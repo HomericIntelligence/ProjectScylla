@@ -1,0 +1,18 @@
+id: "001-justfile-to-makefile"
+name: "Convert Justfile to Makefile"
+description: |
+  Convert ProjectOdyssey's justfile to an equivalent Makefile.
+  The Makefile must support all existing recipes and produce
+  equivalent outputs when run.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "ce739d4aa328f1c0815b33e2812c4b889868b740"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 3600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"

@@ -1,0 +1,44 @@
+requirements:
+  - id: "R001"
+    description: "Makefile exists and is syntactically valid"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R002"
+    description: "All justfile recipes have Makefile equivalents"
+    weight: 2.0
+    evaluation: "scaled"
+
+  - id: "R003"
+    description: "help command works and lists targets"
+    weight: 1.0
+    evaluation: "binary"
+
+  - id: "R004"
+    description: "build commands produce equivalent output"
+    weight: 1.5
+    evaluation: "scaled"
+
+  - id: "R005"
+    description: "clean command removes correct artifacts"
+    weight: 1.0
+    evaluation: "binary"
+
+  - id: "R006"
+    description: "Variable substitution works correctly"
+    weight: 1.0
+    evaluation: "binary"
+
+  - id: "R007"
+    description: "Code quality: readable, well-commented"
+    weight: 0.5
+    evaluation: "scaled"
+
+grading:
+  pass_threshold: 0.70
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0
