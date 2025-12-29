@@ -1,79 +1,97 @@
 # ProjectScylla Implementation Plan Review
 
-You are conducting a thorough review of the ProjectScylla agent testing framework plan. Your goal is to identify gaps, ambiguities, and areas requiring clarification before implementation begins.
+This document captures the clarifying questions asked during plan review and the decisions made.
 
-## Context Files to Read First
+**Review Date**: 2025-12-28
+**Status**: COMPLETE - All decisions captured
 
-1. `/home/mvillmow/ProjectScylla/docs/plan.md` - Implementation plan with issue links
+## Decisions Summary
+
+| Question | Decision |
+|----------|----------|
+| API Key Handling | Environment Variables (docker -e flags) |
+| Runs per Tier | **9 runs** (standardized) |
+| Test Focus | **Both tiers AND models** (Claude, GPT-4, etc.) |
+| T0 Baseline | **Tool default behavior** (use agent CLI defaults) |
+| Judge Location | **Separate container** (isolated from agent container) |
+| Tier Prompts | **Independent** (each tier self-contained) |
+| Docker Fallback | **Fail with error** (Docker is required) |
+| Timeout Handling | **Include as failures** (pass_rate=0, impl_rate=0) |
+| Report Audience | **Researchers/Engineers** (detailed technical analysis) |
+| Judge Disagreement | **Run additional passes** until consensus emerges |
+| First Test Scope | **Claude Code only** (add other adapters incrementally) |
+
+## Context Files
+
+1. `/home/mvillmow/ProjectScylla/docs/plan.md` - Implementation plan (UPDATED with decisions)
 2. `/home/mvillmow/.claude/plans/swift-skipping-creek.md` - Detailed 21-part plan
-3. `/home/mvillmow/ProjectScylla/tests/001-justfile-to-makefile/` - First test case
+3. `/home/mvillmow/.claude/plans/mellow-wandering-pnueli.md` - Plan review document
+4. `/home/mvillmow/ProjectScylla/tests/001-justfile-to-makefile/` - First test case
 
-## GitHub Issues to Review
+## GitHub Issues
 
-Read each GitHub issue for implementation details using `gh issue view <number>`:
+### Original Issues (#3-#38)
 
-### Phase 1: Foundation
-
+#### Phase 1: Foundation
 - #3 - Project structure and environment setup
-- #4 - Configuration loading system
+- #4 - Configuration loading system (UPDATED: runs_per_tier: 9)
 - #5 - Architecture documentation
 - #6 - Test schema specification
 
-### Phase 2: Execution Engine
-
+#### Phase 2: Execution Engine
 - #7 - Workspace management
-- #8 - Test runner orchestration (includes Docker/tier support)
+- #8 - Test runner orchestration (UPDATED: 9 runs, tiers+models, judge container)
 - #9 - Log and metrics capture
 - #10 - Adapter interface specification
 
-### Phase 3: Adapters
-
-- #11 - Base adapter class (includes tier configuration)
+#### Phase 3: Adapters
+- #11 - Base adapter class (UPDATED: T0 = tool defaults, independent tiers)
 - #12 - Claude Code adapter
-- #13 - OpenAI Codex adapter
-- #14 - Cline adapter
-- #15 - OpenCode adapter
+- #13 - OpenAI Codex adapter (Phase 2 - not needed for first test)
+- #14 - Cline adapter (Phase 2 - not needed for first test)
+- #15 - OpenCode adapter (Phase 2 - not needed for first test)
 
-### Phase 4: Judge System
-
+#### Phase 4: Judge System
 - #16 - Rubric parser
 - #17 - Judge prompt templates (includes 10 quality categories)
-- #18 - Evaluator implementation (includes 3-run consensus)
+- #18 - Evaluator implementation (UPDATED: separate container, retry on disagreement)
 - #19 - Judgment parser
 - #20 - Judge protocol documentation
 - #38 - Cleanup script evaluation
 
-### Phase 5: Metrics and Statistics
-
+#### Phase 5: Metrics and Statistics
 - #21 - Statistical calculations
 - #22 - Grading calculations
-- #23 - 10-run aggregation (includes cross-tier support)
+- #23 - 9-run aggregation (UPDATED: was 10-run)
 - #24 - Metrics formulas documentation
 - #37 - Cross-tier analysis
 
-### Phase 6: Reporting
-
+#### Phase 6: Reporting
 - #25 - result.json writer
 - #26 - summary.json generator
 - #27 - scorecard.json generator
 - #28 - Markdown report generator (includes tier comparison)
 
-### Phase 7: CLI
-
+#### Phase 7: CLI
 - #29 - Command-line interface
 - #30 - Progress display
 
-### Phase 8: First Test Case
-
+#### Phase 8: First Test Case
 - #31 - Create 001-justfile-to-makefile test case (includes cleanup script)
 - #32 - Validate framework with single run
-- #33 - Execute full 10-run suite
+- #33 - Execute full 9-run suite (UPDATED: was 10-run)
 - #34 - Generate first report
 
-### Phase 9: Tier System
+#### Phase 9: Tier System
+- #35 - Docker container orchestration (UPDATED: API keys via env vars, required)
+- #36 - Tier configuration system (UPDATED: independent tiers, T0 = tool defaults)
 
-- #35 - Docker container orchestration
-- #36 - Tier configuration system
+### New Issues Created (#40-#43)
+
+- #40 - [Infra] Dockerfile specification for scylla-runner:latest
+- #41 - [Core] Judge container orchestration
+- #42 - [Config] Create tier prompt template files
+- #43 - [Core] Judge consensus with retry logic
 
 ---
 
@@ -88,19 +106,22 @@ For each phase, cross-reference the plan with the GitHub issues:
 
 ---
 
+## Resolved Questions
+
 ### 1. Test Execution Model
 
 **Reference Issues**: #7, #8, #9, #35
 
-Questions to clarify:
+| Question | Decision |
+|----------|----------|
+| How are API keys/credentials passed? | **Environment variables** via docker -e flags |
+| What if Docker is unavailable? | **Fail with error** - Docker is required |
+| Container isolation | Agent and judge run in **separate containers** |
+| Timeout handling | **Include as failures** (pass_rate=0, impl_rate=0) |
 
-- How exactly does the adapter invoke the agent CLI inside Docker?
-- What environment variables are passed to the container?
-- How is the tier-specific prompt injected (file mount, env var, CLI flag)?
-- What happens if Docker is unavailable on the host?
-- How are API keys/credentials passed securely to containers?
-- What's the container resource limit (CPU, memory, disk)?
-- How do we handle agents that require internet access vs air-gapped runs?
+**Still TBD** (implementation details):
+- Container resource limits (CPU, memory, disk)
+- Internet access handling
 
 ---
 
@@ -108,13 +129,13 @@ Questions to clarify:
 
 **Reference Issues**: #36, #11, #8
 
-Questions to clarify:
+| Question | Decision |
+|----------|----------|
+| T0 (Vanilla) behavior | **Tool default behavior** - use agent CLI defaults |
+| Are tiers cumulative? | **No - independent** - each tier is self-contained |
+| Testing scope | **Both tiers AND models** (Claude, GPT-4, etc.) |
 
-- What exactly goes in each tier prompt file (t1-prompted.md, t2-skills.md, t3-tooling.md)?
-- For T0 (Vanilla), do we pass ANY prompt or literally nothing?
-- For T3+ (Tooling), what tools are enabled? How are they configured?
-- How do we ensure tier prompts are agent-agnostic (work with Claude Code, Cline, etc.)?
-- Are tiers cumulative (T2 includes T1 content) or independent?
+**New Issue Created**: #42 - Create tier prompt template files
 
 ---
 
@@ -122,15 +143,15 @@ Questions to clarify:
 
 **Reference Issues**: #16, #17, #18, #19, #20, #38
 
-Questions to clarify:
+| Question | Decision |
+|----------|----------|
+| Where does judge run? | **Separate container** from agent |
+| Judge disagreement handling | **Run additional passes** until consensus |
+| Workspace access | Via **volume mount** (read-only) |
 
-- How does Claude Code + Opus 4.5 access the workspace for judging?
-- What's the exact invocation command for the judge?
-- How do we capture judge token usage and cost separately from agent runs?
-- What if the judge fails or times out? Retry logic?
-- How do we validate judge consistency across the 3 runs?
-- What's the threshold for "too much disagreement" between judge runs?
-- How does cleanup script evaluation integrate with overall scoring?
+**New Issues Created**:
+- #41 - Judge container orchestration
+- #43 - Judge consensus with retry logic
 
 ---
 
@@ -138,14 +159,11 @@ Questions to clarify:
 
 **Reference Issues**: #21, #22, #23, #24, #37
 
-Questions to clarify:
-
-- How do we handle runs that timeout or abort? Include in statistics or exclude?
-- What's the minimum number of successful runs needed to report statistics?
-- How do we calculate Cost-of-Pass when pass_rate is 0?
-- Are there any metrics specific to certain tiers (e.g., T3+ tool call count)?
-- How do we track token usage per component (agent vs judge vs orchestrator)?
-- What statistical tests validate cross-tier differences are significant?
+| Question | Decision |
+|----------|----------|
+| Runs per tier | **9 runs** (standardized) |
+| Timeout runs in stats? | **Include as failures** |
+| Cost-of-Pass when pass_rate=0 | Return **infinity** |
 
 ---
 
@@ -153,14 +171,12 @@ Questions to clarify:
 
 **Reference Issues**: #10, #11, #12, #13, #14, #15
 
-Questions to clarify:
-
-- What's the exact subprocess command for each adapter?
-- How do adapters handle different prompt injection methods per agent CLI?
-- What's the contract for adapter success vs failure?
-- How do we detect if an agent "gave up" vs completed unsuccessfully?
-- How do adapters capture structured output (if available) vs just logs?
-- How does tier configuration affect adapter behavior?
+| Question | Decision |
+|----------|----------|
+| First test adapter scope | **Claude Code only** |
+| Other adapters | **Phase 2** - not needed for first test |
+| T0 prompt injection | **None** - use tool defaults |
+| T1-T3+ prompt injection | Tier prompt prepended to task prompt |
 
 ---
 
@@ -168,13 +184,11 @@ Questions to clarify:
 
 **Reference Issues**: #31, #32, #33, #34
 
-Questions to clarify:
-
-- Is "justfile to Makefile" representative of the types of tests we'll run?
-- What other test case categories are planned?
-- How do we handle tests that require specific environments (GPU, database, etc.)?
-- What's the expected difficulty distribution (easy/medium/hard tests)?
-- What does the cleanup script requirement look like for this test?
+| Question | Decision |
+|----------|----------|
+| Runs per tier | **9 runs** (was 10) |
+| Adapter for first test | **Claude Code only** |
+| Cleanup script | Required - evaluated as one of 10 quality categories |
 
 ---
 
@@ -182,14 +196,10 @@ Questions to clarify:
 
 **Reference Issues**: #25, #26, #27, #28
 
-Questions to clarify:
-
-- Who is the audience for reports (researchers, engineers, executives)?
-- What visualization is needed (charts, graphs) or just tables?
-- Should reports be versioned or timestamped?
-- How do we handle comparing results across different time periods?
-- Is there a dashboard or just static reports?
-- How does the tier comparison section present statistical significance?
+| Question | Decision |
+|----------|----------|
+| Report audience | **Researchers/Engineers** - detailed technical analysis |
+| Visualization | Tables primarily (charts/graphs TBD) |
 
 ---
 
@@ -197,14 +207,14 @@ Questions to clarify:
 
 **Reference Issues**: #3, #4, #29, #30
 
-Questions to clarify:
+| Question | Decision |
+|----------|----------|
+| Docker requirement | **Required** - fail if unavailable |
+| Minimum runs for stats | 5/9 runs must succeed |
 
-- How do we run this in CI/CD?
-- What's the expected runtime for a full test suite?
-- How do we handle partial failures (some tiers complete, others fail)?
-- Is there a way to resume interrupted test runs?
-- How do we manage storage for runs/ directory over time?
-- What CLI commands are needed for different workflows?
+**Still TBD**:
+- CI/CD integration details
+- Storage management strategy
 
 ---
 
@@ -212,13 +222,10 @@ Questions to clarify:
 
 **Reference Issues**: #8, #9, #18, #35
 
-Questions to clarify:
-
-- What if an agent produces output but the workspace is corrupted?
-- What if the cleanup script itself causes damage?
-- How do we handle agents that try to escape the container?
-- What if token counting differs between adapters?
-- How do we handle model version changes mid-experiment?
+| Question | Decision |
+|----------|----------|
+| Timeout handling | **Include as failures** |
+| Judge failures | **Retry with additional passes** |
 
 ---
 
@@ -226,39 +233,62 @@ Questions to clarify:
 
 **Reference Issues**: #37, #24, #20
 
-Questions to clarify:
-
-- How do we ensure reproducibility of results?
-- What's the strategy for controlling for external factors (API latency, rate limits)?
-- How do we document and version tier prompts for reproducibility?
-- Is there a control group or baseline beyond T0?
-- How do we handle the variance introduced by different models within the same adapter?
+| Question | Decision |
+|----------|----------|
+| Baseline | T0 (Vanilla) = **tool default behavior** |
+| Reproducibility | Tier prompts documented in config/tiers/ |
+| Cross-model testing | **Yes** - test both tiers AND models |
 
 ---
 
-## Interview Approach
+## Interview Approach Used
 
-For each gap identified:
+Questions were grouped into batches of 3-4 related topics:
 
-1. State the gap clearly
-2. Reference which GitHub issue(s) it affects
-3. Explain why it matters for implementation
-4. Propose 2-3 possible solutions
-5. Ask the user to choose or provide their preference
+**Batch 1: Core Execution Model**
+- API key handling
+- Docker availability fallback
+- Runs per tier standardization
 
-Group questions into batches of 3-4 related topics to avoid overwhelming the user.
+**Batch 2: Tier System**
+- T0 Vanilla definition
+- Tier prompt relationship
+
+**Batch 3: Judge System**
+- Judge execution context
+- Disagreement handling
+
+**Batch 4: Scope**
+- Report audience
+- First test adapter scope
 
 ---
 
-## Output
+## Completed Actions
 
-After the interview:
+### 1. Updated docs/plan.md
+- Changed "10 runs" to "9 runs" throughout
+- Added testing scope: "tiers AND models"
+- Expanded Key Decisions table with all clarifications
+- Updated issue titles (#23, #33)
 
-1. Update `/home/mvillmow/ProjectScylla/docs/plan.md` with clarifications
-2. Update `/home/mvillmow/.claude/plans/swift-skipping-creek.md` with new details
-3. Create new GitHub issues for any newly identified work using `gh issue create`
-4. Update existing issues with additional details using `gh issue edit`
-5. Document all decisions with issue cross-references
+### 2. Updated GitHub Issues with Decision Comments
+| Issue | Key Updates |
+|-------|-------------|
+| #4 | runs_per_tier: 9, API keys via env vars |
+| #8 | 9 runs, tiers+models, separate judge container |
+| #11 | T0 = tool default behavior, independent tiers |
+| #18 | Separate judge container, retry on disagreement |
+| #35 | Docker required, API keys via env vars |
+| #36 | Independent tier prompts, T0 = tool defaults |
+
+### 3. Created New GitHub Issues
+| Issue | Title |
+|-------|-------|
+| #40 | [Infra] Dockerfile specification for scylla-runner:latest |
+| #41 | [Core] Judge container orchestration |
+| #42 | [Config] Create tier prompt template files |
+| #43 | [Core] Judge consensus with retry logic |
 
 ---
 
@@ -283,4 +313,4 @@ gh issue list --limit 50
 
 ---
 
-Begin by reading all context files and GitHub issues, then start with the most critical gaps first.
+*Review completed 2025-12-28*

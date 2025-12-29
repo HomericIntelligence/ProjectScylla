@@ -22,10 +22,11 @@ How sensitive are agents to system prompt changes? Does the complexity of higher
 
 ### Testing Methodology
 
-- Each test runs against **ALL tiers** (T0, T1, T2, T3+)
-- Each tier runs **10 times** for statistical validity
-- Each run executes in **isolated Docker container**
-- **3-run judge consensus** with confidence-weighted averaging
+- Each test runs against **ALL tiers** (T0, T1, T2, T3+) **AND multiple models** (Claude, GPT-4, etc.)
+- Each tier runs **9 times** for statistical validity
+- Each run executes in **isolated Docker container** (Docker required, no fallback)
+- **3-run judge consensus** with confidence-weighted averaging (run additional passes on disagreement)
+- Judge runs in **separate container** from agent
 
 ---
 
@@ -54,7 +55,7 @@ PHASE 1: EXECUTE                 PHASE 2: JUDGE                 PHASE 3: REPORT
 │ - Run adapter   │  workspace  │ - Score rubric  │  judgment   │ - Cross-tier    │
 │ - Capture logs  │             │ - Confidence    │             │ - Report        │
 └─────────────────┘             └─────────────────┘             └─────────────────┘
-     × 10 runs                      × 3 judges                       × 1
+     × 9 runs                       × 3 judges                       × 1
 ```
 
 ---
@@ -147,7 +148,7 @@ PHASE 1: EXECUTE                 PHASE 2: JUDGE                 PHASE 3: REPORT
 |-------|-------|--------|
 | [#21](https://github.com/mvillmow/ProjectScylla/issues/21) | [Metrics] Statistical calculations | Open |
 | [#22](https://github.com/mvillmow/ProjectScylla/issues/22) | [Metrics] Grading calculations | Open |
-| [#23](https://github.com/mvillmow/ProjectScylla/issues/23) | [Metrics] 10-run aggregation | Open |
+| [#23](https://github.com/mvillmow/ProjectScylla/issues/23) | [Metrics] 9-run aggregation | Open |
 | [#24](https://github.com/mvillmow/ProjectScylla/issues/24) | [Docs] Metrics formulas documentation | Open |
 | [#37](https://github.com/mvillmow/ProjectScylla/issues/37) | [Metrics] Cross-tier analysis | Open |
 
@@ -173,7 +174,7 @@ PHASE 1: EXECUTE                 PHASE 2: JUDGE                 PHASE 3: REPORT
 |-------|-------|--------|
 | [#31](https://github.com/mvillmow/ProjectScylla/issues/31) | [Test] Create 001-justfile-to-makefile test case | Open |
 | [#32](https://github.com/mvillmow/ProjectScylla/issues/32) | [Test] Validate framework with single run | Open |
-| [#33](https://github.com/mvillmow/ProjectScylla/issues/33) | [Test] Execute full 10-run suite | Open |
+| [#33](https://github.com/mvillmow/ProjectScylla/issues/33) | [Test] Execute full 9-run suite | Open |
 | [#34](https://github.com/mvillmow/ProjectScylla/issues/34) | [Test] Generate first report | Open |
 
 ### Phase 9: Tier System (NEW)
@@ -231,15 +232,15 @@ Test: 001-justfile-to-makefile
 ├── Tier: T0 (Vanilla)
 │   ├── Run 01 [container-001-t0-r01]
 │   ├── Run 02 [container-001-t0-r02]
-│   └── ... (10 runs)
+│   └── ... (9 runs)
 ├── Tier: T1 (Prompted)
-│   └── ... (10 runs)
+│   └── ... (9 runs)
 ├── Tier: T2 (Skills)
-│   └── ... (10 runs)
+│   └── ... (9 runs)
 └── Tier: T3+ (Tooling)
-    └── ... (10 runs)
+    └── ... (9 runs)
 
-Total: 40 runs per test × N adapters
+Total: 36 runs per test × N adapters
 ```
 
 ---
@@ -278,7 +279,8 @@ Total: 40 runs per test × N adapters
 | **Git Hash** | ce739d4aa328f1c0815b33e2812c4b889868b740 |
 | **Task** | Convert justfile to Makefile + create cleanup script |
 | **Tiers** | T0, T1, T2, T3+ |
-| **Runs per Tier** | 10 |
+| **Runs per Tier** | 9 |
+| **First Test Adapter** | Claude Code only (others added incrementally) |
 
 ---
 
@@ -288,10 +290,16 @@ Total: 40 runs per test × N adapters
 |----------|--------|-----------|
 | Language | Python only | Simplicity, ecosystem, subprocess capture |
 | Validation | Claude Code + Opus 4.5 | Semantic evaluation beyond programmatic checks |
-| Judge Consensus | 3 runs, confidence-weighted | Ensure consistent evaluations |
-| Runs per tier | 10 | Statistical validity |
-| Container isolation | Docker | Independent runs, reproducibility |
+| Judge Consensus | 3 runs, confidence-weighted | Ensure consistent evaluations (retry on disagreement) |
+| Runs per tier | 9 | Statistical validity |
+| Container isolation | Docker (required) | Independent runs, reproducibility |
 | Tiers | T0-T3+ | Test prompt sensitivity across complexity levels |
+| Test Focus | Tiers AND models | Compare both prompt tiers and different models |
+| T0 Baseline | Tool default behavior | Use agent CLI defaults for vanilla tier |
+| Tier Prompts | Independent | Each tier is self-contained (not cumulative) |
+| Judge Container | Separate | Judge runs in separate container from agent |
+| API Keys | Environment variables | Pass from host via docker -e flags |
+| Timeout Handling | Include as failures | Count timeouts as pass_rate=0, impl_rate=0 |
 
 ---
 
