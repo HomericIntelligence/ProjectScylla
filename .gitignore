@@ -1,0 +1,54 @@
+# Worktrees for parallel development
+worktree/
+
+# Build artifacts
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.local
+*.pem
+credentials.json
+
+# Pixi
+.pixi/
+
+# Run artifacts (generated data)
+runs/
+!runs/.gitkeep
+
+# Coverage reports
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Type checking
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
