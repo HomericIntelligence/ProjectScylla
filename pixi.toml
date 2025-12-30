@@ -1,0 +1,27 @@
+[project]
+name = "scylla"
+version = "0.1.0"
+description = "AI agent testing and optimization framework"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[tasks]
+test = "pytest"
+lint = "ruff check src tests"
+format = "ruff format src tests"
+
+[dependencies]
+python = ">=3.10"
+pip = "*"
+
+[pypi-dependencies]
+scylla = { path = ".", editable = true }
+
+[feature.dev.dependencies]
+pytest = ">=7.0"
+pytest-cov = ">=4.0"
+pre-commit = ">=3.0"
+ruff = ">=0.1.0"
+
+[environments]
+default = { features = ["dev"], solve-group = "default" }
