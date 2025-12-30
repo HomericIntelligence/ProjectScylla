@@ -1,0 +1,30 @@
+{
+  "name": "plan-review-interview",
+  "version": "1.0.0",
+  "description": "Structured interview workflow for reviewing implementation plans and capturing decisions",
+  "category": "evaluation",
+  "created": "2025-12-30",
+  "author": "ProjectScylla Team",
+  "tags": [
+    "planning",
+    "requirements",
+    "interview",
+    "decision-tracking",
+    "github-issues"
+  ],
+  "skills": [
+    {
+      "name": "plan-review-interview",
+      "path": "skills/plan-review-interview/SKILL.md",
+      "triggers": [
+        "plan review",
+        "clarify requirements",
+        "interview for plan",
+        "gap analysis"
+      ]
+    }
+  ],
+  "references": [
+    "references/notes.md"
+  ]
+}
