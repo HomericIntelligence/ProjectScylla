@@ -1,0 +1,33 @@
+{
+  "name": "prompt-ablation-framework",
+  "version": "1.0.0",
+  "description": "Framework for testing which components of a prompting system (CLAUDE.md, agents, skills) are essential vs. optional through systematic ablation testing",
+  "category": "tooling",
+  "author": "Claude Code",
+  "created": "2024-12-30",
+  "tags": [
+    "ablation-testing",
+    "prompt-engineering",
+    "tier-testing",
+    "agent-evaluation",
+    "skill-evaluation",
+    "claude-code"
+  ],
+  "skills": [
+    "skills/prompt-ablation-framework/SKILL.md"
+  ],
+  "references": [
+    "references/notes.md"
+  ],
+  "source_project": "ProjectOdyssey",
+  "target_project": "ProjectScylla",
+  "metrics": {
+    "files_created": 191,
+    "lines_added": 19439,
+    "blocks_extracted": 18,
+    "agents_organized": 44,
+    "skills_organized": 62,
+    "test_configurations": 26,
+    "total_test_cases": 78
+  }
+}
