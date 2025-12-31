@@ -202,6 +202,8 @@ class TestConfigLoaderModel:
 
         assert isinstance(model, ModelConfig)
         assert model.model_id == "test-model"
+        assert model.name == "Test Model"
+        assert model.provider == "test_provider"
         assert model.adapter == "test_adapter"
         assert model.temperature == 0.5
         assert model.max_tokens == 4096
@@ -214,6 +216,48 @@ class TestConfigLoaderModel:
         model = loader.load_model("nonexistent-model")
 
         assert model is None
+
+    def test_load_all_models(self) -> None:
+        """Load all model configurations from directory."""
+        loader = ConfigLoader(base_path=FIXTURES_PATH)
+        models = loader.load_all_models()
+
+        # Fixtures should have test-model and test-model-2
+        assert len(models) >= 2
+        assert "test-model" in models
+        assert "test-model-2" in models
+        assert models["test-model"].model_id == "test-model"
+        assert models["test-model"].name == "Test Model"
+        assert models["test-model-2"].name == "Test Model Two"
+
+    def test_load_all_models_empty_directory(self) -> None:
+        """Empty models directory returns empty dict."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create minimal config structure
+            config_dir = Path(tmpdir) / "config"
+            models_dir = config_dir / "models"
+            models_dir.mkdir(parents=True)
+
+            # Create defaults.yaml (required)
+            defaults_path = config_dir / "defaults.yaml"
+            defaults_path.write_text("evaluation:\n  runs_per_eval: 1\n")
+
+            loader = ConfigLoader(base_path=Path(tmpdir))
+            models = loader.load_all_models()
+
+            assert models == {}
+
+    def test_load_all_models_missing_directory(self) -> None:
+        """Missing models directory returns empty dict."""
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            loader = ConfigLoader(base_path=Path(tmpdir))
+            models = loader.load_all_models()
+
+            assert models == {}
 
 
 class TestConfigLoaderMerged:
