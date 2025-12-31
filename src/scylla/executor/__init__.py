@@ -20,6 +20,11 @@ from scylla.executor.docker import (
     DockerExecutor,
     DockerNotAvailableError,
 )
+from scylla.executor.judge_container import (
+    JudgeContainerConfig,
+    JudgeContainerManager,
+    JudgeResult,
+)
 from scylla.executor.runner import (
     ExecutionInfo,
     ExecutionState,
@@ -68,6 +73,10 @@ __all__ = [
     "DockerError",
     "DockerExecutor",
     "DockerNotAvailableError",
+    # Judge container
+    "JudgeContainerConfig",
+    "JudgeContainerManager",
+    "JudgeResult",
     # Runner
     "ExecutionInfo",
     "ExecutionState",
