@@ -3,6 +3,15 @@
 This module provides result writing and report generation capabilities.
 """
 
+from scylla.reporting.markdown import (
+    MarkdownReportGenerator,
+    ReportData,
+    SensitivityAnalysis,
+    TierMetrics,
+    TransitionAssessment,
+    create_report_data,
+    create_tier_metrics,
+)
 from scylla.reporting.result import (
     ExecutionInfo,
     GradingInfo,
@@ -30,6 +39,14 @@ from scylla.reporting.summary import (
 )
 
 __all__ = [
+    # Markdown
+    "MarkdownReportGenerator",
+    "ReportData",
+    "SensitivityAnalysis",
+    "TierMetrics",
+    "TransitionAssessment",
+    "create_report_data",
+    "create_tier_metrics",
     # Result
     "ExecutionInfo",
     "GradingInfo",
