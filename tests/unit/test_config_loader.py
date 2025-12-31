@@ -38,7 +38,7 @@ class TestConfigLoaderDefaults:
         defaults = loader.load_defaults()
 
         assert isinstance(defaults, DefaultsConfig)
-        assert defaults.evaluation.runs_per_tier == 9
+        assert defaults.evaluation.runs_per_tier == 10
         assert defaults.evaluation.timeout == 300
         assert defaults.output.runs_dir == "runs"
         assert defaults.logging.level == "INFO"
@@ -225,7 +225,7 @@ class TestConfigLoaderMerged:
         config = loader.load(test_id="nonexistent", model_id="nonexistent")
 
         assert isinstance(config, ScyllaConfig)
-        assert config.runs_per_tier == 9
+        assert config.runs_per_tier == 10
         assert config.test_id == "nonexistent"
         assert config.model_id == "nonexistent"
         assert config.model is None
@@ -262,7 +262,7 @@ class TestConfigLoaderMerged:
         assert config.max_cost_usd == 5.0  # test override
 
         # Defaults should fill in non-overridden values
-        assert config.runs_per_tier == 9  # from defaults
+        assert config.runs_per_tier == 10  # from defaults
         assert config.output.runs_dir == "runs"  # from defaults
 
     def test_load_merged_immutable(self) -> None:

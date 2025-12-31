@@ -4,7 +4,7 @@
 # Evaluation settings
 evaluation:
   # Number of runs per evaluation
-  runs_per_eval: 3
+  runs_per_eval: 10
   # Default timeout in seconds
   timeout: 300
   # Random seed for reproducibility (null for random)

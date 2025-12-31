@@ -1,6 +1,6 @@
 # Test fixture: Global defaults
 evaluation:
-  runs_per_eval: 9
+  runs_per_eval: 10
   timeout: 300
   seed: null
 

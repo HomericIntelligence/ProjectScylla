@@ -141,7 +141,7 @@ grading:
         # Create defaults.yaml
         defaults_yaml = config_dir / "defaults.yaml"
         defaults_yaml.write_text("""
-runs_per_tier: 9
+runs_per_tier: 10
 timeout_seconds: 3600
 max_cost_usd: 10.0
 output:
