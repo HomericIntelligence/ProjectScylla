@@ -12,6 +12,7 @@ from scylla.adapters.base import (
     AdapterValidationError,
     BaseAdapter,
 )
+from scylla.adapters.claude_code import ClaudeCodeAdapter
 
 __all__ = [
     "AdapterConfig",
@@ -20,4 +21,5 @@ __all__ = [
     "AdapterTimeoutError",
     "AdapterValidationError",
     "BaseAdapter",
+    "ClaudeCodeAdapter",
 ]
