@@ -17,6 +17,12 @@ from scylla.judge.evaluator import (
     assign_grade,
     weighted_consensus,
 )
+from scylla.judge.parser import (
+    ExploratoryTestingResult,
+    JudgmentParseError,
+    JudgmentParser,
+    load_judgment,
+)
 from scylla.judge.prompts import (
     CATEGORY_WEIGHTS,
     JSON_OUTPUT_SCHEMA,
@@ -58,6 +64,11 @@ __all__ = [
     "JudgeSummary",
     "assign_grade",
     "weighted_consensus",
+    # Parser
+    "ExploratoryTestingResult",
+    "JudgmentParseError",
+    "JudgmentParser",
+    "load_judgment",
     # Prompts
     "CATEGORY_WEIGHTS",
     "CategoryScore",
