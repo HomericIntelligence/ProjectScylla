@@ -1,6 +1,6 @@
 """Test runner orchestration for agent evaluations.
 
-This module provides the TestRunner class that orchestrates test execution
+This module provides the EvalRunner class that orchestrates test execution
 across multiple tiers, models, and runs in Docker containers.
 
 Python Justification: Required for subprocess output capture, threading for
@@ -112,7 +112,7 @@ class TierSummary(BaseModel):
     runs: list[RunResult] = Field(default_factory=list, description="Individual run results")
 
 
-class TestSummary(BaseModel):
+class EvalSummary(BaseModel):
     """Complete summary of a test execution."""
 
     test_id: str = Field(..., description="Test identifier")
@@ -252,7 +252,7 @@ def load_state(path: Path) -> ExecutionState | None:
     )
 
 
-class TestRunner:
+class EvalRunner:
     """Orchestrates test execution across tiers, models, and runs.
 
     This class manages the complete test execution workflow:
@@ -263,7 +263,7 @@ class TestRunner:
     5. Aggregate and report results
 
     Example:
-        >>> runner = TestRunner(docker_executor, tier_loader, config)
+        >>> runner = EvalRunner(docker_executor, tier_loader, config)
         >>> summary = runner.run_test(
         ...     test_id="test-001",
         ...     tiers=["T0", "T1", "T2"],
@@ -316,7 +316,7 @@ class TestRunner:
         runs_per_tier: int | None = None,
         parallel: bool | None = None,
         resume_from: Path | None = None,
-    ) -> TestSummary:
+    ) -> EvalSummary:
         """Run a complete test across all specified tiers and models.
 
         Args:
@@ -328,7 +328,7 @@ class TestRunner:
             resume_from: Path to state file for resume.
 
         Returns:
-            TestSummary with complete results.
+            EvalSummary with complete results.
 
         Raises:
             RunnerError: If test execution fails critically.
@@ -359,7 +359,7 @@ class TestRunner:
             )
 
         # Initialize summary
-        summary = TestSummary(
+        summary = EvalSummary(
             test_id=test_id,
             started_at=self._state.started_at,
         )

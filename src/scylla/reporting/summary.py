@@ -77,7 +77,7 @@ class Rankings:
 
 
 @dataclass
-class TestSummary:
+class EvaluationReport:
     """Summary of all model results for a single test."""
 
     test_id: str
@@ -189,7 +189,7 @@ class SummaryGenerator:
         models: dict[str, ModelStatistics],
         runs_per_model: int = 10,
         timestamp: str | None = None,
-    ) -> TestSummary:
+    ) -> EvaluationReport:
         """Generate a test summary from model statistics.
 
         Args:
@@ -200,14 +200,14 @@ class SummaryGenerator:
             timestamp: Optional timestamp (auto-generated if not provided)
 
         Returns:
-            TestSummary object
+            EvaluationReport object
         """
         if timestamp is None:
             timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
         rankings = self.calculate_rankings(models)
 
-        return TestSummary(
+        return EvaluationReport(
             test_id=test_id,
             test_name=test_name,
             updated=timestamp,
@@ -216,11 +216,11 @@ class SummaryGenerator:
             rankings=rankings,
         )
 
-    def write_summary(self, summary: TestSummary) -> Path:
+    def write_summary(self, summary: EvaluationReport) -> Path:
         """Write a test summary to the appropriate directory.
 
         Args:
-            summary: TestSummary to write
+            summary: EvaluationReport to write
 
         Returns:
             Path to written summary.json
@@ -228,14 +228,14 @@ class SummaryGenerator:
         summary_dir = self.get_summary_dir(summary.test_id)
         return summary.write(summary_dir)
 
-    def read_summary(self, test_id: str) -> TestSummary | None:
+    def read_summary(self, test_id: str) -> EvaluationReport | None:
         """Read a test summary from the file system.
 
         Args:
             test_id: Test identifier
 
         Returns:
-            TestSummary if found, None otherwise
+            EvaluationReport if found, None otherwise
         """
         summary_dir = self.get_summary_dir(test_id)
         summary_path = summary_dir / "summary.json"
@@ -249,12 +249,12 @@ class SummaryGenerator:
         for model_id, model_data in data.get("models", {}).items():
             models[model_id] = ModelStatistics(
                 runs_completed=model_data["runs_completed"],
-                pass_rate=Statistics(**model_data["pass_rate"]),
-                impl_rate=Statistics(**model_data["impl_rate"]),
-                cost_usd=Statistics(**model_data["cost_usd"]),
-                duration_seconds=Statistics(**model_data["duration_seconds"]),
-                composite_score=Statistics(**model_data["composite_score"]),
-                cost_of_pass=Statistics(**model_data["cost_of_pass"]),
+                pass_rate=SummaryStatistics(**model_data["pass_rate"]),
+                impl_rate=SummaryStatistics(**model_data["impl_rate"]),
+                cost_usd=SummaryStatistics(**model_data["cost_usd"]),
+                duration_seconds=SummaryStatistics(**model_data["duration_seconds"]),
+                composite_score=SummaryStatistics(**model_data["composite_score"]),
+                cost_of_pass=SummaryStatistics(**model_data["cost_of_pass"]),
                 grade=model_data["grade"],
             )
 
@@ -265,7 +265,7 @@ class SummaryGenerator:
             by_speed=rankings_data.get("by_speed", []),
         )
 
-        return TestSummary(
+        return EvaluationReport(
             test_id=data["test_id"],
             test_name=data["test_name"],
             updated=data["updated"],

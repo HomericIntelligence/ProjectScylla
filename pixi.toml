@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "scylla"
 version = "0.1.0"
 description = "AI agent testing and optimization framework"

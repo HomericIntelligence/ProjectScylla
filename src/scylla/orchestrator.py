@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Callable
 
 from scylla.cli.progress import ProgressDisplay, RunStatus
-from scylla.config import ConfigLoader, Rubric, TestCase
+from scylla.config import ConfigLoader, EvalCase, Rubric
 from scylla.executor import WorkspaceManager
 from scylla.reporting import RunResult, ResultWriter, create_run_result
 
@@ -28,7 +28,7 @@ class OrchestratorConfig:
     verbose: bool = False
 
 
-class TestOrchestrator:
+class EvalOrchestrator:
     """Orchestrates test execution with all components.
 
     Wires together:
@@ -39,7 +39,7 @@ class TestOrchestrator:
     - ResultWriter: Writes results
 
     Example:
-        orchestrator = TestOrchestrator()
+        orchestrator = EvalOrchestrator()
         result = orchestrator.run_single(
             test_id="001-justfile-to-makefile",
             model_id="claude-opus-4-5-20251101",
@@ -203,7 +203,7 @@ class TestOrchestrator:
     def _run_adapter(
         self,
         workspace: Path,
-        test_case: TestCase,
+        test_case: EvalCase,
         model_id: str,
         tier_id: str,
     ) -> dict:
@@ -239,7 +239,7 @@ class TestOrchestrator:
     def _run_judge(
         self,
         workspace: Path,
-        test_case: TestCase,
+        test_case: EvalCase,
         rubric: Rubric,
         execution_result: dict,
     ) -> dict:

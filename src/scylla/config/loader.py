@@ -19,7 +19,7 @@ from .models import (
     ModelConfig,
     Rubric,
     ScyllaConfig,
-    TestCase,
+    EvalCase,
     TierConfig,
 )
 
@@ -131,14 +131,14 @@ class ConfigLoader:
     # Test Case Loading
     # -------------------------------------------------------------------------
 
-    def load_test(self, test_id: str) -> TestCase:
+    def load_test(self, test_id: str) -> EvalCase:
         """Load a test case configuration.
 
         Args:
             test_id: Test identifier (e.g., "001-justfile-to-makefile")
 
         Returns:
-            TestCase model
+            EvalCase model
 
         Raises:
             ConfigurationError: If test configuration is invalid or missing
@@ -147,7 +147,7 @@ class ConfigLoader:
         data = self._load_yaml(test_path)
 
         try:
-            return TestCase(**data)
+            return EvalCase(**data)
         except Exception as e:
             raise ConfigurationError(f"Invalid test configuration in {test_path}: {e}")
 

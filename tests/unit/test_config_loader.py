@@ -21,7 +21,7 @@ from scylla.config import (
     Requirement,
     Rubric,
     ScyllaConfig,
-    TestCase,
+    EvalCase,
     TierConfig,
 )
 
@@ -58,7 +58,7 @@ class TestConfigLoaderDefaults:
             loader.load_defaults()
 
 
-class TestConfigLoaderTestCase:
+class TestConfigLoaderEvalCase:
     """Tests for loading test case configurations."""
 
     def test_load_test(self) -> None:
@@ -66,7 +66,7 @@ class TestConfigLoaderTestCase:
         loader = ConfigLoader(base_path=FIXTURES_PATH)
         test = loader.load_test("test-001")
 
-        assert isinstance(test, TestCase)
+        assert isinstance(test, EvalCase)
         assert test.id == "test-001"
         assert test.name == "Test Case 001"
         assert test.source.repo == "https://github.com/example/repo"
@@ -319,7 +319,7 @@ class TestConfigLoaderEdgeCases:
     def test_test_case_empty_id_rejected(self) -> None:
         """Empty test ID is rejected."""
         with pytest.raises(ValueError, match="cannot be empty"):
-            TestCase(
+            EvalCase(
                 id="",
                 name="Test",
                 description="Test",

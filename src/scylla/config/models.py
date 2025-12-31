@@ -51,7 +51,7 @@ class ValidationConfig(BaseModel):
     )
 
 
-class TestCase(BaseModel):
+class EvalCase(BaseModel):
     """Configuration for a test case.
 
     Maps to tests/<id>/test.yaml

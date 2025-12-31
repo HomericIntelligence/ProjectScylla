@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 @dataclass
-class TestResult:
+class EvalResult:
     """Summary of a model's performance on a single test."""
 
     runs_completed: int
@@ -59,7 +59,7 @@ class ModelScorecard:
     model_name: str
     updated: str
     overall: OverallStats
-    tests: dict[str, TestResult] = field(default_factory=dict)
+    tests: dict[str, EvalResult] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -175,12 +175,12 @@ class ScorecardGenerator:
         return self.base_dir / model_id
 
     def calculate_overall(
-        self, tests: dict[str, TestResult]
+        self, tests: dict[str, EvalResult]
     ) -> OverallStats:
         """Calculate overall statistics from test results.
 
         Args:
-            tests: Dictionary of test_id -> TestResult
+            tests: Dictionary of test_id -> EvalResult
 
         Returns:
             OverallStats with aggregated values
@@ -215,7 +215,7 @@ class ScorecardGenerator:
         self,
         model_id: str,
         model_name: str,
-        tests: dict[str, TestResult],
+        tests: dict[str, EvalResult],
         timestamp: str | None = None,
     ) -> ModelScorecard:
         """Generate a model scorecard from test results.
@@ -223,7 +223,7 @@ class ScorecardGenerator:
         Args:
             model_id: Model identifier
             model_name: Human-readable model name
-            tests: Dictionary of test_id -> TestResult
+            tests: Dictionary of test_id -> EvalResult
             timestamp: Optional timestamp (auto-generated if not provided)
 
         Returns:
@@ -273,7 +273,7 @@ class ScorecardGenerator:
 
         tests = {}
         for test_id, test_data in data.get("tests", {}).items():
-            tests[test_id] = TestResult(
+            tests[test_id] = EvalResult(
                 runs_completed=test_data["runs_completed"],
                 grade=test_data["grade"],
                 median_pass_rate=test_data["median_pass_rate"],
@@ -306,8 +306,8 @@ def create_test_result(
     median_impl_rate: float,
     median_cost_usd: float,
     median_duration_seconds: float,
-) -> TestResult:
-    """Factory function to create TestResult.
+) -> EvalResult:
+    """Factory function to create EvalResult.
 
     Args:
         runs_completed: Number of completed runs
@@ -318,9 +318,9 @@ def create_test_result(
         median_duration_seconds: Median duration in seconds
 
     Returns:
-        TestResult object
+        EvalResult object
     """
-    return TestResult(
+    return EvalResult(
         runs_completed=runs_completed,
         grade=grade,
         median_pass_rate=median_pass_rate,

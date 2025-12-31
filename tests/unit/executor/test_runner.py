@@ -10,6 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from scylla.executor.runner import (
+    EvalRunner,
+    EvalSummary,
     ExecutionInfo,
     ExecutionState,
     JudgmentResult,
@@ -17,8 +19,6 @@ from scylla.executor.runner import (
     RunnerError,
     RunResult,
     RunStatus,
-    TestRunner,
-    TestSummary,
     TierSummary,
     calculate_wilson_ci,
     load_state,
@@ -261,7 +261,7 @@ class TestTestRunner:
         self, mock_docker: MagicMock, mock_tier_loader: MagicMock
     ) -> None:
         """Test runner initialization."""
-        runner = TestRunner(mock_docker, mock_tier_loader)
+        runner = EvalRunner(mock_docker, mock_tier_loader)
         assert runner.docker == mock_docker
         assert runner.tier_loader == mock_tier_loader
 
@@ -269,7 +269,7 @@ class TestTestRunner:
         self, mock_docker: MagicMock, mock_tier_loader: MagicMock
     ) -> None:
         """Test that run_test requires models."""
-        runner = TestRunner(mock_docker, mock_tier_loader)
+        runner = EvalRunner(mock_docker, mock_tier_loader)
         with pytest.raises(RunnerError, match="At least one model"):
             runner.run_test(test_id="test-001", models=[])
 
@@ -278,7 +278,7 @@ class TestTestRunner:
     ) -> None:
         """Test basic test execution."""
         config = RunnerConfig(runs_per_tier=2)
-        runner = TestRunner(mock_docker, mock_tier_loader, config)
+        runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
         summary = runner.run_test(
             test_id="test-001",
@@ -304,7 +304,7 @@ class TestTestRunner:
             save_state(state, state_path)
 
             config = RunnerConfig(runs_per_tier=2)
-            runner = TestRunner(mock_docker, mock_tier_loader, config)
+            runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
             summary = runner.run_test(
                 test_id="test-001",
@@ -321,7 +321,7 @@ class TestTestRunner:
     ) -> None:
         """Test setting custom judge function."""
         config = RunnerConfig(runs_per_tier=1)
-        runner = TestRunner(mock_docker, mock_tier_loader, config)
+        runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
         custom_judgment = JudgmentResult(
             passed=True,
@@ -378,7 +378,7 @@ class TestTestRunnerAggregation:
         )
 
         config = RunnerConfig(runs_per_tier=5)
-        runner = TestRunner(mock_docker, mock_tier_loader, config)
+        runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
         summary = runner.run_test(
             test_id="test-001",
@@ -411,7 +411,7 @@ class TestTestRunnerAggregation:
         mock_docker.run.side_effect = mock_run
 
         config = RunnerConfig(runs_per_tier=5)
-        runner = TestRunner(mock_docker, mock_tier_loader, config)
+        runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
         # Custom judge that fails some runs
         judge_count = [0]
@@ -474,7 +474,7 @@ class TestTestRunnerParallel:
     ) -> None:
         """Test parallel execution mode."""
         config = RunnerConfig(runs_per_tier=4, parallel=True, max_parallel_workers=2)
-        runner = TestRunner(mock_docker, mock_tier_loader, config)
+        runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
         summary = runner.run_test(
             test_id="test-001",
