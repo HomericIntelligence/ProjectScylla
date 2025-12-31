@@ -230,7 +230,7 @@ class CleanupConfig(BaseModel):
 class EvaluationConfig(BaseModel):
     """Evaluation settings from defaults."""
 
-    runs_per_tier: int = Field(default=9, ge=1, le=100, alias="runs_per_eval")
+    runs_per_tier: int = Field(default=10, ge=1, le=100, alias="runs_per_eval")
     timeout: int = Field(default=300, ge=60, le=86400)
     seed: int | None = Field(default=None)
 
@@ -275,7 +275,7 @@ class DefaultsConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
     # Optional extended settings (for executor)
-    runs_per_tier: int = Field(default=9, ge=1, le=100)
+    runs_per_tier: int = Field(default=10, ge=1, le=100)
     timeout_seconds: int = Field(default=3600, ge=60, le=86400)
     max_cost_usd: float = Field(default=10.0, ge=0.0)
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
@@ -300,7 +300,7 @@ class ScyllaConfig(BaseModel):
     """
 
     # From defaults
-    runs_per_tier: int = Field(default=9, ge=1, le=100)
+    runs_per_tier: int = Field(default=10, ge=1, le=100)
     timeout_seconds: int = Field(default=3600, ge=60, le=86400)
     max_cost_usd: float = Field(default=10.0, ge=0.0)
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
