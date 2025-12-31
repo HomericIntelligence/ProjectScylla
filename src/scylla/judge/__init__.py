@@ -4,6 +4,24 @@ This module provides the judge system for evaluating AI agent work
 using rubrics, prompts, and consensus-based scoring.
 """
 
+from scylla.judge.prompts import (
+    CATEGORY_WEIGHTS,
+    JSON_OUTPUT_SCHEMA,
+    JUDGE_PROMPT_TEMPLATE,
+    TIER_CONTEXT_TEMPLATES,
+    TOTAL_CATEGORY_WEIGHT,
+    CategoryScore,
+    EvaluationCategory,
+    EvaluationSummary,
+    ExploratoryTesting,
+    JudgmentOutput,
+    RequirementScore,
+    build_judge_prompt,
+    calculate_weighted_category_score,
+    get_category_descriptions,
+    get_tier_context,
+    validate_judgment_output,
+)
 from scylla.judge.rubric import (
     EvaluationType,
     GradeScale,
@@ -15,6 +33,24 @@ from scylla.judge.rubric import (
 )
 
 __all__ = [
+    # Prompts
+    "CATEGORY_WEIGHTS",
+    "CategoryScore",
+    "EvaluationCategory",
+    "EvaluationSummary",
+    "ExploratoryTesting",
+    "JSON_OUTPUT_SCHEMA",
+    "JUDGE_PROMPT_TEMPLATE",
+    "JudgmentOutput",
+    "RequirementScore",
+    "TIER_CONTEXT_TEMPLATES",
+    "TOTAL_CATEGORY_WEIGHT",
+    "build_judge_prompt",
+    "calculate_weighted_category_score",
+    "get_category_descriptions",
+    "get_tier_context",
+    "validate_judgment_output",
+    # Rubric
     "EvaluationType",
     "GradeScale",
     "Requirement",
