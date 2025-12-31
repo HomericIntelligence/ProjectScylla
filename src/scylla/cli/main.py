@@ -3,12 +3,24 @@
 Python justification: Click library for CLI parsing and subprocess orchestration.
 """
 
+import json
+import statistics
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import click
 
 from scylla.orchestrator import OrchestratorConfig, TestOrchestrator
+from scylla.reporting import (
+    MarkdownReportGenerator,
+    ReportData,
+    RunResult,
+    SensitivityAnalysis,
+    TierMetrics,
+    TransitionAssessment,
+    create_tier_metrics,
+)
 
 
 @click.group()
@@ -129,6 +141,82 @@ def run(
         sys.exit(1)
 
 
+def _load_results(test_id: str, base_path: Path = Path(".")) -> list[dict]:
+    """Load all result.json files for a test.
+
+    Args:
+        test_id: Test identifier
+        base_path: Base path for runs directory
+
+    Returns:
+        List of result dictionaries
+    """
+    runs_dir = base_path / "runs" / test_id
+    results = []
+
+    if not runs_dir.exists():
+        return results
+
+    for result_file in runs_dir.rglob("result.json"):
+        with open(result_file) as f:
+            results.append(json.load(f))
+
+    return results
+
+
+def _calculate_tier_metrics(
+    tier_id: str, results: list[dict], t0_pass_rate: float | None = None
+) -> TierMetrics:
+    """Calculate metrics for a tier from results.
+
+    Args:
+        tier_id: Tier identifier
+        results: List of result dictionaries for this tier
+        t0_pass_rate: T0 pass rate for uplift calculation
+
+    Returns:
+        TierMetrics for the tier
+    """
+    tier_names = {
+        "T0": "Vanilla",
+        "T1": "Prompted",
+        "T2": "Skills",
+        "T3": "Tooling",
+        "T4": "Delegation",
+        "T5": "Hierarchy",
+        "T6": "Hybrid",
+    }
+
+    pass_rates = [r["grading"]["pass_rate"] for r in results]
+    impl_rates = [r["judgment"]["impl_rate"] for r in results]
+    composites = [r["grading"]["composite_score"] for r in results]
+    costs = [r["grading"]["cost_of_pass"] for r in results]
+    # Filter out infinity for cost median
+    valid_costs = [c for c in costs if c != float("inf")]
+
+    pass_rate_median = statistics.median(pass_rates)
+    impl_rate_median = statistics.median(impl_rates)
+    composite_median = statistics.median(composites)
+    cost_median = statistics.median(valid_costs) if valid_costs else float("inf")
+    consistency_std = statistics.stdev(pass_rates) if len(pass_rates) > 1 else 0.0
+
+    # Calculate uplift vs T0
+    uplift = 0.0
+    if t0_pass_rate is not None and t0_pass_rate > 0:
+        uplift = ((pass_rate_median - t0_pass_rate) / t0_pass_rate) * 100
+
+    return create_tier_metrics(
+        tier_id=tier_id,
+        tier_name=tier_names.get(tier_id, tier_id),
+        pass_rate_median=pass_rate_median,
+        impl_rate_median=impl_rate_median,
+        composite_median=composite_median,
+        cost_of_pass_median=cost_median,
+        consistency_std_dev=consistency_std,
+        uplift=uplift,
+    )
+
+
 @cli.command()
 @click.argument("test_id")
 @click.option(
@@ -162,12 +250,107 @@ def report(
     """
     click.echo(f"Generating {output_format} report for: {test_id}")
 
-    if output:
-        click.echo(f"  Output: {output}")
+    base_path = Path(".")
+    results = _load_results(test_id, base_path)
 
-    # TODO: Integrate with report generator when available
-    click.echo("\nReport generation not yet implemented.")
-    click.echo("This CLI provides the interface structure.")
+    if not results:
+        click.echo(f"\nNo results found for test: {test_id}", err=True)
+        click.echo("Run 'scylla run {test_id}' first to generate results.", err=True)
+        sys.exit(1)
+
+    click.echo(f"  Found {len(results)} run results")
+
+    # Group results by tier
+    by_tier: dict[str, list[dict]] = {}
+    for r in results:
+        tier_id = r["tier_id"]
+        if tier_id not in by_tier:
+            by_tier[tier_id] = []
+        by_tier[tier_id].append(r)
+
+    # Sort tiers
+    sorted_tiers = sorted(by_tier.keys())
+
+    # Calculate T0 pass rate for uplift calculations
+    t0_pass_rate = None
+    if "T0" in by_tier:
+        t0_results = by_tier["T0"]
+        t0_pass_rates = [r["grading"]["pass_rate"] for r in t0_results]
+        t0_pass_rate = statistics.median(t0_pass_rates)
+
+    # Calculate metrics for each tier
+    tier_metrics = []
+    for tier_id in sorted_tiers:
+        metrics = _calculate_tier_metrics(tier_id, by_tier[tier_id], t0_pass_rate)
+        tier_metrics.append(metrics)
+        click.echo(f"  {tier_id}: {len(by_tier[tier_id])} runs, "
+                   f"pass rate: {metrics.pass_rate_median:.1%}")
+
+    # Calculate sensitivity analysis if multiple tiers
+    sensitivity = None
+    if len(tier_metrics) > 1:
+        pass_rates = [m.pass_rate_median for m in tier_metrics]
+        impl_rates = [m.impl_rate_median for m in tier_metrics]
+        costs = [m.cost_of_pass_median for m in tier_metrics if m.cost_of_pass_median != float("inf")]
+
+        sensitivity = SensitivityAnalysis(
+            pass_rate_variance=statistics.variance(pass_rates) if len(pass_rates) > 1 else 0.0,
+            impl_rate_variance=statistics.variance(impl_rates) if len(impl_rates) > 1 else 0.0,
+            cost_variance=statistics.variance(costs) if len(costs) > 1 else 0.0,
+        )
+
+    # Calculate transitions
+    transitions = []
+    for i in range(len(tier_metrics) - 1):
+        from_tier = tier_metrics[i]
+        to_tier = tier_metrics[i + 1]
+
+        pass_delta = to_tier.pass_rate_median - from_tier.pass_rate_median
+        impl_delta = to_tier.impl_rate_median - from_tier.impl_rate_median
+        cost_delta = to_tier.cost_of_pass_median - from_tier.cost_of_pass_median
+
+        # Worth it if pass rate improves more than cost increases (relative)
+        worth_it = pass_delta > 0 and (cost_delta < 0 or pass_delta > cost_delta)
+
+        transitions.append(TransitionAssessment(
+            from_tier=from_tier.tier_id,
+            to_tier=to_tier.tier_id,
+            pass_rate_delta=pass_delta,
+            impl_rate_delta=impl_delta,
+            cost_delta=cost_delta,
+            worth_it=worth_it,
+        ))
+
+    # Determine runs per tier (from first tier's count)
+    runs_per_tier = len(by_tier[sorted_tiers[0]]) if sorted_tiers else 0
+
+    # Create report data
+    timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    report_data = ReportData(
+        test_id=test_id,
+        test_name=test_id.replace("-", " ").title(),
+        timestamp=timestamp,
+        runs_per_tier=runs_per_tier,
+        judge_model="claude-opus-4-5",
+        tiers=tier_metrics,
+        sensitivity=sensitivity,
+        transitions=transitions,
+        key_finding=f"Evaluated {len(results)} runs across {len(sorted_tiers)} tier(s).",
+        recommendations=[
+            "Review per-tier metrics to identify optimal configuration.",
+            "Consider cost-of-pass when selecting production tier.",
+        ],
+    )
+
+    # Generate report
+    if output_format == "markdown":
+        report_dir = output.parent if output else base_path / "reports"
+        generator = MarkdownReportGenerator(report_dir)
+        report_path = generator.write_report(report_data)
+        click.echo(f"\nReport generated: {report_path}")
+    else:
+        click.echo(f"\n{output_format} format not yet implemented.", err=True)
+        sys.exit(1)
 
 
 @cli.command("list")
