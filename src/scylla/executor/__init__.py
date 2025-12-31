@@ -1,7 +1,7 @@
 """Executor module for running agent evaluations.
 
 This module provides workspace management, Docker container orchestration,
-tier configuration, and test execution capabilities.
+tier configuration, test runner orchestration, and result aggregation.
 """
 
 from scylla.executor.docker import (
@@ -12,6 +12,23 @@ from scylla.executor.docker import (
     DockerError,
     DockerExecutor,
     DockerNotAvailableError,
+)
+from scylla.executor.runner import (
+    ExecutionInfo,
+    ExecutionState,
+    InsufficientRunsError,
+    JudgmentResult,
+    RateLimitError,
+    RunnerConfig,
+    RunnerError,
+    RunResult,
+    RunStatus,
+    TestRunner,
+    TestSummary,
+    TierSummary,
+    calculate_wilson_ci,
+    load_state,
+    save_state,
 )
 from scylla.executor.tier_config import (
     TierConfig,
@@ -38,6 +55,22 @@ __all__ = [
     "DockerError",
     "DockerExecutor",
     "DockerNotAvailableError",
+    # Runner
+    "ExecutionInfo",
+    "ExecutionState",
+    "InsufficientRunsError",
+    "JudgmentResult",
+    "RateLimitError",
+    "RunnerConfig",
+    "RunnerError",
+    "RunResult",
+    "RunStatus",
+    "TestRunner",
+    "TestSummary",
+    "TierSummary",
+    "calculate_wilson_ci",
+    "load_state",
+    "save_state",
     # Tier Configuration
     "TierConfig",
     "TierConfigError",
