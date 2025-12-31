@@ -10,10 +10,10 @@ import sys
 import pytest
 
 from scylla.cli.progress import (
+    EvalProgress,
     ProgressDisplay,
     RunProgress,
     RunStatus,
-    TestProgress,
     TierProgress,
     format_duration,
     format_progress_bar,
@@ -110,12 +110,12 @@ class TestTestProgress:
     """Tests for TestProgress dataclass."""
 
     def test_create(self) -> None:
-        progress = TestProgress(test_id="001-test")
+        progress = EvalProgress(test_id="001-test")
         assert progress.test_id == "001-test"
         assert progress.tiers == []
 
     def test_total_runs(self) -> None:
-        progress = TestProgress(
+        progress = EvalProgress(
             test_id="001-test",
             tiers=[
                 TierProgress("T0", 10),
@@ -125,7 +125,7 @@ class TestTestProgress:
         assert progress.total_runs == 20
 
     def test_completed_runs(self) -> None:
-        progress = TestProgress(
+        progress = EvalProgress(
             test_id="001-test",
             tiers=[
                 TierProgress("T0", 5),
@@ -139,7 +139,7 @@ class TestTestProgress:
         assert progress.completed_runs == 3
 
     def test_completed_tiers(self) -> None:
-        progress = TestProgress(
+        progress = EvalProgress(
             test_id="001-test",
             tiers=[
                 TierProgress("T0", 2),
@@ -155,7 +155,7 @@ class TestTestProgress:
         assert progress.completed_tiers == 1
 
     def test_progress_percent(self) -> None:
-        progress = TestProgress(
+        progress = EvalProgress(
             test_id="001-test",
             tiers=[
                 TierProgress("T0", 4),

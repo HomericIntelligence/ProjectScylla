@@ -68,19 +68,25 @@ class TestReportCommand:
         assert "Generate report for a completed test" in result.output
         assert "--format" in result.output
 
-    def test_report_basic(self) -> None:
+    def test_report_basic_no_results(self) -> None:
+        """Test report command with no results exits with error."""
         runner = CliRunner()
         result = runner.invoke(cli, ["report", "001-test"])
 
-        assert result.exit_code == 0
+        # Should fail because no results exist
+        assert result.exit_code == 1
         assert "Generating markdown report for: 001-test" in result.output
+        assert "No results found" in result.output
 
-    def test_report_with_format(self) -> None:
+    def test_report_with_format_no_results(self) -> None:
+        """Test report command with format option and no results."""
         runner = CliRunner()
         result = runner.invoke(cli, ["report", "001-test", "--format", "json"])
 
-        assert result.exit_code == 0
+        # Should fail because no results exist
+        assert result.exit_code == 1
         assert "Generating json report for: 001-test" in result.output
+        assert "No results found" in result.output
 
 
 class TestListCommand:

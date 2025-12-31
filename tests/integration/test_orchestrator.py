@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from scylla.orchestrator import OrchestratorConfig, TestOrchestrator
+from scylla.orchestrator import OrchestratorConfig, EvalOrchestrator
 
 
-class TestOrchestratorConfig:
+class EvalOrchestratorConfig:
     """Tests for OrchestratorConfig."""
 
     def test_defaults(self) -> None:
@@ -38,11 +38,11 @@ class TestOrchestratorConfig:
         assert config.quiet is True
 
 
-class TestTestOrchestrator:
-    """Tests for TestOrchestrator."""
+class TestEvalOrchestrator:
+    """Tests for EvalOrchestrator."""
 
     def test_init_default(self) -> None:
-        orchestrator = TestOrchestrator()
+        orchestrator = EvalOrchestrator()
         assert orchestrator.config.base_path == Path(".")
         assert orchestrator.loader is not None
         assert orchestrator.progress is not None
@@ -53,12 +53,12 @@ class TestTestOrchestrator:
             base_path=Path("/tmp/test"),
             quiet=True,
         )
-        orchestrator = TestOrchestrator(config)
+        orchestrator = EvalOrchestrator(config)
         assert orchestrator.config.base_path == Path("/tmp/test")
         assert orchestrator.config.quiet is True
 
     def test_set_adapter(self) -> None:
-        orchestrator = TestOrchestrator()
+        orchestrator = EvalOrchestrator()
 
         def mock_adapter(**kwargs):
             return {"tokens_in": 100, "tokens_out": 50}
@@ -67,7 +67,7 @@ class TestTestOrchestrator:
         assert orchestrator._adapter_func is mock_adapter
 
     def test_set_judge(self) -> None:
-        orchestrator = TestOrchestrator()
+        orchestrator = EvalOrchestrator()
 
         def mock_judge(**kwargs):
             return {"passed": True, "score": 1.0}
@@ -76,7 +76,7 @@ class TestTestOrchestrator:
         assert orchestrator._judge_func is mock_judge
 
 
-class TestOrchestratorWithFixture:
+class EvalOrchestratorWithFixture:
     """Tests for orchestrator with proper test fixture."""
 
     @pytest.fixture
@@ -157,7 +157,7 @@ output:
             base_path=test_env,
             quiet=True,
         )
-        orchestrator = TestOrchestrator(config)
+        orchestrator = EvalOrchestrator(config)
         assert orchestrator.config.base_path == test_env
 
     def test_orchestrator_loads_test(self, test_env: Path) -> None:
@@ -165,7 +165,7 @@ output:
             base_path=test_env,
             quiet=True,
         )
-        orchestrator = TestOrchestrator(config)
+        orchestrator = EvalOrchestrator(config)
 
         # Load test case through the loader
         test_case = orchestrator.loader.load_test("001-test")
@@ -178,7 +178,7 @@ output:
             base_path=test_env,
             quiet=True,
         )
-        orchestrator = TestOrchestrator(config)
+        orchestrator = EvalOrchestrator(config)
 
         rubric = orchestrator.loader.load_rubric("001-test")
         assert len(rubric.requirements) == 1

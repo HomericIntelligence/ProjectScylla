@@ -13,7 +13,7 @@ from scylla.reporting.scorecard import (
     ModelScorecard,
     OverallStats,
     ScorecardGenerator,
-    TestResult,
+    EvalResult,
     _grade_to_points,
     _points_to_grade,
     create_test_result,
@@ -27,9 +27,9 @@ def make_test_result(
     median_impl_rate: float = 0.85,
     median_cost_usd: float = 1.0,
     median_duration_seconds: float = 60.0,
-) -> TestResult:
-    """Create test TestResult."""
-    return TestResult(
+) -> EvalResult:
+    """Create test EvalResult."""
+    return EvalResult(
         runs_completed=runs_completed,
         grade=grade,
         median_pass_rate=median_pass_rate,
@@ -39,11 +39,11 @@ def make_test_result(
     )
 
 
-class TestTestResult:
-    """Tests for TestResult dataclass."""
+class TestEvalResult:
+    """Tests for EvalResult dataclass."""
 
     def test_create(self) -> None:
-        result = TestResult(
+        result = EvalResult(
             runs_completed=10,
             grade="A",
             median_pass_rate=1.0,
@@ -361,7 +361,7 @@ class TestScorecardGeneratorWriteRead:
             assert read_scorecard.overall.tests_completed == 2
 
 
-class TestCreateTestResult:
+class TestCreateEvalResult:
     """Tests for create_test_result factory function."""
 
     def test_create(self) -> None:

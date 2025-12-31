@@ -11,7 +11,7 @@ from pathlib import Path
 
 import click
 
-from scylla.orchestrator import OrchestratorConfig, TestOrchestrator
+from scylla.orchestrator import OrchestratorConfig, EvalOrchestrator
 from scylla.reporting import (
     MarkdownReportGenerator,
     ReportData,
@@ -109,7 +109,7 @@ def run(
         verbose=verbose,
     )
 
-    orchestrator = TestOrchestrator(config)
+    orchestrator = EvalOrchestrator(config)
 
     try:
         if runs == 1 and tiers and len(tiers) == 1:
