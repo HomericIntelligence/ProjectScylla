@@ -87,7 +87,7 @@ class TierProgress:
 
 
 @dataclass
-class TestProgress:
+class EvalProgress:
     """Progress information for a complete test."""
 
     test_id: str
@@ -177,7 +177,7 @@ class ProgressDisplay:
         self.quiet = quiet
         self.verbose = verbose
         self.no_progress = no_progress
-        self._current_progress: TestProgress | None = None
+        self._current_progress: EvalProgress | None = None
 
     def _write(self, message: str, newline: bool = True) -> None:
         """Write a message to stdout."""
@@ -187,7 +187,7 @@ class ProgressDisplay:
         sys.stdout.write(message + end)
         sys.stdout.flush()
 
-    def start_test(self, test_id: str, tiers: list[str], runs_per_tier: int) -> TestProgress:
+    def start_test(self, test_id: str, tiers: list[str], runs_per_tier: int) -> EvalProgress:
         """Start tracking a new test.
 
         Args:
@@ -196,9 +196,9 @@ class ProgressDisplay:
             runs_per_tier: Number of runs per tier
 
         Returns:
-            TestProgress object
+            EvalProgress object
         """
-        progress = TestProgress(
+        progress = EvalProgress(
             test_id=test_id,
             tiers=[TierProgress(t, runs_per_tier) for t in tiers],
             start_time=datetime.now(),

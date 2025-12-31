@@ -26,6 +26,8 @@ from scylla.executor.judge_container import (
     JudgeResult,
 )
 from scylla.executor.runner import (
+    EvalRunner,
+    EvalSummary,
     ExecutionInfo,
     ExecutionState,
     InsufficientRunsError,
@@ -35,8 +37,6 @@ from scylla.executor.runner import (
     RunnerError,
     RunResult,
     RunStatus,
-    TestRunner,
-    TestSummary,
     TierSummary,
     calculate_wilson_ci,
     load_state,
@@ -78,6 +78,8 @@ __all__ = [
     "JudgeContainerManager",
     "JudgeResult",
     # Runner
+    "EvalRunner",
+    "EvalSummary",
     "ExecutionInfo",
     "ExecutionState",
     "InsufficientRunsError",
@@ -87,8 +89,6 @@ __all__ = [
     "RunnerError",
     "RunResult",
     "RunStatus",
-    "TestRunner",
-    "TestSummary",
     "TierSummary",
     "calculate_wilson_ci",
     "load_state",

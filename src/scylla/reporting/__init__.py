@@ -22,18 +22,18 @@ from scylla.reporting.result import (
     create_run_result,
 )
 from scylla.reporting.scorecard import (
+    EvalResult,
     ModelScorecard,
     OverallStats,
     ScorecardGenerator,
-    TestResult,
     create_test_result,
 )
 from scylla.reporting.summary import (
+    EvaluationReport,
     ModelStatistics,
     Rankings,
     SummaryGenerator,
     SummaryStatistics,
-    TestSummary,
     create_model_statistics,
     create_statistics,
 )
@@ -56,17 +56,17 @@ __all__ = [
     "RunResult",
     "create_run_result",
     # Scorecard
+    "EvalResult",
     "ModelScorecard",
     "OverallStats",
     "ScorecardGenerator",
-    "TestResult",
     "create_test_result",
     # Summary
+    "EvaluationReport",
     "ModelStatistics",
     "Rankings",
     "SummaryGenerator",
     "SummaryStatistics",
-    "TestSummary",
     "create_model_statistics",
     "create_statistics",
 ]

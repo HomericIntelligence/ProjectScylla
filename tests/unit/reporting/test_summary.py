@@ -14,7 +14,7 @@ from scylla.reporting.summary import (
     Rankings,
     SummaryGenerator,
     SummaryStatistics,
-    TestSummary,
+    EvaluationReport,
     create_model_statistics,
     create_statistics,
 )
@@ -59,7 +59,7 @@ def make_model_statistics(
     )
 
 
-class TestSummaryStatistics:
+class EvaluationReportStatistics:
     """Tests for SummaryStatistics dataclass."""
 
     def test_create(self) -> None:
@@ -153,11 +153,11 @@ class TestRankings:
         assert data["by_cost_efficiency"] == ["model-b"]
 
 
-class TestTestSummary:
-    """Tests for TestSummary dataclass."""
+class TestEvaluationReport:
+    """Tests for EvaluationReport dataclass."""
 
     def test_create(self) -> None:
-        summary = TestSummary(
+        summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
             updated="2024-01-15T14:30:00Z",
@@ -167,7 +167,7 @@ class TestTestSummary:
         assert summary.runs_per_model == 10
 
     def test_create_with_models(self) -> None:
-        summary = TestSummary(
+        summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
             updated="2024-01-15T14:30:00Z",
@@ -177,7 +177,7 @@ class TestTestSummary:
         assert "model-a" in summary.models
 
     def test_to_dict(self) -> None:
-        summary = TestSummary(
+        summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
             updated="2024-01-15T14:30:00Z",
@@ -193,7 +193,7 @@ class TestTestSummary:
         assert data["rankings"]["by_quality"] == ["model-a"]
 
     def test_to_json(self) -> None:
-        summary = TestSummary(
+        summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
             updated="2024-01-15T14:30:00Z",
@@ -206,7 +206,7 @@ class TestTestSummary:
         assert data["test_id"] == "001-test"
 
     def test_write(self) -> None:
-        summary = TestSummary(
+        summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
             updated="2024-01-15T14:30:00Z",
@@ -221,7 +221,7 @@ class TestTestSummary:
             assert output_path.name == "summary.json"
 
 
-class TestSummaryGeneratorCalculateRankings:
+class EvaluationReportGeneratorCalculateRankings:
     """Tests for SummaryGenerator.calculate_rankings method."""
 
     def test_empty_models(self) -> None:
@@ -296,7 +296,7 @@ class TestSummaryGeneratorCalculateRankings:
         assert rankings.by_cost_efficiency[-1] == "model-inf"
 
 
-class TestSummaryGeneratorGenerateSummary:
+class EvaluationReportGeneratorGenerateSummary:
     """Tests for SummaryGenerator.generate_summary method."""
 
     def test_generate_basic(self) -> None:
@@ -343,7 +343,7 @@ class TestSummaryGeneratorGenerateSummary:
         assert summary.rankings.by_quality[0] == "model-b"
 
 
-class TestSummaryGeneratorWriteRead:
+class EvaluationReportGeneratorWriteRead:
     """Tests for SummaryGenerator write/read methods."""
 
     def test_write_summary(self) -> None:

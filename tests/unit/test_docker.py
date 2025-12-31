@@ -284,11 +284,15 @@ class TestContainerRun:
         """Run container that times out."""
         import subprocess
 
+        # Create TimeoutExpired and set stdout/stderr as attributes
+        # (Python 3.14 doesn't accept these as constructor kwargs)
+        timeout_error = subprocess.TimeoutExpired(cmd="docker", timeout=60)
+        timeout_error.stdout = b"partial"
+        timeout_error.stderr = b""
+
         mock_run.side_effect = [
             MagicMock(returncode=0),  # docker info
-            subprocess.TimeoutExpired(
-                cmd="docker", timeout=60, stdout=b"partial", stderr=b""
-            ),
+            timeout_error,
             MagicMock(returncode=0),  # docker stop
         ]
 

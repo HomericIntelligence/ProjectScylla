@@ -4,7 +4,7 @@ This module provides Pydantic models and a ConfigLoader for parsing YAML
 test configurations, tier definitions, and model settings.
 
 Example:
-    from scylla.config import ConfigLoader, TestCase, Rubric
+    from scylla.config import ConfigLoader, EvalCase, Rubric
 
     loader = ConfigLoader()
     test = loader.load_test("001-justfile-to-makefile")
@@ -18,6 +18,7 @@ from .models import (
     CleanupConfig,
     ConfigurationError,
     DefaultsConfig,
+    EvalCase,
     EvaluationConfig,
     GradeScale,
     GradingConfig,
@@ -31,7 +32,6 @@ from .models import (
     ScyllaConfig,
     SourceConfig,
     TaskConfig,
-    TestCase,
     TierConfig,
     ValidationConfig,
 )
@@ -42,7 +42,7 @@ __all__ = [
     # Exceptions
     "ConfigurationError",
     # Test Case Models
-    "TestCase",
+    "EvalCase",
     "SourceConfig",
     "TaskConfig",
     "ValidationConfig",
