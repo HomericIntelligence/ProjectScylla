@@ -34,6 +34,57 @@ requirements:
     weight: 0.5
     evaluation: "scaled"
 
+  - id: "R008"
+    description: "Cleanup script exists and works"
+    weight: 1.0
+    evaluation: "scaled"
+    scoring:
+      1.0: "Script exists, runs successfully, full cleanup"
+      0.7: "Script exists, runs, partial cleanup"
+      0.4: "Script exists but fails"
+      0.0: "No cleanup script"
+
+categories:
+  functional_correctness:
+    weight: 2.0
+    description: "Makefile works as intended"
+
+  completeness:
+    weight: 1.5
+    description: "All recipes converted"
+
+  code_quality:
+    weight: 1.0
+    description: "Readable, maintainable Makefile"
+
+  simplicity:
+    weight: 1.0
+    description: "Simple, not over-engineered"
+
+  lack_of_duplication:
+    weight: 0.5
+    description: "DRY principle followed"
+
+  clarity:
+    weight: 1.0
+    description: "Clear target names and structure"
+
+  documentation:
+    weight: 0.5
+    description: "Comments explain non-obvious parts"
+
+  architectural_cleanliness:
+    weight: 0.5
+    description: "Good organization and separation"
+
+  efficiency:
+    weight: 0.5
+    description: "Efficient make rules"
+
+  cleanup_script_quality:
+    weight: 1.0
+    description: "Proper cleanup/teardown script"
+
 grading:
   pass_threshold: 0.70
   grade_scale:
