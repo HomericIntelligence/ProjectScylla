@@ -31,7 +31,7 @@ class TierDefinition(BaseModel):
 class TierConfig(BaseModel):
     """Complete tier configuration with loaded prompt content."""
 
-    tier_id: str = Field(..., description="Tier identifier (e.g., 'T0', 'T1', 'T2', 'T3+')")
+    tier_id: str = Field(..., description="Tier identifier (e.g., 'T0', 'T1', 'T2', 'T3')")
     name: str = Field(..., description="Human-readable tier name")
     description: str = Field(..., description="Description of the tier's purpose")
     prompt_file: Optional[Path] = Field(
@@ -63,7 +63,7 @@ class TiersDefinitionFile(BaseModel):
         cls, v: dict[str, TierDefinition]
     ) -> dict[str, TierDefinition]:
         """Ensure required tiers are present."""
-        required = {"T0", "T1", "T2", "T3+"}
+        required = {"T0", "T1", "T2", "T3"}
         missing = required - set(v.keys())
         if missing:
             raise ValueError(f"Missing required tier definitions: {missing}")
@@ -126,7 +126,7 @@ class TierConfigLoader:
         """Load configuration for a specific tier.
 
         Args:
-            tier_id: The tier identifier (e.g., "T0", "T1", "T2", "T3+")
+            tier_id: The tier identifier (e.g., "T0", "T1", "T2", "T3")
 
         Returns:
             TierConfig with loaded prompt content
