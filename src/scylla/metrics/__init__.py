@@ -11,6 +11,12 @@ from scylla.metrics.aggregator import (
     RunResult,
     TierStatistics,
 )
+from scylla.metrics.cross_tier import (
+    CrossTierAnalyzer,
+    PromptSensitivityAnalysis,
+    TierTransitionAssessment,
+    TierUplift,
+)
 from scylla.metrics.grading import (
     GradingResult,
     assign_letter_grade,
@@ -40,6 +46,11 @@ __all__ = [
     "RunAggregator",
     "RunResult",
     "TierStatistics",
+    # Cross-tier analysis
+    "CrossTierAnalyzer",
+    "PromptSensitivityAnalysis",
+    "TierTransitionAssessment",
+    "TierUplift",
     # Grading
     "GradingResult",
     "assign_letter_grade",
