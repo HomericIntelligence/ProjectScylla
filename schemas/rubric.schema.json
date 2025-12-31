@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/mvillmow/ProjectScylla/schemas/rubric.schema.json",
+  "title": "ProjectScylla Rubric Schema",
+  "description": "Schema for rubric.yaml files that define scoring rubrics for LLM-as-Judge evaluation",
+  "type": "object",
+  "required": ["requirements", "grading"],
+  "additionalProperties": false,
+  "properties": {
+    "requirements": {
+      "type": "array",
+      "description": "List of evaluation requirements",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "weight", "evaluation"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique requirement identifier (e.g., 'R001')",
+            "pattern": "^R[0-9]{3}$",
+            "examples": ["R001", "R042"]
+          },
+          "description": {
+            "type": "string",
+            "description": "What this requirement measures",
+            "minLength": 10,
+            "maxLength": 200,
+            "examples": [
+              "Makefile exists and is syntactically valid",
+              "All justfile recipes have Makefile equivalents"
+            ]
+          },
+          "weight": {
+            "type": "number",
+            "description": "Scoring weight (higher = more important)",
+            "minimum": 0,
+            "maximum": 10,
+            "examples": [0.5, 1.0, 1.5, 2.0]
+          },
+          "evaluation": {
+            "type": "string",
+            "description": "Evaluation type: binary (pass/fail) or scaled (0.0-1.0)",
+            "enum": ["binary", "scaled"]
+          }
+        }
+      }
+    },
+    "grading": {
+      "type": "object",
+      "description": "Grading configuration",
+      "required": ["pass_threshold"],
+      "additionalProperties": false,
+      "properties": {
+        "pass_threshold": {
+          "type": "number",
+          "description": "Minimum weighted score to pass (0.0-1.0)",
+          "minimum": 0,
+          "maximum": 1,
+          "examples": [0.60, 0.70, 0.80]
+        },
+        "grade_scale": {
+          "type": "object",
+          "description": "Letter grade thresholds (optional)",
+          "additionalProperties": false,
+          "properties": {
+            "A": {
+              "type": "number",
+              "description": "Threshold for A grade",
+              "minimum": 0,
+              "maximum": 1,
+              "examples": [0.95]
+            },
+            "B": {
+              "type": "number",
+              "description": "Threshold for B grade",
+              "minimum": 0,
+              "maximum": 1,
+              "examples": [0.85]
+            },
+            "C": {
+              "type": "number",
+              "description": "Threshold for C grade",
+              "minimum": 0,
+              "maximum": 1,
+              "examples": [0.75]
+            },
+            "D": {
+              "type": "number",
+              "description": "Threshold for D grade",
+              "minimum": 0,
+              "maximum": 1,
+              "examples": [0.65]
+            },
+            "F": {
+              "type": "number",
+              "description": "Threshold for F grade (typically 0.0)",
+              "minimum": 0,
+              "maximum": 1,
+              "examples": [0.0]
+            }
+          }
+        }
+      }
+    }
+  }
+}
