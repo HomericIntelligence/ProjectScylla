@@ -4,6 +4,10 @@ This module provides the judge system for evaluating AI agent work
 using rubrics, prompts, and consensus-based scoring.
 """
 
+from scylla.judge.cleanup_evaluator import (
+    CleanupEvaluation,
+    CleanupEvaluator,
+)
 from scylla.judge.evaluator import (
     ConsensusJudgment,
     EvaluationParseError,
@@ -24,22 +28,10 @@ from scylla.judge.parser import (
     load_judgment,
 )
 from scylla.judge.prompts import (
-    CATEGORY_WEIGHTS,
-    JSON_OUTPUT_SCHEMA,
     JUDGE_PROMPT_TEMPLATE,
     TIER_CONTEXT_TEMPLATES,
-    TOTAL_CATEGORY_WEIGHT,
-    CategoryScore,
-    EvaluationCategory,
-    EvaluationSummary,
-    ExploratoryTesting,
-    JudgmentOutput,
-    RequirementScore,
     build_judge_prompt,
-    calculate_weighted_category_score,
-    get_category_descriptions,
     get_tier_context,
-    validate_judgment_output,
 )
 from scylla.judge.rubric import (
     EvaluationType,
@@ -52,6 +44,9 @@ from scylla.judge.rubric import (
 )
 
 __all__ = [
+    # Cleanup evaluator
+    "CleanupEvaluation",
+    "CleanupEvaluator",
     # Evaluator
     "ConsensusJudgment",
     "EvaluationParseError",
@@ -70,22 +65,10 @@ __all__ = [
     "JudgmentParser",
     "load_judgment",
     # Prompts
-    "CATEGORY_WEIGHTS",
-    "CategoryScore",
-    "EvaluationCategory",
-    "EvaluationSummary",
-    "ExploratoryTesting",
-    "JSON_OUTPUT_SCHEMA",
     "JUDGE_PROMPT_TEMPLATE",
-    "JudgmentOutput",
-    "RequirementScore",
     "TIER_CONTEXT_TEMPLATES",
-    "TOTAL_CATEGORY_WEIGHT",
     "build_judge_prompt",
-    "calculate_weighted_category_score",
-    "get_category_descriptions",
     "get_tier_context",
-    "validate_judgment_output",
     # Rubric
     "EvaluationType",
     "GradeScale",
