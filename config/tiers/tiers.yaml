@@ -4,7 +4,7 @@
 # Each tier represents a different level of agent capability.
 #
 # Important: Tiers are INDEPENDENT, not cumulative.
-# T0 uses tool defaults (null values), T1-T3+ have explicit configurations.
+# T0 uses tool defaults (null values), T1-T3 have explicit configurations.
 
 tiers:
   T0:
@@ -28,7 +28,7 @@ tiers:
     tools_enabled: false
     delegation_enabled: false
 
-  "T3+":
+  T3:
     name: "Tooling"
     description: "External tools, multi-agent orchestration"
     prompt_file: "t3-tooling.md"

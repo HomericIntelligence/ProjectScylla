@@ -58,7 +58,7 @@ class TestTiersDefinitionFile:
                 "T0": TierDefinition(name="Vanilla", description="Base"),
                 "T1": TierDefinition(name="Prompted", description="With prompts"),
                 "T2": TierDefinition(name="Skills", description="With skills"),
-                "T3+": TierDefinition(name="Tooling", description="With tools"),
+                "T3": TierDefinition(name="Tooling", description="With tools"),
             }
         )
         assert len(tiers_def.tiers) == 4
@@ -143,7 +143,7 @@ tiers:
     tools_enabled: false
     delegation_enabled: false
 
-  "T3+":
+  T3:
     name: "Tooling"
     description: "With tools"
     prompt_file: "t3-tooling.md"
@@ -187,12 +187,12 @@ tiers:
         assert t1.tools_enabled is False
         assert t1.delegation_enabled is False
 
-    def test_get_t3_plus_tier(self, config_dir: Path) -> None:
-        """Test getting T3+ tier with tools enabled."""
+    def test_get_t3_tier(self, config_dir: Path) -> None:
+        """Test getting T3 tier with tools enabled."""
         loader = TierConfigLoader(config_dir)
-        t3 = loader.get_tier("T3+")
+        t3 = loader.get_tier("T3")
 
-        assert t3.tier_id == "T3+"
+        assert t3.tier_id == "T3"
         assert t3.name == "Tooling"
         assert t3.tools_enabled is True
         assert t3.delegation_enabled is True
@@ -204,7 +204,7 @@ tiers:
 
         assert len(all_tiers) == 4
         tier_ids = [t.tier_id for t in all_tiers]
-        assert set(tier_ids) == {"T0", "T1", "T2", "T3+"}
+        assert set(tier_ids) == {"T0", "T1", "T2", "T3"}
 
     def test_get_tier_ids(self, config_dir: Path) -> None:
         """Test getting list of tier IDs."""
@@ -213,13 +213,13 @@ tiers:
 
         assert len(tier_ids) == 4
         assert "T0" in tier_ids
-        assert "T3+" in tier_ids
+        assert "T3" in tier_ids
 
     def test_validate_tier_id_valid(self, config_dir: Path) -> None:
         """Test validating a valid tier ID."""
         loader = TierConfigLoader(config_dir)
         assert loader.validate_tier_id("T0") is True
-        assert loader.validate_tier_id("T3+") is True
+        assert loader.validate_tier_id("T3") is True
 
     def test_validate_tier_id_invalid(self, config_dir: Path) -> None:
         """Test validating an invalid tier ID."""
@@ -263,7 +263,7 @@ tiers:
     name: "Skills"
     description: "With skills"
 
-  "T3+":
+  T3:
     name: "Tooling"
     description: "With tools"
 """)
