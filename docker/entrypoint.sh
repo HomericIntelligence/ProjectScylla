@@ -1,0 +1,264 @@
+#!/bin/bash
+# Entry point script for scylla-runner container
+#
+# This script handles test execution within the Docker container.
+# It validates environment variables, sets up the workspace, and
+# executes the appropriate test command based on the tier configuration.
+#
+# Environment Variables (injected by orchestrator):
+#   TIER           - Test tier (T0, T1, T2, T3, T4, T5, T6)
+#   MODEL          - Model identifier
+#   RUN_NUMBER     - Run number (1-9)
+#   ANTHROPIC_API_KEY - API key for Claude
+#   OPENAI_API_KEY    - API key for OpenAI (optional)
+#   TEST_ID        - Unique test identifier
+#   TIMEOUT        - Execution timeout in seconds
+#   REPO_URL       - Git repository URL to clone
+#   REPO_HASH      - Git commit hash to checkout
+#   TEST_COMMAND   - Command to execute for testing
+
+set -euo pipefail
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Logging functions
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Display help message
+show_help() {
+    cat << EOF
+scylla-runner - AI Agent Test Execution Container
+
+Usage: docker run scylla-runner:latest [OPTIONS] [COMMAND]
+
+Options:
+    --help          Show this help message
+    --version       Show version information
+    --validate      Validate environment configuration
+    --run           Execute test run (default)
+
+Environment Variables:
+    TIER            Test tier (T0-T6) [required for --run]
+    MODEL           Model identifier [required for --run]
+    RUN_NUMBER      Run number (1-9) [required for --run]
+    ANTHROPIC_API_KEY  Claude API key [required]
+    OPENAI_API_KEY     OpenAI API key [optional]
+    TEST_ID         Unique test identifier [required for --run]
+    TIMEOUT         Execution timeout in seconds [default: 300]
+    REPO_URL        Git repository URL to clone [optional]
+    REPO_HASH       Git commit hash to checkout [optional]
+    TEST_COMMAND    Command to execute [optional]
+
+Examples:
+    # Show help
+    docker run scylla-runner:latest --help
+
+    # Validate environment
+    docker run -e ANTHROPIC_API_KEY=\$KEY scylla-runner:latest --validate
+
+    # Run a test
+    docker run -e TIER=T0 -e MODEL=claude-sonnet-4-20250514 -e RUN_NUMBER=1 \\
+               -e TEST_ID=test-001 -e ANTHROPIC_API_KEY=\$KEY \\
+               -v /path/to/workspace:/workspace \\
+               scylla-runner:latest --run
+
+EOF
+}
+
+# Display version information
+show_version() {
+    echo "scylla-runner version: latest"
+    echo "Python: $(python3 --version 2>&1)"
+    echo "Node.js: $(node --version 2>&1)"
+    echo "Git: $(git --version 2>&1)"
+
+    # Check if Claude CLI is installed
+    if command -v claude &> /dev/null; then
+        echo "Claude CLI: $(claude --version 2>&1 || echo 'installed')"
+    else
+        echo "Claude CLI: not installed"
+    fi
+}
+
+# Validate required environment variables
+validate_env() {
+    local errors=0
+
+    log_info "Validating environment configuration..."
+
+    # Check required variables for test execution
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        log_error "ANTHROPIC_API_KEY is not set"
+        ((errors++))
+    else
+        log_info "ANTHROPIC_API_KEY is set"
+    fi
+
+    # Validate tier if set
+    if [[ -n "${TIER:-}" ]]; then
+        if [[ ! "${TIER}" =~ ^T[0-6]$ ]]; then
+            log_error "TIER must be T0, T1, T2, T3, T4, T5, or T6 (got: ${TIER})"
+            ((errors++))
+        else
+            log_info "TIER: ${TIER}"
+        fi
+    fi
+
+    # Validate run number if set
+    if [[ -n "${RUN_NUMBER:-}" ]]; then
+        if [[ ! "${RUN_NUMBER}" =~ ^[1-9]$ ]]; then
+            log_error "RUN_NUMBER must be 1-9 (got: ${RUN_NUMBER})"
+            ((errors++))
+        else
+            log_info "RUN_NUMBER: ${RUN_NUMBER}"
+        fi
+    fi
+
+    # Validate model if set
+    if [[ -n "${MODEL:-}" ]]; then
+        log_info "MODEL: ${MODEL}"
+    fi
+
+    # Validate test ID if set
+    if [[ -n "${TEST_ID:-}" ]]; then
+        log_info "TEST_ID: ${TEST_ID}"
+    fi
+
+    # Check optional variables
+    if [[ -n "${OPENAI_API_KEY:-}" ]]; then
+        log_info "OPENAI_API_KEY is set"
+    fi
+
+    if [[ -n "${TIMEOUT:-}" ]]; then
+        log_info "TIMEOUT: ${TIMEOUT}s"
+    else
+        log_info "TIMEOUT: 300s (default)"
+    fi
+
+    # Check workspace
+    if [[ -d "/workspace" ]]; then
+        log_info "Workspace directory exists"
+        log_info "Workspace contents: $(ls -la /workspace 2>/dev/null | wc -l) items"
+    else
+        log_warn "Workspace directory not mounted"
+    fi
+
+    if [[ ${errors} -gt 0 ]]; then
+        log_error "Validation failed with ${errors} error(s)"
+        return 1
+    fi
+
+    log_info "Environment validation passed"
+    return 0
+}
+
+# Set up the workspace (clone repo if needed)
+setup_workspace() {
+    log_info "Setting up workspace..."
+
+    # Clone repository if URL is provided
+    if [[ -n "${REPO_URL:-}" ]]; then
+        log_info "Cloning repository: ${REPO_URL}"
+
+        # Check if workspace is empty
+        if [[ -z "$(ls -A /workspace 2>/dev/null)" ]]; then
+            git clone "${REPO_URL}" /workspace
+        else
+            log_warn "Workspace not empty, skipping clone"
+        fi
+
+        # Checkout specific commit if hash is provided
+        if [[ -n "${REPO_HASH:-}" ]]; then
+            log_info "Checking out commit: ${REPO_HASH}"
+            cd /workspace && git checkout "${REPO_HASH}"
+        fi
+    fi
+
+    log_info "Workspace setup complete"
+}
+
+# Execute the test run
+run_test() {
+    log_info "Starting test execution..."
+    log_info "Tier: ${TIER}"
+    log_info "Model: ${MODEL}"
+    log_info "Run Number: ${RUN_NUMBER}"
+    log_info "Test ID: ${TEST_ID}"
+
+    # Validate required variables for test run
+    local required_vars=("TIER" "MODEL" "RUN_NUMBER" "TEST_ID" "ANTHROPIC_API_KEY")
+    for var in "${required_vars[@]}"; do
+        if [[ -z "${!var:-}" ]]; then
+            log_error "Required variable ${var} is not set"
+            exit 1
+        fi
+    done
+
+    # Set up workspace
+    setup_workspace
+
+    # Set timeout (default 300 seconds)
+    local timeout_seconds="${TIMEOUT:-300}"
+
+    # Execute test command if provided
+    if [[ -n "${TEST_COMMAND:-}" ]]; then
+        log_info "Executing test command: ${TEST_COMMAND}"
+
+        # Run with timeout
+        timeout "${timeout_seconds}" bash -c "${TEST_COMMAND}"
+        local exit_code=$?
+
+        if [[ ${exit_code} -eq 124 ]]; then
+            log_error "Test execution timed out after ${timeout_seconds}s"
+            exit 124
+        fi
+
+        log_info "Test execution completed with exit code: ${exit_code}"
+        exit ${exit_code}
+    else
+        log_info "No TEST_COMMAND specified, entering interactive mode"
+        log_info "You can run commands manually in /workspace"
+        exec /bin/bash
+    fi
+}
+
+# Main entry point
+main() {
+    local command="${1:---help}"
+
+    case "${command}" in
+        --help|-h)
+            show_help
+            ;;
+        --version|-v)
+            show_version
+            ;;
+        --validate)
+            validate_env
+            ;;
+        --run)
+            validate_env || exit 1
+            run_test
+            ;;
+        *)
+            # If unknown command, treat as a shell command
+            exec "$@"
+            ;;
+    esac
+}
+
+main "$@"
