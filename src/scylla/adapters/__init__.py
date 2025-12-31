@@ -15,6 +15,7 @@ from scylla.adapters.base import (
 from scylla.adapters.claude_code import ClaudeCodeAdapter
 from scylla.adapters.cline import ClineAdapter
 from scylla.adapters.openai_codex import OpenAICodexAdapter
+from scylla.adapters.opencode import OpenCodeAdapter
 
 __all__ = [
     "AdapterConfig",
@@ -26,4 +27,5 @@ __all__ = [
     "ClaudeCodeAdapter",
     "ClineAdapter",
     "OpenAICodexAdapter",
+    "OpenCodeAdapter",
 ]
