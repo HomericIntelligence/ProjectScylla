@@ -9,6 +9,7 @@ from scylla.judge.cleanup_evaluator import (
     CleanupEvaluator,
 )
 from scylla.judge.evaluator import (
+    ConsensusConfig,
     ConsensusJudgment,
     EvaluationParseError,
     EvaluatorConfig,
@@ -19,6 +20,7 @@ from scylla.judge.evaluator import (
     JudgeScore,
     JudgeSummary,
     assign_grade,
+    needs_additional_runs,
     weighted_consensus,
 )
 from scylla.judge.parser import (
@@ -48,6 +50,7 @@ __all__ = [
     "CleanupEvaluation",
     "CleanupEvaluator",
     # Evaluator
+    "ConsensusConfig",
     "ConsensusJudgment",
     "EvaluationParseError",
     "EvaluatorConfig",
@@ -58,6 +61,7 @@ __all__ = [
     "JudgeScore",
     "JudgeSummary",
     "assign_grade",
+    "needs_additional_runs",
     "weighted_consensus",
     # Parser
     "ExploratoryTestingResult",

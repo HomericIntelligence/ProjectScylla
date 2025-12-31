@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from scylla.judge.evaluator import (
+    ConsensusConfig,
     ConsensusJudgment,
     EvaluationParseError,
     EvaluatorConfig,
@@ -19,6 +20,7 @@ from scylla.judge.evaluator import (
     JudgeScore,
     JudgeSummary,
     assign_grade,
+    needs_additional_runs,
     weighted_consensus,
 )
 
@@ -311,3 +313,188 @@ class TestErrors:
     def test_parse_error(self) -> None:
         error = EvaluationParseError("Parse")
         assert isinstance(error, EvaluatorError)
+
+
+class TestConsensusConfig:
+    """Tests for ConsensusConfig."""
+
+    def test_default_config(self) -> None:
+        config = ConsensusConfig()
+        assert config.initial_runs == 3
+        assert config.max_additional_runs == 5
+        assert config.variance_threshold == 0.15
+        assert config.min_confidence == 0.6
+        assert config.score_range_threshold == 0.3
+
+    def test_custom_config(self) -> None:
+        config = ConsensusConfig(
+            initial_runs=5,
+            max_additional_runs=10,
+            variance_threshold=0.2,
+        )
+        assert config.initial_runs == 5
+        assert config.max_additional_runs == 10
+        assert config.variance_threshold == 0.2
+
+
+class TestNeedsAdditionalRuns:
+    """Tests for needs_additional_runs function."""
+
+    def test_insufficient_runs(self) -> None:
+        config = ConsensusConfig()
+        scores = [JudgeScore(score=0.8, confidence=0.9)]
+        needs, reason = needs_additional_runs(scores, config)
+        assert needs is False
+        assert "insufficient" in reason
+
+    def test_high_variance_triggers_retry(self) -> None:
+        config = ConsensusConfig(
+            variance_threshold=0.01,  # Low threshold
+            score_range_threshold=0.5,  # High enough to not trigger first
+        )
+        # Variance of [0.5, 0.9, 0.7] = 0.0267, range = 0.4
+        scores = [
+            JudgeScore(score=0.5, confidence=0.9),
+            JudgeScore(score=0.9, confidence=0.9),
+            JudgeScore(score=0.7, confidence=0.9),
+        ]
+        needs, reason = needs_additional_runs(scores, config)
+        assert needs is True
+        assert "variance" in reason
+
+    def test_low_confidence_triggers_retry(self) -> None:
+        config = ConsensusConfig(min_confidence=0.8)
+        scores = [
+            JudgeScore(score=0.8, confidence=0.5),
+            JudgeScore(score=0.8, confidence=0.5),
+            JudgeScore(score=0.8, confidence=0.5),
+        ]
+        needs, reason = needs_additional_runs(scores, config)
+        assert needs is True
+        assert "confidence" in reason
+
+    def test_high_range_triggers_retry(self) -> None:
+        config = ConsensusConfig(
+            variance_threshold=0.5,  # High enough to not trigger
+            min_confidence=0.0,  # Low enough to not trigger
+            score_range_threshold=0.2,
+        )
+        scores = [
+            JudgeScore(score=0.5, confidence=0.9),
+            JudgeScore(score=0.8, confidence=0.9),
+        ]
+        needs, reason = needs_additional_runs(scores, config)
+        assert needs is True
+        assert "range" in reason
+
+    def test_consensus_reached(self) -> None:
+        config = ConsensusConfig()
+        scores = [
+            JudgeScore(score=0.8, confidence=0.9),
+            JudgeScore(score=0.82, confidence=0.9),
+            JudgeScore(score=0.79, confidence=0.85),
+        ]
+        needs, reason = needs_additional_runs(scores, config)
+        assert needs is False
+        assert "consensus" in reason
+
+
+class TestConsensusJudgmentRetryFields:
+    """Tests for new retry-related fields in ConsensusJudgment."""
+
+    def test_default_retry_fields(self) -> None:
+        consensus = ConsensusJudgment()
+        assert consensus.initial_runs == 3
+        assert consensus.retry_runs == 0
+        assert consensus.consensus_reached is True
+        assert consensus.consensus_reason == ""
+
+    def test_retry_fields_populated(self) -> None:
+        consensus = ConsensusJudgment(
+            initial_runs=3,
+            retry_runs=2,
+            consensus_reached=False,
+            consensus_reason="max retries reached",
+        )
+        assert consensus.initial_runs == 3
+        assert consensus.retry_runs == 2
+        assert consensus.consensus_reached is False
+        assert consensus.run_count == 3  # Default, should be 3 + 2 = 5 in practice
+
+
+class TestEvaluatorWithConsensusConfig:
+    """Tests for JudgeEvaluator with consensus configuration."""
+
+    def test_init_with_consensus_config(self) -> None:
+        config = EvaluatorConfig()
+        consensus_config = ConsensusConfig(max_additional_runs=10)
+        evaluator = JudgeEvaluator(
+            config=config,
+            consensus_config=consensus_config,
+        )
+        assert evaluator.consensus_config.max_additional_runs == 10
+
+    def test_retry_on_high_variance(self) -> None:
+        consensus_config = ConsensusConfig(
+            initial_runs=3,
+            max_additional_runs=2,
+            variance_threshold=0.01,  # Very low, will trigger retry
+        )
+        evaluator = JudgeEvaluator(consensus_config=consensus_config)
+        call_count = 0
+
+        def fake_single_run(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            # Alternating scores to create variance
+            score = 0.7 if call_count % 2 == 0 else 0.9
+            return Judgment(
+                requirements={"R001": JudgeScore(score=score, confidence=0.9)},
+                summary=JudgeSummary(
+                    weighted_score=score,
+                    passed=True,
+                    letter_grade="B",
+                    overall_confidence=0.9,
+                ),
+            )
+
+        evaluator._single_evaluation = fake_single_run
+        with TemporaryDirectory() as tmpdir:
+            consensus = evaluator.evaluate_with_consensus(
+                workspace=Path(tmpdir), prompt="T", criteria="C", rubric="R",
+            )
+        # Should have done initial 3 + 2 retries = 5 calls
+        assert call_count == 5
+        assert consensus.retry_runs == 2
+
+    def test_no_retry_on_consensus(self) -> None:
+        consensus_config = ConsensusConfig(
+            initial_runs=3,
+            max_additional_runs=5,
+        )
+        evaluator = JudgeEvaluator(consensus_config=consensus_config)
+        call_count = 0
+
+        def fake_single_run(*args, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            # Consistent scores - no variance
+            return Judgment(
+                requirements={"R001": JudgeScore(score=0.8, confidence=0.9)},
+                summary=JudgeSummary(
+                    weighted_score=0.8,
+                    passed=True,
+                    letter_grade="B",
+                    overall_confidence=0.9,
+                ),
+            )
+
+        evaluator._single_evaluation = fake_single_run
+        with TemporaryDirectory() as tmpdir:
+            consensus = evaluator.evaluate_with_consensus(
+                workspace=Path(tmpdir), prompt="T", criteria="C", rubric="R",
+            )
+        # Should only do initial 3 runs
+        assert call_count == 3
+        assert consensus.retry_runs == 0
+        assert consensus.consensus_reached is True
