@@ -109,7 +109,7 @@ def run(
             )
             if not quiet:
                 click.echo(f"\nResult: {'PASS' if result.judgment.passed else 'FAIL'}")
-                click.echo(f"Grade: {result.grading.grade}")
+                click.echo(f"Grade: {result.judgment.letter_grade}")
                 click.echo(f"Cost: ${result.metrics.cost_usd:.4f}")
         else:
             # Multi-run mode
