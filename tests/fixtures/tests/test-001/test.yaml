@@ -1,0 +1,18 @@
+# Test fixture: Test case
+id: "test-001"
+name: "Test Case 001"
+description: |
+  A test fixture for unit testing the configuration loader.
+  This is not a real test case.
+
+source:
+  repo: "https://github.com/example/repo"
+  hash: "abc123def456"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"

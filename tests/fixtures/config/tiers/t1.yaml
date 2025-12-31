@@ -1,0 +1,8 @@
+# Test fixture: Tier 1 (Prompted)
+tier: "t1"
+name: "Prompted"
+description: "System prompts and chain-of-thought"
+system_prompt: "You are a helpful assistant."
+uses_tools: false
+uses_delegation: false
+uses_hierarchy: false
