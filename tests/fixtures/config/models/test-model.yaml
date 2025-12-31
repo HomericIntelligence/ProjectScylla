@@ -1,5 +1,7 @@
 # Test fixture: Model configuration
 model_id: "test-model"
+name: "Test Model"
+provider: "test_provider"
 adapter: "test_adapter"
 temperature: 0.5
 max_tokens: 4096

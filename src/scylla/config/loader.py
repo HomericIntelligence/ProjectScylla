@@ -260,6 +260,33 @@ class ConfigLoader:
         except Exception as e:
             raise ConfigurationError(f"Invalid model configuration in {model_path}: {e}")
 
+    def load_all_models(self) -> dict[str, ModelConfig]:
+        """Load all available model configurations.
+
+        Returns:
+            Dict mapping model keys (from filename) to ModelConfig models
+
+        Raises:
+            ConfigurationError: If any model configuration is invalid
+        """
+        models_dir = self.base_path / "config" / "models"
+        result: dict[str, ModelConfig] = {}
+
+        if not models_dir.exists():
+            return result
+
+        for model_file in sorted(models_dir.glob("*.yaml")):
+            # Skip special files
+            if model_file.name.startswith("."):
+                continue
+
+            model_key = model_file.stem  # e.g., "claude-opus-4-5" from "claude-opus-4-5.yaml"
+            model = self.load_model(model_key)
+            if model:
+                result[model_key] = model
+
+        return result
+
     # -------------------------------------------------------------------------
     # Defaults Loading
     # -------------------------------------------------------------------------

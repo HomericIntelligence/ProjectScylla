@@ -150,6 +150,8 @@ class ModelConfig(BaseModel):
     """
 
     model_id: str = Field(..., description="Model identifier")
+    name: str = Field(default="", description="Human-readable model name")
+    provider: str = Field(default="", description="Model provider (e.g., anthropic, openai)")
     adapter: str = Field(default="claude_code", description="Adapter to use")
     temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     max_tokens: int = Field(default=8192, ge=1, le=200000)

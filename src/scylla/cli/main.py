@@ -419,17 +419,34 @@ def list_models() -> None:
 
         scylla list-models
     """
-    # TODO: Load from config when available
-    models = [
-        ("claude-opus-4-5-20251101", "Claude Opus 4.5", "$15.00/$75.00 per 1M tokens"),
-        ("claude-sonnet-4-20250514", "Claude Sonnet 4", "$3.00/$15.00 per 1M tokens"),
-    ]
+    from scylla.config import ConfigLoader, ConfigurationError
+
+    loader = ConfigLoader()
+
+    try:
+        models = loader.load_all_models()
+    except ConfigurationError as e:
+        click.echo(f"Error loading model configurations: {e}", err=True)
+        sys.exit(1)
+
+    if not models:
+        click.echo("No model configurations found in config/models/")
+        click.echo("\nCreate YAML files in config/models/ to add models.")
+        return
 
     click.echo("Configured models:\n")
 
-    for model_id, name, pricing in models:
-        click.echo(f"  {model_id}")
-        click.echo(f"    Name: {name}")
+    for model_key, model in models.items():
+        # Calculate pricing display
+        input_per_1m = model.cost_per_1k_input * 1000
+        output_per_1m = model.cost_per_1k_output * 1000
+        pricing = f"${input_per_1m:.2f}/${output_per_1m:.2f} per 1M tokens"
+
+        click.echo(f"  {model.model_id}")
+        if model.name:
+            click.echo(f"    Name: {model.name}")
+        if model.provider:
+            click.echo(f"    Provider: {model.provider}")
         click.echo(f"    Pricing: {pricing}")
         click.echo()
 
