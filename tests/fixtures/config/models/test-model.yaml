@@ -1,0 +1,7 @@
+# Test fixture: Model configuration
+model_id: "test-model"
+adapter: "test_adapter"
+temperature: 0.5
+max_tokens: 4096
+cost_per_1k_input: 0.01
+cost_per_1k_output: 0.03
