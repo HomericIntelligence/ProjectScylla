@@ -8,6 +8,8 @@ from pathlib import Path
 
 import click
 
+from scylla.orchestrator import OrchestratorConfig, TestOrchestrator
+
 
 @click.group()
 @click.version_option(version="0.1.0", prog_name="scylla")
@@ -81,21 +83,50 @@ def run(
     if verbose and quiet:
         raise click.UsageError("Cannot use --verbose and --quiet together.")
 
-    tiers = list(tier) if tier else ["T0", "T1", "T2", "T3"]
+    tiers = list(tier) if tier else None  # None means use test defaults
+    model_id = model or "claude-opus-4-5-20251101"  # Default model
 
-    if not quiet:
-        click.echo(f"Running test: {test_id}")
-        click.echo(f"  Tiers: {', '.join(tiers)}")
-        click.echo(f"  Runs per tier: {runs}")
-        if model:
-            click.echo(f"  Model: {model}")
-        if output_dir:
-            click.echo(f"  Output: {output_dir}")
+    # Configure orchestrator
+    base_path = output_dir.parent if output_dir else Path(".")
+    config = OrchestratorConfig(
+        base_path=base_path,
+        runs_per_tier=runs,
+        tiers=tiers,
+        model=model_id,
+        quiet=quiet,
+        verbose=verbose,
+    )
 
-    # TODO: Integrate with test runner when available
-    if not quiet:
-        click.echo("\nTest execution not yet implemented.")
-        click.echo("This CLI provides the interface structure.")
+    orchestrator = TestOrchestrator(config)
+
+    try:
+        if runs == 1 and tiers and len(tiers) == 1:
+            # Single run mode
+            result = orchestrator.run_single(
+                test_id=test_id,
+                model_id=model_id,
+                tier_id=tiers[0],
+            )
+            if not quiet:
+                click.echo(f"\nResult: {'PASS' if result.judgment.passed else 'FAIL'}")
+                click.echo(f"Grade: {result.grading.grade}")
+                click.echo(f"Cost: ${result.metrics.cost_usd:.4f}")
+        else:
+            # Multi-run mode
+            results = orchestrator.run_test(
+                test_id=test_id,
+                models=[model_id],
+                tiers=tiers,
+                runs_per_tier=runs,
+            )
+            if not quiet:
+                passed = sum(1 for r in results if r.judgment.passed)
+                click.echo(f"\nCompleted {len(results)} runs")
+                click.echo(f"Pass rate: {passed}/{len(results)}")
+
+    except Exception as e:
+        click.echo(f"Error: {e}", err=True)
+        sys.exit(1)
 
 
 @cli.command()
