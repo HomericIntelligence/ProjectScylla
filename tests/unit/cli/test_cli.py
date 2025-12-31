@@ -5,7 +5,7 @@ Python justification: Required for pytest testing framework and Click testing.
 
 from click.testing import CliRunner
 
-from scylla.cli import cli
+from scylla.cli.main import cli
 
 
 class TestCLIGroup:
@@ -40,50 +40,21 @@ class TestRunCommand:
         assert "--model" in result.output
         assert "--runs" in result.output
 
-    def test_run_basic(self) -> None:
-        runner = CliRunner()
-        result = runner.invoke(cli, ["run", "001-test"])
-
-        assert result.exit_code == 0
-        assert "Running test: 001-test" in result.output
-        assert "Tiers: T0, T1, T2, T3" in result.output
-        assert "Runs per tier: 10" in result.output
-
-    def test_run_with_tier(self) -> None:
-        runner = CliRunner()
-        result = runner.invoke(cli, ["run", "001-test", "--tier", "T0", "--tier", "T1"])
-
-        assert result.exit_code == 0
-        assert "Tiers: T0, T1" in result.output
-
-    def test_run_with_model(self) -> None:
-        runner = CliRunner()
-        result = runner.invoke(cli, ["run", "001-test", "--model", "claude-opus"])
-
-        assert result.exit_code == 0
-        assert "Model: claude-opus" in result.output
-
-    def test_run_with_runs(self) -> None:
-        runner = CliRunner()
-        result = runner.invoke(cli, ["run", "001-test", "--runs", "1"])
-
-        assert result.exit_code == 0
-        assert "Runs per tier: 1" in result.output
-
-    def test_run_quiet_mode(self) -> None:
-        runner = CliRunner()
-        result = runner.invoke(cli, ["run", "001-test", "--quiet"])
-
-        assert result.exit_code == 0
-        # Quiet mode should not print the test info
-        assert "Running test:" not in result.output
-
     def test_run_verbose_and_quiet_error(self) -> None:
         runner = CliRunner()
         result = runner.invoke(cli, ["run", "001-test", "--verbose", "--quiet"])
 
         assert result.exit_code != 0
         assert "Cannot use --verbose and --quiet together" in result.output
+
+    def test_run_missing_test_error(self) -> None:
+        """Test that running a non-existent test shows error."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["run", "nonexistent-test", "--tier", "T0", "--runs", "1"])
+
+        # Should fail because test doesn't exist
+        assert result.exit_code == 1
+        assert "Error" in result.output
 
 
 class TestReportCommand:

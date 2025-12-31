@@ -31,7 +31,7 @@ dependencies = [
 ]
 
 [project.scripts]
-scylla = "scylla.cli:main"
+scylla = "scylla.cli.main:main"
 
 [project.optional-dependencies]
 dev = [
