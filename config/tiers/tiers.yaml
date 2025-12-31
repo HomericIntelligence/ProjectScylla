@@ -1,0 +1,36 @@
+# Tier Definitions
+#
+# Defines the testing tiers for the agent evaluation framework.
+# Each tier represents a different level of agent capability.
+#
+# Important: Tiers are INDEPENDENT, not cumulative.
+# T0 uses tool defaults (null values), T1-T3+ have explicit configurations.
+
+tiers:
+  T0:
+    name: "Vanilla"
+    description: "Base LLM, tool default, zero customization"
+    prompt_file: null  # Use tool default
+    tools_enabled: null  # Use tool default
+    delegation_enabled: null  # Use tool default
+
+  T1:
+    name: "Prompted"
+    description: "System prompt with chain-of-thought reasoning"
+    prompt_file: "t1-prompted.md"
+    tools_enabled: false
+    delegation_enabled: false
+
+  T2:
+    name: "Skills"
+    description: "Domain expertise encoded in prompts"
+    prompt_file: "t2-skills.md"
+    tools_enabled: false
+    delegation_enabled: false
+
+  "T3+":
+    name: "Tooling"
+    description: "External tools, multi-agent orchestration"
+    prompt_file: "t3-tooling.md"
+    tools_enabled: true
+    delegation_enabled: true
