@@ -79,6 +79,7 @@ class TestOrchestrator:
         model_id: str,
         tier_id: str = "T0",
         run_number: int = 1,
+        _skip_progress_init: bool = False,
     ) -> RunResult:
         """Run a single test execution.
 
@@ -87,6 +88,7 @@ class TestOrchestrator:
             model_id: Model identifier.
             tier_id: Tier identifier.
             run_number: Run number (1-indexed).
+            _skip_progress_init: Internal flag to skip progress initialization.
 
         Returns:
             RunResult with execution details.
@@ -97,9 +99,10 @@ class TestOrchestrator:
         test_case = self.loader.load_test(test_id)
         rubric = self.loader.load_rubric(test_id)
 
-        # Start progress tracking
-        self.progress.start_test(test_id, [tier_id], runs_per_tier=1)
-        self.progress.start_tier(tier_id)
+        # Start progress tracking (unless called from run_test)
+        if not _skip_progress_init:
+            self.progress.start_test(test_id, [tier_id], runs_per_tier=1)
+            self.progress.start_tier(tier_id)
         self.progress.start_run(tier_id, run_number)
 
         # Create workspace
@@ -187,8 +190,9 @@ class TestOrchestrator:
                 grade=result.judgment.letter_grade,
                 cost_usd=result.metrics.cost_usd,
             )
-            self.progress.complete_tier(tier_id)
-            self.progress.complete_test()
+            if not _skip_progress_init:
+                self.progress.complete_tier(tier_id)
+                self.progress.complete_test()
 
             return result
 
@@ -297,15 +301,23 @@ class TestOrchestrator:
 
         results: list[RunResult] = []
 
+        # Initialize progress for full test run
+        self.progress.start_test(test_id, tiers, runs_per_tier=runs)
+
         for model_id in models:
             for tier_id in tiers:
+                self.progress.start_tier(tier_id)
                 for run_number in range(1, runs + 1):
                     result = self.run_single(
                         test_id=test_id,
                         model_id=model_id,
                         tier_id=tier_id,
                         run_number=run_number,
+                        _skip_progress_init=True,
                     )
                     results.append(result)
+                self.progress.complete_tier(tier_id)
+
+        self.progress.complete_test()
 
         return results
