@@ -42,6 +42,9 @@ credentials.json
 runs/
 !runs/.gitkeep
 
+# Generated reports
+reports/
+
 # Coverage reports
 .coverage
 htmlcov/
