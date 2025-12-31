@@ -4,6 +4,8 @@
 
 - A `Makefile` must exist in the repository root
 - The file must be syntactically valid (parseable by GNU Make)
+- A `cleanup.sh` script must exist in the repository root
+- The cleanup script must be executable
 
 ## Recipe Coverage
 
@@ -34,3 +36,19 @@ For the following commands, running with just vs make should produce equivalent 
 
 - The Makefile should be readable and well-organized
 - Comments should explain non-obvious translations
+
+## Cleanup Script
+
+The cleanup script (`cleanup.sh`) must:
+
+- Execute without errors (exit code 0)
+- Remove all build artifacts
+- Remove any generated files
+- Return the repository to a clean state
+
+| Score | Criteria |
+|-------|----------|
+| 1.0 | Script exists, runs successfully, returns env to clean state |
+| 0.7 | Script exists, runs successfully, partial cleanup |
+| 0.4 | Script exists but fails or incomplete |
+| 0.0 | No cleanup script provided |

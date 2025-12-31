@@ -12,6 +12,11 @@ provides the same functionality using standard GNU Make.
 3. Handle Docker-related commands correctly
 4. Include a `help` target that lists available commands
 5. Maintain recipe dependencies
+6. Create a cleanup script (`cleanup.sh`) that:
+   - Removes all build artifacts
+   - Removes any generated files
+   - Returns the repository to a clean state
+   - Is executable and runs without errors
 
 ## Constraints
 
@@ -23,9 +28,11 @@ provides the same functionality using standard GNU Make.
 ## Expected Output
 
 - A new file named `Makefile` in the repository root
+- A new file named `cleanup.sh` in the repository root
 - The original `justfile` should remain unchanged
 
 ## Validation
 
 Your solution will be validated by running equivalent commands with both
-build systems and comparing results.
+build systems and comparing results. The cleanup script will be executed
+to verify it properly cleans the environment.
