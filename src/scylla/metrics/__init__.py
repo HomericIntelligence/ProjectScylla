@@ -1,9 +1,16 @@
-"""Metrics module for statistical calculations and grading.
+"""Metrics module for statistical calculations, grading, and aggregation.
 
-This module provides statistical functions and grading calculations
-for analyzing evaluation results across multiple runs.
+This module provides statistical functions, grading calculations,
+and run aggregation for analyzing evaluation results across multiple runs.
 """
 
+from scylla.metrics.aggregator import (
+    AggregatedStats,
+    CrossTierAnalysis,
+    RunAggregator,
+    RunResult,
+    TierStatistics,
+)
 from scylla.metrics.grading import (
     GradingResult,
     assign_letter_grade,
@@ -27,6 +34,12 @@ from scylla.metrics.statistics import (
 )
 
 __all__ = [
+    # Aggregator
+    "AggregatedStats",
+    "CrossTierAnalysis",
+    "RunAggregator",
+    "RunResult",
+    "TierStatistics",
     # Grading
     "GradingResult",
     "assign_letter_grade",
