@@ -12,6 +12,13 @@ from scylla.reporting.result import (
     RunResult,
     create_run_result,
 )
+from scylla.reporting.scorecard import (
+    ModelScorecard,
+    OverallStats,
+    ScorecardGenerator,
+    TestResult,
+    create_test_result,
+)
 from scylla.reporting.summary import (
     ModelStatistics,
     Rankings,
@@ -31,6 +38,12 @@ __all__ = [
     "ResultWriter",
     "RunResult",
     "create_run_result",
+    # Scorecard
+    "ModelScorecard",
+    "OverallStats",
+    "ScorecardGenerator",
+    "TestResult",
+    "create_test_result",
     # Summary
     "ModelStatistics",
     "Rankings",
