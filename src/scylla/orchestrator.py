@@ -146,20 +146,34 @@ class TestOrchestrator:
                 execution_result=execution_result,
             )
 
+            # Extract values for result creation
+            passed = judgment.get("passed", False)
+            impl_rate = judgment.get("score", 0.0)
+            cost_usd = execution_result.get("cost_usd", 0.0)
+            pass_rate = 1.0 if passed else 0.0
+            cost_of_pass = cost_usd / pass_rate if pass_rate > 0 else float("inf")
+            # Composite score weights: 70% implementation rate, 30% pass rate
+            composite_score = (impl_rate * 0.7) + (pass_rate * 0.3)
+
             # Create result
             result = create_run_result(
                 test_id=test_id,
                 tier_id=tier_id,
                 model_id=model_id,
                 run_number=run_number,
+                status="completed",
                 duration_seconds=duration,
-                tokens_in=execution_result.get("tokens_in", 0),
-                tokens_out=execution_result.get("tokens_out", 0),
-                cost_usd=execution_result.get("cost_usd", 0.0),
-                passed=judgment.get("passed", False),
-                score=judgment.get("score", 0.0),
-                grade=judgment.get("grade", "F"),
-                reasoning=judgment.get("reasoning", ""),
+                exit_code=execution_result.get("exit_code", 0),
+                tokens_input=execution_result.get("tokens_in", 0),
+                tokens_output=execution_result.get("tokens_out", 0),
+                cost_usd=cost_usd,
+                api_calls=execution_result.get("api_calls", 1),
+                passed=passed,
+                impl_rate=impl_rate,
+                letter_grade=judgment.get("grade", "F"),
+                pass_rate=pass_rate,
+                cost_of_pass=cost_of_pass,
+                composite_score=composite_score,
             )
 
             # Write result
@@ -170,7 +184,7 @@ class TestOrchestrator:
                 tier_id=tier_id,
                 run_number=run_number,
                 passed=result.judgment.passed,
-                grade=result.grading.grade,
+                grade=result.judgment.letter_grade,
                 cost_usd=result.metrics.cost_usd,
             )
             self.progress.complete_tier(tier_id)
