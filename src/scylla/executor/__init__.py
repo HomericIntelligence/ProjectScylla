@@ -1,9 +1,16 @@
 """Executor module for running agent evaluations.
 
 This module provides workspace management, Docker container orchestration,
-tier configuration, test runner orchestration, and result aggregation.
+tier configuration, test runner orchestration, log capture, and result aggregation.
 """
 
+from scylla.executor.capture import (
+    ExecutionMetrics,
+    LogCapture,
+    StreamingCapture,
+    aggregate_metrics,
+    load_metrics,
+)
 from scylla.executor.docker import (
     ContainerConfig,
     ContainerError,
@@ -47,6 +54,12 @@ from scylla.executor.workspace import (
 )
 
 __all__ = [
+    # Capture
+    "ExecutionMetrics",
+    "LogCapture",
+    "StreamingCapture",
+    "aggregate_metrics",
+    "load_metrics",
     # Docker
     "ContainerConfig",
     "ContainerError",
