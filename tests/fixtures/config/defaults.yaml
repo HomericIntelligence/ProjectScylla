@@ -1,0 +1,21 @@
+# Test fixture: Global defaults
+evaluation:
+  runs_per_eval: 9
+  timeout: 300
+  seed: null
+
+metrics:
+  quality:
+    - pass_rate
+    - impl_rate
+  economic:
+    - cost_of_pass
+
+output:
+  runs_dir: "runs"
+  summaries_dir: "summaries"
+  reports_dir: "reports"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
