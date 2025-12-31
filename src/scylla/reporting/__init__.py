@@ -12,8 +12,18 @@ from scylla.reporting.result import (
     RunResult,
     create_run_result,
 )
+from scylla.reporting.summary import (
+    ModelStatistics,
+    Rankings,
+    SummaryGenerator,
+    SummaryStatistics,
+    TestSummary,
+    create_model_statistics,
+    create_statistics,
+)
 
 __all__ = [
+    # Result
     "ExecutionInfo",
     "GradingInfo",
     "JudgmentInfo",
@@ -21,4 +31,12 @@ __all__ = [
     "ResultWriter",
     "RunResult",
     "create_run_result",
+    # Summary
+    "ModelStatistics",
+    "Rankings",
+    "SummaryGenerator",
+    "SummaryStatistics",
+    "TestSummary",
+    "create_model_statistics",
+    "create_statistics",
 ]
