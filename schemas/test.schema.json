@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/mvillmow/ProjectScylla/schemas/test.schema.json",
+  "title": "ProjectScylla Test Case Schema",
+  "description": "Schema for test.yaml files that define test cases for AI agent evaluation",
+  "type": "object",
+  "required": ["id", "name", "source", "task", "validation"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique test identifier (e.g., '001-justfile-to-makefile')",
+      "pattern": "^[0-9]{3}-[a-z0-9]+(-[a-z0-9]+)*$",
+      "examples": ["001-justfile-to-makefile", "042-api-integration-test"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable test name",
+      "minLength": 3,
+      "maxLength": 100,
+      "examples": ["Convert Justfile to Makefile"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the test case (supports multiline)",
+      "default": ""
+    },
+    "source": {
+      "type": "object",
+      "description": "Git repository configuration",
+      "required": ["repo", "hash"],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Git repository URL (HTTPS)",
+          "pattern": "^https?://[^\\s]+$",
+          "examples": ["https://github.com/mvillmow/ProjectOdyssey"]
+        },
+        "hash": {
+          "type": "string",
+          "description": "Full 40-character Git commit SHA hash",
+          "pattern": "^[a-f0-9]{40}$",
+          "examples": ["ce739d4aa328f1c0815b33e2812c4b889868b740"]
+        },
+        "branch": {
+          "type": "string",
+          "description": "Git branch name (informational)",
+          "default": "main",
+          "examples": ["main", "feature/new-api"]
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "description": "Task execution configuration",
+      "required": ["prompt_file"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt_file": {
+          "type": "string",
+          "description": "Relative path to the prompt markdown file",
+          "pattern": "^[^/].*\\.md$",
+          "examples": ["prompt.md", "prompts/main.md"]
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "description": "Maximum execution time in seconds",
+          "default": 3600,
+          "minimum": 60,
+          "maximum": 86400
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Validation file references",
+      "required": ["criteria_file", "rubric_file"],
+      "additionalProperties": false,
+      "properties": {
+        "criteria_file": {
+          "type": "string",
+          "description": "Relative path to the criteria markdown file",
+          "pattern": "^[^/].*\\.md$",
+          "examples": ["expected/criteria.md"]
+        },
+        "rubric_file": {
+          "type": "string",
+          "description": "Relative path to the rubric YAML file",
+          "pattern": "^[^/].*\\.ya?ml$",
+          "examples": ["expected/rubric.yaml"]
+        }
+      }
+    },
+    "models": {
+      "type": "array",
+      "description": "Model overrides per tier",
+      "default": [],
+      "items": {
+        "type": "object",
+        "required": ["tier", "model"],
+        "additionalProperties": false,
+        "properties": {
+          "tier": {
+            "type": "string",
+            "description": "Tier identifier (T0-T6)",
+            "enum": ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+          },
+          "model": {
+            "type": "string",
+            "description": "Model identifier",
+            "examples": ["claude-3-opus", "claude-3-sonnet", "claude-3-haiku"]
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Classification tags for filtering and organization",
+      "default": [],
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "examples": [["build-system", "migration", "mojo"]]
+    }
+  }
+}
