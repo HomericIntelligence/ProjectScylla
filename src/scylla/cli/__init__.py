@@ -14,6 +14,7 @@ from scylla.cli.progress import (
 )
 
 __all__ = [
+    # Progress
     "ProgressDisplay",
     "RunProgress",
     "RunStatus",
