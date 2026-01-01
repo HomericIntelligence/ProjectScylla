@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 from scylla.adapters.base import AdapterConfig
 from scylla.adapters.claude_code import ClaudeCodeAdapter
 from scylla.e2e.command_logger import CommandLogger
+from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import (
     ExperimentConfig,
     RunResult,
@@ -351,6 +352,8 @@ class SubTestExecutor:
     ) -> dict:
         """Run LLM judge evaluation on the result.
 
+        Uses a real LLM to evaluate task completion against the requirements.
+
         Args:
             workspace: Workspace with agent's output
             task_prompt: The original task prompt
@@ -360,62 +363,16 @@ class SubTestExecutor:
         Returns:
             Dict with score, passed, grade, and reasoning.
         """
-        # TODO: Implement proper LLM judge
-        # For now, use a simple heuristic judge
-        import json
+        # Use the LLM judge for proper evaluation
+        judge_result = run_llm_judge(
+            workspace=workspace,
+            task_prompt=task_prompt,
+            agent_output=stdout,
+            model=self.config.judge_model,
+            logs_dir=logs_dir,
+        )
 
-        # Check for success indicators
-        passed = False
-        score = 0.0
-        reasoning = "Unable to evaluate"
-
-        # Parse JSON output if available
-        try:
-            data = json.loads(stdout.strip())
-            # Check if result indicates success
-            if data.get("subtype") == "success":
-                passed = True
-                score = 0.7
-                reasoning = "Agent reported success"
-            elif data.get("is_error"):
-                passed = False
-                score = 0.0
-                reasoning = f"Agent error: {data.get('error', 'Unknown error')}"
-            else:
-                # Partial success
-                score = 0.5
-                reasoning = "Agent completed but unclear if successful"
-        except (json.JSONDecodeError, AttributeError):
-            # Non-JSON output
-            if len(stdout) > 100:
-                score = 0.3
-                reasoning = "Agent produced output but format unclear"
-
-        # Determine grade
-        if score >= 0.9:
-            grade = "A"
-        elif score >= 0.8:
-            grade = "B"
-        elif score >= 0.7:
-            grade = "C"
-        elif score >= 0.6:
-            grade = "D"
-        else:
-            grade = "F"
-
-        judgment = {
-            "passed": passed,
-            "score": score,
-            "grade": grade,
-            "reasoning": reasoning,
-        }
-
-        # Save judgment to file
-        judgment_file = logs_dir / "judgment.json"
-        with open(judgment_file, "w") as f:
-            json.dump(judgment, f, indent=2)
-
-        return judgment
+        return judge_result.to_dict()
 
     def _aggregate_results(
         self,

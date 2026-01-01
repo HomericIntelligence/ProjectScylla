@@ -9,6 +9,7 @@ Python Justification: Required for subprocess execution, parallel processing,
 and LLM API calls for judging.
 """
 
+from scylla.e2e.llm_judge import JudgeResult, run_llm_judge
 from scylla.e2e.models import (
     ExperimentConfig,
     ExperimentResult,
@@ -23,10 +24,12 @@ from scylla.e2e.models import (
 __all__ = [
     "ExperimentConfig",
     "ExperimentResult",
+    "JudgeResult",
     "RunResult",
     "SubTestConfig",
     "SubTestResult",
     "TierConfig",
     "TierID",
     "TierResult",
+    "run_llm_judge",
 ]
