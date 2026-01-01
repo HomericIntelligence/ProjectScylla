@@ -59,9 +59,12 @@ class TestTiersDefinitionFile:
                 "T1": TierDefinition(name="Prompted", description="With prompts"),
                 "T2": TierDefinition(name="Skills", description="With skills"),
                 "T3": TierDefinition(name="Tooling", description="With tools"),
+                "T4": TierDefinition(name="Delegation", description="Multi-agent"),
+                "T5": TierDefinition(name="Hierarchy", description="Nested orchestration"),
+                "T6": TierDefinition(name="Hybrid", description="Optimal combination"),
             }
         )
-        assert len(tiers_def.tiers) == 4
+        assert len(tiers_def.tiers) == 7
 
     def test_missing_required_tiers(self) -> None:
         """Test that missing required tiers raises error."""
@@ -148,6 +151,27 @@ tiers:
     description: "With tools"
     prompt_file: "t3-tooling.md"
     tools_enabled: true
+    delegation_enabled: false
+
+  T4:
+    name: "Delegation"
+    description: "Multi-agent delegation"
+    prompt_file: "t4-delegation.md"
+    tools_enabled: true
+    delegation_enabled: true
+
+  T5:
+    name: "Hierarchy"
+    description: "Nested orchestration"
+    prompt_file: "t5-hierarchy.md"
+    tools_enabled: true
+    delegation_enabled: true
+
+  T6:
+    name: "Hybrid"
+    description: "Optimal combination"
+    prompt_file: "t6-hybrid.md"
+    tools_enabled: true
     delegation_enabled: true
 """)
 
@@ -155,13 +179,16 @@ tiers:
             (tiers_dir / "t1-prompted.md").write_text("Think step by step.")
             (tiers_dir / "t2-skills.md").write_text("You have domain expertise.")
             (tiers_dir / "t3-tooling.md").write_text("Use tools as needed.")
+            (tiers_dir / "t4-delegation.md").write_text("Delegate to specialists.")
+            (tiers_dir / "t5-hierarchy.md").write_text("Use hierarchical orchestration.")
+            (tiers_dir / "t6-hybrid.md").write_text("Combine optimal components.")
 
             yield config_path
 
     def test_load_tiers_successfully(self, config_dir: Path) -> None:
         """Test loading tier configurations successfully."""
         loader = TierConfigLoader(config_dir)
-        assert len(loader.get_tier_ids()) == 4
+        assert len(loader.get_tier_ids()) == 7
 
     def test_get_t0_tier(self, config_dir: Path) -> None:
         """Test getting T0 tier with null values."""
@@ -188,32 +215,32 @@ tiers:
         assert t1.delegation_enabled is False
 
     def test_get_t3_tier(self, config_dir: Path) -> None:
-        """Test getting T3 tier with tools enabled."""
+        """Test getting T3 tier with tools enabled but no delegation."""
         loader = TierConfigLoader(config_dir)
         t3 = loader.get_tier("T3")
 
         assert t3.tier_id == "T3"
         assert t3.name == "Tooling"
         assert t3.tools_enabled is True
-        assert t3.delegation_enabled is True
+        assert t3.delegation_enabled is False  # T3 has tools but no delegation
 
     def test_get_all_tiers(self, config_dir: Path) -> None:
         """Test getting all tier configurations."""
         loader = TierConfigLoader(config_dir)
         all_tiers = loader.get_all_tiers()
 
-        assert len(all_tiers) == 4
+        assert len(all_tiers) == 7
         tier_ids = [t.tier_id for t in all_tiers]
-        assert set(tier_ids) == {"T0", "T1", "T2", "T3"}
+        assert set(tier_ids) == {"T0", "T1", "T2", "T3", "T4", "T5", "T6"}
 
     def test_get_tier_ids(self, config_dir: Path) -> None:
         """Test getting list of tier IDs."""
         loader = TierConfigLoader(config_dir)
         tier_ids = loader.get_tier_ids()
 
-        assert len(tier_ids) == 4
+        assert len(tier_ids) == 7
         assert "T0" in tier_ids
-        assert "T3" in tier_ids
+        assert "T6" in tier_ids
 
     def test_validate_tier_id_valid(self, config_dir: Path) -> None:
         """Test validating a valid tier ID."""
@@ -266,6 +293,18 @@ tiers:
   T3:
     name: "Tooling"
     description: "With tools"
+
+  T4:
+    name: "Delegation"
+    description: "Multi-agent"
+
+  T5:
+    name: "Hierarchy"
+    description: "Nested"
+
+  T6:
+    name: "Hybrid"
+    description: "Optimal"
 """)
 
             loader = TierConfigLoader(config_path)

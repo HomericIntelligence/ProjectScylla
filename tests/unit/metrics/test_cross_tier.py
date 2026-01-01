@@ -11,6 +11,7 @@ from scylla.metrics.cross_tier import (
     PromptSensitivityAnalysis,
     TierTransitionAssessment,
     TierUplift,
+    calculate_frontier_cop,
 )
 
 
@@ -305,3 +306,97 @@ class TestCrossTierAnalyzerAssessAllTransitions:
         transitions = analyzer.assess_all_transitions()
 
         assert transitions == []
+
+
+class TestCalculateFrontierCop:
+    """Tests for calculate_frontier_cop function."""
+
+    def test_empty_tiers(self) -> None:
+        """Empty tiers returns infinity and T0."""
+        frontier, tier = calculate_frontier_cop({})
+        assert frontier == float("inf")
+        assert tier == "T0"
+
+    def test_single_tier(self) -> None:
+        """Single tier returns that tier's CoP."""
+        tier_stats = {"T0": make_tier_stats("T0", pass_rate=1.0, cost_usd=2.0)}
+        frontier, tier = calculate_frontier_cop(tier_stats)
+        assert frontier == 2.0  # 2.0 / 1.0
+        assert tier == "T0"
+
+    def test_multiple_tiers_find_minimum(self) -> None:
+        """Finds tier with minimum CoP."""
+        tier_stats = {
+            "T0": make_tier_stats("T0", pass_rate=0.5, cost_usd=1.0),  # CoP = 2.0
+            "T1": make_tier_stats("T1", pass_rate=1.0, cost_usd=1.0),  # CoP = 1.0 (best)
+            "T2": make_tier_stats("T2", pass_rate=0.8, cost_usd=2.0),  # CoP = 2.5
+        }
+        frontier, tier = calculate_frontier_cop(tier_stats)
+        assert frontier == 1.0
+        assert tier == "T1"
+
+    def test_zero_pass_rate_excluded(self) -> None:
+        """Tiers with 0 pass rate are excluded from calculation."""
+        tier_stats = {
+            "T0": make_tier_stats("T0", pass_rate=0.0, cost_usd=0.5),  # Excluded
+            "T1": make_tier_stats("T1", pass_rate=1.0, cost_usd=2.0),  # CoP = 2.0
+        }
+        frontier, tier = calculate_frontier_cop(tier_stats)
+        assert frontier == 2.0
+        assert tier == "T1"
+
+    def test_all_zero_pass_rate(self) -> None:
+        """All tiers with 0 pass rate returns infinity."""
+        tier_stats = {
+            "T0": make_tier_stats("T0", pass_rate=0.0, cost_usd=1.0),
+            "T1": make_tier_stats("T1", pass_rate=0.0, cost_usd=2.0),
+        }
+        frontier, tier = calculate_frontier_cop(tier_stats)
+        assert frontier == float("inf")
+        assert tier == "T0"
+
+
+class TestAnalyzeFrontierCop:
+    """Tests for frontier_cop in analyze() method."""
+
+    def test_frontier_cop_in_analysis(self) -> None:
+        """Analyze includes frontier_cop calculation."""
+        tier_stats = {
+            "T0": make_tier_stats("T0", pass_rate=0.5, cost_usd=1.0),  # CoP = 2.0
+            "T1": make_tier_stats("T1", pass_rate=1.0, cost_usd=1.5),  # CoP = 1.5 (best)
+        }
+        analyzer = CrossTierAnalyzer(tier_stats)
+        analysis = analyzer.analyze()
+
+        assert analysis.frontier_cop == 1.5
+        assert analysis.frontier_cop_tier == "T1"
+
+    def test_empty_returns_infinity(self) -> None:
+        """Empty tiers returns infinity for frontier_cop."""
+        analyzer = CrossTierAnalyzer({})
+        analysis = analyzer.analyze()
+
+        assert analysis.frontier_cop == float("inf")
+        assert analysis.frontier_cop_tier == "T0"
+
+
+class TestPromptSensitivityAnalysisFrontierCop:
+    """Tests for PromptSensitivityAnalysis dataclass with frontier_cop."""
+
+    def test_has_frontier_cop_fields(self) -> None:
+        """PromptSensitivityAnalysis includes frontier_cop fields."""
+        analysis = PromptSensitivityAnalysis(
+            pass_rate_variance=0.05,
+            impl_rate_variance=0.03,
+            cost_variance=0.10,
+            pass_rate_sensitivity="low",
+            impl_rate_sensitivity="low",
+            cost_sensitivity="medium",
+            tier_uplifts={},
+            cost_of_pass_delta=0.5,
+            best_value_tier="T1",
+            frontier_cop=1.5,
+            frontier_cop_tier="T1",
+        )
+        assert analysis.frontier_cop == 1.5
+        assert analysis.frontier_cop_tier == "T1"

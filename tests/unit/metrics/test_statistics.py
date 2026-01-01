@@ -10,6 +10,7 @@ import pytest
 from scylla.metrics.statistics import (
     Statistics,
     calculate_all,
+    calculate_consistency,
     calculate_mean,
     calculate_median,
     calculate_mode,
@@ -140,6 +141,58 @@ class TestCalculateStdDev:
         values = [2.0, 4.0, 6.0]
         expected = math.sqrt(8.0 / 3)
         assert calculate_std_dev(values) == pytest.approx(expected)
+
+
+class TestCalculateConsistency:
+    """Tests for consistency calculation.
+
+    Consistency = 1 - (std_dev / mean)
+    - 1.0 = perfectly consistent (no variance)
+    - 0.0 = highly inconsistent (std_dev >= mean)
+    """
+
+    def test_empty_list(self) -> None:
+        assert calculate_consistency([]) == 0.0
+
+    def test_single_value(self) -> None:
+        assert calculate_consistency([5.0]) == 0.0
+
+    def test_identical_values(self) -> None:
+        """All identical values = perfect consistency."""
+        values = [0.8, 0.8, 0.8, 0.8, 0.8]
+        assert calculate_consistency(values) == 1.0
+
+    def test_all_zeros(self) -> None:
+        """All zeros = perfect consistency at zero."""
+        values = [0.0, 0.0, 0.0]
+        assert calculate_consistency(values) == 1.0
+
+    def test_low_variance(self) -> None:
+        """Low variance = high consistency."""
+        values = [0.79, 0.80, 0.81, 0.80, 0.80]
+        consistency = calculate_consistency(values)
+        assert consistency > 0.95  # Should be very high
+
+    def test_high_variance(self) -> None:
+        """High variance = low consistency."""
+        values = [0.1, 0.5, 0.9]  # Wide spread
+        consistency = calculate_consistency(values)
+        assert consistency < 0.5  # Should be lower
+
+    def test_consistency_bounds(self) -> None:
+        """Consistency should be clamped to [0.0, 1.0]."""
+        # Extreme variance case
+        values = [0.01, 1.0, 0.01, 1.0]
+        consistency = calculate_consistency(values)
+        assert 0.0 <= consistency <= 1.0
+
+    def test_typical_evaluation_scenario(self) -> None:
+        """Test with typical 10-run evaluation results."""
+        # Pass rates from 10 runs with some variance
+        values = [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]
+        consistency = calculate_consistency(values)
+        # 80% pass rate with 20% variance
+        assert 0.4 < consistency < 0.8
 
 
 class TestStatistics:
