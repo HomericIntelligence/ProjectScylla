@@ -153,6 +153,38 @@ def calculate_std_dev(values: list[float]) -> float:
     return math.sqrt(variance)
 
 
+def calculate_consistency(values: list[float]) -> float:
+    """Calculate consistency score from coefficient of variation.
+
+    Measures output stability across multiple runs.
+    Higher values indicate more consistent outputs.
+
+    Formula: 1 - (std_dev / mean)
+
+    Args:
+        values: List of numeric values.
+
+    Returns:
+        Consistency score between 0.0 and 1.0.
+        Returns 1.0 if mean is 0 (perfectly consistent at zero).
+        Returns 0.0 if empty or single value.
+
+    Reference:
+        .claude/shared/metrics-definitions.md - Consistency metric
+    """
+    if len(values) < 2:
+        return 0.0
+
+    mean = calculate_mean(values)
+    if mean == 0:
+        # All zeros are perfectly consistent
+        return 1.0
+
+    std = calculate_std_dev(values)
+    # Clamp to [0, 1] in case std > mean
+    return max(0.0, min(1.0, 1.0 - (std / abs(mean))))
+
+
 def calculate_all(values: list[float]) -> Statistics:
     """Calculate all statistics at once.
 

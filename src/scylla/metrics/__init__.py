@@ -1,10 +1,20 @@
 """Metrics module for statistical calculations, grading, and aggregation.
 
 This module provides statistical functions, grading calculations,
-run aggregation, process metrics, and token tracking for analyzing
-evaluation results across multiple runs.
+run aggregation, process metrics, token tracking, ablation analysis,
+and latency tracking for analyzing evaluation results across multiple runs.
 """
 
+from scylla.metrics.ablation import (
+    AblationResult,
+    AblationStudy,
+    ComponentRole,
+    analyze_component,
+    calculate_ablation_score,
+    calculate_relative_impact,
+    compare_tier_ablations,
+    run_ablation_study,
+)
 from scylla.metrics.aggregator import (
     AggregatedStats,
     CrossTierAnalysis,
@@ -17,6 +27,7 @@ from scylla.metrics.cross_tier import (
     PromptSensitivityAnalysis,
     TierTransitionAssessment,
     TierUplift,
+    calculate_frontier_cop,
 )
 from scylla.metrics.grading import (
     GradingResult,
@@ -28,6 +39,14 @@ from scylla.metrics.grading import (
     calculate_pass_rate,
     calculate_tier_uplift,
     grade_run,
+)
+from scylla.metrics.latency import (
+    LatencyBreakdown,
+    LatencyPhase,
+    LatencyTracker,
+    PhaseLatency,
+    analyze_verification_overhead,
+    calculate_latency_stats,
 )
 from scylla.metrics.process import (
     ChangeResult,
@@ -48,6 +67,7 @@ from scylla.metrics.process import (
 from scylla.metrics.statistics import (
     Statistics,
     calculate_all,
+    calculate_consistency,
     calculate_mean,
     calculate_median,
     calculate_mode,
@@ -68,6 +88,15 @@ from scylla.metrics.token_tracking import (
 )
 
 __all__ = [
+    # Ablation
+    "AblationResult",
+    "AblationStudy",
+    "ComponentRole",
+    "analyze_component",
+    "calculate_ablation_score",
+    "calculate_relative_impact",
+    "compare_tier_ablations",
+    "run_ablation_study",
     # Aggregator
     "AggregatedStats",
     "CrossTierAnalysis",
@@ -79,6 +108,7 @@ __all__ = [
     "PromptSensitivityAnalysis",
     "TierTransitionAssessment",
     "TierUplift",
+    "calculate_frontier_cop",
     # Grading
     "GradingResult",
     "assign_letter_grade",
@@ -89,6 +119,13 @@ __all__ = [
     "calculate_pass_rate",
     "calculate_tier_uplift",
     "grade_run",
+    # Latency
+    "LatencyBreakdown",
+    "LatencyPhase",
+    "LatencyTracker",
+    "PhaseLatency",
+    "analyze_verification_overhead",
+    "calculate_latency_stats",
     # Process metrics
     "ChangeResult",
     "ProcessMetrics",
@@ -107,6 +144,7 @@ __all__ = [
     # Statistics
     "Statistics",
     "calculate_all",
+    "calculate_consistency",
     "calculate_mean",
     "calculate_median",
     "calculate_mode",

@@ -63,7 +63,7 @@ class TiersDefinitionFile(BaseModel):
         cls, v: dict[str, TierDefinition]
     ) -> dict[str, TierDefinition]:
         """Ensure required tiers are present."""
-        required = {"T0", "T1", "T2", "T3"}
+        required = {"T0", "T1", "T2", "T3", "T4", "T5", "T6"}
         missing = required - set(v.keys())
         if missing:
             raise ValueError(f"Missing required tier definitions: {missing}")
