@@ -122,8 +122,10 @@ class ClaudeCodeAdapter(BaseAdapter):
         tokens_input, tokens_output = self._parse_token_counts(result.stdout, result.stderr)
         api_calls = self._parse_api_calls(result.stdout, result.stderr)
 
-        # Calculate cost
-        cost = self.calculate_cost(tokens_input, tokens_output, config.model)
+        # Parse cost directly from JSON if available, otherwise calculate
+        cost = self._parse_cost(result.stdout)
+        if cost == 0.0 and (tokens_input > 0 or tokens_output > 0):
+            cost = self.calculate_cost(tokens_input, tokens_output, config.model)
 
         # Write logs
         self.write_logs(config.output_dir, result.stdout, result.stderr)
@@ -160,6 +162,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             self.CLI_EXECUTABLE,
             "--model", config.model,
             "--print",  # Print output to stdout
+            "--output-format", "json",  # JSON output for structured parsing
             "--dangerously-skip-permissions",  # Non-interactive mode
         ]
 
@@ -168,7 +171,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         # Disable tools if explicitly set to False
         if tier_settings["tools_enabled"] is False:
-            cmd.append("--no-tools")
+            cmd.extend(["--tools", ""])
 
         # Add extra arguments from config
         if config.extra_args:
@@ -197,10 +200,9 @@ class ClaudeCodeAdapter(BaseAdapter):
     def _parse_token_counts(self, stdout: str, stderr: str) -> tuple[int, int]:
         """Parse token counts from Claude Code output.
 
-        Looks for patterns like:
-        - "Input tokens: 1234"
-        - "Output tokens: 567"
-        - "Tokens: 1234 input, 567 output"
+        Supports two formats:
+        1. JSON output (preferred): Parses usage.input_tokens and usage.output_tokens
+        2. Text output (fallback): Regex patterns for "Input tokens: 1234", etc.
 
         Args:
             stdout: Standard output from CLI.
@@ -209,6 +211,22 @@ class ClaudeCodeAdapter(BaseAdapter):
         Returns:
             Tuple of (input_tokens, output_tokens).
         """
+        import json
+
+        # Try JSON parsing first (from --output-format json)
+        try:
+            data = json.loads(stdout.strip())
+            usage = data.get("usage", {})
+            input_tokens = usage.get("input_tokens", 0)
+            # Include cache read tokens in input count
+            input_tokens += usage.get("cache_read_input_tokens", 0)
+            output_tokens = usage.get("output_tokens", 0)
+            if input_tokens > 0 or output_tokens > 0:
+                return input_tokens, output_tokens
+        except (json.JSONDecodeError, AttributeError):
+            pass
+
+        # Fallback to regex parsing for text output
         combined = stdout + "\n" + stderr
         input_tokens = 0
         output_tokens = 0
@@ -255,6 +273,19 @@ class ClaudeCodeAdapter(BaseAdapter):
         Returns:
             Number of API calls detected.
         """
+        import json
+
+        # Try JSON parsing first (from --output-format json)
+        try:
+            data = json.loads(stdout.strip())
+            # num_turns represents the number of API turn exchanges
+            num_turns = data.get("num_turns", 0)
+            if num_turns > 0:
+                return num_turns
+        except (json.JSONDecodeError, AttributeError):
+            pass
+
+        # Fallback to regex parsing for text output
         combined = stdout + "\n" + stderr
 
         # Pattern: "API calls: 5" or "5 API calls"
@@ -273,3 +304,20 @@ class ClaudeCodeAdapter(BaseAdapter):
             return 1
 
         return 0
+
+    def _parse_cost(self, stdout: str) -> float:
+        """Parse cost from JSON output.
+
+        Args:
+            stdout: Standard output from CLI (JSON format).
+
+        Returns:
+            Cost in USD, or 0.0 if not available.
+        """
+        import json
+
+        try:
+            data = json.loads(stdout.strip())
+            return data.get("total_cost_usd", 0.0)
+        except (json.JSONDecodeError, AttributeError):
+            return 0.0
