@@ -19,6 +19,10 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+# Path to the standardized judge system prompt (checked into repo)
+JUDGE_SYSTEM_PROMPT_FILE = Path(__file__).parent.parent.parent.parent / "config" / "judge" / "system_prompt.md"
+
+
 @dataclass
 class JudgeResult:
     """Result from LLM judge evaluation.
@@ -26,8 +30,9 @@ class JudgeResult:
     Attributes:
         score: Numeric score from 0.0 to 1.0
         passed: Whether the task was successfully completed
-        grade: Letter grade (A, B, C, D, F)
+        grade: Letter grade (A, B, C, D, F, or N/A for invalid)
         reasoning: Detailed explanation of the judgment
+        is_valid: Whether the evaluation was successfully completed (False if agent errored)
         criteria_scores: Individual scores for each criterion
         raw_response: Raw LLM response for debugging
     """
@@ -36,6 +41,7 @@ class JudgeResult:
     passed: bool
     grade: str
     reasoning: str
+    is_valid: bool = True  # False if evaluation couldn't be completed (e.g., agent error)
     criteria_scores: dict[str, float] | None = None
     raw_response: str | None = None
 
@@ -46,6 +52,7 @@ class JudgeResult:
             "passed": self.passed,
             "grade": self.grade,
             "reasoning": self.reasoning,
+            "is_valid": self.is_valid,
             "criteria_scores": self.criteria_scores,
         }
 
@@ -68,7 +75,10 @@ def _build_judge_prompt(
     agent_output: str,
     workspace_state: str,
 ) -> str:
-    """Build the evaluation prompt for the LLM judge.
+    """Build the evaluation context for the LLM judge.
+
+    The system prompt with evaluation criteria is loaded from JUDGE_SYSTEM_PROMPT_FILE.
+    This function builds only the context (task, output, workspace state).
 
     Args:
         task_prompt: The original task prompt
@@ -76,11 +86,9 @@ def _build_judge_prompt(
         workspace_state: Description of files created/modified
 
     Returns:
-        Formatted prompt for the judge LLM.
+        Formatted evaluation context for the judge LLM.
     """
-    return f"""You are an expert evaluator for AI agent task completion. Your job is to objectively assess whether an AI agent successfully completed a given task.
-
-## Task Given to Agent
+    return f"""## Task Given to Agent
 
 {task_prompt}
 
@@ -92,43 +100,7 @@ def _build_judge_prompt(
 
 {workspace_state}
 
-## Evaluation Instructions
-
-Evaluate the agent's work against the task requirements. Consider:
-
-1. **Correctness**: Did the agent produce the correct output/files as specified?
-2. **Completeness**: Were all requirements satisfied?
-3. **Quality**: Is the solution well-structured and following best practices?
-4. **Following Instructions**: Did the agent follow the specific instructions given?
-
-## Response Format
-
-Respond with a JSON object containing:
-- "score": A number from 0.0 to 1.0 (0.0 = complete failure, 1.0 = perfect completion)
-- "passed": true if the task was successfully completed, false otherwise
-- "reasoning": A brief explanation (2-3 sentences) of your judgment
-- "criteria_scores": An object with scores for each criterion:
-  - "correctness": 0.0-1.0
-  - "completeness": 0.0-1.0
-  - "quality": 0.0-1.0
-  - "following_instructions": 0.0-1.0
-
-Example response:
-```json
-{{
-  "score": 0.85,
-  "passed": true,
-  "reasoning": "The agent successfully created the required file with correct output. Minor improvements possible in code structure.",
-  "criteria_scores": {{
-    "correctness": 0.9,
-    "completeness": 1.0,
-    "quality": 0.7,
-    "following_instructions": 0.8
-  }}
-}}
-```
-
-Respond ONLY with the JSON object, no other text."""
+Evaluate the agent's work using the criteria in your system prompt."""
 
 
 def _get_workspace_state(workspace: Path) -> str:
@@ -166,10 +138,14 @@ def run_llm_judge(
     workspace: Path,
     task_prompt: str,
     agent_output: str,
-    model: str = "claude-sonnet-4-20250514",
+    model: str = "claude-opus-4-5-20251101",  # REQUIRED: Must use Opus for accurate judging
     logs_dir: Path | None = None,
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
+
+    IMPORTANT: The judge model MUST be claude-opus-4-5-20251101.
+    Opus provides the most accurate and consistent evaluations.
+    Do NOT use Sonnet or Haiku - quality matters more than speed for judging.
 
     Uses the Claude CLI to evaluate task completion with an LLM judge.
     Falls back to heuristic evaluation if the LLM call fails.
@@ -178,7 +154,7 @@ def run_llm_judge(
         workspace: Path to the workspace with agent's output
         task_prompt: The original task prompt
         agent_output: The agent's stdout output
-        model: Model to use for judging
+        model: Model to use for judging (must be Opus for accurate judging)
         logs_dir: Optional directory to save judge logs
 
     Returns:
@@ -208,12 +184,16 @@ def run_llm_judge(
         return _fallback_judge(agent_output)
 
 
-def _call_claude_judge(prompt: str, model: str) -> str:
+def _call_claude_judge(evaluation_context: str, model: str) -> str:
     """Call Claude CLI to get judgment.
 
+    IMPORTANT: Always use claude-opus-4-5-20251101 for judging.
+    Opus provides the most accurate and consistent evaluations.
+    Do NOT change to Sonnet or Haiku - quality matters more than speed for judging.
+
     Args:
-        prompt: The judge prompt
-        model: Model to use
+        evaluation_context: The task, agent output, and workspace state to evaluate
+        model: Model to use (must be Opus for accurate judging)
 
     Returns:
         Raw response from Claude.
@@ -228,19 +208,22 @@ def _call_claude_judge(prompt: str, model: str) -> str:
         "--dangerously-skip-permissions",
         "--max-turns",
         "1",
-        prompt,
+        "--system-prompt-file",
+        str(JUDGE_SYSTEM_PROMPT_FILE),
+        evaluation_context,
     ]
 
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
-        timeout=120,
-        env={**os.environ, "ANTHROPIC_API_KEY": os.environ.get("ANTHROPIC_API_KEY", "")},
+        timeout=1200,  # 20 minutes - judging can take time with Opus
+        env={**os.environ},
     )
 
     if result.returncode != 0:
-        raise RuntimeError(f"Claude CLI failed: {result.stderr}")
+        error_msg = result.stderr.strip() if result.stderr else "No error message"
+        raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
 
     return result.stdout
 
@@ -316,40 +299,43 @@ def _fallback_judge(agent_output: str) -> JudgeResult:
 
     Returns:
         JudgeResult from heuristic evaluation.
+        Returns is_valid=False for agent errors (rate limits, crashes, etc.)
     """
     try:
         data = json.loads(agent_output.strip())
+
+        # Check is_error FIRST (before subtype) - rate limits have both
+        # "subtype": "success" AND "is_error": true
+        if data.get("is_error"):
+            error_msg = data.get("result", data.get("error", "Unknown error"))
+            # Mark as INVALID, not pass/fail - cannot evaluate an errored run
+            return JudgeResult(
+                score=0.0,
+                passed=False,
+                grade="N/A",
+                reasoning=f"Invalid: Agent error - {error_msg}",
+                is_valid=False,
+            )
+
+        # Only check success if no error
         if data.get("subtype") == "success":
             return JudgeResult(
                 score=0.7,
                 passed=True,
                 grade="C",
                 reasoning="Fallback: Agent reported success",
-            )
-        elif data.get("is_error"):
-            return JudgeResult(
-                score=0.0,
-                passed=False,
-                grade="F",
-                reasoning=f"Fallback: Agent error - {data.get('error', 'Unknown')}",
+                is_valid=True,
             )
     except (json.JSONDecodeError, AttributeError):
         pass
 
-    # Default fallback
-    if len(agent_output) > 100:
-        return JudgeResult(
-            score=0.3,
-            passed=False,
-            grade="F",
-            reasoning="Fallback: Agent produced output but unclear if successful",
-        )
-
+    # Default fallback - mark as invalid since we can't determine success
     return JudgeResult(
         score=0.0,
         passed=False,
-        grade="F",
-        reasoning="Fallback: Unable to evaluate agent output",
+        grade="N/A",
+        reasoning="Invalid: Unable to evaluate agent output",
+        is_valid=False,
     )
 
 
