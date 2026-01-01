@@ -18,14 +18,14 @@ tiers:
     name: "Prompted"
     description: "System prompt with chain-of-thought reasoning"
     prompt_file: "t1-prompted.md"
-    tools_enabled: false
+    tools_enabled: null  # Use tool defaults (same as T0 for fair comparison)
     delegation_enabled: false
 
   T2:
     name: "Skills"
     description: "Domain expertise encoded in prompts"
     prompt_file: "t2-skills.md"
-    tools_enabled: false
+    tools_enabled: null  # Use tool defaults
     delegation_enabled: false
 
   T3:

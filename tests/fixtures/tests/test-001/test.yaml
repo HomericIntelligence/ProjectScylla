@@ -1,18 +1,23 @@
-# Test fixture: Test case
+# Test fixture: Test case for E2E validation
 id: "test-001"
-name: "Test Case 001"
+name: "Hello World Task"
 description: |
-  A test fixture for unit testing the configuration loader.
-  This is not a real test case.
+  A simple test case for E2E framework validation.
+  The agent must create a hello.py script.
 
 source:
-  repo: "https://github.com/example/repo"
-  hash: "abc123def456"
+  # Use a minimal public repo that exists
+  repo: "https://github.com/octocat/Hello-World"
+  hash: "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
 
 task:
   prompt_file: "prompt.md"
-  timeout_seconds: 1800
+  timeout_seconds: 300
 
 validation:
   criteria_file: "expected/criteria.md"
   rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1

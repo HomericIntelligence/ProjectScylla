@@ -74,7 +74,9 @@ class TestBuildCommand:
 
             cmd = adapter._build_command(config, "Test prompt", tier_config)
 
-            assert "--no-tools" in cmd
+            # Check that --tools "" is in the command
+            tools_idx = cmd.index("--tools")
+            assert cmd[tools_idx + 1] == ""
 
     def test_command_with_tools_enabled(self) -> None:
         """Test command with tools enabled (no --no-tools flag)."""
@@ -351,7 +353,9 @@ class TestRun:
             # Check that the command included the tier prompt
             call_args = mock_run.call_args
             cmd = call_args[0][0]
-            assert "--no-tools" in cmd
+            # Check that --tools "" is in the command
+            tools_idx = cmd.index("--tools")
+            assert cmd[tools_idx + 1] == ""
             # Prompt should include tier content
             assert "Think step by step" in cmd[-1]
 
