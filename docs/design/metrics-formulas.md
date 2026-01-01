@@ -289,6 +289,130 @@ Variance:
            = 0.00547
 ```
 
+## Process Metrics
+
+These metrics capture the quality of the agent's execution process, not just the final outcome.
+
+### Fine-Grained Progress Rate (R_Prog)
+
+Captures incremental advancements through the execution trajectory.
+
+```
+r_prog = achieved_weighted_steps / expected_weighted_steps
+
+# Simple version (equal weights):
+r_prog = achieved_steps / expected_steps
+```
+
+**Interpretation**:
+- 1.0 = all expected steps completed
+- 0.5 = halfway through expected steps
+- 0.0 = no progress
+
+**Why R_Prog?** Diagnoses where agents fail in multi-step tasks.
+
+### Strategic Drift
+
+Measures how much intermediate actions diverge from the intended goal.
+
+```
+strategic_drift = 1 - (sum(goal_alignment * weight) / sum(weight))
+
+# Simple version (binary alignment):
+strategic_drift = 1 - (goal_aligned_actions / total_actions)
+```
+
+**Interpretation**:
+- 0.0 = perfect alignment (no drift)
+- 1.0 = complete misalignment (all actions off-track)
+
+### Change Fail Percentage (CFP)
+
+DevOps stability metric: percentage of changes that cause service failures.
+
+```
+cfp = failed_changes / total_changes
+```
+
+**Interpretation**:
+- 0.0 = no failures (stable output)
+- 0.1 = 10% of changes cause failures
+- High CFP indicates brittle solutions
+
+### PR Revert Rate
+
+Frequency of agent-generated changes rejected by human reviewers.
+
+```
+pr_revert_rate = reverted_changes / total_changes
+```
+
+## Token Tracking (T2 vs T3 Analysis)
+
+These metrics analyze the "Token Efficiency Chasm" between T2 (Skills) and T3 (Tooling).
+
+### Schema Overhead
+
+Total tokens consumed by tool schemas (T3+).
+
+```
+schema_overhead = sum(tokens for component_type == TOOL_SCHEMA)
+```
+
+**Key insight**: T3 architectures load JSON schemas that can consume 50k+ tokens upfront.
+
+### Skill Efficiency
+
+Ratio of skill tokens to total (skill + schema) tokens.
+
+```
+skill_efficiency = skill_tokens / (skill_tokens + schema_overhead)
+```
+
+**Interpretation**:
+- 1.0 = no schema overhead (pure T2)
+- 0.2 = 80% of tokens are schema overhead
+
+### Token Efficiency Ratio
+
+Comparison of schema tokens to skill tokens.
+
+```
+token_efficiency_ratio = schema_tokens / skill_tokens
+```
+
+**Interpretation**:
+- ratio > 1.0 = schemas use more tokens than skills
+- ratio = 10.0 = schemas use 10x more tokens
+
+### Component Cost Breakdown
+
+Track costs at the component level:
+
+| Component Type | Description |
+|----------------|-------------|
+| `SYSTEM_PROMPT` | Base system prompt |
+| `SKILL_PROMPT` | T2 skill instructions |
+| `DOMAIN_EXPERTISE` | T2 domain knowledge |
+| `TOOL_SCHEMA` | T3 JSON tool definitions |
+| `TOOL_CALL` | T3 tool invocations |
+| `TOOL_RESPONSE` | T3 tool results |
+| `ORCHESTRATOR` | T4/T5 coordination |
+| `SUB_AGENT` | T4/T5 delegated agents |
+| `MONITOR` | T5 error detection |
+| `EVALUATOR` | T5 self-reflection |
+
+```python
+# Calculate per-component costs
+distribution = tracker.calculate_distribution(
+    input_price=3.0,   # $/1M input tokens
+    output_price=15.0, # $/1M output tokens
+)
+
+# Get schema overhead percentage
+schema_pct = distribution.get_type_percentage(ComponentType.TOOL_SCHEMA)
+```
+
 ## Summary Table
 
 | Metric | Formula | Range | Interpretation |
@@ -300,8 +424,13 @@ Variance:
 | composite | `(pass + impl) / 2` | [0, 1] | Higher = better |
 | tier_uplift | `(tier - t0) / t0` | (-∞, ∞) | Positive = improvement |
 | variance | `Σ(x - μ)² / n` | [0, ∞) | Lower = more consistent |
+| r_prog | `achieved / expected` | [0, 1] | Higher = more progress |
+| strategic_drift | `1 - alignment` | [0, 1] | Lower = better alignment |
+| cfp | `failed / total` | [0, 1] | Lower = more stable |
+| schema_overhead | `sum(schema_tokens)` | [0, ∞) | Lower = more efficient |
 
 ## Related Documentation
 
 - [Judge Protocol](./judge-protocol.md) - How judgments produce weighted_score
 - [Evaluation Categories](./judge-protocol.md#evaluation-categories) - 10 quality categories
+- [Research Methodology](../research.md) - Original metrics definitions
