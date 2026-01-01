@@ -448,9 +448,9 @@ output:
                     run_number=1,
                 )
 
-        # Verify composite score = (impl_rate * 0.7) + (pass_rate * 0.3)
-        # = (0.80 * 0.7) + (1.0 * 0.3) = 0.56 + 0.30 = 0.86
-        assert abs(result.grading.composite_score - 0.86) < 0.001
+        # Verify composite score = (pass_rate + impl_rate) / 2 (50/50 weights)
+        # = (1.0 + 0.80) / 2 = 0.90
+        assert abs(result.grading.composite_score - 0.90) < 0.001
 
         # Verify cost-of-pass = cost_usd / pass_rate = 0.10 / 1.0 = 0.10
         assert abs(result.grading.cost_of_pass - 0.10) < 0.001

@@ -155,8 +155,8 @@ class EvalOrchestrator:
             cost_usd = execution_result.get("cost_usd", 0.0)
             pass_rate = 1.0 if passed else 0.0
             cost_of_pass = cost_usd / pass_rate if pass_rate > 0 else float("inf")
-            # Composite score weights: 70% implementation rate, 30% pass rate
-            composite_score = (impl_rate * 0.7) + (pass_rate * 0.3)
+            # Composite score: equal weight (50/50) per metrics-formulas.md
+            composite_score = (pass_rate + impl_rate) / 2
 
             # Create result
             result = create_run_result(
