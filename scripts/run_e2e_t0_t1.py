@@ -64,6 +64,10 @@ def create_adapter_wrapper():
             timeout=300,  # 5 minutes for validation
         )
 
+        # Capture the final prompt (for logging)
+        task_prompt = adapter.load_prompt(prompt_file)
+        final_prompt = adapter.inject_tier_prompt(task_prompt, tier_config)
+
         # Run adapter
         result = adapter.run(config, tier_config)
 
@@ -76,6 +80,7 @@ def create_adapter_wrapper():
             "stdout": result.stdout,
             "stderr": result.stderr,
             "api_calls": result.api_calls,
+            "final_prompt": final_prompt,  # Include for logging
         }
 
     return adapter_func

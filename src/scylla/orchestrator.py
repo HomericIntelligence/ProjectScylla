@@ -182,6 +182,16 @@ class EvalOrchestrator:
             # Write result
             result_path = self.result_writer.write_result(result)
 
+            # Write logs to result directory for independent validation
+            result_dir = result_path.parent
+            self._write_run_logs(
+                result_dir=result_dir,
+                execution_result=execution_result,
+                judgment=judgment,
+                test_case=test_case,
+                tier_id=tier_id,
+            )
+
             # Complete progress
             self.progress.complete_run(
                 tier_id=tier_id,
@@ -269,6 +279,93 @@ class EvalOrchestrator:
             "grade": "B",
             "reasoning": "Default judgment for testing",
         }
+
+    def _write_run_logs(
+        self,
+        result_dir: Path,
+        execution_result: dict,
+        judgment: dict,
+        test_case: EvalCase,
+        tier_id: str,
+    ) -> None:
+        """Write comprehensive logs for independent validation.
+
+        Creates a logs/ subdirectory with:
+        - prompt.md: The task prompt (from test case)
+        - tier_prompt.md: The tier-specific prompt (if any)
+        - stdout.log: Raw stdout from agent execution
+        - stderr.log: Raw stderr from agent execution
+        - response.json: Parsed JSON response (if available)
+        - judgment.json: Judge evaluation details
+
+        Args:
+            result_dir: Directory containing result.json
+            execution_result: Results dict from adapter
+            judgment: Judgment dict from judge
+            test_case: Test case configuration
+            tier_id: Tier identifier
+        """
+        import json
+
+        logs_dir = result_dir / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+        # Write final prompt (the actual prompt sent to the agent)
+        final_prompt = execution_result.get("final_prompt", "")
+        if final_prompt:
+            (logs_dir / "final_prompt.md").write_text(final_prompt)
+
+        # Write task prompt (original, without tier injection)
+        prompt_path = self.config.base_path / "tests" / test_case.id / "prompt.md"
+        if prompt_path.exists():
+            (logs_dir / "task_prompt.md").write_text(prompt_path.read_text())
+
+        # Write tier prompt (if applicable)
+        if tier_id != "T0":
+            # Try to find tier prompt file
+            tier_files = list((self.config.base_path.parent / "config" / "tiers").glob(f"t{tier_id[1]}-*.md"))
+            if tier_files:
+                (logs_dir / "tier_prompt.md").write_text(tier_files[0].read_text())
+
+        # Write stdout
+        stdout = execution_result.get("stdout", "")
+        (logs_dir / "stdout.log").write_text(stdout)
+
+        # Write stderr
+        stderr = execution_result.get("stderr", "")
+        (logs_dir / "stderr.log").write_text(stderr)
+
+        # Try to parse and write JSON response (if stdout is JSON)
+        try:
+            response_data = json.loads(stdout.strip())
+            (logs_dir / "response.json").write_text(
+                json.dumps(response_data, indent=2)
+            )
+        except (json.JSONDecodeError, AttributeError):
+            pass  # stdout wasn't JSON, that's fine
+
+        # Write judgment details
+        judgment_data = {
+            "passed": judgment.get("passed", False),
+            "score": judgment.get("score", 0.0),
+            "grade": judgment.get("grade", "F"),
+            "reasoning": judgment.get("reasoning", ""),
+        }
+        (logs_dir / "judgment.json").write_text(
+            json.dumps(judgment_data, indent=2)
+        )
+
+        # Write execution metadata
+        exec_metadata = {
+            "exit_code": execution_result.get("exit_code", -1),
+            "tokens_in": execution_result.get("tokens_in", 0),
+            "tokens_out": execution_result.get("tokens_out", 0),
+            "cost_usd": execution_result.get("cost_usd", 0.0),
+            "api_calls": execution_result.get("api_calls", 0),
+        }
+        (logs_dir / "execution.json").write_text(
+            json.dumps(exec_metadata, indent=2)
+        )
 
     def run_test(
         self,
