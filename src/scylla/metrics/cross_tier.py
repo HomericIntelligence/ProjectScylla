@@ -46,6 +46,8 @@ class PromptSensitivityAnalysis:
         tier_uplifts: Detailed uplift for each tier vs T0.
         cost_of_pass_delta: Range between max and min cost-of-pass.
         best_value_tier: Tier with best quality/cost ratio.
+        frontier_cop: Minimum Cost-of-Pass across all tiers (Frontier CoP).
+        frontier_cop_tier: Tier that achieves the Frontier CoP.
     """
 
     pass_rate_variance: float
@@ -57,6 +59,8 @@ class PromptSensitivityAnalysis:
     tier_uplifts: dict[str, TierUplift] = field(default_factory=dict)
     cost_of_pass_delta: float = 0.0
     best_value_tier: str = "T0"
+    frontier_cop: float = float("inf")
+    frontier_cop_tier: str = "T0"
 
 
 @dataclass
@@ -89,6 +93,44 @@ def _calculate_variance(values: list[float]) -> float:
     mean = sum(values) / len(values)
     squared_diffs = [(v - mean) ** 2 for v in values]
     return sum(squared_diffs) / len(values)
+
+
+def calculate_frontier_cop(
+    tier_stats: dict[str, "TierStatistics"],
+) -> tuple[float, str]:
+    """Calculate the Frontier Cost-of-Pass (minimum CoP across all tiers).
+
+    The Frontier CoP represents the most cost-effective tier for achieving
+    a correct solution. This is the key metric for comparing architectural
+    efficiency against human expert costs.
+
+    Args:
+        tier_stats: Dictionary mapping tier IDs to their statistics.
+
+    Returns:
+        Tuple of (frontier_cop, tier_id) where frontier_cop is the minimum
+        Cost-of-Pass and tier_id is the tier that achieves it.
+        Returns (inf, "T0") if no valid CoP can be calculated.
+
+    Reference:
+        docs/research.md Section 5.2 - Cost-of-Pass Framework
+    """
+    if not tier_stats:
+        return (float("inf"), "T0")
+
+    tier_cops: list[tuple[float, str]] = []
+
+    for tier_id, stats in tier_stats.items():
+        if stats.pass_rate.median > 0:
+            cop = stats.cost_usd.median / stats.pass_rate.median
+            tier_cops.append((cop, tier_id))
+
+    if not tier_cops:
+        return (float("inf"), "T0")
+
+    # Find minimum CoP and its tier
+    frontier_cop, frontier_tier = min(tier_cops, key=lambda x: x[0])
+    return (frontier_cop, frontier_tier)
 
 
 class CrossTierAnalyzer:
@@ -264,6 +306,8 @@ class CrossTierAnalyzer:
                 tier_uplifts={},
                 cost_of_pass_delta=0.0,
                 best_value_tier="T0",
+                frontier_cop=float("inf"),
+                frontier_cop_tier="T0",
             )
 
         # Calculate variances
@@ -296,6 +340,9 @@ class CrossTierAnalyzer:
         }
         best_value = max(value_scores, key=lambda k: value_scores[k])
 
+        # Calculate Frontier CoP
+        frontier_cop, frontier_tier = calculate_frontier_cop(self.tier_stats)
+
         return PromptSensitivityAnalysis(
             pass_rate_variance=pass_var,
             impl_rate_variance=impl_var,
@@ -306,6 +353,8 @@ class CrossTierAnalyzer:
             tier_uplifts=uplifts,
             cost_of_pass_delta=cop_delta,
             best_value_tier=best_value,
+            frontier_cop=frontier_cop,
+            frontier_cop_tier=frontier_tier,
         )
 
     def assess_all_transitions(self) -> list[TierTransitionAssessment]:

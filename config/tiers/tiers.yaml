@@ -30,7 +30,28 @@ tiers:
 
   T3:
     name: "Tooling"
-    description: "External tools, multi-agent orchestration"
+    description: "External tools via JSON schemas for real-world execution"
     prompt_file: "t3-tooling.md"
+    tools_enabled: true
+    delegation_enabled: false
+
+  T4:
+    name: "Delegation"
+    description: "Flat multi-agent system with atomic task design and specialist agents"
+    prompt_file: "t4-delegation.md"
+    tools_enabled: true
+    delegation_enabled: true
+
+  T5:
+    name: "Hierarchy"
+    description: "Nested orchestration with Monitor/Evaluator loops for iterative self-correction"
+    prompt_file: "t5-hierarchy.md"
+    tools_enabled: true
+    delegation_enabled: true
+
+  T6:
+    name: "Hybrid"
+    description: "Optimal combination of T2 Skills + T4 Delegation + Agentic RAG"
+    prompt_file: "t6-hybrid.md"
     tools_enabled: true
     delegation_enabled: true
