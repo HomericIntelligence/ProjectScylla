@@ -51,12 +51,17 @@ class ClaudeCodeAdapter(BaseAdapter):
         self,
         config: AdapterConfig,
         tier_config: TierConfig | None = None,
+        system_prompt_mode: str = "default",
     ) -> AdapterResult:
         """Execute Claude Code CLI with the given configuration.
 
         Args:
             config: Adapter configuration with model, prompt, workspace, etc.
             tier_config: Optional tier-specific configuration for prompt injection.
+            system_prompt_mode: How to handle system prompt:
+                - "none": Use empty system prompt (T0 vanilla)
+                - "default": Use Claude Code's built-in prompt (T1)
+                - "custom": Let CLAUDE.md in workspace take effect (T2+)
 
         Returns:
             AdapterResult with execution details.
@@ -72,7 +77,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         final_prompt = self.inject_tier_prompt(task_prompt, tier_config)
 
         # Build CLI command
-        cmd = self._build_command(config, final_prompt, tier_config)
+        cmd = self._build_command(config, final_prompt, tier_config, system_prompt_mode)
 
         # Prepare environment with API keys
         env = self._prepare_env(config)
@@ -147,6 +152,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         config: AdapterConfig,
         prompt: str,
         tier_config: TierConfig | None,
+        system_prompt_mode: str = "default",
     ) -> list[str]:
         """Build the Claude Code CLI command.
 
@@ -154,6 +160,10 @@ class ClaudeCodeAdapter(BaseAdapter):
             config: Adapter configuration.
             prompt: The prompt to send (with tier injection if applicable).
             tier_config: Tier configuration for tool/delegation settings.
+            system_prompt_mode: How to handle system prompt:
+                - "none": Use empty system prompt (T0 vanilla)
+                - "default": Use Claude Code's built-in prompt (T1)
+                - "custom": Let CLAUDE.md in workspace take effect (T2+)
 
         Returns:
             Command as list of strings.
@@ -165,6 +175,13 @@ class ClaudeCodeAdapter(BaseAdapter):
             "--output-format", "json",  # JSON output for structured parsing
             "--dangerously-skip-permissions",  # Non-interactive mode
         ]
+
+        # Handle system prompt based on mode
+        # T0: Remove built-in system prompt entirely
+        if system_prompt_mode == "none":
+            cmd.extend(["--system-prompt", ""])
+        # T1 "default": Omit flag to use Claude Code's default
+        # T2+ "custom": CLAUDE.md in workspace handles it
 
         # Apply tier settings
         tier_settings = self.get_tier_settings(tier_config)
