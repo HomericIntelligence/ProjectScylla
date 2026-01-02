@@ -68,6 +68,29 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
     - Fails gracefully (no silent failures)
     - Resources cleaned up properly
 
+### Patchfile Quality Criteria (When Reference Provided)
+
+If a reference solution patch is provided, also evaluate:
+
+11. **Semantic Alignment**: Does the solution achieve the same result as the reference?
+    - Same files created/modified/deleted
+    - Similar architectural approach
+    - Equivalent functionality (not necessarily identical code)
+
+12. **Change Minimality**: Are changes focused and minimal?
+    - No unrelated modifications
+    - No scope creep
+    - Changes directly address the requirements
+
+13. **Completeness vs Reference**: How complete is the solution compared to reference?
+    - All key transformations implemented
+    - No critical files missed
+    - Edge cases covered
+
+Note: The agent's solution does NOT need to be identical to the reference. Evaluate
+whether it achieves the same semantic result. Different approaches that accomplish
+the same goal should score well if they work correctly.
+
 ## Scoring Guidelines
 
 **Score Thresholds**:
