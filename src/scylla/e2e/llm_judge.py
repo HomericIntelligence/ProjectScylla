@@ -12,6 +12,7 @@ import json
 import logging
 import os
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -129,6 +130,71 @@ def _build_judge_prompt(
     sections.append("Evaluate the agent's work using the criteria in your system prompt.")
 
     return "\n\n".join(sections)
+
+
+def build_judge_prompt_with_paths(
+    prompt_path: Path,
+    output_path: Path,
+    workspace_path: Path,
+    criteria_path: Path | None = None,
+    rubric_path: Path | None = None,
+) -> str:
+    """Build a judge prompt template that references file paths.
+
+    This creates a prompt that tells the judge where to find the relevant files
+    rather than inlining all content. This is used for the experiment-level
+    judge_prompt.md template.
+
+    Args:
+        prompt_path: Path to the task prompt file
+        output_path: Path to the agent output file (run-specific)
+        workspace_path: Path to the workspace directory (subtest-specific)
+        criteria_path: Optional path to criteria.md
+        rubric_path: Optional path to rubric.yaml
+
+    Returns:
+        Judge prompt template with file path references.
+    """
+    sections = [
+        "# Evaluation Context",
+        "",
+        "## Task Given to Agent",
+        "",
+        f"See file: `{prompt_path}`",
+        "",
+        "## Agent's Output",
+        "",
+        f"See file: `{output_path}`",
+        "",
+        "## Workspace",
+        "",
+        f"See directory: `{workspace_path}`",
+        "",
+    ]
+
+    if criteria_path:
+        sections.extend([
+            "## Grading Criteria",
+            "",
+            f"See file: `{criteria_path}`",
+            "",
+        ])
+
+    if rubric_path:
+        sections.extend([
+            "## Grading Rubric",
+            "",
+            f"See file: `{rubric_path}`",
+            "",
+        ])
+
+    sections.extend([
+        "---",
+        "",
+        "Read the files at the paths above and evaluate the agent's work using the criteria in your system prompt.",
+    ])
+
+    return "\n".join(sections)
 
 
 def _get_workspace_state(workspace: Path) -> str:
@@ -342,32 +408,52 @@ def _call_claude_judge(evaluation_context: str, model: str) -> str:
     Returns:
         Raw response from Claude.
     """
-    cmd = [
-        "claude",
-        "--model",
-        model,
-        "--print",
-        "--output-format",
-        "text",
-        "--dangerously-skip-permissions",
-        "--system-prompt-file",
-        str(JUDGE_SYSTEM_PROMPT_FILE),
-        evaluation_context,
-    ]
+    # Write evaluation context to temp file to avoid "Argument list too long" errors
+    # This is necessary for T5/T6 where the combined config can be very large
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".md",
+        prefix="judge_prompt_",
+        delete=False,
+    ) as prompt_file:
+        prompt_file.write(evaluation_context)
+        prompt_file_path = prompt_file.name
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=1200,  # 20 minutes - judging can take time with Opus
-        env={**os.environ},
-    )
+    try:
+        cmd = [
+            "claude",
+            "--model",
+            model,
+            "--print",
+            "--output-format",
+            "text",
+            "--dangerously-skip-permissions",
+            "--system-prompt-file",
+            str(JUDGE_SYSTEM_PROMPT_FILE),
+            "-p",
+            prompt_file_path,
+        ]
 
-    if result.returncode != 0:
-        error_msg = result.stderr.strip() if result.stderr else "No error message"
-        raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=1200,  # 20 minutes - judging can take time with Opus
+            env={**os.environ},
+        )
 
-    return result.stdout
+        if result.returncode != 0:
+            error_msg = result.stderr.strip() if result.stderr else "No error message"
+            raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
+
+        return result.stdout
+
+    finally:
+        # Clean up temp file
+        try:
+            os.unlink(prompt_file_path)
+        except OSError:
+            pass
 
 
 def _parse_judge_response(response: str) -> JudgeResult:
