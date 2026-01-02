@@ -315,7 +315,7 @@ class ExperimentConfig:
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = field(default_factory=lambda: list(TierID))
     judge_model: str = "claude-opus-4-5-20251101"
-    tiebreaker_model: str = "gpt-4"
+    tiebreaker_model: str = "claude-opus-4-5-20251101"
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
 
@@ -355,7 +355,7 @@ class ExperimentConfig:
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
             judge_model=data.get("judge_model", "claude-opus-4-5-20251101"),
-            tiebreaker_model=data.get("tiebreaker_model", "gpt-4"),
+            tiebreaker_model=data.get("tiebreaker_model", "claude-opus-4-5-20251101"),
             parallel_subtests=data.get("parallel_subtests", 4),
             timeout_seconds=data.get("timeout_seconds", 3600),
         )

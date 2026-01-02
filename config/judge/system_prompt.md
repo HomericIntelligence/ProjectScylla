@@ -84,8 +84,10 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
 Respond with a JSON object containing:
 - "score": Weighted average (0.0-1.0) using weights above
 - "passed": true if score >= 0.7 AND correctness >= 0.8
-- "reasoning": Brief explanation (2-3 sentences) of judgment
-- "criteria_scores": Object with all criterion scores (0.0-1.0):
+- "reasoning": Overall summary (2-3 sentences) of judgment
+- "criteria_scores": Object with all criterion evaluations, each containing:
+  - "score": Numeric score (0.0-1.0)
+  - "explanation": Paragraph explaining why this score was given, with specific examples from the code
 
 ```json
 {
@@ -93,16 +95,46 @@ Respond with a JSON object containing:
   "passed": true,
   "reasoning": "The agent created a working solution that handles normal cases correctly. Edge case handling is incomplete and documentation is minimal, but the core functionality works as specified.",
   "criteria_scores": {
-    "correctness": 0.9,
-    "completeness": 0.85,
-    "edge_case_handling": 0.6,
-    "following_instructions": 0.9,
-    "code_structure": 0.8,
-    "documentation": 0.5,
-    "linting_compliance": 0.75,
-    "testability": 0.7,
-    "security": 1.0,
-    "error_handling": 0.7
+    "correctness": {
+      "score": 0.9,
+      "explanation": "The implementation produces correct output for the specified requirements. The hello.py script prints exactly 'Hello, World!' as requested and exits cleanly with code 0. Minor deduction for not including a main guard, though this doesn't affect functionality for this simple script."
+    },
+    "completeness": {
+      "score": 0.85,
+      "explanation": "All primary requirements were satisfied: the file was created with the correct name, produces the expected output, and exits properly. The solution could be more complete with a shebang line for direct execution."
+    },
+    "edge_case_handling": {
+      "score": 0.6,
+      "explanation": "For this simple task, edge cases are minimal. However, the script doesn't handle potential encoding issues or verify stdout availability. Given the task simplicity, this is acceptable but noted."
+    },
+    "following_instructions": {
+      "score": 0.9,
+      "explanation": "The agent followed instructions well, creating the file in the current working directory using a relative path as specified. The output matches the exact format requested."
+    },
+    "code_structure": {
+      "score": 0.8,
+      "explanation": "The code is appropriately simple for the task. A single print statement is the right approach here. Structure is minimal but appropriate - no over-engineering."
+    },
+    "documentation": {
+      "score": 0.5,
+      "explanation": "No docstring or comments were provided. While the code is self-explanatory for this trivial case, a brief module docstring would improve clarity for any reader."
+    },
+    "linting_compliance": {
+      "score": 0.75,
+      "explanation": "The code follows basic Python style guidelines. No unused imports or variables. Could benefit from a trailing newline at end of file per PEP8."
+    },
+    "testability": {
+      "score": 0.7,
+      "explanation": "The script is testable via subprocess execution. However, wrapping the print in a function would make unit testing easier without subprocess overhead."
+    },
+    "security": {
+      "score": 1.0,
+      "explanation": "No security concerns for this simple script. No user input handling, no file operations beyond stdout, no network calls, no secrets or credentials."
+    },
+    "error_handling": {
+      "score": 0.7,
+      "explanation": "The script has no explicit error handling, but for a simple print statement, none is strictly required. The implicit behavior (Python's default exception handling) is acceptable here."
+    }
   }
 }
 ```

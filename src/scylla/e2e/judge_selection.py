@@ -78,7 +78,7 @@ class JudgeSelection:
 def select_best_subtest(
     subtest_results: dict[str, SubTestResult],
     primary_judge_model: str = "claude-opus-4-5-20251101",
-    tiebreaker_model: str = "gpt-4",
+    tiebreaker_model: str = "claude-opus-4-5-20251101",
     tie_threshold: float = 0.05,
 ) -> JudgeSelection:
     """Select the best sub-test using LLM judge with tie-breaker.
