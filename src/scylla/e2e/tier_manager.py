@@ -59,13 +59,9 @@ class TierManager:
         """
         tier_dir = self.tiers_dir / tier_id.value.lower()
 
-        # Determine system prompt mode based on tier
-        if tier_id == TierID.T0:
-            system_prompt_mode = "none"
-        elif tier_id == TierID.T1:
-            system_prompt_mode = "default"
-        else:
-            system_prompt_mode = "custom"  # T2+ use CLAUDE.md
+        # All tiers now have sub-tests with custom configurations
+        # The system_prompt_mode is determined per sub-test, not per tier
+        system_prompt_mode = "custom"
 
         # Discover sub-tests
         subtests = self._discover_subtests(tier_id, tier_dir)
@@ -79,6 +75,9 @@ class TierManager:
     def _discover_subtests(self, tier_id: TierID, tier_dir: Path) -> list[SubTestConfig]:
         """Discover sub-test configurations in a tier directory.
 
+        All tiers now support numbered sub-tests. Sub-test directories use
+        the format "NN-name" (e.g., "00-empty", "01-vanilla", "02-critical-only").
+
         Args:
             tier_id: The tier identifier
             tier_dir: Path to the tier directory
@@ -88,50 +87,53 @@ class TierManager:
         """
         subtests = []
 
-        # For T0 and T1, there's only a baseline (no numbered sub-tests)
-        if tier_id in (TierID.T0, TierID.T1):
-            subtests.append(
-                SubTestConfig(
-                    id="baseline",
-                    name=f"{tier_id.value} Baseline",
-                    description=f"Baseline configuration for {tier_id.value}",
-                    claude_md_path=None,
-                    claude_dir_path=None,
-                    extends_previous=False,
-                )
-            )
-            return subtests
-
-        # For T2+, look for numbered subdirectories
         if not tier_dir.exists():
             return subtests
 
+        # Look for numbered subdirectories (format: NN-name or just NN)
         for subdir in sorted(tier_dir.iterdir()):
-            if subdir.is_dir() and subdir.name.isdigit():
-                claude_md = subdir / "CLAUDE.md"
-                claude_dir = subdir / ".claude"
+            if not subdir.is_dir():
+                continue
 
-                # Load metadata if config.yaml exists
-                config_file = subdir / "config.yaml"
-                name = f"{tier_id.value} Sub-test {subdir.name}"
-                description = f"Sub-test configuration {subdir.name}"
+            # Match directories starting with digits (e.g., "00-empty", "01", "02-vanilla")
+            dir_name = subdir.name
+            if not dir_name[:2].isdigit():
+                continue
 
-                if config_file.exists():
-                    with open(config_file) as f:
-                        config_data = yaml.safe_load(f) or {}
-                    name = config_data.get("name", name)
-                    description = config_data.get("description", description)
+            # Extract ID (first two digits) and name
+            subtest_id = dir_name[:2]
+            subtest_name_suffix = dir_name[3:] if len(dir_name) > 2 and dir_name[2] == "-" else ""
 
-                subtests.append(
-                    SubTestConfig(
-                        id=subdir.name,
-                        name=name,
-                        description=description,
-                        claude_md_path=claude_md if claude_md.exists() else None,
-                        claude_dir_path=claude_dir if claude_dir.exists() else None,
-                        extends_previous=True,
-                    )
+            claude_md = subdir / "CLAUDE.md"
+            claude_dir = subdir / ".claude"
+
+            # Load metadata if config.yaml exists
+            config_file = subdir / "config.yaml"
+            name = f"{tier_id.value} {subtest_name_suffix}" if subtest_name_suffix else f"{tier_id.value} Sub-test {subtest_id}"
+            description = f"Sub-test configuration {dir_name}"
+
+            # T0 sub-tests have special handling for extends_previous
+            # 00-empty and 01-vanilla don't extend; 02+ may extend
+            extends_previous = tier_id != TierID.T0 or int(subtest_id) >= 2
+
+            if config_file.exists():
+                with open(config_file) as f:
+                    config_data = yaml.safe_load(f) or {}
+                name = config_data.get("name", name)
+                description = config_data.get("description", description)
+                # Allow config to override extends_previous
+                extends_previous = config_data.get("extends_previous", extends_previous)
+
+            subtests.append(
+                SubTestConfig(
+                    id=subtest_id,
+                    name=name,
+                    description=description,
+                    claude_md_path=claude_md if claude_md.exists() else None,
+                    claude_dir_path=claude_dir if claude_dir.exists() else None,
+                    extends_previous=extends_previous,
                 )
+            )
 
         return subtests
 
@@ -148,32 +150,44 @@ class TierManager:
         1. If baseline provided and sub-test extends_previous, copy baseline
         2. Overlay the sub-test's specific configuration
 
+        For T0 sub-tests, special handling applies:
+        - 00-empty: Remove all CLAUDE.md and .claude (no system prompt)
+        - 01-vanilla: Use tool defaults (no changes)
+        - 02+: Apply the sub-test's CLAUDE.md configuration
+
         Args:
             workspace: Path to the workspace directory
             tier_id: The tier being prepared
             subtest_id: The sub-test identifier
             baseline: Previous tier's winning baseline (if any)
         """
-        # For T0, ensure no CLAUDE.md exists (clean slate)
-        if tier_id == TierID.T0:
-            claude_md = workspace / "CLAUDE.md"
-            claude_dir = workspace / ".claude"
-            if claude_md.exists():
-                claude_md.unlink()
-            if claude_dir.exists():
-                shutil.rmtree(claude_dir)
-            return
-
-        # For T1, use defaults (no changes needed)
-        if tier_id == TierID.T1:
-            return
-
-        # For T2+, apply inheritance and overlay
         tier_config = self.load_tier_config(tier_id)
         subtest = next((s for s in tier_config.subtests if s.id == subtest_id), None)
 
         if not subtest:
             raise ValueError(f"Sub-test {subtest_id} not found for tier {tier_id.value}")
+
+        # Special handling for T0 sub-tests
+        if tier_id == TierID.T0:
+            claude_md = workspace / "CLAUDE.md"
+            claude_dir = workspace / ".claude"
+
+            if subtest_id == "00":
+                # 00-empty: Remove all configuration (no system prompt)
+                if claude_md.exists():
+                    claude_md.unlink()
+                if claude_dir.exists():
+                    shutil.rmtree(claude_dir)
+                return
+            elif subtest_id == "01":
+                # 01-vanilla: Use tool defaults (no changes needed)
+                # But still remove any existing CLAUDE.md to ensure clean state
+                if claude_md.exists():
+                    claude_md.unlink()
+                if claude_dir.exists():
+                    shutil.rmtree(claude_dir)
+                return
+            # 02+: Fall through to normal overlay logic
 
         # Step 1: Copy baseline if extending from previous tier
         if baseline and subtest.extends_previous:

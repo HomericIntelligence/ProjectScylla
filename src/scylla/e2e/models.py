@@ -20,13 +20,13 @@ class TierID(Enum):
     """Tier identifiers for the evaluation framework.
 
     Tiers represent increasing levels of agent capability:
-    - T0: Vanilla - Base LLM with no system prompt
-    - T1: Prompted - Default system prompt
-    - T2: Skills - CLAUDE.md with domain expertise
-    - T3: Tooling - External tools via JSON schemas
-    - T4: Delegation - Flat multi-agent system
-    - T5: Hierarchy - Nested orchestration
-    - T6: Hybrid - Optimal combination
+    - T0: Prompts - System prompt ablation (empty → full CLAUDE.md)
+    - T1: Skills - Domain expertise via installed skills
+    - T2: Tooling - External tools and MCP servers
+    - T3: Delegation - Flat multi-agent with specialist agents
+    - T4: Hierarchy - Nested orchestration with orchestrators
+    - T5: Hybrid - Best combinations and permutations
+    - T6: Super - Everything enabled at maximum capability
     """
 
     T0 = "T0"
