@@ -1,0 +1,3 @@
+name: "Quality Skills"
+description: "5 skills from the quality category"
+extends_previous: true

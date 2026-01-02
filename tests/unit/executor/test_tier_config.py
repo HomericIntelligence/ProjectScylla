@@ -55,13 +55,13 @@ class TestTiersDefinitionFile:
         """Test validating a complete tiers definition."""
         tiers_def = TiersDefinitionFile(
             tiers={
-                "T0": TierDefinition(name="Vanilla", description="Base"),
-                "T1": TierDefinition(name="Prompted", description="With prompts"),
-                "T2": TierDefinition(name="Skills", description="With skills"),
-                "T3": TierDefinition(name="Tooling", description="With tools"),
-                "T4": TierDefinition(name="Delegation", description="Multi-agent"),
-                "T5": TierDefinition(name="Hierarchy", description="Nested orchestration"),
-                "T6": TierDefinition(name="Hybrid", description="Optimal combination"),
+                "T0": TierDefinition(name="Prompts", description="System prompt ablation"),
+                "T1": TierDefinition(name="Skills", description="Domain expertise"),
+                "T2": TierDefinition(name="Tooling", description="External tools and MCP"),
+                "T3": TierDefinition(name="Delegation", description="Flat multi-agent"),
+                "T4": TierDefinition(name="Hierarchy", description="Nested orchestration"),
+                "T5": TierDefinition(name="Hybrid", description="Best combinations"),
+                "T6": TierDefinition(name="Super", description="Everything enabled"),
             }
         )
         assert len(tiers_def.tiers) == 7
@@ -121,67 +121,68 @@ class TestTierConfigLoader:
             tiers_dir = config_path / "tiers"
             tiers_dir.mkdir(parents=True)
 
-            # Create tiers.yaml
+            # Create tiers.yaml with new tier structure
             tiers_yaml = tiers_dir / "tiers.yaml"
             tiers_yaml.write_text("""
 tiers:
   T0:
-    name: "Vanilla"
-    description: "Base LLM"
-    prompt_file: null
+    name: "Prompts"
+    description: "System prompt ablation"
+    prompt_file: "t0-prompts.md"
     tools_enabled: null
-    delegation_enabled: null
+    delegation_enabled: false
 
   T1:
-    name: "Prompted"
-    description: "With chain-of-thought"
-    prompt_file: "t1-prompted.md"
-    tools_enabled: false
+    name: "Skills"
+    description: "Domain expertise via installed skills"
+    prompt_file: "t1-skills.md"
+    tools_enabled: null
     delegation_enabled: false
 
   T2:
-    name: "Skills"
-    description: "Domain expertise"
-    prompt_file: "t2-skills.md"
-    tools_enabled: false
-    delegation_enabled: false
-
-  T3:
     name: "Tooling"
-    description: "With tools"
-    prompt_file: "t3-tooling.md"
+    description: "External tools and MCP servers"
+    prompt_file: "t2-tooling.md"
     tools_enabled: true
     delegation_enabled: false
 
-  T4:
+  T3:
     name: "Delegation"
-    description: "Multi-agent delegation"
-    prompt_file: "t4-delegation.md"
+    description: "Flat multi-agent with specialist agents"
+    prompt_file: "t3-delegation.md"
+    tools_enabled: true
+    delegation_enabled: true
+
+  T4:
+    name: "Hierarchy"
+    description: "Nested orchestration with orchestrators"
+    prompt_file: "t4-hierarchy.md"
     tools_enabled: true
     delegation_enabled: true
 
   T5:
-    name: "Hierarchy"
-    description: "Nested orchestration"
-    prompt_file: "t5-hierarchy.md"
+    name: "Hybrid"
+    description: "Best combinations and permutations"
+    prompt_file: "t5-hybrid.md"
     tools_enabled: true
     delegation_enabled: true
 
   T6:
-    name: "Hybrid"
-    description: "Optimal combination"
-    prompt_file: "t6-hybrid.md"
+    name: "Super"
+    description: "Everything enabled at maximum capability"
+    prompt_file: "t6-super.md"
     tools_enabled: true
     delegation_enabled: true
 """)
 
             # Create prompt files
-            (tiers_dir / "t1-prompted.md").write_text("Think step by step.")
-            (tiers_dir / "t2-skills.md").write_text("You have domain expertise.")
-            (tiers_dir / "t3-tooling.md").write_text("Use tools as needed.")
-            (tiers_dir / "t4-delegation.md").write_text("Delegate to specialists.")
-            (tiers_dir / "t5-hierarchy.md").write_text("Use hierarchical orchestration.")
-            (tiers_dir / "t6-hybrid.md").write_text("Combine optimal components.")
+            (tiers_dir / "t0-prompts.md").write_text("System prompt ablation tier.")
+            (tiers_dir / "t1-skills.md").write_text("You have domain expertise.")
+            (tiers_dir / "t2-tooling.md").write_text("Use tools as needed.")
+            (tiers_dir / "t3-delegation.md").write_text("Delegate to specialists.")
+            (tiers_dir / "t4-hierarchy.md").write_text("Use hierarchical orchestration.")
+            (tiers_dir / "t5-hybrid.md").write_text("Combine optimal components.")
+            (tiers_dir / "t6-super.md").write_text("Maximum capability mode.")
 
             yield config_path
 
@@ -191,38 +192,38 @@ tiers:
         assert len(loader.get_tier_ids()) == 7
 
     def test_get_t0_tier(self, config_dir: Path) -> None:
-        """Test getting T0 tier with null values."""
+        """Test getting T0 tier (Prompts) with prompt file."""
         loader = TierConfigLoader(config_dir)
         t0 = loader.get_tier("T0")
 
         assert t0.tier_id == "T0"
-        assert t0.name == "Vanilla"
-        assert t0.prompt_file is None
-        assert t0.prompt_content is None
+        assert t0.name == "Prompts"
+        assert t0.prompt_file is not None
+        assert t0.prompt_content == "System prompt ablation tier."
         assert t0.tools_enabled is None
-        assert t0.delegation_enabled is None
+        assert t0.delegation_enabled is False
 
     def test_get_t1_tier_with_prompt(self, config_dir: Path) -> None:
-        """Test getting T1 tier with prompt content loaded."""
+        """Test getting T1 tier (Skills) with prompt content loaded."""
         loader = TierConfigLoader(config_dir)
         t1 = loader.get_tier("T1")
 
         assert t1.tier_id == "T1"
-        assert t1.name == "Prompted"
+        assert t1.name == "Skills"
         assert t1.prompt_file is not None
-        assert t1.prompt_content == "Think step by step."
-        assert t1.tools_enabled is False
+        assert t1.prompt_content == "You have domain expertise."
+        assert t1.tools_enabled is None
         assert t1.delegation_enabled is False
 
-    def test_get_t3_tier(self, config_dir: Path) -> None:
-        """Test getting T3 tier with tools enabled but no delegation."""
+    def test_get_t2_tier(self, config_dir: Path) -> None:
+        """Test getting T2 tier (Tooling) with tools enabled but no delegation."""
         loader = TierConfigLoader(config_dir)
-        t3 = loader.get_tier("T3")
+        t2 = loader.get_tier("T2")
 
-        assert t3.tier_id == "T3"
-        assert t3.name == "Tooling"
-        assert t3.tools_enabled is True
-        assert t3.delegation_enabled is False  # T3 has tools but no delegation
+        assert t2.tier_id == "T2"
+        assert t2.name == "Tooling"
+        assert t2.tools_enabled is True
+        assert t2.delegation_enabled is False  # T2 has tools but no delegation
 
     def test_get_all_tiers(self, config_dir: Path) -> None:
         """Test getting all tier configurations."""
@@ -346,13 +347,20 @@ class TestTierConfigLoaderWithActualConfig:
 
         # Verify all tiers can be loaded
         all_tiers = loader.get_all_tiers()
-        assert len(all_tiers) >= 4
+        assert len(all_tiers) == 7  # T0-T6
 
-        # Verify T0 has no prompt
+        # Verify T0 (Prompts) has prompt content
         t0 = loader.get_tier("T0")
-        assert t0.prompt_content is None
+        assert t0.name == "Prompts"
+        assert t0.prompt_content is not None
 
-        # Verify T1+ have prompts
+        # Verify T1 (Skills) has prompts
         t1 = loader.get_tier("T1")
+        assert t1.name == "Skills"
         assert t1.prompt_content is not None
         assert len(t1.prompt_content) > 0
+
+        # Verify T6 (Super) exists and has prompts
+        t6 = loader.get_tier("T6")
+        assert t6.name == "Super"
+        assert t6.prompt_content is not None

@@ -138,19 +138,19 @@ See [agents/hierarchy.md](agents/hierarchy.md) for the complete agent hierarchy 
 - **Never duplicate** documentation across locations - link instead
 - See `.claude/shared/github-issue-workflow.md` for GitHub issue read/write patterns
 
-## Testing Tiers (Incremental Capability Matrix)
+## Testing Tiers (Ablation Study Framework)
 
-ProjectScylla benchmarks AI agent architectures across 7 testing tiers:
+ProjectScylla benchmarks AI agent architectures across 7 testing tiers with ~114+ sub-tests:
 
-| Tier | Name | Description | Key Characteristics |
-|------|------|-------------|---------------------|
-| T0 | Vanilla | Base LLM with zero-shot prompting | No customization, baseline reference |
-| T1 | Prompted | System prompts and chain-of-thought | Prompt engineering, no code changes |
-| T2 | Skills | Prompt-encoded domain expertise | Reusable prompt modules |
-| T3 | Tooling | External function calling with JSON schemas | API integration, tool use |
-| T4 | Delegation | Flat multi-agent systems | Task distribution, parallel execution |
-| T5 | Hierarchy | Nested orchestration with self-correction | Iterative refinement, supervision |
-| T6 | Hybrid | Optimal combinations of proven components | Best-of-breed architecture |
+| Tier | Name | Sub-tests | Description |
+|------|------|-----------|-------------|
+| T0 | Prompts | 24 | System prompt ablation (empty → full CLAUDE.md) |
+| T1 | Skills | 10 | Domain expertise via installed skills by category |
+| T2 | Tooling | 15 | External tools and MCP servers |
+| T3 | Delegation | 41 | Flat multi-agent with specialist agents |
+| T4 | Hierarchy | 7 | Nested orchestration with orchestrator agents |
+| T5 | Hybrid | 15 | Best combinations and permutations |
+| T6 | Super | 1 | Everything enabled at maximum capability |
 
 ### Evaluation Protocol
 
