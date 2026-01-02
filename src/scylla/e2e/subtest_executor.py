@@ -31,7 +31,7 @@ from scylla.e2e.models import (
     TierConfig,
     TierID,
 )
-from scylla.e2e.run_report import save_run_report
+from scylla.e2e.run_report import save_run_report, save_run_report_json
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
 
@@ -89,12 +89,15 @@ class SubTestExecutor:
     ) -> SubTestResult:
         """Run a single sub-test N times and aggregate results.
 
+        Creates workspace at subtest level (shared across runs) for efficiency.
+        Each run gets its own directory for output.txt, judgment.json, etc.
+
         Args:
             tier_id: The tier being executed
             tier_config: Tier configuration
             subtest: Sub-test configuration
             baseline: Previous tier's winning baseline (if any)
-            results_dir: Directory to store results
+            results_dir: Directory to store results (subtest directory)
 
         Returns:
             SubTestResult with aggregated metrics.
@@ -104,6 +107,19 @@ class SubTestExecutor:
 
         # Load task prompt once
         task_prompt = self.config.task_prompt_file.read_text()
+
+        # Create workspace at subtest level (shared across all runs)
+        workspace = results_dir / "workspace"
+        workspace.mkdir(parents=True, exist_ok=True)
+        self._setup_workspace(workspace, CommandLogger(results_dir))
+
+        # Prepare tier configuration in workspace once
+        self.tier_manager.prepare_workspace(
+            workspace=workspace,
+            tier_id=tier_id,
+            subtest_id=subtest.id,
+            baseline=baseline,
+        )
 
         for run_num in range(1, self.config.runs_per_subtest + 1):
             run_dir = results_dir / f"run_{run_num:02d}"
@@ -116,13 +132,14 @@ class SubTestExecutor:
                 baseline=baseline,
                 run_number=run_num,
                 run_dir=run_dir,
+                workspace=workspace,
                 task_prompt=task_prompt,
             )
             runs.append(run_result)
 
         # Save sub-test config for inheritance
         self.tier_manager.save_subtest_config(
-            workspace=run_dir / "workspace",  # Use last run's workspace
+            workspace=workspace,
             results_dir=results_dir,
         )
 
@@ -137,9 +154,16 @@ class SubTestExecutor:
         baseline: TierBaseline | None,
         run_number: int,
         run_dir: Path,
+        workspace: Path,
         task_prompt: str,
     ) -> RunResult:
         """Execute a single run of the sub-test.
+
+        Files are placed directly in run_dir (no logs/ subdir):
+        - output.txt: Agent stdout
+        - command_log.json: Execution details
+        - judgment.json: LLM judge result
+        - report.md: Run report
 
         Args:
             tier_id: The tier being executed
@@ -148,32 +172,17 @@ class SubTestExecutor:
             baseline: Previous tier's baseline
             run_number: The run number (1-indexed)
             run_dir: Directory for this run's outputs
+            workspace: Shared workspace at subtest level
             task_prompt: The task prompt text
 
         Returns:
             RunResult with execution details.
         """
-        logs_dir = run_dir / "logs"
-        logs_dir.mkdir(parents=True, exist_ok=True)
-        command_logger = CommandLogger(logs_dir)
+        # All files go directly in run_dir (no logs/ subdir)
+        command_logger = CommandLogger(run_dir)
 
-        # Create workspace
-        workspace = run_dir / "workspace"
-        workspace.mkdir(parents=True, exist_ok=True)
-
-        # Clone and checkout
-        self._setup_workspace(workspace, command_logger)
-
-        # Prepare tier configuration
-        self.tier_manager.prepare_workspace(
-            workspace=workspace,
-            tier_id=tier_id,
-            subtest_id=subtest.id,
-            baseline=baseline,
-        )
-
-        # Create adapter config
-        prompt_file = logs_dir / "task_prompt.md"
+        # Save task prompt to run dir (for reference, though uniform across runs)
+        prompt_file = run_dir / "task_prompt.md"
         prompt_file.write_text(task_prompt)
 
         # Build extra args for adapter
@@ -185,7 +194,7 @@ class SubTestExecutor:
             model=self.config.models[0],
             prompt_file=prompt_file,
             workspace=workspace,
-            output_dir=logs_dir,
+            output_dir=run_dir,  # Files go directly in run_dir
             timeout=self.config.timeout_seconds,
             extra_args=extra_args,
         )
@@ -236,12 +245,16 @@ class SubTestExecutor:
         command_logger.save()
         command_logger.save_replay_script()
 
+        # Save agent output to output.txt
+        output_file = run_dir / "output.txt"
+        output_file.write_text(result.stdout or "")
+
         # Run judge evaluation
         judgment = self._run_judge(
             workspace=workspace,
             task_prompt=task_prompt,
             stdout=result.stdout,
-            logs_dir=logs_dir,
+            run_dir=run_dir,
         )
 
         run_result = RunResult(
@@ -256,13 +269,13 @@ class SubTestExecutor:
             judge_grade=judgment["grade"],
             judge_reasoning=judgment["reasoning"],
             workspace_path=workspace,
-            logs_path=logs_dir,
-            command_log_path=logs_dir / "command_log.json",
+            logs_path=run_dir,  # Now same as run_dir (no logs/ subdir)
+            command_log_path=run_dir / "command_log.json",
         )
 
-        # Generate per-run markdown report
+        # Generate per-run reports (markdown and JSON)
         save_run_report(
-            output_path=logs_dir / "report.md",
+            output_path=run_dir / "report.md",
             tier_id=tier_id.value,
             subtest_id=subtest.id,
             run_number=run_number,
@@ -279,6 +292,17 @@ class SubTestExecutor:
             workspace_path=workspace,
             criteria_scores=judgment.get("criteria_scores"),
             agent_output=result.stdout[:2000] if result.stdout else None,
+        )
+
+        # JSON report for hierarchical linking
+        save_run_report_json(
+            run_dir=run_dir,
+            run_number=run_number,
+            score=judgment["score"],
+            grade=judgment["grade"],
+            passed=judgment["passed"],
+            cost_usd=result.cost_usd,
+            duration_seconds=duration,
         )
 
         return run_result
@@ -338,7 +362,7 @@ class SubTestExecutor:
         workspace: Path,
         task_prompt: str,
         stdout: str,
-        logs_dir: Path,
+        run_dir: Path,
     ) -> dict:
         """Run LLM judge evaluation on the result.
 
@@ -348,7 +372,7 @@ class SubTestExecutor:
             workspace: Workspace with agent's output
             task_prompt: The original task prompt
             stdout: Agent's stdout output
-            logs_dir: Directory for judge logs
+            run_dir: Directory for judge logs (judgment.json goes here)
 
         Returns:
             Dict with score, passed, grade, and reasoning.
@@ -359,7 +383,7 @@ class SubTestExecutor:
             task_prompt=task_prompt,
             agent_output=stdout,
             model=self.config.judge_model,
-            logs_dir=logs_dir,
+            logs_dir=run_dir,  # Judge logs go in run_dir
         )
 
         return judge_result.to_dict()
