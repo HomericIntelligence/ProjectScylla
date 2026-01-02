@@ -42,20 +42,26 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    # Run with config file
-    python scripts/run_e2e_experiment.py --config experiments/hello-world.yaml
-
-    # Run with CLI arguments
+    # Minimal: just specify tiers-dir (repo, commit, prompt from test.yaml)
     python scripts/run_e2e_experiment.py \\
-        --repo https://github.com/octocat/Hello-World \\
-        --commit 7fd1a60 \\
-        --prompt tests/fixtures/tests/test-001/prompt.md \\
-        --tiers T0 T1 T2
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --tiers T0 --runs 1
 
-    # Quick test with fewer runs
+    # Quick T0 validation
     python scripts/run_e2e_experiment.py \\
-        --config experiments/test.yaml \\
-        --runs 3 \\
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --tiers T0 --runs 1 -v
+
+    # Run all tiers with defaults from test.yaml
+    python scripts/run_e2e_experiment.py \\
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --tiers T0 T1 T2 T3 T4 T5 T6
+
+    # Override repo/commit from CLI
+    python scripts/run_e2e_experiment.py \\
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --repo https://github.com/example/repo \\
+        --commit abc123 \\
         --tiers T0 T1
         """,
     )
@@ -67,27 +73,27 @@ Examples:
         help="Path to experiment configuration YAML file",
     )
 
-    # Direct arguments (override config)
+    # Direct arguments (override config) - all optional if test.yaml exists
     parser.add_argument(
         "--repo",
         type=str,
-        help="Task repository URL",
+        help="Task repository URL (default: from test.yaml)",
     )
     parser.add_argument(
         "--commit",
         type=str,
-        help="Task commit hash",
+        help="Task commit hash (default: from test.yaml)",
     )
     parser.add_argument(
         "--prompt",
         type=Path,
-        help="Path to task prompt file",
+        help="Path to task prompt file (default: from test.yaml)",
     )
     parser.add_argument(
         "--experiment-id",
         type=str,
-        default="experiment",
-        help="Experiment identifier (default: experiment)",
+        default=None,
+        help="Experiment identifier (default: from test.yaml id)",
     )
 
     # Tier selection
@@ -116,7 +122,7 @@ Examples:
         "--timeout",
         type=int,
         default=3600,
-        help="Timeout per run in seconds (default: 3600)",
+        help="Timeout per run in seconds (default: from test.yaml or 3600)",
     )
 
     # Model settings
@@ -181,8 +187,42 @@ def load_config_from_yaml(path: Path) -> dict:
         return yaml.safe_load(f) or {}
 
 
+def load_test_config(tiers_dir: Path) -> dict | None:
+    """Load test configuration from test.yaml in tiers directory.
+
+    This provides default values for repo, commit, prompt, timeout, and experiment-id.
+
+    Args:
+        tiers_dir: Path to tier configurations directory
+
+    Returns:
+        Configuration dictionary or None if not found
+    """
+    test_yaml = tiers_dir / "test.yaml"
+    if not test_yaml.exists():
+        return None
+
+    with open(test_yaml) as f:
+        config = yaml.safe_load(f) or {}
+
+    return {
+        "experiment_id": config.get("id"),
+        "task_repo": config.get("source", {}).get("repo"),
+        "task_commit": config.get("source", {}).get("hash"),
+        "task_prompt_file": config.get("task", {}).get("prompt_file"),
+        "timeout_seconds": config.get("task", {}).get("timeout_seconds"),
+        "tiers": config.get("tiers"),
+    }
+
+
 def build_config(args: argparse.Namespace) -> ExperimentConfig:
     """Build experiment configuration from arguments.
+
+    Priority (highest to lowest):
+    1. CLI arguments (--repo, --commit, etc.)
+    2. Config YAML file (--config)
+    3. Test config (test.yaml in --tiers-dir)
+    4. Defaults
 
     Args:
         args: Parsed command-line arguments
@@ -190,9 +230,12 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
     Returns:
         ExperimentConfig instance
     """
-    # Start with defaults
+    # Load test config from tiers-dir (provides defaults for repo, commit, prompt, etc.)
+    test_config = load_test_config(args.tiers_dir)
+
+    # Start with defaults, using test config if available
     config_dict = {
-        "experiment_id": args.experiment_id,
+        "experiment_id": args.experiment_id or (test_config.get("experiment_id") if test_config else None) or "experiment",
         "task_repo": "",
         "task_commit": "",
         "task_prompt_file": None,
@@ -205,19 +248,35 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         "timeout_seconds": args.timeout,
     }
 
-    # Load from YAML if provided
+    # Apply test config defaults (from test.yaml in tiers-dir)
+    if test_config:
+        if test_config.get("task_repo"):
+            config_dict["task_repo"] = test_config["task_repo"]
+        if test_config.get("task_commit"):
+            config_dict["task_commit"] = test_config["task_commit"]
+        if test_config.get("task_prompt_file"):
+            # Resolve prompt file relative to tiers-dir
+            config_dict["task_prompt_file"] = args.tiers_dir / test_config["task_prompt_file"]
+        if test_config.get("timeout_seconds") and args.timeout == 3600:  # Only if not explicitly set
+            config_dict["timeout_seconds"] = test_config["timeout_seconds"]
+
+    # Load from YAML config if provided (overrides test config)
     if args.config:
         yaml_config = load_config_from_yaml(args.config)
-        config_dict.update({
-            "experiment_id": yaml_config.get("experiment_id", config_dict["experiment_id"]),
-            "task_repo": yaml_config.get("task_repo", config_dict["task_repo"]),
-            "task_commit": yaml_config.get("task_commit", config_dict["task_commit"]),
-            "task_prompt_file": Path(yaml_config["task_prompt_file"]) if yaml_config.get("task_prompt_file") else None,
-            "runs_per_subtest": yaml_config.get("runs_per_subtest", config_dict["runs_per_subtest"]),
-            "tiers_to_run": [TierID.from_string(t) for t in yaml_config.get("tiers", args.tiers)],
-        })
+        if yaml_config.get("experiment_id"):
+            config_dict["experiment_id"] = yaml_config["experiment_id"]
+        if yaml_config.get("task_repo"):
+            config_dict["task_repo"] = yaml_config["task_repo"]
+        if yaml_config.get("task_commit"):
+            config_dict["task_commit"] = yaml_config["task_commit"]
+        if yaml_config.get("task_prompt_file"):
+            config_dict["task_prompt_file"] = Path(yaml_config["task_prompt_file"])
+        if yaml_config.get("runs_per_subtest"):
+            config_dict["runs_per_subtest"] = yaml_config["runs_per_subtest"]
+        if yaml_config.get("tiers"):
+            config_dict["tiers_to_run"] = [TierID.from_string(t) for t in yaml_config["tiers"]]
 
-    # Override with CLI arguments
+    # Override with CLI arguments (highest priority)
     if args.repo:
         config_dict["task_repo"] = args.repo
     if args.commit:
@@ -227,9 +286,9 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
 
     # Validate required fields
     if not config_dict["task_repo"]:
-        raise ValueError("Task repository (--repo) is required")
+        raise ValueError("Task repository required: set in test.yaml, --config, or --repo")
     if not config_dict["task_prompt_file"]:
-        raise ValueError("Task prompt file (--prompt) is required")
+        raise ValueError("Task prompt required: set in test.yaml, --config, or --prompt")
 
     return ExperimentConfig(
         experiment_id=config_dict["experiment_id"],
