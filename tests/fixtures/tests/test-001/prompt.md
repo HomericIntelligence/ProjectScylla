@@ -7,6 +7,7 @@ Create a simple Python script called `hello.py` that prints "Hello, World!" to s
 1. Create a file named `hello.py` in the current working directory (use relative path `./hello.py`, NOT an absolute path)
 2. The script should print exactly: `Hello, World!`
 3. The script should exit with code 0
+4. Specify the directory where the script was created
 
 ## Expected Output
 

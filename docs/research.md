@@ -75,17 +75,17 @@ This final phase optimizes the architecture by integrating structural constraint
 
 The following table summarizes the incremental matrix and the hypothesized economic implications for each architectural decision.
 
-Table 2.1: Incremental Agent Capability Testing Matrix
+Table 2.1: Incremental Agent Capability Testing Matrix (Ablation Study Framework)
 
-| Test Tier | Architectural Feature Enabled | Primary Function/Change from T-1 | Dominant Cost Driver | Hypothesized Economic Viability |
-| :---- | :---- | :---- | :---- | :---- |
-| T0 (Vanilla) | Base LLM (Zero-shot) | Baseline establishment. | Single Inference Token Cost | Low CoP, Low Efficacy |
-| T1 (Prompted) | System Prompt & CoT | Guides behavior, sets instruction context. | Input Token Cost (Context) | Low CoP, Moderate Efficacy |
-| T2 (Skills) | Prompt-Encoded Expertise | Enhances reasoning/judgment (efficient domain knowledge). | Context Bloat (Mitigated, High Token Efficiency) 12 | Excellent CoP, High Efficacy |
-| T3 (Tooling) | Function Calling (External Schema) | Enables API/external execution. | Massive Schema Token Overhead (High Input Cost) 14 | High Efficacy, Poor CoP |
-| T4 (Delegation) | Flat Multi-Agent System (Specialist Agents) | Task partitioning and parallel execution (Atomic Design). | Orchestration & Communication Latency 15 | High Efficacy, Moderate CoP |
-| T5 (Hierarchy) | Nested Orchestration \+ Monitor/Evaluator | Deep planning and iterative self-correction. | Iterative Inference & Verification Cost 5 | Very High Efficacy, High CoP |
-| T6 (Hybrid) | Optimal Combinations (T2+T4/T5+Agentic RAG) | Economic optimization of efficacy and cost. | Synergistic Overhead Management | Maximized CoP/Efficacy Ratio |
+| Tier | Name | Sub-tests | Primary Function | Dominant Cost Driver | Hypothesized Viability |
+| :---- | :---- | :---- | :---- | :---- | :---- |
+| T0 | Prompts | 24 | System prompt ablation (empty → full CLAUDE.md) | Input Token Cost (Context) | Baseline measurement |
+| T1 | Skills | 10 | Domain expertise via installed skills by category | Context Bloat (Mitigated) | Excellent CoP, High Efficacy |
+| T2 | Tooling | 15 | External tools and MCP servers | Schema Token Overhead | High Efficacy, Poor CoP |
+| T3 | Delegation | 41 | Flat multi-agent with specialist agents (L2-L5) | Orchestration Latency | High Efficacy, Moderate CoP |
+| T4 | Hierarchy | 7 | Nested orchestration with orchestrator agents (L0-L1) | Iterative Verification Cost | Very High Efficacy, High CoP |
+| T5 | Hybrid | 15 | Best combinations and permutations from all tiers | Synergistic Overhead | Maximized CoP/Efficacy Ratio |
+| T6 | Super | 1 | Everything enabled at maximum capability | Maximum Overhead | Theoretical Upper Bound |
 
 ## **3\. Detailed Experimental Protocol and Task Selection**
 
