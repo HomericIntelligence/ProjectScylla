@@ -208,7 +208,9 @@ class BaseAdapter(ABC):
         stderr: str,
         agent_log: str | None = None,
     ) -> None:
-        """Write captured logs to output directory.
+        """Write captured logs directly to output directory.
+
+        Files are written directly to output_dir (no logs/ subdirectory).
 
         Args:
             output_dir: Directory for log files.
@@ -216,14 +218,13 @@ class BaseAdapter(ABC):
             stderr: Standard error content.
             agent_log: Optional agent interaction log.
         """
-        logs_dir = output_dir / "logs"
-        logs_dir.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
-        (logs_dir / "stdout.log").write_text(stdout)
-        (logs_dir / "stderr.log").write_text(stderr)
+        (output_dir / "stdout.log").write_text(stdout)
+        (output_dir / "stderr.log").write_text(stderr)
 
         if agent_log:
-            (logs_dir / "agent.log").write_text(agent_log)
+            (output_dir / "agent.log").write_text(agent_log)
 
     def calculate_cost(
         self,

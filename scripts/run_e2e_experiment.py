@@ -124,6 +124,12 @@ Examples:
         default=3600,
         help="Timeout per run in seconds (default: from test.yaml or 3600)",
     )
+    parser.add_argument(
+        "--max-subtests",
+        type=int,
+        default=None,
+        help="Limit sub-tests per tier for testing (default: all)",
+    )
 
     # Model settings
     parser.add_argument(
@@ -302,6 +308,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         tiebreaker_model=config_dict["tiebreaker_model"],
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],
+        max_subtests=args.max_subtests,
     )
 
 
