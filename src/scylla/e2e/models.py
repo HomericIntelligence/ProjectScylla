@@ -305,6 +305,7 @@ class ExperimentConfig:
         tiebreaker_model: Model to use for tie-breaking
         parallel_subtests: Max parallel sub-tests (default: 4)
         timeout_seconds: Timeout per run in seconds
+        max_turns: Maximum conversation turns for agent (None = unlimited)
     """
 
     experiment_id: str
@@ -318,6 +319,7 @@ class ExperimentConfig:
     tiebreaker_model: str = "claude-opus-4-5-20251101"
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
+    max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -333,6 +335,7 @@ class ExperimentConfig:
             "tiebreaker_model": self.tiebreaker_model,
             "parallel_subtests": self.parallel_subtests,
             "timeout_seconds": self.timeout_seconds,
+            "max_turns": self.max_turns,
         }
 
     def save(self, path: Path) -> None:
@@ -358,6 +361,7 @@ class ExperimentConfig:
             tiebreaker_model=data.get("tiebreaker_model", "claude-opus-4-5-20251101"),
             parallel_subtests=data.get("parallel_subtests", 4),
             timeout_seconds=data.get("timeout_seconds", 3600),
+            max_turns=data.get("max_turns"),
         )
 
 

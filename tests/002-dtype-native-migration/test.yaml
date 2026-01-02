@@ -1,0 +1,40 @@
+id: "002-dtype-native-migration"
+name: "Migrate Custom DTypes to Mojo Native Types"
+description: |
+  Migrate custom dtype struct implementations (BF16, FP8, BF8, FP4, E8M0)
+  to Mojo's native built-in types. This is a complex refactoring task that
+  tests an agent's ability to understand a large codebase and make
+  coordinated changes across multiple files.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "68a608896097f0b519ac2a410c7d6d645f921439"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 7200
+  max_turns: 50
+
+tiers:
+  - T2
+  - T3
+  - T4
+  - T5
+
+runs_per_tier: 10
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+  reference_patch: "expected/reference/reference.patch"
+
+evaluation:
+  output_format: "patchfile_and_workspace"
+  patchfile_command: "git diff HEAD"
+
+tags:
+  - "mojo"
+  - "refactoring"
+  - "dtype"
+  - "architecture"
+  - "t2-plus"
