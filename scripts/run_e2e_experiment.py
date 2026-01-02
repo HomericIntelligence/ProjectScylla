@@ -123,7 +123,7 @@ Examples:
     parser.add_argument(
         "--model",
         type=str,
-        default="claude-sonnet-4-20250514",
+        default="claude-sonnet-4-5-20250929",
         help="Primary model for task execution",
     )
     parser.add_argument(
@@ -135,8 +135,8 @@ Examples:
     parser.add_argument(
         "--tiebreaker-model",
         type=str,
-        default="gpt-4",
-        help="Model for tie-breaking (default: gpt-4)",
+        default="opus-4.5",
+        help="Model for tie-breaking (default: opus-4.5)",
     )
 
     # Paths
