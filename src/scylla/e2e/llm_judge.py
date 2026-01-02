@@ -33,7 +33,8 @@ class JudgeResult:
         grade: Letter grade (A, B, C, D, F, or N/A for invalid)
         reasoning: Detailed explanation of the judgment
         is_valid: Whether the evaluation was successfully completed (False if agent errored)
-        criteria_scores: Individual scores for each criterion
+        criteria_scores: Individual evaluations for each criterion, each containing
+            'score' (float) and 'explanation' (str)
         raw_response: Raw LLM response for debugging
     """
 
@@ -42,7 +43,7 @@ class JudgeResult:
     grade: str
     reasoning: str
     is_valid: bool = True  # False if evaluation couldn't be completed (e.g., agent error)
-    criteria_scores: dict[str, float] | None = None
+    criteria_scores: dict[str, dict[str, Any]] | None = None
     raw_response: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -206,8 +207,6 @@ def _call_claude_judge(evaluation_context: str, model: str) -> str:
         "--output-format",
         "text",
         "--dangerously-skip-permissions",
-        "--max-turns",
-        "1",
         "--system-prompt-file",
         str(JUDGE_SYSTEM_PROMPT_FILE),
         evaluation_context,

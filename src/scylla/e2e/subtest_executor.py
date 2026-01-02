@@ -31,7 +31,9 @@ from scylla.e2e.models import (
     TierConfig,
     TierID,
 )
+from scylla.e2e.run_report import save_run_report
 from scylla.e2e.tier_manager import TierManager
+from scylla.e2e.workspace_manager import WorkspaceManager
 
 if TYPE_CHECKING:
     pass
@@ -61,6 +63,7 @@ class SubTestExecutor:
         self,
         config: ExperimentConfig,
         tier_manager: TierManager,
+        workspace_manager: WorkspaceManager,
         adapter: ClaudeCodeAdapter | None = None,
     ) -> None:
         """Initialize the executor.
@@ -68,10 +71,12 @@ class SubTestExecutor:
         Args:
             config: Experiment configuration
             tier_manager: Tier configuration manager
+            workspace_manager: Workspace manager for git worktrees
             adapter: Optional adapter (defaults to ClaudeCodeAdapter)
         """
         self.config = config
         self.tier_manager = tier_manager
+        self.workspace_manager = workspace_manager
         self.adapter = adapter or ClaudeCodeAdapter()
 
     def run_subtest(
@@ -233,7 +238,7 @@ class SubTestExecutor:
             logs_dir=logs_dir,
         )
 
-        return RunResult(
+        run_result = RunResult(
             run_number=run_number,
             exit_code=result.exit_code,
             tokens_input=result.tokens_input,
@@ -249,12 +254,35 @@ class SubTestExecutor:
             command_log_path=logs_dir / "command_log.json",
         )
 
+        # Generate per-run markdown report
+        save_run_report(
+            output_path=logs_dir / "report.md",
+            tier_id=tier_id.value,
+            subtest_id=subtest.id,
+            run_number=run_number,
+            score=judgment["score"],
+            grade=judgment["grade"],
+            passed=judgment["passed"],
+            reasoning=judgment["reasoning"],
+            cost_usd=result.cost_usd,
+            duration_seconds=duration,
+            tokens_input=result.tokens_input,
+            tokens_output=result.tokens_output,
+            exit_code=result.exit_code,
+            task_prompt=task_prompt,
+            workspace_path=workspace,
+            criteria_scores=judgment.get("criteria_scores"),
+            agent_output=result.stdout[:2000] if result.stdout else None,
+        )
+
+        return run_result
+
     def _setup_workspace(
         self,
         workspace: Path,
         command_logger: CommandLogger,
     ) -> None:
-        """Set up workspace by cloning repo and checking out commit.
+        """Set up workspace using git worktree from base repo.
 
         Args:
             workspace: Target workspace directory
@@ -262,25 +290,34 @@ class SubTestExecutor:
         """
         start_time = datetime.now(UTC)
 
-        # Clone repository
-        clone_cmd = [
+        # Ensure workspace path is absolute for git worktree
+        workspace_abs = workspace.resolve()
+
+        # Create worktree from shared base repo
+        worktree_cmd = [
             "git",
-            "clone",
-            "--depth=1",
-            self.config.task_repo,
-            str(workspace),
+            "-C",
+            str(self.workspace_manager.base_repo),
+            "worktree",
+            "add",
+            "--detach",
+            str(workspace_abs),
         ]
 
+        # Add commit reference if specified
+        if self.config.task_commit:
+            worktree_cmd.append(self.config.task_commit)
+
         result = subprocess.run(
-            clone_cmd,
+            worktree_cmd,
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=60,
         )
 
         duration = (datetime.now(UTC) - start_time).total_seconds()
         command_logger.log_command(
-            cmd=clone_cmd,
+            cmd=worktree_cmd,
             stdout=result.stdout,
             stderr=result.stderr,
             exit_code=result.returncode,
@@ -288,60 +325,7 @@ class SubTestExecutor:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(f"Failed to clone repo: {result.stderr}")
-
-        # Fetch specific commit if needed
-        if self.config.task_commit:
-            fetch_cmd = [
-                "git",
-                "-C",
-                str(workspace),
-                "fetch",
-                "--depth=1",
-                "origin",
-                self.config.task_commit,
-            ]
-
-            start_time = datetime.now(UTC)
-            result = subprocess.run(
-                fetch_cmd,
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
-            duration = (datetime.now(UTC) - start_time).total_seconds()
-            command_logger.log_command(
-                cmd=fetch_cmd,
-                stdout=result.stdout,
-                stderr=result.stderr,
-                exit_code=result.returncode,
-                duration=duration,
-            )
-
-            # Checkout commit
-            checkout_cmd = [
-                "git",
-                "-C",
-                str(workspace),
-                "checkout",
-                self.config.task_commit,
-            ]
-
-            start_time = datetime.now(UTC)
-            result = subprocess.run(
-                checkout_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            duration = (datetime.now(UTC) - start_time).total_seconds()
-            command_logger.log_command(
-                cmd=checkout_cmd,
-                stdout=result.stdout,
-                stderr=result.stderr,
-                exit_code=result.returncode,
-                duration=duration,
-            )
+            raise RuntimeError(f"Failed to create worktree: {result.stderr}")
 
     def _run_judge(
         self,
@@ -430,6 +414,7 @@ def run_tier_subtests_parallel(
     tier_id: TierID,
     tier_config: TierConfig,
     tier_manager: TierManager,
+    workspace_manager: WorkspaceManager,
     baseline: TierBaseline | None,
     results_dir: Path,
 ) -> dict[str, SubTestResult]:
@@ -440,6 +425,7 @@ def run_tier_subtests_parallel(
         tier_id: The tier being executed
         tier_config: Tier configuration with sub-tests
         tier_manager: Tier configuration manager
+        workspace_manager: Workspace manager for git worktrees
         baseline: Previous tier's winning baseline
         results_dir: Base directory for tier results
 
@@ -447,7 +433,7 @@ def run_tier_subtests_parallel(
         Dict mapping sub-test ID to results.
     """
     results: dict[str, SubTestResult] = {}
-    executor = SubTestExecutor(config, tier_manager)
+    executor = SubTestExecutor(config, tier_manager, workspace_manager)
 
     # For single sub-test (T0, T1), run directly
     if len(tier_config.subtests) <= 1:
@@ -477,6 +463,9 @@ def run_tier_subtests_parallel(
                 baseline=baseline,
                 results_dir=subtest_dir,
                 tiers_dir=tier_manager.tiers_dir,
+                base_repo=workspace_manager.base_repo,
+                repo_url=workspace_manager.repo_url,
+                commit=workspace_manager.commit,
             )
             futures[future] = subtest.id
 
@@ -511,13 +500,25 @@ def _run_subtest_in_process(
     baseline: TierBaseline | None,
     results_dir: Path,
     tiers_dir: Path,
+    base_repo: Path,
+    repo_url: str,
+    commit: str | None,
 ) -> SubTestResult:
     """Run a sub-test in a separate process.
 
     This is a helper for parallel execution.
     """
     tier_manager = TierManager(tiers_dir)
-    executor = SubTestExecutor(config, tier_manager)
+    # Recreate workspace manager in child process
+    workspace_manager = WorkspaceManager(
+        experiment_dir=base_repo.parent,
+        repo_url=repo_url,
+        commit=commit,
+    )
+    workspace_manager._is_setup = True  # Base repo already exists
+    workspace_manager.base_repo = base_repo
+
+    executor = SubTestExecutor(config, tier_manager, workspace_manager)
     return executor.run_subtest(
         tier_id=tier_id,
         tier_config=tier_config,
