@@ -25,6 +25,7 @@ from scylla.e2e.models import (
 )
 from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 from scylla.e2e.tier_manager import TierManager
+from scylla.e2e.workspace_manager import WorkspaceManager
 
 if TYPE_CHECKING:
     pass
@@ -73,6 +74,7 @@ class E2ERunner:
         self.tier_manager = TierManager(tiers_dir)
         self.results_base_dir = results_base_dir
         self.experiment_dir: Path | None = None
+        self.workspace_manager: WorkspaceManager | None = None
 
     def run(self) -> ExperimentResult:
         """Run the complete E2E experiment.
@@ -87,6 +89,14 @@ class E2ERunner:
 
         # Save configuration
         self._save_config()
+
+        # Create workspace manager and setup base repo
+        self.workspace_manager = WorkspaceManager(
+            experiment_dir=self.experiment_dir,
+            repo_url=self.config.task_repo,
+            commit=self.config.task_commit,
+        )
+        self.workspace_manager.setup_base_repo()
 
         # Run tiers
         tier_results: dict[TierID, TierResult] = {}
@@ -208,6 +218,7 @@ class E2ERunner:
             tier_id=tier_id,
             tier_config=tier_config,
             tier_manager=self.tier_manager,
+            workspace_manager=self.workspace_manager,
             baseline=baseline,
             results_dir=tier_dir,
         )
