@@ -306,6 +306,7 @@ class ExperimentConfig:
         parallel_subtests: Max parallel sub-tests (default: 4)
         timeout_seconds: Timeout per run in seconds
         max_turns: Maximum conversation turns for agent (None = unlimited)
+        max_subtests: Maximum sub-tests per tier for testing (None = all)
     """
 
     experiment_id: str
@@ -320,6 +321,7 @@ class ExperimentConfig:
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
+    max_subtests: int | None = None  # Max sub-tests per tier (None = all)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -336,6 +338,7 @@ class ExperimentConfig:
             "parallel_subtests": self.parallel_subtests,
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
+            "max_subtests": self.max_subtests,
         }
 
     def save(self, path: Path) -> None:
