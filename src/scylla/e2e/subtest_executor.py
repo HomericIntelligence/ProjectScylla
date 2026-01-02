@@ -176,12 +176,18 @@ class SubTestExecutor:
         prompt_file = logs_dir / "task_prompt.md"
         prompt_file.write_text(task_prompt)
 
+        # Build extra args for adapter
+        extra_args: list[str] = []
+        if self.config.max_turns is not None:
+            extra_args.extend(["--max-turns", str(self.config.max_turns)])
+
         adapter_config = AdapterConfig(
             model=self.config.models[0],
             prompt_file=prompt_file,
             workspace=workspace,
             output_dir=logs_dir,
             timeout=self.config.timeout_seconds,
+            extra_args=extra_args,
         )
 
         # Execute agent

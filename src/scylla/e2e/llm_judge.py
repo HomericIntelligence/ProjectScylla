@@ -75,6 +75,9 @@ def _build_judge_prompt(
     task_prompt: str,
     agent_output: str,
     workspace_state: str,
+    patchfile: str | None = None,
+    deleted_files: list[str] | None = None,
+    reference_patch: str | None = None,
 ) -> str:
     """Build the evaluation context for the LLM judge.
 
@@ -85,23 +88,47 @@ def _build_judge_prompt(
         task_prompt: The original task prompt
         agent_output: The agent's stdout/conversation output
         workspace_state: Description of files created/modified
+        patchfile: Git diff showing all changes (optional)
+        deleted_files: List of deleted file paths (optional)
+        reference_patch: Reference solution patch for comparison (optional)
 
     Returns:
         Formatted evaluation context for the judge LLM.
     """
-    return f"""## Task Given to Agent
+    sections = [
+        f"## Task Given to Agent\n\n{task_prompt}",
+        f"## Agent's Output\n\n{agent_output}",
+        f"## Workspace State After Agent Execution\n\n{workspace_state}",
+    ]
 
-{task_prompt}
+    # Add patchfile section if available
+    if patchfile and patchfile not in ("(no changes detected)", "(unable to generate patchfile)"):
+        sections.append(f"## Git Diff (Patchfile)\n\n```diff\n{patchfile}\n```")
 
-## Agent's Output
+    # Add deleted files section if any
+    if deleted_files:
+        deleted_list = "\n".join(f"- {f}" for f in deleted_files)
+        sections.append(f"## Deleted Files\n\n{deleted_list}")
 
-{agent_output}
+    # Add reference patch section if available
+    if reference_patch:
+        # Truncate reference patch if too long
+        ref_lines = reference_patch.split("\n")
+        if len(ref_lines) > 200:
+            ref_patch = "\n".join(ref_lines[:100] + ["", "... (truncated)", ""] + ref_lines[-50:])
+        else:
+            ref_patch = reference_patch
+        sections.append(
+            f"## Reference Solution Patch\n\n"
+            f"Compare the agent's changes against this reference solution:\n\n"
+            f"```diff\n{ref_patch}\n```\n\n"
+            f"Note: The agent's solution does not need to be identical, but should achieve "
+            f"the same semantic result (same files created/modified, similar structure)."
+        )
 
-## Workspace State After Agent Execution
+    sections.append("Evaluate the agent's work using the criteria in your system prompt.")
 
-{workspace_state}
-
-Evaluate the agent's work using the criteria in your system prompt."""
+    return "\n\n".join(sections)
 
 
 def _get_workspace_state(workspace: Path) -> str:
@@ -135,12 +162,107 @@ def _get_workspace_state(workspace: Path) -> str:
     return "\n".join(lines)
 
 
+def _get_patchfile(workspace: Path) -> str:
+    """Generate a patchfile from the agent's changes.
+
+    Uses git diff to capture all changes made by the agent.
+
+    Args:
+        workspace: Path to the workspace directory
+
+    Returns:
+        String containing the git diff output.
+    """
+    try:
+        # Get both staged and unstaged changes
+        result = subprocess.run(
+            ["git", "diff", "HEAD"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if result.returncode != 0:
+            logger.warning(f"git diff failed: {result.stderr}")
+            return "(unable to generate patchfile)"
+
+        diff = result.stdout.strip()
+        if not diff:
+            return "(no changes detected)"
+
+        # Truncate if too long (keep first and last portions)
+        max_lines = 500
+        lines = diff.split("\n")
+        if len(lines) > max_lines:
+            half = max_lines // 2
+            truncated = lines[:half] + ["", "... (truncated)", ""] + lines[-half:]
+            return "\n".join(truncated)
+
+        return diff
+
+    except subprocess.TimeoutExpired:
+        return "(git diff timed out)"
+    except Exception as e:
+        logger.warning(f"Error generating patchfile: {e}")
+        return f"(error generating patchfile: {e})"
+
+
+def _get_deleted_files(workspace: Path) -> list[str]:
+    """Get list of files deleted by the agent.
+
+    Args:
+        workspace: Path to the workspace directory
+
+    Returns:
+        List of deleted file paths.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "--diff-filter=D", "HEAD"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if result.returncode != 0:
+            return []
+
+        deleted = result.stdout.strip().split("\n")
+        return [f for f in deleted if f]
+
+    except Exception:
+        return []
+
+
+def _load_reference_patch(reference_path: Path) -> str | None:
+    """Load a reference patch file for comparison.
+
+    Args:
+        reference_path: Path to the reference patch file
+
+    Returns:
+        Contents of the reference patch, or None if not found.
+    """
+    if not reference_path.exists():
+        return None
+
+    try:
+        return reference_path.read_text()
+    except Exception as e:
+        logger.warning(f"Error loading reference patch: {e}")
+        return None
+
+
 def run_llm_judge(
     workspace: Path,
     task_prompt: str,
     agent_output: str,
     model: str = "claude-opus-4-5-20251101",  # REQUIRED: Must use Opus for accurate judging
     logs_dir: Path | None = None,
+    reference_patch_path: Path | None = None,
+    include_patchfile: bool = True,
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
 
@@ -157,6 +279,8 @@ def run_llm_judge(
         agent_output: The agent's stdout output
         model: Model to use for judging (must be Opus for accurate judging)
         logs_dir: Optional directory to save judge logs
+        reference_patch_path: Optional path to reference solution patch for comparison
+        include_patchfile: Whether to include git diff in evaluation context
 
     Returns:
         JudgeResult with evaluation details.
@@ -164,8 +288,27 @@ def run_llm_judge(
     # Get workspace state
     workspace_state = _get_workspace_state(workspace)
 
+    # Get patchfile and deleted files if requested
+    patchfile = None
+    deleted_files = None
+    if include_patchfile:
+        patchfile = _get_patchfile(workspace)
+        deleted_files = _get_deleted_files(workspace)
+
+    # Load reference patch if provided
+    reference_patch = None
+    if reference_patch_path:
+        reference_patch = _load_reference_patch(reference_patch_path)
+
     # Build the judge prompt
-    judge_prompt = _build_judge_prompt(task_prompt, agent_output, workspace_state)
+    judge_prompt = _build_judge_prompt(
+        task_prompt,
+        agent_output,
+        workspace_state,
+        patchfile=patchfile,
+        deleted_files=deleted_files,
+        reference_patch=reference_patch,
+    )
 
     # Call Claude CLI for judgment
     try:
