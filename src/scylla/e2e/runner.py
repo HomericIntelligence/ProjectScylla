@@ -16,12 +16,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scylla.e2e.judge_selection import JudgeSelection, save_selection, select_best_subtest
+from scylla.e2e.llm_judge import build_judge_prompt_with_paths
 from scylla.e2e.models import (
     ExperimentConfig,
     ExperimentResult,
     TierBaseline,
     TierID,
     TierResult,
+)
+from scylla.e2e.run_report import (
+    save_experiment_report,
+    save_subtest_report,
+    save_tier_report,
 )
 from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 from scylla.e2e.tier_manager import TierManager
@@ -112,7 +118,6 @@ class E2ERunner:
             if tier_result.best_subtest:
                 subtest_dir = (
                     self.experiment_dir
-                    / "tiers"
                     / tier_id.value
                     / tier_result.best_subtest
                 )
@@ -165,6 +170,10 @@ class E2ERunner:
     def _create_experiment_dir(self) -> Path:
         """Create the experiment results directory.
 
+        Creates flattened structure with grading materials at root:
+        - prompt.md, criteria.md, rubric.yaml, judge_prompt.md at root
+        - Tiers directly under root (T0/, T1/, etc.)
+
         Returns:
             Path to the experiment directory.
         """
@@ -172,13 +181,63 @@ class E2ERunner:
         experiment_dir = self.results_base_dir / f"{timestamp}-{self.config.experiment_id}"
         experiment_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create subdirectories
+        # Create config directory
         (experiment_dir / "config").mkdir(exist_ok=True)
-        (experiment_dir / "tiers").mkdir(exist_ok=True)
-        (experiment_dir / "summary").mkdir(exist_ok=True)
-        (experiment_dir / "logs").mkdir(exist_ok=True)
+
+        # Copy grading materials to root (uniform across all tiers)
+        self._copy_grading_materials(experiment_dir)
 
         return experiment_dir
+
+    def _copy_grading_materials(self, experiment_dir: Path) -> None:
+        """Copy grading materials from test config to experiment root.
+
+        Copies prompt.md, criteria.md, rubric.yaml to experiment root since
+        they're uniform across all tiers/subtests/runs. Also creates the
+        judge_prompt.md template.
+
+        Args:
+            experiment_dir: Root experiment directory
+        """
+        import shutil
+
+        # Copy task prompt
+        prompt_path = experiment_dir / "prompt.md"
+        if self.config.task_prompt_file.exists():
+            shutil.copy2(self.config.task_prompt_file, prompt_path)
+            logger.debug(f"Copied task prompt to {prompt_path}")
+
+        # Copy criteria if exists (look for it relative to prompt file)
+        prompt_dir = self.config.task_prompt_file.parent
+        criteria_path = experiment_dir / "criteria.md"
+        criteria_file = prompt_dir / "expected" / "criteria.md"
+        if criteria_file.exists():
+            shutil.copy2(criteria_file, criteria_path)
+            logger.debug(f"Copied criteria to {criteria_path}")
+        else:
+            criteria_path = None
+
+        # Copy rubric if exists
+        rubric_path = experiment_dir / "rubric.yaml"
+        rubric_file = prompt_dir / "expected" / "rubric.yaml"
+        if rubric_file.exists():
+            shutil.copy2(rubric_file, rubric_path)
+            logger.debug(f"Copied rubric to {rubric_path}")
+        else:
+            rubric_path = None
+
+        # Create judge_prompt.md template (uniform across all tiers)
+        # Note: output_path and workspace_path are placeholders - they get substituted per run
+        judge_template = build_judge_prompt_with_paths(
+            prompt_path=experiment_dir / "prompt.md",
+            output_path=Path("<run_dir>/output.txt"),  # Placeholder
+            workspace_path=Path("<subtest_dir>/workspace"),  # Placeholder
+            criteria_path=criteria_path,
+            rubric_path=rubric_path,
+        )
+        judge_prompt_path = experiment_dir / "judge_prompt.md"
+        judge_prompt_path.write_text(judge_template)
+        logger.debug(f"Created judge prompt template at {judge_prompt_path}")
 
     def _save_config(self) -> None:
         """Save experiment configuration."""
@@ -209,8 +268,8 @@ class E2ERunner:
             f"mode: {tier_config.system_prompt_mode}"
         )
 
-        # Prepare results directory
-        tier_dir = self.experiment_dir / "tiers" / tier_id.value
+        # Prepare results directory (flat structure: experiment/T0/, not experiment/tiers/T0/)
+        tier_dir = self.experiment_dir / tier_id.value
 
         # Run all sub-tests in parallel
         subtest_results = run_tier_subtests_parallel(
@@ -260,18 +319,33 @@ class E2ERunner:
         )
 
     def _save_tier_result(self, tier_id: TierID, result: TierResult) -> None:
-        """Save tier results to file.
+        """Save tier results to file and generate hierarchical reports.
+
+        Generates:
+        - result.json (detailed data)
+        - report.json (summary with links)
+        - report.md (human-readable)
+        - Per-subtest reports
 
         Args:
             tier_id: The tier identifier
             result: The tier result
         """
         if self.experiment_dir:
-            tier_dir = self.experiment_dir / "tiers" / tier_id.value
+            tier_dir = self.experiment_dir / tier_id.value
             tier_dir.mkdir(parents=True, exist_ok=True)
 
+            # Save detailed result
             with open(tier_dir / "result.json", "w") as f:
                 json.dump(result.to_dict(), f, indent=2)
+
+            # Generate subtest reports
+            for subtest_id, subtest_result in result.subtest_results.items():
+                subtest_dir = tier_dir / subtest_id
+                save_subtest_report(subtest_dir, subtest_id, subtest_result)
+
+            # Generate tier report
+            save_tier_report(tier_dir, tier_id.value, result)
 
     def _find_frontier(
         self,
@@ -309,11 +383,14 @@ class E2ERunner:
     def _save_final_results(self, result: ExperimentResult) -> None:
         """Save final experiment results.
 
+        Saves result.json and tier_comparison.json to experiment root.
+
         Args:
             result: The complete experiment result
         """
         if self.experiment_dir:
-            result.save(self.experiment_dir / "summary" / "result.json")
+            # Save to root (not summary/ subdir)
+            result.save(self.experiment_dir / "result.json")
 
             # Save tier comparison
             comparison = {
@@ -326,11 +403,15 @@ class E2ERunner:
                 for tier_id, tier_result in result.tier_results.items()
             }
 
-            with open(self.experiment_dir / "summary" / "tier_comparison.json", "w") as f:
+            with open(self.experiment_dir / "tier_comparison.json", "w") as f:
                 json.dump(comparison, f, indent=2)
 
     def _generate_report(self, result: ExperimentResult) -> None:
-        """Generate markdown report.
+        """Generate hierarchical experiment reports.
+
+        Generates:
+        - report.json (summary with links to tier reports)
+        - report.md (human-readable with links)
 
         Args:
             result: The complete experiment result
@@ -338,56 +419,10 @@ class E2ERunner:
         if not self.experiment_dir:
             return
 
-        lines = [
-            f"# E2E Experiment Report: {self.config.experiment_id}",
-            "",
-            f"**Generated**: {datetime.now(UTC).isoformat()}",
-            f"**Duration**: {result.total_duration_seconds:.1f}s",
-            f"**Total Cost**: ${result.total_cost:.4f}",
-            "",
-            "## Summary",
-            "",
-            f"- **Best Tier**: {result.best_overall_tier.value if result.best_overall_tier else 'N/A'}",
-            f"- **Best Sub-test**: {result.best_overall_subtest or 'N/A'}",
-            f"- **Frontier CoP**: ${result.frontier_cop:.4f}" if result.frontier_cop != float("inf") else "- **Frontier CoP**: N/A",
-            "",
-            "## Tier Results",
-            "",
-            "| Tier | Best Sub-test | Score | Cost | Tie-breaker |",
-            "|------|---------------|-------|------|-------------|",
-        ]
+        # Use the hierarchical report generator
+        save_experiment_report(self.experiment_dir, result)
 
-        for tier_id in self.config.tiers_to_run:
-            tier_result = result.tier_results.get(tier_id)
-            if tier_result:
-                lines.append(
-                    f"| {tier_id.value} | {tier_result.best_subtest or 'N/A'} | "
-                    f"{tier_result.best_subtest_score:.3f} | "
-                    f"${tier_result.total_cost:.4f} | "
-                    f"{'Yes' if tier_result.tiebreaker_used else 'No'} |"
-                )
-
-        lines.extend(
-            [
-                "",
-                "## Configuration",
-                "",
-                f"- **Task Repo**: {self.config.task_repo}",
-                f"- **Task Commit**: {self.config.task_commit}",
-                f"- **Runs per Sub-test**: {self.config.runs_per_subtest}",
-                f"- **Judge Model**: {self.config.judge_model}",
-                f"- **Tie-breaker Model**: {self.config.tiebreaker_model}",
-                "",
-                "---",
-                "",
-                "*Generated by ProjectScylla E2E Framework*",
-            ]
-        )
-
-        report_path = self.experiment_dir / "report.md"
-        report_path.write_text("\n".join(lines))
-
-        logger.info(f"Report saved to {report_path}")
+        logger.info(f"Reports saved to {self.experiment_dir / 'report.md'}")
 
 
 def run_experiment(
