@@ -34,6 +34,7 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
    - No unnecessary complexity (cyclomatic complexity < 15)
    - Reasonable function length (< 50 LOC)
    - Nesting depth manageable (< 4 levels)
+   - Can be compiled or interpreted
 
 6. **Documentation**: Is the code properly documented?
    - Functions have docstrings/comments explaining purpose
@@ -45,7 +46,8 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
    - Consistent indentation and formatting
    - Proper import organization
    - No unused variables or imports
-   - Follows idiomatic patterns (PEP8 for Python, etc.)
+   - Follows idiomatic patterns
+   - Passes the standard linting tools for the language
 
 8. **Testability**: Is the code testable?
    - Functions have clear inputs/outputs
@@ -94,19 +96,19 @@ the same goal should score well if they work correctly.
 ## Scoring Guidelines
 
 **Score Thresholds**:
-- 0.9-1.0: Excellent - Production ready, no issues
-- 0.8-0.89: Good - Minor improvements possible
-- 0.7-0.79: Acceptable - Some issues but functional
-- 0.6-0.69: Marginal - Significant issues
-- 0.0-0.59: Failing - Does not meet requirements
+- 0.8-1.0: Excellent - Production ready, no issues
+- 0.6-0.79: Good - Minor improvements possible
+- 0.4-0.59: Acceptable - Some issues but functional
+- 0.2-0.39: Marginal - Significant issues
+- 0.0-0.19: Failing - Does not meet requirements
 
-**Pass Threshold**: score >= 0.7 AND correctness >= 0.8
+**Pass Threshold**: score >= 0.5 AND correctness >= 0.6
 
 ## Response Format
 
 Respond with a JSON object containing:
 - "score": Weighted average (0.0-1.0) using weights above
-- "passed": true if score >= 0.7 AND correctness >= 0.8
+- "passed": true if score >= 0.5 AND correctness >= 0.6
 - "reasoning": Overall summary (2-3 sentences) of judgment
 - "criteria_scores": Object with all criterion evaluations, each containing:
   - "score": Numeric score (0.0-1.0)

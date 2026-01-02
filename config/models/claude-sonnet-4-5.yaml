@@ -1,0 +1,15 @@
+# Claude Sonnet 4 Model Configuration
+model_id: "claude-sonnet-4-5-20250929"
+name: "Claude Sonnet 4"
+provider: "anthropic"
+adapter: "claude_code"
+temperature: 0.0
+max_tokens: 8192
+
+# Pricing per 1K tokens (as of 2025)
+cost_per_1k_input: 0.003   # $3.00 per 1M = $0.003 per 1K
+cost_per_1k_output: 0.015  # $15.00 per 1M = $0.015 per 1K
+
+# Optional overrides (null uses defaults)
+timeout_seconds: null
+max_cost_usd: null
