@@ -263,6 +263,15 @@ class E2ERunner:
         # Load tier configuration
         tier_config = self.tier_manager.load_tier_config(tier_id)
 
+        # Limit sub-tests if max_subtests is set
+        if self.config.max_subtests is not None:
+            original_count = len(tier_config.subtests)
+            tier_config.subtests = tier_config.subtests[: self.config.max_subtests]
+            if len(tier_config.subtests) < original_count:
+                logger.info(
+                    f"Limiting sub-tests from {original_count} to {len(tier_config.subtests)}"
+                )
+
         logger.info(
             f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests, "
             f"mode: {tier_config.system_prompt_mode}"
