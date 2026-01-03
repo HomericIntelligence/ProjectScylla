@@ -11,7 +11,13 @@ from pathlib import Path
 
 @dataclass
 class ExecutionInfo:
-    """Execution metadata for a run."""
+    """Execution metadata for a run.
+
+    This is the minimal execution info for result persistence.
+    For other ExecutionInfo types, see:
+    - executor/runner.py:ExecutionInfo (detailed with container info)
+    - core/results.py:BaseExecutionInfo (base type)
+    """
 
     status: str
     duration_seconds: float
@@ -50,7 +56,15 @@ class GradingInfo:
 class RunResult:
     """Complete result for a single evaluation run.
 
-    Contains all execution, metrics, judgment, and grading data.
+    Contains all execution, metrics, judgment, and grading data
+    using composition with nested info objects.
+
+    This is the persistence result with nested info objects.
+    For other RunResult types, see:
+    - executor/runner.py:RunResult (execution tracking with status)
+    - e2e/models.py:RunResult (E2E testing with paths)
+    - metrics/aggregator.py:RunResult (statistical aggregation)
+    - core/results.py:BaseRunResult (base type)
     """
 
     test_id: str

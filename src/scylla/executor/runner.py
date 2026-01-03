@@ -57,7 +57,13 @@ class InsufficientRunsError(RunnerError):
 
 
 class ExecutionInfo(BaseModel):
-    """Information about a single execution."""
+    """Detailed execution information for container runs.
+
+    This is the executor's detailed execution info, including container
+    and output details. For simpler execution info, see:
+    - reporting/result.py:ExecutionInfo (minimal, for persistence)
+    - core/results.py:BaseExecutionInfo (base type)
+    """
 
     container_id: str = Field(..., description="Docker container ID")
     exit_code: int = Field(..., description="Container exit code")
@@ -79,7 +85,15 @@ class JudgmentResult(BaseModel):
 
 
 class RunResult(BaseModel):
-    """Result of a single run."""
+    """Result of a single run with execution tracking.
+
+    This is the executor's run result with status tracking and optional
+    judgment. For other RunResult types, see:
+    - e2e/models.py:RunResult (E2E testing with judge fields)
+    - reporting/result.py:RunResult (persistence with nested info)
+    - metrics/aggregator.py:RunResult (statistical aggregation)
+    - core/results.py:BaseRunResult (base type)
+    """
 
     run_number: int = Field(..., description="Run number (1-10)")
     status: RunStatus = Field(..., description="Run status")

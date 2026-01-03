@@ -23,7 +23,13 @@ AggregatedStats = Statistics
 
 @dataclass
 class RunResult:
-    """Result from a single evaluation run.
+    """Result from a single evaluation run for aggregation.
+
+    This is a simplified result type used for statistical aggregation.
+    For detailed execution results, see:
+    - executor/runner.py:RunResult (execution tracking)
+    - e2e/models.py:RunResult (E2E test results)
+    - reporting/result.py:RunResult (persistence)
 
     Attributes:
         run_id: Unique identifier for the run.
