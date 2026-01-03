@@ -1,3 +1,7 @@
-name: "foundation-orchestrator"
-description: "L1 orchestrator: foundation-orchestrator"
+name: foundation-orchestrator
+description: 'L1 orchestrator: foundation-orchestrator'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 1

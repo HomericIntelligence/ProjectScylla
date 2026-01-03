@@ -8,9 +8,10 @@ Python Justification: Required for filesystem operations and YAML parsing.
 
 from __future__ import annotations
 
+import os
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
@@ -116,6 +117,9 @@ class TierManager:
             # 00-empty and 01-vanilla don't extend; 02+ may extend
             extends_previous = tier_id != TierID.T0 or int(subtest_id) >= 2
 
+            # Load resources spec for symlink-based fixtures
+            resources: dict[str, Any] = {}
+
             if config_file.exists():
                 with open(config_file) as f:
                     config_data = yaml.safe_load(f) or {}
@@ -123,6 +127,8 @@ class TierManager:
                 description = config_data.get("description", description)
                 # Allow config to override extends_previous
                 extends_previous = config_data.get("extends_previous", extends_previous)
+                # Load resources specification for runtime symlinks
+                resources = config_data.get("resources", {})
 
             subtests.append(
                 SubTestConfig(
@@ -132,6 +138,7 @@ class TierManager:
                     claude_md_path=claude_md if claude_md.exists() else None,
                     claude_dir_path=claude_dir if claude_dir.exists() else None,
                     extends_previous=extends_previous,
+                    resources=resources,
                 )
             )
 
@@ -219,13 +226,20 @@ class TierManager:
         """Overlay sub-test configuration onto workspace.
 
         This merges the sub-test's CLAUDE.md and .claude directory
-        with any existing configuration from the baseline.
+        with any existing configuration from the baseline. Supports both:
+        - Legacy mode: Copy files from subtest directory
+        - Symlink mode: Create symlinks to shared/ based on resources spec
 
         Args:
             workspace: Target workspace directory
             subtest: Sub-test configuration to overlay
         """
-        # Handle CLAUDE.md
+        # NEW: Use symlinks if resources are specified
+        if subtest.resources:
+            self._create_symlinks(workspace, subtest.resources)
+            return
+
+        # LEGACY: Handle CLAUDE.md (fallback for fixtures not yet migrated)
         if subtest.claude_md_path and subtest.claude_md_path.exists():
             dest = workspace / "CLAUDE.md"
             if dest.exists() and subtest.extends_previous:
@@ -238,7 +252,7 @@ class TierManager:
                 # Replace
                 shutil.copy(subtest.claude_md_path, dest)
 
-        # Handle .claude directory
+        # LEGACY: Handle .claude directory (fallback for fixtures not yet migrated)
         if subtest.claude_dir_path and subtest.claude_dir_path.exists():
             dest = workspace / ".claude"
             if dest.exists() and subtest.extends_previous:
@@ -268,6 +282,142 @@ class TierManager:
                 self._merge_directories(item, dest_item)
             else:
                 shutil.copy(item, dest_item)
+
+    def _get_shared_dir(self) -> Path:
+        """Get path to the shared resources directory.
+
+        Returns:
+            Path to tests/claude-code/shared/ directory.
+        """
+        # Navigate from tiers_dir (tests/fixtures/tests/test-XXX) to shared
+        # tiers_dir -> tests/fixtures/tests -> tests/fixtures -> tests -> claude-code/shared
+        return self.tiers_dir.parent.parent.parent / "claude-code" / "shared"
+
+    def _resolve_resources(self, config_path: Path) -> dict[str, Any]:
+        """Parse resources section from config.yaml.
+
+        Args:
+            config_path: Path to the config.yaml file
+
+        Returns:
+            Dictionary with resources specification (skills, agents, claude_md)
+        """
+        if not config_path.exists():
+            return {}
+
+        with open(config_path) as f:
+            config = yaml.safe_load(f) or {}
+
+        return config.get("resources", {})
+
+    def _create_symlinks(self, workspace: Path, resources: dict[str, Any]) -> None:
+        """Create symlinks to shared resources at runtime.
+
+        Args:
+            workspace: Target workspace directory
+            resources: Resource specification from config.yaml
+        """
+        shared_dir = self._get_shared_dir()
+
+        # Symlink skills by category
+        if "skills" in resources:
+            skills_spec = resources["skills"]
+            skills_dir = workspace / ".claude" / "skills"
+            skills_dir.mkdir(parents=True, exist_ok=True)
+
+            # Handle categories (e.g., ["agent", "github"])
+            for category in skills_spec.get("categories", []):
+                category_dir = shared_dir / "skills" / category
+                if category_dir.exists():
+                    for skill in category_dir.iterdir():
+                        if skill.is_dir():
+                            link_path = skills_dir / skill.name
+                            if not link_path.exists():
+                                os.symlink(skill.resolve(), link_path)
+
+            # Handle individual skill names (e.g., ["gh-create-pr-linked"])
+            for skill_name in skills_spec.get("names", []):
+                # Search all categories for this skill
+                for category_dir in (shared_dir / "skills").iterdir():
+                    if category_dir.is_dir():
+                        skill_path = category_dir / skill_name
+                        if skill_path.exists():
+                            link_path = skills_dir / skill_name
+                            if not link_path.exists():
+                                os.symlink(skill_path.resolve(), link_path)
+                            break
+
+        # Symlink agents by level
+        if "agents" in resources:
+            agents_spec = resources["agents"]
+            agents_dir = workspace / ".claude" / "agents"
+            agents_dir.mkdir(parents=True, exist_ok=True)
+
+            # Handle levels (e.g., [0, 1, 3])
+            for level in agents_spec.get("levels", []):
+                level_dir = shared_dir / "agents" / f"L{level}"
+                if level_dir.exists():
+                    for agent in level_dir.iterdir():
+                        if agent.is_file() and agent.suffix == ".md":
+                            link_path = agents_dir / agent.name
+                            if not link_path.exists():
+                                os.symlink(agent.resolve(), link_path)
+
+            # Handle individual agent names (e.g., ["chief-architect.md"])
+            for agent_name in agents_spec.get("names", []):
+                # Search all levels for this agent
+                for level_dir in (shared_dir / "agents").iterdir():
+                    if level_dir.is_dir() and level_dir.name.startswith("L"):
+                        agent_path = level_dir / agent_name
+                        if agent_path.exists():
+                            link_path = agents_dir / agent_name
+                            if not link_path.exists():
+                                os.symlink(agent_path.resolve(), link_path)
+                            break
+
+        # Compose CLAUDE.md from blocks
+        if "claude_md" in resources:
+            claude_md_spec = resources["claude_md"]
+            self._compose_claude_md(workspace, claude_md_spec, shared_dir)
+
+    def _compose_claude_md(
+        self,
+        workspace: Path,
+        spec: dict[str, Any],
+        shared_dir: Path,
+    ) -> None:
+        """Compose CLAUDE.md from blocks at runtime.
+
+        Args:
+            workspace: Target workspace directory
+            spec: CLAUDE.md specification (preset or blocks list)
+            shared_dir: Path to shared resources directory
+        """
+        blocks_dir = shared_dir / "blocks"
+        if not blocks_dir.exists():
+            return
+
+        # Get block IDs from spec
+        block_ids = spec.get("blocks", [])
+
+        # Handle presets (would need a preset mapping, for now just use blocks)
+        if not block_ids and "preset" in spec:
+            # TODO: Add preset mappings if needed
+            return
+
+        if not block_ids:
+            return
+
+        content_parts = []
+        for block_id in block_ids:
+            # Find block file matching pattern like "B02-critical-rules.md"
+            matches = list(blocks_dir.glob(f"{block_id}-*.md"))
+            if matches:
+                content_parts.append(matches[0].read_text())
+
+        if content_parts:
+            claude_md = workspace / "CLAUDE.md"
+            claude_md.write_text("\n\n".join(content_parts))
 
     def get_baseline_for_subtest(
         self,

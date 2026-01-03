@@ -1,3 +1,7 @@
-name: "Workflow Skills"
-description: "5 skills from the workflow category"
+name: Workflow Skills
+description: 5 skills from the workflow category
 extends_previous: true
+resources:
+  skills:
+    categories:
+    - workflow

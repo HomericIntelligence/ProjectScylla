@@ -1,3 +1,7 @@
-name: "Quality Skills"
-description: "5 skills from the quality category"
+name: Quality Skills
+description: 5 skills from the quality category
 extends_previous: true
+resources:
+  skills:
+    categories:
+    - quality

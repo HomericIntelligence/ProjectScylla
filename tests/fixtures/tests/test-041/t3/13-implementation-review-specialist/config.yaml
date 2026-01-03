@@ -1,3 +1,7 @@
-name: "implementation-review-specialist"
-description: "L3 agent: implementation-review-specialist"
+name: implementation-review-specialist
+description: 'L3 agent: implementation-review-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

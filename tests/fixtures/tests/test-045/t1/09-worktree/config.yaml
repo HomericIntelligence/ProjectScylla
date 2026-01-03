@@ -1,3 +1,7 @@
-name: "Worktree Skills"
-description: "4 skills from the worktree category"
+name: Worktree Skills
+description: 4 skills from the worktree category
 extends_previous: true
+resources:
+  skills:
+    categories:
+    - worktree

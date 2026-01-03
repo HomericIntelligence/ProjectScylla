@@ -56,3 +56,9 @@ htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Test fixtures - generated at runtime via symlinks
+# The .claude/ directories and CLAUDE.md files are created by tier_manager.py
+# at test runtime from shared/ resources specified in config.yaml
+tests/fixtures/tests/*/t*/*/.claude/
+tests/fixtures/tests/*/t*/*/CLAUDE.md

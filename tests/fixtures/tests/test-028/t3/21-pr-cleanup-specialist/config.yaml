@@ -1,3 +1,7 @@
-name: "pr-cleanup-specialist"
-description: "L3 agent: pr-cleanup-specialist"
+name: pr-cleanup-specialist
+description: 'L3 agent: pr-cleanup-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

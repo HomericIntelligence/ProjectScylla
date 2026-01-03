@@ -1,3 +1,10 @@
-name: "All Agents"
-description: "All 37 non-orchestrator agents enabled"
+name: All Agents
+description: All 37 non-orchestrator agents enabled
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 2
+    - 3
+    - 4
+    - 5
