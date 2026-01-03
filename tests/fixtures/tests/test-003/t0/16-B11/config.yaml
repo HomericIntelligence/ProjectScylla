@@ -1,7 +1,0 @@
-name: B11 output-style
-description: Individual block B11 test
-extends_previous: false
-resources:
-  claude_md:
-    blocks:
-    - B11

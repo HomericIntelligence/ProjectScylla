@@ -1,7 +1,0 @@
-name: agentic-workflows-orchestrator
-description: 'L1 orchestrator: agentic-workflows-orchestrator'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 1

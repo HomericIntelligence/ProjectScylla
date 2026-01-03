@@ -1,7 +1,0 @@
-name: test-specialist
-description: 'L3 agent: test-specialist'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 3

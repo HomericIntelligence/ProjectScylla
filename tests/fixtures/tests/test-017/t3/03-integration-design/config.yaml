@@ -1,7 +1,0 @@
-name: integration-design
-description: 'L2 agent: integration-design'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 2

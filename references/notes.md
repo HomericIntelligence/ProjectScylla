@@ -352,3 +352,79 @@ du -sh tests/fixtures/
 1. `scripts/migrate_t0_to_blocks.py` - Migration script (created)
 2. `tests/fixtures/tests/test-*/t0/*/config.yaml` - 1128 files updated with `resources.claude_md.blocks`
 3. `tests/fixtures/tests/test-*/t0/*/CLAUDE.md` - 1034 files deleted
+
+---
+
+## Skill: centralize-subtest-configs (2026-01-03)
+
+### Session Details
+
+- **Date**: 2026-01-03
+- **Model**: Claude Opus 4.5 (claude-opus-4-5-20251101)
+- **Working Directory**: /home/mvillmow/ProjectOdyssey/build/ProjectScylla
+- **Branch**: feat/odyssey-benchmark-tests
+
+### Initial Request
+
+> "There are still lots of code duplication that needs to be removed. Looking at filelist.txt,
+> there are 120 files that are duplicated more than once... config.yaml duplicated 47 times...
+> Lets come up with a plan for reducing this duplication and instead having it be generated
+> or linked dynamically at runtime. Ideally each test has a single json that documents its
+> configuration, and that configuration knows which tiers and sub-tests to run from."
+
+### Key Findings
+
+1. **Scale of duplication**:
+   - 5361 config.yaml files across 47 tests
+   - 5355 (99.9%) were duplicates
+   - 119 unique subtest configs repeated 47 times each
+   - Example: `t1/04-github/config.yaml` identical across all tests
+
+2. **Root cause**: Subtest configs are test-independent - they define tier components, not test-specific settings
+
+3. **Solution**: Centralize configs in `tests/claude-code/shared/subtests/` and modify `tier_manager.py` to load from there
+
+### Commands Used
+
+```bash
+# Find duplicated files by hash
+find tests/fixtures/tests -type f -name "config.yaml" | xargs md5sum | awk '{print $1}' | sort | uniq -c | sort -rn | head -30
+
+# Count total duplicates
+find tests/fixtures/tests -type f -name "config.yaml" | xargs md5sum | awk '{print $1}' | sort | uniq -c | awk '$1 > 1 {sum += $1; count++} END {print "Duplicated file groups:", count; print "Total duplicated files:", sum}'
+
+# Create shared subtests structure
+mkdir -p tests/claude-code/shared/subtests/t{0,1,2,3,4,5,6}
+
+# Copy configs from test-001 to shared
+for tier in t0 t1 t2 t3 t4 t5 t6; do
+  for dir in tests/fixtures/tests/test-001/$tier/*/; do
+    subtest=$(basename "$dir")
+    if [ -f "$dir/config.yaml" ]; then
+      cp "$dir/config.yaml" "tests/claude-code/shared/subtests/$tier/$subtest.yaml"
+    fi
+  done
+done
+
+# Dry-run migration
+python scripts/migrate_subtests_to_shared.py tests/fixtures/tests/ --dry-run
+
+# Execute migration
+python scripts/migrate_subtests_to_shared.py tests/fixtures/tests/
+```
+
+### Results
+
+| Metric | Before | After |
+|--------|--------|-------|
+| config.yaml files | 5361 | 47 (test-level) + 113 (shared) |
+| Fixture size | 47MB | 1.4MB |
+| Tier directories per test | 7 | 0 |
+| Subtest directories | 5361 | 0 (now YAML files in shared) |
+
+### Files Created/Modified
+
+1. `tests/claude-code/shared/subtests/t{0-6}/*.yaml` - 113 centralized subtest configs
+2. `scripts/migrate_subtests_to_shared.py` - Migration script
+3. `src/scylla/e2e/tier_manager.py` - Added `_load_shared_subtests()` and `_overlay_test_specific()` methods
+4. `tests/fixtures/tests/test-*/t{0-6}/` - 329 directories deleted (5361 files)

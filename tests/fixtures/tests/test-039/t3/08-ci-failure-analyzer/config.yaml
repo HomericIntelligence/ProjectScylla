@@ -1,7 +1,0 @@
-name: ci-failure-analyzer
-description: 'L3 agent: ci-failure-analyzer'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 3

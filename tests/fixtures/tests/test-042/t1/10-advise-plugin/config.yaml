@@ -1,3 +1,0 @@
-name: "Advise Plugin"
-description: "Uses /advise skill plugin for knowledge search"
-extends_previous: true

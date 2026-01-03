@@ -1,6 +1,0 @@
-name: "PostgreSQL MCP"
-description: "PostgreSQL database interactions"
-extends_previous: true
-mcp_servers:
-  - name: postgres
-    source: third-party

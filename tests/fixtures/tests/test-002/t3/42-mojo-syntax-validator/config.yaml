@@ -1,5 +1,0 @@
-name: "Mojo Syntax Validator Agent"
-description: "L3 specialist for validating Mojo v0.26.1 syntax"
-extends_previous: true
-agent: mojo-syntax-validator
-agent_source: "https://github.com/mvillmow/ProjectOdyssey/tree/main/.claude/agents"

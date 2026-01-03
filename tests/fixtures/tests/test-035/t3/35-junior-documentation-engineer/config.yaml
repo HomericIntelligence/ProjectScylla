@@ -1,7 +1,0 @@
-name: junior-documentation-engineer
-description: 'L5 agent: junior-documentation-engineer'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 5

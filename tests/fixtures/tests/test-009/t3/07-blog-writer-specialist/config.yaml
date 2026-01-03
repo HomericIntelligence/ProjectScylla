@@ -1,7 +1,0 @@
-name: blog-writer-specialist
-description: 'L3 agent: blog-writer-specialist'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 3

@@ -1,6 +1,0 @@
-name: "Playwright MCP"
-description: "Web automation and testing via accessibility trees"
-extends_previous: true
-mcp_servers:
-  - name: playwright
-    source: third-party

@@ -74,50 +74,125 @@ class TierManager:
         )
 
     def _discover_subtests(self, tier_id: TierID, tier_dir: Path) -> list[SubTestConfig]:
-        """Discover sub-test configurations in a tier directory.
+        """Discover sub-test configurations.
 
-        All tiers now support numbered sub-tests. Sub-test directories use
-        the format "NN-name" (e.g., "00-empty", "01-vanilla", "02-critical-only").
+        First loads from centralized shared/subtests/ directory, then overlays
+        any test-specific configs from the tier_dir.
 
         Args:
             tier_id: The tier identifier
-            tier_dir: Path to the tier directory
+            tier_dir: Path to the test-specific tier directory
 
         Returns:
             List of SubTestConfig for each discovered sub-test.
         """
+        # First, load from shared subtests directory
+        shared_subtests_dir = self._get_shared_dir() / "subtests" / tier_id.value.lower()
+        subtests = self._load_shared_subtests(tier_id, shared_subtests_dir)
+
+        # Create lookup by ID for overlaying
+        subtest_by_id = {s.id: s for s in subtests}
+
+        # Overlay any test-specific configs (for rare overrides)
+        if tier_dir.exists():
+            self._overlay_test_specific(subtest_by_id, tier_dir, tier_id)
+
+        return list(subtest_by_id.values())
+
+    def _load_shared_subtests(self, tier_id: TierID, shared_dir: Path) -> list[SubTestConfig]:
+        """Load sub-test configurations from shared directory.
+
+        Shared subtests are defined as YAML files in tests/claude-code/shared/subtests/tN/.
+        Each file is named NN-name.yaml (e.g., "00-empty.yaml", "04-github.yaml").
+
+        Args:
+            tier_id: The tier identifier
+            shared_dir: Path to shared/subtests/tN/ directory
+
+        Returns:
+            List of SubTestConfig loaded from shared directory.
+        """
         subtests = []
 
-        if not tier_dir.exists():
+        if not shared_dir.exists():
             return subtests
 
+        # Look for YAML files with NN-name.yaml pattern
+        for config_file in sorted(shared_dir.glob("*.yaml")):
+            file_name = config_file.stem  # e.g., "04-github" from "04-github.yaml"
+
+            if len(file_name) < 2 or not file_name[:2].isdigit():
+                continue
+
+            # Extract ID and name suffix
+            subtest_id = file_name[:2]
+            subtest_name_suffix = file_name[3:] if len(file_name) > 2 and file_name[2] == "-" else ""
+
+            # Load config from YAML
+            with open(config_file) as f:
+                config_data = yaml.safe_load(f) or {}
+
+            name = config_data.get("name", f"{tier_id.value} {subtest_name_suffix}" if subtest_name_suffix else f"{tier_id.value} Sub-test {subtest_id}")
+            description = config_data.get("description", f"Sub-test configuration {file_name}")
+
+            # T0 sub-tests have special handling for extends_previous
+            # 00-empty and 01-vanilla don't extend; 02+ may extend
+            default_extends = tier_id != TierID.T0 or int(subtest_id) >= 2
+            extends_previous = config_data.get("extends_previous", default_extends)
+
+            # Load resources specification
+            resources = config_data.get("resources", {})
+
+            subtests.append(
+                SubTestConfig(
+                    id=subtest_id,
+                    name=name,
+                    description=description,
+                    claude_md_path=None,  # Shared configs don't have per-file paths
+                    claude_dir_path=None,
+                    extends_previous=extends_previous,
+                    resources=resources,
+                )
+            )
+
+        return subtests
+
+    def _overlay_test_specific(
+        self,
+        subtest_by_id: dict[str, SubTestConfig],
+        tier_dir: Path,
+        tier_id: TierID,
+    ) -> None:
+        """Overlay test-specific configurations onto shared subtests.
+
+        Allows individual tests to override or add subtests beyond the shared set.
+
+        Args:
+            subtest_by_id: Dictionary mapping subtest ID to config (modified in place)
+            tier_dir: Path to the test-specific tier directory
+            tier_id: The tier identifier
+        """
         # Look for numbered subdirectories (format: NN-name or just NN)
         for subdir in sorted(tier_dir.iterdir()):
             if not subdir.is_dir():
                 continue
 
-            # Match directories starting with digits (e.g., "00-empty", "01", "02-vanilla")
             dir_name = subdir.name
-            if not dir_name[:2].isdigit():
+            if len(dir_name) < 2 or not dir_name[:2].isdigit():
                 continue
 
-            # Extract ID (first two digits) and name
             subtest_id = dir_name[:2]
             subtest_name_suffix = dir_name[3:] if len(dir_name) > 2 and dir_name[2] == "-" else ""
 
+            config_file = subdir / "config.yaml"
             claude_md = subdir / "CLAUDE.md"
             claude_dir = subdir / ".claude"
 
-            # Load metadata if config.yaml exists
-            config_file = subdir / "config.yaml"
+            # Default values
             name = f"{tier_id.value} {subtest_name_suffix}" if subtest_name_suffix else f"{tier_id.value} Sub-test {subtest_id}"
             description = f"Sub-test configuration {dir_name}"
-
-            # T0 sub-tests have special handling for extends_previous
-            # 00-empty and 01-vanilla don't extend; 02+ may extend
-            extends_previous = tier_id != TierID.T0 or int(subtest_id) >= 2
-
-            # Load resources spec for symlink-based fixtures
+            default_extends = tier_id != TierID.T0 or int(subtest_id) >= 2
+            extends_previous = default_extends
             resources: dict[str, Any] = {}
 
             if config_file.exists():
@@ -125,24 +200,19 @@ class TierManager:
                     config_data = yaml.safe_load(f) or {}
                 name = config_data.get("name", name)
                 description = config_data.get("description", description)
-                # Allow config to override extends_previous
-                extends_previous = config_data.get("extends_previous", extends_previous)
-                # Load resources specification for runtime symlinks
+                extends_previous = config_data.get("extends_previous", default_extends)
                 resources = config_data.get("resources", {})
 
-            subtests.append(
-                SubTestConfig(
-                    id=subtest_id,
-                    name=name,
-                    description=description,
-                    claude_md_path=claude_md if claude_md.exists() else None,
-                    claude_dir_path=claude_dir if claude_dir.exists() else None,
-                    extends_previous=extends_previous,
-                    resources=resources,
-                )
+            # Override or add the subtest
+            subtest_by_id[subtest_id] = SubTestConfig(
+                id=subtest_id,
+                name=name,
+                description=description,
+                claude_md_path=claude_md if claude_md.exists() else None,
+                claude_dir_path=claude_dir if claude_dir.exists() else None,
+                extends_previous=extends_previous,
+                resources=resources,
             )
-
-        return subtests
 
     def prepare_workspace(
         self,

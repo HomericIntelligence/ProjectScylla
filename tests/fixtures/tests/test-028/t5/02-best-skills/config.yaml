@@ -1,4 +1,0 @@
-name: "Best Skills"
-description: "Top performing skill categories from T1"
-extends_previous: true
-inherit_best_from: ["T1"]
