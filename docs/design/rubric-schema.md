@@ -1,6 +1,6 @@
 # Rubric Schema Specification
 
-> Version 1.0 | Last Updated: 2025-12-30
+> Version 1.1 | Last Updated: 2026-01-02
 
 This document defines the YAML schema for `rubric.yaml` files used in ProjectScylla's
 LLM-as-Judge evaluation system. These files specify the requirements and scoring
@@ -268,31 +268,46 @@ grading:
 
 Letter grade thresholds. If omitted, only pass/fail is reported.
 
+> **Centralized Definition**: See [grading-scale.md](/.claude/shared/grading-scale.md) for the
+> standard industry-aligned grade scale used across all ProjectScylla rubrics.
+
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `A` | number | No | Threshold for A grade |
-| `B` | number | No | Threshold for B grade |
-| `C` | number | No | Threshold for C grade |
-| `D` | number | No | Threshold for D grade |
-| `F` | number | No | Threshold for F grade |
+| `S` | number | No | Amazing - exceptional, above and beyond (1.00) |
+| `A` | number | No | Excellent - production ready (0.80) |
+| `B` | number | No | Good - minor improvements possible (0.60) |
+| `C` | number | No | Acceptable - functional with issues (0.40) |
+| `D` | number | No | Marginal - significant issues (0.20) |
+| `F` | number | No | Failing - does not meet requirements (0.00) |
 
 **Rules**:
 
-- Thresholds must be in descending order (A > B > C > D > F)
-- F is typically `0.0` (any score below D)
+- Thresholds must be in descending order (S > A > B > C > D > F)
+- F is always `0.0` (any score below D)
 - Score >= threshold receives that grade
 
-**Example**:
+**Industry-Aligned Scale** (Recommended):
 ```yaml
 grading:
-  pass_threshold: 0.70
+  pass_threshold: 0.60
   grade_scale:
-    A: 0.95   # >= 95% is an A
-    B: 0.85   # >= 85% is a B
-    C: 0.75   # >= 75% is a C
-    D: 0.65   # >= 65% is a D
-    F: 0.0    # < 65% is an F
+    S: 1.00    # Amazing - above and beyond
+    A: 0.80    # Excellent - production ready
+    B: 0.60    # Good - minor improvements possible
+    C: 0.40    # Acceptable - functional with issues
+    D: 0.20    # Marginal - significant issues
+    F: 0.0     # Failing - does not meet requirements
 ```
+
+**Why Industry-Aligned vs Academic Scale**:
+
+The traditional academic scale (A=95%, B=85%, etc.) was replaced with an industry-aligned
+scale for several reasons:
+
+1. **Production semantics**: Grades map to deployment decisions (ship/fix/rework)
+2. **No grade inflation**: Academic 95% threshold is unrealistic for complex tasks
+3. **Meaningful differentiation**: Each grade represents a distinct action item
+4. **Industry alignment**: Matches SonarQube, LLM evaluation, and QA scorecard patterns
 
 ## Scoring Methodology
 
@@ -462,17 +477,18 @@ requirements:
 # Grading configuration (required)
 grading:
   # Minimum weighted score to pass (required)
-  # 0.70 means 70% weighted score needed
-  pass_threshold: 0.70
+  # 0.60 means 60% weighted score needed (Good grade)
+  pass_threshold: 0.60
 
-  # Letter grade thresholds (optional)
-  # Comment out to use pass/fail only
+  # Industry-aligned grade scale
+  # See .claude/shared/grading-scale.md for full specification
   grade_scale:
-    A: 0.95   # Excellent - near perfect
-    B: 0.85   # Good - minor issues
-    C: 0.75   # Satisfactory - some issues
-    D: 0.65   # Below standard - significant issues
-    F: 0.0    # Failing - major problems
+    S: 1.00    # Amazing - above and beyond
+    A: 0.80    # Excellent - production ready
+    B: 0.60    # Good - minor improvements possible
+    C: 0.40    # Acceptable - functional with issues
+    D: 0.20    # Marginal - significant issues
+    F: 0.0     # Failing - does not meet requirements
 
 # Total weights: 2.0 + 2.0 + 1.0 + 1.5 + 1.0 + 1.0 + 0.5 = 9.0
 # Maximum possible score: 9.0 / 9.0 = 1.0 (100%)
@@ -516,6 +532,7 @@ grading:
 
 ## Related Documents
 
+- [Grading Scale Definition](/.claude/shared/grading-scale.md) - **Single source of truth** for grade thresholds
 - [Test Schema Specification](test-schema.md) - Test case YAML schema
 - [Evaluation Guidelines](/.claude/shared/evaluation-guidelines.md) - Evaluation methodology
 - [Metrics Definitions](/.claude/shared/metrics-definitions.md) - Quality metrics including Pass-Rate

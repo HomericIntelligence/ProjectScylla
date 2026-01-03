@@ -107,11 +107,13 @@ categories:
     description: "Minimal, focused changes without scope creep"
 
 grading:
-  pass_threshold: 0.70
+  pass_threshold: 0.60
   min_correctness: 0.80
+  # Industry-aligned grade scale - see .claude/shared/grading-scale.md
   grade_scale:
-    A: 0.95
-    B: 0.85
-    C: 0.75
-    D: 0.65
-    F: 0.0
+    S: 1.00    # Amazing - above and beyond
+    A: 0.80    # Excellent - production ready
+    B: 0.60    # Good - minor improvements possible
+    C: 0.40    # Acceptable - functional with issues
+    D: 0.20    # Marginal - significant issues
+    F: 0.0     # Failing - does not meet requirements

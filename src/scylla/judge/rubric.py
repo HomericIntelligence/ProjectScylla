@@ -66,21 +66,27 @@ class Requirement(BaseModel):
 
 
 class GradeScale(BaseModel):
-    """Grade scale thresholds.
+    """Industry-aligned grade scale thresholds.
+
+    See .claude/shared/grading-scale.md for full specification.
 
     Attributes:
-        a_threshold: Minimum score for A grade.
-        b_threshold: Minimum score for B grade.
-        c_threshold: Minimum score for C grade.
-        d_threshold: Minimum score for D grade.
+        s_threshold: Amazing - exceptional, above and beyond (1.00).
+        a_threshold: Excellent - production ready (0.80).
+        b_threshold: Good - minor improvements possible (0.60).
+        c_threshold: Acceptable - functional with issues (0.40).
+        d_threshold: Marginal - significant issues (0.20).
     """
 
-    a_threshold: float = Field(default=0.95, ge=0.0, le=1.0)
-    b_threshold: float = Field(default=0.85, ge=0.0, le=1.0)
-    c_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
-    d_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
+    s_threshold: float = Field(default=1.00, ge=0.0, le=1.0)
+    a_threshold: float = Field(default=0.80, ge=0.0, le=1.0)
+    b_threshold: float = Field(default=0.60, ge=0.0, le=1.0)
+    c_threshold: float = Field(default=0.40, ge=0.0, le=1.0)
+    d_threshold: float = Field(default=0.20, ge=0.0, le=1.0)
 
-    @field_validator("a_threshold", "b_threshold", "c_threshold", "d_threshold")
+    @field_validator(
+        "s_threshold", "a_threshold", "b_threshold", "c_threshold", "d_threshold"
+    )
     @classmethod
     def validate_threshold(cls, v: float) -> float:
         """Validate threshold is between 0 and 1."""
@@ -106,7 +112,7 @@ class Rubric(BaseModel):
         default_factory=list, description="Requirements to evaluate"
     )
     pass_threshold: float = Field(
-        default=0.70, ge=0.0, le=1.0, description="Pass threshold"
+        default=0.60, ge=0.0, le=1.0, description="Pass threshold (Good grade)"
     )
     grade_scale: GradeScale = Field(
         default_factory=GradeScale, description="Grade thresholds"
@@ -153,13 +159,24 @@ class Rubric(BaseModel):
     def assign_grade(self, weighted_score: float) -> str:
         """Assign letter grade based on weighted score.
 
+        Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.
+
         Args:
             weighted_score: The weighted score (0.0 to 1.0).
 
         Returns:
-            Letter grade (A, B, C, D, or F).
+            Letter grade (S, A, B, C, D, or F).
+
+        Raises:
+            RubricValidationError: If score is outside valid range [0.0, 1.0].
         """
-        if weighted_score >= self.grade_scale.a_threshold:
+        if weighted_score > 1.0 or weighted_score < 0.0:
+            raise RubricValidationError(
+                f"Score must be between 0.0 and 1.0, got {weighted_score}"
+            )
+        if weighted_score >= self.grade_scale.s_threshold:
+            return "S"
+        elif weighted_score >= self.grade_scale.a_threshold:
             return "A"
         elif weighted_score >= self.grade_scale.b_threshold:
             return "B"
@@ -298,20 +315,22 @@ class RubricParser:
                 )
                 requirements.append(requirement)
 
-            # Parse grade scale
-            grade_data = data.get("grade_scale", {})
+            # Parse grade scale from grading section
+            grading_data = data.get("grading", {})
+            grade_data = grading_data.get("grade_scale", {})
             grade_scale = GradeScale(
-                a_threshold=float(grade_data.get("A", 0.95)),
-                b_threshold=float(grade_data.get("B", 0.85)),
-                c_threshold=float(grade_data.get("C", 0.75)),
-                d_threshold=float(grade_data.get("D", 0.65)),
+                s_threshold=float(grade_data.get("S", 1.00)),
+                a_threshold=float(grade_data.get("A", 0.80)),
+                b_threshold=float(grade_data.get("B", 0.60)),
+                c_threshold=float(grade_data.get("C", 0.40)),
+                d_threshold=float(grade_data.get("D", 0.20)),
             )
 
             return Rubric(
                 name=data.get("name", "Evaluation Rubric"),
                 description=data.get("description", ""),
                 requirements=requirements,
-                pass_threshold=float(data.get("pass_threshold", 0.70)),
+                pass_threshold=float(grading_data.get("pass_threshold", 0.60)),
                 grade_scale=grade_scale,
             )
 
