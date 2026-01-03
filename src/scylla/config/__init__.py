@@ -35,6 +35,12 @@ from .models import (
     TierConfig,
     ValidationConfig,
 )
+from .pricing import (
+    MODEL_PRICING,
+    ModelPricing,
+    calculate_cost,
+    get_model_pricing,
+)
 
 __all__ = [
     # Loader
@@ -55,6 +61,11 @@ __all__ = [
     "TierConfig",
     # Model Models
     "ModelConfig",
+    # Pricing Models
+    "ModelPricing",
+    "MODEL_PRICING",
+    "get_model_pricing",
+    "calculate_cost",
     # Defaults Models
     "DefaultsConfig",
     "EvaluationConfig",

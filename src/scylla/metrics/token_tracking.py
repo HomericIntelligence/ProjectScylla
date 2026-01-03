@@ -19,6 +19,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from scylla.config.pricing import get_model_pricing
+
 
 class ComponentType(Enum):
     """Types of components that consume tokens."""
@@ -219,20 +221,33 @@ class TokenTracker:
 
     def calculate_distribution(
         self,
-        input_price: float = 3.0,
-        output_price: float = 15.0,
-        cached_price: float = 0.0,
+        input_price: float | None = None,
+        output_price: float | None = None,
+        cached_price: float | None = None,
+        model: str | None = None,
     ) -> TokenDistribution:
         """Calculate token distribution and costs.
 
+        Uses centralized pricing from scylla.config.pricing if prices
+        are not explicitly provided.
+
         Args:
-            input_price: Price per million input tokens.
-            output_price: Price per million output tokens.
-            cached_price: Price per million cached tokens.
+            input_price: Price per million input tokens (optional).
+            output_price: Price per million output tokens (optional).
+            cached_price: Price per million cached tokens (optional).
+            model: Model identifier for centralized pricing lookup.
 
         Returns:
             TokenDistribution with all component costs.
         """
+        # Use centralized pricing if not explicitly provided
+        pricing = get_model_pricing(model)
+        if input_price is None:
+            input_price = pricing.input_cost_per_million
+        if output_price is None:
+            output_price = pricing.output_cost_per_million
+        if cached_price is None:
+            cached_price = pricing.cached_cost_per_million
         components: list[ComponentCost] = []
         total_input = 0
         total_output = 0
