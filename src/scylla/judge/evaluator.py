@@ -17,6 +17,8 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
+from scylla.metrics.grading import assign_letter_grade
+
 logger = logging.getLogger(__name__)
 
 
@@ -240,25 +242,9 @@ def weighted_consensus(scores: list[JudgeScore]) -> float:
     return sum(s.score * s.confidence for s in scores) / total_confidence
 
 
-def assign_grade(score: float) -> str:
-    """Assign letter grade based on score.
-
-    Args:
-        score: Score (0.0 to 1.0).
-
-    Returns:
-        Letter grade (A/B/C/D/F).
-    """
-    if score >= 0.95:
-        return "A"
-    elif score >= 0.85:
-        return "B"
-    elif score >= 0.75:
-        return "C"
-    elif score >= 0.65:
-        return "D"
-    else:
-        return "F"
+# Backward-compatible alias for assign_letter_grade
+# Use assign_letter_grade from scylla.metrics.grading for new code
+assign_grade = assign_letter_grade
 
 
 class JudgeEvaluator:
