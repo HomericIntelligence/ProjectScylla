@@ -249,9 +249,7 @@ class TestLogWriting:
             output_dir = Path(tmpdir)
             adapter = ConcreteAdapter()
 
-            adapter.write_logs(
-                output_dir, "stdout", "stderr", agent_log="agent activity"
-            )
+            adapter.write_logs(output_dir, "stdout", "stderr", agent_log="agent activity")
 
             logs_dir = output_dir / "logs"
             assert (logs_dir / "agent.log").read_text() == "agent activity"
@@ -282,9 +280,7 @@ class TestCostCalculation:
     def test_calculate_cost_claude_sonnet(self) -> None:
         """Test cost calculation for Claude Sonnet."""
         adapter = ConcreteAdapter()
-        cost = adapter.calculate_cost(
-            1000, 500, model="claude-sonnet-4-20250514"
-        )
+        cost = adapter.calculate_cost(1000, 500, model="claude-sonnet-4-20250514")
 
         # Sonnet: 0.003 per 1K input, 0.015 per 1K output
         expected = (1000 / 1000 * 0.003) + (500 / 1000 * 0.015)
@@ -293,9 +289,7 @@ class TestCostCalculation:
     def test_calculate_cost_claude_opus(self) -> None:
         """Test cost calculation for Claude Opus."""
         adapter = ConcreteAdapter()
-        cost = adapter.calculate_cost(
-            1000, 500, model="claude-opus-4-20250514"
-        )
+        cost = adapter.calculate_cost(1000, 500, model="claude-opus-4-20250514")
 
         # Opus: 0.015 per 1K input, 0.075 per 1K output
         expected = (1000 / 1000 * 0.015) + (500 / 1000 * 0.075)

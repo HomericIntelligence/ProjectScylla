@@ -234,12 +234,8 @@ class TestScorecardGeneratorCalculateOverall:
     def test_cost_calculation(self) -> None:
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {
-            "001-test": make_test_result(
-                runs_completed=5, median_cost_usd=1.0
-            ),
-            "002-test": make_test_result(
-                runs_completed=10, median_cost_usd=2.0
-            ),
+            "001-test": make_test_result(runs_completed=5, median_cost_usd=1.0),
+            "002-test": make_test_result(runs_completed=10, median_cost_usd=2.0),
         }
         overall = generator.calculate_overall(tests)
 

@@ -34,18 +34,10 @@ class TierConfig(BaseModel):
     tier_id: str = Field(..., description="Tier identifier (e.g., 'T0', 'T1', 'T2', 'T3')")
     name: str = Field(..., description="Human-readable tier name")
     description: str = Field(..., description="Description of the tier's purpose")
-    prompt_file: Optional[Path] = Field(
-        None, description="Absolute path to prompt file"
-    )
-    prompt_content: Optional[str] = Field(
-        None, description="Loaded prompt content"
-    )
-    tools_enabled: Optional[bool] = Field(
-        None, description="Whether tools are enabled"
-    )
-    delegation_enabled: Optional[bool] = Field(
-        None, description="Whether delegation is enabled"
-    )
+    prompt_file: Optional[Path] = Field(None, description="Absolute path to prompt file")
+    prompt_content: Optional[str] = Field(None, description="Loaded prompt content")
+    tools_enabled: Optional[bool] = Field(None, description="Whether tools are enabled")
+    delegation_enabled: Optional[bool] = Field(None, description="Whether delegation is enabled")
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -59,9 +51,7 @@ class TiersDefinitionFile(BaseModel):
 
     @field_validator("tiers")
     @classmethod
-    def validate_required_tiers(
-        cls, v: dict[str, TierDefinition]
-    ) -> dict[str, TierDefinition]:
+    def validate_required_tiers(cls, v: dict[str, TierDefinition]) -> dict[str, TierDefinition]:
         """Ensure required tiers are present."""
         required = {"T0", "T1", "T2", "T3", "T4", "T5", "T6"}
         missing = required - set(v.keys())
@@ -146,9 +136,7 @@ class TierConfigLoader:
         if tier_def.prompt_file:
             prompt_file = self.tiers_dir / tier_def.prompt_file
             if not prompt_file.exists():
-                raise TierConfigError(
-                    f"Prompt file not found for tier {tier_id}: {prompt_file}"
-                )
+                raise TierConfigError(f"Prompt file not found for tier {tier_id}: {prompt_file}")
             prompt_content = prompt_file.read_text()
 
         return TierConfig(

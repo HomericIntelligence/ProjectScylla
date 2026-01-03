@@ -102,9 +102,7 @@ class CleanupEvaluator:
             Set of relative file paths in the workspace.
         """
         return set(
-            str(p.relative_to(self.workspace))
-            for p in self.workspace.rglob("*")
-            if p.is_file()
+            str(p.relative_to(self.workspace)) for p in self.workspace.rglob("*") if p.is_file()
         )
 
     def find_cleanup_script(self) -> Path | None:

@@ -18,6 +18,7 @@ Presets:
     implementation:    Implementation-focused agents
     full:              All 44 agents
 """
+
 import argparse
 import re
 import shutil
@@ -171,34 +172,21 @@ def main():
     parser = argparse.ArgumentParser(
         description="Compose agent configuration from selected levels/categories",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
     parser.add_argument(
-        "--levels", "-l",
-        type=str,
-        help="Comma-separated list of levels (e.g., 0,1,5)"
+        "--levels", "-l", type=str, help="Comma-separated list of levels (e.g., 0,1,5)"
     )
+    parser.add_argument("--pattern", "-p", type=str, help="Regex pattern to match agent filenames")
+    parser.add_argument("--preset", choices=PRESETS.keys(), help="Use a preset configuration")
     parser.add_argument(
-        "--pattern", "-p",
-        type=str,
-        help="Regex pattern to match agent filenames"
-    )
-    parser.add_argument(
-        "--preset",
-        choices=PRESETS.keys(),
-        help="Use a preset configuration"
-    )
-    parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         default=Path("agents"),
-        help="Output directory (default: agents)"
+        help="Output directory (default: agents)",
     )
-    parser.add_argument(
-        "--list",
-        action="store_true",
-        help="List available agents and presets"
-    )
+    parser.add_argument("--list", action="store_true", help="List available agents and presets")
 
     args = parser.parse_args()
 

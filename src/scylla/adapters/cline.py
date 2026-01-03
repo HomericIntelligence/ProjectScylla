@@ -106,9 +106,7 @@ class ClineAdapter(BaseAdapter):
             )
 
         except FileNotFoundError:
-            raise AdapterError(
-                f"Cline CLI not found. Is '{self.CLI_EXECUTABLE}' installed?"
-            )
+            raise AdapterError(f"Cline CLI not found. Is '{self.CLI_EXECUTABLE}' installed?")
 
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute Cline: {e}") from e
@@ -156,7 +154,8 @@ class ClineAdapter(BaseAdapter):
         """
         cmd = [
             self.CLI_EXECUTABLE,
-            "--model", config.model,
+            "--model",
+            config.model,
             "--non-interactive",  # Non-interactive mode
         ]
 
@@ -264,7 +263,9 @@ class ClineAdapter(BaseAdapter):
             return int(match.group(1) or match.group(2))
 
         # Count request/response markers
-        request_count = len(re.findall(r"(?:Sending request|Request sent)", combined, re.IGNORECASE))
+        request_count = len(
+            re.findall(r"(?:Sending request|Request sent)", combined, re.IGNORECASE)
+        )
         if request_count > 0:
             return request_count
 

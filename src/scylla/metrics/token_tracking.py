@@ -290,9 +290,7 @@ class TokenTracker:
         Returns:
             Total schema tokens.
         """
-        schema_usages = [
-            u for u in self._usages if u.component_type == ComponentType.TOOL_SCHEMA
-        ]
+        schema_usages = [u for u in self._usages if u.component_type == ComponentType.TOOL_SCHEMA]
         return sum(u.total_tokens for u in schema_usages)
 
     def get_skill_tokens(self) -> int:
@@ -396,8 +394,7 @@ def compare_t2_t3_efficiency(
     token_ratio = t3_total / t2_total if t2_total > 0 else 0.0
     schema_ratio = t3_schema / t2_total if t2_total > 0 else 0.0
     cost_ratio = (
-        t3_analysis.distribution.total_cost_usd
-        / t2_analysis.distribution.total_cost_usd
+        t3_analysis.distribution.total_cost_usd / t2_analysis.distribution.total_cost_usd
         if t2_analysis.distribution.total_cost_usd > 0
         else 0.0
     )

@@ -154,10 +154,7 @@ class CrossTierAnalyzer:
         Returns:
             Variance of median values across tiers.
         """
-        values = [
-            getattr(t, metric).median
-            for t in self.tier_stats.values()
-        ]
+        values = [getattr(t, metric).median for t in self.tier_stats.values()]
         return calculate_variance(values)
 
     def interpret_sensitivity(self, variance: float) -> str:
@@ -314,10 +311,7 @@ class CrossTierAnalyzer:
                 uplifts[tier_id] = self.calculate_uplift(tier_id)
 
         # Calculate cost-of-pass delta
-        cops = [
-            self._calculate_cost_of_pass(t)
-            for t in self.tier_stats.values()
-        ]
+        cops = [self._calculate_cost_of_pass(t) for t in self.tier_stats.values()]
         # Filter out infinity for delta calculation
         valid_cops = [c for c in cops if c != float("inf")]
         if valid_cops:
@@ -327,8 +321,7 @@ class CrossTierAnalyzer:
 
         # Find best value tier
         value_scores = {
-            tier_id: self._calculate_value_score(t)
-            for tier_id, t in self.tier_stats.items()
+            tier_id: self._calculate_value_score(t) for tier_id, t in self.tier_stats.items()
         }
         best_value = max(value_scores, key=lambda k: value_scores[k])
 

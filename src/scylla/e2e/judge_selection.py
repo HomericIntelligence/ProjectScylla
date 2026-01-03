@@ -71,7 +71,9 @@ class JudgeSelection:
             "votes": [v.to_dict() for v in self.votes],
             "margin": self.margin,
             "tiebreaker_needed": self.tiebreaker_needed,
-            "tiebreaker_result": self.tiebreaker_result.to_dict() if self.tiebreaker_result else None,
+            "tiebreaker_result": self.tiebreaker_result.to_dict()
+            if self.tiebreaker_result
+            else None,
         }
 
 

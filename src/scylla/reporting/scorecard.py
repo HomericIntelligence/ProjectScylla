@@ -180,9 +180,7 @@ class ScorecardGenerator:
         """
         return self.base_dir / model_id
 
-    def calculate_overall(
-        self, tests: dict[str, EvalResult]
-    ) -> OverallStats:
+    def calculate_overall(self, tests: dict[str, EvalResult]) -> OverallStats:
         """Calculate overall statistics from test results.
 
         Args:
@@ -201,9 +199,7 @@ class ScorecardGenerator:
 
         tests_completed = len(tests)
         total_runs = sum(t.runs_completed for t in tests.values())
-        total_cost = sum(
-            t.median_cost_usd * t.runs_completed for t in tests.values()
-        )
+        total_cost = sum(t.median_cost_usd * t.runs_completed for t in tests.values())
 
         # Calculate average grade
         total_points = sum(_grade_to_points(t.grade) for t in tests.values())

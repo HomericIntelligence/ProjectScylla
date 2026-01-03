@@ -170,12 +170,10 @@ class Judgment:
             "timestamp": self.timestamp,
             "judge_model": self.judge_model,
             "requirements": {
-                req_id: score.to_dict()
-                for req_id, score in self.requirements.items()
+                req_id: score.to_dict() for req_id, score in self.requirements.items()
             },
             "categories": {
-                cat_name: score.to_dict()
-                for cat_name, score in self.categories.items()
+                cat_name: score.to_dict() for cat_name, score in self.categories.items()
             },
             "qualitative_feedback": self.qualitative_feedback,
         }

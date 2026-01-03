@@ -72,7 +72,9 @@ class TestJudgmentSummary:
 
     def test_to_dict(self) -> None:
         summary = JudgmentSummary(
-            weighted_score=0.8, passed=True, letter_grade="B",
+            weighted_score=0.8,
+            passed=True,
+            letter_grade="B",
         )
         d = summary.to_dict()
         assert d["weighted_score"] == 0.8
@@ -106,7 +108,9 @@ class TestJudgment:
             judge_model="test-model",
             requirements={"R001": RequirementScore(id="R001", score=0.9)},
             summary=JudgmentSummary(
-                weighted_score=0.9, passed=True, letter_grade="A",
+                weighted_score=0.9,
+                passed=True,
+                letter_grade="A",
             ),
         )
         d = judgment.to_dict()
@@ -125,7 +129,7 @@ class TestJudgment:
             output_path = Path(tmpdir) / "judgment.json"
             judgment = Judgment(judge_model="test")
             judgment.write_json(output_path)
-            
+
             assert output_path.exists()
             data = json.loads(output_path.read_text())
             assert data["judge_model"] == "test"
@@ -136,7 +140,7 @@ class TestJudgmentParser:
 
     def test_parse_full_json(self) -> None:
         parser = JudgmentParser()
-        output = '''{
+        output = """{
             "requirements": {"R001": {"score": 0.9, "confidence": 0.8, "notes": "Met"}},
             "categories": {"code_quality": {"score": 0.85, "weight": 1.0}},
             "summary": {
@@ -144,7 +148,7 @@ class TestJudgmentParser:
                 "overall_confidence": 0.85
             },
             "qualitative_feedback": "Good work"
-        }'''
+        }"""
         judgment = parser.parse(output, judge_model="test-model")
         assert judgment.requirements["R001"].score == 0.9
         assert judgment.categories["code_quality"].score == 0.85
@@ -153,11 +157,11 @@ class TestJudgmentParser:
 
     def test_parse_json_in_code_block(self) -> None:
         parser = JudgmentParser()
-        output = '''Some text
+        output = """Some text
 ```json
 {"requirements": {"R001": {"score": 0.8}}}
 ```
-More text'''
+More text"""
         judgment = parser.parse(output)
         assert judgment.requirements["R001"].score == 0.8
 
@@ -179,13 +183,13 @@ More text'''
 
     def test_parse_exploratory_testing(self) -> None:
         parser = JudgmentParser()
-        output = '''{
+        output = """{
             "exploratory_testing": {
                 "commands_run": ["pytest", "mypy"],
                 "observations": ["All pass"],
                 "failures": []
             }
-        }'''
+        }"""
         judgment = parser.parse(output)
         assert judgment.exploratory_testing is not None
         assert len(judgment.exploratory_testing.commands_run) == 2
@@ -195,7 +199,7 @@ More text'''
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "output.txt"
             file_path.write_text('{"requirements": {"R001": {"score": 0.7}}}')
-            
+
             judgment = parser.parse_file(file_path)
             assert judgment.requirements["R001"].score == 0.7
 
@@ -215,11 +219,13 @@ class TestLoadJudgment:
                 "judge_model": "test",
                 "requirements": {"R001": {"score": 0.8}},
                 "summary": {
-                    "weighted_score": 0.8, "passed": True, "letter_grade": "B",
+                    "weighted_score": 0.8,
+                    "passed": True,
+                    "letter_grade": "B",
                 },
             }
             file_path.write_text(json.dumps(data))
-            
+
             judgment = load_judgment(file_path)
             assert judgment.requirements["R001"].score == 0.8
 
@@ -231,7 +237,7 @@ class TestLoadJudgment:
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "judgment.json"
             file_path.write_text("not valid json")
-            
+
             with pytest.raises(JudgmentParseError, match="Failed to load"):
                 load_judgment(file_path)
 

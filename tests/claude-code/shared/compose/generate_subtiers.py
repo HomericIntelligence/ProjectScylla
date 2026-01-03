@@ -25,6 +25,7 @@ Output Structure:
             ├── criteria.md
             └── rubric.yaml
 """
+
 import argparse
 import subprocess
 import sys
@@ -219,8 +220,10 @@ def run_compose_claude_md(preset: str, output: Path, dry_run: bool = False) -> N
     cmd = [
         sys.executable,
         str(COMPOSE_DIR / "compose_claude_md.py"),
-        "--preset", preset,
-        "--output", str(output / "CLAUDE.md"),
+        "--preset",
+        preset,
+        "--output",
+        str(output / "CLAUDE.md"),
     ]
     if dry_run:
         print(f"  Would run: {' '.join(cmd)}")
@@ -276,14 +279,14 @@ def create_test_yaml(subtier_path: Path, tier: str, subtier: str, config: dict) 
     test_id = f"{tier}-{subtier}".lower().replace("_", "-")
     content = f'''# Test configuration for {tier}/{subtier}
 id: "{test_id}"
-name: "{config['desc']}"
+name: "{config["desc"]}"
 description: |
-  {config['desc']}
+  {config["desc"]}
 
   Configuration:
-    - CLAUDE.md: {config.get('claude_md', 'None')}
-    - Agents: {config.get('agents', 'None')}
-    - Skills: {config.get('skills', 'None')}
+    - CLAUDE.md: {config.get("claude_md", "None")}
+    - Agents: {config.get("agents", "None")}
+    - Skills: {config.get("skills", "None")}
 
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
@@ -302,7 +305,7 @@ validation:
 
 def create_prompt_template(subtier_path: Path) -> None:
     """Create a template prompt.md file."""
-    content = '''# Task Prompt
+    content = """# Task Prompt
 
 <!-- Replace this with the actual task prompt for evaluation -->
 
@@ -323,7 +326,7 @@ def create_prompt_template(subtier_path: Path) -> None:
 ## Expected Output
 
 [Describe expected output format and criteria]
-'''
+"""
     (subtier_path / "prompt.md").write_text(content)
 
 
@@ -333,7 +336,7 @@ def create_expected_files(subtier_path: Path) -> None:
     expected_dir.mkdir(parents=True, exist_ok=True)
 
     # criteria.md
-    criteria = '''# Validation Criteria
+    criteria = """# Validation Criteria
 
 ## Functional Requirements
 
@@ -352,11 +355,11 @@ def create_expected_files(subtier_path: Path) -> None:
 - [ ] Task completed within timeout
 - [ ] Minimal unnecessary operations
 - [ ] Clear progress toward goal
-'''
+"""
     (expected_dir / "criteria.md").write_text(criteria)
 
     # rubric.yaml
-    rubric = '''# Evaluation Rubric
+    rubric = """# Evaluation Rubric
 version: "1.0"
 
 metrics:
@@ -384,16 +387,12 @@ thresholds:
   pass: 0.7
   good: 0.60
   excellent: 0.80
-'''
+"""
     (expected_dir / "rubric.yaml").write_text(rubric)
 
 
 def generate_subtier(
-    model: str,
-    tier: str,
-    subtier: str,
-    config: dict,
-    dry_run: bool = False
+    model: str, tier: str, subtier: str, config: dict, dry_run: bool = False
 ) -> None:
     """Generate a single subtier configuration."""
     subtier_path = TESTS_DIR / model / tier / subtier
@@ -462,33 +461,30 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate sub-tier configurations for testing",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
     parser.add_argument(
-        "--model", "-m",
+        "--model",
+        "-m",
         type=str,
         default="all",
-        help="Model to generate for (sonnet, opus, haiku, or 'all')"
+        help="Model to generate for (sonnet, opus, haiku, or 'all')",
     )
     parser.add_argument(
-        "--tier", "-t",
+        "--tier", "-t", type=str, help="Specific tier to generate (e.g., T1-prompted)"
+    )
+    parser.add_argument(
+        "--subtier",
+        "-s",
         type=str,
-        help="Specific tier to generate (e.g., T1-prompted)"
+        help="Specific subtier to generate (e.g., T1-prompted/02-minimal-viable)",
     )
+    parser.add_argument("--list", "-l", action="store_true", help="List all configurations")
     parser.add_argument(
-        "--subtier", "-s",
-        type=str,
-        help="Specific subtier to generate (e.g., T1-prompted/02-minimal-viable)"
-    )
-    parser.add_argument(
-        "--list", "-l",
+        "--dry-run",
+        "-n",
         action="store_true",
-        help="List all configurations"
-    )
-    parser.add_argument(
-        "--dry-run", "-n",
-        action="store_true",
-        help="Show what would be generated without creating files"
+        help="Show what would be generated without creating files",
     )
 
     args = parser.parse_args()

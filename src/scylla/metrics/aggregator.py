@@ -134,9 +134,7 @@ class RunAggregator:
         durations = [r.duration_seconds for r in runs]
 
         # Calculate composite scores
-        composite_scores = [
-            _calculate_composite_score(r.pass_rate, r.impl_rate) for r in runs
-        ]
+        composite_scores = [_calculate_composite_score(r.pass_rate, r.impl_rate) for r in runs]
 
         # Calculate statistics
         pass_rate_stats = calculate_all(pass_rates)
@@ -224,8 +222,7 @@ class RunAggregator:
             Tuple of (tier_stats, cross_tier_analysis).
         """
         tier_stats = {
-            tier_id: self.aggregate_tier(tier_id, runs)
-            for tier_id, runs in runs_by_tier.items()
+            tier_id: self.aggregate_tier(tier_id, runs) for tier_id, runs in runs_by_tier.items()
         }
 
         cross_tier = self.analyze_cross_tier(tier_stats)

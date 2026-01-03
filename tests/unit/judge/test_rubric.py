@@ -98,6 +98,7 @@ class TestGradeScale:
         assert scale.c_threshold == 0.40  # Acceptable
         assert scale.d_threshold == 0.20  # Marginal
 
+
 class TestRubric:
     """Tests for Rubric model."""
 
@@ -241,6 +242,7 @@ class TestAssignGrade:
         rubric = Rubric()
         with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
             rubric.assign_letter_grade(-0.1)
+
 
 class TestIsPassing:
     """Tests for passing check."""
