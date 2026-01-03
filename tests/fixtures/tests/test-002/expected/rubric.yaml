@@ -130,8 +130,8 @@ grading:
     D: 0.65
     F: 0.0
 
-# Total weight: 16.0
-# Functional (R001-R004): 7.5 (47%)
-# Build/Compile (R005, R010, R014): 3.5 (22%)
-# Documentation (R006-R008): 2.5 (16%)
-# Safety/Patterns (R009, R011-R013): 2.5 (16%)
+# Total weight: 17.5
+# Functional (R001-R004): 7.5 (43%)
+# Build/Compile (R005, R010, R014): 3.5 (20%)
+# Documentation (R006-R008): 2.5 (14%)
+# Safety/Patterns (R009, R011-R013): 4.0 (23%)
