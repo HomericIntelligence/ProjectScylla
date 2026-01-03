@@ -116,6 +116,13 @@ class RunResult:
     Captures all execution details, metrics, and judge evaluation
     for one run of an agent against the canonical task.
 
+    This is the E2E testing result with detailed paths and judge fields.
+    For other RunResult types, see:
+    - executor/runner.py:RunResult (execution tracking with status)
+    - reporting/result.py:RunResult (persistence with nested info)
+    - metrics/aggregator.py:RunResult (statistical aggregation)
+    - core/results.py:BaseRunResult (base type)
+
     Attributes:
         run_number: The run number (1-indexed)
         exit_code: Process exit code
@@ -125,7 +132,7 @@ class RunResult:
         duration_seconds: Execution duration
         judge_score: LLM judge's score (0.0 - 1.0)
         judge_passed: Whether the run passed
-        judge_grade: Letter grade (A-F)
+        judge_grade: Letter grade (S-F)
         judge_reasoning: Judge's reasoning text
         workspace_path: Path to preserved workspace
         logs_path: Path to execution logs
