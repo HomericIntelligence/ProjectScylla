@@ -1,0 +1,26 @@
+# Test fixture: Testing - Enable eye() Offset Diagonal Test
+id: "test-038"
+name: "Enable eye() Offset Diagonal Test"
+description: |
+  Enable disabled eye() offset diagonal test
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "dc9a74a94e5406b1d985e71159285b5aa3ddbdde"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

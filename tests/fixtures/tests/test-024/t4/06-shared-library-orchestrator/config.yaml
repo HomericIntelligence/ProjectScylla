@@ -1,0 +1,3 @@
+name: "shared-library-orchestrator"
+description: "L1 orchestrator: shared-library-orchestrator"
+extends_previous: true

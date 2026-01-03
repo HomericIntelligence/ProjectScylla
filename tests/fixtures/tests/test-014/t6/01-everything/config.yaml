@@ -1,0 +1,15 @@
+name: "Everything Enabled"
+description: "Maximum capability: all prompts, skills, agents, tools, and MCP servers"
+extends_previous: false
+tools:
+  enabled: all
+mcp_servers:
+  - name: filesystem
+  - name: git
+  - name: memory
+  - name: fetch
+  - name: sequential-thinking
+  - name: time
+  - name: github
+  - name: postgres
+  - name: playwright

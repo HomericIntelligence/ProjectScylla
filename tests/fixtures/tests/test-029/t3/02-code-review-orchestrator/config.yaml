@@ -1,0 +1,3 @@
+name: "code-review-orchestrator"
+description: "L2 agent: code-review-orchestrator"
+extends_previous: true

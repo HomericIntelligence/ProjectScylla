@@ -1,0 +1,4 @@
+name: "Best Prompts"
+description: "Top performing prompt configurations from T0"
+extends_previous: true
+inherit_best_from: ["T0"]

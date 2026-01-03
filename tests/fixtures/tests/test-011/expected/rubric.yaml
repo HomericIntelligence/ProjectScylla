@@ -1,0 +1,35 @@
+# Test fixture: Rubric for Docker workflow creation
+requirements:
+  - id: "R001"
+    description: "Workflow file created"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R002"
+    description: "Correct triggers configured"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R003"
+    description: "GHCR authentication setup"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R004"
+    description: "Multi-platform support"
+    weight: 1.0
+    evaluation: "binary"
+
+  - id: "R005"
+    description: "Proper image tagging"
+    weight: 2.0
+    evaluation: "scaled"
+
+grading:
+  pass_threshold: 0.70
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0

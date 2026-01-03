@@ -1,0 +1,26 @@
+# Test fixture: Testing - Add Unit Tests for implement_issues.py
+id: "test-040"
+name: "Add Unit Tests for implement_issues.py"
+description: |
+  Create comprehensive tests for implement_issues.py
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "fa1f2882fd7ac8c61f030374237d3cfeeae0164a"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 7200
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

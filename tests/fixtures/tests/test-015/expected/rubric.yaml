@@ -1,0 +1,22 @@
+requirements:
+  - id: "R001"
+    description: "Type errors fixed"
+    weight: 2.0
+    evaluation: "binary"
+  - id: "R002"
+    description: "Mypy passes"
+    weight: 2.0
+    evaluation: "binary"
+  - id: "R003"
+    description: "Tests pass"
+    weight: 2.0
+    evaluation: "binary"
+
+grading:
+  pass_threshold: 0.70
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0

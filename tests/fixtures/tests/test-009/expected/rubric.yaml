@@ -1,0 +1,25 @@
+# Test fixture: Rubric for Docker SBOM fix
+requirements:
+  - id: "R001"
+    description: "Lowercase image name"
+    weight: 3.0
+    evaluation: "binary"
+
+  - id: "R002"
+    description: "SBOM step fixed"
+    weight: 3.0
+    evaluation: "binary"
+
+  - id: "R003"
+    description: "Valid workflow syntax"
+    weight: 1.0
+    evaluation: "binary"
+
+grading:
+  pass_threshold: 0.75
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0

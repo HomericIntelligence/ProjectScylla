@@ -1,0 +1,26 @@
+# Test fixture: Documentation - Clarify from_array Implementation Status
+id: "test-033"
+name: "Clarify from_array Implementation Status"
+description: |
+  Document from_array() implementation status
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "1ec9699bcc0f360eb290ab909abbaedcd07ebd6d"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

@@ -1,0 +1,3 @@
+name: "performance-engineer"
+description: "L4 agent: performance-engineer"
+extends_previous: true

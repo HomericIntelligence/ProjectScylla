@@ -1,0 +1,26 @@
+# Test fixture: Refactoring - Remove 13 Unused Variable Declarations
+id: "test-023"
+name: "Remove 13 Unused Variable Declarations"
+description: |
+  Clean up unused variable declarations
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "1a1a74758b3be246bde846d6c0ec18934814119d"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

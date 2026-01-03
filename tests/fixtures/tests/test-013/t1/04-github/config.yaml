@@ -1,0 +1,3 @@
+name: "GitHub Skills"
+description: "10 skills from the github category"
+extends_previous: true

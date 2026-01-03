@@ -1,0 +1,40 @@
+# Test fixture: Rubric for justfile simplification
+requirements:
+  - id: "R001"
+    description: "Duplicate recipes merged"
+    weight: 2.0
+    evaluation: "scaled"
+
+  - id: "R002"
+    description: "Unused recipes removed"
+    weight: 2.0
+    evaluation: "scaled"
+
+  - id: "R003"
+    description: "Build works"
+    weight: 3.0
+    evaluation: "binary"
+
+  - id: "R004"
+    description: "Test works"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R005"
+    description: "CI compatible"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R006"
+    description: "Docs updated"
+    weight: 1.0
+    evaluation: "scaled"
+
+grading:
+  pass_threshold: 0.70
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0

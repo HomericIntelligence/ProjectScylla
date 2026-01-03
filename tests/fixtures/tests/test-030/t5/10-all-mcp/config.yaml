@@ -1,0 +1,13 @@
+name: "All MCP Servers"
+description: "All MCP servers enabled together"
+extends_previous: true
+mcp_servers:
+  - name: filesystem
+  - name: git
+  - name: memory
+  - name: fetch
+  - name: sequential-thinking
+  - name: time
+  - name: github
+  - name: postgres
+  - name: playwright

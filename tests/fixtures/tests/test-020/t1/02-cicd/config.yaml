@@ -1,0 +1,3 @@
+name: "CICD Skills"
+description: "7 skills from the cicd category"
+extends_previous: true

@@ -1,0 +1,7 @@
+name: "Custom MCP"
+description: "Custom MCP server configuration for project-specific tools"
+extends_previous: true
+mcp_servers:
+  - name: custom
+    source: local
+    config_path: ".claude/mcp/custom.json"
