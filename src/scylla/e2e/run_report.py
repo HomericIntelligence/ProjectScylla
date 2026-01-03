@@ -47,7 +47,7 @@ def generate_run_report(
         subtest_id: Sub-test identifier (e.g., "baseline", "01")
         run_number: Run number (1-indexed)
         score: Overall judge score (0.0-1.0)
-        grade: Letter grade (A-F)
+        grade: Letter grade (S-F)
         passed: Whether the run passed
         reasoning: Judge's overall reasoning
         cost_usd: Total cost in USD

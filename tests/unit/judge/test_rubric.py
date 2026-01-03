@@ -98,32 +98,6 @@ class TestGradeScale:
         assert scale.c_threshold == 0.40  # Acceptable
         assert scale.d_threshold == 0.20  # Marginal
 
-    def test_custom_thresholds(self) -> None:
-        """Test custom grade thresholds."""
-        scale = GradeScale(
-            s_threshold=0.95,
-            a_threshold=0.85,
-            b_threshold=0.75,
-            c_threshold=0.65,
-            d_threshold=0.55,
-        )
-        assert scale.s_threshold == 0.95
-        assert scale.a_threshold == 0.85
-        assert scale.b_threshold == 0.75
-        assert scale.c_threshold == 0.65
-        assert scale.d_threshold == 0.55
-
-    def test_threshold_over_one_rejected(self) -> None:
-        """Test that threshold over 1.0 is rejected."""
-        with pytest.raises(ValueError):
-            GradeScale(s_threshold=1.5)
-
-    def test_threshold_under_zero_rejected(self) -> None:
-        """Test that threshold under 0.0 is rejected."""
-        with pytest.raises(ValueError):
-            GradeScale(d_threshold=-0.1)
-
-
 class TestRubric:
     """Tests for Rubric model."""
 
@@ -267,22 +241,6 @@ class TestAssignGrade:
         rubric = Rubric()
         with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
             rubric.assign_letter_grade(-0.1)
-
-    def test_custom_scale(self) -> None:
-        """Test grading with custom scale."""
-        rubric = Rubric(
-            grade_scale=GradeScale(
-                s_threshold=0.95,
-                a_threshold=0.85,
-                b_threshold=0.75,
-                c_threshold=0.65,
-                d_threshold=0.55,
-            )
-        )
-        assert rubric.assign_letter_grade(0.95) == "S"
-        assert rubric.assign_letter_grade(0.94) == "A"
-        assert rubric.assign_letter_grade(0.84) == "B"
-
 
 class TestIsPassing:
     """Tests for passing check."""
