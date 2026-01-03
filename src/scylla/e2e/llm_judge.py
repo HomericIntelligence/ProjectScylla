@@ -207,13 +207,7 @@ def _get_workspace_state(workspace: Path) -> str:
             continue
         if item.is_file():
             rel_path = item.relative_to(workspace)
-            try:
-                content = item.read_text()
-                if len(content) > 1000:
-                    content = content[:1000] + "\n... (truncated)"
-                lines.append(f"\n### {rel_path}\n```\n{content}\n```")
-            except (UnicodeDecodeError, PermissionError):
-                lines.append(f"\n### {rel_path}\n(binary file)")
+            lines.append(f"\n### {rel_path}\n")
 
     if len(lines) == 1:
         lines.append("(no files created)")
