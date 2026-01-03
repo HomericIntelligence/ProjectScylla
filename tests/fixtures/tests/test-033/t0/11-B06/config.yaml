@@ -1,3 +1,7 @@
-name: "B06 dev-principles"
-description: "Individual block B06 test"
+name: B06 dev-principles
+description: Individual block B06 test
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B06

@@ -1,3 +1,7 @@
-name: "Critical Rules Only"
-description: "B02 safety rules only (~55 lines) - minimum viable prompt"
+name: Critical Rules Only
+description: B02 safety rules only (~55 lines) - minimum viable prompt
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B02

@@ -1,3 +1,7 @@
-name: "B05 skill-delegation"
-description: "Individual block B05 test"
+name: B05 skill-delegation
+description: Individual block B05 test
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B05

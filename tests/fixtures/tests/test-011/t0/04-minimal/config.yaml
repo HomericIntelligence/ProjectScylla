@@ -1,3 +1,8 @@
-name: "Minimal Preset"
-description: "B02 + B07 + B18 (~260 lines) - minimum viable configuration"
+name: Minimal Preset
+description: B02 + B07 + B18 (~260 lines) - minimum viable configuration
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B01
+    - B02
