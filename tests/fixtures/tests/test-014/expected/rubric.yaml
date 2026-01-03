@@ -11,8 +11,9 @@ requirements:
 grading:
   pass_threshold: 0.70
   grade_scale:
-    A: 0.95
-    B: 0.85
-    C: 0.75
-    D: 0.65
+    S: 1.00
+    A: 0.80
+    B: 0.60
+    C: 0.40
+    D: 0.20
     F: 0.0

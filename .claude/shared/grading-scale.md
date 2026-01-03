@@ -43,7 +43,7 @@ grading:
 Grades are assigned using a **greater-than-or-equal** comparison in descending order:
 
 ```python
-def assign_grade(score: float) -> str:
+def assign_letter_grade(score: float) -> str:
     if score >= 1.00: return "S"   # Amazing
     if score >= 0.80: return "A"   # Excellent
     if score >= 0.60: return "B"   # Good

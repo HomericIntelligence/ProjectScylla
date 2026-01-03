@@ -168,18 +168,20 @@ Grades are assigned from the median composite score.
 
 | Grade | Threshold | Meaning |
 |-------|-----------|---------|
-| A | >= 0.95 | Excellent |
-| B | >= 0.85 | Good |
-| C | >= 0.75 | Satisfactory |
-| D | >= 0.65 | Marginal |
-| F | < 0.65 | Failing |
+| S | == 1.00 | Amazing |
+| A | >= 0.80 | Excellent |
+| B | >= 0.60 | Good |
+| C | >= 0.40 | Satisfactory |
+| D | >= 0.20 | Marginal |
+| F | >= 0.0| Failing |
 
 ```
 def assign_letter_grade(score: float) -> str:
-    if score >= 0.95: return "A"
-    if score >= 0.85: return "B"
-    if score >= 0.75: return "C"
-    if score >= 0.65: return "D"
+    if score == 1.00: return "S"
+    if score >= 0.80: return "A"
+    if score >= 0.60: return "B"
+    if score >= 0.40: return "C"
+    if score >= 0.20: return "D"
     return "F"
 ```
 
