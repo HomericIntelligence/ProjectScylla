@@ -30,6 +30,7 @@ from scylla.e2e.models import (
     TierBaseline,
     TierConfig,
     TierID,
+    TokenStats,
 )
 from scylla.e2e.run_report import save_run_report, save_run_report_json
 from scylla.e2e.tier_manager import TierManager
@@ -211,20 +212,17 @@ class SubTestExecutor:
                 system_prompt_mode=tier_config.system_prompt_mode,
             )
         except Exception as e:
-            # Handle execution errors
-            result = type(
-                "ErrorResult",
-                (),
-                {
-                    "exit_code": -1,
-                    "stdout": "",
-                    "stderr": str(e),
-                    "tokens_input": 0,
-                    "tokens_output": 0,
-                    "cost_usd": 0.0,
-                    "api_calls": 0,
-                },
-            )()
+            # Handle execution errors - create a mock result with token_stats
+            from scylla.adapters.base import AdapterResult, AdapterTokenStats
+
+            result = AdapterResult(
+                exit_code=-1,
+                stdout="",
+                stderr=str(e),
+                token_stats=AdapterTokenStats(),
+                cost_usd=0.0,
+                api_calls=0,
+            )
 
         duration = (datetime.now(UTC) - start_time).total_seconds()
 
@@ -260,11 +258,13 @@ class SubTestExecutor:
             run_dir=run_dir,
         )
 
+        # Convert adapter token stats to E2E token stats
+        token_stats = result.token_stats.to_token_stats()
+
         run_result = RunResult(
             run_number=run_number,
             exit_code=result.exit_code,
-            tokens_input=result.tokens_input,
-            tokens_output=result.tokens_output,
+            token_stats=token_stats,
             cost_usd=result.cost_usd,
             duration_seconds=duration,
             judge_score=judgment["score"],
@@ -274,6 +274,7 @@ class SubTestExecutor:
             workspace_path=workspace,
             logs_path=run_dir,  # Now same as run_dir (no logs/ subdir)
             command_log_path=run_dir / "command_log.json",
+            criteria_scores=judgment.get("criteria_scores", {}),
         )
 
         # Generate per-run reports (markdown and JSON)
@@ -288,13 +289,14 @@ class SubTestExecutor:
             reasoning=judgment["reasoning"],
             cost_usd=result.cost_usd,
             duration_seconds=duration,
-            tokens_input=result.tokens_input,
-            tokens_output=result.tokens_output,
+            tokens_input=run_result.tokens_input,  # Legacy property for fallback
+            tokens_output=run_result.tokens_output,  # Legacy property for fallback
             exit_code=result.exit_code,
             task_prompt=task_prompt,
             workspace_path=workspace,
             criteria_scores=judgment.get("criteria_scores"),
             agent_output=result.stdout[:2000] if result.stdout else None,
+            token_stats=token_stats.to_dict(),  # Pass detailed stats
         )
 
         # JSON report for hierarchical linking
@@ -428,6 +430,15 @@ class SubTestExecutor:
         cv = std_dev / mean_score if mean_score > 0 else 1.0
         consistency = max(0.0, 1.0 - cv)
 
+        # Aggregate token stats from all runs
+        from functools import reduce
+
+        token_stats = reduce(
+            lambda a, b: a + b,
+            [r.token_stats for r in runs],
+            TokenStats(),
+        )
+
         return SubTestResult(
             subtest_id=subtest_id,
             tier_id=tier_id,
@@ -439,6 +450,7 @@ class SubTestExecutor:
             mean_cost=statistics.mean(costs),
             total_cost=sum(costs),
             consistency=consistency,
+            token_stats=token_stats,
         )
 
 

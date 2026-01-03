@@ -19,6 +19,7 @@ from scylla.adapters.base import (
     AdapterError,
     AdapterResult,
     AdapterTimeoutError,
+    AdapterTokenStats,
     BaseAdapter,
 )
 
@@ -122,13 +123,15 @@ class ClaudeCodeAdapter(BaseAdapter):
         duration = (end_time - start_time).total_seconds()
 
         # Parse output for metrics
-        tokens_input, tokens_output = self._parse_token_counts(result.stdout, result.stderr)
+        token_stats = self._parse_token_stats(result.stdout, result.stderr)
         api_calls = self._parse_api_calls(result.stdout, result.stderr)
 
         # Parse cost directly from JSON if available, otherwise calculate
         cost = self._parse_cost(result.stdout)
-        if cost == 0.0 and (tokens_input > 0 or tokens_output > 0):
-            cost = self.calculate_cost(tokens_input, tokens_output, config.model)
+        if cost == 0.0 and (token_stats.input_tokens > 0 or token_stats.output_tokens > 0):
+            # Use total input (including cache reads) for cost calculation
+            total_input = token_stats.input_tokens + token_stats.cache_read_tokens
+            cost = self.calculate_cost(total_input, token_stats.output_tokens, config.model)
 
         # Write logs
         self.write_logs(config.output_dir, result.stdout, result.stderr)
@@ -138,8 +141,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             stdout=result.stdout,
             stderr=result.stderr,
             duration_seconds=duration,
-            tokens_input=tokens_input,
-            tokens_output=tokens_output,
+            token_stats=token_stats,
             cost_usd=cost,
             api_calls=api_calls,
             timed_out=False,
@@ -214,19 +216,19 @@ class ClaudeCodeAdapter(BaseAdapter):
         env.update(config.env_vars)
         return env
 
-    def _parse_token_counts(self, stdout: str, stderr: str) -> tuple[int, int]:
-        """Parse token counts from Claude Code output.
+    def _parse_token_stats(self, stdout: str, stderr: str) -> AdapterTokenStats:
+        """Parse detailed token statistics from Claude Code output.
 
         Supports two formats:
-        1. JSON output (preferred): Parses usage.input_tokens and usage.output_tokens
-        2. Text output (fallback): Regex patterns for "Input tokens: 1234", etc.
+        1. JSON output (preferred): Parses full usage object with cache tokens
+        2. Text output (fallback): Regex patterns for basic token counts
 
         Args:
             stdout: Standard output from CLI.
             stderr: Standard error from CLI.
 
         Returns:
-            Tuple of (input_tokens, output_tokens).
+            AdapterTokenStats with all token types.
         """
         import json
 
@@ -234,12 +236,12 @@ class ClaudeCodeAdapter(BaseAdapter):
         try:
             data = json.loads(stdout.strip())
             usage = data.get("usage", {})
-            input_tokens = usage.get("input_tokens", 0)
-            # Include cache read tokens in input count
-            input_tokens += usage.get("cache_read_input_tokens", 0)
-            output_tokens = usage.get("output_tokens", 0)
-            if input_tokens > 0 or output_tokens > 0:
-                return input_tokens, output_tokens
+            return AdapterTokenStats(
+                input_tokens=usage.get("input_tokens", 0),
+                output_tokens=usage.get("output_tokens", 0),
+                cache_creation_tokens=usage.get("cache_creation_input_tokens", 0),
+                cache_read_tokens=usage.get("cache_read_input_tokens", 0),
+            )
         except (json.JSONDecodeError, AttributeError):
             pass
 
@@ -278,7 +280,13 @@ class ClaudeCodeAdapter(BaseAdapter):
             input_tokens = int(total_match.group(1))
             output_tokens = int(total_match.group(2))
 
-        return input_tokens, output_tokens
+        # Fallback doesn't have cache info, return basic stats
+        return AdapterTokenStats(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cache_creation_tokens=0,
+            cache_read_tokens=0,
+        )
 
     def _parse_api_calls(self, stdout: str, stderr: str) -> int:
         """Parse API call count from output.

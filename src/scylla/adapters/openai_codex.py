@@ -19,6 +19,7 @@ from scylla.adapters.base import (
     AdapterConfig,
     AdapterError,
     AdapterResult,
+    AdapterTokenStats,
     BaseAdapter,
 )
 
@@ -119,6 +120,12 @@ class OpenAICodexAdapter(BaseAdapter):
         tokens_input, tokens_output = self._parse_token_counts(result.stdout, result.stderr)
         api_calls = self._parse_api_calls(result.stdout, result.stderr)
 
+        # Create token stats (OpenAI Codex doesn't provide cache info, so only basic stats)
+        token_stats = AdapterTokenStats(
+            input_tokens=tokens_input,
+            output_tokens=tokens_output,
+        )
+
         # Calculate cost
         cost = self.calculate_cost(tokens_input, tokens_output, config.model)
 
@@ -130,8 +137,7 @@ class OpenAICodexAdapter(BaseAdapter):
             stdout=result.stdout,
             stderr=result.stderr,
             duration_seconds=duration,
-            tokens_input=tokens_input,
-            tokens_output=tokens_output,
+            token_stats=token_stats,
             cost_usd=cost,
             api_calls=api_calls,
             timed_out=False,

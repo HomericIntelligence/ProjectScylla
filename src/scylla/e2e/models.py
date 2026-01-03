@@ -16,6 +16,64 @@ from pathlib import Path
 from typing import Any
 
 
+@dataclass
+class TokenStats:
+    """Detailed token usage statistics.
+
+    Tracks all token types including cache operations for
+    accurate cost analysis and efficiency metrics.
+
+    Attributes:
+        input_tokens: Fresh input tokens (not from cache)
+        output_tokens: Generated output tokens
+        cache_creation_tokens: Tokens written to cache
+        cache_read_tokens: Tokens read from cache (cheaper)
+    """
+
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
+
+    @property
+    def total_input(self) -> int:
+        """Total input tokens including cache reads."""
+        return self.input_tokens + self.cache_read_tokens
+
+    @property
+    def total_tokens(self) -> int:
+        """Total all tokens processed."""
+        return self.total_input + self.output_tokens + self.cache_creation_tokens
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "cache_creation_tokens": self.cache_creation_tokens,
+            "cache_read_tokens": self.cache_read_tokens,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TokenStats:
+        """Create from dictionary."""
+        return cls(
+            input_tokens=data.get("input_tokens", 0),
+            output_tokens=data.get("output_tokens", 0),
+            cache_creation_tokens=data.get("cache_creation_tokens", 0),
+            cache_read_tokens=data.get("cache_read_tokens", 0),
+        )
+
+    def __add__(self, other: TokenStats) -> TokenStats:
+        """Enable summing TokenStats."""
+        return TokenStats(
+            input_tokens=self.input_tokens + other.input_tokens,
+            output_tokens=self.output_tokens + other.output_tokens,
+            cache_creation_tokens=self.cache_creation_tokens + other.cache_creation_tokens,
+            cache_read_tokens=self.cache_read_tokens + other.cache_read_tokens,
+        )
+
+
 class TierID(Enum):
     """Tier identifiers for the evaluation framework.
 
@@ -136,8 +194,7 @@ class RunResult:
     Attributes:
         run_number: The run number (1-indexed)
         exit_code: Process exit code
-        tokens_input: Number of input tokens
-        tokens_output: Number of output tokens
+        token_stats: Detailed token usage statistics
         cost_usd: Total cost in USD
         duration_seconds: Execution duration
         judge_score: LLM judge's score (0.0 - 1.0)
@@ -147,12 +204,12 @@ class RunResult:
         workspace_path: Path to preserved workspace
         logs_path: Path to execution logs
         command_log_path: Path to command log JSON
+        criteria_scores: Per-criterion scores from judge
     """
 
     run_number: int
     exit_code: int
-    tokens_input: int
-    tokens_output: int
+    token_stats: TokenStats
     cost_usd: float
     duration_seconds: float
     judge_score: float
@@ -162,12 +219,26 @@ class RunResult:
     workspace_path: Path
     logs_path: Path
     command_log_path: Path | None = None
+    criteria_scores: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    # Legacy properties for backwards compatibility
+    @property
+    def tokens_input(self) -> int:
+        """Total input tokens (legacy compatibility)."""
+        return self.token_stats.total_input
+
+    @property
+    def tokens_output(self) -> int:
+        """Output tokens (legacy compatibility)."""
+        return self.token_stats.output_tokens
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "run_number": self.run_number,
             "exit_code": self.exit_code,
+            "token_stats": self.token_stats.to_dict(),
+            # Legacy fields for backwards compatibility
             "tokens_input": self.tokens_input,
             "tokens_output": self.tokens_output,
             "cost_usd": self.cost_usd,
@@ -179,6 +250,7 @@ class RunResult:
             "workspace_path": str(self.workspace_path),
             "logs_path": str(self.logs_path),
             "command_log_path": str(self.command_log_path) if self.command_log_path else None,
+            "criteria_scores": self.criteria_scores,
         }
 
 
@@ -198,6 +270,7 @@ class SubTestResult:
         std_dev_score: Standard deviation of scores
         mean_cost: Mean cost per run
         total_cost: Total cost across all runs
+        token_stats: Aggregated token statistics across all runs
         consistency: Score consistency (1 - coefficient of variation)
         selected_as_best: Whether this sub-test was selected as best
         selection_reason: Reason for selection (if selected)
@@ -212,6 +285,7 @@ class SubTestResult:
     std_dev_score: float = 0.0
     mean_cost: float = 0.0
     total_cost: float = 0.0
+    token_stats: TokenStats = field(default_factory=TokenStats)
     consistency: float = 0.0
     selected_as_best: bool = False
     selection_reason: str = ""
@@ -228,6 +302,7 @@ class SubTestResult:
             "std_dev_score": self.std_dev_score,
             "mean_cost": self.mean_cost,
             "total_cost": self.total_cost,
+            "token_stats": self.token_stats.to_dict(),
             "consistency": self.consistency,
             "selected_as_best": self.selected_as_best,
             "selection_reason": self.selection_reason,
@@ -343,6 +418,7 @@ class TierResult:
         tiebreaker_model: Model used for tie-breaking (if applicable)
         total_cost: Total cost for this tier
         total_duration: Total duration for this tier
+        token_stats: Aggregated token statistics across all subtests
     """
 
     tier_id: TierID
@@ -354,6 +430,7 @@ class TierResult:
     tiebreaker_model: str | None = None
     total_cost: float = 0.0
     total_duration: float = 0.0
+    token_stats: TokenStats = field(default_factory=TokenStats)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -367,6 +444,7 @@ class TierResult:
             "tiebreaker_model": self.tiebreaker_model,
             "total_cost": self.total_cost,
             "total_duration": self.total_duration,
+            "token_stats": self.token_stats.to_dict(),
         }
 
 
@@ -466,6 +544,7 @@ class ExperimentResult:
         frontier_cop_tier: Tier achieving frontier cost-of-pass
         total_cost: Total experiment cost
         total_duration_seconds: Total experiment duration
+        token_stats: Aggregated token statistics across all tiers
         started_at: Experiment start timestamp
         completed_at: Experiment completion timestamp
     """
@@ -478,6 +557,7 @@ class ExperimentResult:
     frontier_cop_tier: TierID | None = None
     total_cost: float = 0.0
     total_duration_seconds: float = 0.0
+    token_stats: TokenStats = field(default_factory=TokenStats)
     started_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     completed_at: str | None = None
 
@@ -492,6 +572,7 @@ class ExperimentResult:
             "frontier_cop_tier": self.frontier_cop_tier.value if self.frontier_cop_tier else None,
             "total_cost": self.total_cost,
             "total_duration_seconds": self.total_duration_seconds,
+            "token_stats": self.token_stats.to_dict(),
             "started_at": self.started_at,
             "completed_at": self.completed_at,
         }

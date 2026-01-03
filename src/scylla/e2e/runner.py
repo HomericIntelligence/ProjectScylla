@@ -23,6 +23,7 @@ from scylla.e2e.models import (
     TierBaseline,
     TierID,
     TierResult,
+    TokenStats,
 )
 from scylla.e2e.run_report import (
     save_experiment_report,
@@ -134,6 +135,15 @@ class E2ERunner:
         # Find frontier (best cost-of-pass)
         frontier_tier, frontier_cop = self._find_frontier(tier_results)
 
+        # Aggregate token stats from all tiers
+        from functools import reduce
+
+        experiment_token_stats = reduce(
+            lambda a, b: a + b,
+            [t.token_stats for t in tier_results.values()],
+            TokenStats(),
+        )
+
         # Create final result
         result = ExperimentResult(
             config=self.config,
@@ -148,6 +158,7 @@ class E2ERunner:
             total_duration_seconds=total_duration,
             started_at=start_time.isoformat(),
             completed_at=end_time.isoformat(),
+            token_stats=experiment_token_stats,
         )
 
         # Save final results
@@ -306,6 +317,15 @@ class E2ERunner:
         end_time = datetime.now(UTC)
         duration = (end_time - start_time).total_seconds()
 
+        # Aggregate token stats from all subtests
+        from functools import reduce
+
+        token_stats = reduce(
+            lambda a, b: a + b,
+            [s.token_stats for s in subtest_results.values()],
+            TokenStats(),
+        )
+
         return TierResult(
             tier_id=tier_id,
             subtest_results=subtest_results,
@@ -318,6 +338,7 @@ class E2ERunner:
             ),
             total_cost=sum(s.total_cost for s in subtest_results.values()),
             total_duration=duration,
+            token_stats=token_stats,
         )
 
     def _save_tier_result(self, tier_id: TierID, result: TierResult) -> None:
