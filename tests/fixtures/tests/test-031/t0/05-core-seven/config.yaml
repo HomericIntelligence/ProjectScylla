@@ -1,3 +1,14 @@
-name: "Core Seven Preset"
-description: "B02 + B05 + B07 + B09 + B12 + B16 + B18 (~400 lines) - recommended core configuration"
+name: Core Seven Preset
+description: B02 + B05 + B07 + B09 + B12 + B16 + B18 (~400 lines) - recommended core
+  configuration
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B01
+    - B02
+    - B03
+    - B04
+    - B05
+    - B06
+    - B07

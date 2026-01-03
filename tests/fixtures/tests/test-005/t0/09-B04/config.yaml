@@ -1,3 +1,7 @@
-name: "B04 agent-hierarchy-intro"
-description: "Individual block B04 test"
+name: B04 agent-hierarchy-intro
+description: Individual block B04 test
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B04

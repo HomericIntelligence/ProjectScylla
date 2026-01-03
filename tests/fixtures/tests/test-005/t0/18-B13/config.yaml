@@ -1,3 +1,7 @@
-name: "B13 agentic-loops"
-description: "Individual block B13 test"
+name: B13 agentic-loops
+description: Individual block B13 test
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B13
