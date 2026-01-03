@@ -1,0 +1,137 @@
+# Test fixture: Rubric for Mojo Hello World
+requirements:
+  # Core Functionality (Weight: 7.5 / 50%)
+  - id: "R001"
+    description: "Location Discovery - Example placed in appropriate directory"
+    weight: 1.0
+    evaluation: "scaled"
+
+  - id: "R002"
+    description: "File Creation - hello.mojo exists"
+    weight: 2.0
+    evaluation: "binary"
+
+  - id: "R003"
+    description: "Mojo Syntax Compliance - v0.26.1 standards"
+    weight: 2.5
+    evaluation: "scaled"
+    criteria:
+      - "fn main() entry point"
+      - "print() function used"
+      - "No deprecated patterns (inout, @value, DynamicVector)"
+      - "out self in constructors (if any)"
+      - "mut self in mutating methods (if any)"
+      - "Proper List literal syntax"
+      - "Tuple return syntax correct"
+
+  - id: "R004"
+    description: "Correct Output - prints Hello, world"
+    weight: 2.0
+    evaluation: "binary"
+
+  # Build Integration (Weight: 2.5 / 17%)
+  - id: "R005"
+    description: "Bazel Integration - BUILD.bazel created/updated"
+    weight: 1.5
+    evaluation: "scaled"
+    criteria:
+      - "BUILD.bazel file exists or updated"
+      - "mojo_binary or appropriate rule used"
+      - "bazel build succeeds"
+
+  - id: "R010"
+    description: "Zero compilation warnings"
+    weight: 1.0
+    evaluation: "binary"
+
+  # Documentation (Weight: 2.5 / 17%)
+  - id: "R006"
+    description: "Module Docstring present"
+    weight: 1.0
+    evaluation: "binary"
+
+  - id: "R007"
+    description: "Inline Comments for clarity"
+    weight: 0.5
+    evaluation: "scaled"
+
+  - id: "R008"
+    description: "README documentation"
+    weight: 1.0
+    evaluation: "scaled"
+    criteria:
+      - "README exists or updated"
+      - "Example documented"
+      - "Build instructions included"
+
+  # Execution (Weight: 0.5)
+  - id: "R009"
+    description: "Clean Exit (code 0)"
+    weight: 0.5
+    evaluation: "binary"
+
+  # Memory Safety & Ownership (Weight: 2.5 / 17%) - From ProjectOdyssey Skills
+  - id: "R011"
+    description: "Memory Safety - No ownership violations"
+    weight: 1.5
+    evaluation: "scaled"
+    criteria:
+      - "Proper ownership transfer with ^ operator"
+      - "No use-after-move patterns"
+      - "No uninitialized access"
+      - "Pointer safety (if applicable)"
+    skill_validation: "check-memory-safety"
+    skill_source: "https://github.com/mvillmow/ProjectOdyssey/.claude/skills/check-memory-safety"
+
+  - id: "R012"
+    description: "Ownership Patterns - Correct conventions"
+    weight: 1.0
+    evaluation: "scaled"
+    criteria:
+      - "out self in constructors (not mut self)"
+      - "mut self in mutating methods"
+      - "No inout keyword anywhere"
+      - "var parameter for ownership transfer"
+    skill_validation: "validate-mojo-patterns"
+    skill_source: "https://github.com/mvillmow/ProjectOdyssey/.claude/skills/validate-mojo-patterns"
+
+  # Deprecated Patterns (Weight: 1.0) - From ProjectOdyssey Skills
+  - id: "R013"
+    description: "No Deprecated Patterns"
+    weight: 1.0
+    evaluation: "binary"
+    criteria:
+      - "No @value decorator (use @fieldwise_init)"
+      - "No DynamicVector (use List)"
+      - "No inout keyword (use mut)"
+      - "Tuple return syntax -> Tuple[T1, T2] not -> (T1, T2)"
+    skill_validation: "mojo-lint-syntax"
+    skill_source: "https://github.com/mvillmow/ProjectOdyssey/.claude/skills/mojo-lint-syntax"
+
+  # Code Formatting (Weight: 1.0) - From ProjectOdyssey Skills
+  - id: "R014"
+    description: "Code Formatting - mojo format passes"
+    weight: 1.0
+    evaluation: "binary"
+    criteria:
+      - "Consistent indentation"
+      - "Proper spacing around operators"
+      - "Correct line lengths"
+      - "Standard Mojo style conventions"
+    skill_validation: "mojo-format"
+    skill_source: "https://github.com/mvillmow/ProjectOdyssey/.claude/skills/mojo-format"
+
+grading:
+  pass_threshold: 0.70
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0
+
+# Total weight: 16.0
+# Functional (R001-R004): 7.5 (47%)
+# Build/Compile (R005, R010, R014): 3.5 (22%)
+# Documentation (R006-R008): 2.5 (16%)
+# Safety/Patterns (R009, R011-R013): 2.5 (16%)
