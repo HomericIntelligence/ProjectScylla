@@ -156,7 +156,7 @@ class Rubric(BaseModel):
 
         return weighted_sum / total_weight
 
-    def assign_grade(self, weighted_score: float) -> str:
+    def assign_letter_grade(self, weighted_score: float) -> str:
         """Assign letter grade based on weighted score.
 
         Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.

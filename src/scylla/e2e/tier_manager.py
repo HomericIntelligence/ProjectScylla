@@ -8,14 +8,17 @@ Python Justification: Required for filesystem operations and YAML parsing.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 import shutil
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
 
-from scylla.e2e.models import SubTestConfig, TierBaseline, TierConfig, TierID
+from scylla.e2e.models import ResourceManifest, SubTestConfig, TierBaseline, TierConfig, TierID
 
 if TYPE_CHECKING:
     pass
@@ -196,26 +199,33 @@ class TierManager:
                 return
             # 02+: Fall through to normal overlay logic
 
-        # Step 1: Copy baseline if extending from previous tier
+        # Step 1: Apply baseline if extending from previous tier
         if baseline and subtest.extends_previous:
-            self._copy_baseline(workspace, baseline)
+            self._apply_baseline(workspace, baseline)
 
         # Step 2: Overlay sub-test configuration
         self._overlay_subtest(workspace, subtest)
 
-    def _copy_baseline(self, workspace: Path, baseline: TierBaseline) -> None:
-        """Copy baseline configuration to workspace.
+    def _apply_baseline(self, workspace: Path, baseline: TierBaseline) -> None:
+        """Apply baseline configuration to workspace using resources.
+
+        NEW: Uses resource specification to recreate config via symlinks,
+        instead of copying files. Falls back to legacy copy for old baselines.
 
         Args:
             workspace: Target workspace directory
-            baseline: Baseline configuration to copy
+            baseline: Baseline configuration to apply
         """
-        # Copy CLAUDE.md
+        # NEW: Use resources to recreate via symlinks (no file copying)
+        if baseline.resources:
+            self._create_symlinks(workspace, baseline.resources)
+            return
+
+        # LEGACY fallback: Copy from paths (for old baselines without resources)
         if baseline.claude_md_path and baseline.claude_md_path.exists():
             dest = workspace / "CLAUDE.md"
             shutil.copy(baseline.claude_md_path, dest)
 
-        # Copy .claude directory
         if baseline.claude_dir_path and baseline.claude_dir_path.exists():
             dest = workspace / ".claude"
             if dest.exists():
@@ -225,44 +235,20 @@ class TierManager:
     def _overlay_subtest(self, workspace: Path, subtest: SubTestConfig) -> None:
         """Overlay sub-test configuration onto workspace.
 
-        This merges the sub-test's CLAUDE.md and .claude directory
-        with any existing configuration from the baseline. Supports both:
-        - Legacy mode: Copy files from subtest directory
-        - Symlink mode: Create symlinks to shared/ based on resources spec
+        Uses symlinks to shared resources based on the resources spec.
+        All fixtures must use symlink-based configuration (no legacy copy mode).
 
         Args:
             workspace: Target workspace directory
             subtest: Sub-test configuration to overlay
         """
-        # NEW: Use symlinks if resources are specified
+        # Use symlinks if resources are specified
         if subtest.resources:
             self._create_symlinks(workspace, subtest.resources)
             return
 
-        # LEGACY: Handle CLAUDE.md (fallback for fixtures not yet migrated)
-        if subtest.claude_md_path and subtest.claude_md_path.exists():
-            dest = workspace / "CLAUDE.md"
-            if dest.exists() and subtest.extends_previous:
-                # Merge: append sub-test content to existing
-                existing = dest.read_text()
-                addition = subtest.claude_md_path.read_text()
-                merged = f"{existing}\n\n# Tier {subtest.id} Additions\n\n{addition}"
-                dest.write_text(merged)
-            else:
-                # Replace
-                shutil.copy(subtest.claude_md_path, dest)
-
-        # LEGACY: Handle .claude directory (fallback for fixtures not yet migrated)
-        if subtest.claude_dir_path and subtest.claude_dir_path.exists():
-            dest = workspace / ".claude"
-            if dest.exists() and subtest.extends_previous:
-                # Merge: copy files from sub-test, overwriting conflicts
-                self._merge_directories(subtest.claude_dir_path, dest)
-            else:
-                # Replace
-                if dest.exists():
-                    shutil.rmtree(dest)
-                shutil.copytree(subtest.claude_dir_path, dest)
+        # Empty resources is valid (e.g., T0 empty/vanilla subtests)
+        # No action needed - workspace will have no CLAUDE.md or .claude
 
     def _merge_directories(self, src: Path, dest: Path) -> None:
         """Recursively merge source directory into destination.
@@ -427,6 +413,9 @@ class TierManager:
     ) -> TierBaseline:
         """Create a baseline reference from a completed sub-test.
 
+        NEW: Reads resource manifest instead of looking for copied files.
+        Falls back to legacy config/ directory for old results.
+
         Args:
             tier_id: The tier of the winning sub-test
             subtest_id: The winning sub-test ID
@@ -435,8 +424,20 @@ class TierManager:
         Returns:
             TierBaseline that can be passed to the next tier.
         """
-        config_dir = results_dir / "config"
+        # NEW: Read from manifest (no file copying)
+        manifest_path = results_dir / "config_manifest.json"
+        if manifest_path.exists():
+            manifest = ResourceManifest.load(manifest_path)
+            return TierBaseline(
+                tier_id=tier_id,
+                subtest_id=subtest_id,
+                claude_md_path=None,  # No longer used with manifest
+                claude_dir_path=None,  # No longer used with manifest
+                resources=manifest.resources,
+            )
 
+        # LEGACY fallback: Read from config/ directory (for old results)
+        config_dir = results_dir / "config"
         return TierBaseline(
             tier_id=tier_id,
             subtest_id=subtest_id,
@@ -444,32 +445,63 @@ class TierManager:
             claude_dir_path=config_dir / ".claude" if (config_dir / ".claude").exists() else None,
         )
 
-    def save_subtest_config(
-        self,
-        workspace: Path,
-        results_dir: Path,
-    ) -> None:
-        """Save the workspace configuration to results directory.
-
-        Preserves the CLAUDE.md and .claude directory used for this
-        sub-test so it can be used as a baseline for the next tier.
+    def _get_fixture_config_path(self, tier_id: TierID, subtest_id: str) -> Path:
+        """Get path to the fixture's config.yaml file.
 
         Args:
-            workspace: Workspace with the configuration
-            results_dir: Results directory to save to
+            tier_id: The tier identifier
+            subtest_id: The subtest identifier
+
+        Returns:
+            Path to config.yaml in the fixture directory.
         """
-        config_dir = results_dir / "config"
-        config_dir.mkdir(parents=True, exist_ok=True)
+        tier_dir = self.tiers_dir / tier_id.value.lower()
+        # Find directory starting with subtest_id (e.g., "03-full")
+        for subdir in tier_dir.iterdir():
+            if subdir.is_dir() and subdir.name.startswith(subtest_id):
+                return subdir / "config.yaml"
+        return tier_dir / subtest_id / "config.yaml"
 
-        # Save CLAUDE.md
+    def save_resource_manifest(
+        self,
+        results_dir: Path,
+        tier_id: TierID,
+        subtest: SubTestConfig,
+        workspace: Path,
+        baseline: TierBaseline | None = None,
+    ) -> None:
+        """Save resource manifest for reproducibility.
+
+        Instead of copying CLAUDE.md and .claude/ to results, saves a
+        manifest that records what resources were used. This enables
+        reproducibility without file duplication.
+
+        Args:
+            results_dir: Directory to save manifest to
+            tier_id: The tier identifier
+            subtest: The subtest configuration
+            workspace: Workspace with the composed configuration
+            baseline: Previous tier's baseline (for inheritance chain)
+        """
+        # Compute hash of composed CLAUDE.md for verification
         claude_md = workspace / "CLAUDE.md"
+        claude_md_hash = None
         if claude_md.exists():
-            shutil.copy(claude_md, config_dir / "CLAUDE.md")
+            claude_md_hash = hashlib.sha256(claude_md.read_bytes()).hexdigest()
 
-        # Save .claude directory
-        claude_dir = workspace / ".claude"
-        if claude_dir.exists():
-            dest = config_dir / ".claude"
-            if dest.exists():
-                shutil.rmtree(dest)
-            shutil.copytree(claude_dir, dest)
+        # Record inherited resources for the chain
+        inherited_from = None
+        if baseline and baseline.resources:
+            inherited_from = baseline.resources
+
+        manifest = ResourceManifest(
+            tier_id=tier_id.value,
+            subtest_id=subtest.id,
+            fixture_config_path=str(self._get_fixture_config_path(tier_id, subtest.id)),
+            resources=subtest.resources,
+            composed_at=datetime.now(UTC).isoformat(),
+            claude_md_hash=claude_md_hash,
+            inherited_from=inherited_from,
+        )
+
+        manifest.save(results_dir / "config_manifest.json")

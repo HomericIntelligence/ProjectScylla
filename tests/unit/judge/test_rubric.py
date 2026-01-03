@@ -224,49 +224,49 @@ class TestAssignGrade:
     def test_grade_s(self) -> None:
         """Test S grade assignment (Amazing - exactly 1.00)."""
         rubric = Rubric()
-        assert rubric.assign_grade(1.0) == "S"
+        assert rubric.assign_letter_grade(1.0) == "S"
 
     def test_grade_a(self) -> None:
         """Test A grade assignment (Excellent - >= 0.80)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.80) == "A"
-        assert rubric.assign_grade(0.99) == "A"
+        assert rubric.assign_letter_grade(0.80) == "A"
+        assert rubric.assign_letter_grade(0.99) == "A"
 
     def test_grade_b(self) -> None:
         """Test B grade assignment (Good - >= 0.60)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.60) == "B"
-        assert rubric.assign_grade(0.79) == "B"
+        assert rubric.assign_letter_grade(0.60) == "B"
+        assert rubric.assign_letter_grade(0.79) == "B"
 
     def test_grade_c(self) -> None:
         """Test C grade assignment (Acceptable - >= 0.40)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.40) == "C"
-        assert rubric.assign_grade(0.59) == "C"
+        assert rubric.assign_letter_grade(0.40) == "C"
+        assert rubric.assign_letter_grade(0.59) == "C"
 
     def test_grade_d(self) -> None:
         """Test D grade assignment (Marginal - >= 0.20)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.20) == "D"
-        assert rubric.assign_grade(0.39) == "D"
+        assert rubric.assign_letter_grade(0.20) == "D"
+        assert rubric.assign_letter_grade(0.39) == "D"
 
     def test_grade_f(self) -> None:
         """Test F grade assignment (Failing - < 0.20)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.19) == "F"
-        assert rubric.assign_grade(0.0) == "F"
+        assert rubric.assign_letter_grade(0.19) == "F"
+        assert rubric.assign_letter_grade(0.0) == "F"
 
     def test_score_over_one_raises(self) -> None:
         """Test that score > 1.0 raises error."""
         rubric = Rubric()
         with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
-            rubric.assign_grade(1.1)
+            rubric.assign_letter_grade(1.1)
 
     def test_score_under_zero_raises(self) -> None:
         """Test that score < 0.0 raises error."""
         rubric = Rubric()
         with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
-            rubric.assign_grade(-0.1)
+            rubric.assign_letter_grade(-0.1)
 
     def test_custom_scale(self) -> None:
         """Test grading with custom scale."""
@@ -279,9 +279,9 @@ class TestAssignGrade:
                 d_threshold=0.55,
             )
         )
-        assert rubric.assign_grade(0.95) == "S"
-        assert rubric.assign_grade(0.94) == "A"
-        assert rubric.assign_grade(0.84) == "B"
+        assert rubric.assign_letter_grade(0.95) == "S"
+        assert rubric.assign_letter_grade(0.94) == "A"
+        assert rubric.assign_letter_grade(0.84) == "B"
 
 
 class TestIsPassing:

@@ -241,12 +241,6 @@ def weighted_consensus(scores: list[JudgeScore]) -> float:
 
     return sum(s.score * s.confidence for s in scores) / total_confidence
 
-
-# Backward-compatible alias for assign_letter_grade
-# Use assign_letter_grade from scylla.metrics.grading for new code
-assign_grade = assign_letter_grade
-
-
 class JudgeEvaluator:
     """Evaluator that runs judge evaluations with consensus and retry logic.
 
@@ -646,7 +640,7 @@ class JudgeEvaluator:
 
         # Determine pass/fail based on consensus score
         passed = weighted_score >= self.config.pass_threshold
-        letter_grade = assign_grade(weighted_score)
+        letter_grade = assign_letter_grade(weighted_score)
 
         # Calculate overall confidence
         if overall_scores:
