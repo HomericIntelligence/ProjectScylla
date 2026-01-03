@@ -318,13 +318,7 @@ class RubricParser:
             # Parse grade scale from grading section
             grading_data = data.get("grading", {})
             grade_data = grading_data.get("grade_scale", {})
-            grade_scale = GradeScale(
-                s_threshold=float(grade_data.get("S", 1.00)),
-                a_threshold=float(grade_data.get("A", 0.80)),
-                b_threshold=float(grade_data.get("B", 0.60)),
-                c_threshold=float(grade_data.get("C", 0.40)),
-                d_threshold=float(grade_data.get("D", 0.20)),
-            )
+            grade_scale = GradeScale()
 
             return Rubric(
                 name=data.get("name", "Evaluation Rubric"),
