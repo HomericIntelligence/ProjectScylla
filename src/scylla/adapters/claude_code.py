@@ -122,6 +122,16 @@ class ClaudeCodeAdapter(BaseAdapter):
         end_time = datetime.now(UTC)
         duration = (end_time - start_time).total_seconds()
 
+        # Check for rate limit BEFORE parsing metrics
+        # This ensures we detect and raise RateLimitError immediately
+        from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
+
+        rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="agent")
+        if rate_limit_info:
+            # Write logs before raising exception
+            self.write_logs(config.output_dir, result.stdout, result.stderr)
+            raise RateLimitError(rate_limit_info)
+
         # Parse output for metrics
         token_stats = self._parse_token_stats(result.stdout, result.stderr)
         api_calls = self._parse_api_calls(result.stdout, result.stderr)

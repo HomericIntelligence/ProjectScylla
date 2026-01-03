@@ -9,12 +9,14 @@ and filesystem operations.
 
 from __future__ import annotations
 
+import logging
 import shutil
 import statistics
 import subprocess
 import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import UTC, datetime
+from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -32,12 +34,112 @@ from scylla.e2e.models import (
     TierID,
     TokenStats,
 )
+from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo, wait_for_rate_limit
 from scylla.e2e.run_report import save_run_report, save_run_report_json
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
 
 if TYPE_CHECKING:
-    pass
+    from multiprocessing.managers import SyncManager
+
+    from scylla.e2e.checkpoint import E2ECheckpoint
+
+logger = logging.getLogger(__name__)
+
+
+class RateLimitCoordinator:
+    """Coordinates rate limit pause across parallel workers.
+
+    When ANY worker detects a rate limit, this coordinator:
+    1. Signals all workers to pause
+    2. Waits for the rate limit to expire
+    3. Signals all workers to resume
+
+    Uses multiprocessing.Manager for cross-process coordination.
+
+    Example:
+        >>> manager = Manager()
+        >>> coordinator = RateLimitCoordinator(manager)
+        >>> # In worker process:
+        >>> if coordinator.check_if_paused():
+        >>>     # Worker blocks here until resume
+        >>>     pass
+    """
+
+    def __init__(self, manager: SyncManager) -> None:
+        """Initialize coordinator with shared state.
+
+        Args:
+            manager: Multiprocessing manager for shared objects
+        """
+        self._pause_event = manager.Event()
+        self._resume_event = manager.Event()
+        self._rate_limit_info = manager.dict()
+
+    def signal_rate_limit(self, info: RateLimitInfo) -> None:
+        """Signal that a rate limit was detected (called by worker).
+
+        This sets the pause event, causing all workers to block.
+
+        Args:
+            info: Rate limit detection information
+        """
+        self._rate_limit_info.update(
+            {
+                "source": info.source,
+                "retry_after_seconds": info.retry_after_seconds,
+                "error_message": info.error_message,
+                "detected_at": info.detected_at,
+            }
+        )
+        self._pause_event.set()
+        logger.info(f"Rate limit coordinator: pause signal from {info.source}")
+
+    def check_if_paused(self) -> bool:
+        """Check if pause is active and wait if needed (called by workers).
+
+        Workers call this before each operation. If pause is active,
+        they block here until resume signal.
+
+        Returns:
+            True if was paused and now resumed, False if never paused
+        """
+        if self._pause_event.is_set():
+            logger.debug("Worker blocked on pause event, waiting for resume...")
+            self._resume_event.wait()  # Block until resume
+            self._resume_event.clear()
+            logger.debug("Worker resumed after rate limit wait")
+            return True
+        return False
+
+    def get_rate_limit_info(self) -> RateLimitInfo | None:
+        """Get current rate limit info if available.
+
+        Returns:
+            RateLimitInfo if rate limit is active, None otherwise
+        """
+        if not self._pause_event.is_set():
+            return None
+
+        info_dict = dict(self._rate_limit_info)
+        if not info_dict:
+            return None
+
+        return RateLimitInfo(
+            source=info_dict["source"],
+            retry_after_seconds=info_dict["retry_after_seconds"],
+            error_message=info_dict["error_message"],
+            detected_at=info_dict["detected_at"],
+        )
+
+    def resume_all_workers(self) -> None:
+        """Signal all workers to resume (called by main thread after wait).
+
+        Clears the pause event and sets resume event.
+        """
+        self._pause_event.clear()
+        self._resume_event.set()
+        logger.info("Rate limit coordinator: resume signal sent to all workers")
 
 
 class SubTestExecutor:
@@ -87,11 +189,16 @@ class SubTestExecutor:
         subtest: SubTestConfig,
         baseline: TierBaseline | None,
         results_dir: Path,
+        checkpoint: E2ECheckpoint | None = None,
+        checkpoint_path: Path | None = None,
+        coordinator: RateLimitCoordinator | None = None,
     ) -> SubTestResult:
         """Run a single sub-test N times and aggregate results.
 
         Creates workspace at subtest level (shared across runs) for efficiency.
         Each run gets its own directory for output.txt, judgment.json, etc.
+
+        Supports checkpoint/resume: skips completed runs and saves after each run.
 
         Args:
             tier_id: The tier being executed
@@ -99,6 +206,9 @@ class SubTestExecutor:
             subtest: Sub-test configuration
             baseline: Previous tier's winning baseline (if any)
             results_dir: Directory to store results (subtest directory)
+            checkpoint: Optional checkpoint for resume capability
+            checkpoint_path: Path to checkpoint file for saving
+            coordinator: Optional rate limit coordinator for parallel execution
 
         Returns:
             SubTestResult with aggregated metrics.
@@ -109,34 +219,110 @@ class SubTestExecutor:
         # Load task prompt once
         task_prompt = self.config.task_prompt_file.read_text()
 
-        # Create workspace at subtest level (shared across all runs)
-        workspace = results_dir / "workspace"
-        workspace.mkdir(parents=True, exist_ok=True)
-        self._setup_workspace(workspace, CommandLogger(results_dir))
+        # Check if ALL runs are already completed (checkpoint resume optimization)
+        all_completed = True
+        if checkpoint:
+            for run_num in range(1, self.config.runs_per_subtest + 1):
+                if not checkpoint.is_run_completed(tier_id.value, subtest.id, run_num):
+                    all_completed = False
+                    break
 
-        # Prepare tier configuration in workspace once
-        self.tier_manager.prepare_workspace(
-            workspace=workspace,
-            tier_id=tier_id,
-            subtest_id=subtest.id,
-            baseline=baseline,
-        )
+        # Only setup workspace if there are runs to execute
+        if not all_completed:
+            # Create workspace at subtest level (shared across all runs)
+            workspace = results_dir / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            self._setup_workspace(workspace, CommandLogger(results_dir))
+
+            # Prepare tier configuration in workspace once
+            self.tier_manager.prepare_workspace(
+                workspace=workspace,
+                tier_id=tier_id,
+                subtest_id=subtest.id,
+                baseline=baseline,
+            )
+        else:
+            # All runs completed, just use existing workspace path
+            workspace = results_dir / "workspace"
 
         for run_num in range(1, self.config.runs_per_subtest + 1):
+            # Check if run already completed (checkpoint resume)
+            if checkpoint and checkpoint.is_run_completed(tier_id.value, subtest.id, run_num):
+                logger.info(
+                    f"Skipping completed run: {tier_id.value}/{subtest.id}/run_{run_num:02d}"
+                )
+                # Load existing result from disk
+                run_dir = results_dir / f"run_{run_num:02d}"
+                run_result_file = run_dir / "run_result.json"
+                if run_dir.exists() and run_result_file.exists():
+                    # Load from saved RunResult
+                    import json
+                    from pathlib import Path
+
+                    from scylla.e2e.models import TokenStats
+
+                    with open(run_result_file) as f:
+                        report_data = json.load(f)
+
+                    # Reconstruct RunResult from JSON
+                    run_result = RunResult(
+                        run_number=report_data["run_number"],
+                        exit_code=report_data["exit_code"],
+                        token_stats=TokenStats.from_dict(report_data["token_stats"]),
+                        cost_usd=report_data["cost_usd"],
+                        duration_seconds=report_data["duration_seconds"],
+                        judge_score=report_data["judge_score"],
+                        judge_passed=report_data["judge_passed"],
+                        judge_grade=report_data["judge_grade"],
+                        judge_reasoning=report_data["judge_reasoning"],
+                        workspace_path=Path(report_data["workspace_path"]),
+                        logs_path=Path(report_data["logs_path"]),
+                        command_log_path=(
+                            Path(report_data["command_log_path"])
+                            if report_data.get("command_log_path")
+                            else None
+                        ),
+                        criteria_scores=report_data.get("criteria_scores", {}),
+                    )
+                    runs.append(run_result)
+                continue
+
+            # Check coordinator for pause signal before each run
+            if coordinator:
+                coordinator.check_if_paused()
+
             run_dir = results_dir / f"run_{run_num:02d}"
             run_dir.mkdir(parents=True, exist_ok=True)
 
-            run_result = self._execute_single_run(
-                tier_id=tier_id,
-                tier_config=tier_config,
-                subtest=subtest,
-                baseline=baseline,
-                run_number=run_num,
-                run_dir=run_dir,
-                workspace=workspace,
-                task_prompt=task_prompt,
-            )
-            runs.append(run_result)
+            try:
+                run_result = self._execute_single_run(
+                    tier_id=tier_id,
+                    tier_config=tier_config,
+                    subtest=subtest,
+                    baseline=baseline,
+                    run_number=run_num,
+                    run_dir=run_dir,
+                    workspace=workspace,
+                    task_prompt=task_prompt,
+                )
+                runs.append(run_result)
+
+                # Save checkpoint after each successful run
+                if checkpoint and checkpoint_path:
+                    from scylla.e2e.checkpoint import save_checkpoint
+
+                    checkpoint.mark_run_completed(tier_id.value, subtest.id, run_num)
+                    save_checkpoint(checkpoint, checkpoint_path)
+                    logger.debug(
+                        f"Checkpoint saved: {tier_id.value}/{subtest.id}/run_{run_num:02d}"
+                    )
+
+            except RateLimitError as e:
+                # Signal coordinator if available
+                if coordinator:
+                    coordinator.signal_rate_limit(e.info)
+                # Re-raise to be handled at higher level
+                raise
 
         # Save resource manifest for inheritance (no file copying)
         self.tier_manager.save_resource_manifest(
@@ -276,6 +462,12 @@ class SubTestExecutor:
             command_log_path=run_dir / "command_log.json",
             criteria_scores=judgment.get("criteria_scores", {}),
         )
+
+        # Save full RunResult for checkpoint resume
+        import json
+
+        with open(run_dir / "run_result.json", "w") as f:
+            json.dump(run_result.to_dict(), f, indent=2)
 
         # Generate per-run reports (markdown and JSON)
         save_run_report(
@@ -462,8 +654,13 @@ def run_tier_subtests_parallel(
     workspace_manager: WorkspaceManager,
     baseline: TierBaseline | None,
     results_dir: Path,
+    checkpoint: E2ECheckpoint | None = None,
+    checkpoint_path: Path | None = None,
 ) -> dict[str, SubTestResult]:
-    """Run all sub-tests for a tier in parallel.
+    """Run all sub-tests for a tier in parallel with rate limit handling.
+
+    When any worker hits a rate limit, ALL workers are paused until
+    the rate limit expires, then all resume.
 
     Args:
         config: Experiment configuration
@@ -473,6 +670,8 @@ def run_tier_subtests_parallel(
         workspace_manager: Workspace manager for git worktrees
         baseline: Previous tier's winning baseline
         results_dir: Base directory for tier results
+        checkpoint: Optional checkpoint for resume capability
+        checkpoint_path: Path to checkpoint file for saving
 
     Returns:
         Dict mapping sub-test ID to results.
@@ -480,20 +679,48 @@ def run_tier_subtests_parallel(
     results: dict[str, SubTestResult] = {}
     executor = SubTestExecutor(config, tier_manager, workspace_manager)
 
-    # For single sub-test (T0, T1), run directly
+    # Create rate limit coordinator for parallel execution
+    manager = Manager()
+    coordinator = RateLimitCoordinator(manager)
+
+    # For single sub-test (T0, T1), run directly (no need for coordinator)
     if len(tier_config.subtests) <= 1:
         for subtest in tier_config.subtests:
             subtest_dir = results_dir / subtest.id
-            results[subtest.id] = executor.run_subtest(
-                tier_id=tier_id,
-                tier_config=tier_config,
-                subtest=subtest,
-                baseline=baseline,
-                results_dir=subtest_dir,
-            )
+            try:
+                results[subtest.id] = executor.run_subtest(
+                    tier_id=tier_id,
+                    tier_config=tier_config,
+                    subtest=subtest,
+                    baseline=baseline,
+                    results_dir=subtest_dir,
+                    checkpoint=checkpoint,
+                    checkpoint_path=checkpoint_path,
+                    coordinator=None,  # No parallel workers
+                )
+            except RateLimitError as e:
+                # Handle rate limit in main thread for single subtest
+                if checkpoint and checkpoint_path:
+                    logger.info(f"Rate limit detected from {e.info.source}, waiting...")
+                    wait_for_rate_limit(
+                        e.info.retry_after_seconds, checkpoint, checkpoint_path
+                    )
+                    # Retry the subtest after wait
+                    results[subtest.id] = executor.run_subtest(
+                        tier_id=tier_id,
+                        tier_config=tier_config,
+                        subtest=subtest,
+                        baseline=baseline,
+                        results_dir=subtest_dir,
+                        checkpoint=checkpoint,
+                        checkpoint_path=checkpoint_path,
+                        coordinator=None,
+                    )
+                else:
+                    raise  # No checkpoint, can't handle - propagate
         return results
 
-    # For multiple sub-tests, run in parallel
+    # For multiple sub-tests, run in parallel with coordinator
     with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
         futures = {}
 
@@ -511,15 +738,59 @@ def run_tier_subtests_parallel(
                 base_repo=workspace_manager.base_repo,
                 repo_url=workspace_manager.repo_url,
                 commit=workspace_manager.commit,
+                checkpoint=checkpoint,
+                checkpoint_path=checkpoint_path,
+                coordinator=coordinator,
             )
             futures[future] = subtest.id
 
+        # Monitor futures and handle rate limits
         for future in as_completed(futures):
             subtest_id = futures[future]
             try:
                 results[subtest_id] = future.result()
+
+                # Check if rate limit was signaled during execution
+                rate_limit_info = coordinator.get_rate_limit_info()
+                if rate_limit_info and checkpoint and checkpoint_path:
+                    logger.info(
+                        f"Rate limit detected from {rate_limit_info.source}, pausing all workers..."
+                    )
+                    # Wait for rate limit to expire
+                    wait_for_rate_limit(
+                        rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
+                    )
+                    # Resume all workers
+                    coordinator.resume_all_workers()
+
+            except RateLimitError as e:
+                # Rate limit from a worker
+                if checkpoint and checkpoint_path:
+                    logger.info(
+                        f"Rate limit detected from {e.info.source}, pausing all workers..."
+                    )
+                    wait_for_rate_limit(
+                        e.info.retry_after_seconds, checkpoint, checkpoint_path
+                    )
+                    coordinator.resume_all_workers()
+                else:
+                    # Create error result
+                    results[subtest_id] = SubTestResult(
+                        subtest_id=subtest_id,
+                        tier_id=tier_id,
+                        runs=[],
+                        pass_rate=0.0,
+                        mean_score=0.0,
+                        median_score=0.0,
+                        std_dev_score=0.0,
+                        mean_cost=0.0,
+                        total_cost=0.0,
+                        consistency=0.0,
+                        selection_reason=f"Rate limit: {e.info.error_message}",
+                    )
+
             except Exception as e:
-                # Create error result
+                # Other errors
                 results[subtest_id] = SubTestResult(
                     subtest_id=subtest_id,
                     tier_id=tier_id,
@@ -548,10 +819,31 @@ def _run_subtest_in_process(
     base_repo: Path,
     repo_url: str,
     commit: str | None,
+    checkpoint: E2ECheckpoint | None = None,
+    checkpoint_path: Path | None = None,
+    coordinator: RateLimitCoordinator | None = None,
 ) -> SubTestResult:
     """Run a sub-test in a separate process.
 
-    This is a helper for parallel execution.
+    This is a helper for parallel execution with checkpoint and rate limit support.
+
+    Args:
+        config: Experiment configuration
+        tier_id: Tier ID
+        tier_config: Tier configuration
+        subtest: Subtest configuration
+        baseline: Baseline from previous tier
+        results_dir: Results directory for this subtest
+        tiers_dir: Path to tier configurations
+        base_repo: Base repository path
+        repo_url: Repository URL
+        commit: Commit hash
+        checkpoint: Optional checkpoint for resume
+        checkpoint_path: Path to checkpoint file
+        coordinator: Optional rate limit coordinator
+
+    Returns:
+        SubTestResult
     """
     tier_manager = TierManager(tiers_dir)
     # Recreate workspace manager in child process
@@ -570,4 +862,7 @@ def _run_subtest_in_process(
         subtest=subtest,
         baseline=baseline,
         results_dir=results_dir,
+        checkpoint=checkpoint,
+        checkpoint_path=checkpoint_path,
+        coordinator=coordinator,
     )

@@ -165,6 +165,13 @@ Examples:
         help="Path to results directory (default: results)",
     )
 
+    # Resume/Fresh
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Start fresh experiment, ignoring any existing checkpoint (default: auto-resume)",
+    )
+
     # Verbosity
     parser.add_argument(
         "-v", "--verbose",
@@ -344,6 +351,7 @@ def main() -> int:
             config=config,
             tiers_dir=args.tiers_dir,
             results_dir=args.results_dir,
+            fresh=args.fresh,
         )
 
         # Print summary

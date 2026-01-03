@@ -11,10 +11,18 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from scylla.e2e.checkpoint import (
+    E2ECheckpoint,
+    compute_config_hash,
+    load_checkpoint,
+    save_checkpoint,
+    validate_checkpoint_config,
+)
 from scylla.e2e.judge_selection import JudgeSelection, save_selection, select_best_subtest
 from scylla.e2e.llm_judge import build_judge_prompt_with_paths
 from scylla.e2e.models import (
@@ -69,6 +77,7 @@ class E2ERunner:
         config: ExperimentConfig,
         tiers_dir: Path,
         results_base_dir: Path,
+        fresh: bool = False,
     ) -> None:
         """Initialize the E2E runner.
 
@@ -76,34 +85,103 @@ class E2ERunner:
             config: Experiment configuration
             tiers_dir: Path to tier configurations
             results_base_dir: Base directory for results
+            fresh: If True, ignore existing checkpoints and start fresh
         """
         self.config = config
         self.tier_manager = TierManager(tiers_dir)
         self.results_base_dir = results_base_dir
         self.experiment_dir: Path | None = None
         self.workspace_manager: WorkspaceManager | None = None
+        self.checkpoint: E2ECheckpoint | None = None
+        self._fresh = fresh
 
     def run(self) -> ExperimentResult:
-        """Run the complete E2E experiment.
+        """Run the complete E2E experiment with auto-resume support.
+
+        Automatically resumes from checkpoint if one exists (unless --fresh flag).
+        Checkpoints are saved after each completed run for crash recovery and
+        rate limit pause/resume.
 
         Returns:
             ExperimentResult with all tier results and analysis.
         """
         start_time = datetime.now(UTC)
 
-        # Create experiment directory
-        self.experiment_dir = self._create_experiment_dir()
+        # Check for existing checkpoint (auto-resume unless --fresh)
+        checkpoint_path = self._find_existing_checkpoint()
 
-        # Save configuration
-        self._save_config()
+        if checkpoint_path and not self._fresh:
+            # Resume from checkpoint
+            try:
+                self.checkpoint = load_checkpoint(checkpoint_path)
 
-        # Create workspace manager and setup base repo
-        self.workspace_manager = WorkspaceManager(
-            experiment_dir=self.experiment_dir,
-            repo_url=self.config.task_repo,
-            commit=self.config.task_commit,
-        )
-        self.workspace_manager.setup_base_repo()
+                # Validate config match (strict validation)
+                if not validate_checkpoint_config(self.checkpoint, self.config):
+                    raise ValueError(
+                        f"Config has changed since checkpoint. Use --fresh to start over.\n"
+                        f"Checkpoint: {checkpoint_path}"
+                    )
+
+                self.experiment_dir = Path(self.checkpoint.experiment_dir)
+                logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+                logger.info(
+                    f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
+                )
+
+                # Validate experiment directory exists
+                if not self.experiment_dir.exists():
+                    raise ValueError(
+                        f"Checkpoint references non-existent directory: {self.experiment_dir}"
+                    )
+
+            except Exception as e:
+                logger.warning(f"Failed to resume from checkpoint: {e}")
+                logger.warning("Starting fresh experiment instead")
+                self.checkpoint = None
+                self.experiment_dir = None
+
+        if not self.experiment_dir:
+            # Fresh start - create experiment directory
+            self.experiment_dir = self._create_experiment_dir()
+
+            # Save configuration
+            self._save_config()
+
+            # Create checkpoint
+            self.checkpoint = E2ECheckpoint(
+                experiment_id=self.config.experiment_id,
+                experiment_dir=str(self.experiment_dir),
+                config_hash=compute_config_hash(self.config),
+                completed_runs={},
+                started_at=datetime.now(UTC).isoformat(),
+                last_updated_at=datetime.now(UTC).isoformat(),
+                status="running",
+                rate_limit_source=None,
+                rate_limit_until=None,
+                pause_count=0,
+                pid=os.getpid(),
+            )
+
+            checkpoint_path = self.experiment_dir / "checkpoint.json"
+            save_checkpoint(self.checkpoint, checkpoint_path)
+            logger.info(f"💾 Created checkpoint: {checkpoint_path}")
+
+        # Write PID file for status monitoring
+        self._write_pid_file()
+
+        # Create/resume workspace manager
+        if not hasattr(self, "workspace_manager") or self.workspace_manager is None:
+            self.workspace_manager = WorkspaceManager(
+                experiment_dir=self.experiment_dir,
+                repo_url=self.config.task_repo,
+                commit=self.config.task_commit,
+            )
+            # Setup base repo if needed (idempotent)
+            if not self.workspace_manager.base_repo.exists():
+                self.workspace_manager.setup_base_repo()
+            else:
+                # Resuming - base repo already exists
+                logger.debug(f"Using existing base repo: {self.workspace_manager.base_repo}")
 
         # Run tiers
         tier_results: dict[TierID, TierResult] = {}
@@ -167,7 +245,13 @@ class E2ERunner:
         # Generate report
         self._generate_report(result)
 
-        logger.info(f"Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}")
+        # Mark checkpoint as completed
+        self._mark_checkpoint_completed()
+
+        # Clean up PID file
+        self._cleanup_pid_file()
+
+        logger.info(f"✅ Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}")
 
         return result
 
@@ -284,7 +368,8 @@ class E2ERunner:
         # Prepare results directory (flat structure: experiment/T0/, not experiment/tiers/T0/)
         tier_dir = self.experiment_dir / tier_id.value
 
-        # Run all sub-tests in parallel
+        # Run all sub-tests in parallel (with checkpoint support)
+        checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
         subtest_results = run_tier_subtests_parallel(
             config=self.config,
             tier_id=tier_id,
@@ -293,6 +378,8 @@ class E2ERunner:
             workspace_manager=self.workspace_manager,
             baseline=baseline,
             results_dir=tier_dir,
+            checkpoint=self.checkpoint,
+            checkpoint_path=checkpoint_path,
         )
 
         # Select best sub-test
@@ -447,11 +534,65 @@ class E2ERunner:
 
         logger.info(f"Reports saved to {self.experiment_dir / 'report.md'}")
 
+    def _find_existing_checkpoint(self) -> Path | None:
+        """Find existing checkpoint file in results directory.
+
+        Searches for most recent experiment directory with matching experiment_id
+        that has a checkpoint.json file.
+
+        Returns:
+            Path to checkpoint file if found, None otherwise
+        """
+        if not self.results_base_dir.exists():
+            return None
+
+        # Find directories matching: *-{experiment_id}
+        pattern = f"*-{self.config.experiment_id}"
+        matching_dirs = sorted(
+            [d for d in self.results_base_dir.glob(pattern) if d.is_dir()],
+            key=lambda d: d.name,  # Sort by timestamp prefix
+            reverse=True,  # Most recent first
+        )
+
+        for exp_dir in matching_dirs:
+            checkpoint_file = exp_dir / "checkpoint.json"
+            if checkpoint_file.exists():
+                return checkpoint_file
+
+        return None
+
+    def _write_pid_file(self) -> None:
+        """Write PID file for status monitoring.
+
+        Location: {experiment_dir}/experiment.pid
+        """
+        if self.experiment_dir:
+            pid_file = self.experiment_dir / "experiment.pid"
+            pid_file.write_text(str(os.getpid()))
+            logger.debug(f"PID file written: {pid_file}")
+
+    def _cleanup_pid_file(self) -> None:
+        """Remove PID file on completion."""
+        if self.experiment_dir:
+            pid_file = self.experiment_dir / "experiment.pid"
+            if pid_file.exists():
+                pid_file.unlink()
+                logger.debug(f"PID file removed: {pid_file}")
+
+    def _mark_checkpoint_completed(self) -> None:
+        """Mark checkpoint as completed."""
+        if self.checkpoint and self.experiment_dir:
+            self.checkpoint.status = "completed"
+            checkpoint_path = self.experiment_dir / "checkpoint.json"
+            save_checkpoint(self.checkpoint, checkpoint_path)
+            logger.debug("Checkpoint marked as completed")
+
 
 def run_experiment(
     config: ExperimentConfig,
     tiers_dir: Path,
     results_dir: Path,
+    fresh: bool = False,
 ) -> ExperimentResult:
     """Convenience function to run an experiment.
 
@@ -459,9 +600,10 @@ def run_experiment(
         config: Experiment configuration
         tiers_dir: Path to tier configurations
         results_dir: Path to results directory
+        fresh: If True, ignore existing checkpoints and start fresh
 
     Returns:
         ExperimentResult with all results.
     """
-    runner = E2ERunner(config, tiers_dir, results_dir)
+    runner = E2ERunner(config, tiers_dir, results_dir, fresh=fresh)
     return runner.run()

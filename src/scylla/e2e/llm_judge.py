@@ -506,6 +506,13 @@ def _call_claude_judge(evaluation_context: str, model: str) -> str:
             error_msg = result.stderr.strip() if result.stderr else "No error message"
             raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
 
+        # Check for rate limit before returning
+        from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
+
+        rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
+        if rate_limit_info:
+            raise RateLimitError(rate_limit_info)
+
         return result.stdout
 
     finally:
