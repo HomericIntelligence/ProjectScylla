@@ -1,0 +1,26 @@
+# Test fixture: Testing - Add Comprehensive Test Suite for Models
+id: "test-042"
+name: "Add Comprehensive Test Suite for Models"
+description: |
+  Create comprehensive test suite for test models
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "0fe052906b9ac61483c4c7aed8aef0fd7a0643d9"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 7200
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

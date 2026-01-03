@@ -1,0 +1,3 @@
+name: "implementation-specialist"
+description: "L3 agent: implementation-specialist"
+extends_previous: true

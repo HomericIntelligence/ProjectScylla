@@ -1,0 +1,3 @@
+name: "cicd-orchestrator"
+description: "L1 orchestrator: cicd-orchestrator"
+extends_previous: true

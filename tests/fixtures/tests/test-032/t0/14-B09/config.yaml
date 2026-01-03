@@ -1,0 +1,3 @@
+name: "B09 skills-vs-subagents"
+description: "Individual block B09 test"
+extends_previous: false

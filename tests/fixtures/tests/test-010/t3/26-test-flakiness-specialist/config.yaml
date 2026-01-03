@@ -1,0 +1,3 @@
+name: "test-flakiness-specialist"
+description: "L3 agent: test-flakiness-specialist"
+extends_previous: true

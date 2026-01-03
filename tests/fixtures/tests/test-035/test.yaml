@@ -1,0 +1,26 @@
+# Test fixture: Documentation - Update Mojo Version References
+id: "test-035"
+name: "Update Mojo Version References"
+description: |
+  Update Mojo version from v0.25.7 to v0.26.1
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "0878a2e285bb7c1dca106244dfc22091cac4b383"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

@@ -1,0 +1,6 @@
+name: "Prompts + Tools + Skills"
+description: "Best prompts, all tools, and best skills combined"
+extends_previous: true
+inherit_best_from: ["T0", "T1", "T2"]
+tools:
+  enabled: all

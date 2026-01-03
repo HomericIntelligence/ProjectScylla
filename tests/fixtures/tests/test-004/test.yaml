@@ -1,0 +1,27 @@
+# Test fixture: Build System - Bump Ubuntu Docker base image
+id: "test-004"
+name: "Upgrade Docker Ubuntu Base Image"
+description: |
+  Test AI agent's ability to update Docker base image version. Agent must
+  understand Dockerfile syntax and update Ubuntu from 22.04 to 24.04.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "66628858c553abed2fdcb5f4b0bbdefc764d289c"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

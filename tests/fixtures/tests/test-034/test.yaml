@@ -1,0 +1,26 @@
+# Test fixture: Documentation - Convert TODO to NOTE for argv Parsing
+id: "test-034"
+name: "Convert TODO to NOTE for argv Parsing"
+description: |
+  Update TODO comment to NOTE with explanation
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "1f0ff3d0ce392ceecd4f20155b54c469b484cd15"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

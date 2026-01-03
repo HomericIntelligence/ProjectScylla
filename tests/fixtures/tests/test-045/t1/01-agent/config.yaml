@@ -1,0 +1,3 @@
+name: "Agent Skills"
+description: "5 skills from the agent category"
+extends_previous: true

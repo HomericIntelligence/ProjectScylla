@@ -1,0 +1,27 @@
+# Test fixture: CI/CD - Add Docker build and publish workflow
+id: "test-011"
+name: "Add Docker Build and Publish Workflow"
+description: |
+  Test AI agent's ability to create a complete Docker build and publish workflow.
+  Agent must understand GitHub Actions, Docker, and GHCR integration.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "ce739d4aa328f1c0815b33e2812c4b889868b740"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 3600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

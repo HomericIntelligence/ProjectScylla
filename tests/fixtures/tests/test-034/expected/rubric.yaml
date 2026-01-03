@@ -1,0 +1,18 @@
+requirements:
+  - id: "R001"
+    description: "TODO converted"
+    weight: 2.0
+    evaluation: "binary"
+  - id: "R002"
+    description: "Context preserved"
+    weight: 2.0
+    evaluation: "binary"
+
+grading:
+  pass_threshold: 0.70
+  grade_scale:
+    A: 0.95
+    B: 0.85
+    C: 0.75
+    D: 0.65
+    F: 0.0

@@ -1,0 +1,26 @@
+# Test fixture: New Features - Add Claude Code Safety Net Plugin
+id: "test-019"
+name: "Add Claude Code Safety Net Plugin"
+description: |
+  Add safety net plugin for Claude Code
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "011a3ff024954c0e15d0220bd67d72d6f74ffb64"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

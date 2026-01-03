@@ -1,0 +1,3 @@
+name: "B16 repo-architecture"
+description: "Individual block B16 test"
+extends_previous: false

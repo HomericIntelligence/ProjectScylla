@@ -1,0 +1,3 @@
+name: "documentation-review-specialist"
+description: "L3 agent: documentation-review-specialist"
+extends_previous: true

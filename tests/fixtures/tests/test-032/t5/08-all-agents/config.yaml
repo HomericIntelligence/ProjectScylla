@@ -1,0 +1,3 @@
+name: "All Agents"
+description: "All 37 non-orchestrator agents enabled"
+extends_previous: true

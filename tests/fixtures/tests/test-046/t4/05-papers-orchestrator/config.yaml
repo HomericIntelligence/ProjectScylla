@@ -1,0 +1,3 @@
+name: "papers-orchestrator"
+description: "L1 orchestrator: papers-orchestrator"
+extends_previous: true
