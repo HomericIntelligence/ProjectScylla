@@ -283,3 +283,72 @@ skill/tooling/prompt-ablation-framework
 3. Should evaluation include human review or purely automated?
 4. How to handle non-deterministic model outputs?
 5. What's the minimum sample size per configuration?
+
+---
+
+## Skill: deduplicate-test-fixtures (2026-01-02)
+
+### Session Details
+
+- **Date**: 2026-01-02
+- **Model**: Claude Opus 4.5 (claude-opus-4-5-20251101)
+- **Working Directory**: /home/mvillmow/ProjectOdyssey/build/ProjectScylla
+- **Branch**: feat/odyssey-benchmark-tests → skill/testing/deduplicate-test-fixtures
+
+### Initial Request
+
+> "There are lots of files that are duplicated over and over and over again. For example,
+> implementation-review-specialist.md is duplicated 66 times. Instead of duplicating the files,
+> I want to modify the testing system for the test to specify where the file is taken from,
+> or how it is generated, and at test time, to setup the .github repo correctly by grabbing
+> the file from the correct location."
+
+### Key Findings
+
+1. **Actual duplication was different than reported**:
+   - User mentioned `implementation-review-specialist.md` duplicated 66 times
+   - Analysis revealed only 1 copy exists at `tests/claude-code/shared/agents/L3/implementation-review-specialist.md`
+   - Real duplication was 1034 CLAUDE.md files in T0 tier directories
+
+2. **Existing infrastructure existed but wasn't used**:
+   - `tier_manager.py` already had `_compose_claude_md()` method
+   - Prior commit (d7dfeb9) added the infrastructure but never ran migration
+   - T1-T6 were already migrated, only T0 remained
+
+3. **Block-based composition pattern**:
+   - 18 shared blocks (B01-B18) in `tests/claude-code/shared/blocks/`
+   - Directory naming pattern maps to block composition (e.g., `06-B01` → `[B01]`)
+
+### Commands Used
+
+```bash
+# Find duplicated files by hash
+find tests -type f -name "*.md" | xargs md5sum | awk '{print $1}' | sort | uniq -c | sort -rn | head -20
+
+# Count CLAUDE.md files in T0
+find tests/fixtures/tests -name "CLAUDE.md" -path "*/t0/*" | wc -l
+
+# Dry-run migration
+python scripts/migrate_t0_to_blocks.py tests/fixtures/tests/ --dry-run
+
+# Execute migration
+python scripts/migrate_t0_to_blocks.py tests/fixtures/tests/
+
+# Verify
+du -sh tests/fixtures/
+```
+
+### Results
+
+| Metric | Before | After |
+|--------|--------|-------|
+| CLAUDE.md files in T0 | 1034 | 0 |
+| Fixture size | 56MB | 47MB |
+| Lines removed | 0 | 239,888 |
+| Config files updated | 0 | 1128 |
+
+### Files Created/Modified
+
+1. `scripts/migrate_t0_to_blocks.py` - Migration script (created)
+2. `tests/fixtures/tests/test-*/t0/*/config.yaml` - 1128 files updated with `resources.claude_md.blocks`
+3. `tests/fixtures/tests/test-*/t0/*/CLAUDE.md` - 1034 files deleted

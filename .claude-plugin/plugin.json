@@ -14,7 +14,8 @@
     "claude-code"
   ],
   "skills": [
-    "skills/prompt-ablation-framework/SKILL.md"
+    "skills/prompt-ablation-framework/SKILL.md",
+    "skills/deduplicate-test-fixtures/SKILL.md"
   ],
   "references": [
     "references/notes.md"
