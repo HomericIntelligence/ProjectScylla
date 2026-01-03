@@ -62,40 +62,47 @@
         },
         "grade_scale": {
           "type": "object",
-          "description": "Letter grade thresholds (optional)",
+          "description": "Letter grade thresholds. See .claude/shared/grading-scale.md for standard definition. Industry-aligned scale: S(1.0)=Amazing, A(0.8)=Excellent, B(0.6)=Good, C(0.4)=Acceptable, D(0.2)=Marginal, F(0.0)=Failing",
           "additionalProperties": false,
           "properties": {
-            "A": {
+            "S": {
               "type": "number",
-              "description": "Threshold for A grade",
+              "description": "Amazing - exceptional, above and beyond",
               "minimum": 0,
               "maximum": 1,
-              "examples": [0.95]
+              "examples": [1.00]
+            },
+            "A": {
+              "type": "number",
+              "description": "Excellent - production ready, no issues",
+              "minimum": 0,
+              "maximum": 1,
+              "examples": [0.80]
             },
             "B": {
               "type": "number",
-              "description": "Threshold for B grade",
+              "description": "Good - minor improvements possible",
               "minimum": 0,
               "maximum": 1,
-              "examples": [0.85]
+              "examples": [0.60]
             },
             "C": {
               "type": "number",
-              "description": "Threshold for C grade",
+              "description": "Acceptable - functional with some issues",
               "minimum": 0,
               "maximum": 1,
-              "examples": [0.75]
+              "examples": [0.40]
             },
             "D": {
               "type": "number",
-              "description": "Threshold for D grade",
+              "description": "Marginal - significant issues",
               "minimum": 0,
               "maximum": 1,
-              "examples": [0.65]
+              "examples": [0.20]
             },
             "F": {
               "type": "number",
-              "description": "Threshold for F grade (typically 0.0)",
+              "description": "Failing - does not meet requirements",
               "minimum": 0,
               "maximum": 1,
               "examples": [0.0]
