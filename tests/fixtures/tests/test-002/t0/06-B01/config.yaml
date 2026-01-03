@@ -1,3 +1,7 @@
-name: "B01 project-overview"
-description: "Individual block B01 test"
+name: B01 project-overview
+description: Individual block B01 test
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B01

@@ -1,3 +1,7 @@
-name: "B12 tool-use-optimization"
-description: "Individual block B12 test"
+name: B12 tool-use-optimization
+description: Individual block B12 test
 extends_previous: false
+resources:
+  claude_md:
+    blocks:
+    - B12
