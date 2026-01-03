@@ -84,33 +84,39 @@ class TestRequirement:
 
 
 class TestGradeScale:
-    """Tests for GradeScale model."""
+    """Tests for GradeScale model.
+
+    Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.
+    """
 
     def test_default_thresholds(self) -> None:
-        """Test default grade thresholds."""
+        """Test default grade thresholds (industry-aligned)."""
         scale = GradeScale()
-        assert scale.a_threshold == 0.95
-        assert scale.b_threshold == 0.85
-        assert scale.c_threshold == 0.75
-        assert scale.d_threshold == 0.65
+        assert scale.s_threshold == 1.00  # Amazing
+        assert scale.a_threshold == 0.80  # Excellent
+        assert scale.b_threshold == 0.60  # Good
+        assert scale.c_threshold == 0.40  # Acceptable
+        assert scale.d_threshold == 0.20  # Marginal
 
     def test_custom_thresholds(self) -> None:
         """Test custom grade thresholds."""
         scale = GradeScale(
-            a_threshold=0.90,
-            b_threshold=0.80,
-            c_threshold=0.70,
-            d_threshold=0.60,
+            s_threshold=0.95,
+            a_threshold=0.85,
+            b_threshold=0.75,
+            c_threshold=0.65,
+            d_threshold=0.55,
         )
-        assert scale.a_threshold == 0.90
-        assert scale.b_threshold == 0.80
-        assert scale.c_threshold == 0.70
-        assert scale.d_threshold == 0.60
+        assert scale.s_threshold == 0.95
+        assert scale.a_threshold == 0.85
+        assert scale.b_threshold == 0.75
+        assert scale.c_threshold == 0.65
+        assert scale.d_threshold == 0.55
 
     def test_threshold_over_one_rejected(self) -> None:
         """Test that threshold over 1.0 is rejected."""
         with pytest.raises(ValueError):
-            GradeScale(a_threshold=1.5)
+            GradeScale(s_threshold=1.5)
 
     def test_threshold_under_zero_rejected(self) -> None:
         """Test that threshold under 0.0 is rejected."""
@@ -127,7 +133,7 @@ class TestRubric:
         assert rubric.name == "Evaluation Rubric"
         assert rubric.description == ""
         assert rubric.requirements == []
-        assert rubric.pass_threshold == 0.70
+        assert rubric.pass_threshold == 0.60  # Good grade threshold
         assert isinstance(rubric.grade_scale, GradeScale)
 
     def test_custom_rubric(self) -> None:
@@ -210,50 +216,72 @@ class TestCalculateWeightedScore:
 
 
 class TestAssignGrade:
-    """Tests for grade assignment."""
+    """Tests for grade assignment.
+
+    Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.
+    """
+
+    def test_grade_s(self) -> None:
+        """Test S grade assignment (Amazing - exactly 1.00)."""
+        rubric = Rubric()
+        assert rubric.assign_grade(1.0) == "S"
 
     def test_grade_a(self) -> None:
-        """Test A grade assignment."""
+        """Test A grade assignment (Excellent - >= 0.80)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.95) == "A"
-        assert rubric.assign_grade(1.0) == "A"
+        assert rubric.assign_grade(0.80) == "A"
+        assert rubric.assign_grade(0.99) == "A"
 
     def test_grade_b(self) -> None:
-        """Test B grade assignment."""
+        """Test B grade assignment (Good - >= 0.60)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.85) == "B"
-        assert rubric.assign_grade(0.94) == "B"
+        assert rubric.assign_grade(0.60) == "B"
+        assert rubric.assign_grade(0.79) == "B"
 
     def test_grade_c(self) -> None:
-        """Test C grade assignment."""
+        """Test C grade assignment (Acceptable - >= 0.40)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.75) == "C"
-        assert rubric.assign_grade(0.84) == "C"
+        assert rubric.assign_grade(0.40) == "C"
+        assert rubric.assign_grade(0.59) == "C"
 
     def test_grade_d(self) -> None:
-        """Test D grade assignment."""
+        """Test D grade assignment (Marginal - >= 0.20)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.65) == "D"
-        assert rubric.assign_grade(0.74) == "D"
+        assert rubric.assign_grade(0.20) == "D"
+        assert rubric.assign_grade(0.39) == "D"
 
     def test_grade_f(self) -> None:
-        """Test F grade assignment."""
+        """Test F grade assignment (Failing - < 0.20)."""
         rubric = Rubric()
-        assert rubric.assign_grade(0.64) == "F"
+        assert rubric.assign_grade(0.19) == "F"
         assert rubric.assign_grade(0.0) == "F"
+
+    def test_score_over_one_raises(self) -> None:
+        """Test that score > 1.0 raises error."""
+        rubric = Rubric()
+        with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
+            rubric.assign_grade(1.1)
+
+    def test_score_under_zero_raises(self) -> None:
+        """Test that score < 0.0 raises error."""
+        rubric = Rubric()
+        with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
+            rubric.assign_grade(-0.1)
 
     def test_custom_scale(self) -> None:
         """Test grading with custom scale."""
         rubric = Rubric(
             grade_scale=GradeScale(
-                a_threshold=0.90,
-                b_threshold=0.80,
-                c_threshold=0.70,
-                d_threshold=0.60,
+                s_threshold=0.95,
+                a_threshold=0.85,
+                b_threshold=0.75,
+                c_threshold=0.65,
+                d_threshold=0.55,
             )
         )
-        assert rubric.assign_grade(0.90) == "A"
-        assert rubric.assign_grade(0.89) == "B"
+        assert rubric.assign_grade(0.95) == "S"
+        assert rubric.assign_grade(0.94) == "A"
+        assert rubric.assign_grade(0.84) == "B"
 
 
 class TestIsPassing:
@@ -334,16 +362,10 @@ requirements:
         assert rubric.requirements[0].id == "R001"
 
     def test_full_yaml(self) -> None:
-        """Test parsing full YAML with all fields."""
+        """Test parsing full YAML with all fields (industry-aligned scale)."""
         yaml_content = """
 name: Complete Rubric
 description: Full test rubric
-pass_threshold: 0.80
-grade_scale:
-  A: 0.90
-  B: 0.80
-  C: 0.70
-  D: 0.60
 requirements:
   - id: R001
     description: First requirement
@@ -354,12 +376,22 @@ requirements:
     description: Second requirement
     weight: 1.0
     evaluation: scaled
+grading:
+  pass_threshold: 0.60
+  grade_scale:
+    S: 1.00
+    A: 0.80
+    B: 0.60
+    C: 0.40
+    D: 0.20
+    F: 0.0
 """
         rubric = RubricParser.parse_yaml(yaml_content)
         assert rubric.name == "Complete Rubric"
         assert rubric.description == "Full test rubric"
-        assert rubric.pass_threshold == 0.80
-        assert rubric.grade_scale.a_threshold == 0.90
+        assert rubric.pass_threshold == 0.60
+        assert rubric.grade_scale.s_threshold == 1.00
+        assert rubric.grade_scale.a_threshold == 0.80
         assert len(rubric.requirements) == 2
         assert rubric.requirements[0].evaluation == EvaluationType.BINARY
         assert rubric.requirements[0].validation_command == "pytest tests/"
@@ -421,7 +453,7 @@ requirements:
         rubric = RubricParser.parse_yaml(yaml_content)
         assert rubric.name == "Evaluation Rubric"
         assert rubric.description == ""
-        assert rubric.pass_threshold == 0.70
+        assert rubric.pass_threshold == 0.60  # Good grade threshold
         assert rubric.requirements[0].weight == 1.0
         assert rubric.requirements[0].evaluation == EvaluationType.SCALED
 
