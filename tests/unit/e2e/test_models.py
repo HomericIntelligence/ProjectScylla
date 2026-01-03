@@ -100,11 +100,12 @@ class TestRunResult:
 
     def test_to_dict(self) -> None:
         """Test conversion to dictionary."""
+        from scylla.e2e.models import TokenStats
+
         result = RunResult(
             run_number=1,
             exit_code=0,
-            tokens_input=1000,
-            tokens_output=200,
+            token_stats=TokenStats(input_tokens=1000, output_tokens=200),
             cost_usd=0.05,
             duration_seconds=15.5,
             judge_score=0.8,
@@ -122,6 +123,9 @@ class TestRunResult:
         assert d["cost_usd"] == 0.05
         assert d["judge_score"] == 0.8
         assert d["workspace_path"] == "/workspace"
+        # Legacy properties should still work
+        assert result.tokens_input == 1000
+        assert result.tokens_output == 200
 
 
 class TestSubTestResult:

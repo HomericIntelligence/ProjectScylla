@@ -39,6 +39,7 @@ def generate_run_report(
     workspace_path: Path,
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
+    token_stats: dict[str, int] | None = None,
 ) -> str:
     """Generate markdown report content for a single run.
 
@@ -52,19 +53,38 @@ def generate_run_report(
         reasoning: Judge's overall reasoning
         cost_usd: Total cost in USD
         duration_seconds: Execution duration
-        tokens_input: Number of input tokens
-        tokens_output: Number of output tokens
+        tokens_input: Number of input tokens (legacy, use token_stats if available)
+        tokens_output: Number of output tokens (legacy, use token_stats if available)
         exit_code: Process exit code
         task_prompt: The task prompt given to the agent
         workspace_path: Path to the workspace directory
         criteria_scores: Optional detailed criteria evaluations
         agent_output: Optional truncated agent output
+        token_stats: Optional detailed token statistics dict with keys:
+            input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens
 
     Returns:
         Formatted markdown report string.
     """
     timestamp = datetime.now(timezone.utc).isoformat()
     pass_status = "\u2713 PASS" if passed else "\u2717 FAIL"
+
+    # Use detailed token stats if available, otherwise fallback to legacy
+    if token_stats:
+        input_tok = token_stats.get("input_tokens", 0)
+        output_tok = token_stats.get("output_tokens", 0)
+        cache_read = token_stats.get("cache_read_tokens", 0)
+        cache_create = token_stats.get("cache_creation_tokens", 0)
+        total_input = input_tok + cache_read
+        # Format token display with cache info
+        if cache_read > 0 or cache_create > 0:
+            token_display = f"{total_input:,} in ({cache_read:,} cached) / {output_tok:,} out"
+            if cache_create > 0:
+                token_display += f" / {cache_create:,} cache created"
+        else:
+            token_display = f"{total_input:,} in / {output_tok:,} out"
+    else:
+        token_display = f"{tokens_input:,} in / {tokens_output:,} out"
 
     lines = [
         f"# Run Report: {tier_id}/{subtest_id}/run_{run_number:02d}",
@@ -80,24 +100,52 @@ def generate_run_report(
         f"| Status | {pass_status} |",
         f"| Cost | ${cost_usd:.4f} |",
         f"| Duration | {duration_seconds:.2f}s |",
-        f"| Tokens | {tokens_input:,} in / {tokens_output:,} out |",
+        f"| Tokens | {token_display} |",
         f"| Exit Code | {exit_code} |",
         "",
-        "---",
-        "",
-        "## Task",
-        "",
-        task_prompt,
-        "",
-        "---",
-        "",
-        "## Judge Evaluation",
-        "",
-        "### Overall Assessment",
-        "",
-        reasoning,
-        "",
     ]
+
+    # Add detailed token statistics table if available
+    if token_stats:
+        input_tok = token_stats.get("input_tokens", 0)
+        output_tok = token_stats.get("output_tokens", 0)
+        cache_read = token_stats.get("cache_read_tokens", 0)
+        cache_create = token_stats.get("cache_creation_tokens", 0)
+        total = input_tok + output_tok + cache_read + cache_create
+
+        lines.extend(
+            [
+                "### Token Breakdown",
+                "",
+                "| Type | Count |",
+                "|------|-------|",
+                f"| Input (fresh) | {input_tok:,} |",
+                f"| Output | {output_tok:,} |",
+                f"| Cache Read | {cache_read:,} |",
+                f"| Cache Created | {cache_create:,} |",
+                f"| **Total** | **{total:,}** |",
+                "",
+            ]
+        )
+
+    lines.extend(
+        [
+            "---",
+            "",
+            "## Task",
+            "",
+            task_prompt,
+            "",
+            "---",
+            "",
+            "## Judge Evaluation",
+            "",
+            "### Overall Assessment",
+            "",
+            reasoning,
+            "",
+        ]
+    )
 
     # Add criteria scores if available
     if criteria_scores:
@@ -295,6 +343,7 @@ def save_run_report(
     workspace_path: Path,
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
+    token_stats: dict[str, int] | None = None,
 ) -> None:
     """Generate and save markdown report for a single run.
 
@@ -319,6 +368,7 @@ def save_run_report(
         workspace_path=workspace_path,
         criteria_scores=criteria_scores,
         agent_output=agent_output,
+        token_stats=token_stats,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -388,7 +438,7 @@ def save_subtest_report(
             }
         )
 
-    # JSON report
+    # JSON report with token stats
     json_report = {
         "subtest_id": subtest_id,
         "tier_id": result.tier_id.value,
@@ -402,6 +452,7 @@ def save_subtest_report(
             "total_cost": result.total_cost,
             "consistency": result.consistency,
         },
+        "token_stats": result.token_stats.to_dict(),
         "children": children,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -428,19 +479,104 @@ def save_subtest_report(
         f"| Total Cost | ${result.total_cost:.4f} |",
         f"| Consistency | {result.consistency:.3f} |",
         "",
-        "## Runs",
+        "## Runs Overview",
         "",
-        "| Run | Score | Grade | Status | Report |",
-        "|-----|-------|-------|--------|--------|",
+        "| Run | Score | Grade | Pass | Cost | In | Out | Cache R | Cache W |",
+        "|-----|-------|-------|------|------|-----|-----|---------|---------|",
     ]
 
+    # Find best run
+    best_run = max(result.runs, key=lambda r: r.judge_score) if result.runs else None
+
     for run in result.runs:
-        status = "✓ PASS" if run.judge_passed else "✗ FAIL"
-        run_dir_name = f"run_{run.run_number:02d}"
+        status = "✓" if run.judge_passed else "✗"
+        is_best = "★" if best_run and run.run_number == best_run.run_number else ""
+        ts = run.token_stats
         md_lines.append(
-            f"| {run.run_number} | {run.judge_score:.3f} | {run.judge_grade} | "
-            f"{status} | [report.md](./{run_dir_name}/report.md) |"
+            f"| {run.run_number:02d}{is_best} | {run.judge_score:.2f} | {run.judge_grade} | "
+            f"{status} | ${run.cost_usd:.4f} | {ts.input_tokens:,} | {ts.output_tokens:,} | "
+            f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} |"
         )
+
+    # Collect all criteria across runs
+    all_criteria: set[str] = set()
+    for run in result.runs:
+        if run.criteria_scores:
+            all_criteria.update(run.criteria_scores.keys())
+
+    # Add per-criteria comparison table if we have criteria
+    if all_criteria:
+        md_lines.extend(
+            [
+                "",
+                "## Per-Criteria Scores (All Runs)",
+                "",
+            ]
+        )
+
+        # Build header
+        header = "| Criterion |"
+        separator = "|-----------|"
+        for run in result.runs:
+            header += f" Run {run.run_number:02d} |"
+            separator += "--------|"
+        header += " Best |"
+        separator += "------|"
+        md_lines.extend([header, separator])
+
+        # Add row for each criterion
+        for criterion in sorted(all_criteria):
+            row = f"| {criterion} |"
+            scores = []
+            for run in result.runs:
+                if run.criteria_scores and criterion in run.criteria_scores:
+                    score_data = run.criteria_scores[criterion]
+                    if isinstance(score_data, dict):
+                        score = score_data.get("score", "N/A")
+                    else:
+                        score = score_data
+                    if isinstance(score, (int, float)):
+                        scores.append(score)
+                        row += f" {score:.2f} |"
+                    else:
+                        row += f" {score} |"
+                else:
+                    row += " - |"
+            # Add best score
+            if scores:
+                row += f" {max(scores):.2f} |"
+            else:
+                row += " - |"
+            md_lines.append(row)
+
+    # Add aggregated token statistics
+    ts = result.token_stats
+    md_lines.extend(
+        [
+            "",
+            "## Token Statistics (Total)",
+            "",
+            "| Metric | Value |",
+            "|--------|-------|",
+            f"| Input (fresh) | {ts.input_tokens:,} |",
+            f"| Output | {ts.output_tokens:,} |",
+            f"| Cache Read | {ts.cache_read_tokens:,} |",
+            f"| Cache Created | {ts.cache_creation_tokens:,} |",
+            f"| **Total** | **{ts.total_tokens:,}** |",
+            "",
+        ]
+    )
+
+    # Add run links
+    md_lines.extend(
+        [
+            "## Run Reports",
+            "",
+        ]
+    )
+    for run in result.runs:
+        run_dir_name = f"run_{run.run_number:02d}"
+        md_lines.append(f"- [Run {run.run_number:02d}](./{run_dir_name}/report.md)")
 
     md_lines.extend(
         [
@@ -479,7 +615,7 @@ def save_tier_report(
             }
         )
 
-    # JSON report
+    # JSON report with token stats
     json_report = {
         "tier": tier_id,
         "summary": {
@@ -490,6 +626,7 @@ def save_tier_report(
             "total_duration": result.total_duration,
             "tiebreaker_used": result.tiebreaker_used,
         },
+        "token_stats": result.token_stats.to_dict(),
         "best": {
             "subtest": result.best_subtest,
             "score": result.best_subtest_score,
@@ -518,19 +655,105 @@ def save_tier_report(
         f"| Duration | {result.total_duration:.1f}s |",
         f"| Tiebreaker Used | {'Yes' if result.tiebreaker_used else 'No'} |",
         "",
-        "## Subtests",
+        "## Subtests Overview",
         "",
-        "| Subtest | Median Score | Pass Rate | Cost | Selected | Report |",
-        "|---------|--------------|-----------|------|----------|--------|",
+        "| Subtest | Score | Pass | Cost | In | Out | Cache R | Cache W | Best |",
+        "|---------|-------|------|------|-----|-----|---------|---------|------|",
     ]
 
     for subtest_id, subtest_result in sorted(result.subtest_results.items()):
         selected = "★" if subtest_result.selected_as_best else ""
+        ts = subtest_result.token_stats
         md_lines.append(
-            f"| {subtest_id} | {subtest_result.median_score:.3f} | "
-            f"{subtest_result.pass_rate:.1%} | ${subtest_result.total_cost:.4f} | "
-            f"{selected} | [report.md](./{subtest_id}/report.md) |"
+            f"| {subtest_id} | {subtest_result.median_score:.2f} | "
+            f"{subtest_result.pass_rate:.0%} | ${subtest_result.total_cost:.2f} | "
+            f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
+            f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {selected} |"
         )
+
+    # Collect all criteria across best runs from each subtest
+    all_criteria: set[str] = set()
+    best_runs: dict[str, Any] = {}  # subtest_id -> best run
+    for subtest_id, subtest_result in result.subtest_results.items():
+        if subtest_result.runs:
+            best_run = max(subtest_result.runs, key=lambda r: r.judge_score)
+            best_runs[subtest_id] = best_run
+            if best_run.criteria_scores:
+                all_criteria.update(best_run.criteria_scores.keys())
+
+    # Add per-criteria comparison table if we have criteria
+    if all_criteria and best_runs:
+        md_lines.extend(
+            [
+                "",
+                "## Per-Criteria Scores (Best Run per Subtest)",
+                "",
+            ]
+        )
+
+        # Build header
+        header = "| Criterion |"
+        separator = "|-----------|"
+        for subtest_id in sorted(best_runs.keys()):
+            header += f" {subtest_id} |"
+            separator += "------|"
+        header += " Best |"
+        separator += "------|"
+        md_lines.extend([header, separator])
+
+        # Add row for each criterion
+        for criterion in sorted(all_criteria):
+            row = f"| {criterion} |"
+            scores = []
+            for subtest_id in sorted(best_runs.keys()):
+                best_run = best_runs[subtest_id]
+                if best_run.criteria_scores and criterion in best_run.criteria_scores:
+                    score_data = best_run.criteria_scores[criterion]
+                    if isinstance(score_data, dict):
+                        score = score_data.get("score", "N/A")
+                    else:
+                        score = score_data
+                    if isinstance(score, (int, float)):
+                        scores.append(score)
+                        row += f" {score:.2f} |"
+                    else:
+                        row += f" {score} |"
+                else:
+                    row += " - |"
+            # Add best score
+            if scores:
+                row += f" {max(scores):.2f} |"
+            else:
+                row += " - |"
+            md_lines.append(row)
+
+    # Add aggregated token statistics
+    ts = result.token_stats
+    md_lines.extend(
+        [
+            "",
+            "## Token Statistics (Total)",
+            "",
+            "| Metric | Value |",
+            "|--------|-------|",
+            f"| Input (fresh) | {ts.input_tokens:,} |",
+            f"| Output | {ts.output_tokens:,} |",
+            f"| Cache Read | {ts.cache_read_tokens:,} |",
+            f"| Cache Created | {ts.cache_creation_tokens:,} |",
+            f"| **Total** | **{ts.total_tokens:,}** |",
+            "",
+        ]
+    )
+
+    # Add subtest links
+    md_lines.extend(
+        [
+            "## Subtest Reports",
+            "",
+        ]
+    )
+    for subtest_id in sorted(result.subtest_results.keys()):
+        md_lines.append(f"- [{subtest_id}](./{subtest_id}/report.md)")
 
     md_lines.extend(
         [
@@ -566,7 +789,7 @@ def save_experiment_report(
             }
         )
 
-    # JSON report
+    # JSON report with token stats
     json_report = {
         "experiment_id": result.config.experiment_id,
         "summary": {
@@ -579,6 +802,7 @@ def save_experiment_report(
             "started_at": result.started_at,
             "completed_at": result.completed_at,
         },
+        "token_stats": result.token_stats.to_dict(),
         "best": {
             "tier": result.best_overall_tier.value if result.best_overall_tier else None,
             "subtest": result.best_overall_subtest,
@@ -592,7 +816,7 @@ def save_experiment_report(
 
     (experiment_dir / "report.json").write_text(json.dumps(json_report, indent=2))
 
-    # Markdown report - keep existing format but add links
+    # Markdown report with enhanced tables
     md_lines = [
         f"# E2E Experiment Report: {result.config.experiment_id}",
         "",
@@ -608,26 +832,111 @@ def save_experiment_report(
         if result.frontier_cop != float("inf")
         else "- **Frontier CoP**: N/A",
         "",
-        "## Tier Results",
+        "## Tiers Overview",
         "",
-        "| Tier | Best Sub-test | Score | Cost | Tie-breaker | Report |",
-        "|------|---------------|-------|------|-------------|--------|",
+        "| Tier | Best | Score | Cost | In | Out | Cache R | Cache W | CoP |",
+        "|------|------|-------|------|-----|-----|---------|---------|-----|",
     ]
 
     for tier_id in result.config.tiers_to_run:
         tier_result = result.tier_results.get(tier_id)
         if tier_result:
+            ts = tier_result.token_stats
+            # Calculate cost-of-pass for this tier
+            best_subtest = result.tier_results[tier_id].subtest_results.get(
+                tier_result.best_subtest
+            )
+            if best_subtest and best_subtest.pass_rate > 0:
+                cop = tier_result.total_cost / best_subtest.pass_rate
+                cop_str = f"${cop:.2f}"
+            else:
+                cop_str = "N/A"
+
             md_lines.append(
                 f"| {tier_id.value} | {tier_result.best_subtest or 'N/A'} | "
-                f"{tier_result.best_subtest_score:.3f} | "
-                f"${tier_result.total_cost:.4f} | "
-                f"{'Yes' if tier_result.tiebreaker_used else 'No'} | "
-                f"[report.md](./{tier_id.value}/report.md) |"
+                f"{tier_result.best_subtest_score:.2f} | ${tier_result.total_cost:.2f} | "
+                f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
+                f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {cop_str} |"
             )
 
+    # Collect all criteria across best runs from each tier's best subtest
+    all_criteria: set[str] = set()
+    best_runs_by_tier: dict[str, Any] = {}  # tier_id.value -> best run
+    for tier_id, tier_result in result.tier_results.items():
+        if tier_result.best_subtest:
+            best_subtest = tier_result.subtest_results.get(tier_result.best_subtest)
+            if best_subtest and best_subtest.runs:
+                best_run = max(best_subtest.runs, key=lambda r: r.judge_score)
+                best_runs_by_tier[tier_id.value] = best_run
+                if best_run.criteria_scores:
+                    all_criteria.update(best_run.criteria_scores.keys())
+
+    # Add per-criteria comparison table if we have criteria
+    if all_criteria and best_runs_by_tier:
+        md_lines.extend(
+            [
+                "",
+                "## Per-Criteria Scores (Best Subtest per Tier)",
+                "",
+            ]
+        )
+
+        # Build header
+        header = "| Criterion |"
+        separator = "|-----------|"
+        for tier_val in sorted(best_runs_by_tier.keys()):
+            header += f" {tier_val} |"
+            separator += "------|"
+        header += " Best |"
+        separator += "------|"
+        md_lines.extend([header, separator])
+
+        # Add row for each criterion
+        for criterion in sorted(all_criteria):
+            row = f"| {criterion} |"
+            scores = []
+            for tier_val in sorted(best_runs_by_tier.keys()):
+                best_run = best_runs_by_tier[tier_val]
+                if best_run.criteria_scores and criterion in best_run.criteria_scores:
+                    score_data = best_run.criteria_scores[criterion]
+                    if isinstance(score_data, dict):
+                        score = score_data.get("score", "N/A")
+                    else:
+                        score = score_data
+                    if isinstance(score, (int, float)):
+                        scores.append(score)
+                        row += f" {score:.2f} |"
+                    else:
+                        row += f" {score} |"
+                else:
+                    row += " - |"
+            # Add best score
+            if scores:
+                row += f" {max(scores):.2f} |"
+            else:
+                row += " - |"
+            md_lines.append(row)
+
+    # Add aggregated token statistics
+    ts = result.token_stats
     md_lines.extend(
         [
             "",
+            "## Token Statistics (Total)",
+            "",
+            "| Metric | Value |",
+            "|--------|-------|",
+            f"| Input (fresh) | {ts.input_tokens:,} |",
+            f"| Output | {ts.output_tokens:,} |",
+            f"| Cache Read | {ts.cache_read_tokens:,} |",
+            f"| Cache Created | {ts.cache_creation_tokens:,} |",
+            f"| **Total** | **{ts.total_tokens:,}** |",
+            "",
+        ]
+    )
+
+    md_lines.extend(
+        [
             "## Configuration",
             "",
             f"- **Task Repo**: {result.config.task_repo}",
@@ -635,6 +944,18 @@ def save_experiment_report(
             f"- **Runs per Sub-test**: {result.config.runs_per_subtest}",
             f"- **Judge Model**: {result.config.judge_model}",
             f"- **Tie-breaker Model**: {result.config.tiebreaker_model}",
+            "",
+            "## Tier Reports",
+            "",
+        ]
+    )
+
+    for tier_id in result.config.tiers_to_run:
+        if tier_id in result.tier_results:
+            md_lines.append(f"- [{tier_id.value}](./{tier_id.value}/report.md)")
+
+    md_lines.extend(
+        [
             "",
             "## Files",
             "",

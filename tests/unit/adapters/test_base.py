@@ -13,6 +13,7 @@ from scylla.adapters.base import (
     AdapterConfig,
     AdapterError,
     AdapterResult,
+    AdapterTokenStats,
     AdapterValidationError,
     BaseAdapter,
 )
@@ -47,15 +48,21 @@ class TestAdapterResult:
             stdout="output",
             stderr="error",
             duration_seconds=10.5,
-            tokens_input=100,
-            tokens_output=50,
+            token_stats=AdapterTokenStats(
+                input_tokens=100,
+                output_tokens=50,
+                cache_creation_tokens=0,
+                cache_read_tokens=0,
+            ),
             cost_usd=0.05,
             api_calls=3,
             timed_out=False,
             error_message="Something failed",
         )
         assert result.exit_code == 1
-        assert result.tokens_input == 100
+        assert result.tokens_input == 100  # Uses legacy property
+        assert result.tokens_output == 50  # Uses legacy property
+        assert result.token_stats.input_tokens == 100
         assert result.cost_usd == 0.05
 
 
@@ -238,10 +245,10 @@ class TestLogWriting:
 
             adapter.write_logs(output_dir, "stdout content", "stderr content")
 
-            logs_dir = output_dir / "logs"
-            assert logs_dir.exists()
-            assert (logs_dir / "stdout.log").read_text() == "stdout content"
-            assert (logs_dir / "stderr.log").read_text() == "stderr content"
+            # Logs are written directly to output_dir (no logs/ subdirectory)
+            assert output_dir.exists()
+            assert (output_dir / "stdout.log").read_text() == "stdout content"
+            assert (output_dir / "stderr.log").read_text() == "stderr content"
 
     def test_write_logs_with_agent_log(self) -> None:
         """Test writing with agent log."""
@@ -251,18 +258,20 @@ class TestLogWriting:
 
             adapter.write_logs(output_dir, "stdout", "stderr", agent_log="agent activity")
 
-            logs_dir = output_dir / "logs"
-            assert (logs_dir / "agent.log").read_text() == "agent activity"
+            # Logs are written directly to output_dir
+            assert (output_dir / "agent.log").read_text() == "agent activity"
 
     def test_write_logs_creates_directory(self) -> None:
-        """Test that logs directory is created."""
+        """Test that output directory is created if it doesn't exist."""
         with TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir) / "new_dir"
             adapter = ConcreteAdapter()
 
             adapter.write_logs(output_dir, "out", "err")
 
-            assert (output_dir / "logs").exists()
+            # Output directory should be created
+            assert output_dir.exists()
+            assert (output_dir / "stdout.log").read_text() == "out"
 
 
 class TestCostCalculation:

@@ -390,10 +390,9 @@ class TestRun:
             with patch("subprocess.run", return_value=mock_result):
                 adapter.run(config)
 
-            logs_dir = tmppath / "logs"
-            assert logs_dir.exists()
-            assert (logs_dir / "stdout.log").read_text() == "stdout content"
-            assert (logs_dir / "stderr.log").read_text() == "stderr content"
+            # Logs are written directly to output_dir (no logs/ subdirectory)
+            assert (tmppath / "stdout.log").read_text() == "stdout content"
+            assert (tmppath / "stderr.log").read_text() == "stderr content"
 
     def test_run_calculates_cost_gpt4(self) -> None:
         """Test cost calculation for GPT-4."""
