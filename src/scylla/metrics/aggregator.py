@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from scylla.metrics.grading import assign_letter_grade
 from scylla.metrics.statistics import (
     Statistics,
     calculate_all,
@@ -86,19 +87,6 @@ def _calculate_composite_score(pass_rate: float, impl_rate: float) -> float:
     return (pass_rate + impl_rate) / 2
 
 
-def _assign_letter_grade(score: float) -> str:
-    """Assign letter grade."""
-    if score >= 0.95:
-        return "A"
-    elif score >= 0.85:
-        return "B"
-    elif score >= 0.75:
-        return "C"
-    elif score >= 0.65:
-        return "D"
-    return "F"
-
-
 class RunAggregator:
     """Aggregator for multiple evaluation runs.
 
@@ -152,7 +140,7 @@ class RunAggregator:
         composite_stats = calculate_all(composite_scores)
 
         # Determine grade from median composite score
-        grade = _assign_letter_grade(composite_stats.median)
+        grade = assign_letter_grade(composite_stats.median)
 
         return TierStatistics(
             tier_id=tier_id,

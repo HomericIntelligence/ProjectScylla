@@ -81,9 +81,9 @@ class EvaluationSummary(BaseModel):
     @field_validator("letter_grade")
     @classmethod
     def validate_letter_grade(cls, v: str) -> str:
-        """Validate letter grade is A-F."""
-        if v not in ["A", "B", "C", "D", "F"]:
-            raise ValueError(f"Invalid letter grade: {v}. Must be A, B, C, D, or F.")
+        """Validate letter grade is S-F (industry-aligned scale)."""
+        if v not in ["S", "A", "B", "C", "D", "F"]:
+            raise ValueError(f"Invalid letter grade: {v}. Must be S, A, B, C, D, or F.")
         return v
 
 

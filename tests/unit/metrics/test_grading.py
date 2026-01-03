@@ -98,26 +98,35 @@ class TestCalculateCompositeScore:
 
 
 class TestAssignLetterGrade:
-    """Tests for letter grade assignment."""
+    """Tests for letter grade assignment using industry-aligned scale."""
+
+    def test_grade_s(self) -> None:
+        """S grade requires perfect score (1.0)."""
+        assert assign_letter_grade(1.0) == "S"
 
     def test_grade_a(self) -> None:
-        assert assign_letter_grade(0.95) == "A"
-        assert assign_letter_grade(1.0) == "A"
+        """A grade: >= 0.80 (Excellent - production ready)."""
+        assert assign_letter_grade(0.80) == "A"
+        assert assign_letter_grade(0.99) == "A"
 
     def test_grade_b(self) -> None:
-        assert assign_letter_grade(0.85) == "B"
-        assert assign_letter_grade(0.94) == "B"
+        """B grade: >= 0.60 (Good - minor improvements possible)."""
+        assert assign_letter_grade(0.60) == "B"
+        assert assign_letter_grade(0.79) == "B"
 
     def test_grade_c(self) -> None:
-        assert assign_letter_grade(0.75) == "C"
-        assert assign_letter_grade(0.84) == "C"
+        """C grade: >= 0.40 (Acceptable - functional with issues)."""
+        assert assign_letter_grade(0.40) == "C"
+        assert assign_letter_grade(0.59) == "C"
 
     def test_grade_d(self) -> None:
-        assert assign_letter_grade(0.65) == "D"
-        assert assign_letter_grade(0.74) == "D"
+        """D grade: >= 0.20 (Marginal - significant issues)."""
+        assert assign_letter_grade(0.20) == "D"
+        assert assign_letter_grade(0.39) == "D"
 
     def test_grade_f(self) -> None:
-        assert assign_letter_grade(0.64) == "F"
+        """F grade: < 0.20 (Failing - does not meet requirements)."""
+        assert assign_letter_grade(0.19) == "F"
         assert assign_letter_grade(0.0) == "F"
 
 
@@ -181,28 +190,31 @@ class TestGradingResult:
 
 
 class TestGradeRun:
-    """Tests for grade_run function."""
+    """Tests for grade_run function using industry-aligned scale."""
 
     def test_passing_run(self) -> None:
+        """Passing run with high weighted score -> A grade."""
         result = grade_run(passed=True, weighted_score=0.9, cost_usd=1.0)
         assert result.pass_rate == 1.0
         assert result.impl_rate == 0.9
         assert result.cost_of_pass == 1.0
         assert result.composite_score == pytest.approx(0.95)
-        assert result.letter_grade == "A"
+        assert result.letter_grade == "A"  # 0.95 >= 0.80
 
     def test_failing_run(self) -> None:
+        """Failing run with moderate weighted score -> D grade."""
         result = grade_run(passed=False, weighted_score=0.5, cost_usd=1.0)
         assert result.pass_rate == 0.0
         assert result.impl_rate == 0.5
         assert math.isinf(result.cost_of_pass)
         assert result.composite_score == pytest.approx(0.25)
-        assert result.letter_grade == "F"
+        assert result.letter_grade == "D"  # 0.25 >= 0.20
 
     def test_mixed_run(self) -> None:
+        """Passing run with moderate weighted score -> A grade."""
         result = grade_run(passed=True, weighted_score=0.7, cost_usd=2.0)
         assert result.pass_rate == 1.0
         assert result.impl_rate == 0.7
         assert result.cost_of_pass == 2.0
         assert result.composite_score == pytest.approx(0.85)
-        assert result.letter_grade == "B"
+        assert result.letter_grade == "A"  # 0.85 >= 0.80
