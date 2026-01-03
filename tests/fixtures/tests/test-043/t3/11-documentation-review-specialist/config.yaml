@@ -1,3 +1,7 @@
-name: "documentation-review-specialist"
-description: "L3 agent: documentation-review-specialist"
+name: documentation-review-specialist
+description: 'L3 agent: documentation-review-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

@@ -1,3 +1,7 @@
-name: "security-specialist"
-description: "L3 agent: security-specialist"
+name: security-specialist
+description: 'L3 agent: security-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

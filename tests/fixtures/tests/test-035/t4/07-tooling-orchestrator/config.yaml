@@ -1,3 +1,7 @@
-name: "tooling-orchestrator"
-description: "L1 orchestrator: tooling-orchestrator"
+name: tooling-orchestrator
+description: 'L1 orchestrator: tooling-orchestrator'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 1

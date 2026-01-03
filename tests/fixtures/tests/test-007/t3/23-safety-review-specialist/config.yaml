@@ -1,3 +1,7 @@
-name: "safety-review-specialist"
-description: "L3 agent: safety-review-specialist"
+name: safety-review-specialist
+description: 'L3 agent: safety-review-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3
