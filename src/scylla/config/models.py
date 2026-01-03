@@ -88,19 +88,35 @@ class Requirement(BaseModel):
 
 
 class GradeScale(BaseModel):
-    """Grade scale thresholds."""
+    """Industry-aligned grade scale thresholds.
 
-    A: float = Field(default=0.95, ge=0.0, le=1.0)
-    B: float = Field(default=0.85, ge=0.0, le=1.0)
-    C: float = Field(default=0.75, ge=0.0, le=1.0)
-    D: float = Field(default=0.65, ge=0.0, le=1.0)
-    F: float = Field(default=0.0, ge=0.0, le=1.0)
+    See .claude/shared/grading-scale.md for full specification.
+
+    Attributes:
+        S: Amazing - exceptional, above and beyond (1.00).
+        A: Excellent - production ready (0.80).
+        B: Good - minor improvements possible (0.60).
+        C: Acceptable - functional with issues (0.40).
+        D: Marginal - significant issues (0.20).
+        F: Failing - does not meet requirements (0.00).
+    """
+
+    S: float = Field(default=1.00, ge=0.0, le=1.0)
+    A: float = Field(default=0.80, ge=0.0, le=1.0)
+    B: float = Field(default=0.60, ge=0.0, le=1.0)
+    C: float = Field(default=0.40, ge=0.0, le=1.0)
+    D: float = Field(default=0.20, ge=0.0, le=1.0)
+    F: float = Field(default=0.00, ge=0.0, le=1.0)
 
 
 class GradingConfig(BaseModel):
-    """Grading configuration for a rubric."""
+    """Grading configuration for a rubric.
 
-    pass_threshold: float = Field(default=0.70, ge=0.0, le=1.0)
+    Uses industry-aligned defaults where pass_threshold=0.60 corresponds
+    to the B grade (Good - functional, minor improvements possible).
+    """
+
+    pass_threshold: float = Field(default=0.60, ge=0.0, le=1.0)
     grade_scale: GradeScale = Field(default_factory=GradeScale)
 
 
