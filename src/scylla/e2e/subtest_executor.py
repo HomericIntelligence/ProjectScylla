@@ -137,10 +137,13 @@ class SubTestExecutor:
             )
             runs.append(run_result)
 
-        # Save sub-test config for inheritance
-        self.tier_manager.save_subtest_config(
-            workspace=workspace,
+        # Save resource manifest for inheritance (no file copying)
+        self.tier_manager.save_resource_manifest(
             results_dir=results_dir,
+            tier_id=tier_id,
+            subtest=subtest,
+            workspace=workspace,
+            baseline=baseline,
         )
 
         # Aggregate results

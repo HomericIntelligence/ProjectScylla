@@ -19,7 +19,7 @@ from scylla.judge.evaluator import (
     JudgeEvaluator,
     JudgeScore,
     JudgeSummary,
-    assign_grade,
+    assign_letter_grade,
     needs_additional_runs,
     weighted_consensus,
 )
@@ -60,7 +60,7 @@ __all__ = [
     "JudgeEvaluator",
     "JudgeScore",
     "JudgeSummary",
-    "assign_grade",
+    "assign_letter_grade",
     "needs_additional_runs",
     "weighted_consensus",
     # Parser

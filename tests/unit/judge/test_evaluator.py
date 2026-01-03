@@ -19,7 +19,7 @@ from scylla.judge.evaluator import (
     JudgeEvaluator,
     JudgeScore,
     JudgeSummary,
-    assign_grade,
+    assign_letter_grade,
     needs_additional_runs,
     weighted_consensus,
 )
@@ -84,32 +84,32 @@ class TestAssignGrade:
 
     def test_grade_s(self) -> None:
         """S grade requires perfect score (1.0)."""
-        assert assign_grade(1.0) == "S"
+        assert assign_letter_grade(1.0) == "S"
 
     def test_grade_a(self) -> None:
         """A grade: >= 0.80 (Excellent - production ready)."""
-        assert assign_grade(0.80) == "A"
-        assert assign_grade(0.99) == "A"
+        assert assign_letter_grade(0.80) == "A"
+        assert assign_letter_grade(0.99) == "A"
 
     def test_grade_b(self) -> None:
         """B grade: >= 0.60 (Good - minor improvements possible)."""
-        assert assign_grade(0.60) == "B"
-        assert assign_grade(0.79) == "B"
+        assert assign_letter_grade(0.60) == "B"
+        assert assign_letter_grade(0.79) == "B"
 
     def test_grade_c(self) -> None:
         """C grade: >= 0.40 (Acceptable - functional with issues)."""
-        assert assign_grade(0.40) == "C"
-        assert assign_grade(0.59) == "C"
+        assert assign_letter_grade(0.40) == "C"
+        assert assign_letter_grade(0.59) == "C"
 
     def test_grade_d(self) -> None:
         """D grade: >= 0.20 (Marginal - significant issues)."""
-        assert assign_grade(0.20) == "D"
-        assert assign_grade(0.39) == "D"
+        assert assign_letter_grade(0.20) == "D"
+        assert assign_letter_grade(0.39) == "D"
 
     def test_grade_f(self) -> None:
         """F grade: < 0.20 (Failing - does not meet requirements)."""
-        assert assign_grade(0.19) == "F"
-        assert assign_grade(0.0) == "F"
+        assert assign_letter_grade(0.19) == "F"
+        assert assign_letter_grade(0.0) == "F"
 
 
 class TestEvaluatorConfig:

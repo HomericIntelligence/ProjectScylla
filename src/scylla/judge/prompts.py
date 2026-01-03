@@ -231,13 +231,14 @@ Respond with valid JSON matching this schema:
 
 ## Grading Scale
 
-- A: >= 0.95
-- B: >= 0.85
-- C: >= 0.75
-- D: >= 0.65
-- F: < 0.65
+- S: 1.00
+- A: 0.80 - 0.99
+- B: 0.60 - 0.79
+- C: 0.40 - 0.59
+- D: 0.20 - 0.39
+- F: 0.00 - 0.19
 
-Pass threshold: 0.70
+Pass threshold: 0.50
 
 BEGIN EVALUATION
 """

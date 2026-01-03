@@ -10,6 +10,7 @@ import pytest
 
 from scylla.e2e.models import (
     ExperimentConfig,
+    ResourceManifest,
     RunResult,
     SubTestConfig,
     SubTestResult,
@@ -165,6 +166,56 @@ class TestTierBaseline:
         assert d["tier_id"] == "T2"
         assert d["subtest_id"] == "01"
         assert d["claude_md_path"] == "/config/CLAUDE.md"
+
+
+class TestResourceManifest:
+    """Tests for ResourceManifest."""
+
+    def test_to_dict(self) -> None:
+        """Test conversion to dictionary."""
+        manifest = ResourceManifest(
+            tier_id="T2",
+            subtest_id="03",
+            fixture_config_path="/fixtures/test-001/t2/03-full/config.yaml",
+            resources={"claude_md": {"blocks": ["B01", "B02", "B03"]}},
+            composed_at="2026-01-03T12:00:00+00:00",
+            claude_md_hash="abc123def456",
+            inherited_from={"claude_md": {"blocks": ["B01"]}},
+        )
+
+        d = manifest.to_dict()
+
+        assert d["tier_id"] == "T2"
+        assert d["subtest_id"] == "03"
+        assert d["resources"]["claude_md"]["blocks"] == ["B01", "B02", "B03"]
+        assert d["claude_md_hash"] == "abc123def456"
+        assert d["inherited_from"]["claude_md"]["blocks"] == ["B01"]
+
+    def test_save_and_load(self) -> None:
+        """Test saving and loading manifest."""
+        manifest = ResourceManifest(
+            tier_id="T0",
+            subtest_id="05",
+            fixture_config_path="/fixtures/test-001/t0/05-core/config.yaml",
+            resources={
+                "claude_md": {"blocks": ["B02", "B05", "B07"]},
+                "skills": {"categories": ["github"]},
+            },
+            composed_at="2026-01-03T14:30:00+00:00",
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "config_manifest.json"
+            manifest.save(path)
+
+            loaded = ResourceManifest.load(path)
+
+            assert loaded.tier_id == "T0"
+            assert loaded.subtest_id == "05"
+            assert loaded.resources["claude_md"]["blocks"] == ["B02", "B05", "B07"]
+            assert loaded.resources["skills"]["categories"] == ["github"]
+            assert loaded.claude_md_hash is None
+            assert loaded.inherited_from is None
 
 
 class TestExperimentConfig:
