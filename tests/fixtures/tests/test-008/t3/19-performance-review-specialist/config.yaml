@@ -1,3 +1,7 @@
-name: "performance-review-specialist"
-description: "L3 agent: performance-review-specialist"
+name: performance-review-specialist
+description: 'L3 agent: performance-review-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

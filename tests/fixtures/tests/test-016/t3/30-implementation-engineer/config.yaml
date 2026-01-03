@@ -1,3 +1,7 @@
-name: "implementation-engineer"
-description: "L4 agent: implementation-engineer"
+name: implementation-engineer
+description: 'L4 agent: implementation-engineer'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 4

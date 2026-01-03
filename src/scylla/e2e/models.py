@@ -59,9 +59,17 @@ class SubTestConfig:
         id: Numeric identifier (e.g., "01", "02")
         name: Human-readable name
         description: Description of what this sub-test tests
-        claude_md_path: Path to CLAUDE.md for this sub-test
-        claude_dir_path: Path to .claude/ directory for this sub-test
+        claude_md_path: Path to CLAUDE.md for this sub-test (legacy mode)
+        claude_dir_path: Path to .claude/ directory for this sub-test (legacy mode)
         extends_previous: Whether to inherit from best previous tier
+        resources: Resource specification for symlink-based fixtures.
+            When specified, symlinks are created to shared/ at runtime
+            instead of copying files. Format:
+            {
+                "skills": {"categories": ["agent", "github"], "names": ["skill-name"]},
+                "agents": {"levels": [0, 1, 3], "names": ["chief-architect.md"]},
+                "claude_md": {"blocks": ["B02", "B05"]}
+            }
     """
 
     id: str
@@ -70,6 +78,7 @@ class SubTestConfig:
     claude_md_path: Path | None = None
     claude_dir_path: Path | None = None
     extends_previous: bool = True
+    resources: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -80,6 +89,7 @@ class SubTestConfig:
             "claude_md_path": str(self.claude_md_path) if self.claude_md_path else None,
             "claude_dir_path": str(self.claude_dir_path) if self.claude_dir_path else None,
             "extends_previous": self.extends_previous,
+            "resources": self.resources,
         }
 
 
@@ -227,14 +237,18 @@ class TierBaseline:
     Attributes:
         tier_id: The tier this baseline is from
         subtest_id: The winning sub-test ID
-        claude_md_path: Path to the CLAUDE.md to inherit
-        claude_dir_path: Path to the .claude/ directory to inherit
+        claude_md_path: Path to the CLAUDE.md to inherit (legacy mode)
+        claude_dir_path: Path to the .claude/ directory to inherit (legacy mode)
+        resources: Resource specification for symlink recreation.
+            When specified, symlinks are recreated from this spec rather
+            than copying files from paths.
     """
 
     tier_id: TierID
     subtest_id: str
     claude_md_path: Path | None
     claude_dir_path: Path | None
+    resources: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -243,6 +257,7 @@ class TierBaseline:
             "subtest_id": self.subtest_id,
             "claude_md_path": str(self.claude_md_path) if self.claude_md_path else None,
             "claude_dir_path": str(self.claude_dir_path) if self.claude_dir_path else None,
+            "resources": self.resources,
         }
 
 

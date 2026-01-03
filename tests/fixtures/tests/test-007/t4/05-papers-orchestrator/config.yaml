@@ -1,3 +1,7 @@
-name: "papers-orchestrator"
-description: "L1 orchestrator: papers-orchestrator"
+name: papers-orchestrator
+description: 'L1 orchestrator: papers-orchestrator'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 1

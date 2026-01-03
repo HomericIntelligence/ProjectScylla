@@ -1,3 +1,7 @@
-name: "research-review-specialist"
-description: "L3 agent: research-review-specialist"
+name: research-review-specialist
+description: 'L3 agent: research-review-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

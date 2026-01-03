@@ -1,3 +1,7 @@
-name: "architecture-review-specialist"
-description: "L3 agent: architecture-review-specialist"
+name: architecture-review-specialist
+description: 'L3 agent: architecture-review-specialist'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 3

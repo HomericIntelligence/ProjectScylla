@@ -1,3 +1,7 @@
-name: "architecture-design"
-description: "L2 agent: architecture-design"
+name: architecture-design
+description: 'L2 agent: architecture-design'
 extends_previous: true
+resources:
+  agents:
+    levels:
+    - 2

@@ -1,3 +1,7 @@
-name: "Mojo Skills"
-description: "10 skills from the mojo category"
+name: Mojo Skills
+description: 10 skills from the mojo category
 extends_previous: true
+resources:
+  skills:
+    categories:
+    - mojo
