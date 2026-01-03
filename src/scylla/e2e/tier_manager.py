@@ -113,7 +113,11 @@ class TierManager:
 
             # Load metadata if config.yaml exists
             config_file = subdir / "config.yaml"
-            name = f"{tier_id.value} {subtest_name_suffix}" if subtest_name_suffix else f"{tier_id.value} Sub-test {subtest_id}"
+            name = (
+                f"{tier_id.value} {subtest_name_suffix}"
+                if subtest_name_suffix
+                else f"{tier_id.value} Sub-test {subtest_id}"
+            )
             description = f"Sub-test configuration {dir_name}"
 
             # T0 sub-tests have special handling for extends_previous
@@ -441,7 +445,9 @@ class TierManager:
         return TierBaseline(
             tier_id=tier_id,
             subtest_id=subtest_id,
-            claude_md_path=config_dir / "CLAUDE.md" if (config_dir / "CLAUDE.md").exists() else None,
+            claude_md_path=config_dir / "CLAUDE.md"
+            if (config_dir / "CLAUDE.md").exists()
+            else None,
             claude_dir_path=config_dir / ".claude" if (config_dir / ".claude").exists() else None,
         )
 

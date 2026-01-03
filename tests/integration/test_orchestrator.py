@@ -330,7 +330,9 @@ output:
         orchestrator = EvalOrchestrator(config)
 
         # Set simple mocks
-        orchestrator.set_adapter(lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.01, "exit_code": 0})
+        orchestrator.set_adapter(
+            lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.01, "exit_code": 0}
+        )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.9, "grade": "A"})
 
         from scylla.executor import WorkspaceManager
@@ -369,7 +371,9 @@ output:
         orchestrator = EvalOrchestrator(config)
 
         # Set mocks
-        orchestrator.set_adapter(lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.01, "exit_code": 0})
+        orchestrator.set_adapter(
+            lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.01, "exit_code": 0}
+        )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.8, "grade": "B"})
 
         from scylla.executor import WorkspaceManager
@@ -404,7 +408,9 @@ output:
         orchestrator = EvalOrchestrator(config)
 
         # Mock with failing judgment
-        orchestrator.set_adapter(lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.02, "exit_code": 0})
+        orchestrator.set_adapter(
+            lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.02, "exit_code": 0}
+        )
         orchestrator.set_judge(lambda **k: {"passed": False, "score": 0.3, "grade": "F"})
 
         from scylla.executor import WorkspaceManager
@@ -436,7 +442,9 @@ output:
         orchestrator = EvalOrchestrator(config)
 
         # Mock with specific values for calculation verification
-        orchestrator.set_adapter(lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.10, "exit_code": 0})
+        orchestrator.set_adapter(
+            lambda **k: {"tokens_in": 100, "tokens_out": 50, "cost_usd": 0.10, "exit_code": 0}
+        )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.80, "grade": "B"})
 
         from scylla.executor import WorkspaceManager

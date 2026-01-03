@@ -121,9 +121,7 @@ class ResultWriter:
         """
         self.base_dir = base_dir
 
-    def get_run_dir(
-        self, test_id: str, tier_id: str, run_number: int
-    ) -> Path:
+    def get_run_dir(self, test_id: str, tier_id: str, run_number: int) -> Path:
         """Get the directory path for a specific run.
 
         Args:
@@ -145,14 +143,10 @@ class ResultWriter:
         Returns:
             Path to written result.json
         """
-        run_dir = self.get_run_dir(
-            result.test_id, result.tier_id, result.run_number
-        )
+        run_dir = self.get_run_dir(result.test_id, result.tier_id, result.run_number)
         return result.write(run_dir)
 
-    def read_result(
-        self, test_id: str, tier_id: str, run_number: int
-    ) -> RunResult | None:
+    def read_result(self, test_id: str, tier_id: str, run_number: int) -> RunResult | None:
         """Read a run result from the file system.
 
         Args:

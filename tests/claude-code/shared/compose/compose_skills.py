@@ -18,6 +18,7 @@ Presets:
     critical:      Top 10 most-used skills
     full:          All 62 skills
 """
+
 import argparse
 import shutil
 import sys
@@ -214,33 +215,25 @@ def main():
     parser = argparse.ArgumentParser(
         description="Compose skill configuration from selected categories",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
     parser.add_argument(
-        "--categories", "-c",
+        "--categories",
+        "-c",
         type=str,
-        help="Comma-separated list of categories (e.g., github,mojo)"
+        help="Comma-separated list of categories (e.g., github,mojo)",
     )
+    parser.add_argument("--skills", "-s", type=str, help="Comma-separated list of skill names")
+    parser.add_argument("--preset", choices=PRESETS.keys(), help="Use a preset configuration")
     parser.add_argument(
-        "--skills", "-s",
-        type=str,
-        help="Comma-separated list of skill names"
-    )
-    parser.add_argument(
-        "--preset",
-        choices=PRESETS.keys(),
-        help="Use a preset configuration"
-    )
-    parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         default=Path("skills"),
-        help="Output directory (default: skills)"
+        help="Output directory (default: skills)",
     )
     parser.add_argument(
-        "--list", "-l",
-        action="store_true",
-        help="List available skills and presets"
+        "--list", "-l", action="store_true", help="List available skills and presets"
     )
 
     args = parser.parse_args()

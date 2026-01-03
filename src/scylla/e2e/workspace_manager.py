@@ -77,9 +77,7 @@ class WorkspaceManager:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to clone repository: {result.stderr}"
-            )
+            raise RuntimeError(f"Failed to clone repository: {result.stderr}")
 
         # If specific commit requested, fetch and checkout
         if self.commit:
@@ -127,9 +125,7 @@ class WorkspaceManager:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to checkout commit {self.commit}: {result.stderr}"
-            )
+            raise RuntimeError(f"Failed to checkout commit {self.commit}: {result.stderr}")
 
     def create_worktree(self, workspace_path: Path) -> None:
         """Create a worktree for a single run.
@@ -173,9 +169,7 @@ class WorkspaceManager:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to create worktree at {workspace_path}: {result.stderr}"
-            )
+            raise RuntimeError(f"Failed to create worktree at {workspace_path}: {result.stderr}")
 
         logger.debug(f"Created worktree at {workspace_path}")
 

@@ -15,6 +15,7 @@ Presets:
     no-examples:   All blocks with code examples stripped (~900 lines)
     full:          All 18 blocks (1787 lines)
 """
+
 import argparse
 import re
 import sys
@@ -74,8 +75,8 @@ PRESETS = {
 def strip_code_blocks(content: str) -> str:
     """Remove fenced code blocks from markdown content."""
     # Pattern matches ```language ... ```
-    pattern = r'```[a-zA-Z]*\n.*?```'
-    return re.sub(pattern, '', content, flags=re.DOTALL)
+    pattern = r"```[a-zA-Z]*\n.*?```"
+    return re.sub(pattern, "", content, flags=re.DOTALL)
 
 
 def compose(blocks: list[str], output: Path, strip_examples: bool = False) -> None:
@@ -104,14 +105,14 @@ def compose(blocks: list[str], output: Path, strip_examples: bool = False) -> No
     if strip_examples:
         full_content = strip_code_blocks(full_content)
         # Clean up excessive blank lines
-        full_content = re.sub(r'\n{3,}', '\n\n', full_content)
+        full_content = re.sub(r"\n{3,}", "\n\n", full_content)
 
     # Write output
     output.parent.mkdir(parents=True, exist_ok=True)
     with open(output, "w") as f:
         f.write(full_content)
 
-    line_count = full_content.count('\n') + 1
+    line_count = full_content.count("\n") + 1
     print(f"Composed {len(blocks)} blocks into {output} ({line_count} lines)")
 
 
@@ -134,33 +135,22 @@ def main():
     parser = argparse.ArgumentParser(
         description="Compose CLAUDE.md from selected blocks",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
+    parser.add_argument("blocks", nargs="*", help="Block IDs to include (e.g., B02 B07 B18)")
+    parser.add_argument("--preset", choices=PRESETS.keys(), help="Use a preset configuration")
     parser.add_argument(
-        "blocks",
-        nargs="*",
-        help="Block IDs to include (e.g., B02 B07 B18)"
-    )
-    parser.add_argument(
-        "--preset",
-        choices=PRESETS.keys(),
-        help="Use a preset configuration"
-    )
-    parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         type=Path,
         default=Path("CLAUDE.md"),
-        help="Output file path (default: CLAUDE.md)"
+        help="Output file path (default: CLAUDE.md)",
     )
     parser.add_argument(
-        "--strip-examples",
-        action="store_true",
-        help="Remove code examples from output"
+        "--strip-examples", action="store_true", help="Remove code examples from output"
     )
     parser.add_argument(
-        "--list", "-l",
-        action="store_true",
-        help="List available blocks and presets"
+        "--list", "-l", action="store_true", help="List available blocks and presets"
     )
 
     args = parser.parse_args()

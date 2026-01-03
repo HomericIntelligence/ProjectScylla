@@ -273,9 +273,7 @@ class TestTestRunner:
         with pytest.raises(RunnerError, match="At least one model"):
             runner.run_test(test_id="test-001", models=[])
 
-    def test_run_test_basic(
-        self, mock_docker: MagicMock, mock_tier_loader: MagicMock
-    ) -> None:
+    def test_run_test_basic(self, mock_docker: MagicMock, mock_tier_loader: MagicMock) -> None:
         """Test basic test execution."""
         config = RunnerConfig(runs_per_tier=2)
         runner = EvalRunner(mock_docker, mock_tier_loader, config)
@@ -316,9 +314,7 @@ class TestTestRunner:
             # Only 1 run should have been executed (run 2)
             assert mock_docker.run.call_count == 1
 
-    def test_custom_judge(
-        self, mock_docker: MagicMock, mock_tier_loader: MagicMock
-    ) -> None:
+    def test_custom_judge(self, mock_docker: MagicMock, mock_tier_loader: MagicMock) -> None:
         """Test setting custom judge function."""
         config = RunnerConfig(runs_per_tier=1)
         runner = EvalRunner(mock_docker, mock_tier_loader, config)
@@ -469,9 +465,7 @@ class TestTestRunnerParallel:
         )
         return mock
 
-    def test_parallel_execution(
-        self, mock_docker: MagicMock, mock_tier_loader: MagicMock
-    ) -> None:
+    def test_parallel_execution(self, mock_docker: MagicMock, mock_tier_loader: MagicMock) -> None:
         """Test parallel execution mode."""
         config = RunnerConfig(runs_per_tier=4, parallel=True, max_parallel_workers=2)
         runner = EvalRunner(mock_docker, mock_tier_loader, config)

@@ -49,12 +49,8 @@ class Requirement(BaseModel):
     id: str = Field(..., description="Unique requirement identifier")
     description: str = Field(..., description="What to evaluate")
     weight: float = Field(default=1.0, ge=0.0, description="Scoring weight")
-    evaluation: EvaluationType = Field(
-        default=EvaluationType.SCALED, description="Evaluation type"
-    )
-    validation_command: str | None = Field(
-        default=None, description="Optional validation command"
-    )
+    evaluation: EvaluationType = Field(default=EvaluationType.SCALED, description="Evaluation type")
+    validation_command: str | None = Field(default=None, description="Optional validation command")
 
     @field_validator("id")
     @classmethod
@@ -84,9 +80,7 @@ class GradeScale(BaseModel):
     c_threshold: float = Field(default=0.40, ge=0.0, le=1.0)
     d_threshold: float = Field(default=0.20, ge=0.0, le=1.0)
 
-    @field_validator(
-        "s_threshold", "a_threshold", "b_threshold", "c_threshold", "d_threshold"
-    )
+    @field_validator("s_threshold", "a_threshold", "b_threshold", "c_threshold", "d_threshold")
     @classmethod
     def validate_threshold(cls, v: float) -> float:
         """Validate threshold is between 0 and 1."""
@@ -114,9 +108,7 @@ class Rubric(BaseModel):
     pass_threshold: float = Field(
         default=0.60, ge=0.0, le=1.0, description="Pass threshold (Good grade)"
     )
-    grade_scale: GradeScale = Field(
-        default_factory=GradeScale, description="Grade thresholds"
-    )
+    grade_scale: GradeScale = Field(default_factory=GradeScale, description="Grade thresholds")
 
     def calculate_weighted_score(self, scores: dict[str, float]) -> float:
         """Calculate weighted score from requirement scores.
@@ -138,9 +130,7 @@ class Rubric(BaseModel):
 
         for req in self.requirements:
             if req.id not in scores:
-                raise RubricValidationError(
-                    f"Missing score for requirement '{req.id}'"
-                )
+                raise RubricValidationError(f"Missing score for requirement '{req.id}'")
 
             score = scores[req.id]
             if not 0.0 <= score <= 1.0:
@@ -171,9 +161,7 @@ class Rubric(BaseModel):
             RubricValidationError: If score is outside valid range [0.0, 1.0].
         """
         if weighted_score > 1.0 or weighted_score < 0.0:
-            raise RubricValidationError(
-                f"Score must be between 0.0 and 1.0, got {weighted_score}"
-            )
+            raise RubricValidationError(f"Score must be between 0.0 and 1.0, got {weighted_score}")
         if weighted_score >= self.grade_scale.s_threshold:
             return "S"
         elif weighted_score >= self.grade_scale.a_threshold:
@@ -297,9 +285,7 @@ class RubricParser:
 
             for i, req_data in enumerate(raw_requirements):
                 if not isinstance(req_data, dict):
-                    raise RubricValidationError(
-                        f"Requirement {i} must be a mapping"
-                    )
+                    raise RubricValidationError(f"Requirement {i} must be a mapping")
 
                 # Handle evaluation type
                 eval_type = req_data.get("evaluation", "scaled")
@@ -307,7 +293,7 @@ class RubricParser:
                     eval_type = EvaluationType(eval_type.lower())
 
                 requirement = Requirement(
-                    id=req_data.get("id", f"R{i+1:03d}"),
+                    id=req_data.get("id", f"R{i + 1:03d}"),
                     description=req_data.get("description", ""),
                     weight=float(req_data.get("weight", 1.0)),
                     evaluation=eval_type,

@@ -283,15 +283,18 @@ def report(
     for tier_id in sorted_tiers:
         metrics = _calculate_tier_metrics(tier_id, by_tier[tier_id], t0_pass_rate)
         tier_metrics.append(metrics)
-        click.echo(f"  {tier_id}: {len(by_tier[tier_id])} runs, "
-                   f"pass rate: {metrics.pass_rate_median:.1%}")
+        click.echo(
+            f"  {tier_id}: {len(by_tier[tier_id])} runs, pass rate: {metrics.pass_rate_median:.1%}"
+        )
 
     # Calculate sensitivity analysis if multiple tiers
     sensitivity = None
     if len(tier_metrics) > 1:
         pass_rates = [m.pass_rate_median for m in tier_metrics]
         impl_rates = [m.impl_rate_median for m in tier_metrics]
-        costs = [m.cost_of_pass_median for m in tier_metrics if m.cost_of_pass_median != float("inf")]
+        costs = [
+            m.cost_of_pass_median for m in tier_metrics if m.cost_of_pass_median != float("inf")
+        ]
 
         sensitivity = SensitivityAnalysis(
             pass_rate_variance=statistics.variance(pass_rates) if len(pass_rates) > 1 else 0.0,
@@ -312,14 +315,16 @@ def report(
         # Worth it if pass rate improves more than cost increases (relative)
         worth_it = pass_delta > 0 and (cost_delta < 0 or pass_delta > cost_delta)
 
-        transitions.append(TransitionAssessment(
-            from_tier=from_tier.tier_id,
-            to_tier=to_tier.tier_id,
-            pass_rate_delta=pass_delta,
-            impl_rate_delta=impl_delta,
-            cost_delta=cost_delta,
-            worth_it=worth_it,
-        ))
+        transitions.append(
+            TransitionAssessment(
+                from_tier=from_tier.tier_id,
+                to_tier=to_tier.tier_id,
+                pass_rate_delta=pass_delta,
+                impl_rate_delta=impl_delta,
+                cost_delta=cost_delta,
+                worth_it=worth_it,
+            )
+        )
 
     # Determine runs per tier (from first tier's count)
     runs_per_tier = len(by_tier[sorted_tiers[0]]) if sorted_tiers else 0

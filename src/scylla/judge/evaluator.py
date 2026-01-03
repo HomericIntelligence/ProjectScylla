@@ -241,6 +241,7 @@ def weighted_consensus(scores: list[JudgeScore]) -> float:
 
     return sum(s.score * s.confidence for s in scores) / total_confidence
 
+
 class JudgeEvaluator:
     """Evaluator that runs judge evaluations with consensus and retry logic.
 
@@ -595,11 +596,7 @@ class JudgeEvaluator:
             all_req_ids.update(j.requirements.keys())
 
         for req_id in all_req_ids:
-            scores = [
-                j.requirements[req_id]
-                for j in valid_judgments
-                if req_id in j.requirements
-            ]
+            scores = [j.requirements[req_id] for j in valid_judgments if req_id in j.requirements]
             if scores:
                 requirement_consensus[req_id] = weighted_consensus(scores)
 
@@ -610,11 +607,7 @@ class JudgeEvaluator:
             all_categories.update(j.categories.keys())
 
         for cat in all_categories:
-            scores = [
-                j.categories[cat]
-                for j in valid_judgments
-                if cat in j.categories
-            ]
+            scores = [j.categories[cat] for j in valid_judgments if cat in j.categories]
             if scores:
                 category_consensus[cat] = weighted_consensus(scores)
 
@@ -644,9 +637,7 @@ class JudgeEvaluator:
 
         # Calculate overall confidence
         if overall_scores:
-            overall_confidence = sum(s.confidence for s in overall_scores) / len(
-                overall_scores
-            )
+            overall_confidence = sum(s.confidence for s in overall_scores) / len(overall_scores)
         else:
             overall_confidence = 0.5
 

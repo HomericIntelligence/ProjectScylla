@@ -208,9 +208,7 @@ class TestJudgmentOutput:
                 "R001": RequirementScore(score=0.9, confidence=0.95, notes="Met"),
             },
             categories={
-                "functional_correctness": CategoryScore(
-                    score=0.9, confidence=0.9, notes="Works"
-                ),
+                "functional_correctness": CategoryScore(score=0.9, confidence=0.9, notes="Works"),
             },
             summary=EvaluationSummary(
                 weighted_score=0.9,

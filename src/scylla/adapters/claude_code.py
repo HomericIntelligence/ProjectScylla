@@ -113,9 +113,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             )
 
         except FileNotFoundError:
-            raise AdapterError(
-                f"Claude Code CLI not found. Is '{self.CLI_EXECUTABLE}' installed?"
-            )
+            raise AdapterError(f"Claude Code CLI not found. Is '{self.CLI_EXECUTABLE}' installed?")
 
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute Claude Code: {e}") from e
@@ -170,9 +168,11 @@ class ClaudeCodeAdapter(BaseAdapter):
         """
         cmd = [
             self.CLI_EXECUTABLE,
-            "--model", config.model,
+            "--model",
+            config.model,
             "--print",  # Print output to stdout
-            "--output-format", "json",  # JSON output for structured parsing
+            "--output-format",
+            "json",  # JSON output for structured parsing
             "--dangerously-skip-permissions",  # Non-interactive mode
         ]
 
@@ -306,7 +306,9 @@ class ClaudeCodeAdapter(BaseAdapter):
         combined = stdout + "\n" + stderr
 
         # Pattern: "API calls: 5" or "5 API calls"
-        match = re.search(r"(?:API\s+calls?:?\s*(\d+)|(\d+)\s+API\s+calls?)", combined, re.IGNORECASE)
+        match = re.search(
+            r"(?:API\s+calls?:?\s*(\d+)|(\d+)\s+API\s+calls?)", combined, re.IGNORECASE
+        )
         if match:
             return int(match.group(1) or match.group(2))
 

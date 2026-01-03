@@ -107,9 +107,7 @@ class OpenAICodexAdapter(BaseAdapter):
             )
 
         except FileNotFoundError:
-            raise AdapterError(
-                f"OpenAI Codex CLI not found. Is '{self.CLI_EXECUTABLE}' installed?"
-            )
+            raise AdapterError(f"OpenAI Codex CLI not found. Is '{self.CLI_EXECUTABLE}' installed?")
 
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute OpenAI Codex: {e}") from e
@@ -157,7 +155,8 @@ class OpenAICodexAdapter(BaseAdapter):
         """
         cmd = [
             self.CLI_EXECUTABLE,
-            "--model", config.model,
+            "--model",
+            config.model,
             "--quiet",  # Reduce verbose output
         ]
 
@@ -225,7 +224,7 @@ class OpenAICodexAdapter(BaseAdapter):
         # Try to find embedded JSON with usage
         try:
             # Find JSON-like patterns with usage key
-            for match in re.finditer(r'\{[^{}]*\{[^{}]*\}[^{}]*\}|\{[^{}]+\}', combined):
+            for match in re.finditer(r"\{[^{}]*\{[^{}]*\}[^{}]*\}|\{[^{}]+\}", combined):
                 try:
                     data = json.loads(match.group())
                     usage = data.get("usage", {})

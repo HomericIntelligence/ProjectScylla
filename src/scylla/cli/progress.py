@@ -108,9 +108,7 @@ class EvalProgress:
     @property
     def completed_tiers(self) -> int:
         """Number of fully completed tiers."""
-        return sum(
-            1 for t in self.tiers if t.completed_runs == t.total_runs
-        )
+        return sum(1 for t in self.tiers if t.completed_runs == t.total_runs)
 
     @property
     def progress_percent(self) -> float:
@@ -328,8 +326,7 @@ class ProgressDisplay:
         self._write("")
         self._write(f"Tier {tier_id} Summary:")
         self._write(
-            f"  Pass Rate: {tier.pass_rate * 100:.0f}% "
-            f"({tier.passed_runs}/{tier.completed_runs})"
+            f"  Pass Rate: {tier.pass_rate * 100:.0f}% ({tier.passed_runs}/{tier.completed_runs})"
         )
         self._write(f"  Median Grade: {median_grade}")
         self._write(f"  Total Cost: ${tier.total_cost:.2f}")

@@ -97,17 +97,13 @@ class MarkdownReportGenerator:
         """
         return self.base_dir / test_id
 
-    def _find_best_quality_tier(
-        self, tiers: list[TierMetrics]
-    ) -> TierMetrics | None:
+    def _find_best_quality_tier(self, tiers: list[TierMetrics]) -> TierMetrics | None:
         """Find tier with highest composite score."""
         if not tiers:
             return None
         return max(tiers, key=lambda t: t.composite_median)
 
-    def _find_best_cost_tier(
-        self, tiers: list[TierMetrics]
-    ) -> TierMetrics | None:
+    def _find_best_cost_tier(self, tiers: list[TierMetrics]) -> TierMetrics | None:
         """Find tier with lowest cost-of-pass."""
         if not tiers:
             return None
@@ -116,9 +112,7 @@ class MarkdownReportGenerator:
             return None
         return min(valid_tiers, key=lambda t: t.cost_of_pass_median)
 
-    def _find_most_consistent_tier(
-        self, tiers: list[TierMetrics]
-    ) -> TierMetrics | None:
+    def _find_most_consistent_tier(self, tiers: list[TierMetrics]) -> TierMetrics | None:
         """Find tier with lowest variance (most consistent)."""
         if not tiers:
             return None
@@ -221,11 +215,13 @@ class MarkdownReportGenerator:
         ]
 
         if data.transitions:
-            lines.extend([
-                "\n### Tier Uplift Analysis\n",
-                "| Transition | Pass Rate Δ | Impl Rate Δ | Cost Δ | Assessment |",
-                "|------------|-------------|-------------|--------|------------|",
-            ])
+            lines.extend(
+                [
+                    "\n### Tier Uplift Analysis\n",
+                    "| Transition | Pass Rate Δ | Impl Rate Δ | Cost Δ | Assessment |",
+                    "|------------|-------------|-------------|--------|------------|",
+                ]
+            )
 
             for t in data.transitions:
                 assessment = "worth it" if t.worth_it else "not worth it"
