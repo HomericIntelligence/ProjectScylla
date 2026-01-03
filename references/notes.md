@@ -428,3 +428,78 @@ python scripts/migrate_subtests_to_shared.py tests/fixtures/tests/
 2. `scripts/migrate_subtests_to_shared.py` - Migration script
 3. `src/scylla/e2e/tier_manager.py` - Added `_load_shared_subtests()` and `_overlay_test_specific()` methods
 4. `tests/fixtures/tests/test-*/t{0-6}/` - 329 directories deleted (5361 files)
+
+---
+
+## Skill: shared-fixture-migration (2026-01-03)
+
+### Session Details
+
+- **Date**: 2026-01-03
+- **Model**: Claude Opus 4.5 (claude-opus-4-5-20251101)
+- **Working Directory**: /home/mvillmow/ProjectOdyssey/build/ProjectScylla
+- **Branch**: skill/architecture/shared-fixture-migration
+- **Category**: architecture
+
+### Session Summary
+
+This skill documents the complete workflow for migrating duplicated test fixture configs
+to a centralized shared location. It builds on the prior `centralize-subtest-configs`
+work and captures the architectural decision to use shared configs with runtime loading.
+
+### Key Architectural Decisions
+
+1. **YAML files instead of directories**: Subtests are now single YAML files (`04-github.yaml`)
+   instead of directories with config.yaml (`04-github/config.yaml`)
+
+2. **Shared-first loading**: The tier_manager loads from shared directory first, then
+   overlays any test-specific overrides (which should be rare)
+
+3. **Test-specific vs shared**: Only truly test-specific content (prompts, rubrics, expected
+   results) stays per-test. Tier/subtest configurations are shared.
+
+### Validation Output
+
+```
+============================================================
+Validating TierManager with centralized shared subtests
+============================================================
+
+--- Shared Subtests Directory ---
+  T0: 24 subtests
+  T1: 10 subtests
+  T2: 15 subtests
+  T3: 41 subtests
+  T4: 7 subtests
+  T5: 15 subtests
+  T6: 1 subtests
+  Total: 113 shared subtest configs
+
+--- Loading Tiers via TierManager ---
+  T0: 24 subtests (expected 24) [PASS]
+  T1: 10 subtests (expected 10) [PASS]
+  T2: 15 subtests (expected 15) [PASS]
+  T3: 41 subtests (expected 41) [PASS]
+  T4: 7 subtests (expected 7) [PASS]
+  T5: 15 subtests (expected 15) [PASS]
+  T6: 1 subtests (expected 1) [PASS]
+
+--- Verifying Per-Test Tier Dirs Removed ---
+  t0-t6: All Removed [PASS]
+
+============================================================
+VALIDATION PASSED - TierManager loads from shared correctly
+============================================================
+```
+
+### Cross-Test Validation
+
+```
+Testing TierManager across multiple test directories...
+
+test-001: 113 subtests total (T0=24 T1=10 T2=15 T3=41 T4=7 T5=15 T6=1)
+test-010: 113 subtests total (T0=24 T1=10 T2=15 T3=41 T4=7 T5=15 T6=1)
+test-047: 113 subtests total (T0=24 T1=10 T2=15 T3=41 T4=7 T5=15 T6=1)
+
+All test directories load subtests from shared correctly!
+```

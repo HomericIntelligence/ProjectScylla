@@ -16,7 +16,8 @@
   "skills": [
     "skills/prompt-ablation-framework/SKILL.md",
     "skills/deduplicate-test-fixtures/SKILL.md",
-    "skills/centralize-subtest-configs/SKILL.md"
+    "skills/centralize-subtest-configs/SKILL.md",
+    "skills/shared-fixture-migration/SKILL.md"
   ],
   "references": [
     "references/notes.md"
