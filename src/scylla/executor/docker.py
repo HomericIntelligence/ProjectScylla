@@ -145,17 +145,13 @@ class DockerExecutor:
                 timeout=30,
             )
             if result.returncode != 0:
-                raise DockerNotAvailableError(
-                    f"Docker is not running: {result.stderr.strip()}"
-                )
+                raise DockerNotAvailableError(f"Docker is not running: {result.stderr.strip()}")
         except FileNotFoundError:
             raise DockerNotAvailableError(
                 "Docker is not installed. Please install Docker to run evaluations."
             )
         except subprocess.TimeoutExpired:
-            raise DockerNotAvailableError(
-                "Docker command timed out. Docker may be unresponsive."
-            )
+            raise DockerNotAvailableError("Docker command timed out. Docker may be unresponsive.")
 
     def _build_run_command(self, config: ContainerConfig) -> list[str]:
         """Build the docker run command from configuration.
@@ -277,9 +273,7 @@ class DockerExecutor:
             )
 
             if result.returncode != 0:
-                raise ContainerError(
-                    f"Failed to start container: {result.stderr.strip()}"
-                )
+                raise ContainerError(f"Failed to start container: {result.stderr.strip()}")
 
             container_id = result.stdout.strip()
             return container_id
@@ -436,9 +430,7 @@ class DockerExecutor:
             )
 
             if result.returncode != 0:
-                raise ContainerError(
-                    f"Failed to wait for {container_id}: {result.stderr.strip()}"
-                )
+                raise ContainerError(f"Failed to wait for {container_id}: {result.stderr.strip()}")
 
             return int(result.stdout.strip())
 

@@ -244,7 +244,7 @@ class TestCalculateAll:
         """Test with 9 runs (typical evaluation scenario)."""
         values = [0.7, 0.8, 0.75, 0.85, 0.8, 0.9, 0.8, 0.85, 0.82]
         stats = calculate_all(values)
-        
+
         assert stats.count == 9
         assert stats.median == 0.8  # 5th value when sorted
         assert stats.mean == pytest.approx(sum(values) / 9)
@@ -256,7 +256,7 @@ class TestCalculateAll:
         """Test with 10 runs (updated evaluation scenario)."""
         values = [0.7, 0.8, 0.75, 0.85, 0.8, 0.9, 0.8, 0.85, 0.82, 0.88]
         stats = calculate_all(values)
-        
+
         assert stats.count == 10
         assert stats.min == 0.7
         assert stats.max == 0.9
@@ -265,7 +265,7 @@ class TestCalculateAll:
         """Test with identical scores (low variance)."""
         values = [0.8, 0.8, 0.8, 0.8, 0.8]
         stats = calculate_all(values)
-        
+
         assert stats.median == 0.8
         assert stats.mean == 0.8
         assert stats.mode == 0.8
@@ -275,7 +275,7 @@ class TestCalculateAll:
         """Test with high variance scores."""
         values = [0.1, 0.5, 0.9]
         stats = calculate_all(values)
-        
+
         assert stats.min == 0.1
         assert stats.max == 0.9
         assert stats.std_dev > 0.3

@@ -97,12 +97,8 @@ class RunResult(BaseModel):
 
     run_number: int = Field(..., description="Run number (1-10)")
     status: RunStatus = Field(..., description="Run status")
-    execution_info: ExecutionInfo | None = Field(
-        default=None, description="Execution details"
-    )
-    judgment: JudgmentResult | None = Field(
-        default=None, description="Judge evaluation"
-    )
+    execution_info: ExecutionInfo | None = Field(default=None, description="Execution details")
+    judgment: JudgmentResult | None = Field(default=None, description="Judge evaluation")
     error_message: str | None = Field(default=None, description="Error message if failed")
 
 
@@ -117,12 +113,8 @@ class TierSummary(BaseModel):
     error_runs: int = Field(default=0, description="Runs with errors")
     timeout_runs: int = Field(default=0, description="Runs that timed out")
     pass_rate: float = Field(default=0.0, description="Pass rate (0-1)")
-    pass_rate_ci_low: float = Field(
-        default=0.0, description="Pass rate 95% CI lower bound"
-    )
-    pass_rate_ci_high: float = Field(
-        default=0.0, description="Pass rate 95% CI upper bound"
-    )
+    pass_rate_ci_low: float = Field(default=0.0, description="Pass rate 95% CI lower bound")
+    pass_rate_ci_high: float = Field(default=0.0, description="Pass rate 95% CI upper bound")
     runs: list[RunResult] = Field(default_factory=list, description="Individual run results")
 
 
@@ -143,22 +135,14 @@ class RunnerConfig(BaseModel):
     """Configuration for the test runner."""
 
     runs_per_tier: int = Field(default=10, description="Number of runs per tier")
-    min_successful_runs: int = Field(
-        default=5, description="Minimum runs required per tier"
-    )
+    min_successful_runs: int = Field(default=5, description="Minimum runs required per tier")
     parallel: bool = Field(default=False, description="Enable parallel execution")
-    max_parallel_workers: int = Field(
-        default=4, description="Max parallel workers"
-    )
+    max_parallel_workers: int = Field(default=4, description="Max parallel workers")
     timeout_seconds: int = Field(default=3600, description="Timeout per run in seconds")
     max_retries: int = Field(default=6, description="Max retries for rate limits")
-    initial_backoff: float = Field(
-        default=1.0, description="Initial backoff in seconds"
-    )
+    initial_backoff: float = Field(default=1.0, description="Initial backoff in seconds")
     max_backoff: float = Field(default=64.0, description="Maximum backoff in seconds")
-    state_file: Path | None = Field(
-        default=None, description="State file for resume support"
-    )
+    state_file: Path | None = Field(default=None, description="State file for resume support")
     container_image: str = Field(
         default="scylla-runner:latest", description="Docker image for execution"
     )
@@ -445,9 +429,7 @@ class EvalRunner:
 
         for run_number in range(1, runs + 1):
             # Check if already completed (resume support)
-            if self._state and self._state.is_run_completed(
-                tier_config.tier_id, model, run_number
-            ):
+            if self._state and self._state.is_run_completed(tier_config.tier_id, model, run_number):
                 # Skip but don't add to results - we don't have the result
                 continue
 
@@ -480,9 +462,7 @@ class EvalRunner:
         # Determine which runs need to be executed
         runs_to_execute = []
         for run_number in range(1, runs + 1):
-            if self._state and self._state.is_run_completed(
-                tier_config.tier_id, model, run_number
-            ):
+            if self._state and self._state.is_run_completed(tier_config.tier_id, model, run_number):
                 continue
             runs_to_execute.append(run_number)
 
@@ -509,9 +489,7 @@ class EvalRunner:
 
                     # Mark completed
                     if self._state:
-                        self._state.mark_run_completed(
-                            tier_config.tier_id, model, run_number
-                        )
+                        self._state.mark_run_completed(tier_config.tier_id, model, run_number)
                         if self.config.state_file:
                             save_state(self._state, self.config.state_file)
 
@@ -544,9 +522,7 @@ class EvalRunner:
         Returns:
             RunResult with execution outcome.
         """
-        container_name = (
-            f"scylla-{test_id}-{tier_config.tier_id}-{model}-r{run_number:02d}"
-        )
+        container_name = f"scylla-{test_id}-{tier_config.tier_id}-{model}-r{run_number:02d}"
 
         for attempt in range(self.config.max_retries):
             try:
@@ -561,9 +537,7 @@ class EvalRunner:
 
                 execution_info.started_at = start_time.isoformat()
                 execution_info.ended_at = end_time.isoformat()
-                execution_info.duration_seconds = (
-                    end_time - start_time
-                ).total_seconds()
+                execution_info.duration_seconds = (end_time - start_time).total_seconds()
 
                 # Check for timeout
                 if execution_info.timed_out:

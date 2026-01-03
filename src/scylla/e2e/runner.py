@@ -116,11 +116,7 @@ class E2ERunner:
 
             # Set baseline for next tier
             if tier_result.best_subtest:
-                subtest_dir = (
-                    self.experiment_dir
-                    / tier_id.value
-                    / tier_result.best_subtest
-                )
+                subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
                 previous_baseline = self.tier_manager.get_baseline_for_subtest(
                     tier_id=tier_id,
                     subtest_id=tier_result.best_subtest,
@@ -160,10 +156,7 @@ class E2ERunner:
         # Generate report
         self._generate_report(result)
 
-        logger.info(
-            f"Experiment completed in {total_duration:.1f}s, "
-            f"total cost: ${total_cost:.2f}"
-        )
+        logger.info(f"Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}")
 
         return result
 

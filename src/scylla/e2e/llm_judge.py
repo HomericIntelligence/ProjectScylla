@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 
 
 # Path to the standardized judge system prompt (checked into repo)
-JUDGE_SYSTEM_PROMPT_FILE = Path(__file__).parent.parent.parent.parent / "config" / "judge" / "system_prompt.md"
+JUDGE_SYSTEM_PROMPT_FILE = (
+    Path(__file__).parent.parent.parent.parent / "config" / "judge" / "system_prompt.md"
+)
 
 
 @dataclass
@@ -166,53 +168,124 @@ def build_judge_prompt_with_paths(
     ]
 
     if criteria_path:
-        sections.extend([
-            "## Grading Criteria",
-            "",
-            f"See file: `{criteria_path}`",
-            "",
-        ])
+        sections.extend(
+            [
+                "## Grading Criteria",
+                "",
+                f"See file: `{criteria_path}`",
+                "",
+            ]
+        )
 
     if rubric_path:
-        sections.extend([
-            "## Grading Rubric",
-            "",
-            f"See file: `{rubric_path}`",
-            "",
-        ])
+        sections.extend(
+            [
+                "## Grading Rubric",
+                "",
+                f"See file: `{rubric_path}`",
+                "",
+            ]
+        )
 
-    sections.extend([
-        "---",
-        "",
-        "Read the files at the paths above and evaluate the agent's work using the criteria in your system prompt.",
-    ])
+    sections.extend(
+        [
+            "---",
+            "",
+            "Read the files at the paths above and evaluate the agent's work using the criteria in your system prompt.",
+        ]
+    )
 
     return "\n".join(sections)
 
 
+def _is_test_config_file(file_path: str) -> bool:
+    """Check if a file is part of the test configuration (should be ignored).
+
+    Test config files like CLAUDE.md and .claude/ are set up by the test
+    framework, not created by the agent being evaluated.
+
+    Args:
+        file_path: Relative file path from workspace root
+
+    Returns:
+        True if the file should be ignored in evaluation.
+    """
+    # Normalize path for comparison
+    path = file_path.strip()
+
+    # Ignore CLAUDE.md at root level
+    if path == "CLAUDE.md":
+        return True
+
+    # Ignore .claude/ directory and all its contents
+    if path == ".claude" or path.startswith(".claude/"):
+        return True
+
+    return False
+
+
 def _get_workspace_state(workspace: Path) -> str:
-    """Get a description of the workspace state.
+    """Get a description of modified/created files in the workspace.
+
+    Only lists files that were modified or created by the agent (using git status),
+    not their full contents. The patchfile section already shows the actual changes.
+
+    Excludes test configuration files (CLAUDE.md, .claude/) that are set up by
+    the test framework, not by the agent being evaluated.
 
     Args:
         workspace: Path to the workspace directory
 
     Returns:
-        String describing files and their contents.
+        String listing modified/created file paths.
     """
-    lines = ["Files in workspace:"]
+    try:
+        # Get modified, added, and untracked files using git status
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
 
-    # List all files (excluding .git)
-    for item in sorted(workspace.rglob("*")):
-        if ".git" in item.parts:
-            continue
-        if item.is_file():
-            rel_path = item.relative_to(workspace)
-            lines.append(f"\n### {rel_path}\n")
+        if result.returncode != 0:
+            return "(unable to get workspace state)"
 
-    if len(lines) == 1:
-        lines.append("(no files created)")
+        lines = ["Files modified/created by agent:"]
 
-    return "\n".join(lines)
+        for line in result.stdout.strip().split("\n"):
+            if not line:
+                continue
+            # Status codes: M=modified, A=added, ??=untracked, D=deleted
+            status = line[:2].strip()
+            file_path = line[3:]
+
+            # Skip test configuration files
+            if _is_test_config_file(file_path):
+                continue
+
+            if status == "M":
+                lines.append(f"- `{file_path}` (modified)")
+            elif status == "A":
+                lines.append(f"- `{file_path}` (added)")
+            elif status == "??":
+                lines.append(f"- `{file_path}` (created)")
+            elif status == "D":
+                lines.append(f"- `{file_path}` (deleted)")
+            else:
+                lines.append(f"- `{file_path}` ({status})")
+
+        if len(lines) == 1:
+            lines.append("(no changes detected)")
+
+        return "\n".join(lines)
+
+    except subprocess.TimeoutExpired:
+        return "(git status timed out)"
+    except Exception as e:
+        logger.warning(f"Error getting workspace state: {e}")
+        return f"(error getting workspace state: {e})"
 
 
 def _get_patchfile(workspace: Path) -> str:

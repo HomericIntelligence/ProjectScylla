@@ -146,17 +146,11 @@ class BaseAdapter(ABC):
             AdapterValidationError: If configuration is invalid.
         """
         if not config.prompt_file.exists():
-            raise AdapterValidationError(
-                f"Prompt file not found: {config.prompt_file}"
-            )
+            raise AdapterValidationError(f"Prompt file not found: {config.prompt_file}")
         if not config.workspace.exists():
-            raise AdapterValidationError(
-                f"Workspace directory not found: {config.workspace}"
-            )
+            raise AdapterValidationError(f"Workspace directory not found: {config.workspace}")
         if config.timeout <= 0:
-            raise AdapterValidationError(
-                f"Invalid timeout: {config.timeout} (must be positive)"
-            )
+            raise AdapterValidationError(f"Invalid timeout: {config.timeout} (must be positive)")
 
     def inject_tier_prompt(
         self,

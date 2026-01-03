@@ -139,9 +139,7 @@ class SummaryGenerator:
         """
         return self.base_dir / test_id
 
-    def calculate_rankings(
-        self, models: dict[str, ModelStatistics]
-    ) -> Rankings:
+    def calculate_rankings(self, models: dict[str, ModelStatistics]) -> Rankings:
         """Calculate rankings across all models.
 
         Args:

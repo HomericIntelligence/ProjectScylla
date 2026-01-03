@@ -346,7 +346,14 @@ class ConfigLoader:
                 config_data["timeout_seconds"] = eval_cfg["timeout"]
 
         # Copy top-level settings
-        for key in ["runs_per_tier", "timeout_seconds", "max_cost_usd", "judge", "adapters", "cleanup"]:
+        for key in [
+            "runs_per_tier",
+            "timeout_seconds",
+            "max_cost_usd",
+            "judge",
+            "adapters",
+            "cleanup",
+        ]:
             if key in defaults_data:
                 config_data[key] = defaults_data[key]
 

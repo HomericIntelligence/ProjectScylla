@@ -118,10 +118,7 @@ class TestRunAggregatorAggregateTier:
     def test_ten_runs(self) -> None:
         """Test with 10 runs (typical evaluation scenario)."""
         aggregator = RunAggregator()
-        runs = [
-            make_run(f"run-{i}", pass_rate=1.0, impl_rate=0.8 + i * 0.01)
-            for i in range(10)
-        ]
+        runs = [make_run(f"run-{i}", pass_rate=1.0, impl_rate=0.8 + i * 0.01) for i in range(10)]
         stats = aggregator.aggregate_tier("T1", runs)
         assert stats.runs_completed == 10
         assert stats.pass_rate.median == 1.0
@@ -174,17 +171,17 @@ class TestRunAggregatorAnalyzeCrossTier:
 
     def test_multiple_tiers(self) -> None:
         aggregator = RunAggregator()
-        
+
         # T0: baseline
         t0_runs = [make_run(f"t0-{i}", pass_rate=1.0, impl_rate=0.6) for i in range(5)]
         t0_stats = aggregator.aggregate_tier("T0", t0_runs)
-        
+
         # T1: improvement
         t1_runs = [make_run(f"t1-{i}", pass_rate=1.0, impl_rate=0.8) for i in range(5)]
         t1_stats = aggregator.aggregate_tier("T1", t1_runs)
-        
+
         analysis = aggregator.analyze_cross_tier({"T0": t0_stats, "T1": t1_stats})
-        
+
         # Should have variance and uplift
         assert analysis.impl_rate_variance > 0
         assert "T1" in analysis.tier_uplifts
@@ -193,17 +190,17 @@ class TestRunAggregatorAnalyzeCrossTier:
     def test_tier_uplift_calculation(self) -> None:
         """Test tier uplift is calculated correctly."""
         aggregator = RunAggregator()
-        
+
         # T0: composite = (1.0 + 0.5) / 2 = 0.75
         t0_runs = [make_run(f"t0-{i}", pass_rate=1.0, impl_rate=0.5) for i in range(5)]
         t0_stats = aggregator.aggregate_tier("T0", t0_runs)
-        
+
         # T1: composite = (1.0 + 0.8) / 2 = 0.9
         t1_runs = [make_run(f"t1-{i}", pass_rate=1.0, impl_rate=0.8) for i in range(5)]
         t1_stats = aggregator.aggregate_tier("T1", t1_runs)
-        
+
         analysis = aggregator.analyze_cross_tier({"T0": t0_stats, "T1": t1_stats})
-        
+
         # Uplift = (0.9 - 0.75) / 0.75 = 0.2 (20%)
         assert analysis.tier_uplifts["T1"] == pytest.approx(0.2)
 
@@ -213,20 +210,20 @@ class TestRunAggregatorAggregateAllTiers:
 
     def test_aggregate_all(self) -> None:
         aggregator = RunAggregator()
-        
+
         runs_by_tier = {
             "T0": [make_run(f"t0-{i}", impl_rate=0.6) for i in range(5)],
             "T1": [make_run(f"t1-{i}", impl_rate=0.7) for i in range(5)],
             "T2": [make_run(f"t2-{i}", impl_rate=0.8) for i in range(5)],
         }
-        
+
         tier_stats, cross_tier = aggregator.aggregate_all_tiers(runs_by_tier)
-        
+
         assert len(tier_stats) == 3
         assert "T0" in tier_stats
         assert "T1" in tier_stats
         assert "T2" in tier_stats
-        
+
         assert "T1" in cross_tier.tier_uplifts
         assert "T2" in cross_tier.tier_uplifts
 

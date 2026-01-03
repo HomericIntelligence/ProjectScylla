@@ -114,9 +114,7 @@ def calculate_r_prog(tracker: ProgressTracker) -> float:
         return 0.0
 
     # Calculate weighted achieved total
-    achieved_total = sum(
-        step.weight for step in tracker.achieved_steps if step.completed
-    )
+    achieved_total = sum(step.weight for step in tracker.achieved_steps if step.completed)
 
     return min(1.0, achieved_total / expected_total)
 
@@ -165,9 +163,7 @@ def calculate_strategic_drift(tracker: ProgressTracker) -> float:
     if total_weight <= 0:
         return 0.0
 
-    weighted_alignment = sum(
-        step.goal_alignment * step.weight for step in tracker.achieved_steps
-    )
+    weighted_alignment = sum(step.goal_alignment * step.weight for step in tracker.achieved_steps)
     average_alignment = weighted_alignment / total_weight
 
     # Drift is inverse of alignment
@@ -338,11 +334,7 @@ def calculate_process_metrics_simple(
     """
     return ProcessMetrics(
         r_prog=calculate_r_prog_simple(achieved_steps, expected_steps),
-        strategic_drift=calculate_strategic_drift_simple(
-            goal_aligned_actions, total_actions
-        ),
+        strategic_drift=calculate_strategic_drift_simple(goal_aligned_actions, total_actions),
         cfp=calculate_cfp_simple(failed_changes, total_changes),
-        pr_revert_rate=calculate_pr_revert_rate_simple(
-            reverted_changes, total_changes
-        ),
+        pr_revert_rate=calculate_pr_revert_rate_simple(reverted_changes, total_changes),
     )

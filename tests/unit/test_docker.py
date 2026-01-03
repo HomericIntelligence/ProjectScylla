@@ -492,9 +492,7 @@ class TestAPIKeyHandling:
 
     def test_get_api_keys_custom_vars(self) -> None:
         """Get custom environment variables."""
-        with patch.dict(
-            "os.environ", {"MY_API_KEY": "my-key", "OTHER_KEY": "other"}, clear=True
-        ):
+        with patch.dict("os.environ", {"MY_API_KEY": "my-key", "OTHER_KEY": "other"}, clear=True):
             keys = DockerExecutor.get_api_keys_from_env(["MY_API_KEY", "OTHER_KEY"])
 
             assert keys == {"MY_API_KEY": "my-key", "OTHER_KEY": "other"}

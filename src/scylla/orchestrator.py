@@ -323,7 +323,9 @@ class EvalOrchestrator:
         # Write tier prompt (if applicable)
         if tier_id != "T0":
             # Try to find tier prompt file
-            tier_files = list((self.config.base_path.parent / "config" / "tiers").glob(f"t{tier_id[1]}-*.md"))
+            tier_files = list(
+                (self.config.base_path.parent / "config" / "tiers").glob(f"t{tier_id[1]}-*.md")
+            )
             if tier_files:
                 (logs_dir / "tier_prompt.md").write_text(tier_files[0].read_text())
 
@@ -338,9 +340,7 @@ class EvalOrchestrator:
         # Try to parse and write JSON response (if stdout is JSON)
         try:
             response_data = json.loads(stdout.strip())
-            (logs_dir / "response.json").write_text(
-                json.dumps(response_data, indent=2)
-            )
+            (logs_dir / "response.json").write_text(json.dumps(response_data, indent=2))
         except (json.JSONDecodeError, AttributeError):
             pass  # stdout wasn't JSON, that's fine
 
@@ -351,9 +351,7 @@ class EvalOrchestrator:
             "grade": judgment.get("grade", "F"),
             "reasoning": judgment.get("reasoning", ""),
         }
-        (logs_dir / "judgment.json").write_text(
-            json.dumps(judgment_data, indent=2)
-        )
+        (logs_dir / "judgment.json").write_text(json.dumps(judgment_data, indent=2))
 
         # Write execution metadata
         exec_metadata = {
@@ -363,9 +361,7 @@ class EvalOrchestrator:
             "cost_usd": execution_result.get("cost_usd", 0.0),
             "api_calls": execution_result.get("api_calls", 0),
         }
-        (logs_dir / "execution.json").write_text(
-            json.dumps(exec_metadata, indent=2)
-        )
+        (logs_dir / "execution.json").write_text(json.dumps(exec_metadata, indent=2))
 
     def run_test(
         self,
@@ -387,9 +383,7 @@ class EvalOrchestrator:
         """
         # Load test to get default tiers
         test_case = self.loader.load_test(test_id)
-        test_data = self.loader._load_yaml(
-            self.config.base_path / "tests" / test_id / "test.yaml"
-        )
+        test_data = self.loader._load_yaml(self.config.base_path / "tests" / test_id / "test.yaml")
 
         if tiers is None:
             tiers = test_data.get("tiers", ["T0"])

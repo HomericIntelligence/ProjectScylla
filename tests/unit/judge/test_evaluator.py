@@ -220,7 +220,7 @@ class TestParseJudgment:
 
     def test_parse_full_judgment(self) -> None:
         evaluator = JudgeEvaluator()
-        output = '''{
+        output = """{
             "requirements": {"R001": {"score": 0.9, "confidence": 0.8, "notes": "Met"}},
             "categories": {"code_quality": {"score": 0.85, "confidence": 0.9}},
             "summary": {
@@ -228,7 +228,7 @@ class TestParseJudgment:
                 "overall_confidence": 0.85, "strengths": [], "weaknesses": []
             },
             "qualitative_feedback": "Good"
-        }'''
+        }"""
         judgment = evaluator._parse_judgment(output)
         assert judgment.requirements["R001"].score == 0.9
         assert judgment.summary.passed is True
@@ -252,7 +252,9 @@ class TestCalculateConsensus:
         judgment = Judgment(
             requirements={"R001": JudgeScore(score=0.9, confidence=0.8)},
             summary=JudgeSummary(
-                weighted_score=0.87, passed=True, letter_grade="B",
+                weighted_score=0.87,
+                passed=True,
+                letter_grade="B",
                 overall_confidence=0.85,
             ),
         )
@@ -264,13 +266,15 @@ class TestCalculateConsensus:
         judgments = [
             Judgment(
                 requirements={"R001": JudgeScore(score=0.8, confidence=0.9)},
-                summary=JudgeSummary(weighted_score=0.8, passed=True,
-                    letter_grade="B", overall_confidence=0.9),
+                summary=JudgeSummary(
+                    weighted_score=0.8, passed=True, letter_grade="B", overall_confidence=0.9
+                ),
             ),
             Judgment(
                 requirements={"R001": JudgeScore(score=0.9, confidence=0.7)},
-                summary=JudgeSummary(weighted_score=0.9, passed=True,
-                    letter_grade="A", overall_confidence=0.7),
+                summary=JudgeSummary(
+                    weighted_score=0.9, passed=True, letter_grade="A", overall_confidence=0.7
+                ),
             ),
         ]
         consensus = evaluator._calculate_consensus(judgments)
@@ -287,7 +291,9 @@ class TestRunConsensus:
             with pytest.raises(EvaluatorError, match="No adapter"):
                 evaluator._single_evaluation(
                     workspace=Path(tmpdir),
-                    prompt="Test", criteria="C", rubric="R",
+                    prompt="Test",
+                    criteria="C",
+                    rubric="R",
                 )
 
     def test_runs_correct_number(self) -> None:
@@ -300,14 +306,18 @@ class TestRunConsensus:
             call_count += 1
             return Judgment(
                 requirements={"R001": JudgeScore(score=0.8, confidence=0.9)},
-                summary=JudgeSummary(weighted_score=0.8, passed=True,
-                    letter_grade="B", overall_confidence=0.9),
+                summary=JudgeSummary(
+                    weighted_score=0.8, passed=True, letter_grade="B", overall_confidence=0.9
+                ),
             )
 
         evaluator._single_evaluation = mock_eval
         with TemporaryDirectory() as tmpdir:
             consensus = evaluator.evaluate_with_consensus(
-                workspace=Path(tmpdir), prompt="T", criteria="C", rubric="R",
+                workspace=Path(tmpdir),
+                prompt="T",
+                criteria="C",
+                rubric="R",
             )
         assert call_count == 3
 
@@ -470,7 +480,10 @@ class TestEvaluatorWithConsensusConfig:
         evaluator._single_evaluation = fake_single_run
         with TemporaryDirectory() as tmpdir:
             consensus = evaluator.evaluate_with_consensus(
-                workspace=Path(tmpdir), prompt="T", criteria="C", rubric="R",
+                workspace=Path(tmpdir),
+                prompt="T",
+                criteria="C",
+                rubric="R",
             )
         # Should have done initial 3 + 2 retries = 5 calls
         assert call_count == 5
@@ -501,7 +514,10 @@ class TestEvaluatorWithConsensusConfig:
         evaluator._single_evaluation = fake_single_run
         with TemporaryDirectory() as tmpdir:
             consensus = evaluator.evaluate_with_consensus(
-                workspace=Path(tmpdir), prompt="T", criteria="C", rubric="R",
+                workspace=Path(tmpdir),
+                prompt="T",
+                criteria="C",
+                rubric="R",
             )
         # Should only do initial 3 runs
         assert call_count == 3

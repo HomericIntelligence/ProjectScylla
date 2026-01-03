@@ -106,9 +106,7 @@ class OpenCodeAdapter(BaseAdapter):
             )
 
         except FileNotFoundError:
-            raise AdapterError(
-                f"OpenCode CLI not found. Is '{self.CLI_EXECUTABLE}' installed?"
-            )
+            raise AdapterError(f"OpenCode CLI not found. Is '{self.CLI_EXECUTABLE}' installed?")
 
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute OpenCode: {e}") from e
@@ -156,7 +154,8 @@ class OpenCodeAdapter(BaseAdapter):
         """
         cmd = [
             self.CLI_EXECUTABLE,
-            "--model", config.model,
+            "--model",
+            config.model,
             "--batch",  # Non-interactive batch mode
         ]
 
