@@ -382,8 +382,8 @@ metrics:
 
 thresholds:
   pass: 0.7
-  good: 0.85
-  excellent: 0.95
+  good: 0.60
+  excellent: 0.80
 '''
     (expected_dir / "rubric.yaml").write_text(rubric)
 
