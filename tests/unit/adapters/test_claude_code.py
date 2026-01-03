@@ -124,8 +124,8 @@ class TestBuildCommand:
             assert "5" in cmd
 
 
-class TestParseTokenCounts:
-    """Tests for token count parsing."""
+class TestParseTokenStats:
+    """Tests for token stats parsing."""
 
     def test_parse_input_tokens_pattern(self) -> None:
         """Test parsing 'Input tokens: N' pattern."""
@@ -133,10 +133,10 @@ class TestParseTokenCounts:
         stdout = "Input tokens: 1234\nOutput tokens: 567"
         stderr = ""
 
-        tokens_in, tokens_out = adapter._parse_token_counts(stdout, stderr)
+        stats = adapter._parse_token_stats(stdout, stderr)
 
-        assert tokens_in == 1234
-        assert tokens_out == 567
+        assert stats.input_tokens == 1234
+        assert stats.output_tokens == 567
 
     def test_parse_combined_pattern(self) -> None:
         """Test parsing '1234 input, 567 output' pattern."""
@@ -144,10 +144,10 @@ class TestParseTokenCounts:
         stdout = "Used 1000 input, 500 output tokens"
         stderr = ""
 
-        tokens_in, tokens_out = adapter._parse_token_counts(stdout, stderr)
+        stats = adapter._parse_token_stats(stdout, stderr)
 
-        assert tokens_in == 1000
-        assert tokens_out == 500
+        assert stats.input_tokens == 1000
+        assert stats.output_tokens == 500
 
     def test_parse_parenthetical_pattern(self) -> None:
         """Test parsing '(1234 input, 567 output)' pattern."""
@@ -155,10 +155,10 @@ class TestParseTokenCounts:
         stdout = "Total: 1801 tokens (1234 input, 567 output)"
         stderr = ""
 
-        tokens_in, tokens_out = adapter._parse_token_counts(stdout, stderr)
+        stats = adapter._parse_token_stats(stdout, stderr)
 
-        assert tokens_in == 1234
-        assert tokens_out == 567
+        assert stats.input_tokens == 1234
+        assert stats.output_tokens == 567
 
     def test_parse_from_stderr(self) -> None:
         """Test parsing token counts from stderr."""
@@ -166,10 +166,10 @@ class TestParseTokenCounts:
         stdout = ""
         stderr = "Input tokens: 100\nOutput tokens: 50"
 
-        tokens_in, tokens_out = adapter._parse_token_counts(stdout, stderr)
+        stats = adapter._parse_token_stats(stdout, stderr)
 
-        assert tokens_in == 100
-        assert tokens_out == 50
+        assert stats.input_tokens == 100
+        assert stats.output_tokens == 50
 
     def test_parse_no_tokens(self) -> None:
         """Test parsing with no token information."""
@@ -177,10 +177,10 @@ class TestParseTokenCounts:
         stdout = "Just some output"
         stderr = ""
 
-        tokens_in, tokens_out = adapter._parse_token_counts(stdout, stderr)
+        stats = adapter._parse_token_stats(stdout, stderr)
 
-        assert tokens_in == 0
-        assert tokens_out == 0
+        assert stats.input_tokens == 0
+        assert stats.output_tokens == 0
 
     def test_parse_case_insensitive(self) -> None:
         """Test that parsing is case insensitive."""
@@ -188,10 +188,34 @@ class TestParseTokenCounts:
         stdout = "INPUT TOKENS: 200\noutput tokens: 100"
         stderr = ""
 
-        tokens_in, tokens_out = adapter._parse_token_counts(stdout, stderr)
+        stats = adapter._parse_token_stats(stdout, stderr)
 
-        assert tokens_in == 200
-        assert tokens_out == 100
+        assert stats.input_tokens == 200
+        assert stats.output_tokens == 100
+
+    def test_parse_json_with_cache_tokens(self) -> None:
+        """Test parsing JSON output with all token types including cache."""
+        adapter = ClaudeCodeAdapter()
+        import json
+
+        stdout = json.dumps(
+            {
+                "usage": {
+                    "input_tokens": 15,
+                    "output_tokens": 422,
+                    "cache_creation_input_tokens": 27655,
+                    "cache_read_input_tokens": 82278,
+                }
+            }
+        )
+        stderr = ""
+
+        stats = adapter._parse_token_stats(stdout, stderr)
+
+        assert stats.input_tokens == 15
+        assert stats.output_tokens == 422
+        assert stats.cache_creation_tokens == 27655
+        assert stats.cache_read_tokens == 82278
 
 
 class TestParseApiCalls:
@@ -433,10 +457,9 @@ class TestRun:
             with patch("subprocess.run", return_value=mock_result):
                 adapter.run(config)
 
-            logs_dir = tmppath / "logs"
-            assert logs_dir.exists()
-            assert (logs_dir / "stdout.log").read_text() == "stdout content"
-            assert (logs_dir / "stderr.log").read_text() == "stderr content"
+            # Logs are written directly to output_dir (no logs/ subdirectory)
+            assert (tmppath / "stdout.log").read_text() == "stdout content"
+            assert (tmppath / "stderr.log").read_text() == "stderr content"
 
     def test_run_calculates_cost(self) -> None:
         """Test that cost is calculated correctly."""

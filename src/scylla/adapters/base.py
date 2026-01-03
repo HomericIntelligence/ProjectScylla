@@ -20,9 +20,28 @@ from scylla.config.pricing import (
     get_input_cost_per_1k,
     get_output_cost_per_1k,
 )
+from scylla.e2e.models import TokenStats
 
 if TYPE_CHECKING:
     from scylla.executor.tier_config import TierConfig
+
+
+class AdapterTokenStats(BaseModel):
+    """Detailed token statistics for adapter results."""
+
+    input_tokens: int = Field(default=0, description="Fresh input tokens")
+    output_tokens: int = Field(default=0, description="Generated output tokens")
+    cache_creation_tokens: int = Field(default=0, description="Tokens written to cache")
+    cache_read_tokens: int = Field(default=0, description="Tokens read from cache")
+
+    def to_token_stats(self) -> TokenStats:
+        """Convert to E2E TokenStats dataclass."""
+        return TokenStats(
+            input_tokens=self.input_tokens,
+            output_tokens=self.output_tokens,
+            cache_creation_tokens=self.cache_creation_tokens,
+            cache_read_tokens=self.cache_read_tokens,
+        )
 
 
 class AdapterResult(BaseModel):
@@ -35,12 +54,24 @@ class AdapterResult(BaseModel):
     stdout: str = Field(default="", description="Captured standard output")
     stderr: str = Field(default="", description="Captured standard error")
     duration_seconds: float = Field(default=0.0, description="Execution duration")
-    tokens_input: int = Field(default=0, description="Input tokens consumed")
-    tokens_output: int = Field(default=0, description="Output tokens generated")
+    token_stats: AdapterTokenStats = Field(
+        default_factory=AdapterTokenStats, description="Detailed token statistics"
+    )
     cost_usd: float = Field(default=0.0, description="Estimated cost in USD")
     api_calls: int = Field(default=0, description="Number of API calls made")
     timed_out: bool = Field(default=False, description="Whether execution timed out")
     error_message: str | None = Field(default=None, description="Error message if failed")
+
+    # Legacy properties for backwards compatibility
+    @property
+    def tokens_input(self) -> int:
+        """Total input tokens (legacy)."""
+        return self.token_stats.input_tokens + self.token_stats.cache_read_tokens
+
+    @property
+    def tokens_output(self) -> int:
+        """Output tokens (legacy)."""
+        return self.token_stats.output_tokens
 
 
 @dataclass
