@@ -1,0 +1,4 @@
+name: "Vanilla Tool Prompt"
+description: "Default tool system prompt only - no custom CLAUDE.md"
+extends_previous: false
+system_prompt_mode: "default"

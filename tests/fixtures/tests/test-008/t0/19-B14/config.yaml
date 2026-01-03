@@ -1,0 +1,3 @@
+name: "B14 delegation-mojo"
+description: "Individual block B14 test"
+extends_previous: false

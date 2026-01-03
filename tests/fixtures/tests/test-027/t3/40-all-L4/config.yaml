@@ -1,0 +1,3 @@
+name: "All L4 Agents"
+description: "All 6 agents from level L4"
+extends_previous: true

@@ -1,0 +1,26 @@
+# Test fixture: Testing - Convert Float16 FIXME to NOTE
+id: "test-039"
+name: "Convert Float16 FIXME to NOTE"
+description: |
+  Convert float16 FIXMEs to documented NOTEs
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "8fb66e59921ed2ec7bf635c45bce9401d5a4d8c1"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

@@ -1,0 +1,3 @@
+name: "B17 testing-strategy"
+description: "Individual block B17 test"
+extends_previous: false

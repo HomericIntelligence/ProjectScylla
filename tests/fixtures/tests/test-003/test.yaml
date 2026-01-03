@@ -1,0 +1,27 @@
+# Test fixture: Build System - Add mypy to pixi
+id: "test-003"
+name: "Add mypy to pixi Configuration"
+description: |
+  Test AI agent's ability to add a new Python dependency (mypy) to a pixi-managed
+  project. Agent must understand pixi.toml structure and lock file regeneration.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "8e59e100d11e760a28693796a504e9a864051e83"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0  # Prompts (24 sub-tests)
+  - T1  # Skills (10 sub-tests)
+  - T2  # Tooling (15 sub-tests)
+  - T3  # Delegation (41 sub-tests)
+  - T4  # Hierarchy (7 sub-tests)
+  - T5  # Hybrid (15 sub-tests)
+  - T6  # Super (1 sub-test)

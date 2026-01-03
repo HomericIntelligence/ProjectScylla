@@ -1,0 +1,4 @@
+name: "Empty System Prompt"
+description: "No system prompt - absolute baseline for measuring prompt impact"
+extends_previous: false
+system_prompt_mode: "none"

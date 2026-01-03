@@ -1,0 +1,3 @@
+name: "mojo-syntax-validator"
+description: "L3 agent: mojo-syntax-validator"
+extends_previous: true

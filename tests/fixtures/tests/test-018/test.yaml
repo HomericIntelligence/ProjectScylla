@@ -1,0 +1,26 @@
+# Test fixture: New Features - Export Script Runner and Dataset Loaders
+id: "test-018"
+name: "Export Script Runner and Dataset Loaders"
+description: |
+  Export training modules for external use
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "1f83a291811f06f4939ee79c2361202948ea865d"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

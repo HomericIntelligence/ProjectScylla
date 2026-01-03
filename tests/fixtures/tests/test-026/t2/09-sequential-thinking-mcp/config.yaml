@@ -1,0 +1,6 @@
+name: "Sequential Thinking MCP"
+description: "Dynamic/reflective problem-solving through thought sequences"
+extends_previous: true
+mcp_servers:
+  - name: sequential-thinking
+    source: modelcontextprotocol/servers

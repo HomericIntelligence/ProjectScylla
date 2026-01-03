@@ -1,0 +1,26 @@
+# Test fixture: Refactoring - Migrate Scripts to get_repo_root()
+id: "test-024"
+name: "Migrate Scripts to get_repo_root()"
+description: |
+  Migrate 12 scripts to use get_repo_root()
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "af62bf493b15e06ab412dae292ba2468daeada70"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

@@ -1,0 +1,28 @@
+# Test fixture: Build System - Simplify justfile
+id: "test-007"
+name: "Simplify Justfile Build System"
+description: |
+  Test AI agent's ability to refactor and simplify a justfile build system.
+  Large-scale refactoring task involving merging duplicates, removing unused
+  commands, and fixing build/package issues.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "6f6959bfc67614ce541cb28fb337f4161270ca63"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 7200
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

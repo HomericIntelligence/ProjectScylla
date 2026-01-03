@@ -1,0 +1,27 @@
+# Test fixture: Build System - Fix Mojo example build errors
+id: "test-006"
+name: "Fix prelu_activation.mojo Build Errors"
+description: |
+  Test AI agent's ability to fix Mojo build errors in an example file. Agent must
+  understand Mojo type system, ownership patterns, and API migration.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "4272caba362d26f639d3ddbc3f5fcdef5f9b2747"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 3600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

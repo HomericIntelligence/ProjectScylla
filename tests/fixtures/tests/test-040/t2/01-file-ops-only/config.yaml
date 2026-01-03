@@ -1,0 +1,5 @@
+name: "File Operations Only"
+description: "Read, Write, Edit, Glob, Grep tools only"
+extends_previous: true
+tools:
+  enabled: [Read, Write, Edit, Glob, Grep]

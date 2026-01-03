@@ -1,0 +1,26 @@
+# Test fixture: Bug Fixing - Delete Ralph Loop
+id: "test-014"
+name: "Delete Ralph Loop"
+description: |
+  Remove dead code loop
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "1ab38fd8809554d148d420a4500c3856de482d36"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 600
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

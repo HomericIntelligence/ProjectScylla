@@ -1,0 +1,6 @@
+name: "Filesystem MCP"
+description: "Secure file operations with configurable access controls"
+extends_previous: true
+mcp_servers:
+  - name: filesystem
+    source: modelcontextprotocol/servers

@@ -1,0 +1,3 @@
+name: "mojo-language-review-specialist"
+description: "L3 agent: mojo-language-review-specialist"
+extends_previous: true

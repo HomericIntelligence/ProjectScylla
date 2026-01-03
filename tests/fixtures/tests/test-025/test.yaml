@@ -1,0 +1,26 @@
+# Test fixture: Refactoring - Update Stale FIXME/TODO References
+id: "test-025"
+name: "Update Stale FIXME/TODO References"
+description: |
+  Update stale issue references in comments
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "2b06d667fa7b51ce357cefa6954254d9f3aa1c88"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6

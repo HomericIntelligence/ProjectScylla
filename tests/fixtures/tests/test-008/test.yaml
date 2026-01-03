@@ -1,0 +1,27 @@
+# Test fixture: CI/CD - Bump GitHub Actions
+id: "test-008"
+name: "Bump GitHub Actions Dependencies"
+description: |
+  Test AI agent's ability to update GitHub Actions dependencies to newer versions.
+  Agent must understand GitHub Actions workflow syntax and version pinning.
+
+source:
+  repo: "https://github.com/mvillmow/ProjectOdyssey"
+  hash: "d61b7e047d00174f8914241ed8a0d35828b3ce92"
+
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 1800
+
+validation:
+  criteria_file: "expected/criteria.md"
+  rubric_file: "expected/rubric.yaml"
+
+tiers:
+  - T0
+  - T1
+  - T2
+  - T3
+  - T4
+  - T5
+  - T6
