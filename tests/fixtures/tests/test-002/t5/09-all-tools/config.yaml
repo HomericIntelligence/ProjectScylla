@@ -1,0 +1,5 @@
+name: "All Tools"
+description: "All built-in tools enabled"
+extends_previous: true
+tools:
+  enabled: all
