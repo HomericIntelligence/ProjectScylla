@@ -8,22 +8,16 @@ Python Justification: Required for statistical aggregation and data structures.
 
 from __future__ import annotations
 
-import math
-from collections import Counter
 from dataclasses import dataclass, field
 
+from scylla.metrics.statistics import (
+    Statistics,
+    calculate_all,
+    calculate_variance,
+)
 
-@dataclass
-class AggregatedStats:
-    """Statistical summary of a set of values from aggregation."""
-
-    median: float
-    mean: float
-    mode: float
-    min: float
-    max: float
-    std_dev: float
-    count: int = 0
+# Type alias for backward compatibility
+AggregatedStats = Statistics
 
 
 @dataclass
@@ -85,68 +79,6 @@ class CrossTierAnalysis:
     impl_rate_variance: float
     cost_variance: float
     tier_uplifts: dict[str, float] = field(default_factory=dict)
-
-
-def _calculate_median(values: list[float]) -> float:
-    """Calculate median."""
-    if not values:
-        return 0.0
-    sorted_values = sorted(values)
-    n = len(sorted_values)
-    if n % 2 == 1:
-        return sorted_values[n // 2]
-    mid = n // 2
-    return (sorted_values[mid - 1] + sorted_values[mid]) / 2
-
-
-def _calculate_mean(values: list[float]) -> float:
-    """Calculate mean."""
-    if not values:
-        return 0.0
-    return sum(values) / len(values)
-
-
-def _calculate_mode(values: list[float]) -> float:
-    """Calculate mode."""
-    if not values:
-        return 0.0
-    rounded = [round(v, 6) for v in values]
-    counter = Counter(rounded)
-    most_common = counter.most_common()
-    if not most_common:
-        return values[0]
-    max_freq = most_common[0][1]
-    modes = [v for v, freq in most_common if freq == max_freq]
-    return min(modes)
-
-
-def _calculate_variance(values: list[float]) -> float:
-    """Calculate variance."""
-    if len(values) < 2:
-        return 0.0
-    mean = _calculate_mean(values)
-    squared_diffs = [(v - mean) ** 2 for v in values]
-    return sum(squared_diffs) / len(values)
-
-
-def _calculate_std_dev(values: list[float]) -> float:
-    """Calculate standard deviation."""
-    return math.sqrt(_calculate_variance(values))
-
-
-def _calculate_all(values: list[float]) -> AggregatedStats:
-    """Calculate all statistics."""
-    if not values:
-        return AggregatedStats(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)
-    return AggregatedStats(
-        median=_calculate_median(values),
-        mean=_calculate_mean(values),
-        mode=_calculate_mode(values),
-        min=min(values),
-        max=max(values),
-        std_dev=_calculate_std_dev(values),
-        count=len(values),
-    )
 
 
 def _calculate_composite_score(pass_rate: float, impl_rate: float) -> float:
@@ -213,11 +145,11 @@ class RunAggregator:
         ]
 
         # Calculate statistics
-        pass_rate_stats = _calculate_all(pass_rates)
-        impl_rate_stats = _calculate_all(impl_rates)
-        cost_stats = _calculate_all(costs)
-        duration_stats = _calculate_all(durations)
-        composite_stats = _calculate_all(composite_scores)
+        pass_rate_stats = calculate_all(pass_rates)
+        impl_rate_stats = calculate_all(impl_rates)
+        cost_stats = calculate_all(costs)
+        duration_stats = calculate_all(durations)
+        composite_stats = calculate_all(composite_scores)
 
         # Determine grade from median composite score
         grade = _assign_letter_grade(composite_stats.median)
@@ -259,9 +191,9 @@ class RunAggregator:
         costs = [t.cost_usd.median for t in tier_stats.values()]
 
         # Calculate variances
-        pass_rate_variance = _calculate_variance(pass_rates)
-        impl_rate_variance = _calculate_variance(impl_rates)
-        cost_variance = _calculate_variance(costs)
+        pass_rate_variance = calculate_variance(pass_rates)
+        impl_rate_variance = calculate_variance(impl_rates)
+        cost_variance = calculate_variance(costs)
 
         # Calculate tier uplifts vs T0 baseline
         uplifts: dict[str, float] = {}

@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from scylla.metrics.aggregator import TierStatistics
+from scylla.metrics.statistics import calculate_variance
 
 
 @dataclass
@@ -86,15 +87,6 @@ class TierTransitionAssessment:
     reason: str
 
 
-def _calculate_variance(values: list[float]) -> float:
-    """Calculate variance of a list of values."""
-    if len(values) < 2:
-        return 0.0
-    mean = sum(values) / len(values)
-    squared_diffs = [(v - mean) ** 2 for v in values]
-    return sum(squared_diffs) / len(values)
-
-
 def calculate_frontier_cop(
     tier_stats: dict[str, "TierStatistics"],
 ) -> tuple[float, str]:
@@ -166,7 +158,7 @@ class CrossTierAnalyzer:
             getattr(t, metric).median
             for t in self.tier_stats.values()
         ]
-        return _calculate_variance(values)
+        return calculate_variance(values)
 
     def interpret_sensitivity(self, variance: float) -> str:
         """Interpret variance as sensitivity level.
