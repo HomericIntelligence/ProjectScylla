@@ -122,28 +122,33 @@ def calculate_composite_score(
 
 
 def assign_letter_grade(score: float) -> str:
-    """Assign letter grade based on score.
+    """Assign letter grade based on score using industry-aligned scale.
+
+    See .claude/shared/grading-scale.md for full specification.
 
     Grade thresholds:
-        A: >= 0.95
-        B: >= 0.85
-        C: >= 0.75
-        D: >= 0.65
-        F: < 0.65
+        S: == 1.00 (Amazing - exceptional, above and beyond)
+        A: >= 0.80 (Excellent - production ready)
+        B: >= 0.60 (Good - minor improvements possible)
+        C: >= 0.40 (Acceptable - functional with issues)
+        D: >= 0.20 (Marginal - significant issues)
+        F: < 0.20 (Failing - does not meet requirements)
 
     Args:
         score: Score (0.0 to 1.0).
 
     Returns:
-        Letter grade (A/B/C/D/F).
+        Letter grade (S/A/B/C/D/F).
     """
-    if score >= 0.95:
+    if score >= 1.0:
+        return "S"
+    elif score >= 0.80:
         return "A"
-    elif score >= 0.85:
+    elif score >= 0.60:
         return "B"
-    elif score >= 0.75:
+    elif score >= 0.40:
         return "C"
-    elif score >= 0.65:
+    elif score >= 0.20:
         return "D"
     else:
         return "F"

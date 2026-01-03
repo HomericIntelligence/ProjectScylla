@@ -93,13 +93,15 @@ class ModelScorecard:
 def _grade_to_points(grade: str) -> float:
     """Convert letter grade to point value for averaging.
 
+    Uses industry-aligned scale where S is the highest grade.
+
     Args:
-        grade: Letter grade (A, B, C, D, F with optional +/-)
+        grade: Letter grade (S, A, B, C, D, F with optional +/-)
 
     Returns:
-        Numeric point value
+        Numeric point value (0.0 to 5.0)
     """
-    base_points = {"A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0}
+    base_points = {"S": 5.0, "A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0}
 
     if not grade:
         return 0.0
@@ -114,19 +116,23 @@ def _grade_to_points(grade: str) -> float:
         elif modifier == "-":
             points -= 0.3
 
-    return max(0.0, min(4.3, points))
+    return max(0.0, min(5.0, points))
 
 
 def _points_to_grade(points: float) -> str:
     """Convert point value back to letter grade.
 
+    Uses industry-aligned scale where S is the highest grade.
+
     Args:
-        points: Numeric point value
+        points: Numeric point value (0.0 to 5.0)
 
     Returns:
-        Letter grade string
+        Letter grade string (S, A, B, C, D, or F with optional +/-)
     """
-    if points >= 3.85:
+    if points >= 4.85:
+        return "S"
+    elif points >= 3.85:
         return "A"
     elif points >= 3.5:
         return "A-"

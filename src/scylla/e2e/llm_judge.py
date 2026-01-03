@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from scylla.metrics.grading import assign_letter_grade
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,17 +61,8 @@ class JudgeResult:
         }
 
 
-def _score_to_grade(score: float) -> str:
-    """Convert numeric score to letter grade."""
-    if score >= 0.9:
-        return "A"
-    elif score >= 0.8:
-        return "B"
-    elif score >= 0.7:
-        return "C"
-    elif score >= 0.6:
-        return "D"
-    return "F"
+# Alias for industry-aligned grade assignment
+_score_to_grade = assign_letter_grade
 
 
 def _build_judge_prompt(
