@@ -68,11 +68,11 @@ class TestConfigLoaderEvalCase:
 
         assert isinstance(test, EvalCase)
         assert test.id == "test-001"
-        assert test.name == "Test Case 001"
-        assert test.source.repo == "https://github.com/example/repo"
-        assert test.source.hash == "abc123def456"
+        assert test.name == "Hello World Task"
+        assert test.source.repo == "https://github.com/octocat/Hello-World"
+        assert test.source.hash == "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
         assert test.task.prompt_file == "prompt.md"
-        assert test.task.timeout_seconds == 1800
+        assert test.task.timeout_seconds == 300
 
     def test_load_test_missing(self) -> None:
         """Missing test raises ConfigurationError."""
@@ -108,9 +108,10 @@ class TestConfigLoaderRubric:
         assert req1.weight == 2.0
         assert req1.evaluation == "binary"
 
-        # Check grading
-        assert rubric.grading.pass_threshold == 0.70
-        assert rubric.grading.grade_scale.A == 0.95
+        # Check grading (industry-aligned scale)
+        assert rubric.grading.pass_threshold == 0.60
+        assert rubric.grading.grade_scale.S == 1.00  # Exemplary
+        assert rubric.grading.grade_scale.A == 0.80  # Production-Ready
 
     def test_load_rubric_missing(self) -> None:
         """Missing rubric raises ConfigurationError."""
