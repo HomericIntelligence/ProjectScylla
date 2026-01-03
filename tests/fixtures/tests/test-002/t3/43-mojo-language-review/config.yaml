@@ -1,0 +1,5 @@
+name: "Mojo Language Review Specialist"
+description: "L3 specialist for Mojo idioms and SIMD optimization"
+extends_previous: true
+agent: mojo-language-review-specialist
+agent_source: "https://github.com/mvillmow/ProjectOdyssey/tree/main/.claude/agents"
