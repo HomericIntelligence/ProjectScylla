@@ -15,6 +15,12 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
+from scylla.config.pricing import (
+    calculate_cost as pricing_calculate_cost,
+    get_input_cost_per_1k,
+    get_output_cost_per_1k,
+)
+
 if TYPE_CHECKING:
     from scylla.executor.tier_config import TierConfig
 
@@ -234,6 +240,8 @@ class BaseAdapter(ABC):
     ) -> float:
         """Calculate execution cost from token counts.
 
+        Uses centralized pricing from scylla.config.pricing.
+
         Args:
             tokens_input: Number of input tokens.
             tokens_output: Number of output tokens.
@@ -242,16 +250,12 @@ class BaseAdapter(ABC):
         Returns:
             Estimated cost in USD.
         """
-        # Get model-specific pricing if available
-        input_cost = self._get_input_cost_per_1k(model)
-        output_cost = self._get_output_cost_per_1k(model)
-
-        return (tokens_input / 1000 * input_cost) + (tokens_output / 1000 * output_cost)
+        return pricing_calculate_cost(tokens_input, tokens_output, model=model)
 
     def _get_input_cost_per_1k(self, model: str | None) -> float:
         """Get input token cost per 1K tokens for a model.
 
-        Override in subclasses for model-specific pricing.
+        Uses centralized pricing from scylla.config.pricing.
 
         Args:
             model: Model identifier.
@@ -259,22 +263,12 @@ class BaseAdapter(ABC):
         Returns:
             Cost per 1K input tokens.
         """
-        # Model-specific pricing (as of 2024)
-        pricing = {
-            "claude-sonnet-4-20250514": 0.003,
-            "claude-opus-4-20250514": 0.015,
-            "claude-3-5-sonnet-20241022": 0.003,
-            "claude-3-5-haiku-20241022": 0.001,
-            "gpt-4": 0.03,
-            "gpt-4-turbo": 0.01,
-            "gpt-3.5-turbo": 0.0005,
-        }
-        return pricing.get(model or "", self.DEFAULT_INPUT_COST_PER_1K)
+        return get_input_cost_per_1k(model)
 
     def _get_output_cost_per_1k(self, model: str | None) -> float:
         """Get output token cost per 1K tokens for a model.
 
-        Override in subclasses for model-specific pricing.
+        Uses centralized pricing from scylla.config.pricing.
 
         Args:
             model: Model identifier.
@@ -282,17 +276,7 @@ class BaseAdapter(ABC):
         Returns:
             Cost per 1K output tokens.
         """
-        # Model-specific pricing (as of 2024)
-        pricing = {
-            "claude-sonnet-4-20250514": 0.015,
-            "claude-opus-4-20250514": 0.075,
-            "claude-3-5-sonnet-20241022": 0.015,
-            "claude-3-5-haiku-20241022": 0.005,
-            "gpt-4": 0.06,
-            "gpt-4-turbo": 0.03,
-            "gpt-3.5-turbo": 0.0015,
-        }
-        return pricing.get(model or "", self.DEFAULT_OUTPUT_COST_PER_1K)
+        return get_output_cost_per_1k(model)
 
     def load_prompt(self, prompt_file: Path) -> str:
         """Load prompt content from file.
