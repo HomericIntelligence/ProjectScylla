@@ -35,12 +35,14 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
    - Reasonable function length (< 50 LOC)
    - Nesting depth manageable (< 4 levels)
    - Can be compiled or interpreted
+   - **Appropriately simple**: Penalize excessive file creation - a 1-line task shouldn't produce 10 files
 
 6. **Documentation**: Is the code properly documented?
    - Functions have docstrings/comments explaining purpose
    - Complex logic is explained
    - Public APIs are documented
    - Comments are accurate (not redundant or stale)
+   - **Proportionate to code complexity**: Penalize documentation bloat - docs should match the solution's complexity
 
 7. **Linting Compliance**: Does code follow style guidelines?
    - Consistent indentation and formatting
@@ -69,6 +71,27 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
     - Meaningful error messages
     - Fails gracefully (no silent failures)
     - Resources cleaned up properly
+
+### Proportionality & Scope Criteria (Weight: 30%)
+
+11. **Workspace Cleanliness**: Are files proportionate to task complexity?
+    - Files should meaningfully contribute to the solution
+    - Penalize files that don't improve results
+    - Simple tasks (1-line code) warrant minimal supporting files (1-3 max)
+    - Complex tasks can justify more supporting files
+    - Build artifacts and temp files should be cleaned up
+
+12. **Test Quality**: Are tests appropriate and valuable?
+    - IF tests required by task: comprehensive coverage, edge cases, meaningful assertions
+    - IF tests NOT required: penalize unnecessary test files for trivial tasks
+    - Tests should be proportionate to task complexity
+    - A hello.py task doesn't need a 200-line test suite
+
+13. **Scope Discipline**: Is the solution appropriately scoped?
+    - No over-engineering for simple tasks
+    - Documentation matches task complexity
+    - No unused code or dead ends
+    - Files created directly serve the deliverable
 
 ### Patchfile Quality Criteria (When Reference Provided)
 
@@ -159,6 +182,18 @@ Respond with a JSON object containing:
     "error_handling": {
       "score": 0.7,
       "explanation": "The script has no explicit error handling, but for a simple print statement, none is strictly required. The implicit behavior (Python's default exception handling) is acceptable here."
+    },
+    "workspace_cleanliness": {
+      "score": 1.0,
+      "explanation": "The workspace contains only the required file (hello.py). No extraneous files created. Proportionate to task complexity."
+    },
+    "test_quality": {
+      "score": 1.0,
+      "explanation": "No tests were created, which is appropriate for this trivial task. A hello.py script doesn't require a test suite."
+    },
+    "scope_discipline": {
+      "score": 1.0,
+      "explanation": "The solution is appropriately scoped - just the hello.py file as requested. No over-engineering or unnecessary complexity."
     }
   }
 }

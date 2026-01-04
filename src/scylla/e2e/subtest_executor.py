@@ -224,6 +224,12 @@ def _load_judge_result(judge_dir: Path) -> dict:
 def _has_valid_agent_result(run_dir: Path) -> bool:
     """Check if a valid agent result exists for the run.
 
+    A result is considered invalid if:
+    - Result file doesn't exist
+    - JSON is malformed
+    - Required fields are missing
+    - exit_code is -1 AND all token_stats are 0 (incomplete execution)
+
     Args:
         run_dir: Path to the run directory
 
@@ -241,7 +247,27 @@ def _has_valid_agent_result(run_dir: Path) -> bool:
         data = json.loads(result_file.read_text())
         # Check all required fields exist
         required_fields = ["exit_code", "token_stats", "cost_usd"]
-        return all(field in data for field in required_fields)
+        if not all(field in data for field in required_fields):
+            return False
+
+        # Check for incomplete execution: exit_code=-1 AND all token stats are 0
+        # This indicates the agent threw an exception but created files
+        if data["exit_code"] == -1:
+            token_stats = data["token_stats"]
+            all_tokens_zero = (
+                token_stats.get("input_tokens", 0) == 0
+                and token_stats.get("output_tokens", 0) == 0
+                and token_stats.get("cache_creation_tokens", 0) == 0
+                and token_stats.get("cache_read_tokens", 0) == 0
+            )
+            if all_tokens_zero:
+                logger.warning(
+                    f"Invalid result detected at {run_dir}: "
+                    f"exit_code=-1 with zero token stats (incomplete execution)"
+                )
+                return False
+
+        return True
     except (json.JSONDecodeError, KeyError, OSError):
         return False
 
