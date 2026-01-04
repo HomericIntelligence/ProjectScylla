@@ -104,6 +104,8 @@ class TestRunResult:
             token_stats=TokenStats(input_tokens=1000, output_tokens=200),
             cost_usd=0.05,
             duration_seconds=15.5,
+            agent_duration_seconds=12.0,
+            judge_duration_seconds=3.5,
             judge_score=0.8,
             judge_passed=True,
             judge_grade="B",
@@ -117,6 +119,9 @@ class TestRunResult:
         assert d["run_number"] == 1
         assert d["exit_code"] == 0
         assert d["cost_usd"] == 0.05
+        assert d["duration_seconds"] == 15.5
+        assert d["agent_duration_seconds"] == 12.0
+        assert d["judge_duration_seconds"] == 3.5
         assert d["judge_score"] == 0.8
         assert d["workspace_path"] == "/workspace"
         # Legacy properties should still work

@@ -199,7 +199,9 @@ class RunResult:
         exit_code: Process exit code
         token_stats: Detailed token usage statistics
         cost_usd: Total cost in USD
-        duration_seconds: Execution duration
+        duration_seconds: Total execution duration (agent + judge)
+        agent_duration_seconds: Agent execution time
+        judge_duration_seconds: Judge evaluation time
         judge_score: LLM judge's score (0.0 - 1.0)
         judge_passed: Whether the run passed
         judge_grade: Letter grade (S-F)
@@ -216,6 +218,8 @@ class RunResult:
     token_stats: TokenStats
     cost_usd: float
     duration_seconds: float
+    agent_duration_seconds: float
+    judge_duration_seconds: float
     judge_score: float
     judge_passed: bool
     judge_grade: str
@@ -247,6 +251,8 @@ class RunResult:
             "tokens_output": self.tokens_output,
             "cost_usd": self.cost_usd,
             "duration_seconds": self.duration_seconds,
+            "agent_duration_seconds": self.agent_duration_seconds,
+            "judge_duration_seconds": self.judge_duration_seconds,
             "judge_score": self.judge_score,
             "judge_passed": self.judge_passed,
             "judge_grade": self.judge_grade,
