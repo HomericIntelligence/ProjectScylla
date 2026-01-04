@@ -140,10 +140,25 @@ class TierManager:
                 # Load resources specification for runtime symlinks
                 resources = config_data.get("resources", {})
 
-                # Also capture mcp_servers into resources for prompt suffixes
+                # Also capture root-level fields into resources for prompt suffixes
                 mcp_servers = config_data.get("mcp_servers", [])
                 if mcp_servers:
                     resources["mcp_servers"] = mcp_servers
+
+                # Map tools at root level
+                tools = config_data.get("tools", {})
+                if tools:
+                    resources["tools"] = tools
+
+                # Map agents at root level
+                agents = config_data.get("agents", {})
+                if agents:
+                    resources["agents"] = agents
+
+                # Map skills at root level
+                skills = config_data.get("skills", {})
+                if skills:
+                    resources["skills"] = skills
 
             subtests.append(
                 SubTestConfig(
@@ -458,7 +473,11 @@ class TierManager:
             if agent_names:
                 has_any_resources = True
                 bullet_list = "\n".join(f"- {name}" for name in sorted(set(agent_names)))
-                suffixes.append(f"Use the following sub-agents to solve this task:\n{bullet_list}")
+                if len(agent_names) > 1:
+                    prefix = "Maximize usage of the following sub-agents to solve this task:"
+                else:
+                    prefix = "Use the following sub-agent to solve this task:"
+                suffixes.append(f"{prefix}\n{bullet_list}")
 
         # Skills
         if "skills" in resources:
@@ -472,7 +491,11 @@ class TierManager:
             if skill_names:
                 has_any_resources = True
                 bullet_list = "\n".join(f"- {name}" for name in sorted(set(skill_names)))
-                suffixes.append(f"Use the following skills to complete this task:\n{bullet_list}")
+                if len(skill_names) > 1:
+                    prefix = "Maximize usage of the following skills to complete this task:"
+                else:
+                    prefix = "Use the following skill to complete this task:"
+                suffixes.append(f"{prefix}\n{bullet_list}")
 
         # MCP servers
         if "mcp_servers" in resources:
@@ -482,17 +505,29 @@ class TierManager:
             if mcp_names:
                 has_any_resources = True
                 bullet_list = "\n".join(f"- {name}" for name in sorted(set(mcp_names)))
-                suffixes.append(
-                    f"Use the following MCP servers to complete this task:\n{bullet_list}"
-                )
+                if len(mcp_names) > 1:
+                    prefix = "Maximize usage of the following MCP servers to complete this task:"
+                else:
+                    prefix = "Use the following MCP server to complete this task:"
+                suffixes.append(f"{prefix}\n{bullet_list}")
 
         # Tools
         if "tools" in resources:
-            tool_names = resources["tools"].get("names", [])
-            if tool_names:
-                has_any_resources = True
-                bullet_list = "\n".join(f"- {name}" for name in sorted(tool_names))
-                suffixes.append(f"Use the following tools to complete this task:\n{bullet_list}")
+            tools_spec = resources["tools"]
+            if isinstance(tools_spec, dict):
+                if tools_spec.get("enabled") == "all":
+                    suffixes.append("Maximize usage of all available tools to complete this task.")
+                    has_any_resources = True
+                elif "names" in tools_spec:
+                    tool_names = tools_spec["names"]
+                    if tool_names:
+                        has_any_resources = True
+                        bullet_list = "\n".join(f"- {name}" for name in sorted(tool_names))
+                        if len(tool_names) > 1:
+                            prefix = "Maximize usage of the following tools to complete this task:"
+                        else:
+                            prefix = "Use the following tool to complete this task:"
+                        suffixes.append(f"{prefix}\n{bullet_list}")
 
         # If no resources configured, add generic hint
         if not has_any_resources:
