@@ -33,6 +33,7 @@ class CommandLog:
         stdout_file: Relative path to stdout log file
         stderr_file: Relative path to stderr log file
         duration_seconds: Execution duration in seconds
+
     """
 
     timestamp: str
@@ -106,6 +107,7 @@ class CommandLogger:
         ... )
         >>> logger.save()
         >>> replay_script = logger.save_replay_script()
+
     """
 
     log_dir: Path
@@ -152,6 +154,7 @@ class CommandLogger:
 
         Returns:
             The created CommandLog entry.
+
         """
         cmd_index = len(self.commands)
         stdout_file = f"cmd_{cmd_index:04d}_stdout.log"
@@ -180,6 +183,7 @@ class CommandLogger:
 
         Returns:
             Path to the saved JSON file.
+
         """
         log_path = self.log_dir / "command_log.json"
         with open(log_path, "w") as f:
@@ -202,6 +206,7 @@ class CommandLogger:
 
         Returns:
             Path to the generated replay.sh script.
+
         """
         script_path = self.log_dir / "replay.sh"
 
@@ -255,6 +260,7 @@ class CommandLogger:
 
         Returns:
             CommandLogger with loaded commands.
+
         """
         log_path = log_dir / "command_log.json"
         with open(log_path) as f:

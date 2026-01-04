@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Compose agent configuration from selected levels/categories.
+"""Compose agent configuration from selected levels/categories.
 
 Usage:
     python compose_agents.py --levels 0,1,5 --output config/agents/

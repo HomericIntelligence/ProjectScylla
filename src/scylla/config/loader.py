@@ -16,10 +16,10 @@ import yaml
 from .models import (
     ConfigurationError,
     DefaultsConfig,
+    EvalCase,
     ModelConfig,
     Rubric,
     ScyllaConfig,
-    EvalCase,
     TierConfig,
 )
 
@@ -36,6 +36,7 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
 
     Returns:
         Merged dictionary
+
     """
     result = base.copy()
 
@@ -67,6 +68,7 @@ class ConfigLoader:
     Example:
         loader = ConfigLoader()
         config = loader.load(test_id="001-justfile-to-makefile", model_id="claude-opus-4-5-20251101")
+
     """
 
     def __init__(self, base_path: str | Path | None = None) -> None:
@@ -74,6 +76,7 @@ class ConfigLoader:
 
         Args:
             base_path: Base path for configuration files. Defaults to current working directory.
+
         """
         if base_path is None:
             self.base_path = Path.cwd()
@@ -91,6 +94,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If file cannot be read or parsed
+
         """
         try:
             with open(path) as f:
@@ -114,6 +118,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If file exists but cannot be parsed
+
         """
         if not path.exists():
             return None
@@ -142,6 +147,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If test configuration is invalid or missing
+
         """
         test_path = self.base_path / "tests" / test_id / "test.yaml"
         data = self._load_yaml(test_path)
@@ -166,6 +172,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If rubric is invalid or missing
+
         """
         rubric_path = self.base_path / "tests" / test_id / "expected" / "rubric.yaml"
         data = self._load_yaml(rubric_path)
@@ -190,6 +197,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If tier configuration is invalid or missing
+
         """
         # Normalize tier name
         tier = tier.lower().strip()
@@ -216,6 +224,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If any tier configuration is invalid
+
         """
         tiers_dir = self.base_path / "config" / "tiers"
         result: dict[str, TierConfig] = {}
@@ -244,6 +253,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If model configuration exists but is invalid
+
         """
         model_path = self.base_path / "config" / "models" / f"{model_id}.yaml"
         data = self._load_yaml_optional(model_path)
@@ -268,6 +278,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If any model configuration is invalid
+
         """
         models_dir = self.base_path / "config" / "models"
         result: dict[str, ModelConfig] = {}
@@ -299,6 +310,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If defaults.yaml is missing or invalid
+
         """
         defaults_path = self.base_path / "config" / "defaults.yaml"
         data = self._load_yaml(defaults_path)
@@ -329,6 +341,7 @@ class ConfigLoader:
 
         Raises:
             ConfigurationError: If configuration is invalid
+
         """
         # Load defaults (required)
         defaults_path = self.base_path / "config" / "defaults.yaml"

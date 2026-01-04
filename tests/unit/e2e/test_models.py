@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from scylla.e2e.models import (
     ExperimentConfig,
@@ -17,7 +14,6 @@ from scylla.e2e.models import (
     TierBaseline,
     TierConfig,
     TierID,
-    TierResult,
 )
 
 

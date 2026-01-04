@@ -9,6 +9,7 @@ Python Justification: Required for statistical calculations and data structures.
 References:
 - docs/research.md: Section 3.2 (Ablation Study Blueprint)
 - .claude/shared/metrics-definitions.md: Ablation Score definition
+
 """
 
 from __future__ import annotations
@@ -49,6 +50,7 @@ class AblationResult:
         cost_baseline: Cost with all components.
         cost_ablated: Cost with component removed.
         cost_savings: Cost reduction from removing component.
+
     """
 
     component: ComponentRole
@@ -72,6 +74,7 @@ class AblationStudy:
         results: Ablation results for each component.
         critical_components: Components with highest impact.
         redundant_components: Components with negligible impact.
+
     """
 
     tier_id: str
@@ -103,6 +106,7 @@ def calculate_ablation_score(
 
     Reference:
         .claude/shared/metrics-definitions.md - Ablation Score
+
     """
     return baseline_score - ablated_score
 
@@ -120,6 +124,7 @@ def calculate_relative_impact(
     Returns:
         Relative impact as a decimal (0.1 = 10% of baseline).
         Returns 0.0 if baseline is zero.
+
     """
     if baseline_score == 0:
         return 0.0
@@ -144,6 +149,7 @@ def analyze_component(
 
     Returns:
         AblationResult with contribution metrics.
+
     """
     ablation = calculate_ablation_score(baseline_score, ablated_score)
     impact = calculate_relative_impact(baseline_score, ablation)
@@ -181,6 +187,7 @@ def run_ablation_study(
 
     Returns:
         AblationStudy with complete analysis.
+
     """
     results: list[AblationResult] = []
     critical: list[ComponentRole] = []
@@ -225,6 +232,7 @@ def compare_tier_ablations(
 
     Returns:
         Dict mapping component -> list of ablation scores across tiers.
+
     """
     comparison: dict[ComponentRole, list[float]] = {}
 

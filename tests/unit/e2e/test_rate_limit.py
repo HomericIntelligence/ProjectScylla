@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import json
 import tempfile
-import time
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -181,12 +179,14 @@ class TestDetectRateLimit:
     def test_detect_from_json_is_error_hit_limit(self) -> None:
         """Test detection from JSON is_error field with 'hit your limit'."""
         # This is the exact format from the failing test cases
-        stdout = json.dumps({
-            "type": "result",
-            "subtype": "success",
-            "is_error": True,
-            "result": "You've hit your limit · resets 4pm (America/Los_Angeles)",
-        })
+        stdout = json.dumps(
+            {
+                "type": "result",
+                "subtype": "success",
+                "is_error": True,
+                "result": "You've hit your limit · resets 4pm (America/Los_Angeles)",
+            }
+        )
         stderr = ""
 
         info = detect_rate_limit(stdout, stderr, source="agent")
@@ -199,10 +199,12 @@ class TestDetectRateLimit:
 
     def test_detect_from_json_rate_limit_keyword(self) -> None:
         """Test detection from JSON with 'rate limit' keyword."""
-        stdout = json.dumps({
-            "is_error": True,
-            "result": "API rate limit exceeded. Please try again later.",
-        })
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "result": "API rate limit exceeded. Please try again later.",
+            }
+        )
         stderr = ""
 
         info = detect_rate_limit(stdout, stderr, source="judge")
@@ -213,10 +215,12 @@ class TestDetectRateLimit:
 
     def test_detect_from_json_overloaded(self) -> None:
         """Test detection from JSON with 'overloaded' keyword."""
-        stdout = json.dumps({
-            "is_error": True,
-            "error": "Service is currently overloaded",
-        })
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "error": "Service is currently overloaded",
+            }
+        )
         stderr = ""
 
         info = detect_rate_limit(stdout, stderr)
@@ -226,10 +230,12 @@ class TestDetectRateLimit:
 
     def test_detect_from_json_429(self) -> None:
         """Test detection from JSON with '429' keyword."""
-        stdout = json.dumps({
-            "is_error": True,
-            "result": "HTTP 429 Too Many Requests",
-        })
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "result": "HTTP 429 Too Many Requests",
+            }
+        )
         stderr = ""
 
         info = detect_rate_limit(stdout, stderr)
@@ -239,10 +245,12 @@ class TestDetectRateLimit:
 
     def test_json_is_error_but_not_rate_limit(self) -> None:
         """Test that other errors don't trigger rate limit detection."""
-        stdout = json.dumps({
-            "is_error": True,
-            "result": "File not found error",
-        })
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "result": "File not found error",
+            }
+        )
         stderr = ""
 
         info = detect_rate_limit(stdout, stderr)
@@ -312,10 +320,12 @@ class TestDetectRateLimit:
     def test_priority_json_over_stderr(self) -> None:
         """Test that JSON detection takes priority over stderr."""
         # Both JSON and stderr have rate limit indicators
-        stdout = json.dumps({
-            "is_error": True,
-            "result": "You've hit your limit · resets 4pm (America/Los_Angeles)",
-        })
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "result": "You've hit your limit · resets 4pm (America/Los_Angeles)",
+            }
+        )
         stderr = "Retry-After: 30"
 
         info = detect_rate_limit(stdout, stderr)
@@ -414,11 +424,13 @@ class TestWaitForRateLimit:
 
             def mock_sleep(seconds: float) -> None:
                 # Capture checkpoint state during wait
-                checkpoints_during_wait.append({
-                    "status": checkpoint.status,
-                    "rate_limit_until": checkpoint.rate_limit_until,
-                    "pause_count": checkpoint.pause_count,
-                })
+                checkpoints_during_wait.append(
+                    {
+                        "status": checkpoint.status,
+                        "rate_limit_until": checkpoint.rate_limit_until,
+                        "pause_count": checkpoint.pause_count,
+                    }
+                )
 
             with patch("time.sleep", side_effect=mock_sleep):
                 wait_for_rate_limit(
@@ -442,11 +454,13 @@ class TestIntegration:
     def test_full_rate_limit_flow(self) -> None:
         """Test complete flow from detection to waiting."""
         # Simulate agent output with rate limit
-        stdout = json.dumps({
-            "type": "result",
-            "is_error": True,
-            "result": "You've hit your limit · resets 4pm (America/Los_Angeles)",
-        })
+        stdout = json.dumps(
+            {
+                "type": "result",
+                "is_error": True,
+                "result": "You've hit your limit · resets 4pm (America/Los_Angeles)",
+            }
+        )
         stderr = ""
 
         # Detect rate limit

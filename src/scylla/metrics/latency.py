@@ -8,6 +8,7 @@ Python Justification: Required for time calculations and data structures.
 References:
 - docs/research.md: Section 4.1 (Latency metric)
 - .claude/shared/metrics-definitions.md: Latency components
+
 """
 
 from __future__ import annotations
@@ -47,6 +48,7 @@ class PhaseLatency:
         end_time: When the phase ended.
         duration_ms: Duration in milliseconds.
         metadata: Optional additional context.
+
     """
 
     phase: LatencyPhase
@@ -66,6 +68,7 @@ class LatencyBreakdown:
         phases: Individual phase measurements.
         token_count: Number of tokens generated.
         tokens_per_second: Generation throughput.
+
     """
 
     total_duration_ms: float = 0.0
@@ -90,6 +93,7 @@ class LatencyTracker:
         tracker.end_phase(LatencyPhase.INFERENCE)
 
         breakdown = tracker.get_breakdown(token_count=500)
+
     """
 
     def __init__(self) -> None:
@@ -113,6 +117,7 @@ class LatencyTracker:
         Args:
             phase: The phase to start tracking.
             metadata: Optional context for this phase.
+
         """
         self._phases[phase] = PhaseLatency(
             phase=phase,
@@ -129,6 +134,7 @@ class LatencyTracker:
 
         Returns:
             Duration of the phase in milliseconds.
+
         """
         if phase not in self._phases:
             return 0.0
@@ -150,6 +156,7 @@ class LatencyTracker:
 
         Returns:
             Time to first token in milliseconds from request start.
+
         """
         self._first_token_time = datetime.now()
 
@@ -163,6 +170,7 @@ class LatencyTracker:
 
         Returns:
             TTFT in milliseconds, or 0.0 if not recorded.
+
         """
         if self._request_start and self._first_token_time:
             delta = self._first_token_time - self._request_start
@@ -177,6 +185,7 @@ class LatencyTracker:
 
         Returns:
             Duration in milliseconds, or 0.0 if not tracked.
+
         """
         if phase in self._phases:
             return self._phases[phase].duration_ms
@@ -190,6 +199,7 @@ class LatencyTracker:
 
         Returns:
             LatencyBreakdown with all measurements.
+
         """
         # Calculate total duration
         total_ms = 0.0
@@ -229,6 +239,7 @@ def calculate_latency_stats(
 
     Returns:
         Dictionary with statistical summaries.
+
     """
     if not breakdowns:
         return {
@@ -283,6 +294,7 @@ def analyze_verification_overhead(
 
     Returns:
         Dictionary with verification overhead metrics.
+
     """
     verification_times = []
     inference_times = []

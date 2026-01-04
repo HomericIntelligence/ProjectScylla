@@ -3,11 +3,9 @@
 Python justification: Required for pytest testing framework.
 """
 
+import sys
 from datetime import datetime, timedelta
 from io import StringIO
-import sys
-
-import pytest
 
 from scylla.cli.progress import (
     EvalProgress,

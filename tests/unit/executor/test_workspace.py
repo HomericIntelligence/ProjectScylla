@@ -10,7 +10,6 @@ Tests cover:
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -19,10 +18,10 @@ import pytest
 from scylla.executor.workspace import (
     WorkspaceError,
     WorkspaceManager,
+    checkout_hash,
     cleanup_workspace,
     clone_repo,
     create_workspace,
-    checkout_hash,
 )
 
 

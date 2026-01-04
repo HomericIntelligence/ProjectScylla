@@ -3,12 +3,11 @@
 Python justification: Required for pytest testing framework.
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
-from scylla.orchestrator import OrchestratorConfig, EvalOrchestrator
+from scylla.orchestrator import EvalOrchestrator, OrchestratorConfig
 
 
 class EvalOrchestratorConfig:
@@ -268,7 +267,7 @@ output:
 
     def test_run_single_with_mocks(self, test_env: Path) -> None:
         """Test complete single run flow with mock adapter/judge."""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import patch
 
         config = OrchestratorConfig(
             base_path=test_env,
@@ -320,8 +319,8 @@ output:
 
     def test_run_single_result_file_written(self, test_env: Path) -> None:
         """Verify result.json is correctly written to disk."""
-        from unittest.mock import patch
         import json
+        from unittest.mock import patch
 
         config = OrchestratorConfig(
             base_path=test_env,

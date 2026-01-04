@@ -5,13 +5,12 @@ Python justification: Required for pytest testing framework.
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from scylla.executor.runner import (
     EvalRunner,
-    EvalSummary,
     ExecutionInfo,
     ExecutionState,
     JudgmentResult,

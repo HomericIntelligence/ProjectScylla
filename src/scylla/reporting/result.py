@@ -103,6 +103,7 @@ class RunResult:
 
         Returns:
             Path to written file
+
         """
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / "result.json"
@@ -118,6 +119,7 @@ class ResultWriter:
 
         Args:
             base_dir: Base directory for results (e.g., 'runs/')
+
         """
         self.base_dir = base_dir
 
@@ -131,6 +133,7 @@ class ResultWriter:
 
         Returns:
             Path to run directory
+
         """
         return self.base_dir / test_id / tier_id / f"run_{run_number:02d}"
 
@@ -142,6 +145,7 @@ class ResultWriter:
 
         Returns:
             Path to written result.json
+
         """
         run_dir = self.get_run_dir(result.test_id, result.tier_id, result.run_number)
         return result.write(run_dir)
@@ -156,6 +160,7 @@ class ResultWriter:
 
         Returns:
             RunResult if found, None otherwise
+
         """
         run_dir = self.get_run_dir(test_id, tier_id, run_number)
         result_path = run_dir / "result.json"
@@ -220,6 +225,7 @@ def create_run_result(
 
     Returns:
         Fully constructed RunResult
+
     """
     if timestamp is None:
         timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")

@@ -28,6 +28,7 @@ class TokenStats:
         output_tokens: Generated output tokens
         cache_creation_tokens: Tokens written to cache
         cache_read_tokens: Tokens read from cache (cheaper)
+
     """
 
     input_tokens: int = 0
@@ -128,6 +129,7 @@ class SubTestConfig:
                 "agents": {"levels": [0, 1, 3], "names": ["chief-architect.md"]},
                 "claude_md": {"blocks": ["B02", "B05"]}
             }
+
     """
 
     id: str
@@ -160,6 +162,7 @@ class TierConfig:
         subtests: List of sub-test configurations
         system_prompt_mode: How to handle system prompt ("none", "default", "custom")
         custom_system_prompt: Custom system prompt if mode is "custom"
+
     """
 
     tier_id: TierID
@@ -205,6 +208,7 @@ class RunResult:
         logs_path: Path to execution logs
         command_log_path: Path to command log JSON
         criteria_scores: Per-criterion scores from judge
+
     """
 
     run_number: int
@@ -274,6 +278,7 @@ class SubTestResult:
         consistency: Score consistency (1 - coefficient of variation)
         selected_as_best: Whether this sub-test was selected as best
         selection_reason: Reason for selection (if selected)
+
     """
 
     subtest_id: str
@@ -324,6 +329,7 @@ class TierBaseline:
         resources: Resource specification for symlink recreation.
             When specified, symlinks are recreated from this spec rather
             than copying files from paths.
+
     """
 
     tier_id: TierID
@@ -360,6 +366,7 @@ class ResourceManifest:
         composed_at: ISO timestamp when config was composed
         claude_md_hash: SHA256 of composed CLAUDE.md for verification
         inherited_from: Previous tier's resources (for inheritance chain)
+
     """
 
     tier_id: str
@@ -419,6 +426,7 @@ class TierResult:
         total_cost: Total cost for this tier
         total_duration: Total duration for this tier
         token_stats: Aggregated token statistics across all subtests
+
     """
 
     tier_id: TierID
@@ -468,6 +476,7 @@ class ExperimentConfig:
         timeout_seconds: Timeout per run in seconds
         max_turns: Maximum conversation turns for agent (None = unlimited)
         max_subtests: Maximum sub-tests per tier for testing (None = all)
+
     """
 
     experiment_id: str
@@ -547,6 +556,7 @@ class ExperimentResult:
         token_stats: Aggregated token statistics across all tiers
         started_at: Experiment start timestamp
         completed_at: Experiment completion timestamp
+
     """
 
     config: ExperimentConfig

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Generate all sub-tier configurations for testing.
+"""Generate all sub-tier configurations for testing.
 
 This script generates the 27 unique configurations defined in the test plan,
 using the compose_claude_md.py, compose_agents.py, and compose_skills.py scripts.
@@ -277,7 +276,7 @@ def run_compose_skills(config: str | dict, output: Path, dry_run: bool = False) 
 def create_test_yaml(subtier_path: Path, tier: str, subtier: str, config: dict) -> None:
     """Create test.yaml file for the subtier."""
     test_id = f"{tier}-{subtier}".lower().replace("_", "-")
-    content = f'''# Test configuration for {tier}/{subtier}
+    content = f"""# Test configuration for {tier}/{subtier}
 id: "{test_id}"
 name: "{config["desc"]}"
 description: |
@@ -299,7 +298,7 @@ task:
 validation:
   criteria_file: "expected/criteria.md"
   rubric_file: "expected/rubric.yaml"
-'''
+"""
     (subtier_path / "test.yaml").write_text(content)
 
 
@@ -507,7 +506,7 @@ def main():
         # Parse subtier path (e.g., "T1-prompted/02-minimal-viable")
         parts = args.subtier.split("/")
         if len(parts) != 2:
-            print(f"Error: Invalid subtier format. Use: tier/subtier")
+            print("Error: Invalid subtier format. Use: tier/subtier")
             sys.exit(1)
         tier, subtier = parts
         if tier not in SUBTIERS:
@@ -526,7 +525,7 @@ def main():
         tiers_to_generate = SUBTIERS
 
     # Generate configurations
-    print(f"Generating configurations...")
+    print("Generating configurations...")
     if args.dry_run:
         print("(Dry run - no files will be created)")
 

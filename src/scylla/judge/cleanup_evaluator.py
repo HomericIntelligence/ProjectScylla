@@ -27,6 +27,7 @@ class CleanupEvaluation:
         artifacts_remaining: List of artifacts that weren't cleaned up.
         score: Evaluation score (0.0 to 1.0).
         notes: Human-readable notes about the evaluation.
+
     """
 
     script_exists: bool
@@ -83,6 +84,7 @@ class CleanupEvaluator:
 
         Args:
             workspace: Path to the workspace to evaluate.
+
         """
         self.workspace = workspace
         self.initial_state: set[str] | None = None
@@ -100,6 +102,7 @@ class CleanupEvaluator:
 
         Returns:
             Set of relative file paths in the workspace.
+
         """
         return set(
             str(p.relative_to(self.workspace)) for p in self.workspace.rglob("*") if p.is_file()
@@ -110,6 +113,7 @@ class CleanupEvaluator:
 
         Returns:
             Path to cleanup script if found, None otherwise.
+
         """
         for location in self.CLEANUP_LOCATIONS:
             path = self.workspace / location
@@ -129,6 +133,7 @@ class CleanupEvaluator:
 
         Returns:
             True if Makefile has a clean target.
+
         """
         try:
             content = makefile.read_text()
@@ -144,6 +149,7 @@ class CleanupEvaluator:
 
         Returns:
             Tuple of (success, output).
+
         """
         try:
             if script_path.name == "Makefile":
@@ -178,6 +184,7 @@ class CleanupEvaluator:
 
         Returns:
             Tuple of (cleanup_complete, artifacts_remaining).
+
         """
         if self.initial_state is None:
             # No initial state captured, assume clean
@@ -205,6 +212,7 @@ class CleanupEvaluator:
 
         Returns:
             True if the file is a build artifact.
+
         """
         for pattern in self.BUILD_PATTERNS:
             if pattern.endswith("/"):
@@ -226,6 +234,7 @@ class CleanupEvaluator:
 
         Returns:
             CleanupEvaluation with score and details.
+
         """
         script_path = self.find_cleanup_script()
 

@@ -11,7 +11,6 @@ from __future__ import annotations
 import re
 import subprocess
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scylla.adapters.base import (
@@ -42,6 +41,7 @@ class ClineAdapter(BaseAdapter):
         ... )
         >>> result = adapter.run(config)
         >>> print(f"Exit code: {result.exit_code}")
+
     """
 
     # Cline CLI executable
@@ -63,6 +63,7 @@ class ClineAdapter(BaseAdapter):
 
         Raises:
             AdapterError: If execution fails.
+
         """
         self.validate_config(config)
 
@@ -157,6 +158,7 @@ class ClineAdapter(BaseAdapter):
 
         Returns:
             Command as list of strings.
+
         """
         cmd = [
             self.CLI_EXECUTABLE,
@@ -189,6 +191,7 @@ class ClineAdapter(BaseAdapter):
 
         Returns:
             Environment dictionary.
+
         """
         import os
 
@@ -210,6 +213,7 @@ class ClineAdapter(BaseAdapter):
 
         Returns:
             Tuple of (input_tokens, output_tokens).
+
         """
         combined = stdout + "\n" + stderr
         input_tokens = 0
@@ -256,6 +260,7 @@ class ClineAdapter(BaseAdapter):
 
         Returns:
             Number of API calls detected.
+
         """
         combined = stdout + "\n" + stderr
 

@@ -7,7 +7,6 @@ Python justification: Required for YAML parsing, file I/O, and Pydantic validati
 """
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -17,13 +16,13 @@ class TierDefinition(BaseModel):
 
     name: str = Field(..., description="Human-readable tier name")
     description: str = Field(..., description="Description of the tier's purpose")
-    prompt_file: Optional[str] = Field(
+    prompt_file: str | None = Field(
         None, description="Path to prompt markdown file (relative to tiers dir)"
     )
-    tools_enabled: Optional[bool] = Field(
+    tools_enabled: bool | None = Field(
         None, description="Whether tools are enabled (None = tool default)"
     )
-    delegation_enabled: Optional[bool] = Field(
+    delegation_enabled: bool | None = Field(
         None, description="Whether delegation is enabled (None = tool default)"
     )
 
@@ -34,10 +33,10 @@ class TierConfig(BaseModel):
     tier_id: str = Field(..., description="Tier identifier (e.g., 'T0', 'T1', 'T2', 'T3')")
     name: str = Field(..., description="Human-readable tier name")
     description: str = Field(..., description="Description of the tier's purpose")
-    prompt_file: Optional[Path] = Field(None, description="Absolute path to prompt file")
-    prompt_content: Optional[str] = Field(None, description="Loaded prompt content")
-    tools_enabled: Optional[bool] = Field(None, description="Whether tools are enabled")
-    delegation_enabled: Optional[bool] = Field(None, description="Whether delegation is enabled")
+    prompt_file: Path | None = Field(None, description="Absolute path to prompt file")
+    prompt_content: str | None = Field(None, description="Loaded prompt content")
+    tools_enabled: bool | None = Field(None, description="Whether tools are enabled")
+    delegation_enabled: bool | None = Field(None, description="Whether delegation is enabled")
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -76,6 +75,7 @@ class TierConfigLoader:
         loader = TierConfigLoader(Path("config"))
         t1_config = loader.get_tier("T1")
         print(t1_config.prompt_content)
+
     """
 
     def __init__(self, config_dir: Path) -> None:
@@ -83,6 +83,7 @@ class TierConfigLoader:
 
         Args:
             config_dir: Path to the config directory containing tiers/tiers.yaml
+
         """
         self.config_dir = Path(config_dir)
         self.tiers_dir = self.config_dir / "tiers"
@@ -123,6 +124,7 @@ class TierConfigLoader:
 
         Raises:
             TierConfigError: If tier_id is unknown or prompt file is missing
+
         """
         if tier_id not in self._tier_definitions:
             raise TierConfigError(
@@ -130,8 +132,8 @@ class TierConfigLoader:
             )
 
         tier_def = self._tier_definitions[tier_id]
-        prompt_file: Optional[Path] = None
-        prompt_content: Optional[str] = None
+        prompt_file: Path | None = None
+        prompt_content: str | None = None
 
         if tier_def.prompt_file:
             prompt_file = self.tiers_dir / tier_def.prompt_file
@@ -154,6 +156,7 @@ class TierConfigLoader:
 
         Returns:
             List of TierConfig objects for all defined tiers
+
         """
         return [self.get_tier(tid) for tid in self._tier_definitions.keys()]
 
@@ -162,6 +165,7 @@ class TierConfigLoader:
 
         Returns:
             List of tier identifiers in definition order
+
         """
         return list(self._tier_definitions.keys())
 
@@ -173,5 +177,6 @@ class TierConfigLoader:
 
         Returns:
             True if valid, False otherwise
+
         """
         return tier_id in self._tier_definitions

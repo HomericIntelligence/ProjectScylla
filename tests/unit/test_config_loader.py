@@ -17,11 +17,11 @@ from scylla.config import (
     ConfigLoader,
     ConfigurationError,
     DefaultsConfig,
+    EvalCase,
     ModelConfig,
     Requirement,
     Rubric,
     ScyllaConfig,
-    EvalCase,
     TierConfig,
 )
 
@@ -69,7 +69,7 @@ class TestConfigLoaderEvalCase:
         assert isinstance(test, EvalCase)
         assert test.id == "test-001"
         assert test.name == "Hello World Task"
-        assert test.source.repo == "https://github.com/octocat/Hello-World"
+        assert test.source.repo == "https://github.com/mvillmow/Hello-World"
         assert test.source.hash == "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
         assert test.task.prompt_file == "prompt.md"
         assert test.task.timeout_seconds == 300

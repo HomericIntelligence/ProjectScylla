@@ -83,6 +83,7 @@ class ModelScorecard:
 
         Returns:
             Path to written file
+
         """
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / "scorecard.json"
@@ -100,6 +101,7 @@ def _grade_to_points(grade: str) -> float:
 
     Returns:
         Numeric point value (0.0 to 5.0)
+
     """
     base_points = {"S": 5.0, "A": 4.0, "B": 3.0, "C": 2.0, "D": 1.0, "F": 0.0}
 
@@ -129,6 +131,7 @@ def _points_to_grade(points: float) -> str:
 
     Returns:
         Letter grade string (S, A, B, C, D, or F with optional +/-)
+
     """
     if points >= 4.85:
         return "S"
@@ -166,6 +169,7 @@ class ScorecardGenerator:
 
         Args:
             base_dir: Base directory for scorecards (e.g., 'summaries/by-model/')
+
         """
         self.base_dir = base_dir
 
@@ -177,6 +181,7 @@ class ScorecardGenerator:
 
         Returns:
             Path to scorecard directory
+
         """
         return self.base_dir / model_id
 
@@ -188,6 +193,7 @@ class ScorecardGenerator:
 
         Returns:
             OverallStats with aggregated values
+
         """
         if not tests:
             return OverallStats(
@@ -230,6 +236,7 @@ class ScorecardGenerator:
 
         Returns:
             ModelScorecard object
+
         """
         if timestamp is None:
             timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
@@ -252,6 +259,7 @@ class ScorecardGenerator:
 
         Returns:
             Path to written scorecard.json
+
         """
         scorecard_dir = self.get_scorecard_dir(scorecard.model_id)
         return scorecard.write(scorecard_dir)
@@ -264,6 +272,7 @@ class ScorecardGenerator:
 
         Returns:
             ModelScorecard if found, None otherwise
+
         """
         scorecard_dir = self.get_scorecard_dir(model_id)
         scorecard_path = scorecard_dir / "scorecard.json"
@@ -321,6 +330,7 @@ def create_test_result(
 
     Returns:
         EvalResult object
+
     """
     return EvalResult(
         runs_completed=runs_completed,
