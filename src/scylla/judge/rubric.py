@@ -44,6 +44,7 @@ class Requirement(BaseModel):
         weight: Scoring weight (1.0 = standard).
         evaluation: Type of evaluation (binary or scaled).
         validation_command: Optional command to validate requirement.
+
     """
 
     id: str = Field(..., description="Unique requirement identifier")
@@ -72,6 +73,7 @@ class GradeScale(BaseModel):
         b_threshold: Good - minor improvements possible (0.60).
         c_threshold: Acceptable - functional with issues (0.40).
         d_threshold: Marginal - significant issues (0.20).
+
     """
 
     s_threshold: float = Field(default=1.00, ge=0.0, le=1.0)
@@ -98,6 +100,7 @@ class Rubric(BaseModel):
         requirements: List of requirements to evaluate.
         pass_threshold: Score threshold for passing (default 0.70).
         grade_scale: Grade thresholds.
+
     """
 
     name: str = Field(default="Evaluation Rubric", description="Rubric name")
@@ -121,6 +124,7 @@ class Rubric(BaseModel):
 
         Raises:
             RubricValidationError: If required scores are missing.
+
         """
         if not self.requirements:
             return 0.0
@@ -159,6 +163,7 @@ class Rubric(BaseModel):
 
         Raises:
             RubricValidationError: If score is outside valid range [0.0, 1.0].
+
         """
         if weighted_score > 1.0 or weighted_score < 0.0:
             raise RubricValidationError(f"Score must be between 0.0 and 1.0, got {weighted_score}")
@@ -183,6 +188,7 @@ class Rubric(BaseModel):
 
         Returns:
             True if passing, False otherwise.
+
         """
         return weighted_score >= self.pass_threshold
 
@@ -194,6 +200,7 @@ class Rubric(BaseModel):
 
         Returns:
             The Requirement if found, None otherwise.
+
         """
         for req in self.requirements:
             if req.id == requirement_id:
@@ -205,6 +212,7 @@ class Rubric(BaseModel):
 
         Returns:
             Sum of all requirement weights.
+
         """
         return sum(req.weight for req in self.requirements)
 
@@ -225,6 +233,7 @@ class RubricParser:
         Raises:
             RubricError: If the file cannot be read.
             RubricValidationError: If the rubric is invalid.
+
         """
         if not rubric_path.exists():
             raise RubricError(f"Rubric file not found: {rubric_path}")
@@ -248,6 +257,7 @@ class RubricParser:
 
         Raises:
             RubricValidationError: If the YAML is invalid.
+
         """
         try:
             data = yaml.safe_load(yaml_content)
@@ -274,6 +284,7 @@ class RubricParser:
 
         Raises:
             RubricValidationError: If the data is invalid.
+
         """
         try:
             # Parse requirements

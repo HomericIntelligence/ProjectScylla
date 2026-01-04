@@ -55,6 +55,7 @@ class E2ECheckpoint:
         rate_limit_until: ISO timestamp when rate limit expires
         pause_count: Number of times paused for rate limits
         pid: Process ID of running experiment
+
     """
 
     version: str = "2.0"  # Bumped for schema change
@@ -79,7 +80,9 @@ class E2ECheckpoint:
     # Process info for monitoring
     pid: int | None = None
 
-    def mark_run_completed(self, tier_id: str, subtest_id: str, run_number: int, status: str = "passed") -> None:
+    def mark_run_completed(
+        self, tier_id: str, subtest_id: str, run_number: int, status: str = "passed"
+    ) -> None:
         """Mark a run as completed in the checkpoint with status.
 
         Args:
@@ -87,9 +90,12 @@ class E2ECheckpoint:
             subtest_id: Subtest identifier (e.g., "00-empty")
             run_number: Run number (1-based)
             status: Run status - "passed", "failed", or "agent_complete"
+
         """
         if status not in ("passed", "failed", "agent_complete"):
-            raise ValueError(f"Invalid status: {status}. Must be 'passed', 'failed', or 'agent_complete'.")
+            raise ValueError(
+                f"Invalid status: {status}. Must be 'passed', 'failed', or 'agent_complete'."
+            )
 
         if tier_id not in self.completed_runs:
             self.completed_runs[tier_id] = {}
@@ -106,6 +112,7 @@ class E2ECheckpoint:
             tier_id: Tier identifier (e.g., "T0", "T1")
             subtest_id: Subtest identifier (e.g., "00-empty")
             run_number: Run number (1-based)
+
         """
         if tier_id in self.completed_runs:
             if subtest_id in self.completed_runs[tier_id]:
@@ -123,6 +130,7 @@ class E2ECheckpoint:
 
         Returns:
             Run status ("passed", "failed", "agent_complete") or None if not found
+
         """
         if tier_id in self.completed_runs:
             if subtest_id in self.completed_runs[tier_id]:
@@ -139,6 +147,7 @@ class E2ECheckpoint:
 
         Returns:
             True if run status is "passed" or "failed", False otherwise
+
         """
         status = self.get_run_status(tier_id, subtest_id, run_number)
         return status in ("passed", "failed")
@@ -148,6 +157,7 @@ class E2ECheckpoint:
 
         Returns:
             Total count of completed runs
+
         """
         total = 0
         for tier_runs in self.completed_runs.values():
@@ -160,6 +170,7 @@ class E2ECheckpoint:
 
         Returns:
             Dictionary representation of checkpoint
+
         """
         return {
             "version": self.version,
@@ -188,6 +199,7 @@ class E2ECheckpoint:
 
         Raises:
             CheckpointError: If checkpoint version is incompatible
+
         """
         version = data.get("version", "1.0")
 
@@ -228,6 +240,7 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
 
     Raises:
         CheckpointError: If save fails
+
     """
     try:
         # Update timestamp
@@ -241,7 +254,7 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         # Atomic rename
         temp_path.replace(path)
 
-    except (OSError, IOError) as e:
+    except OSError as e:
         raise CheckpointError(f"Failed to save checkpoint to {path}: {e}")
 
 
@@ -256,6 +269,7 @@ def load_checkpoint(path: Path) -> E2ECheckpoint:
 
     Raises:
         CheckpointError: If load fails or file doesn't exist
+
     """
     if not path.exists():
         raise CheckpointError(f"Checkpoint file not found: {path}")
@@ -264,7 +278,7 @@ def load_checkpoint(path: Path) -> E2ECheckpoint:
         with open(path) as f:
             data = json.load(f)
         return E2ECheckpoint.from_dict(data)
-    except (OSError, IOError, json.JSONDecodeError) as e:
+    except (OSError, json.JSONDecodeError) as e:
         raise CheckpointError(f"Failed to load checkpoint from {path}: {e}")
 
 
@@ -279,6 +293,7 @@ def compute_config_hash(config: ExperimentConfig) -> str:
 
     Returns:
         16-character hex hash (first 16 chars of SHA256)
+
     """
     config_dict = config.to_dict()
 
@@ -302,6 +317,7 @@ def validate_checkpoint_config(checkpoint: E2ECheckpoint, config: ExperimentConf
 
     Returns:
         True if configs match, False otherwise
+
     """
     current_hash = compute_config_hash(config)
     return checkpoint.config_hash == current_hash
@@ -323,6 +339,7 @@ def get_experiment_status(experiment_dir: Path) -> dict[str, Any]:
         - completed_runs: int - number of completed runs
         - rate_limit_until: str | None - when rate limit expires
         - pid: int | None - process ID if running
+
     """
     checkpoint_path = experiment_dir / "checkpoint.json"
     pid_path = experiment_dir / "experiment.pid"

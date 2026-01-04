@@ -21,6 +21,7 @@ class ModelPricing(BaseModel):
         input_cost_per_million: Cost per million input tokens.
         output_cost_per_million: Cost per million output tokens.
         cached_cost_per_million: Cost per million cached tokens (if supported).
+
     """
 
     model_id: str
@@ -99,6 +100,7 @@ def get_model_pricing(model_id: str | None) -> ModelPricing:
 
     Returns:
         ModelPricing for the specified model.
+
     """
     if model_id is None:
         return DEFAULT_PRICING
@@ -121,6 +123,7 @@ def calculate_cost(
 
     Returns:
         Total cost in USD.
+
     """
     pricing = get_model_pricing(model)
     return (
@@ -141,6 +144,7 @@ def get_input_cost_per_1k(model: str | None) -> float:
 
     Returns:
         Cost per 1K input tokens.
+
     """
     pricing = get_model_pricing(model)
     return pricing.input_cost_per_million / 1000
@@ -156,6 +160,7 @@ def get_output_cost_per_1k(model: str | None) -> float:
 
     Returns:
         Cost per 1K output tokens.
+
     """
     pricing = get_model_pricing(model)
     return pricing.output_cost_per_million / 1000

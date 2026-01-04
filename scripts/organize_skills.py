@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""
-Organize skills by category.
+"""Organize skills by category.
 
 This script reads skill directories from ProjectOdyssey and organizes them
 into category directories based on their prefix/function.
 """
+
 import shutil
-import sys
 from pathlib import Path
 
 # Source and destination directories
@@ -16,39 +15,66 @@ DEST_DIR = Path("/tmp/ProjectScylla/tests/claude-code/shared/skills")
 # Category mappings based on skill prefix
 CATEGORY_MAPPINGS = {
     "github": [
-        "gh-review-pr", "gh-fix-pr-feedback", "gh-create-pr-linked",
-        "gh-check-ci-status", "gh-implement-issue", "gh-reply-review-comment",
-        "gh-get-review-comments", "gh-batch-merge-by-labels",
-        "gh-read-issue-context", "gh-post-issue-update"
+        "gh-review-pr",
+        "gh-fix-pr-feedback",
+        "gh-create-pr-linked",
+        "gh-check-ci-status",
+        "gh-implement-issue",
+        "gh-reply-review-comment",
+        "gh-get-review-comments",
+        "gh-batch-merge-by-labels",
+        "gh-read-issue-context",
+        "gh-post-issue-update",
     ],
     "mojo": [
-        "mojo-format", "mojo-test-runner", "mojo-build-package",
-        "mojo-simd-optimize", "mojo-memory-check", "mojo-type-safety",
-        "mojo-lint-syntax", "validate-mojo-patterns", "check-memory-safety",
-        "analyze-simd-usage"
+        "mojo-format",
+        "mojo-test-runner",
+        "mojo-build-package",
+        "mojo-simd-optimize",
+        "mojo-memory-check",
+        "mojo-type-safety",
+        "mojo-lint-syntax",
+        "validate-mojo-patterns",
+        "check-memory-safety",
+        "analyze-simd-usage",
     ],
     "workflow": [
-        "phase-plan-generate", "phase-test-tdd", "phase-implement",
-        "phase-package", "phase-cleanup"
+        "phase-plan-generate",
+        "phase-test-tdd",
+        "phase-implement",
+        "phase-package",
+        "phase-cleanup",
     ],
     "quality": [
-        "quality-run-linters", "quality-fix-formatting", "quality-coverage-report",
-        "quality-security-scan", "quality-complexity-check"
+        "quality-run-linters",
+        "quality-fix-formatting",
+        "quality-coverage-report",
+        "quality-security-scan",
+        "quality-complexity-check",
     ],
-    "worktree": [
-        "worktree-create", "worktree-cleanup", "worktree-switch", "worktree-sync"
-    ],
+    "worktree": ["worktree-create", "worktree-cleanup", "worktree-switch", "worktree-sync"],
     "documentation": [
-        "doc-generate-adr", "doc-issue-readme", "doc-update-blog",
-        "doc-validate-markdown"
+        "doc-generate-adr",
+        "doc-issue-readme",
+        "doc-update-blog",
+        "doc-validate-markdown",
     ],
     "agent": [
-        "agent-run-orchestrator", "agent-validate-config", "agent-test-delegation",
-        "agent-coverage-check", "agent-hierarchy-diagram"
+        "agent-run-orchestrator",
+        "agent-validate-config",
+        "agent-test-delegation",
+        "agent-coverage-check",
+        "agent-hierarchy-diagram",
     ],
     "cicd": [
-        "run-precommit", "validate-workflow", "fix-ci-failures", "install-workflow",
-        "analyze-ci-failure-logs", "build-run-local", "verify-pr-ready", "merge-ready"
+        "run-precommit",
+        "validate-workflow",
+        "fix-ci-failures",
+        "install-workflow",
+        "analyze-ci-failure-logs",
+        "build-run-local",
+        "verify-pr-ready",
+        "merge-ready",
     ],
 }
 
@@ -83,14 +109,12 @@ def get_skill_category(skill_name: str) -> str:
 def organize_skills() -> None:
     """Organize all skills by their category."""
     # Get all skill directories (exclude template files)
-    skill_dirs = [
-        d for d in SOURCE_DIR.iterdir()
-        if d.is_dir() and not d.name.startswith(".")
-    ]
+    skill_dirs = [d for d in SOURCE_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")]
 
     # Also get skill files that aren't directories
     skill_files = [
-        f for f in SOURCE_DIR.iterdir()
+        f
+        for f in SOURCE_DIR.iterdir()
         if f.is_file() and f.suffix == ".md" and "TEMPLATE" not in f.name
     ]
 
@@ -124,6 +148,7 @@ def organize_skills() -> None:
 
 
 def main():
+    """Organize skill configuration files into category-based directories."""
     # Ensure destination directories exist
     for category in list(CATEGORY_MAPPINGS.keys()) + ["other"]:
         (DEST_DIR / category).mkdir(parents=True, exist_ok=True)

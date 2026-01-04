@@ -37,6 +37,7 @@ class RunResult:
         impl_rate: Implementation rate (0.0 to 1.0).
         cost_usd: Cost in USD.
         duration_seconds: Duration of the run.
+
     """
 
     run_id: str
@@ -59,6 +60,7 @@ class TierStatistics:
         duration_seconds: Statistics for duration.
         composite_score: Statistics for composite score.
         grade: Letter grade based on median composite score.
+
     """
 
     tier_id: str
@@ -80,6 +82,7 @@ class CrossTierAnalysis:
         impl_rate_variance: Variance in implementation rate across tiers.
         cost_variance: Variance in cost across tiers.
         tier_uplifts: Percentage uplift vs T0 baseline for each tier.
+
     """
 
     pass_rate_variance: float
@@ -113,6 +116,7 @@ class RunAggregator:
 
         Returns:
             TierStatistics with aggregated metrics.
+
         """
         if not runs:
             empty_stats = AggregatedStats(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0)
@@ -168,6 +172,7 @@ class RunAggregator:
 
         Returns:
             CrossTierAnalysis with variance and uplift metrics.
+
         """
         if not tier_stats:
             return CrossTierAnalysis(
@@ -220,6 +225,7 @@ class RunAggregator:
 
         Returns:
             Tuple of (tier_stats, cross_tier_analysis).
+
         """
         tier_stats = {
             tier_id: self.aggregate_tier(tier_id, runs) for tier_id, runs in runs_by_tier.items()

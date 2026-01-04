@@ -54,6 +54,7 @@ class LogCapture:
         >>> capture.write_stdout("output line\\n")
         >>> capture.write_stderr("error line\\n")
         >>> metrics = capture.stop(exit_code=0)
+
     """
 
     output_dir: Path
@@ -94,6 +95,7 @@ class LogCapture:
 
         Args:
             data: Data to write (may include newlines).
+
         """
         if self._stdout_file:
             self._stdout_file.write(data)
@@ -104,6 +106,7 @@ class LogCapture:
 
         Args:
             data: Data to write (may include newlines).
+
         """
         if self._stderr_file:
             self._stderr_file.write(data)
@@ -114,6 +117,7 @@ class LogCapture:
 
         Args:
             data: Data to write (may include newlines).
+
         """
         if self._agent_log_file:
             self._agent_log_file.write(data)
@@ -140,6 +144,7 @@ class LogCapture:
 
         Returns:
             ExecutionMetrics with captured data.
+
         """
         self._ended_at = datetime.now(UTC)
 
@@ -185,6 +190,7 @@ class LogCapture:
 
         Returns:
             Current ExecutionMetrics.
+
         """
         return self._metrics
 
@@ -202,6 +208,7 @@ class LogCapture:
             tokens_output: Output tokens to add.
             cost_usd: Cost to add.
             api_calls: API calls to add.
+
         """
         if tokens_input is not None:
             self._metrics.tokens_input += tokens_input
@@ -225,6 +232,7 @@ class StreamingCapture:
         ...     capture.write_stdout("output\\n")
         ...     capture.write_stderr("error\\n")
         >>> # metrics.json is written automatically on exit
+
     """
 
     def __init__(self, output_dir: Path) -> None:
@@ -232,12 +240,13 @@ class StreamingCapture:
 
         Args:
             output_dir: Directory for log files.
+
         """
         self._capture = LogCapture(output_dir)
         self._exit_code = 0
         self._error: str | None = None
 
-    def __enter__(self) -> "StreamingCapture":
+    def __enter__(self) -> StreamingCapture:
         """Enter context and start capture."""
         self._capture.start()
         return self
@@ -304,6 +313,7 @@ def load_metrics(path: Path) -> ExecutionMetrics | None:
 
     Returns:
         ExecutionMetrics if file exists and is valid, None otherwise.
+
     """
     if not path.exists():
         return None
@@ -324,6 +334,7 @@ def aggregate_metrics(metrics_list: list[ExecutionMetrics]) -> ExecutionMetrics:
 
     Returns:
         Aggregated ExecutionMetrics with summed values.
+
     """
     if not metrics_list:
         return ExecutionMetrics()

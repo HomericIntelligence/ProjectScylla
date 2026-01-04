@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from scylla.e2e.subtest_executor import _move_to_failed
 
 

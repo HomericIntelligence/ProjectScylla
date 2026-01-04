@@ -5,15 +5,15 @@ Python justification: Required for subprocess orchestration and file I/O.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
 from scylla.cli.progress import ProgressDisplay, RunStatus
 from scylla.config import ConfigLoader, EvalCase, Rubric
 from scylla.executor import WorkspaceManager
-from scylla.reporting import RunResult, ResultWriter, create_run_result
+from scylla.reporting import ResultWriter, RunResult, create_run_result
 
 
 @dataclass
@@ -44,6 +44,7 @@ class EvalOrchestrator:
             test_id="001-justfile-to-makefile",
             model_id="claude-opus-4-5-20251101",
         )
+
     """
 
     def __init__(
@@ -54,6 +55,7 @@ class EvalOrchestrator:
 
         Args:
             config: Orchestrator configuration.
+
         """
         self.config = config or OrchestratorConfig()
         self.loader = ConfigLoader(self.config.base_path)
@@ -92,6 +94,7 @@ class EvalOrchestrator:
 
         Returns:
             RunResult with execution details.
+
         """
         timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S")
 
@@ -227,6 +230,7 @@ class EvalOrchestrator:
 
         Returns:
             Dict with execution results.
+
         """
         if self._adapter_func:
             return self._adapter_func(
@@ -263,6 +267,7 @@ class EvalOrchestrator:
 
         Returns:
             Dict with judgment.
+
         """
         if self._judge_func:
             return self._judge_func(
@@ -304,6 +309,7 @@ class EvalOrchestrator:
             judgment: Judgment dict from judge
             test_case: Test case configuration
             tier_id: Tier identifier
+
         """
         import json
 
@@ -380,6 +386,7 @@ class EvalOrchestrator:
 
         Returns:
             List of RunResult objects.
+
         """
         # Load test to get default tiers
         test_case = self.loader.load_test(test_id)

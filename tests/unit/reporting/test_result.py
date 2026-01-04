@@ -7,8 +7,6 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from scylla.reporting.result import (
     ExecutionInfo,
     GradingInfo,

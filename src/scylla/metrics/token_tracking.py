@@ -12,6 +12,7 @@ Python Justification: Required for data aggregation and cost calculations.
 References:
 - docs/research.md: Section 2.2 (Token Efficiency Chasm)
 - docs/summary.md: Section III.A (Token Efficiency Chasm)
+
 """
 
 from __future__ import annotations
@@ -61,6 +62,7 @@ class TokenUsage:
         input_tokens: Number of input tokens consumed.
         output_tokens: Number of output tokens generated.
         cached_tokens: Number of tokens served from cache.
+
     """
 
     component_type: ComponentType
@@ -89,6 +91,7 @@ class TokenUsage:
 
         Returns:
             Cost in USD.
+
         """
         input_cost = (self.input_tokens / 1_000_000) * input_price_per_million
         output_cost = (self.output_tokens / 1_000_000) * output_price_per_million
@@ -107,6 +110,7 @@ class ComponentCost:
         output_tokens: Number of output tokens.
         cost_usd: Total cost in USD.
         percentage: Percentage of total cost.
+
     """
 
     component_type: ComponentType
@@ -126,6 +130,7 @@ class TokenDistribution:
         total_input_tokens: Total input tokens across all components.
         total_output_tokens: Total output tokens across all components.
         total_cost_usd: Total cost across all components.
+
     """
 
     components: list[ComponentCost] = field(default_factory=list)
@@ -162,6 +167,7 @@ class TierTokenAnalysis:
         distribution: Token distribution for this tier.
         schema_overhead: Token overhead from tool schemas (T3+).
         skill_efficiency: Token efficiency from skills (T2+).
+
     """
 
     tier_id: str
@@ -183,6 +189,7 @@ class TokenTracker:
             input_price=3.0,
             output_price=15.0,
         )
+
     """
 
     def __init__(self) -> None:
@@ -205,6 +212,7 @@ class TokenTracker:
             input_tokens: Number of input tokens.
             output_tokens: Number of output tokens.
             cached_tokens: Number of cached tokens.
+
         """
         usage = TokenUsage(
             component_type=component_type,
@@ -239,6 +247,7 @@ class TokenTracker:
 
         Returns:
             TokenDistribution with all component costs.
+
         """
         # Use centralized pricing if not explicitly provided
         pricing = get_model_pricing(model)
@@ -289,6 +298,7 @@ class TokenTracker:
 
         Returns:
             Total schema tokens.
+
         """
         schema_usages = [u for u in self._usages if u.component_type == ComponentType.TOOL_SCHEMA]
         return sum(u.total_tokens for u in schema_usages)
@@ -301,6 +311,7 @@ class TokenTracker:
 
         Returns:
             Total skill tokens.
+
         """
         skill_types = {ComponentType.SKILL_PROMPT, ComponentType.DOMAIN_EXPERTISE}
         skill_usages = [u for u in self._usages if u.component_type in skill_types]
@@ -326,6 +337,7 @@ def calculate_token_efficiency_ratio(
     Returns:
         Efficiency ratio (schema_tokens / skill_tokens).
         Returns 0.0 if skill_tokens is 0.
+
     """
     if skill_tokens <= 0:
         return 0.0 if schema_tokens <= 0 else float("inf")
@@ -349,6 +361,7 @@ def analyze_tier_tokens(
 
     Returns:
         TierTokenAnalysis with distribution and efficiency metrics.
+
     """
     distribution = tracker.calculate_distribution(input_price, output_price)
     schema_overhead = tracker.get_schema_overhead()
@@ -385,6 +398,7 @@ def compare_t2_t3_efficiency(
 
     Returns:
         Dictionary with comparison metrics.
+
     """
     t2_total = t2_analysis.distribution.total_tokens
     t3_total = t3_analysis.distribution.total_tokens

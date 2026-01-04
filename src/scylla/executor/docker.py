@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Sequence
+    from collections.abc import Sequence
 
 
 class DockerError(Exception):
@@ -63,6 +63,7 @@ class ContainerConfig:
         timeout_seconds: Maximum execution time in seconds.
         working_dir: Working directory inside container.
         network: Docker network mode (default: "none" for isolation).
+
     """
 
     image: str
@@ -86,6 +87,7 @@ class ContainerResult:
         stdout: Captured standard output.
         stderr: Captured standard error.
         timed_out: Whether the container was killed due to timeout.
+
     """
 
     container_id: str
@@ -116,6 +118,7 @@ class DockerExecutor:
         ... )
         >>> result = executor.run(config)
         >>> print(f"Exit code: {result.exit_code}")
+
     """
 
     # Common API key environment variable names
@@ -136,6 +139,7 @@ class DockerExecutor:
 
         Raises:
             DockerNotAvailableError: If Docker is not installed or not running.
+
         """
         try:
             result = subprocess.run(
@@ -161,6 +165,7 @@ class DockerExecutor:
 
         Returns:
             List of command arguments for subprocess.
+
         """
         cmd = ["docker", "run"]
 
@@ -207,6 +212,7 @@ class DockerExecutor:
         Raises:
             ContainerError: If container creation or execution fails.
             ContainerTimeoutError: If container exceeds timeout.
+
         """
         cmd = self._build_run_command(config)
         timed_out = False
@@ -259,6 +265,7 @@ class DockerExecutor:
 
         Raises:
             ContainerError: If container creation fails.
+
         """
         cmd = self._build_run_command(config)
         # Insert -d flag after "docker run"
@@ -292,6 +299,7 @@ class DockerExecutor:
 
         Raises:
             ContainerError: If stop operation fails.
+
         """
         try:
             result = subprocess.run(
@@ -319,6 +327,7 @@ class DockerExecutor:
 
         Args:
             container_id: Container ID or name.
+
         """
         try:
             subprocess.run(
@@ -342,6 +351,7 @@ class DockerExecutor:
 
         Raises:
             ContainerError: If removal fails.
+
         """
         cmd = ["docker", "rm"]
         if force:
@@ -379,6 +389,7 @@ class DockerExecutor:
 
         Raises:
             ContainerError: If log retrieval fails.
+
         """
         cmd = ["docker", "logs"]
         if tail is not None:
@@ -418,6 +429,7 @@ class DockerExecutor:
         Raises:
             ContainerTimeoutError: If wait exceeds timeout.
             ContainerError: If wait operation fails.
+
         """
         cmd = ["docker", "wait", container_id]
 
@@ -451,6 +463,7 @@ class DockerExecutor:
 
         Returns:
             True if container is running, False otherwise.
+
         """
         try:
             result = subprocess.run(
@@ -476,6 +489,7 @@ class DockerExecutor:
 
         Returns:
             Container ID or None if no containers exist.
+
         """
         try:
             result = subprocess.run(
@@ -505,6 +519,7 @@ class DockerExecutor:
 
         Returns:
             Dict of variable names to values (only includes set variables).
+
         """
         if var_names is None:
             var_names = cls.API_KEY_VARS
@@ -519,6 +534,7 @@ class DockerExecutor:
 
         Returns:
             True if image exists locally, False otherwise.
+
         """
         try:
             result = subprocess.run(
@@ -541,6 +557,7 @@ class DockerExecutor:
 
         Raises:
             ContainerError: If pull fails.
+
         """
         try:
             result = subprocess.run(

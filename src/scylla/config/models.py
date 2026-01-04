@@ -7,8 +7,7 @@ Python Justification: Required for YAML parsing (no Mojo stdlib support)
 and Pydantic validation capabilities.
 """
 
-from pathlib import Path
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -99,6 +98,7 @@ class GradeScale(BaseModel):
         C: Acceptable - functional with issues (0.40).
         D: Marginal - significant issues (0.20).
         F: Failing - does not meet requirements (0.00).
+
     """
 
     S: float = Field(default=1.00, ge=0.0, le=1.0)
@@ -141,6 +141,7 @@ class Rubric(BaseModel):
 
         Returns:
             Weighted score between 0.0 and 1.0
+
         """
         total = self.total_weight()
         if total == 0:

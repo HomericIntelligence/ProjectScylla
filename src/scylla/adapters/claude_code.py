@@ -11,14 +11,12 @@ from __future__ import annotations
 import re
 import subprocess
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scylla.adapters.base import (
     AdapterConfig,
     AdapterError,
     AdapterResult,
-    AdapterTimeoutError,
     AdapterTokenStats,
     BaseAdapter,
 )
@@ -43,6 +41,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         ... )
         >>> result = adapter.run(config)
         >>> print(f"Exit code: {result.exit_code}")
+
     """
 
     # Claude Code CLI executable
@@ -70,6 +69,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         Raises:
             AdapterError: If execution fails.
             AdapterTimeoutError: If execution times out.
+
         """
         self.validate_config(config)
 
@@ -177,6 +177,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         Returns:
             Command as list of strings.
+
         """
         cmd = [
             self.CLI_EXECUTABLE,
@@ -219,6 +220,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         Returns:
             Environment dictionary.
+
         """
         import os
 
@@ -239,6 +241,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         Returns:
             AdapterTokenStats with all token types.
+
         """
         import json
 
@@ -307,6 +310,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         Returns:
             Number of API calls detected.
+
         """
         import json
 
@@ -350,6 +354,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         Returns:
             Cost in USD, or 0.0 if not available.
+
         """
         import json
 

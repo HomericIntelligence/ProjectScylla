@@ -6,8 +6,6 @@ Python justification: Required for pytest testing framework.
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from scylla.reporting.markdown import (
     MarkdownReportGenerator,
     ReportData,

@@ -65,6 +65,7 @@ def generate_run_report(
 
     Returns:
         Formatted markdown report string.
+
     """
     timestamp = datetime.now(timezone.utc).isoformat()
     pass_status = "\u2713 PASS" if passed else "\u2717 FAIL"
@@ -264,6 +265,7 @@ def _is_test_config_file(file_path: str) -> bool:
 
     Returns:
         True if the file should be ignored in reports.
+
     """
     path = file_path.strip()
 
@@ -290,6 +292,7 @@ def _get_workspace_files(workspace_path: Path) -> list[str]:
 
     Returns:
         List of relative file paths that were modified/created.
+
     """
     import subprocess
 
@@ -350,6 +353,7 @@ def save_run_report(
     Args:
         output_path: Path to save the report (e.g., logs/report.md)
         ... (same as generate_run_report)
+
     """
     report = generate_run_report(
         tier_id=tier_id,
@@ -399,6 +403,7 @@ def save_run_report_json(
         passed: Whether passed
         cost_usd: Cost in USD
         duration_seconds: Duration
+
     """
     report = {
         "run_number": run_number,
@@ -424,6 +429,7 @@ def save_subtest_report(
         subtest_dir: Directory for this subtest
         subtest_id: Subtest identifier
         result: SubTestResult with aggregated data
+
     """
     # Build children list with relative paths
     children = []
@@ -605,6 +611,7 @@ def save_tier_report(
         tier_dir: Directory for this tier
         tier_id: Tier identifier (e.g., "T0")
         result: TierResult with aggregated data
+
     """
     # Build children list with relative paths
     children = []
@@ -785,6 +792,7 @@ def save_experiment_report(
     Args:
         experiment_dir: Root experiment directory
         result: ExperimentResult with all data
+
     """
     # Build children list with relative paths
     children = []

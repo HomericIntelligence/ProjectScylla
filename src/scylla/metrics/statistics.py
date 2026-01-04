@@ -25,6 +25,7 @@ class Statistics:
         max: Maximum value.
         std_dev: Standard deviation.
         count: Number of values.
+
     """
 
     median: float
@@ -46,6 +47,7 @@ def calculate_median(values: list[float]) -> float:
 
     Returns:
         Median value, or 0.0 if empty.
+
     """
     if not values:
         return 0.0
@@ -70,6 +72,7 @@ def calculate_mean(values: list[float]) -> float:
 
     Returns:
         Mean value, or 0.0 if empty.
+
     """
     if not values:
         return 0.0
@@ -88,6 +91,7 @@ def calculate_mode(values: list[float]) -> float:
 
     Returns:
         Mode value, or 0.0 if empty.
+
     """
     if not values:
         return 0.0
@@ -116,6 +120,7 @@ def calculate_range(values: list[float]) -> tuple[float, float]:
 
     Returns:
         Tuple of (min, max), or (0.0, 0.0) if empty.
+
     """
     if not values:
         return (0.0, 0.0)
@@ -131,6 +136,7 @@ def calculate_variance(values: list[float]) -> float:
 
     Returns:
         Variance, or 0.0 if empty or single value.
+
     """
     if len(values) < 2:
         return 0.0
@@ -148,6 +154,7 @@ def calculate_std_dev(values: list[float]) -> float:
 
     Returns:
         Standard deviation, or 0.0 if empty or single value.
+
     """
     variance = calculate_variance(values)
     return math.sqrt(variance)
@@ -171,6 +178,7 @@ def calculate_consistency(values: list[float]) -> float:
 
     Reference:
         .claude/shared/metrics-definitions.md - Consistency metric
+
     """
     if len(values) < 2:
         return 0.0
@@ -193,6 +201,7 @@ def calculate_all(values: list[float]) -> Statistics:
 
     Returns:
         Statistics object with all calculated values.
+
     """
     if not values:
         return Statistics(

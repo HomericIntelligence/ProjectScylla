@@ -3,10 +3,7 @@
 Python justification: Required for pytest testing framework.
 """
 
-import pytest
 from pathlib import Path
-import tempfile
-import os
 
 from scylla.judge.cleanup_evaluator import (
     CleanupEvaluation,

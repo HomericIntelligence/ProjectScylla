@@ -13,11 +13,11 @@ Python Justification: Required for statistical calculations and data structures.
 References:
 - docs/research.md: Sections 4.1, 4.2, 4.3
 - docs/summary.md: Section IV (Experimental Protocol)
+
 """
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 
 
@@ -31,6 +31,7 @@ class ProgressStep:
         weight: Importance weight (default 1.0).
         completed: Whether step was successfully completed.
         goal_alignment: How aligned this step is with the final goal (0.0-1.0).
+
     """
 
     step_id: str
@@ -47,6 +48,7 @@ class ProgressTracker:
     Attributes:
         expected_steps: List of expected steps in the trajectory.
         achieved_steps: List of steps that were completed.
+
     """
 
     expected_steps: list[ProgressStep] = field(default_factory=list)
@@ -63,6 +65,7 @@ class ChangeResult:
         succeeded: Whether the change was successful.
         caused_failure: Whether the change caused a service failure.
         reverted: Whether the change was reverted.
+
     """
 
     change_id: str
@@ -81,6 +84,7 @@ class ProcessMetrics:
         strategic_drift: Strategic drift score (0 = no drift, 1 = complete drift).
         cfp: Change Fail Percentage.
         pr_revert_rate: Pull request revert rate.
+
     """
 
     r_prog: float = 0.0
@@ -104,6 +108,7 @@ def calculate_r_prog(tracker: ProgressTracker) -> float:
     Returns:
         R_Prog value between 0.0 and 1.0.
         Returns 0.0 if no expected steps.
+
     """
     if not tracker.expected_steps:
         return 0.0
@@ -133,6 +138,7 @@ def calculate_r_prog_simple(
 
     Returns:
         R_Prog value between 0.0 and 1.0.
+
     """
     if expected_steps <= 0:
         return 0.0
@@ -155,6 +161,7 @@ def calculate_strategic_drift(tracker: ProgressTracker) -> float:
 
     Returns:
         Strategic drift score between 0.0 and 1.0.
+
     """
     if not tracker.achieved_steps:
         return 0.0
@@ -184,6 +191,7 @@ def calculate_strategic_drift_simple(
 
     Returns:
         Strategic drift score between 0.0 and 1.0.
+
     """
     if total_actions <= 0:
         return 0.0
@@ -207,6 +215,7 @@ def calculate_cfp(changes: list[ChangeResult]) -> float:
     Returns:
         CFP value between 0.0 and 1.0.
         Returns 0.0 if no changes.
+
     """
     if not changes:
         return 0.0
@@ -227,6 +236,7 @@ def calculate_cfp_simple(
 
     Returns:
         CFP value between 0.0 and 1.0.
+
     """
     if total_changes <= 0:
         return 0.0
@@ -246,6 +256,7 @@ def calculate_pr_revert_rate(changes: list[ChangeResult]) -> float:
     Returns:
         Revert rate between 0.0 and 1.0.
         Returns 0.0 if no changes.
+
     """
     if not changes:
         return 0.0
@@ -266,6 +277,7 @@ def calculate_pr_revert_rate_simple(
 
     Returns:
         Revert rate between 0.0 and 1.0.
+
     """
     if total_changes <= 0:
         return 0.0
@@ -285,6 +297,7 @@ def calculate_process_metrics(
 
     Returns:
         ProcessMetrics with all calculated values.
+
     """
     r_prog = 0.0
     drift = 0.0
@@ -331,6 +344,7 @@ def calculate_process_metrics_simple(
 
     Returns:
         ProcessMetrics with all calculated values.
+
     """
     return ProcessMetrics(
         r_prog=calculate_r_prog_simple(achieved_steps, expected_steps),

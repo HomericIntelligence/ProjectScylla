@@ -38,6 +38,7 @@ class WorkspaceManager:
             experiment_dir: Root directory for the experiment
             repo_url: Git repository URL to clone
             commit: Specific commit to checkout (optional)
+
         """
         self.experiment_dir = experiment_dir
         self.repo_url = repo_url
@@ -145,6 +146,7 @@ class WorkspaceManager:
 
         Raises:
             RuntimeError: If base repo not set up or worktree creation fails
+
         """
         if not self._is_setup:
             raise RuntimeError("Base repo not set up. Call setup_base_repo() first.")
@@ -194,6 +196,7 @@ class WorkspaceManager:
         Args:
             workspace_path: Path to the worktree to remove
             branch_name: Optional branch name to delete after removing worktree
+
         """
         if not workspace_path.exists():
             return

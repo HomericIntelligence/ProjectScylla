@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -34,6 +34,7 @@ class RequirementScore:
         score: The score (0.0 to 1.0).
         confidence: Confidence in the score (0.0 to 1.0).
         notes: Brief explanation of the score.
+
     """
 
     id: str
@@ -61,6 +62,7 @@ class CategoryScore:
         confidence: Confidence in the score (0.0 to 1.0).
         weight: Category weight.
         notes: Brief explanation of the score.
+
     """
 
     name: str
@@ -91,6 +93,7 @@ class JudgmentSummary:
         overall_confidence: Overall confidence in the judgment.
         strengths: List of identified strengths.
         weaknesses: List of identified weaknesses.
+
     """
 
     weighted_score: float
@@ -120,6 +123,7 @@ class ExploratoryTestingResult:
         commands_run: Commands executed during testing.
         observations: Observations made.
         failures: Failures encountered.
+
     """
 
     commands_run: list[str] = field(default_factory=list)
@@ -148,6 +152,7 @@ class Judgment:
         exploratory_testing: Results from exploratory testing.
         qualitative_feedback: Free-form qualitative feedback.
         raw_output: Raw output from the judge.
+
     """
 
     timestamp: str = ""
@@ -194,6 +199,7 @@ class Judgment:
 
         Returns:
             JSON string representation.
+
         """
         return json.dumps(self.to_dict(), indent=indent)
 
@@ -205,6 +211,7 @@ class Judgment:
 
         Raises:
             IOError: If writing fails.
+
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(self.to_json())
@@ -223,6 +230,7 @@ class JudgmentParser:
 
         Returns:
             Parsed Judgment object.
+
         """
         json_data = self._extract_json(output)
 
@@ -247,6 +255,7 @@ class JudgmentParser:
 
         Raises:
             JudgmentParseError: If the file cannot be read.
+
         """
         try:
             output = file_path.read_text()
@@ -263,6 +272,7 @@ class JudgmentParser:
 
         Returns:
             Parsed JSON dict, or None if not found.
+
         """
         # Try to find JSON in code blocks first
         json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", output)
@@ -312,6 +322,7 @@ class JudgmentParser:
 
         Returns:
             Judgment object.
+
         """
         judgment = Judgment(
             judge_model=judge_model,
@@ -379,6 +390,7 @@ def load_judgment(file_path: Path) -> Judgment:
 
     Raises:
         JudgmentParseError: If the file cannot be read or parsed.
+
     """
     try:
         content = file_path.read_text()

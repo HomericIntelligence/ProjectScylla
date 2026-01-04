@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
-Extract CLAUDE.md blocks from ProjectOdyssey.
+"""Extract CLAUDE.md blocks from ProjectOdyssey.
 
 This script reads the CLAUDE.md file and extracts it into 18 separate block files
 for use in tier testing.
 """
+
 import sys
 from pathlib import Path
 
@@ -34,7 +34,7 @@ BLOCKS = [
 def extract_blocks(source_file: Path, output_dir: Path) -> None:
     """Extract all blocks from CLAUDE.md to separate files."""
     # Read the source file
-    with open(source_file, "r") as f:
+    with open(source_file) as f:
         lines = f.readlines()
 
     print(f"Read {len(lines)} lines from {source_file}")
@@ -42,7 +42,7 @@ def extract_blocks(source_file: Path, output_dir: Path) -> None:
     # Extract each block
     for block_id, start, end, filename in BLOCKS:
         # Lines are 1-indexed in the plan, but 0-indexed in Python
-        block_lines = lines[start - 1:end]
+        block_lines = lines[start - 1 : end]
         output_path = output_dir / filename
 
         with open(output_path, "w") as f:
@@ -54,6 +54,7 @@ def extract_blocks(source_file: Path, output_dir: Path) -> None:
 
 
 def main():
+    """Extract CLAUDE.md blocks to separate files."""
     # Default paths
     source_file = Path("/home/mvillmow/ProjectOdysseyManual/CLAUDE.md")
     output_dir = Path("/tmp/ProjectScylla/tests/claude-code/shared/blocks")

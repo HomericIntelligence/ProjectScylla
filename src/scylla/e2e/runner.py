@@ -23,7 +23,7 @@ from scylla.e2e.checkpoint import (
     save_checkpoint,
     validate_checkpoint_config,
 )
-from scylla.e2e.judge_selection import JudgeSelection, save_selection, select_best_subtest
+from scylla.e2e.judge_selection import save_selection, select_best_subtest
 from scylla.e2e.llm_judge import build_judge_prompt_with_paths
 from scylla.e2e.models import (
     ExperimentConfig,
@@ -70,6 +70,7 @@ class E2ERunner:
         ... )
         >>> runner = E2ERunner(config, Path("config/tiers"), Path("results"))
         >>> result = runner.run()
+
     """
 
     def __init__(
@@ -86,6 +87,7 @@ class E2ERunner:
             tiers_dir: Path to tier configurations
             results_base_dir: Base directory for results
             fresh: If True, ignore existing checkpoints and start fresh
+
         """
         self.config = config
         self.tier_manager = TierManager(tiers_dir)
@@ -104,6 +106,7 @@ class E2ERunner:
 
         Returns:
             ExperimentResult with all tier results and analysis.
+
         """
         start_time = datetime.now(UTC)
 
@@ -251,7 +254,9 @@ class E2ERunner:
         # Clean up PID file
         self._cleanup_pid_file()
 
-        logger.info(f"✅ Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}")
+        logger.info(
+            f"✅ Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}"
+        )
 
         return result
 
@@ -264,6 +269,7 @@ class E2ERunner:
 
         Returns:
             Path to the experiment directory.
+
         """
         timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S")
         experiment_dir = self.results_base_dir / f"{timestamp}-{self.config.experiment_id}"
@@ -286,6 +292,7 @@ class E2ERunner:
 
         Args:
             experiment_dir: Root experiment directory
+
         """
         # Symlink task prompt
         prompt_path = experiment_dir / "prompt.md"
@@ -343,6 +350,7 @@ class E2ERunner:
 
         Returns:
             TierResult with all sub-test results.
+
         """
         start_time = datetime.now(UTC)
 
@@ -438,6 +446,7 @@ class E2ERunner:
         Args:
             tier_id: The tier identifier
             result: The tier result
+
         """
         if self.experiment_dir:
             tier_dir = self.experiment_dir / tier_id.value
@@ -466,6 +475,7 @@ class E2ERunner:
 
         Returns:
             Tuple of (best tier, cost-of-pass).
+
         """
         best_tier: TierID | None = None
         best_cop = float("inf")
@@ -495,6 +505,7 @@ class E2ERunner:
 
         Args:
             result: The complete experiment result
+
         """
         if self.experiment_dir:
             # Save to root (not summary/ subdir)
@@ -523,6 +534,7 @@ class E2ERunner:
 
         Args:
             result: The complete experiment result
+
         """
         if not self.experiment_dir:
             return
@@ -540,6 +552,7 @@ class E2ERunner:
 
         Returns:
             Path to checkpoint file if found, None otherwise
+
         """
         if not self.results_base_dir.exists():
             return None
@@ -602,6 +615,7 @@ def run_experiment(
 
     Returns:
         ExperimentResult with all results.
+
     """
     runner = E2ERunner(config, tiers_dir, results_dir, fresh=fresh)
     return runner.run()

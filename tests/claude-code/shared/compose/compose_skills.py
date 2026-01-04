@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Compose skill configuration from selected categories.
+"""Compose skill configuration from selected categories.
 
 Usage:
     python compose_skills.py --categories github,mojo --output config/skills/

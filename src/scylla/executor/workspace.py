@@ -23,6 +23,7 @@ class WorkspaceError(Exception):
         message: Human-readable error description.
         command: The command that failed (if applicable).
         stderr: Standard error output from failed command (if available).
+
     """
 
     def __init__(
@@ -37,6 +38,7 @@ class WorkspaceError(Exception):
             message: Human-readable error description.
             command: The command that failed (if applicable).
             stderr: Standard error output from failed command.
+
         """
         self.message = message
         self.command = command
@@ -75,6 +77,7 @@ def _run_git_command(
 
     Raises:
         WorkspaceError: If command fails after all retries.
+
     """
     command = ["git"] + args
     command_str = " ".join(command)
@@ -168,6 +171,7 @@ def create_workspace(
     Raises:
         WorkspaceError: If directory creation fails.
         ValueError: If run_number is out of range.
+
     """
     if not 1 <= run_number <= 99:
         raise ValueError(f"run_number must be 1-99, got: {run_number}")
@@ -230,6 +234,7 @@ def clone_repo(
     Raises:
         WorkspaceError: If clone fails.
         ValueError: If repo_url is empty or invalid.
+
     """
     if not repo_url or not repo_url.strip():
         raise ValueError("repo_url cannot be empty")
@@ -264,6 +269,7 @@ def checkout_hash(
     Raises:
         WorkspaceError: If checkout fails (hash not found, not a git repo, etc.).
         ValueError: If git_hash is empty.
+
     """
     if not git_hash or not git_hash.strip():
         raise ValueError("git_hash cannot be empty")
@@ -313,6 +319,7 @@ def cleanup_workspace(
 
     Raises:
         WorkspaceError: If cleanup fails.
+
     """
     workspace_path = Path(workspace_path)
 
