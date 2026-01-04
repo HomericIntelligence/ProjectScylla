@@ -46,7 +46,8 @@ class E2ECheckpoint:
         experiment_id: Unique experiment identifier
         experiment_dir: Absolute path to experiment directory
         config_hash: SHA256 hash of config for strict validation
-        completed_runs: tier_id -> subtest_id -> list[run_numbers]
+        completed_runs: tier_id -> subtest_id -> {run_number: status}
+                       status can be: "passed", "failed", "agent_complete"
         started_at: ISO timestamp of experiment start
         last_updated_at: ISO timestamp of last checkpoint update
         status: Current status (running, paused_rate_limit, completed, failed)
@@ -56,13 +57,14 @@ class E2ECheckpoint:
         pid: Process ID of running experiment
     """
 
-    version: str = "1.0"
+    version: str = "2.0"  # Bumped for schema change
     experiment_id: str = ""
     experiment_dir: str = ""
     config_hash: str = ""
 
-    # Progress tracking: tier_id -> subtest_id -> list[completed_run_numbers]
-    completed_runs: dict[str, dict[str, list[int]]] = field(default_factory=dict)
+    # Progress tracking: tier_id -> subtest_id -> {run_number: status}
+    # status: "passed", "failed", "agent_complete"
+    completed_runs: dict[str, dict[str, dict[int, str]]] = field(default_factory=dict)
 
     # Timing
     started_at: str = ""
@@ -77,23 +79,24 @@ class E2ECheckpoint:
     # Process info for monitoring
     pid: int | None = None
 
-    def mark_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> None:
-        """Mark a run as completed in the checkpoint.
+    def mark_run_completed(self, tier_id: str, subtest_id: str, run_number: int, status: str = "passed") -> None:
+        """Mark a run as completed in the checkpoint with status.
 
         Args:
             tier_id: Tier identifier (e.g., "T0", "T1")
             subtest_id: Subtest identifier (e.g., "00-empty")
             run_number: Run number (1-based)
+            status: Run status - "passed", "failed", or "agent_complete"
         """
+        if status not in ("passed", "failed", "agent_complete"):
+            raise ValueError(f"Invalid status: {status}. Must be 'passed', 'failed', or 'agent_complete'.")
+
         if tier_id not in self.completed_runs:
             self.completed_runs[tier_id] = {}
         if subtest_id not in self.completed_runs[tier_id]:
-            self.completed_runs[tier_id][subtest_id] = []
+            self.completed_runs[tier_id][subtest_id] = {}
 
-        if run_number not in self.completed_runs[tier_id][subtest_id]:
-            self.completed_runs[tier_id][subtest_id].append(run_number)
-            self.completed_runs[tier_id][subtest_id].sort()
-
+        self.completed_runs[tier_id][subtest_id][run_number] = status
         self.last_updated_at = datetime.now(UTC).isoformat()
 
     def unmark_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> None:
@@ -107,11 +110,11 @@ class E2ECheckpoint:
         if tier_id in self.completed_runs:
             if subtest_id in self.completed_runs[tier_id]:
                 if run_number in self.completed_runs[tier_id][subtest_id]:
-                    self.completed_runs[tier_id][subtest_id].remove(run_number)
+                    del self.completed_runs[tier_id][subtest_id][run_number]
                     self.last_updated_at = datetime.now(UTC).isoformat()
 
-    def is_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> bool:
-        """Check if a run has been completed.
+    def get_run_status(self, tier_id: str, subtest_id: str, run_number: int) -> str | None:
+        """Get the status of a run.
 
         Args:
             tier_id: Tier identifier
@@ -119,13 +122,26 @@ class E2ECheckpoint:
             run_number: Run number (1-based)
 
         Returns:
-            True if run is in completed_runs, False otherwise
+            Run status ("passed", "failed", "agent_complete") or None if not found
         """
-        return (
-            tier_id in self.completed_runs
-            and subtest_id in self.completed_runs[tier_id]
-            and run_number in self.completed_runs[tier_id][subtest_id]
-        )
+        if tier_id in self.completed_runs:
+            if subtest_id in self.completed_runs[tier_id]:
+                return self.completed_runs[tier_id][subtest_id].get(run_number)
+        return None
+
+    def is_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> bool:
+        """Check if a run has been fully completed (passed or failed).
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+            run_number: Run number (1-based)
+
+        Returns:
+            True if run status is "passed" or "failed", False otherwise
+        """
+        status = self.get_run_status(tier_id, subtest_id, run_number)
+        return status in ("passed", "failed")
 
     def get_completed_run_count(self) -> int:
         """Get total number of completed runs across all tiers/subtests.
@@ -169,9 +185,23 @@ class E2ECheckpoint:
 
         Returns:
             E2ECheckpoint instance
+
+        Raises:
+            CheckpointError: If checkpoint version is incompatible
         """
+        version = data.get("version", "1.0")
+
+        # Version 2.0+ uses dict[int, str] for completed_runs, v1.0 used list[int]
+        # No backward compatibility - old checkpoints must be discarded
+        if version != "2.0":
+            raise CheckpointError(
+                f"Incompatible checkpoint version {version}. "
+                "This version requires checkpoint format 2.0. "
+                "Please delete the old checkpoint and re-run the experiment."
+            )
+
         return cls(
-            version=data.get("version", "1.0"),
+            version=version,
             experiment_id=data.get("experiment_id", ""),
             experiment_dir=data.get("experiment_dir", ""),
             config_hash=data.get("config_hash", ""),
