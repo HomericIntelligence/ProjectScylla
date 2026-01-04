@@ -286,3 +286,55 @@ def wait_for_rate_limit(
     save_checkpoint(checkpoint, checkpoint_path)
 
     log_func("▶️  Rate limit wait complete. Resuming...")
+
+
+def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
+    """Validate a run result to check if it's a valid completion.
+
+    Checks:
+    1. run_result.json exists and has valid judge_reasoning
+    2. stderr.log doesn't contain rate limit patterns
+    3. stdout.log doesn't contain rate limit patterns in JSON is_error
+    4. exit_code is not -1 (unless other indicators show success)
+
+    Args:
+        run_dir: Path to the run directory (e.g., results/T0/01/run_01/)
+
+    Returns:
+        Tuple of (is_valid, failure_reason)
+        - is_valid: True if run completed successfully, False if rate-limited
+        - failure_reason: Description of why validation failed, or None
+    """
+    run_result_file = run_dir / "run_result.json"
+    stderr_file = run_dir / "stderr.log"
+    stdout_file = run_dir / "stdout.log"
+
+    # Check stderr.log for rate limit patterns first
+    if stderr_file.exists():
+        stderr_content = stderr_file.read_text()
+        rate_info = detect_rate_limit("", stderr_content, source="agent")
+        if rate_info:
+            return False, f"Rate limit in stderr: {rate_info.error_message}"
+
+    # Check stdout.log for rate limit patterns in JSON
+    if stdout_file.exists():
+        stdout_content = stdout_file.read_text()
+        rate_info = detect_rate_limit(stdout_content, "", source="agent")
+        if rate_info:
+            return False, f"Rate limit in stdout JSON: {rate_info.error_message}"
+
+    # Load run_result.json if exists and check for invalid run indicators
+    if run_result_file.exists():
+        import json
+
+        with open(run_result_file) as f:
+            data = json.load(f)
+
+        # Check for rate limit indicators in judge_reasoning
+        judge_reasoning = data.get("judge_reasoning", "")
+        if "Unable to evaluate agent output" in judge_reasoning:
+            # Check exit_code - if -1, this is a failed run
+            if data.get("exit_code") == -1:
+                return False, "Run failed with exit_code=-1 and invalid judge output"
+
+    return True, None
