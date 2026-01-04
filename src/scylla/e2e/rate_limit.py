@@ -70,6 +70,7 @@ def parse_retry_after(stderr: str) -> float | None:
 
     Handles:
     - Retry-After: 30 (seconds)
+    - resets 4pm (America/Los_Angeles) format
     - Retry-After header in various formats
 
     Args:
@@ -78,10 +79,53 @@ def parse_retry_after(stderr: str) -> float | None:
     Returns:
         Seconds to wait (with 10% buffer added), or None if not found
     """
-    # Pattern: "Retry-After: <seconds>"
+    # Pattern 1: "Retry-After: <seconds>"
     match = re.search(r"Retry-After:\s*(\d+)", stderr, re.IGNORECASE)
     if match:
         seconds = float(match.group(1))
+        # Add 10% buffer to be conservative
+        return seconds * 1.1
+
+    # Pattern 2: "resets 4pm (America/Los_Angeles)" or similar time format
+    # Match patterns like "resets 4pm", "resets 12am", "resets 11:30pm"
+    match = re.search(r"resets\s+(\d{1,2}):?(\d{2})?\s*(am|pm)", stderr, re.IGNORECASE)
+    if match:
+        from datetime import datetime, timezone
+        import zoneinfo
+
+        hour = int(match.group(1))
+        minute = int(match.group(2)) if match.group(2) else 0
+        am_pm = match.group(3).lower()
+
+        # Convert to 24-hour format
+        if am_pm == "pm" and hour != 12:
+            hour += 12
+        elif am_pm == "am" and hour == 12:
+            hour = 0
+
+        # Try to extract timezone, default to America/Los_Angeles if not found
+        tz_match = re.search(r"\(([^)]+)\)", stderr)
+        tz_str = tz_match.group(1) if tz_match else "America/Los_Angeles"
+
+        try:
+            tz = zoneinfo.ZoneInfo(tz_str)
+        except Exception:
+            # Fallback to UTC if timezone parsing fails
+            tz = timezone.utc
+
+        # Get current time and target reset time
+        now = datetime.now(tz)
+        reset_time = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+        # If reset time is in the past today, it means tomorrow
+        if reset_time <= now:
+            from datetime import timedelta
+
+            reset_time += timedelta(days=1)
+
+        # Calculate seconds until reset
+        seconds = (reset_time - now).total_seconds()
+
         # Add 10% buffer to be conservative
         return seconds * 1.1
 
@@ -119,7 +163,15 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
             # Check for rate limit keywords in error message
             if any(
                 keyword in error_str
-                for keyword in ["rate limit", "rate_limit", "ratelimit", "overloaded", "429"]
+                for keyword in [
+                    "rate limit",
+                    "rate_limit",
+                    "ratelimit",
+                    "overloaded",
+                    "429",
+                    "hit your limit",
+                    "resets",
+                ]
             ):
                 error_msg = str(result)
                 retry_after = parse_retry_after(stderr)
@@ -148,7 +200,12 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
         error_msg = "Rate limit detected in stderr"
         retry_after = parse_retry_after(stderr)
 
-    # Pattern 3: "overloaded" text
+    # Pattern 3: "hit your limit" text
+    elif "hit your limit" in stderr_lower:
+        error_msg = "API limit hit"
+        retry_after = parse_retry_after(stderr)
+
+    # Pattern 4: "overloaded" text
     elif "overloaded" in stderr_lower:
         error_msg = "API overloaded"
         retry_after = parse_retry_after(stderr)
