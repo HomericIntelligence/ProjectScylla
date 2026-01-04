@@ -327,16 +327,28 @@ def get_category_descriptions() -> dict[str, str]:
 
     """
     return {
-        EvaluationCategory.FUNCTIONAL_CORRECTNESS.value: "Does the solution work correctly and pass all tests?",
+        EvaluationCategory.FUNCTIONAL_CORRECTNESS.value: (
+            "Does the solution work correctly and pass all tests?"
+        ),
         EvaluationCategory.COMPLETENESS.value: "Are all requirements fully addressed?",
-        EvaluationCategory.CODE_QUALITY.value: "Is the code well-written, maintainable, and follows best practices?",
-        EvaluationCategory.SIMPLICITY.value: "Is the solution appropriately simple without over-engineering?",
+        EvaluationCategory.CODE_QUALITY.value: (
+            "Is the code well-written, maintainable, and follows best practices?"
+        ),
+        EvaluationCategory.SIMPLICITY.value: (
+            "Is the solution appropriately simple without over-engineering?"
+        ),
         EvaluationCategory.LACK_OF_DUPLICATION.value: "Is the code DRY (Don't Repeat Yourself)?",
         EvaluationCategory.CLARITY.value: "Is the code easy to read and understand?",
-        EvaluationCategory.DOCUMENTATION.value: "Are comments and documentation appropriate and helpful?",
-        EvaluationCategory.ARCHITECTURAL_CLEANLINESS.value: "Is the architecture well-organized and modular?",
+        EvaluationCategory.DOCUMENTATION.value: (
+            "Are comments and documentation appropriate and helpful?"
+        ),
+        EvaluationCategory.ARCHITECTURAL_CLEANLINESS.value: (
+            "Is the architecture well-organized and modular?"
+        ),
         EvaluationCategory.EFFICIENCY.value: "Is the solution performant and resource-efficient?",
-        EvaluationCategory.CLEANUP_SCRIPT_QUALITY.value: "Does the cleanup script work correctly and thoroughly?",
+        EvaluationCategory.CLEANUP_SCRIPT_QUALITY.value: (
+            "Does the cleanup script work correctly and thoroughly?"
+        ),
     }
 
 

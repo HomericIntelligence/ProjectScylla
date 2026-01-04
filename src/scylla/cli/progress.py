@@ -51,6 +51,7 @@ class TierProgress:
     end_time: datetime | None = None
 
     def __post_init__(self) -> None:
+        """Initialize runs list if not provided."""
         if not self.runs:
             self.runs = [RunProgress(i + 1) for i in range(self.total_runs)]
 

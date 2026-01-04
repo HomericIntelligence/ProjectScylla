@@ -314,12 +314,12 @@ def create_statistics(
 
 def create_model_statistics(
     runs_completed: int,
-    pass_rate: Statistics,
-    impl_rate: Statistics,
-    cost_usd: Statistics,
-    duration_seconds: Statistics,
-    composite_score: Statistics,
-    cost_of_pass: Statistics,
+    pass_rate: SummaryStatistics,
+    impl_rate: SummaryStatistics,
+    cost_usd: SummaryStatistics,
+    duration_seconds: SummaryStatistics,
+    composite_score: SummaryStatistics,
+    cost_of_pass: SummaryStatistics,
     grade: str,
 ) -> ModelStatistics:
     """Factory function to create ModelStatistics.

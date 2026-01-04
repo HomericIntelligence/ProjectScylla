@@ -41,7 +41,9 @@ from scylla.e2e.workspace_manager import WorkspaceManager
 if TYPE_CHECKING:
     from multiprocessing.managers import SyncManager
 
+    from scylla.adapters.base import AdapterResult
     from scylla.e2e.checkpoint import E2ECheckpoint
+    from scylla.judge.evaluator import JudgeResult
 
 logger = logging.getLogger(__name__)
 
@@ -415,7 +417,8 @@ class SubTestExecutor:
                         # Don't skip - fall through to re-run
                     else:
                         logger.info(
-                            f"Skipping completed run: {tier_id.value}/{subtest.id}/run_{run_num:02d}"
+                            f"Skipping completed run: "
+                            f"{tier_id.value}/{subtest.id}/run_{run_num:02d}"
                         )
                         # Load from saved RunResult
                         import json
@@ -478,7 +481,8 @@ class SubTestExecutor:
                     checkpoint.mark_run_completed(tier_id.value, subtest.id, run_num, status=status)
                     save_checkpoint(checkpoint, checkpoint_path)
                     logger.debug(
-                        f"Checkpoint saved: {tier_id.value}/{subtest.id}/run_{run_num:02d} (status={status})"
+                        f"Checkpoint saved: "
+                        f"{tier_id.value}/{subtest.id}/run_{run_num:02d} (status={status})"
                     )
 
             except RateLimitError as e:
@@ -518,8 +522,10 @@ class SubTestExecutor:
         """Execute a single run of the sub-test.
 
         Files are organized in agent/ and judge/ subdirectories:
-        - agent/: Agent execution artifacts (stdout, stderr, output.txt, command_log.json, replay.sh)
-        - judge/: Judge evaluation artifacts (prompt.md, response.txt, judgment.json, replay.sh)
+        - agent/: Agent execution artifacts
+          (stdout, stderr, output.txt, command_log.json, replay.sh)
+        - judge/: Judge evaluation artifacts
+          (prompt.md, response.txt, judgment.json, replay.sh)
         - task_prompt.md: Task given to agent
         - run_result.json: Combined result
         - report.md: Per-run report
@@ -885,7 +891,8 @@ class SubTestExecutor:
             workspace: Workspace with agent's output
             task_prompt: The original task prompt
             stdout: Agent's stdout output
-            judge_dir: Directory for judge outputs (prompt.md, response.txt, judgment.json, replay.sh)
+            judge_dir: Directory for judge outputs
+                (prompt.md, response.txt, judgment.json, replay.sh)
 
         Returns:
             Dict with score, passed, grade, and reasoning.
@@ -894,7 +901,8 @@ class SubTestExecutor:
         # Log judge execution phase
         _phase_log(
             "JUDGE",
-            f"Running judge with model[{self.config.judge_model}] with prompt[{judge_dir / 'prompt.md'}]",
+            f"Running judge with model[{self.config.judge_model}] "
+            f"with prompt[{judge_dir / 'prompt.md'}]",
         )
 
         # Use the LLM judge for proper evaluation

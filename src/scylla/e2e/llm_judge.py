@@ -194,7 +194,10 @@ def build_judge_prompt_with_paths(
         [
             "---",
             "",
-            "Read the files at the paths above and evaluate the agent's work using the criteria in your system prompt.",
+            (
+                "Read the files at the paths above and evaluate the agent's work "
+                "using the criteria in your system prompt."
+            ),
         ]
     )
 
