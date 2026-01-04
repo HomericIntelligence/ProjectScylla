@@ -288,7 +288,7 @@ def create_statistics(
     max_val: float,
     std_dev: float,
 ) -> SummaryStatistics:
-    """Factory function to create SummaryStatistics.
+    """Create summary statistics from metric values.
 
     Args:
         median: Median value
@@ -322,7 +322,7 @@ def create_model_statistics(
     cost_of_pass: SummaryStatistics,
     grade: str,
 ) -> ModelStatistics:
-    """Factory function to create ModelStatistics.
+    """Create model statistics from run metrics.
 
     Args:
         runs_completed: Number of completed runs

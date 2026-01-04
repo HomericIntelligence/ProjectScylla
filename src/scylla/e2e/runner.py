@@ -605,7 +605,7 @@ def run_experiment(
     results_dir: Path,
     fresh: bool = False,
 ) -> ExperimentResult:
-    """Convenience function to run an experiment.
+    """Run an experiment with the given configuration.
 
     Args:
         config: Experiment configuration

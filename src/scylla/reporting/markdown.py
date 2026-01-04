@@ -324,7 +324,7 @@ def create_tier_metrics(
     consistency_std_dev: float,
     uplift: float = 0.0,
 ) -> TierMetrics:
-    """Factory function to create TierMetrics.
+    """Create TierMetrics from tier results.
 
     Args:
         tier_id: Tier identifier (T0, T1, etc.)
@@ -359,7 +359,7 @@ def create_report_data(
     judge_model: str = "Claude Opus 4.5",
     timestamp: str | None = None,
 ) -> ReportData:
-    """Factory function to create ReportData.
+    """Create ReportData from experiment results.
 
     Args:
         test_id: Test identifier
