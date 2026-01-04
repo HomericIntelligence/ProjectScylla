@@ -127,11 +127,21 @@ class WorkspaceManager:
         if result.returncode != 0:
             raise RuntimeError(f"Failed to checkout commit {self.commit}: {result.stderr}")
 
-    def create_worktree(self, workspace_path: Path) -> None:
-        """Create a worktree for a single run.
+    def create_worktree(
+        self,
+        workspace_path: Path,
+        tier_id: str | None = None,
+        subtest_id: str | None = None,
+    ) -> tuple[list[str], str]:
+        """Create a worktree for a single run with named branch.
 
         Args:
             workspace_path: Path where the worktree should be created
+            tier_id: Optional tier ID (e.g., "T0", "T1") for branch naming
+            subtest_id: Optional subtest ID (e.g., "01", "02") for branch naming
+
+        Returns:
+            Tuple of (command_list, branch_name) for logging/reproducibility
 
         Raises:
             RuntimeError: If base repo not set up or worktree creation fails
@@ -142,19 +152,22 @@ class WorkspaceManager:
         # Ensure parent directory exists
         workspace_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Generate unique branch name for this worktree
-        self._worktree_count += 1
-        branch_name = f"worktree-{self._worktree_count}"
+        # Generate branch name from tier/subtest or fall back to counter
+        if tier_id and subtest_id:
+            branch_name = f"{tier_id}_{subtest_id}"
+        else:
+            self._worktree_count += 1
+            branch_name = f"worktree-{self._worktree_count}"
 
-        # Create worktree with detached HEAD at the commit
-        # Using --detach to avoid branch management
+        # Create worktree with named branch instead of detached HEAD
         worktree_cmd = [
             "git",
             "-C",
             str(self.base_repo),
             "worktree",
             "add",
-            "--detach",
+            "-b",
+            branch_name,
             str(workspace_path),
         ]
 
@@ -171,13 +184,16 @@ class WorkspaceManager:
         if result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree at {workspace_path}: {result.stderr}")
 
-        logger.debug(f"Created worktree at {workspace_path}")
+        logger.debug(f"Created worktree at {workspace_path} on branch {branch_name}")
 
-    def cleanup_worktree(self, workspace_path: Path) -> None:
-        """Remove a worktree after run completion.
+        return worktree_cmd, branch_name
+
+    def cleanup_worktree(self, workspace_path: Path, branch_name: str | None = None) -> None:
+        """Remove a worktree after run completion and delete its branch.
 
         Args:
             workspace_path: Path to the worktree to remove
+            branch_name: Optional branch name to delete after removing worktree
         """
         if not workspace_path.exists():
             return
@@ -201,6 +217,27 @@ class WorkspaceManager:
 
         if result.returncode != 0:
             logger.warning(f"Failed to remove worktree: {result.stderr}")
+            return
+
+        # Delete the branch if specified
+        if branch_name:
+            delete_branch_cmd = [
+                "git",
+                "-C",
+                str(self.base_repo),
+                "branch",
+                "-D",
+                branch_name,
+            ]
+
+            result = subprocess.run(
+                delete_branch_cmd,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode != 0:
+                logger.warning(f"Failed to delete branch {branch_name}: {result.stderr}")
 
     def cleanup_all(self) -> None:
         """Cleanup all worktrees and prune stale entries."""
