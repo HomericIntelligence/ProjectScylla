@@ -7,7 +7,7 @@ description: |
   with Bazel build system, and provide full documentation.
 
 source:
-  repo: "https://github.com/modular/modular"
+  repo: "https://github.com/mvillmow/modular"
   hash: "14df6466f35f2e1ee7afad3c3d9936e6da4f8cc6"
 
 task:
