@@ -318,7 +318,7 @@ def create_test_result(
     median_cost_usd: float,
     median_duration_seconds: float,
 ) -> EvalResult:
-    """Factory function to create EvalResult.
+    """Create an EvalResult from evaluation metrics.
 
     Args:
         runs_completed: Number of completed runs

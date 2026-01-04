@@ -43,7 +43,7 @@ class ExecutionMetrics(BaseModel):
 
 @dataclass
 class LogCapture:
-    """Captures log output to files with streaming support.
+    r"""Captures log output to files with streaming support.
 
     This class handles capturing stdout, stderr, and agent logs
     during test execution, writing to files in real-time.
@@ -51,8 +51,8 @@ class LogCapture:
     Example:
         >>> capture = LogCapture(Path("/output"))
         >>> capture.start()
-        >>> capture.write_stdout("output line\\n")
-        >>> capture.write_stderr("error line\\n")
+        >>> capture.write_stdout("output line\n")
+        >>> capture.write_stderr("error line\n")
         >>> metrics = capture.stop(exit_code=0)
 
     """
@@ -222,15 +222,15 @@ class LogCapture:
 
 
 class StreamingCapture:
-    """Context manager for streaming log capture.
+    r"""Context manager for streaming log capture.
 
     Provides a convenient context manager interface for capturing
     logs during test execution.
 
     Example:
         >>> with StreamingCapture(Path("/output")) as capture:
-        ...     capture.write_stdout("output\\n")
-        ...     capture.write_stderr("error\\n")
+        ...     capture.write_stdout("output\n")
+        ...     capture.write_stderr("error\n")
         >>> # metrics.json is written automatically on exit
 
     """
