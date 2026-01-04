@@ -192,6 +192,56 @@ def _load_judge_result(judge_dir: Path) -> dict:
     return data
 
 
+def _has_valid_agent_result(run_dir: Path) -> bool:
+    """Check if a valid agent result exists for the run.
+
+    Args:
+        run_dir: Path to the run directory
+
+    Returns:
+        True if valid agent result exists, False otherwise
+
+    """
+    import json
+
+    result_file = get_agent_result_file(run_dir)
+    if not result_file.exists():
+        return False
+
+    try:
+        data = json.loads(result_file.read_text())
+        # Check all required fields exist
+        required_fields = ["exit_code", "token_stats", "cost_usd"]
+        return all(field in data for field in required_fields)
+    except (json.JSONDecodeError, KeyError, OSError):
+        return False
+
+
+def _has_valid_judge_result(run_dir: Path) -> bool:
+    """Check if a valid judge result exists for the run.
+
+    Args:
+        run_dir: Path to the run directory
+
+    Returns:
+        True if valid judge result exists, False otherwise
+
+    """
+    import json
+
+    result_file = get_judge_result_file(run_dir)
+    if not result_file.exists():
+        return False
+
+    try:
+        data = json.loads(result_file.read_text())
+        # Check all required fields exist
+        required_fields = ["score", "passed", "grade"]
+        return all(field in data for field in required_fields)
+    except (json.JSONDecodeError, KeyError, OSError):
+        return False
+
+
 class RateLimitCoordinator:
     """Coordinates rate limit pause across parallel workers.
 
@@ -574,13 +624,13 @@ class SubTestExecutor:
         if self.config.max_turns is not None:
             extra_args.extend(["--max-turns", str(self.config.max_turns)])
 
-        # Check if agent result already exists (resume case)
-        agent_result_file = get_agent_result_file(run_dir)
+        # Check if valid agent result already exists (resume case)
         agent_ran = False
 
-        if agent_result_file.exists():
-            # Reuse existing agent result
-            logger.info(f"Reusing existing agent result: {agent_result_file}")
+        if _has_valid_agent_result(run_dir):
+            # Reuse existing valid agent result
+            agent_result_file = get_agent_result_file(run_dir)
+            logger.info(f"[SKIP] Agent already completed: {agent_result_file}")
             result = _load_agent_result(agent_dir)
             duration = 0.0  # Duration not tracked for reused results
         else:
@@ -650,12 +700,11 @@ class SubTestExecutor:
             agent_ran = True
 
         # Run judge evaluation (ALWAYS re-run if agent ran, requirement from user)
-        # Only reuse judge result if agent was reused AND judge result exists
-        judge_result_file = get_judge_result_file(run_dir)
-
-        if not agent_ran and judge_result_file.exists():
-            # Reuse existing judge result (only if agent was also reused)
-            logger.info(f"Reusing existing judge result: {judge_result_file}")
+        # Only reuse judge result if agent was reused AND valid judge result exists
+        if not agent_ran and _has_valid_judge_result(run_dir):
+            # Reuse existing valid judge result (only if agent was also reused)
+            judge_result_file = get_judge_result_file(run_dir)
+            logger.info(f"[SKIP] Judge already completed: {judge_result_file}")
             judgment = _load_judge_result(judge_dir)
         else:
             # Run judge (either agent ran, or judge result missing)
