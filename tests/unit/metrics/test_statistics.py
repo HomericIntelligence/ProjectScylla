@@ -24,26 +24,32 @@ class TestCalculateMedian:
     """Tests for median calculation."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_median([]) == 0.0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_median([5.0]) == 5.0
 
     def test_odd_count(self) -> None:
+        """Test Odd count."""
         # 9 values: median is 5th value
         values = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
         assert calculate_median(values) == 5.0
 
     def test_even_count(self) -> None:
+        """Test Even count."""
         # 4 values: median is average of 2nd and 3rd
         values = [1.0, 2.0, 3.0, 4.0]
         assert calculate_median(values) == 2.5
 
     def test_unsorted_input(self) -> None:
+        """Test Unsorted input."""
         values = [9.0, 1.0, 5.0, 3.0, 7.0]
         assert calculate_median(values) == 5.0
 
     def test_with_duplicates(self) -> None:
+        """Test With duplicates."""
         values = [1.0, 2.0, 2.0, 3.0, 3.0]
         assert calculate_median(values) == 2.0
 
@@ -52,16 +58,20 @@ class TestCalculateMean:
     """Tests for mean calculation."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_mean([]) == 0.0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_mean([5.0]) == 5.0
 
     def test_multiple_values(self) -> None:
+        """Test Multiple values."""
         values = [1.0, 2.0, 3.0, 4.0, 5.0]
         assert calculate_mean(values) == 3.0
 
     def test_with_decimals(self) -> None:
+        """Test With decimals."""
         values = [0.1, 0.2, 0.3]
         assert calculate_mean(values) == pytest.approx(0.2)
 
@@ -70,20 +80,25 @@ class TestCalculateMode:
     """Tests for mode calculation."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_mode([]) == 0.0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_mode([5.0]) == 5.0
 
     def test_clear_mode(self) -> None:
+        """Test Clear mode."""
         values = [1.0, 2.0, 2.0, 3.0]
         assert calculate_mode(values) == 2.0
 
     def test_tie_returns_smallest(self) -> None:
+        """Test Tie returns smallest."""
         values = [1.0, 1.0, 2.0, 2.0]
         assert calculate_mode(values) == 1.0
 
     def test_all_unique(self) -> None:
+        """Test All unique."""
         values = [1.0, 2.0, 3.0]
         # When all unique, returns smallest
         assert calculate_mode(values) == 1.0
@@ -93,12 +108,15 @@ class TestCalculateRange:
     """Tests for range calculation."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_range([]) == (0.0, 0.0)
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_range([5.0]) == (5.0, 5.0)
 
     def test_multiple_values(self) -> None:
+        """Test Multiple values."""
         values = [3.0, 1.0, 4.0, 1.0, 5.0]
         assert calculate_range(values) == (1.0, 5.0)
 
@@ -107,16 +125,20 @@ class TestCalculateVariance:
     """Tests for variance calculation."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_variance([]) == 0.0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_variance([5.0]) == 0.0
 
     def test_identical_values(self) -> None:
+        """Test Identical values."""
         values = [5.0, 5.0, 5.0]
         assert calculate_variance(values) == 0.0
 
     def test_known_variance(self) -> None:
+        """Test Known variance."""
         # Values: 2, 4, 6, mean = 4
         # Variance = ((2-4)^2 + (4-4)^2 + (6-4)^2) / 3 = (4+0+4)/3 = 8/3
         values = [2.0, 4.0, 6.0]
@@ -127,16 +149,20 @@ class TestCalculateStdDev:
     """Tests for standard deviation calculation."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_std_dev([]) == 0.0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_std_dev([5.0]) == 0.0
 
     def test_identical_values(self) -> None:
+        """Test Identical values."""
         values = [5.0, 5.0, 5.0]
         assert calculate_std_dev(values) == 0.0
 
     def test_known_std_dev(self) -> None:
+        """Test Known std dev."""
         # Variance = 8/3, std_dev = sqrt(8/3)
         values = [2.0, 4.0, 6.0]
         expected = math.sqrt(8.0 / 3)
@@ -152,9 +178,11 @@ class TestCalculateConsistency:
     """
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         assert calculate_consistency([]) == 0.0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         assert calculate_consistency([5.0]) == 0.0
 
     def test_identical_values(self) -> None:
@@ -199,6 +227,7 @@ class TestStatistics:
     """Tests for Statistics dataclass."""
 
     def test_dataclass_fields(self) -> None:
+        """Test Dataclass fields."""
         stats = Statistics(
             median=5.0,
             mean=4.5,
@@ -221,6 +250,7 @@ class TestCalculateAll:
     """Tests for calculate_all function."""
 
     def test_empty_list(self) -> None:
+        """Test Empty list."""
         stats = calculate_all([])
         assert stats.median == 0.0
         assert stats.mean == 0.0
@@ -231,6 +261,7 @@ class TestCalculateAll:
         assert stats.count == 0
 
     def test_single_value(self) -> None:
+        """Test Single value."""
         stats = calculate_all([5.0])
         assert stats.median == 5.0
         assert stats.mean == 5.0

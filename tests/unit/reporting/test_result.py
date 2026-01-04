@@ -74,6 +74,7 @@ class TestExecutionInfo:
     """Tests for ExecutionInfo dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         info = ExecutionInfo(
             status="completed",
             duration_seconds=45.0,
@@ -84,6 +85,7 @@ class TestExecutionInfo:
         assert info.exit_code == 0
 
     def test_failed_status(self) -> None:
+        """Test Failed status."""
         info = ExecutionInfo(
             status="failed",
             duration_seconds=10.0,
@@ -93,6 +95,7 @@ class TestExecutionInfo:
         assert info.exit_code == 1
 
     def test_timeout_status(self) -> None:
+        """Test Timeout status."""
         info = ExecutionInfo(
             status="timeout",
             duration_seconds=300.0,
@@ -105,6 +108,7 @@ class TestMetricsInfo:
     """Tests for MetricsInfo dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         info = MetricsInfo(
             tokens_input=10000,
             tokens_output=5000,
@@ -117,6 +121,7 @@ class TestMetricsInfo:
         assert info.api_calls == 5
 
     def test_zero_values(self) -> None:
+        """Test Zero values."""
         info = MetricsInfo(
             tokens_input=0,
             tokens_output=0,
@@ -131,6 +136,7 @@ class TestJudgmentInfo:
     """Tests for JudgmentInfo dataclass."""
 
     def test_passed(self) -> None:
+        """Test Passed."""
         info = JudgmentInfo(
             passed=True,
             impl_rate=0.95,
@@ -141,6 +147,7 @@ class TestJudgmentInfo:
         assert info.letter_grade == "A"
 
     def test_failed(self) -> None:
+        """Test Failed."""
         info = JudgmentInfo(
             passed=False,
             impl_rate=0.3,
@@ -154,6 +161,7 @@ class TestGradingInfo:
     """Tests for GradingInfo dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         info = GradingInfo(
             pass_rate=1.0,
             cost_of_pass=0.50,
@@ -164,6 +172,7 @@ class TestGradingInfo:
         assert info.composite_score == 0.925
 
     def test_failed_run(self) -> None:
+        """Test Failed run."""
         info = GradingInfo(
             pass_rate=0.0,
             cost_of_pass=float("inf"),
@@ -177,6 +186,7 @@ class TestRunResult:
     """Tests for RunResult dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         result = make_run_result()
         assert result.test_id == "001-test"
         assert result.tier_id == "T1"
@@ -185,6 +195,7 @@ class TestRunResult:
         assert result.timestamp == "2024-01-15T14:30:00Z"
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         result = make_run_result()
         data = result.to_dict()
 
@@ -198,6 +209,7 @@ class TestRunResult:
         assert "grading" in data
 
     def test_to_dict_execution(self) -> None:
+        """Test To dict execution."""
         result = make_run_result()
         data = result.to_dict()
 
@@ -206,6 +218,7 @@ class TestRunResult:
         assert data["execution"]["exit_code"] == 0
 
     def test_to_dict_metrics(self) -> None:
+        """Test To dict metrics."""
         result = make_run_result()
         data = result.to_dict()
 
@@ -215,6 +228,7 @@ class TestRunResult:
         assert data["metrics"]["api_calls"] == 5
 
     def test_to_dict_judgment(self) -> None:
+        """Test To dict judgment."""
         result = make_run_result()
         data = result.to_dict()
 
@@ -223,6 +237,7 @@ class TestRunResult:
         assert data["judgment"]["letter_grade"] == "B"
 
     def test_to_dict_grading(self) -> None:
+        """Test To dict grading."""
         result = make_run_result()
         data = result.to_dict()
 
@@ -231,6 +246,7 @@ class TestRunResult:
         assert data["grading"]["composite_score"] == 0.925
 
     def test_to_json(self) -> None:
+        """Test To json."""
         result = make_run_result()
         json_str = result.to_json()
 
@@ -239,6 +255,7 @@ class TestRunResult:
         assert data["test_id"] == "001-test"
 
     def test_to_json_formatting(self) -> None:
+        """Test To json formatting."""
         result = make_run_result()
 
         # Default indent
@@ -246,10 +263,11 @@ class TestRunResult:
         assert "\n" in json_str  # Has newlines due to indent
 
         # Custom indent
-        compact = result.to_json(indent=None)
+        result.to_json(indent=None)
         # With indent=None, json.dumps still produces valid JSON
 
     def test_write(self) -> None:
+        """Test Write."""
         result = make_run_result()
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -264,6 +282,7 @@ class TestRunResult:
             assert data["test_id"] == "001-test"
 
     def test_write_creates_directories(self) -> None:
+        """Test Write creates directories."""
         result = make_run_result()
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -279,16 +298,19 @@ class TestResultWriter:
     """Tests for ResultWriter class."""
 
     def test_init(self) -> None:
+        """Test Init."""
         writer = ResultWriter(Path("/tmp/runs"))
         assert writer.base_dir == Path("/tmp/runs")
 
     def test_get_run_dir(self) -> None:
+        """Test Get run dir."""
         writer = ResultWriter(Path("/tmp/runs"))
         run_dir = writer.get_run_dir("001-test", "T1", 1)
 
         assert run_dir == Path("/tmp/runs/001-test/T1/run_01")
 
     def test_get_run_dir_formatting(self) -> None:
+        """Test Get run dir formatting."""
         writer = ResultWriter(Path("/tmp/runs"))
 
         # Single digit run number should be zero-padded
@@ -300,6 +322,7 @@ class TestResultWriter:
         assert run_dir.name == "run_10"
 
     def test_write_result(self) -> None:
+        """Test Write result."""
         result = make_run_result()
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -311,6 +334,7 @@ class TestResultWriter:
             assert output_path == expected_path
 
     def test_read_result(self) -> None:
+        """Test Read result."""
         result = make_run_result()
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -327,6 +351,7 @@ class TestResultWriter:
             assert read_result.execution.status == "completed"
 
     def test_read_result_not_found(self) -> None:
+        """Test Read result not found."""
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = ResultWriter(Path(tmpdir))
 
@@ -334,6 +359,7 @@ class TestResultWriter:
             assert result is None
 
     def test_write_multiple_runs(self) -> None:
+        """Test Write multiple runs."""
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = ResultWriter(Path(tmpdir))
 
@@ -357,6 +383,7 @@ class TestResultWriter:
             assert len(run_dirs) == 10
 
     def test_write_multiple_tiers(self) -> None:
+        """Test Write multiple tiers."""
         with tempfile.TemporaryDirectory() as tmpdir:
             writer = ResultWriter(Path(tmpdir))
 
@@ -384,6 +411,7 @@ class TestCreateRunResult:
     """Tests for create_run_result factory function."""
 
     def test_create_with_all_params(self) -> None:
+        """Test Create with all params."""
         result = create_run_result(
             test_id="001-test",
             tier_id="T1",
@@ -412,6 +440,7 @@ class TestCreateRunResult:
         assert result.grading.pass_rate == 1.0
 
     def test_create_auto_timestamp(self) -> None:
+        """Test Create auto timestamp."""
         result = create_run_result(
             test_id="001-test",
             tier_id="T0",
@@ -437,6 +466,7 @@ class TestCreateRunResult:
         assert result.timestamp.endswith("Z")
 
     def test_create_failed_run(self) -> None:
+        """Test Create failed run."""
         result = create_run_result(
             test_id="001-test",
             tier_id="T0",

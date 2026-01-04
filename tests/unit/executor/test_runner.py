@@ -303,7 +303,7 @@ class TestTestRunner:
             config = RunnerConfig(runs_per_tier=2)
             runner = EvalRunner(mock_docker, mock_tier_loader, config)
 
-            summary = runner.run_test(
+            runner.run_test(
                 test_id="test-001",
                 tiers=["T0"],
                 models=["model-a"],

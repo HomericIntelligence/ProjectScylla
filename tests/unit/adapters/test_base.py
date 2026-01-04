@@ -23,7 +23,7 @@ class ConcreteAdapter(BaseAdapter):
     """Concrete implementation for testing."""
 
     def run(self, config, tier_config=None):
-        """Simple implementation that returns success."""
+        """Return success result."""
         return AdapterResult(exit_code=0, stdout="success", stderr="")
 
 

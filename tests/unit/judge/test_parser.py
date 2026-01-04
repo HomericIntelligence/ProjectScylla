@@ -25,6 +25,7 @@ class TestRequirementScore:
     """Tests for RequirementScore dataclass."""
 
     def test_create_score(self) -> None:
+        """Test Create score."""
         score = RequirementScore(id="R001", score=0.8, confidence=0.9, notes="Good")
         assert score.id == "R001"
         assert score.score == 0.8
@@ -32,6 +33,7 @@ class TestRequirementScore:
         assert score.notes == "Good"
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         score = RequirementScore(id="R001", score=0.8, confidence=0.9)
         d = score.to_dict()
         assert d["id"] == "R001"
@@ -42,12 +44,14 @@ class TestCategoryScore:
     """Tests for CategoryScore dataclass."""
 
     def test_create_score(self) -> None:
+        """Test Create score."""
         score = CategoryScore(name="code_quality", score=0.85, weight=1.5)
         assert score.name == "code_quality"
         assert score.score == 0.85
         assert score.weight == 1.5
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         score = CategoryScore(name="test", score=0.7)
         d = score.to_dict()
         assert d["name"] == "test"
@@ -58,6 +62,7 @@ class TestJudgmentSummary:
     """Tests for JudgmentSummary dataclass."""
 
     def test_create_summary(self) -> None:
+        """Test Create summary."""
         summary = JudgmentSummary(
             weighted_score=0.85,
             passed=True,
@@ -71,6 +76,7 @@ class TestJudgmentSummary:
         assert summary.letter_grade == "B"
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         summary = JudgmentSummary(
             weighted_score=0.8,
             passed=True,
@@ -85,12 +91,14 @@ class TestExploratoryTestingResult:
     """Tests for ExploratoryTestingResult dataclass."""
 
     def test_default_values(self) -> None:
+        """Test Default values."""
         result = ExploratoryTestingResult()
         assert result.commands_run == []
         assert result.observations == []
         assert result.failures == []
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         result = ExploratoryTestingResult(commands_run=["pytest"])
         d = result.to_dict()
         assert d["commands_run"] == ["pytest"]
@@ -100,10 +108,12 @@ class TestJudgment:
     """Tests for Judgment dataclass."""
 
     def test_auto_timestamp(self) -> None:
+        """Test Auto timestamp."""
         judgment = Judgment()
         assert judgment.timestamp != ""
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         judgment = Judgment(
             judge_model="test-model",
             requirements={"R001": RequirementScore(id="R001", score=0.9)},
@@ -119,12 +129,14 @@ class TestJudgment:
         assert d["summary"]["passed"] is True
 
     def test_to_json(self) -> None:
+        """Test To json."""
         judgment = Judgment(judge_model="test")
         json_str = judgment.to_json()
         data = json.loads(json_str)
         assert data["judge_model"] == "test"
 
     def test_write_json(self) -> None:
+        """Test Write json."""
         with TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "judgment.json"
             judgment = Judgment(judge_model="test")
@@ -139,6 +151,7 @@ class TestJudgmentParser:
     """Tests for JudgmentParser class."""
 
     def test_parse_full_json(self) -> None:
+        """Test Parse full json."""
         parser = JudgmentParser()
         output = """{
             "requirements": {"R001": {"score": 0.9, "confidence": 0.8, "notes": "Met"}},
@@ -156,6 +169,7 @@ class TestJudgmentParser:
         assert judgment.judge_model == "test-model"
 
     def test_parse_json_in_code_block(self) -> None:
+        """Test Parse json in code block."""
         parser = JudgmentParser()
         output = """Some text
 ```json
@@ -166,22 +180,26 @@ More text"""
         assert judgment.requirements["R001"].score == 0.8
 
     def test_parse_nested_json(self) -> None:
+        """Test Parse nested json."""
         parser = JudgmentParser()
         output = '{"outer": {"inner": {"score": 0.5}}}'
         result = parser._extract_json(output)
         assert result["outer"]["inner"]["score"] == 0.5
 
     def test_parse_no_json(self) -> None:
+        """Test Parse no json."""
         parser = JudgmentParser()
         judgment = parser.parse("No JSON here")
         assert judgment.requirements == {}
 
     def test_parse_malformed_json(self) -> None:
+        """Test Parse malformed json."""
         parser = JudgmentParser()
         judgment = parser.parse("{invalid: json")
         assert judgment.requirements == {}
 
     def test_parse_exploratory_testing(self) -> None:
+        """Test Parse exploratory testing."""
         parser = JudgmentParser()
         output = """{
             "exploratory_testing": {
@@ -195,6 +213,7 @@ More text"""
         assert len(judgment.exploratory_testing.commands_run) == 2
 
     def test_parse_file(self) -> None:
+        """Test Parse file."""
         parser = JudgmentParser()
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "output.txt"
@@ -204,6 +223,7 @@ More text"""
             assert judgment.requirements["R001"].score == 0.7
 
     def test_parse_file_not_found(self) -> None:
+        """Test Parse file not found."""
         parser = JudgmentParser()
         with pytest.raises(JudgmentParseError, match="Failed to read"):
             parser.parse_file(Path("/nonexistent/file.txt"))
@@ -213,6 +233,7 @@ class TestLoadJudgment:
     """Tests for load_judgment function."""
 
     def test_load_valid_judgment(self) -> None:
+        """Test Load valid judgment."""
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "judgment.json"
             data = {
@@ -230,10 +251,12 @@ class TestLoadJudgment:
             assert judgment.requirements["R001"].score == 0.8
 
     def test_load_missing_file(self) -> None:
+        """Test Load missing file."""
         with pytest.raises(JudgmentParseError, match="Failed to load"):
             load_judgment(Path("/nonexistent/judgment.json"))
 
     def test_load_invalid_json(self) -> None:
+        """Test Load invalid json."""
         with TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "judgment.json"
             file_path.write_text("not valid json")
@@ -246,5 +269,6 @@ class TestJudgmentParseError:
     """Tests for JudgmentParseError exception."""
 
     def test_error_message(self) -> None:
+        """Test Error message."""
         error = JudgmentParseError("Parse failed")
         assert str(error) == "Parse failed"

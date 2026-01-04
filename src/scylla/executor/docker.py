@@ -215,7 +215,6 @@ class DockerExecutor:
 
         """
         cmd = self._build_run_command(config)
-        timed_out = False
 
         try:
             result = subprocess.run(
@@ -237,7 +236,6 @@ class DockerExecutor:
             )
 
         except subprocess.TimeoutExpired as e:
-            timed_out = True
             # Container is still running - stop it
             container_id = config.name or self._get_last_container_id()
             if container_id:
