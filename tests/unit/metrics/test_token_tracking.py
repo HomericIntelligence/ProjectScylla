@@ -24,6 +24,7 @@ class TestTokenUsage:
     """Tests for TokenUsage dataclass."""
 
     def test_default_values(self) -> None:
+        """Test Default values."""
         usage = TokenUsage(ComponentType.SYSTEM_PROMPT)
         assert usage.component_type == ComponentType.SYSTEM_PROMPT
         assert usage.component_name == ""
@@ -32,6 +33,7 @@ class TestTokenUsage:
         assert usage.cached_tokens == 0
 
     def test_total_tokens(self) -> None:
+        """Test Total tokens."""
         usage = TokenUsage(
             ComponentType.RESPONSE,
             input_tokens=100,
@@ -40,6 +42,7 @@ class TestTokenUsage:
         assert usage.total_tokens == 600
 
     def test_calculate_cost(self) -> None:
+        """Test Calculate cost."""
         usage = TokenUsage(
             ComponentType.SYSTEM_PROMPT,
             input_tokens=1_000_000,  # 1M input
@@ -53,6 +56,7 @@ class TestTokenUsage:
         assert cost == pytest.approx(10.5)
 
     def test_calculate_cost_with_cache(self) -> None:
+        """Test Calculate cost with cache."""
         usage = TokenUsage(
             ComponentType.CONTEXT,
             input_tokens=1_000_000,
@@ -71,15 +75,18 @@ class TestComponentType:
     """Tests for ComponentType enum."""
 
     def test_t2_specific_types(self) -> None:
+        """Test T2 specific types."""
         assert ComponentType.SKILL_PROMPT.value == "skill_prompt"
         assert ComponentType.DOMAIN_EXPERTISE.value == "domain_expertise"
 
     def test_t3_specific_types(self) -> None:
+        """Test T3 specific types."""
         assert ComponentType.TOOL_SCHEMA.value == "tool_schema"
         assert ComponentType.TOOL_CALL.value == "tool_call"
         assert ComponentType.TOOL_RESPONSE.value == "tool_response"
 
     def test_t4_t5_specific_types(self) -> None:
+        """Test T4 t5 specific types."""
         assert ComponentType.ORCHESTRATOR.value == "orchestrator"
         assert ComponentType.SUB_AGENT.value == "sub_agent"
         assert ComponentType.MONITOR.value == "monitor"
@@ -90,6 +97,7 @@ class TestTokenTracker:
     """Tests for TokenTracker class."""
 
     def test_add_usage(self) -> None:
+        """Test Add usage."""
         tracker = TokenTracker()
         tracker.add_usage(
             ComponentType.SYSTEM_PROMPT,
@@ -110,6 +118,7 @@ class TestTokenTracker:
         assert distribution.total_output_tokens == 1000
 
     def test_add_token_usage_object(self) -> None:
+        """Test Add token usage object."""
         tracker = TokenTracker()
         usage = TokenUsage(
             ComponentType.TOOL_SCHEMA,
@@ -122,6 +131,7 @@ class TestTokenTracker:
         assert distribution.total_input_tokens == 15000
 
     def test_calculate_distribution_with_pricing(self) -> None:
+        """Test Calculate distribution with pricing."""
         tracker = TokenTracker()
         tracker.add_usage(
             ComponentType.SYSTEM_PROMPT,
@@ -140,6 +150,7 @@ class TestTokenTracker:
         assert distribution.total_cost_usd == pytest.approx(4.5)
 
     def test_calculate_distribution_percentages(self) -> None:
+        """Test Calculate distribution percentages."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SYSTEM_PROMPT, input_tokens=1_000_000)
         tracker.add_usage(ComponentType.TOOL_SCHEMA, input_tokens=1_000_000)
@@ -150,6 +161,7 @@ class TestTokenTracker:
         assert distribution.components[1].percentage == pytest.approx(50.0)
 
     def test_get_schema_overhead(self) -> None:
+        """Test Get schema overhead."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SYSTEM_PROMPT, input_tokens=500)
         tracker.add_usage(ComponentType.TOOL_SCHEMA, input_tokens=15000)
@@ -159,6 +171,7 @@ class TestTokenTracker:
         assert overhead == 25000
 
     def test_get_skill_tokens(self) -> None:
+        """Test Get skill tokens."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SYSTEM_PROMPT, input_tokens=500)
         tracker.add_usage(ComponentType.SKILL_PROMPT, input_tokens=2000)
@@ -168,6 +181,7 @@ class TestTokenTracker:
         assert skill_tokens == 3000
 
     def test_clear(self) -> None:
+        """Test Clear."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SYSTEM_PROMPT, input_tokens=500)
         tracker.clear()
@@ -180,6 +194,7 @@ class TestTokenDistribution:
     """Tests for TokenDistribution dataclass."""
 
     def test_total_tokens(self) -> None:
+        """Test Total tokens."""
         distribution = TokenDistribution(
             total_input_tokens=1000,
             total_output_tokens=500,
@@ -187,6 +202,7 @@ class TestTokenDistribution:
         assert distribution.total_tokens == 1500
 
     def test_get_by_type(self) -> None:
+        """Test Get by type."""
         components = [
             ComponentCost(ComponentType.TOOL_SCHEMA, "tool1", 1000, 0, 0.03),
             ComponentCost(ComponentType.TOOL_SCHEMA, "tool2", 2000, 0, 0.06),
@@ -198,6 +214,7 @@ class TestTokenDistribution:
         assert len(schema_components) == 2
 
     def test_get_type_cost(self) -> None:
+        """Test Get type cost."""
         components = [
             ComponentCost(ComponentType.TOOL_SCHEMA, "tool1", 1000, 0, 1.0),
             ComponentCost(ComponentType.TOOL_SCHEMA, "tool2", 2000, 0, 2.0),
@@ -209,6 +226,7 @@ class TestTokenDistribution:
         assert schema_cost == 3.0
 
     def test_get_type_percentage(self) -> None:
+        """Test Get type percentage."""
         components = [
             ComponentCost(ComponentType.TOOL_SCHEMA, "tool1", 1000, 0, 3.0),
             ComponentCost(ComponentType.SYSTEM_PROMPT, "main", 500, 0, 1.0),
@@ -223,6 +241,7 @@ class TestCalculateTokenEfficiencyRatio:
     """Tests for token efficiency ratio calculation."""
 
     def test_schemas_more_expensive(self) -> None:
+        """Test Schemas more expensive."""
         # Schema uses 10x more tokens than skills
         ratio = calculate_token_efficiency_ratio(
             skill_tokens=1000,
@@ -231,6 +250,7 @@ class TestCalculateTokenEfficiencyRatio:
         assert ratio == 10.0
 
     def test_equal_usage(self) -> None:
+        """Test Equal usage."""
         ratio = calculate_token_efficiency_ratio(
             skill_tokens=5000,
             schema_tokens=5000,
@@ -238,6 +258,7 @@ class TestCalculateTokenEfficiencyRatio:
         assert ratio == 1.0
 
     def test_skills_more_efficient(self) -> None:
+        """Test Skills more efficient."""
         ratio = calculate_token_efficiency_ratio(
             skill_tokens=10000,
             schema_tokens=5000,
@@ -245,6 +266,7 @@ class TestCalculateTokenEfficiencyRatio:
         assert ratio == 0.5
 
     def test_zero_skill_tokens(self) -> None:
+        """Test Zero skill tokens."""
         ratio = calculate_token_efficiency_ratio(
             skill_tokens=0,
             schema_tokens=10000,
@@ -252,6 +274,7 @@ class TestCalculateTokenEfficiencyRatio:
         assert math.isinf(ratio)
 
     def test_both_zero(self) -> None:
+        """Test Both zero."""
         ratio = calculate_token_efficiency_ratio(
             skill_tokens=0,
             schema_tokens=0,
@@ -263,6 +286,7 @@ class TestAnalyzeTierTokens:
     """Tests for analyze_tier_tokens function."""
 
     def test_t2_tier_analysis(self) -> None:
+        """Test T2 tier analysis."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SYSTEM_PROMPT, input_tokens=500)
         tracker.add_usage(ComponentType.SKILL_PROMPT, input_tokens=2000)
@@ -274,6 +298,7 @@ class TestAnalyzeTierTokens:
         assert analysis.skill_efficiency == 1.0  # No schema overhead
 
     def test_t3_tier_analysis(self) -> None:
+        """Test T3 tier analysis."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SYSTEM_PROMPT, input_tokens=500)
         tracker.add_usage(ComponentType.TOOL_SCHEMA, input_tokens=50000)
@@ -284,6 +309,7 @@ class TestAnalyzeTierTokens:
         assert analysis.schema_overhead == 50000
 
     def test_mixed_tier_analysis(self) -> None:
+        """Test Mixed tier analysis."""
         tracker = TokenTracker()
         tracker.add_usage(ComponentType.SKILL_PROMPT, input_tokens=2000)
         tracker.add_usage(ComponentType.TOOL_SCHEMA, input_tokens=8000)
@@ -297,6 +323,7 @@ class TestCompareT2T3Efficiency:
     """Tests for T2 vs T3 efficiency comparison."""
 
     def test_t3_uses_more_tokens(self) -> None:
+        """Test T3 uses more tokens."""
         t2_tracker = TokenTracker()
         t2_tracker.add_usage(ComponentType.SKILL_PROMPT, input_tokens=2000)
 
@@ -314,6 +341,7 @@ class TestCompareT2T3Efficiency:
         assert comparison["token_ratio"] == 25.0  # T3 uses 25x more
 
     def test_equal_token_usage(self) -> None:
+        """Test Equal token usage."""
         t2_tracker = TokenTracker()
         t2_tracker.add_usage(ComponentType.SKILL_PROMPT, input_tokens=5000)
 
@@ -328,6 +356,7 @@ class TestCompareT2T3Efficiency:
         assert comparison["token_ratio"] == 1.0
 
     def test_cost_comparison(self) -> None:
+        """Test Cost comparison."""
         t2_tracker = TokenTracker()
         t2_tracker.add_usage(ComponentType.SKILL_PROMPT, input_tokens=1_000_000)
 
@@ -348,6 +377,7 @@ class TestTierTokenAnalysis:
     """Tests for TierTokenAnalysis dataclass."""
 
     def test_dataclass_fields(self) -> None:
+        """Test Dataclass fields."""
         distribution = TokenDistribution(
             total_input_tokens=10000,
             total_output_tokens=5000,

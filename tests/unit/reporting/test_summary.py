@@ -61,6 +61,7 @@ class EvaluationReportStatistics:
     """Tests for SummaryStatistics dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         stats = SummaryStatistics(
             median=0.8,
             mean=0.75,
@@ -74,6 +75,7 @@ class EvaluationReportStatistics:
         assert stats.std_dev == 0.1
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         stats = make_statistics()
         data = stats.to_dict()
 
@@ -83,6 +85,7 @@ class EvaluationReportStatistics:
         assert "max" in data
 
     def test_zero_values(self) -> None:
+        """Test Zero values."""
         stats = SummaryStatistics(
             median=0.0,
             mean=0.0,
@@ -98,11 +101,13 @@ class TestModelStatistics:
     """Tests for ModelStatistics dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         model_stats = make_model_statistics()
         assert model_stats.runs_completed == 10
         assert model_stats.grade == "B"
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         model_stats = make_model_statistics()
         data = model_stats.to_dict()
 
@@ -113,6 +118,7 @@ class TestModelStatistics:
         assert "cost_usd" in data
 
     def test_to_dict_nested_stats(self) -> None:
+        """Test To dict nested stats."""
         model_stats = make_model_statistics()
         data = model_stats.to_dict()
 
@@ -125,12 +131,14 @@ class TestRankings:
     """Tests for Rankings dataclass."""
 
     def test_create_empty(self) -> None:
+        """Test Create empty."""
         rankings = Rankings()
         assert rankings.by_quality == []
         assert rankings.by_cost_efficiency == []
         assert rankings.by_speed == []
 
     def test_create_with_values(self) -> None:
+        """Test Create with values."""
         rankings = Rankings(
             by_quality=["model-a", "model-b"],
             by_cost_efficiency=["model-b", "model-a"],
@@ -140,6 +148,7 @@ class TestRankings:
         assert rankings.by_cost_efficiency[0] == "model-b"
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         rankings = Rankings(
             by_quality=["model-a"],
             by_cost_efficiency=["model-b"],
@@ -155,6 +164,7 @@ class TestEvaluationReport:
     """Tests for EvaluationReport dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
@@ -165,6 +175,7 @@ class TestEvaluationReport:
         assert summary.runs_per_model == 10
 
     def test_create_with_models(self) -> None:
+        """Test Create with models."""
         summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
@@ -175,6 +186,7 @@ class TestEvaluationReport:
         assert "model-a" in summary.models
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
@@ -191,6 +203,7 @@ class TestEvaluationReport:
         assert data["rankings"]["by_quality"] == ["model-a"]
 
     def test_to_json(self) -> None:
+        """Test To json."""
         summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
@@ -204,6 +217,7 @@ class TestEvaluationReport:
         assert data["test_id"] == "001-test"
 
     def test_write(self) -> None:
+        """Test Write."""
         summary = EvaluationReport(
             test_id="001-test",
             test_name="Test Name",
@@ -223,6 +237,7 @@ class EvaluationReportGeneratorCalculateRankings:
     """Tests for SummaryGenerator.calculate_rankings method."""
 
     def test_empty_models(self) -> None:
+        """Test Empty models."""
         generator = SummaryGenerator(Path("/tmp"))
         rankings = generator.calculate_rankings({})
 
@@ -231,6 +246,7 @@ class EvaluationReportGeneratorCalculateRankings:
         assert rankings.by_speed == []
 
     def test_single_model(self) -> None:
+        """Test Single model."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {"model-a": make_model_statistics()}
         rankings = generator.calculate_rankings(models)
@@ -240,6 +256,7 @@ class EvaluationReportGeneratorCalculateRankings:
         assert rankings.by_speed == ["model-a"]
 
     def test_ranking_by_quality(self) -> None:
+        """Test Ranking by quality."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {
             "model-a": make_model_statistics(composite_median=0.7),
@@ -252,6 +269,7 @@ class EvaluationReportGeneratorCalculateRankings:
         assert rankings.by_quality == ["model-b", "model-c", "model-a"]
 
     def test_ranking_by_cost_efficiency(self) -> None:
+        """Test Ranking by cost efficiency."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {
             "model-a": make_model_statistics(cost_median=2.0),
@@ -264,6 +282,7 @@ class EvaluationReportGeneratorCalculateRankings:
         assert rankings.by_cost_efficiency == ["model-b", "model-a", "model-c"]
 
     def test_ranking_by_speed(self) -> None:
+        """Test Ranking by speed."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {
             "model-a": make_model_statistics(duration_median=60.0),
@@ -276,6 +295,7 @@ class EvaluationReportGeneratorCalculateRankings:
         assert rankings.by_speed == ["model-b", "model-a", "model-c"]
 
     def test_infinity_cost_ranked_last(self) -> None:
+        """Test Infinity cost ranked last."""
         generator = SummaryGenerator(Path("/tmp"))
 
         model_with_inf = make_model_statistics()
@@ -298,6 +318,7 @@ class EvaluationReportGeneratorGenerateSummary:
     """Tests for SummaryGenerator.generate_summary method."""
 
     def test_generate_basic(self) -> None:
+        """Test Generate basic."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {"model-a": make_model_statistics()}
 
@@ -313,6 +334,7 @@ class EvaluationReportGeneratorGenerateSummary:
         assert "model-a" in summary.models
 
     def test_generate_auto_timestamp(self) -> None:
+        """Test Generate auto timestamp."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {"model-a": make_model_statistics()}
 
@@ -326,6 +348,7 @@ class EvaluationReportGeneratorGenerateSummary:
         assert summary.updated.endswith("Z")
 
     def test_generate_includes_rankings(self) -> None:
+        """Test Generate includes rankings."""
         generator = SummaryGenerator(Path("/tmp"))
         models = {
             "model-a": make_model_statistics(composite_median=0.7),
@@ -345,6 +368,7 @@ class EvaluationReportGeneratorWriteRead:
     """Tests for SummaryGenerator write/read methods."""
 
     def test_write_summary(self) -> None:
+        """Test Write summary."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = SummaryGenerator(Path(tmpdir))
             models = {"model-a": make_model_statistics()}
@@ -361,6 +385,7 @@ class EvaluationReportGeneratorWriteRead:
             assert output_path == expected_path
 
     def test_read_summary(self) -> None:
+        """Test Read summary."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = SummaryGenerator(Path(tmpdir))
             models = {"model-a": make_model_statistics()}
@@ -381,6 +406,7 @@ class EvaluationReportGeneratorWriteRead:
             assert read_summary.models["model-a"].grade == "B"
 
     def test_read_summary_not_found(self) -> None:
+        """Test Read summary not found."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = SummaryGenerator(Path(tmpdir))
 
@@ -388,6 +414,7 @@ class EvaluationReportGeneratorWriteRead:
             assert result is None
 
     def test_read_preserves_rankings(self) -> None:
+        """Test Read preserves rankings."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = SummaryGenerator(Path(tmpdir))
             models = {
@@ -412,6 +439,7 @@ class TestCreateStatistics:
     """Tests for create_statistics factory function."""
 
     def test_create(self) -> None:
+        """Test Create."""
         stats = create_statistics(
             median=0.8,
             mean=0.75,
@@ -429,6 +457,7 @@ class TestCreateModelStatistics:
     """Tests for create_model_statistics factory function."""
 
     def test_create(self) -> None:
+        """Test Create."""
         stats = create_model_statistics(
             runs_completed=10,
             pass_rate=make_statistics(),

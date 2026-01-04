@@ -211,6 +211,7 @@ def list_skills_and_presets() -> None:
 
 
 def main():
+    """Compose skill configuration from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Compose skill configuration from selected categories",
         formatter_class=argparse.RawDescriptionHelpFormatter,

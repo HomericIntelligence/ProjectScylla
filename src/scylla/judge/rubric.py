@@ -314,7 +314,6 @@ class RubricParser:
 
             # Parse grade scale from grading section
             grading_data = data.get("grading", {})
-            grade_data = grading_data.get("grade_scale", {})
             grade_scale = GradeScale()
 
             return Rubric(

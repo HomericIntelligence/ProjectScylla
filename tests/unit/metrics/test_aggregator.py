@@ -21,7 +21,7 @@ def make_run(
     cost_usd: float = 1.0,
     duration_seconds: float = 60.0,
 ) -> RunResult:
-    """Helper to create RunResult."""
+    """Create RunResult for testing."""
     return RunResult(
         run_id=run_id,
         pass_rate=pass_rate,
@@ -35,6 +35,7 @@ class TestRunResult:
     """Tests for RunResult dataclass."""
 
     def test_create_result(self) -> None:
+        """Test Create result."""
         result = RunResult(
             run_id="run-001",
             pass_rate=1.0,
@@ -51,6 +52,7 @@ class TestAggregatedStats:
     """Tests for AggregatedStats dataclass."""
 
     def test_create_stats(self) -> None:
+        """Test Create stats."""
         stats = AggregatedStats(
             median=0.8,
             mean=0.75,
@@ -68,6 +70,7 @@ class TestTierStatistics:
     """Tests for TierStatistics dataclass."""
 
     def test_create_tier_stats(self) -> None:
+        """Test Create tier stats."""
         stats = AggregatedStats(0.8, 0.8, 0.8, 0.7, 0.9, 0.05, 10)
         tier_stats = TierStatistics(
             tier_id="T1",
@@ -87,6 +90,7 @@ class TestCrossTierAnalysis:
     """Tests for CrossTierAnalysis dataclass."""
 
     def test_create_analysis(self) -> None:
+        """Test Create analysis."""
         analysis = CrossTierAnalysis(
             pass_rate_variance=0.05,
             impl_rate_variance=0.03,
@@ -101,6 +105,7 @@ class TestRunAggregatorAggregateTier:
     """Tests for aggregate_tier method."""
 
     def test_empty_runs(self) -> None:
+        """Test Empty runs."""
         aggregator = RunAggregator()
         stats = aggregator.aggregate_tier("T0", [])
         assert stats.tier_id == "T0"
@@ -108,6 +113,7 @@ class TestRunAggregatorAggregateTier:
         assert stats.grade == "F"
 
     def test_single_run(self) -> None:
+        """Test Single run."""
         aggregator = RunAggregator()
         runs = [make_run("run-1", pass_rate=1.0, impl_rate=0.9)]
         stats = aggregator.aggregate_tier("T0", runs)
@@ -156,12 +162,14 @@ class TestRunAggregatorAnalyzeCrossTier:
     """Tests for analyze_cross_tier method."""
 
     def test_empty_tiers(self) -> None:
+        """Test Empty tiers."""
         aggregator = RunAggregator()
         analysis = aggregator.analyze_cross_tier({})
         assert analysis.pass_rate_variance == 0.0
         assert analysis.tier_uplifts == {}
 
     def test_single_tier(self) -> None:
+        """Test Single tier."""
         aggregator = RunAggregator()
         runs = [make_run(f"run-{i}") for i in range(5)]
         stats = aggregator.aggregate_tier("T0", runs)
@@ -170,6 +178,7 @@ class TestRunAggregatorAnalyzeCrossTier:
         assert analysis.tier_uplifts == {}  # No uplift for T0 baseline
 
     def test_multiple_tiers(self) -> None:
+        """Test Multiple tiers."""
         aggregator = RunAggregator()
 
         # T0: baseline
@@ -209,6 +218,7 @@ class TestRunAggregatorAggregateAllTiers:
     """Tests for aggregate_all_tiers method."""
 
     def test_aggregate_all(self) -> None:
+        """Test Aggregate all."""
         aggregator = RunAggregator()
 
         runs_by_tier = {
@@ -228,6 +238,7 @@ class TestRunAggregatorAggregateAllTiers:
         assert "T2" in cross_tier.tier_uplifts
 
     def test_aggregate_empty(self) -> None:
+        """Test Aggregate empty."""
         aggregator = RunAggregator()
         tier_stats, cross_tier = aggregator.aggregate_all_tiers({})
         assert tier_stats == {}

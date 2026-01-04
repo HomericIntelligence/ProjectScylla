@@ -18,6 +18,7 @@ class TestJudgeContainerConfig:
     """Tests for JudgeContainerConfig dataclass."""
 
     def test_minimal_config(self, tmp_path: Path) -> None:
+        """Test Minimal config."""
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         output = tmp_path / "output"
@@ -34,6 +35,7 @@ class TestJudgeContainerConfig:
         assert config.image == "scylla-runner:latest"
 
     def test_full_config(self, tmp_path: Path) -> None:
+        """Test Full config."""
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         output = tmp_path / "output"
@@ -58,6 +60,7 @@ class TestJudgeResult:
     """Tests for JudgeResult dataclass."""
 
     def test_create_result(self) -> None:
+        """Test Create result."""
         result = JudgeResult(
             container_id="abc123",
             exit_code=0,
@@ -74,6 +77,7 @@ class TestJudgeResult:
         assert result.cost_usd == 0.05
 
     def test_default_values(self) -> None:
+        """Test Default values."""
         result = JudgeResult(
             container_id="abc123",
             exit_code=0,
@@ -91,13 +95,15 @@ class TestJudgeContainerManagerInit:
     """Tests for JudgeContainerManager initialization."""
 
     def test_init_with_executor(self) -> None:
+        """Test Init with executor."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
         assert manager.executor == mock_executor
 
     @patch("scylla.executor.judge_container.DockerExecutor")
     def test_init_creates_executor(self, mock_executor_class: MagicMock) -> None:
-        manager = JudgeContainerManager()
+        """Test Init creates executor."""
+        JudgeContainerManager()
         mock_executor_class.assert_called_once()
 
 
@@ -105,6 +111,7 @@ class TestJudgeContainerManagerGenerateName:
     """Tests for container name generation."""
 
     def test_unique_names(self) -> None:
+        """Test Unique names."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -120,6 +127,7 @@ class TestJudgeContainerManagerBuildEnvironment:
     """Tests for environment variable building."""
 
     def test_basic_environment(self, tmp_path: Path) -> None:
+        """Test Basic environment."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -137,6 +145,7 @@ class TestJudgeContainerManagerBuildEnvironment:
 
     @patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"})
     def test_includes_api_key(self, tmp_path: Path) -> None:
+        """Test Includes api key."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -150,6 +159,7 @@ class TestJudgeContainerManagerBuildEnvironment:
         assert env["ANTHROPIC_API_KEY"] == "test-key"
 
     def test_includes_rubric_path(self, tmp_path: Path) -> None:
+        """Test Includes rubric path."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -172,6 +182,7 @@ class TestJudgeContainerManagerBuildVolumes:
     """Tests for volume mount building."""
 
     def test_basic_volumes(self, tmp_path: Path) -> None:
+        """Test Basic volumes."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -201,6 +212,7 @@ class TestJudgeContainerManagerCreateContainerConfig:
     """Tests for creating container configuration."""
 
     def test_creates_valid_config(self, tmp_path: Path) -> None:
+        """Test Creates valid config."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -225,6 +237,7 @@ class TestJudgeContainerManagerRunJudge:
     """Tests for running judge container."""
 
     def test_run_success(self, tmp_path: Path) -> None:
+        """Test Run success."""
         mock_executor = MagicMock()
         mock_executor.run.return_value = ContainerResult(
             container_id="judge-123",
@@ -253,6 +266,7 @@ class TestJudgeContainerManagerRunJudge:
         assert result.cost_usd == 0.05
 
     def test_run_timeout(self, tmp_path: Path) -> None:
+        """Test Run timeout."""
         mock_executor = MagicMock()
         mock_executor.run.return_value = ContainerResult(
             container_id="judge-123",
@@ -282,6 +296,7 @@ class TestJudgeContainerManagerParseTokenUsage:
     """Tests for token usage parsing."""
 
     def test_parse_all_fields(self) -> None:
+        """Test Parse all fields."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -299,6 +314,7 @@ More output
         assert cost == 0.0825
 
     def test_parse_missing_fields(self) -> None:
+        """Test Parse missing fields."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -310,6 +326,7 @@ More output
         assert cost == 0.0
 
     def test_parse_malformed_values(self) -> None:
+        """Test Parse malformed values."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
 
@@ -329,6 +346,7 @@ class TestJudgeContainerManagerLifecycle:
     """Tests for container lifecycle management."""
 
     def test_stop_judge(self) -> None:
+        """Test Stop judge."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
         manager._active_containers.append("judge-123")
@@ -339,6 +357,7 @@ class TestJudgeContainerManagerLifecycle:
         assert "judge-123" not in manager._active_containers
 
     def test_cleanup_judge(self) -> None:
+        """Test Cleanup judge."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
         manager._active_containers.append("judge-123")
@@ -349,6 +368,7 @@ class TestJudgeContainerManagerLifecycle:
         assert "judge-123" not in manager._active_containers
 
     def test_cleanup_all(self) -> None:
+        """Test Cleanup all."""
         mock_executor = MagicMock()
         manager = JudgeContainerManager(executor=mock_executor)
         manager._active_containers = ["judge-1", "judge-2", "judge-3"]
@@ -358,6 +378,7 @@ class TestJudgeContainerManagerLifecycle:
         assert mock_executor.remove.call_count == 3
 
     def test_is_judge_running(self) -> None:
+        """Test Is judge running."""
         mock_executor = MagicMock()
         mock_executor.is_running.return_value = True
         manager = JudgeContainerManager(executor=mock_executor)
@@ -368,6 +389,7 @@ class TestJudgeContainerManagerLifecycle:
         mock_executor.is_running.assert_called_once_with("judge-123")
 
     def test_get_judge_logs(self) -> None:
+        """Test Get judge logs."""
         mock_executor = MagicMock()
         mock_executor.logs.return_value = ("stdout", "stderr")
         manager = JudgeContainerManager(executor=mock_executor)

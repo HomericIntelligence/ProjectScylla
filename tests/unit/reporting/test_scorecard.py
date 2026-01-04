@@ -41,6 +41,7 @@ class TestEvalResult:
     """Tests for EvalResult dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         result = EvalResult(
             runs_completed=10,
             grade="A",
@@ -53,6 +54,7 @@ class TestEvalResult:
         assert result.grade == "A"
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         result = make_test_result()
         data = result.to_dict()
 
@@ -66,6 +68,7 @@ class TestOverallStats:
     """Tests for OverallStats dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         stats = OverallStats(
             tests_completed=5,
             average_grade="B",
@@ -76,6 +79,7 @@ class TestOverallStats:
         assert stats.total_runs == 50
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         stats = OverallStats(
             tests_completed=5,
             average_grade="B+",
@@ -92,6 +96,7 @@ class TestModelScorecard:
     """Tests for ModelScorecard dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         scorecard = ModelScorecard(
             model_id="claude-opus-4-5-20251101",
             model_name="Claude Opus 4.5",
@@ -102,6 +107,7 @@ class TestModelScorecard:
         assert scorecard.model_name == "Claude Opus 4.5"
 
     def test_create_with_tests(self) -> None:
+        """Test Create with tests."""
         scorecard = ModelScorecard(
             model_id="claude-opus-4-5-20251101",
             model_name="Claude Opus 4.5",
@@ -112,6 +118,7 @@ class TestModelScorecard:
         assert "001-test" in scorecard.tests
 
     def test_to_dict(self) -> None:
+        """Test To dict."""
         scorecard = ModelScorecard(
             model_id="claude-opus-4-5-20251101",
             model_name="Claude Opus 4.5",
@@ -126,6 +133,7 @@ class TestModelScorecard:
         assert "001-test" in data["tests"]
 
     def test_to_json(self) -> None:
+        """Test To json."""
         scorecard = ModelScorecard(
             model_id="test-model",
             model_name="Test Model",
@@ -139,6 +147,7 @@ class TestModelScorecard:
         assert data["model_id"] == "test-model"
 
     def test_write(self) -> None:
+        """Test Write."""
         scorecard = ModelScorecard(
             model_id="test-model",
             model_name="Test Model",
@@ -158,6 +167,7 @@ class TestGradeConversion:
     """Tests for grade conversion functions."""
 
     def test_grade_to_points(self) -> None:
+        """Test Grade to points."""
         assert _grade_to_points("A") == 4.0
         assert _grade_to_points("B") == 3.0
         assert _grade_to_points("C") == 2.0
@@ -165,16 +175,19 @@ class TestGradeConversion:
         assert _grade_to_points("F") == 0.0
 
     def test_grade_to_points_with_modifiers(self) -> None:
+        """Test Grade to points with modifiers."""
         assert _grade_to_points("A+") == 4.3
         assert _grade_to_points("A-") == 3.7
         assert _grade_to_points("B+") == 3.3
         assert _grade_to_points("B-") == 2.7
 
     def test_grade_to_points_edge_cases(self) -> None:
+        """Test Grade to points edge cases."""
         assert _grade_to_points("") == 0.0
         assert _grade_to_points("F-") == 0.0  # Can't go below 0
 
     def test_points_to_grade(self) -> None:
+        """Test Points to grade."""
         assert _points_to_grade(4.0) == "A"
         assert _points_to_grade(3.0) == "B"
         assert _points_to_grade(2.0) == "C"
@@ -182,11 +195,13 @@ class TestGradeConversion:
         assert _points_to_grade(0.0) == "F"
 
     def test_points_to_grade_with_modifiers(self) -> None:
+        """Test Points to grade with modifiers."""
         assert _points_to_grade(3.5) == "A-"
         assert _points_to_grade(3.2) == "B+"
         assert _points_to_grade(2.6) == "B-"
 
     def test_roundtrip_conversion(self) -> None:
+        """Test Roundtrip conversion."""
         # A grade converted to points and back should be stable
         for grade in ["A", "B", "C", "D", "F"]:
             points = _grade_to_points(grade)
@@ -198,6 +213,7 @@ class TestScorecardGeneratorCalculateOverall:
     """Tests for ScorecardGenerator.calculate_overall method."""
 
     def test_empty_tests(self) -> None:
+        """Test Empty tests."""
         generator = ScorecardGenerator(Path("/tmp"))
         overall = generator.calculate_overall({})
 
@@ -207,6 +223,7 @@ class TestScorecardGeneratorCalculateOverall:
         assert overall.total_runs == 0
 
     def test_single_test(self) -> None:
+        """Test Single test."""
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {"001-test": make_test_result(runs_completed=10, grade="A")}
         overall = generator.calculate_overall(tests)
@@ -216,6 +233,7 @@ class TestScorecardGeneratorCalculateOverall:
         assert overall.total_runs == 10
 
     def test_multiple_tests(self) -> None:
+        """Test Multiple tests."""
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {
             "001-test": make_test_result(runs_completed=10, grade="A"),
@@ -230,6 +248,7 @@ class TestScorecardGeneratorCalculateOverall:
         assert overall.average_grade == "B"
 
     def test_cost_calculation(self) -> None:
+        """Test Cost calculation."""
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {
             "001-test": make_test_result(runs_completed=5, median_cost_usd=1.0),
@@ -245,6 +264,7 @@ class TestScorecardGeneratorGenerateScorecard:
     """Tests for ScorecardGenerator.generate_scorecard method."""
 
     def test_generate_basic(self) -> None:
+        """Test Generate basic."""
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {"001-test": make_test_result()}
 
@@ -260,6 +280,7 @@ class TestScorecardGeneratorGenerateScorecard:
         assert "001-test" in scorecard.tests
 
     def test_generate_auto_timestamp(self) -> None:
+        """Test Generate auto timestamp."""
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {"001-test": make_test_result()}
 
@@ -273,6 +294,7 @@ class TestScorecardGeneratorGenerateScorecard:
         assert scorecard.updated.endswith("Z")
 
     def test_generate_includes_overall(self) -> None:
+        """Test Generate includes overall."""
         generator = ScorecardGenerator(Path("/tmp"))
         tests = {
             "001-test": make_test_result(grade="A"),
@@ -292,6 +314,7 @@ class TestScorecardGeneratorWriteRead:
     """Tests for ScorecardGenerator write/read methods."""
 
     def test_write_scorecard(self) -> None:
+        """Test Write scorecard."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = ScorecardGenerator(Path(tmpdir))
             tests = {"001-test": make_test_result()}
@@ -308,6 +331,7 @@ class TestScorecardGeneratorWriteRead:
             assert output_path == expected_path
 
     def test_read_scorecard(self) -> None:
+        """Test Read scorecard."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = ScorecardGenerator(Path(tmpdir))
             tests = {"001-test": make_test_result()}
@@ -328,6 +352,7 @@ class TestScorecardGeneratorWriteRead:
             assert read_scorecard.tests["001-test"].grade == "B"
 
     def test_read_scorecard_not_found(self) -> None:
+        """Test Read scorecard not found."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = ScorecardGenerator(Path(tmpdir))
 
@@ -335,6 +360,7 @@ class TestScorecardGeneratorWriteRead:
             assert result is None
 
     def test_read_preserves_overall(self) -> None:
+        """Test Read preserves overall."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = ScorecardGenerator(Path(tmpdir))
             tests = {
@@ -359,6 +385,7 @@ class TestCreateEvalResult:
     """Tests for create_test_result factory function."""
 
     def test_create(self) -> None:
+        """Test Create."""
         result = create_test_result(
             runs_completed=10,
             grade="A",

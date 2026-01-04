@@ -389,7 +389,6 @@ class EvalOrchestrator:
 
         """
         # Load test to get default tiers
-        test_case = self.loader.load_test(test_id)
         test_data = self.loader._load_yaml(self.config.base_path / "tests" / test_id / "test.yaml")
 
         if tiers is None:

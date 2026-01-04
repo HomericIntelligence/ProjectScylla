@@ -44,6 +44,7 @@ class TestTierMetrics:
     """Tests for TierMetrics dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         metrics = TierMetrics(
             tier_id="T1",
             tier_name="T1 (Prompted)",
@@ -58,6 +59,7 @@ class TestTierMetrics:
         assert metrics.pass_rate_median == 0.9
 
     def test_default_uplift(self) -> None:
+        """Test Default uplift."""
         metrics = make_tier_metrics()
         assert metrics.uplift == 0.0
 
@@ -66,6 +68,7 @@ class TestSensitivityAnalysis:
     """Tests for SensitivityAnalysis dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         analysis = SensitivityAnalysis(
             pass_rate_variance=0.05,
             impl_rate_variance=0.03,
@@ -74,14 +77,17 @@ class TestSensitivityAnalysis:
         assert analysis.pass_rate_variance == 0.05
 
     def test_get_sensitivity_level_low(self) -> None:
+        """Test Get sensitivity level low."""
         analysis = SensitivityAnalysis(0.02, 0.02, 0.02)
         assert analysis.get_sensitivity_level(0.02) == "low"
 
     def test_get_sensitivity_level_medium(self) -> None:
+        """Test Get sensitivity level medium."""
         analysis = SensitivityAnalysis(0.10, 0.10, 0.10)
         assert analysis.get_sensitivity_level(0.10) == "medium"
 
     def test_get_sensitivity_level_high(self) -> None:
+        """Test Get sensitivity level high."""
         analysis = SensitivityAnalysis(0.20, 0.20, 0.20)
         assert analysis.get_sensitivity_level(0.20) == "high"
 
@@ -90,6 +96,7 @@ class TestTransitionAssessment:
     """Tests for TransitionAssessment dataclass."""
 
     def test_create(self) -> None:
+        """Test Create."""
         assessment = TransitionAssessment(
             from_tier="T0",
             to_tier="T1",
@@ -106,6 +113,7 @@ class TestReportData:
     """Tests for ReportData dataclass."""
 
     def test_create_minimal(self) -> None:
+        """Test Create minimal."""
         data = ReportData(
             test_id="001-test",
             test_name="Test Name",
@@ -118,6 +126,7 @@ class TestReportData:
         assert data.recommendations == []
 
     def test_create_with_tiers(self) -> None:
+        """Test Create with tiers."""
         data = ReportData(
             test_id="001-test",
             test_name="Test Name",
@@ -129,6 +138,7 @@ class TestReportData:
         assert len(data.tiers) == 1
 
     def test_create_with_sensitivity(self) -> None:
+        """Test Create with sensitivity."""
         data = ReportData(
             test_id="001-test",
             test_name="Test Name",
@@ -144,6 +154,7 @@ class TestMarkdownReportGeneratorHelpers:
     """Tests for MarkdownReportGenerator helper methods."""
 
     def test_find_best_quality_tier(self) -> None:
+        """Test Find best quality tier."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         tiers = [
             make_tier_metrics(tier_id="T0", composite_median=0.7),
@@ -156,11 +167,13 @@ class TestMarkdownReportGeneratorHelpers:
         assert best.tier_id == "T1"
 
     def test_find_best_quality_tier_empty(self) -> None:
+        """Test Find best quality tier empty."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         best = generator._find_best_quality_tier([])
         assert best is None
 
     def test_find_best_cost_tier(self) -> None:
+        """Test Find best cost tier."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         tiers = [
             make_tier_metrics(tier_id="T0", cost_of_pass_median=2.0),
@@ -173,6 +186,7 @@ class TestMarkdownReportGeneratorHelpers:
         assert best.tier_id == "T1"
 
     def test_find_best_cost_tier_ignores_infinity(self) -> None:
+        """Test Find best cost tier ignores infinity."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         tiers = [
             make_tier_metrics(tier_id="T0", cost_of_pass_median=float("inf")),
@@ -184,6 +198,7 @@ class TestMarkdownReportGeneratorHelpers:
         assert best.tier_id == "T1"
 
     def test_find_most_consistent_tier(self) -> None:
+        """Test Find most consistent tier."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         tiers = [
             make_tier_metrics(tier_id="T0", consistency_std_dev=0.15),
@@ -196,12 +211,14 @@ class TestMarkdownReportGeneratorHelpers:
         assert best.tier_id == "T1"
 
     def test_format_percentage(self) -> None:
+        """Test Format percentage."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         assert generator._format_percentage(0.85) == "85.0%"
         assert generator._format_percentage(1.0) == "100.0%"
         assert generator._format_percentage(0.0) == "0.0%"
 
     def test_format_cost(self) -> None:
+        """Test Format cost."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         assert generator._format_cost(1.50) == "$1.50"
         assert generator._format_cost(0.0) == "$0.00"
@@ -212,6 +229,7 @@ class TestMarkdownReportGeneratorSections:
     """Tests for individual report sections."""
 
     def test_generate_header(self) -> None:
+        """Test Generate header."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(
             test_id="001-test",
@@ -225,6 +243,7 @@ class TestMarkdownReportGeneratorSections:
         assert "2024-01-15T14:30:00Z" in header
 
     def test_generate_executive_summary(self) -> None:
+        """Test Generate executive summary."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(
             test_id="001-test",
@@ -248,6 +267,7 @@ class TestMarkdownReportGeneratorSections:
         assert "T1 provides significant improvement." in summary
 
     def test_generate_tier_comparison(self) -> None:
+        """Test Generate tier comparison."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(
             test_id="001-test",
@@ -271,6 +291,7 @@ class TestMarkdownReportGeneratorSections:
         assert "+15.0%" in comparison
 
     def test_generate_tier_comparison_empty(self) -> None:
+        """Test Generate tier comparison empty."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(test_id="001-test", test_name="Test Name")
 
@@ -278,6 +299,7 @@ class TestMarkdownReportGeneratorSections:
         assert comparison == ""
 
     def test_generate_sensitivity_analysis(self) -> None:
+        """Test Generate sensitivity analysis."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(test_id="001-test", test_name="Test Name")
         data.sensitivity = SensitivityAnalysis(0.05, 0.03, 0.10)
@@ -294,6 +316,7 @@ class TestMarkdownReportGeneratorSections:
         assert "worth it" in analysis
 
     def test_generate_recommendations(self) -> None:
+        """Test Generate recommendations."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(test_id="001-test", test_name="Test Name")
         data.recommendations = [
@@ -312,6 +335,7 @@ class TestMarkdownReportGeneratorFullReport:
     """Tests for full report generation."""
 
     def test_generate_report(self) -> None:
+        """Test Generate report."""
         generator = MarkdownReportGenerator(Path("/tmp"))
         data = create_report_data(
             test_id="001-test",
@@ -340,6 +364,7 @@ class TestMarkdownReportGeneratorFullReport:
         assert "*Generated by ProjectScylla Agent Testing Framework*" in report
 
     def test_write_report(self) -> None:
+        """Test Write report."""
         with tempfile.TemporaryDirectory() as tmpdir:
             generator = MarkdownReportGenerator(Path(tmpdir))
             data = create_report_data(
@@ -364,6 +389,7 @@ class TestFactoryFunctions:
     """Tests for factory functions."""
 
     def test_create_tier_metrics(self) -> None:
+        """Test Create tier metrics."""
         metrics = create_tier_metrics(
             tier_id="T1",
             tier_name="T1 (Prompted)",
@@ -378,6 +404,7 @@ class TestFactoryFunctions:
         assert metrics.uplift == 0.13
 
     def test_create_report_data(self) -> None:
+        """Test Create report data."""
         data = create_report_data(
             test_id="001-test",
             test_name="Test Name",
@@ -388,6 +415,7 @@ class TestFactoryFunctions:
         assert data.runs_per_tier == 10
 
     def test_create_report_data_auto_timestamp(self) -> None:
+        """Test Create report data auto timestamp."""
         data = create_report_data(
             test_id="001-test",
             test_name="Test Name",
