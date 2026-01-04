@@ -89,6 +89,97 @@ def _move_to_failed(run_dir: Path, attempt: int = 1) -> Path:
     return new_path
 
 
+def _save_agent_result(agent_dir: Path, result: "AdapterResult") -> None:
+    """Save agent execution result to agent/result.json.
+
+    Args:
+        agent_dir: Path to agent directory
+        result: AdapterResult from agent execution
+    """
+    import json
+
+    from scylla.adapters.base import AdapterResult
+
+    result_data = {
+        "exit_code": result.exit_code,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "token_stats": result.token_stats.to_dict(),
+        "cost_usd": result.cost_usd,
+        "api_calls": result.api_calls,
+    }
+
+    with open(agent_dir / "result.json", "w") as f:
+        json.dump(result_data, f, indent=2)
+
+
+def _load_agent_result(agent_dir: Path) -> "AdapterResult":
+    """Load agent execution result from agent/result.json.
+
+    Args:
+        agent_dir: Path to agent directory
+
+    Returns:
+        AdapterResult loaded from file
+    """
+    import json
+
+    from scylla.adapters.base import AdapterResult, AdapterTokenStats
+
+    with open(agent_dir / "result.json") as f:
+        data = json.load(f)
+
+    token_stats = AdapterTokenStats(**data["token_stats"])
+
+    return AdapterResult(
+        exit_code=data["exit_code"],
+        stdout=data["stdout"],
+        stderr=data["stderr"],
+        token_stats=token_stats,
+        cost_usd=data["cost_usd"],
+        api_calls=data["api_calls"],
+    )
+
+
+def _save_judge_result(judge_dir: Path, result: "JudgeResult") -> None:
+    """Save judge evaluation result to judge/result.json.
+
+    Args:
+        judge_dir: Path to judge directory
+        result: JudgeResult from judge evaluation
+    """
+    import json
+
+    # Save to result.json (simplified version for quick checking)
+    result_data = {
+        "score": result.score,
+        "passed": result.passed,
+        "grade": result.grade,
+        "reasoning": result.reasoning,
+    }
+
+    with open(judge_dir / "result.json", "w") as f:
+        json.dump(result_data, f, indent=2)
+
+
+def _load_judge_result(judge_dir: Path) -> dict:
+    """Load judge evaluation result from judge/result.json.
+
+    Args:
+        judge_dir: Path to judge directory
+
+    Returns:
+        Dict with score, passed, grade, reasoning
+    """
+    import json
+
+    # Load from judgment.json (full result with criteria_scores)
+    with open(judge_dir / "judgment.json") as f:
+        data = json.load(f)
+
+    return data
+
+
 class RateLimitCoordinator:
     """Coordinates rate limit pause across parallel workers.
 
@@ -367,14 +458,16 @@ class SubTestExecutor:
                 )
                 runs.append(run_result)
 
-                # Save checkpoint after each successful run
+                # Save checkpoint after each run (with pass/fail status)
                 if checkpoint and checkpoint_path:
                     from scylla.e2e.checkpoint import save_checkpoint
 
-                    checkpoint.mark_run_completed(tier_id.value, subtest.id, run_num)
+                    # Status based on judge pass/fail
+                    status = "passed" if run_result.judge_passed else "failed"
+                    checkpoint.mark_run_completed(tier_id.value, subtest.id, run_num, status=status)
                     save_checkpoint(checkpoint, checkpoint_path)
                     logger.debug(
-                        f"Checkpoint saved: {tier_id.value}/{subtest.id}/run_{run_num:02d}"
+                        f"Checkpoint saved: {tier_id.value}/{subtest.id}/run_{run_num:02d} (status={status})"
                     )
 
             except RateLimitError as e:
@@ -413,11 +506,12 @@ class SubTestExecutor:
     ) -> RunResult:
         """Execute a single run of the sub-test.
 
-        Files are placed directly in run_dir (no logs/ subdir):
-        - output.txt: Agent stdout
-        - command_log.json: Execution details
-        - judgment.json: LLM judge result
-        - report.md: Run report
+        Files are organized in agent/ and judge/ subdirectories:
+        - agent/: Agent execution artifacts (stdout, stderr, output.txt, command_log.json, replay.sh)
+        - judge/: Judge evaluation artifacts (prompt.md, response.txt, judgment.json, replay.sh)
+        - task_prompt.md: Task given to agent
+        - run_result.json: Combined result
+        - report.md: Per-run report
 
         Args:
             tier_id: The tier being executed
@@ -432,8 +526,14 @@ class SubTestExecutor:
         Returns:
             RunResult with execution details.
         """
-        # All files go directly in run_dir (no logs/ subdir)
-        command_logger = CommandLogger(run_dir)
+        # Create agent and judge subdirectories
+        agent_dir = run_dir / "agent"
+        judge_dir = run_dir / "judge"
+        agent_dir.mkdir(parents=True, exist_ok=True)
+        judge_dir.mkdir(parents=True, exist_ok=True)
+
+        # Agent command logger outputs to agent/
+        command_logger = CommandLogger(agent_dir)
 
         # Build context-aware resource suffix
         resource_suffix = self.tier_manager.build_resource_suffix(subtest)
@@ -449,71 +549,106 @@ class SubTestExecutor:
         if self.config.max_turns is not None:
             extra_args.extend(["--max-turns", str(self.config.max_turns)])
 
-        adapter_config = AdapterConfig(
-            model=self.config.models[0],
-            prompt_file=prompt_file,
-            workspace=workspace,
-            output_dir=run_dir,  # Files go directly in run_dir
-            timeout=self.config.timeout_seconds,
-            extra_args=extra_args,
-        )
+        # Check if agent result already exists (resume case)
+        agent_result_file = agent_dir / "result.json"
+        agent_ran = False
 
-        # Execute agent
-        _phase_log("AGENT", f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]")
-
-        start_time = datetime.now(UTC)
-        try:
-            result = self.adapter.run(
-                config=adapter_config,
-                tier_config=None,  # Tier config handled by workspace preparation
-                system_prompt_mode=tier_config.system_prompt_mode,
-            )
-        except Exception as e:
-            # Handle execution errors - create a mock result with token_stats
-            from scylla.adapters.base import AdapterResult, AdapterTokenStats
-
-            result = AdapterResult(
-                exit_code=-1,
-                stdout="",
-                stderr=str(e),
-                token_stats=AdapterTokenStats(),
-                cost_usd=0.0,
-                api_calls=0,
+        if agent_result_file.exists():
+            # Reuse existing agent result
+            logger.info(f"Reusing existing agent result: {agent_result_file}")
+            result = _load_agent_result(agent_dir)
+            duration = 0.0  # Duration not tracked for reused results
+        else:
+            # Run agent
+            adapter_config = AdapterConfig(
+                model=self.config.models[0],
+                prompt_file=prompt_file,
+                workspace=workspace,
+                output_dir=agent_dir,  # Agent files go in agent/
+                timeout=self.config.timeout_seconds,
+                extra_args=extra_args,
             )
 
-        duration = (datetime.now(UTC) - start_time).total_seconds()
+            _phase_log("AGENT", f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]")
 
-        # Log the command
-        cmd = self.adapter._build_command(
-            adapter_config,
-            task_prompt,
-            None,
-            tier_config.system_prompt_mode,
-        )
-        command_logger.log_command(
-            cmd=cmd,
-            stdout=result.stdout,
-            stderr=result.stderr,
-            exit_code=result.exit_code,
-            duration=duration,
-            cwd=str(workspace),
-        )
+            start_time = datetime.now(UTC)
+            try:
+                result = self.adapter.run(
+                    config=adapter_config,
+                    tier_config=None,  # Tier config handled by workspace preparation
+                    system_prompt_mode=tier_config.system_prompt_mode,
+                )
+            except Exception as e:
+                # Handle execution errors - create a mock result with token_stats
+                from scylla.adapters.base import AdapterResult, AdapterTokenStats
 
-        # Save command logs
-        command_logger.save()
-        command_logger.save_replay_script()
+                result = AdapterResult(
+                    exit_code=-1,
+                    stdout="",
+                    stderr=str(e),
+                    token_stats=AdapterTokenStats(),
+                    cost_usd=0.0,
+                    api_calls=0,
+                )
 
-        # Save agent output to output.txt
-        output_file = run_dir / "output.txt"
-        output_file.write_text(result.stdout or "")
+            duration = (datetime.now(UTC) - start_time).total_seconds()
 
-        # Run judge evaluation
-        judgment = self._run_judge(
-            workspace=workspace,
-            task_prompt=task_prompt,
-            stdout=result.stdout,
-            run_dir=run_dir,
-        )
+            # Log the command
+            cmd = self.adapter._build_command(
+                adapter_config,
+                task_prompt,
+                None,
+                tier_config.system_prompt_mode,
+            )
+            command_logger.log_command(
+                cmd=cmd,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                exit_code=result.exit_code,
+                duration=duration,
+                cwd=str(workspace),
+            )
+
+            # Save command logs
+            command_logger.save()
+            command_logger.save_replay_script()
+
+            # Save agent output to agent/output.txt
+            output_file = agent_dir / "output.txt"
+            output_file.write_text(result.stdout or "")
+
+            # Save agent result for future resume
+            _save_agent_result(agent_dir, result)
+            agent_ran = True
+
+        # Run judge evaluation (ALWAYS re-run if agent ran, requirement from user)
+        # Only reuse judge result if agent was reused AND judge result exists
+        judge_result_file = judge_dir / "result.json"
+
+        if not agent_ran and judge_result_file.exists():
+            # Reuse existing judge result (only if agent was also reused)
+            logger.info(f"Reusing existing judge result: {judge_result_file}")
+            judgment = _load_judge_result(judge_dir)
+        else:
+            # Run judge (either agent ran, or judge result missing)
+            judgment = self._run_judge(
+                workspace=workspace,
+                task_prompt=task_prompt,
+                stdout=result.stdout,
+                judge_dir=judge_dir,
+            )
+
+            # Save judge result for future resume
+            from scylla.e2e.llm_judge import JudgeResult
+
+            judge_result_obj = JudgeResult(
+                score=judgment["score"],
+                passed=judgment["passed"],
+                grade=judgment["grade"],
+                reasoning=judgment["reasoning"],
+                is_valid=judgment.get("is_valid", True),
+            )
+            _save_judge_result(judge_dir, judge_result_obj)
 
         # Convert adapter token stats to E2E token stats
         token_stats = result.token_stats.to_token_stats()
@@ -548,8 +683,8 @@ class SubTestExecutor:
             judge_grade=judgment["grade"],
             judge_reasoning=judgment["reasoning"],
             workspace_path=workspace,
-            logs_path=run_dir,  # Now same as run_dir (no logs/ subdir)
-            command_log_path=run_dir / "command_log.json",
+            logs_path=agent_dir,  # Points to agent/ subdirectory
+            command_log_path=agent_dir / "command_log.json",
             criteria_scores=judgment.get("criteria_scores", {}),
         )
 
@@ -726,7 +861,7 @@ class SubTestExecutor:
         workspace: Path,
         task_prompt: str,
         stdout: str,
-        run_dir: Path,
+        judge_dir: Path,
     ) -> dict:
         """Run LLM judge evaluation on the result.
 
@@ -736,13 +871,13 @@ class SubTestExecutor:
             workspace: Workspace with agent's output
             task_prompt: The original task prompt
             stdout: Agent's stdout output
-            run_dir: Directory for judge logs (judgment.json goes here)
+            judge_dir: Directory for judge outputs (prompt.md, response.txt, judgment.json, replay.sh)
 
         Returns:
             Dict with score, passed, grade, and reasoning.
         """
         # Log judge execution phase
-        _phase_log("JUDGE", f"Running judge with model[{self.config.judge_model}] with prompt[{run_dir / 'judge_prompt.md'}]")
+        _phase_log("JUDGE", f"Running judge with model[{self.config.judge_model}] with prompt[{judge_dir / 'prompt.md'}]")
 
         # Use the LLM judge for proper evaluation
         judge_result = run_llm_judge(
@@ -750,7 +885,7 @@ class SubTestExecutor:
             task_prompt=task_prompt,
             agent_output=stdout,
             model=self.config.judge_model,
-            logs_dir=run_dir,  # Judge logs go in run_dir
+            judge_dir=judge_dir,  # Judge outputs go in judge/
         )
 
         return judge_result.to_dict()

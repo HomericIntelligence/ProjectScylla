@@ -502,7 +502,8 @@ class TestValidateRunResult:
     def test_rate_limited_run_in_stderr(self, tmp_path: Path) -> None:
         """Test detection of rate-limited run via stderr."""
         run_dir = tmp_path / "run_01"
-        run_dir.mkdir()
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
 
         (run_dir / "run_result.json").write_text(
             json.dumps(
@@ -512,7 +513,7 @@ class TestValidateRunResult:
                 }
             )
         )
-        (run_dir / "stderr.log").write_text(
+        (agent_dir / "stderr.log").write_text(
             "Rate limit from agent: You've hit your limit · resets 2am (America/Los_Angeles)"
         )
 
@@ -524,7 +525,8 @@ class TestValidateRunResult:
     def test_rate_limited_run_in_stdout_json(self, tmp_path: Path) -> None:
         """Test detection of rate-limited run via stdout JSON."""
         run_dir = tmp_path / "run_01"
-        run_dir.mkdir()
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
 
         (run_dir / "run_result.json").write_text(
             json.dumps(
@@ -534,7 +536,7 @@ class TestValidateRunResult:
                 }
             )
         )
-        (run_dir / "stdout.log").write_text(
+        (agent_dir / "stdout.log").write_text(
             json.dumps(
                 {
                     "type": "result",
