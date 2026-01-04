@@ -483,7 +483,7 @@ class ExperimentConfig:
     task_repo: str
     task_commit: str
     task_prompt_file: Path
-    models: list[str] = field(default_factory=lambda: ["claude-sonnet-4-20250514"])
+    models: list[str] = field(default_factory=lambda: ["claude-sonnet-4-5-20250929"])
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = field(default_factory=lambda: list(TierID))
     judge_model: str = "claude-opus-4-5-20251101"
@@ -527,7 +527,7 @@ class ExperimentConfig:
             task_repo=data["task_repo"],
             task_commit=data["task_commit"],
             task_prompt_file=Path(data["task_prompt_file"]),
-            models=data.get("models", ["claude-sonnet-4-20250514"]),
+            models=data.get("models", ["claude-sonnet-4-5-20250929"]),
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
             judge_model=data.get("judge_model", "claude-opus-4-5-20251101"),

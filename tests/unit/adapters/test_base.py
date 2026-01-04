@@ -289,7 +289,7 @@ class TestCostCalculation:
     def test_calculate_cost_claude_sonnet(self) -> None:
         """Test cost calculation for Claude Sonnet."""
         adapter = ConcreteAdapter()
-        cost = adapter.calculate_cost(1000, 500, model="claude-sonnet-4-20250514")
+        cost = adapter.calculate_cost(1000, 500, model="claude-sonnet-4-5-20250929")
 
         # Sonnet: 0.003 per 1K input, 0.015 per 1K output
         expected = (1000 / 1000 * 0.003) + (500 / 1000 * 0.015)
@@ -298,7 +298,7 @@ class TestCostCalculation:
     def test_calculate_cost_claude_opus(self) -> None:
         """Test cost calculation for Claude Opus."""
         adapter = ConcreteAdapter()
-        cost = adapter.calculate_cost(1000, 500, model="claude-opus-4-20250514")
+        cost = adapter.calculate_cost(1000, 500, model="claude-opus-4-5-20251101")
 
         # Opus: 0.015 per 1K input, 0.075 per 1K output
         expected = (1000 / 1000 * 0.015) + (500 / 1000 * 0.075)

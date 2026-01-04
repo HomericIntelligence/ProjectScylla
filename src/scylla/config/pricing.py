@@ -41,16 +41,11 @@ DEFAULT_PRICING = ModelPricing(
 # Centralized model pricing data (as of January 2025)
 # All prices in USD per million tokens
 MODEL_PRICING: dict[str, ModelPricing] = {
-    # Anthropic Claude 4 models
-    "claude-sonnet-4-20250514": ModelPricing(
-        model_id="claude-sonnet-4-20250514",
+    # Anthropic Claude 4.5 models
+    "claude-sonnet-4-5-20250929": ModelPricing(
+        model_id="claude-sonnet-4-5-20250929",
         input_cost_per_million=3.0,
         output_cost_per_million=15.0,
-    ),
-    "claude-opus-4-20250514": ModelPricing(
-        model_id="claude-opus-4-20250514",
-        input_cost_per_million=15.0,
-        output_cost_per_million=75.0,
     ),
     "claude-opus-4-5-20251101": ModelPricing(
         model_id="claude-opus-4-5-20251101",

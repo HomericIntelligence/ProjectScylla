@@ -71,7 +71,7 @@ Examples:
     docker run -e ANTHROPIC_API_KEY=\$KEY scylla-runner:latest --validate
 
     # Run a test
-    docker run -e TIER=T0 -e MODEL=claude-sonnet-4-20250514 -e RUN_NUMBER=1 \\
+    docker run -e TIER=T0 -e MODEL=claude-sonnet-4-5-20250929 -e RUN_NUMBER=1 \\
                -e TEST_ID=test-001 -e ANTHROPIC_API_KEY=\$KEY \\
                -v /path/to/workspace:/workspace \\
                scylla-runner:latest --run

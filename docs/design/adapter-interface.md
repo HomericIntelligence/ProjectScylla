@@ -18,7 +18,7 @@ Adapters are the bridge between the Scylla test runner and specific AI agent imp
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `model` | `str` | Yes | Model identifier (e.g., "claude-sonnet-4-20250514") |
+| `model` | `str` | Yes | Model identifier (e.g., "claude-sonnet-4-5-20250929") |
 | `prompt_file` | `Path` | Yes | Path to the prompt markdown file |
 | `workspace` | `Path` | Yes | Working directory for the agent |
 | `output_dir` | `Path` | Yes | Directory for logs and metrics output |

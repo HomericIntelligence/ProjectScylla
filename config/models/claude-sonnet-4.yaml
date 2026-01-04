@@ -1,6 +1,6 @@
-# Claude Sonnet 4 Model Configuration
-model_id: "claude-sonnet-4-20250514"
-name: "Claude Sonnet 4"
+# Claude Sonnet 4.5 Model Configuration
+model_id: "claude-sonnet-4-5-20250929"
+name: "Claude Sonnet 4.5"
 provider: "anthropic"
 adapter: "claude_code"
 temperature: 0.0

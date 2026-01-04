@@ -32,7 +32,7 @@ docker run -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY scylla-runner:latest --valida
 ```bash
 docker run \
     -e TIER=T0 \
-    -e MODEL=claude-sonnet-4-20250514 \
+    -e MODEL=claude-sonnet-4-5-20250929 \
     -e RUN_NUMBER=1 \
     -e TEST_ID=test-001 \
     -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
@@ -66,7 +66,7 @@ The `scylla-runner:latest` image includes:
 | Variable | Description | Values | Example |
 |----------|-------------|--------|---------|
 | `TIER` | Test tier | T0-T6 | `T0` |
-| `MODEL` | Model identifier | Any valid model ID | `claude-sonnet-4-20250514` |
+| `MODEL` | Model identifier | Any valid model ID | `claude-sonnet-4-5-20250929` |
 | `RUN_NUMBER` | Run number for prompt sensitivity | 1-9 | `1` |
 | `TEST_ID` | Unique test identifier | Any string | `test-abc-001` |
 
