@@ -137,6 +137,11 @@ class TierManager:
                 # Load resources specification for runtime symlinks
                 resources = config_data.get("resources", {})
 
+                # Also capture mcp_servers into resources for prompt suffixes
+                mcp_servers = config_data.get("mcp_servers", [])
+                if mcp_servers:
+                    resources["mcp_servers"] = mcp_servers
+
             subtests.append(
                 SubTestConfig(
                     id=subtest_id,
@@ -408,6 +413,76 @@ class TierManager:
         if content_parts:
             claude_md = workspace / "CLAUDE.md"
             claude_md.write_text("\n\n".join(content_parts))
+
+    def build_resource_suffix(self, subtest: SubTestConfig) -> str:
+        """Build prompt suffix based on configured resources.
+
+        Uses bullet list format for resources:
+        - skill1
+        - skill2
+
+        If no resources configured, returns generic hint.
+
+        Args:
+            subtest: SubTestConfig with resources specification
+
+        Returns:
+            Prompt suffix string with resource hints
+        """
+        suffixes = []
+        resources = subtest.resources or {}
+        has_any_resources = False
+
+        # Sub-agents
+        if "agents" in resources:
+            agents_spec = resources["agents"]
+            agent_names = []
+            for level in agents_spec.get("levels", []):
+                level_dir = self._get_shared_dir() / "agents" / f"L{level}"
+                if level_dir.exists():
+                    for f in level_dir.glob("*.md"):
+                        agent_names.append(f.stem)
+            agent_names.extend(n.replace(".md", "") for n in agents_spec.get("names", []))
+            if agent_names:
+                has_any_resources = True
+                bullet_list = "\n".join(f"- {name}" for name in sorted(set(agent_names)))
+                suffixes.append(f"Use the following sub-agents to solve this task:\n{bullet_list}")
+
+        # Skills
+        if "skills" in resources:
+            skills_spec = resources["skills"]
+            skill_names = []
+            for cat in skills_spec.get("categories", []):
+                cat_dir = self._get_shared_dir() / "skills" / cat
+                if cat_dir.exists():
+                    skill_names.extend(d.name for d in cat_dir.iterdir() if d.is_dir())
+            skill_names.extend(skills_spec.get("names", []))
+            if skill_names:
+                has_any_resources = True
+                bullet_list = "\n".join(f"- {name}" for name in sorted(set(skill_names)))
+                suffixes.append(f"Use the following skills to complete this task:\n{bullet_list}")
+
+        # MCP servers
+        if "mcp_servers" in resources:
+            mcp_names = [m.get("name", m) if isinstance(m, dict) else m for m in resources["mcp_servers"]]
+            if mcp_names:
+                has_any_resources = True
+                bullet_list = "\n".join(f"- {name}" for name in sorted(set(mcp_names)))
+                suffixes.append(f"Use the following MCP servers to complete this task:\n{bullet_list}")
+
+        # Tools
+        if "tools" in resources:
+            tool_names = resources["tools"].get("names", [])
+            if tool_names:
+                has_any_resources = True
+                bullet_list = "\n".join(f"- {name}" for name in sorted(tool_names))
+                suffixes.append(f"Use the following tools to complete this task:\n{bullet_list}")
+
+        # If no resources configured, add generic hint
+        if not has_any_resources:
+            return "Complete this task using available tools and your best judgment."
+
+        return "\n\n".join(suffixes)
 
     def get_baseline_for_subtest(
         self,

@@ -47,6 +47,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _phase_log(phase: str, message: str) -> None:
+    """Log a phase message with timestamp and prefix.
+
+    Args:
+        phase: Phase identifier (WORKTREE, AGENT, JUDGE)
+        message: Message content
+    """
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    logger.info(f"{timestamp} [{phase}] - {message}")
+
+
 class RateLimitCoordinator:
     """Coordinates rate limit pause across parallel workers.
 
@@ -232,7 +243,7 @@ class SubTestExecutor:
             # Create workspace at subtest level (shared across all runs)
             workspace = results_dir / "workspace"
             workspace.mkdir(parents=True, exist_ok=True)
-            self._setup_workspace(workspace, CommandLogger(results_dir))
+            self._setup_workspace(workspace, CommandLogger(results_dir), tier_id, subtest.id)
 
             # Prepare tier configuration in workspace once
             self.tier_manager.prepare_workspace(
@@ -371,6 +382,11 @@ class SubTestExecutor:
         # All files go directly in run_dir (no logs/ subdir)
         command_logger = CommandLogger(run_dir)
 
+        # Build context-aware resource suffix
+        resource_suffix = self.tier_manager.build_resource_suffix(subtest)
+        if resource_suffix:
+            task_prompt = f"{task_prompt}\n\n{resource_suffix}"
+
         # Save task prompt to run dir (for reference, though uniform across runs)
         prompt_file = run_dir / "task_prompt.md"
         prompt_file.write_text(task_prompt)
@@ -390,6 +406,8 @@ class SubTestExecutor:
         )
 
         # Execute agent
+        _phase_log("AGENT", f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]")
+
         start_time = datetime.now(UTC)
         try:
             result = self.adapter.run(
@@ -508,26 +526,39 @@ class SubTestExecutor:
         self,
         workspace: Path,
         command_logger: CommandLogger,
+        tier_id: TierID,
+        subtest_id: str,
     ) -> None:
-        """Set up workspace using git worktree from base repo.
+        """Set up workspace using git worktree from base repo with named branch.
 
         Args:
             workspace: Target workspace directory
             command_logger: Logger for commands
+            tier_id: Tier identifier for branch naming
+            subtest_id: Subtest identifier for branch naming
         """
+        import shlex
+
         start_time = datetime.now(UTC)
 
         # Ensure workspace path is absolute for git worktree
         workspace_abs = workspace.resolve()
 
-        # Create worktree from shared base repo
+        # Generate branch name
+        branch_name = f"{tier_id.value}_{subtest_id}"
+
+        # Log worktree creation phase
+        _phase_log("WORKTREE", f"Creating worktree [{branch_name}] @ [{workspace_abs}]")
+
+        # Create worktree with named branch
         worktree_cmd = [
             "git",
             "-C",
             str(self.workspace_manager.base_repo),
             "worktree",
             "add",
-            "--detach",
+            "-b",
+            branch_name,
             str(workspace_abs),
         ]
 
@@ -552,7 +583,24 @@ class SubTestExecutor:
         )
 
         if result.returncode != 0:
+            # Check for branch conflict and provide helpful error message
+            if "already exists" in result.stderr:
+                raise RuntimeError(
+                    f"Branch {branch_name} already exists. "
+                    f"Run `git branch -D {branch_name}` to delete it, "
+                    f"or clean up old worktrees with `git worktree prune`."
+                )
             raise RuntimeError(f"Failed to create worktree: {result.stderr}")
+
+        # Save worktree creation command (create only, no cleanup)
+        subtest_dir = workspace.parent
+        worktree_script = subtest_dir / "worktree_create.sh"
+        worktree_script.write_text(
+            f"#!/bin/bash\n# Worktree: {branch_name} @ {workspace_abs}\n"
+            + " ".join(shlex.quote(arg) for arg in worktree_cmd)
+            + "\n"
+        )
+        worktree_script.chmod(0o755)
 
     def _run_judge(
         self,
@@ -574,6 +622,9 @@ class SubTestExecutor:
         Returns:
             Dict with score, passed, grade, and reasoning.
         """
+        # Log judge execution phase
+        _phase_log("JUDGE", f"Running judge with model[{self.config.judge_model}] with prompt[{run_dir / 'judge_prompt.md'}]")
+
         # Use the LLM judge for proper evaluation
         judge_result = run_llm_judge(
             workspace=workspace,
