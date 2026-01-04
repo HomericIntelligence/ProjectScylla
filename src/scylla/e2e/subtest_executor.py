@@ -106,7 +106,7 @@ def _save_agent_result(agent_dir: Path, result: AdapterResult) -> None:
         "exit_code": result.exit_code,
         "stdout": result.stdout,
         "stderr": result.stderr,
-        "token_stats": result.token_stats.to_dict(),
+        "token_stats": result.token_stats.model_dump(),
         "cost_usd": result.cost_usd,
         "api_calls": result.api_calls,
     }
