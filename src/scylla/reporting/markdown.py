@@ -152,19 +152,25 @@ class MarkdownReportGenerator:
         sections = ["## Executive Summary\n"]
 
         if best_quality:
-            sections.append(f"""### Winner by Quality
-**{best_quality.tier_name}** achieved the highest median composite score of **{self._format_percentage(best_quality.composite_median)}**.
-""")
+            sections.append(
+                f"### Winner by Quality\n"
+                f"**{best_quality.tier_name}** achieved the highest median composite score of "
+                f"**{self._format_percentage(best_quality.composite_median)}**.\n"
+            )
 
         if best_cost:
-            sections.append(f"""### Winner by Cost Efficiency
-**{best_cost.tier_name}** achieved the lowest Cost-of-Pass at **{self._format_cost(best_cost.cost_of_pass_median)}** per successful run.
-""")
+            sections.append(
+                f"### Winner by Cost Efficiency\n"
+                f"**{best_cost.tier_name}** achieved the lowest Cost-of-Pass at "
+                f"**{self._format_cost(best_cost.cost_of_pass_median)}** per successful run.\n"
+            )
 
         if most_consistent:
-            sections.append(f"""### Winner by Consistency
-**{most_consistent.tier_name}** showed the lowest variance with std_dev of **{most_consistent.consistency_std_dev:.3f}**.
-""")
+            sections.append(
+                f"### Winner by Consistency\n"
+                f"**{most_consistent.tier_name}** showed the lowest variance with "
+                f"std_dev of **{most_consistent.consistency_std_dev:.3f}**.\n"
+            )
 
         if data.key_finding:
             sections.append(f"""### Key Finding
@@ -212,9 +218,18 @@ class MarkdownReportGenerator:
             "### Variance Metrics\n",
             "| Metric | Cross-Tier Variance | Interpretation |",
             "|--------|---------------------|----------------|",
-            f"| Pass Rate | {s.pass_rate_variance:.4f} | {s.get_sensitivity_level(s.pass_rate_variance)} sensitivity |",
-            f"| Impl Rate | {s.impl_rate_variance:.4f} | {s.get_sensitivity_level(s.impl_rate_variance)} sensitivity |",
-            f"| Cost | {s.cost_variance:.4f} | {s.get_sensitivity_level(s.cost_variance)} sensitivity |",
+            (
+                f"| Pass Rate | {s.pass_rate_variance:.4f} | "
+                f"{s.get_sensitivity_level(s.pass_rate_variance)} sensitivity |"
+            ),
+            (
+                f"| Impl Rate | {s.impl_rate_variance:.4f} | "
+                f"{s.get_sensitivity_level(s.impl_rate_variance)} sensitivity |"
+            ),
+            (
+                f"| Cost | {s.cost_variance:.4f} | "
+                f"{s.get_sensitivity_level(s.cost_variance)} sensitivity |"
+            ),
         ]
 
         if data.transitions:
