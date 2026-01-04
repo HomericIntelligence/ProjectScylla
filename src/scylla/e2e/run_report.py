@@ -167,7 +167,7 @@ def generate_run_report(
                 explanation_short = explanation[:100].replace("|", "\\|")
                 if len(explanation) > 100:
                     explanation_short += "..."
-                if isinstance(crit_score, (int, float)):
+                if isinstance(crit_score, int | float):
                     lines.append(f"| {criterion} | {crit_score:.2f} | {explanation_short} |")
                 else:
                     lines.append(f"| {criterion} | {crit_score} | {explanation_short} |")
@@ -190,7 +190,7 @@ def generate_run_report(
                 crit_score = data.get("score", "N/A")
                 explanation = data.get("explanation", "No explanation provided")
                 score_str = (
-                    f"{crit_score:.2f}" if isinstance(crit_score, (int, float)) else str(crit_score)
+                    f"{crit_score:.2f}" if isinstance(crit_score, int | float) else str(crit_score)
                 )
                 lines.extend(
                     [
@@ -538,7 +538,7 @@ def save_subtest_report(
                 if run.criteria_scores and criterion in run.criteria_scores:
                     score_data = run.criteria_scores[criterion]
                     score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                    if isinstance(score, (int, float)):
+                    if isinstance(score, int | float):
                         scores.append((score, len(score_cells)))
                         score_cells.append(f"{score:.2f}")
                     else:
@@ -722,7 +722,7 @@ def save_tier_report(
                 if best_run.criteria_scores and criterion in best_run.criteria_scores:
                     score_data = best_run.criteria_scores[criterion]
                     score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                    if isinstance(score, (int, float)):
+                    if isinstance(score, int | float):
                         scores.append((score, len(score_cells)))
                         score_cells.append(f"{score:.2f}")
                     else:
@@ -918,7 +918,7 @@ def save_experiment_report(
                 if best_run.criteria_scores and criterion in best_run.criteria_scores:
                     score_data = best_run.criteria_scores[criterion]
                     score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                    if isinstance(score, (int, float)):
+                    if isinstance(score, int | float):
                         scores.append((score, len(score_cells)))
                         score_cells.append(f"{score:.2f}")
                     else:
