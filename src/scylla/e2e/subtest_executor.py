@@ -301,6 +301,7 @@ class RateLimitCoordinator:
         self._pause_event = manager.Event()
         self._resume_event = manager.Event()
         self._rate_limit_info = manager.dict()
+        self._shutdown_event = manager.Event()
 
     def signal_rate_limit(self, info: RateLimitInfo) -> None:
         """Signal that a rate limit was detected (called by worker).
@@ -369,6 +370,20 @@ class RateLimitCoordinator:
         self._pause_event.clear()
         self._resume_event.set()
         logger.info("Rate limit coordinator: resume signal sent to all workers")
+
+    def signal_shutdown(self) -> None:
+        """Signal all workers to stop accepting new work and exit gracefully."""
+        self._shutdown_event.set()
+        logger.info("Shutdown signal sent to all workers")
+
+    def is_shutdown_requested(self) -> bool:
+        """Check if shutdown has been requested.
+
+        Returns:
+            True if shutdown is requested, False otherwise
+
+        """
+        return self._shutdown_event.is_set()
 
 
 class SubTestExecutor:
@@ -478,6 +493,14 @@ class SubTestExecutor:
             workspace = results_dir / "workspace"
 
         for run_num in range(1, self.config.runs_per_subtest + 1):
+            # Check for shutdown before starting run
+            if coordinator and coordinator.is_shutdown_requested():
+                logger.warning(
+                    f"Shutdown requested before run {run_num} of "
+                    f"{tier_id.value}/{subtest.id}, stopping..."
+                )
+                break
+
             # Check if run already completed (checkpoint resume)
             if checkpoint and checkpoint.is_run_completed(tier_id.value, subtest.id, run_num):
                 run_dir = results_dir / f"run_{run_num:02d}"
@@ -1196,6 +1219,14 @@ def run_tier_subtests_parallel(
                     f"{completed_count}/{total_subtests} complete, "
                     f"{active_workers} active, elapsed: {elapsed:.0f}s"
                 )
+
+                # Check for shutdown request
+                from scylla.e2e.runner import is_shutdown_requested
+
+                if is_shutdown_requested():
+                    logger.warning("Shutdown requested, signaling workers to stop...")
+                    coordinator.signal_shutdown()
+                    break
 
                 # Check if rate limit was signaled during execution
                 rate_limit_info = coordinator.get_rate_limit_info()
