@@ -40,6 +40,8 @@ def generate_run_report(
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
     token_stats: dict[str, int] | None = None,
+    agent_duration_seconds: float | None = None,
+    judge_duration_seconds: float | None = None,
 ) -> str:
     """Generate markdown report content for a single run.
 
@@ -52,7 +54,7 @@ def generate_run_report(
         passed: Whether the run passed
         reasoning: Judge's overall reasoning
         cost_usd: Total cost in USD
-        duration_seconds: Execution duration
+        duration_seconds: Total execution duration (agent + judge)
         tokens_input: Number of input tokens (legacy, use token_stats if available)
         tokens_output: Number of output tokens (legacy, use token_stats if available)
         exit_code: Process exit code
@@ -62,6 +64,8 @@ def generate_run_report(
         agent_output: Optional truncated agent output
         token_stats: Optional detailed token statistics dict with keys:
             input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens
+        agent_duration_seconds: Agent execution time (optional)
+        judge_duration_seconds: Judge evaluation time (optional)
 
     Returns:
         Formatted markdown report string.
@@ -100,11 +104,25 @@ def generate_run_report(
         f"| Grade | {grade} |",
         f"| Status | {pass_status} |",
         f"| Cost | ${cost_usd:.4f} |",
-        f"| Duration | {duration_seconds:.2f}s |",
-        f"| Tokens | {token_display} |",
-        f"| Exit Code | {exit_code} |",
-        "",
+        f"| Duration (Total) | {duration_seconds:.2f}s |",
     ]
+
+    # Add duration breakdown if available
+    if agent_duration_seconds is not None and judge_duration_seconds is not None:
+        lines.extend(
+            [
+                f"| - Agent | {agent_duration_seconds:.2f}s |",
+                f"| - Judge | {judge_duration_seconds:.2f}s |",
+            ]
+        )
+
+    lines.extend(
+        [
+            f"| Tokens | {token_display} |",
+            f"| Exit Code | {exit_code} |",
+            "",
+        ]
+    )
 
     # Add detailed token statistics table if available
     if token_stats:
@@ -347,6 +365,8 @@ def save_run_report(
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
     token_stats: dict[str, int] | None = None,
+    agent_duration_seconds: float | None = None,
+    judge_duration_seconds: float | None = None,
 ) -> None:
     """Generate and save markdown report for a single run.
 
@@ -373,6 +393,8 @@ def save_run_report(
         criteria_scores=criteria_scores,
         agent_output=agent_output,
         token_stats=token_stats,
+        agent_duration_seconds=agent_duration_seconds,
+        judge_duration_seconds=judge_duration_seconds,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

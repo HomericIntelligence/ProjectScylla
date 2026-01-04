@@ -545,6 +545,8 @@ class SubTestExecutor:
                             token_stats=TokenStats.from_dict(report_data["token_stats"]),
                             cost_usd=report_data["cost_usd"],
                             duration_seconds=report_data["duration_seconds"],
+                            agent_duration_seconds=report_data["agent_duration_seconds"],
+                            judge_duration_seconds=report_data["judge_duration_seconds"],
                             judge_score=report_data["judge_score"],
                             judge_passed=report_data["judge_passed"],
                             judge_grade=report_data["judge_grade"],
@@ -765,6 +767,7 @@ class SubTestExecutor:
             judge_result_file = get_judge_result_file(run_dir)
             logger.info(f"[SKIP] Judge already completed: {judge_result_file}")
             judgment = _load_judge_result(judge_dir)
+            judge_duration = 0.0  # Duration not tracked for reused results
         else:
             # Run judge (either agent ran, or judge result missing)
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Starting")
@@ -819,7 +822,9 @@ class SubTestExecutor:
             exit_code=result.exit_code,
             token_stats=token_stats,
             cost_usd=result.cost_usd,
-            duration_seconds=duration,
+            duration_seconds=duration + judge_duration,
+            agent_duration_seconds=duration,
+            judge_duration_seconds=judge_duration,
             judge_score=judgment["score"],
             judge_passed=judgment["passed"],
             judge_grade=judgment["grade"],
@@ -847,7 +852,7 @@ class SubTestExecutor:
             passed=judgment["passed"],
             reasoning=judgment["reasoning"],
             cost_usd=result.cost_usd,
-            duration_seconds=duration,
+            duration_seconds=duration + judge_duration,
             tokens_input=run_result.tokens_input,  # Legacy property for fallback
             tokens_output=run_result.tokens_output,  # Legacy property for fallback
             exit_code=result.exit_code,
@@ -856,6 +861,8 @@ class SubTestExecutor:
             criteria_scores=judgment.get("criteria_scores"),
             agent_output=result.stdout[:2000] if result.stdout else None,
             token_stats=token_stats.to_dict(),  # Pass detailed stats
+            agent_duration_seconds=duration,
+            judge_duration_seconds=judge_duration,
         )
 
         # JSON report for hierarchical linking
@@ -866,7 +873,7 @@ class SubTestExecutor:
             grade=judgment["grade"],
             passed=judgment["passed"],
             cost_usd=result.cost_usd,
-            duration_seconds=duration,
+            duration_seconds=duration + judge_duration,
         )
 
         # Log completion with total time
