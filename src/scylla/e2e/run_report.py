@@ -153,15 +153,13 @@ def generate_run_report(
             "",
             "## Task",
             "",
-            task_prompt,
+            "[View task prompt](./task_prompt.md)",
             "",
             "---",
             "",
             "## Judge Evaluation",
             "",
-            "### Overall Assessment",
-            "",
-            reasoning,
+            "[View full judgment](./judge/judgment.json)",
             "",
         ]
     )
@@ -240,26 +238,17 @@ def generate_run_report(
         lines.append("No files created in workspace.")
         lines.append("")
 
-    # Add agent output if available
-    if agent_output:
-        lines.extend(
-            [
-                "---",
-                "",
-                "## Agent Output",
-                "",
-                "```",
-                agent_output[:2000] if len(agent_output) > 2000 else agent_output,
-            ]
-        )
-        if len(agent_output) > 2000:
-            lines.append("... (truncated)")
-        lines.extend(
-            [
-                "```",
-                "",
-            ]
-        )
+    # Add agent output link
+    lines.extend(
+        [
+            "---",
+            "",
+            "## Agent Output",
+            "",
+            "[View agent output](./agent/output.txt)",
+            "",
+        ]
+    )
 
     lines.extend(
         [
@@ -509,8 +498,8 @@ def save_subtest_report(
         "",
         "## Runs Overview",
         "",
-        "| Run | Score | Grade | Pass | Cost | In | Out | Cache R | Cache W |",
-        "|-----|-------|-------|------|------|-----|-----|---------|---------|",
+        "| Run | Score | Grade | Pass | Duration | Cost | In | Out | Cache R | Cache W |",
+        "|-----|-------|-------|------|----------|------|-----|-----|---------|---------|",
     ]
 
     # Find best run
@@ -522,7 +511,8 @@ def save_subtest_report(
         ts = run.token_stats
         md_lines.append(
             f"| {run.run_number:02d}{is_best} | {run.judge_score:.2f} | {run.judge_grade} | "
-            f"{status} | ${run.cost_usd:.4f} | {ts.input_tokens:,} | {ts.output_tokens:,} | "
+            f"{status} | {run.duration_seconds:.2f}s | ${run.cost_usd:.4f} | "
+            f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
             f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} |"
         )
 
@@ -569,11 +559,13 @@ def save_subtest_report(
                     score_cells.append("-")
 
             # Bold/italicize best scores (***text*** = bold+italic)
+            # Only apply formatting if more than one result to compare
             if scores:
                 max_score = max(s[0] for s in scores)
                 best_indices = {s[1] for s in scores if s[0] == max_score}
+                should_highlight = len(score_cells) > 1
                 for idx, cell in enumerate(score_cells):
-                    if idx in best_indices and cell != "-":
+                    if should_highlight and idx in best_indices and cell != "-":
                         row += f" ***{cell}*** |"
                     else:
                         row += f" {cell} |"
@@ -581,6 +573,12 @@ def save_subtest_report(
                 row += "".join(f" {cell} |" for cell in score_cells)
 
             md_lines.append(row)
+
+        # Add Total row with judge's final scores
+        total_row = "| **Total** |"
+        for run in result.runs:
+            total_row += f" **{run.judge_score:.2f}** |"
+        md_lines.append(total_row)
 
     # Add aggregated token statistics
     ts = result.token_stats
@@ -691,16 +689,19 @@ def save_tier_report(
         "",
         "## Subtests Overview",
         "",
-        "| Subtest | Score | Pass | Cost | In | Out | Cache R | Cache W | Best |",
-        "|---------|-------|------|------|-----|-----|---------|---------|------|",
+        "| Subtest | Score | Pass | Duration | Cost | In | Out | Cache R | Cache W | Best |",
+        "|---------|-------|------|----------|------|-----|-----|---------|---------|------|",
     ]
 
     for subtest_id, subtest_result in sorted(result.subtest_results.items()):
         selected = "★" if subtest_result.selected_as_best else ""
         ts = subtest_result.token_stats
+        # Calculate total duration from runs
+        total_duration = sum(run.duration_seconds for run in subtest_result.runs)
         md_lines.append(
             f"| {subtest_id} | {subtest_result.median_score:.2f} | "
-            f"{subtest_result.pass_rate:.0%} | ${subtest_result.total_cost:.2f} | "
+            f"{subtest_result.pass_rate:.0%} | {total_duration:.2f}s | "
+            f"${subtest_result.total_cost:.2f} | "
             f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
             f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {selected} |"
         )
@@ -753,11 +754,13 @@ def save_tier_report(
                     score_cells.append("-")
 
             # Bold/italicize best scores
+            # Only apply formatting if more than one result to compare
             if scores:
                 max_score = max(s[0] for s in scores)
                 best_indices = {s[1] for s in scores if s[0] == max_score}
+                should_highlight = len(score_cells) > 1
                 for idx, cell in enumerate(score_cells):
-                    if idx in best_indices and cell != "-":
+                    if should_highlight and idx in best_indices and cell != "-":
                         row += f" ***{cell}*** |"
                     else:
                         row += f" {cell} |"
@@ -765,6 +768,13 @@ def save_tier_report(
                 row += "".join(f" {cell} |" for cell in score_cells)
 
             md_lines.append(row)
+
+        # Add Total row with judge's final scores
+        total_row = "| **Total** |"
+        for subtest_id in sorted(best_runs.keys()):
+            best_run = best_runs[subtest_id]
+            total_row += f" **{best_run.judge_score:.2f}** |"
+        md_lines.append(total_row)
 
     # Add aggregated token statistics
     ts = result.token_stats
@@ -874,8 +884,8 @@ def save_experiment_report(
         "",
         "## Tiers Overview",
         "",
-        "| Tier | Best | Score | Cost | In | Out | Cache R | Cache W | CoP |",
-        "|------|------|-------|------|-----|-----|---------|---------|-----|",
+        "| Tier | Best | Score | Duration | Cost | In | Out | Cache R | Cache W | CoP |",
+        "|------|------|-------|----------|------|-----|-----|---------|---------|-----|",
     ]
 
     for tier_id in result.config.tiers_to_run:
@@ -894,7 +904,8 @@ def save_experiment_report(
 
             md_lines.append(
                 f"| {tier_id.value} | {tier_result.best_subtest or 'N/A'} | "
-                f"{tier_result.best_subtest_score:.2f} | ${tier_result.total_cost:.2f} | "
+                f"{tier_result.best_subtest_score:.2f} | {tier_result.total_duration:.1f}s | "
+                f"${tier_result.total_cost:.2f} | "
                 f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
                 f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {cop_str} |"
             )
@@ -949,11 +960,13 @@ def save_experiment_report(
                     score_cells.append("-")
 
             # Bold/italicize best scores
+            # Only apply formatting if more than one result to compare
             if scores:
                 max_score = max(s[0] for s in scores)
                 best_indices = {s[1] for s in scores if s[0] == max_score}
+                should_highlight = len(score_cells) > 1
                 for idx, cell in enumerate(score_cells):
-                    if idx in best_indices and cell != "-":
+                    if should_highlight and idx in best_indices and cell != "-":
                         row += f" ***{cell}*** |"
                     else:
                         row += f" {cell} |"
@@ -961,6 +974,13 @@ def save_experiment_report(
                 row += "".join(f" {cell} |" for cell in score_cells)
 
             md_lines.append(row)
+
+        # Add Total row with judge's final scores
+        total_row = "| **Total** |"
+        for tier_val in sorted(best_runs_by_tier.keys()):
+            best_run = best_runs_by_tier[tier_val]
+            total_row += f" **{best_run.judge_score:.2f}** |"
+        md_lines.append(total_row)
 
     # Add aggregated token statistics
     ts = result.token_stats
