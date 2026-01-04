@@ -531,9 +531,19 @@ class TierManager:
 
         # If no resources configured, add generic hint
         if not has_any_resources:
-            return "Complete this task using available tools and your best judgment."
+            base_message = "Complete this task using available tools and your best judgment."
+        else:
+            base_message = "\n\n".join(suffixes)
 
-        return "\n\n".join(suffixes)
+        # Always add cleanup instructions (temporary files only)
+        cleanup_instructions = (
+            "\n\n## Cleanup Requirements\n"
+            "- Remove any temporary files created during task completion "
+            "(build artifacts, cache files, etc.)\n"
+            "- Clean up after yourself - the workspace should contain only final deliverables"
+        )
+
+        return base_message + cleanup_instructions
 
     def get_baseline_for_subtest(
         self,

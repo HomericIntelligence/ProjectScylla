@@ -26,6 +26,9 @@ class EvaluationCategory(Enum):
     ARCHITECTURAL_CLEANLINESS = "architectural_cleanliness"
     EFFICIENCY = "efficiency"
     CLEANUP_SCRIPT_QUALITY = "cleanup_script_quality"
+    WORKSPACE_CLEANLINESS = "workspace_cleanliness"
+    TEST_QUALITY = "test_quality"
+    SCOPE_DISCIPLINE = "scope_discipline"
 
 
 CATEGORY_WEIGHTS: dict[EvaluationCategory, float] = {
@@ -39,6 +42,9 @@ CATEGORY_WEIGHTS: dict[EvaluationCategory, float] = {
     EvaluationCategory.ARCHITECTURAL_CLEANLINESS: 0.5,
     EvaluationCategory.EFFICIENCY: 0.5,
     EvaluationCategory.CLEANUP_SCRIPT_QUALITY: 1.0,
+    EvaluationCategory.WORKSPACE_CLEANLINESS: 1.0,
+    EvaluationCategory.TEST_QUALITY: 1.0,
+    EvaluationCategory.SCOPE_DISCIPLINE: 1.0,
 }
 
 TOTAL_CATEGORY_WEIGHT: float = sum(CATEGORY_WEIGHTS.values())
@@ -152,7 +158,10 @@ JSON_OUTPUT_SCHEMA: str = """{
     "documentation": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
     "architectural_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
     "efficiency": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "cleanup_script_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" }
+    "cleanup_script_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
+    "workspace_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
+    "test_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
+    "scope_discipline": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" }
   },
   "summary": {
     "weighted_score": 0.0-1.0,
@@ -348,6 +357,13 @@ def get_category_descriptions() -> dict[str, str]:
         EvaluationCategory.EFFICIENCY.value: "Is the solution performant and resource-efficient?",
         EvaluationCategory.CLEANUP_SCRIPT_QUALITY.value: (
             "Does the cleanup script work correctly and thoroughly?"
+        ),
+        EvaluationCategory.WORKSPACE_CLEANLINESS.value: (
+            "Are files proportionate to task complexity and do they meaningfully contribute?"
+        ),
+        EvaluationCategory.TEST_QUALITY.value: ("Are tests appropriate and valuable for the task?"),
+        EvaluationCategory.SCOPE_DISCIPLINE.value: (
+            "Is the solution appropriately scoped without over-engineering?"
         ),
     }
 
