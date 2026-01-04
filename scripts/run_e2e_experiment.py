@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import signal
 import sys
 from pathlib import Path
 
@@ -24,7 +25,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from scylla.e2e.models import ExperimentConfig, TierID
-from scylla.e2e.runner import run_experiment
+from scylla.e2e.runner import request_shutdown, run_experiment
 
 # Configure logging
 logging.basicConfig(
@@ -344,6 +345,14 @@ def main() -> int:
         logging.getLogger().setLevel(logging.DEBUG)
     elif args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
+
+    # Register signal handlers for graceful shutdown
+    def signal_handler(signum: int, frame):
+        logger.warning(f"Received signal {signum}, initiating graceful shutdown...")
+        request_shutdown()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     try:
         # Build configuration

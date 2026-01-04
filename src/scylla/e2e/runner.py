@@ -47,6 +47,29 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Global shutdown coordination
+_shutdown_requested = False
+
+
+def request_shutdown() -> None:
+    """Request graceful shutdown of the experiment.
+
+    This is typically called by signal handlers (SIGINT, SIGTERM).
+    """
+    global _shutdown_requested
+    _shutdown_requested = True
+    logger.warning("Graceful shutdown requested")
+
+
+def is_shutdown_requested() -> bool:
+    """Check if shutdown has been requested.
+
+    Returns:
+        True if shutdown is requested, False otherwise
+
+    """
+    return _shutdown_requested
+
 
 class E2ERunner:
     """Main runner for E2E experiments.
@@ -186,29 +209,84 @@ class E2ERunner:
                 # Resuming - base repo already exists
                 logger.debug(f"Using existing base repo: {self.workspace_manager.base_repo}")
 
-        # Run tiers
+        # Run tiers (with shutdown handling)
         tier_results: dict[TierID, TierResult] = {}
         previous_baseline: TierBaseline | None = None
+        checkpoint_path = self.experiment_dir / "checkpoint.json"
 
-        for tier_id in self.config.tiers_to_run:
-            logger.info(f"Starting tier {tier_id.value}")
+        try:
+            for tier_id in self.config.tiers_to_run:
+                # Check for shutdown before starting tier
+                if is_shutdown_requested():
+                    logger.warning(f"Shutdown requested before tier {tier_id.value}, stopping...")
+                    break
 
-            tier_result = self._run_tier(tier_id, previous_baseline)
-            tier_results[tier_id] = tier_result
+                logger.info(f"Starting tier {tier_id.value}")
 
-            # Set baseline for next tier
-            if tier_result.best_subtest:
-                subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
-                previous_baseline = self.tier_manager.get_baseline_for_subtest(
-                    tier_id=tier_id,
-                    subtest_id=tier_result.best_subtest,
-                    results_dir=subtest_dir,
+                tier_result = self._run_tier(tier_id, previous_baseline)
+                tier_results[tier_id] = tier_result
+
+                # Set baseline for next tier
+                if tier_result.best_subtest:
+                    subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
+                    previous_baseline = self.tier_manager.get_baseline_for_subtest(
+                        tier_id=tier_id,
+                        subtest_id=tier_result.best_subtest,
+                        results_dir=subtest_dir,
+                    )
+
+                # Save intermediate results
+                self._save_tier_result(tier_id, tier_result)
+
+        finally:
+            # Save checkpoint on interrupt
+            if is_shutdown_requested() and self.checkpoint:
+                self.checkpoint.status = "interrupted"
+                self.checkpoint.last_updated_at = datetime.now(UTC).isoformat()
+                save_checkpoint(self.checkpoint, checkpoint_path)
+                logger.warning("💾 Checkpoint saved after interrupt")
+            self._cleanup_pid_file()
+
+        # If shutdown was requested, return partial results
+        if is_shutdown_requested():
+            logger.warning("Experiment interrupted - returning partial results")
+            end_time = datetime.now(UTC)
+            total_duration = (end_time - start_time).total_seconds()
+            total_cost = sum(t.total_cost for t in tier_results.values())
+
+            # Find frontier from completed tiers
+            frontier_tier, frontier_cop = self._find_frontier(tier_results)
+
+            # Aggregate token stats from completed tiers
+            from functools import reduce
+
+            experiment_token_stats = (
+                reduce(
+                    lambda a, b: a + b,
+                    [t.token_stats for t in tier_results.values()],
+                    TokenStats(),
                 )
+                if tier_results
+                else TokenStats()
+            )
 
-            # Save intermediate results
-            self._save_tier_result(tier_id, tier_result)
+            return ExperimentResult(
+                config=self.config,
+                tier_results=tier_results,
+                best_overall_tier=frontier_tier,
+                best_overall_subtest=(
+                    tier_results[frontier_tier].best_subtest if frontier_tier else None
+                ),
+                frontier_cop=frontier_cop,
+                frontier_cop_tier=frontier_tier,
+                total_cost=total_cost,
+                total_duration_seconds=total_duration,
+                started_at=start_time.isoformat(),
+                completed_at=end_time.isoformat(),
+                token_stats=experiment_token_stats,
+            )
 
-        # Calculate overall metrics
+        # Calculate overall metrics (normal completion)
         end_time = datetime.now(UTC)
         total_duration = (end_time - start_time).total_seconds()
         total_cost = sum(t.total_cost for t in tier_results.values())
@@ -250,9 +328,6 @@ class E2ERunner:
 
         # Mark checkpoint as completed
         self._mark_checkpoint_completed()
-
-        # Clean up PID file
-        self._cleanup_pid_file()
 
         logger.info(
             f"✅ Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}"
