@@ -14,6 +14,7 @@ class EvalOrchestratorConfig:
     """Tests for OrchestratorConfig."""
 
     def test_defaults(self) -> None:
+        """Test Defaults."""
         config = OrchestratorConfig()
         assert config.base_path == Path(".")
         assert config.runs_per_tier == 10
@@ -23,6 +24,7 @@ class EvalOrchestratorConfig:
         assert config.verbose is False
 
     def test_custom_values(self) -> None:
+        """Test Custom values."""
         config = OrchestratorConfig(
             base_path=Path("/tmp/test"),
             runs_per_tier=5,
@@ -41,6 +43,7 @@ class TestEvalOrchestrator:
     """Tests for EvalOrchestrator."""
 
     def test_init_default(self) -> None:
+        """Test Init default."""
         orchestrator = EvalOrchestrator()
         assert orchestrator.config.base_path == Path(".")
         assert orchestrator.loader is not None
@@ -48,6 +51,7 @@ class TestEvalOrchestrator:
         assert orchestrator.result_writer is not None
 
     def test_init_with_config(self) -> None:
+        """Test Init with config."""
         config = OrchestratorConfig(
             base_path=Path("/tmp/test"),
             quiet=True,
@@ -57,6 +61,7 @@ class TestEvalOrchestrator:
         assert orchestrator.config.quiet is True
 
     def test_set_adapter(self) -> None:
+        """Test Set adapter."""
         orchestrator = EvalOrchestrator()
 
         def mock_adapter(**kwargs):
@@ -66,6 +71,7 @@ class TestEvalOrchestrator:
         assert orchestrator._adapter_func is mock_adapter
 
     def test_set_judge(self) -> None:
+        """Test Set judge."""
         orchestrator = EvalOrchestrator()
 
         def mock_judge(**kwargs):
@@ -153,6 +159,7 @@ output:
         return tmp_path
 
     def test_orchestrator_creates_with_fixture(self, test_env: Path) -> None:
+        """Test Orchestrator creates with fixture."""
         config = OrchestratorConfig(
             base_path=test_env,
             quiet=True,
@@ -161,6 +168,7 @@ output:
         assert orchestrator.config.base_path == test_env
 
     def test_orchestrator_loads_test(self, test_env: Path) -> None:
+        """Test Orchestrator loads test."""
         config = OrchestratorConfig(
             base_path=test_env,
             quiet=True,
@@ -174,6 +182,7 @@ output:
         assert test_case.source.repo == "https://github.com/octocat/Hello-World"
 
     def test_orchestrator_loads_rubric(self, test_env: Path) -> None:
+        """Test Orchestrator loads rubric."""
         config = OrchestratorConfig(
             base_path=test_env,
             quiet=True,
@@ -338,7 +347,7 @@ output:
 
         with patch.object(WorkspaceManager, "clone"):
             with patch.object(WorkspaceManager, "checkout"):
-                result = orchestrator.run_single(
+                orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
                     tier_id="T0",

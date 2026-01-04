@@ -161,13 +161,14 @@ def list_agents_and_presets() -> None:
     for preset_name, config in PRESETS.items():
         print(f"\n  {preset_name}: {config['desc']}")
         if "levels" in config:
-            levels_str = ", ".join(f"L{l}" for l in config["levels"])
+            levels_str = ", ".join(f"L{level}" for level in config["levels"])
             print(f"    Levels: {levels_str}")
         if "pattern" in config:
             print(f"    Pattern: {config['pattern']}")
 
 
 def main():
+    """Compose agent configuration from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Compose agent configuration from selected levels/categories",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -203,7 +204,7 @@ def main():
         pattern = preset_config.get("pattern")
     else:
         if args.levels:
-            levels = [int(l.strip()) for l in args.levels.split(",")]
+            levels = [int(level.strip()) for level in args.levels.split(",")]
         pattern = args.pattern
 
     if levels is None and pattern is None:

@@ -10,7 +10,7 @@ class TestComponentNameIntegration:
 
     @pytest.fixture
     def setup_environment(self):
-        """Setup test environment."""
+        """Set up test environment."""
         # TODO: Initialize test environment
         # Setup dependencies, test data, etc.
         yield

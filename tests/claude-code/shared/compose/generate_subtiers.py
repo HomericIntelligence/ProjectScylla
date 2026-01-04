@@ -238,7 +238,7 @@ def run_compose_agents(config: str | dict, output: Path, dry_run: bool = False) 
         cmd.extend(["--preset", config])
     elif isinstance(config, dict):
         if "levels" in config:
-            levels_str = ",".join(str(l) for l in config["levels"])
+            levels_str = ",".join(str(level) for level in config["levels"])
             cmd.extend(["--levels", levels_str])
         if "pattern" in config:
             cmd.extend(["--pattern", config["pattern"]])
@@ -457,6 +457,7 @@ def list_configurations() -> None:
 
 
 def main():
+    """Generate sub-tier configurations from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Generate sub-tier configurations for testing",
         formatter_class=argparse.RawDescriptionHelpFormatter,

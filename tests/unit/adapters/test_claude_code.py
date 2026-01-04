@@ -372,7 +372,7 @@ class TestRun:
             mock_result.stderr = ""
 
             with patch("subprocess.run", return_value=mock_result) as mock_run:
-                result = adapter.run(config, tier_config)
+                adapter.run(config, tier_config)
 
             # Check that the command included the tier prompt
             call_args = mock_run.call_args

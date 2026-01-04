@@ -21,7 +21,7 @@ def make_stats(
     std_dev: float = 0.05,
     count: int = 10,
 ) -> AggregatedStats:
-    """Helper to create AggregatedStats."""
+    """Create AggregatedStats for testing."""
     return AggregatedStats(
         median=median,
         mean=mean,
@@ -40,7 +40,7 @@ def make_tier_stats(
     cost_usd: float = 1.0,
     duration: float = 60.0,
 ) -> TierStatistics:
-    """Helper to create TierStatistics."""
+    """Create TierStatistics for testing."""
     composite = (pass_rate + impl_rate) / 2
     return TierStatistics(
         tier_id=tier_id,
@@ -58,6 +58,7 @@ class TestTierUplift:
     """Tests for TierUplift dataclass."""
 
     def test_create_uplift(self) -> None:
+        """Test Create uplift."""
         uplift = TierUplift(
             tier_id="T1",
             pass_rate_uplift=0.1,
@@ -74,6 +75,7 @@ class TestPromptSensitivityAnalysis:
     """Tests for PromptSensitivityAnalysis dataclass."""
 
     def test_create_analysis(self) -> None:
+        """Test Create analysis."""
         analysis = PromptSensitivityAnalysis(
             pass_rate_variance=0.05,
             impl_rate_variance=0.03,
@@ -94,6 +96,7 @@ class TestTierTransitionAssessment:
     """Tests for TierTransitionAssessment dataclass."""
 
     def test_create_assessment(self) -> None:
+        """Test Create assessment."""
         assessment = TierTransitionAssessment(
             from_tier="T0",
             to_tier="T1",
@@ -112,12 +115,14 @@ class TestCrossTierAnalyzerCalculateVariance:
     """Tests for calculate_variance method."""
 
     def test_single_tier(self) -> None:
+        """Test Single tier."""
         tier_stats = {"T0": make_tier_stats("T0")}
         analyzer = CrossTierAnalyzer(tier_stats)
         variance = analyzer.calculate_variance("pass_rate")
         assert variance == 0.0
 
     def test_multiple_tiers_same_values(self) -> None:
+        """Test Multiple tiers same values."""
         tier_stats = {
             "T0": make_tier_stats("T0", pass_rate=1.0),
             "T1": make_tier_stats("T1", pass_rate=1.0),
@@ -127,6 +132,7 @@ class TestCrossTierAnalyzerCalculateVariance:
         assert variance == 0.0
 
     def test_multiple_tiers_different_values(self) -> None:
+        """Test Multiple tiers different values."""
         tier_stats = {
             "T0": make_tier_stats("T0", impl_rate=0.6),
             "T1": make_tier_stats("T1", impl_rate=0.8),
@@ -140,16 +146,19 @@ class TestCrossTierAnalyzerInterpretSensitivity:
     """Tests for interpret_sensitivity method."""
 
     def test_low_sensitivity(self) -> None:
+        """Test Low sensitivity."""
         analyzer = CrossTierAnalyzer({})
         assert analyzer.interpret_sensitivity(0.01) == "low"
         assert analyzer.interpret_sensitivity(0.04) == "low"
 
     def test_medium_sensitivity(self) -> None:
+        """Test Medium sensitivity."""
         analyzer = CrossTierAnalyzer({})
         assert analyzer.interpret_sensitivity(0.06) == "medium"
         assert analyzer.interpret_sensitivity(0.14) == "medium"
 
     def test_high_sensitivity(self) -> None:
+        """Test High sensitivity."""
         analyzer = CrossTierAnalyzer({})
         assert analyzer.interpret_sensitivity(0.16) == "high"
         assert analyzer.interpret_sensitivity(0.5) == "high"
@@ -159,6 +168,7 @@ class TestCrossTierAnalyzerCalculateUplift:
     """Tests for calculate_uplift method."""
 
     def test_uplift_vs_t0(self) -> None:
+        """Test Uplift vs t0."""
         tier_stats = {
             "T0": make_tier_stats("T0", pass_rate=1.0, impl_rate=0.6),
             "T1": make_tier_stats("T1", pass_rate=1.0, impl_rate=0.8),
@@ -170,6 +180,7 @@ class TestCrossTierAnalyzerCalculateUplift:
         assert uplift.impl_rate_uplift == pytest.approx(0.333, rel=0.01)
 
     def test_no_t0_baseline(self) -> None:
+        """Test No t0 baseline."""
         tier_stats = {
             "T1": make_tier_stats("T1", pass_rate=1.0, impl_rate=0.8),
         }
@@ -180,6 +191,7 @@ class TestCrossTierAnalyzerCalculateUplift:
         assert uplift.impl_rate_uplift == 0.0
 
     def test_cost_change(self) -> None:
+        """Test Cost change."""
         tier_stats = {
             "T0": make_tier_stats("T0", cost_usd=1.0),
             "T1": make_tier_stats("T1", cost_usd=1.5),
@@ -225,6 +237,7 @@ class TestCrossTierAnalyzerAnalyze:
     """Tests for analyze method."""
 
     def test_empty_tiers(self) -> None:
+        """Test Empty tiers."""
         analyzer = CrossTierAnalyzer({})
         analysis = analyzer.analyze()
 
@@ -234,6 +247,7 @@ class TestCrossTierAnalyzerAnalyze:
         assert analysis.best_value_tier == "T0"
 
     def test_single_tier(self) -> None:
+        """Test Single tier."""
         tier_stats = {"T0": make_tier_stats("T0")}
         analyzer = CrossTierAnalyzer(tier_stats)
         analysis = analyzer.analyze()
@@ -243,6 +257,7 @@ class TestCrossTierAnalyzerAnalyze:
         assert analysis.best_value_tier == "T0"
 
     def test_multiple_tiers(self) -> None:
+        """Test Multiple tiers."""
         tier_stats = {
             "T0": make_tier_stats("T0", pass_rate=1.0, impl_rate=0.6, cost_usd=1.0),
             "T1": make_tier_stats("T1", pass_rate=1.0, impl_rate=0.8, cost_usd=1.2),
@@ -270,6 +285,7 @@ class TestCrossTierAnalyzerAnalyze:
         assert analysis.best_value_tier == "T1"
 
     def test_cost_of_pass_delta(self) -> None:
+        """Test Cost of pass delta."""
         tier_stats = {
             "T0": make_tier_stats("T0", pass_rate=1.0, cost_usd=1.0),
             "T1": make_tier_stats("T1", pass_rate=1.0, cost_usd=2.0),
@@ -286,6 +302,7 @@ class TestCrossTierAnalyzerAssessAllTransitions:
     """Tests for assess_all_transitions method."""
 
     def test_assess_all(self) -> None:
+        """Test Assess all."""
         tier_stats = {
             "T0": make_tier_stats("T0", pass_rate=0.7, impl_rate=0.6),
             "T1": make_tier_stats("T1", pass_rate=0.8, impl_rate=0.7),
@@ -301,6 +318,7 @@ class TestCrossTierAnalyzerAssessAllTransitions:
         assert transitions[1].to_tier == "T2"
 
     def test_single_tier(self) -> None:
+        """Test Single tier."""
         tier_stats = {"T0": make_tier_stats("T0")}
         analyzer = CrossTierAnalyzer(tier_stats)
         transitions = analyzer.assess_all_transitions()

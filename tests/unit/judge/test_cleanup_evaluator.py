@@ -15,6 +15,7 @@ class TestCleanupEvaluation:
     """Tests for CleanupEvaluation dataclass."""
 
     def test_create_evaluation(self) -> None:
+        """Test Create evaluation."""
         evaluation = CleanupEvaluation(
             script_exists=True,
             script_path=Path("/workspace/cleanup.sh"),
@@ -29,6 +30,7 @@ class TestCleanupEvaluation:
         assert evaluation.score == 1.0
 
     def test_no_script_evaluation(self) -> None:
+        """Test No script evaluation."""
         evaluation = CleanupEvaluation(
             script_exists=False,
             script_path=None,
@@ -46,6 +48,7 @@ class TestCleanupEvaluatorFindScript:
     """Tests for find_cleanup_script method."""
 
     def test_finds_cleanup_sh(self, tmp_path: Path) -> None:
+        """Test Finds cleanup sh."""
         (tmp_path / "cleanup.sh").write_text("#!/bin/bash\necho 'clean'")
         evaluator = CleanupEvaluator(tmp_path)
         script = evaluator.find_cleanup_script()
@@ -53,6 +56,7 @@ class TestCleanupEvaluatorFindScript:
         assert script.name == "cleanup.sh"
 
     def test_finds_scripts_cleanup_sh(self, tmp_path: Path) -> None:
+        """Test Finds scripts cleanup sh."""
         scripts_dir = tmp_path / "scripts"
         scripts_dir.mkdir()
         (scripts_dir / "cleanup.sh").write_text("#!/bin/bash\necho 'clean'")
@@ -62,6 +66,7 @@ class TestCleanupEvaluatorFindScript:
         assert str(script).endswith("scripts/cleanup.sh")
 
     def test_finds_makefile_with_clean(self, tmp_path: Path) -> None:
+        """Test Finds makefile with clean."""
         (tmp_path / "Makefile").write_text("clean:\n\trm -rf build\n")
         evaluator = CleanupEvaluator(tmp_path)
         script = evaluator.find_cleanup_script()
@@ -69,12 +74,14 @@ class TestCleanupEvaluatorFindScript:
         assert script.name == "Makefile"
 
     def test_ignores_makefile_without_clean(self, tmp_path: Path) -> None:
+        """Test Ignores makefile without clean."""
         (tmp_path / "Makefile").write_text("build:\n\techo 'building'\n")
         evaluator = CleanupEvaluator(tmp_path)
         script = evaluator.find_cleanup_script()
         assert script is None
 
     def test_no_script_found(self, tmp_path: Path) -> None:
+        """Test No script found."""
         evaluator = CleanupEvaluator(tmp_path)
         script = evaluator.find_cleanup_script()
         assert script is None
@@ -93,18 +100,21 @@ class TestCleanupEvaluatorMakefileHasClean:
     """Tests for _makefile_has_clean method."""
 
     def test_clean_target(self, tmp_path: Path) -> None:
+        """Test Clean target."""
         makefile = tmp_path / "Makefile"
         makefile.write_text("clean:\n\trm -rf build\n")
         evaluator = CleanupEvaluator(tmp_path)
         assert evaluator._makefile_has_clean(makefile) is True
 
     def test_clean_target_with_space(self, tmp_path: Path) -> None:
+        """Test Clean target with space."""
         makefile = tmp_path / "Makefile"
         makefile.write_text("clean :\n\trm -rf build\n")
         evaluator = CleanupEvaluator(tmp_path)
         assert evaluator._makefile_has_clean(makefile) is True
 
     def test_no_clean_target(self, tmp_path: Path) -> None:
+        """Test No clean target."""
         makefile = tmp_path / "Makefile"
         makefile.write_text("build:\n\techo 'building'\n")
         evaluator = CleanupEvaluator(tmp_path)
@@ -115,6 +125,7 @@ class TestCleanupEvaluatorRunCleanup:
     """Tests for run_cleanup method."""
 
     def test_successful_script(self, tmp_path: Path) -> None:
+        """Test Successful script."""
         script = tmp_path / "cleanup.sh"
         script.write_text("#!/bin/bash\necho 'cleaned'\nexit 0\n")
         evaluator = CleanupEvaluator(tmp_path)
@@ -123,6 +134,7 @@ class TestCleanupEvaluatorRunCleanup:
         assert "cleaned" in output
 
     def test_failing_script(self, tmp_path: Path) -> None:
+        """Test Failing script."""
         script = tmp_path / "cleanup.sh"
         script.write_text("#!/bin/bash\nexit 1\n")
         evaluator = CleanupEvaluator(tmp_path)
@@ -130,6 +142,7 @@ class TestCleanupEvaluatorRunCleanup:
         assert success is False
 
     def test_makefile_clean(self, tmp_path: Path) -> None:
+        """Test Makefile clean."""
         makefile = tmp_path / "Makefile"
         makefile.write_text(".PHONY: clean\nclean:\n\t@echo 'cleaned'\n")
         evaluator = CleanupEvaluator(tmp_path)
@@ -142,6 +155,7 @@ class TestCleanupEvaluatorCaptureState:
     """Tests for state capture and verification."""
 
     def test_capture_initial_state(self, tmp_path: Path) -> None:
+        """Test Capture initial state."""
         (tmp_path / "file1.txt").write_text("content")
         evaluator = CleanupEvaluator(tmp_path)
         evaluator.capture_initial_state()
@@ -149,6 +163,7 @@ class TestCleanupEvaluatorCaptureState:
         assert "file1.txt" in evaluator.initial_state
 
     def test_verify_cleanup_no_artifacts(self, tmp_path: Path) -> None:
+        """Test Verify cleanup no artifacts."""
         evaluator = CleanupEvaluator(tmp_path)
         evaluator.capture_initial_state()
         # No new files, cleanup complete
@@ -157,6 +172,7 @@ class TestCleanupEvaluatorCaptureState:
         assert artifacts == []
 
     def test_verify_cleanup_with_artifacts(self, tmp_path: Path) -> None:
+        """Test Verify cleanup with artifacts."""
         evaluator = CleanupEvaluator(tmp_path)
         evaluator.capture_initial_state()
         # Create build artifact
@@ -168,6 +184,7 @@ class TestCleanupEvaluatorCaptureState:
         assert len(artifacts) > 0
 
     def test_verify_cleanup_no_initial_state(self, tmp_path: Path) -> None:
+        """Test Verify cleanup no initial state."""
         evaluator = CleanupEvaluator(tmp_path)
         # No initial state captured
         complete, artifacts = evaluator.verify_cleanup()
@@ -179,20 +196,24 @@ class TestCleanupEvaluatorIsBuildArtifact:
     """Tests for _is_build_artifact method."""
 
     def test_build_directory(self, tmp_path: Path) -> None:
+        """Test Build directory."""
         evaluator = CleanupEvaluator(tmp_path)
         assert evaluator._is_build_artifact("build/output.txt") is True
         assert evaluator._is_build_artifact("dist/package.tar.gz") is True
 
     def test_pycache(self, tmp_path: Path) -> None:
+        """Test Pycache."""
         evaluator = CleanupEvaluator(tmp_path)
         assert evaluator._is_build_artifact("__pycache__/module.cpython-311.pyc") is True
 
     def test_object_files(self, tmp_path: Path) -> None:
+        """Test Object files."""
         evaluator = CleanupEvaluator(tmp_path)
         assert evaluator._is_build_artifact("main.o") is True
         assert evaluator._is_build_artifact("module.pyc") is True
 
     def test_not_artifact(self, tmp_path: Path) -> None:
+        """Test Not artifact."""
         evaluator = CleanupEvaluator(tmp_path)
         assert evaluator._is_build_artifact("src/main.py") is False
         assert evaluator._is_build_artifact("README.md") is False
@@ -202,6 +223,7 @@ class TestCleanupEvaluatorEvaluate:
     """Tests for the full evaluate method."""
 
     def test_no_script(self, tmp_path: Path) -> None:
+        """Test No script."""
         evaluator = CleanupEvaluator(tmp_path)
         result = evaluator.evaluate()
         assert result.script_exists is False
@@ -209,6 +231,7 @@ class TestCleanupEvaluatorEvaluate:
         assert "No cleanup script" in result.notes
 
     def test_successful_full_cleanup(self, tmp_path: Path) -> None:
+        """Test Successful full cleanup."""
         script = tmp_path / "cleanup.sh"
         script.write_text("#!/bin/bash\necho 'cleaned'\n")
         evaluator = CleanupEvaluator(tmp_path)
@@ -220,6 +243,7 @@ class TestCleanupEvaluatorEvaluate:
         assert result.score == CleanupEvaluator.SCORE_FULL_CLEANUP
 
     def test_script_fails(self, tmp_path: Path) -> None:
+        """Test Script fails."""
         script = tmp_path / "cleanup.sh"
         script.write_text("#!/bin/bash\nexit 1\n")
         evaluator = CleanupEvaluator(tmp_path)
@@ -229,6 +253,7 @@ class TestCleanupEvaluatorEvaluate:
         assert result.score == CleanupEvaluator.SCORE_SCRIPT_FAILED
 
     def test_partial_cleanup(self, tmp_path: Path) -> None:
+        """Test Partial cleanup."""
         # Create cleanup script that doesn't remove all artifacts
         script = tmp_path / "cleanup.sh"
         script.write_text("#!/bin/bash\necho 'partial cleanup'\n")

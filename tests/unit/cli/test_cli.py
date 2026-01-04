@@ -12,6 +12,7 @@ class TestCLIGroup:
     """Tests for main CLI group."""
 
     def test_help(self) -> None:
+        """Test Help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--help"])
 
@@ -20,6 +21,7 @@ class TestCLIGroup:
         assert "AI Agent Testing Framework" in result.output
 
     def test_version(self) -> None:
+        """Test Version."""
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
 
@@ -31,6 +33,7 @@ class TestRunCommand:
     """Tests for 'run' command."""
 
     def test_run_help(self) -> None:
+        """Test Run help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["run", "--help"])
 
@@ -41,6 +44,7 @@ class TestRunCommand:
         assert "--runs" in result.output
 
     def test_run_verbose_and_quiet_error(self) -> None:
+        """Test Run verbose and quiet error."""
         runner = CliRunner()
         result = runner.invoke(cli, ["run", "001-test", "--verbose", "--quiet"])
 
@@ -61,6 +65,7 @@ class TestReportCommand:
     """Tests for 'report' command."""
 
     def test_report_help(self) -> None:
+        """Test Report help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["report", "--help"])
 
@@ -93,6 +98,7 @@ class TestListCommand:
     """Tests for 'list' command."""
 
     def test_list_help(self) -> None:
+        """Test List help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list", "--help"])
 
@@ -100,6 +106,7 @@ class TestListCommand:
         assert "List available test cases" in result.output
 
     def test_list_basic(self) -> None:
+        """Test List basic."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list"])
 
@@ -108,6 +115,7 @@ class TestListCommand:
         assert "001-justfile-to-makefile" in result.output
 
     def test_list_verbose(self) -> None:
+        """Test List verbose."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list", "--verbose"])
 
@@ -119,6 +127,7 @@ class TestListTiersCommand:
     """Tests for 'list-tiers' command."""
 
     def test_list_tiers_help(self) -> None:
+        """Test List tiers help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list-tiers", "--help"])
 
@@ -126,6 +135,7 @@ class TestListTiersCommand:
         assert "List available evaluation tiers" in result.output
 
     def test_list_tiers(self) -> None:
+        """Test List tiers."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list-tiers"])
 
@@ -141,6 +151,7 @@ class TestListModelsCommand:
     """Tests for 'list-models' command."""
 
     def test_list_models_help(self) -> None:
+        """Test List models help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list-models", "--help"])
 
@@ -148,6 +159,7 @@ class TestListModelsCommand:
         assert "List configured models" in result.output
 
     def test_list_models(self) -> None:
+        """Test List models."""
         runner = CliRunner()
         result = runner.invoke(cli, ["list-models"])
 
@@ -160,6 +172,7 @@ class TestStatusCommand:
     """Tests for 'status' command."""
 
     def test_status_help(self) -> None:
+        """Test Status help."""
         runner = CliRunner()
         result = runner.invoke(cli, ["status", "--help"])
 
@@ -167,6 +180,7 @@ class TestStatusCommand:
         assert "Show status of a test evaluation" in result.output
 
     def test_status_basic(self) -> None:
+        """Test Status basic."""
         runner = CliRunner()
         result = runner.invoke(cli, ["status", "001-test"])
 

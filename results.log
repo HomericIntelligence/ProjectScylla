@@ -1,0 +1,102 @@
+2026-01-04 08:33:47 [INFO] __main__: Starting experiment: test-001
+2026-01-04 08:33:47 [INFO] __main__: Task repo: https://github.com/mvillmow/Hello-World
+2026-01-04 08:33:47 [INFO] __main__: Tiers: ['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']
+2026-01-04 08:33:47 [INFO] __main__: Runs per sub-test: 1
+2026-01-04 08:33:47 [DEBUG] scylla.e2e.runner: Symlinked task prompt to results/2026-01-04T16-33-47-test-001/prompt.md
+2026-01-04 08:33:47 [DEBUG] scylla.e2e.runner: Symlinked criteria to results/2026-01-04T16-33-47-test-001/criteria.md
+2026-01-04 08:33:47 [DEBUG] scylla.e2e.runner: Symlinked rubric to results/2026-01-04T16-33-47-test-001/rubric.yaml
+2026-01-04 08:33:47 [DEBUG] scylla.e2e.runner: Created judge prompt template at results/2026-01-04T16-33-47-test-001/judge_prompt.md
+2026-01-04 08:33:47 [INFO] scylla.e2e.runner: 💾 Created checkpoint: results/2026-01-04T16-33-47-test-001/checkpoint.json
+2026-01-04 08:33:47 [DEBUG] scylla.e2e.runner: PID file written: results/2026-01-04T16-33-47-test-001/experiment.pid
+2026-01-04 08:33:47 [INFO] scylla.e2e.workspace_manager: Cloning base repo to results/2026-01-04T16-33-47-test-001/repo
+2026-01-04 08:33:49 [INFO] scylla.e2e.workspace_manager: Base repo setup complete
+2026-01-04 08:33:49 [INFO] scylla.e2e.runner: Starting tier T0
+2026-01-04 08:33:49 [INFO] scylla.e2e.runner: Limiting sub-tests from 24 to 2
+2026-01-04 08:33:49 [INFO] scylla.e2e.runner: Tier T0: 2 sub-tests, mode: custom
+2026-01-04 08:33:49 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:33:49.716Z [WORKTREE] - Creating worktree [T0_00] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T0/00/workspace]
+2026-01-04 08:33:49 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:33:49.723Z [WORKTREE] - Creating worktree [T0_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T0/01/workspace]
+2026-01-04 08:33:49 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:33:49.742Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T0/00/run_01/task_prompt.md]
+2026-01-04 08:33:49 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:33:49.744Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T0/01/run_01/task_prompt.md]
+2026-01-04 08:34:16 [INFO] scylla.e2e.runner: Starting tier T1
+2026-01-04 08:34:16 [INFO] scylla.e2e.runner: Limiting sub-tests from 10 to 2
+2026-01-04 08:34:16 [INFO] scylla.e2e.runner: Tier T1: 2 sub-tests, mode: custom
+2026-01-04 08:34:16 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:16.642Z [WORKTREE] - Creating worktree [T1_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T1/01/workspace]
+2026-01-04 08:34:16 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:16.645Z [WORKTREE] - Creating worktree [T1_02] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T1/02/workspace]
+2026-01-04 08:34:16 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:16.669Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T1/01/run_01/task_prompt.md]
+2026-01-04 08:34:16 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:16.669Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T1/02/run_01/task_prompt.md]
+2026-01-04 08:34:39 [INFO] scylla.e2e.runner: Starting tier T2
+2026-01-04 08:34:39 [INFO] scylla.e2e.runner: Limiting sub-tests from 15 to 2
+2026-01-04 08:34:39 [INFO] scylla.e2e.runner: Tier T2: 2 sub-tests, mode: custom
+2026-01-04 08:34:39 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:39.375Z [WORKTREE] - Creating worktree [T2_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T2/01/workspace]
+2026-01-04 08:34:39 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:39.375Z [WORKTREE] - Creating worktree [T2_02] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T2/02/workspace]
+2026-01-04 08:34:39 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:39.394Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T2/01/run_01/task_prompt.md]
+2026-01-04 08:34:39 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:34:39.402Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T2/02/run_01/task_prompt.md]
+2026-01-04 08:35:04 [INFO] scylla.e2e.runner: Starting tier T3
+2026-01-04 08:35:04 [INFO] scylla.e2e.runner: Limiting sub-tests from 41 to 2
+2026-01-04 08:35:04 [INFO] scylla.e2e.runner: Tier T3: 2 sub-tests, mode: custom
+2026-01-04 08:35:04 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:35:04.510Z [WORKTREE] - Creating worktree [T3_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T3/01/workspace]
+2026-01-04 08:35:04 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:35:04.517Z [WORKTREE] - Creating worktree [T3_02] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T3/02/workspace]
+2026-01-04 08:35:04 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:35:04.562Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T3/01/run_01/task_prompt.md]
+2026-01-04 08:35:04 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:35:04.569Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T3/02/run_01/task_prompt.md]
+2026-01-04 08:37:22 [INFO] scylla.e2e.runner: Starting tier T4
+2026-01-04 08:37:22 [INFO] scylla.e2e.runner: Limiting sub-tests from 7 to 2
+2026-01-04 08:37:22 [INFO] scylla.e2e.runner: Tier T4: 2 sub-tests, mode: custom
+2026-01-04 08:37:23 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:37:23.029Z [WORKTREE] - Creating worktree [T4_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T4/01/workspace]
+2026-01-04 08:37:23 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:37:23.032Z [WORKTREE] - Creating worktree [T4_02] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T4/02/workspace]
+2026-01-04 08:37:23 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:37:23.046Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T4/02/run_01/task_prompt.md]
+2026-01-04 08:37:23 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:37:23.050Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T4/01/run_01/task_prompt.md]
+2026-01-04 08:38:05 [INFO] scylla.e2e.runner: Starting tier T5
+2026-01-04 08:38:05 [INFO] scylla.e2e.runner: Limiting sub-tests from 15 to 2
+2026-01-04 08:38:05 [INFO] scylla.e2e.runner: Tier T5: 2 sub-tests, mode: custom
+2026-01-04 08:38:05 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:38:05.850Z [WORKTREE] - Creating worktree [T5_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T5/01/workspace]
+2026-01-04 08:38:05 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:38:05.851Z [WORKTREE] - Creating worktree [T5_02] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T5/02/workspace]
+2026-01-04 08:38:05 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:38:05.867Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T5/02/run_01/task_prompt.md]
+2026-01-04 08:38:05 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:38:05.871Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T5/01/run_01/task_prompt.md]
+2026-01-04 08:38:32 [INFO] scylla.e2e.runner: Starting tier T6
+2026-01-04 08:38:32 [INFO] scylla.e2e.runner: Tier T6: 1 sub-tests, mode: custom
+2026-01-04 08:38:32 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:38:32.250Z [WORKTREE] - Creating worktree [T6_01] @ [/home/mvillmow/ProjectScylla/results/2026-01-04T16-33-47-test-001/T6/01/workspace]
+2026-01-04 08:38:32 [INFO] scylla.e2e.subtest_executor: 2026-01-04T16:38:32.277Z [AGENT] - Running agent with model[claude-sonnet-4-5-20250929] with prompt[results/2026-01-04T16-33-47-test-001/T6/01/run_01/task_prompt.md]
+2026-01-04 08:39:01 [ERROR] __main__: Experiment failed: 'AdapterTokenStats' object has no attribute 'to_dict'
+Traceback (most recent call last):
+  File "/home/mvillmow/ProjectScylla/scripts/run_e2e_experiment.py", line 350, in main
+    result = run_experiment(
+        config=config,
+    ...<2 lines>...
+        fresh=args.fresh,
+    )
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/runner.py", line 607, in run_experiment
+    return runner.run()
+           ~~~~~~~~~~^^
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/runner.py", line 193, in run
+    tier_result = self._run_tier(tier_id, previous_baseline)
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/runner.py", line 371, in _run_tier
+    subtest_results = run_tier_subtests_parallel(
+        config=self.config,
+    ...<7 lines>...
+        checkpoint_path=checkpoint_path,
+    )
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/subtest_executor.py", line 996, in run_tier_subtests_parallel
+    results[subtest.id] = executor.run_subtest(
+                          ~~~~~~~~~~~~~~~~~~~~^
+        tier_id=tier_id,
+        ^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        coordinator=None,  # No parallel workers
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/subtest_executor.py", line 449, in run_subtest
+    run_result = self._execute_single_run(
+        tier_id=tier_id,
+    ...<6 lines>...
+        task_prompt=task_prompt,
+    )
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/subtest_executor.py", line 621, in _execute_single_run
+    _save_agent_result(agent_dir, result)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/subtest_executor.py", line 107, in _save_agent_result
+    "token_stats": result.token_stats.to_dict(),
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/mvillmow/ProjectScylla/.pixi/envs/default/lib/python3.14/site-packages/pydantic/main.py", line 1026, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+AttributeError: 'AdapterTokenStats' object has no attribute 'to_dict'

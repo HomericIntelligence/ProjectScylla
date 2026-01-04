@@ -337,7 +337,6 @@ class JudgeEvaluator:
 
         while needs_retry and retry_runs < self.consensus_config.max_additional_runs:
             retry_runs += 1
-            total_runs = initial_runs + retry_runs
             logger.info(
                 f"Running additional judge evaluation {retry_runs}/"
                 f"{self.consensus_config.max_additional_runs} (reason: {reason})"
