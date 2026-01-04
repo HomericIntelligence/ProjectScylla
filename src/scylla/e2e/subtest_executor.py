@@ -1154,6 +1154,9 @@ def run_tier_subtests_parallel(
         return results
 
     # For multiple sub-tests, run in parallel with coordinator
+    total_subtests = len(tier_config.subtests)
+    start_time = time.time()
+
     with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
         futures = {}
 
@@ -1178,10 +1181,21 @@ def run_tier_subtests_parallel(
             futures[future] = subtest.id
 
         # Monitor futures and handle rate limits
+        completed_count = 0
         for future in as_completed(futures):
             subtest_id = futures[future]
             try:
                 results[subtest_id] = future.result()
+                completed_count += 1
+
+                # Log progress after each completion
+                elapsed = time.time() - start_time
+                active_workers = total_subtests - completed_count
+                logger.info(
+                    f"[PROGRESS] Tier {tier_id.value}: "
+                    f"{completed_count}/{total_subtests} complete, "
+                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
+                )
 
                 # Check if rate limit was signaled during execution
                 rate_limit_info = coordinator.get_rate_limit_info()
@@ -1217,6 +1231,16 @@ def run_tier_subtests_parallel(
                         consistency=0.0,
                         selection_reason=f"Rate limit: {e.info.error_message}",
                     )
+                    completed_count += 1
+
+                    # Log progress after error
+                    elapsed = time.time() - start_time
+                    active_workers = total_subtests - completed_count
+                    logger.info(
+                        f"[PROGRESS] Tier {tier_id.value}: "
+                        f"{completed_count}/{total_subtests} complete, "
+                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
+                    )
 
             except Exception as e:
                 # Other errors
@@ -1232,6 +1256,16 @@ def run_tier_subtests_parallel(
                     total_cost=0.0,
                     consistency=0.0,
                     selection_reason=f"Error: {e}",
+                )
+                completed_count += 1
+
+                # Log progress after error
+                elapsed = time.time() - start_time
+                active_workers = total_subtests - completed_count
+                logger.info(
+                    f"[PROGRESS] Tier {tier_id.value}: "
+                    f"{completed_count}/{total_subtests} complete, "
+                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
                 )
 
     return results
