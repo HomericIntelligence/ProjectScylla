@@ -9,6 +9,14 @@ import yaml
 from scylla.e2e.models import SubTestConfig, TierID
 from scylla.e2e.tier_manager import TierManager
 
+# Cleanup instructions that are appended to all prompts
+CLEANUP_INSTRUCTIONS = (
+    "\n\n## Cleanup Requirements\n"
+    "- Remove any temporary files created during task completion "
+    "(build artifacts, cache files, etc.)\n"
+    "- Clean up after yourself - the workspace should contain only final deliverables"
+)
+
 
 class TestBuildResourceSuffix:
     """Tests for TierManager.build_resource_suffix()."""
@@ -23,7 +31,10 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        assert result == "Maximize usage of all available tools to complete this task."
+        expected = (
+            "Maximize usage of all available tools to complete this task." + CLEANUP_INSTRUCTIONS
+        )
+        assert result == expected
 
     def test_tools_with_names(self) -> None:
         """Test that tools with specific names generates bullet list."""
@@ -37,6 +48,7 @@ class TestBuildResourceSuffix:
         result = manager.build_resource_suffix(subtest)
         expected = (
             "Maximize usage of the following tools to complete this task:\n- Bash\n- Read\n- Write"
+            + CLEANUP_INSTRUCTIONS
         )
         assert result == expected
 
@@ -52,7 +64,7 @@ class TestBuildResourceSuffix:
         result = manager.build_resource_suffix(subtest)
         expected = (
             "Maximize usage of the following MCP servers to complete this task:\n"
-            "- filesystem\n- git\n- memory"
+            "- filesystem\n- git\n- memory" + CLEANUP_INSTRUCTIONS
         )
         assert result == expected
 
@@ -66,7 +78,11 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        assert result == "Complete this task using available tools and your best judgment."
+        expected = (
+            "Complete this task using available tools and your best judgment."
+            + CLEANUP_INSTRUCTIONS
+        )
+        assert result == expected
 
     def test_single_tool(self) -> None:
         """Test that single tool uses 'Use' instead of 'Maximize usage'."""
@@ -78,7 +94,7 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        expected = "Use the following tool to complete this task:\n- Read"
+        expected = "Use the following tool to complete this task:\n- Read" + CLEANUP_INSTRUCTIONS
         assert result == expected
 
     def test_single_mcp_server(self) -> None:
@@ -91,7 +107,10 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        expected = "Use the following MCP server to complete this task:\n- filesystem"
+        expected = (
+            "Use the following MCP server to complete this task:\n- filesystem"
+            + CLEANUP_INSTRUCTIONS
+        )
         assert result == expected
 
     def test_multiple_resource_types(self) -> None:
