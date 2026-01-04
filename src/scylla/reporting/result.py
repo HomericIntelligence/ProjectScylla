@@ -202,7 +202,7 @@ def create_run_result(
     composite_score: float,
     timestamp: str | None = None,
 ) -> RunResult:
-    """Factory function to create a RunResult with all components.
+    """Create a RunResult with all components.
 
     Args:
         test_id: Test identifier
