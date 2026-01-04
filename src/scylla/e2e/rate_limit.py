@@ -293,8 +293,8 @@ def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
 
     Checks:
     1. run_result.json exists and has valid judge_reasoning
-    2. stderr.log doesn't contain rate limit patterns
-    3. stdout.log doesn't contain rate limit patterns in JSON is_error
+    2. agent/stderr.log doesn't contain rate limit patterns
+    3. agent/stdout.log doesn't contain rate limit patterns in JSON is_error
     4. exit_code is not -1 (unless other indicators show success)
 
     Args:
@@ -306,17 +306,18 @@ def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
         - failure_reason: Description of why validation failed, or None
     """
     run_result_file = run_dir / "run_result.json"
-    stderr_file = run_dir / "stderr.log"
-    stdout_file = run_dir / "stdout.log"
+    agent_dir = run_dir / "agent"
+    stderr_file = agent_dir / "stderr.log"
+    stdout_file = agent_dir / "stdout.log"
 
-    # Check stderr.log for rate limit patterns first
+    # Check agent/stderr.log for rate limit patterns first
     if stderr_file.exists():
         stderr_content = stderr_file.read_text()
         rate_info = detect_rate_limit("", stderr_content, source="agent")
         if rate_info:
             return False, f"Rate limit in stderr: {rate_info.error_message}"
 
-    # Check stdout.log for rate limit patterns in JSON
+    # Check agent/stdout.log for rate limit patterns in JSON
     if stdout_file.exists():
         stdout_content = stdout_file.read_text()
         rate_info = detect_rate_limit(stdout_content, "", source="agent")
