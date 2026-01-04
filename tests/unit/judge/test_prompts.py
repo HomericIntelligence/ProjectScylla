@@ -29,8 +29,8 @@ class TestEvaluationCategory:
     """Tests for EvaluationCategory enum."""
 
     def test_all_categories_present(self) -> None:
-        """Test all 10 categories are defined."""
-        assert len(EvaluationCategory) == 10
+        """Test all 13 categories are defined."""
+        assert len(EvaluationCategory) == 13
 
     def test_category_values(self) -> None:
         """Test category enum values."""
@@ -44,6 +44,9 @@ class TestEvaluationCategory:
         assert EvaluationCategory.ARCHITECTURAL_CLEANLINESS.value == "architectural_cleanliness"
         assert EvaluationCategory.EFFICIENCY.value == "efficiency"
         assert EvaluationCategory.CLEANUP_SCRIPT_QUALITY.value == "cleanup_script_quality"
+        assert EvaluationCategory.WORKSPACE_CLEANLINESS.value == "workspace_cleanliness"
+        assert EvaluationCategory.TEST_QUALITY.value == "test_quality"
+        assert EvaluationCategory.SCOPE_DISCIPLINE.value == "scope_discipline"
 
 
 class TestCategoryWeights:
@@ -61,7 +64,7 @@ class TestCategoryWeights:
 
     def test_total_weight(self) -> None:
         """Test total weight matches expected value."""
-        assert TOTAL_CATEGORY_WEIGHT == pytest.approx(9.5)
+        assert TOTAL_CATEGORY_WEIGHT == pytest.approx(12.5)
 
     def test_specific_weights(self) -> None:
         """Test specific category weights."""
