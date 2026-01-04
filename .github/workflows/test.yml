@@ -1,0 +1,43 @@
+name: Test
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+      - 'pyproject.toml'
+      - 'pixi.toml'
+      - '.github/workflows/test.yml'
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group:
+          - { name: "unit", path: "tests/unit" }
+          - { name: "integration", path: "tests/integration" }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.39.5
+          cache: true
+
+      - name: Run ${{ matrix.test-group.name }} tests
+        run: |
+          pixi run pytest ${{ matrix.test-group.path }} -v --cov=scylla --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage
+        if: matrix.test-group.name == 'unit'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: ${{ matrix.test-group.name }}
