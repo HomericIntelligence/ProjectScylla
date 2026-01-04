@@ -174,7 +174,8 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
                 ]
             ):
                 error_msg = str(result)
-                retry_after = parse_retry_after(stderr)
+                # Try parsing from error message first (JSON result field), then stderr
+                retry_after = parse_retry_after(error_msg) or parse_retry_after(stderr)
 
                 return RateLimitInfo(
                     source=source,
