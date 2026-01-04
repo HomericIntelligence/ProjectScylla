@@ -17,6 +17,7 @@ from scylla.e2e.rate_limit import (
     RateLimitInfo,
     detect_rate_limit,
     parse_retry_after,
+    validate_run_result,
     wait_for_rate_limit,
 )
 
@@ -471,3 +472,109 @@ class TestIntegration:
         assert info is not None
         assert info.source == "judge"
         assert info.retry_after_seconds == 66.0  # 60 * 1.1
+
+
+class TestValidateRunResult:
+    """Tests for validate_run_result function."""
+
+    def test_valid_run(self, tmp_path: Path) -> None:
+        """Test validation of a valid run."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        # Create valid run_result.json
+        (run_dir / "run_result.json").write_text(
+            json.dumps(
+                {
+                    "exit_code": 0,
+                    "judge_reasoning": "Task completed successfully",
+                }
+            )
+        )
+        (run_dir / "stderr.log").write_text("Normal output")
+        (run_dir / "stdout.log").write_text("Normal output")
+
+        is_valid, reason = validate_run_result(run_dir)
+
+        assert is_valid is True
+        assert reason is None
+
+    def test_rate_limited_run_in_stderr(self, tmp_path: Path) -> None:
+        """Test detection of rate-limited run via stderr."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        (run_dir / "run_result.json").write_text(
+            json.dumps(
+                {
+                    "exit_code": -1,
+                    "judge_reasoning": "Invalid: Unable to evaluate agent output",
+                }
+            )
+        )
+        (run_dir / "stderr.log").write_text(
+            "Rate limit from agent: You've hit your limit · resets 2am (America/Los_Angeles)"
+        )
+
+        is_valid, reason = validate_run_result(run_dir)
+
+        assert is_valid is False
+        assert "rate limit" in reason.lower()
+
+    def test_rate_limited_run_in_stdout_json(self, tmp_path: Path) -> None:
+        """Test detection of rate-limited run via stdout JSON."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        (run_dir / "run_result.json").write_text(
+            json.dumps(
+                {
+                    "exit_code": -1,
+                    "judge_reasoning": "Invalid: Unable to evaluate agent output",
+                }
+            )
+        )
+        (run_dir / "stdout.log").write_text(
+            json.dumps(
+                {
+                    "type": "result",
+                    "is_error": True,
+                    "result": "You've hit your limit · resets 2am (America/Los_Angeles)",
+                }
+            )
+        )
+
+        is_valid, reason = validate_run_result(run_dir)
+
+        assert is_valid is False
+        assert "rate limit" in reason.lower()
+
+    def test_exit_code_minus_one_with_invalid_judge(self, tmp_path: Path) -> None:
+        """Test detection of failed run with exit_code=-1 and invalid judge output."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        (run_dir / "run_result.json").write_text(
+            json.dumps(
+                {
+                    "exit_code": -1,
+                    "judge_reasoning": "Invalid: Unable to evaluate agent output",
+                }
+            )
+        )
+        (run_dir / "stderr.log").write_text("Some other error")
+
+        is_valid, reason = validate_run_result(run_dir)
+
+        assert is_valid is False
+        assert "exit_code=-1" in reason
+
+    def test_missing_files_returns_valid(self, tmp_path: Path) -> None:
+        """Test that missing files returns valid (no evidence of failure)."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        is_valid, reason = validate_run_result(run_dir)
+
+        assert is_valid is True
+        assert reason is None

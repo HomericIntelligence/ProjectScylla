@@ -96,6 +96,20 @@ class E2ECheckpoint:
 
         self.last_updated_at = datetime.now(UTC).isoformat()
 
+    def unmark_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> None:
+        """Remove a run from completed runs (for re-running invalid runs).
+
+        Args:
+            tier_id: Tier identifier (e.g., "T0", "T1")
+            subtest_id: Subtest identifier (e.g., "00-empty")
+            run_number: Run number (1-based)
+        """
+        if tier_id in self.completed_runs:
+            if subtest_id in self.completed_runs[tier_id]:
+                if run_number in self.completed_runs[tier_id][subtest_id]:
+                    self.completed_runs[tier_id][subtest_id].remove(run_number)
+                    self.last_updated_at = datetime.now(UTC).isoformat()
+
     def is_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> bool:
         """Check if a run has been completed.
 

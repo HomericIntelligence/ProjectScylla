@@ -58,6 +58,37 @@ def _phase_log(phase: str, message: str) -> None:
     logger.info(f"{timestamp} [{phase}] - {message}")
 
 
+def _move_to_failed(run_dir: Path, attempt: int = 1) -> Path:
+    """Move a failed run directory to .failed/ subdirectory.
+
+    Args:
+        run_dir: Path to the run directory (e.g., results/T0/01/run_01/)
+        attempt: Attempt number for naming (default 1)
+
+    Returns:
+        Path to the new location in .failed/
+    """
+    failed_dir = run_dir.parent / ".failed"
+    failed_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate new name: run_03 -> .failed/run_03_attempt_01
+    run_name = run_dir.name
+    new_name = f"{run_name}_attempt_{attempt:02d}"
+    new_path = failed_dir / new_name
+
+    # Find next available attempt number if exists
+    while new_path.exists():
+        attempt += 1
+        new_name = f"{run_name}_attempt_{attempt:02d}"
+        new_path = failed_dir / new_name
+
+    # Move the directory
+    shutil.move(str(run_dir), str(new_path))
+    logger.info(f"Moved failed run to {new_path}")
+
+    return new_path
+
+
 class RateLimitCoordinator:
     """Coordinates rate limit pause across parallel workers.
 
@@ -259,44 +290,62 @@ class SubTestExecutor:
         for run_num in range(1, self.config.runs_per_subtest + 1):
             # Check if run already completed (checkpoint resume)
             if checkpoint and checkpoint.is_run_completed(tier_id.value, subtest.id, run_num):
-                logger.info(
-                    f"Skipping completed run: {tier_id.value}/{subtest.id}/run_{run_num:02d}"
-                )
-                # Load existing result from disk
                 run_dir = results_dir / f"run_{run_num:02d}"
                 run_result_file = run_dir / "run_result.json"
+
                 if run_dir.exists() and run_result_file.exists():
-                    # Load from saved RunResult
-                    import json
-                    from pathlib import Path
+                    # Validate the run result before considering it completed
+                    from scylla.e2e.rate_limit import validate_run_result
 
-                    from scylla.e2e.models import TokenStats
+                    is_valid, failure_reason = validate_run_result(run_dir)
 
-                    with open(run_result_file) as f:
-                        report_data = json.load(f)
+                    if not is_valid:
+                        logger.warning(
+                            f"Previously completed run is invalid ({failure_reason}), re-running..."
+                        )
+                        # Move to .failed/ and unmark from checkpoint
+                        _move_to_failed(run_dir)
+                        checkpoint.unmark_run_completed(tier_id.value, subtest.id, run_num)
+                        if checkpoint_path:
+                            from scylla.e2e.checkpoint import save_checkpoint
 
-                    # Reconstruct RunResult from JSON
-                    run_result = RunResult(
-                        run_number=report_data["run_number"],
-                        exit_code=report_data["exit_code"],
-                        token_stats=TokenStats.from_dict(report_data["token_stats"]),
-                        cost_usd=report_data["cost_usd"],
-                        duration_seconds=report_data["duration_seconds"],
-                        judge_score=report_data["judge_score"],
-                        judge_passed=report_data["judge_passed"],
-                        judge_grade=report_data["judge_grade"],
-                        judge_reasoning=report_data["judge_reasoning"],
-                        workspace_path=Path(report_data["workspace_path"]),
-                        logs_path=Path(report_data["logs_path"]),
-                        command_log_path=(
-                            Path(report_data["command_log_path"])
-                            if report_data.get("command_log_path")
-                            else None
-                        ),
-                        criteria_scores=report_data.get("criteria_scores", {}),
-                    )
-                    runs.append(run_result)
-                continue
+                            save_checkpoint(checkpoint, checkpoint_path)
+                        # Don't skip - fall through to re-run
+                    else:
+                        logger.info(
+                            f"Skipping completed run: {tier_id.value}/{subtest.id}/run_{run_num:02d}"
+                        )
+                        # Load from saved RunResult
+                        import json
+                        from pathlib import Path
+
+                        from scylla.e2e.models import TokenStats
+
+                        with open(run_result_file) as f:
+                            report_data = json.load(f)
+
+                        # Reconstruct RunResult from JSON
+                        run_result = RunResult(
+                            run_number=report_data["run_number"],
+                            exit_code=report_data["exit_code"],
+                            token_stats=TokenStats.from_dict(report_data["token_stats"]),
+                            cost_usd=report_data["cost_usd"],
+                            duration_seconds=report_data["duration_seconds"],
+                            judge_score=report_data["judge_score"],
+                            judge_passed=report_data["judge_passed"],
+                            judge_grade=report_data["judge_grade"],
+                            judge_reasoning=report_data["judge_reasoning"],
+                            workspace_path=Path(report_data["workspace_path"]),
+                            logs_path=Path(report_data["logs_path"]),
+                            command_log_path=(
+                                Path(report_data["command_log_path"])
+                                if report_data.get("command_log_path")
+                                else None
+                            ),
+                            criteria_scores=report_data.get("criteria_scores", {}),
+                        )
+                        runs.append(run_result)
+                        continue
 
             # Check coordinator for pause signal before each run
             if coordinator:
@@ -329,6 +378,10 @@ class SubTestExecutor:
                     )
 
             except RateLimitError as e:
+                # Move the run directory to .failed/ so run number can be reused
+                if run_dir.exists():
+                    _move_to_failed(run_dir)
+
                 # Signal coordinator if available
                 if coordinator:
                     coordinator.signal_rate_limit(e.info)
@@ -465,6 +518,25 @@ class SubTestExecutor:
         # Convert adapter token stats to E2E token stats
         token_stats = result.token_stats.to_token_stats()
 
+        # Check for rate limit in run artifacts BEFORE considering complete
+        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo, detect_rate_limit
+
+        # Check stderr and stdout for rate limit patterns (adapter may have missed it)
+        stderr_content = result.stderr or ""
+        stdout_content = result.stdout or ""
+        rate_limit_info = detect_rate_limit(stdout_content, stderr_content, source="agent")
+
+        if rate_limit_info:
+            # Rate limit detected - raise error to prevent marking as completed
+            raise RateLimitError(rate_limit_info)
+
+        # Also check for "invalid" judge output with exit_code=-1
+        if result.exit_code == -1 and judgment.get("reasoning", "").startswith("Invalid:"):
+            # Double-check stderr for rate limit
+            rate_limit_info = detect_rate_limit(stdout_content, stderr_content, source="agent")
+            if rate_limit_info:
+                raise RateLimitError(rate_limit_info)
+
         run_result = RunResult(
             run_number=run_number,
             exit_code=result.exit_code,
@@ -582,14 +654,61 @@ class SubTestExecutor:
             duration=duration,
         )
 
-        if result.returncode != 0:
-            # Check for branch conflict and provide helpful error message
-            if "already exists" in result.stderr:
+        # Handle branch already exists (resume scenario)
+        if result.returncode != 0 and "already exists" in result.stderr:
+            logger.info(f"Branch {branch_name} exists, attempting recovery for resume...")
+
+            # Step 1: Remove stale worktree entry if it exists
+            prune_cmd = [
+                "git",
+                "-C",
+                str(self.workspace_manager.base_repo),
+                "worktree",
+                "prune",
+            ]
+            subprocess.run(prune_cmd, capture_output=True, text=True, timeout=30)
+
+            # Step 2: Try to remove existing worktree (may fail if already gone)
+            remove_cmd = [
+                "git",
+                "-C",
+                str(self.workspace_manager.base_repo),
+                "worktree",
+                "remove",
+                "--force",
+                str(workspace_abs),
+            ]
+            subprocess.run(remove_cmd, capture_output=True, text=True, timeout=30)
+
+            # Step 3: Delete the branch
+            delete_branch_cmd = [
+                "git",
+                "-C",
+                str(self.workspace_manager.base_repo),
+                "branch",
+                "-D",
+                branch_name,
+            ]
+            subprocess.run(delete_branch_cmd, capture_output=True, text=True, timeout=30)
+
+            # Step 4: Clean up workspace directory if exists
+            if workspace_abs.exists():
+                shutil.rmtree(workspace_abs)
+
+            # Step 5: Retry worktree creation
+            result = subprocess.run(
+                worktree_cmd,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+
+            if result.returncode != 0:
                 raise RuntimeError(
-                    f"Branch {branch_name} already exists. "
-                    f"Run `git branch -D {branch_name}` to delete it, "
-                    f"or clean up old worktrees with `git worktree prune`."
+                    f"Failed to create worktree even after cleanup: {result.stderr}"
                 )
+
+        elif result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree: {result.stderr}")
 
         # Save worktree creation command (create only, no cleanup)
