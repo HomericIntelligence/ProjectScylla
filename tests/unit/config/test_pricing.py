@@ -26,7 +26,7 @@ class TestModelPricing:
     def test_model_pricing_dict_not_empty(self) -> None:
         """MODEL_PRICING should contain known models."""
         assert len(MODEL_PRICING) > 0
-        assert "claude-sonnet-4-20250514" in MODEL_PRICING
+        assert "claude-sonnet-4-5-20250929" in MODEL_PRICING
 
     def test_pricing_values_positive(self) -> None:
         """All pricing values should be positive."""
@@ -41,8 +41,8 @@ class TestGetModelPricing:
 
     def test_known_model(self) -> None:
         """Known model should return specific pricing."""
-        pricing = get_model_pricing("claude-sonnet-4-20250514")
-        assert pricing.model_id == "claude-sonnet-4-20250514"
+        pricing = get_model_pricing("claude-sonnet-4-5-20250929")
+        assert pricing.model_id == "claude-sonnet-4-5-20250929"
         assert pricing.input_cost_per_million == 3.0
         assert pricing.output_cost_per_million == 15.0
 
@@ -66,7 +66,7 @@ class TestCalculateCost:
         cost = calculate_cost(
             tokens_input=1_000_000,
             tokens_output=1_000_000,
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
         )
         assert cost == pytest.approx(18.0)
 
@@ -76,7 +76,7 @@ class TestCalculateCost:
         cost = calculate_cost(
             tokens_input=1000,
             tokens_output=1000,
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
         )
         assert cost == pytest.approx(0.018)
 
@@ -86,7 +86,7 @@ class TestCalculateCost:
             tokens_input=1000,
             tokens_output=1000,
             tokens_cached=1000,
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
         )
         # Cached tokens have 0 cost by default
         assert cost == pytest.approx(0.018)
@@ -103,17 +103,17 @@ class TestBackwardCompatibility:
     def test_get_input_cost_per_1k(self) -> None:
         """get_input_cost_per_1k should convert per-million to per-1k."""
         # Sonnet: $3/M = $0.003/1k
-        cost = get_input_cost_per_1k("claude-sonnet-4-20250514")
+        cost = get_input_cost_per_1k("claude-sonnet-4-5-20250929")
         assert cost == pytest.approx(0.003)
 
     def test_get_output_cost_per_1k(self) -> None:
         """get_output_cost_per_1k should convert per-million to per-1k."""
         # Sonnet: $15/M = $0.015/1k
-        cost = get_output_cost_per_1k("claude-sonnet-4-20250514")
+        cost = get_output_cost_per_1k("claude-sonnet-4-5-20250929")
         assert cost == pytest.approx(0.015)
 
     def test_opus_pricing(self) -> None:
         """Opus should have higher pricing than Sonnet."""
-        opus_input = get_input_cost_per_1k("claude-opus-4-20250514")
-        sonnet_input = get_input_cost_per_1k("claude-sonnet-4-20250514")
+        opus_input = get_input_cost_per_1k("claude-opus-4-5-20251101")
+        sonnet_input = get_input_cost_per_1k("claude-sonnet-4-5-20250929")
         assert opus_input > sonnet_input

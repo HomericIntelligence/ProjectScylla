@@ -38,7 +38,7 @@ class TestBuildCommand:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -48,7 +48,7 @@ class TestBuildCommand:
 
             assert cmd[0] == "claude"
             assert "--model" in cmd
-            assert "claude-sonnet-4-20250514" in cmd
+            assert "claude-sonnet-4-5-20250929" in cmd
             assert "--print" in cmd
             assert "--dangerously-skip-permissions" in cmd
             assert "Test prompt" == cmd[-1]
@@ -62,7 +62,7 @@ class TestBuildCommand:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -87,7 +87,7 @@ class TestBuildCommand:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -110,7 +110,7 @@ class TestBuildCommand:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -325,7 +325,7 @@ class TestRun:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -354,7 +354,7 @@ class TestRun:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -394,7 +394,7 @@ class TestRun:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -424,7 +424,7 @@ class TestRun:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -443,7 +443,7 @@ class TestRun:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -470,7 +470,7 @@ class TestRun:
 
             adapter = ClaudeCodeAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-20250514",
+                model="claude-sonnet-4-5-20250929",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,

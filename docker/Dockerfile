@@ -60,7 +60,7 @@ RUN chmod +x /entrypoint.sh
 # These are documented but not set here - they're injected by the orchestrator
 #
 # TIER           - Test tier (T0, T1, T2, T3, T4, T5, T6)
-# MODEL          - Model identifier (e.g., claude-sonnet-4-20250514)
+# MODEL          - Model identifier (e.g., claude-sonnet-4-5-20250929)
 # RUN_NUMBER     - Run number (1-9 for prompt sensitivity)
 # ANTHROPIC_API_KEY - API key for Claude (passed from host)
 # OPENAI_API_KEY    - API key for OpenAI models (if needed)

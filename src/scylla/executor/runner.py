@@ -269,9 +269,9 @@ class EvalRunner:
         >>> summary = runner.run_test(
         ...     test_id="test-001",
         ...     tiers=["T0", "T1", "T2"],
-        ...     models=["claude-sonnet-4-20250514"],
+        ...     models=["claude-sonnet-4-5-20250929"],
         ... )
-        >>> print(f"T0 pass rate: {summary.tiers['T0']['claude-sonnet-4-20250514'].pass_rate}")
+        >>> print(f"T0 pass rate: {summary.tiers['T0']['claude-sonnet-4-5-20250929'].pass_rate}")
 
     """
 
