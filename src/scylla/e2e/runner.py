@@ -287,30 +287,28 @@ class E2ERunner:
         Args:
             experiment_dir: Root experiment directory
         """
-        import shutil
-
-        # Copy task prompt
+        # Symlink task prompt
         prompt_path = experiment_dir / "prompt.md"
         if self.config.task_prompt_file.exists():
-            shutil.copy2(self.config.task_prompt_file, prompt_path)
-            logger.debug(f"Copied task prompt to {prompt_path}")
+            prompt_path.symlink_to(self.config.task_prompt_file.resolve())
+            logger.debug(f"Symlinked task prompt to {prompt_path}")
 
-        # Copy criteria if exists (look for it relative to prompt file)
+        # Symlink criteria if exists (look for it relative to prompt file)
         prompt_dir = self.config.task_prompt_file.parent
         criteria_path = experiment_dir / "criteria.md"
         criteria_file = prompt_dir / "expected" / "criteria.md"
         if criteria_file.exists():
-            shutil.copy2(criteria_file, criteria_path)
-            logger.debug(f"Copied criteria to {criteria_path}")
+            criteria_path.symlink_to(criteria_file.resolve())
+            logger.debug(f"Symlinked criteria to {criteria_path}")
         else:
             criteria_path = None
 
-        # Copy rubric if exists
+        # Symlink rubric if exists
         rubric_path = experiment_dir / "rubric.yaml"
         rubric_file = prompt_dir / "expected" / "rubric.yaml"
         if rubric_file.exists():
-            shutil.copy2(rubric_file, rubric_path)
-            logger.debug(f"Copied rubric to {rubric_path}")
+            rubric_path.symlink_to(rubric_file.resolve())
+            logger.debug(f"Symlinked rubric to {rubric_path}")
         else:
             rubric_path = None
 
