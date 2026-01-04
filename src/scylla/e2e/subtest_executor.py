@@ -13,8 +13,10 @@ import logging
 import shutil
 import statistics
 import subprocess
+import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import UTC, datetime
+from enum import Enum
 from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -55,6 +57,16 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class ExecutionStage(str, Enum):
+    """Execution stages for worker thread reporting."""
+
+    WORKTREE = "WORKTREE"
+    AGENT = "AGENT"
+    JUDGE = "JUDGE"
+    CLEANUP = "CLEANUP"
+    COMPLETE = "COMPLETE"
+
+
 def _phase_log(phase: str, message: str) -> None:
     """Log a phase message with timestamp and prefix.
 
@@ -65,6 +77,23 @@ def _phase_log(phase: str, message: str) -> None:
     """
     timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     logger.info(f"{timestamp} [{phase}] - {message}")
+
+
+def _stage_log(
+    subtest_id: str, stage: ExecutionStage, status: str, elapsed: float | None = None
+) -> None:
+    """Log execution stage with sub-test context and timing.
+
+    Args:
+        subtest_id: Sub-test identifier (e.g., "T0_00")
+        stage: Execution stage
+        status: Status description (e.g., "Starting", "Complete")
+        elapsed: Optional elapsed time in seconds
+
+    """
+    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    elapsed_str = f" ({elapsed:.1f}s)" if elapsed is not None else ""
+    logger.info(f"{timestamp} [{subtest_id}] Stage: {stage.value} - {status}{elapsed_str}")
 
 
 def _move_to_failed(run_dir: Path, attempt: int = 1) -> Path:
@@ -551,6 +580,10 @@ class SubTestExecutor:
             RunResult with execution details.
 
         """
+        # Track execution timing and stages
+        subtest_id = f"{tier_id.value}_{subtest.id}"
+        start_time = time.time()
+
         # Create agent and judge subdirectories
         agent_dir = get_agent_dir(run_dir)
         judge_dir = get_judge_dir(run_dir)
@@ -585,6 +618,8 @@ class SubTestExecutor:
             duration = 0.0  # Duration not tracked for reused results
         else:
             # Run agent
+            _stage_log(subtest_id, ExecutionStage.AGENT, "Starting")
+
             adapter_config = AdapterConfig(
                 model=self.config.models[0],
                 prompt_file=prompt_file,
@@ -599,7 +634,7 @@ class SubTestExecutor:
                 f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]",
             )
 
-            start_time = datetime.now(UTC)
+            agent_start = datetime.now(UTC)
             try:
                 result = self.adapter.run(
                     config=adapter_config,
@@ -619,7 +654,7 @@ class SubTestExecutor:
                     api_calls=0,
                 )
 
-            duration = (datetime.now(UTC) - start_time).total_seconds()
+            duration = (datetime.now(UTC) - agent_start).total_seconds()
 
             # Log the command
             cmd = self.adapter._build_command(
@@ -648,6 +683,7 @@ class SubTestExecutor:
             # Save agent result for future resume
             _save_agent_result(agent_dir, result)
             agent_ran = True
+            _stage_log(subtest_id, ExecutionStage.AGENT, "Complete", duration)
 
         # Run judge evaluation (ALWAYS re-run if agent ran, requirement from user)
         # Only reuse judge result if agent was reused AND judge result exists
@@ -659,12 +695,18 @@ class SubTestExecutor:
             judgment = _load_judge_result(judge_dir)
         else:
             # Run judge (either agent ran, or judge result missing)
+            _stage_log(subtest_id, ExecutionStage.JUDGE, "Starting")
+            judge_start = datetime.now(UTC)
+
             judgment = self._run_judge(
                 workspace=workspace,
                 task_prompt=task_prompt,
                 stdout=result.stdout,
                 judge_dir=judge_dir,
             )
+
+            judge_duration = (datetime.now(UTC) - judge_start).total_seconds()
+            _stage_log(subtest_id, ExecutionStage.JUDGE, "Complete", judge_duration)
 
             # Save judge result for future resume
             from scylla.e2e.llm_judge import JudgeResult
@@ -754,6 +796,10 @@ class SubTestExecutor:
             cost_usd=result.cost_usd,
             duration_seconds=duration,
         )
+
+        # Log completion with total time
+        total_elapsed = time.time() - start_time
+        _stage_log(subtest_id, ExecutionStage.COMPLETE, "All stages complete", total_elapsed)
 
         return run_result
 
