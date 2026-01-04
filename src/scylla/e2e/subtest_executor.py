@@ -33,6 +33,13 @@ from scylla.e2e.models import (
     TierID,
     TokenStats,
 )
+from scylla.e2e.paths import (
+    RESULT_FILE,
+    get_agent_dir,
+    get_agent_result_file,
+    get_judge_dir,
+    get_judge_result_file,
+)
 from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo, wait_for_rate_limit
 from scylla.e2e.run_report import save_run_report, save_run_report_json
 from scylla.e2e.tier_manager import TierManager
@@ -111,7 +118,7 @@ def _save_agent_result(agent_dir: Path, result: AdapterResult) -> None:
         "api_calls": result.api_calls,
     }
 
-    with open(agent_dir / "result.json", "w") as f:
+    with open(agent_dir / RESULT_FILE, "w") as f:
         json.dump(result_data, f, indent=2)
 
 
@@ -129,7 +136,7 @@ def _load_agent_result(agent_dir: Path) -> AdapterResult:
 
     from scylla.adapters.base import AdapterResult, AdapterTokenStats
 
-    with open(agent_dir / "result.json") as f:
+    with open(agent_dir / RESULT_FILE) as f:
         data = json.load(f)
 
     token_stats = AdapterTokenStats(**data["token_stats"])
@@ -162,7 +169,7 @@ def _save_judge_result(judge_dir: Path, result: JudgeResult) -> None:
         "reasoning": result.reasoning,
     }
 
-    with open(judge_dir / "result.json", "w") as f:
+    with open(judge_dir / RESULT_FILE, "w") as f:
         json.dump(result_data, f, indent=2)
 
 
@@ -545,8 +552,8 @@ class SubTestExecutor:
 
         """
         # Create agent and judge subdirectories
-        agent_dir = run_dir / "agent"
-        judge_dir = run_dir / "judge"
+        agent_dir = get_agent_dir(run_dir)
+        judge_dir = get_judge_dir(run_dir)
         agent_dir.mkdir(parents=True, exist_ok=True)
         judge_dir.mkdir(parents=True, exist_ok=True)
 
@@ -568,7 +575,7 @@ class SubTestExecutor:
             extra_args.extend(["--max-turns", str(self.config.max_turns)])
 
         # Check if agent result already exists (resume case)
-        agent_result_file = agent_dir / "result.json"
+        agent_result_file = get_agent_result_file(run_dir)
         agent_ran = False
 
         if agent_result_file.exists():
@@ -644,7 +651,7 @@ class SubTestExecutor:
 
         # Run judge evaluation (ALWAYS re-run if agent ran, requirement from user)
         # Only reuse judge result if agent was reused AND judge result exists
-        judge_result_file = judge_dir / "result.json"
+        judge_result_file = get_judge_result_file(run_dir)
 
         if not agent_ran and judge_result_file.exists():
             # Reuse existing judge result (only if agent was also reused)
