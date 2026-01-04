@@ -58,6 +58,8 @@ select = ["E", "F", "W", "I", "N", "D", "UP"]
 ignore = [
     "D100",  # Missing docstring in public module
     "D104",  # Missing docstring in public package
+    "D203",  # 1 blank line before class (conflicts with D211)
+    "D213",  # Multi-line summary second line (conflicts with D212)
     "D417",  # Missing argument descriptions in docstring
 ]
 

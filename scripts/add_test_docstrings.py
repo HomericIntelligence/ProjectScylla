@@ -54,7 +54,7 @@ def add_docstrings_to_file(file_path: Path) -> int:
         line = lines[i]
 
         # Check if this is a test method definition
-        match = re.match(r'^(\s+)def (test_\w+)\(', line)
+        match = re.match(r"^(\s+)def (test_\w+)\(", line)
         if match:
             indent = match.group(1)
             method_name = match.group(2)
