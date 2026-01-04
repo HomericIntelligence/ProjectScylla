@@ -34,7 +34,7 @@ class ClaudeCodeAdapter(BaseAdapter):
     Example:
         >>> adapter = ClaudeCodeAdapter()
         >>> config = AdapterConfig(
-        ...     model="claude-sonnet-4-20250514",
+        ...     model="claude-sonnet-4-5-20250929",
         ...     prompt_file=Path("prompt.md"),
         ...     workspace=Path("/workspace"),
         ...     output_dir=Path("/output"),

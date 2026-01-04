@@ -21,7 +21,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       # Test configuration (override as needed)
       - TIER=${TIER:-T0}
-      - MODEL=${MODEL:-claude-sonnet-4-20250514}
+      - MODEL=${MODEL:-claude-sonnet-4-5-20250929}
       - RUN_NUMBER=${RUN_NUMBER:-1}
       - TEST_ID=${TEST_ID:-local-test}
       - TIMEOUT=${TIMEOUT:-300}
