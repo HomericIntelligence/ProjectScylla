@@ -7,7 +7,7 @@ description: |
 
 source:
   # Use a minimal public repo that exists
-  repo: "https://github.com/octocat/Hello-World"
+  repo: "https://github.com/mvillmow/Hello-World"
   hash: "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
 
 task:
