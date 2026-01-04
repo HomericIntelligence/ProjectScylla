@@ -38,6 +38,7 @@ class SensitivityAnalysis:
 
         Returns:
             Sensitivity level string
+
         """
         if variance < 0.05:
             return "low"
@@ -83,6 +84,7 @@ class MarkdownReportGenerator:
 
         Args:
             base_dir: Base directory for reports (e.g., 'reports/')
+
         """
         self.base_dir = base_dir
 
@@ -94,6 +96,7 @@ class MarkdownReportGenerator:
 
         Returns:
             Path to report directory
+
         """
         return self.base_dir / test_id
 
@@ -263,6 +266,7 @@ class MarkdownReportGenerator:
 
         Returns:
             Complete Markdown report string
+
         """
         sections = [
             self._generate_header(data),
@@ -283,6 +287,7 @@ class MarkdownReportGenerator:
 
         Returns:
             Path to written report.md
+
         """
         report_dir = self.get_report_dir(data.test_id)
         report_dir.mkdir(parents=True, exist_ok=True)
@@ -318,6 +323,7 @@ def create_tier_metrics(
 
     Returns:
         TierMetrics object
+
     """
     return TierMetrics(
         tier_id=tier_id,
@@ -349,6 +355,7 @@ def create_report_data(
 
     Returns:
         ReportData object
+
     """
     if timestamp is None:
         timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")

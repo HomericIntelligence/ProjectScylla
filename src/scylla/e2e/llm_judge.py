@@ -41,6 +41,7 @@ class JudgeResult:
         criteria_scores: Individual evaluations for each criterion, each containing
             'score' (float) and 'explanation' (str)
         raw_response: Raw LLM response for debugging
+
     """
 
     score: float
@@ -90,6 +91,7 @@ def _build_judge_prompt(
 
     Returns:
         Formatted evaluation context for the judge LLM.
+
     """
     sections = [
         f"## Task Given to Agent\n\n{task_prompt}",
@@ -149,6 +151,7 @@ def build_judge_prompt_with_paths(
 
     Returns:
         Judge prompt template with file path references.
+
     """
     sections = [
         "# Evaluation Context",
@@ -209,6 +212,7 @@ def _is_test_config_file(file_path: str) -> bool:
 
     Returns:
         True if the file should be ignored in evaluation.
+
     """
     # Normalize path for comparison
     path = file_path.strip()
@@ -238,6 +242,7 @@ def _get_workspace_state(workspace: Path) -> str:
 
     Returns:
         String listing modified/created file paths.
+
     """
     try:
         # Get modified, added, and untracked files using git status
@@ -298,6 +303,7 @@ def _get_patchfile(workspace: Path) -> str:
 
     Returns:
         String containing the git diff output.
+
     """
     try:
         # Get both staged and unstaged changes
@@ -342,6 +348,7 @@ def _get_deleted_files(workspace: Path) -> list[str]:
 
     Returns:
         List of deleted file paths.
+
     """
     try:
         result = subprocess.run(
@@ -370,6 +377,7 @@ def _load_reference_patch(reference_path: Path) -> str | None:
 
     Returns:
         Contents of the reference patch, or None if not found.
+
     """
     if not reference_path.exists():
         return None
@@ -410,6 +418,7 @@ def run_llm_judge(
 
     Returns:
         JudgeResult with evaluation details.
+
     """
     # Get workspace state
     workspace_state = _get_workspace_state(workspace)
@@ -467,6 +476,7 @@ def _call_claude_judge(evaluation_context: str, model: str) -> str:
 
     Returns:
         Raw response from Claude.
+
     """
     # Write evaluation context to temp file to avoid "Argument list too long" errors
     # This is necessary for T5/T6 where the combined config can be very large
@@ -531,6 +541,7 @@ def _parse_judge_response(response: str) -> JudgeResult:
 
     Returns:
         JudgeResult parsed from response.
+
     """
     # Try to extract JSON from response
     response = response.strip()
@@ -595,6 +606,7 @@ def _fallback_judge(agent_output: str) -> JudgeResult:
     Returns:
         JudgeResult from heuristic evaluation.
         Returns is_valid=False for agent errors (rate limits, crashes, etc.)
+
     """
     try:
         data = json.loads(agent_output.strip())
@@ -649,6 +661,7 @@ def _save_judge_logs(
         response: Raw LLM response
         result: Parsed judge result
         model: Model used for judging
+
     """
     judge_dir.mkdir(parents=True, exist_ok=True)
 

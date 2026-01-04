@@ -13,7 +13,6 @@ import logging
 import shutil
 import statistics
 import subprocess
-import tempfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import UTC, datetime
 from multiprocessing import Manager
@@ -53,6 +52,7 @@ def _phase_log(phase: str, message: str) -> None:
     Args:
         phase: Phase identifier (WORKTREE, AGENT, JUDGE)
         message: Message content
+
     """
     timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     logger.info(f"{timestamp} [{phase}] - {message}")
@@ -67,6 +67,7 @@ def _move_to_failed(run_dir: Path, attempt: int = 1) -> Path:
 
     Returns:
         Path to the new location in .failed/
+
     """
     failed_dir = run_dir.parent / ".failed"
     failed_dir.mkdir(parents=True, exist_ok=True)
@@ -89,16 +90,15 @@ def _move_to_failed(run_dir: Path, attempt: int = 1) -> Path:
     return new_path
 
 
-def _save_agent_result(agent_dir: Path, result: "AdapterResult") -> None:
+def _save_agent_result(agent_dir: Path, result: AdapterResult) -> None:
     """Save agent execution result to agent/result.json.
 
     Args:
         agent_dir: Path to agent directory
         result: AdapterResult from agent execution
+
     """
     import json
-
-    from scylla.adapters.base import AdapterResult
 
     result_data = {
         "exit_code": result.exit_code,
@@ -113,7 +113,7 @@ def _save_agent_result(agent_dir: Path, result: "AdapterResult") -> None:
         json.dump(result_data, f, indent=2)
 
 
-def _load_agent_result(agent_dir: Path) -> "AdapterResult":
+def _load_agent_result(agent_dir: Path) -> AdapterResult:
     """Load agent execution result from agent/result.json.
 
     Args:
@@ -121,6 +121,7 @@ def _load_agent_result(agent_dir: Path) -> "AdapterResult":
 
     Returns:
         AdapterResult loaded from file
+
     """
     import json
 
@@ -141,12 +142,13 @@ def _load_agent_result(agent_dir: Path) -> "AdapterResult":
     )
 
 
-def _save_judge_result(judge_dir: Path, result: "JudgeResult") -> None:
+def _save_judge_result(judge_dir: Path, result: JudgeResult) -> None:
     """Save judge evaluation result to judge/result.json.
 
     Args:
         judge_dir: Path to judge directory
         result: JudgeResult from judge evaluation
+
     """
     import json
 
@@ -170,6 +172,7 @@ def _load_judge_result(judge_dir: Path) -> dict:
 
     Returns:
         Dict with score, passed, grade, reasoning
+
     """
     import json
 
@@ -197,6 +200,7 @@ class RateLimitCoordinator:
         >>> if coordinator.check_if_paused():
         >>>     # Worker blocks here until resume
         >>>     pass
+
     """
 
     def __init__(self, manager: SyncManager) -> None:
@@ -204,6 +208,7 @@ class RateLimitCoordinator:
 
         Args:
             manager: Multiprocessing manager for shared objects
+
         """
         self._pause_event = manager.Event()
         self._resume_event = manager.Event()
@@ -216,6 +221,7 @@ class RateLimitCoordinator:
 
         Args:
             info: Rate limit detection information
+
         """
         self._rate_limit_info.update(
             {
@@ -236,6 +242,7 @@ class RateLimitCoordinator:
 
         Returns:
             True if was paused and now resumed, False if never paused
+
         """
         if self._pause_event.is_set():
             logger.debug("Worker blocked on pause event, waiting for resume...")
@@ -250,6 +257,7 @@ class RateLimitCoordinator:
 
         Returns:
             RateLimitInfo if rate limit is active, None otherwise
+
         """
         if not self._pause_event.is_set():
             return None
@@ -293,6 +301,7 @@ class SubTestExecutor:
         ...     baseline=previous_baseline,
         ...     results_dir=Path("/results/T2/01"),
         ... )
+
     """
 
     def __init__(
@@ -309,6 +318,7 @@ class SubTestExecutor:
             tier_manager: Tier configuration manager
             workspace_manager: Workspace manager for git worktrees
             adapter: Optional adapter (defaults to ClaudeCodeAdapter)
+
         """
         self.config = config
         self.tier_manager = tier_manager
@@ -345,6 +355,7 @@ class SubTestExecutor:
 
         Returns:
             SubTestResult with aggregated metrics.
+
         """
         runs: list[RunResult] = []
         results_dir.mkdir(parents=True, exist_ok=True)
@@ -525,6 +536,7 @@ class SubTestExecutor:
 
         Returns:
             RunResult with execution details.
+
         """
         # Create agent and judge subdirectories
         agent_dir = run_dir / "agent"
@@ -569,7 +581,10 @@ class SubTestExecutor:
                 extra_args=extra_args,
             )
 
-            _phase_log("AGENT", f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]")
+            _phase_log(
+                "AGENT",
+                f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]",
+            )
 
             start_time = datetime.now(UTC)
             try:
@@ -654,7 +669,7 @@ class SubTestExecutor:
         token_stats = result.token_stats.to_token_stats()
 
         # Check for rate limit in run artifacts BEFORE considering complete
-        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo, detect_rate_limit
+        from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
 
         # Check stderr and stdout for rate limit patterns (adapter may have missed it)
         stderr_content = result.stderr or ""
@@ -743,6 +758,7 @@ class SubTestExecutor:
             command_logger: Logger for commands
             tier_id: Tier identifier for branch naming
             subtest_id: Subtest identifier for branch naming
+
         """
         import shlex
 
@@ -839,9 +855,7 @@ class SubTestExecutor:
             )
 
             if result.returncode != 0:
-                raise RuntimeError(
-                    f"Failed to create worktree even after cleanup: {result.stderr}"
-                )
+                raise RuntimeError(f"Failed to create worktree even after cleanup: {result.stderr}")
 
         elif result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree: {result.stderr}")
@@ -875,9 +889,13 @@ class SubTestExecutor:
 
         Returns:
             Dict with score, passed, grade, and reasoning.
+
         """
         # Log judge execution phase
-        _phase_log("JUDGE", f"Running judge with model[{self.config.judge_model}] with prompt[{judge_dir / 'prompt.md'}]")
+        _phase_log(
+            "JUDGE",
+            f"Running judge with model[{self.config.judge_model}] with prompt[{judge_dir / 'prompt.md'}]",
+        )
 
         # Use the LLM judge for proper evaluation
         judge_result = run_llm_judge(
@@ -905,6 +923,7 @@ class SubTestExecutor:
 
         Returns:
             SubTestResult with aggregated statistics.
+
         """
         if not runs:
             return SubTestResult(
@@ -980,6 +999,7 @@ def run_tier_subtests_parallel(
 
     Returns:
         Dict mapping sub-test ID to results.
+
     """
     results: dict[str, SubTestResult] = {}
     executor = SubTestExecutor(config, tier_manager, workspace_manager)
@@ -1007,9 +1027,7 @@ def run_tier_subtests_parallel(
                 # Handle rate limit in main thread for single subtest
                 if checkpoint and checkpoint_path:
                     logger.info(f"Rate limit detected from {e.info.source}, waiting...")
-                    wait_for_rate_limit(
-                        e.info.retry_after_seconds, checkpoint, checkpoint_path
-                    )
+                    wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)
                     # Retry the subtest after wait
                     results[subtest.id] = executor.run_subtest(
                         tier_id=tier_id,
@@ -1071,12 +1089,8 @@ def run_tier_subtests_parallel(
             except RateLimitError as e:
                 # Rate limit from a worker
                 if checkpoint and checkpoint_path:
-                    logger.info(
-                        f"Rate limit detected from {e.info.source}, pausing all workers..."
-                    )
-                    wait_for_rate_limit(
-                        e.info.retry_after_seconds, checkpoint, checkpoint_path
-                    )
+                    logger.info(f"Rate limit detected from {e.info.source}, pausing all workers...")
+                    wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)
                     coordinator.resume_all_workers()
                 else:
                     # Create error result
@@ -1149,6 +1163,7 @@ def _run_subtest_in_process(
 
     Returns:
         SubTestResult
+
     """
     tier_manager = TierManager(tiers_dir)
     # Recreate workspace manager in child process

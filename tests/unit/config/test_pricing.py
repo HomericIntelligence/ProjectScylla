@@ -8,7 +8,6 @@ import pytest
 from scylla.config.pricing import (
     DEFAULT_PRICING,
     MODEL_PRICING,
-    ModelPricing,
     calculate_cost,
     get_input_cost_per_1k,
     get_model_pricing,

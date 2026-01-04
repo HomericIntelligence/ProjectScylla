@@ -42,6 +42,7 @@ class JudgeScore:
         score: The score (0.0 to 1.0).
         confidence: Confidence in the score (0.0 to 1.0).
         notes: Brief notes explaining the score.
+
     """
 
     score: float
@@ -60,6 +61,7 @@ class Judgment:
         exploratory_testing: Results from exploratory testing.
         qualitative_feedback: Free-form feedback.
         raw_output: Raw JSON output from the judge.
+
     """
 
     requirements: dict[str, JudgeScore] = field(default_factory=dict)
@@ -81,6 +83,7 @@ class JudgeSummary:
         overall_confidence: Overall confidence in the judgment.
         strengths: List of identified strengths.
         weaknesses: List of identified weaknesses.
+
     """
 
     weighted_score: float
@@ -99,6 +102,7 @@ class ExploratoryResult:
         commands_run: Commands executed during testing.
         observations: Observations made.
         failures: Failures encountered.
+
     """
 
     commands_run: list[str] = field(default_factory=list)
@@ -123,6 +127,7 @@ class ConsensusJudgment:
         retry_runs: Number of additional retry runs.
         consensus_reached: Whether consensus was reached.
         consensus_reason: Reason for final consensus state.
+
     """
 
     requirements: dict[str, float] = field(default_factory=dict)
@@ -147,6 +152,7 @@ class EvaluatorConfig(BaseModel):
         num_runs: Number of runs for consensus (default 3).
         timeout: Timeout for each run in seconds.
         pass_threshold: Score threshold for passing.
+
     """
 
     model: str = Field(default="claude-opus-4-5-20251101")
@@ -164,6 +170,7 @@ class ConsensusConfig(BaseModel):
         variance_threshold: Score variance threshold to trigger retry.
         min_confidence: Minimum average confidence to avoid retry.
         score_range_threshold: Maximum allowed score range before retry.
+
     """
 
     initial_runs: int = Field(default=3, ge=1)
@@ -185,6 +192,7 @@ def needs_additional_runs(
 
     Returns:
         Tuple of (needs_retry, reason).
+
     """
     if len(scores) < 2:
         return False, "insufficient runs"
@@ -230,6 +238,7 @@ def weighted_consensus(scores: list[JudgeScore]) -> float:
 
     Returns:
         Weighted average score (0.0 to 1.0).
+
     """
     if not scores:
         return 0.0
@@ -252,6 +261,7 @@ class JudgeEvaluator:
         config: Evaluator configuration.
         consensus_config: Consensus retry configuration.
         adapter: The adapter to use for running evaluations.
+
     """
 
     def __init__(
@@ -266,6 +276,7 @@ class JudgeEvaluator:
             config: Evaluator configuration.
             consensus_config: Consensus retry configuration.
             adapter: Optional adapter for running evaluations.
+
         """
         self.config = config or EvaluatorConfig()
         self.consensus_config = consensus_config or ConsensusConfig()
@@ -297,6 +308,7 @@ class JudgeEvaluator:
 
         Raises:
             EvaluatorError: If evaluation fails.
+
         """
         judgments: list[Judgment] = []
         initial_runs = self.consensus_config.initial_runs
@@ -367,6 +379,7 @@ class JudgeEvaluator:
 
         Returns:
             List of JudgeScore objects for overall scores.
+
         """
         scores = []
         for j in judgments:
@@ -401,6 +414,7 @@ class JudgeEvaluator:
 
         Raises:
             EvaluatorError: If evaluation fails.
+
         """
         if self.adapter is None:
             raise EvaluatorError("No adapter configured for evaluation")
@@ -447,6 +461,7 @@ class JudgeEvaluator:
 
         Raises:
             EvaluationParseError: If parsing fails.
+
         """
         # Extract JSON from the output
         json_data = self._extract_json(output)
@@ -465,6 +480,7 @@ class JudgeEvaluator:
 
         Returns:
             Parsed JSON dict, or None if not found.
+
         """
         # Try to find JSON block in output
         import re
@@ -516,6 +532,7 @@ class JudgeEvaluator:
 
         Returns:
             Judgment object.
+
         """
         judgment = Judgment(raw_output=raw_output)
 
@@ -576,6 +593,7 @@ class JudgeEvaluator:
 
         Returns:
             ConsensusJudgment with weighted scores.
+
         """
         if not judgments:
             return ConsensusJudgment()

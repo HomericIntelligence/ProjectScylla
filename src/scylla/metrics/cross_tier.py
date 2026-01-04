@@ -24,6 +24,7 @@ class TierUplift:
         impl_rate_uplift: Implementation rate change vs T0.
         composite_uplift: Composite score change vs T0.
         cost_change: Cost change vs T0 (positive = more expensive).
+
     """
 
     tier_id: str
@@ -49,6 +50,7 @@ class PromptSensitivityAnalysis:
         best_value_tier: Tier with best quality/cost ratio.
         frontier_cop: Minimum Cost-of-Pass across all tiers (Frontier CoP).
         frontier_cop_tier: Tier that achieves the Frontier CoP.
+
     """
 
     pass_rate_variance: float
@@ -76,6 +78,7 @@ class TierTransitionAssessment:
         cost_delta: Change in cost (positive = more expensive).
         worth_it: Whether the transition is recommended.
         reason: Human-readable explanation of assessment.
+
     """
 
     from_tier: str
@@ -88,7 +91,7 @@ class TierTransitionAssessment:
 
 
 def calculate_frontier_cop(
-    tier_stats: dict[str, "TierStatistics"],
+    tier_stats: dict[str, TierStatistics],
 ) -> tuple[float, str]:
     """Calculate the Frontier Cost-of-Pass (minimum CoP across all tiers).
 
@@ -106,6 +109,7 @@ def calculate_frontier_cop(
 
     Reference:
         docs/research.md Section 5.2 - Cost-of-Pass Framework
+
     """
     if not tier_stats:
         return (float("inf"), "T0")
@@ -141,6 +145,7 @@ class CrossTierAnalyzer:
 
         Args:
             tier_stats: Dictionary mapping tier IDs to statistics.
+
         """
         self.tier_stats = tier_stats
         self.t0_baseline = tier_stats.get("T0")
@@ -153,6 +158,7 @@ class CrossTierAnalyzer:
 
         Returns:
             Variance of median values across tiers.
+
         """
         values = [getattr(t, metric).median for t in self.tier_stats.values()]
         return calculate_variance(values)
@@ -165,6 +171,7 @@ class CrossTierAnalyzer:
 
         Returns:
             Sensitivity level: "low", "medium", or "high".
+
         """
         if variance < self.LOW_SENSITIVITY_THRESHOLD:
             return "low"
@@ -181,6 +188,7 @@ class CrossTierAnalyzer:
 
         Returns:
             TierUplift with detailed metrics.
+
         """
         tier = self.tier_stats[tier_id]
 
@@ -231,6 +239,7 @@ class CrossTierAnalyzer:
 
         Returns:
             TierTransitionAssessment with recommendation.
+
         """
         from_stats = self.tier_stats[from_tier]
         to_stats = self.tier_stats[to_tier]
@@ -283,6 +292,7 @@ class CrossTierAnalyzer:
 
         Returns:
             PromptSensitivityAnalysis with complete metrics.
+
         """
         if not self.tier_stats:
             return PromptSensitivityAnalysis(
@@ -347,6 +357,7 @@ class CrossTierAnalyzer:
 
         Returns:
             List of transition assessments for T0→T1, T1→T2, etc.
+
         """
         sorted_tiers = sorted(self.tier_stats.keys())
         transitions = []

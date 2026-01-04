@@ -110,6 +110,7 @@ class EvaluationReport:
 
         Returns:
             Path to written file
+
         """
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / "summary.json"
@@ -125,6 +126,7 @@ class SummaryGenerator:
 
         Args:
             base_dir: Base directory for summaries (e.g., 'summaries/by-test/')
+
         """
         self.base_dir = base_dir
 
@@ -136,6 +138,7 @@ class SummaryGenerator:
 
         Returns:
             Path to summary directory
+
         """
         return self.base_dir / test_id
 
@@ -147,6 +150,7 @@ class SummaryGenerator:
 
         Returns:
             Rankings object with sorted model IDs
+
         """
         if not models:
             return Rankings()
@@ -199,6 +203,7 @@ class SummaryGenerator:
 
         Returns:
             EvaluationReport object
+
         """
         if timestamp is None:
             timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
@@ -222,6 +227,7 @@ class SummaryGenerator:
 
         Returns:
             Path to written summary.json
+
         """
         summary_dir = self.get_summary_dir(summary.test_id)
         return summary.write(summary_dir)
@@ -234,6 +240,7 @@ class SummaryGenerator:
 
         Returns:
             EvaluationReport if found, None otherwise
+
         """
         summary_dir = self.get_summary_dir(test_id)
         summary_path = summary_dir / "summary.json"
@@ -293,6 +300,7 @@ def create_statistics(
 
     Returns:
         SummaryStatistics object
+
     """
     return SummaryStatistics(
         median=median,
@@ -328,6 +336,7 @@ def create_model_statistics(
 
     Returns:
         ModelStatistics object
+
     """
     return ModelStatistics(
         runs_completed=runs_completed,

@@ -252,6 +252,7 @@ def get_tier_context(tier_id: str) -> str:
 
     Returns:
         Tier context string, or empty string if tier not found.
+
     """
     return TIER_CONTEXT_TEMPLATES.get(tier_id, "")
 
@@ -272,6 +273,7 @@ def build_judge_prompt(
 
     Returns:
         Complete formatted judge prompt.
+
     """
     tier_context = get_tier_context(tier_id) if tier_id else ""
 
@@ -294,6 +296,7 @@ def calculate_weighted_category_score(
 
     Returns:
         Weighted average score (0.0-1.0).
+
     """
     if not categories:
         return 0.0
@@ -321,6 +324,7 @@ def get_category_descriptions() -> dict[str, str]:
 
     Returns:
         Dictionary mapping category value to description.
+
     """
     return {
         EvaluationCategory.FUNCTIONAL_CORRECTNESS.value: "Does the solution work correctly and pass all tests?",
@@ -347,6 +351,7 @@ def validate_judgment_output(raw: dict[str, Any]) -> JudgmentOutput:
 
     Raises:
         ValueError: If validation fails.
+
     """
     try:
         # Parse nested structures

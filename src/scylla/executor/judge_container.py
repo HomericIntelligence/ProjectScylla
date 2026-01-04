@@ -18,13 +18,12 @@ from __future__ import annotations
 
 import os
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from scylla.executor.docker import (
     ContainerConfig,
     ContainerError,
-    ContainerResult,
     DockerExecutor,
 )
 
@@ -42,6 +41,7 @@ class JudgeContainerConfig:
         prompt_path: Path to original task prompt file.
         timeout_seconds: Maximum evaluation time in seconds.
         image: Docker image to use for judge container.
+
     """
 
     agent_workspace: Path
@@ -67,6 +67,7 @@ class JudgeResult:
         tokens_input: Estimated input tokens used.
         tokens_output: Estimated output tokens used.
         cost_usd: Estimated cost in USD.
+
     """
 
     container_id: str
@@ -95,6 +96,7 @@ class JudgeContainerManager:
         ... )
         >>> result = manager.run_judge(config)
         >>> print(f"Exit code: {result.exit_code}")
+
     """
 
     # Default judge image
@@ -112,6 +114,7 @@ class JudgeContainerManager:
 
         Args:
             executor: DockerExecutor to use. Created if not provided.
+
         """
         self.executor = executor or DockerExecutor()
         self._active_containers: list[str] = []
@@ -121,6 +124,7 @@ class JudgeContainerManager:
 
         Returns:
             Unique container name like "scylla-judge-abc123".
+
         """
         short_id = str(uuid.uuid4())[:8]
         return f"scylla-judge-{short_id}"
@@ -133,6 +137,7 @@ class JudgeContainerManager:
 
         Returns:
             Dictionary of environment variables.
+
         """
         env = {
             "ROLE": "judge",
@@ -167,6 +172,7 @@ class JudgeContainerManager:
 
         Returns:
             Dictionary of volume mounts.
+
         """
         volumes = {
             # Agent workspace - READ-ONLY
@@ -215,6 +221,7 @@ class JudgeContainerManager:
 
         Returns:
             ContainerConfig for DockerExecutor.
+
         """
         # Ensure output directory exists
         config.output_dir.mkdir(parents=True, exist_ok=True)
@@ -244,6 +251,7 @@ class JudgeContainerManager:
 
         Raises:
             ContainerError: If container creation or execution fails.
+
         """
         container_config = self.create_container_config(config)
 
@@ -279,6 +287,7 @@ class JudgeContainerManager:
 
         Raises:
             ContainerError: If container creation fails.
+
         """
         container_config = self.create_container_config(config)
         container_id = self.executor.run_detached(container_config)
@@ -301,6 +310,7 @@ class JudgeContainerManager:
 
         Raises:
             ContainerError: If wait fails.
+
         """
         exit_code = self.executor.wait(container_id, timeout)
         stdout, stderr = self.executor.logs(container_id)
@@ -334,6 +344,7 @@ class JudgeContainerManager:
 
         Returns:
             Tuple of (tokens_input, tokens_output, cost_usd).
+
         """
         tokens_in = 0
         tokens_out = 0
@@ -363,6 +374,7 @@ class JudgeContainerManager:
 
         Args:
             container_id: Container ID to stop.
+
         """
         self.executor.stop(container_id)
         if container_id in self._active_containers:
@@ -377,6 +389,7 @@ class JudgeContainerManager:
         Args:
             container_id: Container ID to remove.
             force: Force removal of running container.
+
         """
         self.executor.remove(container_id, force=force)
         if container_id in self._active_containers:
@@ -387,6 +400,7 @@ class JudgeContainerManager:
 
         Args:
             force: Force removal of running containers.
+
         """
         for container_id in list(self._active_containers):
             try:
@@ -407,6 +421,7 @@ class JudgeContainerManager:
 
         Returns:
             Tuple of (stdout, stderr).
+
         """
         return self.executor.logs(container_id, tail=tail)
 
@@ -418,5 +433,6 @@ class JudgeContainerManager:
 
         Returns:
             True if container is running.
+
         """
         return self.executor.is_running(container_id)

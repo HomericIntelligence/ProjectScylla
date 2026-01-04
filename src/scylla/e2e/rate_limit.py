@@ -12,10 +12,11 @@ import json
 import logging
 import re
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
@@ -32,6 +33,7 @@ class RateLimitInfo:
         retry_after_seconds: Seconds to wait before retry (with buffer)
         error_message: Human-readable error message
         detected_at: ISO timestamp when detected
+
     """
 
     source: str  # "agent" or "judge"
@@ -53,6 +55,7 @@ class RateLimitError(Exception):
 
     Attributes:
         info: RateLimitInfo with detection details
+
     """
 
     def __init__(self, info: RateLimitInfo):
@@ -60,6 +63,7 @@ class RateLimitError(Exception):
 
         Args:
             info: Rate limit detection information
+
         """
         self.info = info
         super().__init__(f"Rate limit from {info.source}: {info.error_message}")
@@ -78,6 +82,7 @@ def parse_retry_after(stderr: str) -> float | None:
 
     Returns:
         Seconds to wait (with 10% buffer added), or None if not found
+
     """
     # Pattern 1: "Retry-After: <seconds>"
     match = re.search(r"Retry-After:\s*(\d+)", stderr, re.IGNORECASE)
@@ -90,8 +95,8 @@ def parse_retry_after(stderr: str) -> float | None:
     # Match patterns like "resets 4pm", "resets 12am", "resets 11:30pm"
     match = re.search(r"resets\s+(\d{1,2}):?(\d{2})?\s*(am|pm)", stderr, re.IGNORECASE)
     if match:
-        from datetime import datetime, timezone
         import zoneinfo
+        from datetime import datetime, timezone
 
         hour = int(match.group(1))
         minute = int(match.group(2)) if match.group(2) else 0
@@ -146,6 +151,7 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
 
     Returns:
         RateLimitInfo if rate limit detected, None otherwise
+
     """
     retry_after = None
     error_msg = ""
@@ -238,6 +244,7 @@ def wait_for_rate_limit(
         checkpoint: Checkpoint to update with pause status
         checkpoint_path: Path to save updated checkpoint
         log_func: Function for status logging (default: logger.info)
+
     """
     if log_func is None:
         log_func = logger.info
@@ -304,6 +311,7 @@ def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
         Tuple of (is_valid, failure_reason)
         - is_valid: True if run completed successfully, False if rate-limited
         - failure_reason: Description of why validation failed, or None
+
     """
     run_result_file = run_dir / "run_result.json"
     agent_dir = run_dir / "agent"

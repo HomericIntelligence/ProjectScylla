@@ -4,7 +4,6 @@ Python justification: Terminal output formatting and progress tracking.
 """
 
 import sys
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -134,6 +133,7 @@ def format_duration(td: timedelta) -> str:
 
     Returns:
         Formatted string
+
     """
     total_seconds = int(td.total_seconds())
     hours, remainder = divmod(total_seconds, 3600)
@@ -150,6 +150,7 @@ def format_progress_bar(percent: float, width: int = 20) -> str:
 
     Returns:
         Progress bar string
+
     """
     filled = int(width * percent / 100)
     empty = width - filled
@@ -171,6 +172,7 @@ class ProgressDisplay:
             quiet: Minimal output for CI
             verbose: Detailed output
             no_progress: Disable progress bar
+
         """
         self.quiet = quiet
         self.verbose = verbose
@@ -195,6 +197,7 @@ class ProgressDisplay:
 
         Returns:
             EvalProgress object
+
         """
         progress = EvalProgress(
             test_id=test_id,
@@ -213,6 +216,7 @@ class ProgressDisplay:
 
         Args:
             tier_id: Tier identifier
+
         """
         if self._current_progress is None:
             return
@@ -230,6 +234,7 @@ class ProgressDisplay:
         Args:
             tier_id: Tier identifier
             run_number: Run number (1-indexed)
+
         """
         if self._current_progress is None:
             return
@@ -251,6 +256,7 @@ class ProgressDisplay:
             tier_id: Tier identifier
             run_number: Run number (1-indexed)
             status: New status
+
         """
         if self._current_progress is None:
             return
@@ -280,6 +286,7 @@ class ProgressDisplay:
             passed: Whether the run passed
             grade: Letter grade
             cost_usd: Cost in USD
+
         """
         if self._current_progress is None:
             return
@@ -305,6 +312,7 @@ class ProgressDisplay:
 
         Args:
             tier_id: Tier identifier
+
         """
         if self._current_progress is None:
             return

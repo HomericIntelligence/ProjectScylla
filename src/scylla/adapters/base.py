@@ -17,6 +17,8 @@ from pydantic import BaseModel, Field
 
 from scylla.config.pricing import (
     calculate_cost as pricing_calculate_cost,
+)
+from scylla.config.pricing import (
     get_input_cost_per_1k,
     get_output_cost_per_1k,
 )
@@ -122,6 +124,7 @@ class BaseAdapter(ABC):
         ...     def run(self, config, tier_config):
         ...         # Implementation here
         ...         return AdapterResult(exit_code=0)
+
     """
 
     # Model pricing (per 1K tokens) - override in subclasses for specific models
@@ -133,6 +136,7 @@ class BaseAdapter(ABC):
 
         Args:
             adapter_config: Optional adapter-specific configuration.
+
         """
         self.adapter_config = adapter_config or {}
 
@@ -154,6 +158,7 @@ class BaseAdapter(ABC):
         Raises:
             AdapterError: If execution fails.
             AdapterTimeoutError: If execution times out.
+
         """
         ...
 
@@ -162,6 +167,7 @@ class BaseAdapter(ABC):
 
         Returns:
             Class name as string.
+
         """
         return self.__class__.__name__
 
@@ -175,6 +181,7 @@ class BaseAdapter(ABC):
 
         Raises:
             AdapterValidationError: If configuration is invalid.
+
         """
         if not config.prompt_file.exists():
             raise AdapterValidationError(f"Prompt file not found: {config.prompt_file}")
@@ -199,6 +206,7 @@ class BaseAdapter(ABC):
 
         Returns:
             Combined prompt with tier injection (if applicable).
+
         """
         if tier_config is None:
             return task_prompt
@@ -223,6 +231,7 @@ class BaseAdapter(ABC):
 
         Returns:
             Dictionary with tools_enabled and delegation_enabled settings.
+
         """
         if tier_config is None:
             return {"tools_enabled": None, "delegation_enabled": None}
@@ -248,6 +257,7 @@ class BaseAdapter(ABC):
             stdout: Standard output content.
             stderr: Standard error content.
             agent_log: Optional agent interaction log.
+
         """
         output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -274,6 +284,7 @@ class BaseAdapter(ABC):
 
         Returns:
             Estimated cost in USD.
+
         """
         return pricing_calculate_cost(tokens_input, tokens_output, model=model)
 
@@ -287,6 +298,7 @@ class BaseAdapter(ABC):
 
         Returns:
             Cost per 1K input tokens.
+
         """
         return get_input_cost_per_1k(model)
 
@@ -300,6 +312,7 @@ class BaseAdapter(ABC):
 
         Returns:
             Cost per 1K output tokens.
+
         """
         return get_output_cost_per_1k(model)
 
@@ -314,6 +327,7 @@ class BaseAdapter(ABC):
 
         Raises:
             AdapterError: If file cannot be read.
+
         """
         try:
             return prompt_file.read_text()

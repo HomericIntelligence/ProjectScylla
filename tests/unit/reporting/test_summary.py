@@ -7,14 +7,12 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from scylla.reporting.summary import (
+    EvaluationReport,
     ModelStatistics,
     Rankings,
     SummaryGenerator,
     SummaryStatistics,
-    EvaluationReport,
     create_model_statistics,
     create_statistics,
 )

@@ -17,10 +17,8 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 import yaml
-
 
 # Block mapping based on directory naming patterns
 DIRECTORY_TO_BLOCKS: dict[str, list[str]] = {
@@ -46,6 +44,7 @@ def get_blocks_for_directory(dir_name: str) -> list[str] | None:
 
     Returns:
         List of block IDs, or None if directory doesn't match known patterns.
+
     """
     # Direct match
     if dir_name in DIRECTORY_TO_BLOCKS:
@@ -69,6 +68,7 @@ def update_config_yaml(config_path: Path, blocks: list[str], dry_run: bool = Fal
 
     Returns:
         True if file was updated (or would be in dry-run), False otherwise.
+
     """
     if not config_path.exists():
         print(f"  Warning: config.yaml not found at {config_path}")
@@ -105,6 +105,7 @@ def delete_claude_md(claude_md_path: Path, dry_run: bool = False) -> bool:
 
     Returns:
         True if file was deleted (or would be in dry-run), False otherwise.
+
     """
     if not claude_md_path.exists():
         return False
@@ -124,6 +125,7 @@ def migrate_t0_fixtures(fixtures_dir: Path, dry_run: bool = False) -> dict[str, 
 
     Returns:
         Dictionary with counts of actions taken.
+
     """
     stats = {
         "tests_processed": 0,
@@ -185,7 +187,7 @@ def migrate_t0_fixtures(fixtures_dir: Path, dry_run: bool = False) -> dict[str, 
 
 
 def main() -> int:
-    """Main entry point."""
+    """Migrate T0 fixtures from duplicated CLAUDE.md to block-based composition."""
     parser = argparse.ArgumentParser(
         description="Migrate T0 fixtures from duplicated CLAUDE.md to block-based composition"
     )

@@ -7,13 +7,11 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from scylla.reporting.scorecard import (
+    EvalResult,
     ModelScorecard,
     OverallStats,
     ScorecardGenerator,
-    EvalResult,
     _grade_to_points,
     _points_to_grade,
     create_test_result,

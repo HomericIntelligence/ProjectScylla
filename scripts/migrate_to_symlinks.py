@@ -22,7 +22,6 @@ from pathlib import Path
 
 import yaml
 
-
 # Paths relative to script location
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
@@ -35,6 +34,7 @@ def build_skill_category_map() -> dict[str, str]:
 
     Returns:
         Dict mapping skill directory name to its category.
+
     """
     skill_map = {}
     skills_dir = SHARED_DIR / "skills"
@@ -57,6 +57,7 @@ def build_agent_level_map() -> dict[str, int]:
 
     Returns:
         Dict mapping agent filename to its level (0-5).
+
     """
     agent_map = {}
     agents_dir = SHARED_DIR / "agents"
@@ -92,6 +93,7 @@ def analyze_subtest(
 
     Returns:
         Resource specification dict for config.yaml
+
     """
     resources: dict = {}
     claude_dir = subtest_dir / ".claude"
@@ -144,6 +146,7 @@ def migrate_subtest(
 
     Returns:
         Tuple of (success, message)
+
     """
     config_path = subtest_dir / "config.yaml"
     claude_dir = subtest_dir / ".claude"
@@ -206,15 +209,14 @@ def migrate_test(
 
     Returns:
         Dict with migration statistics
+
     """
     stats = {"migrated": 0, "skipped": 0, "errors": 0}
 
     for tier_dir in sorted(test_dir.glob("t[0-6]")):
         for subtest_dir in sorted(tier_dir.glob("[0-9][0-9]-*")):
             try:
-                success, message = migrate_subtest(
-                    subtest_dir, skill_map, agent_map, dry_run
-                )
+                success, message = migrate_subtest(subtest_dir, skill_map, agent_map, dry_run)
                 if "Migrated" in message or "Would add" in message:
                     stats["migrated"] += 1
                     print(f"  {subtest_dir.relative_to(test_dir)}: {message}")
@@ -228,10 +230,8 @@ def migrate_test(
 
 
 def main() -> None:
-    """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Migrate test fixtures to symlink-based resources"
-    )
+    """Migrate test fixtures to symlink-based resources."""
+    parser = argparse.ArgumentParser(description="Migrate test fixtures to symlink-based resources")
     parser.add_argument(
         "--dry-run",
         action="store_true",

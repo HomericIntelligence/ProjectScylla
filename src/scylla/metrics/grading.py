@@ -8,7 +8,6 @@ Python Justification: Required for grade calculation with edge case handling.
 
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -17,7 +16,7 @@ class JudgmentProtocol(Protocol):
     """Protocol for judgment objects."""
 
     @property
-    def summary(self) -> "SummaryProtocol":
+    def summary(self) -> SummaryProtocol:
         """Get the summary."""
         ...
 
@@ -41,6 +40,7 @@ class GradingResult:
         cost_of_pass: Cost per successful run.
         composite_score: Combined score from metrics.
         letter_grade: Letter grade (A/B/C/D/F).
+
     """
 
     pass_rate: float
@@ -58,6 +58,7 @@ def calculate_pass_rate(passed: bool) -> float:
 
     Returns:
         1.0 if passed, 0.0 if failed.
+
     """
     return 1.0 if passed else 0.0
 
@@ -70,6 +71,7 @@ def calculate_impl_rate(weighted_score: float) -> float:
 
     Returns:
         Implementation rate (clamped to 0.0-1.0).
+
     """
     return max(0.0, min(1.0, weighted_score))
 
@@ -86,6 +88,7 @@ def calculate_cost_of_pass(cost: float, pass_rate: float) -> float:
 
     Returns:
         Cost per pass, or infinity if pass_rate is 0.
+
     """
     if pass_rate <= 0:
         return float("inf")
@@ -112,6 +115,7 @@ def calculate_composite_score(
 
     Returns:
         Weighted composite score (0.0 to 1.0).
+
     """
     total_weight = pass_weight + impl_weight
     if total_weight <= 0:
@@ -139,6 +143,7 @@ def assign_letter_grade(score: float) -> str:
 
     Returns:
         Letter grade (S/A/B/C/D/F).
+
     """
     if score >= 1.0:
         return "S"
@@ -169,6 +174,7 @@ def calculate_tier_uplift(
     Returns:
         Percentage uplift (can be negative for regression).
         Returns 0.0 if baseline is 0.
+
     """
     if baseline_score <= 0:
         return 0.0
@@ -186,6 +192,7 @@ def calculate_cost_delta(costs: list[float]) -> float:
 
     Returns:
         Cost delta, or 0.0 if empty.
+
     """
     if not costs:
         return 0.0
@@ -207,6 +214,7 @@ def grade_run(
 
     Returns:
         GradingResult with all calculated metrics.
+
     """
     pass_rate = calculate_pass_rate(passed)
     impl_rate = calculate_impl_rate(weighted_score)

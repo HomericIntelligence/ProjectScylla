@@ -12,12 +12,13 @@ from __future__ import annotations
 import json
 import math
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
@@ -188,6 +189,7 @@ def calculate_wilson_ci(
 
     Returns:
         Tuple of (lower_bound, upper_bound) for pass rate.
+
     """
     if total == 0:
         return 0.0, 0.0
@@ -209,6 +211,7 @@ def save_state(state: ExecutionState, path: Path) -> None:
     Args:
         state: Current execution state.
         path: Path to state file.
+
     """
     state_dict = {
         "version": state.version,
@@ -231,6 +234,7 @@ def load_state(path: Path) -> ExecutionState | None:
 
     Returns:
         Loaded state or None if file doesn't exist.
+
     """
     if not path.exists():
         return None
@@ -268,6 +272,7 @@ class EvalRunner:
         ...     models=["claude-sonnet-4-20250514"],
         ... )
         >>> print(f"T0 pass rate: {summary.tiers['T0']['claude-sonnet-4-20250514'].pass_rate}")
+
     """
 
     def __init__(
@@ -282,6 +287,7 @@ class EvalRunner:
             docker_executor: Docker executor for container management.
             tier_loader: Tier configuration loader.
             config: Runner configuration (uses defaults if not provided).
+
         """
         self.docker = docker_executor
         self.tier_loader = tier_loader
@@ -295,6 +301,7 @@ class EvalRunner:
 
         Args:
             adapter_func: Function to run the agent adapter.
+
         """
         self._adapter_func = adapter_func
 
@@ -303,6 +310,7 @@ class EvalRunner:
 
         Args:
             judge_func: Function to evaluate run results.
+
         """
         self._judge_func = judge_func
 
@@ -331,6 +339,7 @@ class EvalRunner:
         Raises:
             RunnerError: If test execution fails critically.
             InsufficientRunsError: If minimum runs cannot be achieved.
+
         """
         # Apply overrides
         runs = runs_per_tier or self.config.runs_per_tier
@@ -406,6 +415,7 @@ class EvalRunner:
 
         Returns:
             TierSummary with results.
+
         """
         results: list[RunResult] = []
 
@@ -521,6 +531,7 @@ class EvalRunner:
 
         Returns:
             RunResult with execution outcome.
+
         """
         container_name = f"scylla-{test_id}-{tier_config.tier_id}-{model}-r{run_number:02d}"
 
@@ -604,8 +615,9 @@ class EvalRunner:
 
         Returns:
             ExecutionInfo with container results.
+
         """
-        from scylla.executor.docker import ContainerConfig, ContainerResult
+        from scylla.executor.docker import ContainerConfig
 
         # Build container config
         env_vars = {
@@ -650,6 +662,7 @@ class EvalRunner:
 
         Returns:
             JudgmentResult from evaluation.
+
         """
         if self._judge_func:
             return self._judge_func(execution_info)
@@ -677,6 +690,7 @@ class EvalRunner:
 
         Returns:
             TierSummary with aggregated statistics.
+
         """
         passed = sum(1 for r in results if r.status == RunStatus.PASSED)
         failed = sum(1 for r in results if r.status == RunStatus.FAILED)

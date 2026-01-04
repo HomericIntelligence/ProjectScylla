@@ -174,12 +174,14 @@ Examples:
 
     # Verbosity
     parser.add_argument(
-        "-v", "--verbose",
+        "-v",
+        "--verbose",
         action="store_true",
         help="Enable verbose logging",
     )
     parser.add_argument(
-        "-q", "--quiet",
+        "-q",
+        "--quiet",
         action="store_true",
         help="Suppress non-error output",
     )
@@ -195,6 +197,7 @@ def load_config_from_yaml(path: Path) -> dict:
 
     Returns:
         Configuration dictionary
+
     """
     with open(path) as f:
         return yaml.safe_load(f) or {}
@@ -210,6 +213,7 @@ def load_test_config(tiers_dir: Path) -> dict | None:
 
     Returns:
         Configuration dictionary or None if not found
+
     """
     test_yaml = tiers_dir / "test.yaml"
     if not test_yaml.exists():
@@ -242,13 +246,19 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
 
     Returns:
         ExperimentConfig instance
+
     """
     # Load test config from tiers-dir (provides defaults for repo, commit, prompt, etc.)
     test_config = load_test_config(args.tiers_dir)
 
     # Start with defaults, using test config if available
+    experiment_id = (
+        args.experiment_id
+        or (test_config.get("experiment_id") if test_config else None)
+        or "experiment"
+    )
     config_dict = {
-        "experiment_id": args.experiment_id or (test_config.get("experiment_id") if test_config else None) or "experiment",
+        "experiment_id": experiment_id,
         "task_repo": "",
         "task_commit": "",
         "task_prompt_file": None,
@@ -270,7 +280,8 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         if test_config.get("task_prompt_file"):
             # Resolve prompt file relative to tiers-dir
             config_dict["task_prompt_file"] = args.tiers_dir / test_config["task_prompt_file"]
-        if test_config.get("timeout_seconds") and args.timeout == 3600:  # Only if not explicitly set
+        # Only if not explicitly set
+        if test_config.get("timeout_seconds") and args.timeout == 3600:
             config_dict["timeout_seconds"] = test_config["timeout_seconds"]
 
     # Load from YAML config if provided (overrides test config)
@@ -320,10 +331,11 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
 
 
 def main() -> int:
-    """Main entry point.
+    """Run an E2E experiment with the specified configuration.
 
     Returns:
         Exit code (0 for success, 1 for error)
+
     """
     args = parse_args()
 

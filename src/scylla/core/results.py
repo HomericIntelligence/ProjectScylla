@@ -36,6 +36,7 @@ class BaseExecutionInfo:
         exit_code: Process/container exit code (0 = success).
         duration_seconds: Total execution duration.
         timed_out: Whether execution timed out.
+
     """
 
     exit_code: int
@@ -51,6 +52,7 @@ class BaseRunMetrics:
         tokens_input: Number of input tokens consumed.
         tokens_output: Number of output tokens generated.
         cost_usd: Total cost in USD.
+
     """
 
     tokens_input: int
@@ -66,6 +68,7 @@ class BaseRunResult:
         run_number: Run number/identifier.
         cost_usd: Cost in USD.
         duration_seconds: Execution duration.
+
     """
 
     run_number: int

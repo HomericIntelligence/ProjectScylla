@@ -11,11 +11,10 @@ from pathlib import Path
 
 import click
 
-from scylla.orchestrator import OrchestratorConfig, EvalOrchestrator
+from scylla.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
     MarkdownReportGenerator,
     ReportData,
-    RunResult,
     SensitivityAnalysis,
     TierMetrics,
     TransitionAssessment,
@@ -85,12 +84,12 @@ def run(
     TEST_ID is the identifier of the test to run (e.g., 001-justfile-to-makefile).
 
     Examples:
-
         scylla run 001-justfile-to-makefile
 
         scylla run 001-justfile-to-makefile --tier T0 --tier T1
 
         scylla run 001-justfile-to-makefile --model claude-opus-4-5 --runs 1
+
     """
     if verbose and quiet:
         raise click.UsageError("Cannot use --verbose and --quiet together.")
@@ -150,6 +149,7 @@ def _load_results(test_id: str, base_path: Path = Path(".")) -> list[dict]:
 
     Returns:
         List of result dictionaries
+
     """
     runs_dir = base_path / "runs" / test_id
     results = []
@@ -176,6 +176,7 @@ def _calculate_tier_metrics(
 
     Returns:
         TierMetrics for the tier
+
     """
     tier_names = {
         "T0": "Vanilla",
@@ -243,10 +244,10 @@ def report(
     TEST_ID is the identifier of the test (e.g., 001-justfile-to-makefile).
 
     Examples:
-
         scylla report 001-justfile-to-makefile
 
         scylla report 001-justfile-to-makefile --format json
+
     """
     click.echo(f"Generating {output_format} report for: {test_id}")
 
@@ -369,10 +370,10 @@ def list_tests(verbose: bool) -> None:
     """List available test cases.
 
     Examples:
-
         scylla list
 
         scylla list --verbose
+
     """
     # TODO: Load from tests directory when available
     tests = [
@@ -395,8 +396,8 @@ def list_tiers() -> None:
     """List available evaluation tiers.
 
     Examples:
-
         scylla list-tiers
+
     """
     tiers = [
         ("T0", "Vanilla", "Base LLM with zero-shot prompting"),
@@ -421,8 +422,8 @@ def list_models() -> None:
     """List configured models.
 
     Examples:
-
         scylla list-models
+
     """
     from scylla.config import ConfigLoader, ConfigurationError
 
@@ -464,8 +465,8 @@ def status(test_id: str) -> None:
     TEST_ID is the identifier of the test (e.g., 001-justfile-to-makefile).
 
     Examples:
-
         scylla status 001-justfile-to-makefile
+
     """
     click.echo(f"Status for: {test_id}\n")
 

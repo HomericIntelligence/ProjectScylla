@@ -6,8 +6,6 @@ import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from scylla.e2e.command_logger import CommandLog, CommandLogger
 
 

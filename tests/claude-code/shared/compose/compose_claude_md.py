@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Compose CLAUDE.md from selected blocks.
+"""Compose CLAUDE.md from selected blocks.
 
 Usage:
     python compose_claude_md.py B02 B07 B18 --output config/CLAUDE.md
@@ -93,7 +92,7 @@ def compose(blocks: list[str], output: Path, strip_examples: bool = False) -> No
             print(f"Warning: Block file not found: {block_file}")
             continue
 
-        with open(block_file, "r") as f:
+        with open(block_file) as f:
             block_content = f.read()
 
         content_parts.append(block_content)

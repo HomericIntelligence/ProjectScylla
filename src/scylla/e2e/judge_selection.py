@@ -26,6 +26,7 @@ class JudgeVote:
         score: The score assigned (0.0 - 1.0)
         confidence: Confidence in the vote (0.0 - 1.0)
         reasoning: Explanation for the vote
+
     """
 
     subtest_id: str
@@ -54,6 +55,7 @@ class JudgeSelection:
         margin: Score difference between winner and runner-up
         tiebreaker_needed: Whether a tie-breaker was used
         tiebreaker_result: Result from tie-breaker (if used)
+
     """
 
     winning_subtest: str
@@ -98,6 +100,7 @@ def select_best_subtest(
 
     Returns:
         JudgeSelection with the winning sub-test.
+
     """
     if not subtest_results:
         raise ValueError("No sub-test results to select from")
@@ -193,6 +196,7 @@ def _run_tiebreaker(
 
     Returns:
         JudgeVote indicating the winner.
+
     """
     # TODO: Implement actual LLM call for tie-breaking
     # For now, use a heuristic based on multiple factors
@@ -235,6 +239,7 @@ def _calculate_composite_score(result: SubTestResult) -> float:
 
     Returns:
         Composite score between 0 and 1.
+
     """
     # Normalize cost (lower is better, assume $1 is max reasonable)
     max_cost = 1.0
@@ -259,6 +264,7 @@ def save_selection(selection: JudgeSelection, path: str | None = None) -> str:
 
     Returns:
         JSON string representation.
+
     """
     json_str = json.dumps(selection.to_dict(), indent=2)
 

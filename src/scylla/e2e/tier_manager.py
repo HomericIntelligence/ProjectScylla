@@ -9,7 +9,6 @@ Python Justification: Required for filesystem operations and YAML parsing.
 from __future__ import annotations
 
 import hashlib
-import json
 import os
 import shutil
 from datetime import UTC, datetime
@@ -39,6 +38,7 @@ class TierManager:
         ...     subtest_id="01",
         ...     baseline=previous_baseline,
         ... )
+
     """
 
     def __init__(self, tiers_dir: Path) -> None:
@@ -46,6 +46,7 @@ class TierManager:
 
         Args:
             tiers_dir: Path to the config/tiers directory
+
         """
         self.tiers_dir = tiers_dir
 
@@ -60,6 +61,7 @@ class TierManager:
 
         Returns:
             TierConfig with all sub-tests for the tier.
+
         """
         tier_dir = self.tiers_dir / tier_id.value.lower()
 
@@ -88,6 +90,7 @@ class TierManager:
 
         Returns:
             List of SubTestConfig for each discovered sub-test.
+
         """
         subtests = []
 
@@ -179,6 +182,7 @@ class TierManager:
             tier_id: The tier being prepared
             subtest_id: The sub-test identifier
             baseline: Previous tier's winning baseline (if any)
+
         """
         tier_config = self.load_tier_config(tier_id)
         subtest = next((s for s in tier_config.subtests if s.id == subtest_id), None)
@@ -224,6 +228,7 @@ class TierManager:
         Args:
             workspace: Target workspace directory
             baseline: Baseline configuration to apply
+
         """
         # NEW: Use resources to recreate via symlinks (no file copying)
         if baseline.resources:
@@ -250,6 +255,7 @@ class TierManager:
         Args:
             workspace: Target workspace directory
             subtest: Sub-test configuration to overlay
+
         """
         # Use symlinks if resources are specified
         if subtest.resources:
@@ -268,6 +274,7 @@ class TierManager:
         Args:
             src: Source directory
             dest: Destination directory
+
         """
         dest.mkdir(parents=True, exist_ok=True)
 
@@ -283,6 +290,7 @@ class TierManager:
 
         Returns:
             Path to tests/claude-code/shared/ directory.
+
         """
         # Navigate from tiers_dir (tests/fixtures/tests/test-XXX) to shared
         # tiers_dir -> tests/fixtures/tests -> tests/fixtures -> tests -> claude-code/shared
@@ -296,6 +304,7 @@ class TierManager:
 
         Returns:
             Dictionary with resources specification (skills, agents, claude_md)
+
         """
         if not config_path.exists():
             return {}
@@ -311,6 +320,7 @@ class TierManager:
         Args:
             workspace: Target workspace directory
             resources: Resource specification from config.yaml
+
         """
         shared_dir = self._get_shared_dir()
 
@@ -387,6 +397,7 @@ class TierManager:
             workspace: Target workspace directory
             spec: CLAUDE.md specification (preset or blocks list)
             shared_dir: Path to shared resources directory
+
         """
         blocks_dir = shared_dir / "blocks"
         if not blocks_dir.exists():
@@ -428,6 +439,7 @@ class TierManager:
 
         Returns:
             Prompt suffix string with resource hints
+
         """
         suffixes = []
         resources = subtest.resources or {}
@@ -464,11 +476,15 @@ class TierManager:
 
         # MCP servers
         if "mcp_servers" in resources:
-            mcp_names = [m.get("name", m) if isinstance(m, dict) else m for m in resources["mcp_servers"]]
+            mcp_names = [
+                m.get("name", m) if isinstance(m, dict) else m for m in resources["mcp_servers"]
+            ]
             if mcp_names:
                 has_any_resources = True
                 bullet_list = "\n".join(f"- {name}" for name in sorted(set(mcp_names)))
-                suffixes.append(f"Use the following MCP servers to complete this task:\n{bullet_list}")
+                suffixes.append(
+                    f"Use the following MCP servers to complete this task:\n{bullet_list}"
+                )
 
         # Tools
         if "tools" in resources:
@@ -502,6 +518,7 @@ class TierManager:
 
         Returns:
             TierBaseline that can be passed to the next tier.
+
         """
         # NEW: Read from manifest (no file copying)
         manifest_path = results_dir / "config_manifest.json"
@@ -535,6 +552,7 @@ class TierManager:
 
         Returns:
             Path to config.yaml in the fixture directory.
+
         """
         tier_dir = self.tiers_dir / tier_id.value.lower()
         # Find directory starting with subtest_id (e.g., "03-full")
@@ -563,6 +581,7 @@ class TierManager:
             subtest: The subtest configuration
             workspace: Workspace with the composed configuration
             baseline: Previous tier's baseline (for inheritance chain)
+
         """
         # Compute hash of composed CLAUDE.md for verification
         claude_md = workspace / "CLAUDE.md"

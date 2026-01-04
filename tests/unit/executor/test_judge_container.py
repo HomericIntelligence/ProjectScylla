@@ -6,9 +6,7 @@ Python justification: Required for pytest testing framework.
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from scylla.executor.docker import ContainerConfig, ContainerResult
+from scylla.executor.docker import ContainerResult
 from scylla.executor.judge_container import (
     JudgeContainerConfig,
     JudgeContainerManager,
