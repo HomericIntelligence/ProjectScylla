@@ -514,39 +514,44 @@ def save_subtest_report(
             ]
         )
 
-        # Build header
+        # Build header WITHOUT "Best" column
         header = "| Criterion |"
         separator = "|-----------|"
         for run in result.runs:
             header += f" Run {run.run_number:02d} |"
             separator += "--------|"
-        header += " Best |"
-        separator += "------|"
         md_lines.extend([header, separator])
 
-        # Add row for each criterion
+        # Add rows with best values bolded/italicized
         for criterion in sorted(all_criteria):
             row = f"| {criterion} |"
             scores = []
+            score_cells = []
+
             for run in result.runs:
                 if run.criteria_scores and criterion in run.criteria_scores:
                     score_data = run.criteria_scores[criterion]
-                    if isinstance(score_data, dict):
-                        score = score_data.get("score", "N/A")
-                    else:
-                        score = score_data
+                    score = score_data.get("score") if isinstance(score_data, dict) else score_data
                     if isinstance(score, (int, float)):
-                        scores.append(score)
-                        row += f" {score:.2f} |"
+                        scores.append((score, len(score_cells)))
+                        score_cells.append(f"{score:.2f}")
                     else:
-                        row += f" {score} |"
+                        score_cells.append(f"{score}" if score else "-")
                 else:
-                    row += " - |"
-            # Add best score
+                    score_cells.append("-")
+
+            # Bold/italicize best scores (***text*** = bold+italic)
             if scores:
-                row += f" {max(scores):.2f} |"
+                max_score = max(s[0] for s in scores)
+                best_indices = {s[1] for s in scores if s[0] == max_score}
+                for idx, cell in enumerate(score_cells):
+                    if idx in best_indices and cell != "-":
+                        row += f" ***{cell}*** |"
+                    else:
+                        row += f" {cell} |"
             else:
-                row += " - |"
+                row += "".join(f" {cell} |" for cell in score_cells)
+
             md_lines.append(row)
 
     # Add aggregated token statistics
@@ -691,40 +696,45 @@ def save_tier_report(
             ]
         )
 
-        # Build header
+        # Build header WITHOUT "Best" column
         header = "| Criterion |"
         separator = "|-----------|"
         for subtest_id in sorted(best_runs.keys()):
             header += f" {subtest_id} |"
             separator += "------|"
-        header += " Best |"
-        separator += "------|"
         md_lines.extend([header, separator])
 
-        # Add row for each criterion
+        # Add row for each criterion with best bolded
         for criterion in sorted(all_criteria):
             row = f"| {criterion} |"
             scores = []
+            score_cells = []
+
             for subtest_id in sorted(best_runs.keys()):
                 best_run = best_runs[subtest_id]
                 if best_run.criteria_scores and criterion in best_run.criteria_scores:
                     score_data = best_run.criteria_scores[criterion]
-                    if isinstance(score_data, dict):
-                        score = score_data.get("score", "N/A")
-                    else:
-                        score = score_data
+                    score = score_data.get("score") if isinstance(score_data, dict) else score_data
                     if isinstance(score, (int, float)):
-                        scores.append(score)
-                        row += f" {score:.2f} |"
+                        scores.append((score, len(score_cells)))
+                        score_cells.append(f"{score:.2f}")
                     else:
-                        row += f" {score} |"
+                        score_cells.append(f"{score}" if score else "-")
                 else:
-                    row += " - |"
-            # Add best score
+                    score_cells.append("-")
+
+            # Bold/italicize best scores
             if scores:
-                row += f" {max(scores):.2f} |"
+                max_score = max(s[0] for s in scores)
+                best_indices = {s[1] for s in scores if s[0] == max_score}
+                for idx, cell in enumerate(score_cells):
+                    if idx in best_indices and cell != "-":
+                        row += f" ***{cell}*** |"
+                    else:
+                        row += f" {cell} |"
             else:
-                row += " - |"
+                row += "".join(f" {cell} |" for cell in score_cells)
+
             md_lines.append(row)
 
     # Add aggregated token statistics
@@ -881,40 +891,45 @@ def save_experiment_report(
             ]
         )
 
-        # Build header
+        # Build header WITHOUT "Best" column
         header = "| Criterion |"
         separator = "|-----------|"
         for tier_val in sorted(best_runs_by_tier.keys()):
             header += f" {tier_val} |"
             separator += "------|"
-        header += " Best |"
-        separator += "------|"
         md_lines.extend([header, separator])
 
-        # Add row for each criterion
+        # Add row for each criterion with best bolded
         for criterion in sorted(all_criteria):
             row = f"| {criterion} |"
             scores = []
+            score_cells = []
+
             for tier_val in sorted(best_runs_by_tier.keys()):
                 best_run = best_runs_by_tier[tier_val]
                 if best_run.criteria_scores and criterion in best_run.criteria_scores:
                     score_data = best_run.criteria_scores[criterion]
-                    if isinstance(score_data, dict):
-                        score = score_data.get("score", "N/A")
-                    else:
-                        score = score_data
+                    score = score_data.get("score") if isinstance(score_data, dict) else score_data
                     if isinstance(score, (int, float)):
-                        scores.append(score)
-                        row += f" {score:.2f} |"
+                        scores.append((score, len(score_cells)))
+                        score_cells.append(f"{score:.2f}")
                     else:
-                        row += f" {score} |"
+                        score_cells.append(f"{score}" if score else "-")
                 else:
-                    row += " - |"
-            # Add best score
+                    score_cells.append("-")
+
+            # Bold/italicize best scores
             if scores:
-                row += f" {max(scores):.2f} |"
+                max_score = max(s[0] for s in scores)
+                best_indices = {s[1] for s in scores if s[0] == max_score}
+                for idx, cell in enumerate(score_cells):
+                    if idx in best_indices and cell != "-":
+                        row += f" ***{cell}*** |"
+                    else:
+                        row += f" {cell} |"
             else:
-                row += " - |"
+                row += "".join(f" {cell} |" for cell in score_cells)
+
             md_lines.append(row)
 
     # Add aggregated token statistics
