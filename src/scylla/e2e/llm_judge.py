@@ -546,6 +546,7 @@ def run_llm_judge(
     reference_patch_path: Path | None = None,
     include_patchfile: bool = True,
     run_build_pipeline: bool = True,
+    judge_run_number: int = 1,
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
 
@@ -565,6 +566,7 @@ def run_llm_judge(
         reference_patch_path: Optional path to reference solution patch for comparison
         include_patchfile: Whether to include git diff in evaluation context
         run_build_pipeline: Whether to run build/lint/test pipeline (default True)
+        judge_run_number: Judge run number for creating judge_{N}/ subdirectory (default 1)
 
     Returns:
         JudgeResult with evaluation details.
@@ -606,6 +608,12 @@ def run_llm_judge(
         pipeline_result=pipeline_result,
     )
 
+    # Create judge_{N}/ subdirectory if judge_dir provided
+    actual_judge_dir = None
+    if judge_dir:
+        actual_judge_dir = judge_dir / f"judge_{judge_run_number:02d}"
+        actual_judge_dir.mkdir(parents=True, exist_ok=True)
+
     # Call Claude CLI for judgment
     try:
         result = _call_claude_judge(judge_prompt, model)
@@ -614,8 +622,8 @@ def run_llm_judge(
         judge_result = _parse_judge_response(result)
 
         # Save judge logs if directory provided
-        if judge_dir:
-            _save_judge_logs(judge_dir, judge_prompt, result, judge_result, model, workspace)
+        if actual_judge_dir:
+            _save_judge_logs(actual_judge_dir, judge_prompt, result, judge_result, model, workspace)
 
         return judge_result
 
@@ -952,6 +960,33 @@ def _save_judge_logs(
     # Save structured result (keep as judgment.json for compatibility)
     with open(judge_dir / "judgment.json", "w") as f:
         json.dump(result.to_dict(), f, indent=2)
+
+    # Create MODEL.md with judge model information
+    try:
+        from datetime import UTC, datetime
+
+        # Try to get claude-code version
+        claude_version_result = subprocess.run(
+            ["claude", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        claude_code_version = (
+            claude_version_result.stdout.strip()
+            if claude_version_result.returncode == 0
+            else "unknown"
+        )
+
+        model_info = f"""# Judge Model Information
+
+**Model**: {model}
+**Claude Code Version**: {claude_code_version}
+**Timestamp**: {datetime.now(UTC).isoformat()}
+"""
+        (judge_dir / "MODEL.md").write_text(model_info)
+    except Exception as e:
+        logger.warning(f"Failed to create MODEL.md: {e}")
 
     # Generate replay script for re-running judge
     replay_script = judge_dir / "replay.sh"
