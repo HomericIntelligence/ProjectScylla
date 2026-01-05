@@ -107,6 +107,21 @@ class TierID(Enum):
         return order.index(self) < order.index(other)
 
 
+# Tier dependency map for parallel execution
+# T0-T4 are independent (can run in parallel)
+# T5 depends on T0-T4 (inherits from best result)
+# T6 depends on T5 (inherits from T5)
+TIER_DEPENDENCIES: dict[TierID, list[TierID]] = {
+    TierID.T0: [],
+    TierID.T1: [],
+    TierID.T2: [],
+    TierID.T3: [],
+    TierID.T4: [],
+    TierID.T5: [TierID.T0, TierID.T1, TierID.T2, TierID.T3, TierID.T4],
+    TierID.T6: [TierID.T5],
+}
+
+
 @dataclass
 class SubTestConfig:
     """Configuration for a single sub-test within a tier.

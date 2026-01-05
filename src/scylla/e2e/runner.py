@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -26,6 +27,7 @@ from scylla.e2e.checkpoint import (
 from scylla.e2e.judge_selection import save_selection, select_best_subtest
 from scylla.e2e.llm_judge import build_judge_prompt_with_paths
 from scylla.e2e.models import (
+    TIER_DEPENDENCIES,
     ExperimentConfig,
     ExperimentResult,
     TierBaseline,
@@ -119,6 +121,50 @@ class E2ERunner:
         self.workspace_manager: WorkspaceManager | None = None
         self.checkpoint: E2ECheckpoint | None = None
         self._fresh = fresh
+
+    @staticmethod
+    def _get_tier_groups(tiers_to_run: list[TierID]) -> list[list[TierID]]:
+        """Group tiers by dependencies for parallel execution.
+
+        Tiers within each group can run in parallel. Groups are executed sequentially.
+
+        Args:
+            tiers_to_run: List of tier IDs to run
+
+        Returns:
+            List of tier groups, where each group can be run in parallel.
+            Example: [[T0, T1, T2, T3, T4], [T5], [T6]]
+
+        """
+        if not tiers_to_run:
+            return []
+
+        groups: list[list[TierID]] = []
+        remaining = set(tiers_to_run)
+        completed: set[TierID] = set()
+
+        while remaining:
+            # Find all tiers whose dependencies are satisfied
+            ready = [
+                tier
+                for tier in remaining
+                if all(
+                    dep in completed or dep not in tiers_to_run for dep in TIER_DEPENDENCIES[tier]
+                )
+            ]
+
+            if not ready:
+                # Circular dependency or missing dependency
+                raise ValueError(
+                    f"Unable to resolve tier dependencies. "
+                    f"Remaining: {remaining}, Completed: {completed}"
+                )
+
+            groups.append(sorted(ready))  # Sort for deterministic ordering
+            completed.update(ready)
+            remaining -= set(ready)
+
+        return groups
 
     def run(self) -> ExperimentResult:
         """Run the complete E2E experiment with auto-resume support.
@@ -214,29 +260,93 @@ class E2ERunner:
         previous_baseline: TierBaseline | None = None
         checkpoint_path = self.experiment_dir / "checkpoint.json"
 
+        # Group tiers by dependencies for parallel execution
+        tier_groups = self._get_tier_groups(self.config.tiers_to_run)
+        logger.info(f"Tier groups for parallel execution: {tier_groups}")
+
         try:
-            for tier_id in self.config.tiers_to_run:
-                # Check for shutdown before starting tier
+            for group in tier_groups:
+                # Check for shutdown before starting group
                 if is_shutdown_requested():
-                    logger.warning(f"Shutdown requested before tier {tier_id.value}, stopping...")
+                    logger.warning("Shutdown requested before tier group, stopping...")
                     break
 
-                logger.info(f"Starting tier {tier_id.value}")
+                if len(group) == 1:
+                    # Single tier - run sequentially
+                    tier_id = group[0]
+                    logger.info(f"Starting tier {tier_id.value}")
 
-                tier_result = self._run_tier(tier_id, previous_baseline)
-                tier_results[tier_id] = tier_result
+                    tier_result = self._run_tier(tier_id, previous_baseline)
+                    tier_results[tier_id] = tier_result
 
-                # Set baseline for next tier
-                if tier_result.best_subtest:
-                    subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
-                    previous_baseline = self.tier_manager.get_baseline_for_subtest(
-                        tier_id=tier_id,
-                        subtest_id=tier_result.best_subtest,
-                        results_dir=subtest_dir,
+                    # Set baseline for next tier
+                    if tier_result.best_subtest:
+                        subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
+                        previous_baseline = self.tier_manager.get_baseline_for_subtest(
+                            tier_id=tier_id,
+                            subtest_id=tier_result.best_subtest,
+                            results_dir=subtest_dir,
+                        )
+
+                    # Save intermediate results
+                    self._save_tier_result(tier_id, tier_result)
+
+                else:
+                    # Multiple tiers - run in parallel
+                    logger.info(
+                        f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}"
                     )
 
-                # Save intermediate results
-                self._save_tier_result(tier_id, tier_result)
+                    with ThreadPoolExecutor(max_workers=len(group)) as executor:
+                        # Submit all tiers in this group
+                        futures = {
+                            executor.submit(self._run_tier, tier_id, previous_baseline): tier_id
+                            for tier_id in group
+                        }
+
+                        # Collect results as they complete
+                        for future in as_completed(futures):
+                            tier_id = futures[future]
+                            try:
+                                tier_result = future.result()
+                                tier_results[tier_id] = tier_result
+
+                                # Save intermediate results
+                                self._save_tier_result(tier_id, tier_result)
+
+                                logger.info(f"Completed tier {tier_id.value} in parallel group")
+                            except Exception as e:
+                                logger.error(f"Tier {tier_id.value} failed: {e}")
+                                raise
+
+                    # After parallel group completes, find best tier for baseline
+                    # (only relevant for T0-T4 group before T5)
+                    if TierID.T5 in self.config.tiers_to_run:
+                        best_cop = float("inf")
+                        best_tier = None
+                        for tier_id in group:
+                            if (
+                                tier_id in tier_results
+                                and tier_results[tier_id].cost_of_pass < best_cop
+                            ):
+                                best_cop = tier_results[tier_id].cost_of_pass
+                                best_tier = tier_id
+
+                        if best_tier and tier_results[best_tier].best_subtest:
+                            subtest_dir = (
+                                self.experiment_dir
+                                / best_tier.value
+                                / tier_results[best_tier].best_subtest
+                            )
+                            previous_baseline = self.tier_manager.get_baseline_for_subtest(
+                                tier_id=best_tier,
+                                subtest_id=tier_results[best_tier].best_subtest,
+                                results_dir=subtest_dir,
+                            )
+                            logger.info(
+                                f"Selected {best_tier.value} as baseline for next tier group "
+                                f"(CoP: ${best_cop:.4f})"
+                            )
 
         finally:
             # Save checkpoint on interrupt
