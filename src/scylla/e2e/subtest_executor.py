@@ -151,6 +151,60 @@ def _save_agent_result(agent_dir: Path, result: AdapterResult) -> None:
         json.dump(result_data, f, indent=2)
 
 
+def _commit_test_config(workspace: Path) -> None:
+    """Commit test configuration files so agent sees them as existing state.
+
+    Commits CLAUDE.md and .claude/ directory if they exist, so the agent
+    sees them as part of the repository's existing state rather than
+    uncommitted changes.
+
+    Args:
+        workspace: Path to the workspace directory
+
+    """
+    import subprocess
+
+    # Stage CLAUDE.md if it exists
+    claude_md = workspace / "CLAUDE.md"
+    if claude_md.exists():
+        subprocess.run(
+            ["git", "add", "CLAUDE.md"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+    # Stage .claude/ directory if it exists
+    claude_dir = workspace / ".claude"
+    if claude_dir.exists():
+        subprocess.run(
+            ["git", "add", ".claude/"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+    # Check if there are staged changes
+    status_result = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=workspace,
+        capture_output=True,
+        timeout=30,
+    )
+
+    # If there are staged changes, commit them
+    if status_result.returncode != 0:
+        subprocess.run(
+            ["git", "commit", "-m", "[scylla] Initialize test configuration"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+
 def _load_agent_result(agent_dir: Path) -> AdapterResult:
     """Load agent execution result from agent/result.json.
 
@@ -590,6 +644,9 @@ class SubTestExecutor:
                 subtest_id=subtest.id,
                 baseline=baseline,
             )
+
+            # Commit test configs so agent sees them as existing state
+            _commit_test_config(workspace)
 
             try:
                 run_result = self._execute_single_run(
