@@ -232,7 +232,8 @@ def generate_run_report(
         lines.append("Files created/modified:")
         lines.append("")
         for file_path in workspace_files:
-            lines.append(f"- `{file_path}`")
+            # Create markdown link to file in workspace
+            lines.append(f"- [{file_path}](./workspace/{file_path})")
         lines.append("")
     else:
         lines.append("No files created in workspace.")
@@ -290,15 +291,16 @@ def _is_test_config_file(file_path: str) -> bool:
 def _get_workspace_files(workspace_path: Path) -> list[str]:
     """Get list of modified/created files in workspace (using git status).
 
-    Only returns files that were modified or created by the agent,
-    not all files in the repository. Excludes test configuration files
-    (CLAUDE.md, .claude/) that are set up by the test framework.
+    Recursively expands directories to list individual files. Only returns
+    files that were modified or created by the agent, not all files in the
+    repository. Excludes test configuration files (CLAUDE.md, .claude/)
+    that are set up by the test framework.
 
     Args:
         workspace_path: Path to workspace directory
 
     Returns:
-        List of relative file paths that were modified/created.
+        List of relative file paths (individual files, not directories).
 
     """
     import subprocess
@@ -324,12 +326,25 @@ def _get_workspace_files(workspace_path: Path) -> list[str]:
             if not line:
                 continue
             # Extract file path (skip status codes in first 3 chars)
-            file_path = line[3:]
-            # Skip test configuration files
-            if file_path and not _is_test_config_file(file_path):
-                files.append(file_path)
+            file_path = line[3:].strip()
+            if not file_path:
+                continue
 
-        return sorted(files)
+            full_path = workspace_path / file_path
+
+            # If it's a directory, recursively add all files within it
+            if full_path.is_dir():
+                for child in full_path.rglob("*"):
+                    if child.is_file():
+                        rel_path = child.relative_to(workspace_path)
+                        if not _is_test_config_file(str(rel_path)):
+                            files.append(str(rel_path))
+            # If it's a file, add it directly
+            elif full_path.is_file():
+                if not _is_test_config_file(file_path):
+                    files.append(file_path)
+
+        return sorted(set(files))  # Remove duplicates and sort
 
     except Exception:
         return []
