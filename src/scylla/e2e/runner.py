@@ -36,6 +36,8 @@ from scylla.e2e.models import (
     TokenStats,
 )
 from scylla.e2e.run_report import (
+    generate_experiment_summary_table,
+    generate_tier_summary_table,
     save_experiment_report,
     save_subtest_report,
     save_tier_report,
@@ -649,6 +651,13 @@ class E2ERunner:
             # Generate tier report
             save_tier_report(tier_dir, tier_id.value, result)
 
+            # Generate tier summary table
+            tier_summary = generate_tier_summary_table(
+                tier_id=tier_id.value,
+                subtest_results=result.subtest_results,
+            )
+            (tier_dir / "summary.md").write_text(tier_summary)
+
     def _find_frontier(
         self,
         tier_results: dict[TierID, TierResult],
@@ -726,6 +735,12 @@ class E2ERunner:
 
         # Use the hierarchical report generator
         save_experiment_report(self.experiment_dir, result)
+
+        # Generate experiment summary table
+        experiment_summary = generate_experiment_summary_table(
+            tier_results=result.tier_results,
+        )
+        (self.experiment_dir / "summary.md").write_text(experiment_summary)
 
         logger.info(f"Reports saved to {self.experiment_dir / 'report.md'}")
 
