@@ -505,7 +505,10 @@ class SubTestExecutor:
             # Create workspace at subtest level (shared across all runs)
             workspace = results_dir / "workspace"
             workspace.mkdir(parents=True, exist_ok=True)
-            self._setup_workspace(workspace, CommandLogger(results_dir), tier_id, subtest.id)
+            # Use run_number=1 for shared workspace (will be per-run in Bug 2)
+            self._setup_workspace(
+                workspace, CommandLogger(results_dir), tier_id, subtest.id, run_number=1
+            )
 
             # Prepare tier configuration in workspace once
             self.tier_manager.prepare_workspace(
@@ -914,6 +917,7 @@ class SubTestExecutor:
         command_logger: CommandLogger,
         tier_id: TierID,
         subtest_id: str,
+        run_number: int,
     ) -> None:
         """Set up workspace using git worktree from base repo with named branch.
 
@@ -922,6 +926,7 @@ class SubTestExecutor:
             command_logger: Logger for commands
             tier_id: Tier identifier for branch naming
             subtest_id: Subtest identifier for branch naming
+            run_number: Run number for branch naming
 
         """
         import shlex
@@ -931,8 +936,8 @@ class SubTestExecutor:
         # Ensure workspace path is absolute for git worktree
         workspace_abs = workspace.resolve()
 
-        # Generate branch name
-        branch_name = f"{tier_id.value}_{subtest_id}"
+        # Generate branch name with run number
+        branch_name = f"{tier_id.value}_{subtest_id}_run_{run_number:02d}"
 
         # Log worktree creation phase
         _phase_log("WORKTREE", f"Creating worktree [{branch_name}] @ [{workspace_abs}]")

@@ -172,6 +172,7 @@ class WorkspaceManager:
         workspace_path: Path,
         tier_id: str | None = None,
         subtest_id: str | None = None,
+        run_number: int | None = None,
     ) -> tuple[list[str], str]:
         """Create a worktree for a single run with named branch.
 
@@ -179,6 +180,7 @@ class WorkspaceManager:
             workspace_path: Path where the worktree should be created
             tier_id: Optional tier ID (e.g., "T0", "T1") for branch naming
             subtest_id: Optional subtest ID (e.g., "01", "02") for branch naming
+            run_number: Optional run number for branch naming (e.g., 1, 2, 3)
 
         Returns:
             Tuple of (command_list, branch_name) for logging/reproducibility
@@ -193,9 +195,12 @@ class WorkspaceManager:
         # Ensure parent directory exists
         workspace_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Generate branch name from tier/subtest or fall back to counter
+        # Generate branch name from tier/subtest/run or fall back to counter
         if tier_id and subtest_id:
-            branch_name = f"{tier_id}_{subtest_id}"
+            if run_number is not None:
+                branch_name = f"{tier_id}_{subtest_id}_run_{run_number:02d}"
+            else:
+                branch_name = f"{tier_id}_{subtest_id}"
         else:
             self._worktree_count += 1
             branch_name = f"worktree-{self._worktree_count}"
