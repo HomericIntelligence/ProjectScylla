@@ -68,6 +68,140 @@ class JudgeResult:
 _score_to_grade = assign_letter_grade
 
 
+@dataclass
+class BuildPipelineResult:
+    """Results from running build/lint pipeline.
+
+    Attributes:
+        mojo_build_passed: Whether mojo build succeeded
+        mojo_build_output: Output from mojo build
+        mojo_format_passed: Whether mojo format --check passed
+        mojo_format_output: Output from mojo format
+        mojo_test_passed: Whether mojo test passed
+        mojo_test_output: Output from mojo test
+        precommit_passed: Whether pre-commit hooks passed
+        precommit_output: Output from pre-commit
+        all_passed: Whether all tools passed
+
+    """
+
+    mojo_build_passed: bool
+    mojo_build_output: str
+    mojo_format_passed: bool
+    mojo_format_output: str
+    mojo_test_passed: bool
+    mojo_test_output: str
+    precommit_passed: bool
+    precommit_output: str
+    all_passed: bool
+
+    def to_context_string(self) -> str:
+        """Format pipeline results for judge context."""
+        sections = []
+
+        status = "PASSED" if self.mojo_build_passed else "FAILED"
+        sections.append(f"### Mojo Build ({status})\n```\n{self.mojo_build_output[:2000]}\n```")
+
+        status = "PASSED" if self.mojo_format_passed else "FAILED"
+        sections.append(
+            f"### Mojo Format Check ({status})\n```\n{self.mojo_format_output[:2000]}\n```"
+        )
+
+        status = "PASSED" if self.mojo_test_passed else "FAILED"
+        sections.append(f"### Mojo Test ({status})\n```\n{self.mojo_test_output[:2000]}\n```")
+
+        status = "PASSED" if self.precommit_passed else "FAILED"
+        sections.append(
+            f"### Pre-commit Hooks ({status})\n```\n{self.precommit_output[:2000]}\n```"
+        )
+
+        return "\n\n".join(sections)
+
+
+def _run_build_pipeline(workspace: Path) -> BuildPipelineResult:
+    """Run build/lint pipeline and capture results.
+
+    Args:
+        workspace: Path to the workspace directory
+
+    Returns:
+        BuildPipelineResult with all tool outputs
+
+    """
+    results: dict[str, Any] = {}
+
+    # Mojo build
+    try:
+        build_result = subprocess.run(
+            ["mojo", "build", "."],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        results["mojo_build_passed"] = build_result.returncode == 0
+        results["mojo_build_output"] = build_result.stdout + "\n" + build_result.stderr
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        results["mojo_build_passed"] = False
+        results["mojo_build_output"] = f"Error: {e}"
+
+    # Mojo format check
+    try:
+        format_result = subprocess.run(
+            ["mojo", "format", "--check", "."],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        results["mojo_format_passed"] = format_result.returncode == 0
+        results["mojo_format_output"] = format_result.stdout + "\n" + format_result.stderr
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        results["mojo_format_passed"] = False
+        results["mojo_format_output"] = f"Error: {e}"
+
+    # Mojo test
+    try:
+        test_result = subprocess.run(
+            ["mojo", "test"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        results["mojo_test_passed"] = test_result.returncode == 0
+        results["mojo_test_output"] = test_result.stdout + "\n" + test_result.stderr
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        results["mojo_test_passed"] = False
+        results["mojo_test_output"] = f"Error: {e}"
+
+    # Pre-commit hooks
+    try:
+        precommit_result = subprocess.run(
+            ["pre-commit", "run", "--all-files"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        results["precommit_passed"] = precommit_result.returncode == 0
+        results["precommit_output"] = precommit_result.stdout + "\n" + precommit_result.stderr
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        results["precommit_passed"] = False
+        results["precommit_output"] = f"Error: {e}"
+
+    results["all_passed"] = all(
+        [
+            results["mojo_build_passed"],
+            results["mojo_format_passed"],
+            results["mojo_test_passed"],
+            results["precommit_passed"],
+        ]
+    )
+
+    return BuildPipelineResult(**results)
+
+
 def _build_judge_prompt(
     task_prompt: str,
     agent_output: str,
@@ -75,6 +209,7 @@ def _build_judge_prompt(
     patchfile: str | None = None,
     deleted_files: list[str] | None = None,
     reference_patch: str | None = None,
+    pipeline_result: BuildPipelineResult | None = None,
 ) -> str:
     """Build the evaluation context for the LLM judge.
 
@@ -88,6 +223,7 @@ def _build_judge_prompt(
         patchfile: Git diff showing all changes (optional)
         deleted_files: List of deleted file paths (optional)
         reference_patch: Reference solution patch for comparison (optional)
+        pipeline_result: Build/lint/test pipeline results (optional)
 
     Returns:
         Formatted evaluation context for the judge LLM.
@@ -122,6 +258,15 @@ def _build_judge_prompt(
             f"```diff\n{ref_patch}\n```\n\n"
             f"Note: The agent's solution does not need to be identical, but should achieve "
             f"the same semantic result (same files created/modified, similar structure)."
+        )
+
+    # Add build pipeline results if available
+    if pipeline_result:
+        overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
+        sections.append(
+            f"## Build/Lint/Test Pipeline Results\n\n"
+            f"**Overall Status**: {overall_status}\n\n"
+            f"{pipeline_result.to_context_string()}"
         )
 
     sections.append("Evaluate the agent's work using the criteria in your system prompt.")
@@ -400,6 +545,7 @@ def run_llm_judge(
     judge_dir: Path | None = None,
     reference_patch_path: Path | None = None,
     include_patchfile: bool = True,
+    run_build_pipeline: bool = True,
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
 
@@ -418,6 +564,7 @@ def run_llm_judge(
         judge_dir: Directory for judge outputs (prompt.md, response.txt, judgment.json, replay.sh)
         reference_patch_path: Optional path to reference solution patch for comparison
         include_patchfile: Whether to include git diff in evaluation context
+        run_build_pipeline: Whether to run build/lint/test pipeline (default True)
 
     Returns:
         JudgeResult with evaluation details.
@@ -438,6 +585,16 @@ def run_llm_judge(
     if reference_patch_path:
         reference_patch = _load_reference_patch(reference_patch_path)
 
+    # Run build/lint/test pipeline if requested
+    pipeline_result = None
+    if run_build_pipeline:
+        logger.info("Running build/lint/test pipeline")
+        pipeline_result = _run_build_pipeline(workspace)
+        if pipeline_result.all_passed:
+            logger.info("Build pipeline: ALL PASSED")
+        else:
+            logger.warning("Build pipeline: SOME FAILED")
+
     # Build the judge prompt
     judge_prompt = _build_judge_prompt(
         task_prompt,
@@ -446,6 +603,7 @@ def run_llm_judge(
         patchfile=patchfile,
         deleted_files=deleted_files,
         reference_patch=reference_patch,
+        pipeline_result=pipeline_result,
     )
 
     # Call Claude CLI for judgment
