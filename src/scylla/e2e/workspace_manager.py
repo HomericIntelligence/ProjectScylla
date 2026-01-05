@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,9 @@ class WorkspaceManager:
 
         Creates a shallow clone with the specified commit checked out.
         This is the single source for all worktrees.
+
+        Uses exponential backoff retry for transient network errors
+        (connection reset, curl failures, timeouts).
         """
         if self._is_setup:
             logger.debug("Base repo already set up")
@@ -71,14 +75,49 @@ class WorkspaceManager:
             str(self.base_repo),
         ]
 
-        result = subprocess.run(
-            clone_cmd,
-            capture_output=True,
-            text=True,
-        )
+        # Retry logic for transient network errors
+        max_retries = 3
+        base_delay = 1.0
 
-        if result.returncode != 0:
-            raise RuntimeError(f"Failed to clone repository: {result.stderr}")
+        for attempt in range(max_retries):
+            result = subprocess.run(
+                clone_cmd,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                break
+
+            stderr = result.stderr.lower()
+
+            # Detect transient network errors (retry-able)
+            transient_patterns = [
+                "connection reset",
+                "connection refused",
+                "network unreachable",
+                "network is unreachable",
+                "temporary failure",
+                "could not resolve host",
+                "curl 56",  # RPC failed curl error
+                "timed out",
+                "early eof",
+                "recv failure",
+            ]
+
+            is_transient = any(pattern in stderr for pattern in transient_patterns)
+
+            # Fail immediately on non-transient errors or last attempt
+            if not is_transient or attempt == max_retries - 1:
+                raise RuntimeError(f"Failed to clone repository: {result.stderr}")
+
+            # Exponential backoff: 1s, 2s, 4s
+            delay = base_delay * (2**attempt)
+            logger.warning(
+                f"Git clone failed (attempt {attempt + 1}/{max_retries}), "
+                f"retrying in {delay}s: {result.stderr.strip()}"
+            )
+            time.sleep(delay)
 
         # If specific commit requested, fetch and checkout
         if self.commit:
