@@ -492,34 +492,8 @@ class SubTestExecutor:
         # Load task prompt once
         task_prompt = self.config.task_prompt_file.read_text()
 
-        # Check if ALL runs are already completed (checkpoint resume optimization)
-        all_completed = True
-        if checkpoint:
-            for run_num in range(1, self.config.runs_per_subtest + 1):
-                if not checkpoint.is_run_completed(tier_id.value, subtest.id, run_num):
-                    all_completed = False
-                    break
-
-        # Only setup workspace if there are runs to execute
-        if not all_completed:
-            # Create workspace at subtest level (shared across all runs)
-            workspace = results_dir / "workspace"
-            workspace.mkdir(parents=True, exist_ok=True)
-            # Use run_number=1 for shared workspace (will be per-run in Bug 2)
-            self._setup_workspace(
-                workspace, CommandLogger(results_dir), tier_id, subtest.id, run_number=1
-            )
-
-            # Prepare tier configuration in workspace once
-            self.tier_manager.prepare_workspace(
-                workspace=workspace,
-                tier_id=tier_id,
-                subtest_id=subtest.id,
-                baseline=baseline,
-            )
-        else:
-            # All runs completed, just use existing workspace path
-            workspace = results_dir / "workspace"
+        # Track last workspace for resource manifest
+        last_workspace = None
 
         for run_num in range(1, self.config.runs_per_subtest + 1):
             # Check for shutdown before starting run
@@ -599,6 +573,24 @@ class SubTestExecutor:
             run_dir = results_dir / f"run_{run_num:02d}"
             run_dir.mkdir(parents=True, exist_ok=True)
 
+            # Create workspace per run in run_N/workspace/
+            workspace = run_dir / "workspace"
+            workspace.mkdir(parents=True, exist_ok=True)
+            last_workspace = workspace  # Track for resource manifest
+
+            # Setup workspace with git worktree
+            self._setup_workspace(
+                workspace, CommandLogger(run_dir), tier_id, subtest.id, run_number=run_num
+            )
+
+            # Prepare tier configuration in workspace
+            self.tier_manager.prepare_workspace(
+                workspace=workspace,
+                tier_id=tier_id,
+                subtest_id=subtest.id,
+                baseline=baseline,
+            )
+
             try:
                 run_result = self._execute_single_run(
                     tier_id=tier_id,
@@ -637,13 +629,20 @@ class SubTestExecutor:
                 raise
 
         # Save resource manifest for inheritance (no file copying)
-        self.tier_manager.save_resource_manifest(
-            results_dir=results_dir,
-            tier_id=tier_id,
-            subtest=subtest,
-            workspace=workspace,
-            baseline=baseline,
-        )
+        # Use last workspace if available, otherwise use the final run's workspace path
+        if last_workspace is None and self.config.runs_per_subtest > 0:
+            # No runs were executed (all completed via checkpoint), use last run's workspace
+            last_run_num = self.config.runs_per_subtest
+            last_workspace = results_dir / f"run_{last_run_num:02d}" / "workspace"
+
+        if last_workspace is not None:
+            self.tier_manager.save_resource_manifest(
+                results_dir=results_dir,
+                tier_id=tier_id,
+                subtest=subtest,
+                workspace=last_workspace,
+                baseline=baseline,
+            )
 
         # Aggregate results
         return self._aggregate_results(tier_id, subtest.id, runs)
