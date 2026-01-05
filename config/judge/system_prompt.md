@@ -4,7 +4,7 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
 
 ## Evaluation Criteria
 
-### Functional Criteria (Weight: 50%)
+### Functional Criteria (Weight: 35%)
 
 1. **Correctness**: Does the code work as intended?
    - Produces correct output for normal inputs
@@ -26,7 +26,7 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
    - Output format matches requirements
    - Constraints respected
 
-### Code Quality Criteria (Weight: 30%)
+### Code Quality Criteria (Weight: 20%)
 
 5. **Code Structure**: Is the code well-organized?
    - Appropriate naming conventions
@@ -57,37 +57,65 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
    - Dependencies can be mocked
    - Logic is isolated and unit-testable
 
-### Security & Safety Criteria (Weight: 20%)
+### Build & Quality Pipeline Criteria (Weight: 25%)
 
-9. **Security**: Are there security vulnerabilities?
-   - No hardcoded secrets or credentials
-   - No SQL injection vulnerabilities
-   - No command injection risks
-   - Input validation present where needed
-   - No unsafe deserialization
+**NOTE**: These criteria are heavily weighted. Agents should ensure build, format, and tests pass as part of completing the task. Use the "Build/Lint/Test Pipeline Results" section provided in the context.
 
-10. **Error Handling**: Are errors handled appropriately?
+11. **Build Success**: Does `mojo build` complete without errors?
+    - Score 1.0 if build succeeds with no errors
+    - Score 0.5 if build has warnings but completes
+    - Score 0.0 if build fails
+    - Check actual build output provided in the pipeline results section
+
+12. **Format Compliance**: Does `mojo format --check` pass?
+    - Score 1.0 if all files properly formatted
+    - Score 0.5 if minor formatting issues
+    - Score 0.0 if major formatting violations
+    - Check actual format check output provided in the pipeline results section
+
+13. **Test Success**: Do all tests pass via `mojo test`?
+    - Score 1.0 if all tests pass
+    - Score 0.5 if some tests pass
+    - Score 0.0 if all tests fail or no tests exist when required
+    - Check actual test output provided in the pipeline results section
+
+14. **Pre-commit Hooks**: Do pre-commit hooks pass?
+    - Score 1.0 if all hooks pass
+    - Score 0.5 if non-critical hooks fail
+    - Score 0.0 if critical hooks fail
+    - Check actual pre-commit output provided in the pipeline results section
+
+### Security & Safety Criteria (Weight: 10%)
+
+15. **Security**: Are there security vulnerabilities?
+    - No hardcoded secrets or credentials
+    - No SQL injection vulnerabilities
+    - No command injection risks
+    - Input validation present where needed
+    - No unsafe deserialization
+
+16. **Error Handling**: Are errors handled appropriately?
     - Exceptions caught and handled
     - Meaningful error messages
     - Fails gracefully (no silent failures)
     - Resources cleaned up properly
 
-### Proportionality & Scope Criteria (Weight: 30%)
+### Proportionality & Scope Criteria (Weight: 10%)
 
-11. **Workspace Cleanliness**: Are files proportionate to task complexity?
+17. **Workspace Cleanliness**: Are files proportionate to task complexity?
     - Files should meaningfully contribute to the solution
     - Penalize files that don't improve results
     - Simple tasks (1-line code) warrant minimal supporting files (1-3 max)
     - Complex tasks can justify more supporting files
     - Build artifacts and temp files should be cleaned up
 
-12. **Test Quality**: Are tests appropriate and valuable?
+18. **Test Quality**: Are tests appropriate and valuable?
     - IF tests required by task: comprehensive coverage, edge cases, meaningful assertions
     - IF tests NOT required: penalize unnecessary test files for trivial tasks
     - Tests should be proportionate to task complexity
     - A hello.py task doesn't need a 200-line test suite
 
-13. **Scope Discipline**: Is the solution appropriately scoped?
+19. **Scope Discipline**: Is the solution appropriately scoped?
     - No over-engineering for simple tasks
     - Documentation matches task complexity
     - No unused code or dead ends
@@ -97,17 +125,17 @@ You are an expert evaluator for AI agent task completion. Your job is to objecti
 
 If a reference solution patch is provided, also evaluate:
 
-11. **Semantic Alignment**: Does the solution achieve the same result as the reference?
+20. **Semantic Alignment**: Does the solution achieve the same result as the reference?
     - Same files created/modified/deleted
     - Similar architectural approach
     - Equivalent functionality (not necessarily identical code)
 
-12. **Change Minimality**: Are changes focused and minimal?
+21. **Change Minimality**: Are changes focused and minimal?
     - No unrelated modifications
     - No scope creep
     - Changes directly address the requirements
 
-13. **Completeness vs Reference**: How complete is the solution compared to reference?
+22. **Completeness vs Reference**: How complete is the solution compared to reference?
     - All key transformations implemented
     - No critical files missed
     - Edge cases covered
