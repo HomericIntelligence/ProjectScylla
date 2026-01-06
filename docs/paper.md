@@ -25,7 +25,7 @@ research@villmow.us
 <High-level executive summary of the research goals, experimental setup, major findings, and implications.>
 With the advancement of large language models has come a massive increase in capabilities for automated computer interactions. What used to require hand-coded algorithms and pipelines can now be done automatically using state of the art coding models to generate instructions that can then be utilized to further improve automated approaches. However, understanding what improves these language models is more of black magic than art, let alone a rigorous science. This paper's goal is to help demistify the magic of prompt engineering by proposing a rigorous evaluation framework across multiple dimensions to help determine how agents interact, the scale that of changes for the agentics, and an attempt to quantify with numbers the benefits of each approach across a broad range of activities.
 
-There are benchmarks for measuring LLM's workflows in various domains, such as agent-bench[1], swe-bench[2], tau-bench[3], etc... There are also prompt evaluation benchmarks such as PromptBench[4], PromptEval[5], Multi-Prompt Eval[6], etc... This paper focuses specifically on coding tools, specifically industry leading tool Claude Code[7], and how prompt modification can change the behavior of the model for better or for worse. This paper also introduces a framework for evaluating other tools in a systematic way, thus allowing extension to domains outside of CLI based coding tools. We show that <insert findings here>. 
+There are benchmarks for measuring LLM's workflows in various domains, such as agent-bench[1], swe-bench[2], tau-bench[3], etc... There are also prompt evaluation benchmarks such as PromptBench[4] or PromptEval[5]. This paper focuses specifically on coding tools, specifically industry leading tool Claude Code[7], and how prompt modification can change the behavior of the model for better or for worse. This paper also introduces a framework for evaluating other tools in a systematic way, thus allowing extension to domains outside of CLI based coding tools. We show that <insert findings here>. 
 
 This implies that there is still a <summarize implications> and repost here.
 
@@ -53,9 +53,15 @@ Some hypotheses I have are:
 
 ## 3. Related Work
 
-<Prior work on LLM benchmarking.>
-<Related work on agentic systems and multi-agent architectures.>
-<Existing evaluation frameworks and gaps addressed by this work.>
+I am sure there are other work in this category, but I do not know of them yet, so I will fill this in later once I learn more. Given that we are testing production tools and not models, many, if not all, of the prior work on evaluating prompts and benchmarks does not apply directly here, since there is possibly a large level of indirection between what we are testing and what actually gets executed by the model. The model is hidden behind multiple black boxes, first being the CLI tool itself, but also whatever optimizations and implementation details the vendor implemnents on top of their trained base model. The models themselves aren't not documented publicly, as these details are competitive advantages.
+
+There are multiple benchmarks on judging the models, such as agent-bench[1], swe-bench[2], and tau-bench[3], but no standard benchmarks on these CLI tools on how prompts affect them. The reader can also investigate PromptEval, PromptBench, or lm-evaludation-harness[8], but these also don't benchmark the CLI tools, which are used in production today. The next paragraphs will explain in high level details the various other options on the market.
+
+<Add a paragraph on benchmarks>
+
+<Add a paragraph on prompt harnesses>
+
+My work is based solely on evaluating CLI tools, as the CLI's tools are more than the model themselves, but the agentic loop, with hooks, tools, skills, sub-agents, MCP servers, and other logic wrapped together into a single application where the only way to get control of the behavior is through the english language. From this interface, programmatic tools can be spawned, but the ability to properly and accurately interact with the agent is via a fuzzy language interface, and not via traditional programmatic interfaces. While there are some hooks that allow extra programmatic validation with Claude Code, we are not evaluating those at this time. Claude code has the ability to use agentic evaluation at the hook boundary, but triggering it is guaranteed, and not language based.
 
 ---
 
