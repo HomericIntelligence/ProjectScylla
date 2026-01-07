@@ -92,6 +92,14 @@ Moderate issues warrant 0.30 to 0.50 point deductions. These include code duplic
 
 Major issues warrant 0.50 to 0.80 point deductions. These include non-critical security vulnerabilities, race conditions in concurrent code, fundamentally suboptimal approaches, and missing error handling for common failure modes.
 
+**Score Thresholds**:
+- 1.00: Superior - Above and beyond production readiness
+- 0.8-0.99: Excellent - Production ready, no issues
+- 0.6-0.79: Good - Minor improvements possible
+- 0.4-0.59: Acceptable - Some issues but functional
+- 0.2-0.39: Marginal - Significant issues
+- 0.0-0.19: Failing - Does not meet requirements
+
 Severe issues warrant 0.80 to 1.50 point deductions. These include critical security vulnerabilities, data corruption risks, authentication or authorization bypasses, and resource exhaustion vulnerabilities.
 
 Critical issues warrant 1.50 or more point deductions, potentially the full item value. These include solutions that do not function, destructive operations without safeguards, infinite loops or memory leaks, and malicious or dangerous behavior.
