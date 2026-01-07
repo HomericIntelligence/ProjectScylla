@@ -69,8 +69,26 @@ My work is based solely on evaluating CLI tools, as the CLI's tools are more tha
 
 ### 4.1 Experimental Design
 
-<Overall experimental design and rationale.>
-<Ablation strategy and tiered evaluation approach (T0–T6).>
+The experiment is designed by testing english phrases, colloqually known as prompts, via the various methodologies exposed by the tools, in this case Claude Code. The experiment is run by allowing an agent a nearly unfeatered access to the system, only blocked by dangerous ops thanks to the safety-net plugin[9] from cc-marketplace, to perform a task. The task has a well defined solution that is then judged by three different LLM's of various 'strength'. In this case Claude Opus 4.5, Claude Sonnet 4.5, and Claude Haiku 4.5. Each of the 4.5 models are sufficiently advanced in capabilities to be considered independent judges of a task. The judges are provided the same prompt, so the only difference between their results comes from the judge training and implementation differences and not from the prompt or test input. Each judge will receive the output of the task LLM, and provide the results based on the criteria. The judges have the following categories of evaluation; functional correctness, code quality, development pipeline, securty and safety, proportionality and professionalism, and patchfile correctness.
+
+<Insert table w/ summaries of the various categories here>
+
+Each category has contributes proportionally to the final score, with the weighting being:
+
+<Insert list with the category and weight>
+
+The final score results in one of 6 categories, simply labeled S, A, B, C, D, E, F. The ranges and descriptions for these categories are, <Insert weight tables from judge prompt here>.
+
+Each experiment can be reproduced by running either the agent script, the judge script, or the test run script. The test run script will properly run the agent script followed by the test run script.
+
+This finishes the summary of a single test. However, the test themselves are defined differently. The test are a prompt and a configuartion file that specify a repository, a github hash, a set of configuration files to override any pre-defined tooling, and a container to run everything in to help with reproducibility. The first test is being used as an example in this paper, and also as a pipecleaner to show that everything works as expected. This example is 'hello world' from octocat, but forked to my repository just to make sure that the repository is not polluted incase the agents make mistakes or do things that the original author probably does not want.
+
+<Insert test-001 test, config, prompt, expected result, and summary of the test here>
+
+Now that we have gone over the test itself, lets discuss the strategy and tiered approach. The first thing to test is with no prompt at all, including no system prompt. This is to provide as close to a baseline as the base model as possible by overwriting the system prompt with an empty string and not using any configuration or non-default settings from the tool. This provides the baseline that all improvements are measured against. For something as simple as hello world, this baseline should solve the task. The test setup is such that variability in judging will occur, but there is not much one can do to improve the output of a hello world script. However, there are things that you can do that make things worse or break the expected behavior, but I would expect most solutions to be the exact same for all the tests.
+
+
+<Insert section discussing the Ablation strategy and tiered evaluation approach (T0–T6) from the documentation.
 
 ### 4.2 Dimensional Search Space
 

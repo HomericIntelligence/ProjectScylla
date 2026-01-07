@@ -82,15 +82,15 @@ Critical issues warrant 1.50 or more point deductions, potentially the full item
 <subjective_scoring_anchors>
 Use these anchors to calibrate your assessment on the continuous scale from 0% to 100% of maximum points.
 
-95% to 100% represents exceptional work that could serve as a reference implementation. The solution demonstrates mastery through clarity, appropriate complexity, and thoughtful design decisions. This level justifies consideration for the S grade.
+100% represents exceptional work that could serve as a reference implementation. The solution demonstrates mastery through clarity, appropriate complexity, and thoughtful design decisions. This level justifies consideration for the S grade.
 
-85% to 94% represents excellent work that is production ready with only minor improvements possible. The solution follows best practices consistently and handles edge cases appropriately.
+80% to 99% represents excellent work that is production ready with only minor improvements possible. The solution follows best practices consistently and handles edge cases appropriately.
 
-70% to 84% represents good work that is solid with small gaps. The solution is functional and maintainable but may have minor inefficiencies or missing polish.
+60% to 79% represents good work that is solid with small gaps. The solution is functional and maintainable but may have minor inefficiencies or missing polish.
 
-50% to 69% represents acceptable work that functions but has notable quality concerns. A reviewer would approve with required changes.
+40% to 59% represents acceptable work that functions but has notable quality concerns. A reviewer would approve with required changes.
 
-30% to 49% represents marginal work that technically functions but has significant issues. A reviewer would request substantial revisions.
+30% to 39% represents marginal work that technically functions but has significant issues. A reviewer would request substantial revisions.
 
 10% to 29% represents poor work that barely functions with major problems throughout.
 
