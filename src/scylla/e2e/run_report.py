@@ -988,10 +988,10 @@ def save_experiment_report(
         if result.frontier_cop != float("inf")
         else "- **Frontier CoP**: N/A",
         "",
-        "## Tiers Overview",
+        "## Tier Summary",
         "",
-        "| Tier | Best | Score | Duration | Cost | In | Out | Cache R | Cache W | CoP |",
-        "|------|------|-------|----------|------|-----|-----|---------|---------|-----|",
+        "| Tier | Subtests | Duration | Cost | In | Out | Cache R | Cache W | CoP |",
+        "|------|----------|----------|------|-----|-----|---------|---------|-----|",
     ]
 
     for tier_id in result.config.tiers_to_run:
@@ -1008,13 +1008,39 @@ def save_experiment_report(
             else:
                 cop_str = "N/A"
 
+            num_subtests = len(tier_result.subtest_results)
             md_lines.append(
-                f"| {tier_id.value} | {tier_result.best_subtest or 'N/A'} | "
-                f"{tier_result.best_subtest_score:.2f} | {tier_result.total_duration:.1f}s | "
+                f"| {tier_id.value} | {num_subtests} | "
+                f"{tier_result.total_duration:.1f}s | "
                 f"${tier_result.total_cost:.2f} | "
                 f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
                 f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {cop_str} |"
             )
+
+    md_lines.extend(
+        [
+            "",
+            "## Best Subtest per Tier",
+            "",
+            "| Tier | Best | Score | Pass | Cost | Duration |",
+            "|------|------|-------|------|------|----------|",
+        ]
+    )
+
+    for tier_id in result.config.tiers_to_run:
+        tier_result = result.tier_results.get(tier_id)
+        if tier_result and tier_result.best_subtest:
+            best_subtest = tier_result.subtest_results.get(tier_result.best_subtest)
+            if best_subtest:
+                # Calculate subtest-level duration (sum of all runs in this subtest)
+                subtest_duration = sum(r.duration_seconds for r in best_subtest.runs)
+                md_lines.append(
+                    f"| {tier_id.value} | {tier_result.best_subtest} | "
+                    f"{tier_result.best_subtest_score:.2f} | "
+                    f"{best_subtest.pass_rate:.0%} | "
+                    f"${best_subtest.total_cost:.2f} | "
+                    f"{subtest_duration:.1f}s |"
+                )
 
     # Collect all criteria across best runs from each tier's best subtest
     all_criteria: set[str] = set()
