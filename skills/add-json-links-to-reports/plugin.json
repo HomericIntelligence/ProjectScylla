@@ -1,0 +1,39 @@
+{
+  "name": "add-json-links-to-reports",
+  "version": "1.0.0",
+  "type": "skill",
+  "category": "reporting",
+  "description": "Add JSON result links to markdown reports for structured data access",
+  "created": "2026-01-08",
+  "tags": [
+    "reporting",
+    "markdown",
+    "json",
+    "evaluation",
+    "e2e-testing"
+  ],
+  "author": "ProjectScylla",
+  "tested_with": {
+    "python": "3.14.2",
+    "pytest": "9.0.2"
+  },
+  "success_metrics": {
+    "tests_passing": "28/28",
+    "files_modified": 1,
+    "backward_compatible": true
+  },
+  "related_skills": [],
+  "prerequisites": [
+    "Understanding of markdown report structure",
+    "Knowledge of relative path linking",
+    "Familiarity with pytest testing"
+  ],
+  "estimated_time": "15-30 minutes",
+  "difficulty": "beginner",
+  "applicable_to": [
+    "Evaluation frameworks with structured results",
+    "Multi-format reporting systems (markdown + JSON)",
+    "Hierarchical report structures",
+    "LLM testing and benchmarking systems"
+  ]
+}
