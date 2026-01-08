@@ -159,7 +159,8 @@ def generate_run_report(
             "",
             "## Judge Evaluation",
             "",
-            "[View full judgment](./judge/judgment.json)",
+            "- [View full judgment](./judge/judgment.json)",
+            "- [View judge result JSON](./judge/result.json)",
             "",
         ]
     )
@@ -246,7 +247,8 @@ def generate_run_report(
             "",
             "## Agent Output",
             "",
-            "[View agent output](./agent/output.txt)",
+            "- [View agent output](./agent/output.txt)",
+            "- [View agent result JSON](./agent/result.json)",
             "",
         ]
     )
