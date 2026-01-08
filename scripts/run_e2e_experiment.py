@@ -36,6 +36,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def resolve_judge_model(model_shorthand: str) -> str:
+    """Resolve shorthand model names to full model IDs.
+
+    Args:
+        model_shorthand: Either a shorthand like 'sonnet-4-5' or a full model ID
+
+    Returns:
+        Full model ID
+
+    """
+    shortcuts = {
+        "opus-4-5": "claude-opus-4-5-20251101",
+        "sonnet-4-5": "claude-sonnet-4-5-20250929",
+        "haiku-4-5": "claude-haiku-4-0-20250514",
+    }
+    return shortcuts.get(model_shorthand, model_shorthand)
+
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -144,6 +162,16 @@ Examples:
         type=str,
         default="claude-opus-4-5-20251101",
         help="Model for judging (default: claude-opus-4-5-20251101)",
+    )
+    parser.add_argument(
+        "--add-judge",
+        action="append",
+        nargs="?",
+        const="claude-opus-4-5-20251101",
+        metavar="MODEL",
+        help="Add additional judge model. Use multiple times for more judges. "
+        "Without argument, adds opus-4-5. Examples: --add-judge, "
+        "--add-judge sonnet-4-5, --add-judge haiku-4-5",
     )
     parser.add_argument(
         "--tiebreaker-model",
@@ -266,7 +294,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         "models": [args.model],
         "runs_per_subtest": args.runs,
         "tiers_to_run": [TierID.from_string(t) for t in args.tiers],
-        "judge_model": args.judge_model,
+        "judge_models": [args.judge_model],  # Start with primary judge
         "tiebreaker_model": args.tiebreaker_model,
         "parallel_subtests": args.parallel,
         "timeout_seconds": args.timeout,
@@ -309,6 +337,12 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
     if args.prompt:
         config_dict["task_prompt_file"] = args.prompt
 
+    # Build judge_models list from --add-judge arguments
+    if args.add_judge:
+        for model in args.add_judge:
+            resolved_model = resolve_judge_model(model)
+            config_dict["judge_models"].append(resolved_model)
+
     # Validate required fields
     if not config_dict["task_repo"]:
         raise ValueError("Task repository required: set in test.yaml, --config, or --repo")
@@ -323,7 +357,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         models=config_dict["models"],
         runs_per_subtest=config_dict["runs_per_subtest"],
         tiers_to_run=config_dict["tiers_to_run"],
-        judge_model=config_dict["judge_model"],
+        judge_models=config_dict["judge_models"],
         tiebreaker_model=config_dict["tiebreaker_model"],
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],

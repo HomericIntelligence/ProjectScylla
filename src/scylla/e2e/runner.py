@@ -13,6 +13,7 @@ import json
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -360,6 +361,17 @@ class E2ERunner:
                                 f"Selected {best_tier.value} as baseline for next tier group "
                                 f"(CoP: ${best_cop:.4f})"
                             )
+
+        except (KeyboardInterrupt, BrokenProcessPool) as e:
+            # Clean exit for Ctrl+C or process pool failure
+            if isinstance(e, KeyboardInterrupt):
+                logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
+            else:
+                logger.warning("Process pool interrupted, cleaning up...")
+        except Exception as e:
+            # Other errors should propagate
+            logger.error(f"Experiment failed: {e}")
+            raise
 
         finally:
             # Save checkpoint on interrupt

@@ -15,6 +15,7 @@ import statistics
 import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 from datetime import UTC, datetime
 from enum import Enum
 from multiprocessing import Manager
@@ -27,6 +28,7 @@ from scylla.e2e.command_logger import CommandLogger
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import (
     ExperimentConfig,
+    JudgeResultSummary,
     RunResult,
     SubTestConfig,
     SubTestResult,
@@ -902,13 +904,14 @@ class SubTestExecutor:
             judge_result_file = get_judge_result_file(run_dir)
             logger.info(f"[SKIP] Judge already completed: {judge_result_file}")
             judgment = _load_judge_result(judge_dir)
+            judges = []  # No individual judge data for resumed results
             judge_duration = 0.0  # Duration not tracked for reused results
         else:
             # Run judge (either agent ran, or judge result missing)
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Starting")
             judge_start = datetime.now(UTC)
 
-            judgment = self._run_judge(
+            judgment, judges = self._run_judge(
                 workspace=workspace,
                 task_prompt=task_prompt,
                 stdout=result.stdout,
@@ -964,6 +967,7 @@ class SubTestExecutor:
             judge_passed=judgment["passed"],
             judge_grade=judgment["grade"],
             judge_reasoning=judgment["reasoning"],
+            judges=judges,  # Individual judge results
             workspace_path=workspace,
             logs_path=agent_dir,  # Points to agent/ subdirectory
             command_log_path=agent_dir / "command_log.json",
@@ -986,6 +990,7 @@ class SubTestExecutor:
             grade=judgment["grade"],
             passed=judgment["passed"],
             reasoning=judgment["reasoning"],
+            judges=judges,  # Individual judge results for multi-judge tables
             cost_usd=result.cost_usd,
             duration_seconds=duration + judge_duration,
             tokens_input=run_result.tokens_input,  # Legacy property for fallback
@@ -1145,45 +1150,117 @@ class SubTestExecutor:
         )
         worktree_script.chmod(0o755)
 
+    def _compute_judge_consensus(
+        self, judges: list[JudgeResultSummary]
+    ) -> tuple[float | None, bool | None, str | None]:
+        """Compute consensus score from multiple judges using simple average.
+
+        Args:
+            judges: List of individual judge results
+
+        Returns:
+            Tuple of (consensus_score, passed, grade)
+
+        """
+        if not judges:
+            return (None, None, None)
+
+        # Filter judges with valid scores
+        valid = [j for j in judges if j.score is not None]
+        if not valid:
+            return (None, None, None)
+
+        # Simple average across judges
+        consensus_score = sum(j.score for j in valid) / len(valid)
+
+        # Majority vote for passed
+        passed_votes = sum(1 for j in valid if j.passed)
+        passed = passed_votes > len(valid) / 2
+
+        # Grade from consensus score
+        if consensus_score >= 0.95:
+            grade = "S"
+        elif consensus_score >= 0.80:
+            grade = "A"
+        elif consensus_score >= 0.60:
+            grade = "B"
+        elif consensus_score >= 0.40:
+            grade = "C"
+        elif consensus_score >= 0.20:
+            grade = "D"
+        else:
+            grade = "F"
+
+        return (consensus_score, passed, grade)
+
     def _run_judge(
         self,
         workspace: Path,
         task_prompt: str,
         stdout: str,
         judge_dir: Path,
-    ) -> dict:
-        """Run LLM judge evaluation on the result.
+    ) -> tuple[dict, list[JudgeResultSummary]]:
+        """Run LLM judge evaluation(s) on the result.
 
-        Uses a real LLM to evaluate task completion against the requirements.
+        Runs multiple judges if configured, computes consensus.
 
         Args:
             workspace: Workspace with agent's output
             task_prompt: The original task prompt
             stdout: Agent's stdout output
             judge_dir: Directory for judge outputs
-                (prompt.md, response.txt, judgment.json, replay.sh)
+                (judge_01/, judge_02/, etc. for each judge)
 
         Returns:
-            Dict with score, passed, grade, and reasoning.
+            Tuple of (consensus_dict, judges_list)
+            - consensus_dict: Dict with consensus score, passed, grade, reasoning
+            - judges_list: List of JudgeResultSummary for each judge
 
         """
-        # Log judge execution phase
-        _phase_log(
-            "JUDGE",
-            f"Running judge with model[{self.config.judge_model}] "
-            f"with prompt[{judge_dir / 'prompt.md'}]",
-        )
+        judges = []
 
-        # Use the LLM judge for proper evaluation
-        judge_result = run_llm_judge(
-            workspace=workspace,
-            task_prompt=task_prompt,
-            agent_output=stdout,
-            model=self.config.judge_model,
-            judge_dir=judge_dir,  # Judge outputs go in judge/
-        )
+        # Run each configured judge
+        for judge_num, model in enumerate(self.config.judge_models, start=1):
+            _phase_log(
+                "JUDGE",
+                f"Running judge {judge_num}/{len(self.config.judge_models)} "
+                f"with model[{model}]",
+            )
 
-        return judge_result.to_dict()
+            # Use the LLM judge for proper evaluation
+            judge_result = run_llm_judge(
+                workspace=workspace,
+                task_prompt=task_prompt,
+                agent_output=stdout,
+                model=model,
+                judge_dir=judge_dir,
+                judge_run_number=judge_num,  # Creates judge_01/, judge_02/, etc.
+            )
+
+            # Store individual judge result
+            judge_summary = JudgeResultSummary(
+                model=model,
+                score=judge_result.score,
+                passed=judge_result.passed,
+                grade=judge_result.grade,
+                reasoning=judge_result.reasoning,
+                judge_number=judge_num,
+            )
+            judges.append(judge_summary)
+
+        # Compute consensus from all judges
+        consensus_score, consensus_passed, consensus_grade = self._compute_judge_consensus(judges)
+
+        # Build consensus dict (use primary judge's reasoning)
+        primary_reasoning = judges[0].reasoning if judges else ""
+        consensus_dict = {
+            "score": consensus_score,
+            "passed": consensus_passed,
+            "grade": consensus_grade,
+            "reasoning": primary_reasoning,
+        }
+
+        return consensus_dict, judges
 
     def _aggregate_results(
         self,
@@ -1326,76 +1403,103 @@ def run_tier_subtests_parallel(
     total_subtests = len(tier_config.subtests)
     start_time = time.time()
 
-    with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
-        futures = {}
+    try:
+        with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
+            futures = {}
 
-        for subtest in tier_config.subtests:
-            subtest_dir = results_dir / subtest.id
-            future = pool.submit(
-                _run_subtest_in_process,
-                config=config,
-                tier_id=tier_id,
-                tier_config=tier_config,
-                subtest=subtest,
-                baseline=baseline,
-                results_dir=subtest_dir,
-                tiers_dir=tier_manager.tiers_dir,
-                base_repo=workspace_manager.base_repo,
-                repo_url=workspace_manager.repo_url,
-                commit=workspace_manager.commit,
-                checkpoint=checkpoint,
-                checkpoint_path=checkpoint_path,
-                coordinator=coordinator,
-                global_semaphore=global_semaphore,
-            )
-            futures[future] = subtest.id
-
-        # Monitor futures and handle rate limits
-        completed_count = 0
-        for future in as_completed(futures):
-            subtest_id = futures[future]
-            try:
-                results[subtest_id] = future.result()
-                completed_count += 1
-
-                # Log progress after each completion
-                elapsed = time.time() - start_time
-                active_workers = total_subtests - completed_count
-                logger.info(
-                    f"[PROGRESS] Tier {tier_id.value}: "
-                    f"{completed_count}/{total_subtests} complete, "
-                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
+            for subtest in tier_config.subtests:
+                subtest_dir = results_dir / subtest.id
+                future = pool.submit(
+                    _run_subtest_in_process,
+                    config=config,
+                    tier_id=tier_id,
+                    tier_config=tier_config,
+                    subtest=subtest,
+                    baseline=baseline,
+                    results_dir=subtest_dir,
+                    tiers_dir=tier_manager.tiers_dir,
+                    base_repo=workspace_manager.base_repo,
+                    repo_url=workspace_manager.repo_url,
+                    commit=workspace_manager.commit,
+                    checkpoint=checkpoint,
+                    checkpoint_path=checkpoint_path,
+                    coordinator=coordinator,
+                    global_semaphore=global_semaphore,
                 )
+                futures[future] = subtest.id
 
-                # Check for shutdown request
-                from scylla.e2e.runner import is_shutdown_requested
+            # Monitor futures and handle rate limits
+            completed_count = 0
+            for future in as_completed(futures):
+                subtest_id = futures[future]
+                try:
+                    results[subtest_id] = future.result()
+                    completed_count += 1
 
-                if is_shutdown_requested():
-                    logger.warning("Shutdown requested, signaling workers to stop...")
-                    coordinator.signal_shutdown()
-                    break
-
-                # Check if rate limit was signaled during execution
-                rate_limit_info = coordinator.get_rate_limit_info()
-                if rate_limit_info and checkpoint and checkpoint_path:
+                    # Log progress after each completion
+                    elapsed = time.time() - start_time
+                    active_workers = total_subtests - completed_count
                     logger.info(
-                        f"Rate limit detected from {rate_limit_info.source}, pausing all workers..."
+                        f"[PROGRESS] Tier {tier_id.value}: "
+                        f"{completed_count}/{total_subtests} complete, "
+                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
                     )
-                    # Wait for rate limit to expire
-                    wait_for_rate_limit(
-                        rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
-                    )
-                    # Resume all workers
-                    coordinator.resume_all_workers()
 
-            except RateLimitError as e:
-                # Rate limit from a worker
-                if checkpoint and checkpoint_path:
-                    logger.info(f"Rate limit detected from {e.info.source}, pausing all workers...")
-                    wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)
-                    coordinator.resume_all_workers()
-                else:
-                    # Create error result
+                    # Check for shutdown request
+                    from scylla.e2e.runner import is_shutdown_requested
+
+                    if is_shutdown_requested():
+                        logger.warning("Shutdown requested, signaling workers to stop...")
+                        coordinator.signal_shutdown()
+                        break
+
+                    # Check if rate limit was signaled during execution
+                    rate_limit_info = coordinator.get_rate_limit_info()
+                    if rate_limit_info and checkpoint and checkpoint_path:
+                        logger.info(f"Rate limit from {rate_limit_info.source}, pausing workers...")
+                        # Wait for rate limit to expire
+                        wait_for_rate_limit(
+                            rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
+                        )
+                        # Resume all workers
+                        coordinator.resume_all_workers()
+
+                except RateLimitError as e:
+                    # Rate limit from a worker
+                    if checkpoint and checkpoint_path:
+                        logger.info(
+                            f"Rate limit detected from {e.info.source}, pausing all workers..."
+                        )
+                        wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)
+                        coordinator.resume_all_workers()
+                    else:
+                        # Create error result
+                        results[subtest_id] = SubTestResult(
+                            subtest_id=subtest_id,
+                            tier_id=tier_id,
+                            runs=[],
+                            pass_rate=0.0,
+                            mean_score=0.0,
+                            median_score=0.0,
+                            std_dev_score=0.0,
+                            mean_cost=0.0,
+                            total_cost=0.0,
+                            consistency=0.0,
+                            selection_reason=f"Rate limit: {e.info.error_message}",
+                        )
+                        completed_count += 1
+
+                        # Log progress after error
+                        elapsed = time.time() - start_time
+                        active_workers = total_subtests - completed_count
+                        logger.info(
+                            f"[PROGRESS] Tier {tier_id.value}: "
+                            f"{completed_count}/{total_subtests} complete, "
+                            f"{active_workers} active, elapsed: {elapsed:.0f}s"
+                        )
+
+                except Exception as e:
+                    # Other errors
                     results[subtest_id] = SubTestResult(
                         subtest_id=subtest_id,
                         tier_id=tier_id,
@@ -1407,7 +1511,7 @@ def run_tier_subtests_parallel(
                         mean_cost=0.0,
                         total_cost=0.0,
                         consistency=0.0,
-                        selection_reason=f"Rate limit: {e.info.error_message}",
+                        selection_reason=f"Error: {e}",
                     )
                     completed_count += 1
 
@@ -1420,31 +1524,13 @@ def run_tier_subtests_parallel(
                         f"{active_workers} active, elapsed: {elapsed:.0f}s"
                     )
 
-            except Exception as e:
-                # Other errors
-                results[subtest_id] = SubTestResult(
-                    subtest_id=subtest_id,
-                    tier_id=tier_id,
-                    runs=[],
-                    pass_rate=0.0,
-                    mean_score=0.0,
-                    median_score=0.0,
-                    std_dev_score=0.0,
-                    mean_cost=0.0,
-                    total_cost=0.0,
-                    consistency=0.0,
-                    selection_reason=f"Error: {e}",
-                )
-                completed_count += 1
-
-                # Log progress after error
-                elapsed = time.time() - start_time
-                active_workers = total_subtests - completed_count
-                logger.info(
-                    f"[PROGRESS] Tier {tier_id.value}: "
-                    f"{completed_count}/{total_subtests} complete, "
-                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
-                )
+    except (KeyboardInterrupt, BrokenProcessPool):
+        # Clean exit on Ctrl+C or process pool failure
+        logger.warning("Experiment interrupted, cleaning up...")
+        # Cancel pending futures
+        for future in futures:
+            if not future.done():
+                future.cancel()
 
     return results
 
