@@ -145,23 +145,23 @@ JSON_OUTPUT_SCHEMA: str = """{
     "R001": {
       "score": 0.0-1.0,
       "confidence": 0.0-1.0,
-      "notes": "explanation"
+      "notes": "explain your score - if < 1.0, explain what's missing and why points deducted"
     }
   },
   "categories": {
-    "functional_correctness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "completeness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "code_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "simplicity": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "lack_of_duplication": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "clarity": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "documentation": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "architectural_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "efficiency": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "cleanup_script_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "workspace_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "test_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" },
-    "scope_discipline": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "" }
+    "functional_correctness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "completeness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "code_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "simplicity": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "lack_of_duplication": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "clarity": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "documentation": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "architectural_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explain" },
+    "efficiency": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "cleanup_script_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "workspace_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "test_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
+    "scope_discipline": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" }
   },
   "summary": {
     "weighted_score": 0.0-1.0,
@@ -230,7 +230,9 @@ Review the overall solution quality:
 Score each requirement and category with:
 - score (0.0-1.0): How well was this met?
 - confidence (0.0-1.0): How confident are you in this score?
-- notes: Brief explanation
+- notes: **REQUIRED** - Explain your score. For scores below 1.0, you MUST clearly
+  explain what is missing or incorrect and why points were deducted. Be specific
+  about what needs to be fixed or improved.
 
 ## Output Format
 

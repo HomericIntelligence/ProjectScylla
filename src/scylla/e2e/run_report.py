@@ -37,6 +37,7 @@ def generate_run_report(
     exit_code: int,
     task_prompt: str,
     workspace_path: Path,
+    judges: list | None = None,
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
     token_stats: dict[str, int] | None = None,
@@ -157,13 +158,68 @@ def generate_run_report(
             "",
             "---",
             "",
-            "## Judge Evaluation",
-            "",
-            "- [View full judgment](./judge/judgment.json)",
-            "- [View judge result JSON](./judge/result.json)",
-            "",
         ]
     )
+
+    # Judge Evaluation section - handle single or multiple judges
+    if judges and len(judges) > 1:
+        # Multiple judges - show consensus summary and individual results
+        lines.extend(
+            [
+                "## Judge Evaluation (Consensus)",
+                "",
+                "| Metric | Value |",
+                "|--------|-------|",
+                f"| Score | {score:.3f} |",
+                f"| Grade | {grade} |",
+                f"| Passed | {'✅' if passed else '❌'} |",
+                "",
+                "### Individual Judges",
+                "",
+            ]
+        )
+
+        for judge in judges:
+            judge_score_str = f"{judge.score:.3f}" if judge.score is not None else "N/A"
+            judge_grade_str = judge.grade or "N/A"
+            lines.extend(
+                [
+                    f"#### Judge {judge.judge_number}: {judge.model}",
+                    "",
+                    "| Metric | Value |",
+                    "|--------|-------|",
+                    f"| Score | {judge_score_str} |",
+                    f"| Passed | {'✅' if judge.passed else '❌'} |",
+                    f"| Grade | {judge_grade_str} |",
+                    "",
+                    f"**Reasoning:** {judge.reasoning or 'No reasoning provided'}",
+                    "",
+                    f"- [View judgment](./judge/judge_{judge.judge_number:02d}/judgment.json)",
+                    f"- [View result JSON](./judge/judge_{judge.judge_number:02d}/result.json)",
+                    "",
+                ]
+            )
+    else:
+        # Single judge - use existing format
+        lines.extend(
+            [
+                "## Judge Evaluation",
+                "",
+                "| Metric | Value |",
+                "|--------|-------|",
+                f"| Score | {score:.3f} |",
+                f"| Grade | {grade} |",
+                f"| Passed | {'✅' if passed else '❌'} |",
+                "",
+                f"**Reasoning:** {reasoning}",
+                "",
+                "- [View full judgment](./judge/judgment.json)",
+                "- [View judge result JSON](./judge/result.json)",
+                "",
+            ]
+        )
+
+    lines.extend([""])
 
     # Add criteria scores if available
     if criteria_scores:
@@ -368,6 +424,7 @@ def save_run_report(
     exit_code: int,
     task_prompt: str,
     workspace_path: Path,
+    judges: list | None = None,
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
     token_stats: dict[str, int] | None = None,
@@ -396,6 +453,7 @@ def save_run_report(
         exit_code=exit_code,
         task_prompt=task_prompt,
         workspace_path=workspace_path,
+        judges=judges,
         criteria_scores=criteria_scores,
         agent_output=agent_output,
         token_stats=token_stats,

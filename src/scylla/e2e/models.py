@@ -196,6 +196,41 @@ class TierConfig:
 
 
 @dataclass
+class JudgeResultSummary:
+    """Summary of a single judge's evaluation.
+
+    Used when multiple judges evaluate the same run.
+
+    Attributes:
+        model: Model ID of the judge
+        score: Judge's score (0.0-1.0)
+        passed: Whether the run passed
+        grade: Letter grade (S-F)
+        reasoning: Judge's reasoning text
+        judge_number: Judge number for directory linking (1-indexed)
+
+    """
+
+    model: str
+    score: float | None = None
+    passed: bool | None = None
+    grade: str | None = None
+    reasoning: str | None = None
+    judge_number: int = 1
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "model": self.model,
+            "score": self.score,
+            "passed": self.passed,
+            "grade": self.grade,
+            "reasoning": self.reasoning,
+            "judge_number": self.judge_number,
+        }
+
+
+@dataclass
 class RunResult:
     """Result from a single run of a sub-test.
 
@@ -217,10 +252,11 @@ class RunResult:
         duration_seconds: Total execution duration (agent + judge)
         agent_duration_seconds: Agent execution time
         judge_duration_seconds: Judge evaluation time
-        judge_score: LLM judge's score (0.0 - 1.0)
-        judge_passed: Whether the run passed
-        judge_grade: Letter grade (S-F)
-        judge_reasoning: Judge's reasoning text
+        judge_score: Consensus score from all judges (0.0 - 1.0)
+        judge_passed: Consensus passed from majority vote
+        judge_grade: Letter grade (S-F) from consensus score
+        judge_reasoning: Primary judge's reasoning text
+        judges: Individual judge results (for multi-judge runs)
         workspace_path: Path to preserved workspace
         logs_path: Path to execution logs
         command_log_path: Path to command log JSON
@@ -241,6 +277,7 @@ class RunResult:
     judge_reasoning: str
     workspace_path: Path
     logs_path: Path
+    judges: list[JudgeResultSummary] = field(default_factory=list)
     command_log_path: Path | None = None
     criteria_scores: dict[str, dict[str, Any]] = field(default_factory=dict)
 
@@ -272,6 +309,7 @@ class RunResult:
             "judge_passed": self.judge_passed,
             "judge_grade": self.judge_grade,
             "judge_reasoning": self.judge_reasoning,
+            "judges": [j.to_dict() for j in self.judges],
             "workspace_path": str(self.workspace_path),
             "logs_path": str(self.logs_path),
             "command_log_path": str(self.command_log_path) if self.command_log_path else None,
@@ -509,7 +547,7 @@ class ExperimentConfig:
         models: List of model identifiers to test
         runs_per_subtest: Number of runs per sub-test (default: 10)
         tiers_to_run: List of tiers to evaluate
-        judge_model: Model to use for judging
+        judge_models: List of models to use for judging (consensus voting)
         tiebreaker_model: Model to use for tie-breaking
         parallel_subtests: Max parallel sub-tests (default: 4)
         timeout_seconds: Timeout per run in seconds
@@ -525,7 +563,7 @@ class ExperimentConfig:
     models: list[str] = field(default_factory=lambda: ["claude-sonnet-4-5-20250929"])
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = field(default_factory=lambda: list(TierID))
-    judge_model: str = "claude-opus-4-5-20251101"
+    judge_models: list[str] = field(default_factory=lambda: ["claude-opus-4-5-20251101"])
     tiebreaker_model: str = "claude-opus-4-5-20251101"
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
@@ -542,7 +580,7 @@ class ExperimentConfig:
             "models": self.models,
             "runs_per_subtest": self.runs_per_subtest,
             "tiers_to_run": [t.value for t in self.tiers_to_run],
-            "judge_model": self.judge_model,
+            "judge_models": self.judge_models,
             "tiebreaker_model": self.tiebreaker_model,
             "parallel_subtests": self.parallel_subtests,
             "timeout_seconds": self.timeout_seconds,
