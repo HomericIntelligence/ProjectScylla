@@ -312,8 +312,10 @@ def _load_judge_result(judge_dir: Path) -> dict:
     """
     import json
 
-    # Load from judgment.json (full result with criteria_scores)
-    with open(judge_dir / "judgment.json") as f:
+    # FIX: Use result.json (same file that _has_valid_judge_result validates)
+    # Previously tried to read judgment.json which doesn't exist at this path
+    result_file = judge_dir / RESULT_FILE
+    with open(result_file) as f:
         data = json.load(f)
 
     return data

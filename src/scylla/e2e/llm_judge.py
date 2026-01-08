@@ -616,14 +616,23 @@ def run_llm_judge(
 
     # Call Claude CLI for judgment
     try:
-        result = _call_claude_judge(judge_prompt, model)
+        stdout, stderr, result = _call_claude_judge(judge_prompt, model)
 
         # Parse the response
         judge_result = _parse_judge_response(result)
 
         # Save judge logs if directory provided
         if actual_judge_dir:
-            _save_judge_logs(actual_judge_dir, judge_prompt, result, judge_result, model, workspace)
+            _save_judge_logs(
+                actual_judge_dir,
+                judge_prompt,
+                result,
+                judge_result,
+                model,
+                workspace,
+                raw_stdout=stdout,
+                raw_stderr=stderr,
+            )
 
         return judge_result
 
@@ -632,7 +641,7 @@ def run_llm_judge(
         return _fallback_judge(agent_output)
 
 
-def _call_claude_judge(evaluation_context: str, model: str) -> str:
+def _call_claude_judge(evaluation_context: str, model: str) -> tuple[str, str, str]:
     """Call Claude CLI to get judgment.
 
     IMPORTANT: Always use claude-opus-4-5-20251101 for judging.
@@ -644,7 +653,7 @@ def _call_claude_judge(evaluation_context: str, model: str) -> str:
         model: Model to use (must be Opus for accurate judging)
 
     Returns:
-        Raw response from Claude.
+        Tuple of (stdout, stderr, raw_response) where raw_response is the same as stdout.
 
     """
     # Write evaluation context to temp file to avoid "Argument list too long" errors
@@ -692,7 +701,8 @@ def _call_claude_judge(evaluation_context: str, model: str) -> str:
         if rate_limit_info:
             raise RateLimitError(rate_limit_info)
 
-        return result.stdout
+        # Return stdout, stderr, and raw response (stdout is the judge response)
+        return result.stdout, result.stderr, result.stdout
 
     finally:
         # Clean up temp file
@@ -937,6 +947,8 @@ def _save_judge_logs(
     result: JudgeResult,
     model: str,
     workspace: Path | None = None,
+    raw_stdout: str = "",
+    raw_stderr: str = "",
 ) -> None:
     """Save judge evaluation logs and generate replay script.
 
@@ -947,6 +959,8 @@ def _save_judge_logs(
         result: Parsed judge result
         model: Model used for judging
         workspace: Path to the workspace directory (for saving pipeline commands)
+        raw_stdout: Raw stdout from subprocess (optional)
+        raw_stderr: Raw stderr from subprocess (optional)
 
     """
     judge_dir.mkdir(parents=True, exist_ok=True)
@@ -956,6 +970,12 @@ def _save_judge_logs(
 
     # Save raw response
     (judge_dir / "response.txt").write_text(response)
+
+    # Save raw subprocess output (NEW)
+    if raw_stdout:
+        (judge_dir / "stdout.log").write_text(raw_stdout)
+    if raw_stderr:
+        (judge_dir / "stderr.log").write_text(raw_stderr)
 
     # Save structured result (keep as judgment.json for compatibility)
     with open(judge_dir / "judgment.json", "w") as f:
