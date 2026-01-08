@@ -1255,6 +1255,7 @@ def run_tier_subtests_parallel(
     results_dir: Path,
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
+    global_semaphore=None,
 ) -> dict[str, SubTestResult]:
     """Run all sub-tests for a tier in parallel with rate limit handling.
 
@@ -1271,6 +1272,7 @@ def run_tier_subtests_parallel(
         results_dir: Base directory for tier results
         checkpoint: Optional checkpoint for resume capability
         checkpoint_path: Path to checkpoint file for saving
+        global_semaphore: Optional global semaphore to limit total concurrent agents
 
     Returns:
         Dict mapping sub-test ID to results.
@@ -1342,6 +1344,7 @@ def run_tier_subtests_parallel(
                 checkpoint=checkpoint,
                 checkpoint_path=checkpoint_path,
                 coordinator=coordinator,
+                global_semaphore=global_semaphore,
             )
             futures[future] = subtest.id
 
@@ -1458,6 +1461,7 @@ def _run_subtest_in_process(
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
+    global_semaphore=None,
 ) -> SubTestResult:
     """Run a sub-test in a separate process.
 
@@ -1477,29 +1481,39 @@ def _run_subtest_in_process(
         checkpoint: Optional checkpoint for resume
         checkpoint_path: Path to checkpoint file
         coordinator: Optional rate limit coordinator
+        global_semaphore: Optional global semaphore to limit concurrent agents across all tiers
 
     Returns:
         SubTestResult
 
     """
-    tier_manager = TierManager(tiers_dir)
-    # Recreate workspace manager in child process
-    workspace_manager = WorkspaceManager(
-        experiment_dir=base_repo.parent,
-        repo_url=repo_url,
-        commit=commit,
-    )
-    workspace_manager._is_setup = True  # Base repo already exists
-    workspace_manager.base_repo = base_repo
+    # Acquire global semaphore to limit concurrent agents across all tiers
+    if global_semaphore:
+        global_semaphore.acquire()
 
-    executor = SubTestExecutor(config, tier_manager, workspace_manager)
-    return executor.run_subtest(
-        tier_id=tier_id,
-        tier_config=tier_config,
-        subtest=subtest,
-        baseline=baseline,
-        results_dir=results_dir,
-        checkpoint=checkpoint,
-        checkpoint_path=checkpoint_path,
-        coordinator=coordinator,
-    )
+    try:
+        tier_manager = TierManager(tiers_dir)
+        # Recreate workspace manager in child process
+        workspace_manager = WorkspaceManager(
+            experiment_dir=base_repo.parent,
+            repo_url=repo_url,
+            commit=commit,
+        )
+        workspace_manager._is_setup = True  # Base repo already exists
+        workspace_manager.base_repo = base_repo
+
+        executor = SubTestExecutor(config, tier_manager, workspace_manager)
+        return executor.run_subtest(
+            tier_id=tier_id,
+            tier_config=tier_config,
+            subtest=subtest,
+            baseline=baseline,
+            results_dir=results_dir,
+            checkpoint=checkpoint,
+            checkpoint_path=checkpoint_path,
+            coordinator=coordinator,
+        )
+    finally:
+        # Always release semaphore, even if exception occurred
+        if global_semaphore:
+            global_semaphore.release()
