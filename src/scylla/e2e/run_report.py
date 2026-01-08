@@ -489,6 +489,8 @@ def save_subtest_report(
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
+    # Ensure directory exists before writing
+    subtest_dir.mkdir(parents=True, exist_ok=True)
     (subtest_dir / "report.json").write_text(json.dumps(json_report, indent=2))
 
     # Markdown report

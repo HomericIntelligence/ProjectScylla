@@ -262,6 +262,15 @@ class E2ERunner:
         previous_baseline: TierBaseline | None = None
         checkpoint_path = self.experiment_dir / "checkpoint.json"
 
+        # Create global semaphore for limiting concurrent agents across ALL tiers
+        from multiprocessing import Manager
+
+        manager = Manager()
+        global_semaphore = manager.Semaphore(self.config.parallel_subtests)
+        logger.info(
+            f"Created global semaphore with {self.config.parallel_subtests} concurrent agent limit"
+        )
+
         # Group tiers by dependencies for parallel execution
         tier_groups = self._get_tier_groups(self.config.tiers_to_run)
         logger.info(f"Tier groups for parallel execution: {tier_groups}")
@@ -278,7 +287,7 @@ class E2ERunner:
                     tier_id = group[0]
                     logger.info(f"Starting tier {tier_id.value}")
 
-                    tier_result = self._run_tier(tier_id, previous_baseline)
+                    tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
                     tier_results[tier_id] = tier_result
 
                     # Set baseline for next tier
@@ -302,7 +311,9 @@ class E2ERunner:
                     with ThreadPoolExecutor(max_workers=len(group)) as executor:
                         # Submit all tiers in this group
                         futures = {
-                            executor.submit(self._run_tier, tier_id, previous_baseline): tier_id
+                            executor.submit(
+                                self._run_tier, tier_id, previous_baseline, global_semaphore
+                            ): tier_id
                             for tier_id in group
                         }
 
@@ -528,12 +539,14 @@ class E2ERunner:
         self,
         tier_id: TierID,
         baseline: TierBaseline | None,
+        global_semaphore=None,
     ) -> TierResult:
         """Run a single tier's evaluation.
 
         Args:
             tier_id: The tier to run
             baseline: Previous tier's winning baseline
+            global_semaphore: Optional global semaphore to limit concurrent agents
 
         Returns:
             TierResult with all sub-test results.
@@ -573,6 +586,7 @@ class E2ERunner:
             results_dir=tier_dir,
             checkpoint=self.checkpoint,
             checkpoint_path=checkpoint_path,
+            global_semaphore=global_semaphore,
         )
 
         # Select best sub-test
