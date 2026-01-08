@@ -461,6 +461,23 @@ class TierResult:
     total_duration: float = 0.0
     token_stats: TokenStats = field(default_factory=TokenStats)
 
+    @property
+    def cost_of_pass(self) -> float:
+        """Calculate cost-of-pass for this tier's best subtest.
+
+        Returns:
+            Cost per successful pass (mean_cost / pass_rate), or infinity if no passes.
+
+        """
+        if not self.best_subtest or self.best_subtest not in self.subtest_results:
+            return float("inf")
+
+        best = self.subtest_results[self.best_subtest]
+        if best.pass_rate <= 0:
+            return float("inf")
+
+        return best.mean_cost / best.pass_rate
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -473,6 +490,7 @@ class TierResult:
             "tiebreaker_model": self.tiebreaker_model,
             "total_cost": self.total_cost,
             "total_duration": self.total_duration,
+            "cost_of_pass": self.cost_of_pass,
             "token_stats": self.token_stats.to_dict(),
         }
 
