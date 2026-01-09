@@ -604,8 +604,7 @@ class E2ERunner:
         # Select best sub-test
         selection = select_best_subtest(
             subtest_results,
-            primary_judge_model=self.config.judge_model,
-            tiebreaker_model=self.config.tiebreaker_model,
+            judge_models=self.config.judge_models,
         )
 
         # Mark winning sub-test
@@ -638,10 +637,7 @@ class E2ERunner:
             best_subtest=selection.winning_subtest,
             best_subtest_score=selection.winning_score,
             inherited_from=baseline,
-            tiebreaker_used=selection.tiebreaker_needed,
-            tiebreaker_model=(
-                self.config.tiebreaker_model if selection.tiebreaker_needed else None
-            ),
+            tiebreaker_needed=selection.tiebreaker_needed,
             total_cost=sum(s.total_cost for s in subtest_results.values()),
             total_duration=duration,
             token_stats=token_stats,
