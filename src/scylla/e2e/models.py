@@ -599,6 +599,13 @@ class ExperimentConfig:
         """Load configuration from JSON file."""
         with open(path) as f:
             data = json.load(f)
+
+        # Backward compatibility: convert old judge_model to judge_models
+        if "judge_model" in data and "judge_models" not in data:
+            judge_models = [data["judge_model"]]
+        else:
+            judge_models = data.get("judge_models", ["claude-opus-4-5-20251101"])
+
         return cls(
             experiment_id=data["experiment_id"],
             task_repo=data["task_repo"],
@@ -607,7 +614,7 @@ class ExperimentConfig:
             models=data.get("models", ["claude-sonnet-4-5-20250929"]),
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
-            judge_model=data.get("judge_model", "claude-opus-4-5-20251101"),
+            judge_models=judge_models,
             tiebreaker_model=data.get("tiebreaker_model", "claude-opus-4-5-20251101"),
             parallel_subtests=data.get("parallel_subtests", 4),
             timeout_seconds=data.get("timeout_seconds", 3600),
