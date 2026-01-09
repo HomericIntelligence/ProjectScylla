@@ -10,7 +10,7 @@ from scylla.e2e.judge_selection import (
     _calculate_composite_score,
     select_best_subtest,
 )
-from scylla.e2e.models import SubTestResult, TierID
+from scylla.e2e.models import SubTestResult, TierID, TokenStats
 
 
 class TestJudgeVote:
@@ -69,7 +69,7 @@ class TestSelectBestSubtest:
             ),
         }
 
-        selection = select_best_subtest(results)
+        selection = select_best_subtest(results, judge_models=["claude-sonnet-4-5"])
 
         assert selection.winning_subtest == "baseline"
         assert selection.margin == 1.0
@@ -94,14 +94,14 @@ class TestSelectBestSubtest:
             ),
         }
 
-        selection = select_best_subtest(results)
+        selection = select_best_subtest(results, judge_models=["claude-sonnet-4-5"])
 
         assert selection.winning_subtest == "01"
         assert abs(selection.margin - 0.20) < 0.001  # Float comparison
         assert not selection.tiebreaker_needed
 
     def test_tiebreaker_triggered(self) -> None:
-        """Test that tiebreaker is triggered for close scores."""
+        """Test that tiebreaker is triggered for close scores and uses token usage."""
         results = {
             "01": SubTestResult(
                 subtest_id="01",
@@ -112,6 +112,11 @@ class TestSelectBestSubtest:
                 pass_rate=0.8,
                 consistency=0.9,
                 mean_cost=0.10,
+                token_stats=TokenStats(
+                    input_tokens=8000,
+                    output_tokens=2000,
+                    total_tokens=10000,  # More tokens
+                ),
             ),
             "02": SubTestResult(
                 subtest_id="02",
@@ -119,22 +124,31 @@ class TestSelectBestSubtest:
                 runs=[],
                 median_score=0.80,
                 mean_score=0.80,
-                pass_rate=0.9,  # Higher pass rate
-                consistency=0.95,  # Higher consistency
-                mean_cost=0.08,  # Lower cost
+                pass_rate=0.9,
+                consistency=0.95,
+                mean_cost=0.08,
+                token_stats=TokenStats(
+                    input_tokens=6000,
+                    output_tokens=1500,
+                    total_tokens=7500,  # Fewer tokens - should win tiebreaker
+                ),
             ),
         }
 
-        selection = select_best_subtest(results, tie_threshold=0.05)
+        selection = select_best_subtest(
+            results, judge_models=["claude-sonnet-4-5"], tie_threshold=0.05
+        )
 
         assert selection.tiebreaker_needed
         assert selection.tiebreaker_result is not None
-        # With higher pass rate, consistency, and lower cost, 02 might win
+        # 02 should win because it has fewer tokens (7500 < 10000)
+        assert selection.winning_subtest == "02"
+        assert "token usage" in selection.tiebreaker_result.reasoning.lower()
 
     def test_empty_results(self) -> None:
         """Test that empty results raise error."""
         with pytest.raises(ValueError, match="No sub-test results"):
-            select_best_subtest({})
+            select_best_subtest({}, judge_models=["claude-sonnet-4-5"])
 
 
 class TestCompositeScore:
