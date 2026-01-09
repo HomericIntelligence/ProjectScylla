@@ -733,7 +733,7 @@ class E2ERunner:
                     "best_subtest": tier_result.best_subtest,
                     "best_score": tier_result.best_subtest_score,
                     "total_cost": tier_result.total_cost,
-                    "tiebreaker_used": tier_result.tiebreaker_used,
+                    "tiebreaker_needed": tier_result.tiebreaker_needed,
                 }
                 for tier_id, tier_result in result.tier_results.items()
             }
