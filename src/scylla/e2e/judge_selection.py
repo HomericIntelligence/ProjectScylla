@@ -81,21 +81,19 @@ class JudgeSelection:
 
 def select_best_subtest(
     subtest_results: dict[str, SubTestResult],
-    primary_judge_model: str = "claude-opus-4-5-20251101",
-    tiebreaker_model: str = "claude-opus-4-5-20251101",
+    judge_models: list[str],
     tie_threshold: float = 0.05,
 ) -> JudgeSelection:
-    """Select the best sub-test using LLM judge with tie-breaker.
+    """Select the best sub-test using median judge scores with token-based tie-breaker.
 
     Algorithm:
     1. Rank sub-tests by median judge score (descending)
-    2. If top two are within tie_threshold, invoke tie-breaker
-    3. Tie-breaker uses a different LLM model for independence
+    2. If top two are within tie_threshold, use token usage as tie-breaker
+    3. Tie-breaker selects the sub-test with fewest total tokens (more efficient)
 
     Args:
         subtest_results: Dict mapping sub-test ID to results
-        primary_judge_model: Model used for primary judging
-        tiebreaker_model: Model used for tie-breaking
+        judge_models: List of models used for judging (for documentation)
         tie_threshold: Score difference threshold for triggering tie-breaker
 
     Returns:
@@ -149,17 +147,25 @@ def select_best_subtest(
 
     # Check if tie-breaker needed
     if margin < tie_threshold:
-        tiebreaker_result = _run_tiebreaker(
-            first_id,
-            first_result,
-            second_id,
-            second_result,
-            tiebreaker_model,
+        # Use token usage as tiebreaker (fewest tokens wins)
+        first_tokens = first_result.token_stats.total_tokens
+        second_tokens = second_result.token_stats.total_tokens
+
+        winner_id = first_id if first_tokens <= second_tokens else second_id
+        winner_result = subtest_results[winner_id]
+        winner_tokens = min(first_tokens, second_tokens)
+
+        tiebreaker_result = JudgeVote(
+            subtest_id=winner_id,
+            score=winner_result.median_score,
+            confidence=1.0,
+            reasoning=f"Tie broken by token usage: {winner_tokens} tokens "
+            f"({first_id}={first_tokens}, {second_id}={second_tokens}). Lower is better.",
         )
 
         return JudgeSelection(
-            winning_subtest=tiebreaker_result.subtest_id,
-            winning_score=subtest_results[tiebreaker_result.subtest_id].median_score,
+            winning_subtest=winner_id,
+            winning_score=winner_result.median_score,
             votes=votes,
             margin=margin,
             tiebreaker_needed=True,
