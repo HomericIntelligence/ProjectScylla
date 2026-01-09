@@ -114,8 +114,7 @@ class TestSelectBestSubtest:
                 mean_cost=0.10,
                 token_stats=TokenStats(
                     input_tokens=8000,
-                    output_tokens=2000,
-                    total_tokens=10000,  # More tokens
+                    output_tokens=2000,  # total_tokens will be 10000
                 ),
             ),
             "02": SubTestResult(
@@ -129,8 +128,7 @@ class TestSelectBestSubtest:
                 mean_cost=0.08,
                 token_stats=TokenStats(
                     input_tokens=6000,
-                    output_tokens=1500,
-                    total_tokens=7500,  # Fewer tokens - should win tiebreaker
+                    output_tokens=1500,  # total_tokens will be 7500 - fewer tokens, should win
                 ),
             ),
         }
