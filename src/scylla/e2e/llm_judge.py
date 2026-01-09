@@ -95,6 +95,24 @@ class BuildPipelineResult:
     precommit_output: str
     all_passed: bool
 
+    def get_failure_summary(self) -> str:
+        """Get a summary of which pipeline steps failed.
+
+        Returns:
+            Comma-separated list of failed steps, or "none" if all passed.
+
+        """
+        failed = []
+        if not self.mojo_build_passed:
+            failed.append("mojo-build")
+        if not self.mojo_format_passed:
+            failed.append("mojo-format")
+        if not self.mojo_test_passed:
+            failed.append("mojo-test")
+        if not self.precommit_passed:
+            failed.append("pre-commit")
+        return ", ".join(failed) if failed else "none"
+
     def to_context_string(self) -> str:
         """Format pipeline results for judge context."""
         sections = []
@@ -595,7 +613,8 @@ def run_llm_judge(
         if pipeline_result.all_passed:
             logger.info("Build pipeline: ALL PASSED")
         else:
-            logger.warning("Build pipeline: SOME FAILED")
+            failed_steps = pipeline_result.get_failure_summary()
+            logger.warning(f"Build pipeline: FAILED [{failed_steps}]")
 
     # Build the judge prompt
     judge_prompt = _build_judge_prompt(
@@ -691,7 +710,23 @@ def _call_claude_judge(evaluation_context: str, model: str) -> tuple[str, str, s
         )
 
         if result.returncode != 0:
-            error_msg = result.stderr.strip() if result.stderr else "No error message"
+            error_msg = "No error message"
+
+            # Check stdout for JSON error response (Claude outputs errors as JSON)
+            if result.stdout:
+                try:
+                    data = json.loads(result.stdout.strip())
+                    if data.get("is_error"):
+                        error_msg = data.get("result", data.get("error", "Unknown JSON error"))
+                except json.JSONDecodeError:
+                    # Not JSON, check if stdout has useful text
+                    if result.stdout.strip():
+                        error_msg = f"stdout: {result.stdout.strip()[:200]}"
+
+            # Fall back to stderr if no useful stdout
+            if error_msg == "No error message" and result.stderr:
+                error_msg = result.stderr.strip()
+
             raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
 
         # Check for rate limit before returning

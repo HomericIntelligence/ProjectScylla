@@ -680,10 +680,21 @@ class SubTestExecutor:
             workspace.mkdir(parents=True, exist_ok=True)
             last_workspace = workspace  # Track for resource manifest
 
-            # Setup workspace with git worktree
-            self._setup_workspace(
-                workspace, CommandLogger(run_dir), tier_id, subtest.id, run_number=run_num
-            )
+            # Check if run already passed and workspace exists - preserve it
+            run_status = None
+            if checkpoint:
+                run_status = checkpoint.get_run_status(tier_id.value, subtest.id, run_num)
+
+            if run_status == "passed" and workspace.exists():
+                logger.info(
+                    f"Run {run_num} already passed (checkpoint), preserving existing workspace"
+                )
+                # Skip workspace setup - use existing workspace
+            else:
+                # Setup workspace with git worktree
+                self._setup_workspace(
+                    workspace, CommandLogger(run_dir), tier_id, subtest.id, run_number=run_num
+                )
 
             # Prepare tier configuration in workspace
             self.tier_manager.prepare_workspace(
