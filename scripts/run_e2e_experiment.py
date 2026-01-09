@@ -173,12 +173,6 @@ Examples:
         "Without argument, adds opus-4-5. Examples: --add-judge, "
         "--add-judge sonnet-4-5, --add-judge haiku-4-5",
     )
-    parser.add_argument(
-        "--tiebreaker-model",
-        type=str,
-        default="opus-4.5",
-        help="Model for tie-breaking (default: opus-4.5)",
-    )
 
     # Paths
     parser.add_argument(
@@ -295,7 +289,6 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         "runs_per_subtest": args.runs,
         "tiers_to_run": [TierID.from_string(t) for t in args.tiers],
         "judge_models": [args.judge_model],  # Start with primary judge
-        "tiebreaker_model": args.tiebreaker_model,
         "parallel_subtests": args.parallel,
         "timeout_seconds": args.timeout,
     }
@@ -358,7 +351,6 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         runs_per_subtest=config_dict["runs_per_subtest"],
         tiers_to_run=config_dict["tiers_to_run"],
         judge_models=config_dict["judge_models"],
-        tiebreaker_model=config_dict["tiebreaker_model"],
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],
         max_subtests=args.max_subtests,
