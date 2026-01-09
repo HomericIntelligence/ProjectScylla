@@ -62,3 +62,5 @@ htmlcov/
 # at test runtime from shared/ resources specified in config.yaml
 tests/fixtures/tests/*/t*/*/.claude/
 tests/fixtures/tests/*/t*/*/CLAUDE.md
+
+worktrees
