@@ -28,7 +28,7 @@ def experiment_config() -> ExperimentConfig:
         models=["claude-sonnet-4-5-20250929"],
         runs_per_subtest=2,
         tiers_to_run=[TierID.T0],
-        judge_model="claude-opus-4-5-20251101",
+        judge_models=["claude-opus-4-5-20251101"],
         tiebreaker_model="claude-opus-4-5-20251101",
         parallel_subtests=2,
         timeout_seconds=300,
