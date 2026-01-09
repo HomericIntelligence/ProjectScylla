@@ -480,8 +480,7 @@ class TierResult:
         best_subtest: ID of the winning sub-test
         best_subtest_score: Score of the winning sub-test
         inherited_from: Baseline this tier inherited from
-        tiebreaker_used: Whether a tie-breaker was needed
-        tiebreaker_model: Model used for tie-breaking (if applicable)
+        tiebreaker_needed: Whether a tie-breaker was needed
         total_cost: Total cost for this tier
         total_duration: Total duration for this tier
         token_stats: Aggregated token statistics across all subtests
@@ -493,8 +492,7 @@ class TierResult:
     best_subtest: str | None = None
     best_subtest_score: float = 0.0
     inherited_from: TierBaseline | None = None
-    tiebreaker_used: bool = False
-    tiebreaker_model: str | None = None
+    tiebreaker_needed: bool = False
     total_cost: float = 0.0
     total_duration: float = 0.0
     token_stats: TokenStats = field(default_factory=TokenStats)
@@ -524,8 +522,7 @@ class TierResult:
             "best_subtest": self.best_subtest,
             "best_subtest_score": self.best_subtest_score,
             "inherited_from": self.inherited_from.to_dict() if self.inherited_from else None,
-            "tiebreaker_used": self.tiebreaker_used,
-            "tiebreaker_model": self.tiebreaker_model,
+            "tiebreaker_needed": self.tiebreaker_needed,
             "total_cost": self.total_cost,
             "total_duration": self.total_duration,
             "cost_of_pass": self.cost_of_pass,
@@ -548,7 +545,6 @@ class ExperimentConfig:
         runs_per_subtest: Number of runs per sub-test (default: 10)
         tiers_to_run: List of tiers to evaluate
         judge_models: List of models to use for judging (consensus voting)
-        tiebreaker_model: Model to use for tie-breaking
         parallel_subtests: Max parallel sub-tests (default: 4)
         timeout_seconds: Timeout per run in seconds
         max_turns: Maximum conversation turns for agent (None = unlimited)
@@ -564,7 +560,6 @@ class ExperimentConfig:
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = field(default_factory=lambda: list(TierID))
     judge_models: list[str] = field(default_factory=lambda: ["claude-opus-4-5-20251101"])
-    tiebreaker_model: str = "claude-opus-4-5-20251101"
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
@@ -581,7 +576,6 @@ class ExperimentConfig:
             "runs_per_subtest": self.runs_per_subtest,
             "tiers_to_run": [t.value for t in self.tiers_to_run],
             "judge_models": self.judge_models,
-            "tiebreaker_model": self.tiebreaker_model,
             "parallel_subtests": self.parallel_subtests,
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
@@ -615,7 +609,6 @@ class ExperimentConfig:
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
             judge_models=judge_models,
-            tiebreaker_model=data.get("tiebreaker_model", "claude-opus-4-5-20251101"),
             parallel_subtests=data.get("parallel_subtests", 4),
             timeout_seconds=data.get("timeout_seconds", 3600),
             max_turns=data.get("max_turns"),
