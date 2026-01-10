@@ -927,11 +927,20 @@ class SubTestExecutor:
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Starting")
             judge_start = datetime.now(UTC)
 
+            # Find rubric path (symlinked at experiment root)
+            # results_dir structure: experiment_dir/T0/01/
+            experiment_dir = run_dir.parent.parent.parent
+            rubric_path = experiment_dir / "rubric.yaml"
+            if not rubric_path.exists():
+                rubric_path = None
+
             judgment, judges = self._run_judge(
                 workspace=workspace,
                 task_prompt=task_prompt,
                 stdout=result.stdout,
                 judge_dir=judge_dir,
+                language=self.config.language,
+                rubric_path=rubric_path,
             )
 
             judge_duration = (datetime.now(UTC) - judge_start).total_seconds()
@@ -1215,6 +1224,8 @@ class SubTestExecutor:
         task_prompt: str,
         stdout: str,
         judge_dir: Path,
+        language: str = "mojo",
+        rubric_path: Path | None = None,
     ) -> tuple[dict, list[JudgeResultSummary]]:
         """Run LLM judge evaluation(s) on the result.
 
@@ -1226,6 +1237,8 @@ class SubTestExecutor:
             stdout: Agent's stdout output
             judge_dir: Directory for judge outputs
                 (judge_01/, judge_02/, etc. for each judge)
+            language: Programming language for build pipeline ('python' or 'mojo')
+            rubric_path: Optional path to rubric YAML file
 
         Returns:
             Tuple of (consensus_dict, judges_list)
@@ -1251,6 +1264,8 @@ class SubTestExecutor:
                 model=model,
                 judge_dir=judge_dir,
                 judge_run_number=judge_num,  # Creates judge_01/, judge_02/, etc.
+                language=language,
+                rubric_path=rubric_path,
             )
 
             # Store individual judge result

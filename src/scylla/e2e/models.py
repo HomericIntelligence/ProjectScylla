@@ -564,6 +564,7 @@ class ExperimentConfig:
         timeout_seconds: Timeout per run in seconds
         max_turns: Maximum conversation turns for agent (None = unlimited)
         max_subtests: Maximum sub-tests per tier for testing (None = all)
+        language: Programming language for build pipeline ('python' or 'mojo')
 
     """
 
@@ -571,6 +572,7 @@ class ExperimentConfig:
     task_repo: str
     task_commit: str
     task_prompt_file: Path
+    language: str  # REQUIRED: Programming language for build pipeline
     models: list[str] = field(default_factory=lambda: ["claude-sonnet-4-5-20250929"])
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = field(default_factory=lambda: list(TierID))
@@ -587,6 +589,7 @@ class ExperimentConfig:
             "task_repo": self.task_repo,
             "task_commit": self.task_commit,
             "task_prompt_file": str(self.task_prompt_file),
+            "language": self.language,
             "models": self.models,
             "runs_per_subtest": self.runs_per_subtest,
             "tiers_to_run": [t.value for t in self.tiers_to_run],
@@ -620,6 +623,7 @@ class ExperimentConfig:
             task_repo=data["task_repo"],
             task_commit=data["task_commit"],
             task_prompt_file=Path(data["task_prompt_file"]),
+            language=data["language"],
             models=data.get("models", ["claude-sonnet-4-5-20250929"]),
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
