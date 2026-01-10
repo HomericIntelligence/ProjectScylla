@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -359,8 +360,6 @@ def check_api_rate_limit_status() -> RateLimitInfo | None:
         RateLimitInfo if rate limited, None otherwise
 
     """
-    import subprocess
-
     # Use claude CLI to check status with minimal prompt
     try:
         result = subprocess.run(
@@ -372,7 +371,7 @@ def check_api_rate_limit_status() -> RateLimitInfo | None:
 
         if "rate limit" in result.stderr.lower() or "hit your limit" in result.stderr.lower():
             return RateLimitInfo(
-                source="preflight",
+                source="agent",
                 retry_after_seconds=parse_retry_after(result.stderr),
                 error_message=result.stderr.strip(),
                 detected_at=datetime.now(UTC).isoformat(),
