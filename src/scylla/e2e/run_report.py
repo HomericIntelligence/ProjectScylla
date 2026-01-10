@@ -543,6 +543,10 @@ def save_subtest_report(
             "std_dev": result.std_dev_score,
             "total_cost": result.total_cost,
             "consistency": result.consistency,
+            "grade_distribution": result.grade_distribution,
+            "modal_grade": result.modal_grade,
+            "min_grade": result.min_grade,
+            "max_grade": result.max_grade,
         },
         "token_stats": result.token_stats.to_dict(),
         "children": children,
@@ -592,6 +596,21 @@ def save_subtest_report(
             f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
             f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} |"
         )
+
+    # Add grade statistics if available
+    if result.grade_distribution:
+        md_lines.extend(["", "## Grade Statistics", ""])
+        # Sort grades from best to worst (S to F)
+        grade_order = ["S", "A", "B", "C", "D", "F"]
+        sorted_dist = sorted(
+            result.grade_distribution.items(),
+            key=lambda x: grade_order.index(x[0]) if x[0] in grade_order else 99,
+        )
+        dist_str = ", ".join(f"{g}={c}" for g, c in sorted_dist)
+        md_lines.append(f"**Distribution**: {dist_str}")
+        md_lines.append(f"**Modal Grade**: {result.modal_grade}")
+        if result.min_grade and result.max_grade:
+            md_lines.append(f"**Grade Range**: {result.min_grade} - {result.max_grade}")
 
     # Collect all criteria across runs
     all_criteria: set[str] = set()

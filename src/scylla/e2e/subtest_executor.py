@@ -1340,6 +1340,29 @@ class SubTestExecutor:
             TokenStats(),
         )
 
+        # Aggregate grades
+        grades = [r.judge_grade for r in runs if r.judge_grade]
+        grade_distribution: dict[str, int] | None = None
+        modal_grade: str | None = None
+        min_grade: str | None = None
+        max_grade: str | None = None
+
+        if grades:
+            # Build distribution
+            grade_distribution = {}
+            for g in grades:
+                grade_distribution[g] = grade_distribution.get(g, 0) + 1
+
+            # Modal grade (most common)
+            modal_grade = max(grade_distribution, key=grade_distribution.get)
+
+            # Grade ordering for min/max (F=worst, S=best)
+            grade_order = ["F", "D", "C", "B", "A", "S"]
+            grade_indices = [grade_order.index(g) for g in grades if g in grade_order]
+            if grade_indices:
+                min_grade = grade_order[min(grade_indices)]
+                max_grade = grade_order[max(grade_indices)]
+
         return SubTestResult(
             subtest_id=subtest_id,
             tier_id=tier_id,
@@ -1352,6 +1375,10 @@ class SubTestExecutor:
             total_cost=sum(costs),
             consistency=consistency,
             token_stats=token_stats,
+            grade_distribution=grade_distribution,
+            modal_grade=modal_grade,
+            min_grade=min_grade,
+            max_grade=max_grade,
         )
 
 
