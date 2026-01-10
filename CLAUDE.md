@@ -326,6 +326,28 @@ BAD: Updated cop.py (ambiguous - which file?)
 .claude/ is the centralized location for agent configurations and skills. Sub-agents reference
 `.claude/agents/*.md` for roles and capabilities.
 
+### Skills and Knowledge Sharing
+
+When using `/retrospective` to capture session learnings:
+
+1. **Create skill in ProjectScylla** first (`.claude-plugin/skills/{name}/`)
+2. **Push to ProjectMnemosyne** for team-wide sharing:
+   ```bash
+   # Copy skill to knowledge base
+   cp -r .claude-plugin/skills/{name} build/ProjectMnemosyne/skills/
+
+   # Create PR in ProjectMnemosyne
+   cd build/ProjectMnemosyne
+   git checkout -b skill/{category}/{name}
+   git add skills/{name}
+   git commit -m "feat(skills): Add {name} from ProjectScylla"
+   git push -u origin skill/{category}/{name}
+   gh pr create --title "feat(skills): Add {name} from ProjectScylla"
+   ```
+
+**Location**: `<ProjectRoot>/build/ProjectMnemosyne`
+**Purpose**: Central repository for team knowledge and reusable skills
+
 ### Shared Reference Files
 
 All agents reference these shared files to avoid duplication:
