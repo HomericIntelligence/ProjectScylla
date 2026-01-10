@@ -338,6 +338,10 @@ class SubTestResult:
         total_cost: Total cost across all runs
         token_stats: Aggregated token statistics across all runs
         consistency: Score consistency (1 - coefficient of variation)
+        grade_distribution: Distribution of letter grades across runs
+        modal_grade: Most common grade across runs
+        min_grade: Worst grade across runs
+        max_grade: Best grade across runs
         selected_as_best: Whether this sub-test was selected as best
         selection_reason: Reason for selection (if selected)
 
@@ -354,6 +358,11 @@ class SubTestResult:
     total_cost: float = 0.0
     token_stats: TokenStats = field(default_factory=TokenStats)
     consistency: float = 0.0
+    # Grade aggregation across runs
+    grade_distribution: dict[str, int] | None = None
+    modal_grade: str | None = None
+    min_grade: str | None = None
+    max_grade: str | None = None
     selected_as_best: bool = False
     selection_reason: str = ""
     # Rate limit info for retry logic (None if not rate-limited)
@@ -373,6 +382,10 @@ class SubTestResult:
             "total_cost": self.total_cost,
             "token_stats": self.token_stats.to_dict(),
             "consistency": self.consistency,
+            "grade_distribution": self.grade_distribution,
+            "modal_grade": self.modal_grade,
+            "min_grade": self.min_grade,
+            "max_grade": self.max_grade,
             "selected_as_best": self.selected_as_best,
             "selection_reason": self.selection_reason,
             "rate_limit_info": (
