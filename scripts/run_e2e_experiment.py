@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import logging
 import signal
+import subprocess
 import sys
 from pathlib import Path
 
@@ -47,11 +48,45 @@ def resolve_judge_model(model_shorthand: str) -> str:
 
     """
     shortcuts = {
+        # Claude 4.5 models
         "opus-4-5": "claude-opus-4-5-20251101",
         "sonnet-4-5": "claude-sonnet-4-5-20250929",
-        "haiku-4-5": "claude-haiku-4-0-20250514",
+        "haiku-4-5": "claude-haiku-4-5",
+        # Claude 4.0 models
+        "opus-4-0": "claude-opus-4-20250514",
+        "sonnet-4-0": "claude-sonnet-4-20250514",
+        "haiku-4-0": "claude-haiku-4-0-20250514",
     }
     return shortcuts.get(model_shorthand, model_shorthand)
+
+
+def validate_model(model_id: str) -> bool:
+    """Validate that a model is available by running a test prompt.
+
+    Args:
+        model_id: Full model ID to test
+
+    Returns:
+        True if model is available, False otherwise
+
+    """
+    try:
+        result = subprocess.run(
+            [
+                "claude",
+                "--model",
+                model_id,
+                "--output-format",
+                "json",
+                "Say 'OK'",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        return False
 
 
 def parse_args() -> argparse.Namespace:
@@ -252,6 +287,7 @@ def load_test_config(tiers_dir: Path) -> dict | None:
         "task_prompt_file": config.get("task", {}).get("prompt_file"),
         "timeout_seconds": config.get("task", {}).get("timeout_seconds"),
         "tiers": config.get("tiers"),
+        "language": config.get("language"),  # Required field
     }
 
 
@@ -291,6 +327,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         "judge_models": [args.judge_model],  # Start with primary judge
         "parallel_subtests": args.parallel,
         "timeout_seconds": args.timeout,
+        "language": None,  # Must be set from test.yaml
     }
 
     # Apply test config defaults (from test.yaml in tiers-dir)
@@ -305,6 +342,8 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         # Only if not explicitly set
         if test_config.get("timeout_seconds") and args.timeout == 3600:
             config_dict["timeout_seconds"] = test_config["timeout_seconds"]
+        if test_config.get("language"):
+            config_dict["language"] = test_config["language"]
 
     # Load from YAML config if provided (overrides test config)
     if args.config:
@@ -334,6 +373,16 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
     if args.add_judge:
         for model in args.add_judge:
             resolved_model = resolve_judge_model(model)
+
+            # Validate model is available
+            logger.info(f"Validating judge model: {resolved_model}")
+            if not validate_model(resolved_model):
+                logger.warning(
+                    f"⚠️  Judge model '{resolved_model}' (from '{model}') is not available. "
+                    f"Skipping this judge."
+                )
+                continue
+
             config_dict["judge_models"].append(resolved_model)
 
     # Validate required fields
@@ -341,12 +390,15 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         raise ValueError("Task repository required: set in test.yaml, --config, or --repo")
     if not config_dict["task_prompt_file"]:
         raise ValueError("Task prompt required: set in test.yaml, --config, or --prompt")
+    if not config_dict["language"]:
+        raise ValueError("Language required: must be set in test.yaml (e.g., 'language: python')")
 
     return ExperimentConfig(
         experiment_id=config_dict["experiment_id"],
         task_repo=config_dict["task_repo"],
         task_commit=config_dict["task_commit"] or "",
         task_prompt_file=config_dict["task_prompt_file"],
+        language=config_dict["language"],
         models=config_dict["models"],
         runs_per_subtest=config_dict["runs_per_subtest"],
         tiers_to_run=config_dict["tiers_to_run"],

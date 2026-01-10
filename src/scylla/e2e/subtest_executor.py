@@ -804,6 +804,8 @@ class SubTestExecutor:
             RunResult with execution details.
 
         """
+        import json
+
         # Track execution timing and stages
         subtest_id = f"{tier_id.value}_{subtest.id}"
         start_time = time.time()
@@ -839,7 +841,13 @@ class SubTestExecutor:
             agent_result_file = get_agent_result_file(run_dir)
             logger.info(f"[SKIP] Agent already completed: {agent_result_file}")
             result = _load_agent_result(agent_dir)
-            duration = 0.0  # Duration not tracked for reused results
+            # Read persisted timing from file
+            agent_timing_file = agent_dir / "timing.json"
+            if agent_timing_file.exists():
+                timing_data = json.loads(agent_timing_file.read_text())
+                duration = timing_data.get("agent_duration_seconds", 0.0)
+            else:
+                duration = 0.0  # Fallback for old runs without timing file
         else:
             # Run agent
             _stage_log(subtest_id, ExecutionStage.AGENT, "Starting")
@@ -879,6 +887,18 @@ class SubTestExecutor:
                 )
 
             duration = (datetime.now(UTC) - agent_start).total_seconds()
+
+            # Persist timing to file for resume capability
+            agent_timing_file = agent_dir / "timing.json"
+            with open(agent_timing_file, "w") as f:
+                json.dump(
+                    {
+                        "agent_duration_seconds": duration,
+                        "measured_at": datetime.now(UTC).isoformat(),
+                    },
+                    f,
+                    indent=2,
+                )
 
             # Log the command
             cmd = self.adapter._build_command(
@@ -921,7 +941,13 @@ class SubTestExecutor:
             logger.info(f"[SKIP] Judge already completed: {judge_result_file}")
             judgment = _load_judge_result(judge_dir)
             judges = []  # No individual judge data for resumed results
-            judge_duration = 0.0  # Duration not tracked for reused results
+            # Read persisted timing from file
+            judge_timing_file = judge_dir / "timing.json"
+            if judge_timing_file.exists():
+                timing_data = json.loads(judge_timing_file.read_text())
+                judge_duration = timing_data.get("judge_duration_seconds", 0.0)
+            else:
+                judge_duration = 0.0  # Fallback for old runs without timing file
         else:
             # Run judge (either agent ran, or judge result missing)
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Starting")
@@ -945,6 +971,18 @@ class SubTestExecutor:
 
             judge_duration = (datetime.now(UTC) - judge_start).total_seconds()
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Complete", judge_duration)
+
+            # Persist timing to file for resume capability
+            judge_timing_file = judge_dir / "timing.json"
+            with open(judge_timing_file, "w") as f:
+                json.dump(
+                    {
+                        "judge_duration_seconds": judge_duration,
+                        "measured_at": datetime.now(UTC).isoformat(),
+                    },
+                    f,
+                    indent=2,
+                )
 
             # Save judge result for future resume
             from scylla.e2e.llm_judge import JudgeResult
