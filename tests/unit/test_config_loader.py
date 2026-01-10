@@ -97,7 +97,7 @@ class TestConfigLoaderRubric:
     def test_load_rubric(self) -> None:
         """Load rubric.yaml successfully."""
         loader = ConfigLoader(base_path=FIXTURES_PATH)
-        rubric = loader.load_rubric("test-001")
+        rubric = loader.load_rubric("test-config-loader")
 
         assert isinstance(rubric, Rubric)
         assert len(rubric.requirements) == 2
@@ -123,14 +123,14 @@ class TestConfigLoaderRubric:
     def test_rubric_total_weight(self) -> None:
         """Calculate total weight of requirements."""
         loader = ConfigLoader(base_path=FIXTURES_PATH)
-        rubric = loader.load_rubric("test-001")
+        rubric = loader.load_rubric("test-config-loader")
 
         assert rubric.total_weight() == 3.0  # 2.0 + 1.0
 
     def test_rubric_weighted_score(self) -> None:
         """Calculate weighted score from requirement scores."""
         loader = ConfigLoader(base_path=FIXTURES_PATH)
-        rubric = loader.load_rubric("test-001")
+        rubric = loader.load_rubric("test-config-loader")
 
         scores = {"R001": 1.0, "R002": 0.5}  # Full score, half score
         weighted = rubric.weighted_score(scores)
