@@ -722,6 +722,13 @@ def run_llm_judge(
         JudgeResult with evaluation details.
 
     """
+    import json
+    import time
+    from datetime import UTC, datetime
+
+    # Track judge execution timing
+    judge_start = time.time()
+
     # Get workspace state
     workspace_state = _get_workspace_state(workspace)
 
@@ -796,10 +803,39 @@ def run_llm_judge(
                 language=language,
             )
 
+            # Write per-judge timing
+            judge_duration = time.time() - judge_start
+            timing_file = actual_judge_dir / "timing.json"
+            with open(timing_file, "w") as f:
+                json.dump(
+                    {
+                        "judge_duration_seconds": judge_duration,
+                        "measured_at": datetime.now(UTC).isoformat(),
+                    },
+                    f,
+                    indent=2,
+                )
+
         return judge_result
 
     except Exception as e:
         logger.warning(f"LLM judge failed, using fallback: {e}")
+
+        # Write timing even on failure
+        if actual_judge_dir:
+            judge_duration = time.time() - judge_start
+            timing_file = actual_judge_dir / "timing.json"
+            with open(timing_file, "w") as f:
+                json.dump(
+                    {
+                        "judge_duration_seconds": judge_duration,
+                        "measured_at": datetime.now(UTC).isoformat(),
+                        "failed": True,
+                    },
+                    f,
+                    indent=2,
+                )
+
         return _fallback_judge(agent_output)
 
 

@@ -195,7 +195,6 @@ def generate_run_report(
                     f"**Reasoning:** {judge.reasoning or 'No reasoning provided'}",
                     "",
                     f"- [View judgment](./judge/judge_{judge.judge_number:02d}/judgment.json)",
-                    f"- [View result JSON](./judge/judge_{judge.judge_number:02d}/result.json)",
                     "",
                 ]
             )
@@ -213,8 +212,7 @@ def generate_run_report(
                 "",
                 f"**Reasoning:** {reasoning}",
                 "",
-                "- [View full judgment](./judge/judgment.json)",
-                "- [View judge result JSON](./judge/result.json)",
+                "- [View full judgment](./judge/judge_01/judgment.json)",
                 "",
             ]
         )
@@ -288,9 +286,10 @@ def generate_run_report(
     if workspace_files:
         lines.append("Files created/modified:")
         lines.append("")
-        for file_path in workspace_files:
-            # Create markdown link to file in workspace
-            lines.append(f"- [{file_path}](./workspace/{file_path})")
+        for file_path, status in workspace_files:
+            # Create markdown link to file in workspace with status indicator
+            status_indicator = "✓" if status == "committed" else "⚠"
+            lines.append(f"- [{file_path}](./workspace/{file_path}) {status_indicator} {status}")
         lines.append("")
     else:
         lines.append("No files created in workspace.")
@@ -346,19 +345,16 @@ def _is_test_config_file(file_path: str) -> bool:
     return False
 
 
-def _get_workspace_files(workspace_path: Path) -> list[str]:
-    """Get list of modified/created files in workspace (using git status).
+def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
+    """Get files created/modified by agent, with their status.
 
-    Recursively expands directories to list individual files. Only returns
-    files that were modified or created by the agent, not all files in the
-    repository. Excludes test configuration files (CLAUDE.md, .claude/)
-    that are set up by the test framework.
+    Returns both committed and uncommitted files created by the agent.
 
     Args:
         workspace_path: Path to workspace directory
 
     Returns:
-        List of relative file paths (individual files, not directories).
+        List of (file_path, status) tuples where status is "committed" or "uncommitted".
 
     """
     import subprocess
@@ -366,8 +362,26 @@ def _get_workspace_files(workspace_path: Path) -> list[str]:
     if not workspace_path.exists():
         return []
 
+    files_with_status = []
+
     try:
-        # Get modified, added, and untracked files using git status
+        # 1. Get committed files by comparing HEAD with previous commits
+        # Try to find files in the latest commit(s) made by agent
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "HEAD~1", "HEAD"],
+            cwd=workspace_path,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if result.returncode == 0 and result.stdout.strip():
+            for line in result.stdout.strip().split("\n"):
+                file_path = line.strip()
+                if file_path and not _is_test_config_file(file_path):
+                    files_with_status.append((file_path, "committed"))
+
+        # 2. Get untracked/modified files using git status
         result = subprocess.run(
             ["git", "status", "--porcelain"],
             cwd=workspace_path,
@@ -376,33 +390,24 @@ def _get_workspace_files(workspace_path: Path) -> list[str]:
             timeout=30,
         )
 
-        if result.returncode != 0:
-            return []
+        if result.returncode == 0:
+            for line in result.stdout.strip().split("\n"):
+                if not line:
+                    continue
+                # Status format: "XY filename" where X=index, Y=working tree
+                # Examples: "?? file" (untracked), " M file" (modified), "A  file" (added)
+                file_path = line[3:].strip()
 
-        files = []
-        for line in result.stdout.strip().split("\n"):
-            if not line:
-                continue
-            # Extract file path (skip status codes in first 3 chars)
-            file_path = line[3:].strip()
-            if not file_path:
-                continue
+                if not file_path or _is_test_config_file(file_path):
+                    continue
 
-            full_path = workspace_path / file_path
+                # Skip if already added as committed
+                if any(f[0] == file_path for f in files_with_status):
+                    continue
 
-            # If it's a directory, recursively add all files within it
-            if full_path.is_dir():
-                for child in full_path.rglob("*"):
-                    if child.is_file():
-                        rel_path = child.relative_to(workspace_path)
-                        if not _is_test_config_file(str(rel_path)):
-                            files.append(str(rel_path))
-            # If it's a file, add it directly
-            elif full_path.is_file():
-                if not _is_test_config_file(file_path):
-                    files.append(file_path)
+                files_with_status.append((file_path, "uncommitted"))
 
-        return sorted(set(files))  # Remove duplicates and sort
+        return sorted(files_with_status, key=lambda x: x[0])
 
     except Exception:
         return []
