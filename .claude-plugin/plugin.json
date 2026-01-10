@@ -21,6 +21,7 @@
   ],
   "source_project": "ProjectOdyssey",
   "target_project": "ProjectScylla",
+  "target_registry": "ProjectMnemosyne",
   "metrics": {
     "files_created": 191,
     "lines_added": 19439,
