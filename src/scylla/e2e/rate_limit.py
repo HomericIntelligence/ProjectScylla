@@ -347,3 +347,40 @@ def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
                 return False, "Run failed with exit_code=-1 and invalid judge output"
 
     return True, None
+
+
+def check_api_rate_limit_status() -> RateLimitInfo | None:
+    """Check if we're currently rate limited by making a lightweight API call.
+
+    Uses a minimal prompt to check status without burning tokens.
+    Returns RateLimitInfo if rate limited, None if OK.
+
+    Returns:
+        RateLimitInfo if rate limited, None otherwise
+
+    """
+    import subprocess
+
+    # Use claude CLI to check status with minimal prompt
+    try:
+        result = subprocess.run(
+            ["claude", "--print", "ping"],  # Minimal interaction
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if "rate limit" in result.stderr.lower() or "hit your limit" in result.stderr.lower():
+            return RateLimitInfo(
+                source="preflight",
+                retry_after_seconds=parse_retry_after(result.stderr),
+                error_message=result.stderr.strip(),
+                detected_at=datetime.now(UTC).isoformat(),
+            )
+
+        return None
+
+    except subprocess.TimeoutExpired:
+        return None  # Timeout is not a rate limit
+    except Exception:
+        return None  # Other errors are not rate limits

@@ -13,7 +13,10 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from scylla.e2e.rate_limit import RateLimitInfo
 
 
 @dataclass
@@ -353,6 +356,8 @@ class SubTestResult:
     consistency: float = 0.0
     selected_as_best: bool = False
     selection_reason: str = ""
+    # Rate limit info for retry logic (None if not rate-limited)
+    rate_limit_info: RateLimitInfo | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -370,6 +375,16 @@ class SubTestResult:
             "consistency": self.consistency,
             "selected_as_best": self.selected_as_best,
             "selection_reason": self.selection_reason,
+            "rate_limit_info": (
+                {
+                    "source": self.rate_limit_info.source,
+                    "retry_after_seconds": self.rate_limit_info.retry_after_seconds,
+                    "error_message": self.rate_limit_info.error_message,
+                    "detected_at": self.rate_limit_info.detected_at,
+                }
+                if self.rate_limit_info
+                else None
+            ),
         }
 
 

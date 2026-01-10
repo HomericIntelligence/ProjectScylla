@@ -44,7 +44,12 @@ from scylla.e2e.paths import (
     get_judge_dir,
     get_judge_result_file,
 )
-from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo, wait_for_rate_limit
+from scylla.e2e.rate_limit import (
+    RateLimitError,
+    RateLimitInfo,
+    detect_rate_limit,
+    wait_for_rate_limit,
+)
 from scylla.e2e.run_report import save_run_report, save_run_report_json
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
@@ -1421,7 +1426,7 @@ def run_tier_subtests_parallel(
             for subtest in tier_config.subtests:
                 subtest_dir = results_dir / subtest.id
                 future = pool.submit(
-                    _run_subtest_in_process,
+                    _run_subtest_in_process_safe,  # Use safe wrapper to prevent pool crashes
                     config=config,
                     tier_id=tier_id,
                     tier_config=tier_config,
@@ -1535,8 +1540,53 @@ def run_tier_subtests_parallel(
                         f"{active_workers} active, elapsed: {elapsed:.0f}s"
                     )
 
-    except (KeyboardInterrupt, BrokenProcessPool):
-        # Clean exit on Ctrl+C or process pool failure
+    except (KeyboardInterrupt, BrokenProcessPool) as e:
+        if isinstance(e, BrokenProcessPool):
+            # Scan results for rate limit indicators
+            rate_limit_info = _detect_rate_limit_from_results(results, results_dir)
+
+            if rate_limit_info and checkpoint and checkpoint_path:
+                logger.warning(
+                    f"BrokenProcessPool caused by rate limit from {rate_limit_info.source}"
+                )
+                logger.info(f"Waiting {rate_limit_info.retry_after_seconds or 60}s before retry...")
+
+                wait_for_rate_limit(
+                    rate_limit_info.retry_after_seconds,
+                    checkpoint,
+                    checkpoint_path,
+                )
+
+                # Identify remaining subtests (not yet completed OR marked as rate_limited)
+                remaining = [
+                    s
+                    for s in tier_config.subtests
+                    if s.id not in results
+                    or results[s.id].selection_reason.startswith("RateLimitError:")
+                ]
+
+                if remaining:
+                    logger.info(f"Retrying {len(remaining)} subtests after rate limit...")
+                    retry_results = _retry_with_new_pool(
+                        remaining_subtests=remaining,
+                        config=config,
+                        tier_id=tier_id,
+                        tier_config=tier_config,
+                        tier_manager=tier_manager,
+                        workspace_manager=workspace_manager,
+                        baseline=baseline,
+                        results_dir=results_dir,
+                        checkpoint=checkpoint,
+                        checkpoint_path=checkpoint_path,
+                        global_semaphore=global_semaphore,
+                    )
+                    results.update(retry_results)
+                    return results
+
+            # Not a rate limit, or no checkpoint - fall through to cleanup
+            logger.error(f"BrokenProcessPool with no recovery path: {e}")
+
+        # KeyboardInterrupt or unrecoverable - cleanup
         logger.warning("Experiment interrupted, cleaning up...")
         # Cancel pending futures
         for future in futures:
@@ -1544,6 +1594,294 @@ def run_tier_subtests_parallel(
                 future.cancel()
 
     return results
+
+
+def _detect_rate_limit_from_results(
+    results: dict[str, SubTestResult],
+    results_dir: Path,
+) -> RateLimitInfo | None:
+    """Detect rate limit from completed results OR .failed/ directories.
+
+    Checks:
+    1. SubTestResult.rate_limit_info field (from safe wrapper)
+    2. SubTestResult.selection_reason for "RateLimitError:" prefix
+    3. .failed/*/agent/result.json for rate limit patterns in stderr
+
+    Args:
+        results: Dictionary of completed subtest results
+        results_dir: Base directory for tier results
+
+    Returns:
+        RateLimitInfo if rate limit detected, None otherwise
+
+    """
+    # Check structured results first (from safe wrapper)
+    for subtest_id, result in results.items():
+        if result.rate_limit_info:
+            logger.debug(f"Rate limit found in {subtest_id}.rate_limit_info")
+            return result.rate_limit_info
+        if result.selection_reason.startswith("RateLimitError:"):
+            # Parse from selection_reason if rate_limit_info not available
+            logger.debug(f"Rate limit found in {subtest_id}.selection_reason")
+            return RateLimitInfo(
+                source="agent",
+                retry_after_seconds=None,  # Will use default
+                error_message=result.selection_reason,
+                detected_at=datetime.now(UTC).isoformat(),
+            )
+
+    # Check .failed/ directories for crashed workers
+    for failed_dir in results_dir.rglob(".failed/*/agent/result.json"):
+        try:
+            import json
+
+            data = json.loads(failed_dir.read_text())
+            stderr = data.get("stderr", "")
+            stdout = data.get("stdout", "")
+
+            rate_info = detect_rate_limit(stdout, stderr, source="agent")
+            if rate_info:
+                logger.debug(f"Rate limit found in failed run: {failed_dir}")
+                return rate_info
+        except Exception as e:
+            logger.debug(f"Failed to check {failed_dir} for rate limit: {e}")
+            continue
+
+    return None
+
+
+def _retry_with_new_pool(
+    remaining_subtests: list[SubTestConfig],
+    config: ExperimentConfig,
+    tier_id: TierID,
+    tier_config: TierConfig,
+    tier_manager: TierManager,
+    workspace_manager: WorkspaceManager,
+    baseline: TierBaseline | None,
+    results_dir: Path,
+    checkpoint: E2ECheckpoint | None,
+    checkpoint_path: Path | None,
+    global_semaphore,
+    max_retries: int = 3,
+) -> dict[str, SubTestResult]:
+    """Create new ProcessPoolExecutor and retry remaining subtests.
+
+    Has its own retry loop for repeated rate limits.
+
+    Args:
+        remaining_subtests: Subtests that need to be retried
+        config: Experiment configuration
+        tier_id: Tier identifier
+        tier_config: Tier configuration
+        tier_manager: Tier manager instance
+        workspace_manager: Workspace manager instance
+        baseline: Previous tier's baseline
+        results_dir: Base directory for tier results
+        checkpoint: Optional checkpoint for resume
+        checkpoint_path: Path to checkpoint file
+        global_semaphore: Global semaphore for limiting concurrent agents
+        max_retries: Maximum retry attempts for rate limits
+
+    Returns:
+        Dictionary of SubTestResults for retried subtests
+
+    """
+    results: dict[str, SubTestResult] = {}
+    retries = 0
+
+    while remaining_subtests and retries < max_retries:
+        logger.info(
+            f"Retry attempt {retries + 1}/{max_retries} for {len(remaining_subtests)} subtests"
+        )
+
+        try:
+            # Fresh coordinator for new pool
+            manager = Manager()
+            coordinator = RateLimitCoordinator(manager)
+
+            with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
+                futures = {}
+                for subtest in remaining_subtests:
+                    subtest_dir = results_dir / subtest.id
+                    future = pool.submit(
+                        _run_subtest_in_process_safe,  # Use safe wrapper
+                        config=config,
+                        tier_id=tier_id,
+                        tier_config=tier_config,
+                        subtest=subtest,
+                        baseline=baseline,
+                        results_dir=subtest_dir,
+                        tiers_dir=tier_manager.tiers_dir,
+                        base_repo=workspace_manager.base_repo,
+                        repo_url=workspace_manager.repo_url,
+                        commit=workspace_manager.commit,
+                        checkpoint=checkpoint,
+                        checkpoint_path=checkpoint_path,
+                        coordinator=coordinator,
+                        global_semaphore=global_semaphore,
+                    )
+                    futures[future] = subtest.id
+
+                # Collect results
+                for future in as_completed(futures):
+                    subtest_id = futures[future]
+                    try:
+                        result = future.result()
+                        results[subtest_id] = result
+                    except Exception as e:
+                        # Should not happen with safe wrapper, but be defensive
+                        logger.error(f"Unexpected exception from safe wrapper: {e}")
+                        results[subtest_id] = SubTestResult(
+                            subtest_id=subtest_id,
+                            tier_id=tier_id,
+                            runs=[],
+                            pass_rate=0.0,
+                            selection_reason=f"UnexpectedError: {e}",
+                        )
+
+            # Check for rate-limited results that need retry
+            remaining_subtests = [
+                s
+                for s in remaining_subtests
+                if s.id in results and results[s.id].selection_reason.startswith("RateLimitError:")
+            ]
+
+            if remaining_subtests:
+                # More rate limits - wait and retry
+                rate_info = _detect_rate_limit_from_results(results, results_dir)
+                if rate_info and checkpoint and checkpoint_path:
+                    logger.info(
+                        f"Rate limit still active after retry {retries + 1}, waiting again..."
+                    )
+                    wait_for_rate_limit(
+                        rate_info.retry_after_seconds,
+                        checkpoint,
+                        checkpoint_path,
+                    )
+                else:
+                    # No rate limit info but still failing - give up
+                    logger.warning(
+                        f"Subtests still failing after retry {retries + 1} "
+                        f"but no rate limit detected"
+                    )
+                    break
+
+                retries += 1
+            else:
+                # All subtests completed successfully or with non-rate-limit errors
+                break
+
+        except BrokenProcessPool as e:
+            # Pool crashed again - check for rate limit and retry
+            logger.warning(f"BrokenProcessPool during retry attempt {retries + 1}: {e}")
+            rate_info = _detect_rate_limit_from_results(results, results_dir)
+            if rate_info and checkpoint and checkpoint_path:
+                wait_for_rate_limit(
+                    rate_info.retry_after_seconds,
+                    checkpoint,
+                    checkpoint_path,
+                )
+                retries += 1
+            else:
+                # Pool crashed but not due to rate limit - give up
+                logger.error("BrokenProcessPool without rate limit, cannot retry")
+                break
+
+    if retries >= max_retries:
+        logger.warning(
+            f"Max retries ({max_retries}) reached, {len(remaining_subtests)} subtests still failing"
+        )
+
+    return results
+
+
+def _run_subtest_in_process_safe(
+    config: ExperimentConfig,
+    tier_id: TierID,
+    tier_config: TierConfig,
+    subtest: SubTestConfig,
+    baseline: TierBaseline | None,
+    results_dir: Path,
+    tiers_dir: Path,
+    base_repo: Path,
+    repo_url: str,
+    commit: str | None,
+    checkpoint: E2ECheckpoint | None = None,
+    checkpoint_path: Path | None = None,
+    coordinator: RateLimitCoordinator | None = None,
+    global_semaphore=None,
+) -> SubTestResult:
+    """Safe wrapper that catches ALL exceptions and returns structured error.
+
+    This prevents worker crashes from poisoning the entire ProcessPoolExecutor.
+    Any exception (including RateLimitError) is converted to a SubTestResult
+    with error details in selection_reason.
+
+    Args:
+        (same as _run_subtest_in_process)
+
+    Returns:
+        SubTestResult (never raises exceptions)
+
+    """
+    try:
+        return _run_subtest_in_process(
+            config=config,
+            tier_id=tier_id,
+            tier_config=tier_config,
+            subtest=subtest,
+            baseline=baseline,
+            results_dir=results_dir,
+            tiers_dir=tiers_dir,
+            base_repo=base_repo,
+            repo_url=repo_url,
+            commit=commit,
+            checkpoint=checkpoint,
+            checkpoint_path=checkpoint_path,
+            coordinator=coordinator,
+            global_semaphore=global_semaphore,
+        )
+    except RateLimitError as e:
+        # Return structured error, don't crash pool
+        logger.warning(
+            f"Rate limit in worker for {tier_id.value}/{subtest.id}: {e.info.error_message}"
+        )
+        return SubTestResult(
+            subtest_id=subtest.id,
+            tier_id=tier_id,
+            runs=[],
+            pass_rate=0.0,
+            mean_score=0.0,
+            median_score=0.0,
+            std_dev_score=0.0,
+            mean_cost=0.0,
+            total_cost=0.0,
+            consistency=0.0,
+            selected_as_best=False,
+            selection_reason=f"RateLimitError: {e.info.error_message}",
+            # Store rate limit info for retry logic
+            rate_limit_info=e.info,
+        )
+    except Exception as e:
+        # ANY exception becomes structured error
+        logger.error(
+            f"Worker exception for {tier_id.value}/{subtest.id}: {type(e).__name__}: {e}",
+            exc_info=True,
+        )
+        return SubTestResult(
+            subtest_id=subtest.id,
+            tier_id=tier_id,
+            runs=[],
+            pass_rate=0.0,
+            mean_score=0.0,
+            median_score=0.0,
+            std_dev_score=0.0,
+            mean_cost=0.0,
+            total_cost=0.0,
+            consistency=0.0,
+            selected_as_best=False,
+            selection_reason=f"WorkerError: {type(e).__name__}: {e}",
+        )
 
 
 def _run_subtest_in_process(

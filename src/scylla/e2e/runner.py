@@ -547,6 +547,29 @@ class E2ERunner:
         if self.experiment_dir:
             self.config.save(self.experiment_dir / "config" / "experiment.json")
 
+    def _check_rate_limit_before_tier(self, tier_id: TierID) -> None:
+        """Check for active rate limit before starting tier execution.
+
+        Makes a lightweight API call to verify we're not rate-limited.
+        If rate limited, waits until limit expires.
+
+        Args:
+            tier_id: The tier about to be executed
+
+        """
+        from scylla.e2e.rate_limit import check_api_rate_limit_status, wait_for_rate_limit
+
+        rate_limit_info = check_api_rate_limit_status()
+        if rate_limit_info:
+            logger.warning(f"Pre-flight rate limit detected for {tier_id.value}")
+            if self.checkpoint and self.experiment_dir:
+                checkpoint_path = self.experiment_dir / "checkpoint.json"
+                wait_for_rate_limit(
+                    rate_limit_info.retry_after_seconds,
+                    self.checkpoint,
+                    checkpoint_path,
+                )
+
     def _run_tier(
         self,
         tier_id: TierID,
@@ -585,6 +608,9 @@ class E2ERunner:
 
         # Prepare results directory (flat structure: experiment/T0/, not experiment/tiers/T0/)
         tier_dir = self.experiment_dir / tier_id.value
+
+        # Pre-flight rate limit check to avoid wasted work
+        self._check_rate_limit_before_tier(tier_id)
 
         # Run all sub-tests in parallel (with checkpoint support)
         checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
