@@ -13,6 +13,7 @@ from scylla.e2e.checkpoint import E2ECheckpoint
 from scylla.e2e.rate_limit import (
     RateLimitError,
     RateLimitInfo,
+    check_api_rate_limit_status,
     detect_rate_limit,
     parse_retry_after,
     validate_run_result,
@@ -594,3 +595,74 @@ class TestValidateRunResult:
 
         assert is_valid is True
         assert reason is None
+
+
+class TestCheckApiRateLimitStatus:
+    """Tests for check_api_rate_limit_status function."""
+
+    @patch("subprocess.run")
+    def test_no_rate_limit(self, mock_run) -> None:
+        """Test when API is not rate limited."""
+        mock_run.return_value.stderr = "Success"
+        mock_run.return_value.returncode = 0
+
+        result = check_api_rate_limit_status()
+
+        assert result is None
+
+    @patch("subprocess.run")
+    def test_rate_limit_detected(self, mock_run) -> None:
+        """Test when rate limit is detected in stderr."""
+        from subprocess import CompletedProcess
+
+        mock_run.return_value = CompletedProcess(
+            args=["claude", "--print", "ping"],
+            returncode=1,
+            stdout="",
+            stderr="Rate limit exceeded. Retry-After: 120",
+        )
+
+        result = check_api_rate_limit_status()
+
+        assert result is not None
+        assert result.source == "preflight"
+        assert result.retry_after_seconds == 132.0  # 120 * 1.1
+        assert "Rate limit" in result.error_message
+
+    @patch("subprocess.run")
+    def test_hit_your_limit_detected(self, mock_run) -> None:
+        """Test when 'hit your limit' message is detected."""
+        from subprocess import CompletedProcess
+
+        mock_run.return_value = CompletedProcess(
+            args=["claude", "--print", "ping"],
+            returncode=1,
+            stdout="",
+            stderr="You've hit your limit · resets 4pm (America/Los_Angeles)",
+        )
+
+        result = check_api_rate_limit_status()
+
+        assert result is not None
+        assert result.source == "preflight"
+        assert "hit your limit" in result.error_message.lower()
+
+    @patch("subprocess.run")
+    def test_timeout_returns_none(self, mock_run) -> None:
+        """Test that subprocess timeout returns None (not treated as rate limit)."""
+        from subprocess import TimeoutExpired
+
+        mock_run.side_effect = TimeoutExpired("claude", 30)
+
+        result = check_api_rate_limit_status()
+
+        assert result is None
+
+    @patch("subprocess.run")
+    def test_other_exception_returns_none(self, mock_run) -> None:
+        """Test that other exceptions return None."""
+        mock_run.side_effect = OSError("Command not found")
+
+        result = check_api_rate_limit_status()
+
+        assert result is None
