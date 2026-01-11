@@ -997,19 +997,20 @@ def _fallback_judge(agent_output: str) -> JudgeResult:
     )
 
 
-def _save_pipeline_commands(judge_dir: Path, workspace: Path, language: str = "mojo") -> None:
+def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "mojo") -> None:
     """Save all build/lint/test commands as reproducible bash scripts.
 
-    Creates individual scripts for each tool in judge/commands/ directory,
+    Creates individual scripts for each tool in run_dir/commands/ directory,
     plus a run_all.sh script that executes all tools in sequence.
+    Called once per run (not per judge) since results are identical.
 
     Args:
-        judge_dir: Directory for judge outputs
+        run_dir: Run directory (e.g., run_01/)
         workspace: Path to the workspace directory
         language: Programming language ("python" or "mojo")
 
     """
-    commands_dir = judge_dir / "commands"
+    commands_dir = run_dir / "commands"
     commands_dir.mkdir(parents=True, exist_ok=True)
 
     if language == "python":
@@ -1219,8 +1220,13 @@ def _save_judge_logs(
     """
     judge_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save the prompt
-    (judge_dir / "prompt.md").write_text(prompt)
+    # Save the prompt to run level (shared by all judges) - write once
+    # The prompt is at run_dir/judge_prompt.md, not inside judge/ subdir
+    # judge_dir is e.g. run_01/judge/judge_01/, so go up 2 levels to get run_dir
+    run_dir = judge_dir.parent.parent
+    judge_prompt_path = run_dir / "judge_prompt.md"
+    if not judge_prompt_path.exists():
+        judge_prompt_path.write_text(prompt)
 
     # Save raw response
     (judge_dir / "response.txt").write_text(response)
@@ -1272,10 +1278,10 @@ set -euo pipefail
 
 JUDGE_DIR="$(cd "$(dirname "${{BASH_SOURCE[0]}}")" && pwd)"
 
-# Re-run Claude CLI with the same prompt and model
+# Re-run Claude CLI with the same prompt and model (shared judge_prompt.md at run level)
 claude \\
   --model {model} \\
-  --prompt "$JUDGE_DIR/prompt.md" \\
+  --prompt "$JUDGE_DIR/../../judge_prompt.md" \\
   > "$JUDGE_DIR/response.txt"
 
 echo "Judge response saved to $JUDGE_DIR/response.txt"
@@ -1283,6 +1289,5 @@ echo "Judge response saved to $JUDGE_DIR/response.txt"
     replay_script.write_text(replay_content)
     replay_script.chmod(0o755)
 
-    # Save pipeline commands if workspace provided
-    if workspace:
-        _save_pipeline_commands(judge_dir, workspace, language=language)
+    # NOTE: Pipeline commands (run_all.sh) are now saved once per run by the caller,
+    # not per judge, to avoid duplication

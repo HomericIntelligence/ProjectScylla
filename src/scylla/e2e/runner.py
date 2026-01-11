@@ -505,11 +505,13 @@ class E2ERunner:
             experiment_dir: Root experiment directory
 
         """
-        # Symlink task prompt
+        # Copy task prompt (immutable snapshot for reproducibility)
         prompt_path = experiment_dir / "prompt.md"
         if self.config.task_prompt_file.exists():
-            prompt_path.symlink_to(self.config.task_prompt_file.resolve())
-            logger.debug(f"Symlinked task prompt to {prompt_path}")
+            import shutil
+
+            shutil.copy(self.config.task_prompt_file, prompt_path)
+            logger.debug(f"Copied task prompt to {prompt_path}")
 
         # Symlink criteria if exists (look for it relative to prompt file)
         prompt_dir = self.config.task_prompt_file.parent
