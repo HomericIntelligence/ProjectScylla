@@ -1,0 +1,36 @@
+{
+  "name": "evaluation-report-fixes",
+  "version": "1.0.0",
+  "category": "evaluation",
+  "description": "Fix critical E2E evaluation report issues including timing persistence, workspace detection, judge validation, and broken links",
+  "tags": [
+    "evaluation",
+    "debugging",
+    "reports",
+    "timing",
+    "workspace-detection",
+    "judge-validation"
+  ],
+  "author": "Claude Sonnet 4.5",
+  "created": "2026-01-10",
+  "updated": "2026-01-10",
+  "trigger_patterns": [
+    "UnboundLocalError: cannot access local variable 'json'",
+    "workspace files not showing in reports",
+    "judge model fallback scores",
+    "broken result.json links",
+    "timing data missing or zero",
+    "inconsistent judge scoring"
+  ],
+  "related_files": [
+    "src/scylla/e2e/subtest_executor.py",
+    "src/scylla/e2e/run_report.py",
+    "src/scylla/e2e/llm_judge.py",
+    "scripts/run_e2e_experiment.py",
+    "config/judge/system_prompt.md"
+  ],
+  "dependencies": [],
+  "verified": true,
+  "pr_url": "https://github.com/HomericIntelligence/ProjectScylla/pull/172",
+  "commit_hash": "476af08"
+}
