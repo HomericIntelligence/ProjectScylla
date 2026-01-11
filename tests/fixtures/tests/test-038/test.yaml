@@ -4,6 +4,7 @@ name: "Enable eye() Offset Diagonal Test"
 description: |
   Enable disabled eye() offset diagonal test
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "dc9a74a94e5406b1d985e71159285b5aa3ddbdde"

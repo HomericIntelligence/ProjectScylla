@@ -4,6 +4,7 @@ name: "Clarify from_array Implementation Status"
 description: |
   Document from_array() implementation status
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "1ec9699bcc0f360eb290ab909abbaedcd07ebd6d"

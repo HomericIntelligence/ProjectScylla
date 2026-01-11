@@ -4,6 +4,7 @@ name: "Implement Dataset Loaders Module"
 description: |
   Create dataset_loaders module for training
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "33e1689820d3a8cfe547ceb34ea6556560ab5aa9"

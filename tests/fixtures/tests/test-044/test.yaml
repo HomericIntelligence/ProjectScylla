@@ -4,6 +4,7 @@ name: "Plan: Review Commented Imports"
 description: |
   Create review plan for commented-out imports in shared/__init__.mojo
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "b2722395078e3a12f45a92fccdc891ed83a8b870"

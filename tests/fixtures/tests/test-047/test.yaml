@@ -4,6 +4,7 @@ name: "Plan: Implement RotatingFileHandler"
 description: |
   Create implementation plan for RotatingFileHandler in logging
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "b2722395078e3a12f45a92fccdc891ed83a8b870"

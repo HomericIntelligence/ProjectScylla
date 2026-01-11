@@ -4,6 +4,7 @@ name: "Plan: Document TrainingLoop Bounds"
 description: |
   Create implementation plan for documenting TrainingLoop generic trait bounds
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "b2722395078e3a12f45a92fccdc891ed83a8b870"

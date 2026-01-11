@@ -6,6 +6,7 @@ description: |
   Large-scale refactoring task involving merging duplicates, removing unused
   commands, and fixing build/package issues.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "6f6959bfc67614ce541cb28fb337f4161270ca63"

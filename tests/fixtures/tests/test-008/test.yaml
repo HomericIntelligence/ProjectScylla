@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to update GitHub Actions dependencies to newer versions.
   Agent must understand GitHub Actions workflow syntax and version pinning.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "d61b7e047d00174f8914241ed8a0d35828b3ce92"

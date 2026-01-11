@@ -4,6 +4,7 @@ name: "Add PyTorch Migration Guide"
 description: |
   Create PyTorch to ML Odyssey migration guide
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "c47f5c6586f7af9ad13da4cd591bc42b43aac1e4"

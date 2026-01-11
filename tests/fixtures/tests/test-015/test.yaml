@@ -4,6 +4,7 @@ name: "Fix Mypy Type Annotations"
 description: |
   Fix type annotation errors across codebase
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "ac9b7658757448347ecb5178108e69a3f4efe9bf"

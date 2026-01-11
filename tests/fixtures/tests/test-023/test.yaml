@@ -4,6 +4,7 @@ name: "Remove 13 Unused Variable Declarations"
 description: |
   Clean up unused variable declarations
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "1a1a74758b3be246bde846d6c0ec18934814119d"
