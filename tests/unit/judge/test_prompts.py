@@ -160,8 +160,8 @@ class TestEvaluationSummary:
 
     def test_letter_grade_pattern(self) -> None:
         """Test letter grade validation."""
-        # Valid grades
-        for grade in ["A", "B", "C", "D", "F"]:
+        # Valid grades (S-F scale)
+        for grade in ["S", "A", "B", "C", "D", "F"]:
             summary = EvaluationSummary(
                 weighted_score=0.5,
                 passed=False,
