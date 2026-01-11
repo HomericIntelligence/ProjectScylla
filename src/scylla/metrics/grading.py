@@ -128,7 +128,7 @@ def calculate_composite_score(
 def assign_letter_grade(score: float) -> str:
     """Assign letter grade based on score using industry-aligned scale.
 
-    See .claude/shared/grading-scale.md for full specification.
+    See docs/design/grading-scale.md for full specification.
 
     Grade thresholds:
         S: == 1.00 (Amazing - exceptional, above and beyond)

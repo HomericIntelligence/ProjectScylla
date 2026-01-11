@@ -24,7 +24,7 @@ from SonarQube, LLM evaluation frameworks, and QA scorecard best practices.
 
 ### YAML Definition
 
-Use this exact definition in rubric files (or reference this document):
+Use this exact definition in rubric files by referencing this document:
 
 ```yaml
 grading:
@@ -99,7 +99,7 @@ This scale aligns with industry practices:
 
 ## Usage in Rubric Files
 
-### Option 1: Reference This Document (Recommended)
+Reference this document
 
 ```yaml
 # rubric.yaml
@@ -108,23 +108,7 @@ requirements:
 
 grading:
   pass_threshold: 0.60
-  # Grade scale: See .claude/shared/grading-scale.md
-```
-
-### Option 2: Inline Definition
-
-If a test requires a non-standard scale, define it inline with justification:
-
-```yaml
-grading:
-  pass_threshold: 0.80  # Stricter for security-critical tests
-  grade_scale:
-    A: 1.00
-    A-: 0.80
-    B: 0.60
-    C: 0.40
-    D: 0.20
-    F: 0.0
+  # Grade scale: See docs/design/grading-scale.md
 ```
 
 ## Related Documents

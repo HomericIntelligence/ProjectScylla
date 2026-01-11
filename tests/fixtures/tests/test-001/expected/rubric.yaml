@@ -97,9 +97,9 @@ categories:
 
 grading:
   pass_threshold: 0.60
-  # Industry-aligned grade scale
+  # Industry-aligned grade scale - see docs/design/grading-scale.md
   grade_scale:
-    S: 0.95    # Exceptional - above and beyond
+    S: 1.00    # Amazing - above and beyond
     A: 0.80    # Excellent - production ready
     B: 0.60    # Good - minor improvements possible
     C: 0.40    # Acceptable - functional with issues

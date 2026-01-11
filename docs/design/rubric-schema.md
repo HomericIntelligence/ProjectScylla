@@ -268,7 +268,7 @@ grading:
 
 Letter grade thresholds. If omitted, only pass/fail is reported.
 
-> **Centralized Definition**: See [grading-scale.md](/.claude/shared/grading-scale.md) for the
+> **Centralized Definition**: See [grading-scale.md](/docs/design/grading-scale.md) for the
 > standard industry-aligned grade scale used across all ProjectScylla rubrics.
 
 | Field | Type | Required | Description |
@@ -481,7 +481,7 @@ grading:
   pass_threshold: 0.60
 
   # Industry-aligned grade scale
-  # See .claude/shared/grading-scale.md for full specification
+  # See docs/design/grading-scale.md for full specification
   grade_scale:
     S: 1.00    # Amazing - above and beyond
     A: 0.80    # Excellent - production ready
@@ -532,7 +532,7 @@ grading:
 
 ## Related Documents
 
-- [Grading Scale Definition](/.claude/shared/grading-scale.md) - **Single source of truth** for grade thresholds
+- [Grading Scale Definition](/docs/design/grading-scale.md) - **Single source of truth** for grade thresholds
 - [Test Schema Specification](test-schema.md) - Test case YAML schema
 - [Evaluation Guidelines](/.claude/shared/evaluation-guidelines.md) - Evaluation methodology
 - [Metrics Definitions](/.claude/shared/metrics-definitions.md) - Quality metrics including Pass-Rate

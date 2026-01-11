@@ -17,15 +17,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from scylla.judge.prompts import JUDGE_SYSTEM_PROMPT_FILE, build_task_prompt
 from scylla.metrics.grading import assign_letter_grade
 
 logger = logging.getLogger(__name__)
-
-
-# Path to the standardized judge system prompt (checked into repo)
-JUDGE_SYSTEM_PROMPT_FILE = (
-    Path(__file__).parent.parent.parent.parent / "config" / "judge" / "system_prompt.md"
-)
 
 
 @dataclass
@@ -434,163 +429,8 @@ def _run_build_pipeline(workspace: Path, language: str = "mojo") -> BuildPipelin
         return _run_mojo_pipeline(workspace)
 
 
-def _build_judge_prompt(
-    task_prompt: str,
-    agent_output: str,
-    workspace_state: str,
-    patchfile: str | None = None,
-    deleted_files: list[str] | None = None,
-    reference_patch: str | None = None,
-    pipeline_result: BuildPipelineResult | None = None,
-    rubric_content: str | None = None,
-) -> str:
-    """Build the evaluation context for the LLM judge.
-
-    The system prompt with evaluation criteria is loaded from JUDGE_SYSTEM_PROMPT_FILE.
-    This function builds only the context (task, output, workspace state).
-
-    Args:
-        task_prompt: The original task prompt
-        agent_output: The agent's stdout/conversation output
-        workspace_state: Description of files created/modified
-        patchfile: Git diff showing all changes (optional)
-        deleted_files: List of deleted file paths (optional)
-        reference_patch: Reference solution patch for comparison (optional)
-        pipeline_result: Build/lint/test pipeline results (optional)
-        rubric_content: YAML rubric with checklist items (optional)
-
-    Returns:
-        Formatted evaluation context for the judge LLM.
-
-    """
-    sections = []
-
-    # Add rubric FIRST so judge sees evaluation criteria upfront
-    if rubric_content:
-        sections.append(f"## Rubric (Evaluation Criteria)\n\n```yaml\n{rubric_content}\n```")
-
-    sections.extend(
-        [
-            f"## Task Given to Agent\n\n{task_prompt}",
-            f"## Agent's Output\n\n{agent_output}",
-            f"## Workspace State After Agent Execution\n\n{workspace_state}",
-        ]
-    )
-
-    # Add patchfile section if available
-    if patchfile and patchfile not in ("(no changes detected)", "(unable to generate patchfile)"):
-        sections.append(f"## Git Diff (Patchfile)\n\n```diff\n{patchfile}\n```")
-
-    # Add deleted files section if any
-    if deleted_files:
-        deleted_list = "\n".join(f"- {f}" for f in deleted_files)
-        sections.append(f"## Deleted Files\n\n{deleted_list}")
-
-    # Add reference patch section if available
-    if reference_patch:
-        # Truncate reference patch if too long
-        ref_lines = reference_patch.split("\n")
-        if len(ref_lines) > 200:
-            ref_patch = "\n".join(ref_lines[:100] + ["", "... (truncated)", ""] + ref_lines[-50:])
-        else:
-            ref_patch = reference_patch
-        sections.append(
-            f"## Reference Solution Patch\n\n"
-            f"Compare the agent's changes against this reference solution:\n\n"
-            f"```diff\n{ref_patch}\n```\n\n"
-            f"Note: The agent's solution does not need to be identical, but should achieve "
-            f"the same semantic result (same files created/modified, similar structure)."
-        )
-
-    # Add build pipeline results if available
-    if pipeline_result:
-        overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
-        sections.append(
-            f"## Build/Lint/Test Pipeline Results\n\n"
-            f"**Overall Status**: {overall_status}\n\n"
-            f"{pipeline_result.to_context_string()}"
-        )
-
-    sections.append(
-        "Evaluate the agent's work using the rubric and criteria in your system prompt."
-    )
-
-    return "\n\n".join(sections)
-
-
-def build_judge_prompt_with_paths(
-    prompt_path: Path,
-    output_path: Path,
-    workspace_path: Path,
-    criteria_path: Path | None = None,
-    rubric_path: Path | None = None,
-) -> str:
-    """Build a judge prompt template that references file paths.
-
-    This creates a prompt that tells the judge where to find the relevant files
-    rather than inlining all content. This is used for the experiment-level
-    judge_prompt.md template.
-
-    Args:
-        prompt_path: Path to the task prompt file
-        output_path: Path to the agent output file (run-specific)
-        workspace_path: Path to the workspace directory (subtest-specific)
-        criteria_path: Optional path to criteria.md
-        rubric_path: Optional path to rubric.yaml
-
-    Returns:
-        Judge prompt template with file path references.
-
-    """
-    sections = [
-        "# Evaluation Context",
-        "",
-        "## Task Given to Agent",
-        "",
-        f"See file: `{prompt_path}`",
-        "",
-        "## Agent's Output",
-        "",
-        f"See file: `{output_path}`",
-        "",
-        "## Workspace",
-        "",
-        f"See directory: `{workspace_path}`",
-        "",
-    ]
-
-    if criteria_path:
-        sections.extend(
-            [
-                "## Grading Criteria",
-                "",
-                f"See file: `{criteria_path}`",
-                "",
-            ]
-        )
-
-    if rubric_path:
-        sections.extend(
-            [
-                "## Grading Rubric",
-                "",
-                f"See file: `{rubric_path}`",
-                "",
-            ]
-        )
-
-    sections.extend(
-        [
-            "---",
-            "",
-            (
-                "Read the files at the paths above and evaluate the agent's work "
-                "using the criteria in your system prompt."
-            ),
-        ]
-    )
-
-    return "\n".join(sections)
+# Note: _build_judge_prompt() has been moved to scylla.judge.prompts.build_task_prompt()
+# This module now imports and uses that consolidated implementation.
 
 
 def _is_test_config_file(file_path: str) -> bool:
@@ -871,15 +711,22 @@ def run_llm_judge(
             # Has actual failures
             logger.warning(f"Build pipeline: {status_summary}")
 
-    # Build the judge prompt
-    judge_prompt = _build_judge_prompt(
-        task_prompt,
-        agent_output,
-        workspace_state,
+    # Build the judge prompt using consolidated function from prompts.py
+    pipeline_result_str = None
+    if pipeline_result:
+        overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
+        pipeline_result_str = (
+            f"**Overall Status**: {overall_status}\n\n" f"{pipeline_result.to_context_string()}"
+        )
+
+    judge_prompt = build_task_prompt(
+        task_prompt=task_prompt,
+        agent_output=agent_output,
+        workspace_state=workspace_state,
         patchfile=patchfile,
         deleted_files=deleted_files,
         reference_patch=reference_patch,
-        pipeline_result=pipeline_result,
+        pipeline_result_str=pipeline_result_str,
         rubric_content=rubric_content,
     )
 

@@ -233,16 +233,23 @@ class BaseAdapter:
 
 ### 4.4 Judge
 
-The Judge evaluates agent outputs using Claude + Opus 4.5.
+The Judge evaluates agent outputs using Claude + Opus 4.5 with a two-layer prompt architecture.
 
 **Location**: `src/scylla/judge/`
 
 **Components**:
 
 - **Rubric Parser** (`rubric.py`): Parse `rubric.yaml` into evaluation criteria
-- **Judge Prompts** (`prompts/`): Templates for LLM-as-Judge evaluation
+- **Judge Prompts** (`prompts.py`): Consolidated prompt generation
+  - `JUDGE_SYSTEM_PROMPT_FILE`: Path to global system prompt (`config/judge/system_prompt.md`)
+  - `build_task_prompt()`: Generates task-specific evaluation context
+  - `build_judge_prompt()`: Legacy wrapper for backward compatibility
 - **Evaluator** (`evaluator.py`): Invoke Opus 4.5 for judgment
 - **Judgment Parser** (`parser.py`): Parse judgment JSON from LLM response
+
+**Prompt Architecture**:
+1. **Global System Prompt**: `config/judge/system_prompt.md` (evaluation methodology, grading scale reference at `docs/design/grading-scale.md`)
+2. **Task-Specific Prompt**: Generated dynamically with rubric, agent output, workspace state, and pipeline results
 
 **3-Run Consensus Process**:
 
