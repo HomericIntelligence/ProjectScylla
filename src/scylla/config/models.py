@@ -92,7 +92,7 @@ class Requirement(BaseModel):
 class GradeScale(BaseModel):
     """Industry-aligned grade scale thresholds.
 
-    See .claude/shared/grading-scale.md for full specification.
+    See docs/design/grading-scale.md for full specification.
 
     Attributes:
         S: Amazing - exceptional, above and beyond (1.00).

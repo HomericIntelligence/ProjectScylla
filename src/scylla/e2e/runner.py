@@ -26,7 +26,8 @@ from scylla.e2e.checkpoint import (
     validate_checkpoint_config,
 )
 from scylla.e2e.judge_selection import save_selection, select_best_subtest
-from scylla.e2e.llm_judge import build_judge_prompt_with_paths
+
+# Note: Judge prompts are now generated dynamically via scylla.judge.prompts.build_task_prompt()
 from scylla.e2e.models import (
     TIER_DEPENDENCIES,
     ExperimentConfig,
@@ -529,18 +530,29 @@ class E2ERunner:
         else:
             rubric_path = None
 
-        # Create judge_prompt.md template (uniform across all tiers)
-        # Note: output_path and workspace_path are placeholders - they get substituted per run
-        judge_template = build_judge_prompt_with_paths(
-            prompt_path=experiment_dir / "prompt.md",
-            output_path=Path("<run_dir>/output.txt"),  # Placeholder
-            workspace_path=Path("<subtest_dir>/workspace"),  # Placeholder
-            criteria_path=criteria_path,
-            rubric_path=rubric_path,
-        )
+        # Create judge_prompt.md documentation (judge prompts generated dynamically per run)
+        # The actual judge evaluation uses JUDGE_SYSTEM_PROMPT_FILE + build_task_prompt()
+        judge_doc = [
+            "# Judge Evaluation Context",
+            "",
+            "Judge prompts are generated dynamically per run using:",
+            "- **System Prompt**: `config/judge/system_prompt.md` (via --system-prompt-file)",
+            "- **Task Prompt**: Generated via `scylla.judge.prompts.build_task_prompt()`",
+            "",
+            "## Task Prompt References:",
+            f"- Agent Task: `{experiment_dir / 'prompt.md'}`",
+            f"- Success Criteria: `{criteria_path if criteria_path else 'N/A'}`",
+            f"- Rubric: `{rubric_path if rubric_path else 'N/A'}`",
+            "",
+            "## Per-Run Context (Generated Dynamically):",
+            "- Agent Output: `<run_dir>/output.txt`",
+            "- Workspace: `<subtest_dir>/workspace/`",
+            "- Patchfile: Git diff of workspace changes",
+            "- Pipeline Results: Build/lint/test output",
+        ]
         judge_prompt_path = experiment_dir / "judge_prompt.md"
-        judge_prompt_path.write_text(judge_template)
-        logger.debug(f"Created judge prompt template at {judge_prompt_path}")
+        judge_prompt_path.write_text("\n".join(judge_doc))
+        logger.debug(f"Created judge prompt documentation at {judge_prompt_path}")
 
     def _save_config(self) -> None:
         """Save experiment configuration."""

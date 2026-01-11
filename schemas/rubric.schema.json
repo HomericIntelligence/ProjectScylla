@@ -62,7 +62,7 @@
         },
         "grade_scale": {
           "type": "object",
-          "description": "Letter grade thresholds. See .claude/shared/grading-scale.md for standard definition. Industry-aligned scale: S(1.0)=Amazing, A(0.8)=Excellent, B(0.6)=Good, C(0.4)=Acceptable, D(0.2)=Marginal, F(0.0)=Failing",
+          "description": "Letter grade thresholds. See docs/design/grading-scale.md for standard definition. Industry-aligned scale: S(1.0)=Amazing, A(0.8)=Excellent, B(0.6)=Good, C(0.4)=Acceptable, D(0.2)=Marginal, F(0.0)=Failing",
           "additionalProperties": false,
           "properties": {
             "S": {

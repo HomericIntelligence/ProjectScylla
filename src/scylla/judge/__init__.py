@@ -30,10 +30,9 @@ from scylla.judge.parser import (
     load_judgment,
 )
 from scylla.judge.prompts import (
-    JUDGE_PROMPT_TEMPLATE,
-    TIER_CONTEXT_TEMPLATES,
+    JUDGE_SYSTEM_PROMPT_FILE,
     build_judge_prompt,
-    get_tier_context,
+    build_task_prompt,
 )
 from scylla.judge.rubric import (
     EvaluationType,
@@ -69,10 +68,9 @@ __all__ = [
     "JudgmentParser",
     "load_judgment",
     # Prompts
-    "JUDGE_PROMPT_TEMPLATE",
-    "TIER_CONTEXT_TEMPLATES",
+    "JUDGE_SYSTEM_PROMPT_FILE",
     "build_judge_prompt",
-    "get_tier_context",
+    "build_task_prompt",
     # Rubric
     "EvaluationType",
     "GradeScale",

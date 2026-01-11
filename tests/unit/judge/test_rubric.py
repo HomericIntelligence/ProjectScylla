@@ -86,7 +86,7 @@ class TestRequirement:
 class TestGradeScale:
     """Tests for GradeScale model.
 
-    Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.
+    Uses industry-aligned grade scale. See docs/design/grading-scale.md.
     """
 
     def test_default_thresholds(self) -> None:
@@ -193,7 +193,7 @@ class TestCalculateWeightedScore:
 class TestAssignGrade:
     """Tests for grade assignment.
 
-    Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.
+    Uses industry-aligned grade scale. See docs/design/grading-scale.md.
     """
 
     def test_grade_s(self) -> None:
