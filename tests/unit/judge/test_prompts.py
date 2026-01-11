@@ -453,10 +453,12 @@ class TestJudgeSystemPrompt:
     def test_system_prompt_has_json_schema(self) -> None:
         """Test system prompt includes JSON output schema."""
         content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
-        assert "exploratory_testing" in content
-        assert "requirements" in content
+        # Check for fields in the rubric-based JSON response format
+        assert "score" in content
+        assert "passed" in content
+        assert "grade" in content
         assert "categories" in content
-        assert "summary" in content
+        assert "reasoning" in content
 
     def test_system_prompt_references_grading_scale(self) -> None:
         """Test system prompt references the grading scale file."""
