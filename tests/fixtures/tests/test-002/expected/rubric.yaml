@@ -123,7 +123,7 @@ requirements:
 
 grading:
   pass_threshold: 0.60
-  # Industry-aligned grade scale - see .claude/shared/grading-scale.md
+  # Industry-aligned grade scale - see docs/design/grading-scale.md
   grade_scale:
     S: 1.00    # Amazing - above and beyond
     A: 0.80    # Excellent - production ready

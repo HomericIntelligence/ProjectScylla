@@ -300,13 +300,10 @@ code_quality:
 
 ## Grading Scale
 
-Use the grade_scale provided in the rubric. Typical scale:
-- **S**: 0.95-1.00 (Exceptional)
-- **A**: 0.80-0.94 (Excellent)
-- **B**: 0.60-0.79 (Good)
-- **C**: 0.40-0.59 (Acceptable)
-- **D**: 0.20-0.39 (Marginal)
-- **F**: 0.00-0.19 (Failing)
+Use the grade_scale provided in the rubric.
+
+For the standard industry-aligned grade scale definition, see:
+`docs/design/grading-scale.md`
 
 ## Critical Reminders
 

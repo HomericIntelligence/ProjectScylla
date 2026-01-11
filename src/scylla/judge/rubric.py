@@ -65,7 +65,7 @@ class Requirement(BaseModel):
 class GradeScale(BaseModel):
     """Industry-aligned grade scale thresholds.
 
-    See .claude/shared/grading-scale.md for full specification.
+    See docs/design/grading-scale.md for full specification.
 
     Attributes:
         s_threshold: Amazing - exceptional, above and beyond (1.00).
@@ -153,7 +153,7 @@ class Rubric(BaseModel):
     def assign_letter_grade(self, weighted_score: float) -> str:
         """Assign letter grade based on weighted score.
 
-        Uses industry-aligned grade scale. See .claude/shared/grading-scale.md.
+        Uses industry-aligned grade scale. See docs/design/grading-scale.md.
 
         Args:
             weighted_score: The weighted score (0.0 to 1.0).

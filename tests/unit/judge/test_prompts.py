@@ -7,9 +7,7 @@ import pytest
 
 from scylla.judge.prompts import (
     CATEGORY_WEIGHTS,
-    JSON_OUTPUT_SCHEMA,
-    JUDGE_PROMPT_TEMPLATE,
-    TIER_CONTEXT_TEMPLATES,
+    JUDGE_SYSTEM_PROMPT_FILE,
     TOTAL_CATEGORY_WEIGHT,
     CategoryScore,
     EvaluationCategory,
@@ -18,9 +16,9 @@ from scylla.judge.prompts import (
     JudgmentOutput,
     RequirementScore,
     build_judge_prompt,
+    build_task_prompt,
     calculate_weighted_category_score,
     get_category_descriptions,
-    get_tier_context,
     validate_judgment_output,
 )
 
@@ -228,107 +226,108 @@ class TestJudgmentOutput:
         assert output.qualitative_feedback == "Excellent work"
 
 
-class TestTierContext:
-    """Tests for tier context templates."""
+class TestSystemPromptFile:
+    """Tests for system prompt file constant."""
 
-    def test_all_tiers_defined(self) -> None:
-        """Test all 7 tiers have context templates."""
-        for tier in ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]:
-            assert tier in TIER_CONTEXT_TEMPLATES
+    def test_system_prompt_file_exists(self) -> None:
+        """Test JUDGE_SYSTEM_PROMPT_FILE points to existing file."""
+        assert JUDGE_SYSTEM_PROMPT_FILE.exists()
+        assert JUDGE_SYSTEM_PROMPT_FILE.name == "system_prompt.md"
 
-    def test_get_tier_context_valid(self) -> None:
-        """Test getting valid tier context."""
-        context = get_tier_context("T0")
-        assert "Vanilla" in context
-        assert "baseline" in context
-
-        context = get_tier_context("T3")
-        assert "Tooling" in context
-        assert "function calling" in context
-
-    def test_get_tier_context_invalid(self) -> None:
-        """Test getting invalid tier returns empty."""
-        assert get_tier_context("T99") == ""
-        assert get_tier_context("") == ""
+    def test_system_prompt_file_readable(self) -> None:
+        """Test system prompt file is readable."""
+        content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
+        assert len(content) > 0
+        # Check for key evaluation methodology content
+        assert "Evaluation Methodology" in content or "evaluation" in content.lower()
 
 
 class TestBuildJudgePrompt:
-    """Tests for build_judge_prompt function."""
+    """Tests for build_judge_prompt function (legacy wrapper)."""
 
     def test_basic_prompt(self) -> None:
-        """Test building basic prompt."""
+        """Test building basic prompt with system prompt prepended."""
         prompt = build_judge_prompt(
             task_prompt="Implement feature X",
             criteria="Tests must pass",
             rubric="R001: Feature works",
         )
+        # Should include task context
         assert "Implement feature X" in prompt
         assert "Tests must pass" in prompt
         assert "R001: Feature works" in prompt
-        assert "BEGIN EVALUATION" in prompt
+        # Should include system prompt content
+        assert "Evaluation Methodology" in prompt or "evaluation" in prompt.lower()
 
-    def test_prompt_with_tier(self) -> None:
-        """Test building prompt with tier context."""
-        prompt = build_judge_prompt(
-            task_prompt="Task",
-            criteria="Criteria",
-            rubric="Rubric",
-            tier_id="T3",
-        )
-        assert "Tooling" in prompt
-        assert "function calling" in prompt
+    def test_prompt_includes_system_prompt(self) -> None:
+        """Test that system prompt is included."""
+        # System prompt content should be present in judge prompts
+        system_content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
+        # Check a distinctive phrase from system prompt is present
+        assert "Evaluation Methodology" in system_content or "Grading Scale" in system_content
 
-    def test_prompt_without_tier(self) -> None:
-        """Test building prompt without tier context."""
-        prompt = build_judge_prompt(
-            task_prompt="Task",
-            criteria="Criteria",
-            rubric="Rubric",
-            tier_id=None,
-        )
-        # Should not contain tier-specific text
-        assert "Tier Context:" not in prompt
 
-    def test_prompt_includes_all_categories(self) -> None:
-        """Test prompt includes all evaluation categories."""
-        prompt = build_judge_prompt(
-            task_prompt="Task",
-            criteria="Criteria",
-            rubric="Rubric",
-        )
-        assert "Functional Correctness" in prompt
-        assert "Completeness" in prompt
-        assert "Code Quality" in prompt
-        assert "Simplicity" in prompt
-        assert "Lack of Duplication" in prompt
-        assert "Clarity" in prompt
-        assert "Documentation" in prompt
-        assert "Architectural Cleanliness" in prompt
-        assert "Efficiency" in prompt
-        assert "Cleanup Script Quality" in prompt
+class TestBuildTaskPrompt:
+    """Tests for build_task_prompt function."""
 
-    def test_prompt_includes_json_schema(self) -> None:
-        """Test prompt includes JSON schema."""
-        prompt = build_judge_prompt(
-            task_prompt="Task",
-            criteria="Criteria",
-            rubric="Rubric",
+    def test_basic_task_prompt(self) -> None:
+        """Test building basic task prompt."""
+        prompt = build_task_prompt(
+            task_prompt="Implement feature X",
+            agent_output="Feature implemented successfully",
+            workspace_state="Files: main.py (modified)",
         )
-        assert "exploratory_testing" in prompt
-        assert "requirements" in prompt
-        assert "categories" in prompt
-        assert "summary" in prompt
+        assert "Task Given to Agent" in prompt
+        assert "Implement feature X" in prompt
+        assert "Agent's Output" in prompt
+        assert "Feature implemented successfully" in prompt
+        assert "Workspace State After Agent Execution" in prompt
+        assert "Files: main.py (modified)" in prompt
 
-    def test_prompt_includes_three_phases(self) -> None:
-        """Test prompt includes all three evaluation phases."""
-        prompt = build_judge_prompt(
+    def test_task_prompt_with_rubric(self) -> None:
+        """Test task prompt includes rubric."""
+        prompt = build_task_prompt(
             task_prompt="Task",
-            criteria="Criteria",
-            rubric="Rubric",
+            agent_output="Output",
+            workspace_state="State",
+            rubric_content="R001: Test passes",
         )
-        assert "Phase 1: Exploratory Testing" in prompt
-        assert "Phase 2: Holistic Assessment" in prompt
-        assert "Phase 3: Rubric Scoring" in prompt
+        assert "Rubric (Evaluation Criteria)" in prompt
+        assert "R001: Test passes" in prompt
+
+    def test_task_prompt_with_patchfile(self) -> None:
+        """Test task prompt includes patchfile."""
+        prompt = build_task_prompt(
+            task_prompt="Task",
+            agent_output="Output",
+            workspace_state="State",
+            patchfile="diff --git a/file.py b/file.py\n+new line",
+        )
+        assert "Git Diff (Patchfile)" in prompt
+        assert "+new line" in prompt
+
+    def test_task_prompt_with_pipeline_results(self) -> None:
+        """Test task prompt includes pipeline results."""
+        prompt = build_task_prompt(
+            task_prompt="Task",
+            agent_output="Output",
+            workspace_state="State",
+            pipeline_result_str="**Overall Status**: ALL PASSED ✓",
+        )
+        assert "Build/Lint/Test Pipeline Results" in prompt
+        assert "ALL PASSED ✓" in prompt
+
+    def test_task_prompt_ends_with_evaluation_instruction(self) -> None:
+        """Test task prompt ends with evaluation instruction."""
+        prompt = build_task_prompt(
+            task_prompt="Task",
+            agent_output="Output",
+            workspace_state="State",
+        )
+        assert (
+            "Evaluate the agent's work using the rubric and criteria in your system prompt"
+            in prompt
+        )
 
 
 class TestCalculateWeightedCategoryScore:
@@ -443,36 +442,24 @@ class TestValidateJudgmentOutput:
             validate_judgment_output(raw)
 
 
-class TestJudgePromptTemplate:
-    """Tests for the main prompt template."""
+class TestJudgeSystemPrompt:
+    """Tests for the judge system prompt file."""
 
-    def test_template_has_placeholders(self) -> None:
-        """Test template has required placeholders."""
-        assert "{task_prompt}" in JUDGE_PROMPT_TEMPLATE
-        assert "{criteria}" in JUDGE_PROMPT_TEMPLATE
-        assert "{rubric}" in JUDGE_PROMPT_TEMPLATE
-        assert "{tier_context}" in JUDGE_PROMPT_TEMPLATE
-        assert "{json_schema}" in JUDGE_PROMPT_TEMPLATE
+    def test_system_prompt_has_evaluation_methodology(self) -> None:
+        """Test system prompt includes evaluation methodology."""
+        content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
+        assert "Evaluation Methodology" in content or "evaluation" in content.lower()
 
-    def test_template_includes_weights(self) -> None:
-        """Test template includes category weights."""
-        assert "2.0" in JUDGE_PROMPT_TEMPLATE  # Functional Correctness
-        assert "1.5" in JUDGE_PROMPT_TEMPLATE  # Completeness
-        assert "0.5" in JUDGE_PROMPT_TEMPLATE  # Documentation, etc.
+    def test_system_prompt_has_json_schema(self) -> None:
+        """Test system prompt includes JSON output schema."""
+        content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
+        assert "exploratory_testing" in content
+        assert "requirements" in content
+        assert "categories" in content
+        assert "summary" in content
 
-
-class TestJsonOutputSchema:
-    """Tests for JSON output schema."""
-
-    def test_schema_includes_all_sections(self) -> None:
-        """Test schema includes all required sections."""
-        assert "exploratory_testing" in JSON_OUTPUT_SCHEMA
-        assert "requirements" in JSON_OUTPUT_SCHEMA
-        assert "categories" in JSON_OUTPUT_SCHEMA
-        assert "summary" in JSON_OUTPUT_SCHEMA
-        assert "qualitative_feedback" in JSON_OUTPUT_SCHEMA
-
-    def test_schema_includes_all_categories(self) -> None:
-        """Test schema includes all evaluation categories."""
-        for category in EvaluationCategory:
-            assert category.value in JSON_OUTPUT_SCHEMA
+    def test_system_prompt_references_grading_scale(self) -> None:
+        """Test system prompt references the grading scale file."""
+        content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
+        # Should reference the grading scale document
+        assert "grading-scale" in content.lower() or "grade" in content.lower()

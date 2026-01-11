@@ -8,9 +8,15 @@ Python Justification: Required for string templating and Pydantic validation.
 from __future__ import annotations
 
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
+
+# Path to the standardized judge system prompt (checked into repo)
+JUDGE_SYSTEM_PROMPT_FILE = (
+    Path(__file__).parent.parent.parent.parent / "config" / "judge" / "system_prompt.md"
+)
 
 
 class EvaluationCategory(Enum):
@@ -103,198 +109,131 @@ class JudgmentOutput(BaseModel):
     qualitative_feedback: str = ""
 
 
-TIER_CONTEXT_TEMPLATES: dict[str, str] = {
-    "T0": """## Tier Context: T0 (Vanilla)
-This is a baseline evaluation with no customization. The agent operates with
-default settings, serving as a reference point for measuring prompt sensitivity.
-""",
-    "T1": """## Tier Context: T1 (Prompted)
-This evaluation uses system prompts and chain-of-thought reasoning. The agent
-has been given explicit instructions and reasoning frameworks to guide its work.
-""",
-    "T2": """## Tier Context: T2 (Skills)
-This evaluation uses prompt-encoded domain expertise. The agent has access to
-reusable prompt modules that encode specialized knowledge for the task domain.
-""",
-    "T3": """## Tier Context: T3 (Tooling)
-This evaluation uses external function calling with JSON schemas. The agent can
-invoke external tools and APIs to accomplish its goals.
-""",
-    "T4": """## Tier Context: T4 (Delegation)
-This evaluation uses flat multi-agent systems. The agent can delegate tasks to
-peer agents and coordinate parallel execution.
-""",
-    "T5": """## Tier Context: T5 (Hierarchy)
-This evaluation uses nested orchestration with self-correction. The agent operates
-within a hierarchical structure with iterative refinement and supervision.
-""",
-    "T6": """## Tier Context: T6 (Hybrid)
-This evaluation uses optimal combinations of proven components. The agent employs
-a best-of-breed architecture combining the most effective techniques.
-""",
-}
-
-
-JSON_OUTPUT_SCHEMA: str = """{
-  "exploratory_testing": {
-    "commands_run": ["list of commands executed during testing"],
-    "observations": ["list of observations made"],
-    "failures": ["list of failures encountered"]
-  },
-  "requirements": {
-    "R001": {
-      "score": 0.0-1.0,
-      "confidence": 0.0-1.0,
-      "notes": "explain your score - if < 1.0, explain what's missing and why points deducted"
-    }
-  },
-  "categories": {
-    "functional_correctness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "completeness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "code_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "simplicity": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "lack_of_duplication": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "clarity": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "documentation": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "architectural_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explain" },
-    "efficiency": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "cleanup_script_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "workspace_cleanliness": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "test_quality": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" },
-    "scope_discipline": { "score": 0.0-1.0, "confidence": 0.0-1.0, "notes": "explanation" }
-  },
-  "summary": {
-    "weighted_score": 0.0-1.0,
-    "passed": true/false,
-    "letter_grade": "A/B/C/D/F",
-    "overall_confidence": 0.0-1.0,
-    "strengths": ["list of strengths"],
-    "weaknesses": ["list of weaknesses"]
-  },
-  "qualitative_feedback": "free-form feedback"
-}"""
-
-
-JUDGE_PROMPT_TEMPLATE: str = """# Agent Work Evaluation
-
-You are an expert code evaluator. Your task is to evaluate agent-generated code
-against the provided criteria and rubric. Follow the three-phase evaluation process.
-
-## Context
-
-### Original Task
-{task_prompt}
-
-### Success Criteria
-{criteria}
-
-### Scoring Rubric
-{rubric}
-
-{tier_context}
-
-## Evaluation Categories and Weights
-
-Score each category from 0.0 to 1.0:
-
-| Category | Weight | Description |
-|----------|--------|-------------|
-| Functional Correctness | 2.0 | Does the solution work correctly? |
-| Completeness | 1.5 | Are all requirements addressed? |
-| Code Quality | 1.0 | Is the code well-written and maintainable? |
-| Simplicity | 1.0 | Is the solution appropriately simple? |
-| Lack of Duplication | 0.5 | Is code DRY (Don't Repeat Yourself)? |
-| Clarity | 1.0 | Is the code easy to understand? |
-| Documentation | 0.5 | Are comments and docs appropriate? |
-| Architectural Cleanliness | 0.5 | Is the architecture well-organized? |
-| Efficiency | 0.5 | Is the solution performant? |
-| Cleanup Script Quality | 1.0 | Does cleanup work correctly? |
-
-Total Weight: 9.5
-
-## Evaluation Process
-
-### Phase 1: Exploratory Testing
-Run commands to verify the solution works. Document:
-- Commands executed
-- Observations made
-- Any failures encountered
-
-### Phase 2: Holistic Assessment
-Review the overall solution quality:
-- Identify strengths and weaknesses
-- Consider architectural decisions
-- Evaluate maintainability
-
-### Phase 3: Rubric Scoring
-Score each requirement and category with:
-- score (0.0-1.0): How well was this met?
-- confidence (0.0-1.0): How confident are you in this score?
-- notes: **REQUIRED** - Explain your score. For scores below 1.0, you MUST clearly
-  explain what is missing or incorrect and why points were deducted. Be specific
-  about what needs to be fixed or improved.
-
-## Output Format
-
-Respond with valid JSON matching this schema:
-
-{json_schema}
-
-## Grading Scale
-
-- S: 1.00
-- A: 0.80 - 0.99
-- B: 0.60 - 0.79
-- C: 0.40 - 0.59
-- D: 0.20 - 0.39
-- F: 0.00 - 0.19
-
-Pass threshold: 0.50
-
-BEGIN EVALUATION
-"""
-
-
-def get_tier_context(tier_id: str) -> str:
-    """Get tier-specific context.
-
-    Args:
-        tier_id: The tier identifier (T0-T6).
-
-    Returns:
-        Tier context string, or empty string if tier not found.
-
-    """
-    return TIER_CONTEXT_TEMPLATES.get(tier_id, "")
-
-
 def build_judge_prompt(
     task_prompt: str,
     criteria: str,
     rubric: str,
     tier_id: str | None = None,
 ) -> str:
-    """Build the complete judge prompt.
+    """Build complete judge prompt (legacy function - reads system prompt from file).
+
+    DEPRECATED: This function is maintained for backward compatibility with evaluator.py.
+    For new code, use build_task_prompt() with JUDGE_SYSTEM_PROMPT_FILE.
 
     Args:
         task_prompt: The original task prompt.
         criteria: Success criteria for the task.
         rubric: Scoring rubric.
-        tier_id: Optional tier identifier for context.
+        tier_id: Optional tier identifier for context (currently ignored).
 
     Returns:
-        Complete formatted judge prompt.
+        Complete judge evaluation prompt with system prompt prepended.
 
     """
-    tier_context = get_tier_context(tier_id) if tier_id else ""
+    # Read the system prompt from file
+    system_prompt = JUDGE_SYSTEM_PROMPT_FILE.read_text()
 
-    return JUDGE_PROMPT_TEMPLATE.format(
+    # Build the task prompt using the consolidated function
+    # Note: The old function combined criteria and rubric into one section
+    # We'll replicate that behavior for backward compatibility
+    task_context = build_task_prompt(
         task_prompt=task_prompt,
-        criteria=criteria,
-        rubric=rubric,
-        tier_context=tier_context,
-        json_schema=JSON_OUTPUT_SCHEMA,
+        agent_output="(Agent output will be captured separately)",
+        workspace_state="(Workspace state will be captured separately)",
+        rubric_content=f"{criteria}\n\n{rubric}",
     )
+
+    # Combine system prompt with task context
+    return f"{system_prompt}\n\n---\n\n{task_context}"
+
+
+def build_task_prompt(
+    task_prompt: str,
+    agent_output: str,
+    workspace_state: str,
+    patchfile: str | None = None,
+    deleted_files: list[str] | None = None,
+    reference_patch: str | None = None,
+    pipeline_result_str: str | None = None,
+    rubric_content: str | None = None,
+) -> str:
+    """Build task-specific prompt for judge evaluation.
+
+    The system prompt with evaluation criteria is loaded from JUDGE_SYSTEM_PROMPT_FILE.
+    This function builds only the context (task, output, workspace state).
+
+    Args:
+        task_prompt: The original task prompt
+        agent_output: The agent's stdout/conversation output
+        workspace_state: Description of files created/modified
+        patchfile: Git diff showing all changes (optional)
+        deleted_files: List of deleted file paths (optional)
+        reference_patch: Reference solution patch for comparison (optional)
+        pipeline_result_str: Build/lint/test pipeline results formatted string (optional)
+        rubric_content: YAML rubric with checklist items (optional)
+
+    Returns:
+        Formatted evaluation context for the judge LLM.
+
+    Format:
+        Agent task prompt: <task>
+        Agent results: <output>
+        Agent workspace: <state>
+        Script results: <pipeline results>
+
+        ---------------
+
+        Evaluate the agent's work using the rubric and criteria in your system prompt.
+
+    """
+    sections = []
+
+    # Add rubric FIRST so judge sees evaluation criteria upfront
+    if rubric_content:
+        sections.append(f"## Rubric (Evaluation Criteria)\n\n```yaml\n{rubric_content}\n```")
+
+    sections.extend(
+        [
+            f"## Task Given to Agent\n\n{task_prompt}",
+            f"## Agent's Output\n\n{agent_output}",
+            f"## Workspace State After Agent Execution\n\n{workspace_state}",
+        ]
+    )
+
+    # Add patchfile section if available
+    if patchfile and patchfile not in ("(no changes detected)", "(unable to generate patchfile)"):
+        sections.append(f"## Git Diff (Patchfile)\n\n```diff\n{patchfile}\n```")
+
+    # Add deleted files section if any
+    if deleted_files:
+        deleted_list = "\n".join(f"- {f}" for f in deleted_files)
+        sections.append(f"## Deleted Files\n\n{deleted_list}")
+
+    # Add reference patch section if available
+    if reference_patch:
+        # Truncate reference patch if too long
+        ref_lines = reference_patch.split("\n")
+        if len(ref_lines) > 200:
+            ref_patch = "\n".join(ref_lines[:100] + ["", "... (truncated)", ""] + ref_lines[-50:])
+        else:
+            ref_patch = reference_patch
+        sections.append(
+            f"## Reference Solution Patch\n\n"
+            f"Compare the agent's changes against this reference solution:\n\n"
+            f"```diff\n{ref_patch}\n```\n\n"
+            f"Note: The agent's solution does not need to be identical, but should achieve "
+            f"the same semantic result (same files created/modified, similar structure)."
+        )
+
+    # Add build pipeline results if available
+    if pipeline_result_str:
+        sections.append(f"## Build/Lint/Test Pipeline Results\n\n{pipeline_result_str}")
+
+    sections.append(
+        "---\n\nEvaluate the agent's work using the rubric and criteria in your system prompt."
+    )
+
+    return "\n\n".join(sections)
 
 
 def calculate_weighted_category_score(
