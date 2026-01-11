@@ -52,7 +52,7 @@ categories:
         points: 1.0
 
       - id: P2
-        check: "Total lines of code in hello.py ≤ 20"
+        check: "Total lines of code in hello.py ≤ 3"
         points: 1.0
 
       - id: P3
