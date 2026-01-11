@@ -76,12 +76,16 @@ class BuildPipelineResult:
         language: Programming language ("python" or "mojo")
         build_passed: Whether build/syntax check succeeded
         build_output: Output from build/syntax check
+        build_na: Whether build check is N/A
         format_passed: Whether format check passed
         format_output: Output from format check
+        format_na: Whether format check is N/A
         test_passed: Whether tests passed
         test_output: Output from test execution
+        test_na: Whether test execution is N/A
         precommit_passed: Whether pre-commit hooks passed
         precommit_output: Output from pre-commit
+        precommit_na: Whether pre-commit is N/A
         all_passed: Whether all tools passed
 
     """
@@ -89,13 +93,17 @@ class BuildPipelineResult:
     language: str
     build_passed: bool
     build_output: str
-    format_passed: bool
-    format_output: str
-    test_passed: bool
-    test_output: str
-    precommit_passed: bool
-    precommit_output: str
-    all_passed: bool
+    build_na: bool = False
+    format_passed: bool = True
+    format_output: str = ""
+    format_na: bool = False
+    test_passed: bool = True
+    test_output: str = ""
+    test_na: bool = False
+    precommit_passed: bool = True
+    precommit_output: str = ""
+    precommit_na: bool = False
+    all_passed: bool = False
 
     def get_failure_summary(self) -> str:
         """Get a summary of which pipeline steps failed.
@@ -105,15 +113,45 @@ class BuildPipelineResult:
 
         """
         failed = []
-        if not self.build_passed:
+        if not self.build_passed and not self.build_na:
             failed.append(f"{self.language}-build")
-        if not self.format_passed:
+        if not self.format_passed and not self.format_na:
             failed.append(f"{self.language}-format")
-        if not self.test_passed:
+        if not self.test_passed and not self.test_na:
             failed.append(f"{self.language}-test")
-        if not self.precommit_passed:
+        if not self.precommit_passed and not self.precommit_na:
             failed.append("pre-commit")
         return ", ".join(failed) if failed else "none"
+
+    def has_na_items(self) -> bool:
+        """Check if any pipeline steps are marked as N/A.
+
+        Returns:
+            True if any step is N/A, False otherwise.
+
+        """
+        return self.build_na or self.format_na or self.test_na or self.precommit_na
+
+    def get_status_summary(self) -> str:
+        """Get formatted status summary with emojis for each pipeline step.
+
+        Returns:
+            Formatted string like "[build(✅), format(✅), test(🏳️), pre-commit(❌)]"
+
+        """
+
+        def status_emoji(passed: bool, na: bool) -> str:
+            if na:
+                return "🏳️"
+            return "✅" if passed else "❌"
+
+        statuses = [
+            f"{self.language}-build({status_emoji(self.build_passed, self.build_na)})",
+            f"{self.language}-format({status_emoji(self.format_passed, self.format_na)})",
+            f"{self.language}-test({status_emoji(self.test_passed, self.test_na)})",
+            f"pre-commit({status_emoji(self.precommit_passed, self.precommit_na)})",
+        ]
+        return "[" + ", ".join(statuses) + "]"
 
     def to_context_string(self) -> str:
         """Format pipeline results for judge context."""
@@ -161,9 +199,11 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
             timeout=300,
         )
         results["build_passed"] = build_result.returncode == 0
+        results["build_na"] = False
         results["build_output"] = build_result.stdout + "\n" + build_result.stderr
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         results["build_passed"] = False
+        results["build_na"] = False
         results["build_output"] = f"Error: {e}"
 
     # Mojo format check
@@ -176,9 +216,11 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
             timeout=120,
         )
         results["format_passed"] = format_result.returncode == 0
+        results["format_na"] = False
         results["format_output"] = format_result.stdout + "\n" + format_result.stderr
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         results["format_passed"] = False
+        results["format_na"] = False
         results["format_output"] = f"Error: {e}"
 
     # Mojo test
@@ -190,10 +232,24 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
             text=True,
             timeout=600,
         )
-        results["test_passed"] = test_result.returncode == 0
-        results["test_output"] = test_result.stdout + "\n" + test_result.stderr
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        # Check if no tests found
+        output = test_result.stdout + "\n" + test_result.stderr
+        if "No tests found" in output or test_result.returncode == 5:
+            results["test_passed"] = True
+            results["test_na"] = True
+            results["test_output"] = output
+        else:
+            results["test_passed"] = test_result.returncode == 0
+            results["test_na"] = False
+            results["test_output"] = output
+    except FileNotFoundError:
+        # mojo test not available, mark as N/A
+        results["test_passed"] = True
+        results["test_na"] = True
+        results["test_output"] = "mojo test not available, skipping"
+    except subprocess.TimeoutExpired as e:
         results["test_passed"] = False
+        results["test_na"] = False
         results["test_output"] = f"Error: {e}"
 
     # Pre-commit hooks
@@ -205,10 +261,24 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
             text=True,
             timeout=300,
         )
-        results["precommit_passed"] = precommit_result.returncode == 0
-        results["precommit_output"] = precommit_result.stdout + "\n" + precommit_result.stderr
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        # Check if .pre-commit-config.yaml is missing
+        output = precommit_result.stdout + "\n" + precommit_result.stderr
+        if ".pre-commit-config.yaml is not a file" in output:
+            results["precommit_passed"] = True
+            results["precommit_na"] = True
+            results["precommit_output"] = output
+        else:
+            results["precommit_passed"] = precommit_result.returncode == 0
+            results["precommit_na"] = False
+            results["precommit_output"] = output
+    except FileNotFoundError:
+        # pre-commit not installed, mark as N/A
+        results["precommit_passed"] = True
+        results["precommit_na"] = True
+        results["precommit_output"] = "pre-commit not available, skipping"
+    except subprocess.TimeoutExpired as e:
         results["precommit_passed"] = False
+        results["precommit_na"] = False
         results["precommit_output"] = f"Error: {e}"
 
     results["all_passed"] = all(
@@ -245,11 +315,13 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             timeout=300,
         )
         results["build_passed"] = build_result.returncode == 0
+        results["build_na"] = False
         results["build_output"] = build_result.stdout + "\n" + build_result.stderr
         if results["build_passed"]:
             results["build_output"] = "Python syntax check passed"
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         results["build_passed"] = False
+        results["build_na"] = False
         results["build_output"] = f"Error: {e}"
 
     # Python format check (using ruff if available, otherwise skip)
@@ -262,13 +334,16 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             timeout=120,
         )
         results["format_passed"] = format_result.returncode == 0
+        results["format_na"] = False
         results["format_output"] = format_result.stdout + "\n" + format_result.stderr
     except FileNotFoundError:
         # ruff not installed, skip format check
         results["format_passed"] = True
+        results["format_na"] = True
         results["format_output"] = "ruff not available, skipping format check"
     except subprocess.TimeoutExpired as e:
         results["format_passed"] = False
+        results["format_na"] = False
         results["format_output"] = f"Error: {e}"
 
     # Python tests (using pytest if available, otherwise skip)
@@ -280,14 +355,23 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             text=True,
             timeout=600,
         )
-        results["test_passed"] = test_result.returncode == 0
-        results["test_output"] = test_result.stdout + "\n" + test_result.stderr
+        # pytest exit codes: 0=all passed, 1=tests failed, 5=no tests collected
+        if test_result.returncode == 5:
+            results["test_passed"] = True
+            results["test_na"] = True
+            results["test_output"] = test_result.stdout + "\n" + test_result.stderr
+        else:
+            results["test_passed"] = test_result.returncode == 0
+            results["test_na"] = False
+            results["test_output"] = test_result.stdout + "\n" + test_result.stderr
     except FileNotFoundError:
-        # pytest not installed or no tests, skip
+        # pytest not installed, mark as N/A
         results["test_passed"] = True
-        results["test_output"] = "pytest not available or no tests found, skipping"
+        results["test_na"] = True
+        results["test_output"] = "pytest not available, skipping"
     except subprocess.TimeoutExpired as e:
         results["test_passed"] = False
+        results["test_na"] = False
         results["test_output"] = f"Error: {e}"
 
     # Pre-commit hooks
@@ -299,10 +383,24 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             text=True,
             timeout=300,
         )
-        results["precommit_passed"] = precommit_result.returncode == 0
-        results["precommit_output"] = precommit_result.stdout + "\n" + precommit_result.stderr
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        # Check if .pre-commit-config.yaml is missing
+        output = precommit_result.stdout + "\n" + precommit_result.stderr
+        if ".pre-commit-config.yaml is not a file" in output:
+            results["precommit_passed"] = True
+            results["precommit_na"] = True
+            results["precommit_output"] = output
+        else:
+            results["precommit_passed"] = precommit_result.returncode == 0
+            results["precommit_na"] = False
+            results["precommit_output"] = output
+    except FileNotFoundError:
+        # pre-commit not installed, mark as N/A
+        results["precommit_passed"] = True
+        results["precommit_na"] = True
+        results["precommit_output"] = "pre-commit not available, skipping"
+    except subprocess.TimeoutExpired as e:
         results["precommit_passed"] = False
+        results["precommit_na"] = False
         results["precommit_output"] = f"Error: {e}"
 
     results["all_passed"] = all(
@@ -758,11 +856,20 @@ def run_llm_judge(
     if run_build_pipeline:
         logger.info(f"Running {language} build/lint/test pipeline")
         pipeline_result = _run_build_pipeline(workspace, language=language)
-        if pipeline_result.all_passed:
-            logger.info("Build pipeline: ALL PASSED")
+
+        # Use appropriate log level and emoji based on results
+        status_summary = pipeline_result.get_status_summary()
+        failed_steps = pipeline_result.get_failure_summary()
+
+        if failed_steps == "none":
+            # All passed, but check for N/A items
+            if pipeline_result.has_na_items():
+                logger.warning(f"Build pipeline: ⚠️  {status_summary}")
+            else:
+                logger.info(f"Build pipeline: {status_summary}")
         else:
-            failed_steps = pipeline_result.get_failure_summary()
-            logger.warning(f"Build pipeline: FAILED [{failed_steps}]")
+            # Has actual failures
+            logger.warning(f"Build pipeline: {status_summary}")
 
     # Build the judge prompt
     judge_prompt = _build_judge_prompt(
