@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to create a complete Docker build and publish workflow.
   Agent must understand GitHub Actions, Docker, and GHCR integration.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "ce739d4aa328f1c0815b33e2812c4b889868b740"

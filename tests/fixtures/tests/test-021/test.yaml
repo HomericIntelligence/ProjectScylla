@@ -4,6 +4,7 @@ name: "Implement Gradient Tracking Control"
 description: |
   Add gradient tracking control for autograd
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "0ff0c2a95ccbc800e47c7f78e1d8337d44392ea0"

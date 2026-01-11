@@ -4,6 +4,7 @@ name: "Implement FP32 Accumulation for Float16"
 description: |
   Add FP32 accumulation for Float16 precision
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "faa0ff097e172464ccd2d5528d92aae16f3ff38b"

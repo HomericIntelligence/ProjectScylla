@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to update Docker base image version. Agent must
   understand Dockerfile syntax and update Ubuntu from 22.04 to 24.04.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "66628858c553abed2fdcb5f4b0bbdefc764d289c"

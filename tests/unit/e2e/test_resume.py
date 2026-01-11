@@ -25,6 +25,7 @@ def experiment_config() -> ExperimentConfig:
         task_repo="https://github.com/test/repo",
         task_commit="abc123",
         task_prompt_file=Path("/tmp/prompt.md"),
+        language="mojo",
         models=["claude-sonnet-4-5-20250929"],
         runs_per_subtest=2,
         tiers_to_run=[TierID.T0],

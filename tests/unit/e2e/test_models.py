@@ -233,6 +233,7 @@ class TestExperimentConfig:
             task_repo="https://github.com/test/repo",
             task_commit="abc123",
             task_prompt_file=Path("prompt.md"),
+            language="mojo",
             tiers_to_run=[TierID.T0, TierID.T1],
         )
 
@@ -249,6 +250,7 @@ class TestExperimentConfig:
             task_repo="https://github.com/test/repo",
             task_commit="def456",
             task_prompt_file=Path("prompt.md"),
+            language="python",
             runs_per_subtest=5,
             tiers_to_run=[TierID.T0, TierID.T1, TierID.T2],
         )

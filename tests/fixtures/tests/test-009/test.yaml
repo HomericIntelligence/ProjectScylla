@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to fix CI workflow by using lowercase Docker image name.
   Agent must understand Docker naming requirements and GitHub Actions variables.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "3360ae74a88f7ed4f39949aa7f1858a8c08db3f8"

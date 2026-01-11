@@ -62,6 +62,9 @@ class EvalCase(BaseModel):
     source: SourceConfig
     task: TaskConfig
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
+    language: str = Field(
+        ..., description="Programming language for build pipeline ('python' or 'mojo')"
+    )
 
     @field_validator("id")
     @classmethod

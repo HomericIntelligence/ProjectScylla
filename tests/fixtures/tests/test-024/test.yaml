@@ -4,6 +4,7 @@ name: "Migrate Scripts to get_repo_root()"
 description: |
   Migrate 12 scripts to use get_repo_root()
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "af62bf493b15e06ab412dae292ba2468daeada70"

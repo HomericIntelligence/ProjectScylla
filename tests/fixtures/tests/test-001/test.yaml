@@ -4,6 +4,7 @@ name: "Hello World Task"
 description: |
   A simple test case for E2E framework validation.
   The agent must create a hello.py script.
+language: python
 
 source:
   # Use a minimal public repo that exists

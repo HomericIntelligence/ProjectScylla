@@ -4,6 +4,7 @@ name: "Export Script Runner and Dataset Loaders"
 description: |
   Export training modules for external use
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "1f83a291811f06f4939ee79c2361202948ea865d"

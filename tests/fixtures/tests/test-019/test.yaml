@@ -4,6 +4,7 @@ name: "Add Claude Code Safety Net Plugin"
 description: |
   Add safety net plugin for Claude Code
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "011a3ff024954c0e15d0220bd67d72d6f74ffb64"

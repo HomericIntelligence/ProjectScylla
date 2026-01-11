@@ -4,6 +4,7 @@ name: "Plan: Enable Conv2D Backward Tests"
 description: |
   Create plan for enabling disabled Conv2D backward tests
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "b2722395078e3a12f45a92fccdc891ed83a8b870"

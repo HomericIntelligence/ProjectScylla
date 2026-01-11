@@ -4,6 +4,7 @@ name: "Add Unit Tests for implement_issues.py"
 description: |
   Create comprehensive tests for implement_issues.py
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "fa1f2882fd7ac8c61f030374237d3cfeeae0164a"

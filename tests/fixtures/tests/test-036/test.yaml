@@ -4,6 +4,7 @@ name: "Add Comprehensive Year-End Summary"
 description: |
   Create 2025 year-end development summary
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "fc71e3b1cac4beef20ed57eb8436994f25892f45"
