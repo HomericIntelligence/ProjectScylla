@@ -67,25 +67,6 @@ A score is considered **passing** if it meets the `pass_threshold`:
 | 0.60 | Standard evaluations (default) |
 | 0.40 | Lenient evaluations accepting partial implementations |
 
-## Rationale
-
-### Why Not Academic A-F (95/85/75/65)?
-
-Academic grading scales have several issues for software evaluation:
-
-1. **Grade inflation bias**: 95% for an A is unrealistic for complex tasks
-2. **D grade is meaningless**: In industry, you pass or fail
-3. **No "production ready" semantics**: Academic scales don't map to deployment decisions
-
-### Industry Alignment
-
-This scale aligns with industry practices:
-
-- **SonarQube**: Quality gates with customizable pass/fail thresholds
-- **LLM Evaluation**: 5-point scales (1-5) mapping to 0.0-1.0
-- **QA Scorecards**: Pass thresholds with bonus sections for exceptional work
-- **ISO 5055**: Pass/fail based on weakness density thresholds
-
 ### Score Interpretation
 
 | Score Range | Interpretation | Action |
