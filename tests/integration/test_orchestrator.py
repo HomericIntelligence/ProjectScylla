@@ -104,6 +104,7 @@ class EvalOrchestratorWithFixture:
 id: "001-test"
 name: "Test Case"
 description: "A test case for testing"
+language: mojo
 source:
   repo: "https://github.com/octocat/Hello-World"
   hash: "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
@@ -218,6 +219,7 @@ class TestEvalOrchestratorEndToEnd:
 id: "001-test"
 name: "Test Case"
 description: "A test case for testing"
+language: mojo
 source:
   repo: "https://github.com/octocat/Hello-World"
   hash: "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
