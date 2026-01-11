@@ -202,13 +202,16 @@ class CommandLogger:
         """Generate an executable bash script to replay all commands.
 
         The script includes environment setup, directory navigation,
-        and all commands in execution order.
+        and all commands in execution order. For Claude Code commands with
+        prompts, extracts the prompt to a separate prompt.md file and
+        references it in the replay script.
 
         Returns:
             Path to the generated replay.sh script.
 
         """
         script_path = self.log_dir / "replay.sh"
+        prompt_path = self.log_dir / "prompt.md"
 
         lines = [
             "#!/bin/bash",
@@ -238,7 +241,22 @@ class CommandLogger:
             lines.append(f"# Duration: {log.duration_seconds:.2f}s, Exit: {log.exit_code}")
             lines.append(f"cd {shlex.quote(log.cwd)}")
 
-            # Quote each argument properly
+            # Check if this is a claude command with a prompt argument
+            if len(log.command) > 0 and "claude" in log.command[0].lower():
+                # Extract the prompt (last argument) and write to prompt.md
+                if len(log.command) > 1:
+                    prompt = log.command[-1]
+                    # Only extract if it looks like a multi-line prompt
+                    if len(prompt) > 100 or "\n" in prompt:
+                        prompt_path.write_text(prompt)
+                        # Build command referencing prompt.md instead of inlining
+                        cmd_without_prompt = log.command[:-1]
+                        cmd_str = " ".join(shlex.quote(arg) for arg in cmd_without_prompt)
+                        lines.append(f"{cmd_str} prompt.md")
+                        lines.append("")
+                        continue
+
+            # Default: quote each argument properly
             cmd_str = " ".join(shlex.quote(arg) for arg in log.command)
             lines.append(cmd_str)
             lines.append("")

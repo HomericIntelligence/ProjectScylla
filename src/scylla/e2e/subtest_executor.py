@@ -821,12 +821,20 @@ class SubTestExecutor:
 
         # Build context-aware resource suffix
         resource_suffix = self.tier_manager.build_resource_suffix(subtest)
-        if resource_suffix:
-            task_prompt = f"{task_prompt}\n\n{resource_suffix}"
-
-        # Save task prompt to run dir (for reference, though uniform across runs)
         prompt_file = run_dir / "task_prompt.md"
-        prompt_file.write_text(task_prompt)
+
+        if resource_suffix:
+            # Resource suffix modifies the prompt - must write full content
+            task_prompt = f"{task_prompt}\n\n{resource_suffix}"
+            prompt_file.write_text(task_prompt)
+        else:
+            # No modification - symlink to experiment-level copy for deduplication
+            experiment_prompt = self.experiment_dir / "prompt.md"
+            if experiment_prompt.exists():
+                prompt_file.symlink_to(experiment_prompt.resolve())
+            else:
+                # Fallback: write full content if experiment copy doesn't exist
+                prompt_file.write_text(task_prompt)
 
         # Build extra args for adapter
         extra_args: list[str] = []
@@ -968,6 +976,11 @@ class SubTestExecutor:
                 language=self.config.language,
                 rubric_path=rubric_path,
             )
+
+            # Save pipeline commands once per run (not per judge)
+            from scylla.e2e.llm_judge import _save_pipeline_commands
+
+            _save_pipeline_commands(run_dir, workspace, language=self.config.language)
 
             judge_duration = (datetime.now(UTC) - judge_start).total_seconds()
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Complete", judge_duration)
