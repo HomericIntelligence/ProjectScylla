@@ -4,6 +4,7 @@ name: "Delete Ralph Loop"
 description: |
   Remove dead code loop
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "1ab38fd8809554d148d420a4500c3856de482d36"

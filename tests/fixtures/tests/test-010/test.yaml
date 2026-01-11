@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to optimize data processing with zero-copy slicing.
   Agent must understand tensor operations and memory optimization.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "87a02fed42ba953163f1daf6f9751cd26fbe13f9"

@@ -4,6 +4,7 @@ name: "Comprehensive Slot Management"
 description: |
   Fix slot management and per-thread logging
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "93c9fe9cf52f3913704c706496b5a254ca1eebd6"

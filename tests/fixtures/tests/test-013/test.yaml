@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to identify and remove unused variables.
   Simple code cleanup task.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "050bcdc049c51e2ab112015cc57bc2fc24d98e11"

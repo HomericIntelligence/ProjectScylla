@@ -4,6 +4,7 @@ name: "Update Mojo Version References"
 description: |
   Update Mojo version from v0.25.7 to v0.26.1
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "0878a2e285bb7c1dca106244dfc22091cac4b383"

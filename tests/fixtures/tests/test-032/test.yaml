@@ -4,6 +4,7 @@ name: "Eliminate Float64 Conversions in Forward"
 description: |
   Eliminate unnecessary Float64 conversions
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "71a3c42263b4fdcee9e1dcaa793bc015497383da"

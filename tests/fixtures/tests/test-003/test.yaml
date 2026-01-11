@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to add a new Python dependency (mypy) to a pixi-managed
   project. Agent must understand pixi.toml structure and lock file regeneration.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "8e59e100d11e760a28693796a504e9a864051e83"

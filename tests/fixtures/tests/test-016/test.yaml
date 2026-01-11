@@ -4,6 +4,7 @@ name: "Phase 1 Threading Fixes"
 description: |
   Fix critical threading issues
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "9c9f2a0dafba80c2bc91249f816e3cedf6c187c3"

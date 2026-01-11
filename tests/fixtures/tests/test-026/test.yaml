@@ -4,6 +4,7 @@ name: "Extract Layer Parameter Fixtures"
 description: |
   Extract common test setup to fixtures
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "85acc0d86a3b39e6427def88d3ac60b1cabe930f"

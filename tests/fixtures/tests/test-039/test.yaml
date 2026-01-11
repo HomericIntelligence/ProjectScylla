@@ -4,6 +4,7 @@ name: "Convert Float16 FIXME to NOTE"
 description: |
   Convert float16 FIXMEs to documented NOTEs
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "8fb66e59921ed2ec7bf635c45bce9401d5a4d8c1"

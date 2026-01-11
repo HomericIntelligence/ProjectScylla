@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to fix Docker build failure by moving CLI installation
   to root stage. Agent must understand Docker multi-stage builds and user contexts.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "e8a470059158a399b99e24170bf7bba47f4e3a02"

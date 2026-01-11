@@ -4,6 +4,7 @@ name: "Add @always_inline to 32 Operations"
 description: |
   Add @always_inline to element-wise ops
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "55ad174ae1fe0a8831fbefad33160425ca0db7fd"

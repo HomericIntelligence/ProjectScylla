@@ -6,6 +6,7 @@ description: |
   Agent must discover proper location, write Mojo v0.26.1 code, integrate
   with Bazel build system, and provide full documentation.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/modular"
   hash: "14df6466f35f2e1ee7afad3c3d9936e6da4f8cc6"

@@ -4,6 +4,7 @@ name: "Convert TODO to NOTE for argv Parsing"
 description: |
   Update TODO comment to NOTE with explanation
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "1f0ff3d0ce392ceecd4f20155b54c469b484cd15"

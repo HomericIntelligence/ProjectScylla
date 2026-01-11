@@ -4,6 +4,7 @@ name: "Implement Visualization Module Tests"
 description: |
   Create tests for visualization module
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "45492f625b6ca8f7c9dd1468d9575da1187f7d12"

@@ -4,6 +4,7 @@ name: "Add Contiguous Fast Path"
 description: |
   Add contiguous fast path for arithmetic
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "d24233c818a70b47b3cb3ae7d8a5d5942f1103d4"

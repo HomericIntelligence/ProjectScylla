@@ -5,6 +5,7 @@ description: |
   Test AI agent's ability to add code coverage reporting to a project.
   Agent must understand coverage tools, CI integration, and reporting.
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "ea7dbf31ba70a5a85d76b1ab3d30cc1887d42ccb"

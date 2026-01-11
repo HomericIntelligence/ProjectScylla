@@ -4,6 +4,7 @@ name: "Update Stale FIXME/TODO References"
 description: |
   Update stale issue references in comments
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "2b06d667fa7b51ce357cefa6954254d9f3aa1c88"

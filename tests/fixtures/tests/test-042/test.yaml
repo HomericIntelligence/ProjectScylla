@@ -4,6 +4,7 @@ name: "Add Comprehensive Test Suite for Models"
 description: |
   Create comprehensive test suite for test models
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "0fe052906b9ac61483c4c7aed8aef0fd7a0643d9"

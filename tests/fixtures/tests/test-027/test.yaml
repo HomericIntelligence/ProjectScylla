@@ -4,6 +4,7 @@ name: "Extract Backward Operations from Tape"
 description: |
   Refactor autograd backward operations
 
+language: mojo
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
   hash: "601c5c86bf760fac17d213a867e882ab4f319a8e"
