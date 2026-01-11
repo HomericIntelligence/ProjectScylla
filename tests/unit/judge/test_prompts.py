@@ -264,7 +264,7 @@ class TestBuildJudgePrompt:
         # System prompt content should be present in judge prompts
         system_content = JUDGE_SYSTEM_PROMPT_FILE.read_text()
         # Check a distinctive phrase from system prompt is present
-        assert "Evaluation Methodology" in system_content or "Grading Scale" in system_content
+        assert "hybrid evaluation system" in system_content or "expert evaluator" in system_content
 
 
 class TestBuildTaskPrompt:
