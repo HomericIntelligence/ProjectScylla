@@ -24,6 +24,7 @@ from pathlib import Path
 from scylla.executor.docker import (
     ContainerConfig,
     ContainerError,
+    ContainerResult,
     DockerExecutor,
 )
 
@@ -208,6 +209,29 @@ class JudgeContainerManager:
                 "mode": "ro",
             }
 
+        # Mount Claude Code credentials if available
+        # Copy to temp directory with world-readable permissions for container access
+        # Use home directory instead of /tmp due to WSL2 mount visibility issues
+        credentials_path = Path.home() / ".claude" / ".credentials.json"
+        if credentials_path.exists():
+            import uuid
+
+            # Create temp directory in home (not /tmp - WSL2 mount issue)
+            temp_dir = Path.home() / f".scylla-temp-creds-{uuid.uuid4().hex[:8]}"
+            temp_dir.mkdir(exist_ok=True)
+            temp_dir.chmod(0o755)  # Make directory accessible to all users
+
+            temp_creds = temp_dir / ".credentials.json"
+            temp_creds.write_text(credentials_path.read_text())
+            temp_creds.chmod(0o644)  # Make file readable by all users
+
+            # Mount the entire temp directory to /mnt/claude-creds
+            volumes[str(temp_dir)] = {
+                "bind": "/mnt/claude-creds",
+                "mode": "ro",
+                "temp_cleanup": str(temp_dir),  # Mark for cleanup
+            }
+
         return volumes
 
     def create_container_config(
@@ -223,8 +247,10 @@ class JudgeContainerManager:
             ContainerConfig for DockerExecutor.
 
         """
-        # Ensure output directory exists
+        # Ensure output directory exists with permissions for container user
         config.output_dir.mkdir(parents=True, exist_ok=True)
+        # Container runs as 'scylla' user (UID 999), needs write access
+        config.output_dir.chmod(0o777)
 
         env = self._build_environment(config)
 
@@ -253,17 +279,31 @@ class JudgeContainerManager:
             ContainerError: If container creation or execution fails.
 
         """
-        container_config = self.create_container_config(config)
+        # Build volumes and environment
+        volumes = self._build_volumes(config)
+        env = self._build_environment(config)
+
+        # Run container with volumes using docker CLI
+        container_name = self._generate_container_name()
 
         try:
-            result = self.executor.run(container_config)
-            self._active_containers.append(result.container_id)
+            result = self._run_with_volumes(
+                image=config.image,
+                name=container_name,
+                command=["python", "-m", "scylla.judge.runner"],
+                env_vars=env,
+                volumes=volumes,
+                timeout_seconds=config.timeout_seconds,
+                working_dir=self.OUTPUT_MOUNT,
+            )
+
+            self._active_containers.append(container_name)
 
             # Parse token usage from stdout if available
             tokens_in, tokens_out, cost = self._parse_token_usage(result.stdout)
 
             return JudgeResult(
-                container_id=result.container_id,
+                container_id=container_name,
                 exit_code=result.exit_code,
                 stdout=result.stdout,
                 stderr=result.stderr,
@@ -436,3 +476,113 @@ class JudgeContainerManager:
 
         """
         return self.executor.is_running(container_id)
+
+    def _run_with_volumes(
+        self,
+        image: str,
+        name: str,
+        command: list[str],
+        env_vars: dict[str, str],
+        volumes: dict[str, dict[str, str]],
+        timeout_seconds: int,
+        working_dir: str | None = None,
+    ) -> ContainerResult:
+        """Run container with custom volume mounts.
+
+        Uses docker CLI directly since we need custom volume mount options.
+
+        Args:
+            image: Docker image to use.
+            name: Container name.
+            command: Command to run in container.
+            env_vars: Environment variables.
+            volumes: Volume mount configuration.
+            timeout_seconds: Maximum execution time.
+            working_dir: Working directory in container.
+
+        Returns:
+            ContainerResult with execution details.
+
+        Raises:
+            ContainerError: If container execution fails.
+            ContainerTimeoutError: If execution exceeds timeout.
+
+        """
+        import shutil
+        import subprocess
+
+        # Collect temp directories to clean up after execution
+        temp_dirs = []
+        for mount_config in volumes.values():
+            if "temp_cleanup" in mount_config:
+                temp_dirs.append(mount_config["temp_cleanup"])
+
+        try:
+            # Build docker run command
+            cmd = ["docker", "run", "--rm"]
+
+            # Add container name
+            cmd.extend(["--name", name])
+
+            # Add working directory
+            if working_dir:
+                cmd.extend(["--workdir", working_dir])
+
+            # Add environment variables
+            for key, value in env_vars.items():
+                cmd.extend(["-e", f"{key}={value}"])
+
+            # Add volume mounts
+            for host_path, mount_config in volumes.items():
+                mount_str = f"{host_path}:{mount_config['bind']}:{mount_config['mode']}"
+                cmd.extend(["-v", mount_str])
+
+            # Add image and command
+            cmd.append(image)
+            cmd.extend(command)
+
+            # Execute container
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(f"Executing judge in container: {image}")
+            logger.debug(f"Docker command: {' '.join(cmd)}")
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                check=False,
+            )
+
+            logger.info(f"Container execution completed with exit code: {result.returncode}")
+            if result.stdout:
+                logger.debug(f"Container stdout:\n{result.stdout}")
+            if result.stderr:
+                logger.debug(f"Container stderr:\n{result.stderr}")
+
+            return ContainerResult(
+                container_id=name,
+                exit_code=result.returncode,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                timed_out=False,
+            )
+
+        except subprocess.TimeoutExpired:
+            # Container was killed due to timeout
+            from scylla.executor.docker import ContainerTimeoutError
+
+            raise ContainerTimeoutError(f"Judge execution timed out after {timeout_seconds}s")
+
+        except subprocess.CalledProcessError as e:
+            raise ContainerError(f"Container execution failed: {e}")
+
+        finally:
+            # Clean up temporary credential files
+            for temp_dir in temp_dirs:
+                try:
+                    shutil.rmtree(temp_dir)
+                except Exception:
+                    pass  # Best effort cleanup
