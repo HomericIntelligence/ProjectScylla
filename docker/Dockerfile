@@ -20,7 +20,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HOME=/home/scylla \
+    XDG_CONFIG_HOME=/home/scylla/.config \
+    CLAUDE_CONFIG_DIR=/home/scylla/.claude
 
 # Install system dependencies
 # Note: nodejs is required for Claude Code CLI (npm package)
@@ -51,6 +54,11 @@ RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
 # Set up workspace directory
 WORKDIR /workspace
 RUN chown -R scylla:scylla /workspace
+
+# Ensure clean Claude Code environment (no pre-existing config)
+RUN rm -rf /home/scylla/.claude /home/scylla/.claude-plugin 2>/dev/null || true && \
+    mkdir -p /home/scylla/.claude && \
+    chown -R scylla:scylla /home/scylla/.claude
 
 # Copy entry point script
 COPY --chown=scylla:scylla entrypoint.sh /entrypoint.sh

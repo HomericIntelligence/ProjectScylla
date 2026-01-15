@@ -4,6 +4,10 @@ This module provides workspace management, Docker container orchestration,
 tier configuration, test runner orchestration, log capture, and result aggregation.
 """
 
+from scylla.executor.agent_container import (
+    AgentContainerConfig,
+    AgentContainerManager,
+)
 from scylla.executor.capture import (
     ExecutionMetrics,
     LogCapture,
@@ -73,6 +77,9 @@ __all__ = [
     "DockerError",
     "DockerExecutor",
     "DockerNotAvailableError",
+    # Agent container
+    "AgentContainerConfig",
+    "AgentContainerManager",
     # Judge container
     "JudgeContainerConfig",
     "JudgeContainerManager",
