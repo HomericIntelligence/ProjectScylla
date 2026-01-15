@@ -901,6 +901,11 @@ class SubTestExecutor:
         agent_dir.mkdir(parents=True, exist_ok=True)
         judge_dir.mkdir(parents=True, exist_ok=True)
 
+        # Set permissions to allow container user (UID 999) to write
+        # Container runs as 'scylla' user which needs write access to output dirs
+        agent_dir.chmod(0o777)
+        judge_dir.chmod(0o777)
+
         # Agent command logger outputs to agent/
         command_logger = CommandLogger(agent_dir)
 
