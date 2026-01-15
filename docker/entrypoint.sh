@@ -191,7 +191,118 @@ setup_workspace() {
     log_info "Workspace setup complete"
 }
 
-# Execute the test run
+# Ensure clean Claude Code environment
+ensure_clean_claude_environment() {
+    log_info "Ensuring clean Claude Code environment..."
+
+    # Remove any pre-existing config
+    rm -rf "${HOME}/.claude" "${HOME}/.claude-plugin" 2>/dev/null || true
+
+    # Create fresh directories
+    mkdir -p "${HOME}/.claude"
+
+    # Verify isolation
+    if [[ -f "${HOME}/.claude/settings.json" ]]; then
+        log_error "Config leakage detected!"
+        exit 1
+    fi
+
+    log_info "Claude Code environment is clean"
+}
+
+# Execute agent in container
+run_agent() {
+    log_info "Starting agent execution in container..."
+
+    # Ensure clean Claude Code environment
+    ensure_clean_claude_environment
+
+    # Read task prompt
+    if [[ ! -f "/prompt/task.md" ]]; then
+        log_error "Task prompt not found at /prompt/task.md"
+        exit 1
+    fi
+
+    # Validate required environment variables
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        log_error "ANTHROPIC_API_KEY is not set"
+        exit 1
+    fi
+
+    if [[ -z "${MODEL:-}" ]]; then
+        log_error "MODEL is not set"
+        exit 1
+    fi
+
+    # Change to workspace
+    cd /workspace
+
+    # Set timeout (default 600 seconds)
+    local timeout_seconds="${TIMEOUT:-600}"
+
+    log_info "Executing Claude CLI with model: ${MODEL}"
+    log_info "Timeout: ${timeout_seconds}s"
+
+    # Execute Claude Code CLI
+    timeout "${timeout_seconds}" claude \
+        --model "${MODEL}" \
+        --print \
+        --output-format stream-json \
+        "$(cat /prompt/task.md)" \
+        > /output/stdout.log 2> /output/stderr.log
+
+    local exit_code=$?
+
+    # Save result
+    if [[ ${exit_code} -eq 124 ]]; then
+        echo "{\"exit_code\": ${exit_code}, \"timeout\": true}" > /output/result.json
+        log_error "Agent execution timed out after ${timeout_seconds}s"
+    else
+        echo "{\"exit_code\": ${exit_code}, \"timeout\": false}" > /output/result.json
+        log_info "Agent execution completed with exit code: ${exit_code}"
+    fi
+
+    exit ${exit_code}
+}
+
+# Execute judge in container
+run_judge() {
+    log_info "Starting judge execution in container..."
+
+    # Ensure clean Claude Code environment
+    ensure_clean_claude_environment
+
+    # Validate required environment variables
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        log_error "ANTHROPIC_API_KEY is not set"
+        exit 1
+    fi
+
+    if [[ -z "${MODEL:-}" ]]; then
+        log_error "MODEL is not set"
+        exit 1
+    fi
+
+    # Workspace is READ-ONLY at /workspace
+    # Output goes to /output
+    cd /workspace
+
+    log_info "Executing judge with model: ${MODEL}"
+
+    # Run judge evaluation
+    # Note: This assumes the scylla package is available in the container
+    python -m scylla.judge.runner \
+        --workspace /workspace \
+        --output /output \
+        --model "${MODEL}" \
+        --prompt /prompt/task.md
+
+    local exit_code=$?
+    log_info "Judge execution completed with exit code: ${exit_code}"
+    exit ${exit_code}
+}
+
+# Execute the test run (legacy mode)
 run_test() {
     log_info "Starting test execution..."
     log_info "Tier: ${TIER}"
@@ -249,6 +360,12 @@ main() {
             ;;
         --validate)
             validate_env
+            ;;
+        --run-agent)
+            run_agent
+            ;;
+        --run-judge)
+            run_judge
             ;;
         --run)
             validate_env || exit 1
