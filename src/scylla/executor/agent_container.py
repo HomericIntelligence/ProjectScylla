@@ -215,6 +215,12 @@ class AgentContainerManager:
         cmd.extend(config.command)
 
         # Execute container
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.info(f"Executing agent in container: {config.image}")
+        logger.debug(f"Docker command: {' '.join(cmd)}")
+
         try:
             result = subprocess.run(
                 cmd,
@@ -223,6 +229,12 @@ class AgentContainerManager:
                 timeout=config.timeout_seconds,
                 check=False,
             )
+
+            logger.info(f"Container execution completed with exit code: {result.returncode}")
+            if result.stdout:
+                logger.debug(f"Container stdout:\n{result.stdout}")
+            if result.stderr:
+                logger.debug(f"Container stderr:\n{result.stderr}")
 
             return ContainerResult(
                 container_id="",  # Not available with --rm
