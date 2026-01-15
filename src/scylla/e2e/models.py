@@ -578,6 +578,7 @@ class ExperimentConfig:
         max_turns: Maximum conversation turns for agent (None = unlimited)
         max_subtests: Maximum sub-tests per tier for testing (None = all)
         language: Programming language for build pipeline ('python' or 'mojo')
+        use_containers: Run agents and judges in isolated Docker containers (default: False)
 
     """
 
@@ -594,6 +595,7 @@ class ExperimentConfig:
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
     max_subtests: int | None = None  # Max sub-tests per tier (None = all)
+    use_containers: bool = False  # Run agents and judges in isolated containers
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -611,6 +613,7 @@ class ExperimentConfig:
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
             "max_subtests": self.max_subtests,
+            "use_containers": self.use_containers,
         }
 
     def save(self, path: Path) -> None:
