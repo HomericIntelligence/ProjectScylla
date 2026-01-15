@@ -561,6 +561,14 @@ class SubTestExecutor:
         self.workspace_manager = workspace_manager
         self.adapter = adapter or ClaudeCodeAdapter()
 
+        # Initialize Docker executor if containers are enabled
+        self.docker_executor = None
+        if config.use_containers:
+            from scylla.executor.docker import DockerExecutor
+
+            self.docker_executor = DockerExecutor()
+            logger.info("Container execution enabled - using Docker for agent and judge isolation")
+
     def run_subtest(
         self,
         tier_id: TierID,
@@ -768,6 +776,83 @@ class SubTestExecutor:
         # Aggregate results
         return self._aggregate_results(tier_id, subtest.id, runs)
 
+    def _run_agent_execution(
+        self,
+        tier_config: TierConfig,
+        adapter_config: AdapterConfig,
+        task_prompt: str,
+        agent_dir: Path,
+        workspace: Path,
+        prompt_file: Path,
+    ) -> AdapterResult:
+        """Run agent execution with optional container isolation.
+
+        Args:
+            tier_config: Tier configuration for system prompt mode
+            adapter_config: Adapter configuration
+            task_prompt: Task prompt text
+            agent_dir: Directory for agent outputs
+            workspace: Workspace directory
+            prompt_file: Path to task prompt file
+
+        Returns:
+            AdapterResult with execution details
+
+        """
+        if self.config.use_containers and self.docker_executor is not None:
+            # Run agent in isolated container
+            from scylla.executor.agent_container import (
+                AgentContainerConfig,
+                AgentContainerManager,
+            )
+
+            # Get tier-specific CLAUDE.md if it exists
+            claude_md_path = None
+            if tier_config.system_prompt_mode != "empty":
+                # Check for tier-specific CLAUDE.md in workspace
+                potential_claude_md = workspace / "CLAUDE.md"
+                if potential_claude_md.exists():
+                    claude_md_path = potential_claude_md
+
+            container_config = AgentContainerConfig(
+                workspace_dir=workspace,
+                output_dir=agent_dir,
+                task_prompt_path=prompt_file,
+                claude_md_path=claude_md_path,
+                model=adapter_config.model,
+                timeout_seconds=adapter_config.timeout,
+            )
+
+            manager = AgentContainerManager(self.docker_executor)
+
+            try:
+                container_result = manager.run(container_config)
+
+                # Convert ContainerResult to AdapterResult
+                from scylla.adapters.base import AdapterResult, AdapterTokenStats
+
+                # Parse token stats from output if available
+                # For now, create empty token stats
+                return AdapterResult(
+                    exit_code=container_result.exit_code,
+                    stdout=container_result.stdout,
+                    stderr=container_result.stderr,
+                    token_stats=AdapterTokenStats(),
+                    cost_usd=0.0,
+                    api_calls=0,
+                )
+            except Exception as e:
+                logger.error(f"Container execution failed: {e}")
+                # Fall back to direct execution
+                logger.warning("Falling back to direct adapter execution")
+
+        # Direct execution (no container)
+        return self.adapter.run(
+            config=adapter_config,
+            tier_config=None,
+            system_prompt_mode=tier_config.system_prompt_mode,
+        )
+
     def _execute_single_run(
         self,
         tier_id: TierID,
@@ -876,10 +961,13 @@ class SubTestExecutor:
 
             agent_start = datetime.now(UTC)
             try:
-                result = self.adapter.run(
-                    config=adapter_config,
-                    tier_config=None,  # Tier config handled by workspace preparation
-                    system_prompt_mode=tier_config.system_prompt_mode,
+                result = self._run_agent_execution(
+                    tier_config=tier_config,
+                    adapter_config=adapter_config,
+                    task_prompt=task_prompt,
+                    agent_dir=agent_dir,
+                    workspace=workspace,
+                    prompt_file=prompt_file,
                 )
             except Exception as e:
                 # Handle execution errors - create a mock result with token_stats
