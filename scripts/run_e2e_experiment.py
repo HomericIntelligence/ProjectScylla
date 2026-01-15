@@ -106,6 +106,11 @@ Examples:
         --tiers-dir tests/fixtures/tests/test-001 \\
         --tiers T0 --runs 1 -v
 
+    # T0 with containers (1 subtest, 1 run, verbose)
+    python scripts/run_e2e_experiment.py \\
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --tiers T0 --runs 1 --max-subtests 1 --use-containers -v
+
     # Run all tiers with defaults from test.yaml
     python scripts/run_e2e_experiment.py \\
         --tiers-dir tests/fixtures/tests/test-001 \\
@@ -183,6 +188,11 @@ Examples:
         type=int,
         default=None,
         help="Limit sub-tests per tier for testing (default: all)",
+    )
+    parser.add_argument(
+        "--use-containers",
+        action="store_true",
+        help="Run agents and judges in isolated Docker containers (default: False)",
     )
 
     # Model settings
@@ -406,6 +416,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],
         max_subtests=args.max_subtests,
+        use_containers=args.use_containers,
     )
 
 
