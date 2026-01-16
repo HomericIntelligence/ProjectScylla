@@ -773,6 +773,70 @@ class SubTestExecutor:
         # Aggregate results
         return self._aggregate_results(tier_id, subtest.id, runs)
 
+    def _run_via_replay_script(
+        self,
+        replay_script: Path,
+        agent_dir: Path,
+        workspace: Path,
+        adapter_config: AdapterConfig,
+        tier_config: TierConfig,
+    ) -> AdapterResult:
+        """Execute agent via replay.sh script.
+
+        This method runs replay.sh and parses the results from log files.
+
+        Args:
+            replay_script: Path to replay.sh
+            agent_dir: Directory for agent outputs
+            workspace: Workspace directory
+            adapter_config: Adapter configuration
+            tier_config: Tier configuration
+
+        Returns:
+            AdapterResult with execution details
+
+        """
+        import subprocess
+
+        from scylla.adapters.base import AdapterResult
+
+        # Execute replay.sh
+        result = subprocess.run(
+            ["bash", str(replay_script)],
+            capture_output=True,
+            text=True,
+            timeout=adapter_config.timeout,
+            cwd=workspace,
+        )
+
+        # Read stdout/stderr from captured subprocess output
+        # (Log files exist but are empty until we update them later)
+        stdout = result.stdout
+        stderr = result.stderr
+
+        # Parse token stats and cost from stdout
+        token_stats = self.adapter._parse_token_stats(stdout, stderr)
+        api_calls = self.adapter._parse_api_calls(stdout, stderr)
+        cost = self.adapter._parse_cost(stdout)
+
+        if cost == 0.0 and (token_stats.input_tokens > 0 or token_stats.output_tokens > 0):
+            total_input = token_stats.input_tokens + token_stats.cache_read_tokens
+            cost = self.adapter.calculate_cost(
+                total_input, token_stats.output_tokens, adapter_config.model
+            )
+
+        # Write logs (for consistency with adapter behavior)
+        self.adapter.write_logs(agent_dir, stdout, stderr)
+
+        return AdapterResult(
+            exit_code=result.returncode,
+            stdout=stdout,
+            stderr=stderr,
+            token_stats=token_stats,
+            cost_usd=cost,
+            api_calls=api_calls,
+        )
+
     def _run_agent_execution(
         self,
         tier_config: TierConfig,
@@ -933,16 +997,44 @@ class SubTestExecutor:
                     agent_name = agent_names_list[0].replace(".md", "")
                     logger.info(f"Using agent: {agent_name}")
 
+            # Write prompt to agent/prompt.md for replay.sh
+            agent_prompt_file = agent_dir / "prompt.md"
+            agent_prompt_file.write_text(task_prompt)
+
+            # Build command with file path instead of string
+            # Modify the command to reference the prompt file
+            cmd = self.adapter._build_command(
+                adapter_config,
+                str(agent_prompt_file.resolve()),  # Pass absolute file path
+                None,
+                tier_config.system_prompt_mode,
+                agent_name,
+            )
+
+            # Pre-log the command (before execution)
+            # We'll update stdout/stderr/exit_code after execution
+            command_logger.log_command(
+                cmd=cmd,
+                stdout="",  # Will be filled after execution
+                stderr="",  # Will be filled after execution
+                exit_code=0,  # Will be updated after execution
+                duration=0.0,  # Will be updated after execution
+                cwd=str(workspace),
+            )
+
+            # Generate replay.sh BEFORE execution
+            command_logger.save()
+            replay_script = command_logger.save_replay_script()
+
+            # Execute via replay.sh
             agent_start = datetime.now(timezone.utc)
             try:
-                result = self._run_agent_execution(
-                    tier_config=tier_config,
-                    adapter_config=adapter_config,
-                    task_prompt=task_prompt,
+                result = self._run_via_replay_script(
+                    replay_script=replay_script,
                     agent_dir=agent_dir,
                     workspace=workspace,
-                    prompt_file=prompt_file,
-                    agent_name=agent_name,
+                    adapter_config=adapter_config,
+                    tier_config=tier_config,
                 )
             except Exception as e:
                 # Handle execution errors - create a mock result with token_stats
@@ -959,6 +1051,17 @@ class SubTestExecutor:
 
             duration = (datetime.now(timezone.utc) - agent_start).total_seconds()
 
+            # Update the logged command with actual results
+            command_logger.update_last_command(
+                stdout=result.stdout,
+                stderr=result.stderr,
+                exit_code=result.exit_code,
+                duration=duration,
+            )
+
+            # Save updated command logs
+            command_logger.save()
+
             # Persist timing to file for resume capability
             agent_timing_file = agent_dir / "timing.json"
             with open(agent_timing_file, "w") as f:
@@ -970,26 +1073,6 @@ class SubTestExecutor:
                     f,
                     indent=2,
                 )
-
-            # Log the command
-            cmd = self.adapter._build_command(
-                adapter_config,
-                task_prompt,
-                None,
-                tier_config.system_prompt_mode,
-            )
-            command_logger.log_command(
-                cmd=cmd,
-                stdout=result.stdout,
-                stderr=result.stderr,
-                exit_code=result.exit_code,
-                duration=duration,
-                cwd=str(workspace),
-            )
-
-            # Save command logs
-            command_logger.save()
-            command_logger.save_replay_script()
 
             # Save agent output to agent/output.txt
             output_file = agent_dir / "output.txt"
