@@ -11,13 +11,14 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
 
 from scylla.e2e.models import ResourceManifest, SubTestConfig, TierBaseline, TierConfig, TierID
+from scylla.executor.tier_config import TierConfigLoader
 
 if TYPE_CHECKING:
     pass
@@ -45,16 +46,19 @@ class TierManager:
         """Initialize the tier manager.
 
         Args:
-            tiers_dir: Path to the config/tiers directory
+            tiers_dir: Path to the config/tiers directory (or test-specific tiers dir)
 
         """
         self.tiers_dir = tiers_dir
+        # Initialize global tier config loader from config/tiers/
+        # Find the config directory (should be at repo root / config)
+        config_dir = Path(__file__).parent.parent.parent.parent / "config"
+        self.tier_config_loader = TierConfigLoader(config_dir)
 
     def load_tier_config(self, tier_id: TierID) -> TierConfig:
         """Load configuration for a specific tier.
 
-        Discovers all sub-tests for the tier and returns a complete
-        TierConfig object.
+        Loads tier-level config from config/tiers/ and discovers sub-tests.
 
         Args:
             tier_id: The tier to load configuration for
@@ -63,6 +67,10 @@ class TierManager:
             TierConfig with all sub-tests for the tier.
 
         """
+        # Load global tier configuration from config/tiers/
+        global_tier_config = self.tier_config_loader.get_tier(tier_id.value)
+
+        # Discover sub-tests from test-specific directory
         tier_dir = self.tiers_dir / tier_id.value.lower()
 
         # All tiers now have sub-tests with custom configurations
@@ -72,10 +80,14 @@ class TierManager:
         # Discover sub-tests
         subtests = self._discover_subtests(tier_id, tier_dir)
 
+        # Create TierConfig with both global settings and subtests
         return TierConfig(
             tier_id=tier_id,
             subtests=subtests,
             system_prompt_mode=system_prompt_mode,
+            prompt_content=global_tier_config.prompt_content,
+            tools_enabled=global_tier_config.tools_enabled,
+            delegation_enabled=global_tier_config.delegation_enabled,
         )
 
     def _discover_subtests(self, tier_id: TierID, tier_dir: Path) -> list[SubTestConfig]:
@@ -644,7 +656,7 @@ class TierManager:
             subtest_id=subtest.id,
             fixture_config_path=str(self._get_fixture_config_path(tier_id, subtest.id)),
             resources=subtest.resources,
-            composed_at=datetime.now(UTC).isoformat(),
+            composed_at=datetime.now(timezone.utc).isoformat(),
             claude_md_hash=claude_md_hash,
             inherited_from=inherited_from,
         )
