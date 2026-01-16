@@ -707,11 +707,15 @@ class SubTestExecutor:
                 )
 
             # Prepare tier configuration in workspace
+            thinking_enabled = (
+                self.config.thinking_mode is not None and self.config.thinking_mode != "None"
+            )
             self.tier_manager.prepare_workspace(
                 workspace=workspace,
                 tier_id=tier_id,
                 subtest_id=subtest.id,
                 baseline=baseline,
+                thinking_enabled=thinking_enabled,
             )
 
             # Commit test configs so agent sees them as existing state

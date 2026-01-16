@@ -9,6 +9,7 @@ Python Justification: Required for filesystem operations and YAML parsing.
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 from datetime import datetime, timezone
@@ -177,6 +178,7 @@ class TierManager:
         tier_id: TierID,
         subtest_id: str,
         baseline: TierBaseline | None = None,
+        thinking_enabled: bool = False,
     ) -> None:
         """Prepare a workspace with tier configuration.
 
@@ -213,6 +215,8 @@ class TierManager:
                     claude_md.unlink()
                 if claude_dir.exists():
                     shutil.rmtree(claude_dir)
+                # Still create settings.json for thinking control
+                self._create_settings_json(workspace, thinking_enabled)
                 return
             elif subtest_id == "01":
                 # 01-vanilla: Use tool defaults (no changes needed)
@@ -221,6 +225,8 @@ class TierManager:
                     claude_md.unlink()
                 if claude_dir.exists():
                     shutil.rmtree(claude_dir)
+                # Still create settings.json for thinking control
+                self._create_settings_json(workspace, thinking_enabled)
                 return
             # 02+: Fall through to normal overlay logic
 
@@ -230,6 +236,9 @@ class TierManager:
 
         # Step 2: Overlay sub-test configuration
         self._overlay_subtest(workspace, subtest)
+
+        # Create settings.json with thinking configuration
+        self._create_settings_json(workspace, thinking_enabled)
 
     def _apply_baseline(self, workspace: Path, baseline: TierBaseline) -> None:
         """Apply baseline configuration to workspace using resources.
@@ -436,6 +445,28 @@ class TierManager:
         if content_parts:
             claude_md = workspace / "CLAUDE.md"
             claude_md.write_text("\n\n".join(content_parts))
+
+    def _create_settings_json(
+        self,
+        workspace: Path,
+        thinking_enabled: bool = False,
+    ) -> None:
+        """Create .claude/settings.json for workspace configuration.
+
+        Args:
+            workspace: Target workspace directory
+            thinking_enabled: Whether to enable thinking mode
+
+        """
+        settings = {
+            "alwaysThinkingEnabled": thinking_enabled,
+        }
+
+        settings_dir = workspace / ".claude"
+        settings_dir.mkdir(parents=True, exist_ok=True)
+        settings_path = settings_dir / "settings.json"
+        with open(settings_path, "w") as f:
+            json.dump(settings, f, indent=2)
 
     def build_resource_suffix(self, subtest: SubTestConfig) -> str:
         """Build prompt suffix based on configured resources.
