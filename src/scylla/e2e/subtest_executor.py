@@ -998,8 +998,20 @@ class SubTestExecutor:
                     logger.info(f"Using agent: {agent_name}")
 
             # Write prompt to agent/prompt.md for replay.sh
+            # Inject thinking keyword based on config if not None
+            final_prompt = task_prompt
+            if self.config.thinking_mode and self.config.thinking_mode != "None":
+                thinking_keywords = {
+                    "Low": "think",
+                    "High": "think hard",
+                    "UltraThink": "ultrathink",
+                }
+                keyword = thinking_keywords.get(self.config.thinking_mode, "")
+                if keyword:
+                    final_prompt = f"{keyword}\n\n{task_prompt}"
+
             agent_prompt_file = agent_dir / "prompt.md"
-            agent_prompt_file.write_text(task_prompt)
+            agent_prompt_file.write_text(final_prompt)
 
             # Build command with file path instead of string
             # Modify the command to reference the prompt file

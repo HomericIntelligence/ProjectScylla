@@ -213,6 +213,13 @@ Examples:
         "Without argument, adds opus-4-5. Examples: --add-judge, "
         "--add-judge sonnet-4-5, --add-judge haiku-4-5",
     )
+    parser.add_argument(
+        "--thinking",
+        choices=["None", "Low", "High", "UltraThink"],
+        default="None",
+        help="Thinking mode for agent execution (default: None for one-shot evaluation). "
+        "None=no thinking, Low=basic, High=extended, UltraThink=maximum analysis",
+    )
 
     # Paths
     parser.add_argument(
@@ -333,6 +340,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         "parallel_subtests": args.parallel,
         "timeout_seconds": args.timeout,
         "language": None,  # Must be set from test.yaml
+        "thinking_mode": args.thinking,  # Thinking level for agent execution
     }
 
     # Apply test config defaults (from test.yaml in tiers-dir)
@@ -411,6 +419,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],
         max_subtests=args.max_subtests,
+        thinking_mode=config_dict["thinking_mode"],
     )
 
 
