@@ -800,9 +800,9 @@ class SubTestExecutor:
 
         from scylla.adapters.base import AdapterResult
 
-        # Execute replay.sh
+        # Execute replay.sh (resolve to absolute path for subprocess)
         result = subprocess.run(
-            ["bash", str(replay_script)],
+            ["bash", str(replay_script.resolve())],
             capture_output=True,
             text=True,
             timeout=adapter_config.timeout,

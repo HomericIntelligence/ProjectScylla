@@ -247,7 +247,8 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
 
         # Atomic write: write to temp file, then rename
-        temp_path = path.with_suffix(".tmp")
+        # Use process ID to avoid race conditions in parallel execution
+        temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}{path.suffix}"
         with open(temp_path, "w") as f:
             json.dump(checkpoint.to_dict(), f, indent=2)
 
