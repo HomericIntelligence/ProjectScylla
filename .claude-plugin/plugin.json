@@ -1,36 +1,45 @@
 {
-  "name": "prompt-ablation-framework",
+  "name": "e2e-framework-bug-fixes",
+  "category": "debugging",
   "version": "1.0.0",
-  "description": "Framework for testing which components of a prompting system (CLAUDE.md, agents, skills) are essential vs. optional through systematic ablation testing",
-  "category": "tooling",
-  "author": "Claude Code",
-  "created": "2024-12-30",
-  "tags": [
-    "ablation-testing",
-    "prompt-engineering",
-    "tier-testing",
-    "agent-evaluation",
-    "skill-evaluation",
-    "claude-code"
+  "description": "Comprehensive guide to fixing E2E evaluation framework bugs including judge verification, replay.sh execution flow, tier semantics, and checkpoint race conditions",
+  "created_at": "2026-01-16T05:19:32Z",
+  "session_context": "Pipe cleaner validation run (test-001) revealed 8 critical infrastructure bugs in E2E evaluation framework",
+  "key_insight": "replay.sh must be primary execution method, generated BEFORE execution with absolute paths",
+  "bugs_fixed": [
+    "Judge verification (git diff + script execution)",
+    "__pycache__ pollution (PYTHONPYCACHEPREFIX)",
+    "Missing --agent flag for T3/T4 tiers",
+    "T3/T4 tier semantics backwards",
+    "Tier config duplication",
+    "replay.sh execution flow (CRITICAL)",
+    "Checkpoint race condition",
+    "replay.sh path resolution"
   ],
   "skills": [
     "skills/prompt-ablation-framework/SKILL.md",
     "skills/unify-config-structure/SKILL.md",
     "skills/e2e-path-resolution-fix/SKILL.md"
   ],
-  "references": [
-    "references/notes.md"
-  ],
-  "source_project": "ProjectOdyssey",
-  "target_project": "ProjectScylla",
-  "target_registry": "ProjectMnemosyne",
-  "metrics": {
-    "files_created": 191,
-    "lines_added": 19439,
-    "blocks_extracted": 18,
-    "agents_organized": 44,
-    "skills_organized": 62,
-    "test_configurations": 26,
-    "total_test_cases": 78
+  "pull_request": {
+    "number": 182,
+    "title": "feat(e2e): comprehensive evaluation framework bug fixes",
+    "status": "open",
+    "commits": 5
+  },
+  "validation_results": {
+    "before": {
+      "T3_02": "Score 0.000 (F grade) - hello.py existed but not detected",
+      "T6_01": "exit_code -1, 0 tokens, 0 bytes logs"
+    },
+    "after": {
+      "T0": "PASS (0.940)",
+      "T1": "PASS (0.930)",
+      "T2": "PASS (0.900)",
+      "T3": "PASS (0.920)",
+      "T4": "PASS (0.910)",
+      "T5": "PASS (0.930)",
+      "T6": "Fixed and ready for retest"
+    }
   }
 }
