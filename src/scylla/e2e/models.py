@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -180,6 +180,9 @@ class TierConfig:
         subtests: List of sub-test configurations
         system_prompt_mode: How to handle system prompt ("none", "default", "custom")
         custom_system_prompt: Custom system prompt if mode is "custom"
+        prompt_content: Tier-specific prompt content (from config/tiers/*.md)
+        tools_enabled: Whether tools are enabled for this tier
+        delegation_enabled: Whether delegation is enabled for this tier
 
     """
 
@@ -187,6 +190,9 @@ class TierConfig:
     subtests: list[SubTestConfig]
     system_prompt_mode: str = "default"  # "none", "default", "custom"
     custom_system_prompt: str | None = None
+    prompt_content: str | None = None
+    tools_enabled: bool | None = None
+    delegation_enabled: bool | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -195,6 +201,9 @@ class TierConfig:
             "subtests": [s.to_dict() for s in self.subtests],
             "system_prompt_mode": self.system_prompt_mode,
             "custom_system_prompt": self.custom_system_prompt,
+            "prompt_content": self.prompt_content,
+            "tools_enabled": self.tools_enabled,
+            "delegation_enabled": self.delegation_enabled,
         }
 
 
@@ -595,7 +604,9 @@ class ExperimentConfig:
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
     max_subtests: int | None = None  # Max sub-tests per tier (None = all)
-    use_containers: bool = False  # Run agents and judges in isolated containers
+    use_containers: bool = (
+        False  # DEPRECATED: Container isolation now at experiment level, not per-agent
+    )
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -680,7 +691,7 @@ class ExperimentResult:
     total_cost: float = 0.0
     total_duration_seconds: float = 0.0
     token_stats: TokenStats = field(default_factory=TokenStats)
-    started_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     completed_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
