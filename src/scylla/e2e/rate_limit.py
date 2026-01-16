@@ -15,7 +15,7 @@ import subprocess
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -188,7 +188,7 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
                     source=source,
                     retry_after_seconds=retry_after,
                     error_message=error_msg or "Rate limit detected (JSON is_error)",
-                    detected_at=datetime.now(UTC).isoformat(),
+                    detected_at=datetime.now(timezone.utc).isoformat(),
                 )
 
     except (json.JSONDecodeError, ValueError, TypeError):
@@ -223,7 +223,7 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
             source=source,
             retry_after_seconds=retry_after,
             error_message=error_msg,
-            detected_at=datetime.now(UTC).isoformat(),
+            detected_at=datetime.now(timezone.utc).isoformat(),
         )
 
     return None
@@ -262,7 +262,9 @@ def wait_for_rate_limit(
     from scylla.e2e.checkpoint import save_checkpoint
 
     checkpoint.status = "paused_rate_limit"
-    checkpoint.rate_limit_until = (datetime.now(UTC) + timedelta(seconds=wait_time)).isoformat()
+    checkpoint.rate_limit_until = (
+        datetime.now(timezone.utc) + timedelta(seconds=wait_time)
+    ).isoformat()
     checkpoint.pause_count += 1
     save_checkpoint(checkpoint, checkpoint_path)
 
@@ -374,7 +376,7 @@ def check_api_rate_limit_status() -> RateLimitInfo | None:
                 source="agent",
                 retry_after_seconds=parse_retry_after(result.stderr),
                 error_message=result.stderr.strip(),
-                detected_at=datetime.now(UTC).isoformat(),
+                detected_at=datetime.now(timezone.utc).isoformat(),
             )
 
         return None

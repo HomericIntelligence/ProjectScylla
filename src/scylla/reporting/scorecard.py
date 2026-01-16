@@ -5,7 +5,7 @@ Python justification: JSON serialization and file I/O for scorecard persistence.
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -239,7 +239,7 @@ class ScorecardGenerator:
 
         """
         if timestamp is None:
-            timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         overall = self.calculate_overall(tests)
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from scylla.adapters.base import (
@@ -78,7 +78,7 @@ class OpenCodeAdapter(BaseAdapter):
         env = self._prepare_env(config)
 
         # Execute
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
         try:
             result = subprocess.run(
                 cmd,
@@ -90,7 +90,7 @@ class OpenCodeAdapter(BaseAdapter):
             )
 
         except subprocess.TimeoutExpired as e:
-            end_time = datetime.now(UTC)
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             # Write logs even on timeout
@@ -113,7 +113,7 @@ class OpenCodeAdapter(BaseAdapter):
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute OpenCode: {e}") from e
 
-        end_time = datetime.now(UTC)
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
         # Parse output for metrics

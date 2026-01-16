@@ -6,7 +6,7 @@ Python justification: Click library for CLI parsing and subprocess orchestration
 import json
 import statistics
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import click
@@ -331,7 +331,7 @@ def report(
     runs_per_tier = len(by_tier[sorted_tiers[0]]) if sorted_tiers else 0
 
     # Create report data
-    timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     report_data = ReportData(
         test_id=test_id,
         test_name=test_id.replace("-", " ").title(),

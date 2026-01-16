@@ -100,12 +100,17 @@ validate_env() {
 
     log_info "Validating environment configuration..."
 
-    # Check required variables for test execution
-    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-        log_error "ANTHROPIC_API_KEY is not set"
+    # Check for authentication (either API key or credentials file)
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]] && [[ ! -f "${HOME}/.claude/.credentials.json" ]]; then
+        log_error "No authentication found (neither ANTHROPIC_API_KEY nor credentials file)"
         ((errors++))
     else
-        log_info "ANTHROPIC_API_KEY is set"
+        if [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+            log_info "ANTHROPIC_API_KEY is set"
+        fi
+        if [[ -f "${HOME}/.claude/.credentials.json" ]]; then
+            log_info "Claude Code credentials file is mounted"
+        fi
     fi
 
     # Validate tier if set
@@ -195,19 +200,35 @@ setup_workspace() {
 ensure_clean_claude_environment() {
     log_info "Ensuring clean Claude Code environment..."
 
-    # Remove any pre-existing config
-    rm -rf "${HOME}/.claude" "${HOME}/.claude-plugin" 2>/dev/null || true
-
-    # Create fresh directories
+    # Ensure .claude directory exists with proper permissions
     mkdir -p "${HOME}/.claude"
+    chmod 700 "${HOME}/.claude"  # Owner can read/write/execute
 
-    # Verify isolation
-    if [[ -f "${HOME}/.claude/settings.json" ]]; then
-        log_error "Config leakage detected!"
-        exit 1
+    # Check for credentials in various locations (in order of preference)
+    if [[ -f "/tmp/host-creds/.credentials.json" ]]; then
+        # Current method: mounted from host
+        log_info "Found mounted credentials at /tmp/host-creds/.credentials.json"
+        cp "/tmp/host-creds/.credentials.json" "${HOME}/.claude/.credentials.json"
+        chmod 600 "${HOME}/.claude/.credentials.json"  # Owner can read/write (for token refresh)
+        log_info "Copied credentials to ${HOME}/.claude/.credentials.json"
+    elif [[ -f "${HOME}/.claude/.credentials.json" ]]; then
+        # Already exists (e.g., from previous setup)
+        log_info "Using existing Claude Code credentials at ${HOME}/.claude/.credentials.json"
+        chmod 600 "${HOME}/.claude/.credentials.json"  # Ensure proper permissions
+    elif [[ -f "/mnt/claude-creds/.credentials.json" ]]; then
+        # Legacy path support
+        log_info "Found mounted credentials at /mnt/claude-creds/.credentials.json"
+        cp "/mnt/claude-creds/.credentials.json" "${HOME}/.claude/.credentials.json"
+        chmod 600 "${HOME}/.claude/.credentials.json"
+        log_info "Copied credentials to ${HOME}/.claude/.credentials.json"
+    elif [[ -n "${ANTHROPIC_API_KEY:-}" ]]; then
+        log_info "Using ANTHROPIC_API_KEY from environment"
+    else
+        log_warn "No Claude Code credentials or ANTHROPIC_API_KEY found"
+        log_warn "Run 'claude auth' inside container to authenticate"
     fi
 
-    log_info "Claude Code environment is clean"
+    log_info "Claude Code environment ready"
 }
 
 # Execute agent in container
@@ -223,9 +244,9 @@ run_agent() {
         exit 1
     fi
 
-    # Validate required environment variables
-    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-        log_error "ANTHROPIC_API_KEY is not set"
+    # Validate authentication
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]] && [[ ! -f "${HOME}/.claude/.credentials.json" ]]; then
+        log_error "No authentication found (neither ANTHROPIC_API_KEY nor credentials file)"
         exit 1
     fi
 
@@ -248,6 +269,7 @@ run_agent() {
         --model "${MODEL}" \
         --print \
         --output-format stream-json \
+        --verbose \
         "$(cat /prompt/task.md)" \
         > /output/stdout.log 2> /output/stderr.log
 
@@ -262,6 +284,9 @@ run_agent() {
         log_info "Agent execution completed with exit code: ${exit_code}"
     fi
 
+    # Make output files world-writable so host can overwrite them
+    chmod 666 /output/result.json /output/stdout.log /output/stderr.log 2>/dev/null || true
+
     exit ${exit_code}
 }
 
@@ -272,9 +297,9 @@ run_judge() {
     # Ensure clean Claude Code environment
     ensure_clean_claude_environment
 
-    # Validate required environment variables
-    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
-        log_error "ANTHROPIC_API_KEY is not set"
+    # Validate authentication
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]] && [[ ! -f "${HOME}/.claude/.credentials.json" ]]; then
+        log_error "No authentication found (neither ANTHROPIC_API_KEY nor credentials file)"
         exit 1
     fi
 
@@ -311,13 +336,19 @@ run_test() {
     log_info "Test ID: ${TEST_ID}"
 
     # Validate required variables for test run
-    local required_vars=("TIER" "MODEL" "RUN_NUMBER" "TEST_ID" "ANTHROPIC_API_KEY")
+    local required_vars=("TIER" "MODEL" "RUN_NUMBER" "TEST_ID")
     for var in "${required_vars[@]}"; do
         if [[ -z "${!var:-}" ]]; then
             log_error "Required variable ${var} is not set"
             exit 1
         fi
     done
+
+    # Check authentication separately (allow either API key or credentials file)
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]] && [[ ! -f "${HOME}/.claude/.credentials.json" ]]; then
+        log_error "No authentication found (neither ANTHROPIC_API_KEY nor credentials file)"
+        exit 1
+    fi
 
     # Set up workspace
     setup_workspace
@@ -371,8 +402,52 @@ main() {
             validate_env || exit 1
             run_test
             ;;
+        python|python3)
+            # Running Python scripts directly
+            # Ensure clean environment and execute
+            ensure_clean_claude_environment
+            exec "$@"
+            ;;
+        bash|sh)
+            # Running interactive shell
+            # Set up credentials first, then launch shell
+            ensure_clean_claude_environment
+
+            # Show welcome message for interactive sessions
+            if [[ -t 0 ]]; then
+                echo ""
+                echo "=========================================="
+                echo "ProjectScylla Container Shell"
+                echo "=========================================="
+                echo "Working Directory: $(pwd)"
+                echo "Python Version: $(python --version 2>&1)"
+                echo ""
+                echo "Credentials: ${HOME}/.claude/.credentials.json"
+                if [[ -f "${HOME}/.claude/.credentials.json" ]]; then
+                    echo "  ✓ Credentials found"
+                else
+                    echo "  ✗ Credentials not found - run 'claude auth' to login"
+                fi
+                echo ""
+                echo "Run experiments:"
+                echo "  python scripts/run_e2e_experiment.py \\"
+                echo "    --tiers-dir tests/fixtures/tests/test-001 \\"
+                echo "    --tiers T0 --runs 1 -v"
+                echo ""
+                echo "Authenticate Claude (if needed):"
+                echo "  claude auth"
+                echo ""
+                echo "=========================================="
+                echo ""
+            fi
+
+            exec "$@"
+            ;;
         *)
             # If unknown command, treat as a shell command
+            # This allows running arbitrary commands like:
+            # docker run scylla-runner:latest python scripts/run_e2e_experiment.py --args
+            ensure_clean_claude_environment
             exec "$@"
             ;;
     esac

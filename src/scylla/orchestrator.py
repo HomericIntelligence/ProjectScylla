@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from scylla.cli.progress import ProgressDisplay, RunStatus
@@ -96,7 +96,7 @@ class EvalOrchestrator:
             RunResult with execution details.
 
         """
-        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
 
         # Load test configuration
         test_case = self.loader.load_test(test_id)
@@ -131,14 +131,14 @@ class EvalOrchestrator:
             )
 
             # Execute adapter (if configured)
-            start_time = datetime.now(UTC)
+            start_time = datetime.now(timezone.utc)
             execution_result = self._run_adapter(
                 workspace=workspace,
                 test_case=test_case,
                 model_id=model_id,
                 tier_id=tier_id,
             )
-            end_time = datetime.now(UTC)
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             # Update progress to judging

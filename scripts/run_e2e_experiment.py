@@ -106,10 +106,10 @@ Examples:
         --tiers-dir tests/fixtures/tests/test-001 \\
         --tiers T0 --runs 1 -v
 
-    # T0 with containers (1 subtest, 1 run, verbose)
+    # T0 with 1 subtest, 1 run, verbose
     python scripts/run_e2e_experiment.py \\
         --tiers-dir tests/fixtures/tests/test-001 \\
-        --tiers T0 --runs 1 --max-subtests 1 --use-containers -v
+        --tiers T0 --runs 1 --max-subtests 1 -v
 
     # Run all tiers with defaults from test.yaml
     python scripts/run_e2e_experiment.py \\
@@ -188,11 +188,6 @@ Examples:
         type=int,
         default=None,
         help="Limit sub-tests per tier for testing (default: all)",
-    )
-    parser.add_argument(
-        "--use-containers",
-        action="store_true",
-        help="Run agents and judges in isolated Docker containers (default: False)",
     )
 
     # Model settings
@@ -416,8 +411,61 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],
         max_subtests=args.max_subtests,
-        use_containers=args.use_containers,
     )
+
+
+def ensure_docker_image() -> bool:
+    """Check if scylla-runner:latest exists, build it if not.
+
+    Returns:
+        True if image is available, False if build failed
+
+    """
+    try:
+        # Check if image exists
+        result = subprocess.run(
+            ["docker", "images", "-q", "scylla-runner:latest"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        if result.returncode == 0 and result.stdout.strip():
+            logger.info("Docker image scylla-runner:latest found")
+            return True
+
+        # Image doesn't exist, build it
+        logger.info("Docker image scylla-runner:latest not found, building...")
+        docker_dir = Path(__file__).parent.parent / "docker"
+
+        if not docker_dir.exists():
+            logger.error(f"Docker directory not found: {docker_dir}")
+            return False
+
+        build_result = subprocess.run(
+            ["docker", "build", "-t", "scylla-runner:latest", "."],
+            cwd=docker_dir,
+            capture_output=True,
+            text=True,
+            timeout=600,  # 10 minute timeout for build
+        )
+
+        if build_result.returncode == 0:
+            logger.info("Docker image built successfully")
+            return True
+        else:
+            logger.error(f"Docker build failed: {build_result.stderr}")
+            return False
+
+    except subprocess.TimeoutExpired:
+        logger.error("Docker command timed out")
+        return False
+    except FileNotFoundError:
+        logger.error("Docker command not found. Is Docker installed?")
+        return False
+    except Exception as e:
+        logger.error(f"Failed to ensure Docker image: {e}")
+        return False
 
 
 def main() -> int:

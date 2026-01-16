@@ -15,7 +15,7 @@ import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -362,7 +362,7 @@ class EvalRunner:
         if self._state is None:
             self._state = ExecutionState(
                 test_id=test_id,
-                started_at=datetime.now(UTC).isoformat(),
+                started_at=datetime.now(timezone.utc).isoformat(),
             )
 
         # Initialize summary
@@ -387,7 +387,7 @@ class EvalRunner:
                 summary.tiers[tier_id][model] = tier_summary
 
         # Finalize summary
-        summary.ended_at = datetime.now(UTC).isoformat()
+        summary.ended_at = datetime.now(timezone.utc).isoformat()
         summary.status = "completed"
 
         # Save final state if configured
@@ -538,13 +538,13 @@ class EvalRunner:
         for attempt in range(self.config.max_retries):
             try:
                 # Execute in container
-                start_time = datetime.now(UTC)
+                start_time = datetime.now(timezone.utc)
                 execution_info = self._run_in_container(
                     container_name=container_name,
                     tier_config=tier_config,
                     model=model,
                 )
-                end_time = datetime.now(UTC)
+                end_time = datetime.now(timezone.utc)
 
                 execution_info.started_at = start_time.isoformat()
                 execution_info.ended_at = end_time.isoformat()

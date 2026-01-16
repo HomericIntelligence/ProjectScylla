@@ -85,6 +85,7 @@ gh pr merge --auto --rebase
 - [Error Handling](/.claude/shared/error-handling.md)
 - [Evaluation Guidelines](/.claude/shared/evaluation-guidelines.md)
 - [Metrics Definitions](/.claude/shared/metrics-definitions.md)
+- [Thinking Mode Configuration](/.claude/shared/thinking-mode.md) - Disabled by default
 
 ### Agent System
 

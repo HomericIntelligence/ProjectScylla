@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -59,8 +59,8 @@ def checkpoint(tmp_path: Path) -> tuple[E2ECheckpoint, Path]:
         experiment_dir=str(tmp_path),
         config_hash="test-hash",
         completed_runs={},
-        started_at=datetime.now(UTC).isoformat(),
-        last_updated_at=datetime.now(UTC).isoformat(),
+        started_at=datetime.now(timezone.utc).isoformat(),
+        last_updated_at=datetime.now(timezone.utc).isoformat(),
         status="running",
         rate_limit_source=None,
         rate_limit_until=None,
@@ -199,7 +199,7 @@ class TestResumeAfterSignal:
 
         # Simulate interrupt by updating status
         cp.status = "interrupted"
-        cp.last_updated_at = datetime.now(UTC).isoformat()
+        cp.last_updated_at = datetime.now(timezone.utc).isoformat()
         save_checkpoint(cp, cp_path)
 
         # Reload and verify

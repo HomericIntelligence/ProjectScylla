@@ -5,7 +5,7 @@ Python justification: JSON serialization and file I/O for summary persistence.
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -206,7 +206,7 @@ class SummaryGenerator:
 
         """
         if timestamp is None:
-            timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
         rankings = self.calculate_rankings(models)
 
