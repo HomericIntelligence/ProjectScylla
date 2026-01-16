@@ -587,6 +587,7 @@ class ExperimentConfig:
         max_turns: Maximum conversation turns for agent (None = unlimited)
         max_subtests: Maximum sub-tests per tier for testing (None = all)
         language: Programming language for build pipeline ('python' or 'mojo')
+        thinking_mode: Thinking mode for agent execution (None, Low, High, UltraThink)
         use_containers: Run agents and judges in isolated Docker containers (default: False)
 
     """
@@ -604,6 +605,7 @@ class ExperimentConfig:
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
     max_subtests: int | None = None  # Max sub-tests per tier (None = all)
+    thinking_mode: str = "None"  # Thinking mode: None (default), Low, High, UltraThink
     use_containers: bool = (
         False  # DEPRECATED: Container isolation now at experiment level, not per-agent
     )
