@@ -288,6 +288,21 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     return BuildPipelineResult(**results)
 
 
+def _get_pipeline_env() -> dict[str, str]:
+    """Get environment for pipeline subprocess calls with PYTHONPYCACHEPREFIX.
+
+    Sets PYTHONPYCACHEPREFIX to redirect __pycache__ creation away from workspace,
+    preventing unfair penalization for build artifacts created by the framework.
+
+    Returns:
+        Environment dict with PYTHONPYCACHEPREFIX set.
+
+    """
+    env = os.environ.copy()
+    env["PYTHONPYCACHEPREFIX"] = "/tmp/scylla_pycache"
+    return env
+
+
 def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
     """Run Python build/lint pipeline and capture results.
 
@@ -299,8 +314,9 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
 
     """
     results: dict[str, Any] = {"language": "python"}
+    pipeline_env = _get_pipeline_env()
 
-    # Python syntax check (using python -m py_compile)
+    # Python syntax check (using python -m compileall)
     try:
         build_result = subprocess.run(
             ["python", "-m", "compileall", "-q", "."],
@@ -308,12 +324,49 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             capture_output=True,
             text=True,
             timeout=300,
+            env=pipeline_env,
         )
         results["build_passed"] = build_result.returncode == 0
         results["build_na"] = False
-        results["build_output"] = build_result.stdout + "\n" + build_result.stderr
+
+        # Try to execute any Python scripts found in workspace root for functional verification
+        output_lines = []
         if results["build_passed"]:
-            results["build_output"] = "Python syntax check passed"
+            output_lines.append("Python syntax check passed")
+
+            # Find .py files in workspace root (not subdirectories)
+            try:
+                py_files = list(workspace.glob("*.py"))
+                if py_files:
+                    output_lines.append("\n## Script Execution Results\n")
+                    for py_file in sorted(py_files):
+                        output_lines.append(f"\n### Running: python {py_file.name}")
+                        try:
+                            exec_result = subprocess.run(
+                                ["python", py_file.name],
+                                cwd=workspace,
+                                capture_output=True,
+                                text=True,
+                                timeout=30,
+                                env=pipeline_env,
+                            )
+                            output_lines.append(f"Exit code: {exec_result.returncode}")
+                            if exec_result.stdout:
+                                output_lines.append(f"Output:\n{exec_result.stdout[:500]}")
+                            if exec_result.stderr:
+                                output_lines.append(f"Stderr:\n{exec_result.stderr[:500]}")
+                        except subprocess.TimeoutExpired:
+                            output_lines.append("Execution timed out (30s)")
+                        except Exception as e:
+                            output_lines.append(f"Execution error: {e}")
+            except Exception as e:
+                logger.warning(f"Error finding Python scripts: {e}")
+
+        results["build_output"] = (
+            "\n".join(output_lines)
+            if output_lines
+            else (build_result.stdout + "\n" + build_result.stderr)
+        )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         results["build_passed"] = False
         results["build_na"] = False
@@ -327,6 +380,7 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             capture_output=True,
             text=True,
             timeout=120,
+            env=pipeline_env,
         )
         results["format_passed"] = format_result.returncode == 0
         results["format_na"] = False
@@ -349,6 +403,7 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             capture_output=True,
             text=True,
             timeout=600,
+            env=pipeline_env,
         )
         # pytest exit codes: 0=all passed, 1=tests failed, 5=no tests collected
         if test_result.returncode == 5:
@@ -377,6 +432,7 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
             capture_output=True,
             text=True,
             timeout=300,
+            env=pipeline_env,
         )
         # Check if .pre-commit-config.yaml is missing
         output = precommit_result.stdout + "\n" + precommit_result.stderr
@@ -528,7 +584,8 @@ def _get_workspace_state(workspace: Path) -> str:
 def _get_patchfile(workspace: Path) -> str:
     """Generate a patchfile from the agent's changes.
 
-    Uses git diff to capture all changes made by the agent.
+    Uses git diff to capture all changes made by the agent, including both
+    staged and unstaged changes.
 
     Args:
         workspace: Path to the workspace directory
@@ -538,22 +595,39 @@ def _get_patchfile(workspace: Path) -> str:
 
     """
     try:
-        # Get both staged and unstaged changes
-        result = subprocess.run(
-            ["git", "diff", "HEAD"],
+        # Get unstaged changes (files modified but not staged)
+        unstaged_result = subprocess.run(
+            ["git", "diff"],
             cwd=workspace,
             capture_output=True,
             text=True,
             timeout=30,
         )
 
-        if result.returncode != 0:
-            logger.warning(f"git diff failed: {result.stderr}")
+        # Get staged changes (files in staging area)
+        staged_result = subprocess.run(
+            ["git", "diff", "--cached"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+
+        if unstaged_result.returncode != 0 and staged_result.returncode != 0:
+            logger.warning("git diff failed")
             return "(unable to generate patchfile)"
 
-        diff = result.stdout.strip()
-        if not diff:
+        # Combine both diffs
+        diffs = []
+        if unstaged_result.stdout.strip():
+            diffs.append("## Unstaged Changes\n" + unstaged_result.stdout.strip())
+        if staged_result.stdout.strip():
+            diffs.append("## Staged Changes\n" + staged_result.stdout.strip())
+
+        if not diffs:
             return "(no changes detected)"
+
+        diff = "\n\n".join(diffs)
 
         # Truncate if too long (keep first and last portions)
         max_lines = 500
@@ -662,7 +736,7 @@ def run_llm_judge(
     """
     import json
     import time
-    from datetime import UTC, datetime
+    from datetime import datetime, timezone
 
     # Track judge execution timing
     judge_start = time.time()
@@ -764,7 +838,7 @@ def run_llm_judge(
                 json.dump(
                     {
                         "judge_duration_seconds": judge_duration,
-                        "measured_at": datetime.now(UTC).isoformat(),
+                        "measured_at": datetime.now(timezone.utc).isoformat(),
                     },
                     f,
                     indent=2,
@@ -783,7 +857,7 @@ def run_llm_judge(
                 json.dump(
                     {
                         "judge_duration_seconds": judge_duration,
-                        "measured_at": datetime.now(UTC).isoformat(),
+                        "measured_at": datetime.now(timezone.utc).isoformat(),
                         "failed": True,
                     },
                     f,
@@ -1243,7 +1317,7 @@ def _save_judge_logs(
 
     # Create MODEL.md with judge model information
     try:
-        from datetime import UTC, datetime
+        from datetime import datetime, timezone
 
         # Try to get claude-code version
         claude_version_result = subprocess.run(
@@ -1262,7 +1336,7 @@ def _save_judge_logs(
 
 **Model**: {model}
 **Claude Code Version**: {claude_code_version}
-**Timestamp**: {datetime.now(UTC).isoformat()}
+**Timestamp**: {datetime.now(timezone.utc).isoformat()}
 """
         (judge_dir / "MODEL.md").write_text(model_info)
     except Exception as e:

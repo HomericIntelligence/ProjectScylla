@@ -33,6 +33,22 @@ Compiled artifacts: .pyc, .pyo, .class, .o, .so files and similar compiler outpu
 Evaluate only source files, configuration files explicitly required by the task, output files specified in requirements, and documentation the agent was asked to produce. The presence or absence of ignored artifacts must not influence your scoring unless the task explicitly required managing them.
 </workspace_inspection_rules>
 
+<functional_verification>
+IMPORTANT: The "Workspace State" section lists files detected by git status. These files EXIST even if they don't appear in the Git Diff (uncommitted files are still valid deliverables). Always trust the Workspace State section for file existence.
+
+For functional criteria that require verifying script execution or program behavior:
+
+1. The rubric will specify which commands to run (e.g., "Running `python hello.py` produces output")
+2. The build pipeline results will show whether the script executes successfully
+3. Use the workspace state and build pipeline outputs to verify functional correctness
+4. If a functional criterion requires specific output, verify against the actual execution results provided
+
+Do not assume a script works or fails based solely on the git diff. The git diff may not show uncommitted files. Verify functionality based on:
+- Workspace State (lists all created/modified files, committed or not)
+- Build Pipeline Results (shows actual execution and output)
+- Actual file contents (when provided in the evaluation context)
+</functional_verification>
+
 <scoring_methodology>
 The rubric contains two distinct scoring types. Apply the appropriate method based on the item's classification.
 

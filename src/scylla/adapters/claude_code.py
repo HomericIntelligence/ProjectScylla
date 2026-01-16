@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import re
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from scylla.adapters.base import (
@@ -52,6 +52,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         config: AdapterConfig,
         tier_config: TierConfig | None = None,
         system_prompt_mode: str = "default",
+        agent_name: str | None = None,
     ) -> AdapterResult:
         """Execute Claude Code CLI with the given configuration.
 
@@ -62,6 +63,8 @@ class ClaudeCodeAdapter(BaseAdapter):
                 - "none": Use empty system prompt (T0 vanilla)
                 - "default": Use Claude Code's built-in prompt (T1)
                 - "custom": Let CLAUDE.md in workspace take effect (T2+)
+            agent_name: Optional agent name for delegation tiers (T3/T4).
+                Used with --agent flag to specify which agent to use.
 
         Returns:
             AdapterResult with execution details.
@@ -78,13 +81,13 @@ class ClaudeCodeAdapter(BaseAdapter):
         final_prompt = self.inject_tier_prompt(task_prompt, tier_config)
 
         # Build CLI command
-        cmd = self._build_command(config, final_prompt, tier_config, system_prompt_mode)
+        cmd = self._build_command(config, final_prompt, tier_config, system_prompt_mode, agent_name)
 
         # Prepare environment with API keys
         env = self._prepare_env(config)
 
         # Execute
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
         try:
             result = subprocess.run(
                 cmd,
@@ -96,7 +99,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             )
 
         except subprocess.TimeoutExpired as e:
-            end_time = datetime.now(UTC)
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             # Write logs even on timeout
@@ -119,7 +122,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute Claude Code: {e}") from e
 
-        end_time = datetime.now(UTC)
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
         # Check for rate limit BEFORE parsing metrics
@@ -163,6 +166,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         prompt: str,
         tier_config: TierConfig | None,
         system_prompt_mode: str = "default",
+        agent_name: str | None = None,
     ) -> list[str]:
         """Build the Claude Code CLI command.
 
@@ -174,6 +178,7 @@ class ClaudeCodeAdapter(BaseAdapter):
                 - "none": Use empty system prompt (T0 vanilla)
                 - "default": Use Claude Code's built-in prompt (T1)
                 - "custom": Let CLAUDE.md in workspace take effect (T2+)
+            agent_name: Optional agent name for delegation tiers (T3/T4).
 
         Returns:
             Command as list of strings.
@@ -202,6 +207,10 @@ class ClaudeCodeAdapter(BaseAdapter):
         # Disable tools if explicitly set to False
         if tier_settings["tools_enabled"] is False:
             cmd.extend(["--tools", ""])
+
+        # Add agent delegation flag for T3/T4 tiers
+        if agent_name:
+            cmd.extend(["--agent", agent_name])
 
         # Add extra arguments from config
         if config.extra_args:

@@ -16,7 +16,7 @@ import subprocess
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from enum import Enum
 from multiprocessing import Manager
 from pathlib import Path
@@ -82,7 +82,7 @@ def _phase_log(phase: str, message: str) -> None:
         message: Message content
 
     """
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     logger.info(f"{timestamp} [{phase}] - {message}")
 
 
@@ -98,7 +98,7 @@ def _stage_log(
         elapsed: Optional elapsed time in seconds
 
     """
-    timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     elapsed_str = f" ({elapsed:.1f}s)" if elapsed is not None else ""
     logger.info(f"{timestamp} [{subtest_id}] Stage: {stage.value} - {status}{elapsed_str}")
 
@@ -187,7 +187,7 @@ def _create_agent_model_md(agent_dir: Path, model: str) -> None:
 
 **Model**: {model}
 **Claude Code Version**: {claude_code_version}
-**Timestamp**: {datetime.now(UTC).isoformat()}
+**Timestamp**: {datetime.now(timezone.utc).isoformat()}
 
 ## Configuration
 - Model ID: {model}
@@ -561,13 +561,10 @@ class SubTestExecutor:
         self.workspace_manager = workspace_manager
         self.adapter = adapter or ClaudeCodeAdapter()
 
-        # Initialize Docker executor if containers are enabled
+        # Container execution is now handled at the experiment level
+        # (entire script runs in container).
+        # Individual agent/judge container orchestration is disabled
         self.docker_executor = None
-        if config.use_containers:
-            from scylla.executor.docker import DockerExecutor
-
-            self.docker_executor = DockerExecutor()
-            logger.info("Container execution enabled - using Docker for agent and judge isolation")
 
     def run_subtest(
         self,
@@ -784,8 +781,13 @@ class SubTestExecutor:
         agent_dir: Path,
         workspace: Path,
         prompt_file: Path,
+        agent_name: str | None = None,
     ) -> AdapterResult:
-        """Run agent execution with optional container isolation.
+        """Run agent execution directly (no nested containers).
+
+        Container isolation is now handled at the experiment level - the entire
+        run_e2e_experiment.py script runs inside a container. This method always
+        runs the agent directly using the adapter.
 
         Args:
             tier_config: Tier configuration for system prompt mode
@@ -794,63 +796,18 @@ class SubTestExecutor:
             agent_dir: Directory for agent outputs
             workspace: Workspace directory
             prompt_file: Path to task prompt file
+            agent_name: Optional agent name for T3/T4 delegation tiers
 
         Returns:
             AdapterResult with execution details
 
         """
-        if self.config.use_containers and self.docker_executor is not None:
-            # Run agent in isolated container
-            from scylla.executor.agent_container import (
-                AgentContainerConfig,
-                AgentContainerManager,
-            )
-
-            # Get tier-specific CLAUDE.md if it exists
-            claude_md_path = None
-            if tier_config.system_prompt_mode != "empty":
-                # Check for tier-specific CLAUDE.md in workspace
-                potential_claude_md = workspace / "CLAUDE.md"
-                if potential_claude_md.exists():
-                    claude_md_path = potential_claude_md
-
-            container_config = AgentContainerConfig(
-                workspace_dir=workspace,
-                output_dir=agent_dir,
-                task_prompt_path=prompt_file,
-                claude_md_path=claude_md_path,
-                model=adapter_config.model,
-                timeout_seconds=adapter_config.timeout,
-            )
-
-            manager = AgentContainerManager(self.docker_executor)
-
-            try:
-                container_result = manager.run(container_config)
-
-                # Convert ContainerResult to AdapterResult
-                from scylla.adapters.base import AdapterResult, AdapterTokenStats
-
-                # Parse token stats from output if available
-                # For now, create empty token stats
-                return AdapterResult(
-                    exit_code=container_result.exit_code,
-                    stdout=container_result.stdout,
-                    stderr=container_result.stderr,
-                    token_stats=AdapterTokenStats(),
-                    cost_usd=0.0,
-                    api_calls=0,
-                )
-            except Exception as e:
-                logger.error(f"Container execution failed: {e}")
-                # Fall back to direct execution
-                logger.warning("Falling back to direct adapter execution")
-
-        # Direct execution (no container)
+        # Always use direct execution (container is at experiment level, not per-agent)
         return self.adapter.run(
             config=adapter_config,
             tier_config=None,
             system_prompt_mode=tier_config.system_prompt_mode,
+            agent_name=agent_name,
         )
 
     def _execute_single_run(
@@ -964,7 +921,19 @@ class SubTestExecutor:
                 f"Running agent with model[{self.config.models[0]}] with prompt[{prompt_file}]",
             )
 
-            agent_start = datetime.now(UTC)
+            # Extract agent name from subtest config for T3/T4 delegation tiers
+            agent_name = None
+            if subtest.resources and "agents" in subtest.resources:
+                agents_spec = subtest.resources["agents"]
+                # Get agent names from the config
+                agent_names_list = agents_spec.get("names", [])
+                # For T3/T4, expect single agent (not multiple)
+                if agent_names_list:
+                    # Take first agent name, remove .md extension if present
+                    agent_name = agent_names_list[0].replace(".md", "")
+                    logger.info(f"Using agent: {agent_name}")
+
+            agent_start = datetime.now(timezone.utc)
             try:
                 result = self._run_agent_execution(
                     tier_config=tier_config,
@@ -973,6 +942,7 @@ class SubTestExecutor:
                     agent_dir=agent_dir,
                     workspace=workspace,
                     prompt_file=prompt_file,
+                    agent_name=agent_name,
                 )
             except Exception as e:
                 # Handle execution errors - create a mock result with token_stats
@@ -987,7 +957,7 @@ class SubTestExecutor:
                     api_calls=0,
                 )
 
-            duration = (datetime.now(UTC) - agent_start).total_seconds()
+            duration = (datetime.now(timezone.utc) - agent_start).total_seconds()
 
             # Persist timing to file for resume capability
             agent_timing_file = agent_dir / "timing.json"
@@ -995,7 +965,7 @@ class SubTestExecutor:
                 json.dump(
                     {
                         "agent_duration_seconds": duration,
-                        "measured_at": datetime.now(UTC).isoformat(),
+                        "measured_at": datetime.now(timezone.utc).isoformat(),
                     },
                     f,
                     indent=2,
@@ -1052,7 +1022,7 @@ class SubTestExecutor:
         else:
             # Run judge (either agent ran, or judge result missing)
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Starting")
-            judge_start = datetime.now(UTC)
+            judge_start = datetime.now(timezone.utc)
 
             # Find rubric path (symlinked at experiment root)
             # results_dir structure: experiment_dir/T0/01/
@@ -1075,7 +1045,7 @@ class SubTestExecutor:
 
             _save_pipeline_commands(run_dir, workspace, language=self.config.language)
 
-            judge_duration = (datetime.now(UTC) - judge_start).total_seconds()
+            judge_duration = (datetime.now(timezone.utc) - judge_start).total_seconds()
             _stage_log(subtest_id, ExecutionStage.JUDGE, "Complete", judge_duration)
 
             # Persist timing to file for resume capability
@@ -1084,7 +1054,7 @@ class SubTestExecutor:
                 json.dump(
                     {
                         "judge_duration_seconds": judge_duration,
-                        "measured_at": datetime.now(UTC).isoformat(),
+                        "measured_at": datetime.now(timezone.utc).isoformat(),
                     },
                     f,
                     indent=2,
@@ -1211,7 +1181,7 @@ class SubTestExecutor:
         """
         import shlex
 
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
 
         # Ensure workspace path is absolute for git worktree
         workspace_abs = workspace.resolve()
@@ -1245,7 +1215,7 @@ class SubTestExecutor:
             timeout=60,
         )
 
-        duration = (datetime.now(UTC) - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
         command_logger.log_command(
             cmd=worktree_cmd,
             stdout=result.stdout,
@@ -1813,7 +1783,7 @@ def _detect_rate_limit_from_results(
                 source="agent",
                 retry_after_seconds=None,  # Will use default
                 error_message=result.selection_reason,
-                detected_at=datetime.now(UTC).isoformat(),
+                detected_at=datetime.now(timezone.utc).isoformat(),
             )
 
     # Check .failed/ directories for crashed workers
