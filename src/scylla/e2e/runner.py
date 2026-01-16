@@ -14,7 +14,7 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -181,7 +181,7 @@ class E2ERunner:
             ExperimentResult with all tier results and analysis.
 
         """
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
 
         # Check for existing checkpoint (auto-resume unless --fresh)
         checkpoint_path = self._find_existing_checkpoint()
@@ -229,8 +229,8 @@ class E2ERunner:
                 experiment_dir=str(self.experiment_dir),
                 config_hash=compute_config_hash(self.config),
                 completed_runs={},
-                started_at=datetime.now(UTC).isoformat(),
-                last_updated_at=datetime.now(UTC).isoformat(),
+                started_at=datetime.now(timezone.utc).isoformat(),
+                last_updated_at=datetime.now(timezone.utc).isoformat(),
                 status="running",
                 rate_limit_source=None,
                 rate_limit_until=None,
@@ -378,7 +378,7 @@ class E2ERunner:
             # Save checkpoint on interrupt
             if is_shutdown_requested() and self.checkpoint:
                 self.checkpoint.status = "interrupted"
-                self.checkpoint.last_updated_at = datetime.now(UTC).isoformat()
+                self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
                 save_checkpoint(self.checkpoint, checkpoint_path)
                 logger.warning("💾 Checkpoint saved after interrupt")
             self._cleanup_pid_file()
@@ -386,7 +386,7 @@ class E2ERunner:
         # If shutdown was requested, return partial results
         if is_shutdown_requested():
             logger.warning("Experiment interrupted - returning partial results")
-            end_time = datetime.now(UTC)
+            end_time = datetime.now(timezone.utc)
             total_duration = (end_time - start_time).total_seconds()
             total_cost = sum(t.total_cost for t in tier_results.values())
 
@@ -423,7 +423,7 @@ class E2ERunner:
             )
 
         # Calculate overall metrics (normal completion)
-        end_time = datetime.now(UTC)
+        end_time = datetime.now(timezone.utc)
         total_duration = (end_time - start_time).total_seconds()
         total_cost = sum(t.total_cost for t in tier_results.values())
 
@@ -482,7 +482,7 @@ class E2ERunner:
             Path to the experiment directory.
 
         """
-        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H-%M-%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
         experiment_dir = self.results_base_dir / f"{timestamp}-{self.config.experiment_id}"
         experiment_dir.mkdir(parents=True, exist_ok=True)
 
@@ -601,7 +601,7 @@ class E2ERunner:
             TierResult with all sub-test results.
 
         """
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
 
         # Load tier configuration
         tier_config = self.tier_manager.load_tier_config(tier_id)
@@ -659,7 +659,7 @@ class E2ERunner:
         # Save selection
         save_selection(selection, str(tier_dir / "best_subtest.json"))
 
-        end_time = datetime.now(UTC)
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
         # Aggregate token stats from all subtests

@@ -147,6 +147,29 @@ class AgentContainerManager:
                 "mode": "ro",
             }
 
+        # Mount Claude Code credentials if available
+        # Copy to temp directory with world-readable permissions for container access
+        # Use home directory instead of /tmp due to WSL2 mount visibility issues
+        credentials_path = Path.home() / ".claude" / ".credentials.json"
+        if credentials_path.exists():
+            import uuid
+
+            # Create temp directory in home (not /tmp - WSL2 mount issue)
+            temp_dir = Path.home() / f".scylla-temp-creds-{uuid.uuid4().hex[:8]}"
+            temp_dir.mkdir(exist_ok=True)
+            temp_dir.chmod(0o755)  # Make directory accessible to all users
+
+            temp_creds = temp_dir / ".credentials.json"
+            temp_creds.write_text(credentials_path.read_text())
+            temp_creds.chmod(0o644)  # Make file readable by all users
+
+            # Mount the entire temp directory to /mnt/claude-creds
+            volumes[str(temp_dir)] = {
+                "bind": "/mnt/claude-creds",
+                "mode": "ro",
+                "temp_cleanup": str(temp_dir),  # Mark for cleanup
+            }
+
         return volumes
 
     def _build_environment(self, config: AgentContainerConfig) -> dict[str, str]:
@@ -192,36 +215,43 @@ class AgentContainerManager:
             ContainerTimeoutError: If execution exceeds timeout.
 
         """
+        import shutil
         import subprocess
 
-        # Build docker run command
-        cmd = ["docker", "run", "--rm"]
-
-        # Add container name if specified
-        if config.name:
-            cmd.extend(["--name", config.name])
-
-        # Add environment variables
-        for key, value in config.env_vars.items():
-            cmd.extend(["-e", f"{key}={value}"])
-
-        # Add volume mounts
-        for host_path, mount_config in volumes.items():
-            mount_str = f"{host_path}:{mount_config['bind']}:{mount_config['mode']}"
-            cmd.extend(["-v", mount_str])
-
-        # Add image and command
-        cmd.append(config.image)
-        cmd.extend(config.command)
-
-        # Execute container
-        import logging
-
-        logger = logging.getLogger(__name__)
-        logger.info(f"Executing agent in container: {config.image}")
-        logger.debug(f"Docker command: {' '.join(cmd)}")
+        # Collect temp directories to clean up after execution
+        temp_dirs = []
+        for mount_config in volumes.values():
+            if "temp_cleanup" in mount_config:
+                temp_dirs.append(mount_config["temp_cleanup"])
 
         try:
+            # Build docker run command
+            cmd = ["docker", "run", "--rm"]
+
+            # Add container name if specified
+            if config.name:
+                cmd.extend(["--name", config.name])
+
+            # Add environment variables
+            for key, value in config.env_vars.items():
+                cmd.extend(["-e", f"{key}={value}"])
+
+            # Add volume mounts
+            for host_path, mount_config in volumes.items():
+                mount_str = f"{host_path}:{mount_config['bind']}:{mount_config['mode']}"
+                cmd.extend(["-v", mount_str])
+
+            # Add image and command
+            cmd.append(config.image)
+            cmd.extend(config.command)
+
+            # Execute container
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(f"Executing agent in container: {config.image}")
+            logger.debug(f"Docker command: {' '.join(cmd)}")
+
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -256,6 +286,14 @@ class AgentContainerManager:
             from scylla.executor.docker import ContainerError
 
             raise ContainerError(f"Container execution failed: {e}")
+
+        finally:
+            # Clean up temporary credential files
+            for temp_dir in temp_dirs:
+                try:
+                    shutil.rmtree(temp_dir)
+                except Exception:
+                    pass  # Best effort cleanup
 
 
 __all__ = ["AgentContainerConfig", "AgentContainerManager"]

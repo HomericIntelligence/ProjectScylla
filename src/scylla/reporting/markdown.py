@@ -4,7 +4,7 @@ Python justification: String templating and file I/O for report generation.
 """
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -373,7 +373,7 @@ def create_report_data(
 
     """
     if timestamp is None:
-        timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     return ReportData(
         test_id=test_id,
