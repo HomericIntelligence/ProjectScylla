@@ -7,7 +7,7 @@
 # - Claude Code CLI for agent evaluation
 # - Entry point for test execution
 
-FROM python:3.10-slim
+FROM python:3.14.2-slim
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="scylla-runner"
@@ -48,10 +48,22 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # This is the primary tool for agent-based test execution
 RUN npm install -g @anthropic-ai/claude-code
 
+# Install Python build dependencies
+RUN pip install --no-cache-dir hatchling
+
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
 
-# Set up workspace directory
+# Copy project files (for building scylla package)
+# Copy minimal set of files needed for installation
+COPY --chown=scylla:scylla pyproject.toml /opt/scylla/
+COPY --chown=scylla:scylla README.md /opt/scylla/
+COPY --chown=scylla:scylla src/ /opt/scylla/src/
+
+# Install the scylla package
+RUN pip install --no-cache-dir /opt/scylla/
+
+# Set up workspace directory (will be mounted at runtime with full project)
 WORKDIR /workspace
 RUN chown -R scylla:scylla /workspace
 
@@ -60,8 +72,8 @@ RUN rm -rf /home/scylla/.claude /home/scylla/.claude-plugin 2>/dev/null || true 
     mkdir -p /home/scylla/.claude && \
     chown -R scylla:scylla /home/scylla/.claude
 
-# Copy entry point script
-COPY --chown=scylla:scylla entrypoint.sh /entrypoint.sh
+# Copy entry point script from docker/ subdirectory
+COPY --chown=scylla:scylla docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Environment variables that containers receive at runtime

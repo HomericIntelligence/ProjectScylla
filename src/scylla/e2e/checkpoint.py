@@ -12,7 +12,7 @@ import hashlib
 import json
 import os
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -103,7 +103,7 @@ class E2ECheckpoint:
             self.completed_runs[tier_id][subtest_id] = {}
 
         self.completed_runs[tier_id][subtest_id][run_number] = status
-        self.last_updated_at = datetime.now(UTC).isoformat()
+        self.last_updated_at = datetime.now(timezone.utc).isoformat()
 
     def unmark_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> None:
         """Remove a run from completed runs (for re-running invalid runs).
@@ -118,7 +118,7 @@ class E2ECheckpoint:
             if subtest_id in self.completed_runs[tier_id]:
                 if run_number in self.completed_runs[tier_id][subtest_id]:
                     del self.completed_runs[tier_id][subtest_id][run_number]
-                    self.last_updated_at = datetime.now(UTC).isoformat()
+                    self.last_updated_at = datetime.now(timezone.utc).isoformat()
 
     def get_run_status(self, tier_id: str, subtest_id: str, run_number: int) -> str | None:
         """Get the status of a run.
@@ -244,7 +244,7 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
     """
     try:
         # Update timestamp
-        checkpoint.last_updated_at = datetime.now(UTC).isoformat()
+        checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
 
         # Atomic write: write to temp file, then rename
         temp_path = path.with_suffix(".tmp")

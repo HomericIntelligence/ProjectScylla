@@ -5,7 +5,7 @@ Python justification: JSON serialization and file I/O for result persistence.
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -228,7 +228,7 @@ def create_run_result(
 
     """
     if timestamp is None:
-        timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
     return RunResult(
         test_id=test_id,

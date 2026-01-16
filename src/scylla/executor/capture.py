@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +82,7 @@ class LogCapture:
         Opens log files for writing and records start time.
         """
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self._started_at = datetime.now(UTC)
+        self._started_at = datetime.now(timezone.utc)
         self._metrics = ExecutionMetrics(started_at=self._started_at.isoformat())
 
         # Open files for streaming writes
@@ -146,7 +146,7 @@ class LogCapture:
             ExecutionMetrics with captured data.
 
         """
-        self._ended_at = datetime.now(UTC)
+        self._ended_at = datetime.now(timezone.utc)
 
         # Close log files
         if self._stdout_file:

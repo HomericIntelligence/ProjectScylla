@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from scylla.adapters.base import (
@@ -79,7 +79,7 @@ class OpenAICodexAdapter(BaseAdapter):
         env = self._prepare_env(config)
 
         # Execute
-        start_time = datetime.now(UTC)
+        start_time = datetime.now(timezone.utc)
         try:
             result = subprocess.run(
                 cmd,
@@ -91,7 +91,7 @@ class OpenAICodexAdapter(BaseAdapter):
             )
 
         except subprocess.TimeoutExpired as e:
-            end_time = datetime.now(UTC)
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             # Write logs even on timeout
@@ -114,7 +114,7 @@ class OpenAICodexAdapter(BaseAdapter):
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute OpenAI Codex: {e}") from e
 
-        end_time = datetime.now(UTC)
+        end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
         # Parse output for metrics
