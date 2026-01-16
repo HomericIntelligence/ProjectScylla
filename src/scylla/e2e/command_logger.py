@@ -13,7 +13,7 @@ import json
 import os
 import shlex
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -165,7 +165,7 @@ class CommandLogger:
         (self.log_dir / stderr_file).write_text(stderr)
 
         log = CommandLog(
-            timestamp=datetime.now(UTC).isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             command=cmd,
             cwd=str(cwd) if cwd else str(Path.cwd()),
             env_vars=self._extract_relevant_env(),
@@ -178,6 +178,39 @@ class CommandLogger:
         self.commands.append(log)
         return log
 
+    def update_last_command(
+        self,
+        stdout: str,
+        stderr: str,
+        exit_code: int,
+        duration: float,
+    ) -> None:
+        """Update the most recently logged command with execution results.
+
+        This is useful when a command is logged before execution (to generate
+        replay.sh), then updated with actual results after execution.
+
+        Args:
+            stdout: Standard output from the command
+            stderr: Standard error from the command
+            exit_code: Process exit code
+            duration: Execution duration in seconds
+
+        """
+        if not self.commands:
+            raise ValueError("No commands to update")
+
+        last_cmd = self.commands[-1]
+
+        # Update log files
+        (self.log_dir / last_cmd.stdout_file).write_text(stdout)
+        (self.log_dir / last_cmd.stderr_file).write_text(stderr)
+
+        # Update command metadata
+        last_cmd.exit_code = exit_code
+        last_cmd.duration_seconds = duration
+        last_cmd.timestamp = datetime.now(timezone.utc).isoformat()
+
     def save(self) -> Path:
         """Save the command log to JSON file.
 
@@ -189,7 +222,7 @@ class CommandLogger:
         with open(log_path, "w") as f:
             json.dump(
                 {
-                    "generated_at": datetime.now(UTC).isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
                     "total_commands": len(self.commands),
                     "commands": [c.to_dict() for c in self.commands],
                 },
@@ -215,13 +248,14 @@ class CommandLogger:
 
         lines = [
             "#!/bin/bash",
-            f"# Generated: {datetime.now(UTC).isoformat()}",
+            f"# Generated: {datetime.now(timezone.utc).isoformat()}",
             f"# Total commands: {len(self.commands)}",
             "#",
-            "# This script replays the commands executed during the test run.",
-            "# Review and modify as needed before executing.",
+            "# This script executes commands for the test run.",
+            "# All output is captured to stdout/stderr logs.",
             "#",
             "set -e  # Exit on first error",
+            "set -x  # Print commands as they execute",
             "",
             "# Environment variables (secrets redacted)",
             "# Uncomment and fill in as needed:",
@@ -249,10 +283,13 @@ class CommandLogger:
                     # Only extract if it looks like a multi-line prompt
                     if len(prompt) > 100 or "\n" in prompt:
                         prompt_path.write_text(prompt)
-                        # Build command referencing prompt.md instead of inlining
+                        # Build command referencing prompt.md with absolute path
+                        # replay.sh is in agent/, prompt.md is also in agent/
+                        # But command runs from workspace/, so use absolute path
                         cmd_without_prompt = log.command[:-1]
                         cmd_str = " ".join(shlex.quote(arg) for arg in cmd_without_prompt)
-                        lines.append(f"{cmd_str} prompt.md")
+                        abs_prompt_path = prompt_path.resolve()
+                        lines.append(f"{cmd_str} {shlex.quote(str(abs_prompt_path))}")
                         lines.append("")
                         continue
 
