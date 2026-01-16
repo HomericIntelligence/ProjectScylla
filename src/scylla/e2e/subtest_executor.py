@@ -1019,7 +1019,7 @@ class SubTestExecutor:
                 stderr="",  # Will be filled after execution
                 exit_code=0,  # Will be updated after execution
                 duration=0.0,  # Will be updated after execution
-                cwd=str(workspace.resolve()),
+                cwd=str(workspace.resolve()),  # Use absolute path for replay.sh
             )
 
             # Generate replay.sh BEFORE execution
