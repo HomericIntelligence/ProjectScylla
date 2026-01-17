@@ -158,6 +158,12 @@ class TierManager:
             if skills:
                 resources["skills"] = skills
 
+            # Parse inherit_best_from for T5 subtests
+            inherit_best_from: list[TierID] = []
+            if "inherit_best_from" in config_data:
+                raw_tiers = config_data.get("inherit_best_from", [])
+                inherit_best_from = [TierID.from_string(t) for t in raw_tiers]
+
             subtests.append(
                 SubTestConfig(
                     id=subtest_id,
@@ -167,6 +173,7 @@ class TierManager:
                     claude_dir_path=None,  # No longer used with centralized configs
                     extends_previous=extends_previous,
                     resources=resources,
+                    inherit_best_from=inherit_best_from,
                 )
             )
 
@@ -178,6 +185,7 @@ class TierManager:
         tier_id: TierID,
         subtest_id: str,
         baseline: TierBaseline | None = None,
+        merged_resources: dict[str, Any] | None = None,
         thinking_enabled: bool = False,
     ) -> None:
         """Prepare a workspace with tier configuration.
@@ -185,6 +193,10 @@ class TierManager:
         Implements the copy+extend inheritance pattern:
         1. If baseline provided and sub-test extends_previous, copy baseline
         2. Overlay the sub-test's specific configuration
+
+        For T5 sub-tests with inherit_best_from:
+        1. Apply merged resources from completed lower tiers first
+        2. Overlay the sub-test's own resources on top (e.g., tools: enabled: all)
 
         For T0 sub-tests, special handling applies:
         - 00-empty: Remove all CLAUDE.md and .claude (no system prompt)
@@ -196,6 +208,8 @@ class TierManager:
             tier_id: The tier being prepared
             subtest_id: The sub-test identifier
             baseline: Previous tier's winning baseline (if any)
+            merged_resources: Pre-merged resources from multiple tiers (T5 only)
+            thinking_enabled: Whether to enable extended thinking mode
 
         """
         tier_config = self.load_tier_config(tier_id)
@@ -230,12 +244,32 @@ class TierManager:
                 return
             # 02+: Fall through to normal overlay logic
 
-        # Step 1: Apply baseline if extending from previous tier
-        if baseline and subtest.extends_previous:
+        # For T5 with inherit_best_from, apply merged resources
+        if merged_resources and tier_id == TierID.T5:
+            # First apply inherited resources
+            self._create_symlinks(workspace, merged_resources)
+            # Then overlay subtest's own resources (e.g., tools: enabled: all)
+            # This handles cases like T5-13 which inherits AND adds tools
+            if subtest.resources:
+                # Merge subtest resources with inherited resources
+                for resource_type, resource_spec in subtest.resources.items():
+                    if resource_type not in merged_resources:
+                        merged_resources[resource_type] = resource_spec
+                    else:
+                        # Merge with existing resources using same logic
+                        temp_merged = merged_resources.copy()
+                        temp_new = {resource_type: resource_spec}
+                        self._merge_tier_resources(temp_merged, temp_new, TierID.T5)
+                        merged_resources = temp_merged
+                # Re-apply symlinks with merged resources
+                self._create_symlinks(workspace, merged_resources)
+        # Normal baseline extension for other tiers
+        elif baseline and subtest.extends_previous:
             self._apply_baseline(workspace, baseline)
 
-        # Step 2: Overlay sub-test configuration
-        self._overlay_subtest(workspace, subtest)
+        # Step 2: Overlay sub-test configuration (skip for T5 with merged_resources)
+        if not (merged_resources and tier_id == TierID.T5):
+            self._overlay_subtest(workspace, subtest)
 
         # Create settings.json with thinking configuration
         self._create_settings_json(workspace, subtest, thinking_enabled)
@@ -669,6 +703,155 @@ class TierManager:
             return config_file
         # Fallback if exact match not found
         return shared_subtests_dir / f"{subtest_id}.yaml"
+
+    def build_merged_baseline(
+        self,
+        inherit_from_tiers: list[TierID],
+        experiment_dir: Path,
+    ) -> dict[str, Any]:
+        """Build merged resources from multiple tier results.
+
+        Used by T5 subtests to dynamically inherit the best-performing
+        configuration from completed lower tiers (T0-T4).
+
+        Args:
+            inherit_from_tiers: List of tier IDs to inherit from (e.g., [T0, T1, T3])
+            experiment_dir: Path to experiment directory containing tier results
+
+        Returns:
+            Merged resources dictionary with combined configurations from all tiers.
+
+        Raises:
+            ValueError: If any required tier result is missing or has no best_subtest.
+
+        """
+        merged_resources: dict[str, Any] = {}
+
+        for tier_id in inherit_from_tiers:
+            # 1. Load tier result.json to get best_subtest
+            result_file = experiment_dir / tier_id.value / "result.json"
+            if not result_file.exists():
+                raise ValueError(
+                    f"Cannot inherit from {tier_id.value}: result.json not found. "
+                    f"Ensure tier {tier_id.value} completed before T5."
+                )
+
+            with open(result_file) as f:
+                tier_result = json.load(f)
+
+            best_subtest_id = tier_result.get("best_subtest")
+            if not best_subtest_id:
+                raise ValueError(f"Cannot inherit from {tier_id.value}: no best_subtest selected.")
+
+            # 2. Load config_manifest.json from best subtest
+            manifest_file = (
+                experiment_dir / tier_id.value / best_subtest_id / "config_manifest.json"
+            )
+            if not manifest_file.exists():
+                raise ValueError(
+                    f"Cannot inherit from {tier_id.value}/{best_subtest_id}: "
+                    f"config_manifest.json not found."
+                )
+
+            with open(manifest_file) as f:
+                manifest = json.load(f)
+
+            # 3. Merge resources
+            subtest_resources = manifest.get("resources", {})
+            self._merge_tier_resources(merged_resources, subtest_resources, tier_id)
+
+        return merged_resources
+
+    def _merge_tier_resources(
+        self,
+        merged_resources: dict[str, Any],
+        new_resources: dict[str, Any],
+        source_tier: TierID,
+    ) -> None:
+        """Merge resources from a tier into the accumulated merged resources.
+
+        Implements tier-specific merge strategies:
+        - claude_md.blocks: Replace (T0 only provides this)
+        - skills.categories/names: Union (combine lists, deduplicate)
+        - tools.enabled: "all" wins, else union
+        - mcp_servers: Union by server name
+        - agents.levels/names: Union (T3 L2-L5 + T4 L0-L1)
+
+        Args:
+            merged_resources: Accumulated resources to merge into (modified in place)
+            new_resources: Resources from the source tier to merge
+            source_tier: The tier ID being merged (for logging/debugging)
+
+        """
+        # Merge claude_md blocks (replace - T0 only)
+        if "claude_md" in new_resources:
+            merged_resources["claude_md"] = new_resources["claude_md"]
+
+        # Merge skills (union)
+        if "skills" in new_resources:
+            if "skills" not in merged_resources:
+                merged_resources["skills"] = {}
+
+            new_skills = new_resources["skills"]
+
+            # Merge categories
+            if "categories" in new_skills:
+                merged_categories = merged_resources["skills"].get("categories", [])
+                merged_categories.extend(new_skills["categories"])
+                merged_resources["skills"]["categories"] = list(set(merged_categories))
+
+            # Merge names
+            if "names" in new_skills:
+                merged_names = merged_resources["skills"].get("names", [])
+                merged_names.extend(new_skills["names"])
+                merged_resources["skills"]["names"] = list(set(merged_names))
+
+        # Merge tools ("all" wins, else union)
+        if "tools" in new_resources:
+            if "tools" not in merged_resources:
+                merged_resources["tools"] = {}
+
+            new_tools = new_resources["tools"]
+
+            # Check for "all" - it wins
+            new_enabled = new_tools.get("enabled", [])
+            existing_enabled = merged_resources["tools"].get("enabled", [])
+
+            if new_enabled == "all" or existing_enabled == "all":
+                merged_resources["tools"]["enabled"] = "all"
+            elif isinstance(new_enabled, list) and isinstance(existing_enabled, list):
+                merged_enabled = existing_enabled + new_enabled
+                merged_resources["tools"]["enabled"] = list(set(merged_enabled))
+
+        # Merge MCP servers (union by server name)
+        if "mcp_servers" in new_resources:
+            if "mcp_servers" not in merged_resources:
+                merged_resources["mcp_servers"] = []
+
+            existing_servers = {s["name"]: s for s in merged_resources["mcp_servers"]}
+            for server in new_resources["mcp_servers"]:
+                server_name = server["name"]
+                if server_name not in existing_servers:
+                    merged_resources["mcp_servers"].append(server)
+
+        # Merge agents (union)
+        if "agents" in new_resources:
+            if "agents" not in merged_resources:
+                merged_resources["agents"] = {}
+
+            new_agents = new_resources["agents"]
+
+            # Merge levels
+            if "levels" in new_agents:
+                merged_levels = merged_resources["agents"].get("levels", [])
+                merged_levels.extend(new_agents["levels"])
+                merged_resources["agents"]["levels"] = sorted(list(set(merged_levels)))
+
+            # Merge names
+            if "names" in new_agents:
+                merged_names = merged_resources["agents"].get("names", [])
+                merged_names.extend(new_agents["names"])
+                merged_resources["agents"]["names"] = list(set(merged_names))
 
     def save_resource_manifest(
         self,

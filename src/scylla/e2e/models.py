@@ -147,6 +147,9 @@ class SubTestConfig:
                 "agents": {"levels": [0, 1, 3], "names": ["chief-architect.md"]},
                 "claude_md": {"blocks": ["B02", "B05"]}
             }
+        inherit_best_from: List of tier IDs to inherit best configurations from.
+            Used in T5 subtests to dynamically inherit from winning configurations
+            in completed lower tiers (T0-T4).
 
     """
 
@@ -157,6 +160,7 @@ class SubTestConfig:
     claude_dir_path: Path | None = None
     extends_previous: bool = True
     resources: dict[str, Any] = field(default_factory=dict)
+    inherit_best_from: list[TierID] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -168,6 +172,7 @@ class SubTestConfig:
             "claude_dir_path": str(self.claude_dir_path) if self.claude_dir_path else None,
             "extends_previous": self.extends_previous,
             "resources": self.resources,
+            "inherit_best_from": [tier.value for tier in self.inherit_best_from],
         }
 
 
