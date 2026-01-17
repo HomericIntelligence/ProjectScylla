@@ -474,11 +474,15 @@ ProjectScylla/
     config/
         defaults.yaml                   # Global defaults
         models/                         # Model-specific configs
-        tiers/                          # Tier definitions (T0-T3+)
-            t0-vanilla.yaml
-            t1-prompted.md
-            t2-skills.md
-            t3-tooling.md
+        tiers/                          # Tier definitions (T0-T6)
+            tiers.yaml                  # Master tier definitions
+            t0-prompts.md               # T0 prompt template
+            t1-skills.md                # T1 prompt template
+            t2-tooling.md               # T2 prompt template
+            t3-delegation.md            # T3 prompt template
+            t4-hierarchy.md             # T4 prompt template
+            t5-hybrid.md                # T5 prompt template
+            t6-super.md                 # T6 prompt template
 
     src/scylla/
         __init__.py
@@ -554,14 +558,17 @@ ProjectScylla/
 
 ## 8. Tier System
 
-The framework tests across 4+ tiers of increasing complexity:
+The framework tests across 7 tiers of increasing complexity:
 
-| Tier | Name | Description | Prompt Source |
-|------|------|-------------|---------------|
-| T0 | Vanilla | Base LLM, tool default, zero customization | Tool default |
-| T1 | Prompted | System prompt with chain-of-thought | `config/tiers/t1-prompted.md` |
-| T2 | Skills | Domain expertise encoded in prompts | `config/tiers/t2-skills.md` |
-| T3+ | Tooling | External tools, multi-agent orchestration | `config/tiers/t3-tooling.md` |
+| Tier | Name | Sub-tests | Description | Prompt Source |
+|------|------|-----------|-------------|---------------|
+| T0 | Prompts | 24 | System prompt ablation | `config/tiers/t0-prompts.md` |
+| T1 | Skills | 10 | Domain expertise via skills | `config/tiers/t1-skills.md` |
+| T2 | Tooling | 15 | External tools and MCP | `config/tiers/t2-tooling.md` |
+| T3 | Delegation | 41 | Flat multi-agent | `config/tiers/t3-delegation.md` |
+| T4 | Hierarchy | 7 | Nested orchestration | `config/tiers/t4-hierarchy.md` |
+| T5 | Hybrid | 15 | Best combinations | `config/tiers/t5-hybrid.md` |
+| T6 | Super | 1 | Everything enabled | `config/tiers/t6-super.md` |
 
 ### Tier Comparison Goals
 
