@@ -216,7 +216,7 @@ class TierManager:
                 if claude_dir.exists():
                     shutil.rmtree(claude_dir)
                 # Still create settings.json for thinking control
-                self._create_settings_json(workspace, thinking_enabled)
+                self._create_settings_json(workspace, subtest, thinking_enabled)
                 return
             elif subtest_id == "01":
                 # 01-vanilla: Use tool defaults (no changes needed)
@@ -226,7 +226,7 @@ class TierManager:
                 if claude_dir.exists():
                     shutil.rmtree(claude_dir)
                 # Still create settings.json for thinking control
-                self._create_settings_json(workspace, thinking_enabled)
+                self._create_settings_json(workspace, subtest, thinking_enabled)
                 return
             # 02+: Fall through to normal overlay logic
 
@@ -238,7 +238,7 @@ class TierManager:
         self._overlay_subtest(workspace, subtest)
 
         # Create settings.json with thinking configuration
-        self._create_settings_json(workspace, thinking_enabled)
+        self._create_settings_json(workspace, subtest, thinking_enabled)
 
     def _apply_baseline(self, workspace: Path, baseline: TierBaseline) -> None:
         """Apply baseline configuration to workspace using resources.
@@ -449,18 +449,54 @@ class TierManager:
     def _create_settings_json(
         self,
         workspace: Path,
+        subtest: SubTestConfig,
         thinking_enabled: bool = False,
     ) -> None:
         """Create .claude/settings.json for workspace configuration.
 
+        Includes thinking mode, tool permissions, and MCP server registrations.
+
         Args:
             workspace: Target workspace directory
+            subtest: SubTest configuration with resources specification
             thinking_enabled: Whether to enable thinking mode
 
         """
         settings = {
             "alwaysThinkingEnabled": thinking_enabled,
         }
+
+        resources = subtest.resources or {}
+
+        # Add tool permissions for T2+ tiers
+        if "tools" in resources:
+            tools_spec = resources["tools"]
+            if isinstance(tools_spec, dict):
+                enabled_tools = tools_spec.get("enabled", [])
+                if enabled_tools and enabled_tools != "all":
+                    # Restrict to specific tools
+                    settings["allowedTools"] = enabled_tools
+                # If enabled_tools == "all", don't add restriction (all tools allowed)
+
+        # Add MCP server configurations
+        if "mcp_servers" in resources:
+            mcp_servers = resources["mcp_servers"]
+            if mcp_servers:
+                settings["mcpServers"] = {}
+                for server in mcp_servers:
+                    if isinstance(server, dict):
+                        name = server["name"]
+                        source = server.get("source", "modelcontextprotocol/servers")
+                        settings["mcpServers"][name] = {
+                            "command": "npx",
+                            "args": ["-y", f"@{source}/{name}"],
+                        }
+                    else:
+                        # Simple string format
+                        settings["mcpServers"][server] = {
+                            "command": "npx",
+                            "args": ["-y", f"@modelcontextprotocol/servers/{server}"],
+                        }
 
         settings_dir = workspace / ".claude"
         settings_dir.mkdir(parents=True, exist_ok=True)
