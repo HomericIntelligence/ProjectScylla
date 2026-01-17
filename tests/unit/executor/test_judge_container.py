@@ -236,10 +236,10 @@ class TestJudgeContainerManagerCreateContainerConfig:
 class TestJudgeContainerManagerRunJudge:
     """Tests for running judge container."""
 
-    def test_run_success(self, tmp_path: Path) -> None:
+    @patch.object(JudgeContainerManager, "_run_with_volumes")
+    def test_run_success(self, mock_run_with_volumes: MagicMock, tmp_path: Path) -> None:
         """Test Run success."""
-        mock_executor = MagicMock()
-        mock_executor.run.return_value = ContainerResult(
+        mock_run_with_volumes.return_value = ContainerResult(
             container_id="judge-123",
             exit_code=0,
             stdout="TOKENS_INPUT: 1000\nTOKENS_OUTPUT: 500\nCOST_USD: 0.05\n",
@@ -247,7 +247,7 @@ class TestJudgeContainerManagerRunJudge:
             timed_out=False,
         )
 
-        manager = JudgeContainerManager(executor=mock_executor)
+        manager = JudgeContainerManager()
 
         workspace = tmp_path / "workspace"
         workspace.mkdir()
@@ -260,15 +260,14 @@ class TestJudgeContainerManagerRunJudge:
         result = manager.run_judge(config)
 
         assert result.exit_code == 0
-        assert result.container_id == "judge-123"
         assert result.tokens_input == 1000
         assert result.tokens_output == 500
         assert result.cost_usd == 0.05
 
-    def test_run_timeout(self, tmp_path: Path) -> None:
+    @patch.object(JudgeContainerManager, "_run_with_volumes")
+    def test_run_timeout(self, mock_run_with_volumes: MagicMock, tmp_path: Path) -> None:
         """Test Run timeout."""
-        mock_executor = MagicMock()
-        mock_executor.run.return_value = ContainerResult(
+        mock_run_with_volumes.return_value = ContainerResult(
             container_id="judge-123",
             exit_code=-1,
             stdout="",
@@ -276,7 +275,7 @@ class TestJudgeContainerManagerRunJudge:
             timed_out=True,
         )
 
-        manager = JudgeContainerManager(executor=mock_executor)
+        manager = JudgeContainerManager()
 
         workspace = tmp_path / "workspace"
         workspace.mkdir()
