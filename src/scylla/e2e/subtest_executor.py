@@ -949,22 +949,16 @@ class SubTestExecutor:
         # Agent command logger outputs to agent/
         command_logger = CommandLogger(agent_dir)
 
-        # Build context-aware resource suffix
-        resource_suffix = self.tier_manager.build_resource_suffix(subtest)
+        # Resource suffix is now handled in CLAUDE.md by tier_manager.prepare_workspace()
+        # Task prompt stays clean - just symlink to experiment-level copy for deduplication
         prompt_file = run_dir / "task_prompt.md"
+        experiment_prompt = self.experiment_dir / "prompt.md"
 
-        if resource_suffix:
-            # Resource suffix modifies the prompt - must write full content
-            task_prompt = f"{task_prompt}\n\n{resource_suffix}"
-            prompt_file.write_text(task_prompt)
+        if experiment_prompt.exists():
+            prompt_file.symlink_to(experiment_prompt.resolve())
         else:
-            # No modification - symlink to experiment-level copy for deduplication
-            experiment_prompt = self.experiment_dir / "prompt.md"
-            if experiment_prompt.exists():
-                prompt_file.symlink_to(experiment_prompt.resolve())
-            else:
-                # Fallback: write full content if experiment copy doesn't exist
-                prompt_file.write_text(task_prompt)
+            # Fallback: write full content if experiment copy doesn't exist
+            prompt_file.write_text(task_prompt)
 
         # Build extra args for adapter
         extra_args: list[str] = []

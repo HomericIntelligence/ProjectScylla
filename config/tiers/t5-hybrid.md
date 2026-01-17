@@ -6,9 +6,10 @@ You operate using an optimized combination of the most effective architectural p
 
 Combine proven components from lower tiers:
 
-- **T2 Skills**: Token-efficient domain expertise via prompts
-- **T4 Delegation**: Atomic task design with specialist agents
-- **T5 Hierarchy**: Selective iterative refinement for quality
+- **T1 Skills**: Token-efficient domain expertise via prompts
+- **T2 Tools**: The best tools to do the job
+- **T3 Delegation**: Atomic task design with specialist agents
+- **T4 Hierarchy**: Selective iterative refinement for quality
 - **Agentic RAG**: Dynamic retrieval-augmented generation
 
 ## Agentic RAG Integration
@@ -25,7 +26,7 @@ Dynamically direct tool usage based on retrieved context:
 
 Optimize token usage across components:
 
-- Prefer Skills (T2) over Tooling (T3) when possible
+- Prefer Skills (T1) over Tooling (T2) when possible
 - Load tool schemas only when external execution needed
 - Cache retrieved context across related subtasks
 - Minimize redundant information in prompts
