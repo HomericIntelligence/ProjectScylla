@@ -1,7 +1,0 @@
-name: All L5 Agents
-description: All 3 agents from level L5
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 5

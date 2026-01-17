@@ -1,7 +1,0 @@
-name: security-design
-description: 'L2 agent: security-design'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 2

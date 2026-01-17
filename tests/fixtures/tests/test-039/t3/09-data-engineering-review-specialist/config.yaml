@@ -1,7 +1,0 @@
-name: data-engineering-review-specialist
-description: 'L3 agent: data-engineering-review-specialist'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 3

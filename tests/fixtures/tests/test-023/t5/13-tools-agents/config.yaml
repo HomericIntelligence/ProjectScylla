@@ -1,6 +1,0 @@
-name: "Tools + Agents"
-description: "All tools combined with best agents"
-extends_previous: true
-inherit_best_from: ["T2", "T3"]
-tools:
-  enabled: all

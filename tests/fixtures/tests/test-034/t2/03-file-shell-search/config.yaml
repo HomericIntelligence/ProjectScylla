@@ -1,5 +1,0 @@
-name: "File + Shell + Search"
-description: "File ops, Bash, WebSearch, WebFetch"
-extends_previous: true
-tools:
-  enabled: [Read, Write, Edit, Glob, Grep, Bash, WebSearch, WebFetch]

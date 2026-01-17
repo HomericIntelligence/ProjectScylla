@@ -1,7 +1,0 @@
-name: B03 quick-links
-description: Individual block B03 test
-extends_previous: false
-resources:
-  claude_md:
-    blocks:
-    - B03

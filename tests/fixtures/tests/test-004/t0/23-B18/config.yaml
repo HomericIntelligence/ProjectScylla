@@ -1,7 +1,0 @@
-name: B18 github-git-workflow
-description: Individual block B18 test
-extends_previous: false
-resources:
-  claude_md:
-    blocks:
-    - B18

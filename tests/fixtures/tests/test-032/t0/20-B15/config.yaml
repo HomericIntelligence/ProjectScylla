@@ -1,7 +1,0 @@
-name: B15 common-commands
-description: Individual block B15 test
-extends_previous: false
-resources:
-  claude_md:
-    blocks:
-    - B15

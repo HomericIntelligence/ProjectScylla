@@ -1,7 +1,0 @@
-name: chief-architect
-description: 'L0 orchestrator: chief-architect'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 0

@@ -1,7 +1,0 @@
-name: performance-specialist
-description: 'L3 agent: performance-specialist'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 3
