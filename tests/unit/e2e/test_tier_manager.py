@@ -301,3 +301,209 @@ class TestDiscoverSubtestsRootLevelMapping:
         assert "tools" in subtests[0].resources
         # Root-level should override since it's processed after
         assert subtests[0].resources["tools"] == {"enabled": "all"}
+
+
+class TestCreateSettingsJson:
+    """Tests for TierManager._create_settings_json() with tool and MCP configurations."""
+
+    def _create_test_structure(self, tmp_path: Path, tier_id: str) -> tuple[Path, Path]:
+        """Create standard test directory structure for tier tests."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / tier_id
+        shared_dir.mkdir(parents=True)
+
+        return tiers_dir, shared_dir
+
+    def test_thinking_mode_only(self, tmp_path: Path) -> None:
+        """Test settings.json with only thinking mode enabled."""
+        import json
+
+        tiers_dir, shared_dir = self._create_test_structure(tmp_path, "t0")
+
+        # Create minimal subtest
+        config_file = shared_dir / "00-empty.yaml"
+        config_file.write_text(yaml.safe_dump({"name": "Empty", "description": "No resources"}))
+
+        manager = TierManager(tiers_dir)
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        # Load tier config and prepare workspace with thinking enabled
+        manager.load_tier_config(TierID.T0)
+        manager.prepare_workspace(workspace, TierID.T0, "00", None, thinking_enabled=True)
+
+        # Verify settings.json created
+        settings_path = workspace / ".claude" / "settings.json"
+        assert settings_path.exists()
+
+        with open(settings_path) as f:
+            settings = json.load(f)
+
+        assert settings == {"alwaysThinkingEnabled": True}
+
+    def test_tool_restrictions_applied(self, tmp_path: Path) -> None:
+        """Test that T2 tool restrictions are written to settings.json."""
+        import json
+
+        tiers_dir, shared_dir = self._create_test_structure(tmp_path, "t2")
+
+        # Create T2 subtest with tool restrictions
+        config_file = shared_dir / "01-file-ops.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "File Ops Only",
+                    "description": "Restricted tools",
+                    "tools": {"enabled": ["Read", "Write", "Edit", "Glob", "Grep"]},
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        # Load tier config and prepare workspace
+        manager.load_tier_config(TierID.T2)
+        manager.prepare_workspace(workspace, TierID.T2, "01", None, thinking_enabled=False)
+
+        # Verify settings.json has tool restrictions
+        settings_path = workspace / ".claude" / "settings.json"
+        assert settings_path.exists()
+
+        with open(settings_path) as f:
+            settings = json.load(f)
+
+        assert "allowedTools" in settings
+        assert settings["allowedTools"] == ["Read", "Write", "Edit", "Glob", "Grep"]
+        assert settings["alwaysThinkingEnabled"] is False
+
+    def test_all_tools_no_restriction(self, tmp_path: Path) -> None:
+        """Test that 'all' tools doesn't add restriction to settings.json."""
+        import json
+
+        tiers_dir, shared_dir = self._create_test_structure(tmp_path, "t2")
+
+        # Create subtest with all tools enabled
+        config_file = shared_dir / "04-all-tools.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "All Tools",
+                    "description": "No restrictions",
+                    "tools": {"enabled": "all"},
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        # Load tier config and prepare workspace
+        manager.load_tier_config(TierID.T2)
+        manager.prepare_workspace(workspace, TierID.T2, "04", None, thinking_enabled=False)
+
+        # Verify settings.json does NOT have allowedTools
+        settings_path = workspace / ".claude" / "settings.json"
+        with open(settings_path) as f:
+            settings = json.load(f)
+
+        assert "allowedTools" not in settings
+
+    def test_mcp_servers_registered(self, tmp_path: Path) -> None:
+        """Test that MCP servers are registered in settings.json."""
+        import json
+
+        tiers_dir, shared_dir = self._create_test_structure(tmp_path, "t6")
+
+        # Create T6 subtest with MCP servers
+        config_file = shared_dir / "01-everything.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Everything",
+                    "description": "All resources",
+                    "tools": {"enabled": "all"},
+                    "mcp_servers": [
+                        {"name": "filesystem", "source": "modelcontextprotocol/servers"},
+                        {"name": "git"},  # Test simple string format
+                        "memory",  # Test bare string format
+                    ],
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        # Load tier config and prepare workspace
+        manager.load_tier_config(TierID.T6)
+        manager.prepare_workspace(workspace, TierID.T6, "01", None, thinking_enabled=False)
+
+        # Verify settings.json has MCP servers
+        settings_path = workspace / ".claude" / "settings.json"
+        assert settings_path.exists()
+
+        with open(settings_path) as f:
+            settings = json.load(f)
+
+        assert "mcpServers" in settings
+        assert "filesystem" in settings["mcpServers"]
+        assert "git" in settings["mcpServers"]
+        assert "memory" in settings["mcpServers"]
+
+        # Verify server configurations
+        assert settings["mcpServers"]["filesystem"] == {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/servers/filesystem"],
+        }
+        assert settings["mcpServers"]["git"] == {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/servers/git"],
+        }
+        assert settings["mcpServers"]["memory"] == {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/servers/memory"],
+        }
+
+    def test_combined_tools_and_mcp(self, tmp_path: Path) -> None:
+        """Test settings.json with both tool restrictions and MCP servers."""
+        import json
+
+        tiers_dir, shared_dir = self._create_test_structure(tmp_path, "t5")
+
+        # Create subtest with both tools and MCP
+        config_file = shared_dir / "01-hybrid.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Hybrid",
+                    "description": "Tools + MCP",
+                    "tools": {"enabled": ["Read", "Write", "Bash"]},
+                    "mcp_servers": ["filesystem", "git"],
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        # Load tier config and prepare workspace
+        manager.load_tier_config(TierID.T5)
+        manager.prepare_workspace(workspace, TierID.T5, "01", None, thinking_enabled=True)
+
+        # Verify settings.json has both configurations
+        settings_path = workspace / ".claude" / "settings.json"
+        with open(settings_path) as f:
+            settings = json.load(f)
+
+        assert settings["alwaysThinkingEnabled"] is True
+        assert settings["allowedTools"] == ["Read", "Write", "Bash"]
+        assert "mcpServers" in settings
+        assert "filesystem" in settings["mcpServers"]
+        assert "git" in settings["mcpServers"]
