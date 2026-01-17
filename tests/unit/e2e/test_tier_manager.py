@@ -138,14 +138,17 @@ class TestDiscoverSubtestsRootLevelMapping:
 
     def test_root_level_tools_mapped(self, tmp_path: Path) -> None:
         """Test that root-level tools field is mapped to resources."""
-        # Create tier directory structure
-        tier_dir = tmp_path / "t5"
-        tier_dir.mkdir()
-        subtest_dir = tier_dir / "01-test"
-        subtest_dir.mkdir()
+        # Create directory structure matching TierManager expectations
+        # tiers_dir should be tests/fixtures/tests/test-001 (or similar)
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        # Create shared directory at tests/claude-code/shared/subtests/t5
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t5"
+        shared_dir.mkdir(parents=True)
 
         # Write config with root-level tools
-        config_file = subtest_dir / "config.yaml"
+        config_file = shared_dir / "01-test.yaml"
         config_file.write_text(
             yaml.safe_dump(
                 {
@@ -156,8 +159,9 @@ class TestDiscoverSubtestsRootLevelMapping:
             )
         )
 
-        # Discover subtests
-        manager = TierManager(tmp_path)
+        # Discover subtests (tiers_dir is used to navigate to shared dir)
+        manager = TierManager(tiers_dir)
+        tier_dir = tiers_dir / "t5"  # Legacy parameter, not used
         subtests = manager._discover_subtests(TierID.T5, tier_dir)
 
         # Verify tools was mapped to resources
@@ -167,14 +171,16 @@ class TestDiscoverSubtestsRootLevelMapping:
 
     def test_root_level_mcp_servers_mapped(self, tmp_path: Path) -> None:
         """Test that root-level mcp_servers field is mapped to resources."""
-        # Create tier directory structure
-        tier_dir = tmp_path / "t2"
-        tier_dir.mkdir()
-        subtest_dir = tier_dir / "01-test"
-        subtest_dir.mkdir()
+        # Create directory structure matching TierManager expectations
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        # Create shared directory at tests/claude-code/shared/subtests/t2
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t2"
+        shared_dir.mkdir(parents=True)
 
         # Write config with root-level mcp_servers
-        config_file = subtest_dir / "config.yaml"
+        config_file = shared_dir / "01-test.yaml"
         config_file.write_text(
             yaml.safe_dump(
                 {
@@ -186,7 +192,8 @@ class TestDiscoverSubtestsRootLevelMapping:
         )
 
         # Discover subtests
-        manager = TierManager(tmp_path)
+        manager = TierManager(tiers_dir)
+        tier_dir = tiers_dir / "t2"  # Legacy parameter, not used
         subtests = manager._discover_subtests(TierID.T2, tier_dir)
 
         # Verify mcp_servers was mapped to resources
@@ -199,14 +206,16 @@ class TestDiscoverSubtestsRootLevelMapping:
 
     def test_root_level_agents_mapped(self, tmp_path: Path) -> None:
         """Test that root-level agents field is mapped to resources."""
-        # Create tier directory structure
-        tier_dir = tmp_path / "t3"
-        tier_dir.mkdir()
-        subtest_dir = tier_dir / "01-test"
-        subtest_dir.mkdir()
+        # Create directory structure matching TierManager expectations
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        # Create shared directory at tests/claude-code/shared/subtests/t3
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t3"
+        shared_dir.mkdir(parents=True)
 
         # Write config with root-level agents
-        config_file = subtest_dir / "config.yaml"
+        config_file = shared_dir / "01-test.yaml"
         config_file.write_text(
             yaml.safe_dump(
                 {
@@ -218,7 +227,8 @@ class TestDiscoverSubtestsRootLevelMapping:
         )
 
         # Discover subtests
-        manager = TierManager(tmp_path)
+        manager = TierManager(tiers_dir)
+        tier_dir = tiers_dir / "t3"  # Legacy parameter, not used
         subtests = manager._discover_subtests(TierID.T3, tier_dir)
 
         # Verify agents was mapped to resources
@@ -228,14 +238,16 @@ class TestDiscoverSubtestsRootLevelMapping:
 
     def test_root_level_skills_mapped(self, tmp_path: Path) -> None:
         """Test that root-level skills field is mapped to resources."""
-        # Create tier directory structure
-        tier_dir = tmp_path / "t1"
-        tier_dir.mkdir()
-        subtest_dir = tier_dir / "01-test"
-        subtest_dir.mkdir()
+        # Create directory structure matching TierManager expectations
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        # Create shared directory at tests/claude-code/shared/subtests/t1
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t1"
+        shared_dir.mkdir(parents=True)
 
         # Write config with root-level skills
-        config_file = subtest_dir / "config.yaml"
+        config_file = shared_dir / "01-test.yaml"
         config_file.write_text(
             yaml.safe_dump(
                 {
@@ -247,7 +259,8 @@ class TestDiscoverSubtestsRootLevelMapping:
         )
 
         # Discover subtests
-        manager = TierManager(tmp_path)
+        manager = TierManager(tiers_dir)
+        tier_dir = tiers_dir / "t1"  # Legacy parameter, not used
         subtests = manager._discover_subtests(TierID.T1, tier_dir)
 
         # Verify skills was mapped to resources
@@ -257,14 +270,16 @@ class TestDiscoverSubtestsRootLevelMapping:
 
     def test_resources_field_takes_precedence(self, tmp_path: Path) -> None:
         """Test that resources field is not overwritten by root-level fields."""
-        # Create tier directory structure
-        tier_dir = tmp_path / "t5"
-        tier_dir.mkdir()
-        subtest_dir = tier_dir / "01-test"
-        subtest_dir.mkdir()
+        # Create directory structure matching TierManager expectations
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        # Create shared directory at tests/claude-code/shared/subtests/t5
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t5"
+        shared_dir.mkdir(parents=True)
 
         # Write config with both resources and root-level tools
-        config_file = subtest_dir / "config.yaml"
+        config_file = shared_dir / "01-test.yaml"
         config_file.write_text(
             yaml.safe_dump(
                 {
@@ -277,7 +292,8 @@ class TestDiscoverSubtestsRootLevelMapping:
         )
 
         # Discover subtests
-        manager = TierManager(tmp_path)
+        manager = TierManager(tiers_dir)
+        tier_dir = tiers_dir / "t5"  # Legacy parameter, not used
         subtests = manager._discover_subtests(TierID.T5, tier_dir)
 
         # Verify root-level tools was merged/mapped
