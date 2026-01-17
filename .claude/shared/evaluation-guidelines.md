@@ -162,47 +162,54 @@ Always report:
 
 ## Tier-Specific Considerations
 
-### T0 (Vanilla)
+### T0 (Prompts)
 
+- System prompt ablation (24 sub-tests)
 - Baseline reference for all comparisons
-- No prompt engineering allowed
-- Use default model parameters
-
-### T1 (Prompted)
-
-- Document exact system prompt
+- Document exact system prompt per sub-test
 - Track prompt iteration history
-- No code/tool changes from T0
 
-### T2 (Skills)
+### T1 (Skills)
 
+- Domain expertise via installed skills (10 sub-tests by category)
 - Document skill definitions
 - Track which skills are used per task
 - Measure skill activation frequency
 
-### T3 (Tooling)
+### T2 (Tooling)
 
+- External tools and MCP servers (15 sub-tests)
 - Document tool schemas
 - Track tool usage patterns
 - Measure tool call success rate
 
-### T4 (Delegation)
+### T3 (Delegation)
 
+- Flat multi-agent with specialist agents (41 sub-tests per agent)
 - Document agent topology
 - Track inter-agent communication
 - Measure coordination overhead
 
-### T5 (Hierarchy)
+### T4 (Hierarchy)
 
+- Nested orchestration with orchestrator agents (7 sub-tests)
 - Document supervision structure
 - Track correction frequency
 - Measure iteration count to success
 
-### T6 (Hybrid)
+### T5 (Hybrid)
 
+- Best combinations and permutations from all tiers (15 sub-tests)
 - Document component selection rationale
 - Track which components from which tiers
 - Measure synergy effects
+
+### T6 (Super)
+
+- Everything enabled at maximum capability (1 sub-test)
+- Document all enabled components
+- Track combined effect of all capabilities
+- Measure peak performance vs cost trade-off
 
 ## Reporting Results
 

@@ -1,15 +1,8 @@
-# Test fixture: Global defaults
+# Test fixture: Default configuration
 evaluation:
-  runs_per_eval: 10
+  runs_per_tier: 10
   timeout: 300
   seed: null
-
-metrics:
-  quality:
-    - pass_rate
-    - impl_rate
-  economic:
-    - cost_of_pass
 
 output:
   runs_dir: "runs"
