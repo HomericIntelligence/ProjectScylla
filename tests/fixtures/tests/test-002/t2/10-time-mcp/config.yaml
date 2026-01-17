@@ -1,6 +1,0 @@
-name: "Time MCP"
-description: "Time and timezone conversion capabilities"
-extends_previous: true
-mcp_servers:
-  - name: time
-    source: modelcontextprotocol/servers

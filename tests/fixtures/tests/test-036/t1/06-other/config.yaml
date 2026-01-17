@@ -1,7 +1,0 @@
-name: Other Skills
-description: 11 skills from the other category
-extends_previous: true
-resources:
-  skills:
-    categories:
-    - other

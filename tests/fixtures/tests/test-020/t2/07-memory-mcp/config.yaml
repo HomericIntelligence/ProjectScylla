@@ -1,6 +1,0 @@
-name: "Memory MCP"
-description: "Knowledge graph-based persistent memory system"
-extends_previous: true
-mcp_servers:
-  - name: memory
-    source: modelcontextprotocol/servers

@@ -1,7 +1,0 @@
-name: test-engineer
-description: 'L4 agent: test-engineer'
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 4

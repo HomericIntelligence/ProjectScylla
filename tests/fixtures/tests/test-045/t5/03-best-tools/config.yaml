@@ -1,4 +1,0 @@
-name: "Best Tools"
-description: "Top performing tool configurations from T2"
-extends_previous: true
-inherit_best_from: ["T2"]

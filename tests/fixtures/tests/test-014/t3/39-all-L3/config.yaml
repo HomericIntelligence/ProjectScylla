@@ -1,7 +1,0 @@
-name: All L3 Agents
-description: All 24 agents from level L3
-extends_previous: true
-resources:
-  agents:
-    levels:
-    - 3

@@ -1,4 +1,0 @@
-name: "Best Agents"
-description: "Top performing agents from T3"
-extends_previous: true
-inherit_best_from: ["T3"]

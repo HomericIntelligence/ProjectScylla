@@ -1,6 +1,0 @@
-name: "GitHub MCP"
-description: "GitHub repository, issues, PRs, CI/CD integration"
-extends_previous: true
-mcp_servers:
-  - name: github
-    source: third-party
