@@ -1,9 +1,1 @@
-# Second test fixture: Model configuration
-model_id: "test-model-2"
-name: "Test Model Two"
-provider: "test_provider"
-adapter: "test_adapter"
-temperature: 0.0
-max_tokens: 8192
-cost_per_1k_input: 0.005
-cost_per_1k_output: 0.025
+/home/mvillmow/ProjectScylla/config/models/_test-model-2.yaml

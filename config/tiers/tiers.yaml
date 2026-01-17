@@ -5,7 +5,7 @@
 #
 # Tier Structure (7 tiers, ~114+ sub-tests total):
 # - T0: Prompts - 24 sub-tests for system prompt ablation
-# - T1: Skills - 11 sub-tests for skill category ablation
+# - T1: Skills - 10 sub-tests for skill category ablation
 # - T2: Tooling - 15 sub-tests for tool/MCP ablation
 # - T3: Delegation - 41 sub-tests for agent ablation
 # - T4: Hierarchy - 7 sub-tests for orchestrator ablation
@@ -22,7 +22,7 @@ tiers:
 
   T1:
     name: "Skills"
-    description: "Domain expertise via installed skills (11 sub-tests by category)"
+    description: "Domain expertise via installed skills (10 sub-tests by category)"
     prompt_file: "t1-skills.md"
     tools_enabled: null  # Use tool defaults
     delegation_enabled: false
