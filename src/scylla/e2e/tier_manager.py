@@ -244,37 +244,51 @@ class TierManager:
                 return
             # 02+: Fall through to normal overlay logic
 
-        # For T5 with inherit_best_from, apply merged resources
+        # Build resource suffix for CLAUDE.md
+        # For T5 with merged resources, create temporary SubTestConfig with merged resources
         if merged_resources and tier_id == TierID.T5:
-            # First apply inherited resources
-            self._create_symlinks(workspace, merged_resources)
-            # Then overlay subtest's own resources (e.g., tools: enabled: all)
-            # This handles cases like T5-13 which inherits AND adds tools
+            # Merge subtest resources with inherited resources if needed
+            final_merged = merged_resources.copy()
             if subtest.resources:
-                # Merge subtest resources with inherited resources
                 for resource_type, resource_spec in subtest.resources.items():
-                    if resource_type not in merged_resources:
-                        merged_resources[resource_type] = resource_spec
+                    if resource_type not in final_merged:
+                        final_merged[resource_type] = resource_spec
                     else:
-                        # Merge with existing resources using same logic
-                        temp_merged = merged_resources.copy()
+                        temp_merged = final_merged.copy()
                         temp_new = {resource_type: resource_spec}
                         self._merge_tier_resources(temp_merged, temp_new, TierID.T5)
-                        merged_resources = temp_merged
-                # Re-apply symlinks with merged resources
-                self._create_symlinks(workspace, merged_resources)
+                        final_merged = temp_merged
+
+            # Create temporary SubTestConfig for resource suffix generation
+            from dataclasses import replace
+
+            temp_subtest = replace(subtest, resources=final_merged)
+            resource_suffix = self.build_resource_suffix(temp_subtest)
+
+            # Apply merged resources with suffix
+            self._create_symlinks(workspace, final_merged, resource_suffix)
         # Normal baseline extension for other tiers
         elif baseline and subtest.extends_previous:
-            self._apply_baseline(workspace, baseline)
+            # Build resource suffix from baseline
+            from dataclasses import replace
+
+            temp_subtest = replace(subtest, resources=baseline.resources)
+            resource_suffix = self.build_resource_suffix(temp_subtest)
+            self._apply_baseline(workspace, baseline, resource_suffix)
+        else:
+            # Build resource suffix from subtest
+            resource_suffix = self.build_resource_suffix(subtest)
 
         # Step 2: Overlay sub-test configuration (skip for T5 with merged_resources)
         if not (merged_resources and tier_id == TierID.T5):
-            self._overlay_subtest(workspace, subtest)
+            self._overlay_subtest(workspace, subtest, resource_suffix)
 
         # Create settings.json with thinking configuration
         self._create_settings_json(workspace, subtest, thinking_enabled)
 
-    def _apply_baseline(self, workspace: Path, baseline: TierBaseline) -> None:
+    def _apply_baseline(
+        self, workspace: Path, baseline: TierBaseline, resource_suffix: str | None = None
+    ) -> None:
         """Apply baseline configuration to workspace using resources.
 
         NEW: Uses resource specification to recreate config via symlinks,
@@ -283,11 +297,12 @@ class TierManager:
         Args:
             workspace: Target workspace directory
             baseline: Baseline configuration to apply
+            resource_suffix: Optional resource usage instructions to append to CLAUDE.md
 
         """
         # NEW: Use resources to recreate via symlinks (no file copying)
         if baseline.resources:
-            self._create_symlinks(workspace, baseline.resources)
+            self._create_symlinks(workspace, baseline.resources, resource_suffix)
             return
 
         # LEGACY fallback: Copy from paths (for old baselines without resources)
@@ -301,7 +316,9 @@ class TierManager:
                 shutil.rmtree(dest)
             shutil.copytree(baseline.claude_dir_path, dest)
 
-    def _overlay_subtest(self, workspace: Path, subtest: SubTestConfig) -> None:
+    def _overlay_subtest(
+        self, workspace: Path, subtest: SubTestConfig, resource_suffix: str | None = None
+    ) -> None:
         """Overlay sub-test configuration onto workspace.
 
         Uses symlinks to shared resources based on the resources spec.
@@ -310,11 +327,12 @@ class TierManager:
         Args:
             workspace: Target workspace directory
             subtest: Sub-test configuration to overlay
+            resource_suffix: Optional resource usage instructions to append to CLAUDE.md
 
         """
         # Use symlinks if resources are specified
         if subtest.resources:
-            self._create_symlinks(workspace, subtest.resources)
+            self._create_symlinks(workspace, subtest.resources, resource_suffix)
             return
 
         # Empty resources is valid (e.g., T0 empty/vanilla subtests)
@@ -369,12 +387,18 @@ class TierManager:
 
         return config.get("resources", {})
 
-    def _create_symlinks(self, workspace: Path, resources: dict[str, Any]) -> None:
+    def _create_symlinks(
+        self,
+        workspace: Path,
+        resources: dict[str, Any],
+        resource_suffix: str | None = None,
+    ) -> None:
         """Create symlinks to shared resources at runtime.
 
         Args:
             workspace: Target workspace directory
             resources: Resource specification from config.yaml
+            resource_suffix: Optional resource usage instructions to append to CLAUDE.md
 
         """
         shared_dir = self._get_shared_dir()
@@ -435,16 +459,21 @@ class TierManager:
                                 os.symlink(agent_path.resolve(), link_path)
                             break
 
-        # Compose CLAUDE.md from blocks
+        # Compose CLAUDE.md from blocks (with optional resource suffix)
         if "claude_md" in resources:
             claude_md_spec = resources["claude_md"]
-            self._compose_claude_md(workspace, claude_md_spec, shared_dir)
+            self._compose_claude_md(workspace, claude_md_spec, shared_dir, resource_suffix)
+        elif resource_suffix:
+            # No claude_md blocks, but we have a resource suffix - create minimal CLAUDE.md
+            claude_md = workspace / "CLAUDE.md"
+            claude_md.write_text(resource_suffix)
 
     def _compose_claude_md(
         self,
         workspace: Path,
         spec: dict[str, Any],
         shared_dir: Path,
+        resource_suffix: str | None = None,
     ) -> None:
         """Compose CLAUDE.md from blocks at runtime.
 
@@ -452,6 +481,7 @@ class TierManager:
             workspace: Target workspace directory
             spec: CLAUDE.md specification (preset or blocks list)
             shared_dir: Path to shared resources directory
+            resource_suffix: Optional resource usage instructions to append
 
         """
         blocks_dir = shared_dir / "blocks"
@@ -466,7 +496,8 @@ class TierManager:
             # TODO: Add preset mappings if needed
             return
 
-        if not block_ids:
+        # If no blocks but we have a resource suffix, create CLAUDE.md anyway
+        if not block_ids and not resource_suffix:
             return
 
         content_parts = []
@@ -476,9 +507,20 @@ class TierManager:
             if matches:
                 content_parts.append(matches[0].read_text())
 
-        if content_parts:
+        # Compose final content
+        content = "\n\n".join(content_parts) if content_parts else ""
+
+        # Append resource suffix if provided
+        if resource_suffix:
+            if content:
+                content = f"{content}\n\n{resource_suffix}"
+            else:
+                content = resource_suffix
+
+        # Write CLAUDE.md if we have any content
+        if content:
             claude_md = workspace / "CLAUDE.md"
-            claude_md.write_text("\n\n".join(content_parts))
+            claude_md.write_text(content)
 
     def _create_settings_json(
         self,
