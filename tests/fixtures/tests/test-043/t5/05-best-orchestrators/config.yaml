@@ -1,4 +1,0 @@
-name: "Best Orchestrators"
-description: "Top performing orchestrators from T4"
-extends_previous: true
-inherit_best_from: ["T4"]

@@ -1,4 +1,0 @@
-name: "Prompts + Skills"
-description: "Best prompts combined with best skills"
-extends_previous: true
-inherit_best_from: ["T0", "T1"]

@@ -1,6 +1,0 @@
-name: "Fetch MCP"
-description: "Web content fetching and conversion for LLM usage"
-extends_previous: true
-mcp_servers:
-  - name: fetch
-    source: modelcontextprotocol/servers

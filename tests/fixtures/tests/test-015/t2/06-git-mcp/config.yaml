@@ -1,6 +1,0 @@
-name: "Git MCP"
-description: "Tools to read, search, and manipulate Git repositories"
-extends_previous: true
-mcp_servers:
-  - name: git
-    source: modelcontextprotocol/servers

@@ -1,7 +1,0 @@
-name: B02 critical-rules
-description: Individual block B02 test
-extends_previous: false
-resources:
-  claude_md:
-    blocks:
-    - B02

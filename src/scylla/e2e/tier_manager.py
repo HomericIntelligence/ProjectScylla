@@ -91,14 +91,14 @@ class TierManager:
         )
 
     def _discover_subtests(self, tier_id: TierID, tier_dir: Path) -> list[SubTestConfig]:
-        """Discover sub-test configurations in a tier directory.
+        """Discover sub-test configurations from shared directory.
 
-        All tiers now support numbered sub-tests. Sub-test directories use
-        the format "NN-name" (e.g., "00-empty", "01-vanilla", "02-critical-only").
+        Loads subtest configs from tests/claude-code/shared/subtests/tN/*.yaml.
+        All tiers now support numbered sub-tests.
 
         Args:
             tier_id: The tier identifier
-            tier_dir: Path to the tier directory
+            tier_dir: Path to the tier directory (legacy, kept for compatibility)
 
         Returns:
             List of SubTestConfig for each discovered sub-test.
@@ -106,79 +106,64 @@ class TierManager:
         """
         subtests = []
 
-        if not tier_dir.exists():
+        # Load from centralized shared directory
+        shared_subtests_dir = self._get_shared_dir() / "subtests" / tier_id.value.lower()
+
+        if not shared_subtests_dir.exists():
             return subtests
 
-        # Look for numbered subdirectories (format: NN-name or just NN)
-        for subdir in sorted(tier_dir.iterdir()):
-            if not subdir.is_dir():
+        # Look for YAML files (format: NN-name.yaml)
+        for config_file in sorted(shared_subtests_dir.glob("*.yaml")):
+            # Extract ID from filename (e.g., "00-empty.yaml" -> "00")
+            file_name = config_file.stem
+            if not file_name[:2].isdigit():
                 continue
 
-            # Match directories starting with digits (e.g., "00-empty", "01", "02-vanilla")
-            dir_name = subdir.name
-            if not dir_name[:2].isdigit():
-                continue
+            subtest_id = file_name[:2]
 
-            # Extract ID (first two digits) and name
-            subtest_id = dir_name[:2]
-            subtest_name_suffix = dir_name[3:] if len(dir_name) > 2 and dir_name[2] == "-" else ""
+            # Load config
+            with open(config_file) as f:
+                config_data = yaml.safe_load(f) or {}
 
-            claude_md = subdir / "CLAUDE.md"
-            claude_dir = subdir / ".claude"
-
-            # Load metadata if config.yaml exists
-            config_file = subdir / "config.yaml"
-            name = (
-                f"{tier_id.value} {subtest_name_suffix}"
-                if subtest_name_suffix
-                else f"{tier_id.value} Sub-test {subtest_id}"
-            )
-            description = f"Sub-test configuration {dir_name}"
+            name = config_data.get("name", f"{tier_id.value} Sub-test {subtest_id}")
+            description = config_data.get("description", f"Sub-test configuration {file_name}")
 
             # T0 sub-tests have special handling for extends_previous
             # 00-empty and 01-vanilla don't extend; 02+ may extend
             extends_previous = tier_id != TierID.T0 or int(subtest_id) >= 2
+            # Allow config to override extends_previous
+            extends_previous = config_data.get("extends_previous", extends_previous)
 
-            # Load resources spec for symlink-based fixtures
-            resources: dict[str, Any] = {}
+            # Load resources specification
+            resources: dict[str, Any] = config_data.get("resources", {})
 
-            if config_file.exists():
-                with open(config_file) as f:
-                    config_data = yaml.safe_load(f) or {}
-                name = config_data.get("name", name)
-                description = config_data.get("description", description)
-                # Allow config to override extends_previous
-                extends_previous = config_data.get("extends_previous", extends_previous)
-                # Load resources specification for runtime symlinks
-                resources = config_data.get("resources", {})
+            # Also capture root-level fields into resources for prompt suffixes
+            mcp_servers = config_data.get("mcp_servers", [])
+            if mcp_servers:
+                resources["mcp_servers"] = mcp_servers
 
-                # Also capture root-level fields into resources for prompt suffixes
-                mcp_servers = config_data.get("mcp_servers", [])
-                if mcp_servers:
-                    resources["mcp_servers"] = mcp_servers
+            # Map tools at root level
+            tools = config_data.get("tools", {})
+            if tools:
+                resources["tools"] = tools
 
-                # Map tools at root level
-                tools = config_data.get("tools", {})
-                if tools:
-                    resources["tools"] = tools
+            # Map agents at root level
+            agents = config_data.get("agents", {})
+            if agents:
+                resources["agents"] = agents
 
-                # Map agents at root level
-                agents = config_data.get("agents", {})
-                if agents:
-                    resources["agents"] = agents
-
-                # Map skills at root level
-                skills = config_data.get("skills", {})
-                if skills:
-                    resources["skills"] = skills
+            # Map skills at root level
+            skills = config_data.get("skills", {})
+            if skills:
+                resources["skills"] = skills
 
             subtests.append(
                 SubTestConfig(
                     id=subtest_id,
                     name=name,
                     description=description,
-                    claude_md_path=claude_md if claude_md.exists() else None,
-                    claude_dir_path=claude_dir if claude_dir.exists() else None,
+                    claude_md_path=None,  # No longer used with centralized configs
+                    claude_dir_path=None,  # No longer used with centralized configs
                     extends_previous=extends_previous,
                     resources=resources,
                 )
@@ -601,22 +586,22 @@ class TierManager:
         )
 
     def _get_fixture_config_path(self, tier_id: TierID, subtest_id: str) -> Path:
-        """Get path to the fixture's config.yaml file.
+        """Get path to the fixture's config file in shared directory.
 
         Args:
             tier_id: The tier identifier
             subtest_id: The subtest identifier
 
         Returns:
-            Path to config.yaml in the fixture directory.
+            Path to config.yaml in the shared subtests directory.
 
         """
-        tier_dir = self.tiers_dir / tier_id.value.lower()
-        # Find directory starting with subtest_id (e.g., "03-full")
-        for subdir in tier_dir.iterdir():
-            if subdir.is_dir() and subdir.name.startswith(subtest_id):
-                return subdir / "config.yaml"
-        return tier_dir / subtest_id / "config.yaml"
+        shared_subtests_dir = self._get_shared_dir() / "subtests" / tier_id.value.lower()
+        # Find config file starting with subtest_id (e.g., "00-empty.yaml")
+        for config_file in shared_subtests_dir.glob(f"{subtest_id}-*.yaml"):
+            return config_file
+        # Fallback if exact match not found
+        return shared_subtests_dir / f"{subtest_id}.yaml"
 
     def save_resource_manifest(
         self,

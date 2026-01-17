@@ -1,4 +1,0 @@
-name: "Skills + Agents"
-description: "Best skills combined with best agents"
-extends_previous: true
-inherit_best_from: ["T1", "T3"]

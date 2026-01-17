@@ -1,5 +1,0 @@
-name: "File + Shell"
-description: "File operations plus Bash"
-extends_previous: true
-tools:
-  enabled: [Read, Write, Edit, Glob, Grep, Bash]
