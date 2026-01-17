@@ -576,6 +576,7 @@ class SubTestExecutor:
         checkpoint: E2ECheckpoint | None = None,
         checkpoint_path: Path | None = None,
         coordinator: RateLimitCoordinator | None = None,
+        experiment_dir: Path | None = None,
     ) -> SubTestResult:
         """Run a single sub-test N times and aggregate results.
 
@@ -593,6 +594,7 @@ class SubTestExecutor:
             checkpoint: Optional checkpoint for resume capability
             checkpoint_path: Path to checkpoint file for saving
             coordinator: Optional rate limit coordinator for parallel execution
+            experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
         Returns:
             SubTestResult with aggregated metrics.
@@ -706,6 +708,18 @@ class SubTestExecutor:
                     workspace, CommandLogger(run_dir), tier_id, subtest.id, run_number=run_num
                 )
 
+            # Build merged resources for T5 subtests with inherit_best_from
+            merged_resources = None
+            if tier_id == TierID.T5 and subtest.inherit_best_from and experiment_dir:
+                try:
+                    merged_resources = self.tier_manager.build_merged_baseline(
+                        subtest.inherit_best_from,
+                        experiment_dir,
+                    )
+                except ValueError as e:
+                    logger.error(f"Failed to build merged baseline for T5/{subtest.id}: {e}")
+                    raise
+
             # Prepare tier configuration in workspace
             thinking_enabled = (
                 self.config.thinking_mode is not None and self.config.thinking_mode != "None"
@@ -715,6 +729,7 @@ class SubTestExecutor:
                 tier_id=tier_id,
                 subtest_id=subtest.id,
                 baseline=baseline,
+                merged_resources=merged_resources,
                 thinking_enabled=thinking_enabled,
             )
 
@@ -1606,6 +1621,7 @@ def run_tier_subtests_parallel(
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     global_semaphore=None,
+    experiment_dir: Path | None = None,
 ) -> dict[str, SubTestResult]:
     """Run all sub-tests for a tier in parallel with rate limit handling.
 
@@ -1623,6 +1639,7 @@ def run_tier_subtests_parallel(
         checkpoint: Optional checkpoint for resume capability
         checkpoint_path: Path to checkpoint file for saving
         global_semaphore: Optional global semaphore to limit total concurrent agents
+        experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
     Returns:
         Dict mapping sub-test ID to results.
@@ -1649,6 +1666,7 @@ def run_tier_subtests_parallel(
                     checkpoint=checkpoint,
                     checkpoint_path=checkpoint_path,
                     coordinator=None,  # No parallel workers
+                    experiment_dir=experiment_dir,
                 )
             except RateLimitError as e:
                 # Handle rate limit in main thread for single subtest
@@ -1665,6 +1683,7 @@ def run_tier_subtests_parallel(
                         checkpoint=checkpoint,
                         checkpoint_path=checkpoint_path,
                         coordinator=None,
+                        experiment_dir=experiment_dir,
                     )
                 else:
                     raise  # No checkpoint, can't handle - propagate
@@ -1696,6 +1715,7 @@ def run_tier_subtests_parallel(
                     checkpoint_path=checkpoint_path,
                     coordinator=coordinator,
                     global_semaphore=global_semaphore,
+                    experiment_dir=experiment_dir,
                 )
                 futures[future] = subtest.id
 
@@ -2065,6 +2085,7 @@ def _run_subtest_in_process_safe(
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
     global_semaphore=None,
+    experiment_dir: Path | None = None,
 ) -> SubTestResult:
     """Safe wrapper that catches ALL exceptions and returns structured error.
 
@@ -2095,6 +2116,7 @@ def _run_subtest_in_process_safe(
             checkpoint_path=checkpoint_path,
             coordinator=coordinator,
             global_semaphore=global_semaphore,
+            experiment_dir=experiment_dir,
         )
     except RateLimitError as e:
         # Return structured error, don't crash pool
@@ -2154,6 +2176,7 @@ def _run_subtest_in_process(
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
     global_semaphore=None,
+    experiment_dir: Path | None = None,
 ) -> SubTestResult:
     """Run a sub-test in a separate process.
 
@@ -2174,6 +2197,7 @@ def _run_subtest_in_process(
         checkpoint_path: Path to checkpoint file
         coordinator: Optional rate limit coordinator
         global_semaphore: Optional global semaphore to limit concurrent agents across all tiers
+        experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
     Returns:
         SubTestResult
@@ -2204,6 +2228,7 @@ def _run_subtest_in_process(
             checkpoint=checkpoint,
             checkpoint_path=checkpoint_path,
             coordinator=coordinator,
+            experiment_dir=experiment_dir,
         )
     finally:
         # Always release semaphore, even if exception occurred
