@@ -507,3 +507,301 @@ class TestCreateSettingsJson:
         assert "mcpServers" in settings
         assert "filesystem" in settings["mcpServers"]
         assert "git" in settings["mcpServers"]
+
+
+class TestInheritBestFrom:
+    """Tests for inherit_best_from functionality in T5 subtests."""
+
+    def test_parse_inherit_best_from(self, tmp_path: Path) -> None:
+        """Test that inherit_best_from is parsed from YAML config."""
+        # Create directory structure
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t5"
+        shared_dir.mkdir(parents=True)
+
+        # Write config with inherit_best_from
+        config_file = shared_dir / "01-best-prompts.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Best Prompts",
+                    "description": "Top performing prompt configurations from T0",
+                    "inherit_best_from": ["T0"],
+                }
+            )
+        )
+
+        # Discover subtests
+        manager = TierManager(tiers_dir)
+        subtests = manager._discover_subtests(TierID.T5, tiers_dir / "t5")
+
+        # Verify inherit_best_from was parsed
+        assert len(subtests) == 1
+        assert len(subtests[0].inherit_best_from) == 1
+        assert subtests[0].inherit_best_from[0] == TierID.T0
+
+    def test_parse_multiple_tiers(self, tmp_path: Path) -> None:
+        """Test parsing inherit_best_from with multiple tiers."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t5"
+        shared_dir.mkdir(parents=True)
+
+        # Write config with multiple tiers
+        config_file = shared_dir / "15-best-of-all.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Best of All",
+                    "description": "Best from all tiers",
+                    "inherit_best_from": ["T0", "T1", "T2", "T3", "T4"],
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        subtests = manager._discover_subtests(TierID.T5, tiers_dir / "t5")
+
+        assert len(subtests) == 1
+        assert len(subtests[0].inherit_best_from) == 5
+        assert subtests[0].inherit_best_from == [
+            TierID.T0,
+            TierID.T1,
+            TierID.T2,
+            TierID.T3,
+            TierID.T4,
+        ]
+
+    def test_no_inherit_best_from(self, tmp_path: Path) -> None:
+        """Test that subtests without inherit_best_from have empty list."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t5"
+        shared_dir.mkdir(parents=True)
+
+        # Write config without inherit_best_from
+        config_file = shared_dir / "06-all-prompts.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "All Prompts",
+                    "description": "All 18 CLAUDE.md blocks",
+                    "resources": {"claude_md": {"blocks": ["B01", "B02"]}},
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        subtests = manager._discover_subtests(TierID.T5, tiers_dir / "t5")
+
+        assert len(subtests) == 1
+        assert len(subtests[0].inherit_best_from) == 0
+
+
+class TestMergeTierResources:
+    """Tests for _merge_tier_resources() method."""
+
+    def test_merge_claude_md_blocks(self, tmp_path: Path) -> None:
+        """Test that claude_md blocks are replaced (not merged)."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        manager = TierManager(tiers_dir)
+
+        merged = {"claude_md": {"blocks": ["B01", "B02"]}}
+        new_resources = {"claude_md": {"blocks": ["B03", "B04", "B05"]}}
+
+        manager._merge_tier_resources(merged, new_resources, TierID.T0)
+
+        # Should replace, not union
+        assert merged["claude_md"]["blocks"] == ["B03", "B04", "B05"]
+
+    def test_merge_skills_union(self, tmp_path: Path) -> None:
+        """Test that skills are merged via union (deduplicated)."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        manager = TierManager(tiers_dir)
+
+        merged = {"skills": {"categories": ["github"], "names": ["skill-a"]}}
+        new_resources = {"skills": {"categories": ["mojo", "github"], "names": ["skill-b"]}}
+
+        manager._merge_tier_resources(merged, new_resources, TierID.T1)
+
+        # Union of categories (deduplicated)
+        assert set(merged["skills"]["categories"]) == {"github", "mojo"}
+        # Union of names
+        assert set(merged["skills"]["names"]) == {"skill-a", "skill-b"}
+
+    def test_merge_tools_all_wins(self, tmp_path: Path) -> None:
+        """Test that 'all' takes precedence over specific tools."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        manager = TierManager(tiers_dir)
+
+        merged = {"tools": {"enabled": ["Read", "Write"]}}
+        new_resources = {"tools": {"enabled": "all"}}
+
+        manager._merge_tier_resources(merged, new_resources, TierID.T2)
+
+        # "all" should win
+        assert merged["tools"]["enabled"] == "all"
+
+    def test_merge_tools_union_lists(self, tmp_path: Path) -> None:
+        """Test that tool lists are merged via union."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        manager = TierManager(tiers_dir)
+
+        merged = {"tools": {"enabled": ["Read", "Write"]}}
+        new_resources = {"tools": {"enabled": ["Bash", "Read"]}}
+
+        manager._merge_tier_resources(merged, new_resources, TierID.T2)
+
+        # Union (deduplicated)
+        assert set(merged["tools"]["enabled"]) == {"Read", "Write", "Bash"}
+
+    def test_merge_mcp_servers_by_name(self, tmp_path: Path) -> None:
+        """Test that MCP servers are merged by server name (no duplicates)."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        manager = TierManager(tiers_dir)
+
+        merged = {"mcp_servers": [{"name": "filesystem"}, {"name": "git"}]}
+        new_resources = {"mcp_servers": [{"name": "git"}, {"name": "memory"}]}
+
+        manager._merge_tier_resources(merged, new_resources, TierID.T2)
+
+        # Should have 3 servers (git not duplicated)
+        assert len(merged["mcp_servers"]) == 3
+        server_names = {s["name"] for s in merged["mcp_servers"]}
+        assert server_names == {"filesystem", "git", "memory"}
+
+    def test_merge_agents_union(self, tmp_path: Path) -> None:
+        """Test that agents are merged via union with sorted levels."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        manager = TierManager(tiers_dir)
+
+        merged = {"agents": {"levels": [2, 3], "names": ["agent-a.md"]}}
+        new_resources = {"agents": {"levels": [0, 1, 2], "names": ["agent-b.md"]}}
+
+        manager._merge_tier_resources(merged, new_resources, TierID.T3)
+
+        # Union of levels (sorted, deduplicated)
+        assert merged["agents"]["levels"] == [0, 1, 2, 3]
+        # Union of names
+        assert set(merged["agents"]["names"]) == {"agent-a.md", "agent-b.md"}
+
+
+class TestBuildMergedBaseline:
+    """Tests for build_merged_baseline() method."""
+
+    def test_build_merged_baseline_single_tier(self, tmp_path: Path) -> None:
+        """Test building merged baseline from single tier."""
+        import json
+
+        # Create experiment directory structure
+        experiment_dir = tmp_path / "experiment"
+        t0_dir = experiment_dir / "T0"
+        t0_dir.mkdir(parents=True)
+
+        # Create result.json with best_subtest
+        result_file = t0_dir / "result.json"
+        result_file.write_text(json.dumps({"best_subtest": "05"}))
+
+        # Create config_manifest.json for best subtest
+        subtest_dir = t0_dir / "05"
+        subtest_dir.mkdir()
+        manifest_file = subtest_dir / "config_manifest.json"
+        manifest_file.write_text(
+            json.dumps(
+                {
+                    "tier_id": "T0",
+                    "subtest_id": "05",
+                    "resources": {"claude_md": {"blocks": ["B01", "B02", "B03"]}},
+                }
+            )
+        )
+
+        # Create TierManager and build merged baseline
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
+
+        # Verify merged resources
+        assert "claude_md" in merged
+        assert merged["claude_md"]["blocks"] == ["B01", "B02", "B03"]
+
+    def test_build_merged_baseline_multiple_tiers(self, tmp_path: Path) -> None:
+        """Test building merged baseline from multiple tiers."""
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+
+        # T0 result
+        t0_dir = experiment_dir / "T0"
+        t0_dir.mkdir(parents=True)
+        (t0_dir / "result.json").write_text(json.dumps({"best_subtest": "03"}))
+        t0_subtest = t0_dir / "03"
+        t0_subtest.mkdir()
+        (t0_subtest / "config_manifest.json").write_text(
+            json.dumps({"resources": {"claude_md": {"blocks": ["B01", "B02"]}}})
+        )
+
+        # T1 result
+        t1_dir = experiment_dir / "T1"
+        t1_dir.mkdir(parents=True)
+        (t1_dir / "result.json").write_text(json.dumps({"best_subtest": "02"}))
+        t1_subtest = t1_dir / "02"
+        t1_subtest.mkdir()
+        (t1_subtest / "config_manifest.json").write_text(
+            json.dumps({"resources": {"skills": {"categories": ["github", "mojo"]}}})
+        )
+
+        # Build merged baseline
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        merged = manager.build_merged_baseline([TierID.T0, TierID.T1], experiment_dir)
+
+        # Verify both resources are present
+        assert "claude_md" in merged
+        assert merged["claude_md"]["blocks"] == ["B01", "B02"]
+        assert "skills" in merged
+        assert set(merged["skills"]["categories"]) == {"github", "mojo"}
+
+    def test_missing_tier_result_raises(self, tmp_path: Path) -> None:
+        """Test that missing tier result raises ValueError."""
+        experiment_dir = tmp_path / "experiment"
+        experiment_dir.mkdir()
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        # Should raise because T0/result.json doesn't exist
+        import pytest
+
+        with pytest.raises(ValueError, match="result.json not found"):
+            manager.build_merged_baseline([TierID.T0], experiment_dir)
+
+    def test_no_best_subtest_raises(self, tmp_path: Path) -> None:
+        """Test that missing best_subtest raises ValueError."""
+        import json
+
+        import pytest
+
+        experiment_dir = tmp_path / "experiment"
+        t0_dir = experiment_dir / "T0"
+        t0_dir.mkdir(parents=True)
+
+        # Create result.json without best_subtest
+        (t0_dir / "result.json").write_text(json.dumps({"pass_rate": 0.5}))
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        # Should raise because best_subtest is missing
+        with pytest.raises(ValueError, match="no best_subtest selected"):
+            manager.build_merged_baseline([TierID.T0], experiment_dir)

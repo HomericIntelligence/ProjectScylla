@@ -639,6 +639,7 @@ class E2ERunner:
             checkpoint=self.checkpoint,
             checkpoint_path=checkpoint_path,
             global_semaphore=global_semaphore,
+            experiment_dir=self.experiment_dir,
         )
 
         # Select best sub-test
