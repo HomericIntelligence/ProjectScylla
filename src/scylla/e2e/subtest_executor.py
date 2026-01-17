@@ -806,7 +806,7 @@ class SubTestExecutor:
             capture_output=True,
             text=True,
             timeout=adapter_config.timeout,
-            cwd=workspace,
+            cwd=workspace.resolve(),
         )
 
         # Read stdout/stderr from captured subprocess output
@@ -1019,7 +1019,7 @@ class SubTestExecutor:
                 stderr="",  # Will be filled after execution
                 exit_code=0,  # Will be updated after execution
                 duration=0.0,  # Will be updated after execution
-                cwd=str(workspace),
+                cwd=str(workspace.resolve()),
             )
 
             # Generate replay.sh BEFORE execution
