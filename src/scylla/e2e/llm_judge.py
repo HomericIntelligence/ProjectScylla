@@ -667,7 +667,8 @@ def _get_patchfile(workspace: Path) -> str:
     """Generate a patchfile from the agent's changes.
 
     Uses git diff to capture all changes made by the agent, including both
-    staged and unstaged changes.
+    staged and unstaged changes. Excludes test configuration files (CLAUDE.md,
+    .claude/) that are managed by the test framework.
 
     Args:
         workspace: Path to the workspace directory
@@ -678,8 +679,9 @@ def _get_patchfile(workspace: Path) -> str:
     """
     try:
         # Get unstaged changes (files modified but not staged)
+        # Exclude test config files (CLAUDE.md, .claude/) that are framework-managed
         unstaged_result = subprocess.run(
-            ["git", "diff"],
+            ["git", "diff", "--", ".", ":(exclude)CLAUDE.md", ":(exclude).claude"],
             cwd=workspace,
             capture_output=True,
             text=True,
@@ -687,8 +689,9 @@ def _get_patchfile(workspace: Path) -> str:
         )
 
         # Get staged changes (files in staging area)
+        # Exclude test config files (CLAUDE.md, .claude/) that are framework-managed
         staged_result = subprocess.run(
-            ["git", "diff", "--cached"],
+            ["git", "diff", "--cached", "--", ".", ":(exclude)CLAUDE.md", ":(exclude).claude"],
             cwd=workspace,
             capture_output=True,
             text=True,
