@@ -31,6 +31,8 @@ Build and dependency directories: node_modules, dist, build, target, venv, and s
 Compiled artifacts: .pyc, .pyo, .class, .o, .so files and similar compiler outputs.
 
 Evaluate only source files, configuration files explicitly required by the task, output files specified in requirements, and documentation the agent was asked to produce. The presence or absence of ignored artifacts must not influence your scoring unless the task explicitly required managing them.
+
+**Tool Access**: You have access to Read, Glob, and Grep tools to inspect workspace files directly. Use these tools when you need to verify file contents, search for patterns, or examine code structure. The "Workspace State" section shows what files exist, but you can read their full contents using the Read tool to verify implementation details.
 </workspace_inspection_rules>
 
 <functional_verification>

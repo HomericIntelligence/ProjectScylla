@@ -187,7 +187,7 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     # Mojo build
     try:
         build_result = subprocess.run(
-            ["mojo", "build", "."],
+            ["pixi", "run", "mojo", "build", "."],
             cwd=workspace,
             capture_output=True,
             text=True,
@@ -204,7 +204,7 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     # Mojo format check
     try:
         format_result = subprocess.run(
-            ["mojo", "format", "--check", "."],
+            ["pixi", "run", "mojo", "format", "--check", "."],
             cwd=workspace,
             capture_output=True,
             text=True,
@@ -221,7 +221,7 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     # Mojo test
     try:
         test_result = subprocess.run(
-            ["mojo", "test"],
+            ["pixi", "run", "mojo", "test"],
             cwd=workspace,
             capture_output=True,
             text=True,
@@ -525,6 +525,9 @@ def _get_workspace_state(workspace: Path) -> str:
     Excludes test configuration files (CLAUDE.md, .claude/) that are set up by
     the test framework, not by the agent being evaluated.
 
+    For untracked directories, recursively lists all files inside to give judge
+    visibility into directory contents.
+
     Args:
         workspace: Path to the workspace directory
 
@@ -552,22 +555,33 @@ def _get_workspace_state(workspace: Path) -> str:
                 continue
             # Status codes: M=modified, A=added, ??=untracked, D=deleted
             status = line[:2].strip()
-            file_path = line[3:]
+            file_path = line[3:].strip()  # Ensure proper stripping
 
             # Skip test configuration files
             if _is_test_config_file(file_path):
                 continue
 
-            if status == "M":
-                lines.append(f"- `{file_path}` (modified)")
-            elif status == "A":
-                lines.append(f"- `{file_path}` (added)")
-            elif status == "??":
-                lines.append(f"- `{file_path}` (created)")
-            elif status == "D":
-                lines.append(f"- `{file_path}` (deleted)")
+            full_path = workspace / file_path
+
+            # Handle untracked directories - expand to show all files
+            if status == "??" and full_path.is_dir():
+                for child in sorted(full_path.rglob("*")):
+                    if child.is_file():
+                        rel_path = child.relative_to(workspace)
+                        if not _is_test_config_file(str(rel_path)):
+                            lines.append(f"- `{rel_path}` (created)")
             else:
-                lines.append(f"- `{file_path}` ({status})")
+                # Existing file handling
+                if status == "M":
+                    lines.append(f"- `{file_path}` (modified)")
+                elif status == "A":
+                    lines.append(f"- `{file_path}` (added)")
+                elif status == "??":
+                    lines.append(f"- `{file_path}` (created)")
+                elif status == "D":
+                    lines.append(f"- `{file_path}` (deleted)")
+                else:
+                    lines.append(f"- `{file_path}` ({status})")
 
         if len(lines) == 1:
             lines.append("(no changes detected)")
@@ -810,9 +824,9 @@ def run_llm_judge(
         actual_judge_dir = judge_dir / f"judge_{judge_run_number:02d}"
         actual_judge_dir.mkdir(parents=True, exist_ok=True)
 
-    # Call Claude CLI for judgment
+    # Call Claude CLI for judgment with workspace access
     try:
-        stdout, stderr, result = _call_claude_judge(judge_prompt, model)
+        stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
 
         # Parse the response
         judge_result = _parse_judge_response(result)
@@ -867,8 +881,10 @@ def run_llm_judge(
         return _fallback_judge(agent_output)
 
 
-def _call_claude_judge(evaluation_context: str, model: str) -> tuple[str, str, str]:
-    """Call Claude CLI to get judgment.
+def _call_claude_judge(
+    evaluation_context: str, model: str, workspace: Path | None = None
+) -> tuple[str, str, str]:
+    """Call Claude CLI to get judgment with tool access to workspace.
 
     IMPORTANT: Always use claude-opus-4-5-20251101 for judging.
     Opus provides the most accurate and consistent evaluations.
@@ -877,6 +893,7 @@ def _call_claude_judge(evaluation_context: str, model: str) -> tuple[str, str, s
     Args:
         evaluation_context: The task, agent output, and workspace state to evaluate
         model: Model to use (must be Opus for accurate judging)
+        workspace: Path to workspace for judge to inspect files (optional)
 
     Returns:
         Tuple of (stdout, stderr, raw_response) where raw_response is the same as stdout.
@@ -902,14 +919,20 @@ def _call_claude_judge(evaluation_context: str, model: str) -> tuple[str, str, s
             "--output-format",
             "text",
             "--dangerously-skip-permissions",
+            "--allowedTools",
+            "Read,Glob,Grep",  # Judge can read workspace files but not modify
             "--system-prompt-file",
             str(JUDGE_SYSTEM_PROMPT_FILE),
             "-p",
             prompt_file_path,
         ]
 
+        # Run judge in workspace directory if provided, so it can access files
+        cwd = workspace if workspace else None
+
         result = subprocess.run(
             cmd,
+            cwd=cwd,
             capture_output=True,
             text=True,
             timeout=1200,  # 20 minutes - judging can take time with Opus
@@ -1151,7 +1174,7 @@ set -euo pipefail
 WORKSPACE="{workspace}"
 
 cd "$WORKSPACE"
-mojo build .
+pixi run mojo build .
 """
         )
         build_script.chmod(0o755)
@@ -1168,7 +1191,7 @@ set -euo pipefail
 WORKSPACE="{workspace}"
 
 cd "$WORKSPACE"
-mojo format --check .
+pixi run mojo format --check .
 """
         )
         format_script.chmod(0o755)
@@ -1185,7 +1208,7 @@ set -euo pipefail
 WORKSPACE="{workspace}"
 
 cd "$WORKSPACE"
-mojo test
+pixi run mojo test
 """
         )
         test_script.chmod(0o755)
