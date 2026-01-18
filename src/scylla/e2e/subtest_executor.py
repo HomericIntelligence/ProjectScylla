@@ -746,6 +746,7 @@ class SubTestExecutor:
                     run_dir=run_dir,
                     workspace=workspace,
                     task_prompt=task_prompt,
+                    experiment_dir=experiment_dir,
                 )
                 runs.append(run_result)
 
@@ -903,6 +904,7 @@ class SubTestExecutor:
         run_dir: Path,
         workspace: Path,
         task_prompt: str,
+        experiment_dir: Path | None = None,
     ) -> RunResult:
         """Execute a single run of the sub-test.
 
@@ -952,12 +954,16 @@ class SubTestExecutor:
         # Resource suffix is now handled in CLAUDE.md by tier_manager.prepare_workspace()
         # Task prompt stays clean - just symlink to experiment-level copy for deduplication
         prompt_file = run_dir / "task_prompt.md"
-        experiment_prompt = self.experiment_dir / "prompt.md"
 
-        if experiment_prompt.exists():
-            prompt_file.symlink_to(experiment_prompt.resolve())
+        if experiment_dir is not None:
+            experiment_prompt = experiment_dir / "prompt.md"
+            if experiment_prompt.exists():
+                prompt_file.symlink_to(experiment_prompt.resolve())
+            else:
+                # Fallback: write full content if experiment copy doesn't exist
+                prompt_file.write_text(task_prompt)
         else:
-            # Fallback: write full content if experiment copy doesn't exist
+            # No experiment_dir provided, write directly
             prompt_file.write_text(task_prompt)
 
         # Build extra args for adapter
