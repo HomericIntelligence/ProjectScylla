@@ -622,6 +622,7 @@ class E2ERunner:
 
         # Prepare results directory (flat structure: experiment/T0/, not experiment/tiers/T0/)
         tier_dir = self.experiment_dir / tier_id.value
+        tier_dir.mkdir(parents=True, exist_ok=True)
 
         # Pre-flight rate limit check to avoid wasted work
         self._check_rate_limit_before_tier(tier_id)
