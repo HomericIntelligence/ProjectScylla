@@ -200,9 +200,14 @@ def build_task_prompt(
         ]
     )
 
-    # Add patchfile section if available
+    # Add patchfile section if available (supplementary - judge can also read files directly)
     if patchfile and patchfile not in ("(no changes detected)", "(unable to generate patchfile)"):
-        sections.append(f"## Git Diff (Patchfile)\n\n```diff\n{patchfile}\n```")
+        sections.append(
+            f"## Git Diff (Patchfile)\n\n"
+            f"*Note: This shows changes to tracked files. "
+            f"For new files, use the Read tool to view their contents.*\n\n"
+            f"```diff\n{patchfile}\n```"
+        )
 
     # Add deleted files section if any
     if deleted_files:
