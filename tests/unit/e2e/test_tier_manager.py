@@ -11,10 +11,10 @@ from scylla.e2e.tier_manager import TierManager
 
 # Cleanup instructions that are appended to all prompts
 CLEANUP_INSTRUCTIONS = (
-    "\n\n## Cleanup Requirements\n"
+    "\n\n## Cleanup Requirements\n\n"
     "- Remove any temporary files created during task completion "
     "(build artifacts, cache files, etc.)\n"
-    "- Clean up after yourself - the workspace should contain only final deliverables"
+    "- Clean up after yourself - the workspace should contain only final deliverables\n"
 )
 
 
@@ -47,8 +47,8 @@ class TestBuildResourceSuffix:
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
         expected = (
-            "Maximize usage of the following tools to complete this task:\n- Bash\n- Read\n- Write"
-            + CLEANUP_INSTRUCTIONS
+            "Maximize usage of the following tools to complete this task:\n\n"
+            "- Bash\n- Read\n- Write" + CLEANUP_INSTRUCTIONS
         )
         assert result == expected
 
@@ -63,7 +63,7 @@ class TestBuildResourceSuffix:
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
         expected = (
-            "Maximize usage of the following MCP servers to complete this task:\n"
+            "Maximize usage of the following MCP servers to complete this task:\n\n"
             "- filesystem\n- git\n- memory" + CLEANUP_INSTRUCTIONS
         )
         assert result == expected
@@ -94,7 +94,7 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        expected = "Use the following tool to complete this task:\n- Read" + CLEANUP_INSTRUCTIONS
+        expected = "Use the following tool to complete this task:\n\n- Read" + CLEANUP_INSTRUCTIONS
         assert result == expected
 
     def test_single_mcp_server(self) -> None:
@@ -108,7 +108,7 @@ class TestBuildResourceSuffix:
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
         expected = (
-            "Use the following MCP server to complete this task:\n- filesystem"
+            "Use the following MCP server to complete this task:\n\n- filesystem"
             + CLEANUP_INSTRUCTIONS
         )
         assert result == expected
