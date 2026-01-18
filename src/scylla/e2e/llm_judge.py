@@ -172,8 +172,30 @@ class BuildPipelineResult:
         return "\n\n".join(sections)
 
 
+def _is_modular_repo(workspace: Path) -> bool:
+    """Check if workspace is the modular/mojo monorepo.
+
+    The modular repo has a specific structure:
+    - bazelw script at root
+    - mojo/ subdirectory with its own pixi.toml
+
+    Args:
+        workspace: Path to the workspace directory
+
+    Returns:
+        True if this is the modular repo, False otherwise.
+
+    """
+    return (workspace / "bazelw").exists() and (workspace / "mojo").is_dir()
+
+
 def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     """Run Mojo build/lint pipeline and capture results.
+
+    Detects if workspace is the modular/mojo monorepo and uses appropriate commands:
+    - Modular repo: Uses bazelw for build, ./bazelw run format for format check,
+      and pixi run tests from mojo/ subdirectory
+    - Standalone repo: Uses pixi run mojo commands from workspace root
 
     Args:
         workspace: Path to the workspace directory
@@ -183,33 +205,67 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
 
     """
     results: dict[str, Any] = {"language": "mojo"}
+    is_modular = _is_modular_repo(workspace)
 
     # Mojo build
     try:
-        build_result = subprocess.run(
-            ["pixi", "run", "mojo", "build", "."],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
+        if is_modular:
+            # Modular repo: Use bazelw to build all mojo targets
+            # Increase timeout to 30 minutes for large monorepo builds
+            build_result = subprocess.run(
+                ["./bazelw", "build", "//mojo/..."],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=1800,  # 30 minutes for large monorepo
+            )
+        else:
+            # Standalone repo: Use pixi run mojo build
+            build_result = subprocess.run(
+                ["pixi", "run", "mojo", "build", "."],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
         results["build_passed"] = build_result.returncode == 0
         results["build_na"] = False
         results["build_output"] = build_result.stdout + "\n" + build_result.stderr
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+    except subprocess.TimeoutExpired as e:
+        # Timeout - mark as failed with timeout message
         results["build_passed"] = False
         results["build_na"] = False
-        results["build_output"] = f"Error: {e}"
+        results["build_output"] = (
+            f"Build timed out after {e.args[1] if len(e.args) > 1 else 'unknown'} seconds"
+        )
+    except FileNotFoundError as e:
+        results["build_passed"] = False
+        results["build_na"] = False
+        results["build_output"] = f"Build tool not found: {e}"
 
     # Mojo format check
     try:
-        format_result = subprocess.run(
-            ["pixi", "run", "mojo", "format", "--check", "."],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=120,
-        )
+        if is_modular:
+            # Modular repo: Use bazelw run format (runs all linters including mojo format)
+            format_result = subprocess.run(
+                ["./bazelw", "run", "format"],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        else:
+            # Standalone repo: Use pixi run mojo format (NO --check flag - it doesn't exist)
+            # Run from mojo/ subdirectory if it exists, otherwise from workspace root
+            mojo_dir = workspace / "mojo"
+            cwd = mojo_dir if mojo_dir.is_dir() else workspace
+            format_result = subprocess.run(
+                ["pixi", "run", "mojo", "format", "."],
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
         results["format_passed"] = format_result.returncode == 0
         results["format_na"] = False
         results["format_output"] = format_result.stdout + "\n" + format_result.stderr
@@ -220,13 +276,25 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
 
     # Mojo test
     try:
-        test_result = subprocess.run(
-            ["pixi", "run", "mojo", "test"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=600,
-        )
+        if is_modular:
+            # Modular repo: Use pixi run tests from mojo/ subdirectory
+            mojo_dir = workspace / "mojo"
+            test_result = subprocess.run(
+                ["pixi", "run", "tests"],
+                cwd=mojo_dir,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+        else:
+            # Standalone repo: Use pixi run mojo test
+            test_result = subprocess.run(
+                ["pixi", "run", "mojo", "test"],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
         # Check if no tests found
         output = test_result.stdout + "\n" + test_result.stderr
         if "No tests found" in output or test_result.returncode == 5:
@@ -1101,6 +1169,8 @@ def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "moj
     plus a run_all.sh script that executes all tools in sequence.
     Called once per run (not per judge) since results are identical.
 
+    Detects if workspace is modular/mojo monorepo and generates appropriate commands.
+
     Args:
         run_dir: Run directory (e.g., run_01/)
         workspace: Path to the workspace directory
@@ -1162,10 +1232,28 @@ pytest -v
         )
         test_script.chmod(0o755)
     else:
+        # Detect if this is the modular repo
+        is_modular = _is_modular_repo(workspace)
+
         # Mojo build script
         build_script = commands_dir / "mojo_build.sh"
-        build_script.write_text(
-            f"""#!/usr/bin/env bash
+        if is_modular:
+            build_script.write_text(
+                f"""#!/usr/bin/env bash
+# Mojo build script (modular repo)
+# Generated by ProjectScylla E2E test framework
+
+set -euo pipefail
+
+WORKSPACE="{workspace}"
+
+cd "$WORKSPACE"
+./bazelw build //mojo/...
+"""
+            )
+        else:
+            build_script.write_text(
+                f"""#!/usr/bin/env bash
 # Mojo build script
 # Generated by ProjectScylla E2E test framework
 
@@ -1176,13 +1264,45 @@ WORKSPACE="{workspace}"
 cd "$WORKSPACE"
 pixi run mojo build .
 """
-        )
+            )
         build_script.chmod(0o755)
 
         # Mojo format check script
         format_script = commands_dir / "mojo_format.sh"
-        format_script.write_text(
-            f"""#!/usr/bin/env bash
+        if is_modular:
+            format_script.write_text(
+                f"""#!/usr/bin/env bash
+# Mojo format check script (modular repo)
+# Generated by ProjectScylla E2E test framework
+
+set -euo pipefail
+
+WORKSPACE="{workspace}"
+
+cd "$WORKSPACE"
+./bazelw run format
+"""
+            )
+        else:
+            # For standalone repos, run from mojo/ subdirectory if it exists
+            mojo_dir = workspace / "mojo"
+            if mojo_dir.is_dir():
+                format_script.write_text(
+                    f"""#!/usr/bin/env bash
+# Mojo format check script
+# Generated by ProjectScylla E2E test framework
+
+set -euo pipefail
+
+WORKSPACE="{workspace}"
+
+cd "$WORKSPACE/mojo"
+pixi run mojo format .
+"""
+                )
+            else:
+                format_script.write_text(
+                    f"""#!/usr/bin/env bash
 # Mojo format check script
 # Generated by ProjectScylla E2E test framework
 
@@ -1191,15 +1311,30 @@ set -euo pipefail
 WORKSPACE="{workspace}"
 
 cd "$WORKSPACE"
-pixi run mojo format --check .
+pixi run mojo format .
 """
-        )
+                )
         format_script.chmod(0o755)
 
         # Mojo test script
         test_script = commands_dir / "mojo_test.sh"
-        test_script.write_text(
-            f"""#!/usr/bin/env bash
+        if is_modular:
+            test_script.write_text(
+                f"""#!/usr/bin/env bash
+# Mojo test script (modular repo)
+# Generated by ProjectScylla E2E test framework
+
+set -euo pipefail
+
+WORKSPACE="{workspace}"
+
+cd "$WORKSPACE/mojo"
+pixi run tests
+"""
+            )
+        else:
+            test_script.write_text(
+                f"""#!/usr/bin/env bash
 # Mojo test script
 # Generated by ProjectScylla E2E test framework
 
@@ -1210,7 +1345,7 @@ WORKSPACE="{workspace}"
 cd "$WORKSPACE"
 pixi run mojo test
 """
-        )
+            )
         test_script.chmod(0o755)
 
     # Pre-commit hooks script
