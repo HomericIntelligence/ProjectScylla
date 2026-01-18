@@ -617,7 +617,7 @@ class TierManager:
                     prefix = "Maximize usage of the following sub-agents to solve this task:"
                 else:
                     prefix = "Use the following sub-agent to solve this task:"
-                suffixes.append(f"{prefix}\n{bullet_list}")
+                suffixes.append(f"{prefix}\n\n{bullet_list}")
 
         # Skills
         if "skills" in resources:
@@ -635,7 +635,7 @@ class TierManager:
                     prefix = "Maximize usage of the following skills to complete this task:"
                 else:
                     prefix = "Use the following skill to complete this task:"
-                suffixes.append(f"{prefix}\n{bullet_list}")
+                suffixes.append(f"{prefix}\n\n{bullet_list}")
 
         # MCP servers
         if "mcp_servers" in resources:
@@ -649,7 +649,7 @@ class TierManager:
                     prefix = "Maximize usage of the following MCP servers to complete this task:"
                 else:
                     prefix = "Use the following MCP server to complete this task:"
-                suffixes.append(f"{prefix}\n{bullet_list}")
+                suffixes.append(f"{prefix}\n\n{bullet_list}")
 
         # Tools
         if "tools" in resources:
@@ -667,7 +667,7 @@ class TierManager:
                             prefix = "Maximize usage of the following tools to complete this task:"
                         else:
                             prefix = "Use the following tool to complete this task:"
-                        suffixes.append(f"{prefix}\n{bullet_list}")
+                        suffixes.append(f"{prefix}\n\n{bullet_list}")
 
         # If no resources configured, add generic hint
         if not has_any_resources:
@@ -677,10 +677,10 @@ class TierManager:
 
         # Always add cleanup instructions (temporary files only)
         cleanup_instructions = (
-            "\n\n## Cleanup Requirements\n"
+            "\n\n## Cleanup Requirements\n\n"
             "- Remove any temporary files created during task completion "
             "(build artifacts, cache files, etc.)\n"
-            "- Clean up after yourself - the workspace should contain only final deliverables"
+            "- Clean up after yourself - the workspace should contain only final deliverables\n"
         )
 
         return base_message + cleanup_instructions
