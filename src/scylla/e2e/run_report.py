@@ -396,7 +396,15 @@ def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
                     continue
                 # Status format: "XY filename" where X=index, Y=working tree
                 # Examples: "?? file" (untracked), " M file" (modified), "A  file" (added)
-                file_path = line[3:].strip()
+                # Git porcelain format: XY filename (2 status chars + space + path)
+                # Handle edge cases where format may vary
+                if len(line) > 3 and line[2] == " ":
+                    file_path = line[3:].strip()
+                elif " " in line:
+                    # Fallback: split on first space after status
+                    file_path = line.split(" ", 1)[1].strip() if " " in line[1:] else ""
+                else:
+                    file_path = ""
 
                 if not file_path or _is_test_config_file(file_path):
                     continue

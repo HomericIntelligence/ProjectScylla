@@ -955,6 +955,10 @@ class SubTestExecutor:
         # Task prompt stays clean - just symlink to experiment-level copy for deduplication
         prompt_file = run_dir / "task_prompt.md"
 
+        # Handle resume: remove existing file/symlink before creating
+        if prompt_file.exists() or prompt_file.is_symlink():
+            prompt_file.unlink()
+
         if experiment_dir is not None:
             experiment_prompt = experiment_dir / "prompt.md"
             if experiment_prompt.exists():

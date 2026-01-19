@@ -623,7 +623,15 @@ def _get_workspace_state(workspace: Path) -> str:
                 continue
             # Status codes: M=modified, A=added, ??=untracked, D=deleted
             status = line[:2].strip()
-            file_path = line[3:].strip()  # Ensure proper stripping
+            # Git porcelain format: XY filename (2 status chars + space + path)
+            # Handle edge cases where format may vary
+            if len(line) > 3 and line[2] == " ":
+                file_path = line[3:].strip()
+            elif " " in line:
+                # Fallback: split on first space after status
+                file_path = line.split(" ", 1)[1].strip() if " " in line[1:] else ""
+            else:
+                file_path = ""
 
             # Skip test configuration files
             if _is_test_config_file(file_path):
@@ -869,6 +877,11 @@ def run_llm_judge(
         else:
             # Has actual failures
             logger.warning(f"Build pipeline: {status_summary}")
+
+        # Save pipeline outputs for debugging
+        if judge_dir:
+            run_dir = judge_dir.parent if judge_dir.parent.name.startswith("run_") else judge_dir
+            _save_pipeline_outputs(run_dir, pipeline_result, language=language)
 
     # Build the judge prompt using consolidated function from prompts.py
     pipeline_result_str = None
@@ -1426,6 +1439,33 @@ echo "=== All checks completed ==="
 """
     run_all_script.write_text(run_all_content)
     run_all_script.chmod(0o755)
+
+
+def _save_pipeline_outputs(
+    run_dir: Path, result: BuildPipelineResult, language: str = "mojo"
+) -> None:
+    """Save outputs from each pipeline step for debugging.
+
+    Args:
+        run_dir: Run directory containing commands/ subdirectory
+        result: BuildPipelineResult with outputs from each step
+        language: Programming language ("python" or "mojo")
+
+    """
+    commands_dir = run_dir / "commands"
+    commands_dir.mkdir(parents=True, exist_ok=True)
+
+    prefix = "mojo" if language != "python" else "python"
+
+    # Save each step's output (combined stdout/stderr as stored in BuildPipelineResult)
+    if result.build_output:
+        (commands_dir / f"{prefix}_build_output.log").write_text(result.build_output)
+    if result.format_output:
+        (commands_dir / f"{prefix}_format_output.log").write_text(result.format_output)
+    if result.test_output:
+        (commands_dir / f"{prefix}_test_output.log").write_text(result.test_output)
+    if result.precommit_output:
+        (commands_dir / "precommit_output.log").write_text(result.precommit_output)
 
 
 def _save_judge_logs(
