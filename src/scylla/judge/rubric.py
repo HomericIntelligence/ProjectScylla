@@ -62,35 +62,6 @@ class Requirement(BaseModel):
         return v.strip()
 
 
-class GradeScale(BaseModel):
-    """Industry-aligned grade scale thresholds.
-
-    See docs/design/grading-scale.md for full specification.
-
-    Attributes:
-        s_threshold: Amazing - exceptional, above and beyond (1.00).
-        a_threshold: Excellent - production ready (0.80).
-        b_threshold: Good - minor improvements possible (0.60).
-        c_threshold: Acceptable - functional with issues (0.40).
-        d_threshold: Marginal - significant issues (0.20).
-
-    """
-
-    s_threshold: float = Field(default=1.00, ge=0.0, le=1.0)
-    a_threshold: float = Field(default=0.80, ge=0.0, le=1.0)
-    b_threshold: float = Field(default=0.60, ge=0.0, le=1.0)
-    c_threshold: float = Field(default=0.40, ge=0.0, le=1.0)
-    d_threshold: float = Field(default=0.20, ge=0.0, le=1.0)
-
-    @field_validator("s_threshold", "a_threshold", "b_threshold", "c_threshold", "d_threshold")
-    @classmethod
-    def validate_threshold(cls, v: float) -> float:
-        """Validate threshold is between 0 and 1."""
-        if not 0.0 <= v <= 1.0:
-            raise ValueError(f"Threshold must be between 0.0 and 1.0, got {v}")
-        return v
-
-
 class Rubric(BaseModel):
     """Rubric for evaluating agent work.
 
@@ -98,8 +69,10 @@ class Rubric(BaseModel):
         name: Rubric name/title.
         description: Rubric description.
         requirements: List of requirements to evaluate.
-        pass_threshold: Score threshold for passing (default 0.70).
-        grade_scale: Grade thresholds.
+        pass_threshold: Score threshold for passing (default 0.60).
+
+    Grade assignment uses scylla.metrics.grading.assign_letter_grade().
+    See docs/design/grading-scale.md for full specification.
 
     """
 
@@ -111,7 +84,6 @@ class Rubric(BaseModel):
     pass_threshold: float = Field(
         default=0.60, ge=0.0, le=1.0, description="Pass threshold (Good grade)"
     )
-    grade_scale: GradeScale = Field(default_factory=GradeScale, description="Grade thresholds")
 
     def calculate_weighted_score(self, scores: dict[str, float]) -> float:
         """Calculate weighted score from requirement scores.
@@ -149,36 +121,6 @@ class Rubric(BaseModel):
             return 0.0
 
         return weighted_sum / total_weight
-
-    def assign_letter_grade(self, weighted_score: float) -> str:
-        """Assign letter grade based on weighted score.
-
-        Uses industry-aligned grade scale. See docs/design/grading-scale.md.
-
-        Args:
-            weighted_score: The weighted score (0.0 to 1.0).
-
-        Returns:
-            Letter grade (S, A, B, C, D, or F).
-
-        Raises:
-            RubricValidationError: If score is outside valid range [0.0, 1.0].
-
-        """
-        if weighted_score > 1.0 or weighted_score < 0.0:
-            raise RubricValidationError(f"Score must be between 0.0 and 1.0, got {weighted_score}")
-        if weighted_score >= self.grade_scale.s_threshold:
-            return "S"
-        elif weighted_score >= self.grade_scale.a_threshold:
-            return "A"
-        elif weighted_score >= self.grade_scale.b_threshold:
-            return "B"
-        elif weighted_score >= self.grade_scale.c_threshold:
-            return "C"
-        elif weighted_score >= self.grade_scale.d_threshold:
-            return "D"
-        else:
-            return "F"
 
     def is_passing(self, weighted_score: float) -> bool:
         """Check if the weighted score passes the threshold.
@@ -312,16 +254,14 @@ class RubricParser:
                 )
                 requirements.append(requirement)
 
-            # Parse grade scale from grading section
+            # Parse grading configuration
             grading_data = data.get("grading", {})
-            grade_scale = GradeScale()
 
             return Rubric(
                 name=data.get("name", "Evaluation Rubric"),
                 description=data.get("description", ""),
                 requirements=requirements,
                 pass_threshold=float(grading_data.get("pass_threshold", 0.60)),
-                grade_scale=grade_scale,
             )
 
         except (ValueError, TypeError) as e:
