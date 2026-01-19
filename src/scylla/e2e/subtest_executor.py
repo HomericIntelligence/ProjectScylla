@@ -1434,19 +1434,10 @@ class SubTestExecutor:
         passed_votes = sum(1 for j in valid if j.passed)
         passed = passed_votes > len(valid) / 2
 
-        # Grade from consensus score
-        if consensus_score >= 0.95:
-            grade = "S"
-        elif consensus_score >= 0.80:
-            grade = "A"
-        elif consensus_score >= 0.60:
-            grade = "B"
-        elif consensus_score >= 0.40:
-            grade = "C"
-        elif consensus_score >= 0.20:
-            grade = "D"
-        else:
-            grade = "F"
+        # Grade from consensus score using standard grading function
+        from scylla.metrics.grading import assign_letter_grade
+
+        grade = assign_letter_grade(consensus_score)
 
         return (consensus_score, passed, grade)
 
