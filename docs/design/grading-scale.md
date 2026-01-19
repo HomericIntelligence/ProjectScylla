@@ -40,11 +40,19 @@ grading:
 
 ## Grade Assignment Logic
 
-Grades are assigned using a **greater-than-or-equal** comparison in descending order:
+Grades are assigned using **greater-than-or-equal** comparison in descending order,
+with the exception that **S grade requires exactly 1.00** (perfect score):
 
 ```python
 def assign_letter_grade(score: float) -> str:
-    if score >= 1.00: return "S"   # Amazing
+    """Assign letter grade based on score.
+
+    Note: S grade requires exactly 1.00 (perfect score).
+    All other grades use >= thresholds.
+    """
+    assert 0.0 <= score <= 1.0, f"Score {score} is outside valid range [0.0, 1.0]"
+
+    if score == 1.00: return "S"   # Amazing (perfect score only)
     if score >= 0.80: return "A"   # Excellent
     if score >= 0.60: return "B"   # Good
     if score >= 0.40: return "C"   # Acceptable
