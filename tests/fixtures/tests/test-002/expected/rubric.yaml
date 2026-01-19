@@ -16,7 +16,7 @@ requirements:
     weight: 2.5
     evaluation: "scaled"
     criteria:
-      - "fn main() entry point"
+      - "fn main() entry point (NOT def main())"
       - "print() function used"
       - "No deprecated patterns (inout, @value, DynamicVector)"
       - "out self in constructors (if any)"

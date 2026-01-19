@@ -15,7 +15,7 @@ the project's patterns and conventions.
 
 ## Mojo v0.26.1 Requirements
 
-- Use `fn main()` as entry point
+- Use `fn main()` as entry point (NOT `def main()` - this is required for Mojo v0.26.1)
 - Use `print()` for output (NOT `print_string()`)
 - Ensure code passes `mojo build` without errors or warnings
 - Ensure code passes `mojo format` with no changes required
