@@ -21,7 +21,6 @@ from .models import (
     DefaultsConfig,
     EvalCase,
     EvaluationConfig,
-    GradeScale,
     GradingConfig,
     JudgeConfig,
     LoggingConfig,
@@ -57,7 +56,6 @@ __all__ = [
     "Rubric",
     "Requirement",
     "GradingConfig",
-    "GradeScale",
     # Tier Models
     "TierConfig",
     # Model Models

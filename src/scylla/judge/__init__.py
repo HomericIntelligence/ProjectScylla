@@ -36,7 +36,6 @@ from scylla.judge.prompts import (
 )
 from scylla.judge.rubric import (
     EvaluationType,
-    GradeScale,
     Requirement,
     Rubric,
     RubricError,
@@ -73,7 +72,6 @@ __all__ = [
     "build_task_prompt",
     # Rubric
     "EvaluationType",
-    "GradeScale",
     "Requirement",
     "Rubric",
     "RubricError",

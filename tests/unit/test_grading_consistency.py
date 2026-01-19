@@ -9,9 +9,6 @@ This test validates that:
 
 import pytest
 
-from scylla.config.models import GradeScale
-from scylla.judge.rubric import GradeScale as JudgeGradeScale
-from scylla.judge.rubric import Requirement, Rubric
 from scylla.metrics.grading import assign_letter_grade
 
 
@@ -19,24 +16,18 @@ class TestGradingConsistency:
     """Test grading consistency across codebase."""
 
     def test_grade_thresholds_match_documentation(self):
-        """Verify default grade thresholds match grading-scale.md."""
+        """Verify grade thresholds match grading-scale.md."""
         # These values are from docs/design/grading-scale.md
-        expected_thresholds = {
-            "S": 1.00,
-            "A": 0.80,
-            "B": 0.60,
-            "C": 0.40,
-            "D": 0.20,
-            "F": 0.00,
-        }
+        # Grade assignment logic is in scylla.metrics.grading.assign_letter_grade()
+        # Thresholds: S=1.00, A>=0.80, B>=0.60, C>=0.40, D>=0.20, F<0.20
 
-        grade_scale = GradeScale()
-        assert grade_scale.S == expected_thresholds["S"]
-        assert grade_scale.A == expected_thresholds["A"]
-        assert grade_scale.B == expected_thresholds["B"]
-        assert grade_scale.C == expected_thresholds["C"]
-        assert grade_scale.D == expected_thresholds["D"]
-        assert grade_scale.F == expected_thresholds["F"]
+        # Test boundary values
+        assert assign_letter_grade(1.00) == "S"
+        assert assign_letter_grade(0.80) == "A"
+        assert assign_letter_grade(0.60) == "B"
+        assert assign_letter_grade(0.40) == "C"
+        assert assign_letter_grade(0.20) == "D"
+        assert assign_letter_grade(0.00) == "F"
 
     def test_s_grade_requires_perfect_score(self):
         """S grade should ONLY be assigned to exactly 1.0."""
@@ -86,61 +77,6 @@ class TestGradingConsistency:
 
         with pytest.raises(AssertionError, match="outside valid range"):
             assign_letter_grade(-1.0)
-
-    def test_rubric_grading_validates_range(self):
-        """Test that Rubric.assign_letter_grade validates score range."""
-        # Create minimal rubric for testing
-        rubric = Rubric(
-            requirements=[
-                Requirement(
-                    id="R001",
-                    description="Test requirement",
-                    weight=1.0,
-                    evaluation="binary",
-                )
-            ],
-            pass_threshold=0.60,
-            grade_scale=JudgeGradeScale(),
-        )
-
-        # Valid scores should work
-        assert rubric.assign_letter_grade(1.0) == "S"
-        assert rubric.assign_letter_grade(0.8) == "A"
-        assert rubric.assign_letter_grade(0.0) == "F"
-
-        # Invalid scores should raise error
-        with pytest.raises(Exception, match="must be between 0.0 and 1.0"):
-            rubric.assign_letter_grade(1.1)
-
-        with pytest.raises(Exception, match="must be between 0.0 and 1.0"):
-            rubric.assign_letter_grade(-0.1)
-
-    def test_both_grading_functions_agree(self):
-        """Test that both grading functions produce identical results."""
-        # Create rubric with default grade scale
-        rubric = Rubric(
-            requirements=[
-                Requirement(
-                    id="R001",
-                    description="Test requirement",
-                    weight=1.0,
-                    evaluation="binary",
-                )
-            ],
-            pass_threshold=0.60,
-            grade_scale=JudgeGradeScale(),
-        )
-
-        # Test a range of scores
-        test_scores = [0.0, 0.2, 0.4, 0.6, 0.8, 0.85, 0.95, 0.99, 1.0]
-
-        for score in test_scores:
-            metrics_grade = assign_letter_grade(score)
-            rubric_grade = rubric.assign_letter_grade(score)
-            assert metrics_grade == rubric_grade, (
-                f"Grade mismatch for score {score}: "
-                f"metrics.grading={metrics_grade} vs rubric={rubric_grade}"
-            )
 
     def test_grade_assignment_exhaustive(self):
         """Exhaustively test grade assignment for all integer percentages."""

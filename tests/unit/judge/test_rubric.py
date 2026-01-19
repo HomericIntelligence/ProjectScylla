@@ -10,7 +10,6 @@ import pytest
 
 from scylla.judge.rubric import (
     EvaluationType,
-    GradeScale,
     Requirement,
     Rubric,
     RubricError,
@@ -83,22 +82,6 @@ class TestRequirement:
             Requirement(id="R001", description="Test", weight=-1.0)
 
 
-class TestGradeScale:
-    """Tests for GradeScale model.
-
-    Uses industry-aligned grade scale. See docs/design/grading-scale.md.
-    """
-
-    def test_default_thresholds(self) -> None:
-        """Test default grade thresholds (industry-aligned)."""
-        scale = GradeScale()
-        assert scale.s_threshold == 1.00  # Amazing
-        assert scale.a_threshold == 0.80  # Excellent
-        assert scale.b_threshold == 0.60  # Good
-        assert scale.c_threshold == 0.40  # Acceptable
-        assert scale.d_threshold == 0.20  # Marginal
-
-
 class TestRubric:
     """Tests for Rubric model."""
 
@@ -109,7 +92,6 @@ class TestRubric:
         assert rubric.description == ""
         assert rubric.requirements == []
         assert rubric.pass_threshold == 0.60  # Good grade threshold
-        assert isinstance(rubric.grade_scale, GradeScale)
 
     def test_custom_rubric(self) -> None:
         """Test rubric with custom values."""
@@ -188,60 +170,6 @@ class TestCalculateWeightedScore:
             ]
         )
         assert rubric.calculate_weighted_score({"R001": 0.5}) == 0.0
-
-
-class TestAssignGrade:
-    """Tests for grade assignment.
-
-    Uses industry-aligned grade scale. See docs/design/grading-scale.md.
-    """
-
-    def test_grade_s(self) -> None:
-        """Test S grade assignment (Amazing - exactly 1.00)."""
-        rubric = Rubric()
-        assert rubric.assign_letter_grade(1.0) == "S"
-
-    def test_grade_a(self) -> None:
-        """Test A grade assignment (Excellent - >= 0.80)."""
-        rubric = Rubric()
-        assert rubric.assign_letter_grade(0.80) == "A"
-        assert rubric.assign_letter_grade(0.99) == "A"
-
-    def test_grade_b(self) -> None:
-        """Test B grade assignment (Good - >= 0.60)."""
-        rubric = Rubric()
-        assert rubric.assign_letter_grade(0.60) == "B"
-        assert rubric.assign_letter_grade(0.79) == "B"
-
-    def test_grade_c(self) -> None:
-        """Test C grade assignment (Acceptable - >= 0.40)."""
-        rubric = Rubric()
-        assert rubric.assign_letter_grade(0.40) == "C"
-        assert rubric.assign_letter_grade(0.59) == "C"
-
-    def test_grade_d(self) -> None:
-        """Test D grade assignment (Marginal - >= 0.20)."""
-        rubric = Rubric()
-        assert rubric.assign_letter_grade(0.20) == "D"
-        assert rubric.assign_letter_grade(0.39) == "D"
-
-    def test_grade_f(self) -> None:
-        """Test F grade assignment (Failing - < 0.20)."""
-        rubric = Rubric()
-        assert rubric.assign_letter_grade(0.19) == "F"
-        assert rubric.assign_letter_grade(0.0) == "F"
-
-    def test_score_over_one_raises(self) -> None:
-        """Test that score > 1.0 raises error."""
-        rubric = Rubric()
-        with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
-            rubric.assign_letter_grade(1.1)
-
-    def test_score_under_zero_raises(self) -> None:
-        """Test that score < 0.0 raises error."""
-        rubric = Rubric()
-        with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
-            rubric.assign_letter_grade(-0.1)
 
 
 class TestIsPassing:
@@ -350,8 +278,7 @@ grading:
         assert rubric.name == "Complete Rubric"
         assert rubric.description == "Full test rubric"
         assert rubric.pass_threshold == 0.60
-        assert rubric.grade_scale.s_threshold == 1.00
-        assert rubric.grade_scale.a_threshold == 0.80
+        # Grade scale is no longer configurable - uses centralized assign_letter_grade()
         assert len(rubric.requirements) == 2
         assert rubric.requirements[0].evaluation == EvaluationType.BINARY
         assert rubric.requirements[0].validation_command == "pytest tests/"
