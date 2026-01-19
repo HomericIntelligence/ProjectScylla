@@ -145,7 +145,10 @@ def assign_letter_grade(score: float) -> str:
         Letter grade (S/A/B/C/D/F).
 
     """
-    if score >= 1.0:
+    # Scores outside [0.0, 1.0] are errors - should never occur
+    assert 0.0 <= score <= 1.0, f"Score {score} is outside valid range [0.0, 1.0]"
+
+    if score == 1.0:
         return "S"
     elif score >= 0.80:
         return "A"
