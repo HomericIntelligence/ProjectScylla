@@ -11,6 +11,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
+# Default pass threshold (Good grade - B)
+# See docs/design/grading-scale.md for specification
+DEFAULT_PASS_THRESHOLD = 0.60
+
 
 class JudgmentProtocol(Protocol):
     """Protocol for judgment objects."""

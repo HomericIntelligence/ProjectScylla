@@ -15,6 +15,8 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
+from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
+
 
 class RubricError(Exception):
     """Base exception for rubric errors."""
@@ -82,7 +84,7 @@ class Rubric(BaseModel):
         default_factory=list, description="Requirements to evaluate"
     )
     pass_threshold: float = Field(
-        default=0.60, ge=0.0, le=1.0, description="Pass threshold (Good grade)"
+        default=DEFAULT_PASS_THRESHOLD, ge=0.0, le=1.0, description="Pass threshold (Good grade)"
     )
 
     def calculate_weighted_score(self, scores: dict[str, float]) -> float:
@@ -261,7 +263,7 @@ class RubricParser:
                 name=data.get("name", "Evaluation Rubric"),
                 description=data.get("description", ""),
                 requirements=requirements,
-                pass_threshold=float(grading_data.get("pass_threshold", 0.60)),
+                pass_threshold=float(grading_data.get("pass_threshold", DEFAULT_PASS_THRESHOLD)),
             )
 
         except (ValueError, TypeError) as e:
