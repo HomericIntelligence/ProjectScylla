@@ -22,20 +22,16 @@ from SonarQube, LLM evaluation frameworks, and QA scorecard best practices.
 | D | 0.20 | Marginal | Significant issues, barely functional |
 | F | 0.00 | Failing | Does not meet requirements |
 
-### YAML Definition
+### YAML Configuration
 
-Use this exact definition in rubric files by referencing this document:
+Rubric files only need to configure the pass threshold. The grade scale itself is
+defined in code (`scylla.metrics.grading.assign_letter_grade()`) and cannot be customized:
 
 ```yaml
 grading:
   pass_threshold: 0.60  # Minimum score to pass (Good)
-  grade_scale:
-    S: 1.00    # Amazing - above and beyond
-    A: 0.80    # Excellent - production ready
-    B: 0.60    # Good - minor improvements possible
-    C: 0.40    # Acceptable - functional with issues
-    D: 0.20    # Marginal - significant issues
-    F: 0.0     # Failing - does not meet requirements
+  # Note: Grade scale (S/A/B/C/D/F thresholds) is centralized in scylla.metrics.grading
+  #       and uses the industry-aligned scale defined in this document
 ```
 
 ## Grade Assignment Logic
@@ -88,7 +84,8 @@ A score is considered **passing** if it meets the `pass_threshold`:
 
 ## Usage in Rubric Files
 
-Reference this document
+All rubrics use the centralized grade assignment function. Only the pass threshold
+is configurable per rubric:
 
 ```yaml
 # rubric.yaml
@@ -96,8 +93,9 @@ requirements:
   # ... requirements ...
 
 grading:
-  pass_threshold: 0.60
-  # Grade scale: See docs/design/grading-scale.md
+  pass_threshold: 0.60  # Default: 0.60 (Good grade)
+  # Grade assignment uses scylla.metrics.grading.assign_letter_grade()
+  # See docs/design/grading-scale.md for complete specification
 ```
 
 ## Related Documents

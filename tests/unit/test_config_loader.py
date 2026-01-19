@@ -24,6 +24,7 @@ from scylla.config import (
     ScyllaConfig,
     TierConfig,
 )
+from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 
 # Path to test fixtures
 FIXTURES_PATH = Path(__file__).parent.parent / "fixtures"
@@ -108,10 +109,8 @@ class TestConfigLoaderRubric:
         assert req1.weight == 2.0
         assert req1.evaluation == "binary"
 
-        # Check grading (industry-aligned scale)
-        assert rubric.grading.pass_threshold == 0.60
-        assert rubric.grading.grade_scale.S == 1.00  # Exemplary
-        assert rubric.grading.grade_scale.A == 0.80  # Production-Ready
+        # Check grading uses centralized defaults
+        assert rubric.grading.pass_threshold == DEFAULT_PASS_THRESHOLD
 
     def test_load_rubric_missing(self) -> None:
         """Missing rubric raises ConfigurationError."""

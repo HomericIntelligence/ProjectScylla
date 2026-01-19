@@ -30,6 +30,7 @@ from scylla.metrics.cross_tier import (
     calculate_frontier_cop,
 )
 from scylla.metrics.grading import (
+    DEFAULT_PASS_THRESHOLD,
     GradingResult,
     assign_letter_grade,
     calculate_composite_score,
@@ -110,6 +111,7 @@ __all__ = [
     "TierUplift",
     "calculate_frontier_cop",
     # Grading
+    "DEFAULT_PASS_THRESHOLD",
     "GradingResult",
     "assign_letter_grade",
     "calculate_composite_score",

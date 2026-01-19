@@ -16,6 +16,7 @@ from scylla.judge.rubric import (
     RubricParser,
     RubricValidationError,
 )
+from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 
 
 class TestEvaluationType:
@@ -91,7 +92,7 @@ class TestRubric:
         assert rubric.name == "Evaluation Rubric"
         assert rubric.description == ""
         assert rubric.requirements == []
-        assert rubric.pass_threshold == 0.60  # Good grade threshold
+        assert rubric.pass_threshold == DEFAULT_PASS_THRESHOLD
 
     def test_custom_rubric(self) -> None:
         """Test rubric with custom values."""
@@ -340,7 +341,7 @@ requirements:
         rubric = RubricParser.parse_yaml(yaml_content)
         assert rubric.name == "Evaluation Rubric"
         assert rubric.description == ""
-        assert rubric.pass_threshold == 0.60  # Good grade threshold
+        assert rubric.pass_threshold == DEFAULT_PASS_THRESHOLD
         assert rubric.requirements[0].weight == 1.0
         assert rubric.requirements[0].evaluation == EvaluationType.SCALED
 

@@ -11,6 +11,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
+
 
 class ConfigurationError(Exception):
     """Raised when configuration loading or validation fails."""
@@ -99,7 +101,7 @@ class GradingConfig(BaseModel):
     See docs/design/grading-scale.md for full specification.
     """
 
-    pass_threshold: float = Field(default=0.60, ge=0.0, le=1.0)
+    pass_threshold: float = Field(default=DEFAULT_PASS_THRESHOLD, ge=0.0, le=1.0)
 
 
 class Rubric(BaseModel):
