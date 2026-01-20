@@ -273,21 +273,39 @@ def wait_for_rate_limit(
         f"⏸️  Rate limit hit. Pausing for {wait_time:.0f}s (until {checkpoint.rate_limit_until})"
     )
 
-    # Wait with periodic status updates
+    # Wait with Fibonacci backoff for status updates (1s, 1s, 2s, 3s, 5s, 8s... up to 5 min)
     remaining = wait_time
-    update_interval = 30  # Update every 30 seconds
+    fib_prev, fib_curr = 1, 1  # Start Fibonacci sequence at 1 second
+    max_interval = 300  # Cap at 5 minutes (300 seconds)
 
     while remaining > 0:
-        sleep_chunk = min(update_interval, remaining)
+        # Calculate next interval with Fibonacci backoff, capped at 5 minutes
+        interval = min(fib_curr, max_interval)
+        sleep_chunk = min(interval, remaining)
         time.sleep(sleep_chunk)
         remaining -= sleep_chunk
 
         if remaining > 0:
+            # Calculate when next update will occur
+            next_fib = fib_prev + fib_curr
+            next_update_sec = min(next_fib, max_interval, remaining)
+
             minutes = remaining / 60
+            next_update_min = next_update_sec / 60
+
             if minutes >= 1:
-                log_func(f"   Rate limit wait: {minutes:.1f} minutes remaining")
+                log_func(
+                    f"   Rate limit wait: {minutes:.1f} minutes remaining "
+                    f"(next update in {next_update_min:.1f} min)"
+                )
             else:
-                log_func(f"   Rate limit wait: {remaining:.0f} seconds remaining")
+                log_func(
+                    f"   Rate limit wait: {remaining:.0f} seconds remaining "
+                    f"(next update in {next_update_sec:.0f} sec)"
+                )
+
+            # Update Fibonacci sequence for next iteration
+            fib_prev, fib_curr = fib_curr, next_fib
 
     # Update checkpoint - resuming
     checkpoint.status = "running"
