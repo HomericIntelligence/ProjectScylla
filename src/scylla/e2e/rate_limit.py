@@ -19,6 +19,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from scylla.e2e.paths import get_agent_dir
+
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
 
@@ -335,7 +337,7 @@ def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
 
     """
     run_result_file = run_dir / "run_result.json"
-    agent_dir = run_dir / "agent"
+    agent_dir = get_agent_dir(run_dir)
     stderr_file = agent_dir / "stderr.log"
     stdout_file = agent_dir / "stdout.log"
 
