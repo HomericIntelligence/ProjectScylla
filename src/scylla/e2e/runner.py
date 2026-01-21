@@ -37,6 +37,7 @@ from scylla.e2e.models import (
     TierResult,
     TokenStats,
 )
+from scylla.e2e.paths import RESULT_FILE
 from scylla.e2e.run_report import (
     generate_experiment_summary_table,
     generate_tier_summary_table,
@@ -704,7 +705,7 @@ class E2ERunner:
             tier_dir.mkdir(parents=True, exist_ok=True)
 
             # Save detailed result
-            with open(tier_dir / "result.json", "w") as f:
+            with open(tier_dir / RESULT_FILE, "w") as f:
                 json.dump(result.to_dict(), f, indent=2)
 
             # Generate subtest reports
