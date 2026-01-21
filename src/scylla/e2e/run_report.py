@@ -18,6 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from scylla.e2e.filters import is_test_config_file
+
 if TYPE_CHECKING:
     from scylla.e2e.models import ExperimentResult, SubTestResult, TierID, TierResult
 
@@ -319,32 +321,6 @@ def generate_run_report(
     return "\n".join(lines)
 
 
-def _is_test_config_file(file_path: str) -> bool:
-    """Check if a file is part of the test configuration (should be ignored).
-
-    Test config files like CLAUDE.md and .claude/ are set up by the test
-    framework, not created by the agent being evaluated.
-
-    Args:
-        file_path: Relative file path from workspace root
-
-    Returns:
-        True if the file should be ignored in reports.
-
-    """
-    path = file_path.strip()
-
-    # Ignore CLAUDE.md at root level
-    if path == "CLAUDE.md":
-        return True
-
-    # Ignore .claude/ directory and all its contents
-    if path == ".claude" or path.startswith(".claude/"):
-        return True
-
-    return False
-
-
 def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
     """Get files created/modified by agent, with their status.
 
@@ -378,7 +354,7 @@ def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
         if result.returncode == 0 and result.stdout.strip():
             for line in result.stdout.strip().split("\n"):
                 file_path = line.strip()
-                if file_path and not _is_test_config_file(file_path):
+                if file_path and not is_test_config_file(file_path):
                     files_with_status.append((file_path, "committed"))
 
         # 2. Get untracked/modified files using git status
@@ -406,7 +382,7 @@ def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
                 else:
                     file_path = ""
 
-                if not file_path or _is_test_config_file(file_path):
+                if not file_path or is_test_config_file(file_path):
                     continue
 
                 # Skip if already added as committed

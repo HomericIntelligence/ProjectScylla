@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from scylla.e2e.filters import is_test_config_file
 from scylla.judge.prompts import JUDGE_SYSTEM_PROMPT_FILE, build_task_prompt
 from scylla.metrics.grading import assign_letter_grade
 
@@ -557,33 +558,6 @@ def _run_build_pipeline(workspace: Path, language: str = "mojo") -> BuildPipelin
 # This module now imports and uses that consolidated implementation.
 
 
-def _is_test_config_file(file_path: str) -> bool:
-    """Check if a file is part of the test configuration (should be ignored).
-
-    Test config files like CLAUDE.md and .claude/ are set up by the test
-    framework, not created by the agent being evaluated.
-
-    Args:
-        file_path: Relative file path from workspace root
-
-    Returns:
-        True if the file should be ignored in evaluation.
-
-    """
-    # Normalize path for comparison
-    path = file_path.strip()
-
-    # Ignore CLAUDE.md at root level
-    if path == "CLAUDE.md":
-        return True
-
-    # Ignore .claude/ directory and all its contents
-    if path == ".claude" or path.startswith(".claude/"):
-        return True
-
-    return False
-
-
 def _get_workspace_state(workspace: Path) -> str:
     """Get a description of modified/created files in the workspace.
 
@@ -634,7 +608,7 @@ def _get_workspace_state(workspace: Path) -> str:
                 file_path = ""
 
             # Skip test configuration files
-            if _is_test_config_file(file_path):
+            if is_test_config_file(file_path):
                 continue
 
             full_path = workspace / file_path
@@ -644,7 +618,7 @@ def _get_workspace_state(workspace: Path) -> str:
                 for child in sorted(full_path.rglob("*")):
                     if child.is_file():
                         rel_path = child.relative_to(workspace)
-                        if not _is_test_config_file(str(rel_path)):
+                        if not is_test_config_file(str(rel_path)):
                             lines.append(f"- `{rel_path}` (created)")
             else:
                 # Existing file handling
