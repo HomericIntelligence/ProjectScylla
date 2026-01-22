@@ -38,6 +38,7 @@ from scylla.e2e.models import (
     TokenStats,
 )
 from scylla.e2e.paths import RESULT_FILE
+from scylla.e2e.rate_limit import wait_for_rate_limit
 from scylla.e2e.run_report import (
     generate_experiment_summary_table,
     generate_tier_summary_table,
@@ -572,7 +573,7 @@ class E2ERunner:
             tier_id: The tier about to be executed
 
         """
-        from scylla.e2e.rate_limit import check_api_rate_limit_status, wait_for_rate_limit
+        from scylla.e2e.rate_limit import check_api_rate_limit_status
 
         rate_limit_info = check_api_rate_limit_status()
         if rate_limit_info:
@@ -882,5 +883,34 @@ def run_experiment(
         ExperimentResult with all results.
 
     """
-    runner = E2ERunner(config, tiers_dir, results_dir, fresh=fresh)
-    return runner.run()
+    try:
+        runner = E2ERunner(config, tiers_dir, results_dir, fresh=fresh)
+        return runner.run()
+    except Exception as e:
+        # Check if this is a rate limit error that needs handling
+        if "rate limit" in str(e).lower() or "you've hit your limit" in str(e).lower():
+            logger.error(f"Experiment failed due to rate limit: {e}")
+            logger.error("The experiment encountered a Claude API rate limit.")
+            logger.error(
+                "Rate limits are automatically handled by the system when checkpoints are enabled."
+            )
+            logger.error(
+                "Please run with checkpoint support (default) and the experiment "
+                "will resume after the rate limit expires."
+            )
+            logger.error(
+                "If this persists, try reducing parallel_subtests or "
+                "runs_per_subtest in your config."
+            )
+
+            # Re-raise with context
+            raise RuntimeError(
+                f"Experiment failed due to Claude API rate limit. "
+                f"This indicates the API usage limit has been reached. "
+                f"The system will automatically resume after the rate limit expires "
+                f"when using checkpoints. "
+                f"Error details: {e}"
+            ) from e
+        else:
+            # Re-raise other errors as-is
+            raise

@@ -1751,38 +1751,13 @@ def run_tier_subtests_parallel(
                         coordinator.resume_all_workers()
 
                 except RateLimitError as e:
-                    # Rate limit from a worker
-                    if checkpoint and checkpoint_path:
-                        logger.info(
-                            f"Rate limit detected from {e.info.source}, pausing all workers..."
-                        )
-                        wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)
-                        coordinator.resume_all_workers()
-                    else:
-                        # Create error result
-                        results[subtest_id] = SubTestResult(
-                            subtest_id=subtest_id,
-                            tier_id=tier_id,
-                            runs=[],
-                            pass_rate=0.0,
-                            mean_score=0.0,
-                            median_score=0.0,
-                            std_dev_score=0.0,
-                            mean_cost=0.0,
-                            total_cost=0.0,
-                            consistency=0.0,
-                            selection_reason=f"Rate limit: {e.info.error_message}",
-                        )
-                        completed_count += 1
-
-                        # Log progress after error
-                        elapsed = time.time() - start_time
-                        active_workers = total_subtests - completed_count
-                        logger.info(
-                            f"[PROGRESS] Tier {tier_id.value}: "
-                            f"{completed_count}/{total_subtests} complete, "
-                            f"{active_workers} active, elapsed: {elapsed:.0f}s"
-                        )
+                    # Rate limit from a worker - re-raise to maintain consistent behavior
+                    # with single-subtest path
+                    logger.warning(
+                        f"Rate limit detected from {e.info.source} in parallel worker "
+                        f"for {subtest_id}, re-raising for proper handling"
+                    )
+                    raise
 
                 except Exception as e:
                     # Other errors
