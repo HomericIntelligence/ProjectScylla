@@ -631,6 +631,7 @@ class ExperimentConfig:
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
             "max_subtests": self.max_subtests,
+            "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
         }
 
@@ -665,6 +666,9 @@ class ExperimentConfig:
             parallel_subtests=data.get("parallel_subtests", 4),
             timeout_seconds=data.get("timeout_seconds", 3600),
             max_turns=data.get("max_turns"),
+            max_subtests=data.get("max_subtests"),
+            thinking_mode=data.get("thinking_mode", "None"),
+            use_containers=data.get("use_containers", False),
         )
 
 
