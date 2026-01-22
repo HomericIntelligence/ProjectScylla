@@ -192,19 +192,32 @@ class E2ERunner:
             # Resume from checkpoint
             try:
                 self.checkpoint = load_checkpoint(checkpoint_path)
-
-                # Validate config match (strict validation)
-                if not validate_checkpoint_config(self.checkpoint, self.config):
-                    raise ValueError(
-                        f"Config has changed since checkpoint. Use --fresh to start over.\n"
-                        f"Checkpoint: {checkpoint_path}"
-                    )
-
                 self.experiment_dir = Path(self.checkpoint.experiment_dir)
-                logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
-                logger.info(
-                    f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
-                )
+
+                # Load config from checkpoint's saved experiment.json
+                # This ensures checkpoint config takes precedence over CLI args
+                saved_config_path = self.experiment_dir / "config" / "experiment.json"
+                if saved_config_path.exists():
+                    logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+                    logger.info(f"📋 Loading config from checkpoint: {saved_config_path}")
+                    self.config = ExperimentConfig.load(saved_config_path)
+                    logger.info(
+                        f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
+                    )
+                else:
+                    # Fallback: validate CLI config matches checkpoint
+                    logger.warning(
+                        f"⚠️  Checkpoint config not found at {saved_config_path}, using CLI config"
+                    )
+                    if not validate_checkpoint_config(self.checkpoint, self.config):
+                        raise ValueError(
+                            f"Config has changed since checkpoint. Use --fresh to start over.\n"
+                            f"Checkpoint: {checkpoint_path}"
+                        )
+                    logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+                    logger.info(
+                        f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
+                    )
 
                 # Validate experiment directory exists
                 if not self.experiment_dir.exists():
@@ -378,11 +391,26 @@ class E2ERunner:
 
         finally:
             # Save checkpoint on interrupt
-            if is_shutdown_requested() and self.checkpoint:
-                self.checkpoint.status = "interrupted"
-                self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
-                save_checkpoint(self.checkpoint, checkpoint_path)
-                logger.warning("💾 Checkpoint saved after interrupt")
+            if is_shutdown_requested() and checkpoint_path and checkpoint_path.exists():
+                # CRITICAL: Reload checkpoint from disk to preserve worker-saved completions
+                # Workers save their progress to the checkpoint file, but the main process
+                # has a stale copy. We must reload to avoid overwriting worker progress.
+                try:
+                    logger.info("🔄 Reloading checkpoint from disk to preserve worker progress...")
+                    current_checkpoint = load_checkpoint(checkpoint_path)
+                    current_checkpoint.status = "interrupted"
+                    current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
+                    save_checkpoint(current_checkpoint, checkpoint_path)
+                    logger.warning("💾 Checkpoint saved after interrupt")
+                except Exception as reload_error:
+                    # If reload fails, save what we have (better than nothing)
+                    logger.error(f"⚠️  Failed to reload checkpoint: {reload_error}")
+                    logger.warning("Saving checkpoint from memory (may lose some worker progress)")
+                    if self.checkpoint:
+                        self.checkpoint.status = "interrupted"
+                        self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
+                        save_checkpoint(self.checkpoint, checkpoint_path)
+                        logger.warning("💾 Checkpoint saved after interrupt")
             self._cleanup_pid_file()
 
         # If shutdown was requested, return partial results
