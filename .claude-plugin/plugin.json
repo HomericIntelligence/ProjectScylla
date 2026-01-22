@@ -22,7 +22,8 @@
     "skills/e2e-path-resolution-fix/SKILL.md",
     "skills/fix-tests-after-config-refactor/SKILL.md",
     "skills/fix-directory-not-created-before-write/SKILL.md",
-    "skills/fix-evaluation-framework-bugs/SKILL.md"
+    "skills/fix-evaluation-framework-bugs/SKILL.md",
+    "skills/checkpoint-config-mismatch/SKILL.md"
   ],
   "pull_request": {
     "number": 182,
