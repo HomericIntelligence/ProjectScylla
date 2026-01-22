@@ -18,6 +18,7 @@ import logging
 import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import yaml
@@ -48,11 +49,12 @@ def resolve_judge_model(model_shorthand: str) -> str:
 
     """
     shortcuts = {
-        # Claude 4.5 models
+        # Claude 4.5 models (updated names)
         "opus-4-5": "claude-opus-4-5-20251101",
-        "sonnet-4-5": "claude-sonnet-4-5-20250929",
+        "sonnet-4-5": "sonnet",  # Use alias instead of specific version
+        "sonnet": "sonnet",  # Direct alias for current working model
         "haiku-4-5": "claude-haiku-4-5",
-        # Claude 4.0 models
+        # Claude 4.0 models (fallback)
         "opus-4-0": "claude-opus-4-20250514",
         "sonnet-4-0": "claude-sonnet-4-20250514",
         "haiku-4-0": "claude-haiku-4-0-20250514",
@@ -60,33 +62,143 @@ def resolve_judge_model(model_shorthand: str) -> str:
     return shortcuts.get(model_shorthand, model_shorthand)
 
 
-def validate_model(model_id: str) -> bool:
+def is_rate_limit_error(output: str) -> tuple[bool, int | None]:
+    """Check if the output indicates a rate limit error.
+
+    Args:
+        output: The stdout or stderr content to check
+
+    Returns:
+        Tuple of (is_rate_limit, time_to_wait_seconds)
+
+    """
+    # Look for rate limit indicators
+    if "hit your limit" in output.lower() or "rate limit" in output.lower():
+        # Try to extract reset time
+        import re
+
+        # Look for time patterns like "6am", "5 minutes", "30 seconds"
+        time_patterns = [
+            r"resets?\s+(\d{1,2})(am|pm)",  # "resets 6am"
+            r"(\d+)\s*minutes?",  # "5 minutes"
+            r"(\d+)\s*seconds?",  # "30 seconds"
+            r"in\s+(\d+)\s*minutes?",  # "in 5 minutes"
+            r"in\s+(\d+)\s*hours?",  # "in 2 hours"
+        ]
+
+        output_lower = output.lower()
+
+        # Try to find time information
+        for pattern in time_patterns:
+            match = re.search(pattern, output_lower)
+            if match:
+                if "am" in match.group(0) or "pm" in match.group(0):
+                    # Handle time like "6am" - we'll estimate 12 hours for now
+                    return True, 12 * 3600  # 12 hours
+                else:
+                    time_unit = match.group(1)
+                    if "minute" in match.group(0):
+                        return True, int(time_unit) * 60
+                    elif "second" in match.group(0):
+                        return True, int(time_unit)
+                    elif "hour" in match.group(0):
+                        return True, int(time_unit) * 3600
+
+        # If we can't parse the time, assume 1 hour
+        return True, 3600
+
+    return False, None
+
+
+def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) -> bool:
     """Validate that a model is available by running a test prompt.
+
+    This function intelligently handles rate limits by waiting for them to reset
+    rather than failing immediately.
 
     Args:
         model_id: Full model ID to test
+        max_retries: Maximum number of retry attempts for rate limits
+        base_delay: Base delay in seconds between retries
 
     Returns:
-        True if model is available, False otherwise
+        True if model appears available, False otherwise
 
     """
-    try:
-        result = subprocess.run(
-            [
-                "claude",
-                "--model",
-                model_id,
-                "--output-format",
-                "json",
-                "Say 'OK'",
-            ],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
-        return False
+    for attempt in range(max_retries + 1):
+        try:
+            logger.info(f"Validating model '{model_id}' (attempt {attempt + 1}/{max_retries + 1})")
+
+            result = subprocess.run(
+                [
+                    "claude",
+                    "--model",
+                    model_id,
+                    "--output-format",
+                    "json",
+                    "Say 'OK'",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,  # Increased timeout for rate limit scenarios
+            )
+
+            # Check for rate limits first
+            combined_output = result.stdout + result.stderr
+
+            is_rate_limit, wait_time = is_rate_limit_error(combined_output)
+
+            if is_rate_limit and attempt < max_retries:
+                logger.warning(
+                    f"Rate limit detected for model '{model_id}'. "
+                    f"Waiting {wait_time} seconds before retry..."
+                )
+                time.sleep(wait_time)
+                continue  # Retry the validation
+
+            # Check if we got a successful response
+            if result.returncode == 0 and '"is_error":false' in result.stdout:
+                logger.info(f"✓ Model '{model_id}' validated successfully")
+                return True
+            else:
+                # Check for other specific errors
+                if "not_found_error" in combined_output:
+                    logger.warning(f"Model '{model_id}' not found on server")
+                    return False
+                elif attempt < max_retries:
+                    logger.warning(
+                        f"Validation attempt {attempt + 1} failed for model "
+                        f"'{model_id}', retrying..."
+                    )
+                    time.sleep(base_delay * (2**attempt))  # Exponential backoff
+                    continue
+                else:
+                    logger.warning(f"All validation attempts failed for model '{model_id}'")
+                    return False
+
+        except subprocess.TimeoutExpired:
+            if attempt < max_retries:
+                logger.warning(f"Validation timed out for model '{model_id}', retrying...")
+                time.sleep(base_delay)
+                continue
+            else:
+                logger.warning(
+                    f"Validation timed out for model '{model_id}' after {max_retries + 1} attempts"
+                )
+                return False
+        except FileNotFoundError:
+            logger.error("Claude CLI not found. Is it installed?")
+            return False
+        except Exception as e:
+            if attempt < max_retries:
+                logger.warning(f"Validation error for model '{model_id}': {e}, retrying...")
+                time.sleep(base_delay)
+                continue
+            else:
+                logger.error(f"Validation failed for model '{model_id}': {e}")
+                return False
+
+    return False
 
 
 def parse_args() -> argparse.Namespace:
@@ -122,6 +234,16 @@ Examples:
         --repo https://github.com/example/repo \\
         --commit abc123 \\
         --tiers T0 T1
+
+    # Add judge models with intelligent rate limit handling
+    python scripts/run_e2e_experiment.py \\
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --add-judge sonnet --add-judge opus
+
+    # Skip judge validation (useful when rate limited)
+    python scripts/run_e2e_experiment.py \\
+        --tiers-dir tests/fixtures/tests/test-001 \\
+        --add-judge sonnet --skip-judge-validation
         """,
     )
 
@@ -194,24 +316,29 @@ Examples:
     parser.add_argument(
         "--model",
         type=str,
-        default="claude-sonnet-4-5-20250929",
+        default="sonnet",
         help="Primary model for task execution",
     )
     parser.add_argument(
         "--judge-model",
         type=str,
-        default="claude-opus-4-5-20251101",
-        help="Model for judging (default: claude-opus-4-5-20251101)",
+        default="sonnet",
+        help="Model for judging (default: sonnet)",
     )
     parser.add_argument(
         "--add-judge",
         action="append",
         nargs="?",
-        const="claude-opus-4-5-20251101",
+        const="sonnet",
         metavar="MODEL",
         help="Add additional judge model. Use multiple times for more judges. "
-        "Without argument, adds opus-4-5. Examples: --add-judge, "
-        "--add-judge sonnet-4-5, --add-judge haiku-4-5",
+        "Without argument, adds sonnet. Examples: --add-judge, "
+        "--add-judge sonnet, --add-judge opus",
+    )
+    parser.add_argument(
+        "--skip-judge-validation",
+        action="store_true",
+        help="Skip model validation for judges (useful when Claude CLI is unavailable)",
     )
     parser.add_argument(
         "--thinking",
@@ -387,14 +514,18 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         for model in args.add_judge:
             resolved_model = resolve_judge_model(model)
 
-            # Validate model is available
-            logger.info(f"Validating judge model: {resolved_model}")
-            if not validate_model(resolved_model):
-                logger.warning(
-                    f"⚠️  Judge model '{resolved_model}' (from '{model}') is not available. "
-                    f"Skipping this judge."
-                )
-                continue
+            # Skip validation if requested, otherwise try to validate
+            if not args.skip_judge_validation:
+                logger.info(f"Validating judge model: {resolved_model}")
+                if validate_model(resolved_model):
+                    logger.info(f"✓ Judge model {resolved_model} validated successfully")
+                else:
+                    logger.warning(
+                        f"⚠️  Judge model '{resolved_model}' (from '{model}') validation failed. "
+                        f"Proceeding anyway - model may still be available."
+                    )
+            else:
+                logger.info(f"Skipping validation for judge model: {resolved_model}")
 
             config_dict["judge_models"].append(resolved_model)
 
