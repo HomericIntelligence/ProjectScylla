@@ -38,30 +38,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def resolve_judge_model(model_shorthand: str) -> str:
-    """Resolve shorthand model names to full model IDs.
-
-    Args:
-        model_shorthand: Either a shorthand like 'sonnet-4-5' or a full model ID
-
-    Returns:
-        Full model ID
-
-    """
-    shortcuts = {
-        # Claude 4.5 models (updated names)
-        "opus-4-5": "claude-opus-4-5-20251101",
-        "sonnet-4-5": "sonnet",  # Use alias instead of specific version
-        "sonnet": "sonnet",  # Direct alias for current working model
-        "haiku-4-5": "claude-haiku-4-5",
-        # Claude 4.0 models (fallback)
-        "opus-4-0": "claude-opus-4-20250514",
-        "sonnet-4-0": "claude-sonnet-4-20250514",
-        "haiku-4-0": "claude-haiku-4-0-20250514",
-    }
-    return shortcuts.get(model_shorthand, model_shorthand)
-
-
 def is_rate_limit_error(output: str) -> tuple[bool, int | None]:
     """Check if the output indicates a rate limit error.
 
@@ -512,22 +488,20 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
     # Build judge_models list from --add-judge arguments
     if args.add_judge:
         for model in args.add_judge:
-            resolved_model = resolve_judge_model(model)
-
             # Skip validation if requested, otherwise try to validate
             if not args.skip_judge_validation:
-                logger.info(f"Validating judge model: {resolved_model}")
-                if validate_model(resolved_model):
-                    logger.info(f"✓ Judge model {resolved_model} validated successfully")
+                logger.info(f"Validating judge model: {model}")
+                if validate_model(model):
+                    logger.info(f"✓ Judge model {model} validated successfully")
                 else:
                     logger.warning(
-                        f"⚠️  Judge model '{resolved_model}' (from '{model}') validation failed. "
+                        f"⚠️  Judge model '{model}' validation failed. "
                         f"Proceeding anyway - model may still be available."
                     )
             else:
-                logger.info(f"Skipping validation for judge model: {resolved_model}")
+                logger.info(f"Skipping validation for judge model: {model}")
 
-            config_dict["judge_models"].append(resolved_model)
+            config_dict["judge_models"].append(model)
 
     # Validate required fields
     if not config_dict["task_repo"]:
