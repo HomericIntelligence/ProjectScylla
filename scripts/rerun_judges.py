@@ -169,6 +169,14 @@ Examples:
     )
 
     parser.add_argument(
+        "--parallel",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Number of judge slots to run in parallel (default: 1, sequential)",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -236,6 +244,7 @@ def main() -> int:
             status_filter=status_filter,
             judge_model=args.judge_model,
             regenerate_only=args.regenerate_only,
+            parallel=args.parallel,
         )
 
         # Summary already printed by rerun_judges_experiment()
