@@ -23,5 +23,15 @@ pytest-cov = ">=4.0"
 pre-commit = ">=3.0"
 ruff = ">=0.1.0"
 
+[feature.analysis.pypi-dependencies]
+matplotlib = ">=3.8"
+numpy = ">=1.24"
+pandas = ">=2.0"
+seaborn = ">=0.13"
+scipy = ">=1.11"
+altair = ">=5.0"
+vl-convert-python = ">=1.0"
+
 [environments]
 default = { features = ["dev"], solve-group = "default" }
+analysis = { features = ["dev", "analysis"], solve-group = "default" }
