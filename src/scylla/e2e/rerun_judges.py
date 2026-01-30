@@ -17,6 +17,9 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -388,6 +391,33 @@ def _rerun_single_judge_slot(
         return False
 
 
+@dataclass
+class _JudgeSlotResult:
+    """Result from a parallel judge slot execution."""
+
+    slot: JudgeSlotToRerun
+    success: bool
+    error: str | None = None
+
+
+def _rerun_single_judge_slot_safe(
+    slot: JudgeSlotToRerun,
+    experiment_dir: Path,
+    config: ExperimentConfig,
+) -> _JudgeSlotResult:
+    """Safe wrapper that never raises — prevents one failure from poisoning the pool."""
+    try:
+        success = _rerun_single_judge_slot(slot, experiment_dir, config)
+        return _JudgeSlotResult(slot=slot, success=success)
+    except Exception as e:
+        logger.error(
+            f"Unexpected exception in judge worker for "
+            f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d} "
+            f"judge_{slot.judge_number:02d}: {type(e).__name__}: {e}"
+        )
+        return _JudgeSlotResult(slot=slot, success=False, error=str(e))
+
+
 def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
     """Regenerate judge/result.json consensus from per-judge judgment files.
 
@@ -484,6 +514,7 @@ def rerun_judges_experiment(
     status_filter: list[JudgeSlotStatus] | None = None,
     judge_model: str | None = None,
     regenerate_only: bool = False,
+    parallel: int = 1,
 ) -> RerunJudgeStats:
     """Re-run judges for failed/missing judge evaluations in an experiment.
 
@@ -498,6 +529,7 @@ def rerun_judges_experiment(
         status_filter: Only rerun judge slots with these statuses
         judge_model: Judge model to use (default: from config) - IGNORED, uses config.judge_models
         regenerate_only: Only regenerate consensus, don't re-run judges
+        parallel: Number of judge slots to run in parallel (default: 1, sequential)
 
     Returns:
         RerunJudgeStats with summary of what was done
@@ -635,22 +667,58 @@ def rerun_judges_experiment(
 
     # Re-run judges slot by slot
     if needs_judge_rerun:
-        logger.info("Re-running judge slots...")
+        logger.info(f"Re-running {len(needs_judge_rerun)} judge slots " f"(parallel={parallel})...")
+        runs_with_reruns: set[Path] = set()
 
-        # Track which run_dirs had judges re-run (for consensus regeneration)
-        runs_with_reruns = set()
+        if parallel <= 1 or len(needs_judge_rerun) <= 1:
+            # === FAST PATH: Sequential (no pool overhead) ===
+            for slot in needs_judge_rerun:
+                if _rerun_single_judge_slot(slot, experiment_dir, config):
+                    stats.slots_rerun_success += 1
+                    runs_with_reruns.add(slot.run_dir)
+                else:
+                    stats.slots_rerun_failed += 1
+        else:
+            # === PARALLEL PATH: ThreadPoolExecutor ===
+            lock = threading.Lock()
+            total = len(needs_judge_rerun)
+            completed_count = 0
+            start_time = time.time()
 
-        for slot in needs_judge_rerun:
-            if _rerun_single_judge_slot(slot, experiment_dir, config):
-                stats.slots_rerun_success += 1
-                runs_with_reruns.add(slot.run_dir)
-            else:
-                stats.slots_rerun_failed += 1
+            with ThreadPoolExecutor(max_workers=parallel) as pool:
+                futures = {
+                    pool.submit(_rerun_single_judge_slot_safe, slot, experiment_dir, config): slot
+                    for slot in needs_judge_rerun
+                }
 
-        logger.info(f"✓ Re-ran {stats.slots_rerun_success} judge slots")
-        logger.info(f"✗ Failed to re-run {stats.slots_rerun_failed} judge slots")
+                for future in as_completed(futures):
+                    result = future.result()  # Never raises (safe wrapper)
+                    completed_count += 1
 
-        # Regenerate consensus for runs that had any judge re-run
+                    with lock:
+                        if result.success:
+                            stats.slots_rerun_success += 1
+                            runs_with_reruns.add(result.slot.run_dir)
+                        else:
+                            stats.slots_rerun_failed += 1
+
+                    # Progress logging
+                    elapsed = time.time() - start_time
+                    remaining = total - completed_count
+                    slot = result.slot
+                    status_str = "OK" if result.success else "FAIL"
+                    logger.info(
+                        f"[{completed_count}/{total}] "
+                        f"{slot.tier_id}/{slot.subtest_id}/"
+                        f"run_{slot.run_number:02d} "
+                        f"judge_{slot.judge_number:02d} -> {status_str} "
+                        f"({remaining} remaining, {elapsed:.0f}s elapsed)"
+                    )
+
+        logger.info(f"Re-ran {stats.slots_rerun_success} judge slots successfully")
+        logger.info(f"Failed to re-run {stats.slots_rerun_failed} judge slots")
+
+        # Consensus AFTER all slots complete (guaranteed by ThreadPoolExecutor context)
         logger.info(f"Regenerating consensus for {len(runs_with_reruns)} runs")
         for run_dir in sorted(runs_with_reruns):
             if _regenerate_consensus(run_dir, config.judge_models):
