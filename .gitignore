@@ -46,6 +46,17 @@ runs/
 reports/
 results/
 
+# Analysis pipeline outputs (generated at runtime)
+docs/data/*.csv
+docs/data/*.json
+docs/figures/*.vl.json
+docs/figures/*.csv
+docs/figures/*.png
+docs/figures/*.pdf
+docs/figures/*.svg
+docs/tables/*.md
+docs/tables/*.tex
+
 # Coverage reports
 .coverage
 htmlcov/
