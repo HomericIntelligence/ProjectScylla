@@ -40,6 +40,15 @@ dev = [
     "pre-commit>=3.0",
     "ruff>=0.1.0",
 ]
+analysis = [
+    "matplotlib>=3.8",
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "seaborn>=0.13",
+    "scipy>=1.11",
+    "altair>=5.0",
+    "vl-convert-python>=1.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/mvillmow/ProjectScylla"
