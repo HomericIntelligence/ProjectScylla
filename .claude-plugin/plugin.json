@@ -1,49 +1,60 @@
 {
-  "name": "e2e-framework-bug-fixes",
-  "category": "debugging",
+  "name": "publication-pipeline-enhancement",
   "version": "1.0.0",
-  "description": "Comprehensive guide to fixing E2E evaluation framework bugs including judge verification, replay.sh execution flow, tier semantics, and checkpoint race conditions",
-  "created_at": "2026-01-16T05:19:32Z",
-  "session_context": "Pipe cleaner validation run (test-001) revealed 8 critical infrastructure bugs in E2E evaluation framework",
-  "key_insight": "replay.sh must be primary execution method, generated BEFORE execution with absolute paths",
-  "bugs_fixed": [
-    "Judge verification (git diff + script execution)",
-    "__pycache__ pollution (PYTHONPYCACHEPREFIX)",
-    "Missing --agent flag for T3/T4 tiers",
-    "T3/T4 tier semantics backwards",
-    "Tier config duplication",
-    "replay.sh execution flow (CRITICAL)",
-    "Checkpoint race condition",
-    "replay.sh path resolution"
+  "category": "evaluation",
+  "description": "Comprehensive enhancement of analysis pipeline to produce rigorous, publication-quality figures, tables, and statistical outputs suitable for academic papers",
+  "created": "2026-01-31",
+  "tags": [
+    "evaluation",
+    "statistics",
+    "visualization",
+    "publication",
+    "analysis-pipeline",
+    "altair",
+    "latex",
+    "data-export",
+    "hypothesis-testing",
+    "effect-sizes"
   ],
-  "skills": [
-    "skills/prompt-ablation-framework/SKILL.md",
-    "skills/unify-config-structure/SKILL.md",
-    "skills/e2e-path-resolution-fix/SKILL.md",
-    "skills/fix-tests-after-config-refactor/SKILL.md",
-    "skills/fix-directory-not-created-before-write/SKILL.md",
-    "skills/fix-evaluation-framework-bugs/SKILL.md",
-    "skills/checkpoint-config-mismatch/SKILL.md"
-  ],
-  "pull_request": {
-    "number": 182,
-    "title": "feat(e2e): comprehensive evaluation framework bug fixes",
-    "status": "open",
-    "commits": 5
+  "metadata": {
+    "objective": "Enhance analysis pipeline for publication-quality output",
+    "outcome": "Successfully implemented all 6 work packages across 6 PRs with comprehensive test coverage",
+    "complexity": "high",
+    "work_packages": [
+      "WP1: Statistical Foundation (stats functions, table workflows, statsmodels)",
+      "WP2: New Tables (summary stats, config, normality tests)",
+      "WP3: New Figures (effect sizes, correlations, diagnostics)",
+      "WP4: Remove Hardcoded Values (color palettes, parameterization)",
+      "WP5: Enhanced Data Export (rich statistics, statistical_results.json)",
+      "WP6: LaTeX Figure Support (auto-generate inclusion snippets)"
+    ],
+    "pull_requests": [
+      "#273 (WP1)",
+      "#274 (WP2)",
+      "#275 (WP3)",
+      "#276 (WP4)",
+      "#277 (WP5)",
+      "#278 (WP6)"
+    ],
+    "test_coverage": "100+ tests across stats, tables, figures, and export",
+    "files_modified": 16,
+    "files_created": 5,
+    "dependencies_added": [
+      "statsmodels>=0.14"
+    ]
   },
-  "validation_results": {
-    "before": {
-      "T3_02": "Score 0.000 (F grade) - hello.py existed but not detected",
-      "T6_01": "exit_code -1, 0 tokens, 0 bytes logs"
-    },
-    "after": {
-      "T0": "PASS (0.940)",
-      "T1": "PASS (0.930)",
-      "T2": "PASS (0.900)",
-      "T3": "PASS (0.920)",
-      "T4": "PASS (0.910)",
-      "T5": "PASS (0.930)",
-      "T6": "Fixed and ready for retest"
-    }
-  }
+  "triggers": [
+    "make the analysis pipeline publication-ready",
+    "add rigorous statistical testing",
+    "generate publication-quality visualizations",
+    "remove hardcoded assumptions",
+    "export comprehensive statistical results",
+    "add LaTeX figure support"
+  ],
+  "related_skills": [
+    "statistical-testing-patterns",
+    "altair-visualization-guide",
+    "pytest-fixture-patterns",
+    "data-driven-configuration"
+  ]
 }
