@@ -49,6 +49,129 @@ def test_fig11_tier_uplift(sample_runs_df, mock_save_figure):
     assert mock_save_figure.called
 
 
+def test_fig02_judge_variance(sample_judges_df, mock_save_figure):
+    """Test Fig 2 generates without errors."""
+    from scylla.analysis.figures.judge_analysis import fig02_judge_variance
+
+    fig02_judge_variance(sample_judges_df, Path("/tmp"), render=False)
+    assert mock_save_figure.called
+
+
+def test_fig03_failure_rate_by_tier(sample_runs_df):
+    """Test Fig 3 generates without errors."""
+    from scylla.analysis.figures.variance import fig03_failure_rate_by_tier
+
+    with patch("scylla.analysis.figures.variance.save_figure") as mock:
+        fig03_failure_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig05_grade_heatmap(sample_runs_df):
+    """Test Fig 5 generates without errors."""
+    from scylla.analysis.figures.tier_performance import fig05_grade_heatmap
+
+    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
+        fig05_grade_heatmap(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig07_token_distribution(sample_runs_df, mock_save_figure):
+    """Test Fig 7 generates without errors."""
+    from scylla.analysis.figures.token_analysis import fig07_token_distribution
+
+    fig07_token_distribution(sample_runs_df, Path("/tmp"), render=False)
+    assert mock_save_figure.called
+
+
+def test_fig08_cost_quality_pareto(sample_runs_df):
+    """Test Fig 8 generates without errors."""
+    from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
+
+    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
+        fig08_cost_quality_pareto(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig09_criteria_by_tier(sample_criteria_df, mock_save_figure):
+    """Test Fig 9 generates without errors."""
+    from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
+
+    fig09_criteria_by_tier(sample_criteria_df, Path("/tmp"), render=False)
+    assert mock_save_figure.called
+
+
+def test_fig10_score_violin(sample_runs_df):
+    """Test Fig 10 generates without errors."""
+    from scylla.analysis.figures.tier_performance import fig10_score_violin
+
+    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
+        fig10_score_violin(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig12_consistency(sample_runs_df):
+    """Test Fig 12 generates without errors."""
+    from scylla.analysis.figures.model_comparison import fig12_consistency
+
+    with patch("scylla.analysis.figures.model_comparison.save_figure") as mock:
+        fig12_consistency(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig13_latency(sample_runs_df):
+    """Test Fig 13 generates without errors."""
+    from scylla.analysis.figures.subtest_detail import fig13_latency
+
+    with patch("scylla.analysis.figures.subtest_detail.save_figure") as mock:
+        fig13_latency(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig14_judge_agreement(sample_judges_df):
+    """Test Fig 14 generates without errors."""
+    from scylla.analysis.figures.judge_analysis import fig14_judge_agreement
+
+    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
+        fig14_judge_agreement(sample_judges_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig15_subtest_heatmap(sample_runs_df):
+    """Test Fig 15 generates without errors."""
+    from scylla.analysis.figures.subtest_detail import fig15_subtest_heatmap
+
+    with patch("scylla.analysis.figures.subtest_detail.save_figure") as mock:
+        fig15_subtest_heatmap(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig16_success_variance_by_test(sample_runs_df):
+    """Test Fig 16 generates without errors."""
+    from scylla.analysis.figures.variance import fig16_success_variance_by_test
+
+    with patch("scylla.analysis.figures.variance.save_figure") as mock:
+        fig16_success_variance_by_test(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig17_judge_variance_overall(sample_judges_df):
+    """Test Fig 17 generates without errors."""
+    from scylla.analysis.figures.judge_analysis import fig17_judge_variance_overall
+
+    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
+        fig17_judge_variance_overall(sample_judges_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig18_failure_rate_by_test(sample_runs_df):
+    """Test Fig 18 generates without errors."""
+    from scylla.analysis.figures.variance import fig18_failure_rate_by_test
+
+    with patch("scylla.analysis.figures.variance.save_figure") as mock:
+        fig18_failure_rate_by_test(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
 def test_publication_theme():
     """Test publication theme is applied correctly."""
     from scylla.analysis.figures.spec_builder import apply_publication_theme
