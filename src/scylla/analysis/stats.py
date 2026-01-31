@@ -34,6 +34,11 @@ def bootstrap_ci(
     data_array = np.array(data)
     mean = np.mean(data_array)
 
+    # Guard against single-element arrays (BCa requires n >= 2)
+    if len(data_array) < 2:
+        val = float(mean)
+        return val, val, val
+
     # Use scipy's bootstrap with BCa method for better coverage
     res = stats.bootstrap(
         (data_array,),
