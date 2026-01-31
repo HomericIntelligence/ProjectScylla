@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -28,7 +28,7 @@ def fig09_criteria_by_tier(
 
     """
     # Aggregate by (agent_model, tier, criterion)
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
     criterion_order = [
         "functional",
         "code_quality",
@@ -62,7 +62,7 @@ def fig09_criteria_by_tier(
         alt.Chart(criteria_agg)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y(
                 "criterion_score:Q",
                 title="Mean Criterion Score",

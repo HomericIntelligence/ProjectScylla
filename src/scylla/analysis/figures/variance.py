@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -31,11 +31,11 @@ def fig01_score_variance_by_tier(
     data = runs_df[["agent_model", "tier", "score"]].copy()
 
     # Define tier order
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Create base chart with faceting
     base = alt.Chart(data).encode(
-        x=alt.X("tier:O", title="Tier", sort=tier_order),
+        x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
         color=alt.Color(
             "agent_model:N",
             title="Agent Model",
@@ -54,7 +54,7 @@ def fig01_score_variance_by_tier(
     # Jittered points layer
     points = base.mark_circle(size=10, opacity=0.3).encode(
         y=alt.Y("score:Q"),
-        x=alt.X("tier:O", sort=tier_order),
+        x=alt.X("tier:O", sort=TIER_ORDER),
         xOffset="agent_model:N",
     )
 
@@ -95,14 +95,14 @@ def fig03_failure_rate_by_tier(
 
     # Define grade order (F at bottom, S at top)
     grade_order = ["F", "D", "C", "B", "A", "S"]
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Create stacked bar chart
     chart = (
         alt.Chart(grade_counts)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y("proportion:Q", title="Proportion", stack="normalize"),
             color=alt.Color(
                 "grade:O",

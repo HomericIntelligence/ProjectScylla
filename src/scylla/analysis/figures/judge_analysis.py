@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import pearson_correlation, spearman_correlation
 
@@ -37,7 +37,7 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
     }
     data["judge_display"] = data["judge_model"].map(model_name_map)
 
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
     judge_order = ["Opus 4.5", "Sonnet 4.5", "Haiku 4.5"]
 
     # Create violin plot with box plot overlay
@@ -69,7 +69,7 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
     # Combine and facet by tier
     chart = (
         boxplot.facet(
-            column=alt.Column("tier:O", title="Tier", sort=tier_order),
+            column=alt.Column("tier:O", title="Tier", sort=TIER_ORDER),
         )
         .properties(title="Judge Score Variance Across Tiers")
         .resolve_scale(x="independent")

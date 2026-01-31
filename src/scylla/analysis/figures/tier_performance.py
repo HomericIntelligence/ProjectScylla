@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import bootstrap_ci
 
@@ -27,11 +27,11 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
 
     """
     # Compute pass rate and CI per (agent_model, tier)
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     stats = []
     for model in runs_df["agent_model"].unique():
-        for tier in tier_order:
+        for tier in TIER_ORDER:
             subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
             if len(subset) == 0:
                 continue
@@ -58,7 +58,7 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
         alt.Chart(stats_df)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y("pass_rate:Q", title="Pass Rate", scale=alt.Scale(domain=[0, 1])),
             color=alt.Color(
                 "agent_model:N",
@@ -84,7 +84,7 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
         alt.Chart(stats_df)
         .mark_errorbar()
         .encode(
-            x=alt.X("tier:O", sort=tier_order),
+            x=alt.X("tier:O", sort=TIER_ORDER),
             y=alt.Y("ci_low:Q", title=""),
             y2="ci_high:Q",
             xOffset="agent_model:N",
@@ -125,7 +125,7 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
     grade_counts["total"] = grade_counts.groupby(["agent_model", "tier"])["count"].transform("sum")
     grade_counts["proportion"] = grade_counts["count"] / grade_counts["total"]
 
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
     grade_order = ["S", "A", "B", "C", "D", "F"]
 
     # Create heatmap
@@ -134,7 +134,7 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
         .mark_rect()
         .encode(
             x=alt.X("grade:O", title="Grade", sort=grade_order),
-            y=alt.Y("tier:O", title="Tier", sort=tier_order),
+            y=alt.Y("tier:O", title="Tier", sort=TIER_ORDER),
             color=alt.Color(
                 "proportion:Q",
                 title="Proportion",
@@ -155,7 +155,7 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
         .mark_text(baseline="middle")
         .encode(
             x=alt.X("grade:O", sort=grade_order),
-            y=alt.Y("tier:O", sort=tier_order),
+            y=alt.Y("tier:O", sort=TIER_ORDER),
             text=alt.Text("count:Q"),
             color=alt.condition(
                 alt.datum.proportion > 0.5,
@@ -189,7 +189,7 @@ def fig10_score_violin(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
     # Prepare data
     data = runs_df[["agent_model", "tier", "score"]].copy()
 
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Create violin plot using density transform
     # Note: Altair doesn't have native violin plots, so we approximate with area + line
@@ -200,7 +200,7 @@ def fig10_score_violin(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
     )
 
     violin = base.mark_area(orient="horizontal", opacity=0.5).encode(
-        x=alt.X("tier:O", title="Tier", sort=tier_order),
+        x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
         y=alt.Y(
             "score_value:Q",
             title="Score",
@@ -224,7 +224,7 @@ def fig10_score_violin(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
         alt.Chart(medians)
         .mark_point(filled=True, size=50, color="black")
         .encode(
-            x=alt.X("tier:O", sort=tier_order),
+            x=alt.X("tier:O", sort=TIER_ORDER),
             y=alt.Y("score:Q"),
             xOffset="agent_model:N",
         )
