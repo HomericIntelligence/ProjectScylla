@@ -36,12 +36,19 @@ def main() -> None:
         default=Path("docs/data"),
         help="Output directory (default: docs/data)",
     )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        nargs="*",
+        default=[],
+        help="Experiment names to exclude (e.g., --exclude test001-dryrun)",
+    )
 
     args = parser.parse_args()
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")
-    experiments = load_all_experiments(args.data_dir, exclude=["test001-dryrun"])
+    experiments = load_all_experiments(args.data_dir, exclude=args.exclude)
 
     if not experiments:
         print("ERROR: No experiments found")

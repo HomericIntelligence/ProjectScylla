@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import TIER_ORDER
+from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -25,8 +25,6 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         render: Whether to render to PNG/PDF
 
     """
-    # Removed: using TIER_ORDER from figures module
-
     # Aggregate durations by (agent_model, tier)
     duration_agg = (
         runs_df.groupby(["agent_model", "tier"])[
@@ -35,6 +33,9 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         .mean()
         .reset_index()
     )
+
+    # Derive tier order from data
+    tier_order = derive_tier_order(duration_agg)
 
     # Reshape to long format for stacking
     duration_long = duration_agg.melt(
@@ -63,7 +64,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         alt.Chart(duration_long)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
+            x=alt.X("tier:O", title="Tier", sort=tier_order),
             y=alt.Y("duration:Q", title="Mean Duration (seconds)"),
             color=alt.Color(
                 "phase_label:N",
@@ -104,9 +105,9 @@ def fig15_subtest_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     # Create subtest labels combining tier and subtest ID
     heatmap_data["subtest_label"] = heatmap_data["tier"] + "/" + heatmap_data["subtest"]
 
-    # Sort subtests by tier then subtest number
-    # Removed: using TIER_ORDER from figures module
-    heatmap_data["tier_sort"] = heatmap_data["tier"].map({t: i for i, t in enumerate(TIER_ORDER)})
+    # Derive tier order from data and sort subtests by tier then subtest number
+    tier_order = derive_tier_order(heatmap_data)
+    heatmap_data["tier_sort"] = heatmap_data["tier"].map({t: i for i, t in enumerate(tier_order)})
     heatmap_data["subtest_num"] = heatmap_data["subtest"].astype(int)
     heatmap_data = heatmap_data.sort_values(["tier_sort", "subtest_num"])
 

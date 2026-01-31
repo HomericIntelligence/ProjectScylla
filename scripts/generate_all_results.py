@@ -80,10 +80,22 @@ def main() -> None:
         action="store_true",
         help="Skip table generation",
     )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        nargs="*",
+        default=[],
+        help="Experiment names to exclude (e.g., --exclude test001-dryrun)",
+    )
 
     args = parser.parse_args()
 
     success = True
+
+    # Build common exclude args
+    exclude_args = []
+    if args.exclude:
+        exclude_args.extend(["--exclude", *args.exclude])
 
     # Step 1: Export data
     if not args.skip_data:
@@ -92,6 +104,7 @@ def main() -> None:
             str(args.data_dir),
             "--output-dir",
             str(args.output_dir / "data"),
+            *exclude_args,
         ]
         if not run_script(
             "scripts/export_data.py",
@@ -107,6 +120,7 @@ def main() -> None:
             str(args.data_dir),
             "--output-dir",
             str(args.output_dir / "figures"),
+            *exclude_args,
         ]
         if args.no_render:
             figure_args.append("--no-render")
@@ -125,6 +139,7 @@ def main() -> None:
             str(args.data_dir),
             "--output-dir",
             str(args.output_dir / "tables"),
+            *exclude_args,
         ]
         if not run_script(
             "scripts/generate_tables.py",

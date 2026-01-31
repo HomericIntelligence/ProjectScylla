@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import COLORS, derive_tier_order
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -27,28 +27,16 @@ def fig09_criteria_by_tier(
         render: Whether to render to PNG/PDF
 
     """
-    # Aggregate by (agent_model, tier, criterion)
-    # Removed: using TIER_ORDER from figures module
-    criterion_order = [
-        "functional",
-        "code_quality",
-        "proportionality",
-        "build_pipeline",
-        "overall_quality",
-    ]
-
-    criterion_labels = {
-        "functional": "Functional",
-        "code_quality": "Code Quality",
-        "proportionality": "Proportionality",
-        "build_pipeline": "Build Pipeline",
-        "overall_quality": "Overall Quality",
-    }
-
     # Filter to ensure criterion_score is numeric (not "N/A")
     criteria_numeric = criteria_df[
         pd.to_numeric(criteria_df["criterion_score"], errors="coerce").notna()
     ].copy()
+
+    # Derive criterion order from data instead of hardcoding
+    criterion_order = sorted(criteria_numeric["criterion"].unique())
+
+    # Generate display labels from criterion names
+    criterion_labels = {c: c.replace("_", " ").title() for c in criterion_order}
 
     criteria_agg = (
         criteria_numeric.groupby(["agent_model", "tier", "criterion"])["criterion_score"]
@@ -57,12 +45,27 @@ def fig09_criteria_by_tier(
     )
     criteria_agg["criterion_label"] = criteria_agg["criterion"].map(criterion_labels)
 
+    # Derive tier order from aggregated data
+    tier_order = derive_tier_order(criteria_agg)
+
+    # Get colors for criteria (use COLORS if available, otherwise use get_color_scale)
+    criterion_labels_list = [criterion_labels[c] for c in criterion_order]
+    criterion_colors = []
+    for c in criterion_order:
+        if c in COLORS["criteria"]:
+            criterion_colors.append(COLORS["criteria"][c])
+        else:
+            # Use dynamic color assignment via hash for unknown criteria
+            from scylla.analysis.figures import get_color
+
+            criterion_colors.append(get_color("criteria", c))
+
     # Create grouped bar chart
     chart = (
         alt.Chart(criteria_agg)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
+            x=alt.X("tier:O", title="Tier", sort=tier_order),
             y=alt.Y(
                 "criterion_score:Q",
                 title="Mean Criterion Score",
@@ -72,10 +75,10 @@ def fig09_criteria_by_tier(
                 "criterion_label:N",
                 title="Criterion",
                 scale=alt.Scale(
-                    domain=[criterion_labels[c] for c in criterion_order],
-                    range=[COLORS["criteria"][c] for c in criterion_order],
+                    domain=criterion_labels_list,
+                    range=criterion_colors,
                 ),
-                sort=[criterion_labels[c] for c in criterion_order],
+                sort=criterion_labels_list,
             ),
             xOffset="criterion_label:N",
             tooltip=[

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from scylla.analysis.figures import TIER_ORDER
+from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     bonferroni_correction,
     bootstrap_ci,
@@ -32,12 +32,13 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
-    # Removed: using TIER_ORDER from figures module
+    # Derive tier order from data
+    tier_order = derive_tier_order(runs_df)
 
     # Compute statistics per (agent_model, tier)
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
-        for tier in TIER_ORDER:
+        for tier in tier_order:
             subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
             if len(subset) == 0:
                 continue
@@ -143,9 +144,7 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
 def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 2: Tier Pairwise Comparison.
 
-    Applies Bonferroni correction for 7 tests per model:
-    - 6 consecutive tier comparisons (T0→T1, T1→T2, ..., T5→T6)
-    - 1 overall comparison (T0→T6)
+    Applies Bonferroni correction for (n-1) consecutive tier comparisons + 1 overall.
 
     Args:
         runs_df: Runs DataFrame
@@ -154,16 +153,17 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
-    # Removed: using TIER_ORDER from figures module
-    n_tests = 7  # 6 consecutive + 1 overall
+    # Derive tier order from data
+    tier_order = derive_tier_order(runs_df)
+    n_tests = len(tier_order)  # (n-1) consecutive + 1 overall comparison
 
     # Compute pairwise comparisons
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
         model_runs = runs_df[runs_df["agent_model"] == model]
 
-        for i in range(len(TIER_ORDER) - 1):
-            tier1, tier2 = TIER_ORDER[i], TIER_ORDER[i + 1]
+        for i in range(len(tier_order) - 1):
+            tier1, tier2 = tier_order[i], tier_order[i + 1]
             tier1_data = model_runs[model_runs["tier"] == tier1]
             tier2_data = model_runs[model_runs["tier"] == tier2]
 
@@ -199,30 +199,32 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
                 }
             )
 
-        # Add overall T0→T6 comparison
-        t0_data = model_runs[model_runs["tier"] == "T0"]
-        t6_data = model_runs[model_runs["tier"] == "T6"]
+        # Add overall first→last tier comparison
+        first_tier = tier_order[0]
+        last_tier = tier_order[-1]
+        first_data = model_runs[model_runs["tier"] == first_tier]
+        last_data = model_runs[model_runs["tier"] == last_tier]
 
-        if len(t0_data) > 0 and len(t6_data) > 0:
-            pr0 = t0_data["passed"].mean()
-            pr6 = t6_data["passed"].mean()
-            pr_delta = pr6 - pr0
+        if len(first_data) > 0 and len(last_data) > 0:
+            pr_first = first_data["passed"].mean()
+            pr_last = last_data["passed"].mean()
+            pr_delta = pr_last - pr_first
 
             _, pvalue_raw = mann_whitney_u(
-                t0_data["passed"].astype(int),
-                t6_data["passed"].astype(int),
+                first_data["passed"].astype(int),
+                last_data["passed"].astype(int),
             )
             pvalue = bonferroni_correction(pvalue_raw, n_tests)
 
             delta = cliffs_delta(
-                t6_data["passed"].astype(int),
-                t0_data["passed"].astype(int),
+                last_data["passed"].astype(int),
+                first_data["passed"].astype(int),
             )
 
             rows.append(
                 {
                     "Model": model,
-                    "Transition": "T0→T6",
+                    "Transition": f"{first_tier}→{last_tier}",
                     "Pass Rate Δ": pr_delta,
                     "p-value": pvalue,
                     "Cliff's δ": delta,
@@ -406,26 +408,27 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
 
 
 def table04_criteria_performance(
-    criteria_df: pd.DataFrame, runs_df: pd.DataFrame
+    criteria_df: pd.DataFrame,
+    runs_df: pd.DataFrame,
+    criteria_weights: dict[str, float] | None = None,
 ) -> tuple[str, str]:
     """Generate Table 4: Per-Criteria Performance.
 
     Args:
         criteria_df: Criteria DataFrame
         runs_df: Runs DataFrame for model filtering
+        criteria_weights: Optional criteria weights dict. Falls back to hardcoded defaults.
 
     Returns:
         Tuple of (markdown_table, latex_table)
 
     """
-    # Define criteria weights (from paper Table 4.1)
-    criteria_weights = {
-        "functional": 0.35,
-        "code_quality": 0.20,
-        "proportionality": 0.15,
-        "build_pipeline": 0.10,
-        "overall_quality": 0.20,
-    }
+    # Use provided weights or derive from data
+    if criteria_weights is None:
+        # Derive criteria and uniform weights from the actual data
+        unique_criteria = sorted(criteria_df["criterion"].unique())
+        n = len(unique_criteria)
+        criteria_weights = {c: 1.0 / n for c in unique_criteria} if n > 0 else {}
 
     # Aggregate by (agent_model, criterion)
     criterion_stats = []
@@ -609,12 +612,13 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
-    # Removed: using TIER_ORDER from figures module
+    # Derive tier order from data
+    tier_order = derive_tier_order(runs_df)
 
     # Compute cost statistics per (agent_model, tier)
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
-        for tier in TIER_ORDER:
+        for tier in tier_order:
             subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
             if len(subset) == 0:
                 continue
@@ -734,9 +738,8 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
 def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 6: Model Comparison Summary.
 
-    Applies Bonferroni correction for 2 independent tests:
-    - Overall Pass Rate
-    - Mean Score
+    Applies Bonferroni correction for all pairwise model comparisons.
+    For N models, performs C(N,2) pairwise comparisons, each with 2 tests (pass rate + mean score).
 
     Args:
         runs_df: Runs DataFrame
@@ -745,128 +748,185 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
+    from itertools import combinations
+
     models = sorted(runs_df["agent_model"].unique())
-    n_tests = 2  # Pass rate + mean score
 
-    if len(models) != 2:
-        return "# Table 6: Model Comparison\n\nError: Expected 2 models", ""
+    if len(models) < 2:
+        return "# Table 6: Model Comparison\n\nError: Need at least 2 models", ""
 
-    model1, model2 = models[0], models[1]
-    m1_data = runs_df[runs_df["agent_model"] == model1]
-    m2_data = runs_df[runs_df["agent_model"] == model2]
+    # Generate all pairwise comparisons
+    model_pairs = list(combinations(models, 2))
+    n_tests_per_pair = 2  # pass rate + mean score per pair
+    n_total_tests = n_tests_per_pair * len(model_pairs)
 
-    # Compute metrics
-    metrics = []
+    # For backward compatibility, if exactly 2 models, use original n_tests
+    n_tests = 2 if len(models) == 2 else n_total_tests
 
-    # Pass rate
-    pr1, pr2 = m1_data["passed"].mean(), m2_data["passed"].mean()
-    _, pr_pvalue_raw = mann_whitney_u(m1_data["passed"].astype(int), m2_data["passed"].astype(int))
-    pr_pvalue = bonferroni_correction(pr_pvalue_raw, n_tests)
-    metrics.append(
-        {
-            "Metric": "Overall Pass Rate",
-            model1: pr1,
-            model2: pr2,
-            "Δ": pr1 - pr2,
-            "p-value": pr_pvalue,
-        }
-    )
+    # Build comparison table for all pairs
+    all_metrics = []
 
-    # Mean score
-    ms1, ms2 = m1_data["score"].mean(), m2_data["score"].mean()
-    _, ms_pvalue_raw = mann_whitney_u(m1_data["score"], m2_data["score"])
-    ms_pvalue = bonferroni_correction(ms_pvalue_raw, n_tests)
-    metrics.append(
-        {"Metric": "Mean Score", model1: ms1, model2: ms2, "Δ": ms1 - ms2, "p-value": ms_pvalue}
-    )
+    for model1, model2 in model_pairs:
+        m1_data = runs_df[runs_df["agent_model"] == model1]
+        m2_data = runs_df[runs_df["agent_model"] == model2]
 
-    # Mean cost
-    mc1, mc2 = m1_data["cost_usd"].mean(), m2_data["cost_usd"].mean()
-    metrics.append(
-        {"Metric": "Mean Cost ($)", model1: mc1, model2: mc2, "Δ": mc1 - mc2, "p-value": None}
-    )
+        # Pass rate
+        pr1, pr2 = m1_data["passed"].mean(), m2_data["passed"].mean()
+        _, pr_pvalue_raw = mann_whitney_u(
+            m1_data["passed"].astype(int), m2_data["passed"].astype(int)
+        )
+        pr_pvalue = bonferroni_correction(pr_pvalue_raw, n_tests)
 
-    # Frontier CoP
-    cop1 = (
-        m1_data.groupby("tier")["cost_usd"].mean() / m1_data.groupby("tier")["passed"].mean()
-    ).min()
-    cop2 = (
-        m2_data.groupby("tier")["cost_usd"].mean() / m2_data.groupby("tier")["passed"].mean()
-    ).min()
-    metrics.append(
-        {
-            "Metric": "Frontier CoP ($)",
-            model1: cop1,
-            model2: cop2,
-            "Δ": cop1 - cop2,
-            "p-value": None,
-        }
-    )
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Overall Pass Rate",
+                model1: pr1,
+                model2: pr2,
+                "Δ": pr1 - pr2,
+                "p-value": pr_pvalue,
+            }
+        )
 
-    # Best tier
-    best_tier1 = m1_data.groupby("tier")["passed"].mean().idxmax()
-    best_tier2 = m2_data.groupby("tier")["passed"].mean().idxmax()
-    metrics.append(
-        {
-            "Metric": "Best Tier (Pass Rate)",
-            model1: best_tier1,
-            model2: best_tier2,
-            "Δ": "—",
-            "p-value": None,
-        }
-    )
+        # Mean score
+        ms1, ms2 = m1_data["score"].mean(), m2_data["score"].mean()
+        _, ms_pvalue_raw = mann_whitney_u(m1_data["score"], m2_data["score"])
+        ms_pvalue = bonferroni_correction(ms_pvalue_raw, n_tests)
 
-    # Consistency (using helper to avoid NaN and negative values)
-    tier_stats1 = m1_data.groupby("tier")["score"].agg(["mean", "std"])
-    tier_stats2 = m2_data.groupby("tier")["score"].agg(["mean", "std"])
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Mean Score",
+                model1: ms1,
+                model2: ms2,
+                "Δ": ms1 - ms2,
+                "p-value": ms_pvalue,
+            }
+        )
 
-    consistencies1 = [
-        compute_consistency(row["mean"], row["std"]) for _, row in tier_stats1.iterrows()
-    ]
-    consistencies2 = [
-        compute_consistency(row["mean"], row["std"]) for _, row in tier_stats2.iterrows()
-    ]
+        # Mean cost (no p-value)
+        mc1, mc2 = m1_data["cost_usd"].mean(), m2_data["cost_usd"].mean()
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Mean Cost ($)",
+                model1: mc1,
+                model2: mc2,
+                "Δ": mc1 - mc2,
+                "p-value": None,
+            }
+        )
 
-    consistency1 = sum(consistencies1) / len(consistencies1) if consistencies1 else 0.0
-    consistency2 = sum(consistencies2) / len(consistencies2) if consistencies2 else 0.0
+        # Frontier CoP
+        cop1 = (
+            m1_data.groupby("tier")["cost_usd"].mean() / m1_data.groupby("tier")["passed"].mean()
+        ).min()
+        cop2 = (
+            m2_data.groupby("tier")["cost_usd"].mean() / m2_data.groupby("tier")["passed"].mean()
+        ).min()
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Frontier CoP ($)",
+                model1: cop1,
+                model2: cop2,
+                "Δ": cop1 - cop2,
+                "p-value": None,
+            }
+        )
 
-    metrics.append(
-        {
-            "Metric": "Mean Consistency",
-            model1: consistency1,
-            model2: consistency2,
-            "Δ": consistency1 - consistency2,
-            "p-value": None,
-        }
-    )
+        # Best tier
+        best_tier1 = m1_data.groupby("tier")["passed"].mean().idxmax()
+        best_tier2 = m2_data.groupby("tier")["passed"].mean().idxmax()
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Best Tier (Pass Rate)",
+                model1: best_tier1,
+                model2: best_tier2,
+                "Δ": "—",
+                "p-value": None,
+            }
+        )
 
-    # Total tokens
-    tt1 = m1_data["total_tokens"].sum()
-    tt2 = m2_data["total_tokens"].sum()
-    metrics.append(
-        {
-            "Metric": "Total Tokens",
-            model1: tt1,
-            model2: tt2,
-            "Δ": tt1 - tt2,
-            "p-value": None,
-        }
-    )
+        # Consistency
+        tier_stats1 = m1_data.groupby("tier")["score"].agg(["mean", "std"])
+        tier_stats2 = m2_data.groupby("tier")["score"].agg(["mean", "std"])
 
-    df = pd.DataFrame(metrics)
+        consistencies1 = [
+            compute_consistency(row["mean"], row["std"]) for _, row in tier_stats1.iterrows()
+        ]
+        consistencies2 = [
+            compute_consistency(row["mean"], row["std"]) for _, row in tier_stats2.iterrows()
+        ]
+
+        consistency1 = sum(consistencies1) / len(consistencies1) if consistencies1 else 0.0
+        consistency2 = sum(consistencies2) / len(consistencies2) if consistencies2 else 0.0
+
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Mean Consistency",
+                model1: consistency1,
+                model2: consistency2,
+                "Δ": consistency1 - consistency2,
+                "p-value": None,
+            }
+        )
+
+        # Total tokens
+        tt1 = m1_data["total_tokens"].sum()
+        tt2 = m2_data["total_tokens"].sum()
+        all_metrics.append(
+            {
+                "Pair": f"{model1} vs {model2}",
+                "Metric": "Total Tokens",
+                model1: tt1,
+                model2: tt2,
+                "Δ": tt1 - tt2,
+                "p-value": None,
+            }
+        )
+
+    df = pd.DataFrame(all_metrics)
 
     # Markdown table
     md_lines = ["# Table 6: Model Comparison Summary", ""]
-    md_lines.append(f"| Metric | {model1} | {model2} | Δ | p-value |")
-    md_lines.append("|--------|----------|----------|---|---------|")
 
-    for _, row in df.iterrows():
-        val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
-        val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
-        delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-        pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "—"
+    # If only 2 models, use original 2-column format
+    if len(models) == 2:
+        model1, model2 = models[0], models[1]
+        md_lines.append(f"| Metric | {model1} | {model2} | Δ | p-value |")
+        md_lines.append("|--------|----------|----------|---|---------|")
 
-        md_lines.append(f"| {row['Metric']} | {val1_str} | {val2_str} | {delta_str} | {pval_str} |")
+        for _, row in df.iterrows():
+            val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
+            val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
+            delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
+            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "—"
+
+            md_lines.append(
+                f"| {row['Metric']} | {val1_str} | {val2_str} | {delta_str} | {pval_str} |"
+            )
+    else:
+        # For N models, group by pair
+        md_lines.append("| Pair | Metric | Model 1 | Model 2 | Δ | p-value |")
+        md_lines.append("|------|--------|---------|---------|---|---------|")
+
+        for _, row in df.iterrows():
+            # Model names from the pair
+            pair_models = row["Pair"].split(" vs ")
+            model1, model2 = pair_models[0], pair_models[1]
+
+            val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
+            val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
+            delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
+            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "—"
+
+            md_lines.append(
+                f"| {row['Pair']} | {row['Metric']} | {val1_str} | {val2_str} | "
+                f"{delta_str} | {pval_str} |"
+            )
 
     markdown = "\n".join(md_lines)
 
@@ -876,21 +936,51 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         r"\centering",
         r"\caption{Model Comparison Summary}",
         r"\label{tab:model_comparison}",
-        r"\begin{tabular}{lrrrl}",
-        r"\toprule",
-        f"Metric & {model1} & {model2} & $\\Delta$ & p-value \\\\",
-        r"\midrule",
     ]
 
-    for _, row in df.iterrows():
-        val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
-        val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
-        delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-        pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "---"
-
-        latex_lines.append(
-            f"{row['Metric']} & {val1_str} & {val2_str} & {delta_str} & {pval_str} \\\\"
+    if len(models) == 2:
+        model1, model2 = models[0], models[1]
+        latex_lines.extend(
+            [
+                r"\begin{tabular}{lrrrl}",
+                r"\toprule",
+                f"Metric & {model1} & {model2} & $\\Delta$ & p-value \\\\",
+                r"\midrule",
+            ]
         )
+
+        for _, row in df.iterrows():
+            val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
+            val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
+            delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
+            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "---"
+
+            latex_lines.append(
+                f"{row['Metric']} & {val1_str} & {val2_str} & {delta_str} & {pval_str} \\\\"
+            )
+    else:
+        latex_lines.extend(
+            [
+                r"\begin{tabular}{llrrrl}",
+                r"\toprule",
+                "Pair & Metric & Model 1 & Model 2 & $\\Delta$ & p-value \\\\",
+                r"\midrule",
+            ]
+        )
+
+        for _, row in df.iterrows():
+            pair_models = row["Pair"].split(" vs ")
+            model1, model2 = pair_models[0], pair_models[1]
+
+            val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
+            val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
+            delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
+            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "---"
+
+            latex_lines.append(
+                f"{row['Pair']} & {row['Metric']} & {val1_str} & {val2_str} & "
+                f"{delta_str} & {pval_str} \\\\"
+            )
 
     latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
 
@@ -910,12 +1000,13 @@ def table07_subtest_detail(runs_df: pd.DataFrame, subtests_df: pd.DataFrame) -> 
         Tuple of (markdown_table, latex_table)
 
     """
-    # Removed: using TIER_ORDER from figures module
+    # Derive tier order from data
+    tier_order = derive_tier_order(runs_df)
 
     # Build detailed subtest table
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
-        for tier in TIER_ORDER:
+        for tier in tier_order:
             tier_subtests = subtests_df[
                 (subtests_df["agent_model"] == model) & (subtests_df["tier"] == tier)
             ].sort_values("subtest")
