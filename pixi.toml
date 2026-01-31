@@ -31,6 +31,7 @@ seaborn = ">=0.13"
 scipy = ">=1.11"
 altair = ">=5.0"
 vl-convert-python = ">=1.0"
+krippendorff = ">=0.6.0"
 
 [environments]
 default = { features = ["dev"], solve-group = "default" }
