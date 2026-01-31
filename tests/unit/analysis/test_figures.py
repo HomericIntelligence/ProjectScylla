@@ -240,6 +240,61 @@ def test_colors_constant():
         assert tier in COLORS["tiers"]
 
 
+def test_fig19_effect_size_forest(sample_runs_df):
+    """Test Fig 19 effect size forest plot generates without errors."""
+    from scylla.analysis.figures.effect_size import fig19_effect_size_forest
+
+    with patch("scylla.analysis.figures.effect_size.save_figure") as mock:
+        fig19_effect_size_forest(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig20_metric_correlation_heatmap(sample_runs_df):
+    """Test Fig 20 correlation heatmap generates without errors."""
+    from scylla.analysis.figures.correlation import fig20_metric_correlation_heatmap
+
+    with patch("scylla.analysis.figures.correlation.save_figure") as mock:
+        fig20_metric_correlation_heatmap(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig21_cost_quality_regression(sample_runs_df):
+    """Test Fig 21 regression plot generates without errors."""
+    from scylla.analysis.figures.correlation import fig21_cost_quality_regression
+
+    with patch("scylla.analysis.figures.correlation.save_figure") as mock:
+        fig21_cost_quality_regression(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig22_cumulative_cost(sample_runs_df):
+    """Test Fig 22 cumulative cost curve generates without errors."""
+    from scylla.analysis.figures.cost_analysis import fig22_cumulative_cost
+
+    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
+        fig22_cumulative_cost(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig23_qq_plots(sample_runs_df):
+    """Test Fig 23 Q-Q plots generate without errors."""
+    from scylla.analysis.figures.diagnostics import fig23_qq_plots
+
+    with patch("scylla.analysis.figures.diagnostics.save_figure"):
+        fig23_qq_plots(sample_runs_df, Path("/tmp"), render=False)
+        # Note: may not be called if insufficient data
+        # Just check it doesn't crash
+
+
+def test_fig24_score_histograms(sample_runs_df):
+    """Test Fig 24 histograms with KDE generate without errors."""
+    from scylla.analysis.figures.diagnostics import fig24_score_histograms
+
+    with patch("scylla.analysis.figures.diagnostics.save_figure") as mock:
+        fig24_score_histograms(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
 def test_figure_module_structure():
     """Test that all figure modules exist."""
     figure_modules = [
@@ -251,6 +306,9 @@ def test_figure_module_structure():
         "judge_analysis",
         "criteria_analysis",
         "subtest_detail",
+        "effect_size",
+        "correlation",
+        "diagnostics",
     ]
 
     for module_name in figure_modules:
