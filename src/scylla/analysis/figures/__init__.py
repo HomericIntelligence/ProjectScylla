@@ -61,6 +61,16 @@ COLORS = {
         "build_pipeline": "#F58518",
         "overall_quality": "#54A24B",
     },
+    "phases": {
+        "Agent Execution": "#4C78A8",
+        "Judge Evaluation": "#E45756",
+    },
+    "token_types": {
+        "Input (Fresh)": "#4C78A8",
+        "Input (Cached)": "#72B7B2",
+        "Output": "#E45756",
+        "Cache Creation": "#F58518",
+    },
 }
 
 # Dynamic palette for unknown models/judges
@@ -113,4 +123,29 @@ def get_color_scale(category: str, keys: list[str]) -> tuple[list[str], list[str
     return domain, range_
 
 
-__all__ = ["COLORS", "TIER_ORDER", "get_color", "get_color_scale"]
+def register_colors(category: str, mapping: dict[str, str]) -> None:
+    """Register or update colors for a category at runtime.
+
+    Allows dynamic registration of colors from data without hardcoding.
+
+    Args:
+        category: Color category to register/update
+        mapping: Dictionary mapping keys to hex color codes
+
+    Example:
+        >>> register_colors("models", {"GPT-4": "#FF6B6B", "Claude": "#4ECDC4"})
+
+    """
+    if category not in COLORS:
+        COLORS[category] = {}
+    COLORS[category].update(mapping)
+
+
+__all__ = [
+    "COLORS",
+    "TIER_ORDER",
+    "derive_tier_order",
+    "get_color",
+    "get_color_scale",
+    "register_colors",
+]

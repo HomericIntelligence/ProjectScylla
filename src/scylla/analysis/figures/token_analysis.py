@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import derive_tier_order
+from scylla.analysis.figures import derive_tier_order, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -59,13 +59,9 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
     }
     token_long["token_type_order"] = token_long["token_type"].map(token_type_sort_order)
 
-    # Define colors for token types
-    token_colors = {
-        "Input (Fresh)": "#4C78A8",
-        "Input (Cached)": "#72B7B2",
-        "Output": "#E45756",
-        "Cache Creation": "#F58518",
-    }
+    # Get colors for token types from centralized palette
+    token_type_labels = ["Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"]
+    domain, range_ = get_color_scale("token_types", token_type_labels)
 
     # Create stacked bar chart
     chart = (
@@ -77,10 +73,7 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
             color=alt.Color(
                 "token_type_label:N",
                 title="Token Type",
-                scale=alt.Scale(
-                    domain=list(token_colors.keys()),
-                    range=list(token_colors.values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             order=alt.Order("token_type_order:Q"),  # Use numeric order
             tooltip=[

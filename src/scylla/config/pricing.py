@@ -63,6 +63,12 @@ MODEL_PRICING: dict[str, ModelPricing] = {
         input_cost_per_million=1.0,
         output_cost_per_million=5.0,
     ),
+    # Anthropic Claude Haiku 4.5
+    "claude-haiku-4-5-20241223": ModelPricing(
+        model_id="claude-haiku-4-5-20241223",
+        input_cost_per_million=1.0,
+        output_cost_per_million=5.0,
+    ),
     # OpenAI GPT models
     "gpt-4": ModelPricing(
         model_id="gpt-4",

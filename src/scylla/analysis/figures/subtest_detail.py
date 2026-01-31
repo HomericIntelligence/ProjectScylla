@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import derive_tier_order
+from scylla.analysis.figures import derive_tier_order, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -53,11 +53,9 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         }
     )
 
-    # Define colors for phases
-    phase_colors = {
-        "Agent Execution": "#4C78A8",
-        "Judge Evaluation": "#E45756",
-    }
+    # Get colors for phases from centralized palette
+    phase_labels = ["Agent Execution", "Judge Evaluation"]
+    domain, range_ = get_color_scale("phases", phase_labels)
 
     # Create stacked bar chart
     chart = (
@@ -69,10 +67,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
             color=alt.Color(
                 "phase_label:N",
                 title="Phase",
-                scale=alt.Scale(
-                    domain=list(phase_colors.keys()),
-                    range=list(phase_colors.values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             order=alt.Order("phase:N", sort="ascending"),
             tooltip=[
