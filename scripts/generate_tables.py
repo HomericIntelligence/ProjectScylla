@@ -18,6 +18,7 @@ from scylla.analysis import (
     build_subtests_df,
     load_all_experiments,
 )
+from scylla.analysis.figures.spec_builder import apply_publication_theme
 from scylla.analysis.tables import (
     table01_tier_summary,
     table02_tier_comparison,
@@ -46,6 +47,9 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    # Apply publication theme
+    apply_publication_theme()
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")

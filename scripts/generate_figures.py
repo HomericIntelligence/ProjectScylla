@@ -22,6 +22,7 @@ from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier, fig08_cost_
 from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
 from scylla.analysis.figures.judge_analysis import fig02_judge_variance, fig14_judge_agreement
 from scylla.analysis.figures.model_comparison import fig11_tier_uplift, fig12_consistency
+from scylla.analysis.figures.spec_builder import apply_publication_theme
 from scylla.analysis.figures.subtest_detail import fig13_latency, fig15_subtest_heatmap
 from scylla.analysis.figures.tier_performance import (
     fig04_pass_rate_by_tier,
@@ -102,6 +103,9 @@ def main() -> None:
         for name, (category, _) in FIGURES.items():
             print(f"  {name} ({category})")
         return
+
+    # Apply publication theme
+    apply_publication_theme()
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")
