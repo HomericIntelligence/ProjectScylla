@@ -1,0 +1,25 @@
+{
+  "name": "vega-lite-analysis-pipeline",
+  "version": "1.0.0",
+  "category": "evaluation",
+  "description": "Build comprehensive analysis pipelines with text-based Vega-Lite figures and statistical tables for research papers",
+  "created": "2026-01-30",
+  "tags": [
+    "vega-lite",
+    "analysis",
+    "visualization",
+    "statistics",
+    "pandas",
+    "altair",
+    "publication-quality",
+    "text-based-outputs"
+  ],
+  "metadata": {
+    "project": "ProjectScylla",
+    "session_date": "2026-01-30",
+    "outcome": "success",
+    "files_added": 24,
+    "loc_added": 6229,
+    "pr_number": 213
+  }
+}
