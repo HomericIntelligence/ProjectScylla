@@ -53,7 +53,7 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
             score_median = subset["score"].median()
 
             # Consistency
-            consistency = 1 - (score_std / score_mean) if score_mean > 0 else 0
+            consistency = compute_consistency(score_mean, score_std)
 
             # Cost-of-Pass
             mean_cost = subset["cost_usd"].mean()

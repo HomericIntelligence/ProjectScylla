@@ -57,3 +57,25 @@ def test_load_experiment_integration():
     # This would require actual data
     experiments = load_all_experiments(base_dir=Path("~/fullruns").expanduser())
     assert isinstance(experiments, dict)
+
+
+def test_model_id_to_display_removes_date_suffix():
+    """Test that model_id_to_display removes date suffix from model IDs.
+
+    Regression test for P0 bug where re.sub replaced pattern within full string,
+    causing date suffix to leak through (e.g., "Sonnet 4.5-20250929").
+    """
+    from scylla.analysis.loader import model_id_to_display
+
+    # Test date-suffixed models
+    assert model_id_to_display("claude-sonnet-4-5-20250929") == "Sonnet 4.5"
+    assert model_id_to_display("claude-opus-4-5-20251101") == "Opus 4.5"
+    assert model_id_to_display("claude-haiku-3-5-20241022") == "Haiku 3.5"
+
+    # Test without date suffix (should still work)
+    assert model_id_to_display("claude-sonnet-3-5") == "Sonnet 3.5"
+    assert model_id_to_display("claude-opus-4-0") == "Opus 4.0"
+
+    # Test unknown model (should return as-is)
+    assert model_id_to_display("gpt-4") == "gpt-4"
+    assert model_id_to_display("unknown-model") == "unknown-model"
