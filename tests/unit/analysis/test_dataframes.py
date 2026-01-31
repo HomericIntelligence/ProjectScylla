@@ -17,9 +17,15 @@ def test_build_runs_df_structure(sample_runs_df):
         "score",
         "grade",
         "cost_usd",
-        "tokens_in",
-        "tokens_out",
-        "latency_seconds",
+        "input_tokens",
+        "output_tokens",
+        "cache_creation_tokens",
+        "cache_read_tokens",
+        "total_tokens",
+        "duration_seconds",
+        "agent_duration_seconds",
+        "judge_duration_seconds",
+        "exit_code",
     ]
 
     for col in required_cols:
@@ -44,9 +50,11 @@ def test_build_runs_df_values(sample_runs_df):
     # Cost should be positive
     assert (sample_runs_df["cost_usd"] > 0).all()
 
-    # Tokens should be positive integers
-    assert (sample_runs_df["tokens_in"] > 0).all()
-    assert (sample_runs_df["tokens_out"] > 0).all()
+    # Tokens should be positive integers (or zero for cache tokens)
+    assert (sample_runs_df["input_tokens"] > 0).all()
+    assert (sample_runs_df["output_tokens"] > 0).all()
+    assert (sample_runs_df["cache_creation_tokens"] >= 0).all()
+    assert (sample_runs_df["cache_read_tokens"] >= 0).all()
 
 
 def test_build_judges_df_structure(sample_judges_df):
