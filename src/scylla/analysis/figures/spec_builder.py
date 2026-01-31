@@ -101,7 +101,3 @@ def save_figure(
                 print(f"  Rendered: {img_path}")
             except Exception as e:
                 print(f"  Warning: Could not render {fmt}: {e}")
-
-
-# Initialize theme on import
-apply_publication_theme()
