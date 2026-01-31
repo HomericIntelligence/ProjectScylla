@@ -8,6 +8,7 @@ Python Justification: Uses pandas for table formatting and data manipulation.
 from __future__ import annotations
 
 import pandas as pd
+from scipy import stats as scipy_stats
 
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
@@ -21,6 +22,7 @@ from scylla.analysis.stats import (
     kruskal_wallis,
     mann_whitney_u,
     pearson_correlation,
+    shapiro_wilk,
     spearman_correlation,
 )
 
@@ -1193,6 +1195,364 @@ def table07_subtest_detail(runs_df: pd.DataFrame, subtests_df: pd.DataFrame) -> 
     return markdown, latex
 
 
+def table08_summary_statistics(runs_df: pd.DataFrame) -> tuple[str, str]:
+    """Generate Table 8: Summary Statistics.
+
+    Descriptive statistics for all metrics by model.
+    Essential foundation for any paper - shows data characteristics.
+
+    Args:
+        runs_df: Runs DataFrame
+
+    Returns:
+        Tuple of (markdown_table, latex_table)
+
+    """
+    metrics = {
+        "score": "Score",
+        "cost_usd": "Cost (USD)",
+        "duration_seconds": "Duration (s)",
+        "total_tokens": "Total Tokens",
+    }
+
+    rows = []
+    for model in sorted(runs_df["agent_model"].unique()):
+        model_data = runs_df[runs_df["agent_model"] == model]
+
+        for metric_col, metric_name in metrics.items():
+            data = model_data[metric_col].dropna()
+
+            if len(data) == 0:
+                continue
+
+            # Calculate statistics
+            n = len(data)
+            mean_val = data.mean()
+            median_val = data.median()
+            min_val = data.min()
+            max_val = data.max()
+            q1 = data.quantile(0.25)
+            q3 = data.quantile(0.75)
+            std_val = data.std()
+
+            # Skewness and kurtosis using scipy
+            skew_val = scipy_stats.skew(data)
+            kurt_val = scipy_stats.kurtosis(data)
+
+            rows.append(
+                {
+                    "Model": model,
+                    "Metric": metric_name,
+                    "N": n,
+                    "Mean": mean_val,
+                    "Median": median_val,
+                    "Min": min_val,
+                    "Max": max_val,
+                    "Q1": q1,
+                    "Q3": q3,
+                    "StdDev": std_val,
+                    "Skewness": skew_val,
+                    "Kurtosis": kurt_val,
+                }
+            )
+
+    df = pd.DataFrame(rows)
+
+    # Markdown table
+    md_lines = ["# Table 8: Summary Statistics", ""]
+    md_lines.append(
+        "| Model | Metric | N | Mean | Median | Min | Max | Q1 | Q3 | StdDev | Skew | Kurt |"
+    )
+    md_lines.append(
+        "|-------|--------|---|------|--------|-----|-----|----|----|--------|------|------|"
+    )
+
+    for _, row in df.iterrows():
+        md_lines.append(
+            f"| {row['Model']} | {row['Metric']} | {row['N']} | "
+            f"{row['Mean']:.4f} | {row['Median']:.4f} | {row['Min']:.4f} | "
+            f"{row['Max']:.4f} | {row['Q1']:.4f} | {row['Q3']:.4f} | "
+            f"{row['StdDev']:.4f} | {row['Skewness']:.3f} | {row['Kurtosis']:.3f} |"
+        )
+
+    markdown = "\n".join(md_lines)
+
+    # LaTeX table
+    latex_lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Summary Statistics by Model and Metric}",
+        r"\label{tab:summary_statistics}",
+        r"\small",
+        r"\begin{tabular}{llrrrrrrrrrrr}",
+        r"\toprule",
+        r"Model & Metric & N & Mean & Median & Min & Max & Q1 & Q3 & StdDev & Skew & Kurt \\",
+        r"\midrule",
+    ]
+
+    for _, row in df.iterrows():
+        latex_lines.append(
+            f"{row['Model']} & {row['Metric']} & {row['N']} & "
+            f"{row['Mean']:.4f} & {row['Median']:.4f} & {row['Min']:.4f} & "
+            f"{row['Max']:.4f} & {row['Q1']:.4f} & {row['Q3']:.4f} & "
+            f"{row['StdDev']:.4f} & {row['Skewness']:.3f} & {row['Kurtosis']:.3f} \\\\"
+        )
+
+    latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
+
+    latex = "\n".join(latex_lines)
+
+    return markdown, latex
+
+
+def table09_experiment_config(runs_df: pd.DataFrame) -> tuple[str, str]:
+    """Generate Table 9: Experiment Configuration.
+
+    Derived entirely from data - no hardcoded values.
+    Documents the experimental setup for reproducibility.
+
+    Args:
+        runs_df: Runs DataFrame
+
+    Returns:
+        Tuple of (markdown_table, latex_table)
+
+    """
+    rows = []
+
+    # Group by experiment (if experiment column exists, else treat all as one experiment)
+    if "experiment" in runs_df.columns:
+        experiments = sorted(runs_df["experiment"].unique())
+    else:
+        experiments = ["default"]
+        runs_df = runs_df.copy()
+        runs_df["experiment"] = "default"
+
+    for experiment in experiments:
+        exp_data = (
+            runs_df[runs_df["experiment"] == experiment] if experiment != "default" else runs_df
+        )
+
+        # Derive configuration from data
+        agent_models = sorted(exp_data["agent_model"].unique())
+        tiers = derive_tier_order(exp_data)
+        n_tiers = len(tiers)
+
+        # Subtests per tier (count unique subtests in each tier)
+        subtests_per_tier = {}
+        for tier in tiers:
+            tier_data = exp_data[exp_data["tier"] == tier]
+            subtests_per_tier[tier] = tier_data["subtest"].nunique()
+
+        # Runs per subtest (mode of run counts across all subtests)
+        runs_per_subtest_counts = exp_data.groupby(["tier", "subtest"]).size()
+        runs_per_subtest = int(runs_per_subtest_counts.mode().iloc[0])
+
+        # Total runs
+        total_runs = len(exp_data)
+
+        # Judge models (if available)
+        if "judge_model" in exp_data.columns:
+            judge_models = sorted(exp_data["judge_model"].dropna().unique())
+            judge_models_str = ", ".join(judge_models)
+        else:
+            judge_models_str = "N/A"
+
+        # Format subtests/tier as summary
+        subtest_summary = f"{min(subtests_per_tier.values())}-{max(subtests_per_tier.values())}"
+        if min(subtests_per_tier.values()) == max(subtests_per_tier.values()):
+            subtest_summary = str(min(subtests_per_tier.values()))
+
+        rows.append(
+            {
+                "Experiment": experiment,
+                "Agent Models": ", ".join(agent_models),
+                "Tiers": n_tiers,
+                "Tier IDs": ", ".join(tiers),
+                "Subtests/Tier": subtest_summary,
+                "Runs/Subtest": runs_per_subtest,
+                "Total Runs": total_runs,
+                "Judge Models": judge_models_str,
+            }
+        )
+
+    df = pd.DataFrame(rows)
+
+    # Markdown table
+    md_lines = ["# Table 9: Experiment Configuration", ""]
+    md_lines.append(
+        "| Experiment | Agent Models | Tiers | Tier IDs | Subtests/Tier | "
+        "Runs/Subtest | Total Runs | Judge Models |"
+    )
+    md_lines.append(
+        "|------------|--------------|-------|----------|---------------|"
+        "--------------|------------|--------------|"
+    )
+
+    for _, row in df.iterrows():
+        # Truncate long tier IDs for markdown
+        tier_ids = row["Tier IDs"]
+        if len(tier_ids) > 40:
+            tier_ids = tier_ids[:37] + "..."
+
+        md_lines.append(
+            f"| {row['Experiment']} | {row['Agent Models']} | {row['Tiers']} | "
+            f"{tier_ids} | {row['Subtests/Tier']} | {row['Runs/Subtest']} | "
+            f"{row['Total Runs']} | {row['Judge Models']} |"
+        )
+
+    markdown = "\n".join(md_lines)
+
+    # LaTeX table
+    latex_lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Experiment Configuration (Data-Derived)}",
+        r"\label{tab:experiment_config}",
+        r"\small",
+        r"\begin{tabular}{llrllrrr}",
+        r"\toprule",
+        r"Experiment & Models & Tiers & Tier IDs & ST/Tier & Runs/ST & Total & Judges \\",
+        r"\midrule",
+    ]
+
+    for _, row in df.iterrows():
+        # Truncate tier IDs for LaTeX
+        tier_ids = row["Tier IDs"]
+        if len(tier_ids) > 30:
+            tier_ids = tier_ids[:27] + "..."
+
+        latex_lines.append(
+            f"{row['Experiment']} & {row['Agent Models']} & {row['Tiers']} & "
+            f"{tier_ids} & {row['Subtests/Tier']} & {row['Runs/Subtest']} & "
+            f"{row['Total Runs']} & {row['Judge Models']} \\\\"
+        )
+
+    latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
+
+    latex = "\n".join(latex_lines)
+
+    return markdown, latex
+
+
+def table10_normality_tests(runs_df: pd.DataFrame) -> tuple[str, str]:
+    """Generate Table 10: Normality Tests.
+
+    Shapiro-Wilk tests for all metric distributions.
+    Justifies use of non-parametric statistical tests.
+
+    Args:
+        runs_df: Runs DataFrame
+
+    Returns:
+        Tuple of (markdown_table, latex_table)
+
+    """
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(runs_df)
+    metrics = {
+        "score": "Score",
+        "cost_usd": "Cost (USD)",
+    }
+
+    rows = []
+    for model in sorted(runs_df["agent_model"].unique()):
+        for tier in tier_order:
+            tier_data = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
+
+            if len(tier_data) < 3:
+                # Shapiro-Wilk requires at least 3 samples
+                continue
+
+            for metric_col, metric_name in metrics.items():
+                data = tier_data[metric_col].dropna()
+
+                if len(data) < 3:
+                    continue
+
+                # Shapiro-Wilk test
+                w_stat, p_value = shapiro_wilk(data)
+
+                # Interpret result
+                is_normal = "Yes" if p_value > 0.05 else "No"
+
+                rows.append(
+                    {
+                        "Model": model,
+                        "Tier": tier,
+                        "Metric": metric_name,
+                        "N": len(data),
+                        "W": w_stat,
+                        "p-value": p_value,
+                        "Normal? (α=0.05)": is_normal,
+                    }
+                )
+
+    df = pd.DataFrame(rows)
+
+    # Markdown table
+    md_lines = [
+        "# Table 10: Normality Tests (Shapiro-Wilk)",
+        "",
+        "*Tests null hypothesis that data is normally distributed. "
+        "p > 0.05 means cannot reject normality.*",
+        "",
+    ]
+    md_lines.append("| Model | Tier | Metric | N | W | p-value | Normal? (α=0.05) |")
+    md_lines.append("|-------|------|--------|---|---|---------|------------------|")
+
+    for _, row in df.iterrows():
+        md_lines.append(
+            f"| {row['Model']} | {row['Tier']} | {row['Metric']} | {row['N']} | "
+            f"{row['W']:.4f} | {row['p-value']:.4f} | {row['Normal? (α=0.05)']} |"
+        )
+
+    # Summary statistics
+    normal_count = len(df[df["Normal? (α=0.05)"] == "Yes"])
+    total_count = len(df)
+    md_lines.append(
+        f"\n**Summary**: {normal_count}/{total_count} "
+        f"({100*normal_count/total_count:.1f}%) distributions pass normality test"
+    )
+
+    markdown = "\n".join(md_lines)
+
+    # LaTeX table
+    latex_lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Normality Tests (Shapiro-Wilk)}",
+        r"\label{tab:normality_tests}",
+        r"\begin{tabular}{llrrrrl}",
+        r"\toprule",
+        r"Model & Tier & Metric & N & W & p-value & Normal? ($\alpha=0.05$) \\",
+        r"\midrule",
+    ]
+
+    for _, row in df.iterrows():
+        normal_symbol = r"\checkmark" if row["Normal? (α=0.05)"] == "Yes" else r"$\times$"
+        latex_lines.append(
+            f"{row['Model']} & {row['Tier']} & {row['Metric']} & {row['N']} & "
+            f"{row['W']:.4f} & {row['p-value']:.4f} & {normal_symbol} \\\\"
+        )
+
+    latex_lines.extend(
+        [
+            r"\midrule",
+            rf"\multicolumn{{7}}{{l}}{{\textit{{Summary: {normal_count}/{total_count} "
+            rf"({100*normal_count/total_count:.1f}\%) pass normality test}}}} \\",
+            r"\bottomrule",
+            r"\end{tabular}",
+            r"\end{table}",
+        ]
+    )
+
+    latex = "\n".join(latex_lines)
+
+    return markdown, latex
+
+
 # Export all table generators
 __all__ = [
     "table01_tier_summary",
@@ -1202,4 +1562,7 @@ __all__ = [
     "table05_cost_analysis",
     "table06_model_comparison",
     "table07_subtest_detail",
+    "table08_summary_statistics",
+    "table09_experiment_config",
+    "table10_normality_tests",
 ]
