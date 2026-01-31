@@ -59,7 +59,10 @@ def test_build_judges_df_structure(sample_judges_df):
         "run_number",
         "judge_number",
         "judge_model",
-        "score",
+        "judge_score",
+        "judge_passed",
+        "judge_grade",
+        "judge_is_valid",
     ]
 
     for col in required_cols:
@@ -83,7 +86,9 @@ def test_build_criteria_df_structure(sample_criteria_df):
         "judge_number",
         "judge_model",
         "criterion",
-        "score",
+        "criterion_score",
+        "criterion_achieved",
+        "criterion_max",
     ]
 
     for col in required_cols:
