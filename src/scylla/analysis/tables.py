@@ -488,82 +488,108 @@ def table04_criteria_performance(
                 df.loc[(df["Model"] == model1) & (df["Criterion"] == criterion), "p-value"] = pvalue
                 df.loc[(df["Model"] == model1) & (df["Criterion"] == criterion), "Winner"] = winner
 
+    # Get models dynamically
+    models = sorted(df["Model"].unique())
+
     # Markdown table
     md_lines = ["# Table 4: Per-Criteria Performance", ""]
-    md_lines.append(
-        "| Criterion | Weight | Sonnet Mean (±σ) | Haiku Mean (±σ) | " "p-value | Winner |"
-    )
-    md_lines.append(
-        "|-----------|--------|------------------|-----------------|" "---------|--------|"
-    )
+
+    # Build header dynamically
+    model_headers = " | ".join([f"{model} Mean (±σ)" for model in models])
+    md_lines.append(f"| Criterion | Weight | {model_headers} | p-value | Winner |")
+
+    separator = "|" + "|".join(["-" * 10 for _ in range(3 + len(models))]) + "|"
+    md_lines.append(separator)
 
     for criterion in criteria_weights.keys():
         criterion_rows = df[df["Criterion"] == criterion]
         if len(criterion_rows) == 0:
             continue
 
-        sonnet_row = criterion_rows[criterion_rows["Model"] == "Sonnet 4.5"]
-        haiku_row = criterion_rows[criterion_rows["Model"] == "Haiku 4.5"]
+        # Build model columns dynamically
+        model_strs = []
+        for model in models:
+            model_row = criterion_rows[criterion_rows["Model"] == model]
+            if len(model_row) > 0:
+                model_strs.append(
+                    f"{model_row['Mean Score'].iloc[0]:.3f} ± {model_row['Std Dev'].iloc[0]:.3f}"
+                )
+            else:
+                model_strs.append("—")
 
-        sonnet_str = (
-            f"{sonnet_row['Mean Score'].iloc[0]:.3f} ± {sonnet_row['Std Dev'].iloc[0]:.3f}"
-            if len(sonnet_row) > 0
+        # Get p-value and winner from first model row (they're identical across models)
+        first_model_row = criterion_rows[criterion_rows["Model"] == models[0]]
+        pvalue_str = (
+            f"{first_model_row['p-value'].iloc[0]:.4f}"
+            if len(first_model_row) > 0 and "p-value" in first_model_row.columns
             else "—"
         )
-        haiku_str = (
-            f"{haiku_row['Mean Score'].iloc[0]:.3f} ± {haiku_row['Std Dev'].iloc[0]:.3f}"
-            if len(haiku_row) > 0
+        winner_str = (
+            first_model_row["Winner"].iloc[0]
+            if len(first_model_row) > 0 and "Winner" in first_model_row.columns
             else "—"
         )
 
-        pvalue_str = f"{sonnet_row['p-value'].iloc[0]:.4f}" if "p-value" in sonnet_row else "—"
-        winner_str = sonnet_row["Winner"].iloc[0] if "Winner" in sonnet_row.columns else "—"
-
+        model_cols = " | ".join(model_strs)
         md_lines.append(
             f"| {criterion} | {criteria_weights[criterion]:.2f} | "
-            f"{sonnet_str} | {haiku_str} | {pvalue_str} | {winner_str} |"
+            f"{model_cols} | {pvalue_str} | {winner_str} |"
         )
 
     markdown = "\n".join(md_lines)
 
     # LaTeX table
+    # Build column format dynamically:
+    # l (criterion) r (weight) + l for each model + l (pvalue) + l (winner)
+    col_format = "lr" + "l" * len(models) + "ll"
+
     latex_lines = [
         r"\begin{table}[htbp]",
         r"\centering",
         r"\caption{Per-Criteria Performance Comparison}",
         r"\label{tab:criteria_performance}",
-        r"\begin{tabular}{lrllll}",
+        rf"\begin{{tabular}}{{{col_format}}}",
         r"\toprule",
-        r"Criterion & Weight & Sonnet Mean ($\pm\sigma$) & "
-        r"Haiku Mean ($\pm\sigma$) & p-value & Winner \\",
-        r"\midrule",
     ]
+
+    # Build header dynamically
+    model_headers = " & ".join([f"{model} Mean ($\\pm\\sigma$)" for model in models])
+    latex_lines.append(rf"Criterion & Weight & {model_headers} & p-value & Winner \\")
+    latex_lines.append(r"\midrule")
 
     for criterion in criteria_weights.keys():
         criterion_rows = df[df["Criterion"] == criterion]
         if len(criterion_rows) == 0:
             continue
 
-        sonnet_row = criterion_rows[criterion_rows["Model"] == "Sonnet 4.5"]
-        haiku_row = criterion_rows[criterion_rows["Model"] == "Haiku 4.5"]
+        # Build model columns dynamically
+        model_strs = []
+        for model in models:
+            model_row = criterion_rows[criterion_rows["Model"] == model]
+            if len(model_row) > 0:
+                mean_score = model_row["Mean Score"].iloc[0]
+                std_dev = model_row["Std Dev"].iloc[0]
+                model_strs.append(f"{mean_score:.3f} $\\pm$ {std_dev:.3f}")
+            else:
+                model_strs.append("---")
 
-        sonnet_str = (
-            f"{sonnet_row['Mean Score'].iloc[0]:.3f} $\\pm$ {sonnet_row['Std Dev'].iloc[0]:.3f}"
-            if len(sonnet_row) > 0
+        # Get p-value and winner from first model row
+        first_model_row = criterion_rows[criterion_rows["Model"] == models[0]]
+        pvalue_str = (
+            f"{first_model_row['p-value'].iloc[0]:.4f}"
+            if len(first_model_row) > 0 and "p-value" in first_model_row.columns
             else "---"
         )
-        haiku_str = (
-            f"{haiku_row['Mean Score'].iloc[0]:.3f} $\\pm$ {haiku_row['Std Dev'].iloc[0]:.3f}"
-            if len(haiku_row) > 0
+        winner_str = (
+            first_model_row["Winner"].iloc[0]
+            if len(first_model_row) > 0 and "Winner" in first_model_row.columns
             else "---"
         )
 
-        pvalue_str = f"{sonnet_row['p-value'].iloc[0]:.4f}" if "p-value" in sonnet_row else "---"
-        winner_str = sonnet_row["Winner"].iloc[0] if "Winner" in sonnet_row.columns else "---"
-
+        model_cols = " & ".join(model_strs)
         latex_lines.append(
             f"{criterion} & {criteria_weights[criterion]:.2f} & "
-            f"{sonnet_str} & {haiku_str} & {pvalue_str} & {winner_str} \\\\"
+            f"{model_cols} & {pvalue_str} & {winner_str} \\\\"
         )
 
     latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])

@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import TIER_ORDER, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import bootstrap_ci
 
@@ -53,6 +53,10 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
 
     stats_df = pd.DataFrame(stats)
 
+    # Get dynamic color scale for models
+    models = sorted(stats_df["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
     # Create grouped bar chart
     bars = (
         alt.Chart(stats_df)
@@ -63,10 +67,7 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",
-                scale=alt.Scale(
-                    domain=list(COLORS["models"].keys()),
-                    range=list(COLORS["models"].values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             xOffset="agent_model:N",
             tooltip=[
@@ -189,7 +190,9 @@ def fig10_score_violin(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
     # Prepare data
     data = runs_df[["agent_model", "tier", "score"]].copy()
 
-    # Removed: using TIER_ORDER from figures module
+    # Get dynamic color scale for models
+    models = sorted(data["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
 
     # Create violin plot using density transform
     # Note: Altair doesn't have native violin plots, so we approximate with area + line
@@ -209,10 +212,7 @@ def fig10_score_violin(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
         color=alt.Color(
             "agent_model:N",
             title="Agent Model",
-            scale=alt.Scale(
-                domain=list(COLORS["models"].keys()),
-                range=list(COLORS["models"].values()),
-            ),
+            scale=alt.Scale(domain=domain, range=range_),
         ),
         xOffset="agent_model:N",
     )
