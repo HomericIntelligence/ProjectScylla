@@ -12,7 +12,7 @@ import pandas as pd
 
 from scylla.analysis.figures import COLORS
 from scylla.analysis.figures.spec_builder import save_figure
-from scylla.analysis.stats import mann_whitney_u
+from scylla.analysis.stats import bonferroni_correction, mann_whitney_u
 
 
 def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -67,6 +67,8 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     uplift_df = pd.DataFrame(uplift_data)
 
     # Compute statistical significance between consecutive tiers
+    # Apply Bonferroni correction for 6 consecutive comparisons per model
+    n_tests = len(tier_order) - 1  # 6 consecutive comparisons
     significance_data = []
     for model in runs_df["agent_model"].unique():
         model_runs = runs_df[runs_df["agent_model"] == model]
@@ -77,7 +79,8 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             tier2_data = model_runs[model_runs["tier"] == tier2]["passed"].astype(int)
 
             if len(tier1_data) > 0 and len(tier2_data) > 0:
-                _, pvalue = mann_whitney_u(tier1_data, tier2_data)
+                _, pvalue_raw = mann_whitney_u(tier1_data, tier2_data)
+                pvalue = bonferroni_correction(pvalue_raw, n_tests)
                 significance_data.append(
                     {
                         "agent_model": model,
