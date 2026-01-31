@@ -142,3 +142,147 @@ def test_mann_whitney_u_identical():
 
     # Identical groups should have high p-value (no significant difference)
     assert p_value > 0.9
+
+
+def test_krippendorff_alpha_perfect_agreement():
+    """Test Krippendorff's alpha with perfect inter-rater agreement."""
+    from scylla.analysis.stats import krippendorff_alpha
+
+    # 3 judges, 5 items, all agree on varied scores
+    ratings = np.array(
+        [
+            [0.2, 0.4, 0.6, 0.8, 1.0],  # Judge 1
+            [0.2, 0.4, 0.6, 0.8, 1.0],  # Judge 2
+            [0.2, 0.4, 0.6, 0.8, 1.0],  # Judge 3
+        ]
+    )
+
+    alpha = krippendorff_alpha(ratings, level="interval")
+
+    # Perfect agreement should give alpha = 1.0
+    assert abs(alpha - 1.0) < 1e-6
+
+
+def test_krippendorff_alpha_ordinal():
+    """Test Krippendorff's alpha with ordinal data."""
+    from scylla.analysis.stats import krippendorff_alpha
+
+    # 2 judges, 4 items
+    ratings = np.array(
+        [
+            [1, 2, 3, 4],  # Judge 1
+            [1, 2, 3, 3],  # Judge 2 (slight disagreement on last item)
+        ]
+    )
+
+    alpha = krippendorff_alpha(ratings, level="ordinal")
+
+    # Should have high but not perfect agreement
+    assert 0.7 < alpha < 1.0
+
+
+def test_krippendorff_alpha_nominal():
+    """Test Krippendorff's alpha with nominal data."""
+    from scylla.analysis.stats import krippendorff_alpha
+
+    # 3 judges, 6 items, categorical ratings
+    ratings = np.array(
+        [
+            [1, 2, 1, 2, 1, 2],  # Judge 1
+            [1, 2, 1, 2, 1, 2],  # Judge 2
+            [1, 2, 1, 2, 1, 1],  # Judge 3 (disagrees on last item)
+        ]
+    )
+
+    alpha = krippendorff_alpha(ratings, level="nominal")
+
+    # Should have high agreement
+    assert 0.6 < alpha < 1.0
+
+
+def test_bonferroni_correction():
+    """Test Bonferroni correction for multiple comparisons."""
+    from scylla.analysis.stats import bonferroni_correction
+
+    # Test basic correction
+    assert bonferroni_correction(0.01, 5) == 0.05
+    assert bonferroni_correction(0.02, 10) == 0.20
+
+    # Test clamping to 1.0
+    assert bonferroni_correction(0.5, 3) == 1.0
+    assert bonferroni_correction(1.0, 2) == 1.0
+
+
+def test_compute_consistency():
+    """Test consistency metric (1 - CV)."""
+    from scylla.analysis.stats import compute_consistency
+
+    # Perfect consistency (no variation)
+    assert compute_consistency(10.0, 0.0) == 1.0
+
+    # High variation
+    assert compute_consistency(10.0, 10.0) == 0.0
+
+    # Moderate variation
+    consistency = compute_consistency(10.0, 2.0)
+    assert 0.7 < consistency < 0.9
+
+    # Zero mean (edge case)
+    assert compute_consistency(0.0, 5.0) == 0.0
+
+    # Negative consistency should be clamped to 0
+    consistency = compute_consistency(5.0, 10.0)  # std > mean
+    assert consistency == 0.0
+
+
+def test_compute_cop():
+    """Test Cost-of-Pass metric."""
+    from scylla.analysis.stats import compute_cop
+
+    # Basic calculation
+    cop = compute_cop(1.0, 0.5)
+    assert abs(cop - 2.0) < 1e-6
+
+    # High pass rate
+    cop = compute_cop(1.0, 0.9)
+    assert abs(cop - (1.0 / 0.9)) < 1e-6
+
+    # Zero pass rate (edge case)
+    cop = compute_cop(1.0, 0.0)
+    assert cop == float("inf")
+
+
+def test_spearman_correlation():
+    """Test Spearman rank correlation."""
+    from scylla.analysis.stats import spearman_correlation
+
+    # Perfect positive correlation
+    x = [1, 2, 3, 4, 5]
+    y = [2, 4, 6, 8, 10]
+    corr, p_value = spearman_correlation(x, y)
+    assert abs(corr - 1.0) < 1e-6
+    assert p_value < 0.01
+
+    # Perfect negative correlation
+    x = [1, 2, 3, 4, 5]
+    y = [10, 8, 6, 4, 2]
+    corr, p_value = spearman_correlation(x, y)
+    assert abs(corr - (-1.0)) < 1e-6
+
+
+def test_pearson_correlation():
+    """Test Pearson correlation."""
+    from scylla.analysis.stats import pearson_correlation
+
+    # Perfect positive correlation
+    x = [1, 2, 3, 4, 5]
+    y = [2, 4, 6, 8, 10]
+    corr, p_value = pearson_correlation(x, y)
+    assert abs(corr - 1.0) < 1e-6
+    assert p_value < 0.01
+
+    # No correlation
+    x = [1, 2, 3, 4, 5]
+    y = [3, 3, 3, 3, 3]  # Constant
+    corr, p_value = pearson_correlation(x, y)
+    assert np.isnan(corr)  # Pearson undefined for constant series
