@@ -121,13 +121,91 @@ class RunData:
     judges: list[JudgeEvaluation]
 
 
-# Experiment name to agent model mapping
-# Maps the timestamped directory name to agent model
-EXPERIMENT_TO_MODEL = {
-    "2026-01-20T06-50-26-test-001": "Sonnet 4.5",  # test001-nothinking
-    "2026-01-23T17-01-08-test-001": "Haiku 4.5",  # test001-nothinking-haiku
-    "2026-01-20T06-13-07-test-001": "Sonnet 4.5",  # test001-dryrun
-}
+def model_id_to_display(model_id: str) -> str:
+    """Convert model ID to display name.
+
+    Args:
+        model_id: Full model ID (e.g., "claude-sonnet-4-5-20250929")
+
+    Returns:
+        Display name (e.g., "Sonnet 4.5") or original ID if unknown
+
+    Examples:
+        >>> model_id_to_display("claude-sonnet-4-5-20250929")
+        'Sonnet 4.5'
+        >>> model_id_to_display("claude-haiku-4-5")
+        'Haiku 4.5'
+        >>> model_id_to_display("unknown-model")
+        'unknown-model'
+
+    """
+    # Extract model family and version from ID
+    # Pattern: claude-{family}-{major}-{minor}-{date} or claude-{family}-{major}-{minor}
+    patterns = [
+        (r"claude-opus-(\d+)-(\d+)", r"Opus \1.\2"),
+        (r"claude-sonnet-(\d+)-(\d+)", r"Sonnet \1.\2"),
+        (r"claude-haiku-(\d+)-(\d+)", r"Haiku \1.\2"),
+    ]
+
+    for pattern, replacement in patterns:
+        match = re.search(pattern, model_id)
+        if match:
+            return re.sub(pattern, replacement, model_id)
+
+    # Unknown model - return as-is
+    return model_id
+
+
+def resolve_agent_model(experiment_dir: Path) -> str:
+    """Resolve agent model from experiment configuration.
+
+    Tries (in order):
+    1. config/experiment.json -> models[0]
+    2. First agent/MODEL.md file found
+
+    Args:
+        experiment_dir: Path to experiment directory (timestamped)
+
+    Returns:
+        Model ID string
+
+    Raises:
+        ValueError: If model cannot be determined
+
+    """
+    # Try experiment.json first
+    config_path = experiment_dir / "config" / "experiment.json"
+    if config_path.exists():
+        try:
+            with config_path.open() as f:
+                config = json.load(f)
+                models = config.get("models", [])
+                if models:
+                    return model_id_to_display(models[0])
+        except Exception as e:
+            print(f"Warning: Failed to read {config_path}: {e}")
+
+    # Fallback: find first agent/MODEL.md
+    for tier_dir in sorted(experiment_dir.iterdir()):
+        if not tier_dir.is_dir() or not tier_dir.name.startswith("T"):
+            continue
+
+        for subtest_dir in sorted(tier_dir.iterdir()):
+            if not subtest_dir.is_dir() or not subtest_dir.name.isdigit():
+                continue
+
+            for run_dir in sorted(subtest_dir.iterdir()):
+                if not run_dir.is_dir() or not run_dir.name.startswith("run_"):
+                    continue
+
+                model_md = run_dir / "agent" / "MODEL.md"
+                if model_md.exists():
+                    try:
+                        return model_id_to_display(parse_judge_model(model_md))
+                    except Exception as e:
+                        print(f"Warning: Failed to parse {model_md}: {e}")
+
+    raise ValueError(f"Could not determine agent model for {experiment_dir}")
 
 
 def parse_judge_model(model_md_path: Path) -> str:
@@ -214,7 +292,7 @@ def load_judgment(judgment_path: Path, judge_number: int) -> JudgeEvaluation:
     )
 
 
-def load_run(run_dir: Path, experiment: str, tier: str, subtest: str) -> RunData:
+def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_model: str) -> RunData:
     """Load data for a single run.
 
     Args:
@@ -222,6 +300,7 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str) -> RunData
         experiment: Experiment name
         tier: Tier ID (T0-T6)
         subtest: Subtest ID
+        agent_model: Agent model display name
 
     Returns:
         Complete run data
@@ -254,9 +333,6 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str) -> RunData
             if judge_path.exists():
                 judges.append(load_judgment(judge_path, judge_num))
 
-    # Get agent model from experiment name
-    agent_model = EXPERIMENT_TO_MODEL.get(experiment, "Unknown")
-
     return RunData(
         experiment=experiment,
         agent_model=agent_model,
@@ -276,11 +352,12 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str) -> RunData
     )
 
 
-def load_experiment(experiment_dir: Path) -> list[RunData]:
+def load_experiment(experiment_dir: Path, agent_model: str) -> list[RunData]:
     """Load all runs from an experiment.
 
     Args:
         experiment_dir: Path to experiment directory (contains tier dirs)
+        agent_model: Agent model display name
 
     Returns:
         List of all run data
@@ -312,7 +389,7 @@ def load_experiment(experiment_dir: Path) -> list[RunData]:
                     continue
 
                 try:
-                    run = load_run(run_dir, experiment_name, tier_id, subtest_id)
+                    run = load_run(run_dir, experiment_name, tier_id, subtest_id, agent_model)
                     runs.append(run)
                 except Exception as e:
                     print(f"Warning: Failed to load {run_dir}: {e}")
@@ -328,14 +405,14 @@ def load_all_experiments(
 
     Args:
         data_dir: Path to fullruns directory
-        exclude: List of experiment names to exclude (default: ["test001-dryrun"])
+        exclude: List of experiment names to exclude (default: [])
 
     Returns:
         Dictionary mapping experiment name to list of runs
 
     """
     if exclude is None:
-        exclude = ["test001-dryrun"]  # Only 1 run per subtest
+        exclude = []
 
     experiments = {}
 
@@ -357,8 +434,16 @@ def load_all_experiments(
             continue
 
         print(f"Loading experiment: {exp_name}")
-        runs = load_experiment(actual_exp_dir)
+
+        # Resolve agent model from experiment configuration
+        try:
+            agent_model = resolve_agent_model(actual_exp_dir)
+        except ValueError as e:
+            print(f"Warning: {e}, skipping experiment")
+            continue
+
+        runs = load_experiment(actual_exp_dir, agent_model)
         experiments[exp_name] = runs
-        print(f"  Loaded {len(runs)} runs")
+        print(f"  Loaded {len(runs)} runs (agent model: {agent_model})")
 
     return experiments

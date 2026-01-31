@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import TIER_ORDER, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -30,8 +30,9 @@ def fig01_score_variance_by_tier(
     # Prepare data
     data = runs_df[["agent_model", "tier", "score"]].copy()
 
-    # Define tier order
-    # Removed: using TIER_ORDER from figures module
+    # Get dynamic color scale for models
+    models = sorted(data["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
 
     # Create base chart with faceting
     base = alt.Chart(data).encode(
@@ -39,10 +40,7 @@ def fig01_score_variance_by_tier(
         color=alt.Color(
             "agent_model:N",
             title="Agent Model",
-            scale=alt.Scale(
-                domain=list(COLORS["models"].keys()),
-                range=list(COLORS["models"].values()),
-            ),
+            scale=alt.Scale(domain=domain, range=range_),
         ),
     )
 
@@ -95,7 +93,9 @@ def fig03_failure_rate_by_tier(
 
     # Define grade order (F at bottom, S at top)
     grade_order = ["F", "D", "C", "B", "A", "S"]
-    # Removed: using TIER_ORDER from figures module
+
+    # Get dynamic color scale for grades
+    domain, range_ = get_color_scale("grades", grade_order)
 
     # Create stacked bar chart
     chart = (
@@ -108,10 +108,7 @@ def fig03_failure_rate_by_tier(
                 "grade:O",
                 title="Grade",
                 sort=grade_order,
-                scale=alt.Scale(
-                    domain=grade_order,
-                    range=[COLORS["grades"][g] for g in grade_order],
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             order=alt.Order("grade:O", sort="ascending"),
             tooltip=[

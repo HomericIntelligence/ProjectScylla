@@ -41,4 +41,68 @@ COLORS = {
     },
 }
 
-__all__ = ["COLORS", "TIER_ORDER"]
+# Dynamic color palette for unknown keys (10 distinct colors)
+_DYNAMIC_PALETTE = [
+    "#4C78A8",  # Blue
+    "#E45756",  # Red
+    "#72B7B2",  # Teal
+    "#F58518",  # Orange
+    "#54A24B",  # Green
+    "#EECA3B",  # Yellow
+    "#B279A2",  # Purple
+    "#FF9DA6",  # Pink
+    "#9D755D",  # Brown
+    "#BAB0AC",  # Gray
+]
+
+
+def get_color(category: str, key: str) -> str:
+    """Get color for a specific key in a category.
+
+    Args:
+        category: Color category ("models", "tiers", "grades", "judges", "criteria")
+        key: Key to look up
+
+    Returns:
+        Hex color code
+
+    Examples:
+        >>> get_color("models", "Sonnet 4.5")
+        '#4C78A8'
+        >>> get_color("models", "Opus 4.5")  # Unknown, uses palette
+        '#72B7B2'
+
+    """
+    # Check if key exists in static colors
+    if category in COLORS and key in COLORS[category]:
+        return COLORS[category][key]
+
+    # Use deterministic hash to assign from dynamic palette
+    color_index = hash(f"{category}:{key}") % len(_DYNAMIC_PALETTE)
+    return _DYNAMIC_PALETTE[color_index]
+
+
+def get_color_scale(category: str, keys: list[str]) -> tuple[list[str], list[str]]:
+    """Get Altair color scale (domain, range) for a list of keys.
+
+    Args:
+        category: Color category
+        keys: List of keys to create scale for
+
+    Returns:
+        Tuple of (domain, range) for Altair Scale
+
+    Examples:
+        >>> domain, range_ = get_color_scale("models", ["Sonnet 4.5", "Haiku 4.5"])
+        >>> domain
+        ['Sonnet 4.5', 'Haiku 4.5']
+        >>> range_
+        ['#4C78A8', '#E45756']
+
+    """
+    domain = sorted(keys)
+    range_ = [get_color(category, key) for key in domain]
+    return domain, range_
+
+
+__all__ = ["COLORS", "TIER_ORDER", "get_color", "get_color_scale"]

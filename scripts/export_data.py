@@ -41,7 +41,7 @@ def main() -> None:
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")
-    experiments = load_all_experiments(args.data_dir)
+    experiments = load_all_experiments(args.data_dir, exclude=["test001-dryrun"])
 
     if not experiments:
         print("ERROR: No experiments found")

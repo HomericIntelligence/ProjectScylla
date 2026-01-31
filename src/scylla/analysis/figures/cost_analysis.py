@@ -11,7 +11,7 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import TIER_ORDER, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -73,6 +73,10 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     # Create bar chart (exclude infinite values)
     finite_stats = stats_df[~stats_df["is_inf"]].copy()
 
+    # Get dynamic color scale for models
+    models = sorted(stats_df["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
     bars = (
         alt.Chart(finite_stats)
         .mark_bar()
@@ -86,10 +90,7 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",
-                scale=alt.Scale(
-                    domain=list(COLORS["models"].keys()),
-                    range=list(COLORS["models"].values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             xOffset="agent_model:N",
             tooltip=[
@@ -118,10 +119,7 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
                 xOffset="agent_model:N",
                 color=alt.Color(
                     "agent_model:N",
-                    scale=alt.Scale(
-                        domain=list(COLORS["models"].keys()),
-                        range=list(COLORS["models"].values()),
-                    ),
+                    scale=alt.Scale(domain=domain, range=range_),
                 ),
             )
         )
@@ -203,6 +201,14 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
 
         tier_stats.loc[model_mask, "is_pareto"] = pareto_mask
 
+    # Get dynamic color scale for models
+    models = sorted(tier_stats["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
+    # Define shapes for models (cycle through available shapes)
+    shape_options = ["circle", "square", "triangle-up", "diamond", "cross"]
+    shape_range = [shape_options[i % len(shape_options)] for i in range(len(models))]
+
     # Create scatter plot
     scatter = (
         alt.Chart(tier_stats)
@@ -213,14 +219,11 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",
-                scale=alt.Scale(
-                    domain=list(COLORS["models"].keys()),
-                    range=list(COLORS["models"].values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             shape=alt.Shape(
                 "agent_model:N",
-                scale=alt.Scale(domain=list(COLORS["models"].keys()), range=["circle", "square"]),
+                scale=alt.Scale(domain=domain, range=shape_range),
             ),
             tooltip=[
                 alt.Tooltip("tier:O", title="Tier"),
@@ -259,10 +262,7 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
                     y="mean_score:Q",
                     color=alt.Color(
                         "agent_model:N",
-                        scale=alt.Scale(
-                            domain=list(COLORS["models"].keys()),
-                            range=list(COLORS["models"].values()),
-                        ),
+                        scale=alt.Scale(domain=domain, range=range_),
                     ),
                 )
             )

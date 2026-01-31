@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import TIER_ORDER, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import bonferroni_correction, bootstrap_ci, mann_whitney_u
 
@@ -101,6 +101,10 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     )
     uplift_df["significant"] = uplift_df["significant"].fillna(False)
 
+    # Get dynamic color scale for models
+    models = sorted(uplift_df["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
     # Create line chart
     line = (
         alt.Chart(uplift_df)
@@ -111,10 +115,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",
-                scale=alt.Scale(
-                    domain=list(COLORS["models"].keys()),
-                    range=list(COLORS["models"].values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             tooltip=[
                 alt.Tooltip("tier:O", title="Tier"),
@@ -137,10 +138,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
                 y="uplift:Q",
                 color=alt.Color(
                     "agent_model:N",
-                    scale=alt.Scale(
-                        domain=list(COLORS["models"].keys()),
-                        range=list(COLORS["models"].values()),
-                    ),
+                    scale=alt.Scale(domain=domain, range=range_),
                 ),
             )
         )
@@ -220,6 +218,10 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     consistency_df["ci_low"] = consistency_df["ci_low"].clip(lower=0)
     consistency_df["ci_high"] = consistency_df["ci_high"].clip(upper=1)
 
+    # Get dynamic color scale for models
+    models = sorted(consistency_df["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
     # Create line chart
     line = (
         alt.Chart(consistency_df)
@@ -234,10 +236,7 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",
-                scale=alt.Scale(
-                    domain=list(COLORS["models"].keys()),
-                    range=list(COLORS["models"].values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             tooltip=[
                 alt.Tooltip("tier:O", title="Tier"),
@@ -258,10 +257,7 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             y2="ci_high:Q",
             color=alt.Color(
                 "agent_model:N",
-                scale=alt.Scale(
-                    domain=list(COLORS["models"].keys()),
-                    range=list(COLORS["models"].values()),
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
         )
     )

@@ -13,7 +13,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import get_color_scale
 
 
 def apply_publication_theme() -> None:
@@ -51,14 +51,18 @@ def apply_publication_theme() -> None:
     alt.themes.enable("publication")
 
 
-def model_color_scale() -> alt.Scale:
+def model_color_scale(models: list[str]) -> alt.Scale:
     """Create consistent color scale for agent models.
+
+    Args:
+        models: List of model display names
 
     Returns:
         Altair Scale with model colors
 
     """
-    return alt.Scale(domain=list(COLORS["models"].keys()), range=list(COLORS["models"].values()))
+    domain, range_ = get_color_scale("models", models)
+    return alt.Scale(domain=domain, range=range_)
 
 
 def save_figure(
