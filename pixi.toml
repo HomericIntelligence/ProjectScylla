@@ -32,6 +32,7 @@ scipy = ">=1.11"
 altair = ">=5.0"
 vl-convert-python = ">=1.0"
 krippendorff = ">=0.6.0"
+statsmodels = ">=0.14"
 
 [environments]
 default = { features = ["dev"], solve-group = "default" }

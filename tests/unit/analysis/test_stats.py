@@ -314,3 +314,185 @@ def test_pearson_correlation():
     y = [3, 3, 3, 3, 3]  # Constant
     corr, p_value = pearson_correlation(x, y)
     assert np.isnan(corr)  # Pearson undefined for constant series
+
+
+def test_shapiro_wilk_normal_data():
+    """Test Shapiro-Wilk with normal distribution."""
+    from scylla.analysis.stats import shapiro_wilk
+
+    # Generate normal data
+    np.random.seed(42)
+    data = np.random.normal(loc=0, scale=1, size=100)
+
+    w_stat, p_value = shapiro_wilk(data)
+
+    # Should NOT reject normality (p > 0.05)
+    assert 0 < w_stat <= 1
+    assert p_value > 0.05
+
+
+def test_shapiro_wilk_uniform_data():
+    """Test Shapiro-Wilk with non-normal (uniform) distribution."""
+    from scylla.analysis.stats import shapiro_wilk
+
+    # Uniform distribution is decidedly non-normal
+    np.random.seed(42)
+    data = np.random.uniform(low=0, high=1, size=100)
+
+    w_stat, p_value = shapiro_wilk(data)
+
+    # Should reject normality (p < 0.05) for large uniform sample
+    assert 0 < w_stat <= 1
+    assert p_value < 0.05
+
+
+def test_kruskal_wallis_different_groups():
+    """Test Kruskal-Wallis with significantly different groups."""
+    from scylla.analysis.stats import kruskal_wallis
+
+    # Three distinct groups
+    g1 = [1, 2, 3, 4, 5]
+    g2 = [6, 7, 8, 9, 10]
+    g3 = [11, 12, 13, 14, 15]
+
+    h_stat, p_value = kruskal_wallis(g1, g2, g3)
+
+    # Groups are clearly different
+    assert h_stat > 0
+    assert p_value < 0.01
+
+
+def test_kruskal_wallis_identical_groups():
+    """Test Kruskal-Wallis with identical groups."""
+    from scylla.analysis.stats import kruskal_wallis
+
+    # Same data in all groups
+    g1 = [1, 2, 3, 4, 5]
+    g2 = [1, 2, 3, 4, 5]
+    g3 = [1, 2, 3, 4, 5]
+
+    h_stat, p_value = kruskal_wallis(g1, g2, g3)
+
+    # No difference expected
+    assert h_stat < 0.01
+    assert p_value > 0.9
+
+
+def test_holm_bonferroni_less_conservative_than_bonferroni():
+    """Test that Holm-Bonferroni is less conservative than Bonferroni."""
+    from scylla.analysis.stats import bonferroni_correction, holm_bonferroni_correction
+
+    p_values = [0.01, 0.02, 0.03, 0.04]
+    n_tests = len(p_values)
+
+    # Standard Bonferroni
+    bonf_corrected = [bonferroni_correction(p, n_tests) for p in p_values]
+
+    # Holm-Bonferroni
+    holm_corrected = holm_bonferroni_correction(p_values)
+
+    # Holm should be less conservative (smaller p-values for at least some tests)
+    # Specifically, the smallest p-value gets same correction, but larger ones get less
+    assert holm_corrected[0] == bonf_corrected[0]  # Smallest p-value: same correction
+    assert holm_corrected[1] < bonf_corrected[1]  # Larger p-values: less conservative
+
+
+def test_holm_bonferroni_empty():
+    """Test Holm-Bonferroni with empty list."""
+    from scylla.analysis.stats import holm_bonferroni_correction
+
+    assert holm_bonferroni_correction([]) == []
+
+
+def test_holm_bonferroni_single():
+    """Test Holm-Bonferroni with single p-value."""
+    from scylla.analysis.stats import holm_bonferroni_correction
+
+    # Single test: no correction needed
+    result = holm_bonferroni_correction([0.05])
+    assert result == [0.05]
+
+
+def test_benjamini_hochberg_correction():
+    """Test Benjamini-Hochberg FDR correction."""
+    from scylla.analysis.stats import benjamini_hochberg_correction
+
+    p_values = [0.01, 0.04, 0.03, 0.50]
+    corrected = benjamini_hochberg_correction(p_values)
+
+    # All corrected values should be >= original
+    for orig, corr in zip(p_values, corrected):
+        assert corr >= orig
+
+    # Should be clamped to [0, 1]
+    for corr in corrected:
+        assert 0 <= corr <= 1
+
+
+def test_benjamini_hochberg_empty():
+    """Test Benjamini-Hochberg with empty list."""
+    from scylla.analysis.stats import benjamini_hochberg_correction
+
+    assert benjamini_hochberg_correction([]) == []
+
+
+def test_cliffs_delta_ci_covers_point_estimate():
+    """Test that Cliff's delta CI covers the point estimate."""
+    from scylla.analysis.stats import cliffs_delta_ci
+
+    np.random.seed(42)
+    g1 = np.random.normal(loc=5, scale=1, size=50)
+    g2 = np.random.normal(loc=4, scale=1, size=50)
+
+    delta, ci_low, ci_high = cliffs_delta_ci(g1, g2, n_resamples=1000)
+
+    # CI should bracket the point estimate
+    assert ci_low <= delta <= ci_high
+
+    # CI bounds should be different (not degenerate)
+    assert ci_low < ci_high
+
+
+def test_cliffs_delta_ci_small_sample():
+    """Test Cliff's delta CI with insufficient sample size."""
+    from scylla.analysis.stats import cliffs_delta_ci
+
+    # Single element - should return point estimate only
+    delta, ci_low, ci_high = cliffs_delta_ci([5.0], [3.0])
+
+    assert delta == ci_low == ci_high
+
+
+def test_ols_regression_perfect_line():
+    """Test OLS regression with perfect linear relationship."""
+    from scylla.analysis.stats import ols_regression
+
+    x = np.array([1, 2, 3, 4, 5])
+    y = np.array([2, 4, 6, 8, 10])  # y = 2*x
+
+    result = ols_regression(x, y)
+
+    # Perfect fit
+    assert abs(result["slope"] - 2.0) < 1e-10
+    assert abs(result["intercept"] - 0.0) < 1e-10
+    assert abs(result["r_squared"] - 1.0) < 1e-10
+    assert result["p_value"] < 1e-10  # Highly significant
+    assert result["std_err"] < 1e-10  # Nearly zero error
+
+
+def test_ols_regression_basic():
+    """Test OLS regression with realistic data."""
+    from scylla.analysis.stats import ols_regression
+
+    np.random.seed(42)
+    x = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    y = 2 * x + 3 + np.random.normal(0, 0.5, size=10)  # y ≈ 2x + 3 with noise
+
+    result = ols_regression(x, y)
+
+    # Should recover approximate slope and intercept
+    assert 1.5 < result["slope"] < 2.5
+    assert 2.0 < result["intercept"] < 4.0
+    assert result["r_squared"] > 0.9  # High R²
+    assert result["p_value"] < 0.01  # Significant
+    assert result["std_err"] > 0  # Non-zero error due to noise
