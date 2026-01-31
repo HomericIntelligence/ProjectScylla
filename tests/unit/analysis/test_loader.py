@@ -81,14 +81,350 @@ def test_model_id_to_display_removes_date_suffix():
     assert model_id_to_display("unknown-model") == "unknown-model"
 
 
-@pytest.mark.skipif(True, reason="Requires mocked filesystem")
-def test_dynamic_judge_discovery():
+def test_dynamic_judge_discovery(tmp_path):
     """Test that judge loading discovers judge directories dynamically.
 
     Regression test for P1 bug where hardcoded loop [1,2,3] silently ignored
     judges 4+ and skipped missing judges 1-3.
     """
-    # This test would require mocking the filesystem with various judge directory layouts
-    # Including: missing judge_01, having judge_04+, non-sequential judge numbers
-    # Implementation deferred to integration tests with real filesystem fixtures
-    pass
+    from scylla.analysis.loader import load_run
+
+    # Create mock run directory structure
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Create run_result.json
+    run_result = {
+        "judge_score": 0.8,
+        "judge_passed": True,
+        "judge_grade": "A",
+        "cost_usd": 0.05,
+        "duration_seconds": 10.0,
+        "agent_duration_seconds": 8.0,
+        "judge_duration_seconds": 2.0,
+        "token_stats": {
+            "input_tokens": 1000,
+            "output_tokens": 500,
+            "cache_creation_tokens": 100,
+            "cache_read_tokens": 200,
+        },
+        "exit_code": 0,
+    }
+    (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
+
+    # Create judge directory with non-sequential judges (01, 03, 05 - skip 02, 04)
+    judge_dir = run_dir / "judge"
+    judge_dir.mkdir()
+
+    for judge_num in [1, 3, 5]:
+        judge_subdir = judge_dir / f"judge_{judge_num:02d}"
+        judge_subdir.mkdir()
+
+        # Create judgment.json
+        judgment = {
+            "score": 0.7 + (judge_num * 0.05),
+            "passed": True,
+            "grade": "B",
+            "is_valid": True,
+            "reasoning": f"Judge {judge_num} reasoning",
+            "criteria_scores": {},
+        }
+        (judge_subdir / "judgment.json").write_text(__import__("json").dumps(judgment))
+
+        # Create MODEL.md with proper format
+        (judge_subdir / "MODEL.md").write_text(f"**Model**: claude-opus-4-5-judge{judge_num}\n")
+
+    # Load the run
+    run_data = load_run(
+        run_dir=run_dir,
+        experiment="test-experiment",
+        tier="T0",
+        subtest="00",
+        agent_model="Sonnet 4.5",
+    )
+
+    # Should discover all 3 judges (01, 03, 05), not just [1, 2, 3]
+    assert len(run_data.judges) == 3
+
+    # Verify judge numbers are correct
+    judge_numbers = {judge.judge_number for judge in run_data.judges}
+    assert judge_numbers == {1, 3, 5}
+
+    # Verify scores match
+    judge_scores = {judge.judge_number: judge.score for judge in run_data.judges}
+    assert abs(judge_scores[1] - 0.75) < 0.01
+    assert abs(judge_scores[3] - 0.85) < 0.01
+    assert abs(judge_scores[5] - 0.95) < 0.01
+
+
+def test_load_run_with_missing_fields(tmp_path):
+    """Test that load_run handles missing fields with NaN defaults."""
+    from scylla.analysis.loader import load_run
+
+    # Create minimal run directory
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Create run_result.json with minimal fields (no scores, costs)
+    run_result = {
+        "judge_passed": False,
+        "exit_code": 1,
+    }
+    (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
+
+    # No judges directory - should handle gracefully
+
+    # Load the run
+    run_data = load_run(
+        run_dir=run_dir,
+        experiment="test",
+        tier="T0",
+        subtest="00",
+        agent_model="Sonnet 4.5",
+    )
+
+    # Verify NaN defaults for missing numeric fields
+    import numpy as np
+
+    assert np.isnan(run_data.score)
+    assert np.isnan(run_data.cost_usd)
+    assert np.isnan(run_data.duration_seconds)
+
+    # Verify non-numeric defaults
+    assert run_data.passed is False
+    assert run_data.grade == "F"
+    assert run_data.exit_code == 1
+    assert len(run_data.judges) == 0
+
+
+def test_load_run_with_malformed_json(tmp_path):
+    """Test that load_run handles malformed JSON gracefully."""
+    from scylla.analysis.loader import load_run
+
+    # Create run directory with malformed JSON
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Write malformed JSON
+    (run_dir / "run_result.json").write_text("{invalid json")
+
+    # Should raise JSONDecodeError
+    with pytest.raises(__import__("json").JSONDecodeError):
+        load_run(
+            run_dir=run_dir,
+            experiment="test",
+            tier="T0",
+            subtest="00",
+            agent_model="Sonnet 4.5",
+        )
+
+
+def test_load_run_missing_file(tmp_path):
+    """Test that load_run raises FileNotFoundError for missing run_result.json."""
+    from scylla.analysis.loader import load_run
+
+    # Create empty run directory (no run_result.json)
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Should raise FileNotFoundError
+    with pytest.raises(FileNotFoundError):
+        load_run(
+            run_dir=run_dir,
+            experiment="test",
+            tier="T0",
+            subtest="00",
+            agent_model="Sonnet 4.5",
+        )
+
+
+def test_load_judgment_with_criteria(tmp_path):
+    """Test loading judgment with full criteria scores."""
+    from scylla.analysis.loader import load_judgment
+
+    # Create judgment directory
+    judgment_path = tmp_path / "judgment.json"
+    model_path = tmp_path / "MODEL.md"
+
+    # Create comprehensive judgment with criteria
+    judgment = {
+        "score": 0.85,
+        "passed": True,
+        "grade": "A",
+        "is_valid": True,
+        "reasoning": "Well implemented",
+        "criteria_scores": {
+            "functional": {
+                "achieved": 8.5,
+                "max": 10.0,
+                "score": 0.85,
+                "items": {
+                    "req1": {"achieved": 5, "max": 5, "reason": "Perfect"},
+                    "req2": {"achieved": 3.5, "max": 5, "reason": "Good"},
+                },
+            },
+            "code_quality": {
+                "achieved": 9.0,
+                "max": 10.0,
+                "score": 0.90,
+                "items": {},
+            },
+        },
+    }
+    judgment_path.write_text(__import__("json").dumps(judgment))
+    model_path.write_text("**Model**: claude-opus-4-5-20251101\n")
+
+    # Load judgment
+    judge_eval = load_judgment(judgment_path, judge_number=1)
+
+    # Verify top-level fields
+    assert judge_eval.score == 0.85
+    assert judge_eval.passed is True
+    assert judge_eval.grade == "A"
+    # Note: load_judgment returns raw model ID, not display name
+    assert judge_eval.judge_model == "claude-opus-4-5-20251101"
+    assert judge_eval.judge_number == 1
+
+    # Verify criteria
+    assert len(judge_eval.criteria) == 2
+    assert "functional" in judge_eval.criteria
+    assert "code_quality" in judge_eval.criteria
+
+    # Verify functional criterion
+    func_crit = judge_eval.criteria["functional"]
+    assert func_crit.achieved == 8.5
+    assert func_crit.max_points == 10.0
+    assert func_crit.score == 0.85
+    assert len(func_crit.items) == 2
+
+    # Verify items
+    assert "req1" in func_crit.items
+    assert func_crit.items["req1"].achieved == 5
+    assert func_crit.items["req1"].max_points == 5
+
+
+def test_load_judgment_with_none_criteria(tmp_path):
+    """Test loading judgment with None criteria (edge case)."""
+    from scylla.analysis.loader import load_judgment
+
+    judgment_path = tmp_path / "judgment.json"
+    model_path = tmp_path / "MODEL.md"
+
+    # Judgment with None criteria_scores
+    judgment = {
+        "score": 0.5,
+        "passed": False,
+        "grade": "F",
+        "is_valid": True,
+        "reasoning": "Failed",
+        "criteria_scores": None,  # Edge case: None instead of dict
+    }
+    judgment_path.write_text(__import__("json").dumps(judgment))
+    model_path.write_text("**Model**: claude-haiku-4-5-20241223\n")
+
+    # Load judgment - should handle None gracefully
+    judge_eval = load_judgment(judgment_path, judge_number=2)
+
+    assert judge_eval.score == 0.5
+    assert len(judge_eval.criteria) == 0  # Should be empty dict
+
+
+def test_load_experiment_skips_corrupted_runs(tmp_path):
+    """Test that load_experiment skips corrupted runs with warnings."""
+    from scylla.analysis.loader import load_experiment
+
+    # Create experiment directory structure
+    exp_dir = tmp_path / "test-experiment" / "2026-01-31T10-00-00-test"
+    tier_dir = exp_dir / "T0" / "00"
+    tier_dir.mkdir(parents=True)
+
+    # Create 3 runs: 2 good, 1 corrupted
+    for run_num in [1, 2, 3]:
+        run_dir = tier_dir / f"run_{run_num:02d}"
+        run_dir.mkdir()
+
+        if run_num == 2:
+            # Corrupted run - malformed JSON
+            (run_dir / "run_result.json").write_text("{bad json")
+        else:
+            # Good run
+            run_result = {
+                "judge_score": 0.8,
+                "judge_passed": True,
+                "judge_grade": "A",
+                "cost_usd": 0.05,
+                "duration_seconds": 10.0,
+                "token_stats": {},
+                "exit_code": 0,
+            }
+            (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
+
+    # Load experiment - should skip corrupted run 2, load runs 1 and 3
+    runs = load_experiment(exp_dir, agent_model="Sonnet 4.5")
+
+    # Should have loaded 2 out of 3 runs
+    assert len(runs) == 2
+
+    # Verify run numbers
+    run_numbers = {run.run_number for run in runs}
+    assert run_numbers == {1, 3}
+
+
+def test_parse_judge_model_handles_missing_file(tmp_path):
+    """Test parse_judge_model raises FileNotFoundError for missing MODEL.md."""
+    from scylla.analysis.loader import parse_judge_model
+
+    # Non-existent file
+    model_path = tmp_path / "MODEL.md"
+
+    # Should raise FileNotFoundError
+    with pytest.raises(FileNotFoundError):
+        parse_judge_model(model_path)
+
+
+def test_parse_judge_model_handles_invalid_format(tmp_path):
+    """Test parse_judge_model raises ValueError for invalid format."""
+    from scylla.analysis.loader import parse_judge_model
+
+    # Create MODEL.md without proper format
+    model_path = tmp_path / "MODEL.md"
+    model_path.write_text("This is not the right format\n")
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="Could not find model"):
+        parse_judge_model(model_path)
+
+
+def test_parse_judge_model_success(tmp_path):
+    """Test parse_judge_model extracts model correctly."""
+    from scylla.analysis.loader import parse_judge_model
+
+    model_path = tmp_path / "MODEL.md"
+    model_path.write_text("**Model**: claude-sonnet-4-5-20250929\n")
+
+    result = parse_judge_model(model_path)
+    assert result == "claude-sonnet-4-5-20250929"
+
+
+def test_model_id_to_display_comprehensive():
+    """Comprehensive test for model_id_to_display function."""
+    from scylla.analysis.loader import model_id_to_display
+
+    # Claude models with dates
+    assert model_id_to_display("claude-sonnet-4-5-20250929") == "Sonnet 4.5"
+    assert model_id_to_display("claude-opus-4-5-20251101") == "Opus 4.5"
+    assert model_id_to_display("claude-haiku-4-5-20241223") == "Haiku 4.5"
+    assert model_id_to_display("claude-haiku-3-5-20241022") == "Haiku 3.5"
+
+    # Claude models without dates
+    assert model_id_to_display("claude-sonnet-3-5") == "Sonnet 3.5"
+    assert model_id_to_display("claude-opus-4-0") == "Opus 4.0"
+
+    # Unknown models (pass through)
+    assert model_id_to_display("gpt-4") == "gpt-4"
+    assert model_id_to_display("gemini-pro") == "gemini-pro"
+    assert model_id_to_display("unknown-model-123") == "unknown-model-123"
+
+    # Edge cases
+    assert model_id_to_display("") == ""
+    assert model_id_to_display("claude") == "claude"
