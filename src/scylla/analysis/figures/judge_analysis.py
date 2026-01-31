@@ -96,53 +96,36 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
         values="judge_score",
     ).reset_index()
 
-    judge_pivot.columns = [
-        "tier",
-        "subtest",
-        "run_number",
-        "judge_1",
-        "judge_2",
-        "judge_3",
-    ]
+    # Get dynamic judge column names from pivot result
+    index_cols = ["tier", "subtest", "run_number"]
+    judge_cols = [col for col in judge_pivot.columns if col not in index_cols]
+
+    # Rename judge columns to judge_1, judge_2, etc.
+    new_cols = index_cols + [f"judge_{i}" for i in range(1, len(judge_cols) + 1)]
+    judge_pivot.columns = new_cols
+    judge_cols_renamed = [f"judge_{i}" for i in range(1, len(judge_cols) + 1)]
 
     # Remove rows with missing judges
     judge_pivot = judge_pivot.dropna()
 
-    # Create pairwise comparison data
+    # Create pairwise comparison data (dynamic based on number of judges)
     pairs = []
+    n_judges = len(judge_cols_renamed)
 
-    # Judge 1 vs Judge 2
-    for _, row in judge_pivot.iterrows():
-        pairs.append(
-            {
-                "judge_x": "Judge 1 (Opus)",
-                "judge_y": "Judge 2 (Sonnet)",
-                "score_x": row["judge_1"],
-                "score_y": row["judge_2"],
-            }
-        )
+    for i in range(n_judges):
+        for j in range(i + 1, n_judges):
+            col_x = judge_cols_renamed[i]
+            col_y = judge_cols_renamed[j]
 
-    # Judge 1 vs Judge 3
-    for _, row in judge_pivot.iterrows():
-        pairs.append(
-            {
-                "judge_x": "Judge 1 (Opus)",
-                "judge_y": "Judge 3 (Haiku)",
-                "score_x": row["judge_1"],
-                "score_y": row["judge_3"],
-            }
-        )
-
-    # Judge 2 vs Judge 3
-    for _, row in judge_pivot.iterrows():
-        pairs.append(
-            {
-                "judge_x": "Judge 2 (Sonnet)",
-                "judge_y": "Judge 3 (Haiku)",
-                "score_x": row["judge_2"],
-                "score_y": row["judge_3"],
-            }
-        )
+            for _, row in judge_pivot.iterrows():
+                pairs.append(
+                    {
+                        "judge_x": f"Judge {i+1}",
+                        "judge_y": f"Judge {j+1}",
+                        "score_x": row[col_x],
+                        "score_y": row[col_y],
+                    }
+                )
 
     pairs_df = pd.DataFrame(pairs)
 
