@@ -72,8 +72,9 @@ def save_figure(
     data: pd.DataFrame | None = None,
     render: bool = True,
     formats: list[str] | None = None,
+    latex_caption: str | None = None,
 ) -> None:
-    """Save chart as Vega-Lite JSON + CSV + optionally rendered images.
+    """Save chart as Vega-Lite JSON + CSV + optionally rendered images + LaTeX snippet.
 
     Args:
         chart: Altair chart
@@ -82,6 +83,7 @@ def save_figure(
         data: Optional DataFrame to save as CSV (if None, extracted from chart)
         render: Whether to render to raster/vector formats
         formats: List of formats to render ("png", "pdf", "svg")
+        latex_caption: Optional custom LaTeX caption (defaults to chart title)
 
     """
     if formats is None:
@@ -117,3 +119,50 @@ def save_figure(
                 print(f"  Rendered: {img_path}")
             except Exception as e:
                 print(f"  Warning: Could not render {fmt}: {e}")
+
+        # Generate LaTeX inclusion snippet if PDF was rendered
+        if "pdf" in formats:
+            _generate_latex_snippet(name, output_dir, chart, latex_caption)
+
+
+def _generate_latex_snippet(
+    name: str, output_dir: Path, chart: alt.Chart, custom_caption: str | None = None
+) -> None:
+    """Generate LaTeX figure inclusion snippet.
+
+    Args:
+        name: Figure name (without extension)
+        output_dir: Output directory
+        chart: Altair chart (for extracting title)
+        custom_caption: Optional custom caption (overrides chart title)
+
+    """
+    # Extract caption from chart title or use custom caption
+    caption = custom_caption
+    if caption is None:
+        # Try to extract title from chart spec
+        if hasattr(chart, "title") and chart.title:
+            if isinstance(chart.title, str):
+                caption = chart.title
+            elif isinstance(chart.title, dict) and "text" in chart.title:
+                caption = chart.title["text"]
+        else:
+            # Fallback: generate caption from name
+            caption = name.replace("_", " ").replace("fig", "Figure ").title()
+
+    # Generate LaTeX label from name
+    label = f"fig:{name}"
+
+    # Create LaTeX snippet
+    latex_snippet = f"""\\begin{{figure}}[htbp]
+\\centering
+\\includegraphics[width=\\textwidth]{{{name}.pdf}}
+\\caption{{{caption}}}
+\\label{{{label}}}
+\\end{{figure}}
+"""
+
+    # Save snippet
+    snippet_path = output_dir / f"{name}_include.tex"
+    snippet_path.write_text(latex_snippet)
+    print(f"  Saved LaTeX snippet: {snippet_path}")
