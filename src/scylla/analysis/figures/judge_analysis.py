@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import TIER_ORDER, get_color_scale
+from scylla.analysis.figures import derive_tier_order, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.loader import model_id_to_display
 from scylla.analysis.stats import pearson_correlation, spearman_correlation
@@ -58,10 +58,13 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
     # Box plot
     boxplot = base.mark_boxplot(size=20)
 
+    # Derive tier order from data
+    tier_order = derive_tier_order(data)
+
     # Combine and facet by tier
     chart = (
         boxplot.facet(
-            column=alt.Column("tier:O", title="Tier", sort=TIER_ORDER),
+            column=alt.Column("tier:O", title="Tier", sort=tier_order),
         )
         .properties(title="Judge Score Variance Across Tiers")
         .resolve_scale(x="independent")

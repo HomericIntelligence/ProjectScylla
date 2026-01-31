@@ -17,6 +17,7 @@ from scylla.analysis import (
     build_runs_df,
     build_subtests_df,
     load_all_experiments,
+    load_rubric_weights,
 )
 from scylla.analysis.figures.spec_builder import apply_publication_theme
 from scylla.analysis.tables import (
@@ -45,6 +46,13 @@ def main() -> None:
         default=Path("docs/tables"),
         help="Output directory (default: docs/tables)",
     )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        nargs="*",
+        default=[],
+        help="Experiment names to exclude (e.g., --exclude test001-dryrun)",
+    )
 
     args = parser.parse_args()
 
@@ -53,11 +61,19 @@ def main() -> None:
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")
-    experiments = load_all_experiments(args.data_dir, exclude=["test001-dryrun"])
+    experiments = load_all_experiments(args.data_dir, exclude=args.exclude)
 
     if not experiments:
         print("ERROR: No experiments found")
         return
+
+    # Load rubric weights
+    print("Loading rubric weights...")
+    rubric_weights = load_rubric_weights(args.data_dir, exclude=args.exclude)
+    if rubric_weights:
+        print(f"  Loaded weights: {rubric_weights}")
+    else:
+        print("  No rubric found, using defaults")
 
     # Build DataFrames
     print("Building DataFrames...")
@@ -85,27 +101,8 @@ def main() -> None:
         (
             "Table 4",
             "tab04_criteria_performance",
-            lambda: table04_criteria_performance(criteria_df, runs_df),
+            lambda: table04_criteria_performance(criteria_df, runs_df, rubric_weights),
         ),
-    ]
-
-    success_count = 0
-    failed = []
-
-    for table_name, file_prefix, generator_func in tables:
-        print(f"\n{table_name}")
-        try:
-            md, tex = generator_func()
-            (output_dir / f"{file_prefix}.md").write_text(md)
-            (output_dir / f"{file_prefix}.tex").write_text(tex)
-            print(f"  ✓ Saved {file_prefix}.{{md,tex}}")
-            success_count += 1
-        except Exception as e:
-            print(f"  ✗ Failed: {e}")
-            failed.append((table_name, str(e)))
-
-    # Continue with remaining tables
-    remaining_tables = [
         ("Table 5", "tab05_cost_analysis", lambda: table05_cost_analysis(runs_df)),
         ("Table 6", "tab06_model_comparison", lambda: table06_model_comparison(runs_df)),
         (
@@ -115,7 +112,10 @@ def main() -> None:
         ),
     ]
 
-    for table_name, file_prefix, generator_func in remaining_tables:
+    success_count = 0
+    failed = []
+
+    for table_name, file_prefix, generator_func in tables:
         print(f"\n{table_name}")
         try:
             md, tex = generator_func()
