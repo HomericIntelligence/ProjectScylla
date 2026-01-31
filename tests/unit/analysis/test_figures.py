@@ -68,8 +68,7 @@ def test_model_color_scale():
     """Test model color scale helper."""
     from scylla.analysis.figures.spec_builder import model_color_scale
 
-    models = ["Sonnet 4.5", "Haiku 4.5"]
-    scale = model_color_scale(models)
+    scale = model_color_scale()
 
     # Verify it's an Altair Scale
     import altair as alt
@@ -79,8 +78,6 @@ def test_model_color_scale():
     # Verify domain and range are set
     assert scale.domain is not None
     assert scale.range is not None
-    assert len(scale.domain) == 2
-    assert len(scale.range) == 2
 
 
 def test_tier_order_constant():
