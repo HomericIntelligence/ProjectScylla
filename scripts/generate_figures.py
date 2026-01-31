@@ -104,6 +104,13 @@ def main() -> None:
         action="store_true",
         help="Verbose logging",
     )
+    parser.add_argument(
+        "--exclude",
+        type=str,
+        nargs="*",
+        default=[],
+        help="Experiment names to exclude (e.g., --exclude test001-dryrun)",
+    )
 
     args = parser.parse_args()
 
@@ -118,7 +125,7 @@ def main() -> None:
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")
-    experiments = load_all_experiments(args.data_dir, exclude=["test001-dryrun"])
+    experiments = load_all_experiments(args.data_dir, exclude=args.exclude)
 
     if not experiments:
         print("ERROR: No experiments found")
@@ -158,7 +165,7 @@ def main() -> None:
 
         try:
             # Determine which DataFrame to pass
-            if category in ("variance", "tier", "cost", "token"):
+            if category in ("variance", "tier", "cost", "token", "model", "subtest"):
                 generator_func(runs_df, output_dir, render=render)
             elif category == "judge":
                 generator_func(judges_df, output_dir, render=render)

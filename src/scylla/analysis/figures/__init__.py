@@ -4,8 +4,30 @@ Each figure module provides generation functions that produce Vega-Lite
 JSON specifications and CSV data files.
 """
 
+import re
+
 # Tier ordering (consistent across all figures and tables)
+# NOTE: This is a fallback constant. Functions should derive tier order from data.
 TIER_ORDER = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+
+
+def derive_tier_order(df, tier_column: str = "tier") -> list[str]:
+    """Derive tier order from data, sorted naturally (T0 < T1 < ... < T99).
+
+    Args:
+        df: DataFrame containing tier data
+        tier_column: Name of the column containing tier IDs
+
+    Returns:
+        List of tier IDs in natural sorted order
+
+    """
+    tiers = sorted(
+        df[tier_column].unique(),
+        key=lambda t: int(re.search(r"\d+", t).group()) if re.search(r"\d+", t) else 0,
+    )
+    return list(tiers)
+
 
 # Color palettes (consistent across all figures)
 COLORS = {
@@ -28,9 +50,9 @@ COLORS = {
         "F": "#e74c3c",
     },
     "judges": {
-        "claude-opus-4-5-20251101": "#4C78A8",
-        "claude-sonnet-4-5-20250129": "#E45756",
-        "claude-haiku-4-5-20241223": "#72B7B2",
+        "Opus 4.5": "#4C78A8",
+        "Sonnet 4.5": "#E45756",
+        "Haiku 4.5": "#72B7B2",
     },
     "criteria": {
         "functional": "#4C78A8",

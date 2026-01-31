@@ -13,11 +13,12 @@ from scylla.analysis.dataframes import (
     build_runs_df,
     build_subtests_df,
 )
-from scylla.analysis.loader import load_all_experiments, load_experiment
+from scylla.analysis.loader import load_all_experiments, load_experiment, load_rubric_weights
 
 __all__ = [
     "load_all_experiments",
     "load_experiment",
+    "load_rubric_weights",
     "build_runs_df",
     "build_judges_df",
     "build_criteria_df",

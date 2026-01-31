@@ -14,6 +14,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 from scylla.e2e.models import TokenStats
 
 
@@ -447,3 +449,41 @@ def load_all_experiments(
         print(f"  Loaded {len(runs)} runs (agent model: {agent_model})")
 
     return experiments
+
+
+def load_rubric_weights(
+    data_dir: Path, exclude: list[str] | None = None
+) -> dict[str, float] | None:
+    """Load category weights from the first experiment's rubric.yaml.
+
+    Scans experiment directories for rubric.yaml and parses categories.*.weight.
+    Returns None if no rubric found.
+
+    Args:
+        data_dir: Root fullruns directory
+        exclude: List of experiment names to exclude
+
+    Returns:
+        Dictionary mapping category names to weights, or None if no rubric found
+
+    """
+    exclude = exclude or []
+
+    for exp_dir in sorted(data_dir.iterdir()):
+        if not exp_dir.is_dir() or exp_dir.name in exclude:
+            continue
+
+        # Find the timestamp directory
+        for ts_dir in sorted(exp_dir.iterdir()):
+            if not ts_dir.is_dir():
+                continue
+
+            rubric_path = ts_dir / "rubric.yaml"
+            if rubric_path.exists():
+                with rubric_path.open() as f:
+                    data = yaml.safe_load(f)
+
+                categories = data.get("categories", {})
+                return {name: cat.get("weight", 0.0) for name, cat in categories.items()}
+
+    return None

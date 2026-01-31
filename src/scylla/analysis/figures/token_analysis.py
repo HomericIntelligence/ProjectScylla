@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import TIER_ORDER
+from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -27,9 +27,11 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
     """
     # Aggregate tokens by (agent_model, tier)
     token_cols = ["input_tokens", "output_tokens", "cache_creation_tokens", "cache_read_tokens"]
-    # Removed: using TIER_ORDER from figures module
 
     token_agg = runs_df.groupby(["agent_model", "tier"])[token_cols].mean().reset_index()
+
+    # Derive tier order from data
+    tier_order = derive_tier_order(token_agg)
 
     # Reshape to long format for stacking
     token_long = token_agg.melt(
@@ -70,7 +72,7 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
         alt.Chart(token_long)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
+            x=alt.X("tier:O", title="Tier", sort=tier_order),
             y=alt.Y("tokens:Q", title="Mean Tokens per Run"),
             color=alt.Color(
                 "token_type_label:N",
