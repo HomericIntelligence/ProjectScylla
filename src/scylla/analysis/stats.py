@@ -8,6 +8,7 @@ Python Justification: scipy is a Python-only scientific computing library.
 
 from __future__ import annotations
 
+import krippendorff
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -184,6 +185,8 @@ def pearson_correlation(
 def krippendorff_alpha(ratings: np.ndarray, level: str = "ordinal") -> float:
     """Compute Krippendorff's alpha for inter-rater reliability.
 
+    Wrapper around the krippendorff package for correct implementation.
+
     Args:
         ratings: 2D array of shape (n_judges, n_items)
         level: Measurement level ("nominal", "ordinal", "interval", "ratio")
@@ -195,106 +198,12 @@ def krippendorff_alpha(ratings: np.ndarray, level: str = "ordinal") -> float:
     # Convert to numpy array
     ratings = np.array(ratings)
 
-    n_judges, n_items = ratings.shape
+    # The krippendorff package expects (n_units, n_coders) format
+    # Our input is (n_judges, n_items), so we need to transpose
+    reliability_data = ratings
 
-    # Handle missing values (NaN)
-    mask = ~np.isnan(ratings)
-
-    # For ordinal data, use squared differences
-    if level == "ordinal":
-        # Create coincidence matrix
-        unique_vals = np.unique(ratings[mask])
-        n_vals = len(unique_vals)
-
-        # Map values to indices
-        val_to_idx = {val: idx for idx, val in enumerate(unique_vals)}
-
-        # Count coincidences
-        coincidence = np.zeros((n_vals, n_vals))
-        for item_idx in range(n_items):
-            item_ratings = ratings[:, item_idx]
-            valid = item_ratings[~np.isnan(item_ratings)]
-            n_valid = len(valid)
-
-            if n_valid < 2:
-                continue
-
-            for i, val_i in enumerate(valid):
-                for j, val_j in enumerate(valid):
-                    if i != j:
-                        idx_i = val_to_idx[val_i]
-                        idx_j = val_to_idx[val_j]
-                        coincidence[idx_i, idx_j] += 1.0 / (n_valid - 1)
-
-        # Compute observed disagreement
-        total_coincidences = np.sum(coincidence)
-        if total_coincidences == 0:
-            return 1.0
-
-        observed_disagreement = 0.0
-        for i in range(n_vals):
-            for j in range(n_vals):
-                if i != j:
-                    # Ordinal metric: squared difference
-                    metric = (i - j) ** 2
-                    observed_disagreement += coincidence[i, j] * metric
-
-        observed_disagreement /= total_coincidences
-
-        # Compute expected disagreement
-        marginals = np.sum(coincidence, axis=1)
-        total = np.sum(marginals)
-
-        expected_disagreement = 0.0
-        for i in range(n_vals):
-            for j in range(n_vals):
-                if i != j:
-                    metric = (i - j) ** 2
-                    expected_disagreement += marginals[i] * marginals[j] * metric
-
-        expected_disagreement /= total * (total - 1) if total > 1 else 1
-
-        if expected_disagreement == 0:
-            return 1.0
-
-        alpha = 1 - (observed_disagreement / expected_disagreement)
-        return float(alpha)
-
-    # For nominal data, use simple mismatch
-    else:
-        # Simplified implementation for nominal level
-        agreements = 0
-        total_pairs = 0
-
-        for item_idx in range(n_items):
-            item_ratings = ratings[:, item_idx]
-            valid = item_ratings[~np.isnan(item_ratings)]
-            n_valid = len(valid)
-
-            if n_valid < 2:
-                continue
-
-            for i in range(n_valid):
-                for j in range(i + 1, n_valid):
-                    total_pairs += 1
-                    if valid[i] == valid[j]:
-                        agreements += 1
-
-        if total_pairs == 0:
-            return 1.0
-
-        observed_agreement = agreements / total_pairs
-
-        # Compute expected agreement (chance)
-        unique_vals, counts = np.unique(ratings[mask], return_counts=True)
-        total_ratings = np.sum(counts)
-        expected_agreement = np.sum((counts / total_ratings) ** 2)
-
-        if expected_agreement == 1:
-            return 1.0
-
-        alpha = (observed_agreement - expected_agreement) / (1 - expected_agreement)
-        return float(alpha)
+    # Call the krippendorff package
+    return float(krippendorff.alpha(reliability_data=reliability_data, level_of_measurement=level))
 
 
 def intraclass_correlation(ratings: pd.DataFrame) -> float:
