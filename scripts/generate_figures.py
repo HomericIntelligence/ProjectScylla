@@ -18,8 +18,18 @@ from scylla.analysis import (
     build_runs_df,
     load_all_experiments,
 )
-from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier, fig08_cost_quality_pareto
+from scylla.analysis.figures.correlation import (
+    fig20_metric_correlation_heatmap,
+    fig21_cost_quality_regression,
+)
+from scylla.analysis.figures.cost_analysis import (
+    fig06_cop_by_tier,
+    fig08_cost_quality_pareto,
+    fig22_cumulative_cost,
+)
 from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
+from scylla.analysis.figures.diagnostics import fig23_qq_plots, fig24_score_histograms
+from scylla.analysis.figures.effect_size import fig19_effect_size_forest
 from scylla.analysis.figures.judge_analysis import (
     fig02_judge_variance,
     fig14_judge_agreement,
@@ -61,6 +71,12 @@ FIGURES = {
     "fig16_success_variance_by_test": ("variance", fig16_success_variance_by_test),
     "fig17_judge_variance_overall": ("judge", fig17_judge_variance_overall),
     "fig18_failure_rate_by_test": ("variance", fig18_failure_rate_by_test),
+    "fig19_effect_size_forest": ("effect_size", fig19_effect_size_forest),
+    "fig20_metric_correlation_heatmap": ("correlation", fig20_metric_correlation_heatmap),
+    "fig21_cost_quality_regression": ("correlation", fig21_cost_quality_regression),
+    "fig22_cumulative_cost": ("cost", fig22_cumulative_cost),
+    "fig23_qq_plots": ("diagnostics", fig23_qq_plots),
+    "fig24_score_histograms": ("diagnostics", fig24_score_histograms),
 }
 
 
@@ -159,7 +175,17 @@ def main() -> None:
 
         try:
             # Determine which DataFrame to pass
-            if category in ("variance", "tier", "cost", "token", "model", "subtest"):
+            if category in (
+                "variance",
+                "tier",
+                "cost",
+                "token",
+                "model",
+                "subtest",
+                "effect_size",
+                "correlation",
+                "diagnostics",
+            ):
                 generator_func(runs_df, output_dir, render=render)
             elif category == "judge":
                 generator_func(judges_df, output_dir, render=render)

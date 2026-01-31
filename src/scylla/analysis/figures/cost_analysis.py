@@ -278,3 +278,77 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
     chart = chart.properties(title="Cost vs Quality Pareto Frontier").configure_view(strokeWidth=0)
 
     save_figure(chart, "fig08_cost_quality_pareto", output_dir, tier_stats, render)
+
+
+def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
+    """Generate Fig 22: Cumulative Cost Curve.
+
+    Line chart of cumulative cost over runs, faceted by model, colored by tier.
+    Shows how total cost accumulates across the experiment.
+
+    Args:
+        runs_df: Runs DataFrame
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    # Sort runs by execution order (if available) or by index
+    # Assume runs are already in execution order
+    if "run_number" in runs_df.columns:
+        runs_sorted = runs_df.sort_values(["agent_model", "tier", "subtest", "run_number"])
+    else:
+        runs_sorted = runs_df.sort_values(["agent_model", "tier", "subtest"])
+
+    # Compute cumulative cost per model
+    cumulative_data = []
+
+    for model in sorted(runs_sorted["agent_model"].unique()):
+        model_runs = runs_sorted[runs_sorted["agent_model"] == model].copy()
+        model_runs["cumulative_cost"] = model_runs["cost_usd"].cumsum()
+        model_runs["run_index"] = range(len(model_runs))
+
+        cumulative_data.append(model_runs)
+
+    cumulative_df = pd.concat(cumulative_data, ignore_index=True)
+
+    # Get dynamic color scale for tiers
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(runs_df)
+    domain, range_ = get_color_scale("tiers", tier_order)
+
+    # Create line chart
+    lines = (
+        alt.Chart(cumulative_df)
+        .mark_line()
+        .encode(
+            x=alt.X("run_index:Q", title="Run Index (Chronological Order)"),
+            y=alt.Y("cumulative_cost:Q", title="Cumulative Cost (USD)"),
+            color=alt.Color(
+                "tier:N",
+                title="Tier",
+                scale=alt.Scale(domain=domain, range=range_),
+                sort=tier_order,
+            ),
+            tooltip=[
+                alt.Tooltip("agent_model:N", title="Model"),
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("subtest:O", title="Subtest"),
+                alt.Tooltip("run_index:Q", title="Run Index"),
+                alt.Tooltip("cost_usd:Q", title="Run Cost", format="$.4f"),
+                alt.Tooltip("cumulative_cost:Q", title="Cumulative Cost", format="$.2f"),
+            ],
+        )
+    )
+
+    # Facet by model if multiple models
+    if cumulative_df["agent_model"].nunique() > 1:
+        chart = (
+            lines.facet(row=alt.Row("agent_model:N", title="Agent Model"))
+            .properties(title="Cumulative Cost Over Runs")
+            .configure_view(strokeWidth=0)
+        )
+    else:
+        chart = lines.properties(title="Cumulative Cost Over Runs").configure_view(strokeWidth=0)
+
+    save_figure(chart, "fig22_cumulative_cost", output_dir, cumulative_df, render)
