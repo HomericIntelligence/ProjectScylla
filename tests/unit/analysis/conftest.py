@@ -93,6 +93,20 @@ def sample_judges_df(sample_runs_df):
         for judge_idx, judge_model in enumerate(judge_models, start=1):
             # Generate correlated scores (± 0.1 from run score)
             judge_score = np.clip(row["score"] + np.random.uniform(-0.1, 0.1), 0.0, 1.0)
+            judge_passed = judge_score >= 0.6  # Threshold for passing
+            judge_grade = (
+                "S"
+                if judge_score >= 1.0
+                else "A"
+                if judge_score >= 0.8
+                else "B"
+                if judge_score >= 0.6
+                else "C"
+                if judge_score >= 0.4
+                else "D"
+                if judge_score >= 0.2
+                else "F"
+            )
 
             data.append(
                 {
@@ -103,7 +117,11 @@ def sample_judges_df(sample_runs_df):
                     "run_number": row["run_number"],
                     "judge_number": judge_idx,
                     "judge_model": judge_model,
-                    "score": judge_score,
+                    "judge_score": judge_score,
+                    "judge_passed": judge_passed,
+                    "judge_grade": judge_grade,
+                    "judge_is_valid": True,
+                    "judge_reasoning": f"Judge {judge_idx} evaluation",
                 }
             )
 
@@ -127,7 +145,10 @@ def sample_criteria_df(sample_judges_df):
     for idx, row in sample_judges_df.iterrows():
         for criterion in criteria:
             # Generate correlated scores (± 0.15 from judge score)
-            criterion_score = np.clip(row["score"] + np.random.uniform(-0.15, 0.15), 0.0, 1.0)
+            criterion_score = np.clip(row["judge_score"] + np.random.uniform(-0.15, 0.15), 0.0, 1.0)
+            # Generate achieved and max points based on criterion score
+            max_points = 10.0  # Example max points
+            criterion_achieved = criterion_score * max_points
 
             data.append(
                 {
@@ -139,7 +160,9 @@ def sample_criteria_df(sample_judges_df):
                     "judge_number": row["judge_number"],
                     "judge_model": row["judge_model"],
                     "criterion": criterion,
-                    "score": criterion_score,
+                    "criterion_score": criterion_score,
+                    "criterion_achieved": criterion_achieved,
+                    "criterion_max": max_points,
                 }
             )
 
