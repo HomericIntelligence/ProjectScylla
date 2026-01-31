@@ -153,7 +153,8 @@ def krippendorff_alpha(ratings: np.ndarray, level: str = "ordinal") -> float:
     ratings = np.array(ratings)
 
     # The krippendorff package expects (n_units, n_coders) format
-    # Our input is (n_judges, n_items), so we need to transpose
+    # Our input is already (n_judges, n_items) which matches (n_coders, n_units)
+    # No transpose needed
     reliability_data = ratings
 
     # Call the krippendorff package
