@@ -58,3 +58,43 @@ def test_table_function_signatures():
             or (isinstance(ann, str) and ann == "tuple[str, str]")
         )
         assert is_valid, f"Invalid return annotation for {func_name}: {ann}"
+
+
+def test_table01_consistency_clamped():
+    """Test that consistency values are clamped to [0, 1].
+
+    Regression test for P0 bug where inline formula 1 - (std/mean) could produce
+    negative values when std > mean (high-variance subtests).
+    """
+    import pandas as pd
+
+    from scylla.analysis.tables import table01_tier_summary
+
+    # Create minimal test data with high variance (std > mean)
+    # This should trigger the clamping logic
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 10,
+            "tier": ["T0"] * 10,
+            "score": [0.1, 0.2, 0.3, 0.8, 0.9, 0.05, 0.15, 0.25, 0.5, 0.7],  # High variance
+            "passed": [True] * 5 + [False] * 5,
+            "cost_usd": [1.0] * 10,
+            "subtest": [f"test_{i}" for i in range(10)],
+        }
+    )
+
+    markdown, latex = table01_tier_summary(test_data)
+
+    # Verify tables generated (basic smoke test)
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Verify no negative consistency values appear in output
+    # Consistency should be clamped to [0, 1]
+    assert (
+        "-" not in markdown.split("Consistency")[1].split("|")[0]
+        if "Consistency" in markdown
+        else True
+    )

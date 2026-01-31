@@ -152,7 +152,8 @@ def model_id_to_display(model_id: str) -> str:
     for pattern, replacement in patterns:
         match = re.search(pattern, model_id)
         if match:
-            return re.sub(pattern, replacement, model_id)
+            # Use match.group(0) to avoid including trailing date suffix
+            return re.sub(pattern, replacement, match.group(0))
 
     # Unknown model - return as-is
     return model_id
