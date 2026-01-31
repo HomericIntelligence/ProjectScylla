@@ -20,6 +20,14 @@ from scylla.analysis import (
     build_subtests_df,
     load_all_experiments,
 )
+from scylla.analysis.figures import derive_tier_order
+from scylla.analysis.stats import (
+    cliffs_delta_ci,
+    kruskal_wallis,
+    mann_whitney_u,
+    shapiro_wilk,
+    spearman_correlation,
+)
 
 
 def json_nan_handler(obj):
@@ -28,6 +36,186 @@ def json_nan_handler(obj):
         if math.isnan(obj) or math.isinf(obj):
             return None
     return obj
+
+
+def compute_statistical_results(runs_df, tier_order):
+    """Compute all statistical test results for export.
+
+    Args:
+        runs_df: Runs DataFrame
+        tier_order: List of tier IDs in order
+
+    Returns:
+        Dictionary of statistical test results
+
+    """
+    results = {
+        "normality_tests": [],
+        "omnibus_tests": [],
+        "pairwise_comparisons": [],
+        "effect_sizes": [],
+        "correlations": [],
+    }
+
+    models = sorted(runs_df["agent_model"].unique())
+
+    # Normality tests (Shapiro-Wilk) per (model, tier)
+    for model in models:
+        for tier in tier_order:
+            tier_data = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
+
+            if len(tier_data) < 3:
+                continue
+
+            # Test score distribution
+            scores = tier_data["score"].dropna()
+            if len(scores) >= 3:
+                w_stat, p_value = shapiro_wilk(scores)
+                results["normality_tests"].append(
+                    {
+                        "model": model,
+                        "tier": tier,
+                        "metric": "score",
+                        "n": len(scores),
+                        "w_statistic": float(w_stat),
+                        "p_value": float(p_value),
+                        "is_normal": bool(p_value > 0.05),
+                    }
+                )
+
+            # Test cost distribution
+            costs = tier_data["cost_usd"].dropna()
+            if len(costs) >= 3:
+                w_stat, p_value = shapiro_wilk(costs)
+                results["normality_tests"].append(
+                    {
+                        "model": model,
+                        "tier": tier,
+                        "metric": "cost_usd",
+                        "n": len(costs),
+                        "w_statistic": float(w_stat),
+                        "p_value": float(p_value),
+                        "is_normal": bool(p_value > 0.05),
+                    }
+                )
+
+    # Omnibus tests (Kruskal-Wallis) across tiers per model
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+
+        # Collect tier groups for passed metric
+        tier_groups = [
+            model_runs[model_runs["tier"] == tier]["passed"].astype(int) for tier in tier_order
+        ]
+        tier_groups = [g for g in tier_groups if len(g) > 0]
+
+        if len(tier_groups) >= 2:
+            h_stat, p_value = kruskal_wallis(*tier_groups)
+            results["omnibus_tests"].append(
+                {
+                    "model": model,
+                    "metric": "pass_rate",
+                    "n_groups": len(tier_groups),
+                    "h_statistic": float(h_stat),
+                    "p_value": float(p_value),
+                    "is_significant": bool(p_value < 0.05),
+                }
+            )
+
+    # Pairwise comparisons (Mann-Whitney U) between consecutive tiers
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+
+        for i in range(len(tier_order) - 1):
+            tier1, tier2 = tier_order[i], tier_order[i + 1]
+            tier1_data = model_runs[model_runs["tier"] == tier1]
+            tier2_data = model_runs[model_runs["tier"] == tier2]
+
+            if len(tier1_data) == 0 or len(tier2_data) == 0:
+                continue
+
+            u_stat, p_value = mann_whitney_u(
+                tier1_data["passed"].astype(int), tier2_data["passed"].astype(int)
+            )
+
+            results["pairwise_comparisons"].append(
+                {
+                    "model": model,
+                    "tier1": tier1,
+                    "tier2": tier2,
+                    "n1": len(tier1_data),
+                    "n2": len(tier2_data),
+                    "u_statistic": float(u_stat),
+                    "p_value": float(p_value),
+                    "is_significant": bool(p_value < 0.05),
+                }
+            )
+
+    # Effect sizes (Cliff's delta with CI) for tier transitions
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+
+        for i in range(len(tier_order) - 1):
+            tier1, tier2 = tier_order[i], tier_order[i + 1]
+            tier1_data = model_runs[model_runs["tier"] == tier1]
+            tier2_data = model_runs[model_runs["tier"] == tier2]
+
+            if len(tier1_data) < 2 or len(tier2_data) < 2:
+                continue
+
+            delta, ci_low, ci_high = cliffs_delta_ci(
+                tier2_data["passed"].astype(int), tier1_data["passed"].astype(int)
+            )
+
+            results["effect_sizes"].append(
+                {
+                    "model": model,
+                    "tier1": tier1,
+                    "tier2": tier2,
+                    "cliffs_delta": float(delta),
+                    "ci_low": float(ci_low),
+                    "ci_high": float(ci_high),
+                    "is_significant": bool(not (ci_low <= 0 <= ci_high)),
+                }
+            )
+
+    # Correlations between key metrics
+    metrics = [
+        ("score", "cost_usd"),
+        ("score", "total_tokens"),
+        ("score", "duration_seconds"),
+        ("cost_usd", "total_tokens"),
+    ]
+
+    for model in models:
+        model_data = runs_df[runs_df["agent_model"] == model]
+
+        for metric1, metric2 in metrics:
+            if metric1 not in model_data.columns or metric2 not in model_data.columns:
+                continue
+
+            # Get valid data (drop NaN)
+            valid_idx = model_data[[metric1, metric2]].dropna().index
+            if len(valid_idx) < 3:
+                continue
+
+            rho, p_value = spearman_correlation(
+                model_data.loc[valid_idx, metric1], model_data.loc[valid_idx, metric2]
+            )
+
+            results["correlations"].append(
+                {
+                    "model": model,
+                    "metric1": metric1,
+                    "metric2": metric2,
+                    "n": len(valid_idx),
+                    "spearman_rho": float(rho),
+                    "p_value": float(p_value),
+                    "is_significant": bool(p_value < 0.05),
+                }
+            )
+
+    return results
 
 
 def main() -> None:
@@ -112,20 +300,67 @@ def main() -> None:
         "by_model": {},
     }
 
+    # Enhanced by_model statistics
     for model in runs_df["agent_model"].unique():
         model_df = runs_df[runs_df["agent_model"] == model]
+
+        # Compute additional statistics
+        scores = model_df["score"].dropna()
+        costs = model_df["cost_usd"].dropna()
+        durations = model_df["duration_seconds"].dropna()
+
         summary["by_model"][model] = {
             "total_runs": len(model_df),
             "pass_rate": float(model_df["passed"].mean()),
-            "mean_score": float(model_df["score"].mean()),
-            "total_cost": float(model_df["cost_usd"].sum()),
-            "mean_cost_per_run": float(model_df["cost_usd"].mean()),
+            "mean_score": float(scores.mean()),
+            "median_score": float(scores.median()),
+            "std_score": float(scores.std()),
+            "min_score": float(scores.min()),
+            "max_score": float(scores.max()),
+            "q1_score": float(scores.quantile(0.25)),
+            "q3_score": float(scores.quantile(0.75)),
+            "total_cost": float(costs.sum()),
+            "mean_cost_per_run": float(costs.mean()),
+            "median_cost": float(costs.median()),
+            "total_tokens": int(model_df["total_tokens"].sum()),
+            "mean_duration": float(durations.mean()),
+            "n_subtests": int(model_df["subtest"].nunique()),
+            "tiers": sorted(model_df["tier"].unique().tolist()),
+        }
+
+    # Add by_tier statistics (aggregated across all models)
+    tier_order = derive_tier_order(runs_df)
+    summary["by_tier"] = {}
+
+    for tier in tier_order:
+        tier_df = runs_df[runs_df["tier"] == tier]
+        scores = tier_df["score"].dropna()
+        costs = tier_df["cost_usd"].dropna()
+
+        summary["by_tier"][tier] = {
+            "total_runs": len(tier_df),
+            "pass_rate": float(tier_df["passed"].mean()),
+            "mean_score": float(scores.mean()),
+            "median_score": float(scores.median()),
+            "std_score": float(scores.std()),
+            "mean_cost": float(costs.mean()),
+            "total_cost": float(costs.sum()),
+            "n_subtests": int(tier_df["subtest"].nunique()),
         }
 
     summary_path = output_dir / "summary.json"
     with summary_path.open("w") as f:
         json.dump(summary, f, indent=2, default=json_nan_handler)
     print("  Exported summary.json")
+
+    # Export statistical test results
+    print("  Computing statistical results...")
+    statistical_results = compute_statistical_results(runs_df, tier_order)
+
+    stats_path = output_dir / "statistical_results.json"
+    with stats_path.open("w") as f:
+        json.dump(statistical_results, f, indent=2, default=json_nan_handler)
+    print("  Exported statistical_results.json")
 
     print("\nExport complete!")
 
