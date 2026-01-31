@@ -40,7 +40,13 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     uplift_data = []
     for model in tier_stats["agent_model"].unique():
         model_data = tier_stats[tier_stats["agent_model"] == model]
-        t0_pass_rate = model_data[model_data["tier"] == "T0"]["pass_rate"].iloc[0]
+        t0_data = model_data[model_data["tier"] == "T0"]["pass_rate"]
+
+        # Skip model if no T0 baseline data
+        if len(t0_data) == 0:
+            continue
+
+        t0_pass_rate = t0_data.iloc[0]
 
         for _, row in model_data.iterrows():
             tier = row["tier"]
