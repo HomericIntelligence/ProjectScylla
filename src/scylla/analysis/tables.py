@@ -341,7 +341,7 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
         else:
             md_lines.append(f"| {row['Judge Pair']} | — | — | — |")
 
-    md_lines.append(f"\n**Krippendorff's α** (ordinal): {alpha:.3f}")
+    md_lines.append(f"\n**Krippendorff's α** (interval): {alpha:.3f}")
 
     markdown = "\n".join(md_lines)
 
