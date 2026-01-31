@@ -17,6 +17,28 @@ from pathlib import Path
 from scylla.e2e.models import TokenStats
 
 
+def model_id_to_display(model_id: str) -> str:
+    """Convert model ID to display name.
+
+    Args:
+        model_id: Model identifier (e.g., "claude-sonnet-4-5-20250929")
+
+    Returns:
+        Display name (e.g., "Sonnet 4.5") or original ID if unknown
+
+    """
+    # Extract family name from model ID
+    if "opus" in model_id.lower():
+        return "Opus 4.5"
+    elif "sonnet" in model_id.lower():
+        return "Sonnet 4.5"
+    elif "haiku" in model_id.lower():
+        return "Haiku 4.5"
+    else:
+        # Unknown model - return as-is
+        return model_id
+
+
 @dataclass
 class CriterionScore:
     """Detailed score for a single rubric criterion.
