@@ -161,24 +161,33 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
     # Identify Pareto frontier (higher score, lower cost is better)
     # A point is on the frontier if no other point dominates it
     def is_pareto_efficient(costs, scores):
-        """Return boolean array of Pareto efficient points."""
+        """Return boolean array of Pareto efficient points.
+
+        A point (c1, s1) dominates (c2, s2) if c1 <= c2 AND s1 >= s2
+        with at least one strict inequality.
+        """
         is_efficient = np.ones(len(costs), dtype=bool)
-        for i, (cost_i, score_i) in enumerate(zip(costs, scores)):
+        for i in range(len(costs)):
             if is_efficient[i]:
-                # Point i is dominated if there exists j with lower cost and higher score
-                is_efficient[is_efficient] = np.logical_not(
-                    np.logical_and(
-                        costs[is_efficient] <= cost_i,
-                        scores[is_efficient] >= score_i,
-                    )
-                    & (
-                        np.logical_or(
-                            costs[is_efficient] < cost_i,
-                            scores[is_efficient] > score_i,
-                        )
-                    )
+                # Point i is dominated if there exists j!=i with:
+                #   cost_j <= cost_i AND score_j >= score_i (with strict inequality)
+                dominated_by_others = np.logical_and(costs <= costs[i], scores >= scores[i]) & (
+                    np.logical_or(costs < costs[i], scores > scores[i])
                 )
-                is_efficient[i] = True
+                # Exclude self-comparison
+                dominated_by_others[i] = False
+
+                if np.any(dominated_by_others):
+                    # Point i is dominated, mark as inefficient
+                    is_efficient[i] = False
+                else:
+                    # Point i is not dominated, remove all points it dominates
+                    dominated_by_i = np.logical_and(costs >= costs[i], scores <= scores[i]) & (
+                        np.logical_or(costs > costs[i], scores < scores[i])
+                    )
+                    dominated_by_i[i] = False  # Don't mark self
+                    is_efficient[dominated_by_i] = False
+
         return is_efficient
 
     # Compute Pareto frontier per model
