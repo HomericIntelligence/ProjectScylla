@@ -27,6 +27,9 @@ from scylla.analysis.tables import (
     table05_cost_analysis,
     table06_model_comparison,
     table07_subtest_detail,
+    table08_summary_statistics,
+    table09_experiment_config,
+    table10_normality_tests,
 )
 
 
@@ -106,6 +109,9 @@ def main() -> None:
             "tab07_subtest_detail",
             lambda: table07_subtest_detail(runs_df, subtests_df),
         ),
+        ("Table 8", "tab08_summary_statistics", lambda: table08_summary_statistics(runs_df)),
+        ("Table 9", "tab09_experiment_config", lambda: table09_experiment_config(runs_df)),
+        ("Table 10", "tab10_normality_tests", lambda: table10_normality_tests(runs_df)),
     ]
 
     success_count = 0
@@ -125,7 +131,7 @@ def main() -> None:
 
     # Summary
     print(f"\n{'='*70}")
-    print(f"Summary: {success_count}/7 tables generated successfully")
+    print(f"Summary: {success_count}/{len(tables)} tables generated successfully")
     if failed:
         print(f"\nFailed tables ({len(failed)}):")
         for table_name, error in failed:
