@@ -131,11 +131,14 @@ def main() -> None:
     else:
         figures_to_generate = [f.strip() for f in args.figures.split(",")]
 
-    # Generate figures
+    # Generate figures with error isolation
     render = not args.no_render
     output_dir = Path(args.output_dir)
 
     print(f"\nGenerating {len(figures_to_generate)} figures...")
+    success_count = 0
+    failed = []
+
     for fig_name in figures_to_generate:
         if fig_name not in FIGURES:
             print(f"WARNING: Unknown figure '{fig_name}', skipping")
@@ -144,17 +147,34 @@ def main() -> None:
         category, generator_func = FIGURES[fig_name]
         print(f"\n{fig_name} ({category}):")
 
-        # Determine which DataFrame to pass
-        if category in ("variance", "tier", "cost", "token"):
-            generator_func(runs_df, output_dir, render=render)
-        elif category == "judge":
-            generator_func(judges_df, output_dir, render=render)
-        elif category == "criteria":
-            generator_func(criteria_df, output_dir, render=render)
-        else:
-            print(f"  ERROR: Unknown category '{category}'")
+        try:
+            # Determine which DataFrame to pass
+            if category in ("variance", "tier", "cost", "token"):
+                generator_func(runs_df, output_dir, render=render)
+            elif category == "judge":
+                generator_func(judges_df, output_dir, render=render)
+            elif category == "criteria":
+                generator_func(criteria_df, output_dir, render=render)
+            else:
+                print(f"  ERROR: Unknown category '{category}'")
+                failed.append((fig_name, "Unknown category"))
+                continue
 
-    print(f"\nAll figures saved to {output_dir}")
+            print(f"  ✓ {fig_name} generated successfully")
+            success_count += 1
+
+        except Exception as e:
+            print(f"  ✗ {fig_name} failed: {e}")
+            failed.append((fig_name, str(e)))
+
+    # Summary
+    print(f"\n{'='*70}")
+    print(f"Summary: {success_count}/{len(figures_to_generate)} figures generated successfully")
+    if failed:
+        print(f"\nFailed figures ({len(failed)}):")
+        for fig_name, error in failed:
+            print(f"  ✗ {fig_name}: {error}")
+    print(f"\nOutput directory: {output_dir}")
     print("\nNext steps:")
     print(f"  - View specs: open {output_dir}/*.vl.json in Vega Editor")
     print(f"  - View data: {output_dir}/*.csv")
