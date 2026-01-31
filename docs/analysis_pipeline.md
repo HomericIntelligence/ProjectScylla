@@ -52,7 +52,11 @@ Each figure has three files:
 | `fig08_cost_quality_pareto` | Cost vs quality Pareto frontier | runs_df |
 | `fig09_criteria_by_tier` | Per-criteria performance | criteria_df |
 | `fig10_score_violin` | Score distribution violins | runs_df |
+| `fig11_tier_uplift` | Tier transition uplift line chart | runs_df |
+| `fig12_consistency` | Consistency by tier with 95% CI | runs_df |
+| `fig13_latency` | Latency breakdown by tier | runs_df |
 | `fig14_judge_agreement` | Inter-judge correlation scatter matrix | judges_df |
+| `fig15_subtest_detail` | Subtest performance heatmap | subtests_df |
 
 ## Usage
 
@@ -218,26 +222,56 @@ COLORS = {
 }
 ```
 
+### Generated Tables (`docs/tables/`)
+
+Each table has two files:
+- `.md` - Markdown format (GitHub-rendered)
+- `.tex` - LaTeX format (paper integration)
+
+| Table | Description | Data Source |
+|-------|-------------|-------------|
+| `table01_tier_summary` | Tier performance summary with 95% CI | runs_df |
+| `table02_tier_comparison` | Pairwise tier comparison with Mann-Whitney U | runs_df |
+| `table03_judge_agreement` | Inter-rater reliability (Krippendorff's alpha) | judges_df |
+| `table04_criteria_performance` | Per-criteria performance with significance tests | criteria_df |
+| `table05_cost_analysis` | Cost metrics by tier | runs_df |
+| `table06_model_comparison` | Model comparison summary | runs_df |
+| `table07_subtest_results` | Full subtest results (Appendix B) | subtests_df |
+
+### Generate Tables
+
+```bash
+# Generate all tables
+pixi run -e analysis python scripts/generate_tables.py
+
+# Generate specific tables
+pixi run -e analysis python scripts/generate_tables.py \
+    --tables table01_tier_summary,table02_tier_comparison
+
+# List available tables
+pixi run -e analysis python scripts/generate_tables.py --list-tables
+
+# Outputs:
+#   docs/tables/tableNN_*.md   (Markdown)
+#   docs/tables/tableNN_*.tex  (LaTeX)
+```
+
+## Complete Pipeline
+
+Run the entire analysis pipeline (data export, figures, tables):
+
+```bash
+pixi run -e analysis python scripts/generate_all_results.py
+```
+
+This script runs:
+1. `export_data.py` - Export DataFrames to CSV
+2. `generate_figures.py --no-render` - Generate all 15 figures
+3. `generate_tables.py` - Generate all 7 tables
+
 ## Next Steps
 
-### Remaining Figures (Not Yet Implemented)
-
-- Fig 11: Tier transition uplift line chart
-- Fig 12: Consistency by tier
-- Fig 13: Latency breakdown
-- Fig 15: Subtest performance heatmap
-
-### Statistical Tables (Not Yet Implemented)
-
-- Table 1: Tier summary with CI
-- Table 2: Tier pairwise comparison with p-values
-- Table 3: Judge agreement metrics
-- Table 4: Per-criteria performance
-- Table 5: Cost analysis
-- Table 6: Model comparison summary
-- Table 7: Full subtest results (Appendix B)
-
-### Narrative Generation (Not Yet Implemented)
+### Narrative Generation (Future Work)
 
 - Section 9: Results (performance, judges, economics)
 - Section 10: Discussion (diminishing returns, hypothesis validation)
