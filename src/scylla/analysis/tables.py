@@ -300,33 +300,42 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
         values="judge_score",
     ).reset_index()
 
-    judge_pivot.columns = ["tier", "subtest", "run_number", "judge_1", "judge_2", "judge_3"]
+    # Get dynamic judge column names from pivot result
+    # Column names are: ['tier', 'subtest', 'run_number', 1, 2, 3, ...]
+    index_cols = ["tier", "subtest", "run_number"]
+    judge_cols = [col for col in judge_pivot.columns if col not in index_cols]
+
+    # Rename judge columns to judge_1, judge_2, etc.
+    new_cols = index_cols + [f"judge_{i}" for i in range(1, len(judge_cols) + 1)]
+    judge_pivot.columns = new_cols
+    judge_cols_renamed = [f"judge_{i}" for i in range(1, len(judge_cols) + 1)]
+
     judge_pivot = judge_pivot.dropna()
 
-    # Pairwise correlations
-    pairs = [
-        ("Judge 1 (Opus)", "Judge 2 (Sonnet)", "judge_1", "judge_2"),
-        ("Judge 1 (Opus)", "Judge 3 (Haiku)", "judge_1", "judge_3"),
-        ("Judge 2 (Sonnet)", "Judge 3 (Haiku)", "judge_2", "judge_3"),
-    ]
-
+    # Pairwise correlations (dynamic based on number of judges)
+    # Generate all pairs: (0,1), (0,2), (1,2), etc.
     rows = []
-    for name_x, name_y, col_x, col_y in pairs:
-        spearman_r, _ = spearman_correlation(judge_pivot[col_x], judge_pivot[col_y])
-        pearson_r, _ = pearson_correlation(judge_pivot[col_x], judge_pivot[col_y])
-        mean_delta = (judge_pivot[col_x] - judge_pivot[col_y]).abs().mean()
+    n_judges = len(judge_cols_renamed)
+    for i in range(n_judges):
+        for j in range(i + 1, n_judges):
+            col_x = judge_cols_renamed[i]
+            col_y = judge_cols_renamed[j]
 
-        rows.append(
-            {
-                "Judge Pair": f"{name_x} – {name_y}",
-                "Spearman ρ": spearman_r,
-                "Pearson r": pearson_r,
-                "Mean |Δ Score|": mean_delta,
-            }
-        )
+            spearman_r, _ = spearman_correlation(judge_pivot[col_x], judge_pivot[col_y])
+            pearson_r, _ = pearson_correlation(judge_pivot[col_x], judge_pivot[col_y])
+            mean_delta = (judge_pivot[col_x] - judge_pivot[col_y]).abs().mean()
 
-    # Krippendorff's alpha (all 3 judges)
-    ratings_matrix = judge_pivot[["judge_1", "judge_2", "judge_3"]].values.T
+            rows.append(
+                {
+                    "Judge Pair": f"Judge {i+1} – Judge {j+1}",
+                    "Spearman ρ": spearman_r,
+                    "Pearson r": pearson_r,
+                    "Mean |Δ Score|": mean_delta,
+                }
+            )
+
+    # Krippendorff's alpha (all judges)
+    ratings_matrix = judge_pivot[judge_cols_renamed].values.T
     alpha = krippendorff_alpha(ratings_matrix, level="interval")
 
     rows.append(
