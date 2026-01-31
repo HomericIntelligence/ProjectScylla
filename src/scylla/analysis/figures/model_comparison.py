@@ -12,7 +12,7 @@ import pandas as pd
 
 from scylla.analysis.figures import COLORS
 from scylla.analysis.figures.spec_builder import save_figure
-from scylla.analysis.stats import bonferroni_correction, mann_whitney_u
+from scylla.analysis.stats import bonferroni_correction, bootstrap_ci, mann_whitney_u
 
 
 def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -200,17 +200,17 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
                     subtest_consistencies.append(consistency)
 
             if subtest_consistencies:
-                mean_consistency = pd.Series(subtest_consistencies).mean()
-                std_consistency = pd.Series(subtest_consistencies).std()
+                # Compute bootstrap CI instead of normal approximation
+                consistencies_array = pd.Series(subtest_consistencies)
+                mean_consistency, ci_low, ci_high = bootstrap_ci(consistencies_array)
 
                 consistency_data.append(
                     {
                         "agent_model": model,
                         "tier": tier,
                         "mean_consistency": mean_consistency,
-                        "std_consistency": std_consistency,
-                        "ci_low": mean_consistency - 1.96 * std_consistency,
-                        "ci_high": mean_consistency + 1.96 * std_consistency,
+                        "ci_low": ci_low,
+                        "ci_high": ci_high,
                     }
                 )
 
