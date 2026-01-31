@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import TIER_ORDER, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -30,8 +30,9 @@ def fig01_score_variance_by_tier(
     # Prepare data
     data = runs_df[["agent_model", "tier", "score"]].copy()
 
-    # Define tier order
-    # Removed: using TIER_ORDER from figures module
+    # Get dynamic color scale for models
+    models = sorted(data["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
 
     # Create base chart with faceting
     base = alt.Chart(data).encode(
@@ -39,10 +40,7 @@ def fig01_score_variance_by_tier(
         color=alt.Color(
             "agent_model:N",
             title="Agent Model",
-            scale=alt.Scale(
-                domain=list(COLORS["models"].keys()),
-                range=list(COLORS["models"].values()),
-            ),
+            scale=alt.Scale(domain=domain, range=range_),
         ),
     )
 
@@ -95,7 +93,9 @@ def fig03_failure_rate_by_tier(
 
     # Define grade order (F at bottom, S at top)
     grade_order = ["F", "D", "C", "B", "A", "S"]
-    # Removed: using TIER_ORDER from figures module
+
+    # Get dynamic color scale for grades
+    domain, range_ = get_color_scale("grades", grade_order)
 
     # Create stacked bar chart
     chart = (
@@ -108,10 +108,7 @@ def fig03_failure_rate_by_tier(
                 "grade:O",
                 title="Grade",
                 sort=grade_order,
-                scale=alt.Scale(
-                    domain=grade_order,
-                    range=[COLORS["grades"][g] for g in grade_order],
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
             ),
             order=alt.Order("grade:O", sort="ascending"),
             tooltip=[
@@ -126,3 +123,166 @@ def fig03_failure_rate_by_tier(
     )
 
     save_figure(chart, "fig03_failure_rate_by_tier", output_dir, grade_counts, render)
+
+
+def fig16_success_variance_by_test(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig 16: Success Variance by Test.
+
+    Two-panel heatmap showing per-subtest variance, grouped by tier, faceted by model:
+    - Panel A: Binary pass/fail Bernoulli variance (p*(1-p))
+    - Panel B: Continuous score standard deviation
+
+    Args:
+        runs_df: Runs DataFrame
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    # Compute variance metrics per (agent_model, tier, subtest)
+    variance_data = []
+
+    for (model, tier, subtest), group in runs_df.groupby(["agent_model", "tier", "subtest"]):
+        pass_rate = group["passed"].mean()
+        pass_variance = pass_rate * (1 - pass_rate)  # Bernoulli variance: p(1-p)
+        score_std = group["score"].std()
+
+        variance_data.append(
+            {
+                "agent_model": model,
+                "tier": tier,
+                "subtest": subtest,
+                "pass_variance": pass_variance,
+                "score_std": score_std,
+                "n_runs": len(group),
+            }
+        )
+
+    variance_df = pd.DataFrame(variance_data)
+
+    # Panel A: Pass/fail variance heatmap
+    heatmap_pass = (
+        alt.Chart(variance_df)
+        .mark_rect()
+        .encode(
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
+            y=alt.Y("subtest:O", title="Subtest", sort="ascending"),
+            color=alt.Color(
+                "pass_variance:Q",
+                title="Pass Variance",
+                scale=alt.Scale(scheme="viridis", domain=[0, 0.25]),
+            ),
+            tooltip=[
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("subtest:O", title="Subtest"),
+                alt.Tooltip("pass_variance:Q", title="Pass Variance", format=".3f"),
+                alt.Tooltip("n_runs:Q", title="Runs"),
+            ],
+        )
+        .properties(title="Panel A: Pass/Fail Variance (Bernoulli)", width=400, height=600)
+    )
+
+    # Panel B: Score std dev heatmap
+    heatmap_score = (
+        alt.Chart(variance_df)
+        .mark_rect()
+        .encode(
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
+            y=alt.Y("subtest:O", title="Subtest", sort="ascending"),
+            color=alt.Color(
+                "score_std:Q",
+                title="Score Std Dev",
+                scale=alt.Scale(scheme="plasma", domain=[0, 0.3]),
+            ),
+            tooltip=[
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("subtest:O", title="Subtest"),
+                alt.Tooltip("score_std:Q", title="Score Std Dev", format=".3f"),
+                alt.Tooltip("n_runs:Q", title="Runs"),
+            ],
+        )
+        .properties(title="Panel B: Score Standard Deviation", width=400, height=600)
+    )
+
+    # Combine panels horizontally, faceted by model
+    chart = (
+        (heatmap_pass | heatmap_score)
+        .facet(row=alt.Row("agent_model:N", title=None))
+        .properties(title="Success Variance by Test")
+        .resolve_scale(y="independent")
+    )
+
+    save_figure(chart, "fig16_success_variance_by_test", output_dir, variance_df, render)
+
+
+def fig18_failure_rate_by_test(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig 18: Failure Rate by Test.
+
+    Horizontal bar chart showing failure rate (1 - pass_rate) per subtest,
+    color-coded by tier, faceted by model.
+
+    Args:
+        runs_df: Runs DataFrame
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    # Compute failure rate per (agent_model, tier, subtest)
+    failure_data = []
+
+    for (model, tier, subtest), group in runs_df.groupby(["agent_model", "tier", "subtest"]):
+        pass_rate = group["passed"].mean()
+        failure_rate = 1 - pass_rate
+
+        failure_data.append(
+            {
+                "agent_model": model,
+                "tier": tier,
+                "subtest": subtest,
+                "subtest_label": f"{tier}-{subtest}",
+                "failure_rate": failure_rate,
+                "n_runs": len(group),
+            }
+        )
+
+    failure_df = pd.DataFrame(failure_data)
+
+    # Sort by tier then subtest for display
+    failure_df = failure_df.sort_values(["tier", "subtest"])
+
+    # Get dynamic color scale for tiers
+    domain, range_ = get_color_scale("tiers", TIER_ORDER)
+
+    # Horizontal bar chart
+    chart = (
+        alt.Chart(failure_df)
+        .mark_bar()
+        .encode(
+            y=alt.Y(
+                "subtest_label:N",
+                title="Subtest",
+                sort=alt.EncodingSortField(field="tier", order="ascending"),
+            ),
+            x=alt.X("failure_rate:Q", title="Failure Rate", scale=alt.Scale(domain=[0, 1])),
+            color=alt.Color(
+                "tier:N",
+                title="Tier",
+                sort=TIER_ORDER,
+                scale=alt.Scale(domain=domain, range=range_),
+            ),
+            tooltip=[
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("subtest:O", title="Subtest"),
+                alt.Tooltip("failure_rate:Q", title="Failure Rate", format=".2%"),
+                alt.Tooltip("n_runs:Q", title="Runs"),
+            ],
+        )
+        .facet(column=alt.Column("agent_model:N", title=None))
+        .properties(title="Failure Rate by Test")
+        .resolve_scale(y="independent")
+    )
+
+    save_figure(chart, "fig18_failure_rate_by_test", output_dir, failure_df, render)

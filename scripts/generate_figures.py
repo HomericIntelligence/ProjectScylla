@@ -20,7 +20,11 @@ from scylla.analysis import (
 )
 from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier, fig08_cost_quality_pareto
 from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
-from scylla.analysis.figures.judge_analysis import fig02_judge_variance, fig14_judge_agreement
+from scylla.analysis.figures.judge_analysis import (
+    fig02_judge_variance,
+    fig14_judge_agreement,
+    fig17_judge_variance_overall,
+)
 from scylla.analysis.figures.model_comparison import fig11_tier_uplift, fig12_consistency
 from scylla.analysis.figures.spec_builder import apply_publication_theme
 from scylla.analysis.figures.subtest_detail import fig13_latency, fig15_subtest_heatmap
@@ -33,6 +37,8 @@ from scylla.analysis.figures.token_analysis import fig07_token_distribution
 from scylla.analysis.figures.variance import (
     fig01_score_variance_by_tier,
     fig03_failure_rate_by_tier,
+    fig16_success_variance_by_test,
+    fig18_failure_rate_by_test,
 )
 
 # Figure registry mapping names to generator functions
@@ -52,6 +58,9 @@ FIGURES = {
     "fig13_latency": ("cost", fig13_latency),
     "fig14_judge_agreement": ("judge", fig14_judge_agreement),
     "fig15_subtest_heatmap": ("subtest", fig15_subtest_heatmap),
+    "fig16_success_variance_by_test": ("variance", fig16_success_variance_by_test),
+    "fig17_judge_variance_overall": ("judge", fig17_judge_variance_overall),
+    "fig18_failure_rate_by_test": ("variance", fig18_failure_rate_by_test),
 }
 
 
@@ -109,7 +118,7 @@ def main() -> None:
 
     # Load experiment data
     print(f"Loading experiments from {args.data_dir}")
-    experiments = load_all_experiments(args.data_dir)
+    experiments = load_all_experiments(args.data_dir, exclude=["test001-dryrun"])
 
     if not experiments:
         print("ERROR: No experiments found")
