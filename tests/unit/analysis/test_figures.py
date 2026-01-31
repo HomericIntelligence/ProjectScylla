@@ -80,11 +80,11 @@ def test_model_color_scale():
     # Verify domain and range are set
     assert scale.domain is not None
     assert scale.range is not None
-    assert len(scale.domain) == 2
-    assert len(scale.range) == 2
 
     # Verify domain matches input models
     assert scale.domain == models
+    assert len(scale.domain) == len(models)
+    assert len(scale.range) == len(models)
 
 
 def test_tier_order_constant():
