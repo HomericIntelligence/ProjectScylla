@@ -10,8 +10,9 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, TIER_ORDER
+from scylla.analysis.figures import TIER_ORDER, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.loader import model_id_to_display
 from scylla.analysis.stats import pearson_correlation, spearman_correlation
 
 
@@ -29,16 +30,14 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
     # Prepare data
     data = judges_df[["tier", "judge_model", "judge_score"]].copy()
 
-    # Simplify judge model names for display
-    model_name_map = {
-        "claude-opus-4-5-20251101": "Opus 4.5",
-        "claude-sonnet-4-5-20250129": "Sonnet 4.5",
-        "claude-haiku-4-5-20241223": "Haiku 4.5",
-    }
-    # Use model name as fallback if not in map (prevents NaN)
-    data["judge_display"] = data["judge_model"].apply(lambda x: model_name_map.get(x, x))
+    # Convert judge model IDs to display names
+    data["judge_display"] = data["judge_model"].apply(model_id_to_display)
 
-    judge_order = ["Opus 4.5", "Sonnet 4.5", "Haiku 4.5"]
+    # Get judge order dynamically from data
+    judge_order = sorted(data["judge_display"].unique())
+
+    # Get dynamic color scale
+    domain, range_ = get_color_scale("judges", judge_order)
 
     # Create violin plot with box plot overlay
     base = alt.Chart(data).encode(
@@ -51,14 +50,7 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
         color=alt.Color(
             "judge_display:N",
             title="Judge",
-            scale=alt.Scale(
-                domain=judge_order,
-                range=[
-                    COLORS["judges"]["claude-opus-4-5-20251101"],
-                    COLORS["judges"]["claude-sonnet-4-5-20250129"],
-                    COLORS["judges"]["claude-haiku-4-5-20241223"],
-                ],
-            ),
+            scale=alt.Scale(domain=domain, range=range_),
             legend=None,
         ),
     )
@@ -197,16 +189,13 @@ def fig17_judge_variance_overall(
     """
     # Prepare data - convert judge model IDs to display names
     data = judges_df[["judge_model", "judge_score"]].copy()
+    data["judge_display"] = data["judge_model"].apply(model_id_to_display)
 
-    # Simplify judge model names for display
-    model_name_map = {
-        "claude-opus-4-5-20251101": "Opus 4.5",
-        "claude-sonnet-4-5-20250129": "Sonnet 4.5",
-        "claude-haiku-4-5-20241223": "Haiku 4.5",
-    }
-    data["judge_display"] = data["judge_model"].apply(lambda x: model_name_map.get(x, x))
+    # Get judge order dynamically from data
+    judge_order = sorted(data["judge_display"].unique())
 
-    judge_order = ["Opus 4.5", "Sonnet 4.5", "Haiku 4.5"]
+    # Get dynamic color scale
+    domain, range_ = get_color_scale("judges", judge_order)
 
     # Panel A: Box plot of score distributions
     boxplot = (
@@ -222,14 +211,7 @@ def fig17_judge_variance_overall(
             color=alt.Color(
                 "judge_display:N",
                 title="Judge",
-                scale=alt.Scale(
-                    domain=judge_order,
-                    range=[
-                        COLORS["judges"]["claude-opus-4-5-20251101"],
-                        COLORS["judges"]["claude-sonnet-4-5-20250129"],
-                        COLORS["judges"]["claude-haiku-4-5-20241223"],
-                    ],
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
                 legend=None,
             ),
         )
@@ -248,14 +230,7 @@ def fig17_judge_variance_overall(
             y=alt.Y("score_std:Q", title="Score Std Dev", scale=alt.Scale(domain=[0, 0.3])),
             color=alt.Color(
                 "judge_display:N",
-                scale=alt.Scale(
-                    domain=judge_order,
-                    range=[
-                        COLORS["judges"]["claude-opus-4-5-20251101"],
-                        COLORS["judges"]["claude-sonnet-4-5-20250129"],
-                        COLORS["judges"]["claude-haiku-4-5-20241223"],
-                    ],
-                ),
+                scale=alt.Scale(domain=domain, range=range_),
                 legend=None,
             ),
             tooltip=[

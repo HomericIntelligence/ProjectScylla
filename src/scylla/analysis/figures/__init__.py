@@ -41,4 +41,54 @@ COLORS = {
     },
 }
 
-__all__ = ["COLORS", "TIER_ORDER"]
+# Dynamic palette for unknown models/judges
+_DYNAMIC_PALETTE = [
+    "#4C78A8",  # Blue
+    "#E45756",  # Red
+    "#72B7B2",  # Teal
+    "#F58518",  # Orange
+    "#54A24B",  # Green
+    "#B279A2",  # Purple
+    "#FF9DA6",  # Pink
+    "#9D755D",  # Brown
+    "#BAB0AC",  # Gray
+    "#EECA3B",  # Yellow
+]
+
+
+def get_color(category: str, key: str) -> str:
+    """Get color for a key, using static colors or dynamic palette.
+
+    Args:
+        category: Color category ("models", "judges", "tiers", etc.)
+        key: Key within category
+
+    Returns:
+        Hex color code
+
+    """
+    if category in COLORS and key in COLORS[category]:
+        return COLORS[category][key]
+    else:
+        # Use deterministic hash to assign color from dynamic palette
+        index = hash(key) % len(_DYNAMIC_PALETTE)
+        return _DYNAMIC_PALETTE[index]
+
+
+def get_color_scale(category: str, keys: list[str]) -> tuple[list[str], list[str]]:
+    """Get color scale domain and range for Altair.
+
+    Args:
+        category: Color category ("models", "judges", "tiers", etc.)
+        keys: List of keys to assign colors to
+
+    Returns:
+        Tuple of (domain, range) for alt.Scale()
+
+    """
+    domain = list(keys)
+    range_ = [get_color(category, key) for key in keys]
+    return domain, range_
+
+
+__all__ = ["COLORS", "TIER_ORDER", "get_color", "get_color_scale"]
