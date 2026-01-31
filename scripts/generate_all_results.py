@@ -33,10 +33,12 @@ def run_script(script_name: str, args: list[str], description: str) -> bool:
     cmd = ["pixi", "run", "-e", "analysis", "python", script_name, *args]
 
     try:
-        subprocess.run(cmd, check=True)
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"\nERROR: {script_name} failed with return code {e.returncode}")
+        result = subprocess.run(cmd, check=False)  # Don't raise on error
+        if result.returncode != 0:
+            print(f"\nERROR: {script_name} failed with return code {result.returncode}")
+        return result.returncode == 0
+    except Exception as e:
+        print(f"\nERROR: {script_name} failed with exception: {e}")
         return False
 
 
