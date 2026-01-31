@@ -4,6 +4,9 @@ Each figure module provides generation functions that produce Vega-Lite
 JSON specifications and CSV data files.
 """
 
+# Tier ordering (consistent across all figures and tables)
+TIER_ORDER = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+
 # Color palettes (consistent across all figures)
 COLORS = {
     "models": {"Sonnet 4.5": "#4C78A8", "Haiku 4.5": "#E45756"},
@@ -38,4 +41,4 @@ COLORS = {
     },
 }
 
-__all__ = ["COLORS"]
+__all__ = ["COLORS", "TIER_ORDER"]

@@ -174,3 +174,42 @@ def bonferroni_correction(p_value: float, n_tests: int) -> float:
 
     """
     return min(1.0, p_value * n_tests)
+
+
+def compute_consistency(mean: float, std: float) -> float:
+    """Compute consistency metric: 1 - coefficient of variation.
+
+    Consistency measures how stable scores are relative to their mean.
+    Higher values indicate more consistent (less variable) performance.
+
+    Args:
+        mean: Mean of the data
+        std: Standard deviation of the data
+
+    Returns:
+        Consistency value in [0, 1], where 1 = perfect consistency
+
+    """
+    if mean == 0:
+        return 0.0
+    consistency = 1 - (std / mean)
+    return max(0.0, min(1.0, consistency))  # Clamp to [0, 1]
+
+
+def compute_cop(mean_cost: float, pass_rate: float) -> float:
+    """Compute Cost-of-Pass (CoP) metric.
+
+    CoP represents the expected cost to achieve one successful outcome.
+    Lower values indicate better cost efficiency.
+
+    Args:
+        mean_cost: Mean cost per attempt (USD)
+        pass_rate: Success rate in [0, 1]
+
+    Returns:
+        CoP in USD, or inf if pass_rate is 0
+
+    """
+    if pass_rate == 0:
+        return float("inf")
+    return mean_cost / pass_rate
