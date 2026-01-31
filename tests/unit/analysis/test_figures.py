@@ -32,12 +32,13 @@ def test_fig04_pass_rate_by_tier(sample_runs_df, mock_save_figure):
     assert mock_save_figure.called
 
 
-def test_fig06_cop_by_tier(sample_runs_df, mock_save_figure):
+def test_fig06_cop_by_tier(sample_runs_df):
     """Test Fig 6 generates without errors."""
     from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier
 
-    fig06_cop_by_tier(sample_runs_df, Path("/tmp"), render=False)
-    assert mock_save_figure.called
+    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
+        fig06_cop_by_tier(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
 
 
 def test_fig11_tier_uplift(sample_runs_df, mock_save_figure):
@@ -67,7 +68,8 @@ def test_model_color_scale():
     """Test model color scale helper."""
     from scylla.analysis.figures.spec_builder import model_color_scale
 
-    scale = model_color_scale()
+    models = ["Sonnet 4.5", "Haiku 4.5"]
+    scale = model_color_scale(models)
 
     # Verify it's an Altair Scale
     import altair as alt
@@ -77,6 +79,8 @@ def test_model_color_scale():
     # Verify domain and range are set
     assert scale.domain is not None
     assert scale.range is not None
+    assert len(scale.domain) == 2
+    assert len(scale.range) == 2
 
 
 def test_tier_order_constant():
