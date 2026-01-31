@@ -343,3 +343,66 @@ def test_figure_module_structure():
     for module_name in figure_modules:
         module = __import__(f"scylla.analysis.figures.{module_name}", fromlist=[module_name])
         assert module is not None
+
+
+def test_latex_snippet_generation(sample_runs_df, tmp_path, clear_patches):
+    """Test LaTeX snippet generation for figures."""
+    import altair as alt
+
+    from scylla.analysis.figures.spec_builder import save_figure
+
+    # Create a simple chart (avoiding mocked figure functions)
+    chart = (
+        alt.Chart(sample_runs_df)
+        .mark_bar()
+        .encode(x="tier:O", y="mean(score):Q")
+        .properties(title="Test Figure for LaTeX")
+    )
+
+    # Save with render=True to generate LaTeX snippet
+    save_figure(chart, "test_latex_fig", tmp_path, render=True, formats=["pdf"])
+
+    # Check that LaTeX snippet was created
+    snippet_path = tmp_path / "test_latex_fig_include.tex"
+    assert snippet_path.exists(), "LaTeX snippet should be created"
+
+    # Read and verify content
+    content = snippet_path.read_text()
+
+    # Check for required LaTeX structure
+    assert "\\begin{figure}[htbp]" in content
+    assert "\\centering" in content
+    assert "\\includegraphics[width=\\textwidth]{test_latex_fig.pdf}" in content
+    assert "\\caption{" in content
+    assert "\\label{fig:test_latex_fig}" in content
+    assert "\\end{figure}" in content
+
+
+def test_latex_snippet_with_custom_caption(tmp_path):
+    """Test LaTeX snippet with custom caption."""
+    import altair as alt
+    import pandas as pd
+
+    from scylla.analysis.figures.spec_builder import save_figure
+
+    # Create simple chart
+    data = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
+    chart = alt.Chart(data).mark_point().encode(x="x", y="y").properties(title="Test Chart")
+
+    # Save with custom caption
+    save_figure(
+        chart,
+        "test_figure",
+        tmp_path,
+        data=data,
+        render=True,
+        formats=["pdf"],
+        latex_caption="Custom caption for testing",
+    )
+
+    # Verify snippet has custom caption
+    snippet_path = tmp_path / "test_figure_include.tex"
+    assert snippet_path.exists()
+
+    content = snippet_path.read_text()
+    assert "\\caption{Custom caption for testing}" in content
