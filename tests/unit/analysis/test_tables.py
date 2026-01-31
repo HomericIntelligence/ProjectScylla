@@ -43,6 +43,9 @@ def test_table_function_signatures():
         "table05_cost_analysis",
         "table06_model_comparison",
         "table07_subtest_detail",
+        "table08_summary_statistics",
+        "table09_experiment_config",
+        "table10_normality_tests",
     ]
 
     for func_name in table_functions:
@@ -129,3 +132,96 @@ def test_table01_uses_compute_cop():
 
     # Verify that inf appears in output (compute_cop returns inf for zero pass rate)
     assert "inf" in markdown.lower() or "∞" in markdown
+
+
+def test_table08_summary_statistics():
+    """Test Table 8 summary statistics smoke test."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table08_summary_statistics
+
+    # Create minimal test data
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 20,
+            "tier": ["T0"] * 20,
+            "score": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] * 2,
+            "cost_usd": [1.0, 1.5, 2.0, 2.5, 3.0] * 4,
+            "duration_seconds": [10, 20, 30, 40, 50] * 4,
+            "total_tokens": [1000, 2000, 3000, 4000, 5000] * 4,
+        }
+    )
+
+    markdown, latex = table08_summary_statistics(test_data)
+
+    # Verify tables generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Verify contains statistics headers
+    assert "Mean" in markdown
+    assert "Median" in markdown
+    assert "Skew" in markdown
+    assert "Kurt" in markdown
+
+
+def test_table09_experiment_config():
+    """Test Table 9 experiment configuration smoke test."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table09_experiment_config
+
+    # Create minimal test data
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 10,
+            "tier": ["T0"] * 5 + ["T1"] * 5,
+            "subtest": ["test1", "test2", "test1", "test2", "test1"] * 2,
+        }
+    )
+
+    markdown, latex = table09_experiment_config(test_data)
+
+    # Verify tables generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Verify contains configuration headers
+    assert "Agent Models" in markdown
+    assert "Tiers" in markdown
+    assert "Total Runs" in markdown
+
+
+def test_table10_normality_tests():
+    """Test Table 10 normality tests smoke test."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table10_normality_tests
+
+    # Create test data with sufficient samples for Shapiro-Wilk (need N >= 3)
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 10,
+            "tier": ["T0"] * 10,
+            "score": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            "cost_usd": [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
+        }
+    )
+
+    markdown, latex = table10_normality_tests(test_data)
+
+    # Verify tables generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Verify contains normality test headers
+    assert "Shapiro-Wilk" in markdown
+    assert "Normal?" in markdown
+    assert "W" in markdown
+    assert "p-value" in markdown
