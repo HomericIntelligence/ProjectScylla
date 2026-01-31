@@ -23,6 +23,7 @@ from scylla.analysis import (
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     cliffs_delta_ci,
+    holm_bonferroni_correction,
     kruskal_wallis,
     mann_whitney_u,
     shapiro_wilk,
@@ -41,12 +42,15 @@ def json_nan_handler(obj):
 def compute_statistical_results(runs_df, tier_order):
     """Compute all statistical test results for export.
 
+    Pairwise comparisons use Holm-Bonferroni correction per model.
+    Both raw and corrected p-values are exported for transparency.
+
     Args:
         runs_df: Runs DataFrame
         tier_order: List of tier IDs in order
 
     Returns:
-        Dictionary of statistical test results
+        Dictionary of statistical test results with corrected p-values
 
     """
     results = {
@@ -123,8 +127,11 @@ def compute_statistical_results(runs_df, tier_order):
             )
 
     # Pairwise comparisons (Mann-Whitney U) between consecutive tiers
+    # Collect raw p-values per model, then apply Holm-Bonferroni correction
     for model in models:
         model_runs = runs_df[runs_df["agent_model"] == model]
+        raw_p_values = []
+        test_metadata = []
 
         for i in range(len(tier_order) - 1):
             tier1, tier2 = tier_order[i], tier_order[i + 1]
@@ -134,11 +141,12 @@ def compute_statistical_results(runs_df, tier_order):
             if len(tier1_data) == 0 or len(tier2_data) == 0:
                 continue
 
-            u_stat, p_value = mann_whitney_u(
+            u_stat, p_value_raw = mann_whitney_u(
                 tier1_data["passed"].astype(int), tier2_data["passed"].astype(int)
             )
 
-            results["pairwise_comparisons"].append(
+            raw_p_values.append(p_value_raw)
+            test_metadata.append(
                 {
                     "model": model,
                     "tier1": tier1,
@@ -146,10 +154,22 @@ def compute_statistical_results(runs_df, tier_order):
                     "n1": len(tier1_data),
                     "n2": len(tier2_data),
                     "u_statistic": float(u_stat),
-                    "p_value": float(p_value),
-                    "is_significant": bool(p_value < 0.05),
                 }
             )
+
+        # Apply Holm-Bonferroni correction to all pairwise tests for this model
+        if raw_p_values:
+            corrected_p_values = holm_bonferroni_correction(raw_p_values)
+
+            for i, metadata in enumerate(test_metadata):
+                results["pairwise_comparisons"].append(
+                    {
+                        **metadata,
+                        "p_value_raw": float(raw_p_values[i]),
+                        "p_value": float(corrected_p_values[i]),
+                        "is_significant": bool(corrected_p_values[i] < 0.05),
+                    }
+                )
 
     # Effect sizes (Cliff's delta with CI) for tier transitions
     for model in models:

@@ -14,6 +14,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 from scylla.e2e.models import TokenStats
@@ -277,16 +278,16 @@ def load_judgment(judgment_path: Path, judge_number: int) -> JudgeEvaluation:
 
         criteria[criterion_name] = CriterionScore(
             name=criterion_name,
-            achieved=criterion_data.get("achieved", 0.0),
-            max_points=criterion_data.get("max", 0.0),
-            score=criterion_data.get("score", 0.0),
+            achieved=criterion_data.get("achieved", np.nan),
+            max_points=criterion_data.get("max", np.nan),
+            score=criterion_data.get("score", np.nan),
             items=items,
         )
 
     return JudgeEvaluation(
         judge_model=judge_model,
         judge_number=judge_number,
-        score=data.get("score", 0.0),
+        score=data.get("score", np.nan),
         passed=data.get("passed", False),
         grade=data.get("grade", "F"),
         is_valid=data.get("is_valid", True),
@@ -343,13 +344,13 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
         tier=tier,
         subtest=subtest,
         run_number=run_number,
-        score=result.get("judge_score", 0.0),
+        score=result.get("judge_score", np.nan),
         passed=result.get("judge_passed", False),
         grade=result.get("judge_grade", "F"),
-        cost_usd=result.get("cost_usd", 0.0),
-        duration_seconds=result.get("duration_seconds", 0.0),
-        agent_duration_seconds=result.get("agent_duration_seconds", 0.0),
-        judge_duration_seconds=result.get("judge_duration_seconds", 0.0),
+        cost_usd=result.get("cost_usd", np.nan),
+        duration_seconds=result.get("duration_seconds", np.nan),
+        agent_duration_seconds=result.get("agent_duration_seconds", np.nan),
+        judge_duration_seconds=result.get("judge_duration_seconds", np.nan),
         token_stats=token_stats,
         exit_code=result.get("exit_code", -1),
         judges=judges,
