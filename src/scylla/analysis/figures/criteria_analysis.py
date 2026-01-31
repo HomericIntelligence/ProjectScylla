@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS, derive_tier_order
+from scylla.analysis.figures import derive_tier_order, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -48,17 +48,9 @@ def fig09_criteria_by_tier(
     # Derive tier order from aggregated data
     tier_order = derive_tier_order(criteria_agg)
 
-    # Get colors for criteria (use COLORS if available, otherwise use get_color_scale)
+    # Get colors for criteria using centralized function
     criterion_labels_list = [criterion_labels[c] for c in criterion_order]
-    criterion_colors = []
-    for c in criterion_order:
-        if c in COLORS["criteria"]:
-            criterion_colors.append(COLORS["criteria"][c])
-        else:
-            # Use dynamic color assignment via hash for unknown criteria
-            from scylla.analysis.figures import get_color
-
-            criterion_colors.append(get_color("criteria", c))
+    _, criterion_colors = get_color_scale("criteria", criterion_order)
 
     # Create grouped bar chart
     chart = (

@@ -15,7 +15,12 @@ from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import bootstrap_ci
 
 
-def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
+def fig04_pass_rate_by_tier(
+    runs_df: pd.DataFrame,
+    output_dir: Path,
+    render: bool = True,
+    pass_threshold: float = 0.60,
+) -> None:
     """Generate Fig 4: Pass-Rate by Tier.
 
     Grouped bar chart with 95% bootstrap confidence intervals.
@@ -24,6 +29,7 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
         runs_df: Runs DataFrame
         output_dir: Output directory
         render: Whether to render to PNG/PDF
+        pass_threshold: Reference line threshold (default: 0.60)
 
     """
     # Compute pass rate and CI per (agent_model, tier)
@@ -93,8 +99,8 @@ def fig04_pass_rate_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: boo
         )
     )
 
-    # Reference line at 0.60
-    rule_data = pd.DataFrame({"y": [0.60]})
+    # Reference line at pass_threshold
+    rule_data = pd.DataFrame({"y": [pass_threshold]})
     rule = alt.Chart(rule_data).mark_rule(color="gray", strokeDash=[5, 5]).encode(y="y:Q")
 
     # Combine layers

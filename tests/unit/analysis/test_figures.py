@@ -230,6 +230,8 @@ def test_colors_constant():
     assert "grades" in COLORS
     assert "judges" in COLORS
     assert "criteria" in COLORS
+    assert "phases" in COLORS
+    assert "token_types" in COLORS
 
     # Verify models palette has required keys
     assert "Sonnet 4.5" in COLORS["models"]
@@ -238,6 +240,12 @@ def test_colors_constant():
     # Verify tiers palette has all 7 tiers
     for tier in ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]:
         assert tier in COLORS["tiers"]
+
+    # Verify new palettes have expected keys
+    assert "Agent Execution" in COLORS["phases"]
+    assert "Judge Evaluation" in COLORS["phases"]
+    assert "Input (Fresh)" in COLORS["token_types"]
+    assert "Output" in COLORS["token_types"]
 
 
 def test_fig19_effect_size_forest(sample_runs_df):
@@ -293,6 +301,27 @@ def test_fig24_score_histograms(sample_runs_df):
     with patch("scylla.analysis.figures.diagnostics.save_figure") as mock:
         fig24_score_histograms(sample_runs_df, Path("/tmp"), render=False)
         assert mock.called
+
+
+def test_register_colors():
+    """Test dynamic color registration."""
+    from scylla.analysis.figures import COLORS, register_colors
+
+    # Register new colors for a custom category
+    register_colors("custom_models", {"GPT-5": "#FF0000", "Claude-5": "#00FF00"})
+
+    # Verify registration
+    assert "custom_models" in COLORS
+    assert COLORS["custom_models"]["GPT-5"] == "#FF0000"
+    assert COLORS["custom_models"]["Claude-5"] == "#00FF00"
+
+    # Update existing category
+    register_colors("models", {"New Model": "#ABCDEF"})
+    assert "New Model" in COLORS["models"]
+
+    # Cleanup (restore original state)
+    del COLORS["custom_models"]
+    del COLORS["models"]["New Model"]
 
 
 def test_figure_module_structure():
