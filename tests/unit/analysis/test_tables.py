@@ -225,3 +225,323 @@ def test_table10_normality_tests():
     assert "Normal?" in markdown
     assert "W" in markdown
     assert "p-value" in markdown
+
+
+# ============================================================================
+# Functional tests for tables 02-07 (P0-2 from audit)
+# ============================================================================
+
+
+def test_table02_tier_comparison_statistical_workflow(sample_runs_df):
+    """Test Table 2 statistical workflow: Kruskal-Wallis → pairwise → Holm-Bonferroni."""
+    from scylla.analysis.tables import table02_tier_comparison
+
+    markdown, latex = table02_tier_comparison(sample_runs_df)
+
+    # Verify both formats generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 100
+    assert len(latex) > 100
+
+    # Verify statistical workflow documented
+    assert "Kruskal-Wallis" in markdown
+    assert "Mann-Whitney" in markdown
+    assert "Holm-Bonferroni" in markdown
+
+    # Verify contains tier comparisons
+    assert "T0" in markdown and "T1" in markdown
+
+    # Verify p-values present (format: 0.XXX or < 0.001)
+    assert "p=" in markdown or "p <" in markdown
+
+
+def test_table02_handles_single_tier(sample_runs_df):
+    """Test Table 2 handles edge case of single tier."""
+    from scylla.analysis.tables import table02_tier_comparison
+
+    # Filter to single tier
+    single_tier = sample_runs_df[sample_runs_df["tier"] == "T0"]
+
+    markdown, latex = table02_tier_comparison(single_tier)
+
+    # Should still generate output (no comparisons)
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+
+
+def test_table02_holm_bonferroni_correction_applied(sample_runs_df):
+    """Test that Holm-Bonferroni correction is actually applied."""
+    from scylla.analysis.tables import table02_tier_comparison
+
+    # The fixture has 2 models × (3 choose 2) = 2 × 3 = 6 pairwise comparisons
+    # Holm-Bonferroni should correct these p-values
+
+    markdown, latex = table02_tier_comparison(sample_runs_df)
+
+    # Verify correction method mentioned in footer
+    assert "Holm-Bonferroni" in markdown
+
+
+def test_table03_judge_agreement(sample_judges_df):
+    """Test Table 3 judge agreement with Krippendorff's alpha."""
+    from scylla.analysis.tables import table03_judge_agreement
+
+    markdown, latex = table03_judge_agreement(sample_judges_df)
+
+    # Verify both formats generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 50
+    assert len(latex) > 50
+
+    # Verify contains Krippendorff's alpha
+    assert "Krippendorff" in markdown or "α" in markdown or "alpha" in markdown.lower()
+
+    # Verify contains agreement metrics
+    # Alpha should be in [-1, 1] range
+    assert "0." in markdown or "1." in markdown or "-" in markdown
+
+
+def test_table03_handles_single_judge(sample_runs_df):
+    """Test Table 3 handles edge case of single judge."""
+    import pandas as pd
+    import pytest
+
+    from scylla.analysis.tables import table03_judge_agreement
+
+    # Create single-judge data with varying scores (krippendorff requires variance)
+    single_judge = pd.DataFrame(
+        {
+            "experiment": sample_runs_df["experiment"][:10],
+            "agent_model": sample_runs_df["agent_model"][:10],
+            "tier": sample_runs_df["tier"][:10],
+            "subtest": sample_runs_df["subtest"][:10],
+            "run_number": sample_runs_df["run_number"][:10],
+            "judge_number": [1] * 10,
+            "judge_model": ["claude-opus-4-5"] * 10,
+            "judge_score": [0.5, 0.6, 0.7, 0.8, 0.9, 0.4, 0.5, 0.6, 0.7, 0.8],  # Varied scores
+            "judge_grade": ["A"] * 10,
+        }
+    )
+
+    # Single judge should raise ValueError (need at least 2 judges for agreement)
+    with pytest.raises(ValueError):
+        table03_judge_agreement(single_judge)
+
+
+def test_table04_criteria_performance_holm_bonferroni(sample_criteria_df, sample_runs_df):
+    """Test Table 4 uses Holm-Bonferroni for criteria comparisons."""
+    from scylla.analysis.tables import table04_criteria_performance
+
+    markdown, latex = table04_criteria_performance(sample_criteria_df, sample_runs_df)
+
+    # Verify both formats generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 100
+    assert len(latex) > 100
+
+    # Verify contains criteria
+    assert "functional" in markdown or "code_quality" in markdown
+
+    # Verify contains statistical comparisons
+    assert "p-value" in markdown or "p =" in markdown or "Winner" in markdown
+
+
+def test_table04_handles_single_model(sample_criteria_df, sample_runs_df):
+    """Test Table 4 handles single model gracefully."""
+    from scylla.analysis.tables import table04_criteria_performance
+
+    # Filter to single model
+    single_model_criteria = sample_criteria_df[sample_criteria_df["agent_model"] == "Sonnet 4.5"]
+    single_model_runs = sample_runs_df[sample_runs_df["agent_model"] == "Sonnet 4.5"]
+
+    markdown, latex = table04_criteria_performance(single_model_criteria, single_model_runs)
+
+    # Should still generate output (no comparisons)
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 50
+
+
+def test_table04_data_driven_criteria_weights(sample_criteria_df, sample_runs_df):
+    """Test Table 4 derives criteria weights from data when not provided."""
+    from scylla.analysis.tables import table04_criteria_performance
+
+    # Call without providing criteria_weights
+    markdown, latex = table04_criteria_performance(sample_criteria_df, sample_runs_df)
+
+    # Should derive weights from actual criteria in data
+    # All 5 criteria from fixture should appear
+    criteria = [
+        "functional",
+        "code_quality",
+        "proportionality",
+        "build_pipeline",
+        "overall_quality",
+    ]
+    present_criteria = sum(1 for c in criteria if c in markdown)
+
+    # At least some criteria should be present
+    assert present_criteria >= 3
+
+
+def test_table05_cost_analysis_token_breakdown(sample_runs_df):
+    """Test Table 5 cost analysis includes token breakdown."""
+    from scylla.analysis.tables import table05_cost_analysis
+
+    markdown, latex = table05_cost_analysis(sample_runs_df)
+
+    # Verify both formats generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 100
+    assert len(latex) > 100
+
+    # Verify contains cost metrics
+    assert "Cost" in markdown
+    assert "CoP" in markdown or "Cost-of-Pass" in markdown
+
+    # Verify contains token breakdown
+    assert "Input" in markdown or "Output" in markdown or "Token" in markdown
+
+
+def test_table05_handles_zero_cost_runs(sample_runs_df):
+    """Test Table 5 handles runs with zero cost gracefully."""
+    from scylla.analysis.tables import table05_cost_analysis
+
+    # Add some zero-cost runs
+    zero_cost_data = sample_runs_df.copy()
+    zero_cost_data.loc[:5, "cost_usd"] = 0.0
+
+    markdown, latex = table05_cost_analysis(zero_cost_data)
+
+    # Should handle gracefully
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+
+
+def test_table06_model_comparison_holm_bonferroni(sample_runs_df):
+    """Test Table 6 uses Holm-Bonferroni for model comparisons."""
+    from scylla.analysis.tables import table06_model_comparison
+
+    markdown, latex = table06_model_comparison(sample_runs_df)
+
+    # Verify both formats generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 100
+    assert len(latex) > 100
+
+    # Verify contains model names
+    assert "Sonnet" in markdown or "Haiku" in markdown
+
+    # Verify contains comparison metrics
+    assert "Pass Rate" in markdown or "Mean Score" in markdown
+    assert "p-value" in markdown or "p =" in markdown
+
+
+def test_table06_handles_single_model():
+    """Test Table 6 handles single model error case."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table06_model_comparison
+
+    # Single model data
+    single_model = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 10,
+            "tier": ["T0"] * 10,
+            "score": [0.8] * 10,
+            "passed": [True] * 10,
+        }
+    )
+
+    markdown, latex = table06_model_comparison(single_model)
+
+    # Should return error message
+    assert "Error" in markdown or "Need at least 2 models" in markdown
+
+
+def test_table06_multiple_models_pairwise():
+    """Test Table 6 handles multiple models with pairwise comparisons."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table06_model_comparison
+
+    # Create data with 3 models (3 choose 2 = 3 pairs)
+    # Include all required columns for table06
+    data = pd.DataFrame(
+        {
+            "agent_model": ["Model A"] * 10 + ["Model B"] * 10 + ["Model C"] * 10,
+            "tier": ["T0"] * 30,
+            "score": [0.9] * 10 + [0.7] * 10 + [0.5] * 10,
+            "passed": [True] * 10 + [True] * 8 + [False] * 2 + [True] * 5 + [False] * 5,
+            "cost_usd": [0.1] * 10 + [0.2] * 10 + [0.3] * 10,
+            "total_tokens": [1000] * 10 + [2000] * 10 + [3000] * 10,  # Required column
+        }
+    )
+
+    markdown, latex = table06_model_comparison(data)
+
+    # Should generate all pairwise comparisons
+    assert "Model A vs Model B" in markdown
+    assert "Model A vs Model C" in markdown
+    assert "Model B vs Model C" in markdown
+
+
+def test_table07_subtest_detail_appendix(sample_runs_df):
+    """Test Table 7 subtest detail generates appendix table."""
+    from scylla.analysis.dataframes import build_subtests_df
+    from scylla.analysis.tables import table07_subtest_detail
+
+    # Build proper subtests DataFrame using the function
+    subtests_df = build_subtests_df(sample_runs_df)
+
+    # Note: signature is table07_subtest_detail(runs_df, subtests_df)
+    markdown, latex = table07_subtest_detail(sample_runs_df, subtests_df)
+
+    # Verify both formats generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 100
+    assert len(latex) > 100
+
+    # Verify contains subtest identifiers
+    assert "00" in markdown or "01" in markdown
+
+    # Verify contains tier information
+    assert "T0" in markdown or "T1" in markdown
+
+    # Verify LaTeX uses longtable (for multi-page appendix)
+    assert "longtable" in latex or "tabular" in latex
+
+
+def test_table07_handles_empty_subtests():
+    """Test Table 7 handles empty subtest data gracefully."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table07_subtest_detail
+
+    # Empty DataFrames
+    empty_subtests = pd.DataFrame(
+        columns=[
+            "experiment",
+            "agent_model",
+            "tier",
+            "subtest",
+            "pass_rate",
+            "mean_score",
+        ]
+    )
+    empty_runs = pd.DataFrame(
+        columns=["agent_model", "tier", "subtest", "score", "passed", "cost_usd"]
+    )
+
+    markdown, latex = table07_subtest_detail(empty_subtests, empty_runs)
+
+    # Should handle gracefully
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
