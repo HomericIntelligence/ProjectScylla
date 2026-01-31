@@ -233,7 +233,14 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str) -> RunData
         result = json.load(f)
 
     # Parse run number from directory name (e.g., "run_01" -> 1)
-    run_number = int(run_dir.name.split("_")[1])
+    try:
+        run_number = int(run_dir.name.split("_")[1])
+    except (IndexError, ValueError):
+        # Fallback: try to extract any number from the directory name
+        import re
+
+        match = re.search(r"\d+", run_dir.name)
+        run_number = int(match.group()) if match else 0
 
     # Load token stats
     token_stats = TokenStats.from_dict(result.get("token_stats", {}))
@@ -336,13 +343,13 @@ def load_all_experiments(
         if not exp_dir.is_dir():
             continue
 
-        # Find the timestamped subdirectory
-        timestamped_dirs = [d for d in exp_dir.iterdir() if d.is_dir()]
+        # Find the timestamped subdirectory (use latest if multiple)
+        timestamped_dirs = sorted([d for d in exp_dir.iterdir() if d.is_dir()])
         if not timestamped_dirs:
             continue
 
-        # Use the first (should be only) timestamped directory
-        actual_exp_dir = timestamped_dirs[0]
+        # Use the latest timestamped directory (sorted alphabetically = chronologically)
+        actual_exp_dir = timestamped_dirs[-1]
         exp_name = exp_dir.name
 
         if exp_name in exclude:

@@ -19,6 +19,9 @@ def bootstrap_ci(
 ) -> tuple[float, float, float]:
     """Compute bootstrap confidence interval.
 
+    Uses BCa (bias-corrected and accelerated) method for better coverage
+    on small samples and binary data near boundaries.
+
     Args:
         data: Data to bootstrap
         confidence: Confidence level (default: 0.95 for 95% CI)
@@ -31,13 +34,13 @@ def bootstrap_ci(
     data_array = np.array(data)
     mean = np.mean(data_array)
 
-    # Use scipy's bootstrap for percentile CI
+    # Use scipy's bootstrap with BCa method for better coverage
     res = stats.bootstrap(
         (data_array,),
         np.mean,
         n_resamples=n_resamples,
         confidence_level=confidence,
-        method="percentile",
+        method="BCa",
         random_state=42,
     )
 
