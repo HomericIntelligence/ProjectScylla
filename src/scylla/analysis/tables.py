@@ -10,6 +10,7 @@ from __future__ import annotations
 import pandas as pd
 
 from scylla.analysis.stats import (
+    bonferroni_correction,
     bootstrap_ci,
     cliffs_delta,
     krippendorff_alpha,
@@ -140,6 +141,10 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
 def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 2: Tier Pairwise Comparison.
 
+    Applies Bonferroni correction for 7 tests per model:
+    - 6 consecutive tier comparisons (T0→T1, T1→T2, ..., T5→T6)
+    - 1 overall comparison (T0→T6)
+
     Args:
         runs_df: Runs DataFrame
 
@@ -148,6 +153,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     """
     tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    n_tests = 7  # 6 consecutive + 1 overall
 
     # Compute pairwise comparisons
     rows = []
@@ -167,11 +173,12 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             pr2 = tier2_data["passed"].mean()
             pr_delta = pr2 - pr1
 
-            # Mann-Whitney U test
-            _, pvalue = mann_whitney_u(
+            # Mann-Whitney U test with Bonferroni correction
+            _, pvalue_raw = mann_whitney_u(
                 tier1_data["passed"].astype(int),
                 tier2_data["passed"].astype(int),
             )
+            pvalue = bonferroni_correction(pvalue_raw, n_tests)
 
             # Effect size (Cliff's delta)
             delta = cliffs_delta(
@@ -199,10 +206,11 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             pr6 = t6_data["passed"].mean()
             pr_delta = pr6 - pr0
 
-            _, pvalue = mann_whitney_u(
+            _, pvalue_raw = mann_whitney_u(
                 t0_data["passed"].astype(int),
                 t6_data["passed"].astype(int),
             )
+            pvalue = bonferroni_correction(pvalue_raw, n_tests)
 
             delta = cliffs_delta(
                 t6_data["passed"].astype(int),
@@ -223,7 +231,12 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     df = pd.DataFrame(rows)
 
     # Markdown table
-    md_lines = ["# Table 2: Tier Pairwise Comparison", ""]
+    md_lines = [
+        "# Table 2: Tier Pairwise Comparison",
+        "",
+        "*p-values adjusted using Bonferroni correction (n=7 tests per model)*",
+        "",
+    ]
     md_lines.append("| Model | Transition | Pass Rate Δ | p-value | Cliff's δ | Significant? |")
     md_lines.append("|-------|------------|-------------|---------|-----------|--------------|")
 
@@ -435,7 +448,10 @@ def table04_criteria_performance(
 
     df = pd.DataFrame(criterion_stats)
 
-    # Cross-model comparison (Mann-Whitney U tests)
+    # Cross-model comparison (Mann-Whitney U tests with Bonferroni correction)
+    # 5 criteria comparisons
+    n_tests = len(criteria_weights)
+
     if len(df["Model"].unique()) == 2:
         models = sorted(df["Model"].unique())
         model1, model2 = models[0], models[1]
@@ -453,7 +469,8 @@ def table04_criteria_performance(
             m2_numeric = pd.to_numeric(m2_data, errors="coerce").dropna()
 
             if len(m1_numeric) > 0 and len(m2_numeric) > 0:
-                _, pvalue = mann_whitney_u(m1_numeric, m2_numeric)
+                _, pvalue_raw = mann_whitney_u(m1_numeric, m2_numeric)
+                pvalue = bonferroni_correction(pvalue_raw, n_tests)
                 winner = model1 if m1_numeric.mean() > m2_numeric.mean() else model2
 
                 # Add to dataframe
@@ -682,6 +699,10 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
 def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 6: Model Comparison Summary.
 
+    Applies Bonferroni correction for 2 independent tests:
+    - Overall Pass Rate
+    - Mean Score
+
     Args:
         runs_df: Runs DataFrame
 
@@ -690,6 +711,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     """
     models = sorted(runs_df["agent_model"].unique())
+    n_tests = 2  # Pass rate + mean score
 
     if len(models) != 2:
         return "# Table 6: Model Comparison\n\nError: Expected 2 models", ""
@@ -703,7 +725,8 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     # Pass rate
     pr1, pr2 = m1_data["passed"].mean(), m2_data["passed"].mean()
-    _, pr_pvalue = mann_whitney_u(m1_data["passed"].astype(int), m2_data["passed"].astype(int))
+    _, pr_pvalue_raw = mann_whitney_u(m1_data["passed"].astype(int), m2_data["passed"].astype(int))
+    pr_pvalue = bonferroni_correction(pr_pvalue_raw, n_tests)
     metrics.append(
         {
             "Metric": "Overall Pass Rate",
@@ -716,7 +739,8 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     # Mean score
     ms1, ms2 = m1_data["score"].mean(), m2_data["score"].mean()
-    _, ms_pvalue = mann_whitney_u(m1_data["score"], m2_data["score"])
+    _, ms_pvalue_raw = mann_whitney_u(m1_data["score"], m2_data["score"])
+    ms_pvalue = bonferroni_correction(ms_pvalue_raw, n_tests)
     metrics.append(
         {"Metric": "Mean Score", model1: ms1, model2: ms2, "Δ": ms1 - ms2, "p-value": ms_pvalue}
     )
