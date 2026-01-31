@@ -11,6 +11,7 @@ from __future__ import annotations
 import pandas as pd
 
 from scylla.analysis.loader import RunData
+from scylla.analysis.stats import compute_consistency, compute_cop
 
 
 def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
@@ -138,15 +139,15 @@ def build_subtests_df(runs_df: pd.DataFrame) -> pd.DataFrame:
         median_score = group["score"].median()
         std_score = group["score"].std()
 
-        # Consistency: 1 - coefficient of variation
-        consistency = 1 - (std_score / mean_score) if mean_score > 0 else 0.0
+        # Consistency: 1 - coefficient of variation (clamped to [0, 1])
+        consistency = compute_consistency(mean_score, std_score)
 
         mean_cost = group["cost_usd"].mean()
         total_cost = group["cost_usd"].sum()
         mean_duration = group["duration_seconds"].mean()
 
         # Cost-of-Pass: mean_cost / pass_rate (infinity if pass_rate == 0)
-        cop = mean_cost / pass_rate if pass_rate > 0 else float("inf")
+        cop = compute_cop(mean_cost, pass_rate)
 
         # Grade distribution
         grade_counts = group["grade"].value_counts().to_dict()
@@ -157,8 +158,9 @@ def build_subtests_df(runs_df: pd.DataFrame) -> pd.DataFrame:
         grade_d = grade_counts.get("D", 0)
         grade_f = grade_counts.get("F", 0)
 
-        # Modal grade
-        modal_grade = group["grade"].mode()[0] if len(group) > 0 else "F"
+        # Modal grade (handle case where mode() returns empty Series)
+        mode_result = group["grade"].mode()
+        modal_grade = mode_result[0] if len(mode_result) > 0 else "F"
 
         return pd.Series(
             {
@@ -205,10 +207,10 @@ def tier_summary(runs_df: pd.DataFrame) -> pd.DataFrame:
         mean_score = group["score"].mean()
         median_score = group["score"].median()
         std_score = group["score"].std()
-        consistency = 1 - (std_score / mean_score) if mean_score > 0 else 0.0
+        consistency = compute_consistency(mean_score, std_score)
         mean_cost = group["cost_usd"].mean()
         total_cost = group["cost_usd"].sum()
-        cop = mean_cost / pass_rate if pass_rate > 0 else float("inf")
+        cop = compute_cop(mean_cost, pass_rate)
 
         return pd.Series(
             {

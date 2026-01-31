@@ -14,6 +14,7 @@ from scylla.analysis.stats import (
     bonferroni_correction,
     bootstrap_ci,
     cliffs_delta,
+    compute_consistency,
     krippendorff_alpha,
     mann_whitney_u,
     pearson_correlation,
@@ -789,15 +790,20 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         }
     )
 
-    # Consistency
-    consistency1 = (
-        1
-        - (m1_data.groupby("tier")["score"].std() / m1_data.groupby("tier")["score"].mean()).mean()
-    )
-    consistency2 = (
-        1
-        - (m2_data.groupby("tier")["score"].std() / m2_data.groupby("tier")["score"].mean()).mean()
-    )
+    # Consistency (using helper to avoid NaN and negative values)
+    tier_stats1 = m1_data.groupby("tier")["score"].agg(["mean", "std"])
+    tier_stats2 = m2_data.groupby("tier")["score"].agg(["mean", "std"])
+
+    consistencies1 = [
+        compute_consistency(row["mean"], row["std"]) for _, row in tier_stats1.iterrows()
+    ]
+    consistencies2 = [
+        compute_consistency(row["mean"], row["std"]) for _, row in tier_stats2.iterrows()
+    ]
+
+    consistency1 = sum(consistencies1) / len(consistencies1) if consistencies1 else 0.0
+    consistency2 = sum(consistencies2) / len(consistencies2) if consistencies2 else 0.0
+
     metrics.append(
         {
             "Metric": "Mean Consistency",
