@@ -609,8 +609,6 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
                 }
             )
 
-    df = pd.DataFrame(rows)
-
     # Add totals row per model
     for model in sorted(runs_df["agent_model"].unique()):
         model_subset = runs_df[runs_df["agent_model"] == model]
