@@ -331,10 +331,11 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
     judges = []
     judge_dir = run_dir / "judge"
     if judge_dir.exists():
-        for judge_num in [1, 2, 3]:
-            judge_path = judge_dir / f"judge_0{judge_num}" / "judgment.json"
-            if judge_path.exists():
-                judges.append(load_judgment(judge_path, judge_num))
+        # Dynamically discover all judge directories
+        for judge_path in sorted(judge_dir.glob("judge_*/judgment.json")):
+            # Extract judge number from directory name (e.g., "judge_01" -> 1)
+            judge_num = int(judge_path.parent.name.replace("judge_", ""))
+            judges.append(load_judgment(judge_path, judge_num))
 
     return RunData(
         experiment=experiment,

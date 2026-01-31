@@ -15,6 +15,7 @@ from scylla.analysis.stats import (
     bootstrap_ci,
     cliffs_delta,
     compute_consistency,
+    compute_cop,
     krippendorff_alpha,
     mann_whitney_u,
     pearson_correlation,
@@ -57,7 +58,7 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
 
             # Cost-of-Pass
             mean_cost = subset["cost_usd"].mean()
-            cop = mean_cost / pr_mean if pr_mean > 0 else float("inf")
+            cop = compute_cop(mean_cost, pr_mean)
 
             # Count subtests
             n_subtests = subset["subtest"].nunique()
@@ -818,12 +819,26 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         )
 
         # Frontier CoP
-        cop1 = (
-            m1_data.groupby("tier")["cost_usd"].mean() / m1_data.groupby("tier")["passed"].mean()
-        ).min()
-        cop2 = (
-            m2_data.groupby("tier")["cost_usd"].mean() / m2_data.groupby("tier")["passed"].mean()
-        ).min()
+        # Compute CoP per tier, then take minimum (frontier)
+        tier_costs_1 = m1_data.groupby("tier")["cost_usd"].mean()
+        tier_pass_rates_1 = m1_data.groupby("tier")["passed"].mean()
+        tier_cops_1 = pd.Series(
+            {
+                tier: compute_cop(tier_costs_1[tier], tier_pass_rates_1[tier])
+                for tier in tier_costs_1.index
+            }
+        )
+        cop1 = tier_cops_1.min()
+
+        tier_costs_2 = m2_data.groupby("tier")["cost_usd"].mean()
+        tier_pass_rates_2 = m2_data.groupby("tier")["passed"].mean()
+        tier_cops_2 = pd.Series(
+            {
+                tier: compute_cop(tier_costs_2[tier], tier_pass_rates_2[tier])
+                for tier in tier_costs_2.index
+            }
+        )
+        cop2 = tier_cops_2.min()
         all_metrics.append(
             {
                 "Pair": f"{model1} vs {model2}",
