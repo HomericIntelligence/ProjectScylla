@@ -12,7 +12,6 @@ from scipy import stats as scipy_stats
 
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
-    bonferroni_correction,
     bootstrap_ci,
     cliffs_delta,
     compute_consistency,
@@ -507,10 +506,13 @@ def table04_criteria_performance(
 ) -> tuple[str, str]:
     """Generate Table 4: Per-Criteria Performance.
 
+    Uses Mann-Whitney U tests with Holm-Bonferroni correction for cross-model
+    comparison of criteria scores.
+
     Args:
         criteria_df: Criteria DataFrame
         runs_df: Runs DataFrame for model filtering
-        criteria_weights: Optional criteria weights dict. Falls back to hardcoded defaults.
+        criteria_weights: Optional criteria weights dict. Derived from data if not provided.
 
     Returns:
         Tuple of (markdown_table, latex_table)
@@ -555,13 +557,14 @@ def table04_criteria_performance(
 
     df = pd.DataFrame(criterion_stats)
 
-    # Cross-model comparison (Mann-Whitney U tests with Bonferroni correction)
-    # 5 criteria comparisons
-    n_tests = len(criteria_weights)
-
+    # Cross-model comparison (Mann-Whitney U tests with Holm-Bonferroni correction)
+    # Collect all raw p-values first, then apply correction
     if len(df["Model"].unique()) == 2:
         models = sorted(df["Model"].unique())
         model1, model2 = models[0], models[1]
+
+        raw_p_values = []
+        test_metadata = []
 
         for criterion in criteria_weights.keys():
             m1_data = criteria_df[
@@ -577,12 +580,22 @@ def table04_criteria_performance(
 
             if len(m1_numeric) > 0 and len(m2_numeric) > 0:
                 _, pvalue_raw = mann_whitney_u(m1_numeric, m2_numeric)
-                pvalue = bonferroni_correction(pvalue_raw, n_tests)
                 winner = model1 if m1_numeric.mean() > m2_numeric.mean() else model2
 
-                # Add to dataframe
-                df.loc[(df["Model"] == model1) & (df["Criterion"] == criterion), "p-value"] = pvalue
-                df.loc[(df["Model"] == model1) & (df["Criterion"] == criterion), "Winner"] = winner
+                raw_p_values.append(pvalue_raw)
+                test_metadata.append({"criterion": criterion, "winner": winner})
+
+        # Apply Holm-Bonferroni correction to all raw p-values
+        if raw_p_values:
+            corrected_p_values = holm_bonferroni_correction(raw_p_values)
+
+            for i, metadata in enumerate(test_metadata):
+                df.loc[
+                    (df["Model"] == model1) & (df["Criterion"] == metadata["criterion"]), "p-value"
+                ] = corrected_p_values[i]
+                df.loc[
+                    (df["Model"] == model1) & (df["Criterion"] == metadata["criterion"]), "Winner"
+                ] = metadata["winner"]
 
     # Get models dynamically
     models = sorted(df["Model"].unique())
@@ -831,7 +844,7 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
 def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 6: Model Comparison Summary.
 
-    Applies Bonferroni correction for all pairwise model comparisons.
+    Applies Holm-Bonferroni correction for all pairwise model comparisons.
     For N models, performs C(N,2) pairwise comparisons, each with 2 tests (pass rate + mean score).
 
     Args:
@@ -850,14 +863,10 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     # Generate all pairwise comparisons
     model_pairs = list(combinations(models, 2))
-    n_tests_per_pair = 2  # pass rate + mean score per pair
-    n_total_tests = n_tests_per_pair * len(model_pairs)
 
-    # For backward compatibility, if exactly 2 models, use original n_tests
-    n_tests = 2 if len(models) == 2 else n_total_tests
-
-    # Build comparison table for all pairs
-    all_metrics = []
+    # Collect all raw p-values and metadata for Holm-Bonferroni correction
+    raw_p_values = []
+    test_metadata = []
 
     for model1, model2 in model_pairs:
         m1_data = runs_df[runs_df["agent_model"] == model1]
@@ -868,32 +877,46 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         _, pr_pvalue_raw = mann_whitney_u(
             m1_data["passed"].astype(int), m2_data["passed"].astype(int)
         )
-        pr_pvalue = bonferroni_correction(pr_pvalue_raw, n_tests)
-
-        all_metrics.append(
+        raw_p_values.append(pr_pvalue_raw)
+        test_metadata.append(
             {
-                "Pair": f"{model1} vs {model2}",
-                "Metric": "Overall Pass Rate",
-                model1: pr1,
-                model2: pr2,
-                "Δ": pr1 - pr2,
-                "p-value": pr_pvalue,
+                "pair": (model1, model2),
+                "metric": "Overall Pass Rate",
+                "model1_val": pr1,
+                "model2_val": pr2,
+                "delta": pr1 - pr2,
             }
         )
 
         # Mean score
         ms1, ms2 = m1_data["score"].mean(), m2_data["score"].mean()
         _, ms_pvalue_raw = mann_whitney_u(m1_data["score"], m2_data["score"])
-        ms_pvalue = bonferroni_correction(ms_pvalue_raw, n_tests)
+        raw_p_values.append(ms_pvalue_raw)
+        test_metadata.append(
+            {
+                "pair": (model1, model2),
+                "metric": "Mean Score",
+                "model1_val": ms1,
+                "model2_val": ms2,
+                "delta": ms1 - ms2,
+            }
+        )
 
+    # Apply Holm-Bonferroni correction to all raw p-values
+    corrected_p_values = holm_bonferroni_correction(raw_p_values)
+
+    # Build comparison table with corrected p-values
+    all_metrics = []
+    for i, metadata in enumerate(test_metadata):
+        model1, model2 = metadata["pair"]
         all_metrics.append(
             {
                 "Pair": f"{model1} vs {model2}",
-                "Metric": "Mean Score",
-                model1: ms1,
-                model2: ms2,
-                "Δ": ms1 - ms2,
-                "p-value": ms_pvalue,
+                "Metric": metadata["metric"],
+                model1: metadata["model1_val"],
+                model2: metadata["model2_val"],
+                "Δ": metadata["delta"],
+                "p-value": corrected_p_values[i],
             }
         )
 
