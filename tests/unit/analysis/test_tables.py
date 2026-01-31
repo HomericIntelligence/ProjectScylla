@@ -98,3 +98,34 @@ def test_table01_consistency_clamped():
         if "Consistency" in markdown
         else True
     )
+
+
+def test_table01_uses_compute_cop():
+    """Test that table01 uses shared compute_cop function.
+
+    Regression test for P1 bug where inline formula duplicated compute_cop logic.
+    """
+    import pandas as pd
+
+    from scylla.analysis.tables import table01_tier_summary
+
+    # Create test data with zero pass rate to trigger inf CoP
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 5,
+            "tier": ["T0"] * 5,
+            "score": [0.0] * 5,
+            "passed": [False] * 5,  # Zero pass rate
+            "cost_usd": [1.0] * 5,
+            "subtest": [f"test_{i}" for i in range(5)],
+        }
+    )
+
+    markdown, latex = table01_tier_summary(test_data)
+
+    # Verify tables generated
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+
+    # Verify that inf appears in output (compute_cop returns inf for zero pass rate)
+    assert "inf" in markdown.lower() or "∞" in markdown

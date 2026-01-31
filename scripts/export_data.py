@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 from scylla.analysis import (
@@ -19,6 +20,14 @@ from scylla.analysis import (
     build_subtests_df,
     load_all_experiments,
 )
+
+
+def json_nan_handler(obj):
+    """Convert NaN/inf values to None for JSON serialization."""
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+    return obj
 
 
 def main() -> None:
@@ -115,7 +124,7 @@ def main() -> None:
 
     summary_path = output_dir / "summary.json"
     with summary_path.open("w") as f:
-        json.dump(summary, f, indent=2)
+        json.dump(summary, f, indent=2, default=json_nan_handler)
     print("  Exported summary.json")
 
     print("\nExport complete!")
