@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import bonferroni_correction, bootstrap_ci, mann_whitney_u
 
@@ -26,7 +26,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         render: Whether to render to PNG/PDF
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Compute pass rate per (agent_model, tier)
     tier_stats = (
@@ -68,13 +68,13 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
 
     # Compute statistical significance between consecutive tiers
     # Apply Bonferroni correction for 6 consecutive comparisons per model
-    n_tests = len(tier_order) - 1  # 6 consecutive comparisons
+    n_tests = len(TIER_ORDER) - 1  # 6 consecutive comparisons
     significance_data = []
     for model in runs_df["agent_model"].unique():
         model_runs = runs_df[runs_df["agent_model"] == model]
 
-        for i in range(len(tier_order) - 1):
-            tier1, tier2 = tier_order[i], tier_order[i + 1]
+        for i in range(len(TIER_ORDER) - 1):
+            tier1, tier2 = TIER_ORDER[i], TIER_ORDER[i + 1]
             tier1_data = model_runs[model_runs["tier"] == tier1]["passed"].astype(int)
             tier2_data = model_runs[model_runs["tier"] == tier2]["passed"].astype(int)
 
@@ -106,7 +106,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         alt.Chart(uplift_df)
         .mark_line(point=True)
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y("uplift:Q", title="Pass Rate Uplift vs T0 Baseline"),
             color=alt.Color(
                 "agent_model:N",
@@ -133,7 +133,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             alt.Chart(significant_points)
             .mark_text(text="*", fontSize=20, dy=-15, fontWeight="bold")
             .encode(
-                x=alt.X("tier:O", sort=tier_order),
+                x=alt.X("tier:O", sort=TIER_ORDER),
                 y="uplift:Q",
                 color=alt.Color(
                     "agent_model:N",
@@ -169,13 +169,13 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         render: Whether to render to PNG/PDF
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Compute consistency per subtest, then aggregate by tier
     consistency_data = []
 
     for model in runs_df["agent_model"].unique():
-        for tier in tier_order:
+        for tier in TIER_ORDER:
             # Get all subtests in this tier
             tier_subtests = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)][
                 "subtest"
@@ -225,7 +225,7 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         alt.Chart(consistency_df)
         .mark_line(point=True)
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y(
                 "mean_consistency:Q",
                 title="Consistency Score (1 - CV)",
@@ -253,7 +253,7 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         alt.Chart(consistency_df)
         .mark_area(opacity=0.2)
         .encode(
-            x=alt.X("tier:O", sort=tier_order),
+            x=alt.X("tier:O", sort=TIER_ORDER),
             y="ci_low:Q",
             y2="ci_high:Q",
             color=alt.Color(

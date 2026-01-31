@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from scylla.analysis.figures import TIER_ORDER
 from scylla.analysis.stats import (
     bonferroni_correction,
     bootstrap_ci,
@@ -30,12 +31,12 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Compute statistics per (agent_model, tier)
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
-        for tier in tier_order:
+        for tier in TIER_ORDER:
             subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
             if len(subset) == 0:
                 continue
@@ -152,7 +153,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
     n_tests = 7  # 6 consecutive + 1 overall
 
     # Compute pairwise comparisons
@@ -160,8 +161,8 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     for model in sorted(runs_df["agent_model"].unique()):
         model_runs = runs_df[runs_df["agent_model"] == model]
 
-        for i in range(len(tier_order) - 1):
-            tier1, tier2 = tier_order[i], tier_order[i + 1]
+        for i in range(len(TIER_ORDER) - 1):
+            tier1, tier2 = TIER_ORDER[i], TIER_ORDER[i + 1]
             tier1_data = model_runs[model_runs["tier"] == tier1]
             tier2_data = model_runs[model_runs["tier"] == tier2]
 
@@ -581,12 +582,12 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
         Tuple of (markdown_table, latex_table)
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Compute cost statistics per (agent_model, tier)
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
-        for tier in tier_order:
+        for tier in TIER_ORDER:
             subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
             if len(subset) == 0:
                 continue
@@ -877,12 +878,12 @@ def table07_subtest_detail(runs_df: pd.DataFrame, subtests_df: pd.DataFrame) -> 
         Tuple of (markdown_table, latex_table)
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Build detailed subtest table
     rows = []
     for model in sorted(runs_df["agent_model"].unique()):
-        for tier in tier_order:
+        for tier in TIER_ORDER:
             tier_subtests = subtests_df[
                 (subtests_df["agent_model"] == model) & (subtests_df["tier"] == tier)
             ].sort_values("subtest")

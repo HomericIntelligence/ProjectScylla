@@ -11,7 +11,7 @@ import altair as alt
 import numpy as np
 import pandas as pd
 
-from scylla.analysis.figures import COLORS
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -27,11 +27,11 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
 
     """
     # Compute CoP per (agent_model, tier)
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     stats = []
     for model in runs_df["agent_model"].unique():
-        for tier in tier_order:
+        for tier in TIER_ORDER:
             subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
             if len(subset) == 0:
                 continue
@@ -77,7 +77,7 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         alt.Chart(finite_stats)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y(
                 "cop:Q",
                 title="Cost-of-Pass (USD, log scale)",
@@ -113,7 +113,7 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             alt.Chart(inf_stats)
             .mark_text(text="∞", size=20, dy=-10)
             .encode(
-                x=alt.X("tier:O", sort=tier_order),
+                x=alt.X("tier:O", sort=TIER_ORDER),
                 y=alt.Y("cop_plot:Q"),
                 xOffset="agent_model:N",
                 color=alt.Color(

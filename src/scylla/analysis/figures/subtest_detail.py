@@ -10,6 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
+from scylla.analysis.figures import TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -24,7 +25,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         render: Whether to render to PNG/PDF
 
     """
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+    # Removed: using TIER_ORDER from figures module
 
     # Aggregate durations by (agent_model, tier)
     duration_agg = (
@@ -62,7 +63,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         alt.Chart(duration_long)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
             y=alt.Y("duration:Q", title="Mean Duration (seconds)"),
             color=alt.Color(
                 "phase_label:N",
@@ -104,8 +105,8 @@ def fig15_subtest_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     heatmap_data["subtest_label"] = heatmap_data["tier"] + "/" + heatmap_data["subtest"]
 
     # Sort subtests by tier then subtest number
-    tier_order = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
-    heatmap_data["tier_sort"] = heatmap_data["tier"].map({t: i for i, t in enumerate(tier_order)})
+    # Removed: using TIER_ORDER from figures module
+    heatmap_data["tier_sort"] = heatmap_data["tier"].map({t: i for i, t in enumerate(TIER_ORDER)})
     heatmap_data["subtest_num"] = heatmap_data["subtest"].astype(int)
     heatmap_data = heatmap_data.sort_values(["tier_sort", "subtest_num"])
 
