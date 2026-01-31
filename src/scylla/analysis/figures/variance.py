@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import TIER_ORDER, get_color_scale
+from scylla.analysis.figures import COLORS, TIER_ORDER
 from scylla.analysis.figures.spec_builder import save_figure
 
 
@@ -30,17 +30,16 @@ def fig01_score_variance_by_tier(
     # Prepare data
     data = runs_df[["agent_model", "tier", "score"]].copy()
 
-    # Get dynamic color scale for models
-    models = sorted(data["agent_model"].unique())
-    domain, range_ = get_color_scale("models", models)
-
     # Create base chart with faceting
     base = alt.Chart(data).encode(
         x=alt.X("tier:O", title="Tier", sort=TIER_ORDER),
         color=alt.Color(
             "agent_model:N",
             title="Agent Model",
-            scale=alt.Scale(domain=domain, range=range_),
+            scale=alt.Scale(
+                domain=list(COLORS["models"].keys()),
+                range=list(COLORS["models"].values()),
+            ),
         ),
     )
 
@@ -94,9 +93,6 @@ def fig03_failure_rate_by_tier(
     # Define grade order (F at bottom, S at top)
     grade_order = ["F", "D", "C", "B", "A", "S"]
 
-    # Get dynamic color scale for grades
-    domain, range_ = get_color_scale("grades", grade_order)
-
     # Create stacked bar chart
     chart = (
         alt.Chart(grade_counts)
@@ -108,7 +104,10 @@ def fig03_failure_rate_by_tier(
                 "grade:O",
                 title="Grade",
                 sort=grade_order,
-                scale=alt.Scale(domain=domain, range=range_),
+                scale=alt.Scale(
+                    domain=list(COLORS["grades"].keys()),
+                    range=list(COLORS["grades"].values()),
+                ),
             ),
             order=alt.Order("grade:O", sort="ascending"),
             tooltip=[
@@ -253,9 +252,6 @@ def fig18_failure_rate_by_test(
     # Sort by tier then subtest for display
     failure_df = failure_df.sort_values(["tier", "subtest"])
 
-    # Get dynamic color scale for tiers
-    domain, range_ = get_color_scale("tiers", TIER_ORDER)
-
     # Horizontal bar chart
     chart = (
         alt.Chart(failure_df)
@@ -271,7 +267,10 @@ def fig18_failure_rate_by_test(
                 "tier:N",
                 title="Tier",
                 sort=TIER_ORDER,
-                scale=alt.Scale(domain=domain, range=range_),
+                scale=alt.Scale(
+                    domain=list(COLORS["tiers"].keys()),
+                    range=list(COLORS["tiers"].values()),
+                ),
             ),
             tooltip=[
                 alt.Tooltip("tier:O", title="Tier"),
