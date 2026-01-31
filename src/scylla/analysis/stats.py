@@ -150,3 +150,27 @@ def krippendorff_alpha(ratings: np.ndarray, level: str = "ordinal") -> float:
 
     # Call the krippendorff package
     return float(krippendorff.alpha(reliability_data=reliability_data, level_of_measurement=level))
+
+
+def bonferroni_correction(p_value: float, n_tests: int) -> float:
+    """Apply Bonferroni correction for multiple comparisons.
+
+    Adjusts p-value by multiplying by the number of independent tests.
+    This controls the family-wise error rate (FWER) at the significance level.
+
+    Args:
+        p_value: Original p-value from single test
+        n_tests: Number of independent hypothesis tests performed
+
+    Returns:
+        Bonferroni-corrected p-value, clamped to [0, 1]
+
+    Example:
+        >>> # 6 independent tests at α=0.05 individual level
+        >>> # FWER = 1 - (1-0.05)^6 ≈ 0.26 (26% chance of Type I error)
+        >>> # Bonferroni corrects to α_adj = 0.05/6 ≈ 0.0083
+        >>> bonferroni_correction(0.04, 6)  # Original p=0.04 < 0.05
+        0.24  # Adjusted p=0.24 > 0.05, not significant after correction
+
+    """
+    return min(1.0, p_value * n_tests)
