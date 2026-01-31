@@ -40,19 +40,24 @@ def sample_runs_df():
                         else np.random.choice(["C", "D", "F"])
                     )
                     cost = np.random.uniform(0.01, 0.1)
-                    tokens_in = np.random.randint(1000, 10000)
-                    tokens_out = np.random.randint(500, 5000)
-                    latency = np.random.uniform(5.0, 30.0)
+
+                    # Token stats matching production schema
+                    input_tokens = np.random.randint(1000, 10000)
+                    output_tokens = np.random.randint(500, 5000)
+                    cache_creation_tokens = np.random.randint(0, 2000)
+                    cache_read_tokens = np.random.randint(0, 5000)
+                    total_tokens = (
+                        input_tokens + output_tokens + cache_creation_tokens + cache_read_tokens
+                    )
+
+                    # Duration stats matching production schema
+                    agent_duration = np.random.uniform(5.0, 25.0)
+                    judge_duration = np.random.uniform(1.0, 5.0)
+                    duration_seconds = agent_duration + judge_duration
 
                     # Calculate CoP and consistency for completeness
                     consistency = 1 - (np.random.uniform(0.05, 0.15) / score) if score > 0 else 0
                     consistency = max(0.0, min(1.0, consistency))
-
-                    # Total tokens for model_comparison
-                    total_tokens = tokens_in + tokens_out
-
-                    # Duration (alias for latency for compatibility)
-                    duration_seconds = latency
 
                     data.append(
                         {
@@ -65,12 +70,16 @@ def sample_runs_df():
                             "score": score,
                             "grade": grade,
                             "cost_usd": cost,
-                            "tokens_in": tokens_in,
-                            "tokens_out": tokens_out,
+                            "input_tokens": input_tokens,
+                            "output_tokens": output_tokens,
+                            "cache_creation_tokens": cache_creation_tokens,
+                            "cache_read_tokens": cache_read_tokens,
                             "total_tokens": total_tokens,
-                            "latency_seconds": latency,
                             "duration_seconds": duration_seconds,
+                            "agent_duration_seconds": agent_duration,
+                            "judge_duration_seconds": judge_duration,
                             "consistency": consistency,
+                            "exit_code": 0,
                         }
                     )
 
@@ -179,8 +188,9 @@ def sample_subtests_df(sample_runs_df):
                 "passed": "mean",
                 "score": ["mean", "std"],
                 "cost_usd": ["mean", "std"],
-                "tokens_in": "sum",
-                "tokens_out": "sum",
+                "input_tokens": "sum",
+                "output_tokens": "sum",
+                "total_tokens": "sum",
             }
         )
         .reset_index()
@@ -197,8 +207,9 @@ def sample_subtests_df(sample_runs_df):
         "std_score",
         "mean_cost",
         "std_cost",
-        "total_tokens_in",
-        "total_tokens_out",
+        "total_input_tokens",
+        "total_output_tokens",
+        "total_tokens",
     ]
 
     return aggregated
