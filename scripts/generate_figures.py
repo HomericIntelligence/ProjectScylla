@@ -99,12 +99,6 @@ def main() -> None:
         help="List available figures and exit",
     )
     parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Verbose logging",
-    )
-    parser.add_argument(
         "--exclude",
         type=str,
         nargs="*",

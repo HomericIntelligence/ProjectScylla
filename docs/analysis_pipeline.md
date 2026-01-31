@@ -56,7 +56,10 @@ Each figure has three files:
 | `fig12_consistency` | Consistency by tier with 95% CI | runs_df |
 | `fig13_latency` | Latency breakdown by tier | runs_df |
 | `fig14_judge_agreement` | Inter-judge correlation scatter matrix | judges_df |
-| `fig15_subtest_detail` | Subtest performance heatmap | subtests_df |
+| `fig15_subtest_heatmap` | Subtest performance heatmap | runs_df |
+| `fig16_success_variance_by_test` | Success variance by test | runs_df |
+| `fig17_judge_variance_overall` | Overall judge variance | judges_df |
+| `fig18_failure_rate_by_test` | Failure rate by test | runs_df |
 
 ## Usage
 
@@ -182,10 +185,9 @@ From `docs/data/summary.json`:
 
 ### Statistical Analysis (`scylla.analysis.stats`)
 
-- Bootstrap confidence intervals (95% CI, 10K resamples)
+- Bootstrap confidence intervals (95% CI, 10K resamples, BCa method)
 - Mann-Whitney U test (non-parametric significance)
-- Kruskal-Wallis H test (multi-group)
-- Effect sizes: Cliff's delta (non-parametric), Cohen's d (parametric)
+- Cliff's delta (non-parametric effect size)
 - Inter-rater reliability: Krippendorff's alpha, Spearman/Pearson correlation
 - Multiple comparison correction: Bonferroni
 
@@ -266,7 +268,7 @@ pixi run -e analysis python scripts/generate_all_results.py
 
 This script runs:
 1. `export_data.py` - Export DataFrames to CSV
-2. `generate_figures.py --no-render` - Generate all 15 figures
+2. `generate_figures.py --no-render` - Generate all 18 figures
 3. `generate_tables.py` - Generate all 7 tables
 
 ## Next Steps
@@ -284,7 +286,7 @@ This entire module uses Python because it interfaces with Python-only scientific
 
 - **pandas**: DataFrame operations, aggregation
 - **numpy**: Numerical operations, array manipulation
-- **scipy**: Statistical tests (Mann-Whitney, Kruskal-Wallis, bootstrap)
+- **scipy**: Statistical tests (Mann-Whitney, bootstrap)
 - **matplotlib/seaborn**: Plotting libraries (optional renderers)
 - **altair**: Vega-Lite specification generation
 
