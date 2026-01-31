@@ -47,11 +47,11 @@ FIGURES = {
     "fig08_cost_quality_pareto": ("cost", fig08_cost_quality_pareto),
     "fig09_criteria_by_tier": ("criteria", fig09_criteria_by_tier),
     "fig10_score_violin": ("tier", fig10_score_violin),
-    "fig11_tier_uplift": ("variance", fig11_tier_uplift),
-    "fig12_consistency": ("variance", fig12_consistency),
-    "fig13_latency": ("variance", fig13_latency),
+    "fig11_tier_uplift": ("model", fig11_tier_uplift),
+    "fig12_consistency": ("model", fig12_consistency),
+    "fig13_latency": ("cost", fig13_latency),
     "fig14_judge_agreement": ("judge", fig14_judge_agreement),
-    "fig15_subtest_heatmap": ("variance", fig15_subtest_heatmap),
+    "fig15_subtest_heatmap": ("subtest", fig15_subtest_heatmap),
 }
 
 

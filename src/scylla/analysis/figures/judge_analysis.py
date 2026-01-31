@@ -35,7 +35,8 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
         "claude-sonnet-4-5-20250129": "Sonnet 4.5",
         "claude-haiku-4-5-20241223": "Haiku 4.5",
     }
-    data["judge_display"] = data["judge_model"].map(model_name_map)
+    # Use model name as fallback if not in map (prevents NaN)
+    data["judge_display"] = data["judge_model"].apply(lambda x: model_name_map.get(x, x))
 
     # Removed: using TIER_ORDER from figures module
     judge_order = ["Opus 4.5", "Sonnet 4.5", "Haiku 4.5"]
