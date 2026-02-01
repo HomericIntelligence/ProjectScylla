@@ -192,36 +192,70 @@ def sample_criteria_df(sample_judges_df):
 
 @pytest.fixture
 def sample_subtests_df(sample_runs_df):
-    """Sample subtests DataFrame (pre-aggregated)."""
-    aggregated = (
-        sample_runs_df.groupby(["experiment", "agent_model", "tier", "subtest"])
-        .agg(
+    """Sample subtests DataFrame matching production build_subtests_df schema.
+
+    Must match columns produced by dataframes.build_subtests_df().
+    """
+    from scylla.analysis.stats import compute_consistency, compute_cop
+
+    def compute_subtest_stats(group):
+        """Compute statistics for a subtest group (matches production)."""
+        pass_rate = group["passed"].mean()
+        mean_score = group["score"].mean()
+        median_score = group["score"].median()
+        std_score = group["score"].std()
+
+        # Impl-rate statistics
+        mean_impl_rate = group["impl_rate"].mean() if "impl_rate" in group.columns else np.nan
+        median_impl_rate = group["impl_rate"].median() if "impl_rate" in group.columns else np.nan
+        std_impl_rate = group["impl_rate"].std() if "impl_rate" in group.columns else np.nan
+
+        # Consistency
+        consistency = compute_consistency(mean_score, std_score)
+
+        # Cost metrics
+        mean_cost = group["cost_usd"].mean()
+        total_cost = group["cost_usd"].sum()
+        mean_duration = group["duration_seconds"].mean()
+        cop = compute_cop(mean_cost, pass_rate)
+
+        # Grade distribution
+        grade_counts = group["grade"].value_counts().to_dict()
+        grade_s = grade_counts.get("S", 0)
+        grade_a = grade_counts.get("A", 0)
+        grade_b = grade_counts.get("B", 0)
+        grade_c = grade_counts.get("C", 0)
+        grade_d = grade_counts.get("D", 0)
+        grade_f = grade_counts.get("F", 0)
+
+        # Modal grade
+        mode_result = group["grade"].mode()
+        modal_grade = mode_result[0] if len(mode_result) > 0 else "F"
+
+        return pd.Series(
             {
-                "passed": "mean",
-                "score": ["mean", "std"],
-                "cost_usd": ["mean", "std"],
-                "input_tokens": "sum",
-                "output_tokens": "sum",
-                "total_tokens": "sum",
+                "pass_rate": pass_rate,
+                "mean_score": mean_score,
+                "median_score": median_score,
+                "std_score": std_score,
+                "mean_impl_rate": mean_impl_rate,
+                "median_impl_rate": median_impl_rate,
+                "std_impl_rate": std_impl_rate,
+                "consistency": consistency,
+                "mean_cost": mean_cost,
+                "total_cost": total_cost,
+                "mean_duration": mean_duration,
+                "cop": cop,
+                "grade_S": grade_s,
+                "grade_A": grade_a,
+                "grade_B": grade_b,
+                "grade_C": grade_c,
+                "grade_D": grade_d,
+                "grade_F": grade_f,
+                "modal_grade": modal_grade,
             }
         )
-        .reset_index()
-    )
 
-    # Flatten multi-index columns
-    aggregated.columns = [
-        "experiment",
-        "agent_model",
-        "tier",
-        "subtest",
-        "pass_rate",
-        "mean_score",
-        "std_score",
-        "mean_cost",
-        "std_cost",
-        "total_input_tokens",
-        "total_output_tokens",
-        "total_tokens",
-    ]
-
-    return aggregated
+    # Group by experiment, agent_model, tier, subtest (same as production)
+    grouped = sample_runs_df.groupby(["experiment", "agent_model", "tier", "subtest"])
+    return grouped.apply(compute_subtest_stats, include_groups=False).reset_index()
