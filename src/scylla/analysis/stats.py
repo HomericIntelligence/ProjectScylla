@@ -59,6 +59,14 @@ def bootstrap_ci(
         val = float(mean)
         return val, val, val
 
+    # Guard against zero variance (BCa fails on degenerate distributions)
+    if np.std(data_array) == 0:
+        logger.debug(
+            "Bootstrap CI called with zero variance data. " "Returning point estimate as CI bounds."
+        )
+        val = float(mean)
+        return val, val, val
+
     # Use scipy's bootstrap with BCa method for better coverage
     res = stats.bootstrap(
         (data_array,),
@@ -113,11 +121,17 @@ def cliffs_delta(group1: pd.Series | np.ndarray, group2: pd.Series | np.ndarray)
 
     Uses vectorized numpy operations for performance (~50x faster than loops).
 
-    Interpretation:
-        |δ| < 0.147: negligible
-        |δ| < 0.33: small
-        |δ| < 0.474: medium
-        |δ| >= 0.474: large
+    Interpretation (Romano et al., 2006):
+        |δ| < 0.11: negligible
+        |δ| < 0.28: small
+        |δ| < 0.43: medium
+        |δ| >= 0.43: large
+
+    Reference:
+        Romano, J., Kromrey, J. D., Coraggio, J., & Skowronek, J. (2006).
+        Appropriate statistics for ordinal level data: Should we really be using
+        t-test and Cohen's d for evaluating group differences on the NSSE and
+        other surveys? Annual meeting of the Florida Association of Institutional Research.
 
     Args:
         group1: First group

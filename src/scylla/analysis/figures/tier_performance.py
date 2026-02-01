@@ -10,6 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
+from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import bootstrap_ci
@@ -19,7 +20,7 @@ def fig04_pass_rate_by_tier(
     runs_df: pd.DataFrame,
     output_dir: Path,
     render: bool = True,
-    pass_threshold: float = 0.60,
+    pass_threshold: float | None = None,
 ) -> None:
     """Generate Fig 4: Pass-Rate by Tier.
 
@@ -29,9 +30,13 @@ def fig04_pass_rate_by_tier(
         runs_df: Runs DataFrame
         output_dir: Output directory
         render: Whether to render to PNG/PDF
-        pass_threshold: Reference line threshold (default: 0.60)
+        pass_threshold: Reference line threshold (default: from config.yaml)
 
     """
+    # Use config default if not provided
+    if pass_threshold is None:
+        pass_threshold = config.pass_threshold
+
     # Compute pass rate and CI per (agent_model, tier)
     # Derive tier order from data
     tier_order = derive_tier_order(runs_df)
