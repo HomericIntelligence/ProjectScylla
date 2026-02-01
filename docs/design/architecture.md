@@ -296,12 +296,12 @@ The Metrics component calculates quality, economic, and process metrics.
 
 **Quality Metrics**:
 
-| Metric | Formula | Description |
-|--------|---------|-------------|
-| Pass-Rate | `correct / total` | Proportion of correct solutions |
-| Impl-Rate | `satisfied / total_requirements` | Requirement satisfaction |
-| R_Prog | `achieved_steps / expected_steps` | Fine-grained progress |
-| Consistency | `1 - (std / mean)` | Output stability |
+| Metric | Formula | Description | Status |
+|--------|---------|-------------|--------|
+| Pass-Rate | `correct / total` | Proportion of correct solutions | Implemented |
+| Impl-Rate | `satisfied / total_requirements` | Requirement satisfaction | Implemented |
+| R_Prog | `achieved_steps / expected_steps` | Fine-grained progress | **Excluded** |
+| Consistency | `1 - (std / mean)` | Output stability | Implemented |
 
 **Economic Metrics**:
 

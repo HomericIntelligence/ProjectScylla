@@ -297,6 +297,8 @@ These metrics capture the quality of the agent's execution process, not just the
 
 ### Fine-Grained Progress Rate (R_Prog)
 
+**STATUS: EXCLUDED FROM CURRENT STUDY** (See unified_research.md §IV.D for rationale)
+
 Captures incremental advancements through the execution trajectory.
 
 ```
@@ -312,6 +314,8 @@ r_prog = achieved_steps / expected_steps
 - 0.0 = no progress
 
 **Why R_Prog?** Diagnoses where agents fail in multi-step tasks.
+
+**Exclusion Rationale:** Requires execution trajectory instrumentation (step tracking, progress monitoring) not present in current data collection infrastructure. Impl-Rate provides adequate requirement-level granularity without needing intermediate state analysis.
 
 ### Strategic Drift
 
