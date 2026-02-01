@@ -1011,7 +1011,7 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
 
             # CoP
             pass_rate = subset["passed"].mean()
-            cop = mean_cost / pass_rate if pass_rate > 0 else float("inf")
+            cop = compute_cop(mean_cost, pass_rate)
 
             # Token breakdown
             input_tokens = subset["input_tokens"].mean()
