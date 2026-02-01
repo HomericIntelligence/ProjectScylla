@@ -10,6 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
+from scylla.analysis.config import config
 from scylla.analysis.figures import get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 from scylla.analysis.stats import holm_bonferroni_correction, ols_regression, spearman_correlation
@@ -29,12 +30,8 @@ def fig20_metric_correlation_heatmap(
         render: Whether to render to PNG/PDF
 
     """
-    metrics = {
-        "score": "Score",
-        "cost_usd": "Cost (USD)",
-        "total_tokens": "Total Tokens",
-        "duration_seconds": "Duration (s)",
-    }
+    # Get metrics from centralized config
+    metrics = config.correlation_metrics
 
     # Compute correlations per model
     correlations = []
