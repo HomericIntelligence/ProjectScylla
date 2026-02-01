@@ -107,21 +107,21 @@ Components are systematically removed to quantify marginal contributions:
 
 ### IV.A. Performance Metrics
 
-| Metric | Definition | Purpose |
-|--------|------------|---------|
-| **Full Completion Score (S_Full)** | Binary/scalar goal completion | Final success measurement |
-| **Fine-Grained Progress Rate (R_Prog)** | Incremental advancement tracking | Diagnose planning failures |
-| **Latency** | Query-to-resolution time | Operational efficiency |
-| **Consistency** | Output stability on identical inputs | Determinism validation |
+| Metric | Definition | Purpose | Status |
+|--------|------------|---------|--------|
+| **Full Completion Score (S_Full)** | Binary/scalar goal completion | Final success measurement | Implemented (Pass-Rate) |
+| **Fine-Grained Progress Rate (R_Prog)** | Incremental advancement tracking | Diagnose planning failures | **Excluded** (see §IV.D) |
+| **Latency** | Query-to-resolution time | Operational efficiency | Implemented |
+| **Consistency** | Output stability on identical inputs | Determinism validation | Implemented |
 
 ### IV.B. Quality Metrics
 
-| Metric | Category | Definition |
-|--------|----------|------------|
-| **Pass-Rate** | Functional | Automated test-case assessment |
-| **Implementation Rate (Impl-Rate)** | Semantic | LLM-as-Judge requirement verification |
-| **Change Fail Percentage (CFP)** | Stability | Production changes causing failures |
-| **PR Revert Rate** | Quality | Human-rejected agent-generated code |
+| Metric | Category | Definition | Status |
+|--------|----------|------------|--------|
+| **Pass-Rate** | Functional | Automated test-case assessment | Implemented |
+| **Implementation Rate (Impl-Rate)** | Semantic | LLM-as-Judge requirement verification | Implemented |
+| **Change Fail Percentage (CFP)** | Stability | Production changes causing failures | **Excluded** (see §IV.D) |
+| **PR Revert Rate** | Quality | Human-rejected agent-generated code | **Excluded** (see §IV.D) |
 
 ### IV.C. Economic Metrics
 
@@ -140,6 +140,49 @@ Key properties:
 - Dynamic calculation with differential input/output token pricing
 - Component-level cost breakdown (Orchestrator, Monitor, Tools)
 - Token distribution analysis per architectural module
+
+### IV.D. Metric Scope and Exclusions
+
+This study implements a focused subset of metrics optimized for initial publication and practical data collection constraints.
+
+**Implemented Metrics (Core Focus):**
+- **Pass-Rate**: Automated test-based success measurement
+- **Impl-Rate**: LLM-as-Judge semantic requirement satisfaction
+- **Consistency**: Output stability across runs (1 - CV)
+- **CoP**: Cost-of-Pass economic viability
+- **Latency**: Query-to-resolution time
+- **Token Distribution**: Component-level cost breakdown
+- **Krippendorff's Alpha**: Inter-rater reliability for judge consensus
+
+**Excluded Metrics (Future Work):**
+
+| Metric | Status | Exclusion Rationale |
+|--------|--------|---------------------|
+| **R_Prog** (Fine-Grained Progress) | Not Implemented | Requires execution trajectory instrumentation not present in current data collection. Would need: (1) task-specific step definitions, (2) progress tracking during agent execution, (3) expected vs. achieved step comparison. Impl-Rate provides adequate granularity for requirement satisfaction without trajectory analysis. |
+| **Strategic Drift** | Not Implemented | Requires goal alignment tracking across intermediate actions. Current architecture focuses on final outcomes rather than intermediate state analysis. |
+| **CFP** (Change Fail Percentage) | Not Implemented | Requires multi-run stability analysis with failure attribution. Current study focuses on single-run quality metrics. |
+| **PR Revert Rate** | Not Implemented | Requires human code review integration and production deployment tracking beyond current scope. |
+| **Ablation Score** | Not Implemented | Tier comparison methodology (T0-T6) provides architectural contribution analysis without requiring explicit ablation scoring. |
+
+**Design Rationale:**
+
+The implemented metrics provide:
+1. **Functional Coverage**: Pass-Rate measures correctness via automated tests
+2. **Semantic Coverage**: Impl-Rate captures requirement satisfaction beyond binary pass/fail
+3. **Economic Viability**: CoP enables cost-benefit analysis across tiers
+4. **Statistical Rigor**: Krippendorff's Alpha validates judge consensus
+5. **Process Efficiency**: Latency and token distribution identify bottlenecks
+
+This focused metric set enables:
+- Rigorous tier comparison (primary research question)
+- Economic sustainability assessment
+- Publication-quality statistical analysis
+- Practical data collection with existing infrastructure
+
+Future iterations may incorporate excluded metrics pending:
+- Enhanced agent instrumentation for trajectory tracking
+- Multi-run stability analysis infrastructure
+- Human review integration for production quality metrics
 
 ---
 
