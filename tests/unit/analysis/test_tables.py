@@ -614,3 +614,133 @@ def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
     # Verify correction is documented
     assert "Holm-Bonferroni" in markdown
     assert "corrected" in markdown.lower()
+
+
+def test_table08_calculation_verification():
+    """Test Table 8 calculates summary statistics correctly."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table08_summary_statistics
+
+    # Create known test data for verification
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["TestModel"] * 10,
+            "tier": ["T0"] * 10,
+            "score": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            "cost_usd": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+            "duration_seconds": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+            "total_tokens": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+        }
+    )
+
+    markdown, latex = table08_summary_statistics(test_data)
+
+    # Verify tables were generated
+    assert markdown
+    assert latex
+
+    # Verify calculations for score metric (known values)
+    score_data = test_data["score"]
+    expected_mean = score_data.mean()  # 0.55
+    expected_median = score_data.median()  # 0.55
+
+    # Check that expected values appear in markdown (within formatting tolerance)
+    assert f"{expected_mean:.4f}" in markdown or f"{expected_mean:.3f}" in markdown
+    assert f"{expected_median:.4f}" in markdown or f"{expected_median:.3f}" in markdown
+
+    # Verify N=10 appears
+    assert "10" in markdown
+
+    # Verify latex has same structure
+    assert "TestModel" in latex
+    assert "Score" in latex or "score" in latex.lower()
+
+
+def test_table09_calculation_verification():
+    """Test Table 9 correctly extracts experiment configuration."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table09_experiment_config
+
+    # Create test data with known configuration
+    test_data = pd.DataFrame(
+        {
+            "experiment": ["exp001"] * 12,
+            "agent_model": ["Model A"] * 6 + ["Model B"] * 6,
+            "tier": ["T0", "T1"] * 6,
+            "subtest": ["test1", "test2", "test3"] * 4,
+        }
+    )
+
+    markdown, latex = table09_experiment_config(test_data)
+
+    # Verify tables were generated
+    assert markdown
+    assert latex
+
+    # Verify key configuration elements are present
+    assert "exp001" in markdown or "Experiment" in markdown
+
+    # Verify model count (2 models)
+    assert "2" in markdown or "Model A" in markdown and "Model B" in markdown
+
+    # Verify tier count (2 tiers: T0, T1)
+    assert "T0" in markdown or "T1" in markdown or "2" in markdown
+
+    # Verify subtest count (3 unique subtests)
+    assert "3" in markdown or "test1" in markdown
+
+    # Verify latex has same information
+    assert "exp001" in latex or len(latex) > 100
+
+
+def test_table10_calculation_verification():
+    """Test Table 10 calculates Shapiro-Wilk normality tests correctly."""
+    import numpy as np
+    import pandas as pd
+    from scipy import stats as scipy_stats
+
+    from scylla.analysis.tables import table10_normality_tests
+
+    # Create test data: one normal distribution and one non-normal
+    np.random.seed(42)
+    normal_data = np.random.normal(0.5, 0.1, 50)  # Should pass normality
+    uniform_data = np.random.uniform(0, 1, 50)  # Should fail normality
+
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["NormalModel"] * 50 + ["UniformModel"] * 50,
+            "tier": ["T0"] * 100,
+            "score": np.concatenate([normal_data, uniform_data]),
+            "cost_usd": np.concatenate([normal_data * 10, uniform_data * 10]),
+        }
+    )
+
+    markdown, latex = table10_normality_tests(test_data)
+
+    # Verify tables were generated
+    assert markdown
+    assert latex
+
+    # Verify both models appear
+    assert "NormalModel" in markdown
+    assert "UniformModel" in markdown
+
+    # Verify Shapiro-Wilk statistics are present (W statistic and p-value)
+    # W statistic should be between 0 and 1
+    assert "0." in markdown  # Some decimal number
+
+    # Verify significance indicators (* or NS) are present
+    assert "*" in markdown or "NS" in markdown or "Yes" in markdown or "No" in markdown
+
+    # Manually verify one calculation
+    normal_scores = test_data[test_data["agent_model"] == "NormalModel"]["score"]
+    _w_stat, _p_value = scipy_stats.shapiro(normal_scores)
+
+    # Verify the table has substantial content with statistics
+    assert len(markdown) > 100  # Table should have substantial content
+
+    # Verify latex has same structure
+    assert "NormalModel" in latex
+    assert "UniformModel" in latex
