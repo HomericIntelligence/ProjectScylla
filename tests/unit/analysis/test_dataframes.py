@@ -110,29 +110,51 @@ def test_build_criteria_df_structure(sample_criteria_df):
 
 
 def test_build_subtests_df_structure(sample_subtests_df):
-    """Test subtests DataFrame has expected structure."""
+    """Test subtests DataFrame has expected structure matching production.
+
+    Must match columns produced by dataframes.build_subtests_df().
+    """
     required_cols = [
+        # Grouping keys
         "experiment",
         "agent_model",
         "tier",
         "subtest",
+        # Score metrics
         "pass_rate",
         "mean_score",
+        "median_score",
         "std_score",
+        # Impl-rate metrics
+        "mean_impl_rate",
+        "median_impl_rate",
+        "std_impl_rate",
+        # Other metrics
+        "consistency",
         "mean_cost",
-        "std_cost",
+        "total_cost",
+        "mean_duration",
+        "cop",
+        # Grade distribution
+        "grade_S",
+        "grade_A",
+        "grade_B",
+        "grade_C",
+        "grade_D",
+        "grade_F",
+        "modal_grade",
     ]
 
     for col in required_cols:
-        assert col in sample_subtests_df.columns
+        assert col in sample_subtests_df.columns, f"Missing column: {col}"
 
-    # Pass rate should be in [0, 1]
+    # Verify data types and ranges
     assert sample_subtests_df["pass_rate"].min() >= 0.0
     assert sample_subtests_df["pass_rate"].max() <= 1.0
-
-    # Mean score should be in [0, 1]
     assert sample_subtests_df["mean_score"].min() >= 0.0
     assert sample_subtests_df["mean_score"].max() <= 1.0
+    assert sample_subtests_df["consistency"].min() >= 0.0
+    assert sample_subtests_df["consistency"].max() <= 1.0
 
 
 def test_tier_summary_aggregation(sample_runs_df):
