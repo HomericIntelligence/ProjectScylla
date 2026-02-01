@@ -10,6 +10,7 @@ from __future__ import annotations
 import pandas as pd
 from scipy import stats as scipy_stats
 
+from scylla.analysis.config import ALPHA
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     bootstrap_ci,
@@ -24,9 +25,6 @@ from scylla.analysis.stats import (
     shapiro_wilk,
     spearman_correlation,
 )
-
-# Statistical significance threshold
-ALPHA = 0.05
 
 
 def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
