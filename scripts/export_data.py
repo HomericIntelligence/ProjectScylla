@@ -90,6 +90,22 @@ def compute_statistical_results(runs_df, tier_order):
                     }
                 )
 
+            # Test impl_rate distribution
+            impl_rates = tier_data["impl_rate"].dropna()
+            if len(impl_rates) >= 3:
+                w_stat, p_value = shapiro_wilk(impl_rates)
+                results["normality_tests"].append(
+                    {
+                        "model": model,
+                        "tier": tier,
+                        "metric": "impl_rate",
+                        "n": len(impl_rates),
+                        "w_statistic": float(w_stat),
+                        "p_value": float(p_value),
+                        "is_normal": bool(p_value > 0.05),
+                    }
+                )
+
             # Test cost distribution
             costs = tier_data["cost_usd"].dropna()
             if len(costs) >= 3:
@@ -123,6 +139,25 @@ def compute_statistical_results(runs_df, tier_order):
                     "model": model,
                     "metric": "pass_rate",
                     "n_groups": len(tier_groups),
+                    "h_statistic": float(h_stat),
+                    "p_value": float(p_value),
+                    "is_significant": bool(p_value < 0.05),
+                }
+            )
+
+        # Collect tier groups for impl_rate metric
+        tier_groups_impl = [
+            model_runs[model_runs["tier"] == tier]["impl_rate"].dropna() for tier in tier_order
+        ]
+        tier_groups_impl = [g for g in tier_groups_impl if len(g) > 0]
+
+        if len(tier_groups_impl) >= 2:
+            h_stat, p_value = kruskal_wallis(*tier_groups_impl)
+            results["omnibus_tests"].append(
+                {
+                    "model": model,
+                    "metric": "impl_rate",
+                    "n_groups": len(tier_groups_impl),
                     "h_statistic": float(h_stat),
                     "p_value": float(p_value),
                     "is_significant": bool(p_value < 0.05),
@@ -168,6 +203,50 @@ def compute_statistical_results(runs_df, tier_order):
                 results["pairwise_comparisons"].append(
                     {
                         **metadata,
+                        "metric": "pass_rate",
+                        "p_value_raw": float(raw_p_values[i]),
+                        "p_value": float(corrected_p_values[i]),
+                        "is_significant": bool(corrected_p_values[i] < 0.05),
+                    }
+                )
+
+    # Pairwise comparisons for impl_rate between consecutive tiers
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+        raw_p_values = []
+        test_metadata = []
+
+        for i in range(len(tier_order) - 1):
+            tier1, tier2 = tier_order[i], tier_order[i + 1]
+            tier1_data = model_runs[model_runs["tier"] == tier1]["impl_rate"].dropna()
+            tier2_data = model_runs[model_runs["tier"] == tier2]["impl_rate"].dropna()
+
+            if len(tier1_data) < 2 or len(tier2_data) < 2:
+                continue
+
+            u_stat, p_value_raw = mann_whitney_u(tier1_data, tier2_data)
+
+            raw_p_values.append(p_value_raw)
+            test_metadata.append(
+                {
+                    "model": model,
+                    "tier1": tier_order[i],
+                    "tier2": tier_order[i + 1],
+                    "n1": len(tier1_data),
+                    "n2": len(tier2_data),
+                    "u_statistic": float(u_stat),
+                }
+            )
+
+        # Apply Holm-Bonferroni correction
+        if raw_p_values:
+            corrected_p_values = holm_bonferroni_correction(raw_p_values)
+
+            for i, metadata in enumerate(test_metadata):
+                results["pairwise_comparisons"].append(
+                    {
+                        **metadata,
+                        "metric": "impl_rate",
                         "p_value_raw": float(raw_p_values[i]),
                         "p_value": float(corrected_p_values[i]),
                         "is_significant": bool(corrected_p_values[i] < 0.05),
@@ -186,6 +265,7 @@ def compute_statistical_results(runs_df, tier_order):
             if len(tier1_data) < 2 or len(tier2_data) < 2:
                 continue
 
+            # Effect size for pass_rate
             delta, ci_low, ci_high = cliffs_delta_ci(
                 tier2_data["passed"].astype(int), tier1_data["passed"].astype(int)
             )
@@ -193,6 +273,7 @@ def compute_statistical_results(runs_df, tier_order):
             results["effect_sizes"].append(
                 {
                     "model": model,
+                    "metric": "pass_rate",
                     "tier1": tier1,
                     "tier2": tier2,
                     "cliffs_delta": float(delta),
@@ -202,11 +283,34 @@ def compute_statistical_results(runs_df, tier_order):
                 }
             )
 
+            # Effect size for impl_rate
+            tier1_impl = tier1_data["impl_rate"].dropna()
+            tier2_impl = tier2_data["impl_rate"].dropna()
+
+            if len(tier1_impl) >= 2 and len(tier2_impl) >= 2:
+                delta, ci_low, ci_high = cliffs_delta_ci(tier2_impl, tier1_impl)
+
+                results["effect_sizes"].append(
+                    {
+                        "model": model,
+                        "metric": "impl_rate",
+                        "tier1": tier1,
+                        "tier2": tier2,
+                        "cliffs_delta": float(delta),
+                        "ci_low": float(ci_low),
+                        "ci_high": float(ci_high),
+                        "is_significant": bool(not (ci_low <= 0 <= ci_high)),
+                    }
+                )
+
     # Correlations between key metrics
     metrics = [
         ("score", "cost_usd"),
         ("score", "total_tokens"),
         ("score", "duration_seconds"),
+        ("score", "impl_rate"),
+        ("impl_rate", "cost_usd"),
+        ("impl_rate", "duration_seconds"),
         ("cost_usd", "total_tokens"),
     ]
 
