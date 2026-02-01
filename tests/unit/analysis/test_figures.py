@@ -1072,3 +1072,134 @@ def test_fig27_content_verification(sample_runs_df):
     with patch("scylla.analysis.figures.impl_rate_analysis.save_figure"):
         # May not generate if impl_rate column missing
         fig27_impl_rate_distribution(sample_runs_df, Path("/tmp"), render=False)
+
+
+def test_get_color_with_static_colors():
+    """Test get_color() returns static colors from config."""
+    from scylla.analysis.figures import get_color
+
+    # Test models category
+    sonnet_color = get_color("models", "Sonnet 4.5")
+    assert sonnet_color.startswith("#")  # Valid hex color
+    assert len(sonnet_color) == 7  # #RRGGBB format
+
+    # Test tiers category
+    t0_color = get_color("tiers", "T0")
+    assert t0_color.startswith("#")
+    assert len(t0_color) == 7
+
+    # Test grades category
+    a_grade_color = get_color("grades", "A")
+    assert a_grade_color.startswith("#")
+    assert len(a_grade_color) == 7
+
+
+def test_get_color_with_dynamic_palette():
+    """Test get_color() falls back to dynamic palette for unknown keys."""
+    from scylla.analysis.figures import get_color
+
+    # Test unknown model (not in static colors)
+    unknown_color = get_color("models", "Unknown Model")
+    assert unknown_color.startswith("#")
+    assert len(unknown_color) == 7
+
+    # Test unknown category and key
+    custom_color = get_color("custom_category", "custom_key")
+    assert custom_color.startswith("#")
+    assert len(custom_color) == 7
+
+    # Verify deterministic behavior (same key -> same color)
+    color1 = get_color("custom", "test_key")
+    color2 = get_color("custom", "test_key")
+    assert color1 == color2
+
+
+def test_get_color_deterministic_hash():
+    """Test get_color() uses deterministic hash for dynamic colors."""
+    from scylla.analysis.figures import get_color
+
+    # Same key should always produce the same color
+    key = "test_model_xyz"
+    color1 = get_color("unknown_category", key)
+    color2 = get_color("unknown_category", key)
+    color3 = get_color("unknown_category", key)
+
+    assert color1 == color2 == color3
+
+
+def test_get_color_scale_with_known_keys():
+    """Test get_color_scale() returns correct domain and range for known keys."""
+    from scylla.analysis.figures import get_color_scale
+
+    # Test with known models
+    models = ["Sonnet 4.5", "Haiku 4.5", "Opus 4.5"]
+    domain, range_ = get_color_scale("models", models)
+
+    # Verify domain matches input
+    assert domain == models
+    assert len(domain) == len(models)
+
+    # Verify range has corresponding colors
+    assert len(range_) == len(models)
+    for color in range_:
+        assert color.startswith("#")
+        assert len(color) == 7
+
+
+def test_get_color_scale_with_unknown_keys():
+    """Test get_color_scale() handles unknown keys with dynamic palette."""
+    from scylla.analysis.figures import get_color_scale
+
+    # Test with unknown keys
+    unknown_keys = ["Unknown1", "Unknown2", "Unknown3"]
+    domain, range_ = get_color_scale("custom_category", unknown_keys)
+
+    # Verify structure
+    assert domain == unknown_keys
+    assert len(range_) == len(unknown_keys)
+
+    # Verify all colors are valid hex codes
+    for color in range_:
+        assert color.startswith("#")
+        assert len(color) == 7
+
+
+def test_get_color_scale_with_mixed_keys():
+    """Test get_color_scale() handles mix of known and unknown keys."""
+    from scylla.analysis.figures import get_color_scale
+
+    # Mix known and unknown models
+    mixed_models = ["Sonnet 4.5", "Unknown Model", "Haiku 4.5"]
+    domain, range_ = get_color_scale("models", mixed_models)
+
+    # Verify structure
+    assert domain == mixed_models
+    assert len(range_) == 3
+
+    # Verify all colors are valid
+    for color in range_:
+        assert color.startswith("#")
+        assert len(color) == 7
+
+
+def test_get_color_scale_empty_list():
+    """Test get_color_scale() handles empty list gracefully."""
+    from scylla.analysis.figures import get_color_scale
+
+    domain, range_ = get_color_scale("models", [])
+
+    # Should return empty lists
+    assert domain == []
+    assert range_ == []
+
+
+def test_get_color_scale_single_key():
+    """Test get_color_scale() handles single key correctly."""
+    from scylla.analysis.figures import get_color_scale
+
+    domain, range_ = get_color_scale("models", ["Sonnet 4.5"])
+
+    # Verify single-element lists
+    assert domain == ["Sonnet 4.5"]
+    assert len(range_) == 1
+    assert range_[0].startswith("#")

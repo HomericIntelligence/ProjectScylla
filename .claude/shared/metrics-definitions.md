@@ -320,3 +320,317 @@ Combined_SE = sqrt(sum(run_SE^2)) / n_runs
 | Which tier is fastest? | Latency | TTFT |
 | Which tier is most reliable? | Consistency | CFP |
 | Is this component useful? | Ablation Score | - |
+
+## Future Instrumentation
+
+The following tier-specific metrics are defined in the architecture but **cannot be computed from current data collection**. Each requires additional instrumentation before implementation.
+
+### 1. Tool Call Success Rate (T3 - Tooling)
+
+**Status**: Not computable
+
+**Formula**:
+
+```
+Tool_Success_Rate = successful_tool_calls / total_tool_calls
+```
+
+**Current Data Gap**:
+
+- `agent/result.json` provides `api_calls` (total count) but does not track individual tool call outcomes
+- No success/failure distinction for tool invocations
+- No per-tool success tracking
+
+**Required Instrumentation**:
+
+1. **Claude API conversation-level logging** to capture:
+   - Each tool invocation request (tool name, parameters)
+   - Tool execution outcome (success/failure/error)
+   - Error messages for failed tool calls
+   - Timestamp for each tool call
+
+2. **Data schema extension** in `agent/result.json`:
+   ```json
+   "toolMetrics": {
+     "total_tool_calls": 42,
+     "successful_calls": 38,
+     "failed_calls": 4,
+     "by_tool": {
+       "Bash": {"success": 15, "failure": 1},
+       "Read": {"success": 12, "failure": 0},
+       "Edit": {"success": 11, "failure": 3}
+     }
+   }
+   ```
+
+**Implementation Approach**:
+
+- Add tool call result tracking in Claude API wrapper
+- Categorize outcomes: success (tool returned result), failure (tool error), timeout
+- Aggregate per-tool and overall success rates
+- Store in extended result.json schema
+
+---
+
+### 2. Tool Utilization (T3 - Tooling)
+
+**Status**: Not computable
+
+**Formula**:
+
+```
+Tool_Utilization = tasks_using_tools / total_tasks
+```
+
+**Current Data Gap**:
+
+- No explicit marker for whether a task used tools vs. relied purely on prompting
+- `api_calls > 0` is a proxy but doesn't distinguish intentional tool use from incidental calls
+- Cannot differentiate tool-appropriate tasks from prompt-only tasks
+
+**Required Instrumentation**:
+
+1. **Task metadata tracking**:
+   - Task classification: tool-required, tool-optional, prompt-only
+   - Explicit tool usage flag per task execution
+   - Count of unique tools used per task
+
+2. **Data schema extension** in `agent/result.json`:
+   ```json
+   "taskMetrics": {
+     "task_id": "benchmark-42",
+     "task_category": "tool-optional",
+     "tools_used": ["Bash", "Read", "Edit"],
+     "tool_usage_required": false,
+     "tool_usage_occurred": true
+   }
+   ```
+
+**Implementation Approach**:
+
+- Add task categorization to benchmark definitions (YAML)
+- Track tool invocation presence per task execution
+- Calculate utilization rate across task categories
+- Compare tool-optional vs. tool-required task patterns
+
+---
+
+### 3. Task Distribution Efficiency (T4 - Delegation)
+
+**Status**: Not computable
+
+**Formula**:
+
+```
+Task_Distribution_Efficiency = 1 - (idle_time / total_time)
+```
+
+**Current Data Gap**:
+
+- No per-agent timing instrumentation
+- No idle time tracking (time when agent is waiting vs. actively working)
+- `agent/result.json` contains total duration but not per-agent activity logs
+- Cannot distinguish parallel work from sequential bottlenecks
+
+**Required Instrumentation**:
+
+1. **Per-agent activity tracking**:
+   - Agent start/end timestamps for each sub-task
+   - Active vs. idle state transitions
+   - Blocking/waiting periods (e.g., waiting for delegated sub-agent)
+   - Parallel vs. sequential execution markers
+
+2. **Data schema extension** in `agent/result.json`:
+   ```json
+   "delegationMetrics": {
+     "agents": [
+       {
+         "agent_id": "orchestrator-1",
+         "active_time_ms": 12500,
+         "idle_time_ms": 3500,
+         "tasks_completed": 3,
+         "blocked_on": ["specialist-2"]
+       },
+       {
+         "agent_id": "specialist-2",
+         "active_time_ms": 8000,
+         "idle_time_ms": 1000,
+         "tasks_completed": 5,
+         "blocked_on": []
+       }
+     ],
+     "total_time_ms": 16000,
+     "total_idle_time_ms": 4500,
+     "parallelization_factor": 1.25
+   }
+   ```
+
+**Implementation Approach**:
+
+- Add state machine tracking for each agent (active/idle/blocked/completed)
+- Instrument agent framework to log state transitions
+- Calculate idle percentage and parallelization efficiency
+- Detect bottlenecks in delegation chains
+
+---
+
+### 4. Correction Frequency (T5 - Hierarchy)
+
+**Status**: Not computable (requires semantic analysis)
+
+**Formula**:
+
+```
+Correction_Frequency = corrections_made / total_steps
+```
+
+**Current Data Gap**:
+
+- No explicit correction markers in agent conversations
+- `num_turns` from `agent/result.json` is a rough proxy but includes all turns, not just corrections
+- Cannot distinguish correction loops from normal multi-step progress
+- Requires semantic analysis of agent messages to identify corrections
+
+**Required Instrumentation**:
+
+1. **Explicit correction markers** in agent output:
+   - Agent self-identifies when correcting previous work
+   - Hierarchical correction: orchestrator corrects specialist
+   - Correction reason (error, misunderstanding, quality improvement)
+
+2. **Semantic analysis pipeline**:
+   - NLP-based detection of correction patterns in agent messages
+   - Keywords: "fix", "correct", "mistake", "revise", "retry"
+   - Message similarity analysis (detect repeated attempts)
+
+3. **Data schema extension** in `agent/result.json`:
+   ```json
+   "correctionMetrics": {
+     "total_steps": 24,
+     "corrections_made": 5,
+     "correction_types": {
+       "self_correction": 3,
+       "hierarchical_correction": 2,
+       "user_correction": 0
+     },
+     "correction_details": [
+       {
+         "turn_number": 8,
+         "correcting_agent": "orchestrator",
+         "corrected_agent": "specialist-1",
+         "reason": "logic_error"
+       }
+     ]
+   }
+   ```
+
+**Implementation Approach**:
+
+- **Option 1 (Explicit)**: Add correction markers to agent prompts/framework
+  - Instruct agents to emit structured correction signals
+  - Tag messages with correction metadata
+
+- **Option 2 (Inferred)**: Post-hoc semantic analysis
+  - Analyze conversation logs with NLP model
+  - Detect correction patterns heuristically
+  - Less accurate but requires no framework changes
+
+- **Recommended**: Hybrid approach with explicit markers for known corrections + semantic analysis for edge cases
+
+---
+
+### 5. Iterations to Success (T5 - Hierarchy)
+
+**Status**: Partially computable (num_turns is rough proxy)
+
+**Formula**:
+
+```
+Iterations_to_Success = number_of_self_correction_loops
+```
+
+**Current Data Gap**:
+
+- `num_turns` from `agent/result.json` counts all conversation turns, not self-correction loops
+- No explicit loop counter for retry/correction cycles
+- Cannot distinguish linear progress (A→B→C) from iterative refinement (A→B→A'→B'→success)
+- Need to track when agent returns to previous state vs. advances forward
+
+**Required Instrumentation**:
+
+1. **Explicit loop tracking**:
+   - Counter increments when agent revisits previous task/state
+   - Detect retry attempts (same task, different approach)
+   - Track convergence to success vs. abandonment
+
+2. **Task state tracking**:
+   - Mark task attempts (attempt 1, 2, 3...)
+   - Distinguish new tasks from retries
+   - Track success/failure per attempt
+
+3. **Data schema extension** in `agent/result.json`:
+   ```json
+   "iterationMetrics": {
+     "total_attempts": 3,
+     "successful_iteration": 3,
+     "failed_iterations": 2,
+     "iteration_details": [
+       {
+         "iteration": 1,
+         "turns": 8,
+         "outcome": "failure",
+         "failure_reason": "logic_error"
+       },
+       {
+         "iteration": 2,
+         "turns": 6,
+         "outcome": "failure",
+         "failure_reason": "incomplete_implementation"
+       },
+       {
+         "iteration": 3,
+         "turns": 10,
+         "outcome": "success",
+         "failure_reason": null
+       }
+     ],
+     "total_turns": 24
+   }
+   ```
+
+**Implementation Approach**:
+
+- **Option 1 (Framework-level)**: Add iteration tracking to evaluation harness
+  - Detect task restart/retry events
+  - Increment loop counter on retry
+  - Track attempt outcomes
+
+- **Option 2 (Semantic-level)**: Infer from conversation analysis
+  - Detect patterns indicating retry (similar prompts, revisited code)
+  - Cluster turns into iteration cycles
+  - Less precise but requires no framework changes
+
+- **Recommended**: Framework-level tracking with explicit retry events for accuracy
+
+---
+
+## Summary of Instrumentation Priorities
+
+| Metric | Complexity | Value | Priority | Approach |
+|--------|------------|-------|----------|----------|
+| Tool Call Success Rate | Low | High | **P0** | API wrapper modification |
+| Tool Utilization | Low | High | **P0** | Task metadata + flag |
+| Iterations to Success | Medium | High | **P1** | Framework loop counter |
+| Task Distribution Efficiency | High | Medium | **P2** | Per-agent state tracking |
+| Correction Frequency | High | Medium | **P2** | Semantic analysis pipeline |
+
+**P0 (High Priority)**: Low implementation cost, high evaluation value
+**P1 (Medium Priority)**: Medium implementation cost, high evaluation value
+**P2 (Future Work)**: High implementation cost, can defer until advanced analysis
+
+**Next Steps**:
+
+1. Extend `agent/result.json` schema to accommodate new metrics
+2. Implement P0 instrumentation (tool success tracking, tool utilization flags)
+3. Validate data collection with small-scale pilot experiments
+4. Implement P1/P2 instrumentation based on research needs
