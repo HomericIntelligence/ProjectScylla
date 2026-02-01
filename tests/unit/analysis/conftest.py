@@ -34,6 +34,12 @@ def sample_runs_df():
                     # Generate semi-realistic data
                     passed = np.random.choice([0, 1], p=[0.3, 0.7])
                     score = np.random.uniform(0.5, 1.0) if passed else np.random.uniform(0.0, 0.5)
+
+                    # impl_rate: usually close to score, but not identical
+                    # Represents achieved/max across all criteria
+                    impl_rate = score + np.random.uniform(-0.05, 0.05)
+                    impl_rate = max(0.0, min(1.0, impl_rate))  # Clamp to [0, 1]
+
                     grade = (
                         np.random.choice(["S", "A", "B"])
                         if passed
@@ -68,6 +74,7 @@ def sample_runs_df():
                             "run_number": run,
                             "passed": passed,
                             "score": score,
+                            "impl_rate": impl_rate,
                             "grade": grade,
                             "cost_usd": cost,
                             "input_tokens": input_tokens,
@@ -102,6 +109,10 @@ def sample_judges_df(sample_runs_df):
         for judge_idx, judge_model in enumerate(judge_models, start=1):
             # Generate correlated scores (± 0.1 from run score)
             judge_score = np.clip(row["score"] + np.random.uniform(-0.1, 0.1), 0.0, 1.0)
+
+            # Generate judge_impl_rate (correlated to impl_rate, ± 0.1)
+            judge_impl_rate = np.clip(row["impl_rate"] + np.random.uniform(-0.1, 0.1), 0.0, 1.0)
+
             judge_passed = judge_score >= 0.6  # Threshold for passing
             judge_grade = (
                 "S"
@@ -127,6 +138,7 @@ def sample_judges_df(sample_runs_df):
                     "judge_number": judge_idx,
                     "judge_model": judge_model,
                     "judge_score": judge_score,
+                    "judge_impl_rate": judge_impl_rate,
                     "judge_passed": judge_passed,
                     "judge_grade": judge_grade,
                     "judge_is_valid": True,

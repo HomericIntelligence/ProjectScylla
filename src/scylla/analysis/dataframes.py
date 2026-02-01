@@ -11,7 +11,7 @@ from __future__ import annotations
 import pandas as pd
 
 from scylla.analysis.loader import RunData
-from scylla.analysis.stats import compute_consistency, compute_cop
+from scylla.analysis.stats import compute_consistency, compute_cop, compute_impl_rate
 
 
 def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
@@ -27,6 +27,19 @@ def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
     rows = []
     for runs in experiments.values():
         for run in runs:
+            # Calculate impl_rate for each judge, then take median (consensus)
+            judge_impl_rates = []
+            for judge in run.judges:
+                total_achieved = sum(criterion.achieved for criterion in judge.criteria.values())
+                total_max = sum(criterion.max_points for criterion in judge.criteria.values())
+                impl_rate = compute_impl_rate(total_achieved, total_max)
+                judge_impl_rates.append(impl_rate)
+
+            # Consensus impl_rate: median across judges (matching consensus score logic)
+            import numpy as np
+
+            consensus_impl_rate = np.median(judge_impl_rates) if judge_impl_rates else np.nan
+
             rows.append(
                 {
                     "experiment": run.experiment,
@@ -35,6 +48,7 @@ def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
                     "subtest": run.subtest,
                     "run_number": run.run_number,
                     "score": run.score,
+                    "impl_rate": consensus_impl_rate,
                     "passed": run.passed,
                     "grade": run.grade,
                     "cost_usd": run.cost_usd,
@@ -67,6 +81,11 @@ def build_judges_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
     for runs in experiments.values():
         for run in runs:
             for judge in run.judges:
+                # Calculate impl_rate for this judge
+                total_achieved = sum(criterion.achieved for criterion in judge.criteria.values())
+                total_max = sum(criterion.max_points for criterion in judge.criteria.values())
+                judge_impl_rate = compute_impl_rate(total_achieved, total_max)
+
                 rows.append(
                     {
                         "experiment": run.experiment,
@@ -77,6 +96,7 @@ def build_judges_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
                         "judge_model": judge.judge_model,
                         "judge_number": judge.judge_number,
                         "judge_score": judge.score,
+                        "judge_impl_rate": judge_impl_rate,
                         "judge_passed": judge.passed,
                         "judge_grade": judge.grade,
                         "judge_is_valid": judge.is_valid,
@@ -139,6 +159,11 @@ def build_subtests_df(runs_df: pd.DataFrame) -> pd.DataFrame:
         median_score = group["score"].median()
         std_score = group["score"].std()
 
+        # Implementation Rate statistics
+        mean_impl_rate = group["impl_rate"].mean()
+        median_impl_rate = group["impl_rate"].median()
+        std_impl_rate = group["impl_rate"].std()
+
         # Consistency: 1 - coefficient of variation (clamped to [0, 1])
         consistency = compute_consistency(mean_score, std_score)
 
@@ -168,6 +193,9 @@ def build_subtests_df(runs_df: pd.DataFrame) -> pd.DataFrame:
                 "mean_score": mean_score,
                 "median_score": median_score,
                 "std_score": std_score,
+                "mean_impl_rate": mean_impl_rate,
+                "median_impl_rate": median_impl_rate,
+                "std_impl_rate": std_impl_rate,
                 "consistency": consistency,
                 "mean_cost": mean_cost,
                 "total_cost": total_cost,
@@ -207,6 +235,9 @@ def tier_summary(runs_df: pd.DataFrame) -> pd.DataFrame:
         mean_score = group["score"].mean()
         median_score = group["score"].median()
         std_score = group["score"].std()
+        mean_impl_rate = group["impl_rate"].mean()
+        median_impl_rate = group["impl_rate"].median()
+        std_impl_rate = group["impl_rate"].std()
         consistency = compute_consistency(mean_score, std_score)
         mean_cost = group["cost_usd"].mean()
         total_cost = group["cost_usd"].sum()
@@ -219,6 +250,9 @@ def tier_summary(runs_df: pd.DataFrame) -> pd.DataFrame:
                 "mean_score": mean_score,
                 "median_score": median_score,
                 "std_score": std_score,
+                "mean_impl_rate": mean_impl_rate,
+                "median_impl_rate": median_impl_rate,
+                "std_impl_rate": std_impl_rate,
                 "consistency": consistency,
                 "mean_cost": mean_cost,
                 "total_cost": total_cost,

@@ -280,6 +280,33 @@ def test_compute_cop():
     assert cop == float("inf")
 
 
+def test_compute_impl_rate():
+    """Test Implementation Rate (Impl-Rate) metric."""
+    import numpy as np
+
+    from scylla.analysis.stats import compute_impl_rate
+
+    # Perfect implementation (all requirements satisfied)
+    impl_rate = compute_impl_rate(10.0, 10.0)
+    assert abs(impl_rate - 1.0) < 1e-6
+
+    # Partial implementation
+    impl_rate = compute_impl_rate(8.5, 10.0)
+    assert abs(impl_rate - 0.85) < 1e-6
+
+    # Zero implementation (complete failure)
+    impl_rate = compute_impl_rate(0.0, 10.0)
+    assert abs(impl_rate - 0.0) < 1e-6
+
+    # Edge case: zero max_points (no rubric defined)
+    impl_rate = compute_impl_rate(0.0, 0.0)
+    assert np.isnan(impl_rate)
+
+    # Edge case: float precision
+    impl_rate = compute_impl_rate(7.3, 12.5)
+    assert abs(impl_rate - 0.584) < 1e-6
+
+
 def test_spearman_correlation():
     """Test Spearman rank correlation."""
     from scylla.analysis.stats import spearman_correlation

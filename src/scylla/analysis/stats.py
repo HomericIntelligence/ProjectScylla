@@ -243,6 +243,35 @@ def compute_cop(mean_cost: float, pass_rate: float) -> float:
     return mean_cost / pass_rate
 
 
+def compute_impl_rate(achieved_points: float, max_points: float) -> float:
+    """Compute Implementation Rate (Impl-Rate) metric.
+
+    Impl-Rate measures the proportion of semantic requirements satisfied,
+    providing more granular feedback than binary pass/fail. It aggregates
+    points achieved across all rubric criteria.
+
+    Args:
+        achieved_points: Total points achieved across all criteria
+        max_points: Total maximum possible points across all criteria
+
+    Returns:
+        Implementation rate in [0, 1], or NaN if max_points is 0
+
+    Examples:
+        >>> compute_impl_rate(8.5, 10.0)
+        0.85
+        >>> compute_impl_rate(0.0, 10.0)
+        0.0
+        >>> import numpy as np
+        >>> np.isnan(compute_impl_rate(0.0, 0.0))
+        True
+
+    """
+    if max_points == 0:
+        return np.nan
+    return achieved_points / max_points
+
+
 def shapiro_wilk(data: pd.Series | np.ndarray) -> tuple[float, float]:
     """Perform Shapiro-Wilk normality test.
 
