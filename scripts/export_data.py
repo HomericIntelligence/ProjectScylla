@@ -125,6 +125,22 @@ def compute_statistical_results(runs_df, tier_order):
                     }
                 )
 
+            # Test duration distribution
+            durations = tier_data["duration_seconds"].dropna()
+            if len(durations) >= 3:
+                w_stat, p_value = shapiro_wilk(durations)
+                results["normality_tests"].append(
+                    {
+                        "model": model,
+                        "tier": tier,
+                        "metric": "duration_seconds",
+                        "n": len(durations),
+                        "w_statistic": float(w_stat),
+                        "p_value": float(p_value),
+                        "is_normal": bool(p_value > 0.05),
+                    }
+                )
+
     # Omnibus tests (Kruskal-Wallis) across tiers per model
     for model in models:
         model_runs = runs_df[runs_df["agent_model"] == model]
@@ -161,6 +177,26 @@ def compute_statistical_results(runs_df, tier_order):
                     "model": model,
                     "metric": "impl_rate",
                     "n_groups": len(tier_groups_impl),
+                    "h_statistic": float(h_stat),
+                    "p_value": float(p_value),
+                    "is_significant": bool(p_value < 0.05),
+                }
+            )
+
+        # Collect tier groups for duration_seconds metric
+        tier_groups_duration = [
+            model_runs[model_runs["tier"] == tier]["duration_seconds"].dropna()
+            for tier in tier_order
+        ]
+        tier_groups_duration = [g for g in tier_groups_duration if len(g) > 0]
+
+        if len(tier_groups_duration) >= 2:
+            h_stat, p_value = kruskal_wallis(*tier_groups_duration)
+            results["omnibus_tests"].append(
+                {
+                    "model": model,
+                    "metric": "duration_seconds",
+                    "n_groups": len(tier_groups_duration),
                     "h_statistic": float(h_stat),
                     "p_value": float(p_value),
                     "is_significant": bool(p_value < 0.05),
@@ -256,6 +292,49 @@ def compute_statistical_results(runs_df, tier_order):
                     }
                 )
 
+    # Pairwise comparisons for duration_seconds between consecutive tiers
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+        raw_p_values = []
+        test_metadata = []
+
+        for i in range(len(tier_order) - 1):
+            tier1, tier2 = tier_order[i], tier_order[i + 1]
+            tier1_data = model_runs[model_runs["tier"] == tier1]["duration_seconds"].dropna()
+            tier2_data = model_runs[model_runs["tier"] == tier2]["duration_seconds"].dropna()
+
+            if len(tier1_data) < 2 or len(tier2_data) < 2:
+                continue
+
+            u_stat, p_value_raw = mann_whitney_u(tier1_data, tier2_data)
+
+            raw_p_values.append(p_value_raw)
+            test_metadata.append(
+                {
+                    "model": model,
+                    "tier1": tier_order[i],
+                    "tier2": tier_order[i + 1],
+                    "n1": len(tier1_data),
+                    "n2": len(tier2_data),
+                    "u_statistic": float(u_stat),
+                }
+            )
+
+        # Apply Holm-Bonferroni correction
+        if raw_p_values:
+            corrected_p_values = holm_bonferroni_correction(raw_p_values)
+
+            for i, metadata in enumerate(test_metadata):
+                results["pairwise_comparisons"].append(
+                    {
+                        **metadata,
+                        "metric": "duration_seconds",
+                        "p_value_raw": float(raw_p_values[i]),
+                        "p_value": float(corrected_p_values[i]),
+                        "is_significant": bool(corrected_p_values[i] < 0.05),
+                    }
+                )
+
     # Effect sizes (Cliff's delta with CI) for tier transitions
     for model in models:
         model_runs = runs_df[runs_df["agent_model"] == model]
@@ -297,6 +376,26 @@ def compute_statistical_results(runs_df, tier_order):
                     {
                         "model": model,
                         "metric": "impl_rate",
+                        "tier1": tier1,
+                        "tier2": tier2,
+                        "cliffs_delta": float(delta),
+                        "ci_low": float(ci_low),
+                        "ci_high": float(ci_high),
+                        "is_significant": bool(not (ci_low <= 0 <= ci_high)),
+                    }
+                )
+
+            # Effect size for duration_seconds
+            tier1_duration = tier1_data["duration_seconds"].dropna()
+            tier2_duration = tier2_data["duration_seconds"].dropna()
+
+            if len(tier1_duration) >= 2 and len(tier2_duration) >= 2:
+                delta, ci_low, ci_high = cliffs_delta_ci(tier2_duration, tier1_duration)
+
+                results["effect_sizes"].append(
+                    {
+                        "model": model,
+                        "metric": "duration_seconds",
                         "tier1": tier1,
                         "tier2": tier2,
                         "cliffs_delta": float(delta),
