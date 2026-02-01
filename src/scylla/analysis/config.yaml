@@ -102,6 +102,15 @@ colors:
     D: "#e67e22"  # Dark orange
     F: "#e74c3c"  # Red
 
+  # Grade ordering (for consistent sorting across figures)
+  grade_order:
+    - "S"  # Superior (best)
+    - "A"  # Excellent
+    - "B"  # Good
+    - "C"  # Acceptable
+    - "D"  # Poor
+    - "F"  # Fail (worst)
+
 # Data Loading Parameters
 data:
   # Experiment exclusions (override with --exclude CLI flag)

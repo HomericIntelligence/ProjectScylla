@@ -52,11 +52,14 @@ def test_cliffs_delta_negative():
 
 def test_cliffs_delta_empty():
     """Test Cliff's delta with empty groups."""
+    import numpy as np
+
     from scylla.analysis.stats import cliffs_delta
 
-    assert cliffs_delta([], [1, 2, 3]) == 0.0
-    assert cliffs_delta([1, 2, 3], []) == 0.0
-    assert cliffs_delta([], []) == 0.0
+    # Empty groups should return NaN (no comparison possible)
+    assert np.isnan(cliffs_delta([], [1, 2, 3]))
+    assert np.isnan(cliffs_delta([1, 2, 3], []))
+    assert np.isnan(cliffs_delta([], []))
 
 
 def test_cliffs_delta_pandas_series():

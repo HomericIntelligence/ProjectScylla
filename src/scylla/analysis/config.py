@@ -120,6 +120,11 @@ class AnalysisConfig:
         return self.get("figures", "pass_threshold", default=0.60)
 
     @property
+    def grade_order(self) -> list[str]:
+        """Canonical grade ordering (S=best, F=worst)."""
+        return self.get("colors", "grade_order", default=["S", "A", "B", "C", "D", "F"])
+
+    @property
     def pipeline_version(self) -> str:
         """Analysis pipeline version."""
         return self.get("reproducibility", "pipeline_version", default="1.0.0")

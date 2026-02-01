@@ -146,7 +146,7 @@ def cliffs_delta(group1: pd.Series | np.ndarray, group2: pd.Series | np.ndarray)
 
     n1, n2 = len(g1), len(g2)
     if n1 == 0 or n2 == 0:
-        return 0.0
+        return np.nan
 
     # Vectorized comparison: g1[:, None] broadcasts to (n1, n2)
     # g2[None, :] broadcasts to (n1, n2)
@@ -350,6 +350,15 @@ def shapiro_wilk(data: pd.Series | np.ndarray) -> tuple[float, float]:
 
     """
     data_array = np.array(data)
+
+    # Guard against insufficient sample size
+    if len(data_array) < config.min_sample_normality:
+        logger.warning(
+            f"Shapiro-Wilk test requires n >= {config.min_sample_normality}, "
+            f"got n={len(data_array)}. Returning NaN."
+        )
+        return np.nan, np.nan
+
     statistic, pvalue = stats.shapiro(data_array)
     return float(statistic), float(pvalue)
 

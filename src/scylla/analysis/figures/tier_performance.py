@@ -140,7 +140,8 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
 
     # Derive tier order from data
     tier_order = derive_tier_order(grade_counts)
-    grade_order = ["S", "A", "B", "C", "D", "F"]
+    # Get canonical grade order from config
+    grade_order = config.grade_order
 
     # Create heatmap
     heatmap = (
