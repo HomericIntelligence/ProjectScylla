@@ -41,6 +41,9 @@ figures:
   default_width: 400
   default_height: 300
 
+  # Performance thresholds
+  pass_threshold: 0.60  # Reference line for acceptable pass-rate
+
   # Font settings
   fonts:
     family: "serif"
@@ -90,8 +93,9 @@ colors:
     T5: "#ffd92f"
     T6: "#e5c494"
 
-  # Grade colors (traffic light + yellow)
+  # Grade colors (traffic light + yellow + superior)
   grades:
+    S: "#FFD700"  # Gold (superior, above A)
     A: "#2ecc71"  # Green
     B: "#3498db"  # Blue
     C: "#f39c12"  # Orange
