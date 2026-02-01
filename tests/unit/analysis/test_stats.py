@@ -310,6 +310,34 @@ def test_compute_cop():
     assert cop == float("inf")
 
 
+def test_compute_frontier_cop():
+    """Test Frontier CoP metric."""
+    from scylla.analysis.stats import compute_frontier_cop
+
+    # Basic case: find minimum
+    cops = [2.50, 1.75, 3.20, 2.10]
+    frontier = compute_frontier_cop(cops)
+    assert abs(frontier - 1.75) < 1e-6
+
+    # With inf values (should ignore them)
+    cops_with_inf = [2.50, float("inf"), 1.75, float("inf"), 3.20]
+    frontier = compute_frontier_cop(cops_with_inf)
+    assert abs(frontier - 1.75) < 1e-6
+
+    # All inf (edge case)
+    all_inf = [float("inf"), float("inf"), float("inf")]
+    frontier = compute_frontier_cop(all_inf)
+    assert frontier == float("inf")
+
+    # Empty list (edge case)
+    frontier = compute_frontier_cop([])
+    assert frontier == float("inf")
+
+    # Single value
+    frontier = compute_frontier_cop([2.50])
+    assert abs(frontier - 2.50) < 1e-6
+
+
 def test_compute_impl_rate():
     """Test Implementation Rate (Impl-Rate) metric."""
     import numpy as np

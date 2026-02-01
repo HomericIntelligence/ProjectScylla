@@ -263,6 +263,34 @@ def compute_cop(mean_cost: float, pass_rate: float) -> float:
     return mean_cost / pass_rate
 
 
+def compute_frontier_cop(cop_values: list[float]) -> float:
+    """Compute Frontier CoP - minimum CoP across all configurations.
+
+    The Frontier CoP represents the most cost-efficient configuration,
+    establishing the efficiency frontier. Configurations above this frontier
+    are dominated (higher cost for same or worse performance).
+
+    Args:
+        cop_values: List of CoP values from different configurations/tiers
+
+    Returns:
+        Minimum CoP (best cost efficiency), or inf if all values are inf
+
+    Example:
+        >>> cops = [2.50, 1.75, 3.20, 2.10]
+        >>> compute_frontier_cop(cops)
+        1.75
+
+    """
+    # Filter out inf values for comparison
+    finite_cops = [c for c in cop_values if c != float("inf")]
+
+    if not finite_cops:
+        return float("inf")
+
+    return min(finite_cops)
+
+
 def compute_impl_rate(achieved_points: float, max_points: float) -> float:
     """Compute Implementation Rate (Impl-Rate) metric.
 
