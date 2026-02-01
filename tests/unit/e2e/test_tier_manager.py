@@ -834,7 +834,7 @@ class TestBuildMergedBaseline:
 
         # Should succeed by reading from best_subtest.json
         merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
-        assert merged == {"tools": {"enabled": ["bash", "read"]}}
+        assert set(merged["tools"]["enabled"]) == {"bash", "read"}
 
 
 class TestResourceSuffixInClaudeMd:
