@@ -43,20 +43,9 @@ def test_load_all_experiments_signature():
     assert sig is not None
 
 
-@pytest.mark.skipif(True, reason="Requires actual filesystem data")
-def test_load_experiment_integration():
-    """Integration test for loading experiment data.
-
-    This test is skipped by default as it requires actual filesystem data.
-    To run this test, ensure you have experiment data in ~/fullruns/ and remove skip.
-    """
-    from pathlib import Path
-
-    from scylla.analysis.loader import load_all_experiments
-
-    # This would require actual data
-    experiments = load_all_experiments(base_dir=Path("~/fullruns").expanduser())
-    assert isinstance(experiments, dict)
+# Integration test removed - requires actual filesystem data.
+# For integration testing, use functional tests in tests/functional/
+# or run analysis pipeline on real data in ~/fullruns/
 
 
 def test_model_id_to_display_removes_date_suffix():

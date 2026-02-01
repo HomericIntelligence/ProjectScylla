@@ -38,36 +38,42 @@ DEFAULT_PRICING = ModelPricing(
     cached_cost_per_million=0.0,
 )
 
-# Centralized model pricing data (as of January 2025)
+# Centralized model pricing data (as of January 2026)
 # All prices in USD per million tokens
+# Cache read tokens cost 0.1x (10%) of base input token price for Anthropic models
 MODEL_PRICING: dict[str, ModelPricing] = {
     # Anthropic Claude 4.5 models
     "claude-sonnet-4-5-20250929": ModelPricing(
         model_id="claude-sonnet-4-5-20250929",
         input_cost_per_million=3.0,
         output_cost_per_million=15.0,
+        cached_cost_per_million=0.3,  # 0.1x base input cost
     ),
     "claude-opus-4-5-20251101": ModelPricing(
         model_id="claude-opus-4-5-20251101",
         input_cost_per_million=15.0,
         output_cost_per_million=75.0,
+        cached_cost_per_million=1.5,  # 0.1x base input cost
     ),
     # Anthropic Claude 3.5 models
     "claude-3-5-sonnet-20241022": ModelPricing(
         model_id="claude-3-5-sonnet-20241022",
         input_cost_per_million=3.0,
         output_cost_per_million=15.0,
+        cached_cost_per_million=0.3,  # 0.1x base input cost
     ),
     "claude-3-5-haiku-20241022": ModelPricing(
         model_id="claude-3-5-haiku-20241022",
         input_cost_per_million=1.0,
         output_cost_per_million=5.0,
+        cached_cost_per_million=0.1,  # 0.1x base input cost
     ),
     # Anthropic Claude Haiku 4.5
     "claude-haiku-4-5-20241223": ModelPricing(
         model_id="claude-haiku-4-5-20241223",
         input_cost_per_million=1.0,
         output_cost_per_million=5.0,
+        cached_cost_per_million=0.1,  # 0.1x base input cost
     ),
     # OpenAI GPT models
     "gpt-4": ModelPricing(
