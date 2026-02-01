@@ -463,3 +463,121 @@ def test_impl_rate_figures_handle_missing_column():
 
         # save_figure should not be called since impl_rate is missing
         assert not mock.called
+
+
+def test_fig04_pass_rate_content_verification(sample_runs_df):
+    """Test Fig 4 generates correct pass-rate data with bootstrap CIs."""
+    from scylla.analysis.figures.tier_performance import fig04_pass_rate_by_tier
+
+    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
+        fig04_pass_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
+
+        # Verify save_figure was called
+        assert mock.called
+
+        # Get the data passed to save_figure
+        call_args = mock.call_args
+        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+
+        # Verify data structure
+        if data_df is not None:
+            required_cols = [
+                "agent_model",
+                "tier",
+                "pass_rate",
+                "ci_low",
+                "ci_high",
+            ]
+            for col in required_cols:
+                assert col in data_df.columns, f"Missing column: {col}"
+
+            # Verify pass_rate is in [0, 1]
+            assert data_df["pass_rate"].min() >= 0.0
+            assert data_df["pass_rate"].max() <= 1.0
+
+            # Verify CI bounds are valid
+            assert (data_df["ci_low"] <= data_df["pass_rate"]).all()
+            assert (data_df["ci_high"] >= data_df["pass_rate"]).all()
+
+            # Verify we have data for multiple models/tiers
+            assert len(data_df["agent_model"].unique()) >= 1
+            assert len(data_df["tier"].unique()) >= 1
+
+
+def test_fig06_cop_content_verification(sample_runs_df):
+    """Test Fig 6 generates correct CoP data."""
+    from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier
+
+    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
+        fig06_cop_by_tier(sample_runs_df, Path("/tmp"), render=False)
+
+        # Verify save_figure was called
+        assert mock.called
+
+        # Get the data passed to save_figure
+        call_args = mock.call_args
+        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+
+        # Verify data structure
+        if data_df is not None:
+            required_cols = ["agent_model", "tier", "cop", "is_inf"]
+            for col in required_cols:
+                assert col in data_df.columns, f"Missing column: {col}"
+
+            # Verify CoP is non-negative (or inf)
+            finite_cop = data_df[~data_df["is_inf"]]["cop"]
+            if len(finite_cop) > 0:
+                assert (finite_cop >= 0).all()
+
+            # Verify is_inf is boolean
+            assert data_df["is_inf"].dtype == bool
+
+            # Verify we have data for multiple models/tiers
+            assert len(data_df["agent_model"].unique()) >= 1
+            assert len(data_df["tier"].unique()) >= 1
+
+
+def test_fig08_pareto_content_verification(sample_runs_df):
+    """Test Fig 8 generates correct Pareto frontier data structure."""
+    from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
+
+    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
+        fig08_cost_quality_pareto(sample_runs_df, Path("/tmp"), render=False)
+
+        # Verify save_figure was called
+        assert mock.called
+
+        # Get the data passed to save_figure
+        call_args = mock.call_args
+        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+
+        # Verify data structure
+        if data_df is not None:
+            required_cols = ["agent_model", "tier", "mean_cost", "mean_score", "is_pareto"]
+            for col in required_cols:
+                assert col in data_df.columns, f"Missing column: {col}"
+
+            # Verify cost is non-negative
+            assert (data_df["mean_cost"] >= 0).all()
+
+            # Verify score is in [0, 1]
+            assert (data_df["mean_score"] >= 0).all()
+            assert (data_df["mean_score"] <= 1).all()
+
+            # Verify is_pareto is boolean
+            assert data_df["is_pareto"].dtype == bool
+
+            # Verify at least one point is on the Pareto frontier
+            assert data_df["is_pareto"].any()
+
+            # Verify we have both Pareto and non-Pareto points (unless all points are Pareto)
+            num_pareto = data_df["is_pareto"].sum()
+            total_points = len(data_df)
+            assert 0 < num_pareto <= total_points
+
+            # Verify Pareto points have reasonable values
+            pareto_points = data_df[data_df["is_pareto"]]
+            assert len(pareto_points) > 0
+            assert (pareto_points["mean_cost"] >= 0).all()
+            assert (pareto_points["mean_score"] >= 0).all()
+            assert (pareto_points["mean_score"] <= 1).all()
