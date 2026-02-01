@@ -406,3 +406,60 @@ def test_latex_snippet_with_custom_caption(tmp_path):
 
     content = snippet_path.read_text()
     assert "\\caption{Custom caption for testing}" in content
+
+
+def test_fig25_impl_rate_by_tier(sample_runs_df):
+    """Test Fig 25 generates without errors."""
+    from scylla.analysis.figures.impl_rate_analysis import fig25_impl_rate_by_tier
+
+    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
+        fig25_impl_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig26_impl_rate_vs_pass_rate(sample_runs_df):
+    """Test Fig 26 generates without errors."""
+    from scylla.analysis.figures.impl_rate_analysis import fig26_impl_rate_vs_pass_rate
+
+    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
+        fig26_impl_rate_vs_pass_rate(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_fig27_impl_rate_distribution(sample_runs_df):
+    """Test Fig 27 generates without errors."""
+    from scylla.analysis.figures.impl_rate_analysis import fig27_impl_rate_distribution
+
+    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
+        fig27_impl_rate_distribution(sample_runs_df, Path("/tmp"), render=False)
+        assert mock.called
+
+
+def test_impl_rate_figures_handle_missing_column():
+    """Test Impl-Rate figures handle missing impl_rate column gracefully."""
+    import pandas as pd
+
+    from scylla.analysis.figures.impl_rate_analysis import (
+        fig25_impl_rate_by_tier,
+        fig26_impl_rate_vs_pass_rate,
+        fig27_impl_rate_distribution,
+    )
+
+    # Create DataFrame without impl_rate column
+    df = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 5,
+            "tier": ["T0"] * 5,
+            "passed": [True] * 5,
+            "score": [0.8] * 5,
+        }
+    )
+
+    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
+        # Should not raise, just skip generation
+        fig25_impl_rate_by_tier(df, Path("/tmp"), render=False)
+        fig26_impl_rate_vs_pass_rate(df, Path("/tmp"), render=False)
+        fig27_impl_rate_distribution(df, Path("/tmp"), render=False)
+
+        # save_figure should not be called since impl_rate is missing
+        assert not mock.called
