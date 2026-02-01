@@ -74,9 +74,10 @@ tables:
 # Color Palettes
 colors:
   # Model colors (diverging blue-red)
+  # NOTE: These values match figures/__init__.py (authoritative source)
   models:
-    "Sonnet 4.5": "#3498db"  # Blue
-    "Haiku 4.5": "#e74c3c"   # Red
+    "Sonnet 4.5": "#4C78A8"  # Blue (Vega default blue)
+    "Haiku 4.5": "#E45756"   # Red (Vega default red)
     "Opus 4.5": "#2ecc71"    # Green (reserved)
 
   # Tier colors (ColorBrewer Set2 - colorblind safe)
