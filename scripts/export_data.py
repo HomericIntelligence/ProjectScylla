@@ -314,6 +314,8 @@ def main() -> None:
         "overall_stats": {
             "pass_rate": float(runs_df["passed"].mean()),
             "mean_score": float(runs_df["score"].mean()),
+            "mean_impl_rate": float(runs_df["impl_rate"].mean()),
+            "median_impl_rate": float(runs_df["impl_rate"].median()),
             "total_cost": float(runs_df["cost_usd"].sum()),
             "mean_cost_per_run": float(runs_df["cost_usd"].mean()),
         },
@@ -326,6 +328,7 @@ def main() -> None:
 
         # Compute additional statistics
         scores = model_df["score"].dropna()
+        impl_rates = model_df["impl_rate"].dropna()
         costs = model_df["cost_usd"].dropna()
         durations = model_df["duration_seconds"].dropna()
 
@@ -339,6 +342,11 @@ def main() -> None:
             "max_score": float(scores.max()),
             "q1_score": float(scores.quantile(0.25)),
             "q3_score": float(scores.quantile(0.75)),
+            "mean_impl_rate": float(impl_rates.mean()),
+            "median_impl_rate": float(impl_rates.median()),
+            "std_impl_rate": float(impl_rates.std()),
+            "min_impl_rate": float(impl_rates.min()),
+            "max_impl_rate": float(impl_rates.max()),
             "total_cost": float(costs.sum()),
             "mean_cost_per_run": float(costs.mean()),
             "median_cost": float(costs.median()),
@@ -355,6 +363,7 @@ def main() -> None:
     for tier in tier_order:
         tier_df = runs_df[runs_df["tier"] == tier]
         scores = tier_df["score"].dropna()
+        impl_rates = tier_df["impl_rate"].dropna()
         costs = tier_df["cost_usd"].dropna()
 
         summary["by_tier"][tier] = {
@@ -363,6 +372,9 @@ def main() -> None:
             "mean_score": float(scores.mean()),
             "median_score": float(scores.median()),
             "std_score": float(scores.std()),
+            "mean_impl_rate": float(impl_rates.mean()),
+            "median_impl_rate": float(impl_rates.median()),
+            "std_impl_rate": float(impl_rates.std()),
             "mean_cost": float(costs.mean()),
             "total_cost": float(costs.sum()),
             "n_subtests": int(tier_df["subtest"].nunique()),
