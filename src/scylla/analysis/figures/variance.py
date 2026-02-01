@@ -10,6 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
+from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order, get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
 
@@ -97,8 +98,8 @@ def fig03_failure_rate_by_tier(
     grade_counts["total"] = grade_counts.groupby(["agent_model", "tier"])["count"].transform("sum")
     grade_counts["proportion"] = grade_counts["count"] / grade_counts["total"]
 
-    # Define grade order (F at bottom, S at top)
-    grade_order = ["F", "D", "C", "B", "A", "S"]
+    # Get canonical grade order from config (reversed for bottom-to-top stacking)
+    grade_order = list(reversed(config.grade_order))
 
     # Get dynamic color scale for grades
     domain, range_ = get_color_scale("grades", grade_order)
