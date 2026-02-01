@@ -88,14 +88,24 @@ def mann_whitney_u(
     g1 = np.array(group1)
     g2 = np.array(group2)
 
+    # Guard against degenerate input (n < 2 per group)
     if len(g1) < 2 or len(g2) < 2:
         logger.warning(
             f"Mann-Whitney U test called with sample sizes {len(g1)}, {len(g2)}. "
-            "Need at least 2 samples per group for valid results."
+            "Need at least 2 samples per group. Returning U=0, p=1.0."
         )
+        return 0.0, 1.0
 
-    statistic, pvalue = stats.mannwhitneyu(g1, g2, alternative="two-sided")
-    return float(statistic), float(pvalue)
+    try:
+        statistic, pvalue = stats.mannwhitneyu(g1, g2, alternative="two-sided")
+        return float(statistic), float(pvalue)
+    except ValueError as e:
+        # Additional guard for unexpected scipy errors
+        logger.error(
+            f"Mann-Whitney U test failed with ValueError: {e}. "
+            f"Sample sizes: {len(g1)}, {len(g2)}. Returning U=0, p=1.0."
+        )
+        return 0.0, 1.0
 
 
 def cliffs_delta(group1: pd.Series | np.ndarray, group2: pd.Series | np.ndarray) -> float:

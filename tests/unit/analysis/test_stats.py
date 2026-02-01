@@ -172,6 +172,36 @@ def test_mann_whitney_u_identical():
     assert p_value > 0.9
 
 
+def test_mann_whitney_u_degenerate_input():
+    """Test Mann-Whitney U with degenerate input (n < 2).
+
+    Regression test for P1 bug: ensure function doesn't raise on
+    degenerate input but returns safe defaults (U=0, p=1.0).
+    """
+    from scylla.analysis.stats import mann_whitney_u
+
+    # Single element in one group
+    g1 = [1]
+    g2 = [2, 3, 4]
+    u_stat, p_value = mann_whitney_u(g1, g2)
+    assert u_stat == 0.0
+    assert p_value == 1.0
+
+    # Single element in both groups
+    g1 = [1]
+    g2 = [2]
+    u_stat, p_value = mann_whitney_u(g1, g2)
+    assert u_stat == 0.0
+    assert p_value == 1.0
+
+    # Empty group
+    g1 = []
+    g2 = [1, 2, 3]
+    u_stat, p_value = mann_whitney_u(g1, g2)
+    assert u_stat == 0.0
+    assert p_value == 1.0
+
+
 def test_krippendorff_alpha_perfect_agreement():
     """Test Krippendorff's alpha with perfect inter-rater agreement."""
     from scylla.analysis.stats import krippendorff_alpha
