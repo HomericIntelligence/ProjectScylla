@@ -17,11 +17,15 @@ from scipy import stats
 from statsmodels.regression.linear_model import OLS
 from statsmodels.tools import add_constant
 
+from scylla.analysis.config import config
+
 logger = logging.getLogger(__name__)
 
 
 def bootstrap_ci(
-    data: pd.Series | np.ndarray, confidence: float = 0.95, n_resamples: int = 10000
+    data: pd.Series | np.ndarray,
+    confidence: float | None = None,
+    n_resamples: int | None = None,
 ) -> tuple[float, float, float]:
     """Compute bootstrap confidence interval.
 
@@ -30,13 +34,19 @@ def bootstrap_ci(
 
     Args:
         data: Data to bootstrap
-        confidence: Confidence level (default: 0.95 for 95% CI)
-        n_resamples: Number of bootstrap resamples
+        confidence: Confidence level (default from config: 0.95 for 95% CI)
+        n_resamples: Number of bootstrap resamples (default from config: 10000)
 
     Returns:
         Tuple of (mean, lower_bound, upper_bound)
 
     """
+    # Use config defaults if not specified
+    if confidence is None:
+        confidence = config.bootstrap_confidence
+    if n_resamples is None:
+        n_resamples = config.bootstrap_resamples
+
     data_array = np.array(data)
     mean = np.mean(data_array)
 
@@ -56,7 +66,7 @@ def bootstrap_ci(
         n_resamples=n_resamples,
         confidence_level=confidence,
         method="BCa",
-        random_state=42,
+        random_state=config.bootstrap_random_state,
     )
 
     return mean, res.confidence_interval.low, res.confidence_interval.high
@@ -385,8 +395,8 @@ def benjamini_hochberg_correction(p_values: list[float]) -> list[float]:
 def cliffs_delta_ci(
     group1: pd.Series | np.ndarray,
     group2: pd.Series | np.ndarray,
-    confidence: float = 0.95,
-    n_resamples: int = 10000,
+    confidence: float | None = None,
+    n_resamples: int | None = None,
 ) -> tuple[float, float, float]:
     """Compute Cliff's delta with bootstrap confidence interval.
 
@@ -396,13 +406,19 @@ def cliffs_delta_ci(
     Args:
         group1: First group
         group2: Second group
-        confidence: Confidence level (default: 0.95)
-        n_resamples: Number of bootstrap resamples
+        confidence: Confidence level (default from config: 0.95)
+        n_resamples: Number of bootstrap resamples (default from config: 10000)
 
     Returns:
         Tuple of (delta, ci_low, ci_high)
 
     """
+    # Use config defaults if not specified
+    if confidence is None:
+        confidence = config.bootstrap_confidence
+    if n_resamples is None:
+        n_resamples = config.bootstrap_resamples
+
     # Compute point estimate using existing function
     delta = cliffs_delta(group1, group2)
 
@@ -431,7 +447,7 @@ def cliffs_delta_ci(
         n_resamples=n_resamples,
         confidence_level=confidence,
         method="BCa",
-        random_state=42,
+        random_state=config.bootstrap_random_state,
     )
 
     return delta, res.confidence_interval.low, res.confidence_interval.high
