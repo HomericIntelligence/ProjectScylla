@@ -344,6 +344,12 @@ def holm_bonferroni_correction(p_values: list[float]) -> list[float]:
         # Correction factor decreases from n to 1
         corrected[original_idx] = min(1.0, p_val * (n - rank))
 
+    # Enforce monotonicity: corrected p-values must be non-decreasing in sorted order
+    for i in range(1, n):
+        curr_idx = indexed[i][0]
+        prev_idx = indexed[i - 1][0]
+        corrected[curr_idx] = max(corrected[curr_idx], corrected[prev_idx])
+
     return corrected
 
 
