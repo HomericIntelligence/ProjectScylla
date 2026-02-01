@@ -47,6 +47,7 @@ def test_compute_statistical_results(sample_runs_df, tmp_path):
     if len(results["pairwise_comparisons"]) > 0:
         pairwise = results["pairwise_comparisons"][0]
         assert "model" in pairwise
+        assert "metric" in pairwise  # Added for impl_rate integration
         assert "tier1" in pairwise
         assert "tier2" in pairwise
         assert "u_statistic" in pairwise
@@ -57,6 +58,7 @@ def test_compute_statistical_results(sample_runs_df, tmp_path):
     if len(results["effect_sizes"]) > 0:
         effect = results["effect_sizes"][0]
         assert "model" in effect
+        assert "metric" in effect  # Added for impl_rate integration
         assert "tier1" in effect
         assert "tier2" in effect
         assert "cliffs_delta" in effect
@@ -193,7 +195,16 @@ def test_compute_statistical_results_empty_df(tmp_path):
 
     # Create minimal empty DataFrame
     empty_df = pd.DataFrame(
-        columns=["agent_model", "tier", "score", "cost_usd", "total_tokens", "duration_seconds"]
+        columns=[
+            "agent_model",
+            "tier",
+            "score",
+            "impl_rate",
+            "cost_usd",
+            "total_tokens",
+            "duration_seconds",
+            "passed",
+        ]
     )
 
     tier_order = []
@@ -237,10 +248,11 @@ def test_compute_statistical_results_degenerate_data():
             "agent_model": ["model1", "model1"],
             "tier": ["T0", "T1"],
             "score": [0.5, 0.6],
+            "impl_rate": [0.7, 0.8],
             "cost_usd": [1.0, 1.5],
             "total_tokens": [100, 150],
             "duration_seconds": [10.0, 15.0],
-            "passed": [True, False],  # Missing column
+            "passed": [True, False],
         }
     )
 
@@ -287,3 +299,37 @@ def test_export_data_validation_warnings(sample_runs_df, tmp_path, capsys):
 
     # Should complete despite NaN values (dropna in correlations)
     assert "correlations" in results
+
+
+def test_impl_rate_integration(sample_runs_df):
+    """Test that impl_rate is integrated into all statistical tests (Issue #324)."""
+    from export_data import compute_statistical_results
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+    results = compute_statistical_results(sample_runs_df, tier_order)
+
+    # Verify impl_rate in normality tests
+    impl_rate_normality = [t for t in results["normality_tests"] if t["metric"] == "impl_rate"]
+    assert len(impl_rate_normality) > 0, "impl_rate should appear in normality_tests"
+
+    # Verify impl_rate in omnibus tests
+    impl_rate_omnibus = [t for t in results["omnibus_tests"] if t["metric"] == "impl_rate"]
+    assert len(impl_rate_omnibus) > 0, "impl_rate should appear in omnibus_tests"
+
+    # Verify impl_rate in pairwise comparisons
+    impl_rate_pairwise = [t for t in results["pairwise_comparisons"] if t["metric"] == "impl_rate"]
+    assert len(impl_rate_pairwise) > 0, "impl_rate should appear in pairwise_comparisons"
+
+    # Verify impl_rate in effect sizes
+    impl_rate_effects = [t for t in results["effect_sizes"] if t["metric"] == "impl_rate"]
+    assert len(impl_rate_effects) > 0, "impl_rate should appear in effect_sizes"
+
+    # Verify impl_rate in correlations
+    impl_rate_corr = [
+        c
+        for c in results["correlations"]
+        if c["metric1"] == "impl_rate" or c["metric2"] == "impl_rate"
+    ]
+    assert len(impl_rate_corr) > 0, "impl_rate should appear in correlations"
