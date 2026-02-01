@@ -192,7 +192,8 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             continue
 
         h_stat, omnibus_p = kruskal_wallis(*tier_groups)
-        omnibus_results.append((model, h_stat, omnibus_p))
+        dof = len(tier_groups) - 1  # Degrees of freedom for Kruskal-Wallis
+        omnibus_results.append((model, h_stat, omnibus_p, dof))
 
         # Step 2: Only proceed to pairwise tests if omnibus is significant
         proceed_to_pairwise = omnibus_p < ALPHA
@@ -305,9 +306,9 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     # Add omnibus results to header
     md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
-    for model, h_stat, omnibus_p in omnibus_results:
+    for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
-        md_lines.append(f"- {model}: H={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
+        md_lines.append(f"- {model}: H({dof})={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
     md_lines.append("")
 
     md_lines.append(
@@ -360,10 +361,10 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         ]
     )
 
-    for model, h_stat, omnibus_p in omnibus_results:
+    for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
         latex_lines.append(
-            rf"\multicolumn{{7}}{{l}}{{{model}: $H={h_stat:.2f}$, "
+            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:.2f}$, "
             rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
         )
 
@@ -439,7 +440,8 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             continue
 
         h_stat, omnibus_p = kruskal_wallis(*tier_groups)
-        omnibus_results.append((model, h_stat, omnibus_p))
+        dof = len(tier_groups) - 1  # Degrees of freedom for Kruskal-Wallis
+        omnibus_results.append((model, h_stat, omnibus_p, dof))
 
         # Step 2: Only proceed to pairwise tests if omnibus is significant
         proceed_to_pairwise = omnibus_p < ALPHA
@@ -549,9 +551,9 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     # Add omnibus results to header
     md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
-    for model, h_stat, omnibus_p in omnibus_results:
+    for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
-        md_lines.append(f"- {model}: H={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
+        md_lines.append(f"- {model}: H({dof})={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
     md_lines.append("")
 
     md_lines.append(
@@ -635,10 +637,10 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         ]
     )
 
-    for model, h_stat, omnibus_p in omnibus_results:
+    for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
         latex_lines.append(
-            rf"\multicolumn{{7}}{{l}}{{{model}: $H={h_stat:.2f}$, "
+            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:.2f}$, "
             rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
         )
 
