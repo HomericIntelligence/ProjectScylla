@@ -338,9 +338,10 @@ pixi run -e analysis pytest tests/unit/analysis/ -v
 ## Next Steps
 
 1. **Create PR** for P1-5, P1-6, P1-7, P1-8 ✅ READY
-2. **Implement P1-3** (tier-specific metrics) - largest remaining task
-3. **Implement P1-4** (expand test fixtures to T0-T6)
-4. **Implement P0-2** (pytest.approx replacements)
+2. **GitHub Issues Filed** for remaining tasks:
+   - [#314](https://github.com/HomericIntelligence/ProjectScylla/issues/314) - P1-3: Create tier-specific metrics (loader extension)
+   - [#315](https://github.com/HomericIntelligence/ProjectScylla/issues/315) - P1-4: Expand test fixtures to T0-T6
+   - [#316](https://github.com/HomericIntelligence/ProjectScylla/issues/316) - P0-2: Replace bare float == with pytest.approx() **(P0 BLOCKER)**
 
 ---
 
