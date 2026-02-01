@@ -13,6 +13,8 @@ from typing import Any
 
 import yaml
 
+__all__ = ["AnalysisConfig", "config"]
+
 
 class AnalysisConfig:
     """Analysis configuration singleton."""
