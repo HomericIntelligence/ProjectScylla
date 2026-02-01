@@ -125,6 +125,20 @@ class AnalysisConfig:
         return self.get("colors", "grade_order", default=["S", "A", "B", "C", "D", "F"])
 
     @property
+    def correlation_metrics(self) -> dict[str, str]:
+        """Metric pairs for correlation analysis (column_name: display_name)."""
+        return self.get(
+            "figures",
+            "correlation_metrics",
+            default={
+                "score": "Score",
+                "cost_usd": "Cost (USD)",
+                "total_tokens": "Total Tokens",
+                "duration_seconds": "Duration (s)",
+            },
+        )
+
+    @property
     def pipeline_version(self) -> str:
         """Analysis pipeline version."""
         return self.get("reproducibility", "pipeline_version", default="1.0.0")
