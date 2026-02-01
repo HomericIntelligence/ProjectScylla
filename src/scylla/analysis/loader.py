@@ -20,6 +20,105 @@ import yaml
 from scylla.e2e.models import TokenStats
 
 
+def validate_numeric(value: any, field_name: str, default: float = np.nan) -> float:
+    """Validate and coerce numeric field from JSON.
+
+    Args:
+        value: Value from JSON (could be int, float, str, None, etc.)
+        field_name: Field name for error messages
+        default: Default value if validation fails
+
+    Returns:
+        Validated float value or default
+
+    """
+    # Handle None or missing
+    if value is None:
+        return default
+
+    # Try to convert to float
+    try:
+        result = float(value)
+
+        # Check for invalid values
+        if np.isnan(result) or np.isinf(result):
+            return default
+
+        return result
+    except (ValueError, TypeError):
+        print(
+            f"Warning: Invalid type for {field_name}: {type(value).__name__} "
+            f"(value={value!r}), using default={default}"
+        )
+        return default
+
+
+def validate_bool(value: any, field_name: str, default: bool = False) -> bool:
+    """Validate and coerce boolean field from JSON.
+
+    Args:
+        value: Value from JSON (could be bool, int, str, None, etc.)
+        field_name: Field name for error messages
+        default: Default value if validation fails
+
+    Returns:
+        Validated bool value or default
+
+    """
+    # Handle None or missing
+    if value is None:
+        return default
+
+    # If already bool, return directly
+    if isinstance(value, bool):
+        return value
+
+    # Try common string representations
+    if isinstance(value, str):
+        value_lower = value.lower()
+        if value_lower in ("true", "yes", "1"):
+            return True
+        if value_lower in ("false", "no", "0"):
+            return False
+
+    # Try numeric conversion (0 = False, non-zero = True)
+    try:
+        return bool(int(value))
+    except (ValueError, TypeError):
+        print(
+            f"Warning: Invalid type for {field_name}: {type(value).__name__} "
+            f"(value={value!r}), using default={default}"
+        )
+        return default
+
+
+def validate_int(value: any, field_name: str, default: int = -1) -> int:
+    """Validate and coerce integer field from JSON.
+
+    Args:
+        value: Value from JSON (could be int, float, str, None, etc.)
+        field_name: Field name for error messages
+        default: Default value if validation fails
+
+    Returns:
+        Validated int value or default
+
+    """
+    # Handle None or missing
+    if value is None:
+        return default
+
+    # Try to convert to int
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        print(
+            f"Warning: Invalid type for {field_name}: {type(value).__name__} "
+            f"(value={value!r}), using default={default}"
+        )
+        return default
+
+
 @dataclass
 class CriterionScore:
     """Detailed score for a single rubric criterion.
@@ -338,21 +437,28 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
             judge_num = int(judge_path.parent.name.replace("judge_", ""))
             judges.append(load_judgment(judge_path, judge_num))
 
+    # Validate and coerce all numeric/boolean fields with type checking
     return RunData(
         experiment=experiment,
         agent_model=agent_model,
         tier=tier,
         subtest=subtest,
         run_number=run_number,
-        score=result.get("judge_score", np.nan),
-        passed=result.get("judge_passed", False),
-        grade=result.get("judge_grade", "F"),
-        cost_usd=result.get("cost_usd", np.nan),
-        duration_seconds=result.get("duration_seconds", np.nan),
-        agent_duration_seconds=result.get("agent_duration_seconds", np.nan),
-        judge_duration_seconds=result.get("judge_duration_seconds", np.nan),
+        score=validate_numeric(result.get("judge_score"), "judge_score", np.nan),
+        passed=validate_bool(result.get("judge_passed"), "judge_passed", False),
+        grade=result.get("judge_grade", "F"),  # String, no validation needed
+        cost_usd=validate_numeric(result.get("cost_usd"), "cost_usd", np.nan),
+        duration_seconds=validate_numeric(
+            result.get("duration_seconds"), "duration_seconds", np.nan
+        ),
+        agent_duration_seconds=validate_numeric(
+            result.get("agent_duration_seconds"), "agent_duration_seconds", np.nan
+        ),
+        judge_duration_seconds=validate_numeric(
+            result.get("judge_duration_seconds"), "judge_duration_seconds", np.nan
+        ),
         token_stats=token_stats,
-        exit_code=result.get("exit_code", -1),
+        exit_code=validate_int(result.get("exit_code"), "exit_code", -1),
         judges=judges,
     )
 

@@ -43,6 +43,138 @@ def test_load_all_experiments_signature():
     assert sig is not None
 
 
+def test_validate_numeric_with_valid_values():
+    """Test validate_numeric with valid numeric inputs."""
+    from scylla.analysis.loader import validate_numeric
+
+    # Valid float
+    assert validate_numeric(1.5, "test") == 1.5
+
+    # Valid int (coerced to float)
+    assert validate_numeric(42, "test") == 42.0
+
+    # Valid string (coerced to float)
+    assert validate_numeric("3.14", "test") == 3.14
+
+    # Zero is valid
+    assert validate_numeric(0, "test") == 0.0
+    assert validate_numeric(0.0, "test") == 0.0
+
+
+def test_validate_numeric_with_invalid_values():
+    """Test validate_numeric with invalid inputs returns default."""
+    import numpy as np
+
+    from scylla.analysis.loader import validate_numeric
+
+    # None returns default
+    assert np.isnan(validate_numeric(None, "test", np.nan))
+    assert validate_numeric(None, "test", 99.0) == 99.0
+
+    # Invalid string returns default
+    assert np.isnan(validate_numeric("invalid", "test", np.nan))
+
+    # List/dict returns default
+    assert np.isnan(validate_numeric([1, 2, 3], "test", np.nan))
+    assert np.isnan(validate_numeric({"a": 1}, "test", np.nan))
+
+
+def test_validate_numeric_with_special_values():
+    """Test validate_numeric handles inf and nan."""
+    import numpy as np
+
+    from scylla.analysis.loader import validate_numeric
+
+    # inf returns default
+    assert np.isnan(validate_numeric(np.inf, "test", np.nan))
+    assert validate_numeric(np.inf, "test", 0.0) == 0.0
+
+    # -inf returns default
+    assert np.isnan(validate_numeric(-np.inf, "test", np.nan))
+
+    # nan returns default
+    assert np.isnan(validate_numeric(np.nan, "test", np.nan))
+
+
+def test_validate_bool_with_valid_values():
+    """Test validate_bool with valid boolean inputs."""
+    from scylla.analysis.loader import validate_bool
+
+    # Native bool
+    assert validate_bool(True, "test") is True
+    assert validate_bool(False, "test") is False
+
+    # String representations
+    assert validate_bool("true", "test") is True
+    assert validate_bool("True", "test") is True
+    assert validate_bool("TRUE", "test") is True
+    assert validate_bool("yes", "test") is True
+    assert validate_bool("1", "test") is True
+
+    assert validate_bool("false", "test") is False
+    assert validate_bool("False", "test") is False
+    assert validate_bool("no", "test") is False
+    assert validate_bool("0", "test") is False
+
+    # Numeric values (0=False, non-zero=True)
+    assert validate_bool(1, "test") is True
+    assert validate_bool(42, "test") is True
+    assert validate_bool(0, "test") is False
+
+
+def test_validate_bool_with_invalid_values():
+    """Test validate_bool with invalid inputs returns default."""
+    from scylla.analysis.loader import validate_bool
+
+    # None returns default
+    assert validate_bool(None, "test", False) is False
+    assert validate_bool(None, "test", True) is True
+
+    # Invalid string returns default
+    assert validate_bool("maybe", "test", False) is False
+
+    # List/dict returns default
+    assert validate_bool([True], "test", False) is False
+    assert validate_bool({"a": True}, "test", False) is False
+
+
+def test_validate_int_with_valid_values():
+    """Test validate_int with valid integer inputs."""
+    from scylla.analysis.loader import validate_int
+
+    # Valid int
+    assert validate_int(42, "test") == 42
+
+    # Valid float (truncated)
+    assert validate_int(3.14, "test") == 3
+    assert validate_int(3.9, "test") == 3
+
+    # Valid string
+    assert validate_int("123", "test") == 123
+
+    # Zero is valid
+    assert validate_int(0, "test") == 0
+
+    # Negative is valid
+    assert validate_int(-5, "test") == -5
+
+
+def test_validate_int_with_invalid_values():
+    """Test validate_int with invalid inputs returns default."""
+    from scylla.analysis.loader import validate_int
+
+    # None returns default
+    assert validate_int(None, "test", -1) == -1
+    assert validate_int(None, "test", 99) == 99
+
+    # Invalid string returns default
+    assert validate_int("invalid", "test", -1) == -1
+
+    # List/dict returns default
+    assert validate_int([1, 2, 3], "test", -1) == -1
+    assert validate_int({"a": 1}, "test", -1) == -1
+
+
 # Integration test removed - requires actual filesystem data.
 # For integration testing, use functional tests in tests/functional/
 # or run analysis pipeline on real data in ~/fullruns/

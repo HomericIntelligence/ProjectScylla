@@ -118,7 +118,7 @@ def test_build_runs_df_with_mock_data(mock_run_data):
     assert df.iloc[0]["subtest"] == "test-01"
     assert df.iloc[0]["run_number"] == 1
     assert df.iloc[0]["score"] == 0.75
-    assert df.iloc[0]["passed"] is True
+    assert df.iloc[0]["passed"]  # Check truthy value (pandas returns np.True_)
     assert df.iloc[0]["grade"] == "B"
     assert df.iloc[0]["cost_usd"] == 0.05
 
@@ -267,9 +267,9 @@ def test_build_judges_df_judge_fields(mock_run_data):
     judge1 = df[df["judge_number"] == 1].iloc[0]
     assert judge1["judge_model"] == "claude-opus-4-5-20251101"
     assert judge1["judge_score"] == 0.75
-    assert judge1["judge_passed"] is True
+    assert judge1["judge_passed"]  # Check truthy (pandas returns np.True_)
     assert judge1["judge_grade"] == "B"
-    assert judge1["judge_is_valid"] is True
+    assert judge1["judge_is_valid"]  # Check truthy (pandas returns np.True_)
 
 
 def test_build_judges_df_impl_rate_per_judge(mock_run_data):
