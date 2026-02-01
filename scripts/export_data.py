@@ -24,6 +24,8 @@ from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     cliffs_delta_ci,
+    compute_cop,
+    compute_frontier_cop,
     holm_bonferroni_correction,
     kruskal_wallis,
     mann_whitney_u,
@@ -62,6 +64,7 @@ def compute_statistical_results(runs_df, tier_order):
         "pairwise_comparisons": [],
         "effect_sizes": [],
         "correlations": [],
+        "tier_descriptives": [],  # Tier-level descriptive statistics (CoP, etc.)
     }
 
     models = sorted(runs_df["agent_model"].unique())
@@ -342,6 +345,60 @@ def compute_statistical_results(runs_df, tier_order):
                 }
             )
 
+    # Tier-level descriptive statistics (CoP analysis)
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+        tier_cops = []
+
+        for tier in tier_order:
+            tier_data = model_runs[model_runs["tier"] == tier]
+
+            if len(tier_data) == 0:
+                continue
+
+            pass_rate = float(tier_data["passed"].mean())
+            mean_cost = float(tier_data["cost_usd"].mean())
+            median_cost = float(tier_data["cost_usd"].median())
+            cop = compute_cop(mean_cost, pass_rate)
+
+            tier_cops.append(cop if cop != float("inf") else None)
+
+            results["tier_descriptives"].append(
+                {
+                    "model": model,
+                    "tier": tier,
+                    "n": len(tier_data),
+                    "pass_rate": pass_rate,
+                    "mean_cost": mean_cost,
+                    "median_cost": median_cost,
+                    "cop": float(cop) if cop != float("inf") else None,
+                }
+            )
+
+        # Add Frontier CoP for this model
+        valid_cops = [c for c in tier_cops if c is not None]
+        if valid_cops:
+            frontier = compute_frontier_cop(valid_cops)
+            # Find which tier achieved the frontier
+            frontier_tier = None
+            for i, (tier, cop) in enumerate(zip(tier_order, tier_cops)):
+                if cop == frontier:
+                    frontier_tier = tier
+                    break
+
+            results["tier_descriptives"].append(
+                {
+                    "model": model,
+                    "tier": "frontier",
+                    "n": sum(len(model_runs[model_runs["tier"] == t]) for t in tier_order),
+                    "pass_rate": None,
+                    "mean_cost": None,
+                    "median_cost": None,
+                    "cop": float(frontier),
+                    "frontier_tier": frontier_tier,
+                }
+            )
+
     return results
 
 
@@ -440,10 +497,27 @@ def main() -> None:
         impl_rates = model_df["impl_rate"].dropna()
         costs = model_df["cost_usd"].dropna()
         durations = model_df["duration_seconds"].dropna()
+        pass_rate = float(model_df["passed"].mean())
+        mean_cost = float(costs.mean())
+
+        # Compute overall CoP for this model
+        model_cop = compute_cop(mean_cost, pass_rate)
+
+        # Compute Frontier CoP (minimum CoP across all tiers for this model)
+        tier_cops = []
+        for tier in sorted(model_df["tier"].unique()):
+            tier_data = model_df[model_df["tier"] == tier]
+            tier_pass_rate = float(tier_data["passed"].mean())
+            tier_mean_cost = float(tier_data["cost_usd"].mean())
+            tier_cop = compute_cop(tier_mean_cost, tier_pass_rate)
+            if tier_cop != float("inf"):
+                tier_cops.append(tier_cop)
+
+        frontier_cop = compute_frontier_cop(tier_cops) if tier_cops else float("inf")
 
         summary["by_model"][model] = {
             "total_runs": len(model_df),
-            "pass_rate": float(model_df["passed"].mean()),
+            "pass_rate": pass_rate,
             "mean_score": float(scores.mean()),
             "median_score": float(scores.median()),
             "std_score": float(scores.std()),
@@ -457,8 +531,10 @@ def main() -> None:
             "min_impl_rate": float(impl_rates.min()),
             "max_impl_rate": float(impl_rates.max()),
             "total_cost": float(costs.sum()),
-            "mean_cost_per_run": float(costs.mean()),
+            "mean_cost_per_run": mean_cost,
             "median_cost": float(costs.median()),
+            "cop": float(model_cop) if model_cop != float("inf") else None,
+            "frontier_cop": float(frontier_cop) if frontier_cop != float("inf") else None,
             "total_tokens": int(model_df["total_tokens"].sum()),
             "mean_duration": float(durations.mean()),
             "n_subtests": int(model_df["subtest"].nunique()),
@@ -474,18 +550,24 @@ def main() -> None:
         scores = tier_df["score"].dropna()
         impl_rates = tier_df["impl_rate"].dropna()
         costs = tier_df["cost_usd"].dropna()
+        pass_rate = float(tier_df["passed"].mean())
+        mean_cost = float(costs.mean())
+
+        # Compute Cost-of-Pass for this tier
+        cop = compute_cop(mean_cost, pass_rate)
 
         summary["by_tier"][tier] = {
             "total_runs": len(tier_df),
-            "pass_rate": float(tier_df["passed"].mean()),
+            "pass_rate": pass_rate,
             "mean_score": float(scores.mean()),
             "median_score": float(scores.median()),
             "std_score": float(scores.std()),
             "mean_impl_rate": float(impl_rates.mean()),
             "median_impl_rate": float(impl_rates.median()),
             "std_impl_rate": float(impl_rates.std()),
-            "mean_cost": float(costs.mean()),
+            "mean_cost": mean_cost,
             "total_cost": float(costs.sum()),
+            "cop": float(cop) if cop != float("inf") else None,
             "n_subtests": int(tier_df["subtest"].nunique()),
         }
 
