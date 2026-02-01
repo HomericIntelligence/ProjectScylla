@@ -30,6 +30,11 @@ from scylla.analysis.figures.cost_analysis import (
 from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
 from scylla.analysis.figures.diagnostics import fig23_qq_plots, fig24_score_histograms
 from scylla.analysis.figures.effect_size import fig19_effect_size_forest
+from scylla.analysis.figures.impl_rate_analysis import (
+    fig25_impl_rate_by_tier,
+    fig26_impl_rate_vs_pass_rate,
+    fig27_impl_rate_distribution,
+)
 from scylla.analysis.figures.judge_analysis import (
     fig02_judge_variance,
     fig14_judge_agreement,
@@ -77,6 +82,9 @@ FIGURES = {
     "fig22_cumulative_cost": ("cost", fig22_cumulative_cost),
     "fig23_qq_plots": ("diagnostics", fig23_qq_plots),
     "fig24_score_histograms": ("diagnostics", fig24_score_histograms),
+    "fig25_impl_rate_by_tier": ("impl_rate", fig25_impl_rate_by_tier),
+    "fig26_impl_rate_vs_pass_rate": ("impl_rate", fig26_impl_rate_vs_pass_rate),
+    "fig27_impl_rate_distribution": ("impl_rate", fig27_impl_rate_distribution),
 }
 
 
