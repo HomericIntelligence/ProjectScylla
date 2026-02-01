@@ -367,6 +367,12 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
         )
 
+    # Add correction method footnote
+    latex_lines.append(
+        r"\multicolumn{7}{l}{\footnotesize "
+        r"Pairwise p-values corrected with Holm-Bonferroni method.} \\"
+    )
+
     latex_lines.extend(
         [
             r"\bottomrule",
@@ -635,6 +641,12 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             rf"\multicolumn{{7}}{{l}}{{{model}: $H={h_stat:.2f}$, "
             rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
         )
+
+    # Add correction method footnote
+    latex_lines.append(
+        r"\multicolumn{7}{l}{\footnotesize "
+        r"Pairwise p-values corrected with Holm-Bonferroni method.} \\"
+    )
 
     latex_lines.extend(
         [
@@ -977,6 +989,13 @@ def table04_criteria_performance(
             f"{criterion} & {criteria_weights[criterion]:.2f} & "
             f"{model_cols} & {pvalue_str} & {winner_str} \\\\"
         )
+
+    # Add correction method footnote
+    latex_lines.append(r"\midrule")
+    latex_lines.append(
+        r"\multicolumn{" + str(len(models) + 4) + r"}{l}{\footnotesize "
+        r"p-values corrected with Holm-Bonferroni method.} \\"
+    )
 
     latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
 
@@ -1388,6 +1407,14 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
                 f"{row['Pair']} & {row['Metric']} & {val1_str} & {val2_str} & "
                 f"{delta_str} & {pval_str} \\\\"
             )
+
+    # Add correction method footnote
+    latex_lines.append(r"\midrule")
+    num_cols = 5 if len(models) == 2 else 6
+    latex_lines.append(
+        rf"\multicolumn{{{num_cols}}}{{l}}{{\footnotesize "
+        r"p-values corrected with Holm-Bonferroni method.}} \\"
+    )
 
     latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
 
