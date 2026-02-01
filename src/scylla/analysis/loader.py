@@ -10,6 +10,7 @@ data structures. Uses existing e2e.models data structures to avoid duplication.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -18,6 +19,8 @@ import numpy as np
 import yaml
 
 from scylla.e2e.models import TokenStats
+
+logger = logging.getLogger(__name__)
 
 
 def validate_numeric(value: any, field_name: str, default: float = np.nan) -> float:
@@ -46,9 +49,12 @@ def validate_numeric(value: any, field_name: str, default: float = np.nan) -> fl
 
         return result
     except (ValueError, TypeError):
-        print(
-            f"Warning: Invalid type for {field_name}: {type(value).__name__} "
-            f"(value={value!r}), using default={default}"
+        logger.warning(
+            "Invalid type for %s: %s (value=%r), using default=%s",
+            field_name,
+            type(value).__name__,
+            value,
+            default,
         )
         return default
 
@@ -85,9 +91,12 @@ def validate_bool(value: any, field_name: str, default: bool = False) -> bool:
     try:
         return bool(int(value))
     except (ValueError, TypeError):
-        print(
-            f"Warning: Invalid type for {field_name}: {type(value).__name__} "
-            f"(value={value!r}), using default={default}"
+        logger.warning(
+            "Invalid type for %s: %s (value=%r), using default=%s",
+            field_name,
+            type(value).__name__,
+            value,
+            default,
         )
         return default
 
@@ -112,9 +121,12 @@ def validate_int(value: any, field_name: str, default: int = -1) -> int:
     try:
         return int(value)
     except (ValueError, TypeError):
-        print(
-            f"Warning: Invalid type for {field_name}: {type(value).__name__} "
-            f"(value={value!r}), using default={default}"
+        logger.warning(
+            "Invalid type for %s: %s (value=%r), using default=%s",
+            field_name,
+            type(value).__name__,
+            value,
+            default,
         )
         return default
 
@@ -286,7 +298,7 @@ def resolve_agent_model(experiment_dir: Path) -> str:
                 if models:
                     return model_id_to_display(models[0])
         except Exception as e:
-            print(f"Warning: Failed to read {config_path}: {e}")
+            logger.warning("Failed to read %s: %s", config_path, e)
 
     # Fallback: find first agent/MODEL.md
     for tier_dir in sorted(experiment_dir.iterdir()):
@@ -306,7 +318,7 @@ def resolve_agent_model(experiment_dir: Path) -> str:
                     try:
                         return model_id_to_display(parse_judge_model(model_md))
                     except Exception as e:
-                        print(f"Warning: Failed to parse {model_md}: {e}")
+                        logger.warning("Failed to parse %s: %s", model_md, e)
 
     raise ValueError(f"Could not determine agent model for {experiment_dir}")
 
@@ -503,7 +515,7 @@ def load_experiment(experiment_dir: Path, agent_model: str) -> list[RunData]:
                     run = load_run(run_dir, experiment_name, tier_id, subtest_id, agent_model)
                     runs.append(run)
                 except Exception as e:
-                    print(f"Warning: Failed to load {run_dir}: {e}")
+                    logger.warning("Failed to load %s: %s", run_dir, e)
                     continue
 
     return runs
@@ -541,21 +553,21 @@ def load_all_experiments(
         exp_name = exp_dir.name
 
         if exp_name in exclude:
-            print(f"Skipping excluded experiment: {exp_name}")
+            logger.info("Skipping excluded experiment: %s", exp_name)
             continue
 
-        print(f"Loading experiment: {exp_name}")
+        logger.info("Loading experiment: %s", exp_name)
 
         # Resolve agent model from experiment configuration
         try:
             agent_model = resolve_agent_model(actual_exp_dir)
         except ValueError as e:
-            print(f"Warning: {e}, skipping experiment")
+            logger.warning("%s, skipping experiment", e)
             continue
 
         runs = load_experiment(actual_exp_dir, agent_model)
         experiments[exp_name] = runs
-        print(f"  Loaded {len(runs)} runs (agent model: {agent_model})")
+        logger.info("  Loaded %d runs (agent model: %s)", len(runs), agent_model)
 
     return experiments
 
