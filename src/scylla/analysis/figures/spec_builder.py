@@ -113,7 +113,7 @@ def save_figure(
             try:
                 img_path = output_dir / f"{name}.{fmt}"
                 if fmt == "png":
-                    chart.save(str(img_path), scale_factor=2.0)  # ~300 DPI
+                    chart.save(str(img_path), scale_factor=3.0)  # 300 DPI for publication
                 else:
                     chart.save(str(img_path))
                 print(f"  Rendered: {img_path}")

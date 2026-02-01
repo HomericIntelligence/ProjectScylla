@@ -7,7 +7,6 @@ Full validation of table content is deferred to integration tests.
 import pytest
 
 
-@pytest.mark.skipif(True, reason="Requires full DataFrame with judge data")
 def test_table01_tier_summary_format(sample_runs_df):
     """Test Table 1 returns valid dual-format output."""
     from scylla.analysis.tables import table01_tier_summary
@@ -19,6 +18,10 @@ def test_table01_tier_summary_format(sample_runs_df):
     assert isinstance(latex, str)
     assert len(markdown) > 0
     assert len(latex) > 0
+
+    # Verify key content is present
+    assert "Pass Rate" in markdown or "pass rate" in markdown.lower()
+    assert "tabular" in latex or "table" in latex.lower()
 
 
 def test_tables_module_imports():
@@ -307,7 +310,6 @@ def test_table03_judge_agreement(sample_judges_df):
 def test_table03_handles_single_judge(sample_runs_df):
     """Test Table 3 handles edge case of single judge."""
     import pandas as pd
-    import pytest
 
     from scylla.analysis.tables import table03_judge_agreement
 
