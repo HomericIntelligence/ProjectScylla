@@ -1,0 +1,29 @@
+{
+  "name": "defensive-analysis-patterns",
+  "version": "1.0.0",
+  "category": "testing",
+  "description": "Defensive programming patterns for statistical analysis pipelines to handle data quality issues gracefully",
+  "tags": [
+    "defensive-programming",
+    "statistical-analysis",
+    "type-coercion",
+    "edge-cases",
+    "parametrized-testing",
+    "data-quality"
+  ],
+  "created": "2026-02-01",
+  "author": "Claude Sonnet 4.5",
+  "context": "P2 improvements for publication readiness - defensive patterns to make analysis pipeline robust to real-world data quality issues",
+  "related_skills": [
+    "parametrized-testing-pattern",
+    "config-centralization-pattern",
+    "statistical-debugging",
+    "pr-workflow"
+  ],
+  "outcomes": {
+    "prs_created": 3,
+    "tests_added": 69,
+    "test_coverage_increase": "28%",
+    "lines_changed": 509
+  }
+}
