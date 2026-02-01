@@ -11,7 +11,7 @@ from __future__ import annotations
 import pandas as pd
 from scipy import stats as scipy_stats
 
-from scylla.analysis.config import ALPHA
+from scylla.analysis.config import ALPHA, config
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     krippendorff_alpha,
@@ -19,6 +19,12 @@ from scylla.analysis.stats import (
     shapiro_wilk,
     spearman_correlation,
 )
+
+# Format strings from config
+_FMT_PVAL = f".{config.precision_p_values}f"
+_FMT_EFFECT = f".{config.precision_effect_sizes}f"
+_FMT_PCT = f".{config.precision_percentages}f"
+_FMT_RATE = f".{config.precision_rates}f"
 
 
 def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
@@ -65,7 +71,7 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
 
             rows.append(
                 {
-                    "Judge Pair": f"Judge {i+1} – Judge {j+1}",
+                    "Judge Pair": f"Judge {i + 1} – Judge {j + 1}",
                     "Spearman ρ": spearman_r,
                     "Pearson r": pearson_r,
                     "Mean |Δ Score|": mean_delta,
@@ -96,7 +102,7 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
         if row["Spearman ρ"] is not None:
             md_lines.append(
                 f"| {row['Judge Pair']} | {row['Spearman ρ']:.3f} | "
-                f"{row['Pearson r']:.3f} | {row['Mean |Δ Score|']:.4f} |"
+                f"{row['Pearson r']:.3f} | {row['Mean |Δ Score|']:{_FMT_PVAL}} |"
             )
         else:
             md_lines.append(f"| {row['Judge Pair']} | — | — | — |")
@@ -121,7 +127,7 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
         if row["Spearman ρ"] is not None:
             latex_lines.append(
                 f"{row['Judge Pair']} & {row['Spearman ρ']:.3f} & "
-                f"{row['Pearson r']:.3f} & {row['Mean |Δ Score|']:.4f} \\\\"
+                f"{row['Pearson r']:.3f} & {row['Mean |Δ Score|']:{_FMT_PVAL}} \\\\"
             )
         else:
             latex_lines.append(f"{row['Judge Pair']} & — & — & — \\\\")
@@ -202,7 +208,7 @@ def table07_subtest_detail(runs_df: pd.DataFrame, subtests_df: pd.DataFrame) -> 
         md_lines.append(
             f"| {row['Model']} | {row['Tier']} | {row['Subtest']} | "
             f"{row['Pass Rate']:.3f} | {row['Mean Score']:.3f} | {row['Std Dev']:.3f} | "
-            f"{row['Cost ($)']:.4f} | {row['Modal Grade']} | {row['Grade Dist']} |"
+            f"{row['Cost ($)']:{_FMT_PVAL}} | {row['Modal Grade']} | {row['Grade Dist']} |"
         )
 
     markdown = "\n".join(md_lines)
@@ -230,7 +236,8 @@ def table07_subtest_detail(runs_df: pd.DataFrame, subtests_df: pd.DataFrame) -> 
         latex_lines.append(
             f"{row['Model']} & {row['Tier']} & {row['Subtest']} & "
             f"{row['Pass Rate']:.3f} & {row['Mean Score']:.3f} & {row['Std Dev']:.3f} & "
-            f"{row['Cost ($)']:.4f} & {row['Modal Grade']} & \\tiny {row['Grade Dist']} \\\\"
+            f"{row['Cost ($)']:{_FMT_PVAL}} & {row['Modal Grade']} & "
+            f"\\tiny {row['Grade Dist']} \\\\"
         )
 
     latex_lines.append(r"\end{longtable}")
@@ -315,9 +322,9 @@ def table08_summary_statistics(runs_df: pd.DataFrame) -> tuple[str, str]:
     for _, row in df.iterrows():
         md_lines.append(
             f"| {row['Model']} | {row['Metric']} | {row['N']} | "
-            f"{row['Mean']:.4f} | {row['Median']:.4f} | {row['Min']:.4f} | "
-            f"{row['Max']:.4f} | {row['Q1']:.4f} | {row['Q3']:.4f} | "
-            f"{row['StdDev']:.4f} | {row['Skewness']:.3f} | {row['Kurtosis']:.3f} |"
+            f"{row['Mean']:{_FMT_PVAL}} | {row['Median']:{_FMT_PVAL}} | {row['Min']:{_FMT_PVAL}} | "
+            f"{row['Max']:{_FMT_PVAL}} | {row['Q1']:{_FMT_PVAL}} | {row['Q3']:{_FMT_PVAL}} | "
+            f"{row['StdDev']:{_FMT_PVAL}} | {row['Skewness']:.3f} | {row['Kurtosis']:.3f} |"
         )
 
     markdown = "\n".join(md_lines)
@@ -338,9 +345,9 @@ def table08_summary_statistics(runs_df: pd.DataFrame) -> tuple[str, str]:
     for _, row in df.iterrows():
         latex_lines.append(
             f"{row['Model']} & {row['Metric']} & {row['N']} & "
-            f"{row['Mean']:.4f} & {row['Median']:.4f} & {row['Min']:.4f} & "
-            f"{row['Max']:.4f} & {row['Q1']:.4f} & {row['Q3']:.4f} & "
-            f"{row['StdDev']:.4f} & {row['Skewness']:.3f} & {row['Kurtosis']:.3f} \\\\"
+            f"{row['Mean']:{_FMT_PVAL}} & {row['Median']:{_FMT_PVAL}} & {row['Min']:{_FMT_PVAL}} & "
+            f"{row['Max']:{_FMT_PVAL}} & {row['Q1']:{_FMT_PVAL}} & {row['Q3']:{_FMT_PVAL}} & "
+            f"{row['StdDev']:{_FMT_PVAL}} & {row['Skewness']:.3f} & {row['Kurtosis']:.3f} \\\\"
         )
 
     latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
@@ -550,7 +557,7 @@ def table10_normality_tests(runs_df: pd.DataFrame) -> tuple[str, str]:
     for _, row in df.iterrows():
         md_lines.append(
             f"| {row['Model']} | {row['Tier']} | {row['Metric']} | {row['N']} | "
-            f"{row['W']:.4f} | {row['p-value']:.4f} | {row['Normal? (α=0.05)']} |"
+            f"{row['W']:{_FMT_PVAL}} | {row['p-value']:{_FMT_PVAL}} | {row['Normal? (α=0.05)']} |"
         )
 
     # Summary statistics
@@ -558,7 +565,7 @@ def table10_normality_tests(runs_df: pd.DataFrame) -> tuple[str, str]:
     total_count = len(df)
     md_lines.append(
         f"\n**Summary**: {normal_count}/{total_count} "
-        f"({100*normal_count/total_count:.1f}%) distributions pass normality test"
+        f"({100 * normal_count / total_count:{_FMT_PCT}}%) distributions pass normality test"
     )
 
     markdown = "\n".join(md_lines)
@@ -579,14 +586,14 @@ def table10_normality_tests(runs_df: pd.DataFrame) -> tuple[str, str]:
         normal_symbol = r"\checkmark" if row["Normal? (α=0.05)"] == "Yes" else r"$\times$"
         latex_lines.append(
             f"{row['Model']} & {row['Tier']} & {row['Metric']} & {row['N']} & "
-            f"{row['W']:.4f} & {row['p-value']:.4f} & {normal_symbol} \\\\"
+            f"{row['W']:{_FMT_PVAL}} & {row['p-value']:{_FMT_PVAL}} & {normal_symbol} \\\\"
         )
 
     latex_lines.extend(
         [
             r"\midrule",
             rf"\multicolumn{{7}}{{l}}{{\textit{{Summary: {normal_count}/{total_count} "
-            rf"({100*normal_count/total_count:.1f}\%) pass normality test}}}} \\",
+            rf"({100 * normal_count / total_count:{_FMT_PCT}}\%) pass normality test}}}} \\",
             r"\bottomrule",
             r"\end{tabular}",
             r"\end{table}",

@@ -99,6 +99,11 @@ class AnalysisConfig:
         return self.get("statistical", "min_samples", "correlation", default=3)
 
     @property
+    def min_sample_kruskal_wallis(self) -> int:
+        """Minimum sample size for Kruskal-Wallis test."""
+        return self.get("statistical", "min_samples", "kruskal_wallis", default=2)
+
+    @property
     def png_dpi_scale(self) -> float:
         """PNG DPI scale factor (300 DPI / 100 base = 3.0)."""
         dpi = self.get("figures", "dpi", "png", default=300)
@@ -147,6 +152,71 @@ class AnalysisConfig:
     def config_version(self) -> str:
         """Configuration file version."""
         return self.get("reproducibility", "config_version", default="1.0.0")
+
+    @property
+    def colors(self) -> dict[str, dict[str, str]]:
+        """All color palettes from config."""
+        return self.get("colors", default={})
+
+    @property
+    def model_colors(self) -> dict[str, str]:
+        """Model color palette."""
+        return self.get("colors", "models", default={})
+
+    @property
+    def tier_colors(self) -> dict[str, str]:
+        """Tier color palette."""
+        return self.get("colors", "tiers", default={})
+
+    @property
+    def grade_colors(self) -> dict[str, str]:
+        """Grade color palette."""
+        return self.get("colors", "grades", default={})
+
+    @property
+    def judge_colors(self) -> dict[str, str]:
+        """Judge color palette."""
+        return self.get("colors", "judges", default={})
+
+    @property
+    def criteria_colors(self) -> dict[str, str]:
+        """Criteria color palette."""
+        return self.get("colors", "criteria", default={})
+
+    @property
+    def precision_p_values(self) -> int:
+        """Number of decimal places for p-values."""
+        return self.get("tables", "precision", "p_values", default=4)
+
+    @property
+    def precision_effect_sizes(self) -> int:
+        """Number of decimal places for effect sizes."""
+        return self.get("tables", "precision", "effect_sizes", default=3)
+
+    @property
+    def precision_percentages(self) -> int:
+        """Number of decimal places for percentages."""
+        return self.get("tables", "precision", "percentages", default=1)
+
+    @property
+    def precision_costs(self) -> int:
+        """Number of decimal places for costs."""
+        return self.get("tables", "precision", "costs", default=2)
+
+    @property
+    def precision_rates(self) -> int:
+        """Number of decimal places for rates."""
+        return self.get("tables", "precision", "rates", default=3)
+
+    @property
+    def phase_colors(self) -> dict[str, str]:
+        """Phase color palette."""
+        return self.get("colors", "phases", default={})
+
+    @property
+    def token_type_colors(self) -> dict[str, str]:
+        """Token type color palette."""
+        return self.get("colors", "token_types", default={})
 
 
 # Global singleton instance

@@ -84,7 +84,7 @@ tables:
 # Color Palettes
 colors:
   # Model colors (diverging blue-red)
-  # NOTE: These values match figures/__init__.py (authoritative source)
+  # NOTE: config.yaml is the authoritative source for all color definitions
   models:
     "Sonnet 4.5": "#4C78A8"  # Blue (Vega default blue)
     "Haiku 4.5": "#E45756"   # Red (Vega default red)
@@ -117,6 +117,58 @@ colors:
     - "C"  # Acceptable
     - "D"  # Poor
     - "F"  # Fail (worst)
+
+  # Judge colors (for judge variance and agreement figures)
+  judges:
+    "Opus 4.5": "#4C78A8"    # Blue
+    "Sonnet 4.5": "#E45756"  # Red
+    "Haiku 4.5": "#72B7B2"   # Teal
+
+  # Criteria colors (for criteria analysis figures)
+  criteria:
+    functional: "#4C78A8"         # Blue
+    code_quality: "#E45756"       # Red
+    proportionality: "#72B7B2"    # Teal
+    build_pipeline: "#F58518"     # Orange
+    overall_quality: "#54A24B"    # Green
+
+  # Phase colors (for phase duration analysis)
+  phases:
+    "Agent Execution": "#4C78A8"   # Blue
+    "Judge Evaluation": "#E45756"  # Red
+
+  # Token type colors (for token distribution figures)
+  token_types:
+    "Input (Fresh)": "#4C78A8"     # Blue
+    "Input (Cached)": "#72B7B2"    # Teal
+    "Output": "#E45756"            # Red
+    "Cache Creation": "#F58518"    # Orange
+
+  # Judge colors (for judge comparison figures)
+  judges:
+    "Opus 4.5": "#4C78A8"    # Blue
+    "Sonnet 4.5": "#E45756"  # Red
+    "Haiku 4.5": "#72B7B2"   # Teal
+
+  # Criteria colors (for criteria analysis)
+  criteria:
+    functional: "#4C78A8"       # Blue
+    code_quality: "#E45756"     # Red
+    proportionality: "#72B7B2"  # Teal
+    build_pipeline: "#F58518"   # Orange
+    overall_quality: "#54A24B"  # Green
+
+  # Phase colors (for timing breakdown)
+  phases:
+    "Agent Execution": "#4C78A8"  # Blue
+    "Judge Evaluation": "#E45756" # Red
+
+  # Token type colors (for token analysis)
+  token_types:
+    "Input (Fresh)": "#4C78A8"      # Blue
+    "Input (Cached)": "#72B7B2"     # Teal
+    "Output": "#E45756"             # Red
+    "Cache Creation": "#F58518"     # Orange
 
 # Data Loading Parameters
 data:

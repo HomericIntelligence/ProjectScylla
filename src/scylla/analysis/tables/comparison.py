@@ -19,7 +19,7 @@ from itertools import combinations
 
 import pandas as pd
 
-from scylla.analysis.config import ALPHA
+from scylla.analysis.config import ALPHA, config
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     cliffs_delta,
@@ -29,6 +29,12 @@ from scylla.analysis.stats import (
     kruskal_wallis,
     mann_whitney_u,
 )
+
+# Format strings from config
+_FMT_PVAL = f".{config.precision_p_values}f"
+_FMT_EFFECT = f".{config.precision_effect_sizes}f"
+_FMT_RATE = f".{config.precision_rates}f"
+_FMT_COST = f".{config.precision_costs}f"
 
 
 def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
@@ -193,7 +199,9 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
     for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
-        md_lines.append(f"- {model}: H({dof})={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
+        md_lines.append(
+            f"- {model}: H({dof})={h_stat:{_FMT_COST}}, p={omnibus_p:{_FMT_PVAL}} {sig_str}"
+        )
     md_lines.append("")
 
     md_lines.append(
@@ -206,7 +214,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     for _, row in df.iterrows():
         cliffs_delta_val = row["Cliff's δ"]
         n_str = f"({row['N1']}, {row['N2']})"
-        pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "—"
+        pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
 
         md_lines.append(
             f"| {row['Model']} | {row['Transition']} | {n_str} | {row['Pass Rate Δ']:+.4f} | "
@@ -232,7 +240,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         sig_mark = r"\checkmark" if row["Significant"] == "Yes" else ""
         cliffs_delta_val = row["Cliff's δ"]
         n_str = f"({row['N1']}, {row['N2']})"
-        pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "---"
+        pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
 
         latex_lines.append(
             f"{row['Model']} & {row['Transition']} & {n_str} & {row['Pass Rate Δ']:+.4f} & "
@@ -249,8 +257,8 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
         latex_lines.append(
-            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:.2f}$, "
-            rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
+            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:{_FMT_COST}}$, "
+            rf"$p={omnibus_p:{_FMT_PVAL}}$ {sig_str}}} \\"
         )
 
     # Add correction method footnote
@@ -438,7 +446,9 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
     for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
-        md_lines.append(f"- {model}: H({dof})={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
+        md_lines.append(
+            f"- {model}: H({dof})={h_stat:{_FMT_COST}}, p={omnibus_p:{_FMT_PVAL}} {sig_str}"
+        )
     md_lines.append("")
 
     md_lines.append(
@@ -455,7 +465,7 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         cliffs_str = f"{cliffs_delta_val:+.3f}" if cliffs_delta_val is not None else "N/A"
 
         if row["p-value"] is not None:
-            p_str = f"{row['p-value']:.4f}"
+            p_str = f"{row['p-value']:{_FMT_PVAL}}"
         else:
             p_str = "—"
 
@@ -500,7 +510,7 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         cliffs_str = f"{cliffs_delta_val:+.3f}" if cliffs_delta_val is not None else "N/A"
 
         if row["p-value"] is not None:
-            p_str = f"{row['p-value']:.4f}"
+            p_str = f"{row['p-value']:{_FMT_PVAL}}"
         else:
             p_str = r"---"
 
@@ -525,8 +535,8 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
         latex_lines.append(
-            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:.2f}$, "
-            rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
+            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:{_FMT_COST}}$, "
+            rf"$p={omnibus_p:{_FMT_PVAL}}$ {sig_str}}} \\"
         )
 
     # Add correction method footnote
@@ -685,7 +695,7 @@ def table04_criteria_performance(
         # Get p-value and winner from first model row (they're identical across models)
         first_model_row = criterion_rows[criterion_rows["Model"] == models[0]]
         pvalue_str = (
-            f"{first_model_row['p-value'].iloc[0]:.4f}"
+            f"{first_model_row['p-value'].iloc[0]:{_FMT_PVAL}}"
             if len(first_model_row) > 0 and "p-value" in first_model_row.columns
             else "—"
         )
@@ -697,7 +707,7 @@ def table04_criteria_performance(
 
         model_cols = " | ".join(model_strs)
         md_lines.append(
-            f"| {criterion} | {criteria_weights[criterion]:.2f} | "
+            f"| {criterion} | {criteria_weights[criterion]:{_FMT_COST}} | "
             f"{model_cols} | {pvalue_str} | {winner_str} |"
         )
 
@@ -741,7 +751,7 @@ def table04_criteria_performance(
         # Get p-value and winner from first model row
         first_model_row = criterion_rows[criterion_rows["Model"] == models[0]]
         pvalue_str = (
-            f"{first_model_row['p-value'].iloc[0]:.4f}"
+            f"{first_model_row['p-value'].iloc[0]:{_FMT_PVAL}}"
             if len(first_model_row) > 0 and "p-value" in first_model_row.columns
             else "---"
         )
@@ -753,7 +763,7 @@ def table04_criteria_performance(
 
         model_cols = " & ".join(model_strs)
         latex_lines.append(
-            f"{criterion} & {criteria_weights[criterion]:.2f} & "
+            f"{criterion} & {criteria_weights[criterion]:{_FMT_COST}} & "
             f"{model_cols} & {pvalue_str} & {winner_str} \\\\"
         )
 
@@ -961,7 +971,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "—"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
 
             md_lines.append(
                 f"| {row['Metric']} | {val1_str} | {val2_str} | {delta_str} | {pval_str} |"
@@ -979,7 +989,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "—"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
 
             md_lines.append(
                 f"| {row['Pair']} | {row['Metric']} | {val1_str} | {val2_str} | "
@@ -1011,7 +1021,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "---"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
 
             latex_lines.append(
                 f"{row['Metric']} & {val1_str} & {val2_str} & {delta_str} & {pval_str} \\\\"
@@ -1033,7 +1043,7 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             val1_str = f"{row[model1]:.3f}" if isinstance(row[model1], float) else str(row[model1])
             val2_str = f"{row[model2]:.3f}" if isinstance(row[model2], float) else str(row[model2])
             delta_str = f"{row['Δ']:+.3f}" if isinstance(row["Δ"], float) else str(row["Δ"])
-            pval_str = f"{row['p-value']:.4f}" if row["p-value"] is not None else "---"
+            pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
 
             latex_lines.append(
                 f"{row['Pair']} & {row['Metric']} & {val1_str} & {val2_str} & "
