@@ -18,6 +18,12 @@ from scylla.analysis.stats import compute_consistency, compute_cop, compute_impl
 def compute_judge_impl_rate(judge: JudgeEvaluation) -> float:
     """Compute implementation rate for a single judge.
 
+    Gracefully handles data quality issues:
+    - String values in achieved/max_points are coerced to float
+    - Invalid values (non-numeric strings) are treated as 0.0
+    - This defensive approach ensures analysis continues despite source data issues
+    - PRINCIPLE: Never modify source data, make analysis code robust
+
     Args:
         judge: Judge evaluation with criteria scores
 
@@ -25,8 +31,18 @@ def compute_judge_impl_rate(judge: JudgeEvaluation) -> float:
         Implementation rate (achieved / max_points)
 
     """
-    total_achieved = sum(criterion.achieved for criterion in judge.criteria.values())
-    total_max = sum(criterion.max_points for criterion in judge.criteria.values())
+
+    # Defensive data loading: coerce to float, treating invalid values as 0.0
+    # This handles cases where judgment data has string values like "N/A" or numeric strings
+    def safe_float(value, default=0.0):
+        """Convert value to float, returning default for invalid inputs."""
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return default
+
+    total_achieved = sum(safe_float(criterion.achieved) for criterion in judge.criteria.values())
+    total_max = sum(safe_float(criterion.max_points) for criterion in judge.criteria.values())
     return compute_impl_rate(total_achieved, total_max)
 
 
