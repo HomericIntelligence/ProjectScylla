@@ -14,6 +14,19 @@ import pandas as pd
 from scylla.analysis.loader import JudgeEvaluation, RunData
 from scylla.analysis.stats import compute_consistency, compute_cop, compute_impl_rate
 
+__all__ = [
+    "compute_judge_impl_rate",
+    "compute_consensus_impl_rate",
+    "build_runs_df",
+    "build_judges_df",
+    "build_criteria_df",
+    "build_subtests_df",
+    "tier_summary",
+    "judge_summary",
+    "criteria_summary",
+    "model_comparison",
+]
+
 
 def compute_judge_impl_rate(judge: JudgeEvaluation) -> float:
     """Compute implementation rate for a single judge.

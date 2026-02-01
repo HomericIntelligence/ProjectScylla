@@ -21,6 +21,26 @@ from scylla.analysis.config import config
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "bootstrap_ci",
+    "mann_whitney_u",
+    "cliffs_delta",
+    "spearman_correlation",
+    "pearson_correlation",
+    "krippendorff_alpha",
+    "bonferroni_correction",
+    "compute_consistency",
+    "compute_cop",
+    "compute_frontier_cop",
+    "compute_impl_rate",
+    "shapiro_wilk",
+    "kruskal_wallis",
+    "holm_bonferroni_correction",
+    "benjamini_hochberg_correction",
+    "cliffs_delta_ci",
+    "ols_regression",
+]
+
 
 def bootstrap_ci(
     data: pd.Series | np.ndarray,
@@ -376,9 +396,16 @@ def kruskal_wallis(*groups: pd.Series | np.ndarray) -> tuple[float, float]:
         Tuple of (H statistic, p-value)
         - H = 0 when all groups have identical rank sums
         - p < 0.05 indicates at least one group differs (justifies pairwise tests)
+        - Returns (NaN, NaN) if any group has fewer than min_sample_kruskal_wallis samples
 
     """
+    # Defensive guard: ensure minimum sample size
     groups_arrays = [np.array(g) for g in groups]
+    min_samples = config.min_sample_kruskal_wallis
+
+    if any(len(g) < min_samples for g in groups_arrays):
+        return (np.nan, np.nan)
+
     statistic, pvalue = stats.kruskal(*groups_arrays)
     return float(statistic), float(pvalue)
 
