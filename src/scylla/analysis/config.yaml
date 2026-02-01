@@ -44,6 +44,13 @@ figures:
   # Performance thresholds
   pass_threshold: 0.60  # Reference line for acceptable pass-rate
 
+  # Correlation analysis metric pairs
+  correlation_metrics:
+    score: "Score"
+    cost_usd: "Cost (USD)"
+    total_tokens: "Total Tokens"
+    duration_seconds: "Duration (s)"
+
   # Font settings
   fonts:
     family: "serif"
