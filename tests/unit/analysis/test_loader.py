@@ -678,3 +678,250 @@ def test_schema_validation_missing_required_field(tmp_path, caplog):
     # Verify data still loaded (graceful degradation)
     # run_number is parsed from directory name as fallback
     assert run_data.run_number == 1
+
+
+def test_resolve_agent_model_from_experiment_json(tmp_path):
+    """Test resolve_agent_model() reads from experiment.json first."""
+    import json
+
+    from scylla.analysis.loader import resolve_agent_model
+
+    # Create experiment directory structure
+    exp_dir = tmp_path / "test-experiment" / "2026-01-31T10-00-00-test"
+    config_dir = exp_dir / "config"
+    config_dir.mkdir(parents=True)
+
+    # Create experiment.json with models list
+    experiment_config = {
+        "models": ["claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101"],
+        "other_config": "data",
+    }
+    (config_dir / "experiment.json").write_text(json.dumps(experiment_config))
+
+    # Resolve agent model - should return first model as display name
+    model = resolve_agent_model(exp_dir)
+    assert model == "Sonnet 4.5"
+
+
+def test_resolve_agent_model_from_model_md_fallback(tmp_path):
+    """Test resolve_agent_model() falls back to MODEL.md if experiment.json missing."""
+    from scylla.analysis.loader import resolve_agent_model
+
+    # Create experiment directory without experiment.json
+    exp_dir = tmp_path / "test-experiment" / "2026-01-31T10-00-00-test"
+    tier_dir = exp_dir / "T0" / "00" / "run_01" / "agent"
+    tier_dir.mkdir(parents=True)
+
+    # Create MODEL.md
+    (tier_dir / "MODEL.md").write_text("**Model**: claude-opus-4-5-20251101\n")
+
+    # Resolve agent model - should find MODEL.md and return display name
+    model = resolve_agent_model(exp_dir)
+    assert model == "Opus 4.5"
+
+
+def test_resolve_agent_model_raises_on_missing_data(tmp_path):
+    """Test resolve_agent_model() raises ValueError when no model found."""
+    from scylla.analysis.loader import resolve_agent_model
+
+    # Create empty experiment directory
+    exp_dir = tmp_path / "test-experiment" / "2026-01-31T10-00-00-test"
+    exp_dir.mkdir(parents=True)
+
+    # Should raise ValueError
+    with pytest.raises(ValueError, match="Could not determine agent model"):
+        resolve_agent_model(exp_dir)
+
+
+def test_load_all_experiments_functionality(tmp_path):
+    """Test load_all_experiments() loads multiple experiments from directory."""
+    import json
+
+    from scylla.analysis.loader import load_all_experiments
+
+    # Create data directory with two experiments
+    data_dir = tmp_path / "fullruns"
+    data_dir.mkdir()
+
+    # Experiment 1
+    exp1_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
+    config1_dir = exp1_dir / "config"
+    config1_dir.mkdir(parents=True)
+    experiment1_config = {"models": ["claude-sonnet-4-5-20250929"]}
+    (config1_dir / "experiment.json").write_text(json.dumps(experiment1_config))
+
+    # Create one run for experiment 1
+    run1_dir = exp1_dir / "T0" / "00" / "run_01"
+    run1_dir.mkdir(parents=True)
+    run1_result = {
+        "judge_score": 0.8,
+        "judge_passed": True,
+        "judge_grade": "A",
+        "cost_usd": 0.05,
+        "duration_seconds": 10.0,
+        "token_stats": {},
+        "exit_code": 0,
+    }
+    (run1_dir / "run_result.json").write_text(json.dumps(run1_result))
+
+    # Experiment 2
+    exp2_dir = data_dir / "experiment2" / "2026-01-31T11-00-00-run"
+    config2_dir = exp2_dir / "config"
+    config2_dir.mkdir(parents=True)
+    experiment2_config = {"models": ["claude-haiku-4-5-20241223"]}
+    (config2_dir / "experiment.json").write_text(json.dumps(experiment2_config))
+
+    # Create one run for experiment 2
+    run2_dir = exp2_dir / "T0" / "00" / "run_01"
+    run2_dir.mkdir(parents=True)
+    run2_result = {
+        "judge_score": 0.6,
+        "judge_passed": False,
+        "judge_grade": "C",
+        "cost_usd": 0.02,
+        "duration_seconds": 8.0,
+        "token_stats": {},
+        "exit_code": 1,
+    }
+    (run2_dir / "run_result.json").write_text(json.dumps(run2_result))
+
+    # Load all experiments
+    experiments = load_all_experiments(data_dir)
+
+    # Verify both experiments loaded
+    assert len(experiments) == 2
+    assert "experiment1" in experiments
+    assert "experiment2" in experiments
+
+    # Verify runs were loaded
+    assert len(experiments["experiment1"]) == 1
+    assert len(experiments["experiment2"]) == 1
+
+    # Verify run data
+    assert experiments["experiment1"][0].score == 0.8
+    assert experiments["experiment2"][0].score == 0.6
+
+
+def test_load_all_experiments_excludes_experiments(tmp_path):
+    """Test load_all_experiments() excludes specified experiments."""
+    import json
+
+    from scylla.analysis.loader import load_all_experiments
+
+    # Create data directory with two experiments
+    data_dir = tmp_path / "fullruns"
+    data_dir.mkdir()
+
+    # Experiment 1 (will be excluded)
+    exp1_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
+    config1_dir = exp1_dir / "config"
+    config1_dir.mkdir(parents=True)
+    (config1_dir / "experiment.json").write_text(
+        json.dumps({"models": ["claude-sonnet-4-5-20250929"]})
+    )
+    run1_dir = exp1_dir / "T0" / "00" / "run_01"
+    run1_dir.mkdir(parents=True)
+    (run1_dir / "run_result.json").write_text(
+        json.dumps({"judge_score": 0.8, "judge_passed": True, "exit_code": 0})
+    )
+
+    # Experiment 2 (will be loaded)
+    exp2_dir = data_dir / "experiment2" / "2026-01-31T11-00-00-run"
+    config2_dir = exp2_dir / "config"
+    config2_dir.mkdir(parents=True)
+    (config2_dir / "experiment.json").write_text(
+        json.dumps({"models": ["claude-haiku-4-5-20241223"]})
+    )
+    run2_dir = exp2_dir / "T0" / "00" / "run_01"
+    run2_dir.mkdir(parents=True)
+    (run2_dir / "run_result.json").write_text(
+        json.dumps({"judge_score": 0.6, "judge_passed": False, "exit_code": 1})
+    )
+
+    # Load with exclusion
+    experiments = load_all_experiments(data_dir, exclude=["experiment1"])
+
+    # Verify only experiment2 loaded
+    assert len(experiments) == 1
+    assert "experiment1" not in experiments
+    assert "experiment2" in experiments
+
+
+def test_load_rubric_weights_from_rubric_yaml(tmp_path):
+    """Test load_rubric_weights() parses category weights from rubric.yaml."""
+    import yaml
+
+    from scylla.analysis.loader import load_rubric_weights
+
+    # Create experiment directory with rubric.yaml
+    data_dir = tmp_path / "fullruns"
+    exp_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
+    exp_dir.mkdir(parents=True)
+
+    # Create rubric.yaml with category weights
+    rubric = {
+        "categories": {
+            "functional": {"weight": 10.0, "description": "Functional requirements"},
+            "code_quality": {"weight": 5.0, "description": "Code quality"},
+            "proportionality": {"weight": 3.0, "description": "Proportionality"},
+        }
+    }
+    with (exp_dir / "rubric.yaml").open("w") as f:
+        yaml.dump(rubric, f)
+
+    # Load weights
+    weights = load_rubric_weights(data_dir)
+
+    # Verify weights loaded
+    assert weights is not None
+    assert weights["functional"] == 10.0
+    assert weights["code_quality"] == 5.0
+    assert weights["proportionality"] == 3.0
+
+
+def test_load_rubric_weights_returns_none_if_missing(tmp_path):
+    """Test load_rubric_weights() returns None if no rubric.yaml found."""
+    from scylla.analysis.loader import load_rubric_weights
+
+    # Create empty data directory
+    data_dir = tmp_path / "fullruns"
+    data_dir.mkdir()
+
+    # Load weights from empty directory
+    weights = load_rubric_weights(data_dir)
+
+    # Should return None
+    assert weights is None
+
+
+def test_load_rubric_weights_excludes_experiments(tmp_path):
+    """Test load_rubric_weights() respects exclude list."""
+    import yaml
+
+    from scylla.analysis.loader import load_rubric_weights
+
+    # Create two experiments
+    data_dir = tmp_path / "fullruns"
+
+    # Experiment 1 (will be excluded, has rubric)
+    exp1_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
+    exp1_dir.mkdir(parents=True)
+    rubric1 = {"categories": {"functional": {"weight": 10.0}}}
+    with (exp1_dir / "rubric.yaml").open("w") as f:
+        yaml.dump(rubric1, f)
+
+    # Experiment 2 (will be checked, has rubric)
+    exp2_dir = data_dir / "experiment2" / "2026-01-31T11-00-00-run"
+    exp2_dir.mkdir(parents=True)
+    rubric2 = {"categories": {"code_quality": {"weight": 5.0}}}
+    with (exp2_dir / "rubric.yaml").open("w") as f:
+        yaml.dump(rubric2, f)
+
+    # Load weights, excluding experiment1
+    weights = load_rubric_weights(data_dir, exclude=["experiment1"])
+
+    # Should load from experiment2 (first non-excluded)
+    assert weights is not None
+    assert "code_quality" in weights
+    assert weights["code_quality"] == 5.0
+    assert "functional" not in weights

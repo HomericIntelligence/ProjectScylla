@@ -273,3 +273,127 @@ def test_dataframe_filtering(sample_runs_df):
     assert len(t0_sonnet) > 0
     assert (t0_sonnet["tier"] == "T0").all()
     assert (t0_sonnet["agent_model"] == "Sonnet 4.5").all()
+
+
+def test_judge_summary_aggregation(sample_judges_df):
+    """Test judge_summary() aggregates judge scores correctly."""
+    from scylla.analysis.dataframes import judge_summary
+
+    summary = judge_summary(sample_judges_df)
+
+    # Verify structure - should have one row per judge_model
+    assert "judge_model" in summary.columns
+    expected_judges = sample_judges_df["judge_model"].nunique()
+    assert len(summary) == expected_judges
+
+    # Verify aggregated columns exist (MultiIndex from agg)
+    # Format: ('judge_score', 'mean'), ('judge_score', 'median'), etc.
+    column_tuples = list(summary.columns)
+    assert ("judge_score", "mean") in column_tuples
+    assert ("judge_score", "median") in column_tuples
+    assert ("judge_score", "std") in column_tuples
+    assert ("judge_score", "min") in column_tuples
+    assert ("judge_score", "max") in column_tuples
+    assert ("judge_passed", "mean") in column_tuples
+
+    # Verify aggregation correctness for one judge
+    # Get the judge_model value as a scalar, not a Series
+    first_judge_model = summary["judge_model"].iloc[0]
+    judge_data = sample_judges_df[sample_judges_df["judge_model"] == first_judge_model]
+
+    expected_mean = judge_data["judge_score"].mean()
+    actual_mean = summary[summary["judge_model"] == first_judge_model][
+        ("judge_score", "mean")
+    ].iloc[0]
+    assert abs(actual_mean - expected_mean) < 1e-6
+
+
+def test_judge_summary_empty_dataframe():
+    """Test judge_summary() handles empty DataFrames gracefully."""
+    from scylla.analysis.dataframes import judge_summary
+
+    empty_df = pd.DataFrame(
+        columns=[
+            "experiment",
+            "agent_model",
+            "tier",
+            "subtest",
+            "run_number",
+            "judge_number",
+            "judge_model",
+            "judge_score",
+            "judge_passed",
+        ]
+    )
+
+    # Should return empty result, not crash
+    summary = judge_summary(empty_df)
+    assert len(summary) == 0
+
+
+def test_criteria_summary_aggregation(sample_criteria_df):
+    """Test criteria_summary() aggregates by criterion correctly."""
+    from scylla.analysis.dataframes import criteria_summary
+
+    summary = criteria_summary(sample_criteria_df)
+
+    # Verify structure - should have one row per (agent_model, tier, criterion)
+    assert "agent_model" in summary.columns
+    assert "tier" in summary.columns
+    assert "criterion" in summary.columns
+
+    expected_rows = sample_criteria_df.groupby(["agent_model", "tier", "criterion"]).ngroups
+    assert len(summary) == expected_rows
+
+    # Verify aggregated columns exist (MultiIndex from agg)
+    column_tuples = list(summary.columns)
+    assert ("criterion_score", "mean") in column_tuples
+    assert ("criterion_score", "std") in column_tuples
+    assert ("criterion_score", "median") in column_tuples
+    assert ("criterion_achieved", "sum") in column_tuples
+    assert ("criterion_max", "sum") in column_tuples
+
+    # Verify aggregation correctness for one criterion
+    # Get scalar values, not Series
+    model = summary["agent_model"].iloc[0]
+    tier = summary["tier"].iloc[0]
+    criterion = summary["criterion"].iloc[0]
+
+    criterion_data = sample_criteria_df[
+        (sample_criteria_df["agent_model"] == model)
+        & (sample_criteria_df["tier"] == tier)
+        & (sample_criteria_df["criterion"] == criterion)
+    ]
+
+    expected_mean = criterion_data["criterion_score"].mean()
+    actual_mean = summary[
+        (summary["agent_model"] == model)
+        & (summary["tier"] == tier)
+        & (summary["criterion"] == criterion)
+    ][("criterion_score", "mean")].iloc[0]
+    assert abs(actual_mean - expected_mean) < 1e-6
+
+
+def test_criteria_summary_empty_dataframe():
+    """Test criteria_summary() handles empty DataFrames gracefully."""
+    from scylla.analysis.dataframes import criteria_summary
+
+    empty_df = pd.DataFrame(
+        columns=[
+            "experiment",
+            "agent_model",
+            "tier",
+            "subtest",
+            "run_number",
+            "judge_number",
+            "judge_model",
+            "criterion",
+            "criterion_score",
+            "criterion_achieved",
+            "criterion_max",
+        ]
+    )
+
+    # Should return empty result, not crash
+    summary = criteria_summary(empty_df)
+    assert len(summary) == 0
