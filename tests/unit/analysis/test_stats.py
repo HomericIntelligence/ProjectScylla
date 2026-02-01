@@ -440,6 +440,58 @@ def test_holm_bonferroni_single():
     assert result == [0.05]
 
 
+def test_holm_bonferroni_monotonicity():
+    """Test that Holm-Bonferroni produces monotonically non-decreasing corrected p-values.
+
+    Regression test for P0 bug: corrected p-values must be monotonically
+    non-decreasing when sorted by original p-value order.
+
+    Edge case: p-values close together where naive correction would
+    produce non-monotonic results.
+    """
+    from scylla.analysis.stats import holm_bonferroni_correction
+
+    # Edge case: closely spaced p-values that would produce non-monotonic output
+    # without monotonicity enforcement
+    # p = [0.01, 0.011] with n=2:
+    #   - 0.01  * (2-0) = 0.02
+    #   - 0.011 * (2-1) = 0.011
+    # Without enforcement: [0.02, 0.011] (non-monotonic!)
+    # With enforcement: [0.02, 0.02] (monotonic)
+    p_values = [0.01, 0.011]
+    corrected = holm_bonferroni_correction(p_values)
+
+    # Create sorted pairs to verify monotonicity
+    indexed = list(enumerate(p_values))
+    indexed.sort(key=lambda x: x[1])
+
+    # Check monotonicity in sorted order
+    for i in range(1, len(indexed)):
+        curr_idx = indexed[i][0]
+        prev_idx = indexed[i - 1][0]
+        assert corrected[curr_idx] >= corrected[prev_idx], (
+            f"Non-monotonic corrected p-values: "
+            f"corrected[{curr_idx}]={corrected[curr_idx]:.6f} < "
+            f"corrected[{prev_idx}]={corrected[prev_idx]:.6f}"
+        )
+
+    # Specific values for this case
+    assert corrected[0] == 0.02  # 0.01 * 2
+    assert corrected[1] == 0.02  # Enforced to match corrected[0]
+
+    # General test with more p-values
+    p_values_general = [0.001, 0.01, 0.011, 0.05, 0.06]
+    corrected_general = holm_bonferroni_correction(p_values_general)
+
+    indexed_general = list(enumerate(p_values_general))
+    indexed_general.sort(key=lambda x: x[1])
+
+    for i in range(1, len(indexed_general)):
+        curr_idx = indexed_general[i][0]
+        prev_idx = indexed_general[i - 1][0]
+        assert corrected_general[curr_idx] >= corrected_general[prev_idx]
+
+
 def test_benjamini_hochberg_correction():
     """Test Benjamini-Hochberg FDR correction."""
     from scylla.analysis.stats import benjamini_hochberg_correction
