@@ -259,3 +259,79 @@ def sample_subtests_df(sample_runs_df):
     # Group by experiment, agent_model, tier, subtest (same as production)
     grouped = sample_runs_df.groupby(["experiment", "agent_model", "tier", "subtest"])
     return grouped.apply(compute_subtest_stats, include_groups=False).reset_index()
+
+
+# Degenerate input fixtures for edge case testing
+@pytest.fixture
+def degenerate_single_element():
+    """Single-element array for testing n=1 edge cases."""
+    return np.array([0.5])
+
+
+@pytest.fixture
+def degenerate_all_same():
+    """Array with all identical values for testing zero variance."""
+    return np.array([0.7, 0.7, 0.7, 0.7, 0.7])
+
+
+@pytest.fixture
+def degenerate_all_pass():
+    """Array with all passing (1) values."""
+    return np.array([1, 1, 1, 1, 1])
+
+
+@pytest.fixture
+def degenerate_all_fail():
+    """Array with all failing (0) values."""
+    return np.array([0, 0, 0, 0, 0])
+
+
+@pytest.fixture
+def degenerate_unbalanced_groups():
+    """Two groups with severely unbalanced sizes (n1=2, n2=50)."""
+    return {
+        "small": np.array([0.3, 0.4]),
+        "large": np.random.RandomState(42).uniform(0.5, 0.9, size=50),
+    }
+
+
+@pytest.fixture
+def degenerate_empty_array():
+    """Empty array for testing n=0 edge cases."""
+    return np.array([])
+
+
+@pytest.fixture
+def degenerate_nan_values():
+    """Array containing NaN values for testing missing data handling."""
+    return np.array([0.5, np.nan, 0.7, np.nan, 0.9])
+
+
+@pytest.fixture
+def degenerate_inf_values():
+    """Array containing infinite values for testing boundary conditions."""
+    return np.array([0.5, 0.7, np.inf, 0.9, -np.inf])
+
+
+@pytest.fixture
+def degenerate_binary_data():
+    """Binary (0/1) data for testing categorical/boolean edge cases."""
+    return np.array([0, 1, 0, 1, 1, 0, 0, 1])
+
+
+@pytest.fixture
+def degenerate_boundary_values():
+    """Return data at exact boundaries (0.0, 1.0) for testing threshold logic."""
+    return np.array([0.0, 0.0, 1.0, 1.0, 0.5])
+
+
+@pytest.fixture
+def degenerate_near_zero():
+    """Very small positive values for testing numerical stability."""
+    return np.array([1e-10, 1e-9, 1e-8, 1e-7, 1e-6])
+
+
+@pytest.fixture
+def degenerate_high_variance():
+    """Return data with extremely high variance for testing statistical robustness."""
+    return np.array([0.01, 0.02, 0.98, 0.99, 0.5])
