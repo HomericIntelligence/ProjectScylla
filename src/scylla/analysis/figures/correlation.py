@@ -12,7 +12,7 @@ import pandas as pd
 
 from scylla.analysis.figures import get_color_scale
 from scylla.analysis.figures.spec_builder import save_figure
-from scylla.analysis.stats import ols_regression, spearman_correlation
+from scylla.analysis.stats import holm_bonferroni_correction, ols_regression, spearman_correlation
 
 
 def fig20_metric_correlation_heatmap(
@@ -73,6 +73,17 @@ def fig20_metric_correlation_heatmap(
                 )
 
     corr_df = pd.DataFrame(correlations)
+
+    # Apply Holm-Bonferroni correction for multiple comparisons
+    if len(corr_df) > 0:
+        raw_p_values = corr_df["p_value"].tolist()
+        corrected_p_values = holm_bonferroni_correction(raw_p_values)
+        corr_df["p_value_corrected"] = corrected_p_values
+        # Use corrected p-values for significance testing
+        corr_df["significant"] = corr_df["p_value_corrected"] < 0.05
+    else:
+        corr_df["p_value_corrected"] = []
+        corr_df["significant"] = []
 
     # Create heatmap
     heatmap = (
