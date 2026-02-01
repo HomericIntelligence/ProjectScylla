@@ -2,6 +2,9 @@
 
 Generates comparison tables (Table 2, 2b, 4, 6) for tier and model comparisons.
 
+Effect size interpretation follows Romano et al. (2006) for Cliff's delta:
+    negligible (<0.11), small (0.11-0.28), medium (0.28-0.43), large (>0.43)
+
 Python Justification: Uses pandas for table formatting and data manipulation.
 """
 

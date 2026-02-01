@@ -115,6 +115,11 @@ class AnalysisConfig:
         return self.get("figures", "default_height", default=300)
 
     @property
+    def pass_threshold(self) -> float:
+        """Reference line threshold for acceptable pass-rate."""
+        return self.get("figures", "pass_threshold", default=0.60)
+
+    @property
     def pipeline_version(self) -> str:
         """Analysis pipeline version."""
         return self.get("reproducibility", "pipeline_version", default="1.0.0")
