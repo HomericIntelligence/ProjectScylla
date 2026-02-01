@@ -772,18 +772,24 @@ class TierManager:
         for tier_id in inherit_from_tiers:
             # 1. Load tier result.json to get best_subtest
             result_file = experiment_dir / tier_id.value / "result.json"
-            if not result_file.exists():
+            best_subtest_file = experiment_dir / tier_id.value / "best_subtest.json"
+
+            best_subtest_id = None
+            if result_file.exists():
+                with open(result_file) as f:
+                    tier_result = json.load(f)
+                best_subtest_id = tier_result.get("best_subtest")
+            elif best_subtest_file.exists():
+                with open(best_subtest_file) as f:
+                    selection = json.load(f)
+                best_subtest_id = selection.get("winning_subtest")
+
+            if not best_subtest_id:
                 raise ValueError(
-                    f"Cannot inherit from {tier_id.value}: result.json not found. "
+                    f"Cannot inherit from {tier_id.value}: neither result.json nor "
+                    f"best_subtest.json found with best subtest selection. "
                     f"Ensure tier {tier_id.value} completed before T5."
                 )
-
-            with open(result_file) as f:
-                tier_result = json.load(f)
-
-            best_subtest_id = tier_result.get("best_subtest")
-            if not best_subtest_id:
-                raise ValueError(f"Cannot inherit from {tier_id.value}: no best_subtest selected.")
 
             # 2. Load config_manifest.json from best subtest
             manifest_file = (

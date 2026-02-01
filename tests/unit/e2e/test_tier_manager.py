@@ -779,10 +779,10 @@ class TestBuildMergedBaseline:
         tiers_dir.mkdir()
         manager = TierManager(tiers_dir)
 
-        # Should raise because T0/result.json doesn't exist
+        # Should raise because neither T0/result.json nor T0/best_subtest.json exist
         import pytest
 
-        with pytest.raises(ValueError, match="result.json not found"):
+        with pytest.raises(ValueError, match="neither result.json nor best_subtest.json"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
 
     def test_no_best_subtest_raises(self, tmp_path: Path) -> None:
@@ -802,9 +802,39 @@ class TestBuildMergedBaseline:
         tiers_dir.mkdir()
         manager = TierManager(tiers_dir)
 
-        # Should raise because best_subtest is missing
-        with pytest.raises(ValueError, match="no best_subtest selected"):
+        # Should raise because best_subtest is missing from result.json and best_subtest.json doesn't exist
+        with pytest.raises(ValueError, match="neither result.json nor best_subtest.json"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
+
+    def test_fallback_to_best_subtest_json(self, tmp_path: Path) -> None:
+        """Test that build_merged_baseline falls back to best_subtest.json when result.json is missing."""
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+        t0_dir = experiment_dir / "T0"
+        t0_subtest_dir = t0_dir / "subtest-01"
+        t0_subtest_dir.mkdir(parents=True)
+
+        # Create only best_subtest.json (no result.json)
+        (t0_dir / "best_subtest.json").write_text(
+            json.dumps({"winning_subtest": "subtest-01", "rationale": "Best pass rate"})
+        )
+
+        # Create config_manifest.json for the subtest
+        manifest = {
+            "resources": {
+                "tools": {"enabled": ["bash", "read"]},
+            }
+        }
+        (t0_subtest_dir / "config_manifest.json").write_text(json.dumps(manifest))
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        # Should succeed by reading from best_subtest.json
+        merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
+        assert merged == {"tools": {"enabled": ["bash", "read"]}}
 
 
 class TestResourceSuffixInClaudeMd:
