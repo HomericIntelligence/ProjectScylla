@@ -9,12 +9,18 @@ from __future__ import annotations
 
 import pandas as pd
 
+from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     bootstrap_ci,
     compute_consistency,
     compute_cop,
 )
+
+# Format strings from config
+_FMT_RATE = f".{config.precision_rates}f"
+_FMT_COST = f".{config.precision_costs}f"
+_FMT_PCT = f".{config.precision_percentages}f"
 
 
 def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
@@ -87,14 +93,17 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
     )
 
     for _, row in df.iterrows():
-        ci_str = f"{row['Pass Rate']:.3f} ({row['PR 95% CI Low']:.3f}, {row['PR 95% CI High']:.3f})"
-        score_str = f"{row['Mean Score']:.3f} ± {row['Score StdDev']:.3f}"
-        cop_str = f"{row['CoP']:.4f}" if row["CoP"] is not None else "∞"
+        ci_str = (
+            f"{row['Pass Rate']:{_FMT_RATE}} "
+            f"({row['PR 95% CI Low']:{_FMT_RATE}}, {row['PR 95% CI High']:{_FMT_RATE}})"
+        )
+        score_str = f"{row['Mean Score']:{_FMT_RATE}} ± {row['Score StdDev']:{_FMT_RATE}}"
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "∞"
 
         md_lines.append(
             f"| {row['Model']} | {row['Tier']} | {row['Subtests']} | "
-            f"{ci_str} | {score_str} | {row['Median Score']:.3f} | "
-            f"{row['Consistency']:.3f} | {cop_str} |"
+            f"{ci_str} | {score_str} | {row['Median Score']:{_FMT_RATE}} | "
+            f"{row['Consistency']:{_FMT_RATE}} | {cop_str} |"
         )
 
     markdown = "\n".join(md_lines)
@@ -113,14 +122,17 @@ def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
     ]
 
     for _, row in df.iterrows():
-        ci_str = f"{row['Pass Rate']:.3f} ({row['PR 95% CI Low']:.3f}, {row['PR 95% CI High']:.3f})"
-        score_str = f"{row['Mean Score']:.3f} $\\pm$ {row['Score StdDev']:.3f}"
-        cop_str = f"{row['CoP']:.4f}" if row["CoP"] is not None else "$\\infty$"
+        ci_str = (
+            f"{row['Pass Rate']:{_FMT_RATE}} "
+            f"({row['PR 95% CI Low']:{_FMT_RATE}}, {row['PR 95% CI High']:{_FMT_RATE}})"
+        )
+        score_str = f"{row['Mean Score']:{_FMT_RATE}} $\\pm$ {row['Score StdDev']:{_FMT_RATE}}"
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "$\\infty$"
 
         latex_lines.append(
             f"{row['Model']} & {row['Tier']} & {row['Subtests']} & "
-            f"{ci_str} & {score_str} & {row['Median Score']:.3f} & "
-            f"{row['Consistency']:.3f} & {cop_str} \\\\"
+            f"{ci_str} & {score_str} & {row['Median Score']:{_FMT_RATE}} & "
+            f"{row['Consistency']:{_FMT_RATE}} & {cop_str} \\\\"
         )
 
     latex_lines.extend(
@@ -216,7 +228,7 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     for _, row in df.iterrows():
         cop_str = (
-            f"{row['CoP']:.4f}"
+            f"{row['CoP']:{_FMT_COST}}"
             if row["CoP"] is not None
             else "∞"
             if row["Tier"] != "**Total**"
@@ -224,8 +236,8 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
         )
 
         md_lines.append(
-            f"| {row['Model']} | {row['Tier']} | {row['Mean Cost']:.4f} | "
-            f"{row['Total Cost']:.2f} | {cop_str} | "
+            f"| {row['Model']} | {row['Tier']} | {row['Mean Cost']:{_FMT_COST}} | "
+            f"{row['Total Cost']:{_FMT_COST}} | {cop_str} | "
             f"{row['Input Tokens']:.0f} | {row['Output Tokens']:.0f} | "
             f"{row['Cache Read']:.0f} | {row['Cache Create']:.0f} |"
         )
@@ -248,7 +260,7 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     for _, row in df.iterrows():
         cop_str = (
-            f"{row['CoP']:.4f}"
+            f"{row['CoP']:{_FMT_COST}}"
             if row["CoP"] is not None
             else "$\\infty$"
             if row["Tier"] != "**Total**"
@@ -256,8 +268,8 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
         )
 
         latex_lines.append(
-            f"{row['Model']} & {row['Tier']} & {row['Mean Cost']:.4f} & "
-            f"{row['Total Cost']:.2f} & {cop_str} & "
+            f"{row['Model']} & {row['Tier']} & {row['Mean Cost']:{_FMT_COST}} & "
+            f"{row['Total Cost']:{_FMT_COST}} & {cop_str} & "
             f"{row['Input Tokens']:.0f} & {row['Output Tokens']:.0f} & "
             f"{row['Cache Read']:.0f} & {row['Cache Create']:.0f} \\\\"
         )

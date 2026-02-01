@@ -193,6 +193,7 @@ def main() -> None:
                 "effect_size",
                 "correlation",
                 "diagnostics",
+                "impl_rate",
             ):
                 generator_func(runs_df, output_dir, render=render)
             elif category == "judge":
