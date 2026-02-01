@@ -15,12 +15,18 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+import jsonschema
 import numpy as np
 import yaml
 
 from scylla.e2e.models import TokenStats
 
 logger = logging.getLogger(__name__)
+
+# Load JSON Schema for run_result.json validation
+_SCHEMA_PATH = Path(__file__).parent / "schemas" / "run_result.schema.json"
+with _SCHEMA_PATH.open() as _schema_file:
+    _RUN_RESULT_SCHEMA = json.load(_schema_file)
 
 
 def validate_numeric(value: any, field_name: str, default: float = np.nan) -> float:
@@ -425,6 +431,17 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
     run_result_path = run_dir / "run_result.json"
     with run_result_path.open() as f:
         result = json.load(f)
+
+    # Validate against JSON Schema (graceful degradation - log warning only)
+    try:
+        jsonschema.validate(result, _RUN_RESULT_SCHEMA)
+    except jsonschema.ValidationError as e:
+        logger.warning(
+            "Schema validation failed for %s: %s (path: %s)",
+            run_result_path,
+            e.message,
+            " -> ".join(str(p) for p in e.path) if e.path else "root",
+        )
 
     # Parse run number from directory name (e.g., "run_01" -> 1)
     try:
