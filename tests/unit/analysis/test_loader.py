@@ -549,3 +549,132 @@ def test_model_id_to_display_comprehensive():
     # Edge cases
     assert model_id_to_display("") == ""
     assert model_id_to_display("claude") == "claude"
+
+
+def test_schema_validation_valid_data(tmp_path):
+    """Test that valid run_result.json passes schema validation."""
+    from scylla.analysis.loader import load_run
+
+    # Create run directory with valid data
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Create valid run_result.json
+    run_result = {
+        "run_number": 1,
+        "exit_code": 0,
+        "token_stats": {
+            "input_tokens": 1000,
+            "output_tokens": 500,
+            "cache_creation_tokens": 100,
+            "cache_read_tokens": 200,
+        },
+        "tokens_input": 1200,
+        "tokens_output": 500,
+        "cost_usd": 0.05,
+        "duration_seconds": 10.0,
+        "agent_duration_seconds": 8.0,
+        "judge_duration_seconds": 2.0,
+        "judge_score": 0.85,
+        "judge_passed": True,
+        "judge_grade": "A",
+        "judge_reasoning": "Good work",
+        "judges": [
+            {
+                "model": "claude-opus-4-5-20251101",
+                "score": 0.85,
+                "passed": True,
+                "grade": "A",
+                "reasoning": "Good work",
+                "judge_number": 1,
+            }
+        ],
+        "workspace_path": "path/to/workspace",
+        "logs_path": "path/to/logs",
+        "command_log_path": "path/to/command_log.json",
+        "criteria_scores": {},
+    }
+    (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
+
+    # Load run - should not raise any warnings
+    run_data = load_run(
+        run_dir=run_dir,
+        experiment="test",
+        tier="T0",
+        subtest="00",
+        agent_model="Sonnet 4.5",
+    )
+
+    # Verify data loaded correctly
+    assert run_data.run_number == 1
+    assert run_data.exit_code == 0
+    assert run_data.score == 0.85
+    assert run_data.passed is True
+
+
+def test_schema_validation_invalid_grade(tmp_path, caplog):
+    """Test that invalid grade triggers schema validation warning."""
+    from scylla.analysis.loader import load_run
+
+    # Create run directory with invalid grade
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Create run_result.json with invalid grade (not S/A/B/C/D/F)
+    run_result = {
+        "run_number": 1,
+        "exit_code": 0,
+        "judge_grade": "X",  # Invalid grade
+        "judge_passed": False,
+    }
+    (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
+
+    # Load run - should log warning but continue
+    with caplog.at_level(__import__("logging").WARNING):
+        run_data = load_run(
+            run_dir=run_dir,
+            experiment="test",
+            tier="T0",
+            subtest="00",
+            agent_model="Sonnet 4.5",
+        )
+
+    # Verify warning was logged
+    assert any("Schema validation failed" in record.message for record in caplog.records)
+
+    # Verify data still loaded (graceful degradation)
+    assert run_data.run_number == 1
+    assert run_data.grade == "X"  # Data loaded despite validation failure
+
+
+def test_schema_validation_missing_required_field(tmp_path, caplog):
+    """Test that missing required field triggers schema validation warning."""
+    from scylla.analysis.loader import load_run
+
+    # Create run directory with missing run_number
+    run_dir = tmp_path / "run_01"
+    run_dir.mkdir()
+
+    # Create run_result.json without required run_number
+    run_result = {
+        "exit_code": 0,
+        "judge_passed": False,
+    }
+    (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
+
+    # Load run - should log warning but continue
+    with caplog.at_level(__import__("logging").WARNING):
+        run_data = load_run(
+            run_dir=run_dir,
+            experiment="test",
+            tier="T0",
+            subtest="00",
+            agent_model="Sonnet 4.5",
+        )
+
+    # Verify warning was logged
+    assert any("Schema validation failed" in record.message for record in caplog.records)
+
+    # Verify data still loaded (graceful degradation)
+    # run_number is parsed from directory name as fallback
+    assert run_data.run_number == 1

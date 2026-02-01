@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectscylla.ai/schemas/run_result.schema.json",
+  "title": "RunResult",
+  "description": "Schema for run_result.json files containing experiment run data",
+  "type": "object",
+  "required": [
+    "run_number",
+    "exit_code"
+  ],
+  "properties": {
+    "run_number": {
+      "type": "integer",
+      "description": "The run number (1-indexed)",
+      "minimum": 1
+    },
+    "exit_code": {
+      "type": "integer",
+      "description": "Process exit code"
+    },
+    "token_stats": {
+      "type": "object",
+      "description": "Detailed token usage statistics",
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_creation_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_read_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "tokens_input": {
+      "type": "integer",
+      "description": "Total input tokens (legacy field)",
+      "minimum": 0
+    },
+    "tokens_output": {
+      "type": "integer",
+      "description": "Output tokens (legacy field)",
+      "minimum": 0
+    },
+    "cost_usd": {
+      "type": "number",
+      "description": "Total cost in USD",
+      "minimum": 0
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Total execution duration (agent + judge)",
+      "minimum": 0
+    },
+    "agent_duration_seconds": {
+      "type": "number",
+      "description": "Agent execution time",
+      "minimum": 0
+    },
+    "judge_duration_seconds": {
+      "type": "number",
+      "description": "Judge evaluation time",
+      "minimum": 0
+    },
+    "judge_score": {
+      "type": "number",
+      "description": "Consensus score from all judges (0.0 - 1.0)",
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "judge_passed": {
+      "type": "boolean",
+      "description": "Consensus passed from majority vote"
+    },
+    "judge_grade": {
+      "type": "string",
+      "description": "Letter grade (S/A/B/C/D/F)",
+      "pattern": "^[SABCDF]$"
+    },
+    "judge_reasoning": {
+      "type": "string",
+      "description": "Primary judge's reasoning text"
+    },
+    "judges": {
+      "type": "array",
+      "description": "Individual judge results (for multi-judge runs)",
+      "items": {
+        "type": "object",
+        "required": ["model", "judge_number"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Model ID of the judge"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "grade": {
+            "type": "string",
+            "pattern": "^[SABCDF]$"
+          },
+          "reasoning": {
+            "type": "string"
+          },
+          "judge_number": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "workspace_path": {
+      "type": "string",
+      "description": "Path to preserved workspace"
+    },
+    "logs_path": {
+      "type": "string",
+      "description": "Path to execution logs"
+    },
+    "command_log_path": {
+      "type": ["string", "null"],
+      "description": "Path to command log JSON"
+    },
+    "criteria_scores": {
+      "type": "object",
+      "description": "Per-criterion scores from judge",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
