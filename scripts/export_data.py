@@ -20,6 +20,7 @@ from scylla.analysis import (
     build_subtests_df,
     load_all_experiments,
 )
+from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.stats import (
     cliffs_delta_ci,
@@ -54,6 +55,8 @@ def compute_statistical_results(runs_df, tier_order):
 
     """
     results = {
+        "pipeline_version": config.pipeline_version,
+        "config_version": config.config_version,
         "normality_tests": [],
         "omnibus_tests": [],
         "pairwise_comparisons": [],
@@ -304,6 +307,8 @@ def main() -> None:
 
     # Export summary statistics as JSON
     summary = {
+        "pipeline_version": config.pipeline_version,
+        "config_version": config.config_version,
         "total_experiments": len(experiments),
         "total_runs": len(runs_df),
         "total_judge_evaluations": len(judges_df),
