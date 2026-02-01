@@ -25,6 +25,9 @@ from scylla.analysis.stats import (
     spearman_correlation,
 )
 
+# Statistical significance threshold
+ALPHA = 0.05
+
 
 def table01_tier_summary(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 1: Tier Summary.
@@ -153,7 +156,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     Statistical workflow:
     1. Run Kruskal-Wallis omnibus test across all tiers
-    2. If omnibus p < 0.05, proceed to pairwise comparisons
+    2. If omnibus p < ALPHA, proceed to pairwise comparisons
     3. Apply Holm-Bonferroni correction to pairwise p-values
 
     Args:
@@ -194,7 +197,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         omnibus_results.append((model, h_stat, omnibus_p))
 
         # Step 2: Only proceed to pairwise tests if omnibus is significant
-        proceed_to_pairwise = omnibus_p < 0.05
+        proceed_to_pairwise = omnibus_p < ALPHA
 
         # Collect all pairwise raw p-values for Holm-Bonferroni correction
         pairwise_data = []
@@ -282,7 +285,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
             for i, corrected_p in enumerate(corrected_p_values):
                 pairwise_data[i]["p-value"] = corrected_p
-                pairwise_data[i]["Significant"] = "Yes" if corrected_p < 0.05 else "No"
+                pairwise_data[i]["Significant"] = "Yes" if corrected_p < ALPHA else "No"
         else:
             # Omnibus test not significant - don't perform pairwise tests
             for i in range(len(pairwise_data)):
@@ -305,7 +308,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     # Add omnibus results to header
     md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
     for model, h_stat, omnibus_p in omnibus_results:
-        sig_str = "✓ (proceed to pairwise)" if omnibus_p < 0.05 else "✗ (skip pairwise)"
+        sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
         md_lines.append(f"- {model}: H={h_stat:.2f}, p={omnibus_p:.4f} {sig_str}")
     md_lines.append("")
 
@@ -360,7 +363,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     )
 
     for model, h_stat, omnibus_p in omnibus_results:
-        sig_str = r"$p < 0.05$" if omnibus_p < 0.05 else r"$p \geq 0.05$ (n.s.)"
+        sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
         latex_lines.append(
             rf"\multicolumn{{7}}{{l}}{{{model}: $H={h_stat:.2f}$, "
             rf"$p={omnibus_p:.4f}$ {sig_str}}} \\"
@@ -1498,7 +1501,7 @@ def table10_normality_tests(runs_df: pd.DataFrame) -> tuple[str, str]:
                 w_stat, p_value = shapiro_wilk(data)
 
                 # Interpret result
-                is_normal = "Yes" if p_value > 0.05 else "No"
+                is_normal = "Yes" if p_value > ALPHA else "No"
 
                 rows.append(
                     {
@@ -1519,7 +1522,7 @@ def table10_normality_tests(runs_df: pd.DataFrame) -> tuple[str, str]:
         "# Table 10: Normality Tests (Shapiro-Wilk)",
         "",
         "*Tests null hypothesis that data is normally distributed. "
-        "p > 0.05 means cannot reject normality.*",
+        f"p > {ALPHA} means cannot reject normality.*",
         "",
     ]
     md_lines.append("| Model | Tier | Metric | N | W | p-value | Normal? (α=0.05) |")

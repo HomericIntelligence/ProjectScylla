@@ -8,10 +8,43 @@ Python Justification: pandas is a Python-only library with no Mojo equivalent.
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
-from scylla.analysis.loader import RunData
+from scylla.analysis.loader import JudgeEvaluation, RunData
 from scylla.analysis.stats import compute_consistency, compute_cop, compute_impl_rate
+
+
+def compute_judge_impl_rate(judge: JudgeEvaluation) -> float:
+    """Compute implementation rate for a single judge.
+
+    Args:
+        judge: Judge evaluation with criteria scores
+
+    Returns:
+        Implementation rate (achieved / max_points)
+
+    """
+    total_achieved = sum(criterion.achieved for criterion in judge.criteria.values())
+    total_max = sum(criterion.max_points for criterion in judge.criteria.values())
+    return compute_impl_rate(total_achieved, total_max)
+
+
+def compute_consensus_impl_rate(judges: list[JudgeEvaluation]) -> float:
+    """Compute consensus implementation rate across judges (median).
+
+    Args:
+        judges: List of judge evaluations
+
+    Returns:
+        Median implementation rate across judges, or NaN if no judges
+
+    """
+    if not judges:
+        return np.nan
+
+    judge_impl_rates = [compute_judge_impl_rate(judge) for judge in judges]
+    return float(np.median(judge_impl_rates))
 
 
 def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
@@ -27,18 +60,8 @@ def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
     rows = []
     for runs in experiments.values():
         for run in runs:
-            # Calculate impl_rate for each judge, then take median (consensus)
-            judge_impl_rates = []
-            for judge in run.judges:
-                total_achieved = sum(criterion.achieved for criterion in judge.criteria.values())
-                total_max = sum(criterion.max_points for criterion in judge.criteria.values())
-                impl_rate = compute_impl_rate(total_achieved, total_max)
-                judge_impl_rates.append(impl_rate)
-
             # Consensus impl_rate: median across judges (matching consensus score logic)
-            import numpy as np
-
-            consensus_impl_rate = np.median(judge_impl_rates) if judge_impl_rates else np.nan
+            consensus_impl_rate = compute_consensus_impl_rate(run.judges)
 
             rows.append(
                 {
@@ -82,9 +105,7 @@ def build_judges_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
         for run in runs:
             for judge in run.judges:
                 # Calculate impl_rate for this judge
-                total_achieved = sum(criterion.achieved for criterion in judge.criteria.values())
-                total_max = sum(criterion.max_points for criterion in judge.criteria.values())
-                judge_impl_rate = compute_impl_rate(total_achieved, total_max)
+                judge_impl_rate = compute_judge_impl_rate(judge)
 
                 rows.append(
                     {
