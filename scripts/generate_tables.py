@@ -22,6 +22,7 @@ from scylla.analysis import (
 from scylla.analysis.tables import (
     table01_tier_summary,
     table02_tier_comparison,
+    table02b_impl_rate_comparison,
     table03_judge_agreement,
     table04_criteria_performance,
     table05_cost_analysis,
@@ -96,6 +97,7 @@ def main() -> None:
     tables = [
         ("Table 1", "tab01_tier_summary", lambda: table01_tier_summary(runs_df)),
         ("Table 2", "tab02_tier_comparison", lambda: table02_tier_comparison(runs_df)),
+        ("Table 2b", "tab02b_impl_rate_comparison", lambda: table02b_impl_rate_comparison(runs_df)),
         ("Table 3", "tab03_judge_agreement", lambda: table03_judge_agreement(judges_df)),
         (
             "Table 4",

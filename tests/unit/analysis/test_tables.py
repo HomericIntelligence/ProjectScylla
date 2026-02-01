@@ -547,3 +547,70 @@ def test_table07_handles_empty_subtests():
     # Should handle gracefully
     assert isinstance(markdown, str)
     assert isinstance(latex, str)
+
+
+def test_table02b_impl_rate_comparison_format(sample_runs_df):
+    """Test Table 2b returns valid dual-format output."""
+    from scylla.analysis.tables import table02b_impl_rate_comparison
+
+    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
+
+    # Verify both formats are non-empty strings
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Verify key content is present
+    assert "Impl-Rate" in markdown
+    assert "tabular" in latex or "table" in latex.lower()
+
+
+def test_table02b_impl_rate_statistical_workflow(sample_runs_df):
+    """Test Table 2b follows correct statistical workflow."""
+    from scylla.analysis.tables import table02b_impl_rate_comparison
+
+    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
+
+    # Verify statistical components are present
+    assert "Kruskal-Wallis" in markdown
+    assert "Mann-Whitney" in markdown
+    assert "Holm-Bonferroni" in markdown
+    assert "Cliff" in markdown
+
+    # Verify omnibus results section exists
+    assert "Omnibus Test Results" in markdown
+
+
+def test_table02b_handles_missing_impl_rate():
+    """Test Table 2b handles missing impl_rate column gracefully."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table02b_impl_rate_comparison
+
+    # Create DataFrame without impl_rate column
+    test_data = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 5,
+            "tier": ["T0"] * 5,
+            "score": [0.5, 0.6, 0.7, 0.8, 0.9],
+            "passed": [True] * 5,
+        }
+    )
+
+    markdown, latex = table02b_impl_rate_comparison(test_data)
+
+    # Should return error message
+    assert "Error" in markdown
+    assert "impl_rate" in markdown
+
+
+def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
+    """Test that Holm-Bonferroni correction is applied to p-values."""
+    from scylla.analysis.tables import table02b_impl_rate_comparison
+
+    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
+
+    # Verify correction is documented
+    assert "Holm-Bonferroni" in markdown
+    assert "corrected" in markdown.lower()
