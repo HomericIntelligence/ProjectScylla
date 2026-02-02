@@ -1,0 +1,16 @@
+{
+  "name": "ci-test-failure-diagnosis",
+  "version": "1.0.0",
+  "description": "Systematic approach to diagnosing and fixing CI test failures in PRs",
+  "category": "ci-cd",
+  "author": "ProjectScylla",
+  "created": "2026-02-02",
+  "verified_on": "PR #336 - Fixed pre-commit and pricing test failures",
+  "skills": [
+    {
+      "name": "ci-test-failure-diagnosis",
+      "path": "SKILL.md",
+      "description": "Diagnose and fix CI test failures with systematic investigation"
+    }
+  ]
+}
