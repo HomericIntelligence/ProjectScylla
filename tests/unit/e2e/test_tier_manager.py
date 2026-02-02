@@ -802,12 +802,16 @@ class TestBuildMergedBaseline:
         tiers_dir.mkdir()
         manager = TierManager(tiers_dir)
 
-        # Should raise because best_subtest is missing from result.json and best_subtest.json doesn't exist
+        # Should raise because best_subtest is missing from result.json
+        # and best_subtest.json doesn't exist
         with pytest.raises(ValueError, match="neither result.json nor best_subtest.json"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
 
     def test_fallback_to_best_subtest_json(self, tmp_path: Path) -> None:
-        """Test that build_merged_baseline falls back to best_subtest.json when result.json is missing."""
+        """Test that build_merged_baseline falls back to best_subtest.json.
+
+        When result.json is missing.
+        """
         import json
 
         experiment_dir = tmp_path / "experiment"
