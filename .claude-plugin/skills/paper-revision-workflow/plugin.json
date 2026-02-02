@@ -1,0 +1,11 @@
+{
+  "name": "paper-revision-workflow",
+  "version": "1.0.0",
+  "category": "documentation",
+  "description": "Systematic workflow for revising research papers: data validation, structural improvements, and tone unification",
+  "author": "ProjectScylla Team",
+  "created": "2026-02-01",
+  "tags": ["documentation", "research-paper", "data-validation", "tone", "structure"],
+  "dependencies": [],
+  "skill_file": "SKILL.md"
+}
