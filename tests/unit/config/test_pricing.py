@@ -81,15 +81,16 @@ class TestCalculateCost:
         assert cost == pytest.approx(0.018)
 
     def test_with_cached_tokens(self) -> None:
-        """Cost calculation with cached tokens (zero cost by default)."""
+        """Cost calculation with cached tokens (0.1x base cost)."""
         cost = calculate_cost(
             tokens_input=1000,
             tokens_output=1000,
             tokens_cached=1000,
             model="claude-sonnet-4-5-20250929",
         )
-        # Cached tokens have 0 cost by default
-        assert cost == pytest.approx(0.018)
+        # 1000 input * $3/M + 1000 output * $15/M + 1000 cached * $0.3/M
+        # = $0.003 + $0.015 + $0.0003 = $0.0183
+        assert cost == pytest.approx(0.0183)
 
     def test_zero_tokens(self) -> None:
         """Zero tokens should result in zero cost."""
