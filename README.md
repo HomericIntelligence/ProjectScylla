@@ -210,6 +210,58 @@ with open('results/analysis/data/statistical_results.json') as f:
 
 ---
 
+## Experiment Management Scripts
+
+ProjectScylla provides comprehensive scripts for running, managing, and analyzing experiments.
+
+### 🧪 Running Experiments
+
+**Primary Experiment Runner:**
+```bash
+# Run full experiment
+pixi run -e analysis python scripts/run_e2e_experiment.py --config config/test.yaml
+
+# Run specific tiers
+pixi run -e analysis python scripts/run_e2e_experiment.py \
+  --tiers-dir tests/fixtures/tests/test-001 \
+  --tiers T0 T1 --runs 10 -v
+```
+
+**Container-Based Execution:**
+```bash
+./scripts/setup_api_key.sh
+./scripts/run_experiment_in_container.sh \
+  --tiers-dir tests/fixtures/tests/test-001 \
+  --tiers T0 --runs 5 --verbose
+```
+
+### 🔄 Recovery & Re-running
+
+```bash
+# Re-run failed agents
+pixi run -e analysis python scripts/rerun_agents.py \
+  --data-dir ~/fullruns/test_experiment --tiers T0 T1
+
+# Re-run failed judges  
+pixi run -e analysis python scripts/rerun_judges.py \
+  --data-dir ~/fullruns/test_experiment
+```
+
+### 📊 Results Management
+
+```bash
+# Regenerate all results
+pixi run -e analysis python scripts/regenerate_results.py \
+  --data-dir ~/fullruns/test_experiment \
+  --output-dir results/analysis
+
+# Regenerate agent-specific results
+pixi run -e analysis python scripts/regenerate_agent_results.py \
+  --data-dir ~/fullruns/test_experiment
+```
+
+---
+
 ## Analysis Pipeline Architecture
 
 ### Statistical Methodology
@@ -263,16 +315,44 @@ Schema: `src/scylla/analysis/schemas/run_result_schema.json`
 
 ## Development
 
-### Testing
+### 🧪 Testing
+
+ProjectScylla has a comprehensive test suite with **77+ test files** covering all functionality.
+
+#### Test Categories
+- **Unit Tests** (67+ files): Analysis, adapters, config, executors, judges, metrics, reporting
+- **Integration Tests** (2 files): End-to-end workflow testing
+- **E2E Tests** (1 file): Full pipeline validation
+- **Test Fixtures** (47+ scenarios): Complete test cases with expected outputs
+
+#### Running Tests
 ```bash
-# All tests
+# All tests (comprehensive)
+pixi run -e analysis pytest tests/ --verbose
+
+# Unit tests only (fastest)
+pixi run -e analysis pytest tests/unit/ -v
+
+# Specific modules
 pixi run -e analysis pytest tests/unit/analysis/ -v
+pixi run -e analysis pytest tests/unit/adapters/ -v
+pixi run -e analysis pytest tests/unit/config/ -v
 
-# Specific test
+# Integration tests
+pixi run -e analysis pytest tests/integration/ -v
+
+# Coverage analysis
+pixi run -e analysis pytest tests/ --cov=src/scylla --cov-report=html
+
+# Specific test file
 pixi run -e analysis pytest tests/unit/analysis/test_stats.py -v
+```
 
-# Coverage report
-pixi run -e analysis pytest tests/unit/analysis/ --cov=src/scylla/analysis --cov-report=html
+#### Test Quality Assurance
+```bash
+# Code quality (linting + formatting)
+pixi run -e analysis ruff check src/scylla/
+pixi run -e analysis ruff format src/scylla/ --check
 ```
 
 ### Adding Components
