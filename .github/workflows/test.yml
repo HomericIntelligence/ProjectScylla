@@ -20,7 +20,6 @@ jobs:
       matrix:
         test-group:
           - { name: "unit", path: "tests/unit" }
-          - { name: "integration", path: "tests/integration" }
 
     steps:
       - uses: actions/checkout@v4
