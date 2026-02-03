@@ -213,7 +213,7 @@ def main() -> None:
             failed.append((fig_name, str(e)))
 
     # Summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Summary: {success_count}/{len(figures_to_generate)} figures generated successfully")
     if failed:
         print(f"\nFailed figures ({len(failed)}):")

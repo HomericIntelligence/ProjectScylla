@@ -14,9 +14,9 @@ A framework known as the **Architectural Integration Model (AIM)** is required t
 
 Quantitative scaling principles establish that the effectiveness of multi-agent systems is fundamentally influenced by task characteristics and coordination complexity. This research framework must be validated against the empirical findings on coordination efficiency:
 
-* **Parallelizable Tasks (Centralized Coordination):** Centralized coordination mechanisms, which rely on a single Orchestrator (T2) distributing work, demonstrate superior performance, improving results by **80.9%** on parallelizable tasks, such as financial reasoning.  
-* **Exploratory Tasks (Decentralized Coordination):** Decentralized coordination, where agents operate with more autonomy and less central control, excels on dynamic tasks requiring parallel exploration of high-entropy search spaces, such as dynamic web navigation, showing a performance improvement of **9.2%**.  
-* **Sequential Tasks (Performance Degradation):** Crucially, all multi-agent variants universally **degrade performance by 39-70%** on tasks requiring sequential constraint satisfaction (e.g., rigid planning). This is attributed to coordination overhead fragmenting the reasoning capacity under fixed computational budgets.  
+* **Parallelizable Tasks (Centralized Coordination):** Centralized coordination mechanisms, which rely on a single Orchestrator (T2) distributing work, demonstrate superior performance, improving results by **80.9%** on parallelizable tasks, such as financial reasoning.
+* **Exploratory Tasks (Decentralized Coordination):** Decentralized coordination, where agents operate with more autonomy and less central control, excels on dynamic tasks requiring parallel exploration of high-entropy search spaces, such as dynamic web navigation, showing a performance improvement of **9.2%**.
+* **Sequential Tasks (Performance Degradation):** Crucially, all multi-agent variants universally **degrade performance by 39-70%** on tasks requiring sequential constraint satisfaction (e.g., rigid planning). This is attributed to coordination overhead fragmenting the reasoning capacity under fixed computational budgets.
 * **Capability Saturation:** Coordination yields diminishing or negative returns once a single-agent baseline exceeds an empirical threshold of approximately **45%** accuracy.
 
 The architectural segregation into T1 and T2 is therefore not merely a functional convenience, but a necessity derived from these scaling laws, ensuring the system maintains economic viability by aligning architectural complexity with the measurable characteristics of the task at hand.
@@ -79,16 +79,16 @@ The formal definitions of T1 and T2 are based on complexity metrics, cost profil
 
 T1 agents form the execution foundation of the MAS, optimized for speed and cost efficiency.
 
-* **Functional Characteristics:** Core execution, input sanitization, data validation, low-level resource management, and state abstraction.  
-* **Complexity Profile and TDD Constraint:** T1 tasks are subject to a strict Task Dependency Depth (TDD) constraint, hypothesized to be $TDD \\le 2$. This constraint means T1 tasks must be resolvable predominantly through direct tool use or a single step of constrained inference, which maintains high throughput and low latency.  
+* **Functional Characteristics:** Core execution, input sanitization, data validation, low-level resource management, and state abstraction.
+* **Complexity Profile and TDD Constraint:** T1 tasks are subject to a strict Task Dependency Depth (TDD) constraint, hypothesized to be $TDD \\le 2$. This constraint means T1 tasks must be resolvable predominantly through direct tool use or a single step of constrained inference, which maintains high throughput and low latency.
 * **The Resource Optimization Mandate:** T1 agents fulfill the essential resource optimization mandate by handling the massive volume of utility tasks with high speed and low computational overhead, drastically minimizing the Total Cost of Ownership (TCO) of the entire system.5
 
 ### **III.B. Tier 2 (T2) Agents: Specialization, Cognitive Depth, and Orchestration**
 
 T2 agents represent the cognitive engine of Project Odyssey, dedicated to complex problem-solving and strategic direction.
 
-* **Functional Characteristics:** Strategic orchestration, sophisticated multi-modal synthesis, long-term memory integration, expert reasoning, and high-stakes decision-making.  
-* **Complexity Profile and TDD Tolerance:** T2 tasks are characterized by a high TDD tolerance, hypothesized to be $TDD \\ge 3$. T2 agents are specifically optimized for deep, recursive problem-solving and must manage the complexity of maintaining comprehensive context across numerous delegation cycles.7  
+* **Functional Characteristics:** Strategic orchestration, sophisticated multi-modal synthesis, long-term memory integration, expert reasoning, and high-stakes decision-making.
+* **Complexity Profile and TDD Tolerance:** T2 tasks are characterized by a high TDD tolerance, hypothesized to be $TDD \\ge 3$. T2 agents are specifically optimized for deep, recursive problem-solving and must manage the complexity of maintaining comprehensive context across numerous delegation cycles.7
 * **Managing Epistemic Closure:** T2 requires sophisticated state persistence mechanisms to ensure the agent’s internal knowledge state is consistent and current across the long execution timeline, preventing loss of context or state during a delegation cycle.8
 
 ### **III.C. Tiered Architecture Profile: Functionality and Complexity**
@@ -168,7 +168,7 @@ The experimental rigor hinges on selecting tasks that genuinely challenge the ag
 
 The benchmark suite must comprise non-trivial, multi-step tasks requiring complex interactions, such as end-to-end software development.17
 
-* **Difficulty Structuring:** Tasks must be structured to incrementally increase difficulty. Difficulty should be reliably proxied by complexity metrics, such as the number of required tool calls or the sequential steps needed. Benchmarks like **BattleAgentBench** provide a structured approach featuring seven sub-stages of varying difficulty levels to systematically assess model capabilities as complexity increases.  
+* **Difficulty Structuring:** Tasks must be structured to incrementally increase difficulty. Difficulty should be reliably proxied by complexity metrics, such as the number of required tool calls or the sequential steps needed. Benchmarks like **BattleAgentBench** provide a structured approach featuring seven sub-stages of varying difficulty levels to systematically assess model capabilities as complexity increases.
 * **Human Expert Baseline:** The tasks must be confirmed as solvable by human experts, providing a target success rate.18 For software engineering tasks like those in SWE-Bench, the difficulty is often quantified by the time a human expert would require to complete the task, ranging from less than 15 minutes to over 4 hours.
 
 ### **V.B. Economic Sustainability and Cost Modeling**
@@ -187,9 +187,9 @@ Cost must be tracked at the component level to isolate the contribution of speci
 
 Efficacy evaluation must be multi-faceted, encompassing not only the final result but also the quality of the generative process and the maintainability of the artifacts produced.17
 
-* **Process Metrics:** The **Fine-Grained Progress Rate ($\\mathbf{R\_{Prog}}$)** metric, pioneered by benchmarks like AgentBoard, is indispensable for capturing incremental advancements and diagnosing strategic drift in multi-round, long-horizon interactions.  
-* **Quality Metrics (Tension Metrics):** These safeguard measurements ensure improvements in speed do not compromise stability.26  
-  * **Change Fail Percentage (CFP):** Measures the percentage of agent-generated changes (patches) that subsequently result in service degradation, impairment, or outright outages, requiring remediation. This aligns with industry-standard DORA metrics for stability.  
+* **Process Metrics:** The **Fine-Grained Progress Rate ($\\mathbf{R\_{Prog}}$)** metric, pioneered by benchmarks like AgentBoard, is indispensable for capturing incremental advancements and diagnosing strategic drift in multi-round, long-horizon interactions.
+* **Quality Metrics (Tension Metrics):** These safeguard measurements ensure improvements in speed do not compromise stability.26
+  * **Change Fail Percentage (CFP):** Measures the percentage of agent-generated changes (patches) that subsequently result in service degradation, impairment, or outright outages, requiring remediation. This aligns with industry-standard DORA metrics for stability.
   * **PR Revert Rate:** Tracks the frequency with which agent-generated pull requests are rejected or reverted by human reviewers due to quality or architectural concerns.26
 
 ## **VI. Conclusion and Strategic Research Recommendations**
@@ -206,30 +206,30 @@ The complexity of evaluating hierarchically nested agentic data—where performa
 
 #### **Works cited**
 
-1. accessed December 12, 2025, [https://github.com/mvillmow/ProjectOdyssey/tree/main/.claude/agents](https://github.com/mvillmow/ProjectOdyssey/tree/main/.claude/agents)  
-2. accessed December 12, 2025, [https://github.com/mvillmow/ProjectOdyssey/tree/main/agents](https://github.com/mvillmow/ProjectOdyssey/tree/main/agents)  
-3. paperscope/AIConf · Datasets at Hugging Face, accessed December 12, 2025, [https://huggingface.co/datasets/paperscope/AIConf](https://huggingface.co/datasets/paperscope/AIConf)  
-4. What are AI Agents? \- Artificial Intelligence \- AWS, accessed December 12, 2025, [https://aws.amazon.com/what-is/ai-agents/](https://aws.amazon.com/what-is/ai-agents/)  
-5. Optimizing Latency and Cost in Multi-Agent Systems \- HockeyStack, accessed December 12, 2025, [https://www.hockeystack.com/applied-ai/optimizing-latency-and-cost-in-multi-agent-systems](https://www.hockeystack.com/applied-ai/optimizing-latency-and-cost-in-multi-agent-systems)  
-6. Measuring the Real Economic Impact of AI Agents | by Daniel Rodríguez \- Medium, accessed December 12, 2025, [https://medium.com/sadasant/measuring-the-real-economic-impact-of-ai-agents-3f2b4296577c](https://medium.com/sadasant/measuring-the-real-economic-impact-of-ai-agents-3f2b4296577c)  
-7. Hierarchical Agentic Taxonomy \- Emergent Mind, accessed December 12, 2025, [https://www.emergentmind.com/topics/hierarchical-agentic-taxonomy](https://www.emergentmind.com/topics/hierarchical-agentic-taxonomy)  
-8. AI Agent Evaluation: Frameworks, Strategies, and Best Practices \- Medium, accessed December 12, 2025, [https://medium.com/online-inference/ai-agent-evaluation-frameworks-strategies-and-best-practices-9dc3cfdf9890](https://medium.com/online-inference/ai-agent-evaluation-frameworks-strategies-and-best-practices-9dc3cfdf9890)  
-9. Zero-shot 3D Map Generation with LLM Agents: A Dual-Agent Architecture for Procedural Content Generation \- arXiv, accessed December 12, 2025, [https://arxiv.org/html/2512.10501v1](https://arxiv.org/html/2512.10501v1)  
-10. The unreasonable effectiveness of large language models in zero-shot semantic annotation of legal texts \- Frontiers, accessed December 12, 2025, [https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2023.1279794/full](https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2023.1279794/full)  
-11. Agentic AI Frameworks: A Quick Comparison Guide \- Arkon Data, accessed December 12, 2025, [https://www.arkondata.com/en/post/agentic-ai-frameworks-a-quick-comparison-guide](https://www.arkondata.com/en/post/agentic-ai-frameworks-a-quick-comparison-guide)  
-12. Effective context engineering for AI agents \- Anthropic, accessed December 12, 2025, [https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)  
-13. Skills vs Tools for AI Agents: Production Guide \- Arcade Blog, accessed December 12, 2025, [https://blog.arcade.dev/what-are-agent-skills-and-tools](https://blog.arcade.dev/what-are-agent-skills-and-tools)  
-14. LLM fine‑tuning vs. RAG vs. agents: a practical comparison \- MITRIX Technology, accessed December 12, 2025, [https://mitrix.io/blog/llm-fine%E2%80%91tuning-vs-rag-vs-agents-a-practical-comparison/](https://mitrix.io/blog/llm-fine%E2%80%91tuning-vs-rag-vs-agents-a-practical-comparison/)  
-15. Token-Efficient Agent Architecture | by Bijit Ghosh | Nov, 2025 \- Medium, accessed December 12, 2025, [https://medium.com/@bijit211987/token-efficient-agent-architecture-6736bae692a8](https://medium.com/@bijit211987/token-efficient-agent-architecture-6736bae692a8)  
-16. Agentic RAG: Architecture, Use Cases, and Limitations \- Vellum AI, accessed December 12, 2025, [https://www.vellum.ai/blog/agentic-rag](https://www.vellum.ai/blog/agentic-rag)  
-17. \[Literature Review\] Benchmarking and Studying the LLM-based Agent System in End-to-End Software Development \- Moonlight, accessed December 12, 2025, [https://www.themoonlight.io/review/benchmarking-and-studying-the-llm-based-agent-system-in-end-to-end-software-development](https://www.themoonlight.io/review/benchmarking-and-studying-the-llm-based-agent-system-in-end-to-end-software-development)  
-18. BenchAgents: Multi-Agent Systems for Structured Benchmark Creation \- arXiv, accessed December 12, 2025, [https://arxiv.org/html/2410.22584v2](https://arxiv.org/html/2410.22584v2)  
-19. LLM Inference Benchmarking: How Much Does Your LLM Inference Cost? | NVIDIA Technical Blog, accessed December 12, 2025, [https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/](https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/)  
-20. Kinde AI Token Pricing Optimization: Dynamic Cost Management for LLM-Powered SaaS, accessed December 12, 2025, [https://kinde.com/learn/billing/billing-for-ai/ai-token-pricing-optimization-dynamic-cost-management-for-llm-powered-saas/](https://kinde.com/learn/billing/billing-for-ai/ai-token-pricing-optimization-dynamic-cost-management-for-llm-powered-saas/)  
-21. LLM Cost Metrics | VoltAgent, accessed December 12, 2025, [https://voltagent.dev/voltops-llm-observability-docs/dashboard/llm-cost-overview/](https://voltagent.dev/voltops-llm-observability-docs/dashboard/llm-cost-overview/)  
-22. mhamzaerol/Cost-of-Pass: Cost-of-Pass: An Economic ... \- GitHub, accessed December 12, 2025, [https://github.com/mhamzaerol/Cost-of-Pass](https://github.com/mhamzaerol/Cost-of-Pass)  
-23. COST-OF-PASS: AN ECONOMIC FRAMEWORK FOR EVALUATING LANGUAGE MODELS \- OpenReview, accessed December 12, 2025, [https://openreview.net/pdf?id=vC9S20zsgN](https://openreview.net/pdf?id=vC9S20zsgN)  
-24. Cost-of-Pass: An Economic Framework for Evaluating Language Models \- arXiv, accessed December 12, 2025, [https://arxiv.org/html/2504.13359v1](https://arxiv.org/html/2504.13359v1)  
-25. How to Build an LLM Evaluation Framework, from Scratch \- Confident AI, accessed December 12, 2025, [https://www.confident-ai.com/blog/how-to-build-an-llm-evaluation-framework-from-scratch](https://www.confident-ai.com/blog/how-to-build-an-llm-evaluation-framework-from-scratch)  
-26. Three metrics for measuring the impact of AI on code quality \- DX, accessed December 12, 2025, [https://getdx.com/blog/3-metrics-for-measuring-the-impact-of-ai-on-code-quality/](https://getdx.com/blog/3-metrics-for-measuring-the-impact-of-ai-on-code-quality/)  
+1. accessed December 12, 2025, [https://github.com/mvillmow/ProjectOdyssey/tree/main/.claude/agents](https://github.com/mvillmow/ProjectOdyssey/tree/main/.claude/agents)
+2. accessed December 12, 2025, [https://github.com/mvillmow/ProjectOdyssey/tree/main/agents](https://github.com/mvillmow/ProjectOdyssey/tree/main/agents)
+3. paperscope/AIConf · Datasets at Hugging Face, accessed December 12, 2025, [https://huggingface.co/datasets/paperscope/AIConf](https://huggingface.co/datasets/paperscope/AIConf)
+4. What are AI Agents? \- Artificial Intelligence \- AWS, accessed December 12, 2025, [https://aws.amazon.com/what-is/ai-agents/](https://aws.amazon.com/what-is/ai-agents/)
+5. Optimizing Latency and Cost in Multi-Agent Systems \- HockeyStack, accessed December 12, 2025, [https://www.hockeystack.com/applied-ai/optimizing-latency-and-cost-in-multi-agent-systems](https://www.hockeystack.com/applied-ai/optimizing-latency-and-cost-in-multi-agent-systems)
+6. Measuring the Real Economic Impact of AI Agents | by Daniel Rodríguez \- Medium, accessed December 12, 2025, [https://medium.com/sadasant/measuring-the-real-economic-impact-of-ai-agents-3f2b4296577c](https://medium.com/sadasant/measuring-the-real-economic-impact-of-ai-agents-3f2b4296577c)
+7. Hierarchical Agentic Taxonomy \- Emergent Mind, accessed December 12, 2025, [https://www.emergentmind.com/topics/hierarchical-agentic-taxonomy](https://www.emergentmind.com/topics/hierarchical-agentic-taxonomy)
+8. AI Agent Evaluation: Frameworks, Strategies, and Best Practices \- Medium, accessed December 12, 2025, [https://medium.com/online-inference/ai-agent-evaluation-frameworks-strategies-and-best-practices-9dc3cfdf9890](https://medium.com/online-inference/ai-agent-evaluation-frameworks-strategies-and-best-practices-9dc3cfdf9890)
+9. Zero-shot 3D Map Generation with LLM Agents: A Dual-Agent Architecture for Procedural Content Generation \- arXiv, accessed December 12, 2025, [https://arxiv.org/html/2512.10501v1](https://arxiv.org/html/2512.10501v1)
+10. The unreasonable effectiveness of large language models in zero-shot semantic annotation of legal texts \- Frontiers, accessed December 12, 2025, [https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2023.1279794/full](https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2023.1279794/full)
+11. Agentic AI Frameworks: A Quick Comparison Guide \- Arkon Data, accessed December 12, 2025, [https://www.arkondata.com/en/post/agentic-ai-frameworks-a-quick-comparison-guide](https://www.arkondata.com/en/post/agentic-ai-frameworks-a-quick-comparison-guide)
+12. Effective context engineering for AI agents \- Anthropic, accessed December 12, 2025, [https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+13. Skills vs Tools for AI Agents: Production Guide \- Arcade Blog, accessed December 12, 2025, [https://blog.arcade.dev/what-are-agent-skills-and-tools](https://blog.arcade.dev/what-are-agent-skills-and-tools)
+14. LLM fine‑tuning vs. RAG vs. agents: a practical comparison \- MITRIX Technology, accessed December 12, 2025, [https://mitrix.io/blog/llm-fine%E2%80%91tuning-vs-rag-vs-agents-a-practical-comparison/](https://mitrix.io/blog/llm-fine%E2%80%91tuning-vs-rag-vs-agents-a-practical-comparison/)
+15. Token-Efficient Agent Architecture | by Bijit Ghosh | Nov, 2025 \- Medium, accessed December 12, 2025, [https://medium.com/@bijit211987/token-efficient-agent-architecture-6736bae692a8](https://medium.com/@bijit211987/token-efficient-agent-architecture-6736bae692a8)
+16. Agentic RAG: Architecture, Use Cases, and Limitations \- Vellum AI, accessed December 12, 2025, [https://www.vellum.ai/blog/agentic-rag](https://www.vellum.ai/blog/agentic-rag)
+17. \[Literature Review\] Benchmarking and Studying the LLM-based Agent System in End-to-End Software Development \- Moonlight, accessed December 12, 2025, [https://www.themoonlight.io/review/benchmarking-and-studying-the-llm-based-agent-system-in-end-to-end-software-development](https://www.themoonlight.io/review/benchmarking-and-studying-the-llm-based-agent-system-in-end-to-end-software-development)
+18. BenchAgents: Multi-Agent Systems for Structured Benchmark Creation \- arXiv, accessed December 12, 2025, [https://arxiv.org/html/2410.22584v2](https://arxiv.org/html/2410.22584v2)
+19. LLM Inference Benchmarking: How Much Does Your LLM Inference Cost? | NVIDIA Technical Blog, accessed December 12, 2025, [https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/](https://developer.nvidia.com/blog/llm-inference-benchmarking-how-much-does-your-llm-inference-cost/)
+20. Kinde AI Token Pricing Optimization: Dynamic Cost Management for LLM-Powered SaaS, accessed December 12, 2025, [https://kinde.com/learn/billing/billing-for-ai/ai-token-pricing-optimization-dynamic-cost-management-for-llm-powered-saas/](https://kinde.com/learn/billing/billing-for-ai/ai-token-pricing-optimization-dynamic-cost-management-for-llm-powered-saas/)
+21. LLM Cost Metrics | VoltAgent, accessed December 12, 2025, [https://voltagent.dev/voltops-llm-observability-docs/dashboard/llm-cost-overview/](https://voltagent.dev/voltops-llm-observability-docs/dashboard/llm-cost-overview/)
+22. mhamzaerol/Cost-of-Pass: Cost-of-Pass: An Economic ... \- GitHub, accessed December 12, 2025, [https://github.com/mhamzaerol/Cost-of-Pass](https://github.com/mhamzaerol/Cost-of-Pass)
+23. COST-OF-PASS: AN ECONOMIC FRAMEWORK FOR EVALUATING LANGUAGE MODELS \- OpenReview, accessed December 12, 2025, [https://openreview.net/pdf?id=vC9S20zsgN](https://openreview.net/pdf?id=vC9S20zsgN)
+24. Cost-of-Pass: An Economic Framework for Evaluating Language Models \- arXiv, accessed December 12, 2025, [https://arxiv.org/html/2504.13359v1](https://arxiv.org/html/2504.13359v1)
+25. How to Build an LLM Evaluation Framework, from Scratch \- Confident AI, accessed December 12, 2025, [https://www.confident-ai.com/blog/how-to-build-an-llm-evaluation-framework-from-scratch](https://www.confident-ai.com/blog/how-to-build-an-llm-evaluation-framework-from-scratch)
+26. Three metrics for measuring the impact of AI on code quality \- DX, accessed December 12, 2025, [https://getdx.com/blog/3-metrics-for-measuring-the-impact-of-ai-on-code-quality/](https://getdx.com/blog/3-metrics-for-measuring-the-impact-of-ai-on-code-quality/)
 27. HiBayES: Improving LLM evaluation with hierarchical Bayesian modelling | AISI Work, accessed December 12, 2025, [https://www.aisi.gov.uk/blog/hibayes-improving-llm-evaluation-with-hierarchical-bayesian-modelling](https://www.aisi.gov.uk/blog/hibayes-improving-llm-evaluation-with-hierarchical-bayesian-modelling)

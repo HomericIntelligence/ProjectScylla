@@ -10,18 +10,18 @@ To adhere to established best practices in scalable MAS design, Project Odyssey 
 
 This functional taxonomy draws parallels to biological cognitive structures, organizing the agentic system into modular components:
 
-* **Task Decomposer (Anterior Prefrontal Cortex):** Responsible for abstract, high-level planning and breaking down long-horizon goals.  
-* **Actor (Dorsolateral PFC):** The primary execution unit generating actions based on current states.  
-* **Monitor (Anterior Cingulate Cortex):** Crucial for error detection and constraint checking.  
+* **Task Decomposer (Anterior Prefrontal Cortex):** Responsible for abstract, high-level planning and breaking down long-horizon goals.
+* **Actor (Dorsolateral PFC):** The primary execution unit generating actions based on current states.
+* **Monitor (Anterior Cingulate Cortex):** Crucial for error detection and constraint checking.
 * **Evaluator/Predictor (Orbitofrontal Cortex):** Provides heuristic value estimation and self-reflection.
 
 ### **I.B. The Science of Scaling: Task-Contingent Coordination**
 
 Quantitative scaling principles dictate that coordination strategies must be adapted to task characteristics. Empirical findings validate the following coordination efficiencies:
 
-* **Parallelizable Tasks:** Centralized coordination (Orchestrator) improves results by **80.9%** on tasks like financial reasoning.  
-* **Exploratory Tasks:** Decentralized coordination excels in high-entropy search spaces (e.g., web navigation), improving performance by **9.2%**.  
-* **Sequential Tasks:** Multi-agent variants degrade performance by **39–70%** on rigid planning tasks due to coordination overhead fragmenting reasoning capacity.  
+* **Parallelizable Tasks:** Centralized coordination (Orchestrator) improves results by **80.9%** on tasks like financial reasoning.
+* **Exploratory Tasks:** Decentralized coordination excels in high-entropy search spaces (e.g., web navigation), improving performance by **9.2%**.
+* **Sequential Tasks:** Multi-agent variants degrade performance by **39–70%** on rigid planning tasks due to coordination overhead fragmenting reasoning capacity.
 * **Capability Saturation:** Coordination yields diminishing returns once a single-agent baseline exceeds approximately **45%** accuracy.
 
 ## **II. The Project Odyssey Architecture: Structure and Delegation**
@@ -32,13 +32,13 @@ The Project Odyssey architecture enforces a robust, hierarchical separation betw
 
 The architecture is physically and logically segregated to optimize fault isolation:
 
-* **Tier 1 (T1) – Foundation & Utility (/.claude/agents):**  
-  * **Role:** Optimized for high-throughput, low-latency execution. T1 agents handle input sanitization, data normalization, and environment interaction.  
-  * **Complexity Constraint:** T1 tasks are subject to a **Task Dependency Depth (TDD)** constraint of $TDD \\le 2$, meaning tasks must be resolvable through direct tool use or a single step of constrained inference.  
-  * **Prompt Engineering:** T1 prompts are engineered for maximum determinism, often requiring valid JSON output to ensure the data is instantly parsable by upstream agents.  
-* **Tier 2 (T2) – Strategy & Orchestration (/agents):**  
-  * **Role:** The cognitive engine responsible for recursive problem-solving, strategic planning, and complex synthesis.  
-  * **Complexity Tolerance:** Optimized for high complexity with $TDD \\ge 3$, T2 agents manage context across delegation cycles.  
+* **Tier 1 (T1) – Foundation & Utility (/.claude/agents):**
+  * **Role:** Optimized for high-throughput, low-latency execution. T1 agents handle input sanitization, data normalization, and environment interaction.
+  * **Complexity Constraint:** T1 tasks are subject to a **Task Dependency Depth (TDD)** constraint of $TDD \\le 2$, meaning tasks must be resolvable through direct tool use or a single step of constrained inference.
+  * **Prompt Engineering:** T1 prompts are engineered for maximum determinism, often requiring valid JSON output to ensure the data is instantly parsable by upstream agents.
+* **Tier 2 (T2) – Strategy & Orchestration (/agents):**
+  * **Role:** The cognitive engine responsible for recursive problem-solving, strategic planning, and complex synthesis.
+  * **Complexity Tolerance:** Optimized for high complexity with $TDD \\ge 3$, T2 agents manage context across delegation cycles.
   * **Skill Engineering:** T2 agents leverage extensive context windows and "Skills" (prompt-encoded expertise) rather than raw tooling to maintain epistemic breadth.
 
 ### **II.B. Complexity Metrics: Task Dependency Depth (TDD)**
@@ -63,13 +63,13 @@ To quantify the marginal utility of architectural components, Project Odyssey ut
 
 A critical economic distinction exists between T2 and T3.
 
-* **T2 (Skills):** Uses prompt-based instructions to encode domain knowledge. This is highly token-efficient.  
+* **T2 (Skills):** Uses prompt-based instructions to encode domain knowledge. This is highly token-efficient.
 * **T3 (Tooling):** Requires loading comprehensive JSON schemas for external functions. Agents often load libraries "just in case," resulting in massive context bloat (e.g., 150,000 tokens) and a sharp decline in Cost-of-Pass efficiency.
 
 ### **III.B. Advanced Architectures (T4, T5, & T6)**
 
-* **T4 (Atomic Delegation):** Implements **Atomic Task Design**, breaking workflows into narrow, stateless tasks. Production data indicates this reduces costs by up to 54% and latency by 72% compared to generalist agents.  
-* **T5 (Nested Hierarchy):** Utilizes a "Hierarchical Agentic Taxonomy" with a Monitor/Evaluator loop (biological analogue: ACC/OFC). While this recursive verification is essential for quality, it significantly increases the inference requirement per iteration.  
+* **T4 (Atomic Delegation):** Implements **Atomic Task Design**, breaking workflows into narrow, stateless tasks. Production data indicates this reduces costs by up to 54% and latency by 72% compared to generalist agents.
+* **T5 (Nested Hierarchy):** Utilizes a "Hierarchical Agentic Taxonomy" with a Monitor/Evaluator loop (biological analogue: ACC/OFC). While this recursive verification is essential for quality, it significantly increases the inference requirement per iteration.
 * **T6 (Hybrid Optimization):** Incorporates **Agentic RAG**, where the LLM dynamically directs tool usage based on retrieved context. This can reduce error rates by up to **78%** compared to traditional RAG.
 
 ## **IV. Experimental Protocol and Metric Framework**
@@ -84,16 +84,16 @@ The study follows a controlled ablation methodology. Components (e.g., the Evalu
 
 Evaluation moves beyond binary success rates to include process-oriented and DevOps-standard metrics:
 
-1. **Fine-Grained Progress Rate ($\\mathbf{R\_{Prog}}$):** Captures incremental advancements in the agent's trajectory, allowing for the diagnosis of "strategic drift" where intermediate actions veer off-track.  
-2. **Implementation Rate (Impl-Rate):** An "LLM-as-Judge" verifies if the generated artifact semantically meets the original requirements.  
-3. **Change Fail Percentage (CFP):** Measures the percentage of agent-generated changes that result in service degradation or outages. This safeguards against "brittle" solutions that pass tests but fail in production.  
+1. **Fine-Grained Progress Rate ($\\mathbf{R\_{Prog}}$):** Captures incremental advancements in the agent's trajectory, allowing for the diagnosis of "strategic drift" where intermediate actions veer off-track.
+2. **Implementation Rate (Impl-Rate):** An "LLM-as-Judge" verifies if the generated artifact semantically meets the original requirements.
+3. **Change Fail Percentage (CFP):** Measures the percentage of agent-generated changes that result in service degradation or outages. This safeguards against "brittle" solutions that pass tests but fail in production.
 4. **PR Revert Rate:** Tracks the frequency with which agent-generated code is rejected by human reviewers.
 
 ### **IV.C. Economic Sustainability: Cost-of-Pass (CoP)**
 
 The core economic metric is the **Cost-of-Pass (CoP)**, defined as the expected monetary cost to generate a correct solution:
 
-$$CoP \= \\frac{\\text{Total Cost}}{\\text{Accuracy } (R\_m(p))}$$  
+$$CoP \= \\frac{\\text{Total Cost}}{\\text{Accuracy } (R\_m(p))}$$
 This metric integrates inference cost with model accuracy. The objective is to identify the **LM Frontier Cost-of-Pass**—the minimum CoP achievable across all tiers—and compare it to the cost of human labor.
 
 #### **Granular Cost Tracking**

@@ -650,9 +650,9 @@ def test_fig03_content_verification(sample_runs_df):
             # Verify proportions sum to ~1.0 per (model, tier)
             for (model, tier), group in data_df.groupby(["agent_model", "tier"]):
                 total_prop = group["proportion"].sum()
-                assert (
-                    abs(total_prop - 1.0) < 0.01
-                ), f"Proportions don't sum to 1 for {model}, {tier}"
+                assert abs(total_prop - 1.0) < 0.01, (
+                    f"Proportions don't sum to 1 for {model}, {tier}"
+                )
 
             # Verify grades are valid
             valid_grades = ["S", "A", "B", "C", "D", "F"]

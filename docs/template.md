@@ -216,4 +216,3 @@
 ### Appendix C: Reproducibility Checklist
 
 <Steps, configurations, and artifacts required to reproduce the study.>
-

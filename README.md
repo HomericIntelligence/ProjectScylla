@@ -20,7 +20,7 @@
 
 ProjectScylla is a comprehensive testing framework for AI agent workflows that:
 - **🔬 Measures** agent performance under constrained conditions
-- **📈 Analyzes** results with rigorous statistical methods 
+- **📈 Analyzes** results with rigorous statistical methods
 - **⚖️ Optimizes** agent decisions through trade-off evaluation
 - **📋 Generates** publication-ready reports, figures, and tables
 
@@ -79,7 +79,7 @@ pixi run -e analysis python scripts/generate_all_results.py \
 
 **Typical Performance:**
 - Full analysis: 10-15 minutes (10,000 bootstrap samples)
-- Figures only: 2-3 minutes  
+- Figures only: 2-3 minutes
 - Tables only: 1-2 minutes
 
 **Scale:** Handles experiments with 1000+ runs efficiently
@@ -96,7 +96,7 @@ pixi run -e analysis python scripts/generate_all_results.py \
 ## Ecosystem
 
 - **ProjectOdyssey** → Training and capability development
-- **ProjectKeystone** → Communication and distributed agent coordination  
+- **ProjectKeystone** → Communication and distributed agent coordination
 - **ProjectScylla** → Testing, measurement, and optimization under trial
 
 Together: cohesive ecosystem for building, connecting, and refining agent workflows.
@@ -165,17 +165,17 @@ pixi run -e analysis python scripts/generate_tables.py \
 results/analysis/
 ├── data/
 │   ├── runs.csv                      # Per-run metrics
-│   ├── judges.csv                    # Judge evaluations  
+│   ├── judges.csv                    # Judge evaluations
 │   ├── criteria.csv                  # Criterion-level scores
 │   ├── subtests.csv                  # Subtest metadata
 │   ├── summary.json                  # Experiment summary
 │   └── statistical_results.json      # Statistical analysis
 ├── figures/                          # 27 figures × 5 formats
-│   ├── fig01_score_variance.*        
+│   ├── fig01_score_variance.*
 │   ├── fig02_grade_distribution.*
 │   └── ... (27 total)
 └── tables/                           # 11 tables × 2 formats
-    ├── table01_tier_summary.md        
+    ├── table01_tier_summary.md
     ├── table01_tier_summary.tex
     └── ... (11 total)
 ```
@@ -242,7 +242,7 @@ pixi run -e analysis python scripts/run_e2e_experiment.py \
 pixi run -e analysis python scripts/rerun_agents.py \
   --data-dir ~/fullruns/test_experiment --tiers T0 T1
 
-# Re-run failed judges  
+# Re-run failed judges
 pixi run -e analysis python scripts/rerun_judges.py \
   --data-dir ~/fullruns/test_experiment
 ```
@@ -365,7 +365,7 @@ pixi run -e analysis ruff format src/scylla/ --check
 
 **New Tables:**
 1. Add function to module in `src/scylla/analysis/tables/`
-2. Register in `scripts/generate_tables.py`  
+2. Register in `scripts/generate_tables.py`
 3. Add tests in `tests/unit/analysis/test_tables.py`
 
 ### Code Quality
@@ -452,7 +452,7 @@ Required packages for document compilation:
 ```latex
 \documentclass{article}
  \usepackage{booktabs}   % Professional tables
- \usepackage{longtable}  % Multi-page tables  
+ \usepackage{longtable}  % Multi-page tables
  \usepackage{threeparttable} % Table notes
  \usepackage{graphicx}   % Figure inclusion
  \usepackage{amsmath}    % Statistical symbols

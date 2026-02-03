@@ -1475,8 +1475,7 @@ class SubTestExecutor:
         for judge_num, model in enumerate(self.config.judge_models, start=1):
             _phase_log(
                 "JUDGE",
-                f"Running judge {judge_num}/{len(self.config.judge_models)} "
-                f"with model[{model}]",
+                f"Running judge {judge_num}/{len(self.config.judge_models)} with model[{model}]",
             )
 
             # Use the LLM judge for proper evaluation

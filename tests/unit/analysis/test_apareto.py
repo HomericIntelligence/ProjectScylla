@@ -51,9 +51,9 @@ def test_pareto_frontier_basic():
             f"{pareto_points[['tier', 'mean_cost', 'mean_score']].to_dict('records')}"
         )
 
-        assert (
-            pareto_points.iloc[0]["tier"] == "T0"
-        ), f"Expected T0 to be Pareto efficient, got {pareto_points.iloc[0]['tier']}"
+        assert pareto_points.iloc[0]["tier"] == "T0", (
+            f"Expected T0 to be Pareto efficient, got {pareto_points.iloc[0]['tier']}"
+        )
         assert np.isclose(pareto_points.iloc[0]["mean_cost"], 1.0)
         assert np.isclose(pareto_points.iloc[0]["mean_score"], 0.8)
 

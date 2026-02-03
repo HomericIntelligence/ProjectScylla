@@ -66,4 +66,3 @@ Foreground tasks: `gh-create-pr-linked` (invoke explicitly)
 - **Testing & Analysis**: test-diff-analyzer, extract-test-failures, generate-fix-suggestions,
   track-implementation-progress
 - **Review**: review-pr-changes, create-review-checklist
-

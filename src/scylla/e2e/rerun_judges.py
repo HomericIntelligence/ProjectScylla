@@ -295,10 +295,10 @@ def scan_judges_needing_rerun(
                             f"Judge {judge_num} complete (no action needed)"
                         ),
                         JudgeSlotStatus.MISSING: (
-                            f"Judge {judge_num} never ran " f"(judge_{judge_num:02d}/ missing)"
+                            f"Judge {judge_num} never ran (judge_{judge_num:02d}/ missing)"
                         ),
                         JudgeSlotStatus.FAILED: (
-                            f"Judge {judge_num} ran but failed " "(no valid judgment.json)"
+                            f"Judge {judge_num} ran but failed (no valid judgment.json)"
                         ),
                         JudgeSlotStatus.AGENT_FAILED: "Agent failed, cannot judge",
                     }
@@ -667,7 +667,7 @@ def rerun_judges_experiment(
 
     # Re-run judges slot by slot
     if needs_judge_rerun:
-        logger.info(f"Re-running {len(needs_judge_rerun)} judge slots " f"(parallel={parallel})...")
+        logger.info(f"Re-running {len(needs_judge_rerun)} judge slots (parallel={parallel})...")
         runs_with_reruns: set[Path] = set()
 
         if parallel <= 1 or len(needs_judge_rerun) <= 1:

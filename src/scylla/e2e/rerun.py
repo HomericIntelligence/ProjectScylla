@@ -532,8 +532,7 @@ def rerun_experiment(
                 print(f"\n{status.value.upper().replace('_', ' ')} ({len(runs)} runs):")
                 for run in runs[:10]:  # Show first 10
                     print(
-                        f"  - {run.tier_id}/{run.subtest_id}/run_{run.run_number:02d}: "
-                        f"{run.reason}"
+                        f"  - {run.tier_id}/{run.subtest_id}/run_{run.run_number:02d}: {run.reason}"
                     )
                 if len(runs) > 10:
                     print(f"  ... and {len(runs) - 10} more")

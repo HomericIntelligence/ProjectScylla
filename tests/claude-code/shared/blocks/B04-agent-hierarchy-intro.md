@@ -20,4 +20,3 @@ See [agents/hierarchy.md](agents/hierarchy.md) for the complete agent hierarchy 
 1. **No scope creep** - focus only on issue requirements
 1. **Reply to each review comment** with `✅ Fixed - [brief description]`
 1. **Delegate to skills** - Use "Use the X skill to..." pattern for automation
-
