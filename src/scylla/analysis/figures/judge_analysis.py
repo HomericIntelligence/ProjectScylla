@@ -115,8 +115,8 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
             for _, row in judge_pivot.iterrows():
                 pairs.append(
                     {
-                        "judge_x": f"Judge {i+1}",
-                        "judge_y": f"Judge {j+1}",
+                        "judge_x": f"Judge {i + 1}",
+                        "judge_y": f"Judge {j + 1}",
                         "score_x": row[col_x],
                         "score_y": row[col_y],
                     }

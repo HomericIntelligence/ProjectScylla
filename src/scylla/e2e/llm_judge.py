@@ -862,7 +862,7 @@ def run_llm_judge(
     if pipeline_result:
         overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
         pipeline_result_str = (
-            f"**Overall Status**: {overall_status}\n\n" f"{pipeline_result.to_context_string()}"
+            f"**Overall Status**: {overall_status}\n\n{pipeline_result.to_context_string()}"
         )
 
     judge_prompt = build_task_prompt(

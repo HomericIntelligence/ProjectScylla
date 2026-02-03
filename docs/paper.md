@@ -51,7 +51,7 @@ First, in section 3, I will introduce the current work that is being done in thi
 The questions I am investigating are:
 
 * Is it possible to quantify whether a task is solveable more efficiently by one methodology over others?
-* Is the sum of a prompt more than the individual parts? 
+* Is the sum of a prompt more than the individual parts?
 * Are there core improvements that can be made purely through extensions to claude code that are generic for all workloads?
 * Are there specific prompt techniques that have secondary effects, positive or negative, on other prompt techniques?
 * Holding the tool and prompt constant, how much does the underlying model contribute to the quality of the results?
@@ -188,7 +188,7 @@ print("Hello, World!")
 | Build Pipeline | 10% | Syntax check passes; format check passes (if ruff available); tests pass (if required) |
 | Overall Quality | 20% | Senior engineer approval; appropriately scoped for Hello World |
 
-**What Should Happen:** 
+**What Should Happen:**
 
 Even T0 (no system prompt at all) should nail this test and get an 'A', since we're talking ≥ 0.80 scores. If T0 can't do Hello World, I will assume that something is fundamentally wrong with the framework itself and throw out the results. Higher tiers (T1-T6) should also ace it, as there's no reason fancy prompts or multi-agent setups would help with something this simple. However, if performance drop on this test, it means the added complexity is actually making things worse even on something so simple, so if this happens, we will analyze why.
 

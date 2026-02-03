@@ -127,7 +127,7 @@ def main() -> None:
         print("Usage: python scripts/repair_checkpoint.py <checkpoint_path>")
         print("\nExample:")
         print("  python scripts/repair_checkpoint.py \\")
-        print("      ~/fullruns/test001-nothinking/" "2026-01-20T06-50-26-test-001/checkpoint.json")
+        print("      ~/fullruns/test001-nothinking/2026-01-20T06-50-26-test-001/checkpoint.json")
         sys.exit(1)
 
     checkpoint_path = Path(sys.argv[1]).expanduser().resolve()

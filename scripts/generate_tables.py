@@ -132,7 +132,7 @@ def main() -> None:
             failed.append((table_name, str(e)))
 
     # Summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Summary: {success_count}/{len(tables)} tables generated successfully")
     if failed:
         print(f"\nFailed tables ({len(failed)}):")

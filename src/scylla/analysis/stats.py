@@ -82,7 +82,7 @@ def bootstrap_ci(
     # Guard against zero variance (BCa fails on degenerate distributions)
     if np.std(data_array) == 0:
         logger.debug(
-            "Bootstrap CI called with zero variance data. " "Returning point estimate as CI bounds."
+            "Bootstrap CI called with zero variance data. Returning point estimate as CI bounds."
         )
         val = float(mean)
         return val, val, val

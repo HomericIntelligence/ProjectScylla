@@ -145,4 +145,3 @@ error: ExTensor.mojo:145:16: cannot transfer ownership of
     return self._data
            ^
 ```
-

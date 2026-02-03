@@ -58,9 +58,9 @@ class TestGradingConsistency:
 
         for score, expected_grade in test_cases:
             actual_grade = assign_letter_grade(score)
-            assert (
-                actual_grade == expected_grade
-            ), f"Score {score} should be grade {expected_grade}, got {actual_grade}"
+            assert actual_grade == expected_grade, (
+                f"Score {score} should be grade {expected_grade}, got {actual_grade}"
+            )
 
     def test_metrics_grading_validates_range(self):
         """Test that assign_letter_grade asserts on invalid scores."""
@@ -94,8 +94,7 @@ class TestGradingConsistency:
                 score = percentage / 100.0
                 actual_grade = assign_letter_grade(score)
                 assert actual_grade == expected_grade, (
-                    f"Score {score} ({percentage}%) should be {expected_grade}, "
-                    f"got {actual_grade}"
+                    f"Score {score} ({percentage}%) should be {expected_grade}, got {actual_grade}"
                 )
 
     def test_s_grade_exclusively_for_perfect(self):

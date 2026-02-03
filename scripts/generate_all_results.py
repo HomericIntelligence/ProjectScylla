@@ -26,9 +26,9 @@ def run_script(script_name: str, args: list[str], description: str) -> bool:
         True if successful, False otherwise
 
     """
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"{description}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     cmd = ["pixi", "run", "-e", "analysis", "python", script_name, *args]
 
@@ -149,7 +149,7 @@ def main() -> None:
             success = False
 
     # Summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     if success:
         print("✓ All analysis outputs generated successfully!")
         print("\nOutputs:")

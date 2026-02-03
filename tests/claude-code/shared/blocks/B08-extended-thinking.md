@@ -64,4 +64,3 @@ Extended thinking consumes tokens. Use appropriate budgets based on task complex
 2. **Break down complex tasks** - Split large problems into smaller, focused subtasks
 3. **Use examples** - Show expected patterns rather than describing them
 4. **Reference existing code** - Point to similar implementations as templates
-

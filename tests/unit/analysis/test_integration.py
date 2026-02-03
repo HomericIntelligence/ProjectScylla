@@ -86,9 +86,9 @@ def test_e2e_dataframe_types_validation(sample_runs_df):
 
     # tier should be categorical or string-like
     tier_dtype_str = str(sample_runs_df["tier"].dtype)
-    assert any(
-        x in tier_dtype_str for x in ["object", "category", "string", "str"]
-    ), f"tier column should be string or categorical, got {tier_dtype_str}"
+    assert any(x in tier_dtype_str for x in ["object", "category", "string", "str"]), (
+        f"tier column should be string or categorical, got {tier_dtype_str}"
+    )
 
 
 @pytest.mark.parametrize(
