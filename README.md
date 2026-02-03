@@ -1,6 +1,6 @@
 # ProjectScylla
 [![Python](https://img.shields.io/badge/python-3.14+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-240%2B-brightgreen.svg)](#)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](#)
 
@@ -486,14 +486,14 @@ Visit our [GitHub Repository](https://github.com/HomericIntelligence/ProjectScyl
 
 ## License
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 
 ## Citation
 
 ```bibtex
 @software{projectscylla2026,
   title = {ProjectScylla: A Testing and Optimization Framework for Agentic Workflows},
-  author = {ProjectScylla Contributors},
+  author = {Micah Villmow},
   year = {2026},
   url = {https://github.com/HomericIntelligence/ProjectScylla}
 }
