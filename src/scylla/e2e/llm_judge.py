@@ -921,9 +921,14 @@ def run_llm_judge(
     except Exception as e:
         logger.warning(f"LLM judge failed, using fallback: {e}")
 
-        # Write timing even on failure
+        # Get fallback result
+        fallback_result = _fallback_judge(agent_output)
+
+        # Write timing and judgment even on failure
         if actual_judge_dir:
             judge_duration = time.time() - judge_start
+
+            # Save timing with fallback flag
             timing_file = actual_judge_dir / "timing.json"
             with open(timing_file, "w") as f:
                 json.dump(
@@ -931,12 +936,21 @@ def run_llm_judge(
                         "judge_duration_seconds": judge_duration,
                         "measured_at": datetime.now(timezone.utc).isoformat(),
                         "failed": True,
+                        "fallback": True,
                     },
                     f,
                     indent=2,
                 )
 
-        return _fallback_judge(agent_output)
+            # Save fallback judgment to prevent infinite retry
+            judgment_file = actual_judge_dir / "judgment.json"
+            with open(judgment_file, "w") as f:
+                judgment_data = fallback_result.to_dict()
+                judgment_data["fallback"] = True
+                judgment_data["fallback_reason"] = str(e)
+                json.dump(judgment_data, f, indent=2)
+
+        return fallback_result
 
 
 def _call_claude_judge(
@@ -986,7 +1000,10 @@ def _call_claude_judge(
         ]
 
         # Run judge in workspace directory if provided, so it can access files
-        cwd = workspace if workspace else None
+        # But only if the workspace still exists (may have been cleaned up)
+        cwd = None
+        if workspace and workspace.exists():
+            cwd = workspace
 
         result = subprocess.run(
             cmd,

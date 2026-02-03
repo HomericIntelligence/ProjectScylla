@@ -615,9 +615,9 @@ def rerun_experiment(
                 f"run_{run_info.run_number:02d}"
             )
 
-    # Regenerate agent/result.json files for runs with 'results' status
+    # Regenerate result files for runs with 'results' status
     if needs_regenerate:
-        logger.info(f"Regenerating agent/result.json for {len(needs_regenerate)} runs...")
+        logger.info(f"Regenerating result files for {len(needs_regenerate)} runs...")
 
         for run_info in needs_regenerate:
             agent_dir = run_info.run_dir / "agent"
@@ -670,7 +670,112 @@ def rerun_experiment(
                 except Exception as e:
                     logger.error(f"Failed to regenerate {agent_dir / 'result.json'}: {e}")
 
-        logger.info(f"✓ Regenerated {stats.runs_regenerated} agent/result.json files")
+            # Handle missing run_result.json when agent/result.json exists
+            elif not (run_info.run_dir / "run_result.json").exists():
+                import json
+
+                try:
+                    # Read agent result
+                    with open(agent_dir / "result.json") as f:
+                        agent_result = json.load(f)
+
+                    # Read judge result
+                    judge_dir = run_info.run_dir / "judge"
+                    with open(judge_dir / "result.json") as f:
+                        judge_result = json.load(f)
+
+                    # Read agent timing
+                    with open(agent_dir / "timing.json") as f:
+                        agent_timing = json.load(f)
+
+                    # Sum judge timings from all judge_NN directories
+                    judge_duration_total = 0.0
+                    for judge_subdir in sorted(judge_dir.glob("judge_*")):
+                        timing_file = judge_subdir / "timing.json"
+                        if timing_file.exists():
+                            with open(timing_file) as f:
+                                judge_timing = json.load(f)
+                                judge_duration_total += judge_timing.get(
+                                    "judge_duration_seconds", 0.0
+                                )
+
+                    # Build judges array from judge_NN directories
+                    judges = []
+                    for judge_subdir in sorted(judge_dir.glob("judge_*")):
+                        judgment_file = judge_subdir / "judgment.json"
+                        model_file = judge_subdir / "MODEL.md"
+
+                        if judgment_file.exists() and model_file.exists():
+                            # Extract judge number from directory name (judge_01 -> 1)
+                            judge_num = int(judge_subdir.name.split("_")[1])
+
+                            # Read judgment
+                            with open(judgment_file) as f:
+                                judgment = json.load(f)
+
+                            # Extract model from MODEL.md
+                            model_md = model_file.read_text()
+                            model = "unknown"
+                            for line in model_md.split("\n"):
+                                if line.startswith("**Model**:"):
+                                    model = line.split(":", 1)[1].strip()
+                                    break
+
+                            # Build judge entry
+                            judge_entry = {
+                                "model": model,
+                                "score": judgment.get("score", 0.0),
+                                "passed": judgment.get("passed", False),
+                                "grade": judgment.get("grade", "F"),
+                                "reasoning": judgment.get("reasoning", ""),
+                                "judge_number": judge_num,
+                            }
+                            judges.append(judge_entry)
+
+                    # Calculate total duration
+                    total_duration = (
+                        agent_timing.get("agent_duration_seconds", 0.0) + judge_duration_total
+                    )
+
+                    # Build run_result.json
+                    token_stats = agent_result.get("token_stats", {})
+                    run_result = {
+                        "run_number": run_info.run_number,
+                        "exit_code": agent_result.get("exit_code", 1),
+                        "token_stats": token_stats,
+                        "tokens_input": (
+                            token_stats.get("input_tokens", 0)
+                            + token_stats.get("cache_read_tokens", 0)
+                        ),
+                        "tokens_output": token_stats.get("output_tokens", 0),
+                        "cost_usd": agent_result.get("cost_usd", 0.0),
+                        "duration_seconds": total_duration,
+                        "agent_duration_seconds": agent_timing.get("agent_duration_seconds", 0.0),
+                        "judge_duration_seconds": judge_duration_total,
+                        "judge_score": judge_result.get("score", 0.0),
+                        "judge_passed": judge_result.get("passed", False),
+                        "judge_grade": judge_result.get("grade", "F"),
+                        "judge_reasoning": judge_result.get("reasoning", ""),
+                        "judges": judges,
+                        "workspace_path": str(run_info.run_dir / "workspace"),
+                        "logs_path": str(run_info.run_dir / "agent"),
+                        "command_log_path": str(run_info.run_dir / "agent" / "command_log.json"),
+                        "criteria_scores": judge_result.get("criteria_scores", {}),
+                    }
+
+                    # Save run_result.json
+                    with open(run_info.run_dir / "run_result.json", "w") as f:
+                        json.dump(run_result, f, indent=2)
+
+                    stats.runs_regenerated += 1
+                    logger.debug(f"Regenerated {run_info.run_dir / 'run_result.json'}")
+
+                except Exception as e:
+                    logger.error(
+                        f"Failed to regenerate {run_info.run_dir / 'run_result.json'}: {e}"
+                    )
+
+        logger.info(f"✓ Regenerated {stats.runs_regenerated} result files")
 
     stats.print_summary()
     return stats
