@@ -1,7 +1,85 @@
+# Pre-commit hooks for ML Odyssey
+# See https://pre-commit.com for more information
+
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.6
+
+  # Security checks
+  - repo: local
     hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
+      - id: check-shell-injection
+        name: Check for shell=True (Security)
+        description: Prevent command injection vulnerabilities via shell=True
+        entry: 'shell=True'
+        language: pygrep
+        files: \.py$
+        types: [python]
+
+  # Python formatting and linting
+  - repo: local
+    hooks:
+      - id: ruff-format-python
+        name: Ruff Format Python
+        description: Format Python files in scripts/, examples/, tests/, tools/ and all subdirectories using pixi run ruff format
+        entry: pixi run ruff format scripts/ examples/ tests/ tools/
+        language: system
+        files: ^(scripts|examples|tests|tools)/.*\.py$
+        types: [python]
+        pass_filenames: false
+      - id: ruff-check-python
+        name: Ruff Check Python
+        description: Lint Python files in scripts/, examples/, tests/, tools/ and all subdirectories using pixi run ruff check
+        entry: pixi run ruff check --fix scripts/ examples/ tests/ tools/
+        language: system
+        files: ^(scripts|examples|tests|tools)/.*\.py$
+        types: [python]
+        pass_filenames: false
+
+  # Test coverage validation
+  - repo: local
+    hooks:
+      - id: validate-test-coverage
+        name: Validate Test Coverage
+        description: Ensure all test_*.mojo files are covered by CI matrix
+        entry: python3 scripts/validate_test_coverage.py
+        language: system
+        files: (test_.*\.mojo|comprehensive-tests\.yml)$
+        pass_filenames: false
+
+  # Markdown linting
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.12.1
+    hooks:
+      - id: markdownlint-cli2
+        name: Markdown Lint
+        description: Lint markdown files for consistency
+        exclude: ^notes/(plan|issues|review|blog)/
+        args: ['--config', '.markdownlint.json']
+
+  # Jupyter notebook output stripping
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.7.1
+    hooks:
+      - id: nbstripout
+        name: Strip Notebook Outputs
+        description: Remove outputs from Jupyter notebooks before commit
+        files: \.ipynb$
+        args: ['--extra-keys', 'metadata.kernelspec']
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        exclude: ^notes/(plan|review|issues)/
+      - id: end-of-file-fixer
+        name: Fix End of Files
+        exclude: ^notes/(plan|review|issues)/
+      - id: check-yaml
+        name: Check YAML
+      - id: check-added-large-files
+        name: Check for Large Files
+        args: ['--maxkb=1000']
+      - id: mixed-line-ending
+        name: Fix Mixed Line Endings
+        exclude: ^notes/(plan|review|issues)/
