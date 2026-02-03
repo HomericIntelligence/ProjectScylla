@@ -144,12 +144,6 @@ colors:
     "Output": "#E45756"            # Red
     "Cache Creation": "#F58518"    # Orange
 
-  # Judge colors (for judge comparison figures)
-  judges:
-    "Opus 4.5": "#4C78A8"    # Blue
-    "Sonnet 4.5": "#E45756"  # Red
-    "Haiku 4.5": "#72B7B2"   # Teal
-
   # Criteria colors (for criteria analysis)
   criteria:
     functional: "#4C78A8"       # Blue
