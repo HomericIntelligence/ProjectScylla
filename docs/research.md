@@ -184,7 +184,7 @@ Table 5.1: Economic Sustainability and Cost Metrics
 
 ### **6.1. Currently Implemented Metrics**
 
-The following metrics are **fully implemented** in both the metrics calculation layer (`src/scylla/metrics/`) and analysis pipeline (`src/scylla/analysis/`):
+The following metrics are **fully implemented** in both the metrics calculation layer (`scylla/metrics/`) and analysis pipeline (`scylla/analysis/`):
 
 **Quality Metrics:**
 - **Pass-Rate**: Functional test coverage (automated test-based assessment)
@@ -204,21 +204,21 @@ The following metrics are **fully implemented** in both the metrics calculation 
 
 ### **6.2. Metrics Defined but Not Yet Integrated**
 
-The following metrics are **implemented** in `src/scylla/metrics/process.py` but **not yet integrated** into the analysis pipeline (`src/scylla/analysis/`):
+The following metrics are **implemented** in `scylla/metrics/process.py` but **not yet integrated** into the analysis pipeline (`scylla/analysis/`):
 
 **Process Metrics (Future Integration):**
 - **Fine-Grained Progress Rate (R_Prog)**: Incremental advancement tracking through expected steps
-  - Implementation: `src/scylla/metrics/process.py:calculate_r_prog()`
+  - Implementation: `scylla/metrics/process.py:calculate_r_prog()`
   - Status: Data structures defined (ProgressTracker, ProgressStep), calculation functions complete
   - Integration needed: Add to dataframes.py, loader.py, and create analysis figures/tables
 
 - **Change Fail Percentage (CFP)**: Stability metric for production changes requiring remediation
-  - Implementation: `src/scylla/metrics/process.py:calculate_cfp()`
+  - Implementation: `scylla/metrics/process.py:calculate_cfp()`
   - Status: Data structures defined (ChangeResult), calculation functions complete
   - Integration needed: Add to dataframes.py, loader.py, and create comparison tables
 
 - **PR Revert Rate**: Frequency of agent-generated changes reverted by human reviewers
-  - Implementation: `src/scylla/metrics/process.py:calculate_pr_revert_rate()`
+  - Implementation: `scylla/metrics/process.py:calculate_pr_revert_rate()`
   - Status: Uses ChangeResult dataclass, calculation functions complete
   - Integration needed: Add to dataframes.py, loader.py, and create quality analysis tables
 

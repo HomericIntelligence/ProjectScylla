@@ -24,7 +24,7 @@ for arg in "$@"; do
 done
 
 # Check if source directory exists
-SRC_DIR="src/$PACKAGE_NAME"
+SRC_DIR="scylla/$PACKAGE_NAME"
 if [[ ! -d "$SRC_DIR" ]]; then
     echo "Error: Source directory not found: $SRC_DIR"
     exit 1

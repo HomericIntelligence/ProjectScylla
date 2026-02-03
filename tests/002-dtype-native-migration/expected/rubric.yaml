@@ -40,7 +40,7 @@ requirements:
     description: "Code compiles without errors"
     weight: 2.0
     evaluation: "binary"
-    validation_command: "pixi run mojo build src/"
+    validation_command: "pixi run mojo build scylla/"
 
   # Patchfile Quality
   - id: "R006"

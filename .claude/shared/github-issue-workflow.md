@@ -100,7 +100,7 @@ gh issue comment <number> --body "$(cat <<'EOF'
 [Brief description of what was implemented]
 
 ### Files Changed
-- `src/metrics/cop.py` - Cost-of-Pass calculation
+- `scylla/metrics/cop.py` - Cost-of-Pass calculation
 - `tests/test_cop.py` - Unit tests
 
 ### Testing

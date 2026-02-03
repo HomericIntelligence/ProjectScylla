@@ -17,9 +17,9 @@ The user needed to ensure that thinking mode is disabled for Claude unless `--th
 
 1. **Read existing documentation**:
    - `.claude/shared/thinking-mode.md` - Documents thinking mode configuration
-   - `src/scylla/e2e/subtest_executor.py` - Agent execution logic
-   - `src/scylla/e2e/tier_manager.py` - Workspace preparation logic
-   - `src/scylla/e2e/models.py` - Configuration data models
+   - `scylla/e2e/subtest_executor.py` - Agent execution logic
+   - `scylla/e2e/tier_manager.py` - Workspace preparation logic
+   - `scylla/e2e/models.py` - Configuration data models
 
 2. **Key findings**:
    - `thinking_mode` field already exists in `ExperimentConfig`
@@ -98,13 +98,13 @@ pixi run python scripts/run_e2e_experiment.py \
 ## Code Locations
 
 ### Modified Files
-1. `src/scylla/e2e/tier_manager.py`:
+1. `scylla/e2e/tier_manager.py`:
    - Line 12: Added `import json`
    - Lines 464-484: Added `_create_settings_json()` method
    - Line 195: Updated `prepare_workspace()` signature
    - Lines 233, 243, 255: Added `_create_settings_json()` calls
 
-2. `src/scylla/e2e/subtest_executor.py`:
+2. `scylla/e2e/subtest_executor.py`:
    - Lines 710-720: Compute and pass `thinking_enabled`
 
 ## Settings.json Structure

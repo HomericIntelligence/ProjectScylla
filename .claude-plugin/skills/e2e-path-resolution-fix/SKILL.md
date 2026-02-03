@@ -61,7 +61,7 @@ jq '.exit_code' results/*/T*/*/run_01/run_result.json
 
 **Search for relative path usage:**
 ```bash
-grep -n "cwd=workspace" src/scylla/e2e/subtest_executor.py
+grep -n "cwd=workspace" scylla/e2e/subtest_executor.py
 ```
 
 **Expected matches:**
@@ -232,8 +232,8 @@ The agent stderr logs were crucial for diagnosis - they showed the exact cd comm
 
 | File | Lines | Description |
 |------|-------|-------------|
-| `src/scylla/e2e/subtest_executor.py` | 809 | Changed `cwd=workspace` to `cwd=workspace.resolve()` |
-| `src/scylla/e2e/subtest_executor.py` | 1022 | Changed `cwd=str(workspace)` to `cwd=str(workspace.resolve())` |
+| `scylla/e2e/subtest_executor.py` | 809 | Changed `cwd=workspace` to `cwd=workspace.resolve()` |
+| `scylla/e2e/subtest_executor.py` | 1022 | Changed `cwd=str(workspace)` to `cwd=str(workspace.resolve())` |
 
 ## Testing Evidence
 

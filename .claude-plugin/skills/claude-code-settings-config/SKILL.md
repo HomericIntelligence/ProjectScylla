@@ -28,7 +28,7 @@ The E2E evaluation framework was controlling thinking mode by injecting keywords
 
 ### Step 1: Add settings.json Creation Method
 
-**File**: `src/scylla/e2e/tier_manager.py`
+**File**: `scylla/e2e/tier_manager.py`
 
 Add the `json` import:
 ```python
@@ -62,7 +62,7 @@ def _create_settings_json(
 
 ### Step 2: Update prepare_workspace Signature
 
-**File**: `src/scylla/e2e/tier_manager.py`
+**File**: `scylla/e2e/tier_manager.py`
 
 Update the signature to accept `thinking_enabled`:
 ```python
@@ -78,7 +78,7 @@ def prepare_workspace(
 
 ### Step 3: Handle T0 Special Cases
 
-**File**: `src/scylla/e2e/tier_manager.py`
+**File**: `scylla/e2e/tier_manager.py`
 
 Update T0/00 and T0/01 special cases to create settings.json before returning:
 ```python
@@ -117,7 +117,7 @@ self._create_settings_json(workspace, thinking_enabled)
 
 ### Step 4: Pass thinking_enabled from Executor
 
-**File**: `src/scylla/e2e/subtest_executor.py`
+**File**: `scylla/e2e/subtest_executor.py`
 
 Compute thinking_enabled and pass to tier_manager:
 ```python
@@ -210,8 +210,8 @@ find results -name "settings.json" -exec echo "File: {}" \; -exec cat {} \;
 
 | File | Changes |
 |------|---------|
-| `src/scylla/e2e/tier_manager.py` | Added `json` import, `_create_settings_json()` method, updated `prepare_workspace()` signature and logic |
-| `src/scylla/e2e/subtest_executor.py` | Pass `thinking_enabled` parameter to tier_manager |
+| `scylla/e2e/tier_manager.py` | Added `json` import, `_create_settings_json()` method, updated `prepare_workspace()` signature and logic |
+| `scylla/e2e/subtest_executor.py` | Pass `thinking_enabled` parameter to tier_manager |
 
 ## Related Documentation
 

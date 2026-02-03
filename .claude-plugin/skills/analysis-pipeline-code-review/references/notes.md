@@ -198,7 +198,7 @@ The 7 planned PRs were broken down into 15 individual PRs for faster parallel ex
 
 ### Bug 1: Krippendorff's Alpha
 
-**File**: `src/scylla/analysis/stats.py:184-297` (114 lines of custom code)
+**File**: `scylla/analysis/stats.py:184-297` (114 lines of custom code)
 
 **Problem**:
 1. `level="interval"` falls through to `else` branch (nominal)
@@ -234,7 +234,7 @@ def krippendorff_alpha(ratings: np.ndarray, level: str = "ordinal") -> float:
 
 ### Bug 2: Pareto Frontier Inverted
 
-**File**: `src/scylla/analysis/figures/cost_analysis.py:163-182`
+**File**: `scylla/analysis/figures/cost_analysis.py:163-182`
 
 **Problem**: Algorithm removes points that DOMINATE the current point, not points DOMINATED BY it
 
@@ -280,7 +280,7 @@ def test_pareto_frontier_counterexample():
 
 ### Bug 3: fig11_tier_uplift Crash
 
-**File**: `src/scylla/analysis/figures/model_comparison.py:43`
+**File**: `scylla/analysis/figures/model_comparison.py:43`
 
 **Problem**: `baseline_t0 = baseline.iloc[0]` crashes with IndexError if model has no T0 data
 

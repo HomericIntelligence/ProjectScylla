@@ -99,9 +99,9 @@ instead of individual dtype files.
 ## Validation
 
 You CAN and SHOULD run these commands to verify your solution:
-- `pixi run mojo build src/` - Verify code compiles
+- `pixi run mojo build scylla/` - Verify code compiles
 - `pixi run mojo test tests/` - Run tests to verify functionality
-- `pixi run mojo format src/` - Format your code
+- `pixi run mojo format scylla/` - Format your code
 
 ## Expected Output
 

@@ -127,7 +127,7 @@ RUN npm install -g @anthropic-ai/claude-code
 
 # Scylla package
 COPY pyproject.toml README.md ./
-COPY src/ ./src/
+COPY scylla/ ./scylla/
 RUN pip install --no-cache-dir -e .
 ```
 
@@ -176,12 +176,12 @@ Claude CLI
 - Fixed permission handling (700/600)
 
 **Python Files (22 total):**
-- `src/scylla/e2e/` (8 files)
-- `src/scylla/adapters/` (4 files)
-- `src/scylla/executor/` (2 files)
-- `src/scylla/reporting/` (4 files)
-- `src/scylla/cli/main.py`
-- `src/scylla/orchestrator.py`
+- `scylla/e2e/` (8 files)
+- `scylla/adapters/` (4 files)
+- `scylla/executor/` (2 files)
+- `scylla/reporting/` (4 files)
+- `scylla/cli/main.py`
+- `scylla/orchestrator.py`
 - `tests/unit/e2e/test_resume.py`
 - Plus 1 more
 

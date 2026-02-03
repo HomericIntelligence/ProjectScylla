@@ -75,10 +75,10 @@ User requested critical analysis of implementation. Created plan at:
 ### Implementation Phase
 
 **Files Modified:**
-1. `src/scylla/e2e/models.py` - Added rate_limit_info field
-2. `src/scylla/e2e/rate_limit.py` - Added check_api_rate_limit_status()
-3. `src/scylla/e2e/subtest_executor.py` - Safe wrapper, detection, retry logic
-4. `src/scylla/e2e/runner.py` - Pre-flight check
+1. `scylla/e2e/models.py` - Added rate_limit_info field
+2. `scylla/e2e/rate_limit.py` - Added check_api_rate_limit_status()
+3. `scylla/e2e/subtest_executor.py` - Safe wrapper, detection, retry logic
+4. `scylla/e2e/runner.py` - Pre-flight check
 
 **Key Functions Added:**
 

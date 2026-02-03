@@ -14,7 +14,7 @@
 
 - **Files Added**: 24
 - **Lines of Code**: 6,229
-- **Modules**: 13 Python modules in `src/scylla/analysis/`
+- **Modules**: 13 Python modules in `scylla/analysis/`
 - **Scripts**: 4 executable scripts in `scripts/`
 - **Generated Outputs**: 48 files (excluded from git)
 
@@ -29,7 +29,7 @@ Adds: pandas, numpy, scipy, matplotlib, seaborn, altair, vl-convert-python
 ## File Structure Created
 
 ```
-src/scylla/analysis/
+scylla/analysis/
 ├── __init__.py
 ├── loader.py              # 2,238 runs loaded (97.4% success)
 ├── dataframes.py          # 4 DataFrames: runs, judges, criteria, subtests
@@ -190,7 +190,7 @@ def generate_table(df: pd.DataFrame) -> tuple[str, str]:
 ## Git Operations
 
 1. Added analysis dependencies to `pyproject.toml` and `pixi.toml`
-2. Created 24 new files in `src/scylla/analysis/` and `scripts/`
+2. Created 24 new files in `scylla/analysis/` and `scripts/`
 3. Updated `.gitignore` to exclude generated outputs
 4. Removed 48 generated files from git tracking
 5. Committed with proper message + Co-Authored-By

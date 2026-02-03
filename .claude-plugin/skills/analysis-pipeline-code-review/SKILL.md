@@ -134,7 +134,7 @@ For any pipeline generating research outputs, validate statistical functions sys
 **Step 1: Identify all statistical functions**
 ```bash
 # Find all functions in stats.py
-grep "^def " src/scylla/analysis/stats.py
+grep "^def " scylla/analysis/stats.py
 ```
 
 **Step 2: For each function, check:**
@@ -446,11 +446,11 @@ pre-commit run --all-files
 
 ### Key Files Modified
 
-- `/home/mvillmow/ProjectScylla/src/scylla/analysis/stats.py` - Statistical functions
-- `/home/mvillmow/ProjectScylla/src/scylla/analysis/dataframes.py` - DataFrame builders
-- `/home/mvillmow/ProjectScylla/src/scylla/analysis/tables.py` - Table generators
-- `/home/mvillmow/ProjectScylla/src/scylla/analysis/loader.py` - Data loading
-- `/home/mvillmow/ProjectScylla/src/scylla/analysis/figures/*.py` - 9 figure modules
+- `/home/mvillmow/ProjectScylla/scylla/analysis/stats.py` - Statistical functions
+- `/home/mvillmow/ProjectScylla/scylla/analysis/dataframes.py` - DataFrame builders
+- `/home/mvillmow/ProjectScylla/scylla/analysis/tables.py` - Table generators
+- `/home/mvillmow/ProjectScylla/scylla/analysis/loader.py` - Data loading
+- `/home/mvillmow/ProjectScylla/scylla/analysis/figures/*.py` - 9 figure modules
 - `/home/mvillmow/ProjectScylla/tests/unit/analysis/*.py` - 7 test files (new)
 
 ### Documentation

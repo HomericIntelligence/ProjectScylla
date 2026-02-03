@@ -100,7 +100,7 @@ tests/claude-code/shared/subtests/
 
 **Find the discovery/loading method:**
 ```bash
-grep -n "def _discover_subtests" src/scylla/e2e/tier_manager.py
+grep -n "def _discover_subtests" scylla/e2e/tier_manager.py
 ```
 
 **Analyze path construction:**

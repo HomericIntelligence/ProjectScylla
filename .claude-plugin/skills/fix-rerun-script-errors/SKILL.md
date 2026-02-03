@@ -9,7 +9,7 @@
 
 ## When to Use This Skill
 
-Use this skill when encountering errors in the E2E rerun script (`src/scylla/e2e/rerun.py`):
+Use this skill when encountering errors in the E2E rerun script (`scylla/e2e/rerun.py`):
 
 1. **Constructor Errors**: `SubTestExecutor.__init__() got an unexpected keyword argument`
 2. **Checkpoint Errors**: `Invalid status: completed. Must be 'passed', 'failed', or 'agent_complete'`
@@ -59,7 +59,7 @@ T5 subtests with `inherit_best_from` require parent tiers to be complete. When p
 
 ### Step 1: Fix SubTestExecutor Constructor
 
-**Location**: `src/scylla/e2e/rerun.py:313-317`
+**Location**: `scylla/e2e/rerun.py:313-317`
 
 **Before (INCORRECT - 11 parameters)**:
 ```python
@@ -89,7 +89,7 @@ executor = SubTestExecutor(
 
 ### Step 2: Add Workspace Setup
 
-**Location**: `src/scylla/e2e/rerun.py:335-381`
+**Location**: `scylla/e2e/rerun.py:335-381`
 
 **Pattern**: Follow `run_subtest()` in `subtest_executor.py:687-738`
 
@@ -150,7 +150,7 @@ task_prompt = config.task_prompt_file.read_text()
 
 ### Step 3: Fix _execute_single_run() Call
 
-**Location**: `src/scylla/e2e/rerun.py:385-395`
+**Location**: `scylla/e2e/rerun.py:385-395`
 
 **Before (INCORRECT - 2 parameters, wrong name)**:
 ```python
@@ -177,7 +177,7 @@ run_result = executor._execute_single_run(
 
 ### Step 4: Fix Checkpoint Status
 
-**Location**: `src/scylla/e2e/rerun.py:591-597`
+**Location**: `scylla/e2e/rerun.py:591-597`
 
 **Before (INCORRECT)**:
 ```python
@@ -203,7 +203,7 @@ checkpoint.mark_run_completed(
 
 ### Step 5: Add Required Import
 
-**Location**: `src/scylla/e2e/rerun.py:28`
+**Location**: `scylla/e2e/rerun.py:28`
 
 ```python
 from scylla.e2e.subtest_executor import SubTestExecutor, _commit_test_config
@@ -347,10 +347,10 @@ Always call `cleanup_worktree()` before returning `None` from error handling.
 
 ## Related Files
 
-- `src/scylla/e2e/rerun.py` - Main file modified
-- `src/scylla/e2e/subtest_executor.py` - Reference implementation (`run_subtest()`)
-- `src/scylla/e2e/checkpoint.py` - Checkpoint status validation
-- `src/scylla/e2e/tier_manager.py` - T5 baseline inheritance
+- `scylla/e2e/rerun.py` - Main file modified
+- `scylla/e2e/subtest_executor.py` - Reference implementation (`run_subtest()`)
+- `scylla/e2e/checkpoint.py` - Checkpoint status validation
+- `scylla/e2e/tier_manager.py` - T5 baseline inheritance
 
 ## Tags
 

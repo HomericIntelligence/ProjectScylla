@@ -140,7 +140,7 @@ pixi run python scripts/regenerate_results.py ~/fullruns/experiment/ \
 
 The regeneration logic is implemented in two files:
 
-- **src/scylla/e2e/regenerate.py**: Core regeneration logic (testable module)
+- **scylla/e2e/regenerate.py**: Core regeneration logic (testable module)
 - **scripts/regenerate_results.py**: CLI wrapper (~80 lines)
 
 All aggregation logic reuses existing functions from the main pipeline to ensure consistency.

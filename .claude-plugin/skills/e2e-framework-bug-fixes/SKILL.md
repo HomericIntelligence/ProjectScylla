@@ -76,7 +76,7 @@ Use this skill when:
 
 ### 1. Judge Verification Fix (BUG 1, 3)
 
-**File**: `src/scylla/e2e/llm_judge.py`
+**File**: `scylla/e2e/llm_judge.py`
 
 ```python
 def _get_pipeline_env() -> dict[str, str]:
@@ -136,7 +136,7 @@ For functional criteria that require verifying script execution:
 
 ### 2. Agent Flag Support (BUG 4)
 
-**File**: `src/scylla/adapters/claude_code.py`
+**File**: `scylla/adapters/claude_code.py`
 
 ```python
 def _build_command(
@@ -163,7 +163,7 @@ def _build_command(
     return cmd
 ```
 
-**File**: `src/scylla/e2e/subtest_executor.py`
+**File**: `scylla/e2e/subtest_executor.py`
 
 Extract agent name from subtest config:
 ```python
@@ -219,7 +219,7 @@ As an orchestrator:
 
 ### 4. Tier Config Normalization (BUG 7)
 
-**File**: `src/scylla/e2e/models.py`
+**File**: `scylla/e2e/models.py`
 
 Extend TierConfig:
 ```python
@@ -235,7 +235,7 @@ class TierConfig:
     delegation_enabled: bool | None = None  # NEW: from tiers.yaml
 ```
 
-**File**: `src/scylla/e2e/tier_manager.py`
+**File**: `scylla/e2e/tier_manager.py`
 
 ```python
 from scylla.executor.tier_config import TierConfigLoader
@@ -292,7 +292,7 @@ def load_tier_config(self, tier_id: TierID) -> TierConfig:
 6. Update logged command with actual results
 7. Save updated command_log.json
 
-**File**: `src/scylla/e2e/command_logger.py`
+**File**: `scylla/e2e/command_logger.py`
 
 Add `set -x` and absolute paths:
 ```python
@@ -349,7 +349,7 @@ def update_last_command(
     last_cmd.timestamp = datetime.now(timezone.utc).isoformat()
 ```
 
-**File**: `src/scylla/e2e/subtest_executor.py`
+**File**: `scylla/e2e/subtest_executor.py`
 
 New execution flow:
 ```python
@@ -459,7 +459,7 @@ def _run_via_replay_script(
 
 ### 6. Checkpoint Race Condition Fix
 
-**File**: `src/scylla/e2e/checkpoint.py`
+**File**: `scylla/e2e/checkpoint.py`
 
 Use process-specific temp filename:
 ```python
@@ -594,13 +594,13 @@ python scripts/run_e2e_experiment.py \
 | `config/judge/system_prompt.md` | Functional verification instructions |
 | `config/tiers/t3-delegation.md` | Direct specialist execution prompt |
 | `config/tiers/t4-hierarchy.md` | Orchestrator coordination prompt |
-| `src/scylla/e2e/llm_judge.py` | Build pipeline, git diff, PYTHONPYCACHEPREFIX |
-| `src/scylla/e2e/command_logger.py` | replay.sh generation, update_last_command() |
-| `src/scylla/e2e/subtest_executor.py` | Execution flow restructure, _run_via_replay_script() |
-| `src/scylla/e2e/models.py` | TierConfig extensions |
-| `src/scylla/e2e/tier_manager.py` | TierConfigLoader integration |
-| `src/scylla/e2e/checkpoint.py` | Process-specific temp files |
-| `src/scylla/adapters/claude_code.py` | --agent flag support |
+| `scylla/e2e/llm_judge.py` | Build pipeline, git diff, PYTHONPYCACHEPREFIX |
+| `scylla/e2e/command_logger.py` | replay.sh generation, update_last_command() |
+| `scylla/e2e/subtest_executor.py` | Execution flow restructure, _run_via_replay_script() |
+| `scylla/e2e/models.py` | TierConfig extensions |
+| `scylla/e2e/tier_manager.py` | TierConfigLoader integration |
+| `scylla/e2e/checkpoint.py` | Process-specific temp files |
+| `scylla/adapters/claude_code.py` | --agent flag support |
 
 ## Testing & Verification
 

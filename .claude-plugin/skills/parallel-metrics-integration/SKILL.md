@@ -318,7 +318,7 @@ When metrics are implemented but lack artifact data:
 
 ### YOUR_METRIC
 **Status**: ⏸️ Implementation exists, data extraction needed
-**Implementation**: `src/path/to/YOUR_METRIC.py::compute_YOUR_METRIC()`
+**Implementation**: `scylla/path/to/YOUR_METRIC.py::compute_YOUR_METRIC()`
 **Data Requirement**: Specific artifact files or data sources needed
 **Blocker**: Current run artifacts do not include required data
 
@@ -477,7 +477,7 @@ from scylla.analysis.stats import (
 
 ### Statistical Test Configuration
 
-From `src/scylla/analysis/config.py`:
+From `scylla/analysis/config.py`:
 
 ```python
 significance_level = 0.05  # Alpha for hypothesis tests
@@ -511,7 +511,7 @@ Is the metric data available in runs_df or easily computed?
 │  └─ Move to next metric
 │
 └─ NO: Document for future work
-   ├─ Verify implementation exists (src/scylla/metrics/)
+   ├─ Verify implementation exists (scylla/metrics/)
    ├─ Document data requirements clearly
    ├─ Provide instrumentation guide
    ├─ Add to metrics-integration-status.md
@@ -533,8 +533,8 @@ Is the metric data available in runs_df or easily computed?
 
 ## Related Documentation
 
-- **Metrics Implementation**: `src/scylla/metrics/`
-- **Statistical Tests**: `src/scylla/analysis/stats.py`
+- **Metrics Implementation**: `scylla/metrics/`
+- **Statistical Tests**: `scylla/analysis/stats.py`
 - **Integration Status**: `docs/dev/metrics-integration-status.md`
 - **Analysis Pipeline**: `scripts/export_data.py`
 

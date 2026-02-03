@@ -16,7 +16,7 @@
 FileNotFoundError: 'results/2026-01-18T21-15-01-test-002/T3/best_subtest.json'
 ```
 
-**Root Cause**: `src/scylla/e2e/runner.py:624`
+**Root Cause**: `scylla/e2e/runner.py:624`
 ```python
 tier_dir = self.experiment_dir / tier_id.value
 # No mkdir() here!
@@ -68,7 +68,7 @@ index 1794066..45584f7 100644
 
 **Problem**: Agent didn't modify CLAUDE.md - the framework generated it with formatting issues!
 
-**Root Cause**: `src/scylla/e2e/llm_judge.py:682,691`
+**Root Cause**: `scylla/e2e/llm_judge.py:682,691`
 ```python
 # Gets ALL changes, including CLAUDE.md
 unstaged_result = subprocess.run(["git", "diff"], ...)
@@ -83,7 +83,7 @@ staged_result = subprocess.run(["git", "diff", "--cached"], ...)
 
 ### Bug 3: Framework Generates Invalid Markdown
 
-**Root Cause**: `src/scylla/e2e/tier_manager.py:build_resource_suffix()`
+**Root Cause**: `scylla/e2e/tier_manager.py:build_resource_suffix()`
 
 **Violations**:
 1. Line 620: `f"{prefix}\n{bullet_list}"` - Missing blank line after heading (MD022)

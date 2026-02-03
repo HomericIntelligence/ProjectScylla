@@ -176,7 +176,7 @@ validation:
 
 The Executor orchestrates test execution across tiers and runs.
 
-**Location**: `src/scylla/executor/`
+**Location**: `scylla/executor/`
 
 **Responsibilities**:
 
@@ -207,7 +207,7 @@ Total: 36 runs per test x N adapters
 
 Adapters provide a unified interface for different agent CLI tools.
 
-**Location**: `src/scylla/adapters/`
+**Location**: `scylla/adapters/`
 
 **Interface**:
 
@@ -235,7 +235,7 @@ class BaseAdapter:
 
 The Judge evaluates agent outputs using Claude + Opus 4.5 with a two-layer prompt architecture.
 
-**Location**: `src/scylla/judge/`
+**Location**: `scylla/judge/`
 
 **Components**:
 
@@ -292,7 +292,7 @@ Execution Output
 
 The Metrics component calculates quality, economic, and process metrics.
 
-**Location**: `src/scylla/metrics/`
+**Location**: `scylla/metrics/`
 
 **Quality Metrics**:
 
@@ -322,7 +322,7 @@ The Metrics component calculates quality, economic, and process metrics.
 
 The Reporter generates output artifacts from evaluation results.
 
-**Location**: `src/scylla/reporting/`
+**Location**: `scylla/reporting/`
 
 **Output Files**:
 
@@ -484,7 +484,7 @@ ProjectScylla/
             t5-hybrid.md                # T5 prompt template
             t6-super.md                 # T6 prompt template
 
-    src/scylla/
+    scylla/
         __init__.py
         cli.py                          # Command-line interface
         executor/                       # Test execution

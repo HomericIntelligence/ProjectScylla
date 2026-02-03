@@ -6,7 +6,7 @@
 **Task**: Implement multi-threaded `rerun_judges.py` according to pre-planned architecture
 **Files Modified**:
 - `scripts/rerun_judges.py` - CLI interface
-- `src/scylla/e2e/rerun_judges.py` - Core implementation
+- `scylla/e2e/rerun_judges.py` - Core implementation
 
 ## Original Plan Summary
 
@@ -51,7 +51,7 @@ stats = rerun_judges_experiment(
 )
 ```
 
-### Changes to src/scylla/e2e/rerun_judges.py
+### Changes to scylla/e2e/rerun_judges.py
 
 #### Added Imports (lines 20-22)
 ```python
@@ -200,7 +200,7 @@ Progress logging happens OUTSIDE lock (no shared state).
 ### Syntax Check
 ```bash
 python3 -m py_compile scripts/rerun_judges.py
-python3 -m py_compile src/scylla/e2e/rerun_judges.py
+python3 -m py_compile scylla/e2e/rerun_judges.py
 ```
 Result: ✅ Both files compile successfully
 
@@ -342,5 +342,5 @@ spawns subprocesses (GIL released during I/O wait).
 
 Files changed:
 - scripts/rerun_judges.py: Add --parallel CLI arg
-- src/scylla/e2e/rerun_judges.py: Implement branching logic
+- scylla/e2e/rerun_judges.py: Implement branching logic
 ```

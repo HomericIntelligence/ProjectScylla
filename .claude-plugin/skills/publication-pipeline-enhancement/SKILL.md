@@ -389,16 +389,16 @@ if len(data) < 3:
 
 ### Files Modified (16)
 ```
-src/scylla/analysis/stats.py                        # WP1
-src/scylla/analysis/tables.py                       # WP1, WP2
-src/scylla/analysis/figures/__init__.py             # WP4
-src/scylla/analysis/figures/criteria_analysis.py    # WP4
-src/scylla/analysis/figures/tier_performance.py     # WP4
-src/scylla/analysis/figures/token_analysis.py       # WP4
-src/scylla/analysis/figures/subtest_detail.py       # WP4
-src/scylla/analysis/figures/cost_analysis.py        # WP3
-src/scylla/analysis/figures/spec_builder.py         # WP6
-src/scylla/config/pricing.py                        # WP4
+scylla/analysis/stats.py                        # WP1
+scylla/analysis/tables.py                       # WP1, WP2
+scylla/analysis/figures/__init__.py             # WP4
+scylla/analysis/figures/criteria_analysis.py    # WP4
+scylla/analysis/figures/tier_performance.py     # WP4
+scylla/analysis/figures/token_analysis.py       # WP4
+scylla/analysis/figures/subtest_detail.py       # WP4
+scylla/analysis/figures/cost_analysis.py        # WP3
+scylla/analysis/figures/spec_builder.py         # WP6
+scylla/config/pricing.py                        # WP4
 scripts/generate_figures.py                         # WP3
 scripts/generate_tables.py                          # WP2
 scripts/export_data.py                              # WP5
@@ -409,9 +409,9 @@ tests/unit/analysis/test_stats.py                   # WP1
 
 ### Files Created (5)
 ```
-src/scylla/analysis/figures/effect_size.py          # WP3
-src/scylla/analysis/figures/correlation.py          # WP3
-src/scylla/analysis/figures/diagnostics.py          # WP3
+scylla/analysis/figures/effect_size.py          # WP3
+scylla/analysis/figures/correlation.py          # WP3
+scylla/analysis/figures/diagnostics.py          # WP3
 tests/unit/analysis/test_export_data.py             # WP5
 tests/unit/analysis/test_figures.py (enhanced)      # WP3, WP6
 ```
@@ -497,7 +497,7 @@ pixi run -e analysis python scripts/generate_all_results.py \
 pixi run -e analysis pytest tests/unit/analysis/ -v
 
 # Verify test coverage
-pixi run -e analysis pytest tests/unit/analysis/ --cov=src/scylla/analysis --cov-report=html
+pixi run -e analysis pytest tests/unit/analysis/ --cov=scylla/analysis --cov-report=html
 ```
 
 ### Check Outputs
@@ -540,7 +540,7 @@ jq '.effect_sizes | .[0]' docs/data/statistical_results.json
 
 - Research methodology: `docs/research.md`
 - Metrics definitions: `CLAUDE.md` (metrics table)
-- Statistical methods: `src/scylla/analysis/stats.py`
+- Statistical methods: `scylla/analysis/stats.py`
 - Test fixtures: `tests/unit/analysis/conftest.py`
 
 ## Success Criteria

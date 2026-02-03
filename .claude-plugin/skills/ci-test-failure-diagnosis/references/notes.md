@@ -99,7 +99,7 @@ Four failing tests identified:
 
 Read pricing configuration:
 ```python
-# src/scylla/config/pricing.py
+# scylla/config/pricing.py
 cached_cost_per_million=0.3,  # 0.1x base input cost
 ```
 
@@ -242,7 +242,7 @@ gh run view --job=62170160966 --log | grep -E "error|Error|fail|Fail"
 # File operations
 Read tests/unit/e2e/test_tier_manager.py (offset 800, limit 20)
 Read tests/unit/config/test_pricing.py
-Read src/scylla/config/pricing.py
+Read scylla/config/pricing.py
 
 # Local testing
 ruff check tests/unit/e2e/test_tier_manager.py

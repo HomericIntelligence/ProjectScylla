@@ -274,7 +274,7 @@ Rigorous non-parametric methods for bounded, ordinal, non-normal data:
 - **Effect Sizes**: Cliff's delta with bootstrapped CIs
 - **Inter-Rater Reliability**: Krippendorff's alpha for judge agreement
 
-Configuration: `src/scylla/analysis/config.yaml` (all parameters externalized)
+Configuration: `scylla/analysis/config.yaml` (all parameters externalized)
 
 ### Metrics
 
@@ -309,7 +309,7 @@ fullruns/{experiment_name}/{timestamp}/
 - `exit_code` (0 = success)
 - `judges` (list with grades & criteria)
 
-Schema: `src/scylla/analysis/schemas/run_result_schema.json`
+Schema: `scylla/analysis/schemas/run_result_schema.json`
 
 ---
 
@@ -342,7 +342,7 @@ pixi run -e analysis pytest tests/unit/config/ -v
 pixi run -e analysis pytest tests/integration/ -v
 
 # Coverage analysis
-pixi run -e analysis pytest tests/ --cov=src/scylla --cov-report=html
+pixi run -e analysis pytest tests/ --cov=scylla/scylla --cov-report=html
 
 # Specific test file
 pixi run -e analysis pytest tests/unit/analysis/test_stats.py -v
@@ -351,31 +351,31 @@ pixi run -e analysis pytest tests/unit/analysis/test_stats.py -v
 #### Test Quality Assurance
 ```bash
 # Code quality (linting + formatting)
-pixi run -e analysis ruff check src/scylla/
-pixi run -e analysis ruff format src/scylla/ --check
+pixi run -e analysis ruff check scylla/
+pixi run -e analysis ruff format scylla/ --check
 ```
 
 ### Adding Components
 
 **New Figures:**
-1. Create module in `src/scylla/analysis/figures/`
+1. Create module in `scylla/analysis/figures/`
 2. Implement function following existing pattern
 3. Register in `scripts/generate_figures.py`
 4. Add tests in `tests/unit/analysis/test_figures.py`
 
 **New Tables:**
-1. Add function to module in `src/scylla/analysis/tables/`
+1. Add function to module in `scylla/analysis/tables/`
 2. Register in `scripts/generate_tables.py`
 3. Add tests in `tests/unit/analysis/test_tables.py`
 
 ### Code Quality
 ```bash
 # Linting
-pixi run -e analysis ruff check src/scylla/analysis/
+pixi run -e analysis ruff check scylla/analysis/
 
 # Auto-fix and format
-pixi run -e analysis ruff check --fix src/scylla/analysis/
-pixi run -e analysis ruff format src/scylla/analysis/
+pixi run -e analysis ruff check --fix scylla/analysis/
+pixi run -e analysis ruff format scylla/analysis/
 ```
 
 ---

@@ -46,9 +46,9 @@ pixi run -e analysis python scripts/generate_figures.py \
 - Updated comment in `config.yaml` to declare it as the authoritative source
 
 **Files Modified**:
-- `src/scylla/analysis/config.yaml` (added 4 new color categories)
-- `src/scylla/analysis/config.py` (added 2 color properties)
-- `src/scylla/analysis/figures/__init__.py` (replaced hardcoded dict with config)
+- `scylla/analysis/config.yaml` (added 4 new color categories)
+- `scylla/analysis/config.py` (added 2 color properties)
+- `scylla/analysis/figures/__init__.py` (replaced hardcoded dict with config)
 
 **Testing**:
 ```bash
@@ -77,9 +77,9 @@ pixi run -e analysis python -c "from scylla.analysis.figures import COLORS; prin
 - Fixed line length issues for ruff compliance
 
 **Files Modified**:
-- `src/scylla/analysis/tables/summary.py`
-- `src/scylla/analysis/tables/comparison.py`
-- `src/scylla/analysis/tables/detail.py`
+- `scylla/analysis/tables/summary.py`
+- `scylla/analysis/tables/comparison.py`
+- `scylla/analysis/tables/detail.py`
 
 **Testing**:
 ```bash
@@ -103,9 +103,9 @@ pixi run -e analysis pytest tests/unit/analysis/test_tables.py -v
 - Added `__all__` to `config.py` with `AnalysisConfig` and `config` singleton
 
 **Files Modified**:
-- `src/scylla/analysis/dataframes.py`
-- `src/scylla/analysis/stats.py`
-- `src/scylla/analysis/config.py`
+- `scylla/analysis/dataframes.py`
+- `scylla/analysis/stats.py`
+- `scylla/analysis/config.py`
 
 **Testing**:
 ```bash
@@ -134,8 +134,8 @@ print('✓ All __all__ exports import successfully')
 - Matches existing defensive pattern from `shapiro_wilk()`
 
 **Files Modified**:
-- `src/scylla/analysis/config.py`
-- `src/scylla/analysis/stats.py`
+- `scylla/analysis/config.py`
+- `scylla/analysis/stats.py`
 
 **Testing**:
 ```bash

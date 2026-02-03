@@ -58,7 +58,7 @@ RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
 # Copy minimal set of files needed for installation
 COPY --chown=scylla:scylla pyproject.toml /opt/scylla/
 COPY --chown=scylla:scylla README.md /opt/scylla/
-COPY --chown=scylla:scylla src/ /opt/scylla/src/
+COPY --chown=scylla:scylla scylla/ /opt/scylla/
 
 # Install the scylla package
 RUN pip install --no-cache-dir /opt/scylla/

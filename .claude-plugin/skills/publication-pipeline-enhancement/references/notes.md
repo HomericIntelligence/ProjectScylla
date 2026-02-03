@@ -149,37 +149,37 @@ def _generate_latex_snippet(name, output_dir, chart, custom_caption=None):
 
 ### WP1: Statistical Foundation (PR #273)
 ```
-M  src/scylla/analysis/stats.py (+150 lines)
-M  src/scylla/analysis/tables.py (+40 lines)
+M  scylla/analysis/stats.py (+150 lines)
+M  scylla/analysis/tables.py (+40 lines)
 M  pixi.toml (+1 dependency)
 M  tests/unit/analysis/test_stats.py (+200 lines, 32 tests)
 ```
 
 ### WP2: New Tables (PR #274)
 ```
-M  src/scylla/analysis/tables.py (+120 lines)
+M  scylla/analysis/tables.py (+120 lines)
 M  scripts/generate_tables.py (+3 table registrations)
 M  tests/unit/analysis/test_tables.py (+30 lines, 3 tests)
 ```
 
 ### WP3: New Figures (PR #275)
 ```
-A  src/scylla/analysis/figures/effect_size.py (+90 lines)
-A  src/scylla/analysis/figures/correlation.py (+140 lines)
-A  src/scylla/analysis/figures/diagnostics.py (+120 lines)
-M  src/scylla/analysis/figures/cost_analysis.py (+60 lines)
+A  scylla/analysis/figures/effect_size.py (+90 lines)
+A  scylla/analysis/figures/correlation.py (+140 lines)
+A  scylla/analysis/figures/diagnostics.py (+120 lines)
+M  scylla/analysis/figures/cost_analysis.py (+60 lines)
 M  scripts/generate_figures.py (+6 figure registrations)
 M  tests/unit/analysis/test_figures.py (+60 lines, 6 tests)
 ```
 
 ### WP4: Remove Hardcoded Values (PR #276)
 ```
-M  src/scylla/analysis/figures/__init__.py (+40 lines)
-M  src/scylla/analysis/figures/criteria_analysis.py (-5, +10 lines)
-M  src/scylla/analysis/figures/token_analysis.py (-5, +10 lines)
-M  src/scylla/analysis/figures/subtest_detail.py (-5, +10 lines)
-M  src/scylla/analysis/figures/tier_performance.py (+1 parameter)
-M  src/scylla/config/pricing.py (+1 model)
+M  scylla/analysis/figures/__init__.py (+40 lines)
+M  scylla/analysis/figures/criteria_analysis.py (-5, +10 lines)
+M  scylla/analysis/figures/token_analysis.py (-5, +10 lines)
+M  scylla/analysis/figures/subtest_detail.py (-5, +10 lines)
+M  scylla/analysis/figures/tier_performance.py (+1 parameter)
+M  scylla/config/pricing.py (+1 model)
 M  tests/unit/analysis/test_figures.py (+15 lines)
 ```
 
@@ -191,7 +191,7 @@ A  tests/unit/analysis/test_export_data.py (+160 lines, 2 tests)
 
 ### WP6: LaTeX Figure Support (PR #278)
 ```
-M  src/scylla/analysis/figures/spec_builder.py (+60 lines)
+M  scylla/analysis/figures/spec_builder.py (+60 lines)
 M  scripts/generate_all_results.py (+10 lines)
 M  tests/unit/analysis/test_figures.py (+40 lines, 2 tests)
 ```
@@ -303,7 +303,7 @@ No negative feedback or correction requests throughout session.
 - Plan file: `/home/mvillmow/.claude/plans/velvet-herding-bee.md`
 - Research methodology: `docs/research.md`
 - Metrics definitions: `CLAUDE.md`
-- Statistical methods: `src/scylla/analysis/stats.py` docstrings
+- Statistical methods: `scylla/analysis/stats.py` docstrings
 - Figure generation: `scripts/generate_figures.py` comments
 
 ## Follow-up Recommendations

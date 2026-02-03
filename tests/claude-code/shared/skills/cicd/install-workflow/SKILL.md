@@ -87,7 +87,7 @@ Validate packaging on pull requests:
 on:
   pull_request:
     paths:
-      - 'src/**'
+      - 'scylla/**'
       - 'scripts/build_*.sh'
 ```
 

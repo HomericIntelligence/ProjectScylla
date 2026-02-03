@@ -75,9 +75,9 @@ You CAN and SHOULD:
 - Modify any file in the workspace
 - Create new files
 - Delete files
-- Run `pixi run mojo build src/` to verify compilation
+- Run `pixi run mojo build scylla/` to verify compilation
 - Run `pixi run mojo test tests/` to verify tests pass
-- Run `pixi run mojo format src/` to format code
+- Run `pixi run mojo format scylla/` to format code
 - Use `git status` to see your changes
 - Use `git diff` (without commit args) to see unstaged changes
 - Use `git add` to stage changes (but not commit)

@@ -52,7 +52,7 @@ The following should be UPDATED:
 ### Code Compiles
 
 ```bash
-pixi run mojo build src/
+pixi run mojo build scylla/
 # Exit code: 0
 ```
 

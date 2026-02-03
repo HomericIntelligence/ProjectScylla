@@ -66,7 +66,7 @@ total_achieved = sum(safe_float(criterion.achieved) for criterion in judge.crite
 total_max = sum(safe_float(criterion.max_points) for criterion in judge.criteria.values())
 ```
 
-**Location**: `src/scylla/analysis/dataframes.py:37-42`
+**Location**: `scylla/analysis/dataframes.py:37-42`
 
 ### Step 3: Add Zero-Variance Guards
 
@@ -90,7 +90,7 @@ def bootstrap_ci(data: pd.Series | np.ndarray, ...) -> tuple[float, float, float
     # Normal BCa bootstrap...
 ```
 
-**Location**: `src/scylla/analysis/stats.py:218-228`
+**Location**: `scylla/analysis/stats.py:218-228`
 
 ### Step 4: Return NaN for Invalid Computations
 
@@ -113,7 +113,7 @@ def cliffs_delta(group1, group2):
 
 **Why NaN?** Distinguishes "no data" from "zero effect" in aggregations.
 
-**Location**: `src/scylla/analysis/stats.py:134-135`
+**Location**: `scylla/analysis/stats.py:134-135`
 
 ### Step 5: Centralize Configuration
 
@@ -218,7 +218,7 @@ One PR per improvement for easier review:
 ```bash
 # P2-3: Config centralization
 git checkout -b p2-3-correlation-metrics-config
-git add src/scylla/analysis/config.{py,yaml} src/scylla/analysis/figures/correlation.py
+git add scylla/analysis/config.{py,yaml} scylla/analysis/figures/correlation.py
 git commit -m "refactor(analysis): Move correlation metric pairs to config.yaml"
 gh pr create --title "..." --body "..." --label enhancement
 gh pr merge --auto --rebase
@@ -339,7 +339,7 @@ pixi run -e analysis pytest tests/unit/analysis/ -v
 ### Configuration Changes
 
 ```yaml
-# src/scylla/analysis/config.yaml additions
+# scylla/analysis/config.yaml additions
 figures:
   pass_threshold: 0.60
   correlation_metrics:
