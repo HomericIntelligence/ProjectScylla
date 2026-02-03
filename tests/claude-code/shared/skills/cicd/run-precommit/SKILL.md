@@ -134,7 +134,7 @@ jobs:
 pixi run pre-commit trailing-whitespace --all-files
 
 # Run on specific file
-pixi run pre-commit --files src/tensor.mojo
+pixi run pre-commit --files scylla/tensor.mojo
 
 # Update hook versions
 pixi run pre-commit autoupdate

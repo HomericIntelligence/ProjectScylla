@@ -68,7 +68,7 @@ Comments include:
 
 ```bash
 gh api repos/OWNER/REPO/pulls/PR/comments \
-  --jq '.[] | select(.path == "src/file.mojo")'
+  --jq '.[] | select(.path == "scylla/file.mojo")'
 ```
 
 **Comments by specific reviewer**:

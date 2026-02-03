@@ -303,7 +303,7 @@ Is the task well-defined with predictable steps?
 **DO**: Use absolute file paths with line numbers when referencing code:
 
 ```markdown
-GOOD: Updated /home/user/ProjectScylla/src/metrics/cop.py:45-52
+GOOD: Updated /home/user/ProjectScylla/scylla/metrics/cop.py:45-52
 
 BAD: Updated cop.py (ambiguous - which file?)
 ```
@@ -376,10 +376,10 @@ This project uses Pixi for environment management with Mojo 0.26.1:
 pixi run mojo test tests/
 
 # Build Mojo package
-pixi run mojo build src/
+pixi run mojo build scylla/
 
 # Format Mojo code
-pixi run mojo format src/
+pixi run mojo format scylla/
 
 # Run pre-commit hooks
 pre-commit run --all-files
@@ -433,7 +433,7 @@ ProjectScylla/
 +-- docs/
 |   +-- research.md              # Research methodology
 |   +-- dev/                     # Developer documentation
-+-- src/                         # Mojo source code
++-- scylla/                         # Mojo source code
 |   +-- metrics/                 # Metrics calculation (.mojo)
 |   +-- evaluation/              # Evaluation harnesses (.mojo)
 |   +-- benchmarks/              # Benchmark definitions (.mojo)

@@ -215,7 +215,7 @@ class TestCleanupEvaluatorIsBuildArtifact:
     def test_not_artifact(self, tmp_path: Path) -> None:
         """Test Not artifact."""
         evaluator = CleanupEvaluator(tmp_path)
-        assert evaluator._is_build_artifact("src/main.py") is False
+        assert evaluator._is_build_artifact("scylla/main.py") is False
         assert evaluator._is_build_artifact("README.md") is False
 
 

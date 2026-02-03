@@ -5,7 +5,7 @@
 | **Date** | 2026-01-08 |
 | **Objective** | Add links to JSON result files in markdown reports for easy access to structured data |
 | **Outcome** | ✅ Successfully added JSON links to run reports for both judge and agent results |
-| **Files Modified** | `src/scylla/e2e/run_report.py` |
+| **Files Modified** | `scylla/e2e/run_report.py` |
 | **Tests Status** | ✅ All 28 tests passing |
 
 ## When to Use This Skill
@@ -32,10 +32,10 @@ First, identify the report generation code and understand the directory structur
 
 ```bash
 # Find report generation code
-grep -r "generate.*report|save.*report" src/scylla/e2e/
+grep -r "generate.*report|save.*report" scylla/e2e/
 
 # Understand the path structure
-cat src/scylla/e2e/paths.py  # Shows agent/ and judge/ directory constants
+cat scylla/e2e/paths.py  # Shows agent/ and judge/ directory constants
 ```
 
 **Key Discovery**: Reports use a consistent structure:
@@ -49,7 +49,7 @@ cat src/scylla/e2e/paths.py  # Shows agent/ and judge/ directory constants
 Find where markdown report sections are generated:
 
 ```python
-# In src/scylla/e2e/run_report.py
+# In scylla/e2e/run_report.py
 def generate_run_report(
     tier_id: str,
     subtest_id: str,
@@ -159,7 +159,7 @@ Read(file_path="...", offset=148, limit=30)
 
 ### Changes Made
 
-**File**: `src/scylla/e2e/run_report.py`
+**File**: `scylla/e2e/run_report.py`
 
 **Judge Section (lines 160-164)**:
 ```python
@@ -224,9 +224,9 @@ tests/unit/reporting/test_markdown.py::TestTierMetrics::test_create PASSED
 
 ## Related Files
 
-- `src/scylla/e2e/paths.py` - Path constants and helpers for agent/judge directories
-- `src/scylla/e2e/subtest_executor.py` - Where agent and judge results are saved
-- `src/scylla/e2e/llm_judge.py` - Creates `judgment.json` files
+- `scylla/e2e/paths.py` - Path constants and helpers for agent/judge directories
+- `scylla/e2e/subtest_executor.py` - Where agent and judge results are saved
+- `scylla/e2e/llm_judge.py` - Creates `judgment.json` files
 - `tests/unit/reporting/test_markdown.py` - Report generation tests
 
 ## Next Steps

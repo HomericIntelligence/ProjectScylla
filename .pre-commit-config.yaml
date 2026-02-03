@@ -19,16 +19,16 @@ repos:
     hooks:
       - id: ruff-format-python
         name: Ruff Format Python
-        description: Format Python files in scripts/, src/, tests/, and all subdirectories using pixi run ruff format
-        entry: pixi run ruff format scripts/ src/ tests/
+        description: Format Python files in scripts/, scylla/, tests/, and all subdirectories using pixi run ruff format
+        entry: pixi run ruff format scripts/ scylla/ tests/
         language: system
         files: ^(scripts|src|tests)/.*\.py$
         types: [python]
         pass_filenames: false
       - id: ruff-check-python
         name: Ruff Check Python
-        description: Lint Python files in scripts/, src/, tests/, and all subdirectories using pixi run ruff check
-        entry: pixi run ruff check --fix scripts/ src/ tests/
+        description: Lint Python files in scripts/, scylla/, tests/, and all subdirectories using pixi run ruff check
+        entry: pixi run ruff check --fix scripts/ scylla/ tests/
         language: system
         files: ^(scripts|src|tests)/.*\.py$
         types: [python]

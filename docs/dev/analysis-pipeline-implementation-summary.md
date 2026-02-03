@@ -1,7 +1,7 @@
 # Analysis Pipeline Code Review - Implementation Summary
 
 **Date**: January 30, 2026
-**Scope**: ~4,140 lines across 19 files in `src/scylla/analysis/`
+**Scope**: ~4,140 lines across 19 files in `scylla/analysis/`
 **Status**: ✅ Complete (6 of 7 PRs implemented, PR 7 deferred)
 
 ## Executive Summary
@@ -166,7 +166,7 @@ Successfully completed comprehensive code review and improvement of the ProjectS
   - Added complete pipeline workflow
   - Removed "Not Yet Implemented" section
 - **Removed empty directory** (Issue #234)
-  - Deleted `src/scylla/analysis/renderers/`
+  - Deleted `scylla/analysis/renderers/`
 - **Git cleanup** (Issue #233)
   - Verified no generated files are tracked
   - Confirmed .gitignore prevents future commits
@@ -265,33 +265,33 @@ Each PR was verified using:
 ## Files Modified (by PR)
 
 ### PR 1 (Critical Fixes)
-- `src/scylla/analysis/stats.py`: Krippendorff wrapper, remove unused functions
-- `src/scylla/analysis/tables.py`: Table 3 label fix
-- `src/scylla/analysis/figures/cost_analysis.py`: Pareto algorithm fix
-- `src/scylla/analysis/figures/model_comparison.py`: fig11 T0 guard
+- `scylla/analysis/stats.py`: Krippendorff wrapper, remove unused functions
+- `scylla/analysis/tables.py`: Table 3 label fix
+- `scylla/analysis/figures/cost_analysis.py`: Pareto algorithm fix
+- `scylla/analysis/figures/model_comparison.py`: fig11 T0 guard
 - `pixi.toml`, `pyproject.toml`: Add krippendorff dependency
 - `tests/unit/analysis/test_apareto.py`: Pareto unit tests (new)
 
 ### PR 2 (Methodology)
-- `src/scylla/analysis/stats.py`: Vectorize Cliff's delta, add Bonferroni
-- `src/scylla/analysis/tables.py`: Apply Bonferroni to Tables 2, 4, 6
-- `src/scylla/analysis/figures/model_comparison.py`: Bootstrap CI in fig12
+- `scylla/analysis/stats.py`: Vectorize Cliff's delta, add Bonferroni
+- `scylla/analysis/tables.py`: Apply Bonferroni to Tables 2, 4, 6
+- `scylla/analysis/figures/model_comparison.py`: Bootstrap CI in fig12
 - `scripts/generate_all_results.py`: Fix error propagation
 
 ### PR 3 (Robustness)
-- `src/scylla/analysis/tables.py`: Dynamic judge columns (Table 3)
-- `src/scylla/analysis/figures/judge_analysis.py`: Dynamic judge columns (Fig 14)
-- `src/scylla/analysis/figures/spec_builder.py`: Remove import-time theme call
+- `scylla/analysis/tables.py`: Dynamic judge columns (Table 3)
+- `scylla/analysis/figures/judge_analysis.py`: Dynamic judge columns (Fig 14)
+- `scylla/analysis/figures/spec_builder.py`: Remove import-time theme call
 - `scripts/generate_figures.py`: Add theme call, error isolation
 - `scripts/generate_tables.py`: Error isolation
 
 ### PR 4 (DRY)
-- `src/scylla/analysis/figures/__init__.py`: Add TIER_ORDER
-- `src/scylla/analysis/stats.py`: Add compute_consistency, compute_cop
-- `src/scylla/analysis/figures/spec_builder.py`: Add model_color_scale
+- `scylla/analysis/figures/__init__.py`: Add TIER_ORDER
+- `scylla/analysis/stats.py`: Add compute_consistency, compute_cop
+- `scylla/analysis/figures/spec_builder.py`: Add model_color_scale
 - 10 files: Replace local TIER_ORDER with centralized constant
-- `src/scylla/analysis/dataframes.py`: Use stats helpers
-- `src/scylla/analysis/tables.py`: Use stats helpers
+- `scylla/analysis/dataframes.py`: Use stats helpers
+- `scylla/analysis/tables.py`: Use stats helpers
 
 ### PR 5 (Tests)
 - `tests/unit/analysis/conftest.py`: Shared fixtures (new)
@@ -304,7 +304,7 @@ Each PR was verified using:
 
 ### PR 6 (Cleanup)
 - `docs/analysis_pipeline.md`: Update status, add tables section
-- `src/scylla/analysis/renderers/`: Remove empty directory
+- `scylla/analysis/renderers/`: Remove empty directory
 
 **Total**: 19 existing files modified, 7 test files created
 

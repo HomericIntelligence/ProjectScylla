@@ -23,9 +23,9 @@
     "inconsistent judge scoring"
   ],
   "related_files": [
-    "src/scylla/e2e/subtest_executor.py",
-    "src/scylla/e2e/run_report.py",
-    "src/scylla/e2e/llm_judge.py",
+    "scylla/e2e/subtest_executor.py",
+    "scylla/e2e/run_report.py",
+    "scylla/e2e/llm_judge.py",
     "scripts/run_e2e_experiment.py",
     "config/judge/system_prompt.md"
   ],

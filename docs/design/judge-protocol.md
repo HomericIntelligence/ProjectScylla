@@ -295,7 +295,7 @@ The judge scores 10 quality categories:
     ]
   },
   "exploratory_testing": {
-    "commands_run": ["pytest tests/", "mypy src/"],
+    "commands_run": ["pytest tests/", "mypy scylla/"],
     "observations": ["All tests pass", "No type errors"],
     "failures": []
   },

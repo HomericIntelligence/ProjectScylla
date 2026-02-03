@@ -42,7 +42,7 @@
 
 ### R_Prog (Fine-Grained Progress Rate)
 **Status**: ⏸️ Implementation exists, data extraction needed (Issue #326)
-**Implementation**: `src/scylla/metrics/process.py::compute_r_prog()`
+**Implementation**: `scylla/metrics/process.py::compute_r_prog()`
 **Data Requirement**: ProgressTracker checkpoint files or logs from run artifacts
 **Blocker**: Current run artifacts do not include ProgressTracker data
 
@@ -66,7 +66,7 @@ R_Prog = progress_steps_completed / expected_steps_total
 
 ### CFP (Change Fail Percentage)
 **Status**: ⏸️ Implementation exists, data extraction needed (Issue #326)
-**Implementation**: `src/scylla/metrics/process.py::compute_cfp()`
+**Implementation**: `scylla/metrics/process.py::compute_cfp()`
 **Data Requirement**: Git commit history and revert tracking from run artifacts
 **Blocker**: Current run artifacts do not include git history metadata
 
@@ -90,7 +90,7 @@ CFP = failed_changes / total_changes
 
 ### Strategic Drift
 **Status**: ⏸️ Implementation exists, data extraction needed (Issue #326)
-**Implementation**: `src/scylla/metrics/process.py::compute_strategic_drift()`
+**Implementation**: `scylla/metrics/process.py::compute_strategic_drift()`
 **Data Requirement**: ProgressTracker goal tracking data from run artifacts
 **Blocker**: Current run artifacts do not include goal coherence tracking
 
@@ -114,7 +114,7 @@ Strategic Drift = goal_deviations / total_decision_points
 
 ### PR Revert Rate
 **Status**: ⏸️ Implementation exists, data extraction needed (Issue #326)
-**Implementation**: `src/scylla/metrics/process.py::compute_pr_revert_rate()`
+**Implementation**: `scylla/metrics/process.py::compute_pr_revert_rate()`
 **Data Requirement**: GitHub PR data from run artifacts
 **Blocker**: Current run artifacts do not include PR metadata
 
@@ -138,7 +138,7 @@ PR Revert Rate = reverted_prs / total_prs
 
 ### TTFT (Time To First Token)
 **Status**: ⏸️ Implementation exists, data extraction needed (Issue #327)
-**Implementation**: `src/scylla/metrics/latency.py::LatencyTracker`
+**Implementation**: `scylla/metrics/latency.py::LatencyTracker`
 **Data Requirement**: Latency checkpoint files with TTFT timestamps
 **Blocker**: Current run artifacts do not include detailed latency tracking
 

@@ -39,7 +39,7 @@ Use this skill when encountering these symptoms in E2E evaluation reports:
 **Solution**: Move import to method level
 
 ```python
-# In src/scylla/e2e/subtest_executor.py
+# In scylla/e2e/subtest_executor.py
 def _execute_single_run(self, ...):
     import json  # ← Move to top of method
 
@@ -144,7 +144,7 @@ for model in args.add_judge:
 **Solution**: Write timing to each judge's subdirectory
 
 ```python
-# In src/scylla/e2e/llm_judge.py
+# In scylla/e2e/llm_judge.py
 def run_llm_judge(..., judge_run_number: int = 1):
     import json
     import time
@@ -178,7 +178,7 @@ def run_llm_judge(..., judge_run_number: int = 1):
 **Solution**: Remove result.json links, keep only judgment.json
 
 ```python
-# In src/scylla/e2e/run_report.py
+# In scylla/e2e/run_report.py
 # OLD:
 f"- [View judgment](./judge/judge_{judge.judge_number:02d}/judgment.json)",
 f"- [View result JSON](./judge/judge_{judge.judge_number:02d}/result.json)",
@@ -324,9 +324,9 @@ pixi run python scripts/run_e2e_experiment.py \
 
 ## Related Files
 
-- `src/scylla/e2e/subtest_executor.py` - Main executor with timing persistence
-- `src/scylla/e2e/run_report.py` - Report generation with workspace detection
-- `src/scylla/e2e/llm_judge.py` - Judge runner with per-judge timing
+- `scylla/e2e/subtest_executor.py` - Main executor with timing persistence
+- `scylla/e2e/run_report.py` - Report generation with workspace detection
+- `scylla/e2e/llm_judge.py` - Judge runner with per-judge timing
 - `scripts/run_e2e_experiment.py` - Experiment orchestrator with validation
 - `config/judge/system_prompt.md` - Judge guidelines with tiered deductions
 

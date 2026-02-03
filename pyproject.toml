@@ -57,10 +57,10 @@ Repository = "https://github.com/mvillmow/ProjectScylla"
 Issues = "https://github.com/mvillmow/ProjectScylla/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/scylla"]
+packages = ["scylla/scylla"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/scylla/analysis/schemas" = "scylla/analysis/schemas"
+"scylla/analysis/schemas" = "scylla/analysis/schemas"
 
 [tool.ruff]
 line-length = 100

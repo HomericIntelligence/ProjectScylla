@@ -20,7 +20,7 @@ Build compiled Mojo packages for distribution and reuse.
 
 ```bash
 # Build single package
-mojo package src/tensor -o packages/tensor.mojopkg
+mojo package scylla/tensor -o packages/tensor.mojopkg
 
 # Build and test
 ./scripts/build_package.sh tensor --test

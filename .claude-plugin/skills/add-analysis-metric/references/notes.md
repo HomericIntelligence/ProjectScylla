@@ -264,7 +264,7 @@ pixi run -e analysis pytest tests/unit/analysis/ -q
 
 # Git workflow
 git checkout -b implement-impl-rate
-git add src/ tests/ scripts/
+git add scylla/ tests/ scripts/
 git commit -m "feat(metrics): Implement Impl-Rate metric (P1-7)"
 git push -u origin implement-impl-rate
 gh pr create --title "..." --body "..."

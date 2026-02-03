@@ -23,7 +23,7 @@ Automatically fix code formatting issues across file types.
 ./scripts/fix_all_formatting.sh
 
 # Fix specific types
-pixi run mojo format src/**/*.mojo
+pixi run mojo format scylla/**/*.mojo
 npx markdownlint-cli2 --fix "**/*.md"
 just pre-commit-all
 ```
@@ -42,13 +42,13 @@ just pre-commit-all
 
 ```bash
 # Format all Mojo files
-pixi run mojo format src/**/*.mojo
+pixi run mojo format scylla/**/*.mojo
 
 # Format single file
-pixi run mojo format src/tensor.mojo
+pixi run mojo format scylla/tensor.mojo
 
 # Check without fixing
-pixi run mojo format --check src/**/*.mojo
+pixi run mojo format --check scylla/**/*.mojo
 ```
 
 Fixes: indentation, spacing, line wrapping, blank lines
@@ -174,7 +174,7 @@ CI checks formatting but doesn't fix:
 ```yaml
 - name: Check Formatting
   run: |
-    pixi run mojo format --check src/**/*.mojo
+    pixi run mojo format --check scylla/**/*.mojo
     npx markdownlint-cli2 "**/*.md"
 ```
 

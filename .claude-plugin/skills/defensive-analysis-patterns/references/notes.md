@@ -11,9 +11,9 @@
 ### Phase 1: P2-3 Config Centralization (First)
 
 **Files Modified**:
-- `src/scylla/analysis/config.yaml` (+7 lines)
-- `src/scylla/analysis/config.py` (+14 lines)
-- `src/scylla/analysis/figures/correlation.py` (-6 +9 lines)
+- `scylla/analysis/config.yaml` (+7 lines)
+- `scylla/analysis/config.py` (+14 lines)
+- `scylla/analysis/figures/correlation.py` (-6 +9 lines)
 
 **Commit**: `c8cb23a`
 **PR**: #307
@@ -156,7 +156,7 @@ print('Corrected:', corrected)
 ### Defensive Type Coercion
 
 ```python
-# src/scylla/analysis/dataframes.py:37-46
+# scylla/analysis/dataframes.py:37-46
 def safe_float(value, default=0.0):
     """Convert value to float, returning default for invalid inputs."""
     try:
@@ -171,7 +171,7 @@ total_max = sum(safe_float(criterion.max_points) for criterion in judge.criteria
 ### Zero-Variance Guard
 
 ```python
-# src/scylla/analysis/stats.py:218-228
+# scylla/analysis/stats.py:218-228
 def bootstrap_ci(data, confidence=None, n_resamples=None):
     data_array = np.array(data)
     mean = np.mean(data_array)
@@ -188,7 +188,7 @@ def bootstrap_ci(data, confidence=None, n_resamples=None):
 ### NaN for Invalid Operations
 
 ```python
-# src/scylla/analysis/stats.py:134-135
+# scylla/analysis/stats.py:134-135
 if n1 == 0 or n2 == 0:
     return np.nan  # Not 0.0!
 ```
@@ -196,7 +196,7 @@ if n1 == 0 or n2 == 0:
 ### Centralized Config Access
 
 ```python
-# src/scylla/analysis/config.py:127-141
+# scylla/analysis/config.py:127-141
 @property
 def correlation_metrics(self) -> dict[str, str]:
     """Metric pairs for correlation analysis."""

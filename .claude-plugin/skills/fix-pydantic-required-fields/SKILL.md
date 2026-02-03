@@ -47,14 +47,14 @@ pixi run pytest tests/unit/e2e/test_models.py -v
 
 ```bash
 # Find where the model is defined
-grep -r "class ExperimentConfig" src/
+grep -r "class ExperimentConfig" scylla/
 
 # Read the model to understand the new field
 # Look for the field definition and any comments about its purpose
 ```
 
 In this case:
-- Model: `src/scylla/e2e/models.py:588`
+- Model: `scylla/e2e/models.py:588`
 - Field: `language: str  # REQUIRED: Programming language for build pipeline`
 - Purpose: Determines which build pipeline to use (Python vs Mojo)
 

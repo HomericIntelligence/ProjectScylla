@@ -68,7 +68,7 @@ Error: [Errno 2] No such file or directory: 'mojo'
 
 ### Code Change 1: `_get_workspace_state()`
 
-**Location**: `src/scylla/e2e/llm_judge.py:519-595`
+**Location**: `scylla/e2e/llm_judge.py:519-595`
 
 **Change**:
 ```python
@@ -90,7 +90,7 @@ if status == "??" and full_path.is_dir():
 
 ### Code Change 2: `_call_claude_judge()`
 
-**Location**: `src/scylla/e2e/llm_judge.py:884-940`
+**Location**: `scylla/e2e/llm_judge.py:884-940`
 
 **Changes**:
 1. Added `workspace: Path | None` parameter
@@ -117,7 +117,7 @@ result = subprocess.run(cmd, cwd=workspace, ...)  # cwd=workspace NEW
 
 ### Code Change 3: Mojo Pipeline
 
-**Location**: `src/scylla/e2e/llm_judge.py:188-248`
+**Location**: `scylla/e2e/llm_judge.py:188-248`
 
 **Changed Commands**:
 ```python
@@ -146,7 +146,7 @@ search for patterns, or examine code structure.
 
 ### Code Change 5: Patchfile Note
 
-**Location**: `src/scylla/judge/prompts.py:203-210`
+**Location**: `scylla/judge/prompts.py:203-210`
 
 **Enhancement**:
 ```python
@@ -232,8 +232,8 @@ Tier Results:
 
 ## Files Modified
 
-1. `src/scylla/e2e/llm_judge.py` - 3 functions updated
-2. `src/scylla/judge/prompts.py` - 1 function updated
+1. `scylla/e2e/llm_judge.py` - 3 functions updated
+2. `scylla/judge/prompts.py` - 1 function updated
 3. `config/judge/system_prompt.md` - 1 section updated
 
 ## Comparison: Before vs After

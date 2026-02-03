@@ -198,8 +198,8 @@ Grade Range: A - A
 
 **Files**:
 - config/judge/system_prompt.md (440 lines changed)
-- src/scylla/e2e/llm_judge.py (+367 lines)
-- src/scylla/e2e/models.py (+4 fields)
+- scylla/e2e/llm_judge.py (+367 lines)
+- scylla/e2e/models.py (+4 fields)
 - tests/fixtures/tests/test-001/expected/rubric.yaml (+111 lines)
 - docs/eval_hybrid_approach.md (NEW, 270 lines)
 
@@ -213,9 +213,9 @@ Grade Range: A - A
 ### Commit 2: Grade Aggregation (855e105)
 
 **Files**:
-- src/scylla/e2e/models.py (+4 fields to SubTestResult)
-- src/scylla/e2e/subtest_executor.py (+33 lines aggregation logic)
-- src/scylla/e2e/run_report.py (+14 lines display logic)
+- scylla/e2e/models.py (+4 fields to SubTestResult)
+- scylla/e2e/subtest_executor.py (+33 lines aggregation logic)
+- scylla/e2e/run_report.py (+14 lines display logic)
 
 **Key changes**:
 - Grade distribution calculation

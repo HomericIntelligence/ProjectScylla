@@ -229,9 +229,9 @@ $ pixi run python scripts/run_e2e_experiment.py \
 | File | Lines | Purpose |
 |------|-------|---------|
 | `scripts/repair_checkpoint.py` | NEW (138 lines) | Rebuild completed_runs from run_result.json files |
-| `src/scylla/e2e/runner.py` | 191-219 | Load config from checkpoint's experiment.json |
-| `src/scylla/e2e/runner.py` | 379-413 | Reload checkpoint from disk before saving on interrupt |
-| `src/scylla/e2e/models.py` | 634, 669-671 | Add missing fields to serialization |
+| `scylla/e2e/runner.py` | 191-219 | Load config from checkpoint's experiment.json |
+| `scylla/e2e/runner.py` | 379-413 | Reload checkpoint from disk before saving on interrupt |
+| `scylla/e2e/models.py` | 634, 669-671 | Add missing fields to serialization |
 
 ## Key Takeaways
 

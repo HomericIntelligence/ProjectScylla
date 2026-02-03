@@ -290,7 +290,7 @@ To add a new adapter:
 1. **Create the adapter class**:
    ```bash
    # Create file
-   touch src/scylla/adapters/my_adapter.py
+   touch scylla/adapters/my_adapter.py
    ```
 
 2. **Implement BaseAdapter**:
@@ -305,7 +305,7 @@ To add a new adapter:
 
 3. **Register the adapter**:
    ```python
-   # In src/scylla/adapters/__init__.py
+   # In scylla/adapters/__init__.py
    from .my_adapter import MyAdapter
 
    ADAPTERS = {

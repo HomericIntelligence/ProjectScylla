@@ -15,7 +15,7 @@
 **Error Message**:
 ```
 UnboundLocalError: cannot access local variable 'json' where it is not associated with a value
-  File "/home/mvillmow/ProjectScylla/src/scylla/e2e/subtest_executor.py", line 894, in _execute_single_run
+  File "/home/mvillmow/ProjectScylla/scylla/e2e/subtest_executor.py", line 894, in _execute_single_run
     json.dump(
     ^^^^
 ```
@@ -25,7 +25,7 @@ UnboundLocalError: cannot access local variable 'json' where it is not associate
 - Line 894: `json.dump()` called OUTSIDE the if block
 - Python scoping: imports inside conditional blocks are local to that block
 
-**Fix Location**: `src/scylla/e2e/subtest_executor.py:807`
+**Fix Location**: `scylla/e2e/subtest_executor.py:807`
 
 ### Issue 2: Workspace Detection
 
@@ -141,20 +141,20 @@ Based on pattern from 4.5:
 
 ### Files Modified
 
-1. **src/scylla/e2e/subtest_executor.py**
+1. **scylla/e2e/subtest_executor.py**
    - Line 807: Add `import json` at method start
    - Lines 843-850: Read agent timing from file on resume
    - Lines 891-901: Write agent timing to file
    - Lines 944-952: Read judge timing from file on resume
    - Removed duplicate imports from conditional blocks
 
-2. **src/scylla/e2e/run_report.py**
+2. **scylla/e2e/run_report.py**
    - Lines 349-415: Rewrote `_get_workspace_files()` to return tuples with status
    - Lines 287-295: Updated report formatting to show status indicators
    - Lines 197-198: Removed result.json link from multi-judge section
    - Lines 215-216: Removed result.json link from single-judge section
 
-3. **src/scylla/e2e/llm_judge.py**
+3. **scylla/e2e/llm_judge.py**
    - Lines 725-730: Add timing tracking
    - Lines 806-817: Write per-judge timing file on success
    - Lines 824-837: Write timing file even on failure

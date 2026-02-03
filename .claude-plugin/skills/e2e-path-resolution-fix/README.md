@@ -19,7 +19,7 @@ Use this skill when E2E experiments show:
 **Solution:** Use `.resolve()` on Path objects before passing to subprocess and command logger.
 
 **Files Modified:**
-- `src/scylla/e2e/subtest_executor.py` (lines 809, 1022)
+- `scylla/e2e/subtest_executor.py` (lines 809, 1022)
 
 **Impact:**
 - Before: 0% pass rate, $0.00 cost, 0.0s duration

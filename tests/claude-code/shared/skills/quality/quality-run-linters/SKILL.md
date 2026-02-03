@@ -83,8 +83,8 @@ git commit -m "fix: address linting issues"
 Checks: indentation, spacing, line length, operators, blank lines
 
 ```bash
-pixi run mojo format src/tensor.mojo        # Fix
-pixi run mojo format --check src/tensor.mojo  # Check only
+pixi run mojo format scylla/tensor.mojo        # Fix
+pixi run mojo format --check scylla/tensor.mojo  # Check only
 ```
 
 ### Markdownlint

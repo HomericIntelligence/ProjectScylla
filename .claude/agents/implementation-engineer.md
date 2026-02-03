@@ -100,7 +100,7 @@ fn function_name(
 ### Project Structure
 
 ```text
-src/
+scylla/
   metrics/
     __init__.mojo
     pass_rate.mojo
@@ -130,7 +130,7 @@ scripts/
 ### Example 1: Implement Pass-Rate Metric
 
 ```mojo
-# src/metrics/pass_rate.mojo
+# scylla/metrics/pass_rate.mojo
 """Pass-Rate metric implementation."""
 from math import sqrt
 
@@ -185,7 +185,7 @@ fn calculate_pass_rate(results: List[Bool], confidence: Float64 = 0.95) -> PassR
 ### Example 2: Implement Benchmark Harness
 
 ```mojo
-# src/evaluation/harness.mojo
+# scylla/evaluation/harness.mojo
 """Benchmark execution harness."""
 from time import perf_counter_ns
 

@@ -37,7 +37,7 @@ Do NOT use this pattern when:
 ## Root Cause Analysis
 
 ### Code Location
-`/home/mvillmow/ProjectScylla/src/scylla/e2e/subtest_executor.py:678-697`
+`/home/mvillmow/ProjectScylla/scylla/e2e/subtest_executor.py:678-697`
 
 ### The Problem Flow
 
@@ -70,7 +70,7 @@ The workspace setup was designed to be **idempotent** - always creating fresh st
 
 ### Implementation Pattern
 
-**Location**: `src/scylla/e2e/subtest_executor.py:683-697`
+**Location**: `scylla/e2e/subtest_executor.py:683-697`
 
 ```python
 # Check if run already passed and workspace exists - preserve it
@@ -202,9 +202,9 @@ Re-run: Preserves workspace (checkpoint passed), skips setup ✅
 
 | File | Lines Changed | Purpose |
 |------|---------------|---------|
-| `src/scylla/e2e/subtest_executor.py` | +12, -4 | Add checkpoint check before workspace setup |
+| `scylla/e2e/subtest_executor.py` | +12, -4 | Add checkpoint check before workspace setup |
 | `.gitignore` | +2 | Ignore worktrees/ directory |
-| `src/scylla/e2e/llm_judge.py` | +39, -2 | Better error handling (related improvement) |
+| `scylla/e2e/llm_judge.py` | +39, -2 | Better error handling (related improvement) |
 
 ## Key Learnings
 
@@ -216,7 +216,7 @@ Re-run: Preserves workspace (checkpoint passed), skips setup ✅
 
 ## References
 
-- Checkpoint system: `/home/mvillmow/ProjectScylla/src/scylla/e2e/checkpoint.py`
-- Workspace manager: `/home/mvillmow/ProjectScylla/src/scylla/e2e/workspace_manager.py`
+- Checkpoint system: `/home/mvillmow/ProjectScylla/scylla/e2e/checkpoint.py`
+- Workspace manager: `/home/mvillmow/ProjectScylla/scylla/e2e/workspace_manager.py`
 - Git worktree docs: https://git-scm.com/docs/git-worktree
 - PR: https://github.com/HomericIntelligence/ProjectScylla/pull/161

@@ -27,7 +27,7 @@
 
 ### Phase 1: Core Function Implementation
 
-**File: `src/scylla/analysis/stats.py`**
+**File: `scylla/analysis/stats.py`**
 
 1. Add the metric calculation function after related functions (e.g., `compute_cop`):
 
@@ -61,7 +61,7 @@ def compute_impl_rate(achieved_points: float, max_points: float) -> float:
 
 ### Phase 2: DataFrame Integration
 
-**File: `src/scylla/analysis/dataframes.py`**
+**File: `scylla/analysis/dataframes.py`**
 
 **2a. Import the function:**
 
@@ -362,8 +362,8 @@ Impl-Rate = Σ(achieved_points) / Σ(max_points)
 
 ### Files Modified
 
-1. `src/scylla/analysis/stats.py` - Added `compute_impl_rate()` (+29 lines)
-2. `src/scylla/analysis/dataframes.py` - Integration in 4 places (+40 lines)
+1. `scylla/analysis/stats.py` - Added `compute_impl_rate()` (+29 lines)
+2. `scylla/analysis/dataframes.py` - Integration in 4 places (+40 lines)
 3. `scripts/export_data.py` - Export to JSON (+15 lines)
 4. `tests/unit/analysis/test_stats.py` - Test function (+20 lines)
 5. `tests/unit/analysis/conftest.py` - Fixture updates (+11 lines)

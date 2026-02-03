@@ -21,12 +21,12 @@ Refactor and finalize code after all parallel phases (Test, Implementation, Pack
 
 ```bash
 # Check for code quality issues
-grep -r "TODO\|FIXME\|HACK" src/
+grep -r "TODO\|FIXME\|HACK" scylla/
 just pre-commit-all
 pixi run mojo test -I . tests/
 
 # Format and clean
-pixi run mojo format src/**/*.mojo
+pixi run mojo format scylla/**/*.mojo
 pixi run mojo format tests/**/*.mojo
 
 # Verify no warnings
@@ -139,7 +139,7 @@ Before marking cleanup complete:
 
 ```bash
 # 1. Format
-pixi run mojo format src/**/*.mojo tests/**/*.mojo
+pixi run mojo format scylla/**/*.mojo tests/**/*.mojo
 
 # 2. Test
 pixi run mojo test -I . tests/
@@ -149,7 +149,7 @@ pixi run mojo build -I . shared/ 2>&1 | tee /tmp/build.log
 grep -i "warning" /tmp/build.log && echo "❌ Warnings found" || echo "✅ Clean"
 
 # 4. No TODOs
-grep -r "TODO\|FIXME" src/ && echo "❌ TODOs found" || echo "✅ Clean"
+grep -r "TODO\|FIXME" scylla/ && echo "❌ TODOs found" || echo "✅ Clean"
 
 # 5. Pre-commit
 just pre-commit-all

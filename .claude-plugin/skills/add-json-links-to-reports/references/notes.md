@@ -11,20 +11,20 @@
 ### Discovery Phase
 
 1. **Found report generation files**:
-   - `src/scylla/reporting/markdown.py` - Tier-level reports (not modified)
-   - `src/scylla/e2e/run_report.py` - Run-level reports (modified)
+   - `scylla/reporting/markdown.py` - Tier-level reports (not modified)
+   - `scylla/e2e/run_report.py` - Run-level reports (modified)
    - `tests/unit/reporting/test_markdown.py` - Tests for tier reports
 
 2. **Explored path structure**:
-   - `src/scylla/e2e/paths.py` defines directory constants:
+   - `scylla/e2e/paths.py` defines directory constants:
      - `AGENT_DIR = "agent"`
      - `JUDGE_DIR = "judge"`
      - `RESULT_FILE = "result.json"`
 
 3. **Found where JSON files are created**:
-   - `src/scylla/e2e/subtest_executor.py:131-151` - Saves `agent/result.json`
-   - `src/scylla/e2e/subtest_executor.py:281-300` - Saves `judge/result.json`
-   - `src/scylla/e2e/llm_judge.py:980-982` - Saves `judge/judgment.json`
+   - `scylla/e2e/subtest_executor.py:131-151` - Saves `agent/result.json`
+   - `scylla/e2e/subtest_executor.py:281-300` - Saves `judge/result.json`
+   - `scylla/e2e/llm_judge.py:980-982` - Saves `judge/judgment.json`
 
 ### File Structure Understanding
 
@@ -51,7 +51,7 @@ T0/00/run_01/
 
 ### Step 1: Understanding the Report Function
 
-The `generate_run_report()` function in `src/scylla/e2e/run_report.py` creates markdown reports with sections:
+The `generate_run_report()` function in `scylla/e2e/run_report.py` creates markdown reports with sections:
 
 1. Header (title, metadata)
 2. Summary table (score, grade, status, cost, duration, tokens)
@@ -189,7 +189,7 @@ Both are useful:
 
 ### Modified Function
 
-File: `src/scylla/e2e/run_report.py:25-263`
+File: `scylla/e2e/run_report.py:25-263`
 
 Function signature:
 ```python
@@ -254,7 +254,7 @@ Run Reports (T0/00/run_01/report.md, ...)  ← MODIFIED HERE
 **Commit**: (pending)
 
 **Files to commit**:
-- `src/scylla/e2e/run_report.py` (modified)
+- `scylla/e2e/run_report.py` (modified)
 - `skills/add-json-links-to-reports/SKILL.md` (new)
 - `skills/add-json-links-to-reports/references/notes.md` (new)
 - `.claude-plugin/plugin.json` (new)

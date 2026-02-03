@@ -16,7 +16,7 @@ FileNotFoundError: 'results/2026-01-18T21-15-01-test-002/T3/best_subtest.json'
 
 ## Root Cause Analysis
 
-### Code Inspection: src/scylla/e2e/runner.py
+### Code Inspection: scylla/e2e/runner.py
 
 **Line 624** - Directory assigned but not created:
 ```python
@@ -55,7 +55,7 @@ tier_dir.mkdir(parents=True, exist_ok=True)  # ← Added this
 ### Step 1: Code Verification
 ```bash
 # Confirmed mkdir is now called immediately after assignment
-grep -A 1 "tier_dir = self.experiment_dir / tier_id.value" src/scylla/e2e/runner.py
+grep -A 1 "tier_dir = self.experiment_dir / tier_id.value" scylla/e2e/runner.py
 ```
 
 ### Step 2: Live Test

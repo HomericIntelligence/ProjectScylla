@@ -182,7 +182,7 @@ git push --force-with-lease origin skill/evaluation/granular-scoring-systems
 
 ## Model Definition Reference
 
-**File**: `src/scylla/e2e/models.py:588`
+**File**: `scylla/e2e/models.py:588`
 
 ```python
 @dataclass
@@ -221,7 +221,7 @@ pixi run pytest tests/integration -v
 pixi run pytest tests/ -v
 
 # Check test coverage
-pixi run pytest tests/ --cov=src/scylla --cov-report=term-missing
+pixi run pytest tests/ --cov=scylla/scylla --cov-report=term-missing
 ```
 
 ## Related PRs

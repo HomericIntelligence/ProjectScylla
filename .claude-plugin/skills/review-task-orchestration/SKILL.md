@@ -124,7 +124,7 @@ Use this workflow when:
 
 12. **Commit all completed work**:
     ```bash
-    git add src/ tests/ docs/
+    git add scylla/ tests/ docs/
     git commit -m "feat(analysis): Complete P1-5, P1-6, P1-7, P1-8"
     ```
 
@@ -216,12 +216,12 @@ git commit -m "..."
 
 **Implementation** (7 files):
 - `scripts/generate_figures.py` - impl_rate routing
-- `src/scylla/analysis/config.yaml` - color categories
-- `src/scylla/analysis/config.py` - properties, __all__
-- `src/scylla/analysis/figures/__init__.py` - config colors
-- `src/scylla/analysis/tables/*.py` - precision format strings (3 files)
-- `src/scylla/analysis/dataframes.py` - __all__
-- `src/scylla/analysis/stats.py` - __all__, kruskal_wallis guard
+- `scylla/analysis/config.yaml` - color categories
+- `scylla/analysis/config.py` - properties, __all__
+- `scylla/analysis/figures/__init__.py` - config colors
+- `scylla/analysis/tables/*.py` - precision format strings (3 files)
+- `scylla/analysis/dataframes.py` - __all__
+- `scylla/analysis/stats.py` - __all__, kruskal_wallis guard
 
 **Tests** (4 files):
 - `tests/unit/analysis/test_dataframes.py` (+88 lines, 4 tests)

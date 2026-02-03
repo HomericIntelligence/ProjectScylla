@@ -55,7 +55,7 @@ result = core_function(..., parallel=args.parallel)
 
 ### Step 2: Add Imports
 
-**File**: Core module (e.g., `src/scylla/e2e/rerun_judges.py`)
+**File**: Core module (e.g., `scylla/e2e/rerun_judges.py`)
 
 ```python
 import time
@@ -212,10 +212,10 @@ scripts/rerun_judges.py:171-177   # --parallel argument
 scripts/rerun_judges.py:247       # Pass parallel parameter
 
 # Core implementation
-src/scylla/e2e/rerun_judges.py:20-22      # Imports
-src/scylla/e2e/rerun_judges.py:394-418    # Safe wrapper
-src/scylla/e2e/rerun_judges.py:517        # Function parameter
-src/scylla/e2e/rerun_judges.py:669-730    # Branching logic
+scylla/e2e/rerun_judges.py:20-22      # Imports
+scylla/e2e/rerun_judges.py:394-418    # Safe wrapper
+scylla/e2e/rerun_judges.py:517        # Function parameter
+scylla/e2e/rerun_judges.py:669-730    # Branching logic
 ```
 
 ### Verification Commands

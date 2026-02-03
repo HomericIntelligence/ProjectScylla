@@ -239,8 +239,8 @@ for run_info in needs_regenerate:
 ### Files Created
 
 1. **Core Modules**:
-   - `src/scylla/e2e/rerun.py` (570 lines) - Agent rerun logic
-   - `src/scylla/e2e/rerun_judges.py` (467 lines) - Judge rerun logic
+   - `scylla/e2e/rerun.py` (570 lines) - Agent rerun logic
+   - `scylla/e2e/rerun_judges.py` (467 lines) - Judge rerun logic
 
 2. **CLI Scripts**:
    - `scripts/rerun_agents.py` (229 lines) - Agent rerun CLI
@@ -287,8 +287,8 @@ pixi run python scripts/rerun_judges.py ~/fullruns/experiment/ --runs 1,3,5
 
 Updated default from Sonnet to Opus:
 - `scripts/run_e2e_experiment.py`: `--judge-model default="opus"`
-- `src/scylla/e2e/regenerate.py`: Fallback to `claude-opus-4-5-20251101`
-- `src/scylla/e2e/models.py`: Already defaulted to Opus ✓
+- `scylla/e2e/regenerate.py`: Fallback to `claude-opus-4-5-20251101`
+- `scylla/e2e/models.py`: Already defaulted to Opus ✓
 
 ## Key Takeaways
 

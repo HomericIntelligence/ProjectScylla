@@ -23,7 +23,7 @@ Format Mojo code files to ensure consistent style.
 pixi run mojo format path/to/file.mojo
 
 # Format directory
-pixi run mojo format `find src/ -name "*.mojo"`
+pixi run mojo format `find scylla/ -name "*.mojo"`
 
 # Check without modifying
 pixi run mojo format --check path/to/file.mojo

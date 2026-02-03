@@ -117,7 +117,7 @@ grading:
 
 ### 3. Implement Grade Aggregation (Multi-Run)
 
-**File**: `src/scylla/e2e/models.py`
+**File**: `scylla/e2e/models.py`
 
 Add to `SubTestResult`:
 ```python
@@ -130,7 +130,7 @@ class SubTestResult:
     max_grade: str | None = None
 ```
 
-**File**: `src/scylla/e2e/subtest_executor.py`
+**File**: `scylla/e2e/subtest_executor.py`
 
 In `_aggregate_results()`:
 ```python
@@ -155,7 +155,7 @@ if grades:
 
 ### 4. Update Reports
 
-**File**: `src/scylla/e2e/run_report.py`
+**File**: `scylla/e2e/run_report.py`
 
 Add after runs table:
 ```python
@@ -294,12 +294,12 @@ When implementing this system:
 - `tests/fixtures/tests/*/expected/rubric.yaml` - Task-specific rubrics
 
 **Models & Logic**:
-- `src/scylla/e2e/models.py` - Added grade fields to SubTestResult
-- `src/scylla/e2e/subtest_executor.py` - Grade aggregation logic
-- `src/scylla/e2e/llm_judge.py` - Rubric path parameter, parsing
+- `scylla/e2e/models.py` - Added grade fields to SubTestResult
+- `scylla/e2e/subtest_executor.py` - Grade aggregation logic
+- `scylla/e2e/llm_judge.py` - Rubric path parameter, parsing
 
 **Reporting**:
-- `src/scylla/e2e/run_report.py` - Grade statistics display
+- `scylla/e2e/run_report.py` - Grade statistics display
 
 ## References
 

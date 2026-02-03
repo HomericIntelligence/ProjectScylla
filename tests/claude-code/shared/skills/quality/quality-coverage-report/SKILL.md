@@ -36,7 +36,7 @@ pytest --cov=src --cov-report=term-missing tests/
 Percentage of code lines executed by tests:
 
 ```text
-src/module.mojo
+scylla/module.mojo
   Lines: 45/50 (90%)
   Missing: 12, 18, 23, 35, 41
 ```
@@ -65,9 +65,9 @@ Coverage Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 File                Lines    Missing    Coverage
 ────────────────────────────────────────────────
-src/tensor.mojo       150         5      96.7%
-src/nn.mojo          200        30      85.0%
-src/utils.mojo        50        10      80.0%
+scylla/tensor.mojo       150         5      96.7%
+scylla/nn.mojo          200        30      85.0%
+scylla/utils.mojo        50        10      80.0%
 ────────────────────────────────────────────────
 TOTAL                400        45      88.8%
 
