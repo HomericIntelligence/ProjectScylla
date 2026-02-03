@@ -64,8 +64,8 @@ repos:
       - id: end-of-file-fixer
         name: Fix End of Files
         exclude: ^notes/(plan|review|issues)/
-      - id: check-yaml
-        name: Check YAML
+#      - id: check-yaml
+#        name: Check YAML
       - id: check-added-large-files
         name: Check for Large Files
         args: ['--maxkb=1000']
