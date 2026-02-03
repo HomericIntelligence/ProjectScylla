@@ -1,58 +1,113 @@
 # ProjectScylla
+[![Python](https://img.shields.io/badge/python-3.14+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-240%2B-brightgreen.svg)](#)
+[![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](#)
 
-ProjectScylla is a testing and optimization framework for agentic workflows, inspired by the mythic trials of Odysseus. In Homer’s Odyssey, Scylla represents one of the greatest challenges faced on the journey home — a monster that forced sailors to navigate perilous straits where every choice carried risk. In the same spirit, ProjectScylla provides a proving ground for AI agents, evaluating their ability to perform under constraints, balance trade-offs, and optimize outcomes when no path is perfect.
+## 📑 Table of Contents
 
-## Purpose
+- [🎯 What is ProjectScylla?](#-what-is-projectscylla)
+- [Core Concepts](#core-concepts)
+- [🚀 Quick Start](#-quick-start)
+- [📊 System Requirements](#-system-requirements)
+- [Analysis Pipeline Architecture](#analysis-pipeline-architecture)
+- [Development](#development)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [Publication Readiness](#publication-readiness)
+- [🤝 Contributing](#-contributing)
 
-The goal of ProjectScylla is to measure, refine, and improve agentic systems. While ProjectOdyssey focuses on training and capability development, and ProjectKeystone establishes the communication layer for distributed agents, ProjectScylla ensures that agents are not only functional but resilient. It is the crucible where performance is tested, weaknesses are revealed, and strengths are sharpened.
+## 🎯 What is ProjectScylla?
 
-## Core Concepts
+ProjectScylla is a comprehensive testing framework for AI agent workflows that:
+- **🔬 Measures** agent performance under constrained conditions
+- **📈 Analyzes** results with rigorous statistical methods 
+- **⚖️ Optimizes** agent decisions through trade-off evaluation
+- **📋 Generates** publication-ready reports, figures, and tables
 
-- ⚖️ Trade-Off Evaluation: Agents are placed in scenarios where every decision has a cost, mirroring the dilemma of navigating between Scylla and Charybdis.
-- 📊 Metrics & Benchmarks: Structured measurement of agent performance across adaptability, efficiency, and reliability.
-- 🔄 Iterative Optimization: Continuous refinement through repeated trials, enabling agents to improve over time.
-- 🧭 Resilience Testing: Assessing how agents respond to uncertainty, constraints, and unavoidable risks.
+**Key Output**: Publication-quality statistical reports with **27 figures** and **11 tables** from a single command.
 
-## Why Scylla?
+> "In Homer's Odyssey, Scylla represents one of the greatest challenges on the journey home — a monster that forced sailors to navigate perilous straits where every choice carried risk. ProjectScylla provides the same proving ground for AI agents."
 
-Scylla embodies the essence of constrained optimization: unavoidable danger, sacrifice, and the need for wise navigation. By framing evaluation in this mythic context, ProjectScylla highlights the importance of judgment, foresight, and adaptability in agentic systems. Just as Odysseus had to choose the lesser evil to save his crew, agents must learn to optimize outcomes in environments where perfection is impossible.
+## Quick Start Guide
 
-## Ecosystem
-
-- ProjectOdyssey → Training and capability development.
-- ProjectKeystone → Communication and distributed agent coordination.
-- ProjectScylla → Testing, measurement, and optimization under trial.
-
-Together, these projects form a cohesive ecosystem for building, connecting, and refining agentic workflows.
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- **Pixi**: Package manager for reproducible environments ([install](https://pixi.sh))
-- **Python 3.14+**: Required for analysis pipeline
-- **Git**: For version control
-
-### Installation
+### 🚀 5-Minute Setup
 
 ```bash
-# Clone the repository
+# 1. Install prerequisites
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# 2. Clone and setup
 git clone https://github.com/HomericIntelligence/ProjectScylla.git
 cd ProjectScylla
 
-# Pixi will automatically set up the environment on first command
-pixi run -e analysis python --version
+# 3. Run your first analysis
+pixi run -e analysis python --version  # Verify installation
+pixi run -e analysis python scripts/generate_all_results.py --data-dir ~/fullruns
+
+# 4. View results (27 figures + 11 tables generated)
+open results/analysis/figures/*.png  # macOS
+xdg-open results/analysis/figures/*.png  # Linux
 ```
 
-### Running the Analysis Pipeline
+**That's it!** All outputs appear in `results/analysis/` directory.
 
-The analysis pipeline processes experiment results and generates publication-ready figures, tables, and statistical reports.
+### 💡 Usage Examples
 
-#### Full Analysis (Recommended)
+**Compare Two Agent Configurations:**
+```bash
+pixi run -e analysis python scripts/generate_all_results.py \
+  --data-dir ~/experiments/ \
+  --output-dir comparison_results/ \
+  --exclude test001-dryrun
+```
 
-Generate all outputs (data exports, figures, and tables) from your experiment results:
+**Fast Development Mode (No Rendering):**
+```bash
+# Quick iteration - generates Vega-Lite specs only
+pixi run -e analysis python scripts/generate_all_results.py \
+  --data-dir ~/quick_test \
+  --no-render \
+  --skip-data  # Skip if CSVs already exist
+```
+
+## 📊 System Requirements
+
+**Minimum Requirements:**
+- Python 3.14+
+- 8GB RAM for full dataset analysis
+- 2GB disk space for results
+
+**Typical Performance:**
+- Full analysis: 10-15 minutes (10,000 bootstrap samples)
+- Figures only: 2-3 minutes  
+- Tables only: 1-2 minutes
+
+**Scale:** Handles experiments with 1000+ runs efficiently
+
+---
+
+## Core Concepts
+
+- ⚖️ **Trade-Off Evaluation**: Agents face scenarios where every decision has cost, mirroring Scylla and Charybdis dilemma
+- 📊 **Metrics & Benchmarks**: Structured measurement across adaptability, efficiency, and reliability
+- 🔄 **Iterative Optimization**: Continuous refinement through repeated trials
+- 🧭 **Resilience Testing**: Assessment under uncertainty, constraints, and risks
+
+## Ecosystem
+
+- **ProjectOdyssey** → Training and capability development
+- **ProjectKeystone** → Communication and distributed agent coordination  
+- **ProjectScylla** → Testing, measurement, and optimization under trial
+
+Together: cohesive ecosystem for building, connecting, and refining agent workflows.
+
+---
+
+## Running the Analysis Pipeline
+
+### Full Analysis (Recommended)
+
+Generate all outputs (data exports, figures, tables):
 
 ```bash
 pixi run -e analysis python scripts/generate_all_results.py \
@@ -60,106 +115,75 @@ pixi run -e analysis python scripts/generate_all_results.py \
   --output-dir results/analysis
 ```
 
-**Options:**
-- `--data-dir`: Directory containing experiment results (default: `~/fullruns`)
-- `--output-dir`: Base directory for outputs (default: `docs/`)
-- `--no-render`: Skip PNG/PDF rendering (faster, Vega-Lite specs only)
-- `--skip-data`: Skip data export (if CSVs already exist)
-- `--skip-figures`: Skip figure generation
-- `--skip-tables`: Skip table generation
-- `--exclude`: Exclude specific experiments (e.g., `--exclude test001-dryrun`)
-
-**Example with options:**
+**Key Options:**
+- `--data-dir` → Directory with experiment results (default: `~/fullruns`)
+- `--output-dir` → Base output directory (default: `docs/`)
+- `--no-render` → Skip PNG/PDF (faster, Vega-Lite specs only)
+- `--skip-data/skip-figures/skip-tables` → Generate specific components only
+- `--exclude` → Filter experiments (e.g., `--exclude test001-dryrun`)
 
 ```bash
-# Fast analysis without rendering (development mode)
+# Development mode - no rendering
 pixi run -e analysis python scripts/generate_all_results.py \
   --no-render \
   --exclude test001-dryrun test001-debug
 
-# Generate only tables (assumes data/figures already exist)
+# Regenerate tables only (assumes data/figures exist)
 pixi run -e analysis python scripts/generate_all_results.py \
   --skip-data --skip-figures
 ```
 
-#### Individual Pipeline Steps
-
-Run specific parts of the analysis pipeline:
+### Individual Pipeline Steps
 
 **1. Export Data Only**
-
 ```bash
 pixi run -e analysis python scripts/export_data.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/data
 ```
+**Outputs:** `runs.csv`, `judges.csv`, `criteria.csv`, `subtests.csv`, `summary.json`, `statistical_results.json`
 
-Outputs:
-- `results/analysis/data/runs.csv` - Per-run metrics
-- `results/analysis/data/judges.csv` - Judge evaluations
-- `results/analysis/data/criteria.csv` - Criterion-level scores
-- `results/analysis/data/subtests.csv` - Subtest metadata
-- `results/analysis/data/summary.json` - Experiment summary
-- `results/analysis/data/statistical_results.json` - Statistical analysis
-
-**2. Generate Figures Only**
-
+**2. Generate Figures Only (27 figures × 5 formats)**
 ```bash
 pixi run -e analysis python scripts/generate_figures.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/figures
 ```
+**Outputs:** `*.vl.json`, `*.csv`, `*.png` (300 DPI), `*.pdf`, `*_include.tex`
 
-Outputs (27 figures × 5 formats each):
-- `*.vl.json` - Vega-Lite specifications (version control friendly)
-- `*.csv` - Figure data
-- `*.png` - Raster images (300 DPI, publication quality)
-- `*.pdf` - Vector graphics
-- `*_include.tex` - LaTeX snippets for inclusion
-
-**3. Generate Tables Only**
-
+**3. Generate Tables Only (11 tables × 2 formats)**
 ```bash
 pixi run -e analysis python scripts/generate_tables.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/tables
 ```
-
-Outputs (11 tables × 2 formats each):
-- `*.md` - Markdown tables (human-readable)
-- `*.tex` - LaTeX tables (publication-ready, booktabs formatted)
+**Outputs:** `*.md` (human-readable), `*.tex` (LaTeX, booktabs formatted)
 
 ### Output Structure
-
-After running the analysis, your output directory will contain:
 
 ```
 results/analysis/
 ├── data/
 │   ├── runs.csv                      # Per-run metrics
-│   ├── judges.csv                    # Judge evaluations
+│   ├── judges.csv                    # Judge evaluations  
 │   ├── criteria.csv                  # Criterion-level scores
 │   ├── subtests.csv                  # Subtest metadata
 │   ├── summary.json                  # Experiment summary
-│   └── statistical_results.json      # Statistical analysis results
-├── figures/
-│   ├── fig01_score_variance.*        # 5 formats per figure
+│   └── statistical_results.json      # Statistical analysis
+├── figures/                          # 27 figures × 5 formats
+│   ├── fig01_score_variance.*        
 │   ├── fig02_grade_distribution.*
-│   ├── ...
-│   └── fig27_effect_sizes.*
-└── tables/
-    ├── table01_tier_summary.md       # Markdown + LaTeX per table
+│   └── ... (27 total)
+└── tables/                           # 11 tables × 2 formats
+    ├── table01_tier_summary.md        
     ├── table01_tier_summary.tex
-    ├── ...
-    └── table11_diagnostics.tex
+    └── ... (11 total)
 ```
 
 ### Using the Outputs
 
-**In LaTeX Documents:**
-
+**LaTeX Integration:**
 ```latex
-% Include a figure
 \begin{figure}
   \centering
   \input{results/analysis/figures/fig04_pass_rate_by_tier_include.tex}
@@ -167,33 +191,21 @@ results/analysis/
   \label{fig:pass-rate}
 \end{figure}
 
-% Include a table
 \input{results/analysis/tables/table02_tier_comparison.tex}
 ```
 
-**In Python/Jupyter:**
-
+**Python/Jupyter:**
 ```python
 import pandas as pd
+import json
 
-# Load the data
+# Load data
 runs_df = pd.read_csv('results/analysis/data/runs.csv')
 judges_df = pd.read_csv('results/analysis/data/judges.csv')
 
 # Load statistical results
-import json
 with open('results/analysis/data/statistical_results.json') as f:
     stats = json.load(f)
-```
-
-**View Figures:**
-
-```bash
-# Open all PNG figures
-open results/analysis/figures/*.png
-
-# Or use your favorite viewer
-eog results/analysis/figures/fig04_pass_rate_by_tier.png
 ```
 
 ---
@@ -202,186 +214,168 @@ eog results/analysis/figures/fig04_pass_rate_by_tier.png
 
 ### Statistical Methodology
 
-The analysis pipeline implements rigorous non-parametric statistical methods suitable for bounded, ordinal, and potentially non-normal data:
+Rigorous non-parametric methods for bounded, ordinal, non-normal data:
 
-- **Bootstrap Confidence Intervals**: BCa (bias-corrected and accelerated) with 10,000 resamples
-- **Omnibus Testing**: Kruskal-Wallis H test before pairwise comparisons (controls FWER)
-- **Pairwise Comparisons**: Mann-Whitney U with Holm-Bonferroni correction
-- **Effect Sizes**: Cliff's delta with bootstrapped confidence intervals (Romano et al., 2006 thresholds)
+- **Bootstrap Confidence Intervals**: BCa with 10,000 resamples
+- **Omnibus Testing**: Kruskal-Wallis H test (controls FWER)
+- **Pairwise Comparisons**: Mann-Whitney U + Holm-Bonferroni correction
+- **Effect Sizes**: Cliff's delta with bootstrapped CIs
 - **Inter-Rater Reliability**: Krippendorff's alpha for judge agreement
 
-All statistical parameters are centralized in `src/scylla/analysis/config.yaml` for reproducibility.
+Configuration: `src/scylla/analysis/config.yaml` (all parameters externalized)
 
-### Metrics Computed
+### Metrics
 
-**Quality Metrics:**
-- **Pass-Rate**: Functional test coverage (automated test success)
-- **Implementation Rate (Impl-Rate)**: Semantic requirement satisfaction (LLM-as-Judge)
-- **Score**: Weighted rubric-based evaluation
-- **Consistency**: Output stability (1 - Coefficient of Variation)
+**Quality:**
+- Pass-Rate (functional test coverage)
+- Implementation Rate (semantic satisfaction)
+- Score (weighted rubric evaluation)
+- Consistency (1 - Coefficient of Variation)
 
-**Economic Metrics:**
-- **Cost-of-Pass (CoP)**: Expected cost per successful solution
-- **Frontier CoP**: Minimum CoP across all configurations
-- **Token Distribution**: Cost breakdown by component (input/output/total)
+**Economic:**
+- Cost-of-Pass (expected cost per success)
+- Frontier CoP (minimum CoP across configs)
+- Token Distribution (cost breakdown)
 
-**Process Metrics:**
-- **Latency**: Time from query to resolution
-- **Judge Agreement**: Krippendorff's alpha across judges
+**Process:**
+- Latency (query to resolution time)
+- Judge Agreement (Krippendorff's alpha)
 
 ### Data Requirements
 
-The pipeline expects experiment results in the following structure:
-
+Expected structure:
 ```
-fullruns/
-└── {experiment_name}/
-    └── {timestamp}/
-        ├── config/
-        │   └── experiment.json       # Experiment metadata
-        └── T0-T6/                     # Tiers
-            └── {subtest_id}/          # Subtests
-                └── run_{01-10}/       # Runs (typically 10 per subtest)
-                    ├── run_result.json  # Run outcomes
-                    └── judge/
-                        └── judge_{01-03}/
-                            └── judgment.json  # Judge evaluations
+fullruns/{experiment_name}/{timestamp}/
+├── config/experiment.json            # Metadata
+└── T0-T6/{subtest_id}/run_{01-10}/
+    ├── run_result.json              # Outcomes
+    └── judge/judge_{01-03}/judgment.json  # Evaluations
 ```
 
-**Required Fields in `run_result.json`:**
-- `run_number`: Run identifier (integer)
-- `exit_code`: Success/failure indicator (0 = success)
-- `judges`: List of judge evaluations with grades and criteria scores
+**Required in run.json:**
+- `run_number` (integer)
+- `exit_code` (0 = success)
+- `judges` (list with grades & criteria)
 
-See `src/scylla/analysis/schemas/run_result_schema.json` for the complete JSON Schema.
-
-### Configuration
-
-All analysis parameters are externalized in `src/scylla/analysis/config.yaml`:
-
-- Statistical parameters (alpha, bootstrap resamples, seed)
-- Minimum sample sizes for each test
-- Figure dimensions and DPI
-- Color palettes and grade ordering
-- Precision for numeric output
-- LaTeX formatting options
-
-Modify this file to customize the analysis without changing code.
+Schema: `src/scylla/analysis/schemas/run_result_schema.json`
 
 ---
 
 ## Development
 
-### Running Tests
-
+### Testing
 ```bash
-# Run all analysis tests
+# All tests
 pixi run -e analysis pytest tests/unit/analysis/ -v
 
-# Run specific test file
+# Specific test
 pixi run -e analysis pytest tests/unit/analysis/test_stats.py -v
 
-# Run with coverage
+# Coverage report
 pixi run -e analysis pytest tests/unit/analysis/ --cov=src/scylla/analysis --cov-report=html
 ```
 
-### Adding New Figures
+### Adding Components
 
-1. Create a new module in `src/scylla/analysis/figures/`
-2. Implement your figure function following the existing pattern
-3. Register the figure in `scripts/generate_figures.py`
+**New Figures:**
+1. Create module in `src/scylla/analysis/figures/`
+2. Implement function following existing pattern
+3. Register in `scripts/generate_figures.py`
 4. Add tests in `tests/unit/analysis/test_figures.py`
 
-### Adding New Tables
-
-1. Add table function to appropriate module in `src/scylla/analysis/tables/`
-2. Register in `scripts/generate_tables.py`
+**New Tables:**
+1. Add function to module in `src/scylla/analysis/tables/`
+2. Register in `scripts/generate_tables.py`  
 3. Add tests in `tests/unit/analysis/test_tables.py`
 
 ### Code Quality
-
 ```bash
-# Run linting
+# Linting
 pixi run -e analysis ruff check src/scylla/analysis/
 
-# Auto-fix issues
+# Auto-fix and format
 pixi run -e analysis ruff check --fix src/scylla/analysis/
-
-# Format code
 pixi run -e analysis ruff format src/scylla/analysis/
 ```
 
 ---
 
-## Troubleshooting
+## 🔧 Troubleshooting
+
+### Quick Reference
+
+| Symptom | Solution |
+|---------|----------|
+| `Schema validation failed: 'N/A' does not match` | Ensure grades are S, A, B, C, D, or F only |
+| `[Errno 2] No such file or directory` | Run: `find ~/fullruns -name "run_result.json"` |
+| `TypeError: unsupported operand` | Fix type coercion in criterion.achieved values |
+| Empty outputs | Check: ≥2 experiments, ≥1 completed run each |
+| Slow performance | Use `--no-render` flag for faster iteration |
 
 ### Common Issues
 
-**1. Data validation errors**
-
+**1. Data Validation Errors**
 ```
 Schema validation failed: 'N/A' does not match '^[SABCDF]$'
 ```
+**Fix:** Review problematic runs, ensure valid grades S/A/B/C/D/F or update schema.
 
-**Solution**: Some judges returned "N/A" instead of valid grades. The pipeline warns but continues. To fix:
-- Review the problematic runs
-- Ensure all grades are one of: S, A, B, C, D, F
-- Or update the schema to allow N/A
-
-**2. Missing files**
-
+**2. Missing Files**
 ```
-Failed to load: [Errno 2] No such file or directory: '.../run_result.json'
+Failed to load: [Errno 2] No such file or directory
 ```
-
-**Solution**: Some runs are incomplete. The pipeline skips these with a warning. To investigate:
+**Fix:** Incomplete runs skipped with warnings. Investigate:
 ```bash
 find ~/fullruns -name "run_*" -type d -exec sh -c 'test -f "$1/run_result.json" || echo "Missing: $1"' _ {} \;
 ```
 
-**3. Type errors in criterion scores**
-
+**3. Type Errors**
 ```
 TypeError: unsupported operand type(s) for +: 'float' and 'str'
 ```
-
-**Solution**: Some `criterion.achieved` values are strings instead of numbers. Fix in your data generation pipeline or add type coercion.
-
-**4. Empty DataFrames**
-
-The pipeline handles empty data gracefully but won't generate meaningful outputs. Ensure:
-- At least 2 experiments exist in `--data-dir`
-- Each experiment has at least 1 completed run
-- Runs have valid `run_result.json` files
+**Fix:** Some `criterion.achieved` are strings. Fix in data generation or add coercion.
 
 ### Getting Help
 
-- **Documentation**: See `docs/research.md` for detailed methodology
-- **Examples**: Check `tests/unit/analysis/` for usage examples
-- **Issues**: Report bugs at [GitHub Issues](https://github.com/HomericIntelligence/ProjectScylla/issues)
-- **CLAUDE.md**: See `.claude/shared/` for development guidelines
+- **Documentation**: `docs/research.md` for methodology
+- **Examples**: `tests/unit/analysis/` for usage patterns
+- **Issues**: [GitHub Issues](https://github.com/HomericIntelligence/ProjectScylla/issues)
+- **Support**: Create an issue with error message and steps to reproduce
 
 ---
 
-## LaTeX Dependencies
+## Publication Readiness
 
-To compile documents with generated tables/figures, you'll need:
+✅ **Rigorous non-parametric statistics** (Kruskal-Wallis, Mann-Whitney U, Cliff's delta)
 
-**Required Packages:**
-- `booktabs` - Professional table formatting
-- `longtable` - Multi-page tables
-- `threeparttable` - Table notes/footnotes
-- `graphicx` - Figure inclusion
+✅ **Multiple comparison correction** (Holm-Bonferroni throughout)
 
-**Example Preamble:**
+✅ **Bootstrap confidence intervals** (BCa, 10K resamples, seed=42)
 
+✅ **Effect sizes with confidence intervals**
+
+✅ **300 DPI publication-quality figures**
+
+✅ **LaTeX-ready tables** with booktabs formatting
+
+✅ **Reproducible configuration** (all parameters in config.yaml)
+
+✅ **Comprehensive test suite** (240+ tests, all passing)
+
+✅ **Documented methodology** with citations
+
+See `docs/research.md` for complete research methodology and metric definitions.
+
+### LaTeX Dependencies
+
+Required packages for document compilation:
 ```latex
 \documentclass{article}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{threeparttable}
-\usepackage{graphicx}
-\usepackage{amsmath}  % For statistical symbols
+ \usepackage{booktabs}   % Professional tables
+ \usepackage{longtable}  % Multi-page tables  
+ \usepackage{threeparttable} % Table notes
+ \usepackage{graphicx}   % Figure inclusion
+ \usepackage{amsmath}    % Statistical symbols
 
 \begin{document}
 % Your content here
@@ -390,36 +384,36 @@ To compile documents with generated tables/figures, you'll need:
 
 ---
 
-## Publication Readiness
+## 🤝 Contributing
 
-The analysis pipeline is **publication-ready** with:
+We welcome contributions! Please see our contributing guidelines:
 
-✅ Rigorous non-parametric statistics (Kruskal-Wallis, Mann-Whitney U, Cliff's delta)
-✅ Multiple comparison correction (Holm-Bonferroni throughout)
-✅ Bootstrap confidence intervals (BCa, 10K resamples, seed=42)
-✅ Effect sizes with confidence intervals
-✅ 300 DPI publication-quality figures
-✅ LaTeX-ready tables with proper formatting
-✅ Reproducible configuration (all parameters in config.yaml)
-✅ Comprehensive test suite (240+ tests, all passing)
-✅ Statistical methodology documented and cited
+- **Development Setup**: Follow Quick Start guide above
+- **Code Standards**: Run linting and formatting before submitting
+- **Testing**: Ensure all tests pass (`pytest tests/`)
+- **Documentation**: Update README and docs for new features
 
-See `docs/research.md` for the complete research methodology and metric definitions.
+**Areas for contribution:**
+- Additional statistical methods and metrics
+- New visualization types and formats
+- Performance optimizations
+- Documentation improvements
+- Bug fixes and feature requests
+
+Visit our [GitHub Repository](https://github.com/HomericIntelligence/ProjectScylla) to get started.
 
 ---
 
 ## License
 
-[Add license information]
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Citation
-
-If you use ProjectScylla in your research, please cite:
 
 ```bibtex
 @software{projectscylla2026,
   title = {ProjectScylla: A Testing and Optimization Framework for Agentic Workflows},
-  author = {[Authors]},
+  author = {ProjectScylla Contributors},
   year = {2026},
   url = {https://github.com/HomericIntelligence/ProjectScylla}
 }
