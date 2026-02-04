@@ -22,7 +22,7 @@ repos:
         description: Format Python files in scripts/, scylla/, tests/, and all subdirectories using pixi run ruff format
         entry: pixi run ruff format scripts/ scylla/ tests/
         language: system
-        files: ^(scripts|src|tests)/.*\.py$
+        files: ^(scripts|scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
       - id: ruff-check-python
@@ -30,7 +30,7 @@ repos:
         description: Lint Python files in scripts/, scylla/, tests/, and all subdirectories using pixi run ruff check
         entry: pixi run ruff check --fix scripts/ scylla/ tests/
         language: system
-        files: ^(scripts|src|tests)/.*\.py$
+        files: ^(scripts|scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
 
@@ -65,7 +65,7 @@ repos:
         name: Fix End of Files
         exclude: ^notes/(plan|review|issues)/
 #      - id: check-yaml
-#        name: Check YAML
+#      - name: Check YAML
       - id: check-added-large-files
         name: Check for Large Files
         args: ['--maxkb=1000']
