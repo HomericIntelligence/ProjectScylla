@@ -8,8 +8,9 @@ echo "Research Paper PDF Build Pipeline"
 echo "=================================="
 echo ""
 
-WORK_DIR="latex_paper_build"
 SOURCE_DIR="docs"
+OUTPUT_DIR="build/paper"
+WORK_DIR="$OUTPUT_DIR/latex"
 
 info() { echo "[INFO] $1"; }
 success() { echo "[SUCCESS] $1"; }
@@ -23,7 +24,6 @@ success "LaTeX tools available"
 info "Setting up build environment..."
 rm -rf "$WORK_DIR" 2>/dev/null || true
 mkdir -p "$WORK_DIR"
-mkdir -p "output"
 
 info "Copying source files..."
 cp "$SOURCE_DIR/research_paper.tex" "$WORK_DIR/main.tex"
@@ -45,11 +45,11 @@ pdflatex -interaction=nonstopmode main.tex > /dev/null 2>&1
 pdflatex -interaction=nonstopmode main.tex
 
 if [ -f "main.pdf" ]; then
-    mv main.pdf "../output/research_paper.pdf"
-    file_size=$(du -h "../output/research_paper.pdf" | cut -f1)
+    mv main.pdf "../research_paper.pdf"
+    file_size=$(du -h "../research_paper.pdf" | cut -f1)
     success "PDF generated successfully!"
     echo ""
-    echo "Output: output/research_paper.pdf"
+    echo "Output: $OUTPUT_DIR/research_paper.pdf"
     echo "Size: $file_size"
     if [ -f "main.log" ]; then
         pages=$(grep "Output written on main.pdf" main.log | awk '{print $4}' || echo "11 pages")
