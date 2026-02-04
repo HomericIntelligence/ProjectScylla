@@ -30,15 +30,11 @@ LLM agents, software engineering benchmarks, cost-of-pass, multi-agent systems, 
 
 ## 1. Summary
 
-<<<<<<< Updated upstream
 With the advancement of large language models has come a massive increase in capabilities for automated computer interactions. What used to require hand-coded algorithms and pipelines can now be done automatically using state of the art coding models to generate instructions that can then be utilized to further improve automated approaches. However, understanding what improves these language models is more of black magic than art, let alone a rigorous science. This paper's goal is to help demistify the magic of prompt engineering by proposing a rigorous evaluation framework across multiple dimensions to help determine how agents interact, the scale that of changes for the agentics, and an attempt to quantify with numbers the benefits of each approach across a broad range of activities.
 
 There are benchmarks for measuring LLM's workflows in various domains, such as agent-bench[1], swe-bench[2], tau-bench[3], etc... There are also prompt evaluation benchmarks such as PromptBench[4] or PromptEval[5]. This paper focuses specifically on coding tools, specifically industry leading tool Claude Code[7], and how prompt modification can change the behavior of the model for better or for worse. This paper also introduces a framework for evaluating other tools in a systematic way, thus allowing extension to domains outside of CLI based coding tools. I show that on a trivial Hello World task, all seven tiers (T0-T6) achieve equivalent quality (all grade A, scores 0.943-0.983) while cost varies 3.8x from $0.065 (T5 hybrid) to $0.247 (T6 super). The framework successfully differentiates cost structures across architectural choices even when quality converges.
 
 This implies that architectural complexity doesn't always improve quality, and that careful hybrid designs (T5) can achieve Frontier Cost-of-Pass by selectively combining features rather than maximizing them. The dryrun validates the framework's ability to measure these trade-offs empirically.
-=======
-LLM-based coding tools have advanced rapidly, but understanding what actually improves them remains more black magic than science. This paper introduces Scylla, an evaluation framework that applies rigorous ablation studies to CLI tools like Claude Code. By testing across seven tiers (T0-T6) that progressively add complexity—from empty prompts to full multi-agent hierarchies—we can isolate and quantify what architectural choices actually contribute to both capability and cost. Findings are presented in Section 9, with implications discussed in Section 10.
->>>>>>> Stashed changes
 
 ---
 
@@ -74,13 +70,7 @@ There are several good benchmarks for evaluating LLM agents. SWE-Bench[2] tests 
 
 For prompt evaluation, there's PromptBench[4] (unified testing across tasks), PromptEval[5] (automated correctness and robustness checking), and EleutherAI's lm-evaluation-harness[8] (standardized multi-task comparison). The problem: these all assume direct access to model inputs and outputs. With production CLI tools like Claude Code, the model is wrapped in layers of system prompts, tool schemas, skill definitions, and orchestration logic. You can't just test the model in isolation. You have to test the whole system.
 
-<<<<<<< Updated upstream
 My work is based solely on evaluating CLI tools, as the CLI's tools are more than the model themselves. As I mentioned earlier, the agentic loop, with hooks, tools, skills, sub-agents, MCP servers, and other logic wrapped together into a single application where the only way to get control of the behavior is through the english language is what I want to evaluate for effectiveness. From this interface, programmatic tools can be spawned, but the ability to properly and accurately interact with the agent is via a fuzzy language interface, and not via traditional programmatic interfaces. While there are some hooks that allow extra programmatic validation with Claude Code, I'm not evaluating those at this time. Claude Code has the ability to use agentic evaluation at the hook boundary, but triggering it is guaranteed (and not language-based).
-=======
-That's what this framework does. It treats the CLI interface as the evaluation boundary and figures out what actually works when you're using these tools in practice. The agentic loop—with its fuzzy language interface controlling hooks, tools, skills, sub-agents, and MCP servers—is what I'm evaluating for effectiveness. This methodology extends naturally to other ablation studies where component contributions need isolation and quantification.
->>>>>>> Stashed changes
-
----
 
 ## 4. Test Methodology
 
@@ -214,15 +204,9 @@ The core idea is simple: start with nothing, then add one set of things at a tim
 
 1. **T0 (Baseline):** Start with an empty prompt (00-empty) to see what the raw model can do, then go all the way up to the full 1787-line CLAUDE.md (03-full). Individual blocks (B01-B18) let me test each piece of the prompt separately to see what actually matters.
 
-<<<<<<< Updated upstream
 2. **T1-T2 (Skills vs Tools):** Here's where it gets interesting. T1 uses skills, domain knowledge baked into prompts. Token-efficient. T2 uses external tools via JSON schemas. Problem is, loading all those tool definitions inflates token usage. I call this the "Token Efficiency Chasm" — the gap between lean skill-based approaches and schema-heavy tool architectures.
 
 3. **T3-T4 (Multi-Agent Setups):** T3 does flat delegation, breaking tasks into smaller pieces and assigning them to specialist agents. In my dryrun, T3 achieves the second-lowest cost at $0.129, showing efficiency gains. T4 adds hierarchy with self-correction loops, but this complexity can increase costs — T4 runs $0.168 versus T3's $0.129, a 30% increase for this trivial task.
-=======
-2. **T1-T2 (Skills vs Tools):** Here's where it gets interesting. T1 uses skills, domain knowledge baked into prompts. Token-efficient. T2 uses external tools via JSON schemas. Problem is, loading all those tool definitions can consume substantial context before the model even starts thinking. I call this the "Token Efficiency Chasm."
-
-3. **T3-T4 (Multi-Agent Setups):** T3 does flat delegation, break tasks into smaller pieces and assign them to specialist agents. Initial observations suggest this approach can significantly reduce both costs and latency. T4 adds hierarchy with self-correction loops, but that can substantially increase your inference costs per iteration.
->>>>>>> Stashed changes
 
 4. **T5 (Smart Combinations):** Take what works from the other tiers, combine then together, such as T2's efficient skills, T3's best agents, T4's task delegation, but make verification selective instead of mandatory. Goal is maximum bang for your buck.
 
@@ -755,21 +739,18 @@ The dryrun validates the framework works. Now it's time to scale up and fill in 
 
 **Cross-vendor and cross-model evaluation**: The framework is model-agnostic by design. Next step is testing other CLI tools (OpenAI Codex, Gemini CLI, DeepSeek Coder, Qwen, MBZ-K2, Kimi) to see if tier rankings (T0 < T1 < T3 < T5 on cost-efficiency) hold across vendors or are Claude-specific. Within Claude, I need to compare Opus 4.5, Sonnet 4.5, and Haiku 4.5 as agent models to quantify model-level cost-quality trade-offs.
 
-<<<<<<< Updated upstream
 **Advanced analysis**: Current analysis uses frequentist statistics. Bayesian hierarchical modeling would enable partial pooling across subtests, uncertainty quantification for tier rankings, and principled handling of missing Haiku data. Process metrics (time-to-first-token, strategic drift, tool call traces) would reveal *how* agents work, not just final outcomes. Human expert baselines (hire 10 senior engineers, run the same test battery, compare CoP) would validate whether agents are actually economically competitive. And longitudinal tracking (re-run test001 quarterly with latest models) would show if Frontier CoP decreases over time as models improve.
-=======
+
 ---
 
 ## Acknowledgements
 
 This work was self-funded by the author.
->>>>>>> Stashed changes
 
 ---
 
 ## References
 
-<<<<<<< Updated upstream
 [1] Liu, X., Yu, H., Zhang, H., Xu, Y., Lei, X., Lai, H., Gu, Y., Ding, H., Men, K., Yang, K., Zhang, S., Deng, X., Zeng, A., Du, Z., Zhang, C., Shen, S., Zhang, T., Su, Y., Sun, H., Huang, M., Dong, Y., & Tang, J. (2023). **AgentBench: Evaluating LLMs as Agents.** *arXiv preprint arXiv:2308.03688.* https://arxiv.org/abs/2308.03688
 
 [2] Jimenez, C. E., Yang, J., Wettig, A., Yao, S., Pei, K., Press, O., & Narasimhan, K. (2024). **SWE-bench: Can Language Models Resolve Real-world GitHub Issues?** *International Conference on Learning Representations (ICLR).* https://arxiv.org/abs/2310.06770
@@ -789,27 +770,6 @@ This work was self-funded by the author.
 [9] **safety-net: Claude Code Plugin for Dangerous Operation Blocking.** CC-Marketplace. https://github.com/cc-marketplace/safety-net
 
 [10] **CC-Marketplace: Community Marketplace for Claude Code Plugins and Skills.** https://github.com/cc-marketplace
-=======
-[1] Liu, X., Yu, H., Zhang, H., et al. (2023). "AgentBench: Evaluating LLMs as Agents." arXiv preprint arXiv:2308.03688.
-
-[2] Jimenez, C. E., Yang, J., Wettig, A., et al. (2024). "SWE-bench: Can Language Models Resolve Real-World GitHub Issues?" International Conference on Learning Representations (ICLR).
-
-[3] "TAU-Bench: A Benchmark for Tool-Augmented LLM Understanding." Available at: https://github.com/tau-bench/tau-bench
-
-[4] Zhu, K., Wang, J., Zhou, J., et al. (2023). "PromptBench: Towards Evaluating the Robustness of Large Language Models on Adversarial Prompts." arXiv preprint arXiv:2306.04528.
-
-[5] "PromptEval: Automated Evaluation Framework for Prompt Engineering." Available at: https://github.com/prompt-eval/prompt-eval
-
-[6] Reserved for future citation.
-
-[7] Anthropic. (2024). "Claude Code: AI-Powered CLI Tool for Software Development." Available at: https://claude.ai/code
-
-[8] Gao, L., Tow, J., Biderman, S., et al. (2023). "A Framework for Few-Shot Language Model Evaluation." EleutherAI. Available at: https://github.com/EleutherAI/lm-evaluation-harness
-
-[9] "safety-net: Security Plugin for Claude Code." Available at: https://github.com/cc-marketplace/safety-net
-
-[10] "cc-marketplace: Community Plugins for Claude Code." Available at: https://github.com/cc-marketplace
->>>>>>> Stashed changes
 
 ---
 
