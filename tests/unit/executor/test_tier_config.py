@@ -338,7 +338,7 @@ class TestTierConfigLoaderWithActualConfig:
     def test_load_actual_config(self) -> None:
         """Test loading the actual tier configuration."""
         # This test uses the actual config directory
-        config_dir = Path(__file__).parent.parent.parent.parent / "config"
+        config_dir = Path(__file__).parent.parent.parent / "config"
 
         if not (config_dir / "tiers" / "tiers.yaml").exists():
             pytest.skip("Actual config not available")

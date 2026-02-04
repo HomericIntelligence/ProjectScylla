@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field, field_validator
 
 # Path to the standardized judge system prompt (checked into repo)
 JUDGE_SYSTEM_PROMPT_FILE = (
-    Path(__file__).parent.parent.parent.parent / "config" / "judge" / "system_prompt.md"
+    Path(__file__).parent.parent.parent / "config" / "judge" / "system_prompt.md"
 )
 
 
