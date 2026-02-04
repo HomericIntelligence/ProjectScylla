@@ -151,7 +151,7 @@ Evaluation Orchestrator
 ```markdown
 ## Evaluation Status Report
 
-**Agent**: [Your Name]
+**Agent**: Micah Villmow <research@villmow.us>
 **Level**: [0-4]
 **Date**: [YYYY-MM-DD]
 **Experiment**: [Experiment ID]
@@ -194,7 +194,7 @@ Evaluation Orchestrator
 ```markdown
 ## Task Handoff
 
-**From**: [Your Agent Name]
+**From**: Micah Villmow
 **To**: [Next Agent Name]
 **Task**: [Description]
 
