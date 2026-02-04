@@ -13,6 +13,7 @@ format = "ruff format src tests"
 [dependencies]
 python = ">=3.10"
 pip = "*"
+pre-commit = ">=4.5.1,<5"
 
 [pypi-dependencies]
 scylla = { path = ".", editable = true }
