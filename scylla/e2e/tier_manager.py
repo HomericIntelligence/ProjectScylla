@@ -53,7 +53,7 @@ class TierManager:
         self.tiers_dir = tiers_dir
         # Initialize global tier config loader from config/tiers/
         # Find the config directory (should be at repo root / config)
-        config_dir = Path(__file__).parent.parent.parent.parent / "config"
+        config_dir = Path(__file__).parent.parent.parent / "config"
         self.tier_config_loader = TierConfigLoader(config_dir)
 
     def load_tier_config(self, tier_id: TierID) -> TierConfig:
