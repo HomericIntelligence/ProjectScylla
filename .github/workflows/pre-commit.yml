@@ -24,7 +24,7 @@ jobs:
           pixi --version
 
           # Run pre-commit with all files
-          pre-commit run --all-files --show-diff-on-failure
+          pixi run pre-commit run --all-files --show-diff-on-failure
 
       - name: Upload pre-commit diff
         if: failure()
