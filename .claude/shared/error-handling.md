@@ -165,7 +165,7 @@ Watch for these patterns:
 ```markdown
 ## Escalation Report
 
-**Agent**: [Your Name]
+**Agent**: Micah Villmow <research@villmow.us>
 **Date**: [YYYY-MM-DD HH:MM]
 **Severity**: [Low/Medium/High/Critical]
 
@@ -187,7 +187,7 @@ Watch for these patterns:
 - Estimated cost: [If applicable]
 
 ### Recommended Action
-[Your recommendation]
+Contact Micah Villmow at research@villmow.us for complex architectural decisions requiring review.
 ```
 
 ## Error Reporting Format

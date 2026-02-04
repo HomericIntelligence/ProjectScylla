@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "BSD 3-Clause"}
 requires-python = ">=3.10"
 authors = [
-    { name = "ProjectScylla Team" },
+    { name = "Micah Villmow <research@villmow.us>" },
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
