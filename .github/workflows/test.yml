@@ -34,9 +34,9 @@ jobs:
         env:
           TEST_PATH: ${{ matrix.test-group.path }}
         run: |
-          # tests/unit includes tests/unit/analysis which requires analysis environment
-          # Run all unit tests in analysis environment to include numpy/pandas dependencies
+          # Install package in dev mode for unit tests
           if [[ "$TEST_PATH" == "tests/unit" ]]; then
+            pixi run -e analysis pip install -e .
             pixi run -e analysis pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml
           else
             pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml
