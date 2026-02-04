@@ -234,7 +234,7 @@ This is just the tier structure spelled out differently:
 
 #### 4.2.2 Prompt Complexity Axis
 
-Prompt complexity is measured in lines of system prompt content, ranging from 0 (empty) to 1787 (full CLAUDE.md):
+Prompt complexity is measured in lines of system prompt content, ranging from 0 (empty) to 1787 (full CLAUDE.md from ProjectOdyssey[6]):
 
 | Level | Lines | Description | Representative Test |
 |-------|-------|-------------|---------------------|
@@ -761,7 +761,7 @@ This work was self-funded by the author.
 
 [5] **PromptEval: A Comprehensive Evaluation Framework for Prompt Engineering.** Project repository and documentation. https://github.com/prompteval (Note: Placeholder citation — replace with official publication if available)
 
-[6] Reserved for future citation.
+[6] **ProjectOdyssey: Comprehensive Agent Orchestration Framework.** Homeric Intelligence. GitHub repository. https://github.com/HomericIntelligence/Projectodyssey
 
 [7] Anthropic. (2024). **Claude Code: Agentic CLI Tool for Software Development.** Anthropic AI. https://www.anthropic.com/claude/code
 
