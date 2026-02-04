@@ -20,7 +20,7 @@ jobs:
       - name: Run pre-commit
         run: |
           # Ensure pixi is properly initialized
-          pixi run --version
+          pixi --version
 
           # Run pre-commit with all files
           pre-commit run --all-files --show-diff-on-failure
