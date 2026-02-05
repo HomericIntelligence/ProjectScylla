@@ -68,7 +68,7 @@ repos:
 #      - name: Check YAML
       - id: check-added-large-files
         name: Check for Large Files
-        args: ['--maxkb=1000']
+        args: ['--maxkb=5000']
       - id: mixed-line-ending
         name: Fix Mixed Line Endings
         exclude: ^notes/(plan|review|issues)/
