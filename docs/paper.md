@@ -1323,13 +1323,13 @@ cd ProjectScylla
 pixi install
 
 # 3. Run evaluation (example for test-001, tier T0)
-pixi run mojo scylla/run_evaluation.mojo \
+pixi run python scylla/run_evaluation.py \
   --test tests/001-hello-world \
   --tier T0 \
   --runs 10
 
 # 4. Generate report
-pixi run mojo scylla/generate_report.mojo \
+pixi run python scylla/generate_report.py \
   --results runs/001-hello-world/T0
 ```
 
