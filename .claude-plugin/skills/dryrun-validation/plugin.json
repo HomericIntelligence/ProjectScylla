@@ -1,0 +1,61 @@
+{
+  "name": "dryrun-validation",
+  "version": "1.0.0",
+  "category": "evaluation",
+  "created": "2026-02-05",
+  "description": "Complete workflow for re-running dryrun experiments, generating analysis outputs, and validating results against baseline",
+  "author": "ProjectScylla",
+  "tags": [
+    "dryrun",
+    "validation",
+    "experiment",
+    "analysis",
+    "reproducibility",
+    "e2e-testing"
+  ],
+  "verified": true,
+  "success_rate": "100%",
+  "use_cases": [
+    "Re-run dryrun experiments to validate reproducibility",
+    "Validate analysis pipeline after code changes",
+    "Verify tarfile integrity against fresh regeneration",
+    "Establish baseline metrics for experiment comparisons",
+    "Test experiment infrastructure end-to-end"
+  ],
+  "key_learnings": [
+    "Full model IDs required (not short aliases) for correct analysis loader regex matching",
+    "LLM variance: ±0.03-0.06 score delta, ±50-100% cost variance for single-run experiments",
+    "Use --exclude flag to isolate experiments when generating analysis",
+    "Marginal threshold violations (within 0.01) are acceptable due to LLM non-determinism",
+    "Tarfile validation: byte-for-byte CSV comparison + numeric precision < 1e-10"
+  ],
+  "dependencies": {
+    "python": "3.10+",
+    "pixi": "required",
+    "environments": ["default", "analysis"],
+    "packages": ["pandas", "altair", "scipy", "krippendorff"]
+  },
+  "related_skills": [],
+  "validation": {
+    "experiment_success": {
+      "pass_rate": "100% (7/7 tiers)",
+      "grade_distribution": "7x A",
+      "cost_range": "$1.00-$2.00",
+      "duration_range": "9-11 minutes"
+    },
+    "analysis_success": {
+      "data_files": "6/6 generated",
+      "figures": "26/27 generated (1 requires N≥2)",
+      "tables": "10/11 generated (1 requires N≥2)"
+    },
+    "tarfile_match": {
+      "summary_stats": "perfect (Δ < 1e-10)",
+      "csv_files": "byte-for-byte identical",
+      "file_counts": "match (±1 for pipeline enhancements)"
+    }
+  },
+  "files": {
+    "skill": "SKILL.md",
+    "notes": "references/notes.md"
+  }
+}
