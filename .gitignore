@@ -51,7 +51,6 @@ results/
 docs/data/
 docs/figures/
 docs/tables/
-docs/paper-dryrun/
 
 # Coverage reports
 .coverage
