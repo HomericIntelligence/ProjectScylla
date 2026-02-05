@@ -11,7 +11,7 @@ research@villmow.us
 ## Abstract
 
 LLM-based tools are automating more and more software development tasks. But
-there's no rigorous way to evaluate how different architectural choices—prompts,
+there is no rigorous way to evaluate how different architectural choices—prompts,
 skills, tools, multi-agent setups—actually affect both capability and cost.
 
 This paper introduces Scylla, an evaluation framework for benchmarking agentic
@@ -50,9 +50,9 @@ hand-coded algorithms and pipelines can now be done automatically using state of
 the art coding models to generate instructions that can then be utilized to
 further improve automated approaches. However, understanding what improves these
 language models is more of black magic than art, let alone a rigorous science.
-This paper's goal is to help demistify the magic of prompt engineering by
+This paper's goal is to help demystify the magic of prompt engineering by
 proposing a rigorous evaluation framework across multiple dimensions to help
-determine how agents interact, the scale that of changes for the agentics, and
+determine how agents interact, the scale of changes for the agentics, and
 an attempt to quantify with numbers the benefits of each approach across a broad
 range of activities.
 
@@ -69,7 +69,7 @@ cost varies 3.8x from $0.065 (T5 hybrid) to $0.247 (T6 super). The framework
 successfully differentiates cost structures across architectural choices even
 when quality converges.
 
-This implies that architectural complexity doesn't always improve quality, and
+This implies that architectural complexity does not always improve quality, and
 that careful hybrid designs (T5) can achieve Frontier Cost-of-Pass by
 selectively combining features rather than maximizing them. The dryrun validates
 the framework's ability to measure these trade-offs empirically.
@@ -88,7 +88,7 @@ tools, or mcp servers were actually contributing to improved code output,
 without relying on my gut or intuition. This problem came up multiple times when
 asked by others to explain how to better utilize CLI tools for programming. In
 my experience, the quality of the prompts has a dramatic improvement on the
-output of the results. Whether its the prompt to call the tool or MCP server,
+output of the results. Whether it is the prompt to call the tool or MCP server,
 the prompt to spawn a sub-agent, or the prompt to trigger a skill, these
 language based triggers are fuzzy in their meaning. Unlike a traditional
 programming language that is very explicit in what it is means and what it does,
@@ -99,7 +99,7 @@ First, in section 3, I will introduce the current work that is being done in
 this area, and explain how they approach the problem. Then, in section 4, I will
 introduce the testing methodology along with an in-depth analysis of the first
 test case. This will provide the needed understanding of what is being tested,
-along with why, on something that should be easily dissectable and
+along with why, on something that should be easily analyzed and
 understandable. Then I will go over the rest of the testing framework to
 showcase what is being tested, measured, and why these are being tested using
 simple cases introduced in the previous sections.
@@ -144,7 +144,7 @@ visible to the user as they can occur on the vendors servers.
 There are multiple benchmarks on judging the models, such as Agent-Bench[1],
 SWE-Bench[2], and TAU-Bench[3], but no standard benchmarks on CLI tools, like
 Claude Code, on how prompts affect them. The reader can also investigate
-PromptEval, PromptBench, or lm-evaluation-harness[8], but these also don't
+PromptEval, PromptBench, or lm-evaluation-harness[8], but these also do not
 benchmark the CLI tools, which are used in production today. The next paragraphs
 will explain in high level details the various other options on the market.
 
@@ -153,17 +153,17 @@ models on real GitHub issues—can they actually fix bugs and add features to re
 codebases? Agent-Bench[1] goes broader, testing multi-turn agents across
 different environments like operating systems, databases, and knowledge graphs,
 with fine-grained metrics beyond just pass/fail. TAU-Bench[3] focuses on whether
-agents can effectively use external tools. But here's the thing: all of these
-evaluate the models directly. They don't address the full agentic loop—hooks,
-skills, MCP servers, vendor optimizations, orchestration logic. My work focuses
-on that tool interface rather than the raw model underneath.
+agents can effectively use external tools. These benchmarks evaluate the models
+directly. They do not address the full agentic loop—hooks, skills, MCP servers,
+vendor optimizations, orchestration logic. My work focuses on that tool
+interface rather than the raw model underneath.
 
-For prompt evaluation, there's PromptBench[4] (unified testing across tasks),
+For prompt evaluation, there is PromptBench[4] (unified testing across tasks),
 PromptEval[5] (automated correctness and robustness checking), and EleutherAI's
 lm-evaluation-harness[8] (standardized multi-task comparison). There is a
 problem in that these all assume direct access to model inputs and outputs. With
 production CLI tools like Claude Code, the model is wrapped in layers of system
-prompts, tool schemas, skill definitions, and orchestration logic. I can't just
+prompts, tool schemas, skill definitions, and orchestration logic. I cannot just
 test the model in isolation, so I have to test the whole system.
 
 My work is based solely on evaluating CLI tools, as the CLI's tools are more
@@ -174,9 +174,9 @@ the english language is what I want to evaluate for effectiveness. From this
 interface, programmatic tools can be spawned, but the ability to properly and
 accurately interact with the agent is via a fuzzy language interface, and not
 via traditional programmatic interfaces. While there are some hooks that allow
-extra programmatic validation with Claude Code, I'm not evaluating those at this
+extra programmatic validation with Claude Code, I am not evaluating those at this
 time. Claude Code has the ability to use agentic evaluation at the hook
-boundary, but triggering it is guaranteed (and not language-based), so it isn't
+boundary, but triggering it is guaranteed (and not language-based), so it is not
 interesting for probabilistic evaluation.
 
 ## 4. Test Methodology
@@ -187,7 +187,7 @@ This experiment is designed by testing english phrases, colloquially known as
 prompts, via the various methodologies exposed by a CLI tool, in this case
 Claude Code. The prompts to be tested are taken from the ProjectOdyssey[6] git
 repository at github hash 011a3ff on December 30th 2025. The prompts are broken
-down into their components and seperated into various tiers which will be
+down into their components and separated into various tiers which will be
 discussed later. These components are used to setup the experiment, which is run
 by allowing an agent a nearly unfettered access to the system, only blocking
 dangerous ops, thanks to the safety-net plugin[9] from cc-marketplace[10], to
@@ -215,7 +215,7 @@ professionalism, and patchfile correctness.
 
 **Total Weight**: 1.0 (100%)
 
-Each category contributes proportionally to the final score. Here's the formula:
+Each category contributes proportionally to the final score. Here is the formula:
 
 $$S_{final} = \sum_{i} w_i \cdot \frac{P_i^{achieved}}{P_i^{max}}$$
 
@@ -223,7 +223,7 @@ where $w_i$ are the category weights (they sum to 1.0), and $P_i$ is the points
 the test got versus the maximum possible (skipping any N/A items). For scoring
 individual items:
 
-- **Binary items**: You either get it or you don't (1.0 or 0.0)
+- **Binary items**: You either get it or you do not (1.0 or 0.0)
 - **Graduated items**: Partial credit on a 0.0-1.0 scale based on results
 - **Subjective items**: LLM judgment with calibrated deductions
 
@@ -253,7 +253,7 @@ The final score maps to a grade using this scale:
 | F | < 0.20 | Failing | Complete failure of task |
 
 I use **0.60** (Grade B) as the pass threshold. That means the solution works
-and meets requirements, even if there's room for minor improvements. An S grade
+and meets requirements, even if there is room for minor improvements. An S grade
 needs a perfect 1.00 and you have to actually exceed what was asked for. I would
 not expect many, if any, tests to get an S rating.
 
@@ -270,13 +270,13 @@ run everything in to help with reproducibility. The first test is being used as
 an example in this paper, and also as a pipecleaner to show that everything
 works as expected. This example is 'hello world' from octocat, but forked to my
 repository just to make sure that the repository is not polluted. The precaution
-is done just incase the agents make mistakes or do things that the original
+is done just in case the agents make mistakes or do things that the original
 author probably does not want to be bothered by.
 
 #### Test-001: Hello World Baseline
 
-First, let's look at the simplest possible test to make sure everything works.
-This is literally just creating a "Hello World" script, which is a pipecleaner
+First, let us look at the simplest possible test to make sure everything works.
+This is literally just creating a "Hello World" script, which is a pipe-cleaner
 for the infrastructure and to discuss the methodology without intermixing with
 the complexity of more realistic tests.
 
@@ -332,16 +332,16 @@ print("Hello, World!")
 
 **What Should Happen:**
 
-Even T0 (no system prompt at all) is expected to nail this test and get an 'A',
-since we're talking ≥ 0.80 scores. If T0 can't do Hello World, I will assume
+Even T0 (no system prompt at all) is expected to get an 'A',
+since we are talking ≥ 0.80 scores. If T0 cannot do Hello World, I will assume
 that something is fundamentally wrong with the framework itself and throw out
-the results. Higher tiers (T1-T6) should also ace it, as there's no reason fancy
-prompts or multi-agent setups would help with something this simple. However,
-if performance drop on this test, it means the added complexity is actually
-making things worse even on something so simple, so if this happens, we will
-analyze why.
+the results. Higher tiers (T1-T6) should also succeed, as there is no reason
+fancy prompts or multi-agent setups would help with something this simple.
+However, if performance drops on this test, it means the added complexity is
+actually making things worse even on something so simple, so if this happens, we
+will analyze why.
 
-Now that we have gone over the test itself, lets discuss the strategy and tiered
+Now that we have gone over the test itself, let us discuss the strategy and tiered
 approach. The first thing to test is with no prompt at all, including no system
 prompt, if the tool allows it. This is to provide as close to a baseline as the
 base model as possible by overwriting the system prompt with an empty string and
@@ -358,7 +358,7 @@ interesting results.
 
 The core idea is simple: start with nothing, then add one set of things at a
 time to see what actually helps. This ablation study uses seven tiers that
-progressively add complexity, with **~114 sub-tests** total. Each tier gets
+progressively add complexity, with **113 sub-tests** total. Each tier gets
 tested independently so we can isolate what each component contributes.
 
 **Table 4.3: Testing Tiers (Ablation Study Framework)**
@@ -366,7 +366,7 @@ tested independently so we can isolate what each component contributes.
 | Tier | Name | Sub-tests | Primary Focus | Tools | Delegation | Key Characteristic |
 |------|------|-----------|---------------|-------|------------|-------------------|
 | T0 | Prompts | 24 | System prompt ablation (empty → full) | - | No | Baseline: empty prompt (00) through full 1787-line CLAUDE.md (03) plus 18 individual blocks (B01-B18) |
-| T1 | Skills | 11 | Domain expertise via installed skills | Default | No | Token-efficient domain knowledge; categories: Agent (5), CI/CD (7), Documentation (4), GitHub (10), Language Specific (10), Quality (5), Workflow (5) |
+| T1 | Skills | 10 | Domain expertise via installed skills | Default | No | Token-efficient domain knowledge; categories: Agent (5), CI/CD (7), Documentation (4), GitHub (10), Language Specific (10), Quality (5), Workflow (5) |
 | T2 | Tooling | 15 | External tools and MCP servers | Yes | No | External API access; introduces token efficiency chasm from schema loading |
 | T3 | Delegation | 41 | Flat multi-agent with specialists | Yes | Yes | Atomic task design; flat orchestration with specialist agents (L2-L5) |
 | T4 | Hierarchy | 7 | Nested orchestration with orchestrators | Yes | Yes | Hierarchical coordination (L0-L1); Task Decomposer, Actor, Monitor, Evaluator roles |
@@ -380,12 +380,11 @@ tested independently so we can isolate what each component contributes.
    (03-full). Individual blocks (B01-B18) let me test each piece of the prompt
    separately to see what actually matters.
 
-2. **T1-T2 (Skills vs Tools):** Here's where it gets interesting. T1 uses
-   skills, domain knowledge baked into prompts. Token-efficient. T2 uses
-   external tools via JSON schemas. Problem is, loading all those tool
-   definitions inflates token usage. I call this the "Token Efficiency Chasm" -
-   the gap between lean skill-based approaches and schema-heavy tool
-   architectures.
+2. **T1-T2 (Skills vs Tools):** T1 uses skills, domain knowledge baked into
+   prompts. Token-efficient. T2 uses external tools via JSON schemas. Problem
+   is, loading all those tool definitions inflates token usage. I call this the
+   "Token Efficiency Chasm", the gap between lean skill-based approaches and
+   schema-heavy tool architectures.
 
 3. **T3-T4 (Multi-Agent Setups):** T3 does flat delegation, breaking tasks into
    smaller pieces and assigning them to specialist agents. T4 adds hierarchy
@@ -393,7 +392,7 @@ tested independently so we can isolate what each component contributes.
 
 4. **T5 (Smart Combinations):** Take what works from the other tiers, combine
    then together in different combinations. A single test would have the best
-   T1 skills, T2 tools, T3 agents, and T4 task delegation. We don't want to
+   T1 skills, T2 tools, T3 agents, and T4 task delegation. We do not want to
    brute force here due to combinatorial explosion, but picking combinations of
    the top few categories can help give idea what combinations work best
    together.
@@ -403,8 +402,8 @@ tested independently so we can isolate what each component contributes.
    performance and shows where diminishing returns kick in, but also can show
    signs of over-engineering if it is occurring.
 
-**The Key:** For each tier T(n), I compare it directly against T(n-1) to see
-what that specific change actually buys you in terms of performance and cost.
+For each tier T(n), I compare it directly against T(n-1) to see what that
+specific change actually achieves in terms of performance and cost.
 
 ### 4.2 Dimensional Search Space
 
@@ -445,7 +444,7 @@ contributes to the whole.
 
 #### 4.2.3 Skill Complexity Axis
 
-Skills are organized by domain. Here's what we're testing in T1:
+Skills are organized by domain. Here is what we are testing in T1:
 
 | Category | Count | Example Domains | Token Efficiency |
 |----------|-------|-----------------|------------------|
@@ -457,9 +456,9 @@ Skills are organized by domain. Here's what we're testing in T1:
 | Quality | 5 | Code quality and review | Medium |
 | Workflow | 5 | Development workflow patterns | High |
 
-**Total**: 46 skills across 7 categories. The big advantage? Skills bake
-knowledge into prompts, so you avoid loading massive tool schemas. But do these
-actually improve performance? That is an open question.
+**Total**: 46 skills across 7 categories. Skills bake knowledge into prompts, so
+you avoid loading massive tool schemas. But do these actually improve
+performance? That is an open question.
 
 #### 4.2.4 Agent Hierarchy Axis
 
@@ -503,7 +502,7 @@ self-correction loops.
 $$\text{Consistency} = 1 - \frac{\sigma(\text{outputs})}{\mu(\text{outputs})}$$
 
 Range is 0.0 to 1.0, higher means more deterministic. Matters most for where
-you're trying to get reliable structured outputs.
+you are trying to get reliable structured outputs.
 
 ### 5.2 Quality Metrics
 
@@ -524,18 +523,18 @@ median scoring for consensus.
 - Total response time
 - Tool execution time
 
-Matters a lot for T5 architectures where verification loops can really slow
+It matters a lot for architectures where verification loops can really slow
 things down.
 
 **Token Distribution** shows where your tokens are going:
 
 $$\text{token\_dist} = \left\{ \frac{\text{input\_tokens}}{\text{total\_tokens}}, \frac{\text{output\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_input\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_output\_tokens}}{\text{total\_tokens}} \right\}$$
 
-Useful for figuring out what's actually costing you money (like T3's massive
-agent prompts or T4's orchestration overhead).
+Useful for figuring out what is actually contributing to the cost(like T3's
+massive agent prompts or T4's orchestration overhead).
 
-**Cost-of-Pass (CoP)** is the key metric, what's the expected cost to get one
-correct solution:
+**Cost-of-Pass (CoP)** is the primary metric, what is the expected cost to get
+one correct solution:
 
 $$\text{CoP} = \frac{\text{total\_cost}}{\text{pass\_rate}}$$
 
@@ -543,13 +542,14 @@ Units are USD. Lower is better. If pass_rate hits zero, CoP goes to infinity,
 that configuration is economically dead. This combines both cost and accuracy
 into one number that tells you if something is actually sustainable.
 
-**Frontier CoP** finds the best option:
+**Frontier CoP** represents the best CoP for all the various tests:
 
 $$\text{Frontier\_CoP} = \min(\text{CoP}_{T0}, \text{CoP}_{T1}, \ldots, \text{CoP}_{T6})$$
 
-This is just the minimum CoP across all tiers. Compare this against what it
-costs to hire a human expert to see if automation actually makes economic sense.
-Different model providers will have different cost assumptions.
+This metric currently is just the minimum CoP across all tiers. Comparing this
+against what it costs to hire a human expert will allow developers to see if
+automation actually makes economic sense. Different model providers will have
+different cost assumptions.
 
 **Model Pricing** (as of January 2026):
 
@@ -573,7 +573,7 @@ Different model providers will have different cost assumptions.
 | Compute | Standard CPU (no GPU required for evaluation) |
 
 Each test runs in its own git clone with the repo at a specific git
-commit. This means every run is reproducible and tests can't mess with each
+commit. This means every run is reproducible and tests cannot mess with each
 other. Every container starts fresh with:
 
 - Clean git workspace at the exact commit specified
@@ -632,7 +632,7 @@ The evaluation harness does five things:
 
 ### 7.1 Pull Request (PR) Selection Criteria
 
-Test cases come from real software development tasks. Here's what I consider to
+Test cases come from real software development tasks. Here is what I consider to
 make a good test:
 
 1. **Reproducible**: Pin it to a specific git commit
@@ -655,7 +655,7 @@ Complexity also depends on:
 - How many tool calls you need
 - How much of the codebase you have to understand
 - How many sequential steps
-- How many constraints you're working under
+- How many constraints you are working under
 
 ### 7.2 Workflow Categories
 
@@ -675,7 +675,7 @@ Different categories test different capabilities:
 
 ### 7.3 Test Case Matrix
 
-I've designed **47 planned test cases** covering different workflows and
+I have designed **47 planned test cases** covering different workflows and
 complexity levels:
 
 | Test ID Range | Workflow Focus | Representative Task |
@@ -703,7 +703,7 @@ runs_per_tier: 10  # Get enough data for stats
 ```
 
 Tests get progressively harder. Performance should drop as complexity increases,
-if it doesn't, the test is too easy even for the advanced models.
+if it does not, the test is too easy even for the advanced models.
 
 ---
 
@@ -711,20 +711,17 @@ if it doesn't, the test is too easy even for the advanced models.
 
 ### 8.1 Claude Code Models
 
-I'm primarily testing Claude models through the Claude Code CLI:
+I am primarily testing Claude models through the Claude Code CLI:
 
-**Opus 4.5** is the heavy hitter for T4-T6 where you need deep reasoning and
-self-correction. With 200K context and strong multi-step capabilities, it
-handles the complex stuff. Also the authoritative judge in my three-model
-consensus setup.
+**Opus 4.5** is expected to be accel in T4-T6 where you need deep reasoning and
+self-correction.
 
-**Sonnet 4.5** is the workhorse for T1-T3. Balanced cost/performance at $3/$15
-per million tokens. Handles most standard dev work---code gen, refactoring,
-build configs. The middle judge for consensus.
+**Sonnet 4.5** is expected to show benefits at T1-T3. Balanced cost/performance
+at $3/$15 per million tokens.
 
-**Haiku 4.5** is for simple T0-T1 tasks where fancy features don't help. At
-$1/$5 per million tokens, it's 15x cheaper than Opus for inputs. Still capable
-enough for straightforward scripts, and provides diversity as the third judge.
+**Haiku 4.5** is expected to be the choice for simple T0-T1 tasks where fancy
+features do not help. At $1/$5 per million tokens, it is 15x cheaper than Opus
+for inputs. It is not expected to work well with agents, tools, or skills.
 
 ### 8.2 Model-Agnostic Framework Design
 
@@ -732,7 +729,7 @@ The framework is designed to work with any CLI tool or model:
 
 1. **Standardized Interfaces**: Everything goes through the CLI's language
    interface and filesystem outputs. Never touches model APIs directly. This
-   means vendor-specific details don't matter.
+   means vendor-specific details do not matter.
 
 2. **Consistent Metrics**: CoP, Pass-Rate, Impl-Rate work the same across all
    models. You can do apples-to-apples economic comparisons.
@@ -743,7 +740,7 @@ The framework is designed to work with any CLI tool or model:
 4. **Same Tier Structure**: T0-T6 applies to all tools. Direct architectural
    comparisons across vendors.
 
-5. **Reproducible Configs**: Everything's in version-controlled YAML, model IDs,
+5. **Reproducible Configs**: Everything is in version-controlled YAML, model IDs,
    temperature, token limits. Easy to reproduce across different tools.
 
 This means you can benchmark OpenCode, Codex, Goose, or whatever new tool
@@ -753,23 +750,24 @@ comes out, and the comparisons stay valid.
 
 ## 9. Results
 
-I'll present results from the dryrun experiment (test-001, Hello World task)
+I will present results from the dryrun experiment (test-001, Hello World task)
 across all seven tiers. The dryrun serves as a pipeline validation exercise with
 N=1 run per tier, establishing that the framework executes end-to-end
 successfully and generates the expected metrics, figures, and tables. Think of
 this as a "smoke test" — if the pipeline works on the simplest possible task, I
-know it'll handle the complex stuff later.
+know it will handle the complex stuff later.
 
 ### 9.1 Pipeline Validation (Dryrun Overview)
 
-First, here's what I ran for the dry run:
+First, the dry run was executed with the following setup:
 
 - **Scope**: 1 model (Sonnet 4.5), 7 tiers (T0-T6), 1 subtest per tier
 - **Judges**: 3 judges per run (Opus 4.5, Sonnet 4.5, Haiku 4.5) = 21 total
   judge evaluations
 - **Criteria**: 5 criteria per judge × 21 judges = 105 total criteria scores
 - **Total cost**: $1.01 (agent execution + judge evaluation)
-- **Total duration**: ~1289 seconds (~21.5 minutes) total across all tiers
+- **Total duration**: ~1289 seconds (~21.5 minutes) sum of per-tier durations;
+  actual wall-clock time was ~550 seconds due to parallel execution
 - **Pass rate**: 100% (all 7 tiers passed, all grade A)
 
 Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
@@ -778,7 +776,7 @@ trivially easy, as expected — even T0 (minimal prompt) scores 0.973.
 
 **Table 1: Tier Summary (Dryrun)**
 
-| Tier | Pass Rate | Mean Score (±σ) | Median Score | Grade | CoP ($) |
+| Tier | Pass Rate | Mean Score | Median Score | Grade | CoP ($) |
 |------|-----------|-----------------|--------------|-------|---------|
 | T0   | 1.000     | 0.973           | 0.973        | A     | 0.14    |
 | T1   | 1.000     | 0.970           | 0.970        | A     | 0.13    |
@@ -811,9 +809,8 @@ tiers.
 7. **T6** (super): $0.247 — Maximum configuration is 3.8x Frontier CoP;
    diminishing returns evident
 
-Here's the thing: T6 (everything enabled) costs the most despite scoring the
-lowest (0.943). Over-engineering at its finest—loading 61 skills + all tools +
-44 agents adds cost without improving quality on this trivial task.
+T6 (everything enabled) costs the most despite scoring the lowest (0.943). This
+is a kitchen sink approach, to see when more equals better.
 
 ### 9.3 Token Analysis
 
@@ -836,10 +833,10 @@ prompt caching works. But cache creation tokens vary dramatically:
 | T5   | 26    | 625    | **4,629**    | 109,368    | 114,648 |
 | T6   | 29    | 722    | **44,337**   | 218,778    | 263,866 |
 
-The Token Efficiency Chasm I mentioned in Section 4? Confirmed. T6 requires 218K
-cache read tokens versus T0's 113K—a 1.94x increase (nearly double). T5 achieves
-efficiency by minimizing cache creation (4.6K vs 23-44K), validating the hybrid
-strategy.
+The Token Efficiency Chasm I mentioned in Section 4? The data is consistent with
+this hypothesis. T6 requires 218K cache read tokens versus T0's 113K—a 1.94x
+increase (nearly double). T5 achieves efficiency by minimizing cache creation
+(4.6K vs 23-44K), supporting the hybrid strategy.
 
 Output tokens stay stable at 558-725 across tiers, showing the task itself
 requires similar generation regardless of architecture.
@@ -895,7 +892,9 @@ pairwise agreement.
 - **Sonnet-Haiku**: Spearman ρ = -0.522, Pearson r = -0.347, mean Δ = 0.037
 
 Krippendorff's α (interval): -0.117. Poor agreement, but expected with N=1 per
-tier.
+tier. **Note**: N=7 is insufficient for reliable correlation estimates; these
+values are reported for completeness but should be interpreted with extreme
+caution.
 
 Despite low inter-rater agreement, the 3-judge median produces stable final
 scores. The median dampens extreme scores—Haiku's 1.00 perfects versus Opus's
@@ -921,7 +920,7 @@ execution.
 
 ### 9.7 Statistical Limitations
 
-N=1 prevents inferential statistics. With only one run per tier, I can't compute
+N=1 prevents inferential statistics. With only one run per tier, I cannot compute
 confidence intervals, standard deviations, or perform significance tests. All
 results are purely descriptive. This is a limitation of this run and not the
 framework itself.
@@ -936,9 +935,10 @@ are not expected to be robust.
 
 ## 10. Discussion
 
-So what does this dryrun actually tell us? Let's dig into what I learned about
-the framework's behavior on this trivially simple task, while being honest about
-the limitations inherent in N=1 experiments and ceiling effects.
+The dry run is not very useful for serious analysis, but what I will dive into
+what I learned about the framework's behavior on this trivially simple task,
+while being honest about the limitations inherent in N=1 experiments and ceiling
+effects.
 
 ### 10.1 What the Dryrun Tells Us
 
@@ -947,7 +947,7 @@ A with median scores between 0.943-0.983. This validates exactly what I said in
 Section 4: "Even T0 should nail this test." And it did.
 
 **Ceiling effect dominates**: When quality converges at near-perfect levels, we
-can't differentiate tiers by capability. T0's empty prompt (subtest 00 uses no
+cannot differentiate tiers by capability. T0's empty prompt (subtest 00 uses no
 system prompt at all) and T6's maximal configuration (61 skills + all tools + 44
 agents) produce equivalent functional output. This is exactly what we expect for
 Hello World — no amount of architectural sophistication helps when the task
@@ -959,41 +959,42 @@ ability to measure economic trade-offs even when quality metrics saturate. On
 more complex tasks with quality variance, both dimensions should differentiate.
 
 **Pipeline validation successful**: The framework executed all seven tiers,
-collected 21 judge evaluations, computed consensus scores, generated 26 figures
+collected 21 judge evaluations, computed consensus scores, generated 25 figures
 and 10 tables, and produced structured CSV exports. All components worked as
 designed.
 
 ### 10.2 Cost-Performance Trade-offs
 
-The dryrun reveals hints of a pattern: more isn't always better.
+The dryrun reveals hints of a pattern: more is not always better.
 
 T5 achieves Frontier CoP through selective feature loading—it combines T1's
 efficient skills with T3's delegation patterns but avoids T6's "everything
 enabled" overhead. T5's cache creation tokens (4,629) are 5-10x lower than other
 tiers (23,106-44,337), directly explaining its cost advantage.
 
-Here's the kicker: T6 costs the most ($0.247, or 3.8x Frontier CoP) despite
-scoring the lowest (0.943). Loading 61 skills + all tools + 44 agents actually
-made things worse. Judges explicitly noted cache artifacts and unnecessary
-complexity. This lines up with the hypothesis that prompt complexity hurts
-quality when the task is in the model's training set.
+T6 costs the most ($0.247, or 3.8x Frontier CoP) despite scoring the lowest
+(0.943). Loading 61 skills + all tools + 44 agents actually made things worse.
+Judges explicitly noted cache artifacts and unnecessary complexity. This lines
+up with the hypothesis that prompt complexity hurts quality when the task is in
+the model's training set.
 
 T4's hierarchical overhead is another example. T4 costs 30% more than T3
 ($0.168 vs $0.129) for this trivial task. The self-correction loops and nested
 orchestration add latency (41.2s vs 29.9s) without improving quality. On complex
 tasks needing iterative refinement, maybe T4 justifies the overhead. On simple
-tasks, it's pure waste.
+tasks, it is pure waste.
 
-The Token Efficiency Chasm I talked about in Section 4? Confirmed. T6's 218K
-cache read tokens versus T0's 113K (1.94x increase) shows the cost of loading
-tool schemas. T2 (tooling) shows similar bloat—137K total tokens versus T1's
-115K. Skills-based approaches (T1, T3) stay lean while still enabling domain
-knowledge.
+The Token Efficiency Chasm I talked about in Section 4? The data supports this
+hypothesis. T6's 218K cache read tokens versus T0's 113K (1.94x increase) shows
+the cost of loading tool schemas. T2 (tooling) shows similar bloat—137K total
+tokens versus T1's 115K. Skills-based approaches (T1, T3) stay lean while still
+enabling domain knowledge.
 
-Bottom line for production: match tier complexity to task complexity. Don't use
-T6 for trivial tasks. Don't use T0 for tasks needing specialized tools or
-multi-step reasoning. T5's hybrid approach nails it—load features selectively
-based on what the task actually needs, don't just maximize everything.
+Bottom line for production: match tier complexity to task complexity. Do not use
+T6 for trivial tasks. Do not use T0 for tasks needing specialized tools or
+multi-step reasoning. T5's hybrid approach seems to be optimal, load features
+selectively based on what the task actually needs, do not just maximize
+everything.
 
 ### 10.3 Judge Behavior
 
@@ -1013,7 +1014,7 @@ incorrect and points to agents being a little too lenient. Maybe some prompt
 tweaks will fix this, but that also can be due to the simplicity of this task.
 This can be investigated in future analysis.
 
-Inter-rater agreement is predictably low: Krippendorff's α = -0.117. But that's
+Inter-rater agreement is predictably low: Krippendorff's α = -0.117. But that is
 expected with N=1 and near-perfect scores. On tasks with more variance,
 agreement should improve as judges separate clear failures from clear successes.
 
@@ -1024,24 +1025,24 @@ either extreme. This validates the multi-judge consensus design.
 One scaling problem: judge time dominates total latency. 77-86% of execution
 time is judge evaluation (128-178s), not agent execution (25-41s). With 3 judges
 per run, judge costs are 3x per evaluation. For large-scale experiments (N=10 ×
-113 subtests = 1,130 runs × 3 judges = 3,390 judge evaluations), judges eat the
-budget. Future work should explore single-judge evaluation, confidence-based
-selection (use Opus only when Sonnet/Haiku disagree), evaluate if prompt
-improvements can get the cheaper Haiku model to be an effective judge, or
-give different prompts to the same judge model.
+113 subtests = 1,130 runs × 3 judges = 3,390 judge evaluations), judge cost uses
+the budget fast. Future work should explore single-judge evaluation,
+confidence-based selection (use Opus only when Sonnet/Haiku disagree), evaluate
+if prompt improvements can get the cheaper Haiku model to be an effective judge,
+or give different prompts to the same judge model.
 
 ### 10.4 Limitations
 
-N=1 is descriptive only. I can't compute standard deviations, confidence
+N=1 is descriptive only. I cannot compute standard deviations, confidence
 intervals, or significance tests. All tier comparisons are point estimates. A
 single outlier run could flip all the conclusions.
 
-Single task, trivial complexity. Hello World doesn't need skills, tools,
+Single task, trivial complexity. Hello World does not need skills, tools,
 multi-agent coordination, or hierarchical reasoning. The dryrun validates the
 pipeline works, not whether architectural complexity improves quality on hard
 tasks.
 
-Single model. All agent runs use Sonnet 4.5. I haven't tested whether tier
+Single model. All agent runs use Sonnet 4.5. I have not tested whether tier
 rankings hold for Opus 4.5, Haiku 4.5, or other model families.
 
 No thinking mode variants. The dryrun uses standard inference without extended
@@ -1049,7 +1050,7 @@ thinking. Models with thinking enabled might show different cost-quality
 trade-offs.
 
 Ceiling effect masks capability differences. When all tiers score 0.94-0.98, I
-can't tell which architecture would excel on harder tasks. The full experiment
+cannot tell which architecture would excel on harder tasks. The full experiment
 (113 subtests including complex multi-file repos) will differentiate
 capabilities.
 
@@ -1067,39 +1068,39 @@ validates the methodology on the simplest possible task—Hello World—before I
 scale up to complex multi-file repos. What is missing is review and feedback
 from others, which is what this paper helps enable.
 
-What did I learn? Five things stand out. The framework is operational. Quality
-converges on trivial tasks, making the framework overkill. All tiers scored
-grade A, proving that throwing more complexity at Hello World doesn't help,
-which should be obvious. That obviousness is what makes it a good pipecleaning
-run. Cost still varies 3.8x despite identical quality, showing the framework can
-measure economic trade-offs even when quality saturates. T5's hybrid approach
-achieves Frontier CoP by selectively loading features instead of maximizing
-everything. And the Token Efficiency Chasm I hypothesized in Section 4?
-That I can say is confirmed, as T6 burns nearly double the tokens (218K vs 113K)
-compared to T0.
+There are multiple things that stand out from this analysis. The framework is
+operational. Quality converges on trivial tasks, making the framework overkill.
+All tiers scored grade A, proving that throwing more complexity at Hello World
+does not help, which should be obvious. That obviousness is what makes it a good
+pipecleaning run. Cost still varies 3.8x despite identical quality, showing the
+framework can measure economic trade-offs even when quality saturates. T5's
+hybrid approach achieves Frontier CoP by selectively loading features instead of
+maximizing everything. And the Token Efficiency Chasm I hypothesized in Section
+4?  The data is consistent with this hypothesis, as T6 burns nearly double the
+tokens (218K vs 113K) compared to T0.
 
 Did I answer my original questions? Partially. CoP lets me quantify efficiency;
 T5 is 3.8x cheaper than T6 despite equivalent quality. On this task, the sum is
 *not* more than the parts; T6 scores lowest despite highest cost.
-But the hard questions need harder tasks, I can't tell if any tier dominates
-universally from a single Hello World run, and I haven't tested model-to-model
-comparisons yet. That work is left for a future excercise.
+But the hard questions need harder tasks, I cannot tell if any tier dominates
+universally from a single Hello World run, and I have not tested model-to-model
+comparisons yet. That work is left for a future exercise.
 
-What about my hypotheses? The KISS principle hypothesis has hints of being
-confirmed, maximal complexity (T6) scores worst on this training-set-likely
-task. But I haven't tested inverse KISS on out-of-distribution tasks yet, and
-specialization advantages (H1) are inconclusive because Hello World doesn't
+What about my hypotheses? The KISS principle hypothesis shows preliminary
+evidence, as maximal complexity (T6) scores worst on this training-set-likely
+task. But I have not tested inverse KISS on out-of-distribution tasks yet, and
+specialization advantages (H1) are inconclusive because Hello World does not
 require delegation or tools.
 
 There is no real practical takeaway yet, since the testing was insufficient to
 come to any real conclusions. Answering those questions is left for the next
-excercise, and this framework can be used for doing so.
+exercise, and this framework can be used for doing so.
 
 ---
 
 ## 12. Further Work
 
-The dryrun validates the framework works. Now it's time to scale up and fill in
+The dryrun validates the framework works. Now it is time to scale up and fill in
 the gaps.
 
 **Full-scale experiments**: Run the complete test001 dataset with (N=10, 113
@@ -1115,13 +1116,13 @@ hold across workflow categories or if certain tiers excel at specific task
 types.
 
 **Cross-vendor and cross-model evaluation**: The framework is model-agnostic by
-design. I'd love to extend support to other tools, but right now just doing
+design. I would love to extend support to other tools, but right now just doing
 analysis on Claude Code alone is hitting my budgets for experimentation
 extremely quickly. Setting up local models and accessing tools using these
-models will allow more experimentation, but I don't have access to that kind of
+models will allow more experimentation, but I do not have access to that kind of
 compute within my budget at the moment.
 
-**Advanced analysis**: I am by no means a statician, and choices I have made
+**Advanced analysis**: I am by no means a statistician, and choices I have made
 here might be incorrect. My current analysis uses frequentist statistics. There
 are more advanced analysis that I am learning about that could help analyze the
 flood of data more efficiently. There is also other metrics and data points that
@@ -1323,19 +1324,27 @@ cd ProjectScylla
 pixi install
 
 # 3. Run evaluation (example for test-001, tier T0)
-pixi run python scylla/run_evaluation.py \
+pixi run python scripts/run_e2e_experiment.py \
   --test tests/001-hello-world \
   --tier T0 \
   --runs 10
 
-# 4. Generate report
-pixi run python scylla/generate_report.py \
-  --results runs/001-hello-world/T0
+# 4. Generate figures and tables
+pixi run python scripts/generate_figures.py \
+  --results <output_directory>
+pixi run python scripts/generate_tables.py \
+  --results <output_directory>
 ```
 
 **Artifact Locations**:
 
-- Run outputs: `<project_root>/runs/<test-id>/<tier>/`
-- Consensus judgments: `<project_root>/runs/<test-id>/<tier>/judgment.json`
-- Metrics summaries: `<project_root>/summaries/<test-id>/metrics.json`
-- Final reports: `<project_root>/reports/<test-id>/report.md`
+By default, experiment outputs are written to a timestamped directory outside
+the project root (e.g., `~/fullruns/<experiment-id>/<timestamp>/`). The output
+directory structure contains:
+
+- Tier results: `<output_dir>/<tier>/<subtest>/run_<N>/`
+- Workspace snapshots: `<output_dir>/<tier>/<subtest>/run_<N>/workspace/`
+- Agent logs: `<output_dir>/<tier>/<subtest>/run_<N>/agent/`
+- Consensus results: `<output_dir>/result.json`
+- Analysis outputs: Generated by `scripts/generate_figures.py` and
+  `scripts/generate_tables.py` from the `result.json` file
