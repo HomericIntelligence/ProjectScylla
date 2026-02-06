@@ -452,11 +452,20 @@ def convert_paper_to_latex(paper_path: Path, output_path: Path):
                 latex_lines.append("")
                 continue
 
-            # Skip keywords section
+            # Handle keywords section (keep as-is, don't make it a section)
             if title.lower() == "keywords":
+                latex_lines.append(r"\begin{center}")
+                latex_lines.append(r"\textbf{Keywords:}")
+                # Collect keywords text
                 i += 1
+                keyword_lines = []
                 while i < len(lines) and not lines[i].startswith("##"):
+                    if lines[i].strip() and lines[i].strip() not in ["---", "***", "___"]:
+                        keyword_lines.append(convert_inline_formatting(lines[i]))
                     i += 1
+                latex_lines.extend(keyword_lines)
+                latex_lines.append(r"\end{center}")
+                latex_lines.append("")
                 continue
 
             title = convert_inline_formatting(title)
@@ -470,10 +479,13 @@ def convert_paper_to_latex(paper_path: Path, output_path: Path):
                 i += 1
                 continue
 
-            # Check for appendix
-            if "appendix" in title.lower():
+            # Check for appendix section (triggers \appendix command)
+            if title.lower() == "appendices":
                 latex_lines.append("")
                 latex_lines.append(r"\appendix")
+                # Don't create a section for "Appendices" itself, just emit \appendix
+                i += 1
+                continue
 
             latex_lines.append(f"\\section{{{title}}}")
             latex_lines.append("")
@@ -489,8 +501,17 @@ def convert_paper_to_latex(paper_path: Path, output_path: Path):
             # Strip "###" and optional subsection numbers like "4.1 "
             title = line[3:].strip()
             title = re.sub(r"^\d+\.\d+\.?\s+", "", title)
-            title = convert_inline_formatting(title)
-            latex_lines.append(f"\\subsection{{{title}}}")
+
+            # Check if this is an appendix subsection (e.g., "Appendix A:")
+            # These should be \section after \appendix, not \subsection
+            if title.lower().startswith("appendix "):
+                # Remove "Appendix " prefix for cleaner section title
+                appendix_title = title[9:].strip()  # Remove "Appendix "
+                latex_lines.append(f"\\section{{{appendix_title}}}")
+            else:
+                title = convert_inline_formatting(title)
+                latex_lines.append(f"\\subsection{{{title}}}")
+
             latex_lines.append("")
             i += 1
             continue
@@ -554,21 +575,36 @@ def convert_paper_to_latex(paper_path: Path, output_path: Path):
                 in_list = False
 
         # Check for figure references and insert main body figures
-        fig_pattern = r"Figure\s+(\d+)\s*\(see\s+docs/paper-dryrun/figures/(fig\d+)"
-        fig_match = re.search(fig_pattern, line)
-        if fig_match:
-            fig_num = fig_match.group(2)
-            # Replace reference text
-            line = re.sub(r"Figure\s+\d+\s*\([^)]+\)", f"Figure~\\ref{{fig:{fig_num}}}", line)
+        # Look for patterns like "Figure 7 (see `docs/paper-dryrun/figures/fig07_..."
+        # Handle multi-line references and multiple figures on same line
+        combined_text = line
+        if i + 1 < len(lines):
+            combined_text += " " + lines[i + 1]
+        if i + 2 < len(lines):
+            combined_text += " " + lines[i + 2]
+
+        # Find all figure numbers mentioned (fig01, fig02, etc.)
+        fig_nums_in_text = re.findall(r"(fig\d+)_", combined_text)
+
+        if "Figure" in line and fig_nums_in_text:
+            # Replace all "Figure N (see ...)" with "Figure~\ref{fig:figNN}"
+            for fig_num in fig_nums_in_text:
+                # Replace pattern like "Figure 7 (see `docs/.../fig07_...`)"
+                line = re.sub(
+                    rf"Figure\s+\d+\s*\(see\s+`?docs/paper-dryrun/figures/{fig_num}_[^`)]+`?\)",
+                    f"Figure~\\ref{{fig:{fig_num}}}",
+                    line,
+                )
 
             line = convert_inline_formatting(line)
             latex_lines.append(line)
 
-            # Insert figure if it's a main body figure and not already inserted
-            if fig_num in MAIN_BODY_FIGURES and fig_num not in inserted_figures:
-                latex_lines.append("")
-                latex_lines.append(generate_figure_latex(fig_num))
-                inserted_figures.add(fig_num)
+            # Insert all main body figures found on this line
+            for fig_num in fig_nums_in_text:
+                if fig_num in MAIN_BODY_FIGURES and fig_num not in inserted_figures:
+                    latex_lines.append("")
+                    latex_lines.append(generate_figure_latex(fig_num))
+                    inserted_figures.add(fig_num)
 
             i += 1
             continue
@@ -601,21 +637,6 @@ def convert_paper_to_latex(paper_path: Path, output_path: Path):
     if in_list:
         latex_lines.append(f"\\end{{{list_type}}}")
         latex_lines.append("")
-
-    # Add appendix figures
-    latex_lines.append(r"\clearpage")
-    latex_lines.append(r"\appendix")
-    latex_lines.append(r"\section{Additional Figures}")
-    latex_lines.append("")
-
-    for category, figures in APPENDIX_FIGURES.items():
-        latex_lines.append(f"\\subsection{{{category}}}")
-        latex_lines.append("")
-
-        for fig in figures:
-            if fig not in inserted_figures:
-                latex_lines.append(generate_figure_latex(fig, width="0.75\\textwidth"))
-                inserted_figures.add(fig)
 
     # End document
     latex_lines.append(r"\end{document}")
