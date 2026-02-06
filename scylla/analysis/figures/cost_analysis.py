@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 
 
 def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -210,13 +210,16 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
     shape_options = ["circle", "square", "triangle-up", "diamond", "cross"]
     shape_range = [shape_options[i % len(shape_options)] for i in range(len(models))]
 
+    # Compute dynamic domain for score axis
+    score_domain = compute_dynamic_domain(tier_stats["mean_score"])
+
     # Create scatter plot
     scatter = (
         alt.Chart(tier_stats)
         .mark_circle(size=100)
         .encode(
             x=alt.X("mean_cost:Q", title="Mean Cost per Run (USD)", scale=alt.Scale(type="log")),
-            y=alt.Y("mean_score:Q", title="Mean Score", scale=alt.Scale(domain=[0, 1])),
+            y=alt.Y("mean_score:Q", title="Mean Score", scale=alt.Scale(domain=score_domain)),
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",

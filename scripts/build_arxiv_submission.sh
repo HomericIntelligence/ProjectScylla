@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build arXiv submission package from paper.md
+# Build arXiv submission package from paper.tex
 
 set -e  # Exit on error
 
@@ -13,30 +13,31 @@ echo "=========================================="
 echo ""
 
 # Step 1: Create directory structure
-echo "[1/10] Creating directory structure..."
+echo "[1/11] Creating directory structure..."
 mkdir -p "${ARXIV_DIR}/figures"
 mkdir -p "${ARXIV_DIR}/tables"
 echo "✓ Directories created"
 echo ""
 
-# Step 2: Check if main.tex exists (skip conversion if manually edited)
-echo "[2/10] Checking for main.tex..."
-if [ -f "${ARXIV_DIR}/main.tex" ]; then
-    echo "✓ main.tex exists (skipping conversion to preserve manual edits)"
-else
-    echo "  Generating main.tex from paper.md..."
-    cd "${PROJECT_ROOT}"
-    pixi run python scripts/build_arxiv_paper.py
-    if [ ! -f "${ARXIV_DIR}/main.tex" ]; then
-        echo "✗ Error: main.tex not generated"
-        exit 1
-    fi
-    echo "✓ LaTeX generated"
+# Step 1.5: Verify paper alignment
+echo "[1.5/11] Verifying paper.md <-> paper.tex alignment..."
+cd "${PROJECT_ROOT}"
+pixi run python scripts/verify_paper_alignment.py || echo "⚠ Warning: alignment issues found (continuing anyway)"
+echo ""
+
+# Step 2: Generate main.tex from paper.tex (always regenerate)
+echo "[2/11] Generating main.tex from paper.tex..."
+cd "${PROJECT_ROOT}"
+pixi run python scripts/build_arxiv_paper.py
+if [ ! -f "${ARXIV_DIR}/main.tex" ]; then
+    echo "✗ Error: main.tex not generated"
+    exit 1
 fi
+echo "✓ main.tex generated from paper.tex"
 echo ""
 
 # Step 3: Copy figures
-echo "[3/10] Copying figures..."
+echo "[3/11] Copying figures..."
 FIGURE_COUNT=0
 for pdf in docs/paper-dryrun/figures/*.pdf; do
     if [ -f "$pdf" ]; then
@@ -48,7 +49,7 @@ echo "✓ Copied ${FIGURE_COUNT} figure PDFs"
 echo ""
 
 # Step 4: Copy tables and fix underscores
-echo "[4/10] Copying tables..."
+echo "[4/11] Copying tables..."
 TABLE_COUNT=0
 for tex in docs/paper-dryrun/tables/*.tex; do
     if [ -f "$tex" ]; then
@@ -61,13 +62,13 @@ echo "✓ Copied ${TABLE_COUNT} table .tex files"
 echo ""
 
 # Step 5: Copy bibliography
-echo "[5/10] Copying bibliography..."
+echo "[5/11] Copying bibliography..."
 cp docs/references.bib "${ARXIV_DIR}/references.bib"
 echo "✓ Bibliography copied"
 echo ""
 
 # Step 6: Create 00README.json
-echo "[6/10] Creating 00README.json..."
+echo "[6/11] Creating 00README.json..."
 cat > "${ARXIV_DIR}/00README.json" << 'EOF'
 {
   "spec_version": 1,
@@ -84,7 +85,7 @@ echo "✓ 00README.json created"
 echo ""
 
 # Step 7: Compile LaTeX
-echo "[7/10] Compiling LaTeX (pdflatex → bibtex → pdflatex × 2)..."
+echo "[7/11] Compiling LaTeX (pdflatex → bibtex → pdflatex × 2)..."
 cd "${ARXIV_DIR}"
 
 # Clean any stale auxiliary files
@@ -124,7 +125,7 @@ echo "✓ Compilation successful"
 echo ""
 
 # Step 8: Validate output
-echo "[8/10] Validating PDF output..."
+echo "[8/11] Validating PDF output..."
 if [ ! -f "main.pdf" ]; then
     echo "✗ Error: main.pdf not generated"
     exit 1
@@ -149,7 +150,7 @@ echo "✓ PDF validated (size: ${PDF_SIZE} bytes)"
 echo ""
 
 # Step 9: Create submission tarball
-echo "[9/10] Creating submission tarball..."
+echo "[9/11] Creating submission tarball..."
 
 # Files to include
 tar -czf submission.tar.gz \
@@ -165,7 +166,7 @@ echo "✓ Tarball created (size: ${TARBALL_SIZE} bytes)"
 echo ""
 
 # Step 10: Clean auxiliary files
-echo "[10/10] Cleaning auxiliary files..."
+echo "[10/11] Cleaning auxiliary files..."
 rm -f main.aux main.log main.out main.toc main.lof main.lot main.blg
 echo "✓ Auxiliary files cleaned"
 echo ""

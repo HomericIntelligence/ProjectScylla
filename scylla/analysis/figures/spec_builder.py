@@ -16,6 +16,70 @@ import pandas as pd
 from scylla.analysis.figures import get_color_scale
 
 
+def compute_dynamic_domain(
+    series: pd.Series,
+    padding_fraction: float = 0.1,
+    min_range: float = 0.1,
+    floor: float = 0.0,
+    ceiling: float = 1.0,
+) -> list[float]:
+    """Compute tight axis domain from data with padding.
+
+    Calculates data min/max, adds padding, enforces minimum range,
+    rounds to nearest 0.05 for clean axis labels, and clamps to [floor, ceiling].
+
+    Args:
+        series: Pandas series containing numeric data
+        padding_fraction: Fraction of range to add as padding (default: 0.1 = 10%)
+        min_range: Minimum range to enforce (default: 0.1)
+        floor: Minimum allowed domain value (default: 0.0)
+        ceiling: Maximum allowed domain value (default: 1.0)
+
+    Returns:
+        Two-element list [min, max] suitable for alt.Scale(domain=...)
+
+    Example:
+        >>> data = pd.Series([0.94, 0.95, 0.96, 0.97, 0.98])
+        >>> compute_dynamic_domain(data)
+        [0.90, 1.00]  # Tight domain showing actual variation
+
+    """
+    if len(series) == 0 or series.isna().all():
+        return [floor, ceiling]
+
+    # Compute data min/max
+    data_min = float(series.min())
+    data_max = float(series.max())
+
+    # Add padding
+    data_range = data_max - data_min
+    if data_range < min_range:
+        # Center the range if it's too small
+        center = (data_min + data_max) / 2
+        data_min = center - min_range / 2
+        data_max = center + min_range / 2
+        data_range = min_range
+
+    padding = data_range * padding_fraction
+    domain_min = data_min - padding
+    domain_max = data_max + padding
+
+    # Round to nearest 0.05 for clean axis labels
+    domain_min = round(domain_min / 0.05) * 0.05
+    domain_max = round(domain_max / 0.05) * 0.05
+
+    # Clamp to [floor, ceiling]
+    domain_min = max(floor, domain_min)
+    domain_max = min(ceiling, domain_max)
+
+    # Ensure domain_min < domain_max
+    if domain_min >= domain_max:
+        domain_min = floor
+        domain_max = ceiling
+
+    return [domain_min, domain_max]
+
+
 def apply_publication_theme() -> None:
     """Register publication-quality theme for all charts."""
     theme = {

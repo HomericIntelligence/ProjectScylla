@@ -11,7 +11,7 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 from scylla.analysis.stats import (
     bonferroni_correction,
     bootstrap_ci,
@@ -234,6 +234,9 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     models = sorted(consistency_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
+    # Compute dynamic domain for consistency axis
+    consistency_domain = compute_dynamic_domain(consistency_df["mean_consistency"])
+
     # Create line chart
     line = (
         alt.Chart(consistency_df)
@@ -243,7 +246,7 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             y=alt.Y(
                 "mean_consistency:Q",
                 title="Consistency Score (1 - CV)",
-                scale=alt.Scale(domain=[0, 1]),
+                scale=alt.Scale(domain=consistency_domain),
             ),
             color=alt.Color(
                 "agent_model:N",

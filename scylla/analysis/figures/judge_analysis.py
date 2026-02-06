@@ -11,7 +11,7 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 from scylla.analysis.loader import model_id_to_display
 from scylla.analysis.stats import pearson_correlation, spearman_correlation
 
@@ -39,6 +39,9 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
     # Get dynamic color scale
     domain, range_ = get_color_scale("judges", judge_order)
 
+    # Compute dynamic domain for judge score axis
+    score_domain = compute_dynamic_domain(data["judge_score"])
+
     # Create violin plot with box plot overlay
     base = alt.Chart(data).encode(
         x=alt.X(
@@ -46,7 +49,7 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
             title="Judge Model",
             sort=judge_order,
         ),
-        y=alt.Y("judge_score:Q", title="Judge Score", scale=alt.Scale(domain=[0, 1])),
+        y=alt.Y("judge_score:Q", title="Judge Score", scale=alt.Scale(domain=score_domain)),
         color=alt.Color(
             "judge_display:N",
             title="Judge",
@@ -141,14 +144,18 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
 
     corr_df = pd.DataFrame(correlations)
 
+    # Compute dynamic domains for scatter axes
+    score_x_domain = compute_dynamic_domain(pairs_df["score_x"])
+    score_y_domain = compute_dynamic_domain(pairs_df["score_y"])
+
     # Create scatter plot with faceting
     # Use repeat instead of layer + facet to avoid issues
     scatter = (
         alt.Chart(pairs_df)
         .mark_circle(size=10, opacity=0.3)
         .encode(
-            x=alt.X("score_x:Q", title="Score (Judge X)", scale=alt.Scale(domain=[0, 1])),
-            y=alt.Y("score_y:Q", title="Score (Judge Y)", scale=alt.Scale(domain=[0, 1])),
+            x=alt.X("score_x:Q", title="Score (Judge X)", scale=alt.Scale(domain=score_x_domain)),
+            y=alt.Y("score_y:Q", title="Score (Judge Y)", scale=alt.Scale(domain=score_y_domain)),
             tooltip=[
                 alt.Tooltip("score_x:Q", title="Judge X Score", format=".3f"),
                 alt.Tooltip("score_y:Q", title="Judge Y Score", format=".3f"),
@@ -200,6 +207,9 @@ def fig17_judge_variance_overall(
     # Get dynamic color scale
     domain, range_ = get_color_scale("judges", judge_order)
 
+    # Compute dynamic domain for judge score axis
+    score_domain = compute_dynamic_domain(data["judge_score"])
+
     # Panel A: Box plot of score distributions
     boxplot = (
         alt.Chart(data)
@@ -210,7 +220,7 @@ def fig17_judge_variance_overall(
                 title="Judge Model",
                 sort=judge_order,
             ),
-            y=alt.Y("judge_score:Q", title="Judge Score", scale=alt.Scale(domain=[0, 1])),
+            y=alt.Y("judge_score:Q", title="Judge Score", scale=alt.Scale(domain=score_domain)),
             color=alt.Color(
                 "judge_display:N",
                 title="Judge",
