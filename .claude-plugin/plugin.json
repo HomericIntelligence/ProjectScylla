@@ -1,41 +1,17 @@
 {
-  "name": "paper-revision-workflow",
+  "name": "verify-experiment-completion",
   "version": "1.0.0",
-  "category": "documentation",
-  "description": "Systematic research paper revision with data validation, structural trimming, and tone unification",
+  "category": "evaluation",
+  "description": "Workflow for verifying E2E experiment completion and resuming interrupted runs",
   "author": "Claude Sonnet 4.5",
-  "created": "2026-02-01",
-  "tags": [
-    "documentation",
-    "research-papers",
-    "tone-unification",
-    "data-validation",
-    "structural-editing",
-    "academic-writing"
-  ],
-  "trigger_patterns": [
-    "review this paper for accuracy",
-    "verify all the numbers in this document",
-    "unify tone across sections",
-    "this section is too verbose",
-    "make this conversational"
-  ],
-  "related_skills": [
-    "documentation-patterns",
-    "validation-workflow"
-  ],
-  "verified_context": {
-    "document_type": "research paper",
-    "document_length": "1135 lines",
-    "sections_revised": 4,
-    "data_corrections": 9,
-    "structural_fixes": 5,
-    "verification_sources": ["summary.json", "runs.csv", "judges.csv"]
-  },
-  "success_metrics": {
-    "lines_trimmed": 271,
-    "tone_consistency": "100%",
-    "data_accuracy": "100%",
-    "placeholders_remaining": 0
-  }
+  "created": "2026-02-05",
+  "tags": ["evaluation", "experiments", "verification", "checkpoint", "resumption"],
+  "skills": [
+    {
+      "name": "verify-experiment-completion",
+      "description": "Complete workflow for verifying experiment completeness, fixing bugs, and resuming runs",
+      "trigger": "When validating that experiments are ready for analysis or paper writing",
+      "key_learning": "High run_result.json count and checkpoint status='completed' do not guarantee experiment completion. Always verify filesystem state."
+    }
+  ]
 }
