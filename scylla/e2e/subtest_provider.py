@@ -32,7 +32,9 @@ class SubtestProvider(Protocol):
 
     def discover_subtests(
         self, tier_id: TierID, skip_agent_teams: bool = False
-    ) -> list[SubTestConfig]: ...
+    ) -> list[SubTestConfig]:
+        """Discover subtests for a given tier."""
+        ...
 
 
 class FileSystemSubtestProvider:

@@ -161,7 +161,6 @@ class TestDiscoverSubtestsRootLevelMapping:
 
         # Discover subtests (tiers_dir is used to navigate to shared dir)
         manager = TierManager(tiers_dir)
-        tier_dir = tiers_dir / "t5"  # Legacy parameter, not used
         subtests = manager.subtest_provider.discover_subtests(TierID.T5)
 
         # Verify tools was mapped to resources
@@ -193,7 +192,6 @@ class TestDiscoverSubtestsRootLevelMapping:
 
         # Discover subtests
         manager = TierManager(tiers_dir)
-        tier_dir = tiers_dir / "t2"  # Legacy parameter, not used
         subtests = manager.subtest_provider.discover_subtests(TierID.T2)
 
         # Verify mcp_servers was mapped to resources
@@ -228,7 +226,6 @@ class TestDiscoverSubtestsRootLevelMapping:
 
         # Discover subtests
         manager = TierManager(tiers_dir)
-        tier_dir = tiers_dir / "t3"  # Legacy parameter, not used
         subtests = manager.subtest_provider.discover_subtests(TierID.T3)
 
         # Verify agents was mapped to resources
@@ -260,7 +257,6 @@ class TestDiscoverSubtestsRootLevelMapping:
 
         # Discover subtests
         manager = TierManager(tiers_dir)
-        tier_dir = tiers_dir / "t1"  # Legacy parameter, not used
         subtests = manager.subtest_provider.discover_subtests(TierID.T1)
 
         # Verify skills was mapped to resources
@@ -293,7 +289,6 @@ class TestDiscoverSubtestsRootLevelMapping:
 
         # Discover subtests
         manager = TierManager(tiers_dir)
-        tier_dir = tiers_dir / "t5"  # Legacy parameter, not used
         subtests = manager.subtest_provider.discover_subtests(TierID.T5)
 
         # Verify root-level tools was merged/mapped
