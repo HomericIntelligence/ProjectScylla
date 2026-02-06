@@ -1,550 +1,532 @@
-### /home/mvillmow/ProjectScylla/docs/research_paper.tex
-```
-1: ### /home/mvillmow/ProjectScylla/docs/research_paper.tex
-2: ```
-3: 1: ### /home/mvillmow/ProjectScylla/docs/research_paper.tex
-4: 2: ```
-5: 3: 1: ### /home/mvillmow/ProjectScylla/docs/research_paper.tex
-6: 4: 2: ```
-7: 5: 3: 1: ### /home/mvillmow/ProjectScylla/docs/research_paper.tex
-8: 6: 4: 2: ```
-9: 7: 5: 3: 1: ### /home/mvillmow/ProjectScylla/docs/research_paper.tex
-10: 8: 6: 4: 2: ```
-11: 9: 7: 5: 3: 1: \documentclass[11pt]{article}
-12: 10: 8: 6: 4: 2:
-13: 11: 9: 7: 5: 3: % ====================================================================
-14: 12: 10: 8: 6: 4: % TEMPLATE NOTICE
-15: 13: 11: 9: 7: 5: % ====================================================================
-16: 14: 12: 10: 8: 6: % This is a TEMPLATE document for publication formatting demonstration.
-17: 15: 13: 11: 9: 7: % It contains HYPOTHETICAL DATA and does not reflect actual experimental
-18: 16: 14: 12: 10: 8: % results from ProjectScylla.
-19: 17: 15: 13: 11: 9: %
-20: 18: 16: 14: 12: 10: % ACTUAL EXPERIMENTAL DATA (as of 2026-01-31):
-21: 19: 17: 15: 13: 11: %   - 2 models (Sonnet 4.5-20250929, haiku)
-22: 20: 18: 16: 14: 12: %   - 226 total subtests across 7 tiers (T0-T6)
-23: 21: 19: 17: 15: 13: %   - Overall pass rate: 83.9% (not 91.3% Impl-Rate claimed below)
-24: 22: 20: 18: 16: 14: %   - See docs/data/summary.json for real statistics
-25: 23: 21: 19: 17: 15: %
-26: 24: 22: 20: 18: 16: % DO NOT USE THIS DOCUMENT AS A SOURCE OF TRUTH FOR RESEARCH FINDINGS.
-27: 25: 23: 21: 19: 17: % ====================================================================
-28: 26: 24: 22: 20: 18:
-29: 27: 25: 23: 21: 19: % ----------------------------
-30: 28: 26: 24: 22: 20: % Packages
-31: 29: 27: 25: 23: 21: % ----------------------------
-32: 30: 28: 26: 24: 22: \usepackage[margin=1in]{geometry}
-33: 31: 29: 27: 25: 23: \usepackage{times}
-34: 32: 30: 28: 26: 24: \usepackage{graphicx}
-35: 33: 31: 29: 27: 25: \usepackage{amsmath, amssymb}
-36: 34: 32: 30: 28: 26: \usepackage{booktabs}
-37: 35: 33: 31: 29: 27: \usepackage{multirow}
-38: 36: 34: 32: 30: 28: \usepackage{hyperref}
-39: 37: 35: 33: 31: 29: \usepackage{caption}
-40: 38: 36: 34: 32: 30: \usepackage{subcaption}
-41: 39: 37: 35: 33: 31: \usepackage{float}
-42: 40: 38: 36: 34: 32: \usepackage{xcolor}
-43: 41: 39: 37: 35: 33:
-44: 42: 40: 38: 36: 34: % ----------------------------
-45: 43: 41: 39: 37: 35: % Title Information
-46: 44: 42: 40: 38: 36: % ----------------------------
-47: 45: 43: 41: 39: 37: \title{Architectural Efficacy and Economic Sustainability of LLM Agents:\\
-48: 46: 44: 42: 40: 38: \large A Tiered Benchmarking Study Across Software Engineering Workflows}
-49: 47: 45: 43: 41: 39:
-50: 48: 46: 44: 42: 40: \author{%
-51: Micah Villmow\\
-52: Independent Researcher\\
-53: \texttt{research@villmow.us}
-54: }
-55: 52: 50: 48: 46: 44: }
-56: 53: 51: 49: 47: 45:
-57: 54: 52: 50: 48: 46: \date{January 2025}
-58: 55: 53: 51: 49: 47:
-59: 56: 54: 52: 50: 48: % ----------------------------
-60: 57: 55: 53: 51: 49: % Document
-61: 58: 56: 54: 52: 50: % ----------------------------
-62: 59: 57: 55: 53: 51: \begin{document}
-63: 60: 58: 56: 54: 52: \maketitle
-64: 61: 59: 57: 55: 53:
-65: 62: 60: 58: 56: 54: % ----------------------------
-66: 63: 61: 59: 57: 55: % Abstract
-67: 64: 62: 60: 58: 56: % ----------------------------
-68: 65: 63: 61: 59: 57: \begin{abstract}
-69: 66: 64: 62: 60: 58: \textbf{[TEMPLATE: This abstract contains hypothetical data for formatting demonstration only.]}
-70: 67: 65: 63: 61: 59:
-71: 68: 66: 64: 62: 60: We present a comprehensive benchmarking study of LLM-based agent architectures across seven incremental complexity tiers (T0--T6), evaluating performance, quality, and economic sustainability on 135 software engineering tasks spanning nine workflow categories. Using the Cost-of-Pass (CoP) framework, we quantify the marginal utility of architectural components including prompt engineering, domain skills, external tooling, flat delegation, and nested hierarchies. Our results reveal a critical ``Token Efficiency Chasm'' at T3, where external tool schemas increase token consumption by 340\% while improving efficacy by only 12\%. We identify T4 (Atomic Task Design) as the optimal tier for parallelizable workflows, achieving 54\% cost reduction and 72\% latency improvement. For complex, long-horizon tasks, T6 hybrid configurations combining Skills with Delegation achieve the best Frontier Cost-of-Pass, outperforming human baselines by 23\% in economic efficiency while maintaining 91.3\% Implementation Rate.
-72: 69: 67: 65: 63: 61: \end{abstract}
-73: 70: 68: 66: 64: 62:
-74: 71: 69: 67: 65: 63: \vspace{1em}
-75: 72: 70: 68: 66: 64:
-76: 73: 71: 69: 67: 65: \noindent\textbf{Keywords:} LLM agents; benchmarking; cost-of-pass; multi-agent systems; software engineering; agentic architectures
-77: 74: 72: 70: 68: 66:
-78: 75: 73: 71: 69: 67: % ==================================================
-79: 76: 74: 72: 70: 68: \section{Summary}
-80: 77: 75: 73: 71: 69:
-81: 78: 76: 74: 72: 70: \textbf{[TEMPLATE NOTE: Replace with actual experimental data. Current template claims 12 models and 135 tasks; actual data shows 2 models and 226 subtests.]}
-82: 79: 77: 75: 73: 71:
-83: 80: 78: 76: 74: 72: This study establishes a rigorous framework for evaluating LLM agent architectures through the lens of economic sustainability. We benchmark 12 models across 7 complexity tiers on 135 software engineering tasks, introducing the Cost-of-Pass (CoP) metric as the primary economic indicator.
-84: 81: 79: 77: 75: 73:
-85: 82: 80: 78: 76: 74: \textbf{Key Findings:}
-86: 83: 81: 79: 77: 75: \begin{itemize}
-87: 84: 82: 80: 78: 76:     \item \textbf{Token Efficiency Chasm:} T3 (Tooling) consumes 340\% more tokens than T2 (Skills) with only 12\% efficacy improvement
-88: 85: 83: 81: 79: 77:     \item \textbf{Atomic Task Design:} T4 delegation reduces costs by 54\% and latency by 72\% on parallelizable tasks
-89: 86: 84: 82: 80: 78:     \item \textbf{Point of Diminishing Returns:} T5 hierarchies justify cost only for tasks requiring $>$3 verification cycles
-90: 87: 85: 83: 81: 79:     \item \textbf{Optimal Configuration:} T6 hybrid (Skills + Delegation + Agentic RAG) achieves best Frontier CoP
-91: 88: 86: 84: 82: 80:     \item \textbf{Economic Viability:} Best configurations outperform human labor costs by 23\% at 91.3\% Impl-Rate
-92: 89: 87: 85: 83: 81: \end{itemize}
-93: 90: 88: 86: 84: 82:
-94: 91: 89: 87: 85: 83: % ==================================================
-95: 92: 90: 88: 86: 84: \section{Introduction}
-96: 93: 91: 89: 87: 85:
-97: 94: 92: 90: 88: 86: The integration of large language models (LLMs) into autonomous software engineering systems has progressed rapidly, yet the field lacks rigorous frameworks for evaluating the economic sustainability of increasingly complex agent architectures. While sophisticated multi-agent systems promise improved efficacy, they introduce significant operational overhead that must be quantified against measurable performance gains.
-98: 95: 93: 91: 89: 87:
-99: 96: 94: 92: 90: 88: \subsection{Problem Statement}
-100: 97: 95: 93: 91: 89: Traditional LLM evaluation focuses on final success rates, failing to capture the economic trade-offs inherent in production deployments. An agent that achieves 95\% accuracy at \$0.50 per task may be less economically viable than one achieving 85\% at \$0.08 per task, depending on the application context.
-101: 98: 96: 94: 92: 90:
-102: 99: 97: 95: 93: 91: \subsection{Research Questions}
-103: 100: 98: 96: 94: 92: \begin{enumerate}
-104: 101: 99: 97: 95: 93:     \item What is the marginal utility of each incremental complexity tier (T0--T6)?
-105: 102: 100: 98: 96: 94:     \item Where does the ``Point of Diminishing Returns'' occur in architectural complexity?
-106: 103: 101: 99: 97: 95:     \item How does the Cost-of-Pass scale across different software engineering workflows?
-107: 104: 102: 100: 98: 96:     \item What hybrid configurations optimize the efficacy-to-cost ratio?
-108: 105: 103: 101: 99: 97: \end{enumerate}
-109: 106: 104: 102: 100: 98:
-110: 107: 105: 103: 101: 99: \subsection{Contributions}
-111: 108: 106: 104: 102: 100: \begin{itemize}
-112: 109: 107: 105: 103: 101:     \item A comprehensive \textbf{Incremental Capability Matrix} (T0--T6) for ablative benchmarking
-113: 110: 108: 106: 104: 102:     \item The \textbf{Cost-of-Pass (CoP)} economic framework with component-level cost tracking
-114: 111: 109: 107: 105: 103:     \item Empirical quantification of the \textbf{Token Efficiency Chasm} between Skills and Tooling
-115: 112: 110: 108: 106: 104:     \item Validation of \textbf{Task-Contingent Coordination Laws} for multi-agent systems
-116: 113: 111: 109: 107: 105:     \item Actionable deployment guidance based on 135 real-world software engineering tasks
-117: 114: 112: 110: 108: 106: \end{itemize}
-118: 115: 113: 111: 109: 107:
-119: 116: 114: 112: 110: 108: % ==================================================
-120: 117: 115: 113: 111: 109: \section{Related Work}
-121: 118: 116: 114: 112: 110:
-122: 119: 117: 115: 113: 111: \subsection{LLM Agent Benchmarking}
-123: 120: 118: 116: 114: 112: Prior work on LLM benchmarking has focused primarily on capability assessment. AgentBoard introduced fine-grained progress metrics for multi-turn agents, while TheAgentCompany established benchmarks for real-world software tasks. Our work extends these frameworks by integrating economic sustainability metrics.
-124: 121: 119: 117: 115: 113:
-125: 122: 120: 118: 116: 114: \subsection{Multi-Agent Architectures}
-126: 123: 121: 119: 117: 115: Research on multi-agent LLM systems has demonstrated both the promise and pitfalls of coordination. HockeyStack's production analysis showed 54\% cost reductions with atomic task design, while academic studies identified 39--70\% performance degradation on sequential tasks due to coordination overhead.
-127: 124: 122: 120: 118: 116:
-128: 125: 123: 121: 119: 117: \subsection{Economic Frameworks}
-129: 126: 124: 122: 120: 118: The Cost-of-Pass framework, introduced for general LLM evaluation, provides the theoretical foundation for our economic analysis. We extend this framework to component-level cost tracking and multi-tier architectural comparison.
-130: 127: 125: 123: 121: 119:
-131: 128: 126: 124: 122: 120: % ==================================================
-132: 129: 127: 125: 123: 121: \section{Test Methodology}
-133: 130: 128: 126: 124: 122:
-134: 131: 129: 127: 125: 123: \subsection{Experimental Design}
-135: 132: 130: 128: 126: 124: We employ a controlled, sequential introduction of agentic capabilities, benchmarking performance and cost at each incremental step ($T(n)$ versus $T(n-1)$). This ablation methodology isolates the marginal contribution of each architectural component.
-136: 133: 131: 129: 127: 125:
-137: 134: 132: 130: 128: 126: \subsection{Dimensional Search Space}
-138: 135: 133: 131: 129: 127: Our benchmark explores four primary dimensions:
-139: 136: 134: 132: 130: 128:
-140: 137: 135: 133: 131: 129: \begin{itemize}
-141: 138: 136: 134: 132: 130:     \item \textbf{Agent Complexity:} Tiers 0--6 representing progressive architectural sophistication
-142: 139: 137: 135: 133: 131:     \item \textbf{Prompt Complexity:} Scale 0--10 from zero-shot to heavily engineered prompts
-143: 140: 138: 136: 134: 132:     \item \textbf{Skill Complexity:} Domain expertise categories (Build, Test, Deploy, Debug, Document)
-144: 141: 139: 137: 135: 133:     \item \textbf{Agent Hierarchy:} Flat (single-agent), Delegated (T4), Nested (T5), Hybrid (T6)
-145: 142: 140: 138: 136: 134: \end{itemize}
-146: 143: 141: 139: 137: 135:
-147: 144: 142: 140: 138: 136: % ==================================================
-148: 145: 143: 141: 139: 137: \section{Test Metrics}
-149: 146: 144: 142: 140: 138:
-150: 147: 145: 143: 141: 139: \subsection{Performance Metrics}
-151: 148: 146: 144: 142: 140: \begin{itemize}
-152: 149: 147: 145: 143: 141:     \item \textbf{Full Completion Score ($S_{Full}$):} Binary task completion measure
-153: 150: 148: 146: 144: 142:     \item \textbf{Fine-Grained Progress Rate ($R_{Prog}$):} Incremental advancement tracking (0.0--1.0)
-154: 151: 149: 147: 145: 143:     \item \textbf{Latency:} Time from query submission to task resolution (seconds)
-155: 152: 150: 148: 146: 144:     \item \textbf{Consistency:} Output stability coefficient across identical inputs (0.0--1.0)
-156: 153: 151: 149: 147: 145: \end{itemize}
-157: 154: 152: 150: 148: 146:
-158: 155: 153: 151: 149: 147: \subsection{Quality Metrics}
-159: 156: 154: 152: 150: 148: \begin{itemize}
-160: 157: 155: 153: 151: 149:     \item \textbf{Pass-Rate:} Automated test suite pass percentage
-161: 158: 156: 154: 152: 150:     \item \textbf{Implementation Rate (Impl-Rate):} LLM-as-Judge requirement verification (0.0--1.0)
-162: 159: 157: 155: 153: 151:     \item \textbf{Change Fail Percentage (CFP):} Production changes causing failures (\%)
-163: 160: 158: 156: 154: 152:     \item \textbf{PR Revert Rate:} Human-rejected agent-generated code (\%)
-164: 161: 159: 157: 155: 153: \end{itemize}
-165: 162: 160: 158: 156: 154:
-166: 163: 161: 159: 157: 155: \subsection{Efficiency and Cost Metrics}
-167: 164: 162: 160: 158: 156: The Cost-of-Pass (CoP) integrates cost with accuracy:
-168: 165: 163: 161: 159: 157:
-169: 166: 164: 162: 160: 158: \begin{equation}
-170: 167: 165: 163: 161: 159:     CoP = \frac{\text{Expected Cost}}{R_m(p)}
-171: 168: 166: 164: 162: 160: \end{equation}
-172: 169: 167: 165: 163: 161:
-173: 170: 168: 166: 164: 162: where $R_m(p)$ is the accuracy on problem $p$. When accuracy approaches zero, CoP approaches infinity, signaling economic infeasibility.
-174: 171: 169: 167: 165: 163:
-175: 172: 170: 168: 166: 164: Additional metrics include:
-176: 173: 171: 169: 167: 165: \begin{itemize}
-177: 174: 172: 170: 168: 166:     \item \textbf{Frontier CoP:} $\min(CoP)$ across all configurations
-178: 175: 173: 171: 169: 167:     \item \textbf{Token Efficiency:} Useful output per input token
-179: 176: 174: 172: 170: 168:     \item \textbf{Component Cost Breakdown:} Per-module cost attribution
-180: 177: 175: 173: 171: 169: \end{itemize}
-181: 178: 176: 174: 172: 170:
-182: 179: 177: 175: 173: 171: % ==================================================
-183: 180: 178: 176: 174: 172: \section{Test Configuration}
-184: 181: 179: 177: 175: 173:
-185: 182: 180: 178: 176: 174: \subsection{Hardware and Infrastructure}
-186: 183: 181: 179: 177: 175: All experiments were conducted on:
-187: 184: 182: 180: 178: 176: \begin{itemize}
-188: 185: 183: 181: 179: 177:     \item Cloud compute: AWS p4d.24xlarge instances (8× NVIDIA A100 40GB)
-189: 186: 184: 182: 180: 178:     \item API endpoints: Direct provider APIs with consistent rate limiting
-190: 187: 185: 183: 181: 179:     \item Orchestration: Custom evaluation harness with deterministic seeding
-191: 188: 186: 184: 182: 180: \end{itemize}
-192: 189: 187: 185: 183: 181:
-193: 190: 188: 186: 184: 182: \subsection{Software Stack}
-194: 191: 189: 187: 185: 183: \begin{itemize}
-195: 192: 190: 188: 186: 184:     \item Orchestration framework: LangGraph 0.2.x with custom coordination layer
-196: 193: 191: 189: 187: 185:     \item Evaluation harness: PyTest-based with LLM-as-Judge validation
-197: 194: 192: 190: 188: 186:     \item Cost tracking: Real-time token metering with provider-specific pricing
-198: 195: 193: 191: 189: 187: \end{itemize}
-199: 196: 194: 192: 190: 188:
-200: 197: 195: 193: 191: 189: \subsection{Model Configuration}
-201: 198: 196: 194: 192: 190: All models evaluated with:
-202: 199: 197: 195: 193: 191: \begin{itemize}
-203: 200: 198: 196: 194: 192:     \item Temperature: 0.1 (deterministic mode)
-204: 201: 199: 197: 195: 193:     \item Max tokens: 8,192 (output limit)
-205: 202: 200: 198: 196: 194:     \item Context: Model-specific maximum
-206: 203: 201: 199: 197: 195: \end{itemize}
-207: 204: 202: 200: 198: 196:
-208: 205: 203: 201: 199: 197: % ==================================================
-209: 206: 204: 202: 200: 198: \section{Test Cases}
-210: 207: 205: 203: 201: 199:
-211: 208: 206: 204: 202: 200: \subsection{Pull Request Selection}
-212: 209: 207: 205: 203: 201: We selected 5 representative PRs for each combination of workflow category and size tier, totaling 135 test cases per complexity tier.
-213: 210: 208: 206: 204: 202:
-214: 211: 209: 207: 205: 203: \subsubsection{PR Size Categories}
-215: 212: 210: 208: 206: 204: \begin{itemize}
-216: 213: 211: 209: 207: 205:     \item \textbf{Small:} $<$100 lines of code (45 PRs)
-217: 214: 212: 210: 208: 206:     \item \textbf{Medium:} 300--500 lines of code (45 PRs)
-218: 215: 213: 211: 209: 207:     \item \textbf{Large:} 500--2000 lines of code (45 PRs)
-219: 216: 214: 212: 210: 208: \end{itemize}
-220: 217: 215: 213: 211: 209:
-221: 218: 216: 214: 212: 210: \subsection{Workflow Categories}
-222: 219: 217: 215: 213: 211: \begin{itemize}
-223: 220: 218: 216: 214: 212:     \item \textbf{Build System:} Build configuration, dependency management, compilation optimization
-224: 221: 219: 217: 215: 213:     \item \textbf{CI/CD:} Pipeline configuration, deployment automation, environment setup
-225: 222: 220: 218: 216: 214:     \item \textbf{Bug Fixing:} Defect resolution, regression fixes, error handling improvements
-226: 223: 221: 219: 217: 215:     \item \textbf{New Features:} Feature implementation, API additions, capability extensions
-227: 224: 222: 220: 218: 216:     \item \textbf{Refactoring:} Code restructuring, pattern application, technical debt reduction
-228: 225: 223: 221: 219: 217:     \item \textbf{Optimization:} Performance improvements, resource efficiency, caching
-229: 226: 224: 222: 220: 218:     \item \textbf{Review:} Code review suggestions, PR feedback, style corrections
-230: 227: 225: 223: 221: 219:     \item \textbf{Documentation:} Doc generation, comment updates, README improvements
-231: 228: 226: 224: 222: 220:     \item \textbf{Issue Filing:} Bug reports, feature requests, reproduction cases
-232: 229: 227: 225: 223: 221: \end{itemize}
-233: 230: 228: 226: 224: 222:
-234: 231: 229: 227: 225: 223: \subsection{Test Case Matrix}
-235: 232: 230: 228: 226: 224: Table~\ref{tab:test-matrix} shows the distribution of test cases across workflows and sizes.
-236: 233: 231: 229: 227: 225:
-237: 234: 232: 230: 228: 226: \begin{table}[H]
-238: 235: 233: 231: 229: 227: \centering
-239: 236: 234: 232: 230: 228: \caption{Test Case Distribution by Workflow and Size}
-240: 237: 235: 233: 231: 229: \label{tab:test-matrix}
-241: 238: 236: 234: 232: 230: \begin{tabular}{lcccr}
-242: 239: 237: 235: 233: 231: \toprule
-243: 240: 238: 236: 234: 232: \textbf{Workflow} & \textbf{Small} & \textbf{Medium} & \textbf{Large} & \textbf{Total} \\
-244: 241: 239: 237: 235: 233: \midrule
-245: 242: 240: 238: 236: 234: Build System & 5 & 5 & 5 & 15 \\
-246: 243: 241: 239: 237: 235: CI/CD & 5 & 5 & 5 & 15 \\
-247: 244: 242: 240: 238: 236: Bug Fixing & 5 & 5 & 5 & 15 \\
-248: 245: 243: 241: 239: 237: New Features & 5 & 5 & 5 & 15 \\
-249: 246: 244: 242: 240: 238: Refactoring & 5 & 5 & 5 & 15 \\
-250: 247: 245: 243: 241: 239: Optimization & 5 & 5 & 5 & 15 \\
-251: 248: 246: 244: 242: 240: Review & 5 & 5 & 5 & 15 \\
-252: 249: 247: 245: 243: 241: Documentation & 5 & 5 & 5 & 15 \\
-253: 250: 248: 246: 244: 242: Issue Filing & 5 & 5 & 5 & 15 \\
-254: 251: 249: 247: 245: 243: \midrule
-255: 252: 250: 248: 246: 244: \textbf{Total} & 45 & 45 & 45 & \textbf{135} \\
-256: 253: 251: 249: 247: 245: \bottomrule
-257: 254: 252: 250: 248: 246: \end{tabular}
-258: 255: 253: 251: 249: 247: \end{table}
-259: 256: 254: 252: 250: 248:
-260: 257: 255: 253: 251: 249: % ==================================================
-261: 258: 256: 254: 252: 250: \section{Model Summary}
-262: 259: 257: 255: 253: 251:
-263: 260: 258: 256: 254: 252: \subsection{Claude Code}
-264: 261: 259: 257: 255: 253: \begin{itemize}
-265: 262: 260: 258: 256: 254:     \item \textbf{Claude Opus:} Strategic orchestration, maximum reasoning depth, 200K context
-266: 263: 261: 259: 257: 255:     \item \textbf{Claude Sonnet:} Balanced execution, cost-effective quality, 200K context
-267: 264: 262: 260: 258: 256:     \item \textbf{Claude Haiku:} High-throughput utility, fast response, 200K context
-268: 265: 263: 261: 259: 257: \end{itemize}
-269: 266: 264: 262: 260: 258:
-270: 267: 265: 263: 261: 259: \subsection{OpenAI}
-271: 268: 266: 264: 262: 260: \begin{itemize}
-272: 269: 267: 265: 263: 261:     \item \textbf{GPT-5.2 / Codex:} Code-specialized reasoning, extended tool use, 128K context
-273: 270: 268: 266: 264: 262: \end{itemize}
-274: 271: 269: 267: 265: 263:
-275: 272: 270: 268: 266: 264: \subsection{Large Model CLI-Based Systems}
-276: 273: 271: 269: 267: 265: All models evaluated in standardized CLI-based agentic workflows:
-277: 274: 272: 270: 268: 266: \begin{itemize}
-278: 275: 273: 271: 269: 267:     \item Claude Opus (Anthropic)
-279: 276: 274: 272: 270: 268:     \item OpenAI GPT-5.2 (OpenAI)
-280: 277: 275: 273: 271: 269:     \item Gemini 3.0 Pro (Google)
-281: 278: 276: 274: 272: 270:     \item DeepSeek-V3 (DeepSeek AI)
-282: 279: 277: 275: 273: 271:     \item Qwen 3-72B (Alibaba)
-283: 280: 278: 276: 274: 272:     \item MBZ-K2 (Technology Innovation Institute)
-284: 281: 279: 277: 275: 273:     \item Kimi-K2 (Moonshot AI)
-285: 282: 280: 278: 276: 274:     \item Kimi-3 (Moonshot AI)
-286: 283: 281: 279: 277: 275: \end{itemize}
-287: 284: 282: 280: 278: 276:
-288: 285: 283: 281: 279: 277: Table~\ref{tab:model-specs} summarizes model specifications and pricing.
-289: 286: 284: 282: 280: 278:
-290: 287: 285: 283: 281: 279: \begin{table}[H]
-291: 288: 286: 284: 282: 280: \centering
-292: 289: 287: 285: 283: 281: \caption{Model Specifications and Pricing (per 1M tokens)}
-293: 290: 288: 286: 284: 282: \label{tab:model-specs}
-294: 291: 289: 287: 285: 283: \begin{tabular}{lrrrrr}
-295: 292: 290: 288: 286: 284: \toprule
-296: 293: 291: 289: 287: 285: \textbf{Model} & \textbf{Context} & \textbf{Input \$} & \textbf{Output \$} & \textbf{Latency (s)} \\
-297: 294: 292: 290: 288: 286: \midrule
-298: 295: 293: 291: 289: 287: Claude Opus & 200K & 15.00 & 75.00 & 2.8 \\
-299: 296: 294: 292: 290: 288: Claude Sonnet & 200K & 3.00 & 15.00 & 1.4 \\
-300: 297: 295: 293: 291: 289: Claude Haiku & 200K & 0.25 & 1.25 & 0.3 \\
-301: 298: 296: 294: 292: 290: GPT-5.2 & 128K & 10.00 & 30.00 & 1.8 \\
-302: 299: 297: 295: 293: 291: Gemini 3.0 Pro & 1M & 1.25 & 5.00 & 1.1 \\
-303: 300: 298: 296: 294: 292: DeepSeek-V3 & 64K & 0.14 & 0.28 & 0.8 \\
-304: 301: 299: 297: 295: 293: Qwen 3-72B & 128K & 0.40 & 0.40 & 1.2 \\
-305: 302: 300: 298: 296: 294: MBZ-K2 & 128K & 0.20 & 0.20 & 1.5 \\
-306: 303: 301: 299: 297: 295: Kimi-K2 & 200K & 0.60 & 2.00 & 1.3 \\
-307: 304: 302: 300: 298: 296: Kimi-3 & 200K & 0.90 & 3.00 & 1.1 \\
-308: 305: 303: 301: 299: 297: \bottomrule
-309: 306: 304: 302: 300: 298: \end{tabular}
-310: 307: 305: 303: 301: 299: \end{table}
-311: 308: 306: 304: 302: 300:
-312: 309: 307: 305: 303: 301: % ==================================================
-313: 310: 308: 306: 304: 302: \section{Results}
-314: 311: 309: 307: 305: 303:
-315: 312: 310: 308: 306: 304: \subsection{Quantitative Results}
-316: 313: 311: 309: 307: 305:
-317: 314: 312: 310: 308: 306: Table~\ref{tab:tier-results} presents the aggregate performance across complexity tiers.
-318: 315: 313: 311: 309: 307:
-319: 316: 314: 312: 310: 308: \begin{table}[H]
-320: 317: 315: 313: 311: 309: \centering
-321: 318: 316: 314: 312: 310: \caption{Performance by Complexity Tier (All Models Averaged)}
-322: 319: 317: 315: 313: 311: \label{tab:tier-results}
-323: 320: 318: 316: 314: 312: \begin{tabular}{lrrrrrr}
-324: 321: 319: 317: 315: 313: \toprule
-325: 322: 320: 318: 316: 314: \textbf{Tier} & \textbf{Impl-Rate} & \textbf{Pass-Rate} & \textbf{$R_{Prog}$} & \textbf{Latency} & \textbf{Tokens} & \textbf{CoP} \\
-326: 323: 321: 319: 317: 315: \midrule
-327: 324: 322: 320: 318: 316: T0 (Vanilla) & 0.342 & 0.287 & 0.41 & 1.2s & 2,847 & \$0.089 \\
-328: 325: 323: 321: 319: 317: T1 (Prompted) & 0.567 & 0.498 & 0.62 & 1.8s & 4,231 & \$0.047 \\
-329: 326: 324: 322: 320: 318: T2 (Skills) & 0.734 & 0.681 & 0.78 & 2.4s & 6,892 & \$0.031 \\
-330: 327: 325: 323: 321: 319: T3 (Tooling) & 0.821 & 0.756 & 0.84 & 4.7s & 23,412 & \$0.098 \\
-331: 328: 326: 324: 322: 320: T4 (Delegation) & 0.867 & 0.812 & 0.89 & 3.1s & 18,234 & \$0.042 \\
-332: 329: 327: 325: 323: 321: T5 (Hierarchy) & 0.912 & 0.867 & 0.93 & 8.4s & 47,891 & \$0.127 \\
-333: 330: 328: 326: 324: 322: T6 (Hybrid) & 0.913 & 0.871 & 0.94 & 4.2s & 21,456 & \$0.034 \\
-334: 331: 329: 327: 325: 323: \bottomrule
-335: 332: 330: 328: 326: 324: \end{tabular}
-336: 333: 331: 329: 327: 325: \end{table}
-337: 334: 332: 330: 328: 326:
-338: 335: 333: 331: 329: 327: \subsubsection{The Token Efficiency Chasm}
-339: 336: 334: 332: 330: 328: Figure~\ref{fig:fig07_token_distribution} illustrates the dramatic token consumption increase at T3:
-340: 337: 335: 333: 331: 329: \begin{itemize}
-341: 338: 336: 334: 332: 330:     \item T2 $\rightarrow$ T3 token increase: \textbf{+340\%} (6,892 $\rightarrow$ 23,412)
-342: 339: 337: 335: 333: 331:     \item T2 $\rightarrow$ T3 Impl-Rate increase: \textbf{+12\%} (0.734 $\rightarrow$ 0.821)
-343: 340: 338: 336: 334: 332:     \item CoP degradation: \textbf{+216\%} (\$0.031 $\rightarrow$ \$0.098)
-344: 341: 339: 337: 335: 333: \end{itemize}
-345: 342: 340: 338: 336: 334:
-346: 343: 341: 339: 337: 335: \subsection{Comparative Analysis}
-347: 344: 342: 340: 338: 336:
-348: 345: 343: 341: 339: 337: Table~\ref{tab:model-comparison} shows per-model performance at the optimal T6 tier.
-349: 346: 344: 342: 340: 338:
-350: 347: 345: 343: 341: 339: \begin{table}[H]
-351: 348: 346: 344: 342: 340: \centering
-352: 349: 347: 345: 343: 341: \caption{Model Comparison at T6 (Hybrid Configuration)}
-353: 350: 348: 346: 344: 342: \label{tab:model-comparison}
-354: 351: 349: 347: 345: 343: \begin{tabular}{lrrrrrr}
-355: 352: 350: 348: 346: 344: \toprule
-356: 353: 351: 349: 347: 345: \textbf{Model} & \textbf{Impl-Rate} & \textbf{Pass-Rate} & \textbf{CFP} & \textbf{Revert} & \textbf{CoP} \\
-357: 354: 352: 350: 348: 346: \midrule
-358: 355: 353: 351: 349: 347: Claude Opus & 0.947 & 0.912 & 2.1\% & 3.2\% & \$0.089 \\
-359: 356: 354: 352: 350: 348: Claude Sonnet & 0.923 & 0.889 & 2.8\% & 4.1\% & \$0.038 \\
-360: 357: 355: 353: 351: 349: Claude Haiku & 0.812 & 0.767 & 5.4\% & 7.8\% & \$0.012 \\
-361: 358: 356: 354: 352: 350: GPT-5.2 & 0.934 & 0.898 & 2.4\% & 3.7\% & \$0.067 \\
-362: 359: 357: 355: 353: 351: Gemini 3.0 Pro & 0.891 & 0.845 & 3.7\% & 5.2\% & \$0.024 \\
-363: 360: 358: 356: 354: 352: DeepSeek-V3 & 0.867 & 0.823 & 4.2\% & 6.1\% & \$0.008 \\
-364: 361: 359: 357: 355: 353: Qwen 3-72B & 0.845 & 0.798 & 4.8\% & 6.9\% & \$0.014 \\
-365: 362: 360: 358: 356: 354: MBZ-K2 & 0.823 & 0.778 & 5.1\% & 7.3\% & \$0.011 \\
-366: 363: 361: 359: 357: 355: Kimi-K2 & 0.856 & 0.812 & 4.4\% & 6.4\% & \$0.019 \\
-367: 364: 362: 360: 358: 356: Kimi-3 & 0.878 & 0.834 & 3.9\% & 5.6\% & \$0.023 \\
-368: 365: 363: 361: 359: 357: \bottomrule
-369: 366: 364: 362: 360: 358: \end{tabular}
-370: 367: 365: 363: 361: 359: \end{table}
-371: 368: 366: 364: 362: 360:
-372: 369: 367: 365: 363: 361: \subsubsection{Workflow-Specific Performance}
-373: 370: 368: 366: 364: 362: Table~\ref{tab:workflow-results} shows optimal tier by workflow category.
-374: 371: 369: 367: 365: 363:
-375: 372: 370: 368: 366: 364: \begin{table}[H]
-376: 373: 371: 369: 367: 365: \centering
-377: 374: 372: 370: 368: 366: \caption{Optimal Tier and Performance by Workflow Category}
-378: 375: 373: 371: 369: 367: \label{tab:workflow-results}
-379: 376: 374: 372: 370: 368: \begin{tabular}{lcrrr}
-380: 377: 375: 373: 371: 369: \toprule
-381: 378: 376: 374: 372: 370: \textbf{Workflow} & \textbf{Optimal Tier} & \textbf{Impl-Rate} & \textbf{CoP} & \textbf{Rationale} \\
-382: 379: 377: 375: 373: 371: \midrule
-383: 380: 378: 376: 374: 372: Build System & T4 & 0.891 & \$0.034 & Parallelizable subtasks \\
-384: 381: 379: 377: 375: 373: CI/CD & T3/T4 & 0.867 & \$0.067 & External tool integration \\
-385: 382: 380: 378: 376: 374: Bug Fixing & T5 & 0.923 & \$0.098 & Verification critical \\
-386: 383: 381: 379: 377: 375: New Features & T6 & 0.912 & \$0.045 & Long-horizon planning \\
-387: 384: 382: 380: 378: 376: Refactoring & T4 & 0.878 & \$0.031 & Atomic changes \\
-388: 385: 383: 381: 379: 377: Optimization & T4 & 0.845 & \$0.038 & Measurable improvements \\
-389: 386: 384: 382: 380: 378: Review & T2 & 0.856 & \$0.019 & Judgment-based \\
-390: 387: 385: 383: 381: 379: Documentation & T2 & 0.889 & \$0.014 & Token-efficient \\
-391: 388: 386: 384: 382: 380: Issue Filing & T2 & 0.867 & \$0.011 & Judgment-based \\
-392: 389: 387: 385: 383: 381: \bottomrule
-393: 390: 388: 386: 384: 382: \end{tabular}
-394: 391: 389: 387: 385: 383: \end{table}
-395: 392: 390: 388: 386: 384:
-396: 393: 391: 389: 387: 385: \subsection{Cost--Performance Trade-offs}
-397: 394: 392: 390: 388: 386:
-398: 395: 393: 391: 389: 387: \subsubsection{Scaling Behavior by PR Size}
-399: 396: 394: 392: 390: 388: Table~\ref{tab:size-scaling} reveals how CoP scales with task complexity.
-400: 397: 395: 393: 391: 389:
-401: 398: 396: 394: 392: 390: \begin{table}[H]
-402: 399: 397: 395: 393: 391: \centering
-403: 400: 398: 396: 394: 392: \caption{CoP Scaling by PR Size (T6 Hybrid, Claude Sonnet)}
-404: 401: 399: 397: 395: 393: \label{tab:size-scaling}
-405: 402: 400: 398: 396: 394: \begin{tabular}{lrrrr}
-406: 403: 401: 399: 397: 395: \toprule
-407: 404: 402: 400: 398: 396: \textbf{PR Size} & \textbf{Impl-Rate} & \textbf{Tokens} & \textbf{Cost} & \textbf{CoP} \\
-408: 405: 403: 401: 399: 397: \midrule
-409: 406: 404: 402: 400: 398: Small ($<$100 LOC) & 0.956 & 12,345 & \$0.024 & \$0.025 \\
-410: 407: 405: 403: 401: 399: Medium (300--500 LOC) & 0.912 & 24,567 & \$0.048 & \$0.053 \\
-411: 408: 406: 404: 402: 400: Large (500--2000 LOC) & 0.834 & 48,923 & \$0.096 & \$0.115 \\
-412: 409: 407: 405: 403: 401: \bottomrule
-413: 410: 408: 406: 404: 402: \end{tabular}
-414: 411: 409: 407: 405: 403: \end{table}
-415: 412: 410: 408: 406: 404:
-416: 413: 411: 409: 407: 405: \subsubsection{Diminishing Returns Analysis}
-417: 414: 412: 410: 408: 406: The Point of Diminishing Returns occurs at T5 for most workflows:
-418: 415: 413: 411: 409: 407: \begin{itemize}
-419: 416: 414: 412: 410: 408:     \item T4 $\rightarrow$ T5 Impl-Rate gain: +5.2\% (0.867 $\rightarrow$ 0.912)
-420: 417: 415: 413: 411: 409:     \item T4 $\rightarrow$ T5 CoP increase: +202\% (\$0.042 $\rightarrow$ \$0.127)
-421: 418: 416: 414: 412: 410:     \item T5 justified only when CFP $<$ 3\% is required
-422: 419: 417: 415: 413: 411: \end{itemize}
-423: 420: 418: 416: 414: 412:
-424: 421: 419: 417: 415: 413: % ==================================================
-425: 422: 420: 418: 416: 414: \section{Discussion}
-426: 423: 421: 419: 417: 415:
-427: 424: 422: 420: 418: 416: \subsection{Interpretation of Results}
-428: 425: 423: 421: 419: 417: The Token Efficiency Chasm at T3 represents a critical architectural decision point. While external tooling enables real-world execution capabilities, the schema overhead of loading comprehensive tool libraries ``just in case'' results in dramatic cost increases with marginal efficacy gains.
-429: 426: 424: 422: 420: 418:
-430: 427: 425: 423: 421: 419: T4's Atomic Task Design emerges as the optimal strategy for most parallelizable workflows, validating the hypothesis that specialized, narrow agents outperform generalist approaches in both cost and quality metrics.
-431: 428: 426: 424: 422: 420:
-432: 429: 427: 425: 423: 421: \subsection{Failure Modes and Limitations}
-433: 430: 428: 426: 424: 422: \begin{itemize}
-434: 431: 429: 427: 425: 423:     \item \textbf{Sequential Task Degradation:} Multi-agent configurations degrade by 39--70\% on rigid sequential tasks
-435: 432: 430: 428: 426: 424:     \item \textbf{Context Drift:} T5 hierarchies exhibit strategic drift after 7+ delegation cycles
-436: 433: 431: 429: 427: 425:     \item \textbf{Capability Saturation:} Coordination provides no benefit when single-agent baseline exceeds 45\%
-437: 434: 432: 430: 428: 426: \end{itemize}
-438: 435: 433: 431: 429: 427:
-439: 436: 434: 432: 430: 428: \subsection{Implications for Agent Design}
-440: 437: 435: 433: 431: 429: \begin{enumerate}
-441: 438: 436: 434: 432: 430:     \item Prefer Skills (T2) over Tooling (T3) for judgment-based tasks
-442: 439: 437: 435: 433: 431:     \item Use Atomic Task Design (T4) for parallelizable workflows
-443: 440: 438: 436: 434: 432:     \item Reserve T5 hierarchies for verification-critical long-horizon tasks
-444: 441: 439: 437: 435: 433:     \item Deploy T6 hybrid configurations for optimal economic sustainability
-445: 442: 440: 438: 436: 434: \end{enumerate}
-446: 443: 441: 439: 437: 435:
-447: 444: 442: 440: 438: 436: % ==================================================
-448: 445: 443: 441: 439: 437: \section{Conclusions}
-449: 446: 444: 442: 440: 438:
-450: 447: 445: 443: 441: 439: This study provides definitive evidence for the economic sustainability of LLM agent architectures through the Cost-of-Pass framework.
-451: 448: 446: 444: 442: 440:
-452: 449: 447: 445: 443: 441: \textbf{Key Findings:}
-453: 450: 448: 446: 444: 442: \begin{enumerate}
-454: 451: 449: 447: 445: 443:     \item The Token Efficiency Chasm at T3 represents a 216\% CoP increase for only 12\% efficacy gain
-455: 452: 450: 448: 446: 444:     \item T4 Atomic Task Design achieves 54\% cost reduction with 5.2\% efficacy improvement
-456: 453: 451: 449: 447: 445:     \item T6 Hybrid configurations achieve the lowest Frontier CoP (\$0.034) at 91.3\% Impl-Rate
-457: 454: 452: 450: 448: 446:     \item Optimal tier selection is task-contingent, with judgment tasks favoring T2 and complex tasks requiring T5/T6
-458: 455: 453: 451: 449: 447: \end{enumerate}
-459: 456: 454: 452: 450: 448:
-460: 457: 455: 453: 451: 449: The economic viability threshold is achieved when agent CoP falls below human labor costs. At \$0.034 per task with 91.3\% success, T6 configurations outperform estimated human costs (\$0.044 equivalent) by 23\%.
-461: 458: 456: 454: 452: 450:
-462: 459: 457: 455: 453: 451: % ==================================================
-463: 460: 458: 456: 454: 452: \section{Further Work}
-464: 461: 459: 457: 455: 453:
-465: 462: 460: 458: 456: 454: \begin{itemize}
-466: 463: 461: 459: 457: 455:     \item \textbf{Statistical Framework:} Apply Hierarchical Bayesian Models (HiBayES) for robust multi-level analysis
-467: 464: 462: 460: 458: 456:     \item \textbf{Dynamic Tier Selection:} Develop automated classifiers for optimal tier assignment
-468: 465: 463: 461: 459: 457:     \item \textbf{Model Distillation:} Create specialized Monitor/Critic models to reduce T5 costs
-469: 466: 464: 462: 460: 458:     \item \textbf{Adaptive Tool Loading:} Implement lazy schema loading to mitigate T3 overhead
-470: 467: 465: 463: 461: 459:     \item \textbf{Extended Domains:} Validate findings across non-software engineering tasks
-471: 468: 466: 464: 462: 460: \end{itemize}
-472: 469: 467: 465: 463: 461:
-473: 470: 468: 466: 464: 462: % ==================================================
-474: 471: 469: 467: 465: 463: \section*{Acknowledgements}
-475: 472: 470: 468: 466: 464: This is independent research conducted by Micah Villmow. We thank the open-source community for benchmark contributions and the model providers for API access.
-476: 473: 471: 469: 467: 465:
-477: 474: 472: 470: 468: 466: % ==================================================
-478: 475: 473: 471: 469: 467: \bibliographystyle{plain}
-479: 476: 474: 472: 470: 468: % \bibliography{references}
-480: 477: 475: 473: 471: 469:
-481: 478: 476: 474: 472: 470: % ==================================================
-482: 479: 477: 475: 473: 471: \appendix
-483: 480: 478: 476: 474: 472:
-484: 481: 479: 477: 475: 473: \section{Detailed Metric Definitions}
-485: 482: 480: 478: 476: 474:
-486: 483: 481: 479: 477: 475: \subsection{Cost-of-Pass (CoP)}
-487: 484: 482: 480: 478: 476: \begin{equation}
-488: 485: 483: 481: 479: 477:     CoP(m, p) = \frac{C(m, p)}{R_m(p)}
-489: 486: 484: 482: 480: 478: \end{equation}
-490: 487: 485: 483: 481: 479: where $C(m, p)$ is the cost of model $m$ on problem $p$, and $R_m(p)$ is the accuracy.
-491: 488: 486: 484: 482: 480:
-492: 489: 487: 485: 483: 481: \subsection{Fine-Grained Progress Rate}
-493: 490: 488: 486: 484: 482: \begin{equation}
-494: 491: 489: 487: 485: 483:     R_{Prog} = \frac{1}{N} \sum_{i=1}^{N} \frac{\text{Milestones Achieved}_i}{\text{Total Milestones}_i}
-495: 492: 490: 488: 486: 484: \end{equation}
-496: 493: 491: 489: 487: 485:
-497: 494: 492: 490: 488: 486: \subsection{Change Fail Percentage}
-498: 495: 493: 491: 489: 487: \begin{equation}
-499: 496: 494: 492: 490: 488:     CFP = \frac{\text{Failed Deployments}}{\text{Total Deployments}} \times 100\%
-500: 497: 495: 493: 491: 489: \end{equation}
-501: 498: 496: 494: 492: 490:
-502: 499: 497: 495: 493: 491: \section{Additional Tables and Figures}
-503: 500: 498: 496: 494: 492:
-504: 501: 499: 497: 495: 493: \begin{table}[H]
-505: 502: 500: 498: 496: 494: \centering
-506: 503: 501: 499: 497: 495: \caption{Complete Tier Performance Matrix (All Models)}
-507: 504: 502: 500: 498: 496: \label{tab:full-matrix}
-508: 505: 503: 501: 499: 497: \begin{tabular}{llrrrr}
-509: 506: 504: 502: 500: 498: \toprule
-510: 507: 505: 503: 501: 499: \textbf{Model} & \textbf{Tier} & \textbf{Impl-Rate} & \textbf{Tokens} & \textbf{Latency} & \textbf{CoP} \\
-511: 508: 506: 504: 502: 500: \midrule
-512: 509: 507: 505: 503: 501: Claude Opus & T0 & 0.423 & 3,124 & 2.1s & \$0.112 \\
-513: 510: 508: 506: 504: 502: Claude Opus & T2 & 0.812 & 8,456 & 3.2s & \$0.056 \\
-514: 511: 509: 507: 505: 503: Claude Opus & T4 & 0.912 & 21,345 & 4.1s & \$0.067 \\
-515: 512: 510: 508: 506: 504: Claude Opus & T6 & 0.947 & 25,678 & 4.8s & \$0.089 \\
-516: 513: 511: 509: 507: 505: \midrule
-517: 514: 512: 510: 508: 506: Claude Sonnet & T0 & 0.389 & 2,987 & 1.4s & \$0.048 \\
-518: 515: 513: 511: 509: 507: Claude Sonnet & T2 & 0.778 & 7,234 & 2.1s & \$0.028 \\
-519: 516: 514: 512: 510: 508: Claude Sonnet & T4 & 0.889 & 18,456 & 2.8s & \$0.034 \\
-520: 517: 515: 513: 511: 509: Claude Sonnet & T6 & 0.923 & 21,234 & 3.4s & \$0.038 \\
-521: 518: 516: 514: 512: 510: \midrule
-522: 519: 517: 515: 513: 511: DeepSeek-V3 & T0 & 0.312 & 2,456 & 0.6s & \$0.004 \\
-523: 520: 518: 516: 514: 512: DeepSeek-V3 & T2 & 0.689 & 5,678 & 0.9s & \$0.005 \\
-524: 521: 519: 517: 515: 513: DeepSeek-V3 & T4 & 0.823 & 14,567 & 1.4s & \$0.006 \\
-525: 522: 520: 518: 516: 514: DeepSeek-V3 & T6 & 0.867 & 17,890 & 1.8s & \$0.008 \\
-526: 523: 521: 519: 517: 515: \bottomrule
-527: 524: 522: 520: 518: 516: \end{tabular}
-528: 525: 523: 521: 519: 517: \end{table}
-529: 526: 524: 522: 520: 518:
-530: 527: 525: 523: 521: 519: \input{figures/fig07_token_distribution_include.tex}
-531: 528: 526: 524: 522: 520: \section{Reproducibility Checklist}
-532: 529: 527: 525: 523: 521:
-533: 530: 528: 526: 524: 522: \begin{itemize}
-534: 531: 529: 527: 525: 523:     \item[$\square$] Model versions and API endpoints documented
-535: 532: 530: 528: 526: 524:     \item[$\square$] Random seeds fixed for deterministic evaluation
-536: 533: 531: 529: 527: 525:     \item[$\square$] Token counts verified via provider APIs
-537: 534: 532: 530: 528: 526:     \item[$\square$] Cost calculations based on published pricing
-538: 535: 533: 531: 529: 527:     \item[$\square$] Evaluation harness available at \texttt{github.com/villmow/project-scylla}
-539: 536: 534: 532: 530: 528:     \item[$\square$] Test case dataset available upon request
-540: 537: 535: 533: 531: 529: \end{itemize}
-541: 538: 536: 534: 532: 530:
-542: 539: 537: 535: 533: 531: \end{document}
-543: 540: 538: 536: 534: ```
-544: 541: 539: 537: ```
-545: 542: 540: ```
-546: 543: ```
-547: ```
-```
+\documentclass[11pt]{article}
+
+% ====================================================================
+% TEMPLATE NOTICE
+% ====================================================================
+% This is a TEMPLATE document for publication formatting demonstration.
+% It contains HYPOTHETICAL DATA and does not reflect actual experimental
+% results from ProjectScylla.
+%
+% ACTUAL EXPERIMENTAL DATA (as of 2026-01-31):
+%   - 2 models (Sonnet 4.5-20250929, haiku)
+%   - 226 total subtests across 7 tiers (T0-T6)
+%   - Overall pass rate: 83.9% (not 91.3% Impl-Rate claimed below)
+%   - See docs/data/summary.json for real statistics
+%
+% DO NOT USE THIS DOCUMENT AS A SOURCE OF TRUTH FOR RESEARCH FINDINGS.
+% ====================================================================
+
+% ----------------------------
+% Packages
+% ----------------------------
+\usepackage[margin=1in]{geometry}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{xcolor}
+
+% ----------------------------
+% Title Information
+% ----------------------------
+\title{Architectural Efficacy and Economic Sustainability of LLM Agents:\\
+\large A Tiered Benchmarking Study Across Software Engineering Workflows}
+
+\author{%
+Micah Villmow\\
+Independent Researcher\\
+\texttt{research@villmow.us}
+}
+}
+
+\date{January 2025}
+
+% ----------------------------
+% Document
+% ----------------------------
+\begin{document}
+\maketitle
+
+% ----------------------------
+% Abstract
+% ----------------------------
+\begin{abstract}
+\textbf{[TEMPLATE: This abstract contains hypothetical data for formatting demonstration only.]}
+
+We present a comprehensive benchmarking study of LLM-based agent architectures across seven incremental complexity tiers (T0--T6), evaluating performance, quality, and economic sustainability on 135 software engineering tasks spanning nine workflow categories. Using the Cost-of-Pass (CoP) framework, we quantify the marginal utility of architectural components including prompt engineering, domain skills, external tooling, flat delegation, and nested hierarchies. Our results reveal a critical ``Token Efficiency Chasm'' at T3, where external tool schemas increase token consumption by 340\% while improving efficacy by only 12\%. We identify T4 (Atomic Task Design) as the optimal tier for parallelizable workflows, achieving 54\% cost reduction and 72\% latency improvement. For complex, long-horizon tasks, T6 hybrid configurations combining Skills with Delegation achieve the best Frontier Cost-of-Pass, outperforming human baselines by 23\% in economic efficiency while maintaining 91.3\% Implementation Rate.
+\end{abstract}
+
+\vspace{1em}
+
+\noindent\textbf{Keywords:} LLM agents; benchmarking; cost-of-pass; multi-agent systems; software engineering; agentic architectures
+
+% ==================================================
+\section{Summary}
+
+\textbf{[TEMPLATE NOTE: Replace with actual experimental data. Current template claims 12 models and 135 tasks; actual data shows 2 models and 226 subtests.]}
+
+This study establishes a rigorous framework for evaluating LLM agent architectures through the lens of economic sustainability. We benchmark 12 models across 7 complexity tiers on 135 software engineering tasks, introducing the Cost-of-Pass (CoP) metric as the primary economic indicator.
+
+\textbf{Key Findings:}
+\begin{itemize}
+    \item \textbf{Token Efficiency Chasm:} T3 (Tooling) consumes 340\% more tokens than T2 (Skills) with only 12\% efficacy improvement
+    \item \textbf{Atomic Task Design:} T4 delegation reduces costs by 54\% and latency by 72\% on parallelizable tasks
+    \item \textbf{Point of Diminishing Returns:} T5 hierarchies justify cost only for tasks requiring $>$3 verification cycles
+    \item \textbf{Optimal Configuration:} T6 hybrid (Skills + Delegation + Agentic RAG) achieves best Frontier CoP
+    \item \textbf{Economic Viability:} Best configurations outperform human labor costs by 23\% at 91.3\% Impl-Rate
+\end{itemize}
+
+% ==================================================
+\section{Introduction}
+
+The integration of large language models (LLMs) into autonomous software engineering systems has progressed rapidly, yet the field lacks rigorous frameworks for evaluating the economic sustainability of increasingly complex agent architectures. While sophisticated multi-agent systems promise improved efficacy, they introduce significant operational overhead that must be quantified against measurable performance gains.
+
+\subsection{Problem Statement}
+Traditional LLM evaluation focuses on final success rates, failing to capture the economic trade-offs inherent in production deployments. An agent that achieves 95\% accuracy at \$0.50 per task may be less economically viable than one achieving 85\% at \$0.08 per task, depending on the application context.
+
+\subsection{Research Questions}
+\begin{enumerate}
+    \item What is the marginal utility of each incremental complexity tier (T0--T6)?
+    \item Where does the ``Point of Diminishing Returns'' occur in architectural complexity?
+    \item How does the Cost-of-Pass scale across different software engineering workflows?
+    \item What hybrid configurations optimize the efficacy-to-cost ratio?
+\end{enumerate}
+
+\subsection{Contributions}
+\begin{itemize}
+    \item A comprehensive \textbf{Incremental Capability Matrix} (T0--T6) for ablative benchmarking
+    \item The \textbf{Cost-of-Pass (CoP)} economic framework with component-level cost tracking
+    \item Empirical quantification of the \textbf{Token Efficiency Chasm} between Skills and Tooling
+    \item Validation of \textbf{Task-Contingent Coordination Laws} for multi-agent systems
+    \item Actionable deployment guidance based on 135 real-world software engineering tasks
+\end{itemize}
+
+% ==================================================
+\section{Related Work}
+
+\subsection{LLM Agent Benchmarking}
+Prior work on LLM benchmarking has focused primarily on capability assessment. AgentBoard introduced fine-grained progress metrics for multi-turn agents, while TheAgentCompany established benchmarks for real-world software tasks. Our work extends these frameworks by integrating economic sustainability metrics.
+
+\subsection{Multi-Agent Architectures}
+Research on multi-agent LLM systems has demonstrated both the promise and pitfalls of coordination. HockeyStack's production analysis showed 54\% cost reductions with atomic task design, while academic studies identified 39--70\% performance degradation on sequential tasks due to coordination overhead.
+
+\subsection{Economic Frameworks}
+The Cost-of-Pass framework, introduced for general LLM evaluation, provides the theoretical foundation for our economic analysis. We extend this framework to component-level cost tracking and multi-tier architectural comparison.
+
+% ==================================================
+\section{Test Methodology}
+
+\subsection{Experimental Design}
+We employ a controlled, sequential introduction of agentic capabilities, benchmarking performance and cost at each incremental step ($T(n)$ versus $T(n-1)$). This ablation methodology isolates the marginal contribution of each architectural component.
+
+\subsection{Dimensional Search Space}
+Our benchmark explores four primary dimensions:
+
+\begin{itemize}
+    \item \textbf{Agent Complexity:} Tiers 0--6 representing progressive architectural sophistication
+    \item \textbf{Prompt Complexity:} Scale 0--10 from zero-shot to heavily engineered prompts
+    \item \textbf{Skill Complexity:} Domain expertise categories (Build, Test, Deploy, Debug, Document)
+    \item \textbf{Agent Hierarchy:} Flat (single-agent), Delegated (T4), Nested (T5), Hybrid (T6)
+\end{itemize}
+
+% ==================================================
+\section{Test Metrics}
+
+\subsection{Performance Metrics}
+\begin{itemize}
+    \item \textbf{Full Completion Score ($S_{Full}$):} Binary task completion measure
+    \item \textbf{Fine-Grained Progress Rate ($R_{Prog}$):} Incremental advancement tracking (0.0--1.0)
+    \item \textbf{Latency:} Time from query submission to task resolution (seconds)
+    \item \textbf{Consistency:} Output stability coefficient across identical inputs (0.0--1.0)
+\end{itemize}
+
+\subsection{Quality Metrics}
+\begin{itemize}
+    \item \textbf{Pass-Rate:} Automated test suite pass percentage
+    \item \textbf{Implementation Rate (Impl-Rate):} LLM-as-Judge requirement verification (0.0--1.0)
+    \item \textbf{Change Fail Percentage (CFP):} Production changes causing failures (\%)
+    \item \textbf{PR Revert Rate:} Human-rejected agent-generated code (\%)
+\end{itemize}
+
+\subsection{Efficiency and Cost Metrics}
+The Cost-of-Pass (CoP) integrates cost with accuracy:
+
+\begin{equation}
+    CoP = \frac{\text{Expected Cost}}{R_m(p)}
+\end{equation}
+
+where $R_m(p)$ is the accuracy on problem $p$. When accuracy approaches zero, CoP approaches infinity, signaling economic infeasibility.
+
+Additional metrics include:
+\begin{itemize}
+    \item \textbf{Frontier CoP:} $\min(CoP)$ across all configurations
+    \item \textbf{Token Efficiency:} Useful output per input token
+    \item \textbf{Component Cost Breakdown:} Per-module cost attribution
+\end{itemize}
+
+% ==================================================
+\section{Test Configuration}
+
+\subsection{Hardware and Infrastructure}
+All experiments were conducted on:
+\begin{itemize}
+    \item Cloud compute: AWS p4d.24xlarge instances (8× NVIDIA A100 40GB)
+    \item API endpoints: Direct provider APIs with consistent rate limiting
+    \item Orchestration: Custom evaluation harness with deterministic seeding
+\end{itemize}
+
+\subsection{Software Stack}
+\begin{itemize}
+    \item Orchestration framework: LangGraph 0.2.x with custom coordination layer
+    \item Evaluation harness: PyTest-based with LLM-as-Judge validation
+    \item Cost tracking: Real-time token metering with provider-specific pricing
+\end{itemize}
+
+\subsection{Model Configuration}
+All models evaluated with:
+\begin{itemize}
+    \item Temperature: 0.1 (deterministic mode)
+    \item Max tokens: 8,192 (output limit)
+    \item Context: Model-specific maximum
+\end{itemize}
+
+% ==================================================
+\section{Test Cases}
+
+\subsection{Pull Request Selection}
+We selected 5 representative PRs for each combination of workflow category and size tier, totaling 135 test cases per complexity tier.
+
+\subsubsection{PR Size Categories}
+\begin{itemize}
+    \item \textbf{Small:} $<$100 lines of code (45 PRs)
+    \item \textbf{Medium:} 300--500 lines of code (45 PRs)
+    \item \textbf{Large:} 500--2000 lines of code (45 PRs)
+\end{itemize}
+
+\subsection{Workflow Categories}
+\begin{itemize}
+    \item \textbf{Build System:} Build configuration, dependency management, compilation optimization
+    \item \textbf{CI/CD:} Pipeline configuration, deployment automation, environment setup
+    \item \textbf{Bug Fixing:} Defect resolution, regression fixes, error handling improvements
+    \item \textbf{New Features:} Feature implementation, API additions, capability extensions
+    \item \textbf{Refactoring:} Code restructuring, pattern application, technical debt reduction
+    \item \textbf{Optimization:} Performance improvements, resource efficiency, caching
+    \item \textbf{Review:} Code review suggestions, PR feedback, style corrections
+    \item \textbf{Documentation:} Doc generation, comment updates, README improvements
+    \item \textbf{Issue Filing:} Bug reports, feature requests, reproduction cases
+\end{itemize}
+
+\subsection{Test Case Matrix}
+Table~\ref{tab:test-matrix} shows the distribution of test cases across workflows and sizes.
+
+\begin{table}[H]
+\centering
+\caption{Test Case Distribution by Workflow and Size}
+\label{tab:test-matrix}
+\begin{tabular}{lcccr}
+\toprule
+\textbf{Workflow} & \textbf{Small} & \textbf{Medium} & \textbf{Large} & \textbf{Total} \\
+\midrule
+Build System & 5 & 5 & 5 & 15 \\
+CI/CD & 5 & 5 & 5 & 15 \\
+Bug Fixing & 5 & 5 & 5 & 15 \\
+New Features & 5 & 5 & 5 & 15 \\
+Refactoring & 5 & 5 & 5 & 15 \\
+Optimization & 5 & 5 & 5 & 15 \\
+Review & 5 & 5 & 5 & 15 \\
+Documentation & 5 & 5 & 5 & 15 \\
+Issue Filing & 5 & 5 & 5 & 15 \\
+\midrule
+\textbf{Total} & 45 & 45 & 45 & \textbf{135} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==================================================
+\section{Model Summary}
+
+\subsection{Claude Code}
+\begin{itemize}
+    \item \textbf{Claude Opus:} Strategic orchestration, maximum reasoning depth, 200K context
+    \item \textbf{Claude Sonnet:} Balanced execution, cost-effective quality, 200K context
+    \item \textbf{Claude Haiku:} High-throughput utility, fast response, 200K context
+\end{itemize}
+
+\subsection{OpenAI}
+\begin{itemize}
+    \item \textbf{GPT-5.2 / Codex:} Code-specialized reasoning, extended tool use, 128K context
+\end{itemize}
+
+\subsection{Large Model CLI-Based Systems}
+All models evaluated in standardized CLI-based agentic workflows:
+\begin{itemize}
+    \item Claude Opus (Anthropic)
+    \item OpenAI GPT-5.2 (OpenAI)
+    \item Gemini 3.0 Pro (Google)
+    \item DeepSeek-V3 (DeepSeek AI)
+    \item Qwen 3-72B (Alibaba)
+    \item MBZ-K2 (Technology Innovation Institute)
+    \item Kimi-K2 (Moonshot AI)
+    \item Kimi-3 (Moonshot AI)
+\end{itemize}
+
+Table~\ref{tab:model-specs} summarizes model specifications and pricing.
+
+\begin{table}[H]
+\centering
+\caption{Model Specifications and Pricing (per 1M tokens)}
+\label{tab:model-specs}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Model} & \textbf{Context} & \textbf{Input \$} & \textbf{Output \$} & \textbf{Latency (s)} \\
+\midrule
+Claude Opus & 200K & 15.00 & 75.00 & 2.8 \\
+Claude Sonnet & 200K & 3.00 & 15.00 & 1.4 \\
+Claude Haiku & 200K & 0.25 & 1.25 & 0.3 \\
+GPT-5.2 & 128K & 10.00 & 30.00 & 1.8 \\
+Gemini 3.0 Pro & 1M & 1.25 & 5.00 & 1.1 \\
+DeepSeek-V3 & 64K & 0.14 & 0.28 & 0.8 \\
+Qwen 3-72B & 128K & 0.40 & 0.40 & 1.2 \\
+MBZ-K2 & 128K & 0.20 & 0.20 & 1.5 \\
+Kimi-K2 & 200K & 0.60 & 2.00 & 1.3 \\
+Kimi-3 & 200K & 0.90 & 3.00 & 1.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ==================================================
+\section{Results}
+
+\subsection{Quantitative Results}
+
+Table~\ref{tab:tier-results} presents the aggregate performance across complexity tiers.
+
+\begin{table}[H]
+\centering
+\caption{Performance by Complexity Tier (All Models Averaged)}
+\label{tab:tier-results}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Tier} & \textbf{Impl-Rate} & \textbf{Pass-Rate} & \textbf{$R_{Prog}$} & \textbf{Latency} & \textbf{Tokens} & \textbf{CoP} \\
+\midrule
+T0 (Vanilla) & 0.342 & 0.287 & 0.41 & 1.2s & 2,847 & \$0.089 \\
+T1 (Prompted) & 0.567 & 0.498 & 0.62 & 1.8s & 4,231 & \$0.047 \\
+T2 (Skills) & 0.734 & 0.681 & 0.78 & 2.4s & 6,892 & \$0.031 \\
+T3 (Tooling) & 0.821 & 0.756 & 0.84 & 4.7s & 23,412 & \$0.098 \\
+T4 (Delegation) & 0.867 & 0.812 & 0.89 & 3.1s & 18,234 & \$0.042 \\
+T5 (Hierarchy) & 0.912 & 0.867 & 0.93 & 8.4s & 47,891 & \$0.127 \\
+T6 (Hybrid) & 0.913 & 0.871 & 0.94 & 4.2s & 21,456 & \$0.034 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{The Token Efficiency Chasm}
+Figure~\ref{fig:fig07_token_distribution} illustrates the dramatic token consumption increase at T3:
+\begin{itemize}
+    \item T2 $\rightarrow$ T3 token increase: \textbf{+340\%} (6,892 $\rightarrow$ 23,412)
+    \item T2 $\rightarrow$ T3 Impl-Rate increase: \textbf{+12\%} (0.734 $\rightarrow$ 0.821)
+    \item CoP degradation: \textbf{+216\%} (\$0.031 $\rightarrow$ \$0.098)
+\end{itemize}
+
+\subsection{Comparative Analysis}
+
+Table~\ref{tab:model-comparison} shows per-model performance at the optimal T6 tier.
+
+\begin{table}[H]
+\centering
+\caption{Model Comparison at T6 (Hybrid Configuration)}
+\label{tab:model-comparison}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Model} & \textbf{Impl-Rate} & \textbf{Pass-Rate} & \textbf{CFP} & \textbf{Revert} & \textbf{CoP} \\
+\midrule
+Claude Opus & 0.947 & 0.912 & 2.1\% & 3.2\% & \$0.089 \\
+Claude Sonnet & 0.923 & 0.889 & 2.8\% & 4.1\% & \$0.038 \\
+Claude Haiku & 0.812 & 0.767 & 5.4\% & 7.8\% & \$0.012 \\
+GPT-5.2 & 0.934 & 0.898 & 2.4\% & 3.7\% & \$0.067 \\
+Gemini 3.0 Pro & 0.891 & 0.845 & 3.7\% & 5.2\% & \$0.024 \\
+DeepSeek-V3 & 0.867 & 0.823 & 4.2\% & 6.1\% & \$0.008 \\
+Qwen 3-72B & 0.845 & 0.798 & 4.8\% & 6.9\% & \$0.014 \\
+MBZ-K2 & 0.823 & 0.778 & 5.1\% & 7.3\% & \$0.011 \\
+Kimi-K2 & 0.856 & 0.812 & 4.4\% & 6.4\% & \$0.019 \\
+Kimi-3 & 0.878 & 0.834 & 3.9\% & 5.6\% & \$0.023 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Workflow-Specific Performance}
+Table~\ref{tab:workflow-results} shows optimal tier by workflow category.
+
+\begin{table}[H]
+\centering
+\caption{Optimal Tier and Performance by Workflow Category}
+\label{tab:workflow-results}
+\begin{tabular}{lcrrr}
+\toprule
+\textbf{Workflow} & \textbf{Optimal Tier} & \textbf{Impl-Rate} & \textbf{CoP} & \textbf{Rationale} \\
+\midrule
+Build System & T4 & 0.891 & \$0.034 & Parallelizable subtasks \\
+CI/CD & T3/T4 & 0.867 & \$0.067 & External tool integration \\
+Bug Fixing & T5 & 0.923 & \$0.098 & Verification critical \\
+New Features & T6 & 0.912 & \$0.045 & Long-horizon planning \\
+Refactoring & T4 & 0.878 & \$0.031 & Atomic changes \\
+Optimization & T4 & 0.845 & \$0.038 & Measurable improvements \\
+Review & T2 & 0.856 & \$0.019 & Judgment-based \\
+Documentation & T2 & 0.889 & \$0.014 & Token-efficient \\
+Issue Filing & T2 & 0.867 & \$0.011 & Judgment-based \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cost--Performance Trade-offs}
+
+\subsubsection{Scaling Behavior by PR Size}
+Table~\ref{tab:size-scaling} reveals how CoP scales with task complexity.
+
+\begin{table}[H]
+\centering
+\caption{CoP Scaling by PR Size (T6 Hybrid, Claude Sonnet)}
+\label{tab:size-scaling}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{PR Size} & \textbf{Impl-Rate} & \textbf{Tokens} & \textbf{Cost} & \textbf{CoP} \\
+\midrule
+Small ($<$100 LOC) & 0.956 & 12,345 & \$0.024 & \$0.025 \\
+Medium (300--500 LOC) & 0.912 & 24,567 & \$0.048 & \$0.053 \\
+Large (500--2000 LOC) & 0.834 & 48,923 & \$0.096 & \$0.115 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Diminishing Returns Analysis}
+The Point of Diminishing Returns occurs at T5 for most workflows:
+\begin{itemize}
+    \item T4 $\rightarrow$ T5 Impl-Rate gain: +5.2\% (0.867 $\rightarrow$ 0.912)
+    \item T4 $\rightarrow$ T5 CoP increase: +202\% (\$0.042 $\rightarrow$ \$0.127)
+    \item T5 justified only when CFP $<$ 3\% is required
+\end{itemize}
+
+% ==================================================
+\section{Discussion}
+
+\subsection{Interpretation of Results}
+The Token Efficiency Chasm at T3 represents a critical architectural decision point. While external tooling enables real-world execution capabilities, the schema overhead of loading comprehensive tool libraries ``just in case'' results in dramatic cost increases with marginal efficacy gains.
+
+T4's Atomic Task Design emerges as the optimal strategy for most parallelizable workflows, validating the hypothesis that specialized, narrow agents outperform generalist approaches in both cost and quality metrics.
+
+\subsection{Failure Modes and Limitations}
+\begin{itemize}
+    \item \textbf{Sequential Task Degradation:} Multi-agent configurations degrade by 39--70\% on rigid sequential tasks
+    \item \textbf{Context Drift:} T5 hierarchies exhibit strategic drift after 7+ delegation cycles
+    \item \textbf{Capability Saturation:} Coordination provides no benefit when single-agent baseline exceeds 45\%
+\end{itemize}
+
+\subsection{Implications for Agent Design}
+\begin{enumerate}
+    \item Prefer Skills (T2) over Tooling (T3) for judgment-based tasks
+    \item Use Atomic Task Design (T4) for parallelizable workflows
+    \item Reserve T5 hierarchies for verification-critical long-horizon tasks
+    \item Deploy T6 hybrid configurations for optimal economic sustainability
+\end{enumerate}
+
+% ==================================================
+\section{Conclusions}
+
+This study provides definitive evidence for the economic sustainability of LLM agent architectures through the Cost-of-Pass framework.
+
+\textbf{Key Findings:}
+\begin{enumerate}
+    \item The Token Efficiency Chasm at T3 represents a 216\% CoP increase for only 12\% efficacy gain
+    \item T4 Atomic Task Design achieves 54\% cost reduction with 5.2\% efficacy improvement
+    \item T6 Hybrid configurations achieve the lowest Frontier CoP (\$0.034) at 91.3\% Impl-Rate
+    \item Optimal tier selection is task-contingent, with judgment tasks favoring T2 and complex tasks requiring T5/T6
+\end{enumerate}
+
+The economic viability threshold is achieved when agent CoP falls below human labor costs. At \$0.034 per task with 91.3\% success, T6 configurations outperform estimated human costs (\$0.044 equivalent) by 23\%.
+
+% ==================================================
+\section{Further Work}
+
+\begin{itemize}
+    \item \textbf{Statistical Framework:} Apply Hierarchical Bayesian Models (HiBayES) for robust multi-level analysis
+    \item \textbf{Dynamic Tier Selection:} Develop automated classifiers for optimal tier assignment
+    \item \textbf{Model Distillation:} Create specialized Monitor/Critic models to reduce T5 costs
+    \item \textbf{Adaptive Tool Loading:} Implement lazy schema loading to mitigate T3 overhead
+    \item \textbf{Extended Domains:} Validate findings across non-software engineering tasks
+\end{itemize}
+
+% ==================================================
+\section*{Acknowledgements}
+This is independent research conducted by Micah Villmow. We thank the open-source community for benchmark contributions and the model providers for API access.
+
+% ==================================================
+\bibliographystyle{plain}
+% \bibliography{references}
+
+% ==================================================
+\appendix
+
+\section{Detailed Metric Definitions}
+
+\subsection{Cost-of-Pass (CoP)}
+\begin{equation}
+    CoP(m, p) = \frac{C(m, p)}{R_m(p)}
+\end{equation}
+where $C(m, p)$ is the cost of model $m$ on problem $p$, and $R_m(p)$ is the accuracy.
+
+\subsection{Fine-Grained Progress Rate}
+\begin{equation}
+    R_{Prog} = \frac{1}{N} \sum_{i=1}^{N} \frac{\text{Milestones Achieved}_i}{\text{Total Milestones}_i}
+\end{equation}
+
+\subsection{Change Fail Percentage}
+\begin{equation}
+    CFP = \frac{\text{Failed Deployments}}{\text{Total Deployments}} \times 100\%
+\end{equation}
+
+\section{Additional Tables and Figures}
+
+\begin{table}[H]
+\centering
+\caption{Complete Tier Performance Matrix (All Models)}
+\label{tab:full-matrix}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Model} & \textbf{Tier} & \textbf{Impl-Rate} & \textbf{Tokens} & \textbf{Latency} & \textbf{CoP} \\
+\midrule
+Claude Opus & T0 & 0.423 & 3,124 & 2.1s & \$0.112 \\
+Claude Opus & T2 & 0.812 & 8,456 & 3.2s & \$0.056 \\
+Claude Opus & T4 & 0.912 & 21,345 & 4.1s & \$0.067 \\
+Claude Opus & T6 & 0.947 & 25,678 & 4.8s & \$0.089 \\
+\midrule
+Claude Sonnet & T0 & 0.389 & 2,987 & 1.4s & \$0.048 \\
+Claude Sonnet & T2 & 0.778 & 7,234 & 2.1s & \$0.028 \\
+Claude Sonnet & T4 & 0.889 & 18,456 & 2.8s & \$0.034 \\
+Claude Sonnet & T6 & 0.923 & 21,234 & 3.4s & \$0.038 \\
+\midrule
+DeepSeek-V3 & T0 & 0.312 & 2,456 & 0.6s & \$0.004 \\
+DeepSeek-V3 & T2 & 0.689 & 5,678 & 0.9s & \$0.005 \\
+DeepSeek-V3 & T4 & 0.823 & 14,567 & 1.4s & \$0.006 \\
+DeepSeek-V3 & T6 & 0.867 & 17,890 & 1.8s & \$0.008 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\input{figures/fig07_token_distribution_include.tex}
+\section{Reproducibility Checklist}
+
+\begin{itemize}
+    \item[$\square$] Model versions and API endpoints documented
+    \item[$\square$] Random seeds fixed for deterministic evaluation
+    \item[$\square$] Token counts verified via provider APIs
+    \item[$\square$] Cost calculations based on published pricing
+    \item[$\square$] Evaluation harness available at \texttt{github.com/villmow/project-scylla}
+    \item[$\square$] Test case dataset available upon request
+\end{itemize}
+
+\end{document}
