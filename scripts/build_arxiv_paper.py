@@ -94,9 +94,11 @@ def fix_relative_paths(content: str) -> str:
     - tables/ paths should stay as-is
     - Remove any docs/paper-dryrun/ prefixes
     """
-    # Fix absolute or docs/paper-dryrun/ prefixes
+    # Fix absolute or docs/paper-dryrun/ prefixes and bare paper-dryrun/ prefixes
     content = re.sub(r"docs/paper-dryrun/figures/", "figures/", content)
     content = re.sub(r"docs/paper-dryrun/tables/", "tables/", content)
+    content = re.sub(r"paper-dryrun/figures/", "figures/", content)
+    content = re.sub(r"paper-dryrun/tables/", "tables/", content)
 
     # Remove any absolute paths (starting with /)
     # This is more cautious - only fix paths in \includegraphics and \input
