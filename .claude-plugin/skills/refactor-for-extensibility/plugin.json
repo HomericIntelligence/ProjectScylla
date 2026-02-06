@@ -1,0 +1,42 @@
+{
+  "name": "refactor-for-extensibility",
+  "version": "1.0.0",
+  "category": "architecture",
+  "description": "Systematic workflow for preparing codebases for extensibility through extraction, parameterization, and protocol-based abstraction",
+  "author": "Claude Sonnet 4.5",
+  "created": "2026-02-05",
+  "tags": [
+    "refactoring",
+    "extensibility",
+    "protocols",
+    "extraction",
+    "parameterization",
+    "backward-compatibility"
+  ],
+  "keywords": [
+    "prepare codebase",
+    "make extensible",
+    "extract logic",
+    "protocol pattern",
+    "pluggable behavior",
+    "formalize schema"
+  ],
+  "outcome": "success",
+  "metrics": {
+    "prs_created": 6,
+    "prs_planned": 9,
+    "lines_removed": 1051,
+    "lines_added": 636,
+    "net_reduction": 415,
+    "backward_compatible": true,
+    "files_created": 5,
+    "files_deleted": 6,
+    "files_modified": 11
+  },
+  "dependencies": [],
+  "references": [
+    "CLAUDE.md - PR workflow requirements",
+    "scripts/README.md - Recovery script documentation",
+    "Phase 2.1-2.2 plan - SubtestProvider design"
+  ]
+}
