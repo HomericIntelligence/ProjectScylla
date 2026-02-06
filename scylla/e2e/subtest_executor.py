@@ -1042,7 +1042,7 @@ class SubTestExecutor:
                 adapter_config,
                 str(agent_prompt_file.resolve()),  # Pass absolute file path
                 None,
-                tier_config.system_prompt_mode,
+                subtest.system_prompt_mode,
                 agent_name,
             )
 

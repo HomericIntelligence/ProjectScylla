@@ -162,6 +162,7 @@ class SubTestConfig:
     resources: dict[str, Any] = field(default_factory=dict)
     inherit_best_from: list[TierID] = field(default_factory=list)
     agent_teams: bool = False  # Enable experimental agent teams feature
+    system_prompt_mode: str = "custom"  # "none", "default", "custom"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -175,6 +176,7 @@ class SubTestConfig:
             "resources": self.resources,
             "inherit_best_from": [tier.value for tier in self.inherit_best_from],
             "agent_teams": self.agent_teams,
+            "system_prompt_mode": self.system_prompt_mode,
         }
 
 

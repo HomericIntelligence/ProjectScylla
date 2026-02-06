@@ -69,6 +69,37 @@ class TestSubTestConfig:
         assert result["claude_md_path"] is None
         assert result["claude_dir_path"] is None
 
+    def test_system_prompt_mode(self) -> None:
+        """Test that system_prompt_mode is correctly stored and serialized."""
+        # Test default value
+        config_default = SubTestConfig(
+            id="01",
+            name="Default",
+            description="Default system prompt mode",
+        )
+        assert config_default.system_prompt_mode == "custom"
+        assert config_default.to_dict()["system_prompt_mode"] == "custom"
+
+        # Test explicit "none" mode (for T0/00 subtest)
+        config_none = SubTestConfig(
+            id="00",
+            name="Empty",
+            description="No system prompt",
+            system_prompt_mode="none",
+        )
+        assert config_none.system_prompt_mode == "none"
+        assert config_none.to_dict()["system_prompt_mode"] == "none"
+
+        # Test "default" mode
+        config_default_mode = SubTestConfig(
+            id="01",
+            name="Default Mode",
+            description="Use Claude Code default",
+            system_prompt_mode="default",
+        )
+        assert config_default_mode.system_prompt_mode == "default"
+        assert config_default_mode.to_dict()["system_prompt_mode"] == "default"
+
 
 class TestTierConfig:
     """Tests for TierConfig."""

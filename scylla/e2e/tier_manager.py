@@ -175,6 +175,9 @@ class TierManager:
             if skip_agent_teams and agent_teams:
                 continue
 
+            # Parse system_prompt_mode for this subtest
+            system_prompt_mode = config_data.get("system_prompt_mode", "custom")
+
             subtests.append(
                 SubTestConfig(
                     id=subtest_id,
@@ -186,6 +189,7 @@ class TierManager:
                     resources=resources,
                     inherit_best_from=inherit_best_from,
                     agent_teams=agent_teams,
+                    system_prompt_mode=system_prompt_mode,
                 )
             )
 
