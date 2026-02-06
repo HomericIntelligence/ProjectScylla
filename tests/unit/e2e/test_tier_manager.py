@@ -134,7 +134,7 @@ class TestBuildResourceSuffix:
 
 
 class TestDiscoverSubtestsRootLevelMapping:
-    """Tests for root-level field mapping in _discover_subtests()."""
+    """Tests for root-level field mapping in SubtestProvider.discover_subtests()."""
 
     def test_root_level_tools_mapped(self, tmp_path: Path) -> None:
         """Test that root-level tools field is mapped to resources."""
@@ -587,7 +587,7 @@ class TestSystemPromptMode:
         )
 
         manager = TierManager(tiers_dir)
-        subtests = manager._discover_subtests(TierID.T2, tiers_dir / "t2")
+        subtests = manager.subtest_provider.discover_subtests(TierID.T2)
 
         assert len(subtests) == 1
         assert subtests[0].system_prompt_mode == "custom"
@@ -619,7 +619,7 @@ class TestInheritBestFrom:
 
         # Discover subtests
         manager = TierManager(tiers_dir)
-        subtests = manager._discover_subtests(TierID.T5, tiers_dir / "t5")
+        subtests = manager.subtest_provider.discover_subtests(TierID.T5)
 
         # Verify inherit_best_from was parsed
         assert len(subtests) == 1
@@ -647,7 +647,7 @@ class TestInheritBestFrom:
         )
 
         manager = TierManager(tiers_dir)
-        subtests = manager._discover_subtests(TierID.T5, tiers_dir / "t5")
+        subtests = manager.subtest_provider.discover_subtests(TierID.T5)
 
         assert len(subtests) == 1
         assert len(subtests[0].inherit_best_from) == 5
@@ -680,7 +680,7 @@ class TestInheritBestFrom:
         )
 
         manager = TierManager(tiers_dir)
-        subtests = manager._discover_subtests(TierID.T5, tiers_dir / "t5")
+        subtests = manager.subtest_provider.discover_subtests(TierID.T5)
 
         assert len(subtests) == 1
         assert len(subtests[0].inherit_best_from) == 0
