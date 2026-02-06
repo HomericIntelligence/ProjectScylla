@@ -49,6 +49,7 @@ def discover_blocks(
         >>> blocks = discover_blocks(Path("CLAUDE.md"))
         >>> blocks[0]
         ('B01', 1, 11, 'B01-project-overview.md')
+
     """
     if block_defs is not None:
         return block_defs
@@ -83,6 +84,7 @@ def extract_blocks(
         ...     Path("tests/shared/blocks")
         ... )
         [Path("tests/shared/blocks/B01-project-overview.md"), ...]
+
     """
     # Ensure output directory exists
     output_dir.mkdir(parents=True, exist_ok=True)
