@@ -17,14 +17,6 @@ pre-commit = ">=4.5.1,<5"
 
 [pypi-dependencies]
 scylla = { path = ".", editable = true }
-
-[feature.dev.dependencies]
-pytest = ">=7.0"
-pytest-cov = ">=4.0"
-pre-commit = ">=3.0"
-ruff = ">=0.1.0"
-
-[feature.analysis.pypi-dependencies]
 matplotlib = ">=3.8"
 numpy = ">=1.24"
 pandas = ">=2.0"
@@ -36,6 +28,11 @@ krippendorff = ">=0.6.0"
 statsmodels = ">=0.14"
 jsonschema = ">=4.0"
 
+[feature.dev.dependencies]
+pytest = ">=7.0"
+pytest-cov = ">=4.0"
+pre-commit = ">=3.0"
+ruff = ">=0.1.0"
+
 [environments]
 default = { features = ["dev"], solve-group = "default" }
-analysis = { features = ["dev", "analysis"], solve-group = "default" }
