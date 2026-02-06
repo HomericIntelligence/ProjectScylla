@@ -98,7 +98,9 @@ class FileSystemSubtestProvider:
 
             # T0 sub-tests have special handling for extends_previous
             # 00-empty and 01-vanilla don't extend; 02+ may extend
-            extends_previous = tier_id.value != "T0" or int(subtest_id) >= T0_FIRST_EXTENDING_SUBTEST
+            extends_previous = (
+                tier_id.value != "T0" or int(subtest_id) >= T0_FIRST_EXTENDING_SUBTEST
+            )
             # Allow config to override extends_previous
             extends_previous = config_data.get("extends_previous", extends_previous)
 
