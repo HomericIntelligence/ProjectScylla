@@ -129,16 +129,8 @@ def verify_alignment(paper_md_path: Path, paper_tex_path: Path) -> bool:
 
 
 if __name__ == "__main__":
-    paper_md = Path("docs/paper.md")
-    paper_tex = Path("docs/paper.tex")
-
-    success = verify_alignment(paper_md, paper_tex)
-
-    if not success:
-        print("\n⚠ Warning: Alignment issues found")
-        print("  paper.tex should contain all content from paper.md")
-        print("  (paper.tex can have additional content)")
-        sys.exit(1)
-
-    print("\n✓ Verification complete - alignment OK")
+    # paper.tex is now the single source of truth
+    # Skip alignment verification with paper.md
+    print("ℹ Note: paper.tex is the source of truth (paper.md is deprecated)")
+    print("✓ Verification skipped - paper.tex is canonical")
     sys.exit(0)

@@ -54,43 +54,34 @@ complexity and actual outcomes.
 
 \end{abstract}
 
-\section{Keywords}
-LLM agents, software engineering benchmarks, cost-of-pass, multi-agent systems,
+\noindent\textbf{Keywords:} LLM agents, software engineering benchmarks, cost-of-pass, multi-agent systems,
 prompt engineering, ablation studies, evaluation frameworks, CLI tools, agentic
 AI
 
-\section{Summary}
+\section{Introduction}
 
 Large language models have ushered in massive increases in capabilities for
 automated computer interactions. What used to require hand-coded algorithms and
-pipelines can now be done automatically using state of the art coding models to
-generate instructions that can then be utilized to further improve automated
-approaches. However, understanding what improves these language models is more
-of black magic than art, let alone a rigorous science. This paper's goal is to
-help demystify the magic of prompt engineering by proposing a rigorous
-evaluation framework across multiple dimensions to help determine how agents
-interact, the scale of changes for the agentics, and an attempt to quantify
-with numbers the benefits of each approach across a broad range of activities.
+pipelines can now be done automatically using state of the art coding models.
+However, understanding what improves these language models is more of black
+magic than art, let alone a rigorous science. This paper's goal is to help
+demystify the magic of prompt engineering by proposing a rigorous evaluation
+framework to quantify the benefits of different architectural approaches.
 
-There are benchmarks for measuring LLM's workflows in various domains, such as
-agent-bench\cite{liu2023agentbench}, swe-bench\cite{jimenez2024swebench}, tau-bench\cite{yao2024taubench}, etc... There are also prompt
-evaluation benchmarks such as PromptBench\cite{zhu2023promptbench2} or PromptEval\cite{polo2024efficient}. This paper
-focuses specifically on coding tools, specifically industry leading tool Claude
-Code\cite{anthropic2024claude}, and how prompt modification can change the behavior of the model for
-better or for worse. This paper introduces a framework for evaluating agentic
-coding tools in a systematic way, thus allowing extension to domains outside of
-CLI based coding tools. I show that on a trivial Hello World task, all seven
-tiers (T0-T6) achieve equivalent quality (all grade A, scores 0.943-0.983) while
-cost varies 3.8$\times$ from \$0.065 (T5 hybrid) to \$0.247 (T6 super). The framework
+There are benchmarks for measuring LLM workflows in various domains, such as
+agent-bench\cite{liu2023agentbench}, swe-bench\cite{jimenez2024swebench}, and tau-bench\cite{yao2024taubench}. There are also prompt
+evaluation benchmarks such as PromptBench\cite{zhu2023promptbench2} and PromptEval\cite{polo2024efficient}. This paper
+focuses specifically on coding tools, particularly the industry-leading Claude
+Code\cite{anthropic2024claude}, and how prompt and architectural modifications affect model behavior.
+This paper introduces Scylla, a framework for evaluating agentic coding tools in
+a systematic way, allowing extension to domains beyond CLI-based coding tools.
+The dryrun results on a trivial Hello World task show that all seven tiers
+(T0-T6) achieve equivalent quality (all grade A, scores 0.943-0.983) while cost
+varies 3.8$\times$ from \$0.065 (T5 hybrid) to \$0.247 (T6 super). The framework
 successfully differentiates cost structures across architectural choices even
-when quality converges.
-
-This implies that architectural complexity does not always improve quality, and
-that careful hybrid designs (T5) can achieve Frontier Cost-of-Pass by
-selectively combining features rather than maximizing them. The dryrun validates
-the framework's ability to measure these trade-offs empirically.
-
-\section{Introduction}
+when quality converges, demonstrating that architectural complexity does not
+always improve quality. Careful hybrid designs (T5) can achieve Frontier
+Cost-of-Pass by selectively combining features rather than maximizing them.
 
 Anthropic has many good resources for improving Claude Code on their engineering
 blog, but despite these, there are not any intuitive and user-friendly methods
@@ -215,9 +206,6 @@ professionalism, and patchfile correctness.
 
 \textbf{Table 4.1: LLM-as-Judge Evaluation Categories}
 
-\input{tables/tab04_criteria_performance.tex}
-
-
 \begin{tabular}{|l|l|l|l|}
 \hline
 Category & Weight & Scoring Type & Description \\
@@ -279,9 +267,6 @@ Critical & 1.50+ & Non-functioning solutions, destructive operations \\
 The final score maps to a grade using this scale:
 
 \textbf{Table 4.2: Industry-Aligned Grade Scale}
-
-\input{tables/tab04_criteria_performance.tex}
-
 
 \begin{tabular}{|l|l|l|l|}
 \hline
@@ -426,9 +411,6 @@ progressively add complexity, with \textbf{113 sub-tests} total. Each tier gets
 tested independently so we can isolate what each component contributes.
 
 \textbf{Table 4.3: Testing Tiers (Ablation Study Framework)}
-
-\input{tables/tab04_criteria_performance.tex}
-
 
 \begin{tabular}{|l|l|l|l|l|l|l|}
 \hline
@@ -768,6 +750,17 @@ Claude Haiku 4.5 & claude-haiku-4-5-20250929 & simple tasks, cost optimization \
 \item Safety-net plugin blocks destructive operations
 \end{itemize}
 
+\textbf{Model-Agnostic Framework Design}:
+
+The framework is designed to work with any CLI tool or model through standardized
+interfaces. Everything goes through the CLI's language interface and filesystem
+outputs without touching model APIs directly. This enables consistent metrics
+(CoP, Pass-Rate, Impl-Rate) across all models for apples-to-apples economic
+comparisons. The tier structure (T0-T6) applies to all tools, allowing direct
+architectural comparisons across vendors. Everything is in version-controlled
+YAML (model IDs, temperature, token limits), making it easy to reproduce across
+different tools and swap judges.
+
 \section{Test Cases}
 
 \subsection{Pull Request (PR) Selection Criteria}
@@ -879,37 +872,6 @@ runs_per_tier: 10  # Get enough data for stats
 Tests get progressively harder. Performance should drop as complexity increases,
 if it does not, the test is too easy even for the advanced models.
 
-\section{Model Summary}
-
-\subsection{Claude Code Models}
-
-I am primarily testing Claude models through the Claude Code CLI:
-
-\textbf{Opus 4.5} is expected to be accel in T4-T6 where you need deep reasoning and
-self-correction.
-
-\textbf{Sonnet 4.5} is expected to show benefits at T1-T3. Balanced cost/performance
-at \$3/\$15 per million tokens.
-
-\textbf{Haiku 4.5} is expected to be the choice for simple T0-T1 tasks where fancy
-features do not help. At \$1/\$5 per million tokens, it is 15$\times$ cheaper than Opus
-for inputs. It is not expected to work well with agents, tools, or skills.
-
-\subsection{Model-Agnostic Framework Design}
-
-The framework is designed to work with any CLI tool or model:
-
-\begin{enumerate}
-\item \textbf{Standardized Interfaces}: Everything goes through the CLI's language interface and filesystem outputs. Never touches model APIs directly. This means vendor-specific details do not matter.
-\item \textbf{Consistent Metrics}: CoP, Pass-Rate, Impl-Rate work the same across all models. You can do apples-to-apples economic comparisons.
-\item \textbf{Pluggable Judges}: Currently using Claude family for judging, but you can swap in any LLM.
-\item \textbf{Same Tier Structure}: T0-T6 applies to all tools. Direct architectural comparisons across vendors.
-\item \textbf{Reproducible Configs}: Everything is in version-controlled YAML, model IDs, temperature, token limits. Easy to reproduce across different tools.
-\end{enumerate}
-
-This means you can benchmark OpenCode, Codex, Goose, or whatever new tool
-comes out, and the comparisons stay valid.
-
 \section{Results}
 
 I will present results from the dryrun experiment (test-001, Hello World task)
@@ -936,19 +898,29 @@ Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
 consensus scores ranging from 0.943 (T6) to 0.983 (T2, T3, T5). The task is
 trivially easy, as expected, even T0 (minimal prompt) scores 0.973.
 
-**Table 1: Tier Summary (Dryrun)**
+\textbf{Table 1: Tier Summary (Dryrun)}
 
-| Tier | Pass Rate | Mean Score | Median Score | Grade | CoP ($) |
-|------|-----------|-----------------|--------------|-------|---------|
-| T0   | 1.000     | 0.973           | 0.973        | A     | 0.14    |
-| T1   | 1.000     | 0.970           | 0.970        | A     | 0.13    |
-| T2   | 1.000     | 0.983           | 0.983        | A     | 0.14    |
-| T3   | 1.000     | 0.983           | 0.983        | A     | 0.13    |
-| T4   | 1.000     | 0.960           | 0.960        | A     | 0.17    |
-| T5   | 1.000     | 0.983           | 0.983        | A     | 0.07    |
-| T6   | 1.000     | 0.943           | 0.943        | A     | 0.25    |
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Tier & Pass Rate & Mean Score & Median Score & Grade & CoP (\$) \\
+\hline
+T0 & 1.000 & 0.973 & 0.973 & A & 0.14 \\
+\hline
+T1 & 1.000 & 0.970 & 0.970 & A & 0.13 \\
+\hline
+T2 & 1.000 & 0.983 & 0.983 & A & 0.14 \\
+\hline
+T3 & 1.000 & 0.983 & 0.983 & A & 0.13 \\
+\hline
+T4 & 1.000 & 0.960 & 0.960 & A & 0.17 \\
+\hline
+T5 & 1.000 & 0.983 & 0.983 & A & 0.07 \\
+\hline
+T6 & 1.000 & 0.943 & 0.943 & A & 0.25 \\
+\hline
+\end{tabular}
 
-**Key finding**: Quality converges across all tiers (ceiling effect), but cost
+\textbf{Key finding}: Quality converges across all tiers (ceiling effect), but cost
 varies 3.8$\times$ from \$0.065 to \$0.247.
 
 \subsection{Cost-of-Pass Analysis}
@@ -989,7 +961,7 @@ Token distribution reveals where costs originate. Figure~\ref{fig:fig07_token_di
 \label{fig:fig07_token_distribution}
 \end{figure}
 
-Cache read tokens dominate, 80-99\% of total tokens across all tiers, confirming
+Cache read tokens dominate, ~79-83\% of total tokens across all tiers, confirming
 prompt caching works. But cache creation tokens vary dramatically:
 
 \textbf{Table 2: Token Breakdown}
@@ -1039,23 +1011,23 @@ time. Figure~\ref{fig:fig13_latency} shows the breakdown.
 \textbf{Table 3: Latency Breakdown}
 
 
-\begin{tabular}{|l|l|l|l|l|}
+\begin{tabular}{|l|r|r|r|r|}
 \hline
-Tier & Agent Time (s) & Judge Time (s) & Total Time (s) & Judge % of Total \\
+Tier & Agent Time (s) & Judge Time (s) & Total Time (s) & Judge \% of Total \\
 \hline
-T0 & 35.3 & 167.8 & 203.1 & 82.6% \\
+T0 & 35.3 & 167.8 & 203.1 & 82.6\% \\
 \hline
-T1 & 29.3 & 178.0 & 207.3 & 85.9% \\
+T1 & 29.3 & 178.0 & 207.3 & 85.9\% \\
 \hline
-T2 & 36.8 & 161.7 & 198.5 & 81.5% \\
+T2 & 36.8 & 161.7 & 198.5 & 81.5\% \\
 \hline
-T3 & 29.9 & 149.1 & 179.0 & 83.3% \\
+T3 & 29.9 & 149.1 & 179.0 & 83.3\% \\
 \hline
-T4 & 41.2 & 137.0 & 178.2 & 76.9% \\
+T4 & 41.2 & 137.0 & 178.2 & 76.9\% \\
 \hline
-T5 & 24.8 & 128.4 & 153.1 & 83.8% \\
+T5 & 24.8 & 128.4 & 153.1 & 83.8\% \\
 \hline
-T6 & 28.4 & 141.1 & 169.5 & 83.2% \\
+T6 & 28.4 & 141.1 & 169.5 & 83.2\% \\
 \hline
 \end{tabular}
 
@@ -1063,7 +1035,7 @@ T6 & 28.4 & 141.1 & 169.5 & 83.2% \\
 Judge evaluation dominates, 77-86% of total latency, ranging from 128-178
 seconds. This makes sense since 3 judges each evaluate the output independently.
 
-Agent time varies modestly, 25-41 seconds. T5 is fastest (24.8s), T4 slowest
+Agent time varies modestly, 24.8-41.2 seconds. T5 is fastest (24.8s), T4 slowest
 (41.2s). T5's speed advantage aligns with its cost advantage, both stem from
 minimal cache loading.
 
@@ -1085,7 +1057,7 @@ Three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5) evaluated each run. Figure~\ref{f
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig14_judge_agreement.pdf}
-\caption{Inter-judge agreement scatter matrix. Pairwise scatter plots showing score correlations between all judge pairs (Opus-Sonnet, Opus-Haiku, Sonnet-Haiku) with Spearman and Pearson correlation coefficients. High correlations (>0.85) indicate strong agreement despite systematic bias, validating the multi-judge ensemble approach.}
+\caption{Inter-judge agreement scatter matrix. Pairwise scatter plots showing score correlations between all judge pairs (Opus-Sonnet, Opus-Haiku, Sonnet-Haiku) with Spearman and Pearson correlation coefficients. Low-to-moderate correlations reveal systematic bias between judges rather than strong agreement, with Opus-Sonnet showing the highest concordance (Pearson r=0.706).}
 \label{fig:fig14_judge_agreement}
 \end{figure}
 
@@ -1093,18 +1065,18 @@ Three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5) evaluated each run. Figure~\ref{f
 \begin{itemize}
 \item \textbf{Opus}: Most conservative judge, scores range 0.93-0.96, never awards S grade
 \item \textbf{Sonnet}: Moderate judge, scores range 0.90-1.00, awards S grade in 4/7 tiers (T2, T3, T4, T5)
-\item \textbf{Haiku}: Most generous judge, scores range 0.93-1.00, awards S grade in 5/ 7 tiers
+\item \textbf{Haiku}: Most generous judge, scores range 0.929-1.00 (rounded), awards S grade in 5/7 tiers
 \end{itemize}
 
 \textbf{Pairwise agreement} (Table 3 from
  \texttt{docs/paper-dryrun/tables/tab03\_judge\_agreement.md}):
 \begin{itemize}
-\item \textbf{Opus-Sonnet}: Spearman ρ = 0.333, Pearson r = 0.706, mean Δ = 0.033
-\item \textbf{Opus-Haiku}: Spearman ρ = -0.273, Pearson r = -0.063, mean Δ = 0.045
-\item \textbf{Sonnet-Haiku}: Spearman ρ = -0.522, Pearson r = -0.347, mean Δ = 0.037
+\item \textbf{Opus-Sonnet}: Spearman $\rho$ = 0.333, Pearson r = 0.706, mean $\Delta$ = 0.033
+\item \textbf{Opus-Haiku}: Spearman $\rho$ = -0.273, Pearson r = -0.063, mean $\Delta$ = 0.045
+\item \textbf{Sonnet-Haiku}: Spearman $\rho$ = -0.522, Pearson r = -0.347, mean $\Delta$ = 0.037
 \end{itemize}
 
-Krippendorff's α (interval): -0.117. Poor agreement, but expected with N=1 per
+Krippendorff's $\alpha$ (interval): -0.117. Poor agreement, but expected with N=1 per
 tier. \textbf{Note}: N=7 is insufficient for reliable correlation estimates; these
 values are reported for completeness but should be interpreted with extreme
 caution.
@@ -1117,38 +1089,26 @@ scores. The median dampens extreme scores, Haiku's 1.00 perfects versus Opus's
 
 Judges score five weighted categories: functional correctness (35\%),
 code quality (20\%), proportionality (15\%), build pipeline (10\%), overall quality
-(20\%). Figure~\ref{fig:fig09_criteria_by_tier} shows criteria performance by tier.
+(20\%). Table~\ref{tab:tab04_criteria_performance} shows detailed per-criteria performance across tiers, and Figure~\ref{fig:fig09_criteria_by_tier} visualizes the breakdown.
+
+\input{paper-dryrun/tables/tab04_criteria_performance.tex}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.8\textwidth]{figures/fig09_criteria_by_tier.pdf}
-\caption{Per-criteria scores by tier. Grouped bar chart showing mean scores for five weighted categories (functional correctness, code quality, proportionality, build pipeline, overall quality) across T0--T6. Near-perfect functional scores (0.95--1.00) contrast with variance in proportionality and overall quality, revealing where architectural differences produce subtle quality distinctions despite the pass-rate ceiling.}
+\caption{Per-criteria scores by tier. Grouped bar chart showing mean scores for five weighted categories (functional correctness, code quality, proportionality, build pipeline, overall quality) across T0--T6. Perfect functional scores (1.00) contrast with variance in proportionality (0.90--1.00) and overall quality (0.93--1.00).}
 \label{fig:fig09_criteria_by_tier}
 \end{figure}
 
-All tiers score 0.95--1.00 on functional criteria (file exists, correct output,
-exit code 0). Near-perfect, confirming the task is trivially easy.
+All tiers score 1.00 on functional criteria (file exists, correct output,
+exit code 0). Perfect scores confirm the task is trivially easy.
 
 The largest score differences appear in subjective categories. Proportionality:
-T6 scored lower because judges noted cache artifacts (.ruff_cache,
-.pytest_cache) remaining in workspace. Overall quality: subjective engineering
+T6 scored lower because judges noted cache artifacts (\texttt{.ruff\_cache},
+\texttt{.pytest\_cache}) remaining in workspace. Overall quality: subjective engineering
 judgment shows the most variance across judges.
 
-Build pipeline: all tiers pass with scores 0.90-1.00, confirming clean
-execution.
-
-\subsection{Statistical Limitations}
-
-N=1 prevents inferential statistics. With only one run per tier, I cannot compute
-confidence intervals, standard deviations, or perform significance tests. All
-results are purely descriptive. This is a limitation of this run and not the
-framework itself.
-
-The analysis pipeline correctly reports \texttt{nan} for standard deviation and sets
-confidence intervals to (point, point). Statistical warnings appear in the
-output: "Mann-Whitney U test called with sample sizes 1, 1. Need at least 2
-samples per group." This was added so that it was clear to users that results
-are not expected to be robust.
+Build pipeline: all tiers score 1.00, confirming clean execution.
 
 \section{Discussion}
 
@@ -1231,7 +1191,7 @@ incorrect and points to agents being a little too lenient. Maybe some prompt
 tweaks will fix this, but that also can be due to the simplicity of this task.
 This can be investigated in future analysis.
 
-Inter-rater agreement is predictably low: Krippendorff's α = -0.117. But that is
+Inter-rater agreement is predictably low: Krippendorff's $\alpha$ = -0.117. But that is
 expected with N=1 and near-perfect scores. On tasks with more variance,
 agreement should improve as judges separate clear failures from clear successes.
 
@@ -1250,28 +1210,32 @@ or give different prompts to the same judge model.
 
 \subsection{Limitations}
 
-N=1 is descriptive only. I cannot compute standard deviations, confidence
-intervals, or significance tests. All tier comparisons are point estimates. A
-single outlier run could flip all the conclusions.
+\textbf{N=1 prevents inferential statistics}. With only one run per tier, I cannot
+compute standard deviations, confidence intervals, or significance tests. All
+tier comparisons are point estimates. A single outlier run could flip all
+conclusions. The analysis pipeline correctly reports \texttt{nan} for standard
+deviation and sets confidence intervals to (point, point). Statistical warnings
+appear in the output to make clear that results are not expected to be robust.
+This is a limitation of this run, not the framework itself.
 
-Single task, trivial complexity. Hello World does not need skills, tools,
+\textbf{Single task, trivial complexity}. Hello World does not need skills, tools,
 multi-agent coordination, or hierarchical reasoning. The dryrun validates the
 pipeline works, not whether architectural complexity improves quality on hard
 tasks.
 
-Single model. All agent runs use Sonnet 4.5. I have not tested whether tier
+\textbf{Single model}. All agent runs use Sonnet 4.5. I have not tested whether tier
 rankings hold for Opus 4.5, Haiku 4.5, or other model families.
 
-No thinking mode variants. The dryrun uses standard inference without extended
+\textbf{No thinking mode variants}. The dryrun uses standard inference without extended
 thinking. Models with thinking enabled might show different cost-quality
 trade-offs.
 
-Ceiling effect masks capability differences. When all tiers score 0.94-0.98, I
+\textbf{Ceiling effect masks capability differences}. When all tiers score 0.94-0.98, I
 cannot tell which architecture would excel on harder tasks. The full experiment
 (113 subtests including complex multi-file repos) will differentiate
 capabilities.
 
-Judge evaluation time bottleneck. 3 sequential judges per run creates a 3x cost
+\textbf{Judge evaluation time bottleneck}. 3 sequential judges per run creates a 3x cost
 multiplier. Parallel judge execution would reduce latency but not cost.
 
 \section{Conclusions}
@@ -1357,86 +1321,87 @@ reviewing early drafts of this paper and providing valuable feedback.
 
 \subsection{Appendix A: Detailed Metric Definitions}
 
-For comprehensive metric definitions including formulas, calculation methods, and interpretation guidelines, see:
-- \texttt{.claude/shared/metrics-definitions.md}
-- \texttt{docs/design/metrics-formulas.md}
+This appendix defines the core metrics used throughout the evaluation framework. For the complete definitions including future instrumentation, see the repository at \url{https://github.com/HomericIntelligence/ProjectScylla/blob/e33d627/.claude/shared/metrics-definitions.md}.
 
-Key metrics include Pass-Rate, Implementation Rate (Impl-Rate), Fine-Grained Progress Rate ($R_{Prog}$), Consistency, Cost-of-Pass (CoP), Frontier CoP, Token Distribution, and Latency.
+\subsubsection{Quality Metrics}
+
+\textbf{Pass-Rate}: Proportion of attempts that produce a correct solution.
+
+Formula: $\text{Pass-Rate} = \frac{\text{correct\_solutions}}{\text{total\_attempts}}$
+
+Range: [0, 1], where 0.0 = no correct solutions, 1.0 = all solutions correct. ``Correct'' is defined by task-specific test suite. Report with confidence intervals (95\% CI recommended for N$\geq$30).
+
+\textbf{Implementation Rate (Impl-Rate)}: Proportion of semantic requirements satisfied by the solution.
+
+Formula: $\text{Impl-Rate} = \frac{\text{satisfied\_requirements}}{\text{total\_requirements}}$
+
+Range: [0, 1]. Measures partial credit for incomplete solutions, more granular than binary Pass-Rate. Requires predefined requirement checklist where each requirement is independently verifiable.
+
+\textbf{Fine-Grained Progress Rate ($R_{Prog}$)}: Proportion of expected progress steps achieved during problem-solving.
+
+Formula: $R_{Prog} = \frac{\text{achieved\_progress\_steps}}{\text{expected\_progress\_steps}}$
+
+Range: [0, 1+]. Captures step-by-step advancement and can exceed 1.0 if agent takes extra beneficial steps. Useful for debugging agent behavior in multi-step tasks.
+
+\textbf{Consistency}: Stability of outputs across multiple runs with identical inputs.
+
+Formula: $\text{Consistency} = 1 - \frac{\sigma(\text{outputs})}{\mu(\text{outputs})}$
+
+Range: [0, 1], where higher values indicate more deterministic behavior. Requires multiple runs per task; temperature=0 should yield high consistency.
+
+\subsubsection{Economic Metrics}
+
+\textbf{Cost-of-Pass (CoP)}: Expected monetary cost to obtain one correct solution.
+
+Formula: $\text{CoP} = \frac{\text{total\_cost}}{\text{pass\_rate}}$
+
+Unit: USD (\$). Range: [0, $\infty$), lower is better. Infinite if pass\_rate = 0 (configuration is economically dead). Primary economic metric for tier comparison; includes all costs (input tokens, output tokens, tools).
+
+\textbf{Frontier CoP}: Minimum Cost-of-Pass across all evaluated tiers.
+
+Formula: $\text{Frontier\_CoP} = \min(\text{CoP}_{T0}, \text{CoP}_{T1}, \ldots, \text{CoP}_{T6})$
+
+Identifies the most cost-effective tier and serves as the optimization target.
+
+\textbf{Token Distribution}: Breakdown of token usage by component.
+
+Formula: $\text{token\_dist} = \left\{\frac{\text{input}}{\text{total}}, \frac{\text{output}}{\text{total}}, \frac{\text{tool\_input}}{\text{total}}, \frac{\text{tool\_output}}{\text{total}}\right\}$
+
+Helps identify cost drivers and target optimization efforts.
+
+\textbf{Change Fail Percentage (CFP)}: Proportion of code changes that cause failures.
+
+Formula: $\text{CFP} = \frac{\text{failed\_changes}}{\text{total\_changes}}$
+
+Range: [0, 1], lower is better. Measures production stability.
+
+\subsubsection{Process Metrics}
+
+\textbf{Latency}: Time from query submission to response completion, measured in seconds. Components include Time-to-First-Token (TTFT), total response time, and tool execution time (if applicable).
+
+\textbf{Strategic Drift}: Deviation from original goal over multi-step tasks.
+
+Measurement: $\text{Strategic\_Drift} = \text{cosine\_distance}(\text{initial\_goal\_embedding}, \text{final\_action\_embedding})$
+
+Range: [0, 2], where 0 = perfect goal alignment, 2 = completely opposite direction.
+
+\textbf{Ablation Score}: Isolated contribution of a single component to overall performance.
+
+Formula: $\text{Ablation\_Score} = \text{performance\_with\_component} - \text{performance\_without\_component}$
+
+Positive values indicate the component improves performance, negative values indicate harm, near-zero indicates no effect.
+
+\subsubsection{Statistical Reporting}
+
+Always report metrics with: (1) point estimate, (2) confidence interval (95\% CI recommended), (3) sample size (n), and (4) comparison p-value (if comparing tiers).
+
+Example: Pass-Rate: 0.67 (95\% CI: 0.54--0.80), n=50
 
 \subsection{Appendix B: Data Dictionary and Generated Outputs}
 
-This appendix references tables and figures generated by the analysis pipeline for the dryrun experiment. All outputs are located in `docs/paper-dryrun/`.
+All raw data, figures, and tables are available in the repository at \texttt{docs/paper-dryrun/}. The dataset includes 7 runs (one per tier), 21 judge evaluations (3 judges per run), and 105 criteria scores (5 criteria per judge), organized across 26 figures and 9 tables. Data files include \texttt{runs.csv}, \texttt{judges.csv}, \texttt{criteria.csv}, and \texttt{summary.json}. All figures are available in PNG/PDF/Vega-Lite/CSV formats for reproduction and analysis.
 
-**Tables** (Markdown format in `docs/paper-dryrun/tables/`):
-
-- **Table 1 (Tab01)**: Tier Summary — Pass rate, mean score, median, consistency, CoP for each tier
-  - File: `tab01_tier_summary.md`
-  - Contains: 7 rows (T0-T6), 8 columns (model, tier, subtests, pass rate with CI, mean score ± σ, median, consistency, CoP)
-
-- **Table 3 (Tab03)**: Judge Agreement — Pairwise correlations and mean score differences
-  - File: `tab03_judge_agreement.md`
-  - Contains: Spearman ρ, Pearson r, mean |Δ Score| for Opus-Sonnet, Opus-Haiku, Sonnet-Haiku pairs
-  - Includes: Krippendorff's α (interval) = -0.117
-
-- **Table 5 (Tab05)**: Cost Analysis — Token breakdown and cost by tier
-  - File: `tab05_cost_analysis.md`
-  - Contains: Mean cost, total cost, CoP, input tokens, output tokens, cache read, cache create for T0-T6
-
-**Figures** (PNG/PDF + Vega-Lite JSON + CSV in `docs/paper-dryrun/figures/`):
-
-- **Figure 6 (Fig06)**: Cost-of-Pass by Tier
-  - Files: `fig06_cop_by_tier.{png,pdf,vl.json,csv}`
-  - Shows: Bar chart of CoP across T0-T6, highlights Frontier CoP (\$0.065 at T5)
-
-- **Figure 7 (Fig07)**: Token Distribution
-  - Files: `fig07_token_distribution.{png,pdf,vl.json,csv}`
-  - Shows: Stacked bar chart of input, output, cache create, cache read tokens by tier
-  - Demonstrates: Token Efficiency Chasm (T6's 218K cache read vs T0's 113K)
-
-- **Figure 9 (Fig09)**: Criteria Performance by Tier
-  - Files: `fig09_criteria_by_tier.{png,pdf,vl.json,csv}`
-  - Shows: Heatmap or grouped bar of 5 criteria (functional, code_quality, proportionality, build_pipeline, overall_quality) across tiers
-  - Highlights: Near-perfect functional correctness, variance in proportionality/overall_quality
-
-- **Figure 13 (Fig13)**: Latency Breakdown
-  - Files: `fig13_latency.{png,pdf,vl.json,csv}`
-  - Shows: Stacked bar chart of agent time vs judge time by tier
-  - Demonstrates: Judge evaluation dominates (77-86% of total time)
-
-- **Figure 14 (Fig14)**: Judge Agreement
-  - Files: `fig14_judge_agreement.{png,pdf,vl.json,csv}`
-  - Shows: Score distributions by judge (Opus, Sonnet, Haiku) across tiers
-  - Highlights: Haiku most generous, Opus most conservative
-
-**Additional Figures Available** (26 total, see `docs/paper-dryrun/figures/` for complete list):
-
-- Fig01: Score variance by tier
-- Fig02: Judge variance (box plots by judge)
-- Fig03: Failure rate by tier (all zeros in dryrun)
-- Fig04: Pass rate by tier (all 1.0 in dryrun)
-- Fig05: Grade heatmap
-- Fig08: Cost-quality Pareto frontier
-- Fig11: Tier uplift (with significance markers)
-- Fig15: Subtest heatmap
-- Fig19: Effect size forest plot
-- Fig20: Metric correlation heatmap
-- Fig24: Score histograms
-- Fig25-27: Implementation rate analysis
-
-**Data Files** (CSV + JSON in `docs/paper-dryrun/data/`):
-
-- `runs.csv`: 7 rows, 19 columns (experiment, model, tier, subtest, run_number, score, impl_rate, passed, grade, cost, duration, tokens, exit_code)
-- `judges.csv`: 21 rows (7 runs × 3 judges), columns include judge_model, judge_score, judge_impl_rate, judge_passed, judge_grade, judge_reasoning
-- `criteria.csv`: 105 rows (21 judges × 5 criteria), columns include criterion_name, points_achieved, points_possible
-- `summary.json`: Overall statistics (total runs, pass rate, mean score, total cost, by-model and by-tier breakdowns)
-- `statistical_results.json`: Statistical test results (all show insufficient sample size warnings for N=1)
-
-**Usage Notes**:
-
-- All PNG/PDF figures are publication-ready at 300 DPI
-- Vega-Lite JSON specs can be edited and re-rendered with `vl-convert-python`
-- LaTeX snippets (`*_include.tex`) enable direct inclusion in LaTeX documents
-- CSV data files enable custom analysis and replotting in R, Python, or Excel
+\textbf{Repository}: \url{https://github.com/HomericIntelligence/ProjectScylla}
 
 \subsection{Appendix C: Reproducibility Checklist}
 
@@ -1496,22 +1461,6 @@ pixi run python scripts/generate_tables.py \
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.75\textwidth]{figures/fig03_failure_rate_by_tier.pdf}
-\caption{Failure rate by tier. Stacked bar chart showing grade distribution (A+, A, B, C, D, F) across tiers. The dominance of A+ grades (near 100\%) demonstrates that all configurations achieved functional success on this simple task, supporting the pass-rate ceiling finding discussed in Section~6.1.}
-\label{fig:fig03_failure_rate_by_tier}
-\end{figure}
-
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.75\textwidth]{figures/fig04_pass_rate_by_tier.pdf}
-\caption{Pass-rate by tier with 95\% bootstrap confidence intervals. Grouped bar chart showing pass-rate across T0--T6 for each agent model. All configurations achieve 100\% pass-rate (within CI bounds), confirming the task-specific ceiling effect that limits quality discrimination, as discussed in Section~6.1.}
-\label{fig:fig04_pass_rate_by_tier}
-\end{figure}
-
-
-\begin{figure}[htbp]
-\centering
 \includegraphics[width=0.75\textwidth]{figures/fig05_grade_heatmap.pdf}
 \caption{Grade distribution heatmap by tier. Heatmap showing the proportion of each grade (A+ through F) per tier, with count annotations. The dominance of A+ grades across all tiers visually confirms the ceiling effect, where architectural enhancements cannot improve already-perfect task performance.}
 \label{fig:fig05_grade_heatmap}
@@ -1525,14 +1474,6 @@ pixi run python scripts/generate_tables.py \
 \includegraphics[width=0.75\textwidth]{figures/fig08_cost_quality_pareto.pdf}
 \caption{Cost-quality Pareto frontier. Scatter plot of mean cost per run versus mean score for each tier, with Pareto-efficient points highlighted. Points along the frontier represent architecturally optimal trade-offs, revealing which configurations deliver maximum quality at minimum cost, as analyzed in Section~6.2.}
 \label{fig:fig08_cost_quality_pareto}
-\end{figure}
-
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.75\textwidth]{figures/fig11_tier_uplift.pdf}
-\caption{Tier transition uplift relative to T0 baseline. Line chart showing cumulative pass-rate improvement from T0 (baseline) through T6 for each model. The flat trajectories confirm that architectural enhancements provide zero uplift on this ceiling-constrained task, validating the need for more challenging evaluation benchmarks.}
-\label{fig:fig11_tier_uplift}
 \end{figure}
 
 
@@ -1564,21 +1505,7 @@ pixi run python scripts/generate_tables.py \
 
 \subsection{Diagnostic Metrics}
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.75\textwidth]{figures/fig18_failure_rate_by_test.pdf}
-\caption{Failure rate by test. Bar chart showing failure rate for each test across all tiers and configurations. Near-zero failure rates confirm the ceiling effect at the test level, demonstrating that individual tests lack discriminatory power to differentiate architectural capabilities on this simple task.}
-\label{fig:fig18_failure_rate_by_test}
-\end{figure}
-
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.75\textwidth]{figures/fig19_effect_size_forest.pdf}
-\caption{Effect size forest plot (Cliff's Delta with 95\% confidence intervals). Forest plot showing non-parametric effect sizes for tier-to-tier transitions. Confidence intervals crossing zero indicate negligible effect sizes, confirming that architectural differences produce no measurable quality improvement, as discussed in the statistical analysis (Section~8).}
-\label{fig:fig19_effect_size_forest}
-\end{figure}
-
+Additional diagnostic figures (failure rates, pass rates, effect sizes, tier uplift) are available in the data repository but show no variance in this N=1 dryrun and are therefore omitted from this paper. They will provide informative results when the full dataset is collected.
 
 \begin{figure}[htbp]
 \centering
