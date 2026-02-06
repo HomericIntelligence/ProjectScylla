@@ -645,10 +645,7 @@ class E2ERunner:
                     f"Limiting sub-tests from {original_count} to {len(tier_config.subtests)}"
                 )
 
-        logger.info(
-            f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests, "
-            f"mode: {tier_config.system_prompt_mode}"
-        )
+        logger.info(f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests")
 
         # Prepare results directory (flat structure: experiment/T0/, not experiment/tiers/T0/)
         tier_dir = self.experiment_dir / tier_id.value

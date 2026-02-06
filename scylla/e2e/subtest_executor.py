@@ -867,14 +867,17 @@ class SubTestExecutor:
         prompt_file: Path,
         agent_name: str | None = None,
     ) -> AdapterResult:
-        """Run agent execution directly (no nested containers).
+        """Run agent execution directly (DEPRECATED - not used in current flow).
+
+        This method is kept for compatibility but is not called by _execute_single_run.
+        The current execution flow uses replay.sh via _run_via_replay_script.
 
         Container isolation is now handled at the experiment level - the entire
         run_e2e_experiment.py script runs inside a container. This method always
         runs the agent directly using the adapter.
 
         Args:
-            tier_config: Tier configuration for system prompt mode
+            tier_config: Tier configuration (unused, kept for compatibility)
             adapter_config: Adapter configuration
             task_prompt: Task prompt text
             agent_dir: Directory for agent outputs
@@ -886,11 +889,13 @@ class SubTestExecutor:
             AdapterResult with execution details
 
         """
-        # Always use direct execution (container is at experiment level, not per-agent)
+        # DEPRECATED: This path is not used. system_prompt_mode should come from
+        # SubTestConfig in the actual execution path.
+        # Kept for backwards compatibility.
         return self.adapter.run(
             config=adapter_config,
             tier_config=None,
-            system_prompt_mode=tier_config.system_prompt_mode,
+            system_prompt_mode="custom",  # Default fallback
             agent_name=agent_name,
         )
 

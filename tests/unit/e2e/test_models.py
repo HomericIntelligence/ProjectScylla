@@ -112,14 +112,14 @@ class TestTierConfig:
                 SubTestConfig(id="01", name="First", description="First subtest"),
                 SubTestConfig(id="02", name="Second", description="Second subtest"),
             ],
-            system_prompt_mode="custom",
         )
 
         result = config.to_dict()
 
         assert result["tier_id"] == "T2"
         assert len(result["subtests"]) == 2
-        assert result["system_prompt_mode"] == "custom"
+        # system_prompt_mode is per-subtest, not per-tier
+        assert "system_prompt_mode" not in result
 
 
 class TestRunResult:
