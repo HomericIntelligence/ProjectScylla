@@ -468,7 +468,6 @@ def rebuild_tier_results(
                 best_subtest=best_subtest_id,
                 best_subtest_score=best_subtest.median_score,
                 total_cost=sum(s.total_cost for s in subtest_results.values()),
-                total_runs=sum(len(s.runs) for s in subtest_results.values()),
             )
 
             tier_results[tier_id] = tier_result
@@ -575,7 +574,8 @@ def rebuild_experiment_result(
         config=config,
         tier_results=tier_results,
         best_overall_tier=best_tier,
-        best_cost_of_pass=best_cop if best_cop != float("inf") else None,
+        frontier_cop=best_cop,
+        frontier_cop_tier=best_tier,
     )
 
 
@@ -626,13 +626,13 @@ def save_all_results(
         logger.info(f"📦 Backed up existing result.json to {backup_file.name}")
 
     # Save experiment-level result
-    result.save(experiment_dir)
+    result.save(experiment_dir / "result.json")
 
     # Save experiment-level reports
     save_experiment_report(experiment_dir, result)
 
     # Generate and save summary table
-    summary_md = generate_experiment_summary_table(result)
+    summary_md = generate_experiment_summary_table(result.tier_results)
     (experiment_dir / "summary.md").write_text(summary_md)
 
     # Save tier-level reports
@@ -641,7 +641,7 @@ def save_all_results(
         save_tier_report(tier_dir, tier_id.value, tier_result)
 
         # Generate and save tier summary
-        tier_summary_md = generate_tier_summary_table(tier_result)
+        tier_summary_md = generate_tier_summary_table(tier_id.value, tier_result.subtest_results)
         (tier_dir / "summary.md").write_text(tier_summary_md)
 
         # Save subtest-level reports
