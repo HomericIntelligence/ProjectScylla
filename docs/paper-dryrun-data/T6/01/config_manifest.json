@@ -1,0 +1,87 @@
+{
+  "tier_id": "T6",
+  "subtest_id": "01",
+  "fixture_config_path": "tests/claude-code/shared/subtests/t6/01-everything.yaml",
+  "resources": {
+    "claude_md": {
+      "blocks": [
+        "B01",
+        "B02",
+        "B03",
+        "B04",
+        "B05",
+        "B06",
+        "B07",
+        "B08",
+        "B09",
+        "B10",
+        "B11",
+        "B12",
+        "B13",
+        "B14",
+        "B15",
+        "B16",
+        "B17",
+        "B18"
+      ]
+    },
+    "tools": {
+      "enabled": "all"
+    },
+    "mcp_servers": [
+      {
+        "name": "filesystem"
+      },
+      {
+        "name": "git"
+      },
+      {
+        "name": "memory"
+      },
+      {
+        "name": "fetch"
+      },
+      {
+        "name": "sequential-thinking"
+      },
+      {
+        "name": "time"
+      },
+      {
+        "name": "github"
+      },
+      {
+        "name": "postgres"
+      },
+      {
+        "name": "playwright"
+      }
+    ],
+    "skills": {
+      "categories": [
+        "agent",
+        "cicd",
+        "documentation",
+        "github",
+        "mojo",
+        "other",
+        "quality",
+        "workflow",
+        "worktree"
+      ]
+    },
+    "agents": {
+      "levels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    }
+  },
+  "composed_at": "2026-01-20T06:22:17.388785+00:00",
+  "claude_md_hash": "7057c66a06af0ef978ed9adcdf9f1c0e7701f4a82430a0a855caa450efc3bb36",
+  "inherited_from": null
+}

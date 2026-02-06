@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Tier Pairwise Comparison}
+\label{tab:tier_comparison}
+\begin{tabular}{llrrrrl}
+\toprule
+Model & Transition & N (T1, T2) & Pass Rate $\Delta$ & p-value & Cliff's $\delta$ & Significant? \\
+\midrule
+Sonnet 4.5 & T0→T1 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+Sonnet 4.5 & T1→T2 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+Sonnet 4.5 & T2→T3 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+Sonnet 4.5 & T3→T4 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+Sonnet 4.5 & T4→T5 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+Sonnet 4.5 & T5→T6 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+Sonnet 4.5 & T0→T6 & (1, 1) & +0.0000 & --- & +0.000 &  \\
+\midrule
+\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
+\multicolumn{7}{l}{Sonnet 4.5: $H(6)=nan$, $p=nan$ $p \geq 0.05$ (n.s.)} \\
+\multicolumn{7}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,33 @@
+{
+  "tier": "T4",
+  "summary": {
+    "total_subtests": 1,
+    "best_subtest": "01",
+    "best_score": 0.9595333333333333,
+    "total_cost": 0.1684904,
+    "total_duration": 188.090642,
+    "tiebreaker_needed": false
+  },
+  "token_stats": {
+    "input_tokens": 23,
+    "output_tokens": 725,
+    "cache_creation_tokens": 23556,
+    "cache_read_tokens": 91828
+  },
+  "best": {
+    "subtest": "01",
+    "score": 0.9595333333333333,
+    "report": "./01/report.json"
+  },
+  "children": [
+    {
+      "id": "01",
+      "score": 0.9595333333333333,
+      "pass_rate": 1.0,
+      "cost": 0.1684904,
+      "selected": true,
+      "report": "./01/report.json"
+    }
+  ],
+  "generated_at": "2026-01-20T06:16:16.780095+00:00"
+}

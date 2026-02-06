@@ -1,0 +1,2 @@
++ cd /home/mvillmow/fullruns/test001-dryrun/2026-01-20T06-13-07-test-001/T2/01/run_01/workspace
++ claude --model claude-sonnet-4-5-20250929 --print --output-format json --dangerously-skip-permissions /home/mvillmow/fullruns/test001-dryrun/2026-01-20T06-13-07-test-001/T2/01/run_01/agent/prompt.md

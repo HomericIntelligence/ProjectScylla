@@ -1,0 +1,35 @@
+{
+  "subtest_id": "01",
+  "tier_id": "T3",
+  "summary": {
+    "total_runs": 1,
+    "passed": 1,
+    "pass_rate": 1.0,
+    "mean_score": 0.9833333333333334,
+    "median_score": 0.9833333333333334,
+    "std_dev": 0.0,
+    "total_cost": 0.1294133,
+    "consistency": 1.0,
+    "grade_distribution": {
+      "A": 1
+    },
+    "modal_grade": "A",
+    "min_grade": "A",
+    "max_grade": "A"
+  },
+  "token_stats": {
+    "input_tokens": 25,
+    "output_tokens": 668,
+    "cache_creation_tokens": 23352,
+    "cache_read_tokens": 91771
+  },
+  "children": [
+    {
+      "run_number": 1,
+      "score": 0.9833333333333334,
+      "passed": true,
+      "report": "./run_01/report.json"
+    }
+  ],
+  "generated_at": "2026-01-20T06:16:16.245174+00:00"
+}

@@ -1,0 +1,30 @@
+{
+  "experiment_id": "test-001",
+  "task_repo": "https://github.com/mvillmow/Hello-World",
+  "task_commit": "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d",
+  "task_prompt_file": "tests/fixtures/tests/test-001/prompt.md",
+  "language": "python",
+  "models": [
+    "claude-sonnet-4-5-20250929"
+  ],
+  "runs_per_subtest": 1,
+  "tiers_to_run": [
+    "T0",
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6"
+  ],
+  "judge_models": [
+    "claude-opus-4-5-20251101",
+    "claude-sonnet-4-5-20250929",
+    "claude-haiku-4-5"
+  ],
+  "parallel_subtests": 6,
+  "timeout_seconds": 300,
+  "max_turns": null,
+  "max_subtests": 1,
+  "use_containers": false
+}

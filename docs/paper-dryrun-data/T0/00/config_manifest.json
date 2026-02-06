@@ -1,0 +1,13 @@
+{
+  "tier_id": "T0",
+  "subtest_id": "00",
+  "fixture_config_path": "tests/claude-code/shared/subtests/t0/00-empty.yaml",
+  "resources": {
+    "claude_md": {
+      "blocks": []
+    }
+  },
+  "composed_at": "2026-01-20T06:16:41.208809+00:00",
+  "claude_md_hash": null,
+  "inherited_from": null
+}

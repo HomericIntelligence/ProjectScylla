@@ -1,0 +1,15 @@
+{
+  "tier_id": "T3",
+  "subtest_id": "01",
+  "fixture_config_path": "tests/claude-code/shared/subtests/t3/01-architecture-design.yaml",
+  "resources": {
+    "agents": {
+      "levels": [
+        2
+      ]
+    }
+  },
+  "composed_at": "2026-01-20T06:16:16.236461+00:00",
+  "claude_md_hash": "68724e0b75e55a6006c795eb8b039b1a762e72a8c414b39e8112c82c3fa5cb6c",
+  "inherited_from": null
+}

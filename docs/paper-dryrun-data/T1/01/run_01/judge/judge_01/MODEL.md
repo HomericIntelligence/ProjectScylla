@@ -1,0 +1,5 @@
+# Judge Model Information
+
+**Model**: claude-opus-4-5-20251101
+**Claude Code Version**: 2.1.12 (Claude Code)
+**Timestamp**: 2026-01-20T06:15:17.778734+00:00
