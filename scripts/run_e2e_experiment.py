@@ -395,6 +395,7 @@ def load_test_config(tiers_dir: Path) -> dict | None:
     """Load test configuration from test.yaml in tiers directory.
 
     This provides default values for repo, commit, prompt, timeout, and experiment-id.
+    Uses TestFixture.from_directory() for structured loading.
 
     Args:
         tiers_dir: Path to tier configurations directory
@@ -403,22 +404,37 @@ def load_test_config(tiers_dir: Path) -> dict | None:
         Configuration dictionary or None if not found
 
     """
+    from scylla.e2e.models import TestFixture
+
     test_yaml = tiers_dir / "test.yaml"
     if not test_yaml.exists():
         return None
 
-    with open(test_yaml) as f:
-        config = yaml.safe_load(f) or {}
+    try:
+        fixture = TestFixture.from_directory(tiers_dir)
+        return {
+            "experiment_id": fixture.id,
+            "task_repo": fixture.source_repo,
+            "task_commit": fixture.source_hash,
+            "task_prompt_file": "prompt.md",  # Relative to tiers_dir
+            "timeout_seconds": fixture.timeout_seconds,
+            "tiers": fixture.tiers,
+            "language": fixture.language,
+        }
+    except (FileNotFoundError, ValueError) as e:
+        # Fallback to old parsing for backward compatibility
+        with open(test_yaml) as f:
+            config = yaml.safe_load(f) or {}
 
-    return {
-        "experiment_id": config.get("id"),
-        "task_repo": config.get("source", {}).get("repo"),
-        "task_commit": config.get("source", {}).get("hash"),
-        "task_prompt_file": config.get("task", {}).get("prompt_file"),
-        "timeout_seconds": config.get("task", {}).get("timeout_seconds"),
-        "tiers": config.get("tiers"),
-        "language": config.get("language"),  # Required field
-    }
+        return {
+            "experiment_id": config.get("id"),
+            "task_repo": config.get("source", {}).get("repo"),
+            "task_commit": config.get("source", {}).get("hash"),
+            "task_prompt_file": config.get("task", {}).get("prompt_file"),
+            "timeout_seconds": config.get("task", {}).get("timeout_seconds"),
+            "tiers": config.get("tiers"),
+            "language": config.get("language"),
+        }
 
 
 def build_config(args: argparse.Namespace) -> ExperimentConfig:
