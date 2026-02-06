@@ -753,8 +753,10 @@ class ExperimentConfig:
         language: Programming language for build pipeline ('python' or 'mojo')
         thinking_mode: Thinking mode for agent execution (None, Low, High, UltraThink)
         use_containers: Run agents and judges in isolated Docker containers (default: False)
-        criteria_file: Optional explicit path to criteria.md (default: tiers_dir/../expected/criteria.md)
-        rubric_file: Optional explicit path to rubric.yaml (default: tiers_dir/../expected/rubric.yaml)
+        criteria_file: Optional path to criteria.md
+            (default: tiers_dir/../expected/criteria.md)
+        rubric_file: Optional path to rubric.yaml
+            (default: tiers_dir/../expected/rubric.yaml)
 
     """
 
