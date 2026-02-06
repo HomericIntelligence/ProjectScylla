@@ -21,6 +21,7 @@ def parse_agent_level(file_path: Path) -> int | None:
     Example:
         >>> parse_agent_level(Path("agents/chief-evaluator.md"))
         0
+
     """
     with open(file_path) as f:
         content = f.read()
@@ -47,6 +48,7 @@ def discover_agents(source_dir: Path) -> dict[int, list[Path]]:
         >>> agents = discover_agents(Path(".claude/agents"))
         >>> agents[0]  # L0 agents
         [Path(".claude/agents/chief-evaluator.md")]
+
     """
     agent_files = list(source_dir.glob("*.md"))
     result: dict[int, list[Path]] = {i: [] for i in range(6)}
@@ -78,6 +80,7 @@ def organize_agents(source_dir: Path, dest_dir: Path) -> dict[int, list[str]]:
         ...     Path("tests/shared/agents")
         ... )
         {0: ['chief-evaluator.md'], 1: ['experiment-design.md'], ...}
+
     """
     # Ensure destination directories exist
     for level in range(6):
