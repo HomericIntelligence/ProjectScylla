@@ -161,6 +161,7 @@ class SubTestConfig:
     extends_previous: bool = True
     resources: dict[str, Any] = field(default_factory=dict)
     inherit_best_from: list[TierID] = field(default_factory=list)
+    agent_teams: bool = False  # Enable experimental agent teams feature
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -173,6 +174,7 @@ class SubTestConfig:
             "extends_previous": self.extends_previous,
             "resources": self.resources,
             "inherit_best_from": [tier.value for tier in self.inherit_best_from],
+            "agent_teams": self.agent_teams,
         }
 
 
@@ -610,6 +612,7 @@ class ExperimentConfig:
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
     max_subtests: int | None = None  # Max sub-tests per tier (None = all)
+    skip_agent_teams: bool = False  # Skip agent teams sub-tests (default: False)
     thinking_mode: str = "None"  # Thinking mode: None (default), Low, High, UltraThink
     use_containers: bool = (
         False  # DEPRECATED: Container isolation now at experiment level, not per-agent
@@ -631,6 +634,7 @@ class ExperimentConfig:
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
             "max_subtests": self.max_subtests,
+            "skip_agent_teams": self.skip_agent_teams,
             "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
         }
@@ -667,6 +671,7 @@ class ExperimentConfig:
             timeout_seconds=data.get("timeout_seconds", 3600),
             max_turns=data.get("max_turns"),
             max_subtests=data.get("max_subtests"),
+            skip_agent_teams=data.get("skip_agent_teams", False),
             thinking_mode=data.get("thinking_mode", "None"),
             use_containers=data.get("use_containers", False),
         )

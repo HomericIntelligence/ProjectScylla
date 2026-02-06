@@ -3,12 +3,12 @@
 # Defines the testing tiers for the agent evaluation framework.
 # Each tier represents a different level of agent capability.
 #
-# Tier Structure (7 tiers, ~114+ sub-tests total):
+# Tier Structure (7 tiers, ~121+ sub-tests total):
 # - T0: Prompts - 24 sub-tests for system prompt ablation
 # - T1: Skills - 10 sub-tests for skill category ablation
 # - T2: Tooling - 15 sub-tests for tool/MCP ablation
 # - T3: Delegation - 41 sub-tests for agent ablation
-# - T4: Hierarchy - 7 sub-tests for orchestrator ablation
+# - T4: Hierarchy - 14 sub-tests for orchestrator ablation (7 hierarchy + 7 agent teams)
 # - T5: Hybrid - 15+ sub-tests for best combinations
 # - T6: Super - 1 sub-test with everything enabled
 
@@ -43,7 +43,7 @@ tiers:
 
   T4:
     name: "Hierarchy"
-    description: "Nested orchestration with orchestrator agents (7 sub-tests)"
+    description: "Nested orchestration with orchestrator agents (14 sub-tests: 7 hierarchy + 7 agent teams)"
     prompt_file: "t4-hierarchy.md"
     tools_enabled: true
     delegation_enabled: true
