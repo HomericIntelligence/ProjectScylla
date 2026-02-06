@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 
 from scylla.e2e.models import ResourceManifest, SubTestConfig, TierBaseline, TierConfig, TierID
+from scylla.e2e.subtest_provider import FileSystemSubtestProvider, SubtestProvider
 from scylla.executor.tier_config import TierConfigLoader
 
 if TYPE_CHECKING:
@@ -43,18 +44,43 @@ class TierManager:
 
     """
 
-    def __init__(self, tiers_dir: Path) -> None:
+    def __init__(
+        self,
+        tiers_dir: Path,
+        shared_dir: Path | None = None,
+        config_dir: Path | None = None,
+        subtest_provider: SubtestProvider | None = None,
+    ) -> None:
         """Initialize the tier manager.
 
         Args:
             tiers_dir: Path to the config/tiers directory (or test-specific tiers dir)
+            shared_dir: Path to shared resources directory. If None, auto-detected
+                       from tiers_dir (tiers_dir/../../claude-code/shared)
+            config_dir: Path to config directory. If None, auto-detected
+                       (repo_root/config)
+            subtest_provider: Provider for discovering subtests. If None, uses
+                             FileSystemSubtestProvider with shared_dir
 
         """
         self.tiers_dir = tiers_dir
+
+        # Auto-detect config_dir if not provided
+        if config_dir is None:
+            config_dir = Path(__file__).parent.parent.parent / "config"
+
         # Initialize global tier config loader from config/tiers/
-        # Find the config directory (should be at repo root / config)
-        config_dir = Path(__file__).parent.parent.parent / "config"
         self.tier_config_loader = TierConfigLoader(config_dir)
+
+        # Auto-detect shared_dir if not provided
+        if shared_dir is None:
+            shared_dir = self._shared_dir
+        self._shared_dir = shared_dir
+
+        # Initialize subtest provider
+        if subtest_provider is None:
+            subtest_provider = FileSystemSubtestProvider(self._shared_dir)
+        self.subtest_provider = subtest_provider
 
     def load_tier_config(self, tier_id: TierID, skip_agent_teams: bool = False) -> TierConfig:
         """Load configuration for a specific tier.
@@ -72,11 +98,8 @@ class TierManager:
         # Load global tier configuration from config/tiers/
         global_tier_config = self.tier_config_loader.get_tier(tier_id.value)
 
-        # Discover sub-tests from test-specific directory
-        tier_dir = self.tiers_dir / tier_id.value.lower()
-
-        # Discover sub-tests
-        subtests = self._discover_subtests(tier_id, tier_dir, skip_agent_teams)
+        # Discover sub-tests using the provider
+        subtests = self.subtest_provider.discover_subtests(tier_id, skip_agent_teams)
 
         # Create TierConfig with both global settings and subtests
         # Note: system_prompt_mode is determined per-subtest, not per-tier
@@ -88,108 +111,6 @@ class TierManager:
             delegation_enabled=global_tier_config.delegation_enabled,
         )
 
-    def _discover_subtests(
-        self, tier_id: TierID, tier_dir: Path, skip_agent_teams: bool = False
-    ) -> list[SubTestConfig]:
-        """Discover sub-test configurations from shared directory.
-
-        Loads subtest configs from tests/claude-code/shared/subtests/tN/*.yaml.
-        All tiers now support numbered sub-tests.
-
-        Args:
-            tier_id: The tier identifier
-            tier_dir: Path to the tier directory (legacy, kept for compatibility)
-            skip_agent_teams: Skip agent teams sub-tests (default: False)
-
-        Returns:
-            List of SubTestConfig for each discovered sub-test.
-
-        """
-        subtests = []
-
-        # Load from centralized shared directory
-        shared_subtests_dir = self._get_shared_dir() / "subtests" / tier_id.value.lower()
-
-        if not shared_subtests_dir.exists():
-            return subtests
-
-        # Look for YAML files (format: NN-name.yaml)
-        for config_file in sorted(shared_subtests_dir.glob("*.yaml")):
-            # Extract ID from filename (e.g., "00-empty.yaml" -> "00")
-            file_name = config_file.stem
-            if not file_name[:2].isdigit():
-                continue
-
-            subtest_id = file_name[:2]
-
-            # Load config
-            with open(config_file) as f:
-                config_data = yaml.safe_load(f) or {}
-
-            name = config_data.get("name", f"{tier_id.value} Sub-test {subtest_id}")
-            description = config_data.get("description", f"Sub-test configuration {file_name}")
-
-            # T0 sub-tests have special handling for extends_previous
-            # 00-empty and 01-vanilla don't extend; 02+ may extend
-            extends_previous = tier_id != TierID.T0 or int(subtest_id) >= 2
-            # Allow config to override extends_previous
-            extends_previous = config_data.get("extends_previous", extends_previous)
-
-            # Load resources specification
-            resources: dict[str, Any] = config_data.get("resources", {})
-
-            # Also capture root-level fields into resources for prompt suffixes
-            mcp_servers = config_data.get("mcp_servers", [])
-            if mcp_servers:
-                resources["mcp_servers"] = mcp_servers
-
-            # Map tools at root level
-            tools = config_data.get("tools", {})
-            if tools:
-                resources["tools"] = tools
-
-            # Map agents at root level
-            agents = config_data.get("agents", {})
-            if agents:
-                resources["agents"] = agents
-
-            # Map skills at root level
-            skills = config_data.get("skills", {})
-            if skills:
-                resources["skills"] = skills
-
-            # Parse inherit_best_from for T5 subtests
-            inherit_best_from: list[TierID] = []
-            if "inherit_best_from" in config_data:
-                raw_tiers = config_data.get("inherit_best_from", [])
-                inherit_best_from = [TierID.from_string(t) for t in raw_tiers]
-
-            # Parse agent_teams flag
-            agent_teams = config_data.get("agent_teams", False)
-
-            # Skip if agent_teams is enabled but we're filtering them out
-            if skip_agent_teams and agent_teams:
-                continue
-
-            # Parse system_prompt_mode for this subtest
-            system_prompt_mode = config_data.get("system_prompt_mode", "custom")
-
-            subtests.append(
-                SubTestConfig(
-                    id=subtest_id,
-                    name=name,
-                    description=description,
-                    claude_md_path=None,  # No longer used with centralized configs
-                    claude_dir_path=None,  # No longer used with centralized configs
-                    extends_previous=extends_previous,
-                    resources=resources,
-                    inherit_best_from=inherit_best_from,
-                    agent_teams=agent_teams,
-                    system_prompt_mode=system_prompt_mode,
-                )
-            )
-
-        return subtests
 
     def prepare_workspace(
         self,
@@ -371,10 +292,14 @@ class TierManager:
                 shutil.copy(item, dest_item)
 
     def _get_shared_dir(self) -> Path:
-        """Get path to the shared resources directory.
+        """Get path to the shared resources directory (auto-detection).
 
         Returns:
             Path to tests/claude-code/shared/ directory.
+
+        Note:
+            This is called during __init__ if shared_dir is not provided.
+            The hardcoded path computation can be overridden via the constructor.
 
         """
         # Navigate from tiers_dir (tests/fixtures/tests/test-XXX) to shared
@@ -413,7 +338,7 @@ class TierManager:
             resource_suffix: Optional resource usage instructions to append to CLAUDE.md
 
         """
-        shared_dir = self._get_shared_dir()
+        shared_dir = self._shared_dir
 
         # Symlink skills by category
         if "skills" in resources:
@@ -623,7 +548,7 @@ class TierManager:
             agents_spec = resources["agents"]
             agent_names = []
             for level in agents_spec.get("levels", []):
-                level_dir = self._get_shared_dir() / "agents" / f"L{level}"
+                level_dir = self._shared_dir / "agents" / f"L{level}"
                 if level_dir.exists():
                     for f in level_dir.glob("*.md"):
                         agent_names.append(f.stem)
@@ -642,7 +567,7 @@ class TierManager:
             skills_spec = resources["skills"]
             skill_names = []
             for cat in skills_spec.get("categories", []):
-                cat_dir = self._get_shared_dir() / "skills" / cat
+                cat_dir = self._shared_dir / "skills" / cat
                 if cat_dir.exists():
                     skill_names.extend(d.name for d in cat_dir.iterdir() if d.is_dir())
             skill_names.extend(skills_spec.get("names", []))
@@ -757,7 +682,7 @@ class TierManager:
             Path to config.yaml in the shared subtests directory.
 
         """
-        shared_subtests_dir = self._get_shared_dir() / "subtests" / tier_id.value.lower()
+        shared_subtests_dir = self._shared_dir / "subtests" / tier_id.value.lower()
         # Find config file starting with subtest_id (e.g., "00-empty.yaml")
         for config_file in shared_subtests_dir.glob(f"{subtest_id}-*.yaml"):
             return config_file
