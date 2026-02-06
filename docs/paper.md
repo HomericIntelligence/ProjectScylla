@@ -11,8 +11,8 @@ research@villmow.us
 ## Abstract
 
 LLM-based tools are automating more software development tasks at an exponential rate. But
-there's no rigorous way to evaluate how different architectural choices—prompts,
-skills, tools, multi-agent setups—materially affect both capability and cost.
+there's no rigorous way to evaluate how different architectural choices, prompts,
+skills, tools, multi-agent setups, materially affect both capability and cost.
 
 This paper introduces Scylla, an evaluation framework for benchmarking agentic
 coding tools through structured ablation studies. The methodology uses seven
@@ -68,7 +68,7 @@ cost varies 3.8x from $0.065 (T5 hybrid) to $0.247 (T6 super). The framework
 successfully differentiates cost structures across architectural choices even
 when quality converges.
 
-This implies that architectural complexity doesn't always improve quality, and
+This implies that architectural complexity does not always improve quality, and
 that careful hybrid designs (T5) can achieve Frontier Cost-of-Pass by
 selectively combining features rather than maximizing them. The dryrun validates
 the framework's ability to measure these trade-offs empirically.
@@ -78,7 +78,7 @@ the framework's ability to measure these trade-offs empirically.
 ## 2. Introduction
 
 Anthropic has many good resources for improving Claude Code on their engineering
-blog, but despite these, there aren't any intuitive and user-friendly methods
+blog, but despite these, there are not any intuitive and user-friendly methods
 for comparing whether changes to the prompt instructions will yield tangible
 benefits. Therefore, I am introducing Scylla, a testing framework for evaluating
 prompts, tools, skills, and agents for solving problems that are common for
@@ -87,7 +87,7 @@ servers were contributing to actual improved code output, without relying on my
 gut or intuition. This problem came up multiple times when asked by others to
 explain how to better utilize CLI tools for programming. In my experience, the
 quality of the prompts has a dramatic improvement on the output of the results.
-Whether it's the prompt to call the tool or MCP server, the prompt to spawn a
+Whether it is the prompt to call the tool or MCP server, the prompt to spawn a
 sub-agent, or the prompt to trigger a skill, these language-based triggers are
 fuzzy in their meaning. Unlike a traditional programming language that is very
 explicit in what it is means and what it does, prompts do not map directly and
@@ -130,7 +130,7 @@ Some hypotheses I have are:
 
 Given that we are testing production tools and not models, many, if not all, of
 the prior work on evaluating prompts and benchmarks do not apply here. Since
-there's possibly a large level of indirection between what we are testing and
+there is possibly a large level of indirection between what we are testing and
 what actually gets executed by the model due to engineering trade-offs, I am
 considering the tool to be a black box and not attempting to reverse engineer
 this tool. Despite this, what is executing is hidden behind multiple layers,
@@ -148,22 +148,22 @@ benchmark the CLI tools, which are used in production today. The next paragraphs
 will explain in high level details the various other options on the market.
 
 There are several good benchmarks for evaluating LLM agents. SWE-Bench[2] tests
-models on real GitHub issues—can they actually fix bugs and add features to real
+models on real GitHub issues, can they actually fix bugs and add features to real
 codebases? Agent-Bench[1] goes broader, testing multi-turn agents across
 different environments like operating systems, databases, and knowledge graphs,
 with fine-grained metrics beyond just pass/fail. TAU-Bench[3] focuses on whether
 agents can effectively use external tools. These benchmarks evaluate the models
-directly. They do not address the full agentic loop—hooks, skills, MCP servers,
+directly. They do not address the full agentic loop, hooks, skills, MCP servers,
 vendor optimizations, orchestration logic. My work focuses on that tool
 interface rather than the raw model underneath.
 
-For prompt evaluation, there's PromptBench[4] (unified testing across tasks),
+For prompt evaluation, there is PromptBench[4] (unified testing across tasks),
 PromptEval[5] (automated correctness and robustness checking), and EleutherAI's
 lm-evaluation-harness[8] (standardized multi-task comparison). There is a
 problem in that the aforementioned all assume direct access to model inputs and
 outputs. With production CLI tools like Claude Code, the model is wrapped in
 layers of system prompts, tool schemas, skill definitions, and orchestration
-logic. I can't just test the model in isolation, so I must test the whole
+logic. I cannot just test the model in isolation, so I must test the whole
 system.
 
 My work is based solely on evaluating CLI tools, as the CLI's tools are more
@@ -174,9 +174,9 @@ the English language is what I want to evaluate for effectiveness. From this
 interface, programmatic tools can be spawned, but the ability to properly and
 accurately interact with the agent is via a fuzzy language interface, and not
 via traditional programmatic interfaces. While there are some hooks that allow
-extra programmatic validation with Claude Code, I'm not evaluating those at this
+extra programmatic validation with Claude Code, I am not evaluating those at this
 time. Claude Code has the ability to use agentic evaluation at the hook
-boundary, but triggering it is guaranteed (and not language-based), so it isn't
+boundary, but triggering it is guaranteed (and not language-based), so it is not
 interesting for probabilistic evaluation.
 
 ## 4. Test Methodology
@@ -754,7 +754,7 @@ I will present results from the dryrun experiment (test-001, Hello World task)
 across all seven tiers. The dryrun serves as a pipeline validation exercise with
 N=1 run per tier, establishing that the framework executes end-to-end
 successfully and generates the expected metrics, figures, and tables. Think of
-this as a "smoke test" — if the pipeline works on the simplest possible task, I
+this as a "smoke test", if the pipeline works on the simplest possible task, I
 know it will handle the complex stuff later.
 
 ### 9.1 Pipeline Validation (Dryrun Overview)
@@ -772,7 +772,7 @@ First, the dry run was executed with the following setup:
 
 Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
 consensus scores ranging from 0.943 (T6) to 0.983 (T2, T3, T5). The task is
-trivially easy, as expected — even T0 (minimal prompt) scores 0.973.
+trivially easy, as expected, even T0 (minimal prompt) scores 0.973.
 
 **Table 1: Tier Summary (Dryrun)**
 
@@ -818,7 +818,7 @@ Token distribution reveals where costs originate. Figure 7 (see
 `docs/paper-dryrun/figures/fig07_token_distribution.png`) shows the breakdown by
 token type.
 
-Cache read tokens dominate—80-99% of total tokens across all tiers, confirming
+Cache read tokens dominate, 80-99% of total tokens across all tiers, confirming
 prompt caching works. But cache creation tokens vary dramatically:
 
 **Table 2: Token Breakdown**
@@ -834,7 +834,7 @@ prompt caching works. But cache creation tokens vary dramatically:
 | T6   | 29    | 722    | **44,337**   | 218,778    | 263,866 |
 
 The Token Efficiency Chasm I mentioned in Section 4? The data is consistent with
-this hypothesis. T6 requires 218K cache read tokens versus T0's 113K—a 1.94x
+this hypothesis. T6 requires 218K cache read tokens versus T0's 113K, a 1.94x
 increase (nearly double). T5 achieves efficiency by minimizing cache creation
 (4.6K vs 23-44K), supporting the hybrid strategy.
 
@@ -859,11 +859,11 @@ breakdown.
 | T5   | 24.8           | 128.4          | 153.1          | 83.8%            |
 | T6   | 28.4           | 141.1          | 169.5          | 83.2%            |
 
-Judge evaluation dominates—77-86% of total latency, ranging from 128-178
+Judge evaluation dominates, 77-86% of total latency, ranging from 128-178
 seconds. This makes sense since 3 judges each evaluate the output independently.
 
 Agent time varies modestly, 25-41 seconds. T5 is fastest (24.8s), T4 slowest
-(41.2s). T5's speed advantage aligns with its cost advantage—both stem from
+(41.2s). T5's speed advantage aligns with its cost advantage, both stem from
 minimal cache loading.
 
 On this trivial task, judge overhead dwarfs agent execution time, since there
@@ -897,7 +897,7 @@ values are reported for completeness but should be interpreted with extreme
 caution.
 
 Despite low inter-rater agreement, the 3-judge median produces stable final
-scores. The median dampens extreme scores—Haiku's 1.00 perfects versus Opus's
+scores. The median dampens extreme scores, Haiku's 1.00 perfects versus Opus's
 0.93 conservatism.
 
 ### 9.6 Criteria Breakdown
@@ -950,7 +950,7 @@ Section 4: "Even T0 should nail this test." And it did.
 cannot differentiate tiers by capability. T0's empty prompt (subtest 00 uses no
 system prompt at all) and T6's maximal configuration (61 skills + all tools + 44
 agents) produce equivalent functional output. This is exactly what we expect for
-Hello World — no amount of architectural sophistication helps when the task
+Hello World, no amount of architectural sophistication helps when the task
 requires a single `print()` statement.
 
 **Cost differentiation still works**: Despite quality convergence, Cost-of-Pass
@@ -967,7 +967,7 @@ designed.
 
 The dryrun reveals hints of a pattern: more is not always better.
 
-T5 achieves Frontier CoP through selective feature loading—it combines T1's
+T5 achieves Frontier CoP through selective feature loading, it combines T1's
 efficient skills with T3's delegation patterns but avoids T6's "everything
 enabled" overhead. T5's cache creation tokens (4,629) are 5-10x lower than other
 tiers (23,106-44,337), directly explaining its cost advantage.
@@ -986,7 +986,7 @@ tasks, it is pure waste.
 
 The Token Efficiency Chasm I talked about in Section 4? The data supports this
 hypothesis. T6's 218K cache read tokens versus T0's 113K (1.94x increase) shows
-the cost of loading tool schemas. T2 (tooling) shows similar bloat—137K total
+the cost of loading tool schemas. T2 (tooling) shows similar bloat, 137K total
 tokens versus T1's 115K. Skills-based approaches (T1, T3) stay lean while still
 enabling domain knowledge.
 
@@ -1064,7 +1064,7 @@ multiplier. Parallel judge execution would reduce latency but not cost.
 This paper introduced the Scylla framework, and shows that it works, end-to-end.
 All seven tiers executed successfully, three judges scored everything, and the
 analysis pipeline spit out figures and tables automatically. The dryrun
-validates the methodology on the simplest possible task—Hello World—before I
+validates the methodology on the simplest possible task, Hello World, before I
 scale up to complex multi-file repos. What is missing is review and feedback
 from others, which is what this paper helps enable.
 
@@ -1086,14 +1086,14 @@ What did I learn? Five things stand out:
 Did I answer my original questions? Partially. CoP lets me quantify efficiency;
 T5 is 3.8x cheaper than T6 despite equivalent quality. On this task, the sum is
 *not* more than the parts; T6 scores lowest despite highest cost. But the hard
-questions need harder tasks, I can't tell if any tier dominates universally from
-a single Hello World run, and I haven't tested model-to-model comparisons yet.
+questions need harder tasks, I cannot tell if any tier dominates universally from
+a single Hello World run, and I have not tested model-to-model comparisons yet.
 That work is left for a future exercise.
 
 What about my hypotheses? The KISS principle hypothesis has hints of being
 confirmed, maximal complexity (T6) scores worst on this training-set-likely
-task. But I haven't tested inverse KISS on out-of-distribution tasks yet, and
-specialization advantages (H1) are inconclusive because Hello World doesn't
+task. But I have not tested inverse KISS on out-of-distribution tasks yet, and
+specialization advantages (H1) are inconclusive because Hello World does not
 require delegation or tools.
 
 There is no real practical takeaway yet, since the testing was insufficient to
@@ -1316,7 +1316,7 @@ This appendix references tables and figures generated by the analysis pipeline f
 - Pixi (package manager)
 - Docker (containerization)
 - Claude Code CLI
-- Mojo 0.26.1, Python 3.12+
+- Python 3.12+
 
 **Execution Steps**:
 
