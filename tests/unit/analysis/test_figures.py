@@ -93,15 +93,6 @@ def test_fig09_criteria_by_tier(sample_criteria_df, tmp_path):
     assert (tmp_path / "fig09_criteria_by_tier.csv").exists()
 
 
-def test_fig10_score_violin(sample_runs_df, tmp_path):
-    """Test Fig 10 generates files correctly."""
-    from scylla.analysis.figures.tier_performance import fig10_score_violin
-
-    fig10_score_violin(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig10_score_violin.vl.json").exists()
-    assert (tmp_path / "fig10_score_violin.csv").exists()
-
-
 def test_fig12_consistency(sample_runs_df, tmp_path):
     """Test Fig 12 generates files correctly."""
     from scylla.analysis.figures.model_comparison import fig12_consistency
@@ -717,29 +708,6 @@ def test_fig09_content_verification(sample_criteria_df, tmp_path):
     assert (data_df["criterion_score"] <= 1).all()
 
 
-def test_fig10_content_verification(sample_runs_df, tmp_path):
-    """Test Fig 10 score violin generates correct distribution data."""
-    import pandas as pd
-
-    from scylla.analysis.figures.tier_performance import fig10_score_violin
-
-    fig10_score_violin(sample_runs_df, tmp_path, render=False)
-
-    # Read and verify data
-    csv_path = tmp_path / "fig10_score_violin.csv"
-    assert csv_path.exists()
-
-    data_df = pd.read_csv(csv_path)
-    # Verify required columns
-    assert "agent_model" in data_df.columns
-    assert "tier" in data_df.columns
-    assert "score" in data_df.columns
-
-    # Verify scores in valid range
-    assert (data_df["score"] >= 0).all()
-    assert (data_df["score"] <= 1).all()
-
-
 def test_fig11_content_verification(sample_runs_df, tmp_path):
     """Test Fig 11 tier uplift generates correct uplift calculations."""
     import pandas as pd
@@ -1190,3 +1158,67 @@ def test_get_color_scale_single_key():
     assert domain == ["Sonnet 4.5"]
     assert len(range_) == 1
     assert range_[0].startswith("#")
+
+
+def test_compute_dynamic_domain():
+    """Test compute_dynamic_domain with various data patterns."""
+    import pandas as pd
+
+    from scylla.analysis.figures.spec_builder import compute_dynamic_domain
+
+    # Test 1: Tight data range (0.94-0.98)
+    data = pd.Series([0.94, 0.95, 0.96, 0.97, 0.98])
+    domain = compute_dynamic_domain(data)
+    assert len(domain) == 2
+    assert domain[0] < 0.94  # Lower bound is below data min
+    assert domain[1] > 0.98  # Upper bound is above data max
+    assert domain[0] >= 0.0  # Respects floor
+    assert domain[1] <= 1.0  # Respects ceiling
+    # Check rounding to 0.05 (use approximate comparison for floating point)
+    assert abs(domain[0] - round(domain[0] / 0.05) * 0.05) < 1e-10
+    assert abs(domain[1] - round(domain[1] / 0.05) * 0.05) < 1e-10
+
+    # Test 2: Full range data (0.0-1.0)
+    data = pd.Series([0.0, 0.5, 1.0])
+    domain = compute_dynamic_domain(data)
+    assert domain == [0.0, 1.0]  # Should be clamped to floor/ceiling
+
+    # Test 3: Small range (enforce min_range)
+    data = pd.Series([0.5, 0.51])
+    domain = compute_dynamic_domain(data, min_range=0.1)
+    assert len(domain) == 2
+    assert domain[1] - domain[0] >= 0.1  # Enforces minimum range
+
+    # Test 4: Empty series
+    data = pd.Series([])
+    domain = compute_dynamic_domain(data)
+    assert domain == [0.0, 1.0]  # Fallback to floor/ceiling
+
+    # Test 5: All NaN
+    data = pd.Series([float("nan"), float("nan")])
+    domain = compute_dynamic_domain(data)
+    assert domain == [0.0, 1.0]  # Fallback to floor/ceiling
+
+    # Test 6: Custom floor and ceiling
+    data = pd.Series([0.5, 0.6, 0.7])
+    domain = compute_dynamic_domain(data, floor=0.4, ceiling=0.8)
+    assert domain[0] >= 0.4
+    assert domain[1] <= 0.8
+
+
+def test_compute_dynamic_domain_padding():
+    """Test padding behavior."""
+    import pandas as pd
+
+    from scylla.analysis.figures.spec_builder import compute_dynamic_domain
+
+    # Test with different padding fractions
+    data = pd.Series([0.5, 0.6])
+
+    # No padding
+    domain_no_pad = compute_dynamic_domain(data, padding_fraction=0.0)
+    # 10% padding
+    domain_pad = compute_dynamic_domain(data, padding_fraction=0.1)
+
+    # With padding should have wider range
+    assert domain_pad[1] - domain_pad[0] >= domain_no_pad[1] - domain_no_pad[0]

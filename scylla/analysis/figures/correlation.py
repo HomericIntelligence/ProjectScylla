@@ -12,7 +12,7 @@ import pandas as pd
 
 from scylla.analysis.config import config
 from scylla.analysis.figures import get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 from scylla.analysis.stats import holm_bonferroni_correction, ols_regression, spearman_correlation
 
 
@@ -199,13 +199,18 @@ def fig21_cost_quality_regression(
     models = sorted(subtest_stats["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
+    # Compute dynamic domain for score axis
+    score_domain = compute_dynamic_domain(subtest_stats["mean_score"])
+
     # Create scatter plot
     scatter = (
         alt.Chart(subtest_stats)
         .mark_circle(size=60, opacity=0.6)
         .encode(
             x=alt.X("mean_cost:Q", title="Mean Cost per Subtest (USD)"),
-            y=alt.Y("mean_score:Q", title="Mean Score per Subtest", scale=alt.Scale(domain=[0, 1])),
+            y=alt.Y(
+                "mean_score:Q", title="Mean Score per Subtest", scale=alt.Scale(domain=score_domain)
+            ),
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",

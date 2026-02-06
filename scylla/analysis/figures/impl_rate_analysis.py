@@ -16,7 +16,7 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 from scylla.analysis.stats import bootstrap_ci
 
 
@@ -74,6 +74,9 @@ def fig25_impl_rate_by_tier(
     models = sorted(df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
+    # Compute dynamic domain for impl_rate axis
+    impl_rate_domain = compute_dynamic_domain(df["impl_rate"])
+
     # Vega-Lite spec
     bars = (
         alt.Chart(df)
@@ -88,7 +91,7 @@ def fig25_impl_rate_by_tier(
             y=alt.Y(
                 "impl_rate:Q",
                 title="Implementation Rate",
-                scale=alt.Scale(domain=[0, 1]),
+                scale=alt.Scale(domain=impl_rate_domain),
             ),
             color=alt.Color(
                 "agent_model:N",
@@ -164,6 +167,9 @@ def fig26_impl_rate_vs_pass_rate(
     tier_order = derive_tier_order(runs_df)
     domain, range_ = get_color_scale("tiers", tier_order)
 
+    # Compute dynamic domain for impl_rate axis
+    impl_rate_domain = compute_dynamic_domain(df["impl_rate"])
+
     # Scatter plot
     points = (
         alt.Chart(df)
@@ -172,7 +178,7 @@ def fig26_impl_rate_vs_pass_rate(
             x=alt.X(
                 "impl_rate:Q",
                 title="Implementation Rate",
-                scale=alt.Scale(domain=[0, 1]),
+                scale=alt.Scale(domain=impl_rate_domain),
             ),
             y=alt.Y(
                 "pass_rate:Q",
@@ -256,6 +262,9 @@ def fig27_impl_rate_distribution(
     models = sorted(df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
+    # Compute dynamic domain for impl_rate axis
+    impl_rate_domain = compute_dynamic_domain(df["impl_rate"])
+
     # Create base layered chart without faceting
     base_violin = (
         alt.Chart(df)
@@ -274,7 +283,7 @@ def fig27_impl_rate_distribution(
             y=alt.Y(
                 "impl_rate:Q",
                 title="Implementation Rate",
-                scale=alt.Scale(domain=[0, 1]),
+                scale=alt.Scale(domain=impl_rate_domain),
             ),
             color=alt.Color(
                 "agent_model:N",
@@ -295,7 +304,7 @@ def fig27_impl_rate_distribution(
             ),
             y=alt.Y(
                 "impl_rate:Q",
-                scale=alt.Scale(domain=[0, 1]),
+                scale=alt.Scale(domain=impl_rate_domain),
             ),
             color=alt.Color(
                 "agent_model:N",

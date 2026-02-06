@@ -46,7 +46,6 @@ from scylla.analysis.figures.subtest_detail import fig13_latency, fig15_subtest_
 from scylla.analysis.figures.tier_performance import (
     fig04_pass_rate_by_tier,
     fig05_grade_heatmap,
-    fig10_score_violin,
 )
 from scylla.analysis.figures.token_analysis import fig07_token_distribution
 from scylla.analysis.figures.variance import (
@@ -67,7 +66,6 @@ FIGURES = {
     "fig07_token_distribution": ("token", fig07_token_distribution),
     "fig08_cost_quality_pareto": ("cost", fig08_cost_quality_pareto),
     "fig09_criteria_by_tier": ("criteria", fig09_criteria_by_tier),
-    "fig10_score_violin": ("tier", fig10_score_violin),
     "fig11_tier_uplift": ("model", fig11_tier_uplift),
     "fig12_consistency": ("model", fig12_consistency),
     "fig13_latency": ("cost", fig13_latency),

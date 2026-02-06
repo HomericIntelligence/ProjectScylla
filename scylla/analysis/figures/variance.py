@@ -12,7 +12,7 @@ import pandas as pd
 
 from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 
 
 def fig01_score_variance_by_tier(
@@ -38,6 +38,9 @@ def fig01_score_variance_by_tier(
     models = sorted(data["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
+    # Compute dynamic domain for score axis
+    score_domain = compute_dynamic_domain(data["score"])
+
     # Create base chart with faceting
     base = alt.Chart(data).encode(
         x=alt.X("tier:O", title="Tier", sort=tier_order),
@@ -50,7 +53,7 @@ def fig01_score_variance_by_tier(
 
     # Box plot layer
     boxplot = base.mark_boxplot(size=30).encode(
-        y=alt.Y("score:Q", title="Score", scale=alt.Scale(domain=[0, 1])),
+        y=alt.Y("score:Q", title="Score", scale=alt.Scale(domain=score_domain)),
     )
 
     # Jittered points layer

@@ -1,6 +1,6 @@
 """Tier performance figures.
 
-Generates Fig 4 (pass-rate), Fig 5 (grade heatmap), and Fig 10 (score violin).
+Generates Fig 4 (pass-rate) and Fig 5 (grade heatmap).
 """
 
 from __future__ import annotations
@@ -188,70 +188,3 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
     )
 
     save_figure(chart, "fig05_grade_heatmap", output_dir, grade_counts, render)
-
-
-def fig10_score_violin(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
-    """Generate Fig 10: Score Distribution Violin Plots.
-
-    Violin plots showing score distribution per tier.
-
-    Args:
-        runs_df: Runs DataFrame
-        output_dir: Output directory
-        render: Whether to render to PNG/PDF
-
-    """
-    # Prepare data
-    data = runs_df[["agent_model", "tier", "score"]].copy()
-
-    # Derive tier order from data
-    tier_order = derive_tier_order(data)
-
-    # Get dynamic color scale for models
-    models = sorted(data["agent_model"].unique())
-    domain, range_ = get_color_scale("models", models)
-
-    # Create violin plot using density transform
-    # Note: Altair doesn't have native violin plots, so we approximate with area + line
-    base = alt.Chart(data).transform_density(
-        density="score",
-        as_=["score_value", "density"],
-        groupby=["agent_model", "tier"],
-    )
-
-    violin = base.mark_area(orient="horizontal", opacity=0.5).encode(
-        x=alt.X("tier:O", title="Tier", sort=tier_order),
-        y=alt.Y(
-            "score_value:Q",
-            title="Score",
-            scale=alt.Scale(domain=[0, 1]),
-        ),
-        color=alt.Color(
-            "agent_model:N",
-            title="Agent Model",
-            scale=alt.Scale(domain=domain, range=range_),
-        ),
-        xOffset="agent_model:N",
-    )
-
-    # Overlay median markers
-    medians = data.groupby(["agent_model", "tier"])["score"].median().reset_index()
-
-    median_points = (
-        alt.Chart(medians)
-        .mark_point(filled=True, size=50, color="black")
-        .encode(
-            x=alt.X("tier:O", sort=tier_order),
-            y=alt.Y("score:Q"),
-            xOffset="agent_model:N",
-        )
-    )
-
-    # Combine
-    chart = (
-        (violin + median_points)
-        .properties(title="Score Distribution Violin Plots by Tier")
-        .configure_view(strokeWidth=0)
-    )
-
-    save_figure(chart, "fig10_score_violin", output_dir, data, render)

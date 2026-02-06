@@ -11,7 +11,7 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 
 
 def fig09_criteria_by_tier(
@@ -52,6 +52,9 @@ def fig09_criteria_by_tier(
     criterion_labels_list = [criterion_labels[c] for c in criterion_order]
     _, criterion_colors = get_color_scale("criteria", criterion_order)
 
+    # Compute dynamic domain for criterion score axis
+    score_domain = compute_dynamic_domain(criteria_agg["criterion_score"])
+
     # Create grouped bar chart
     chart = (
         alt.Chart(criteria_agg)
@@ -61,7 +64,7 @@ def fig09_criteria_by_tier(
             y=alt.Y(
                 "criterion_score:Q",
                 title="Mean Criterion Score",
-                scale=alt.Scale(domain=[0, 1]),
+                scale=alt.Scale(domain=score_domain),
             ),
             color=alt.Color(
                 "criterion_label:N",
