@@ -10,14 +10,14 @@ research@villmow.us
 
 ## Abstract
 
-LLM-based tools are automating more and more software development tasks. But
-there is no rigorous way to evaluate how different architectural choices—prompts,
-skills, tools, multi-agent setups—actually affect both capability and cost.
+LLM-based tools are automating more software development tasks at an exponential rate. But
+there's no rigorous way to evaluate how different architectural choices—prompts,
+skills, tools, multi-agent setups—materially affect both capability and cost.
 
 This paper introduces Scylla, an evaluation framework for benchmarking agentic
 coding tools through structured ablation studies. The methodology uses seven
 testing tiers (T0-T6) that progressively add complexity. This lets us isolate
-what actually influences results and how.
+what directly influences results and how.
 
 The key metric is Cost-of-Pass (CoP): the expected dollar cost to get one
 correct solution. This directly quantifies the trade-off between complexity and
@@ -44,17 +44,16 @@ AI
 
 ## 1. Summary
 
-With the advancement of large language models has come a massive increase in
-capabilities for automated computer interactions. What used to require
-hand-coded algorithms and pipelines can now be done automatically using state of
-the art coding models to generate instructions that can then be utilized to
-further improve automated approaches. However, understanding what improves these
-language models is more of black magic than art, let alone a rigorous science.
-This paper's goal is to help demystify the magic of prompt engineering by
-proposing a rigorous evaluation framework across multiple dimensions to help
-determine how agents interact, the scale of changes for the agentics, and
-an attempt to quantify with numbers the benefits of each approach across a broad
-range of activities.
+Large language models have ushered in massive increases in capabilities for
+automated computer interactions. What used to require hand-coded algorithms and
+pipelines can now be done automatically using state of the art coding models to
+generate instructions that can then be utilized to further improve automated
+approaches. However, understanding what improves these language models is more
+of black magic than art, let alone a rigorous science. This paper's goal is to
+help demystify the magic of prompt engineering by proposing a rigorous
+evaluation framework across multiple dimensions to help determine how agents
+interact, the scale of changes for the agentics, and an attempt to quantify
+with numbers the benefits of each approach across a broad range of activities.
 
 There are benchmarks for measuring LLM's workflows in various domains, such as
 agent-bench[1], swe-bench[2], tau-bench[3], etc... There are also prompt
@@ -69,7 +68,7 @@ cost varies 3.8x from $0.065 (T5 hybrid) to $0.247 (T6 super). The framework
 successfully differentiates cost structures across architectural choices even
 when quality converges.
 
-This implies that architectural complexity does not always improve quality, and
+This implies that architectural complexity doesn't always improve quality, and
 that careful hybrid designs (T5) can achieve Frontier Cost-of-Pass by
 selectively combining features rather than maximizing them. The dryrun validates
 the framework's ability to measure these trade-offs empirically.
@@ -79,21 +78,21 @@ the framework's ability to measure these trade-offs empirically.
 ## 2. Introduction
 
 Anthropic has many good resources for improving Claude Code on their engineering
-blog, but despite these, there is not a simple way to measure easily whether
-changes to the prompt instructions actually benefit in the way that the user can
-easily comprehend. Therefore, I am introducing Scylla, a testing framework for
-evaluating prompts, tools, skills, and agents for solving problems that are
-common for day to day coding tasks. I wanted to know if sub-agents, skills,
-tools, or mcp servers were actually contributing to improved code output,
-without relying on my gut or intuition. This problem came up multiple times when
-asked by others to explain how to better utilize CLI tools for programming. In
-my experience, the quality of the prompts has a dramatic improvement on the
-output of the results. Whether it is the prompt to call the tool or MCP server,
-the prompt to spawn a sub-agent, or the prompt to trigger a skill, these
-language based triggers are fuzzy in their meaning. Unlike a traditional
-programming language that is very explicit in what it is means and what it does,
-it is not a direct mapping from text to action. This framework is my attempt at
-helping unwrap this problem.
+blog, but despite these, there aren't any intuitive and user-friendly methods
+for comparing whether changes to the prompt instructions will yield tangible
+benefits. Therefore, I am introducing Scylla, a testing framework for evaluating
+prompts, tools, skills, and agents for solving problems that are common for
+day-to-day coding tasks. I wanted to know if sub-agents, skills, tools, or mcp
+servers were contributing to actual improved code output, without relying on my
+gut or intuition. This problem came up multiple times when asked by others to
+explain how to better utilize CLI tools for programming. In my experience, the
+quality of the prompts has a dramatic improvement on the output of the results.
+Whether it's the prompt to call the tool or MCP server, the prompt to spawn a
+sub-agent, or the prompt to trigger a skill, these language-based triggers are
+fuzzy in their meaning. Unlike a traditional programming language that is very
+explicit in what it is means and what it does, prompts do not map directly and
+consistently to action. This framework is my attempt at helping unwrap this
+problem.
 
 First, in section 3, I will introduce the current work that is being done in
 this area, and explain how they approach the problem. Then, in section 4, I will
@@ -130,16 +129,16 @@ Some hypotheses I have are:
 ## 3. Related Work
 
 Given that we are testing production tools and not models, many, if not all, of
-the prior work on evaluating prompts and benchmarks does not apply here. Since
-there is possibly a large level of indirection between what we are testing and
-what actually gets executed by the model due to engineering trade-offs.
-I am considering the tool to be a black box and not attempting to reverse
-engineer this tool. Despite this, what is executing is hidden behind multiple
-layers, first being the CLI tool itself, but also whatever optimizations and
+the prior work on evaluating prompts and benchmarks do not apply here. Since
+there's possibly a large level of indirection between what we are testing and
+what actually gets executed by the model due to engineering trade-offs, I am
+considering the tool to be a black box and not attempting to reverse engineer
+this tool. Despite this, what is executing is hidden behind multiple layers,
+first being the CLI tool itself, but also whatever optimizations and
 implementation details the vendor implements on top of their trained base model.
 The models themselves are not fully documented publicly, as these details are
 competitive advantages, and the pre or post-processing that occurs is not always
-visible to the user as they can occur on the vendors servers.
+visible to the user as they can occur vendor-side.
 
 There are multiple benchmarks on judging the models, such as Agent-Bench[1],
 SWE-Bench[2], and TAU-Bench[3], but no standard benchmarks on CLI tools, like
@@ -158,25 +157,26 @@ directly. They do not address the full agentic loop—hooks, skills, MCP servers
 vendor optimizations, orchestration logic. My work focuses on that tool
 interface rather than the raw model underneath.
 
-For prompt evaluation, there is PromptBench[4] (unified testing across tasks),
+For prompt evaluation, there's PromptBench[4] (unified testing across tasks),
 PromptEval[5] (automated correctness and robustness checking), and EleutherAI's
 lm-evaluation-harness[8] (standardized multi-task comparison). There is a
-problem in that these all assume direct access to model inputs and outputs. With
-production CLI tools like Claude Code, the model is wrapped in layers of system
-prompts, tool schemas, skill definitions, and orchestration logic. I cannot just
-test the model in isolation, so I have to test the whole system.
+problem in that the aforementioned all assume direct access to model inputs and
+outputs. With production CLI tools like Claude Code, the model is wrapped in
+layers of system prompts, tool schemas, skill definitions, and orchestration
+logic. I can't just test the model in isolation, so I must test the whole
+system.
 
 My work is based solely on evaluating CLI tools, as the CLI's tools are more
 than the model themselves. As I mentioned earlier, the agentic loop, with hooks,
 tools, skills, sub-agents, MCP servers, and other logic wrapped together into a
 single application where the only way to get control of the behavior is through
-the english language is what I want to evaluate for effectiveness. From this
+the English language is what I want to evaluate for effectiveness. From this
 interface, programmatic tools can be spawned, but the ability to properly and
 accurately interact with the agent is via a fuzzy language interface, and not
 via traditional programmatic interfaces. While there are some hooks that allow
-extra programmatic validation with Claude Code, I am not evaluating those at this
+extra programmatic validation with Claude Code, I'm not evaluating those at this
 time. Claude Code has the ability to use agentic evaluation at the hook
-boundary, but triggering it is guaranteed (and not language-based), so it is not
+boundary, but triggering it is guaranteed (and not language-based), so it isn't
 interesting for probabilistic evaluation.
 
 ## 4. Test Methodology
@@ -1068,28 +1068,32 @@ validates the methodology on the simplest possible task—Hello World—before I
 scale up to complex multi-file repos. What is missing is review and feedback
 from others, which is what this paper helps enable.
 
-There are multiple things that stand out from this analysis. The framework is
-operational. Quality converges on trivial tasks, making the framework overkill.
-All tiers scored grade A, proving that throwing more complexity at Hello World
-does not help, which should be obvious. That obviousness is what makes it a good
-pipecleaning run. Cost still varies 3.8x despite identical quality, showing the
-framework can measure economic trade-offs even when quality saturates. T5's
-hybrid approach achieves Frontier CoP by selectively loading features instead of
-maximizing everything. And the Token Efficiency Chasm I hypothesized in Section
-4?  The data is consistent with this hypothesis, as T6 burns nearly double the
-tokens (218K vs 113K) compared to T0.
+What did I learn? Five things stand out:
+
+1. The framework is operational.
+2. Quality converges on trivial tasks, making the framework overkill.
+3. All tiers scored grade A, proving that throwing more complexity at Hello
+   World doesn't help, which should be obvious. That obviousness is what makes
+   it a good pipe cleaning run.
+4. Cost still varies 3.8x despite identical quality, showing the framework can
+   measure economic trade-offs even when quality saturates. T5's hybrid approach
+   achieves Frontier CoP by selectively loading features instead of maximizing
+   everything.
+5. And the Token Efficiency Chasm I hypothesized in Section 4? That I can say is
+   confirmed, as T6 burns nearly double the tokens (218K vs 113K) compared to
+   T0.
 
 Did I answer my original questions? Partially. CoP lets me quantify efficiency;
 T5 is 3.8x cheaper than T6 despite equivalent quality. On this task, the sum is
-*not* more than the parts; T6 scores lowest despite highest cost.
-But the hard questions need harder tasks, I cannot tell if any tier dominates
-universally from a single Hello World run, and I have not tested model-to-model
-comparisons yet. That work is left for a future exercise.
+*not* more than the parts; T6 scores lowest despite highest cost. But the hard
+questions need harder tasks, I can't tell if any tier dominates universally from
+a single Hello World run, and I haven't tested model-to-model comparisons yet.
+That work is left for a future exercise.
 
-What about my hypotheses? The KISS principle hypothesis shows preliminary
-evidence, as maximal complexity (T6) scores worst on this training-set-likely
-task. But I have not tested inverse KISS on out-of-distribution tasks yet, and
-specialization advantages (H1) are inconclusive because Hello World does not
+What about my hypotheses? The KISS principle hypothesis has hints of being
+confirmed, maximal complexity (T6) scores worst on this training-set-likely
+task. But I haven't tested inverse KISS on out-of-distribution tasks yet, and
+specialization advantages (H1) are inconclusive because Hello World doesn't
 require delegation or tools.
 
 There is no real practical takeaway yet, since the testing was insufficient to
@@ -1137,7 +1141,8 @@ learning, testing, and analyzing.
 
 ## Acknowledgements
 
-This work was self-funded by the author.
+This work was self-funded by the author. Special thanks to Tuan Nguyen for
+reviewing early drafts of this paper and providing valuable feedback.
 
 ---
 
