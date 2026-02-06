@@ -1,0 +1,8 @@
+agent_model,tier,subtest,subtest_label,failure_rate,n_runs
+Sonnet 4.5,T0,00,T0-00,0.0,1
+Sonnet 4.5,T1,01,T1-01,0.0,1
+Sonnet 4.5,T2,01,T2-01,0.0,1
+Sonnet 4.5,T3,01,T3-01,0.0,1
+Sonnet 4.5,T4,01,T4-01,0.0,1
+Sonnet 4.5,T5,01,T5-01,0.0,1
+Sonnet 4.5,T6,01,T6-01,0.0,1

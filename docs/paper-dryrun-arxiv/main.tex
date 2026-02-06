@@ -1,0 +1,1662 @@
+\documentclass[11pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Listings configuration
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10}
+}
+
+\title{Measuring the Value of Enhanced Reasoning in Agentic AI Architectures:\\
+An Economic Analysis of Testing Tiers}
+\author{Anonymous}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+LLM-based tools are automating more software development tasks at an exponential rate. But
+there is no rigorous way to evaluate how different architectural choices---prompts,
+skills, tools, multi-agent setups---materially affect both capability and cost.
+This paper introduces Scylla, an evaluation framework for benchmarking agentic
+coding tools through structured ablation studies. The methodology uses seven
+testing tiers (T0-T6) that progressively add complexity. This lets us isolate
+what directly influences results and how.
+The key metric is Cost-of-Pass (CoP): the expected dollar cost to get one
+correct solution. This directly quantifies the trade-off between complexity and
+efficiency.
+The framework is model-agnostic, designed to work with any CLI tool. This paper
+demonstrates it with Claude Sonnet 4.5, using multiple LLM judges (Opus 4.5,
+Sonnet 4.5, Haiku 4.5) from the same vendor for evaluation consensus. Judges
+score results using direct tests, human-driven rubrics, and qualitative
+assessment.
+The result is a reproducible framework that quantifies trade-offs between agent
+complexity and actual outcomes.
+\end{abstract}
+
+\section{Summary}
+
+Large language models have ushered in massive increases in capabilities for
+automated computer interactions. What used to require hand-coded algorithms and
+pipelines can now be done automatically using state of the art coding models to
+generate instructions that can then be utilized to further improve automated
+approaches. However, understanding what improves these language models is more
+of black magic than art, let alone a rigorous science. This paper's goal is to
+help demystify the magic of prompt engineering by proposing a rigorous
+evaluation framework across multiple dimensions to help determine how agents
+interact, the scale of changes for the agentics, and an attempt to quantify
+with numbers the benefits of each approach across a broad range of activities.
+
+There are benchmarks for measuring LLM's workflows in various domains, such as
+agent-bench\cite{liu2023agentbench}, swe-bench\cite{jimenez2024swebench}, tau-bench\cite{yao2024taubench}, etc... There are also prompt
+evaluation benchmarks such as PromptBench\cite{zhu2023promptbench2} or PromptEval\cite{polo2024efficient}. This paper
+focuses specifically on coding tools, specifically industry leading tool Claude
+Code\cite{anthropic2024claude}, and how prompt modification can change the behavior of the model for
+better or for worse. This paper introduces a framework for evaluating agentic
+coding tools in a systematic way, thus allowing extension to domains outside of
+CLI based coding tools. I show that on a trivial Hello World task, all seven
+tiers (T0-T6) achieve equivalent quality (all grade A, scores 0.943-0.983) while
+cost varies 3.8x from $0.065 (T5 hybrid) to $0.247 (T6 super). The framework
+successfully differentiates cost structures across architectural choices even
+when quality converges.
+
+This implies that architectural complexity does not always improve quality, and
+that careful hybrid designs (T5) can achieve Frontier Cost-of-Pass by
+selectively combining features rather than maximizing them. The dryrun validates
+the framework's ability to measure these trade-offs empirically.
+
+\section{Introduction}
+
+Anthropic has many good resources for improving Claude Code on their engineering
+blog, but despite these, there are not any intuitive and user-friendly methods
+for comparing whether changes to the prompt instructions will yield tangible
+benefits. Therefore, I am introducing Scylla, a testing framework for evaluating
+prompts, tools, skills, and agents for solving problems that are common for
+day-to-day coding tasks. I wanted to know if sub-agents, skills, tools, or mcp
+servers were contributing to actual improved code output, without relying on my
+gut or intuition. This problem came up multiple times when asked by others to
+explain how to better utilize CLI tools for programming. In my experience, the
+quality of the prompts has a dramatic improvement on the output of the results.
+Whether it is the prompt to call the tool or MCP server, the prompt to spawn a
+sub-agent, or the prompt to trigger a skill, these language-based triggers are
+fuzzy in their meaning. Unlike a traditional programming language that is very
+explicit in what it is means and what it does, prompts do not map directly and
+consistently to action. This framework is my attempt at helping unwrap this
+problem.
+
+First, in section 3, I will introduce the current work that is being done in
+this area, and explain how they approach the problem. Then, in section 4, I will
+introduce the testing methodology along with an in-depth analysis of the first
+test case. This will provide the needed understanding of what is being tested,
+along with why, on something that should be easily analyzed and
+understandable. Then I will go over the rest of the testing framework to
+showcase what is being tested, measured, and why these are being tested using
+simple cases introduced in the previous sections.
+
+The questions I am investigating are:
+
+\begin{itemize}
+\item Is it possible to quantify whether a task is solveable more efficiently by one
+\end{itemize}
+
+  methodology over others?
+\begin{itemize}
+\item Is the sum of a prompt more than the individual parts?
+\item Are there core improvements that can be made purely through extensions to
+\end{itemize}
+
+  claude code that are generic for all workloads?
+\begin{itemize}
+\item Are there specific prompt techniques that have secondary effects, positive or
+\end{itemize}
+
+  negative, on other prompt techniques?
+\begin{itemize}
+\item Holding the tool and prompt constant, how much does the underlying model
+\end{itemize}
+
+  contribute to the quality of the results?
+
+Some hypotheses I have are:
+
+\begin{itemize}
+\item Certain tasks excel when run as sub-tasks, or tools, or mcp, or skills, that
+\end{itemize}
+
+  are unrelated to context management.
+\begin{itemize}
+\item Prompt complexity has a negative correlation to higher quality results, i.e.
+\end{itemize}
+
+  KISS principle, in scenarios that is part of the training set.
+\begin{itemize}
+\item Prompt complexity has a positive correlation to higher quality results, i.e.
+\end{itemize}
+
+  an inverse KISS principle, in scenarios outside of the training set.
+
+\section{Related Work}
+
+Given that we are testing production tools and not models, many, if not all, of
+the prior work on evaluating prompts and benchmarks do not apply here. Since
+there is possibly a large level of indirection between what we are testing and
+what actually gets executed by the model due to engineering trade-offs, I am
+considering the tool to be a black box and not attempting to reverse engineer
+this tool. Despite this, what is executing is hidden behind multiple layers,
+first being the CLI tool itself, but also whatever optimizations and
+implementation details the vendor implements on top of their trained base model.
+The models themselves are not fully documented publicly, as these details are
+competitive advantages, and the pre or post-processing that occurs is not always
+visible to the user as they can occur vendor-side.
+
+There are multiple benchmarks on judging the models, such as Agent-Bench\cite{liu2023agentbench},
+SWE-Bench\cite{jimenez2024swebench}, and TAU-Bench\cite{yao2024taubench}, but no standard benchmarks on CLI tools, like
+Claude Code, on how prompts affect them. The reader can also investigate
+PromptEval, PromptBench, or lm-evaluation-harness\cite{gao2024lmevalharness}, but these also do not
+benchmark the CLI tools, which are used in production today. The next paragraphs
+will explain in high level details the various other options on the market.
+
+There are several good benchmarks for evaluating LLM agents. SWE-Bench\cite{jimenez2024swebench} tests
+models on real GitHub issues---can they actually fix bugs and add features to real
+codebases? Agent-Bench\cite{liu2023agentbench} goes broader, testing multi-turn agents across
+different environments like operating systems, databases, and knowledge graphs,
+with fine-grained metrics beyond just pass/fail. TAU-Bench\cite{yao2024taubench} focuses on whether
+agents can effectively use external tools. These benchmarks evaluate the models
+directly. They do not address the full agentic loop---hooks, skills, MCP servers,
+vendor optimizations, orchestration logic. My work focuses on that tool
+interface rather than the raw model underneath.
+
+For prompt evaluation, there is PromptBench\cite{zhu2023promptbench2} (unified testing across tasks),
+PromptEval\cite{polo2024efficient} (automated correctness and robustness checking), and EleutherAI's
+lm-evaluation-harness\cite{gao2024lmevalharness} (standardized multi-task comparison). There is a
+problem in that the aforementioned all assume direct access to model inputs and
+outputs. With production CLI tools like Claude Code, the model is wrapped in
+layers of system prompts, tool schemas, skill definitions, and orchestration
+logic. I cannot just test the model in isolation, so I must test the whole
+system.
+
+My work is based solely on evaluating CLI tools, as the CLI's tools are more
+than the model themselves. As I mentioned earlier, the agentic loop, with hooks,
+tools, skills, sub-agents, MCP servers, and other logic wrapped together into a
+single application where the only way to get control of the behavior is through
+the English language is what I want to evaluate for effectiveness. From this
+interface, programmatic tools can be spawned, but the ability to properly and
+accurately interact with the agent is via a fuzzy language interface, and not
+via traditional programmatic interfaces. While there are some hooks that allow
+extra programmatic validation with Claude Code, I am not evaluating those at this
+time. Claude Code has the ability to use agentic evaluation at the hook
+boundary, but triggering it is guaranteed (and not language-based), so it is not
+interesting for probabilistic evaluation.
+
+\section{Test Methodology}
+
+\subsection{Experimental Design}
+
+This experiment is designed by testing english phrases, colloquially known as
+prompts, via the various methodologies exposed by a CLI tool, in this case
+Claude Code. The prompts to be tested are taken from the ProjectOdyssey\cite{projectodyssey} git
+repository at github hash 011a3ff on December 30th 2025. The prompts are broken
+down into their components and separated into various tiers which will be
+discussed later. These components are used to setup the experiment, which is run
+by allowing an agent a nearly unfettered access to the system, only blocking
+dangerous ops, thanks to the safety-net plugin\cite{safetynet} from cc-marketplace\cite{ccmarketplace}, to
+perform a task. The task has a well defined solution that is then judged by
+three different LLM's of various 'strength'. In this case Claude Opus 4.5,
+Claude Sonnet 4.5, and Claude Haiku 4.5. Each of the 4.5 models are sufficiently
+advanced in capabilities to be considered independent judges of a task with low
+failure rates. The judges are provided the same prompt, so the only difference
+between their results comes from the judge training and implementation
+differences and not from the prompt or test input. Each judge will receive the
+output of the task LLM, and provide the results based on the criteria. The
+judges have the following categories of evaluation; functional correctness, code
+quality, development pipeline, security and safety, proportionality and
+professionalism, and patchfile correctness.
+
+\textbf{Table 4.1: LLM-as-Judge Evaluation Categories}
+
+\input{tables/tab04_criteria_performance.tex}
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Category & Weight & Scoring Type & Description \\
+\hline
+Functional Correctness & 0.35 & Checklist & File existence, output correctness, exit codes, exact output matching \\
+\hline
+Code Quality & 0.20 & Checklist & Syntax validity, idiomatic code, unused imports, PEP8 compliance \\
+\hline
+Proportionality & 0.15 & Checklist & Appropriate scope, minimal files, no unnecessary artifacts or tests \\
+\hline
+Build Pipeline & 0.10 & Checklist & Build passes, format checks, tests (when applicable), pre-commit hooks \\
+\hline
+Overall Quality & 0.20 & Subjective & Engineering judgment on appropriateness, maintainability, and senior engineer approval \\
+\hline
+\end{tabular}
+
+
+\textbf{Total Weight}: 1.0 (100%)
+
+Each category contributes proportionally to the final score. Here is the formula:
+
+$$S_{final} = \sum_{i} w_i \cdot \frac{P_i^{achieved}}{P_i^{max}}$$
+
+where $w_i$ are the category weights (they sum to 1.0), and $P_i$ is the points
+the test got versus the maximum possible (skipping any N/A items). For scoring
+individual items:
+
+\begin{itemize}
+\item \textbf{Binary items}: You either get it or you do not (1.0 or 0.0)
+\item \textbf{Graduated items}: Partial credit on a 0.0-1.0 scale based on results
+\item \textbf{Subjective items}: LLM judgment with calibrated deductions
+
+\end{itemize}
+
+\textbf{Deduction Calibration Scale} (for subjective assessment):
+
+
+\begin{tabular}{|l|l|l|}
+\hline
+Severity & Deduction Range & Examples \\
+\hline
+Negligible & 0.00-0.05 & IDE config files, \texttt{\_\_pycache\_\_} artifacts \\
+\hline
+Trivial & 0.05-0.15 & Missing trailing newlines, unused imports \\
+\hline
+Minor & 0.15-0.30 & Missing docstrings, magic numbers \\
+\hline
+Moderate & 0.30-0.50 & Code duplication, hardcoded values \\
+\hline
+Major & 0.50-0.80 & Non-critical security issues, race conditions \\
+\hline
+Severe & 0.80-1.50 & Critical security vulnerabilities \\
+\hline
+Critical & 1.50+ & Non-functioning solutions, destructive operations \\
+\hline
+\end{tabular}
+
+
+The final score maps to a grade using this scale:
+
+\textbf{Table 4.2: Industry-Aligned Grade Scale}
+
+\input{tables/tab04_criteria_performance.tex}
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Grade & Threshold & Label & What It Means \\
+\hline
+S & 1.00 & Amazing & Perfect score, goes above and beyond \\
+\hline
+A & $\geq$ 0.80 & Excellent & Production ready \\
+\hline
+B & $\geq$ 0.60 & Good & Works well, minor tweaks needed \\
+\hline
+C & $\geq$ 0.40 & Acceptable & It works but has issues \\
+\hline
+D & $\geq$ 0.20 & Marginal & Lots of problems but salvageable with effort \\
+\hline
+F & < 0.20 & Failing & Complete failure of task \\
+\hline
+\end{tabular}
+
+
+I use \textbf{0.60} (Grade B) as the pass threshold. That means the solution works
+and meets requirements, even if there is room for minor improvements. An S grade
+needs a perfect 1.00 and you have to actually exceed what was asked for. I would
+not expect many, if any, tests to get an S rating.
+
+Each experiment can be reproduced by running the top level test run script,
+which will launch the same set of tasks with the same parameters, where the only
+variation is the judgement of the LLM's judges when determining how to judge the
+work.
+
+This finishes the summary of a single test. However, the test themselves are
+defined differently. The test are a prompt and a configuration file that specify
+a repository, a github hash, a set of configuration files to override any
+pre-defined tooling, set of commands to validate the results, and a container to
+run everything in to help with reproducibility. The first test is being used as
+an example in this paper, and also as a pipecleaner to show that everything
+works as expected. This example is 'hello world' from octocat, but forked to my
+repository just to make sure that the repository is not polluted. The precaution
+is done just in case the agents make mistakes or do things that the original
+author probably does not want to be bothered by.
+
+\subsubsection{Test-001: Hello World Baseline}
+
+First, let us look at the simplest possible test to make sure everything works.
+This is literally just creating a "Hello World" script, which is a pipe-cleaner
+for the infrastructure and to discuss the methodology without intermixing with
+the complexity of more realistic tests.
+
+\textbf{Test Configuration:}
+
+
+\begin{tabular}{|l|l|}
+\hline
+Field & Value \\
+\hline
+ID & \texttt{test-001} \\
+\hline
+Name & Hello World Task \\
+\hline
+Timeout & 300 seconds \\
+\hline
+Pass Threshold & 0.60 (Grade B) \\
+\hline
+\end{tabular}
+
+
+\textbf{Task Prompt:}
+
+Create a Python script \texttt{hello.py} that prints "Hello, World!" to stdout, exits
+with code 0, and uses relative paths. The script should be created in the
+current working directory.
+
+\textbf{Expected Output:}
+
+\begin{lstlisting}
+Hello, World!
+\end{lstlisting}
+
+\textbf{Expected Result:}
+
+\begin{lstlisting}
+print("Hello, World!")
+\end{lstlisting}
+
+or
+
+\begin{lstlisting}
+# /usr/bin/python3
+
+print("Hello, World!")
+\end{lstlisting}
+
+\textbf{Rubric Categories and Weights:}
+
+
+\begin{tabular}{|l|l|l|}
+\hline
+Category & Weight & Key Criteria \\
+\hline
+Functional Correctness & 35% & File \texttt{hello.py} exists; running `python \\
+\hline
+Code Quality & 20% & Valid Python syntax; idiomatic code; no unused imports; \\
+\hline
+Proportionality & 15% & Total files $\leq$ 3; LOC $\leq$ 3; no unnecessary test files; \\
+\hline
+Build Pipeline & 10% & Syntax check passes; format check passes (if ruff \\
+\hline
+Overall Quality & 20% & Senior engineer approval; appropriately scoped for \\
+\hline
+\end{tabular}
+
+
+\textbf{What Should Happen:}
+
+Even T0 (no system prompt at all) is expected to get an 'A',
+since we are talking $\geq$ 0.80 scores. If T0 cannot do Hello World, I will assume
+that something is fundamentally wrong with the framework itself and throw out
+the results. Higher tiers (T1-T6) should also succeed, as there is no reason
+fancy prompts or multi-agent setups would help with something this simple.
+However, if performance drops on this test, it means the added complexity is
+actually making things worse even on something so simple, so if this happens, we
+will analyze why.
+
+Now that we have gone over the test itself, let us discuss the strategy and tiered
+approach. The first thing to test is with no prompt at all, including no system
+prompt, if the tool allows it. This is to provide as close to a baseline as the
+base model as possible by overwriting the system prompt with an empty string and
+not using any configuration or non-default settings from the tool. This provides
+the baseline that all improvements are measured against. For something as simple
+as hello world, this baseline should solve the task. The test setup is such that
+variability in judging will occur, but there is not much one can do to improve
+the output of a hello world script. However, there are things that you can do
+that make things worse or break the expected behavior, but I would expect all
+solutions to be the exact same for all the tests. Divergence points to
+interesting results.
+
+\subsubsection{Tiered Ablation Strategy}
+
+The core idea is simple: start with nothing, then add one set of things at a
+time to see what actually helps. This ablation study uses seven tiers that
+progressively add complexity, with \textbf{113 sub-tests} total. Each tier gets
+tested independently so we can isolate what each component contributes.
+
+\textbf{Table 4.3: Testing Tiers (Ablation Study Framework)}
+
+\input{tables/tab04_criteria_performance.tex}
+
+
+\begin{tabular}{|l|l|l|l|l|l|l|}
+\hline
+Tier & Name & Sub-tests & Primary Focus & Tools & Delegation & Key Characteristic \\
+\hline
+T0 & Prompts & 24 & System prompt ablation (empty $\rightarrow$ full) & - & No & Baseline: empty prompt (00) through full 1787-line CLAUDE.md (03) plus 18 individual blocks (B01-B18) \\
+\hline
+T1 & Skills & 10 & Domain expertise via installed skills & Default & No & Token-efficient domain knowledge; categories: Agent (5), CI/CD (7), Documentation (4), GitHub (10), Language Specific (10), Quality (5), Workflow (5) \\
+\hline
+T2 & Tooling & 15 & External tools and MCP servers & Yes & No & External API access; introduces token efficiency chasm from schema loading \\
+\hline
+T3 & Delegation & 41 & Flat multi-agent with specialists & Yes & Yes & Atomic task design; flat orchestration with specialist agents (L2-L5) \\
+\hline
+T4 & Hierarchy & 7 & Nested orchestration with orchestrators & Yes & Yes & Hierarchical coordination (L0-L1); Task Decomposer, Actor, Monitor, Evaluator roles \\
+\hline
+T5 & Hybrid & 15+ & Optimal combinations from all tiers & Yes & Yes & Combines various combinations of previously ranked skills \\
+\hline
+T6 & Super & 1 & Maximum capability configuration & All & All & Theoretical maximum: 61 skills, all MCP servers, 44 agents, full prompt; establishes capability ceiling \\
+\hline
+\end{tabular}
+
+
+\textbf{How the Tiers Work:}
+
+\begin{enumerate}
+\item \textbf{T0 (Baseline):} Start with an empty prompt (00-empty) to see what the raw
+\end{enumerate}
+
+   model can do, then go all the way up to the full 1787-line CLAUDE.md
+   (03-full). Individual blocks (B01-B18) let me test each piece of the prompt
+   separately to see what actually matters.
+
+\begin{enumerate}
+\item \textbf{T1-T2 (Skills vs Tools):} T1 uses skills, domain knowledge baked into
+\end{enumerate}
+
+   prompts. Token-efficient. T2 uses external tools via JSON schemas. Problem
+   is, loading all those tool definitions inflates token usage. I call this the
+   "Token Efficiency Chasm", the gap between lean skill-based approaches and
+   schema-heavy tool architectures.
+
+\begin{enumerate}
+\item \textbf{T3-T4 (Multi-Agent Setups):} T3 does flat delegation, breaking tasks into
+\end{enumerate}
+
+   smaller pieces and assigning them to specialist agents. T4 adds hierarchy
+   with self-correction loops, but this complexity can increase costs.
+
+\begin{enumerate}
+\item \textbf{T5 (Smart Combinations):} Take what works from the other tiers, combine
+\end{enumerate}
+
+   then together in different combinations. A single test would have the best
+   T1 skills, T2 tools, T3 agents, and T4 task delegation. We do not want to
+   brute force here due to combinatorial explosion, but picking combinations of
+   the top few categories can help give idea what combinations work best
+   together.
+
+\begin{enumerate}
+\item \textbf{T6 (Everything):} Turn on everything at once. All skills, tools, agents,
+\end{enumerate}
+
+   prompt segments, and servers. This I hope establishes the theoretical max
+   performance and shows where diminishing returns kick in, but also can show
+   signs of over-engineering if it is occurring.
+
+For each tier T(n), I compare it directly against T(n-1) to see what that
+specific change actually achieves in terms of performance and cost.
+
+\subsection{Dimensional Search Space}
+
+The framework tests across four different dimensions. Each one is an independent
+knob you can turn, and they all affect both what the agent can do and how much
+it costs.
+
+\subsubsection{4.2.1 Agent Complexity Axis (Tiers 0-6)}
+
+This is just the tier structure spelled out differently:
+
+
+\begin{tabular}{|l|l|l|}
+\hline
+Tier Range & Complexity Level & Description \\
+\hline
+T0 & Single-agent, prompt-only & Base model with varying prompt sophistication \\
+\hline
+T1 & Single-agent with skills & Add in agentic skills to improve the quality of the work \\
+\hline
+T2 & Single-agent with tools & External API access via tool schemas \\
+\hline
+T3 & Multi-agent, flat & Specialist agents with central orchestrator \\
+\hline
+T4 & Multi-agent, hierarchical & Nested orchestration with self-correction loops \\
+\hline
+T5 & Best case scenarios & Attempt to pick the best case scenarios from previous runs to see if the sum is more than its parts \\
+\hline
+T6 & Maximum configuration & All features enabled simultaneously \\
+\hline
+\end{tabular}
+
+
+\subsubsection{4.2.2 Prompt Complexity Axis}
+
+Prompt complexity is measured in lines of system prompt content, ranging from 0
+(empty) to 1787 (full CLAUDE.md from ProjectOdyssey\cite{projectodyssey}):
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Level & Lines & Description & Representative Test \\
+\hline
+Empty & 0 & No system prompt & T0-00-empty \\
+\hline
+System & 0 & Only system prompt & T0-01-empty \\
+\hline
+Minimal & ~55 & Safety rules only & T0-06-B02 \\
+\hline
+Core & ~260 & Essential blocks (B02, B07, B18) & T0-03-core \\
+\hline
+Standard & ~400 & Seven core blocks & T0-02-standard \\
+\hline
+Full & 1787 & All 18 CLAUDE.md blocks & T0-03-full \\
+\hline
+\end{tabular}
+
+
+Each block (B01-B18) can be tested separately to see whether the part actually
+contributes to the whole.
+
+\subsubsection{4.2.3 Skill Complexity Axis}
+
+Skills are organized by domain. Here is what we are testing in T1:
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Category & Count & Example Domains & Token Efficiency \\
+\hline
+Agent & 5 & Agent management patterns & High \\
+\hline
+CI/CD & 7 & Build and deployment automation & High \\
+\hline
+Documentation & 4 & Technical writing assistance & Medium \\
+\hline
+GitHub & 10 & Repository management & Medium \\
+\hline
+Language & 10 & Programming language specific & High \\
+\hline
+Quality & 5 & Code quality and review & Medium \\
+\hline
+Workflow & 5 & Development workflow patterns & High \\
+\hline
+\end{tabular}
+
+
+\textbf{Total}: 46 skills across 7 categories. Skills bake knowledge into prompts, so
+you avoid loading massive tool schemas. But do these actually improve
+performance? That is an open question.
+
+\subsubsection{4.2.4 Agent Hierarchy Axis}
+
+Three ways to organize agents, tested across T3-T4:
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Pattern & Coordination & Communication Overhead & Use Cases \\
+\hline
+\textbf{Flat} & No supervision; peer-to-peer & Low & Simple, independent tasks \\
+\hline
+\textbf{Hierarchical} & L0-L4 levels with explicit supervision & High & Complex, interdependent tasks requiring planning \\
+\hline
+\textbf{Hybrid} & Selective hierarchy based on task complexity & Medium & Adaptive: flat for simple tasks, hierarchical for complex \\
+\hline
+\end{tabular}
+
+
+Hierarchy matters for costs because each supervision layer adds more
+orchestration tokens and potentially more self-correction iterations.
+
+\section{Test Metrics}
+
+\subsection{Performance Metrics}
+
+\textbf{Pass-Rate} is straightforward, did it work or not:
+
+$$\text{Pass-Rate} = \frac{\text{correct\_solutions}}{\text{total\_attempts}}$$
+
+Range is 0.0 (nothing worked) to 1.0 (everything worked). "Correct" means it
+passes the test suite for that specific task. Report this with confidence
+ intervals (95% CI if you have 30+ runs).
+
+\textbf{Fine-Grained Progress Rate} ($R_{Prog}$) tracks how far you got through
+ multi-step tasks:
+
+$$R_{Prog} = \frac{\text{achieved\_progress\_steps}}{\text{expected\_progress\_steps}}$$
+
+Range is 0.0 to 1.0. If you get 1.0, it means the agent took extra steps
+that actually helped. This is super useful for debugging where things go wrong
+in complex workflows, especially in hierarchical setups with all their
+self-correction loops.
+
+\textbf{Consistency} measures how stable the outputs are:
+
+$$\text{Consistency} = 1 - \frac{\sigma(\text{outputs})}{\mu(\text{outputs})}$$
+
+Range is 0.0 to 1.0, higher means more deterministic. Matters most for where
+you are trying to get reliable structured outputs.
+
+\subsection{Quality Metrics}
+
+\textbf{Implementation Rate} (Impl-Rate) measures whether you actually satisfied the
+requirements:
+
+$$\text{Impl-Rate} = \frac{\text{satisfied\_requirements}}{\text{total\_requirements}}$$
+
+Range is 0.0 to 1.0. This gives you more detail than just pass/fail, you get
+partial credit for incomplete work. Checked using multiple LLM judges with
+median scoring for consensus.
+
+\subsection{Efficiency and Cost Metrics}
+
+\textbf{Latency} is just time from start to finish (seconds):
+
+\begin{itemize}
+\item Time-to-First-Token (TTFT)
+\item Total response time
+\item Tool execution time
+
+\end{itemize}
+
+It matters a lot for architectures where verification loops can really slow
+things down.
+
+\textbf{Token Distribution} shows where your tokens are going:
+
+$$\text{token\_dist} = \left\{ \frac{\text{input\_tokens}}{\text{total\_tokens}}, \frac{\text{output\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_input\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_output\_tokens}}{\text{total\_tokens}} \right\}$$
+
+Useful for figuring out what is actually contributing to the cost(like T3's
+massive agent prompts or T4's orchestration overhead).
+
+\textbf{Cost-of-Pass (CoP)} is the primary metric, what is the expected cost to get
+one correct solution:
+
+$$\text{CoP} = \frac{\text{total\_cost}}{\text{pass\_rate}}$$
+
+Units are USD. Lower is better. If pass_rate hits zero, CoP goes to infinity,
+that configuration is economically dead. This combines both cost and accuracy
+into one number that tells you if something is actually sustainable.
+
+\textbf{Frontier CoP} represents the best CoP for all the various tests:
+
+$$\text{Frontier\_CoP} = \min(\text{CoP}_{T0}, \text{CoP}_{T1}, \ldots, \text{CoP}_{T6})$$
+
+This metric currently is just the minimum CoP across all tiers. Comparing this
+against what it costs to hire a human expert will allow developers to see if
+automation actually makes economic sense. Different model providers will have
+different cost assumptions.
+
+\textbf{Model Pricing} (as of January 2026):
+
+
+\begin{tabular}{|l|l|l|}
+\hline
+Model & Input ($/1M tokens) & Output ($/1M tokens) \\
+\hline
+Claude Opus 4.5 & $15.00 & $75.00 \\
+\hline
+Claude Sonnet 4.5 & $3.00 & $15.00 \\
+\hline
+Claude Haiku 4.5 & $1.00 & $5.00 \\
+\hline
+\end{tabular}
+
+
+\section{Test Configuration}
+
+\subsection{Hardware and Infrastructure}
+
+
+\begin{tabular}{|l|l|}
+\hline
+Component & Specification \\
+\hline
+Platform & Linux (WSL2) \\
+\hline
+Kernel & 6.6.87.2-microsoft-standard-WSL2 \\
+\hline
+Isolation & Each test runs in clean workspace \\
+\hline
+Compute & Standard CPU (no GPU required for evaluation) \\
+\hline
+\end{tabular}
+
+
+Each test runs in its own git clone with the repo at a specific git
+commit. This means every run is reproducible and tests cannot mess with each
+other. Every container starts fresh with:
+
+\begin{itemize}
+\item Clean git workspace at the exact commit specified
+\item Tier-specific config files
+\item Whatever tools/skills that tier needs
+\item Isolated filesystem for collecting results
+
+\end{itemize}
+
+\subsection{Software Stack}
+
+
+\begin{tabular}{|l|l|}
+\hline
+Component & Version/Tool \\
+\hline
+CLI Tool & Claude Code (primary evaluation target) \\
+\hline
+Language Runtime & Python 3.12.3, Mojo 0.26.1.0.dev2025122805 (211e2f5c) \\
+\hline
+Package Manager & Pixi \\
+\hline
+Container Runtime & Docker \\
+\hline
+Orchestration & Custom Scylla framework \\
+\hline
+Validation & JSON Schema, YAML validation \\
+\hline
+Version Control & Git Version 2.43.0 \\
+\hline
+\end{tabular}
+
+
+The evaluation harness does five things:
+
+\begin{enumerate}
+\item \textbf{Workspace Prep}: Clone the repo, check out the specific commit, inject
+\end{enumerate}
+
+   tier config
+\begin{enumerate}
+\item \textbf{Run the Agent}: Fire up Claude Code with whatever prompt/tools that tier
+\end{enumerate}
+
+   uses
+\begin{enumerate}
+\item \textbf{Capture Everything}: Grab the output, command logs, file changes,
+\end{enumerate}
+
+   artifacts
+\begin{enumerate}
+\item \textbf{Judge It}: Run three LLM judges in parallel (Opus, Sonnet, Haiku)
+\item \textbf{Calculate Metrics}: Crunch the numbers for Pass-Rate, Impl-Rate, CoP,
+\end{enumerate}
+
+   token usage, consensus scores
+
+\subsection{Model Configuration}
+
+\textbf{Execution Models} (performing the tasks):
+
+
+\begin{tabular}{|l|l|l|}
+\hline
+Model & Model ID & Primary Use \\
+\hline
+Claude Opus 4.5 & claude-opus-4-5-20251101 & complex reasoning, hierarchical orchestration \\
+\hline
+Claude Sonnet 4.5 & claude-sonnet-4-5-20250929 & standard execution, balanced cost/capability \\
+\hline
+Claude Haiku 4.5 & claude-haiku-4-5-20250929 & simple tasks, cost optimization \\
+\hline
+\end{tabular}
+
+
+\textbf{Judge Configuration} (evaluating the outputs):
+
+\begin{itemize}
+\item Three judges per evaluation: Opus 4.5, Sonnet 4.5, Haiku 4.5
+\item Take the median of the three scores for consensus
+\item Same prompt for all judges (only the model changes)
+\item Judge prompt: \texttt{<project\_root>/config/judge/system\_prompt.md}
+
+\end{itemize}
+
+\textbf{Safety}:
+
+\begin{itemize}
+\item Safety-net plugin blocks destructive operations
+
+\end{itemize}
+
+\section{Test Cases}
+
+\subsection{Pull Request (PR) Selection Criteria}
+
+Test cases come from real software development tasks. Here is what I consider to
+make a good test:
+
+\begin{enumerate}
+\item \textbf{Reproducible}: Pin it to a specific git commit
+\item \textbf{Clear success criteria}: Can be expressed in a rubric with measurable
+\end{enumerate}
+
+   requirements
+\begin{enumerate}
+\item \textbf{Representative}: Real work that developers actually do
+\item \textbf{Incrementally complex}: From trivial (Hello World) to multi-file
+\end{enumerate}
+
+   architecture changes
+\begin{enumerate}
+\item \textbf{Unambiguous}: Clear task, clear expected outcome
+
+\end{enumerate}
+
+\textbf{Size Categories:}
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Category & Lines of Code (LOC) & Complexity Characteristics & Example Tasks \\
+\hline
+\textbf{Small} & < 100 LOC & Single file changes, configuration updates & Config file modification, simple script creation \\
+\hline
+\textbf{Medium} & 100-500 LOC & Feature additions, localized refactoring & Add validation logic, implement utility function \\
+\hline
+\textbf{Large} & 500-2000 LOC & Multi-file features, architectural changes & New module implementation, build system migration \\
+\hline
+\end{tabular}
+
+
+Complexity also depends on:
+\begin{itemize}
+\item How many tool calls you need
+\item How much of the codebase you have to understand
+\item How many sequential steps
+\item How many constraints you are working under
+
+\end{itemize}
+
+\subsection{Workflow Categories}
+
+Different categories test different capabilities:
+
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+Category & Description & Complexity & Key Challenges \\
+\hline
+\textbf{Build System} & Makefile, Justfile, build automation configuration & Low-Medium & Syntax correctness, equivalence preservation \\
+\hline
+\textbf{CI/CD} & GitHub Actions, deployment pipelines, automation & Medium & Multi-file coordination, environment configuration \\
+\hline
+\textbf{Bug Fixing} & Defect resolution from issue description & Medium-High & Root cause diagnosis, minimal change principle \\
+\hline
+\textbf{New Features} & Feature implementation from requirements & High & Requirements interpretation, design decisions \\
+\hline
+\textbf{Refactoring} & Code restructuring without behavior change & Medium & Behavior preservation, test coverage \\
+\hline
+\textbf{Optimization} & Performance improvements, algorithmic enhancements & Medium-High & Profiling, benchmarking, trade-off analysis \\
+\hline
+\textbf{Review} & Code review and feedback generation & Medium & Pattern recognition, best practice knowledge \\
+\hline
+\textbf{Documentation} & Technical documentation generation & Low-Medium & Clarity, completeness, accuracy \\
+\hline
+\textbf{Issue Filing} & Bug report creation from symptoms & Low & Information gathering, reproduction steps \\
+\hline
+\end{tabular}
+
+
+\subsection{Test Case Matrix}
+
+I have designed \textbf{47 planned test cases} covering different workflows and
+complexity levels:
+
+
+\begin{tabular}{|l|l|l|}
+\hline
+Test ID Range & Workflow Focus & Representative Task \\
+\hline
+001-010 & Baseline validation & Hello World (001), Simple scripts (002-010) \\
+\hline
+011-020 & Build system tasks & Justfile to Makefile conversion (011), Build automation \\
+\hline
+021-030 & Feature implementation & Add validation logic, Implement utility functions \\
+\hline
+031-040 & Bug fixing and refactoring & Fix type errors, Refactor duplicated code \\
+\hline
+041-047 & Complex multi-step tasks & Multi-file architectural changes, Full feature delivery \\
+\hline
+\end{tabular}
+
+
+Each test is defined in YAML:
+
+\begin{lstlisting}
+id: "NNN-kebab-case-description"
+source:
+  repo: "https://github.com/user/project"
+  hash: "abc123..."  # Pin to specific commit
+task:
+  prompt_file: "prompt.md"
+  timeout_seconds: 3600
+validation:
+  rubric_file: "expected/rubric.yaml"
+tiers: [T0, T1, T2, T3, T4, T5, T6]
+runs_per_tier: 10  # Get enough data for stats
+\end{lstlisting}
+
+Tests get progressively harder. Performance should drop as complexity increases,
+if it does not, the test is too easy even for the advanced models.
+
+\section{Model Summary}
+
+\subsection{Claude Code Models}
+
+I am primarily testing Claude models through the Claude Code CLI:
+
+\textbf{Opus 4.5} is expected to be accel in T4-T6 where you need deep reasoning and
+self-correction.
+
+\textbf{Sonnet 4.5} is expected to show benefits at T1-T3. Balanced cost/performance
+at $3/$15 per million tokens.
+
+\textbf{Haiku 4.5} is expected to be the choice for simple T0-T1 tasks where fancy
+features do not help. At $1/$5 per million tokens, it is 15x cheaper than Opus
+for inputs. It is not expected to work well with agents, tools, or skills.
+
+\subsection{Model-Agnostic Framework Design}
+
+The framework is designed to work with any CLI tool or model:
+
+\begin{enumerate}
+\item \textbf{Standardized Interfaces}: Everything goes through the CLI's language
+\end{enumerate}
+
+   interface and filesystem outputs. Never touches model APIs directly. This
+   means vendor-specific details do not matter.
+
+\begin{enumerate}
+\item \textbf{Consistent Metrics}: CoP, Pass-Rate, Impl-Rate work the same across all
+\end{enumerate}
+
+   models. You can do apples-to-apples economic comparisons.
+
+\begin{enumerate}
+\item \textbf{Pluggable Judges}: Currently using Claude family for judging, but you can
+\end{enumerate}
+
+   swap in any LLM.
+
+\begin{enumerate}
+\item \textbf{Same Tier Structure}: T0-T6 applies to all tools. Direct architectural
+\end{enumerate}
+
+   comparisons across vendors.
+
+\begin{enumerate}
+\item \textbf{Reproducible Configs}: Everything is in version-controlled YAML, model IDs,
+\end{enumerate}
+
+   temperature, token limits. Easy to reproduce across different tools.
+
+This means you can benchmark OpenCode, Codex, Goose, or whatever new tool
+comes out, and the comparisons stay valid.
+
+\section{Results}
+
+I will present results from the dryrun experiment (test-001, Hello World task)
+across all seven tiers. The dryrun serves as a pipeline validation exercise with
+N=1 run per tier, establishing that the framework executes end-to-end
+successfully and generates the expected metrics, figures, and tables. Think of
+this as a "smoke test" --- if the pipeline works on the simplest possible task, I
+know it will handle the complex stuff later.
+
+\subsection{Pipeline Validation (Dryrun Overview)}
+
+First, the dry run was executed with the following setup:
+
+\begin{itemize}
+\item \textbf{Scope}: 1 model (Sonnet 4.5), 7 tiers (T0-T6), 1 subtest per tier
+\item \textbf{Judges}: 3 judges per run (Opus 4.5, Sonnet 4.5, Haiku 4.5) = 21 total
+\end{itemize}
+
+  judge evaluations
+\begin{itemize}
+\item \textbf{Criteria}: 5 criteria per judge $\times$ 21 judges = 105 total criteria scores
+\item \textbf{Total cost}: $1.01 (agent execution + judge evaluation)
+\item \textbf{Total duration}: ~1289 seconds (~21.5 minutes) sum of per-tier durations;
+\end{itemize}
+
+  actual wall-clock time was ~550 seconds due to parallel execution
+\begin{itemize}
+\item \textbf{Pass rate}: 100% (all 7 tiers passed, all grade A)
+
+\end{itemize}
+
+Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
+consensus scores ranging from 0.943 (T6) to 0.983 (T2, T3, T5). The task is
+trivially easy, as expected --- even T0 (minimal prompt) scores 0.973.
+
+\textbf{Table 1: Tier Summary (Dryrun)}
+
+
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Tier & Pass Rate & Mean Score & Median Score & Grade & CoP ($) \\
+\hline
+T0 & 1.000 & 0.973 & 0.973 & A & 0.14 \\
+\hline
+T1 & 1.000 & 0.970 & 0.970 & A & 0.13 \\
+\hline
+T2 & 1.000 & 0.983 & 0.983 & A & 0.14 \\
+\hline
+T3 & 1.000 & 0.983 & 0.983 & A & 0.13 \\
+\hline
+T4 & 1.000 & 0.960 & 0.960 & A & 0.17 \\
+\hline
+T5 & 1.000 & 0.983 & 0.983 & A & 0.07 \\
+\hline
+T6 & 1.000 & 0.943 & 0.943 & A & 0.25 \\
+\hline
+\end{tabular}
+
+
+\textbf{Key finding}: Quality converges across all tiers (ceiling effect), but cost
+varies 3.8x from $0.065 to $0.247.
+
+\subsection{Cost-of-Pass Analysis}
+
+Since all tiers pass (pass_rate = 1.0), Cost-of-Pass equals the raw cost. Figure
+6 (see \texttt{docs/paper-dryrun/figures/fig06\_cop\_by\_tier.png}) visualizes CoP across
+tiers.
+
+\textbf{Frontier CoP}: $0.065 (achieved by T5 hybrid)
+
+\textbf{Cost ranking} (lowest to highest):
+\begin{enumerate}
+\item \textbf{T5} (hybrid): $0.065 --- Frontier CoP achieved through selective skill
+\end{enumerate}
+
+   loading and minimal cache creation (4.6K vs 23-44K for other tiers)
+\begin{enumerate}
+\item \textbf{T1} (skills): $0.127 --- Token-efficient skill-based approach
+\item \textbf{T3} (delegation): $0.129 --- Flat multi-agent with efficient orchestration
+\item \textbf{T0} (baseline): $0.135 --- Minimal prompt overhead
+\item \textbf{T2} (tooling): $0.138 --- Tool schema loading increases cache tokens
+\item \textbf{T4} (hierarchy): $0.168 --- Hierarchical orchestration adds 30% overhead vs
+\end{enumerate}
+
+   T3
+\begin{enumerate}
+\item \textbf{T6} (super): $0.247 --- Maximum configuration is 3.8x Frontier CoP;
+\end{enumerate}
+
+   diminishing returns evident
+
+T6 (everything enabled) costs the most despite scoring the lowest (0.943). This
+is a kitchen sink approach, to see when more equals better.
+
+\subsection{Token Analysis}
+
+Token distribution reveals where costs originate. Figure 7 (see
+\texttt{docs/paper-dryrun/figures/fig07\_token\_distribution.png}) shows the breakdown by
+token type.
+
+Cache read tokens dominate---80-99% of total tokens across all tiers, confirming
+prompt caching works. But cache creation tokens vary dramatically:
+
+\textbf{Table 2: Token Breakdown}
+
+
+\begin{tabular}{|l|l|l|l|l|l|}
+\hline
+Tier & Input & Output & Cache Create & Cache Read & Total \\
+\hline
+T0 & 29 & 656 & 23,106 & 112,686 & 136,477 \\
+\hline
+T1 & 25 & 558 & 23,266 & 91,477 & 115,326 \\
+\hline
+T2 & 29 & 711 & 23,350 & 113,858 & 137,948 \\
+\hline
+T3 & 25 & 668 & 23,352 & 91,771 & 115,816 \\
+\hline
+T4 & 23 & 725 & 23,556 & 91,828 & 116,132 \\
+\hline
+T5 & 26 & 625 & \textbf{4,629} & 109,368 & 114,648 \\
+\hline
+T6 & 29 & 722 & \textbf{44,337} & 218,778 & 263,866 \\
+\hline
+\end{tabular}
+
+
+The Token Efficiency Chasm I mentioned in Section 4? The data is consistent with
+this hypothesis. T6 requires 218K cache read tokens versus T0's 113K---a 1.94x
+increase (nearly double). T5 achieves efficiency by minimizing cache creation
+(4.6K vs 23-44K), supporting the hybrid strategy.
+
+Output tokens stay stable at 558-725 across tiers, showing the task itself
+requires similar generation regardless of architecture.
+
+\subsection{Latency Analysis}
+
+Latency breaks into two components: agent execution time and judge evaluation
+time. Figure 13 (see \texttt{docs/paper-dryrun/figures/fig13\_latency.png}) shows the
+breakdown.
+
+\textbf{Table 3: Latency Breakdown}
+
+
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Tier & Agent Time (s) & Judge Time (s) & Total Time (s) & Judge % of Total \\
+\hline
+T0 & 35.3 & 167.8 & 203.1 & 82.6% \\
+\hline
+T1 & 29.3 & 178.0 & 207.3 & 85.9% \\
+\hline
+T2 & 36.8 & 161.7 & 198.5 & 81.5% \\
+\hline
+T3 & 29.9 & 149.1 & 179.0 & 83.3% \\
+\hline
+T4 & 41.2 & 137.0 & 178.2 & 76.9% \\
+\hline
+T5 & 24.8 & 128.4 & 153.1 & 83.8% \\
+\hline
+T6 & 28.4 & 141.1 & 169.5 & 83.2% \\
+\hline
+\end{tabular}
+
+
+Judge evaluation dominates---77-86% of total latency, ranging from 128-178
+seconds. This makes sense since 3 judges each evaluate the output independently.
+
+Agent time varies modestly, 25-41 seconds. T5 is fastest (24.8s), T4 slowest
+(41.2s). T5's speed advantage aligns with its cost advantage---both stem from
+minimal cache loading.
+
+On this trivial task, judge overhead dwarfs agent execution time, since there
+are three judges for this simple task. On more complex tasks with multi-step
+reasoning, agent time would dominate.
+
+\subsection{Judge Agreement}
+
+Three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5) evaluated each run. Figure 2
+(see \texttt{docs/paper-dryrun/figures/fig02\_judge\_variance.png}) and Figure 14 (see
+\texttt{docs/paper-dryrun/figures/fig14\_judge\_agreement.png}) show judge variance and
+pairwise agreement.
+
+\textbf{Judge behavior patterns}:
+\begin{itemize}
+\item \textbf{Opus}: Most conservative judge, scores range 0.93-0.96, never awards S
+\end{itemize}
+
+  grade
+\begin{itemize}
+\item \textbf{Sonnet}: Moderate judge, scores range 0.90-1.00, awards S grade in 4/7
+\end{itemize}
+
+  tiers (T2, T3, T4, T5)
+\begin{itemize}
+\item \textbf{Haiku}: Most generous judge, scores range 0.93-1.00, awards S grade in 5/
+\end{itemize}
+
+  7 tiers
+
+\textbf{Pairwise agreement} (Table 3 from
+ \texttt{docs/paper-dryrun/tables/tab03\_judge\_agreement.md}):
+\begin{itemize}
+\item \textbf{Opus-Sonnet}: Spearman ρ = 0.333, Pearson r = 0.706, mean Δ = 0.033
+\item \textbf{Opus-Haiku}: Spearman ρ = -0.273, Pearson r = -0.063, mean Δ = 0.045
+\item \textbf{Sonnet-Haiku}: Spearman ρ = -0.522, Pearson r = -0.347, mean Δ = 0.037
+
+\end{itemize}
+
+Krippendorff's α (interval): -0.117. Poor agreement, but expected with N=1 per
+tier. \textbf{Note}: N=7 is insufficient for reliable correlation estimates; these
+values are reported for completeness but should be interpreted with extreme
+caution.
+
+Despite low inter-rater agreement, the 3-judge median produces stable final
+scores. The median dampens extreme scores---Haiku's 1.00 perfects versus Opus's
+0.93 conservatism.
+
+\subsection{Criteria Breakdown}
+
+Judges score five weighted categories: functional correctness (35%),
+code quality (20%), proportionality (15%), build pipeline (10%), overall quality
+(20%). Figure 9 (see \texttt{docs/paper-dryrun/figures/fig09\_criteria\_by\_tier.png})
+shows criteria performance by tier.
+
+All tiers score 0.95-1.00 on functional criteria (file exists, correct output,
+exit code 0). Near-perfect, confirming the task is trivially easy.
+
+The largest score differences appear in subjective categories. Proportionality:
+T6 scored lower because judges noted cache artifacts (.ruff_cache,
+.pytest_cache) remaining in workspace. Overall quality: subjective engineering
+judgment shows the most variance across judges.
+
+Build pipeline: all tiers pass with scores 0.90-1.00, confirming clean
+execution.
+
+\subsection{Statistical Limitations}
+
+N=1 prevents inferential statistics. With only one run per tier, I cannot compute
+confidence intervals, standard deviations, or perform significance tests. All
+results are purely descriptive. This is a limitation of this run and not the
+framework itself.
+
+The analysis pipeline correctly reports \texttt{nan} for standard deviation and sets
+confidence intervals to (point, point). Statistical warnings appear in the
+output: "Mann-Whitney U test called with sample sizes 1, 1. Need at least 2
+samples per group." This was added so that it was clear to users that results
+are not expected to be robust.
+
+\section{Discussion}
+
+The dry run is not very useful for serious analysis, but what I will dive into
+what I learned about the framework's behavior on this trivially simple task,
+while being honest about the limitations inherent in N=1 experiments and ceiling
+effects.
+
+\subsection{What the Dryrun Tells Us}
+
+The Hello World task is, by design, trivially easy. All seven tiers score grade
+A with median scores between 0.943-0.983. This validates exactly what I said in
+Section 4: "Even T0 should nail this test." And it did.
+
+\textbf{Ceiling effect dominates}: When quality converges at near-perfect levels, we
+cannot differentiate tiers by capability. T0's empty prompt (subtest 00 uses no
+system prompt at all) and T6's maximal configuration (61 skills + all tools + 44
+agents) produce equivalent functional output. This is exactly what we expect for
+Hello World --- no amount of architectural sophistication helps when the task
+requires a single \texttt{print()} statement.
+
+\textbf{Cost differentiation still works}: Despite quality convergence, Cost-of-Pass
+varies 3.8x from $0.065 (T5) to $0.247 (T6). This demonstrates the framework's
+ability to measure economic trade-offs even when quality metrics saturate. On
+more complex tasks with quality variance, both dimensions should differentiate.
+
+\textbf{Pipeline validation successful}: The framework executed all seven tiers,
+collected 21 judge evaluations, computed consensus scores, generated 25 figures
+and 10 tables, and produced structured CSV exports. All components worked as
+designed.
+
+\subsection{Cost-Performance Trade-offs}
+
+The dryrun reveals hints of a pattern: more is not always better.
+
+T5 achieves Frontier CoP through selective feature loading---it combines T1's
+efficient skills with T3's delegation patterns but avoids T6's "everything
+enabled" overhead. T5's cache creation tokens (4,629) are 5-10x lower than other
+tiers (23,106-44,337), directly explaining its cost advantage.
+
+T6 costs the most ($0.247, or 3.8x Frontier CoP) despite scoring the lowest
+(0.943). Loading 61 skills + all tools + 44 agents actually made things worse.
+Judges explicitly noted cache artifacts and unnecessary complexity. This lines
+up with the hypothesis that prompt complexity hurts quality when the task is in
+the model's training set.
+
+T4's hierarchical overhead is another example. T4 costs 30% more than T3
+($0.168 vs $0.129) for this trivial task. The self-correction loops and nested
+orchestration add latency (41.2s vs 29.9s) without improving quality. On complex
+tasks needing iterative refinement, maybe T4 justifies the overhead. On simple
+tasks, it is pure waste.
+
+The Token Efficiency Chasm I talked about in Section 4? The data supports this
+hypothesis. T6's 218K cache read tokens versus T0's 113K (1.94x increase) shows
+the cost of loading tool schemas. T2 (tooling) shows similar bloat---137K total
+tokens versus T1's 115K. Skills-based approaches (T1, T3) stay lean while still
+enabling domain knowledge.
+
+Bottom line for production: match tier complexity to task complexity. Do not use
+T6 for trivial tasks. Do not use T0 for tasks needing specialized tools or
+multi-step reasoning. T5's hybrid approach seems to be optimal, load features
+selectively based on what the task actually needs, do not just maximize
+everything.
+
+\subsection{Judge Behavior}
+
+The 3-judge consensus mechanism reveals interesting patterns.
+
+Haiku hands out S grades easily, 5 out of 7 tiers got perfect scores. Scores
+range 0.93-1.00, and Haiku consistently scores higher than Opus or Sonnet.
+
+Opus never awards S grades. Scores range 0.93-0.96, consistently the toughest
+judge. Opus reliably deducts points for cache artifacts that Haiku overlooks.
+
+Sonnet splits the difference. Awards S grades in 4/7 tiers (T2, T3, T4, T5),
+scores range 0.90-1.00.
+
+Given that the results in most cases are a single line, the 1.0 grade is
+incorrect and points to agents being a little too lenient. Maybe some prompt
+tweaks will fix this, but that also can be due to the simplicity of this task.
+This can be investigated in future analysis.
+
+Inter-rater agreement is predictably low: Krippendorff's α = -0.117. But that is
+expected with N=1 and near-perfect scores. On tasks with more variance,
+agreement should improve as judges separate clear failures from clear successes.
+
+Despite the disagreement, the 3-judge median works. When Haiku awards 1.00 and
+Opus awards 0.93, the median captures the true quality without getting pulled to
+either extreme. This validates the multi-judge consensus design.
+
+One scaling problem: judge time dominates total latency. 77-86% of execution
+time is judge evaluation (128-178s), not agent execution (25-41s). With 3 judges
+per run, judge costs are 3x per evaluation. For large-scale experiments (N=10 $\times$
+113 subtests = 1,130 runs $\times$ 3 judges = 3,390 judge evaluations), judge cost uses
+the budget fast. Future work should explore single-judge evaluation,
+confidence-based selection (use Opus only when Sonnet/Haiku disagree), evaluate
+if prompt improvements can get the cheaper Haiku model to be an effective judge,
+or give different prompts to the same judge model.
+
+\subsection{Limitations}
+
+N=1 is descriptive only. I cannot compute standard deviations, confidence
+intervals, or significance tests. All tier comparisons are point estimates. A
+single outlier run could flip all the conclusions.
+
+Single task, trivial complexity. Hello World does not need skills, tools,
+multi-agent coordination, or hierarchical reasoning. The dryrun validates the
+pipeline works, not whether architectural complexity improves quality on hard
+tasks.
+
+Single model. All agent runs use Sonnet 4.5. I have not tested whether tier
+rankings hold for Opus 4.5, Haiku 4.5, or other model families.
+
+No thinking mode variants. The dryrun uses standard inference without extended
+thinking. Models with thinking enabled might show different cost-quality
+trade-offs.
+
+Ceiling effect masks capability differences. When all tiers score 0.94-0.98, I
+cannot tell which architecture would excel on harder tasks. The full experiment
+(113 subtests including complex multi-file repos) will differentiate
+capabilities.
+
+Judge evaluation time bottleneck. 3 sequential judges per run creates a 3x cost
+multiplier. Parallel judge execution would reduce latency but not cost.
+
+\section{Conclusions}
+
+This paper introduced the Scylla framework, and shows that it works, end-to-end.
+All seven tiers executed successfully, three judges scored everything, and the
+analysis pipeline spit out figures and tables automatically. The dryrun
+validates the methodology on the simplest possible task---Hello World---before I
+scale up to complex multi-file repos. What is missing is review and feedback
+from others, which is what this paper helps enable.
+
+What did I learn? Five things stand out:
+
+\begin{enumerate}
+\item The framework is operational.
+\item Quality converges on trivial tasks, making the framework overkill.
+\item All tiers scored grade A, proving that throwing more complexity at Hello
+\end{enumerate}
+
+   World does not help, which should be obvious. That obviousness is what makes
+   it a good pipe cleaning run.
+\begin{enumerate}
+\item Cost still varies 3.8x despite identical quality, showing the framework can
+\end{enumerate}
+
+   measure economic trade-offs even when quality saturates. T5's hybrid approach
+   achieves Frontier CoP by selectively loading features instead of maximizing
+   everything.
+\begin{enumerate}
+\item And the Token Efficiency Chasm I hypothesized in Section 4? That I can say is
+\end{enumerate}
+
+   confirmed, as T6 burns nearly double the tokens (218K vs 113K) compared to
+   T0.
+
+Did I answer my original questions? Partially. CoP lets me quantify efficiency;
+T5 is 3.8x cheaper than T6 despite equivalent quality. On this task, the sum is
+\emph{not} more than the parts; T6 scores lowest despite highest cost. But the hard
+questions need harder tasks, I cannot tell if any tier dominates universally from
+a single Hello World run, and I have not tested model-to-model comparisons yet.
+That work is left for a future exercise.
+
+What about my hypotheses? The KISS principle hypothesis has hints of being
+confirmed, maximal complexity (T6) scores worst on this training-set-likely
+task. But I have not tested inverse KISS on out-of-distribution tasks yet, and
+specialization advantages (H1) are inconclusive because Hello World does not
+require delegation or tools.
+
+There is no real practical takeaway yet, since the testing was insufficient to
+come to any real conclusions. Answering those questions is left for the next
+exercise, and this framework can be used for doing so.
+
+\section{Further Work}
+
+The dryrun validates the framework works. Now it is time to scale up and fill in
+the gaps.
+
+\textbf{Full-scale experiments}: Run the complete test001 dataset with (N=10, 113
+ subtests, 1,130 runs total). Running the analysis will start to enable valid
+statistical inference about the relationship between prompts and the tools.
+
+\textbf{Task diversity}: The dryrun only covers Hello World. The full test suite
+includes 46 additional tasks across greenfield (Flask APIs, CLI tools),
+brownfield (feature additions to existing repos), refactoring (extract function,
+eliminate duplication), bug fixes (off-by-one errors, race conditions), and
+documentation (README generation). Running these will show whether tier rankings
+hold across workflow categories or if certain tiers excel at specific task
+types.
+
+\textbf{Cross-vendor and cross-model evaluation}: The framework is model-agnostic by
+design. I would love to extend support to other tools, but right now just doing
+analysis on Claude Code alone is hitting my budgets for experimentation
+extremely quickly. Setting up local models and accessing tools using these
+models will allow more experimentation, but I do not have access to that kind of
+compute within my budget at the moment.
+
+\textbf{Advanced analysis}: I am by no means a statistician, and choices I have made
+here might be incorrect. My current analysis uses frequentist statistics. There
+are more advanced analysis that I am learning about that could help analyze the
+flood of data more efficiently. There is also other metrics and data points that
+could be useful in this analysis that I am not collecting. I also can save the
+runs and do longitudinal studies to see if the results change consistently over
+time.
+
+Given the scale and scope of this task, it is going to be an ongoing effort of
+learning, testing, and analyzing.
+
+\section{Acknowledgements}
+
+This work was self-funded by the author. Special thanks to Tuan Nguyen for
+reviewing early drafts of this paper and providing valuable feedback.
+
+
+\bibliographystyle{plain}
+\bibliography{references}
+\section{Appendices}
+
+\subsection{Appendix A: Detailed Metric Definitions}
+
+\subsection{Appendix B: Data Dictionary and Generated Outputs}
+
+\subsection{Appendix C: Reproducibility Checklist}
+
+\begin{lstlisting}
+# 1. Clone repository
+git clone https://github.com/HomericIntelligence/ProjectScylla
+cd ProjectScylla
+
+# 2. Install dependencies
+pixi install
+
+# 3. Run evaluation (example for test-001, tier T0)
+pixi run python scripts/run_e2e_experiment.py \
+  --test tests/001-hello-world \
+  --tier T0 \
+  --runs 10
+
+# 4. Generate figures and tables
+pixi run python scripts/generate_figures.py \
+  --results <output_directory>
+pixi run python scripts/generate_tables.py \
+  --results <output_directory>
+\end{lstlisting}
+
+\clearpage
+\appendix
+\section{Additional Figures}
+
+\subsection{Variance Analysis}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig01_score_variance_by_tier.pdf}
+\caption{Score Distribution Across Tiers (T0-T6)}
+\label{fig:fig01_score_variance_by_tier}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig03_failure_rate_by_tier.pdf}
+\caption{Grade Distribution by Tier}
+\label{fig:fig03_failure_rate_by_tier}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig04_pass_rate_by_tier.pdf}
+\caption{Pass Rate by Tier with 95\% Confidence Intervals}
+\label{fig:fig04_pass_rate_by_tier}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig05_grade_heatmap.pdf}
+\caption{Grade Distribution Heatmap by Tier}
+\label{fig:fig05_grade_heatmap}
+\end{figure}
+
+
+\subsection{Cost Analysis}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig08_cost_quality_pareto.pdf}
+\caption{Cost vs Quality Pareto Frontier}
+\label{fig:fig08_cost_quality_pareto}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig10_score_violin.pdf}
+\caption{Score Distribution Violin Plots by Tier}
+\label{fig:fig10_score_violin}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig11_tier_uplift.pdf}
+\caption{Tier Transition Uplift (Relative to T0)}
+\label{fig:fig11_tier_uplift}
+\end{figure}
+
+
+\subsection{Judge Analysis}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig15_subtest_heatmap.pdf}
+\caption{None}
+\label{fig:fig15_subtest_heatmap}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig16_success_variance_by_test.pdf}
+\caption{Success Variance by Test}
+\label{fig:fig16_success_variance_by_test}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig17_judge_variance_overall.pdf}
+\caption{Judge Variance Overall}
+\label{fig:fig17_judge_variance_overall}
+\end{figure}
+
+
+\subsection{Diagnostic Metrics}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig18_failure_rate_by_test.pdf}
+\caption{Failure Rate by Test}
+\label{fig:fig18_failure_rate_by_test}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig19_effect_size_forest.pdf}
+\caption{Effect Size Forest Plot (Cliff's Delta with 95\% CI)}
+\label{fig:fig19_effect_size_forest}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig20_metric_correlation_heatmap.pdf}
+\caption{Metric Correlation Heatmap (Spearman ρ)}
+\label{fig:fig20_metric_correlation_heatmap}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig21_cost_quality_regression.pdf}
+\caption{Cost vs Quality Regression (Subtest Level)}
+\label{fig:fig21_cost_quality_regression}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig22_cumulative_cost.pdf}
+\caption{Cumulative Cost Over Runs}
+\label{fig:fig22_cumulative_cost}
+\end{figure}
+
+
+\subsection{Implementation Rate}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig24_score_histograms.pdf}
+\caption{Score Distributions}
+\label{fig:fig24_score_histograms}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig25_impl_rate_by_tier.pdf}
+\caption{Implementation Rate by Tier (95\% Bootstrap CI)}
+\label{fig:fig25_impl_rate_by_tier}
+\end{figure}
+
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.75\textwidth]{figures/fig26_impl_rate_vs_pass_rate.pdf}
+\caption{Implementation Rate vs Pass-Rate}
+\label{fig:fig26_impl_rate_vs_pass_rate}
+\end{figure}
+
+
+\end{document}

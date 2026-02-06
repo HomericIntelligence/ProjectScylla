@@ -1,0 +1,10 @@
+{
+  "alwaysThinkingEnabled": false,
+  "allowedTools": [
+    "Read",
+    "Write",
+    "Edit",
+    "Glob",
+    "Grep"
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "tier_id": "T2",
+  "subtest_results": {
+    "01": {
+      "subtest_id": "01",
+      "tier_id": "T2",
+      "runs": [
+        {
+          "run_number": 1,
+          "exit_code": 0,
+          "token_stats": {
+            "input_tokens": 29,
+            "output_tokens": 711,
+            "cache_creation_tokens": 23350,
+            "cache_read_tokens": 113858
+          },
+          "tokens_input": 113887,
+          "tokens_output": 711,
+          "cost_usd": 0.1379989,
+          "duration_seconds": 198.522226,
+          "agent_duration_seconds": 36.840063,
+          "judge_duration_seconds": 161.682163,
+          "judge_score": 0.9833333333333334,
+          "judge_passed": true,
+          "judge_grade": "A",
+          "judge_reasoning": "The agent successfully created a minimal, correct hello.py script that prints exactly 'Hello, World!' and exits with code 0. The solution is appropriately simple (1 line of code) and demonstrates excellent engineering judgment for a Hello World task. Minor deduction for .ruff_cache and .pytest_cache directories remaining in the workspace, though these are borderline as they contain .gitignore files and were created by build tools rather than the agent.",
+          "judges": [
+            {
+              "model": "claude-opus-4-5-20251101",
+              "score": 0.95,
+              "passed": true,
+              "grade": "A",
+              "reasoning": "The agent successfully created a minimal, correct hello.py script that prints exactly 'Hello, World!' and exits with code 0. The solution is appropriately simple (1 line of code) and demonstrates excellent engineering judgment for a Hello World task. Minor deduction for .ruff_cache and .pytest_cache directories remaining in the workspace, though these are borderline as they contain .gitignore files and were created by build tools rather than the agent.",
+              "judge_number": 1
+            },
+            {
+              "model": "claude-sonnet-4-5-20250929",
+              "score": 1.0,
+              "passed": true,
+              "grade": "S",
+              "reasoning": "The agent delivered a flawless Hello World implementation with perfect simplicity and adherence to requirements. The solution is exactly one line of idiomatic Python, passes all linting and formatting checks, and produces precisely the expected output. This is a textbook example of appropriate scope for a trivial task with zero over-engineering.",
+              "judge_number": 2
+            },
+            {
+              "model": "claude-haiku-4-5",
+              "score": 1.0,
+              "passed": true,
+              "grade": "S",
+              "reasoning": "The agent delivered a perfect solution that exemplifies excellent engineering judgment. The hello.py script is minimal, clear, and accomplishes the task with zero over-engineering. All functional requirements are met (file exists, correct output, exit code 0, exact output format), code quality is pristine (valid syntax, idiomatic Python, no unused imports, PEP8 compliant), proportionality is excellent (1 line of code, minimal files, no unnecessary artifacts), and the build pipeline passes all applicable checks. The solution demonstrates wisdom in recognizing that a hello world task requires only a hello world solution.",
+              "judge_number": 3
+            }
+          ],
+          "workspace_path": "/home/mvillmow/fullruns/test001-dryrun/2026-01-20T06-13-07-test-001/T2/01/run_01/workspace",
+          "logs_path": "/home/mvillmow/fullruns/test001-dryrun/2026-01-20T06-13-07-test-001/T2/01/run_01/agent",
+          "command_log_path": "/home/mvillmow/fullruns/test001-dryrun/2026-01-20T06-13-07-test-001/T2/01/run_01/agent/command_log.json",
+          "criteria_scores": {}
+        }
+      ],
+      "pass_rate": 1.0,
+      "mean_score": 0.9833333333333334,
+      "median_score": 0.9833333333333334,
+      "std_dev_score": 0.0,
+      "mean_cost": 0.1379989,
+      "total_cost": 0.1379989,
+      "token_stats": {
+        "input_tokens": 29,
+        "output_tokens": 711,
+        "cache_creation_tokens": 23350,
+        "cache_read_tokens": 113858
+      },
+      "consistency": 1.0,
+      "grade_distribution": {
+        "A": 1
+      },
+      "modal_grade": "A",
+      "min_grade": "A",
+      "max_grade": "A",
+      "selected_as_best": true,
+      "selection_reason": "Highest median score (0.983)",
+      "rate_limit_info": null
+    }
+  },
+  "best_subtest": "01",
+  "best_subtest_score": 0.9833333333333334,
+  "inherited_from": null,
+  "tiebreaker_needed": false,
+  "total_cost": 0.1379989,
+  "total_duration": 208.16632,
+  "cost_of_pass": 0.1379989,
+  "token_stats": {
+    "input_tokens": 29,
+    "output_tokens": 711,
+    "cache_creation_tokens": 23350,
+    "cache_read_tokens": 113858
+  }
+}

@@ -1,0 +1,29 @@
+\begin{table}[htbp]
+\centering
+\caption{Impl-Rate Tier Pairwise Comparison}
+\label{tab:impl_rate_tier_comparison}
+\small
+\begin{tabular}{llccccc}
+\toprule
+Model & Transition & N (T1, T2) & Impl-Rate $\Delta$ & p-value & Cliff's $\delta$ & Significant? \\
+\midrule
+Sonnet 4.5 & T0→T1 & (1, 1) & -0.002 & --- & -1.000 & N/A (omnibus n.s.) \\
+Sonnet 4.5 & T1→T2 & (1, 1) & +0.010 & --- & +1.000 & N/A (omnibus n.s.) \\
+Sonnet 4.5 & T2→T3 & (1, 1) & -0.007 & --- & -1.000 & N/A (omnibus n.s.) \\
+Sonnet 4.5 & T3→T4 & (1, 1) & -0.037 & --- & -1.000 & N/A (omnibus n.s.) \\
+Sonnet 4.5 & T4→T5 & (1, 1) & +0.043 & --- & +1.000 & N/A (omnibus n.s.) \\
+Sonnet 4.5 & T5→T6 & (1, 1) & -0.033 & --- & -1.000 & N/A (omnibus n.s.) \\
+Sonnet 4.5 & T0→T6 (Overall) & (1, 1) & -0.026 & --- & -1.000 & N/A (omnibus n.s.) \\
+\midrule
+\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
+\multicolumn{7}{l}{Sonnet 4.5: $H(6)=nan$, $p=nan$ $p \geq 0.05$ (n.s.)} \\
+\multicolumn{7}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Positive $\Delta$ indicates improvement from T1 $\to$ T2.
+\item Cliff's $\delta$: negligible ($<0.11$), small ($0.11$--$0.28$), medium ($0.28$--$0.43$), large ($>0.43$).
+\item p-values are Holm-Bonferroni corrected (step-down).
+\end{tablenotes}
+\end{table}

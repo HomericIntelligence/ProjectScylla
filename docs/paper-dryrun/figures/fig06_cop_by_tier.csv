@@ -1,0 +1,8 @@
+agent_model,tier,cop,pass_rate,mean_cost,is_inf
+Sonnet 4.5,T0,0.1351093,1.0,0.1351093,False
+Sonnet 4.5,T1,0.1273926,1.0,0.1273926,False
+Sonnet 4.5,T2,0.1379989,1.0,0.1379989,False
+Sonnet 4.5,T3,0.1294133,1.0,0.1294133,False
+Sonnet 4.5,T4,0.1684904,1.0,0.1684904,False
+Sonnet 4.5,T5,0.06531415,1.0,0.06531415,False
+Sonnet 4.5,T6,0.24744315,1.0,0.24744315,False

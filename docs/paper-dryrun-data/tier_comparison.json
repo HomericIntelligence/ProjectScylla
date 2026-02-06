@@ -1,0 +1,44 @@
+{
+  "T3": {
+    "best_subtest": "01",
+    "best_score": 0.9833333333333334,
+    "total_cost": 0.1294133,
+    "tiebreaker_needed": false
+  },
+  "T4": {
+    "best_subtest": "01",
+    "best_score": 0.9595333333333333,
+    "total_cost": 0.1684904,
+    "tiebreaker_needed": false
+  },
+  "T2": {
+    "best_subtest": "01",
+    "best_score": 0.9833333333333334,
+    "total_cost": 0.1379989,
+    "tiebreaker_needed": false
+  },
+  "T0": {
+    "best_subtest": "00",
+    "best_score": 0.9733333333333333,
+    "total_cost": 0.1351093,
+    "tiebreaker_needed": false
+  },
+  "T1": {
+    "best_subtest": "01",
+    "best_score": 0.9700000000000001,
+    "total_cost": 0.1273926,
+    "tiebreaker_needed": false
+  },
+  "T5": {
+    "best_subtest": "01",
+    "best_score": 0.9833333333333334,
+    "total_cost": 0.06531415,
+    "tiebreaker_needed": false
+  },
+  "T6": {
+    "best_subtest": "01",
+    "best_score": 0.9433333333333334,
+    "total_cost": 0.24744315,
+    "tiebreaker_needed": false
+  }
+}

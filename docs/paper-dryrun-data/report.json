@@ -1,0 +1,76 @@
+{
+  "experiment_id": "test-001",
+  "summary": {
+    "total_tiers": 7,
+    "best_tier": "T5",
+    "best_subtest": "01",
+    "frontier_cop": 0.06531415,
+    "total_cost": 1.0111618,
+    "total_duration": 549.881757,
+    "started_at": "2026-01-20T06:13:07.511942+00:00",
+    "completed_at": "2026-01-20T06:22:17.393699+00:00"
+  },
+  "token_stats": {
+    "input_tokens": 186,
+    "output_tokens": 4665,
+    "cache_creation_tokens": 165596,
+    "cache_read_tokens": 829766
+  },
+  "best": {
+    "tier": "T5",
+    "subtest": "01",
+    "report": "./T5/report.json"
+  },
+  "children": [
+    {
+      "tier": "T3",
+      "best_subtest": "01",
+      "best_score": 0.9833333333333334,
+      "cost": 0.1294133,
+      "report": "./T3/report.json"
+    },
+    {
+      "tier": "T4",
+      "best_subtest": "01",
+      "best_score": 0.9595333333333333,
+      "cost": 0.1684904,
+      "report": "./T4/report.json"
+    },
+    {
+      "tier": "T2",
+      "best_subtest": "01",
+      "best_score": 0.9833333333333334,
+      "cost": 0.1379989,
+      "report": "./T2/report.json"
+    },
+    {
+      "tier": "T0",
+      "best_subtest": "00",
+      "best_score": 0.9733333333333333,
+      "cost": 0.1351093,
+      "report": "./T0/report.json"
+    },
+    {
+      "tier": "T1",
+      "best_subtest": "01",
+      "best_score": 0.9700000000000001,
+      "cost": 0.1273926,
+      "report": "./T1/report.json"
+    },
+    {
+      "tier": "T5",
+      "best_subtest": "01",
+      "best_score": 0.9833333333333334,
+      "cost": 0.06531415,
+      "report": "./T5/report.json"
+    },
+    {
+      "tier": "T6",
+      "best_subtest": "01",
+      "best_score": 0.9433333333333334,
+      "cost": 0.24744315,
+      "report": "./T6/report.json"
+    }
+  ],
+  "generated_at": "2026-01-20T06:22:17.394393+00:00"
+}

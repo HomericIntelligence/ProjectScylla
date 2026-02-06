@@ -1,0 +1,15 @@
+{
+  "winning_subtest": "01",
+  "winning_score": 0.9833333333333334,
+  "votes": [
+    {
+      "subtest_id": "01",
+      "score": 0.9833333333333334,
+      "confidence": 1.0,
+      "reasoning": "Only sub-test in tier"
+    }
+  ],
+  "margin": 1.0,
+  "tiebreaker_needed": false,
+  "tiebreaker_result": null
+}
