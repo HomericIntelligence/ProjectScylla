@@ -421,7 +421,7 @@ def load_test_config(tiers_dir: Path) -> dict | None:
             "tiers": fixture.tiers,
             "language": fixture.language,
         }
-    except (FileNotFoundError, ValueError) as e:
+    except (FileNotFoundError, ValueError):
         # Fallback to old parsing for backward compatibility
         with open(test_yaml) as f:
             config = yaml.safe_load(f) or {}
