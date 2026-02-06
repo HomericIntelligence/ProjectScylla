@@ -56,13 +56,14 @@ class TierManager:
         config_dir = Path(__file__).parent.parent.parent / "config"
         self.tier_config_loader = TierConfigLoader(config_dir)
 
-    def load_tier_config(self, tier_id: TierID) -> TierConfig:
+    def load_tier_config(self, tier_id: TierID, skip_agent_teams: bool = False) -> TierConfig:
         """Load configuration for a specific tier.
 
         Loads tier-level config from config/tiers/ and discovers sub-tests.
 
         Args:
             tier_id: The tier to load configuration for
+            skip_agent_teams: Skip agent teams sub-tests (default: False)
 
         Returns:
             TierConfig with all sub-tests for the tier.
@@ -79,7 +80,7 @@ class TierManager:
         system_prompt_mode = "custom"
 
         # Discover sub-tests
-        subtests = self._discover_subtests(tier_id, tier_dir)
+        subtests = self._discover_subtests(tier_id, tier_dir, skip_agent_teams)
 
         # Create TierConfig with both global settings and subtests
         return TierConfig(
@@ -91,7 +92,9 @@ class TierManager:
             delegation_enabled=global_tier_config.delegation_enabled,
         )
 
-    def _discover_subtests(self, tier_id: TierID, tier_dir: Path) -> list[SubTestConfig]:
+    def _discover_subtests(
+        self, tier_id: TierID, tier_dir: Path, skip_agent_teams: bool = False
+    ) -> list[SubTestConfig]:
         """Discover sub-test configurations from shared directory.
 
         Loads subtest configs from tests/claude-code/shared/subtests/tN/*.yaml.
@@ -100,6 +103,7 @@ class TierManager:
         Args:
             tier_id: The tier identifier
             tier_dir: Path to the tier directory (legacy, kept for compatibility)
+            skip_agent_teams: Skip agent teams sub-tests (default: False)
 
         Returns:
             List of SubTestConfig for each discovered sub-test.
@@ -164,6 +168,13 @@ class TierManager:
                 raw_tiers = config_data.get("inherit_best_from", [])
                 inherit_best_from = [TierID.from_string(t) for t in raw_tiers]
 
+            # Parse agent_teams flag
+            agent_teams = config_data.get("agent_teams", False)
+
+            # Skip if agent_teams is enabled but we're filtering them out
+            if skip_agent_teams and agent_teams:
+                continue
+
             subtests.append(
                 SubTestConfig(
                     id=subtest_id,
@@ -174,6 +185,7 @@ class TierManager:
                     extends_previous=extends_previous,
                     resources=resources,
                     inherit_best_from=inherit_best_from,
+                    agent_teams=agent_teams,
                 )
             )
 
@@ -573,6 +585,12 @@ class TierManager:
                             "command": "npx",
                             "args": ["-y", f"@modelcontextprotocol/servers/{server}"],
                         }
+
+        # Add experimental agent teams environment variable
+        if subtest.agent_teams:
+            if "env" not in settings:
+                settings["env"] = {}
+            settings["env"]["CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"] = "1"
 
         settings_dir = workspace / ".claude"
         settings_dir.mkdir(parents=True, exist_ok=True)

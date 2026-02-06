@@ -149,7 +149,7 @@ ProjectScylla benchmarks AI agent architectures across 7 testing tiers with ~114
 | T1 | Skills | 10 | Domain expertise via installed skills by category |
 | T2 | Tooling | 15 | External tools and MCP servers |
 | T3 | Delegation | 41 | Flat multi-agent with specialist agents |
-| T4 | Hierarchy | 7 | Nested orchestration with orchestrator agents |
+| T4 | Hierarchy | 14 | Nested orchestration with orchestrator agents (7 hierarchy + 7 agent teams) |
 | T5 | Hybrid | 15 | Best combinations and permutations |
 | T6 | Super | 1 | Everything enabled at maximum capability |
 

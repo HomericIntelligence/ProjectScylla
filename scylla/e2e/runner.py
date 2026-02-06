@@ -634,7 +634,7 @@ class E2ERunner:
         start_time = datetime.now(timezone.utc)
 
         # Load tier configuration
-        tier_config = self.tier_manager.load_tier_config(tier_id)
+        tier_config = self.tier_manager.load_tier_config(tier_id, self.config.skip_agent_teams)
 
         # Limit sub-tests if max_subtests is set
         if self.config.max_subtests is not None:

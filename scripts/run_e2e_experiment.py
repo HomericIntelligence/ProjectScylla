@@ -293,6 +293,11 @@ Examples:
         help="Limit sub-tests per tier for testing (default: all)",
     )
     parser.add_argument(
+        "--skip-agent-teams",
+        action="store_true",
+        help="Skip agent teams sub-tests (default: False, runs all including agent teams)",
+    )
+    parser.add_argument(
         "--use-containers",
         action="store_true",
         help="Run agents and judges in isolated Docker containers (default: False)",
@@ -534,6 +539,7 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:
         parallel_subtests=config_dict["parallel_subtests"],
         timeout_seconds=config_dict["timeout_seconds"],
         max_subtests=args.max_subtests,
+        skip_agent_teams=args.skip_agent_teams,
         thinking_mode=config_dict["thinking_mode"],
         use_containers=args.use_containers,
     )
