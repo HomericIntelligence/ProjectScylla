@@ -19,15 +19,20 @@ mkdir -p "${ARXIV_DIR}/tables"
 echo "✓ Directories created"
 echo ""
 
-# Step 2: Run Python converter
-echo "[2/10] Converting paper.md to LaTeX..."
-cd "${PROJECT_ROOT}"
-pixi run python scripts/build_arxiv_paper.py
-if [ ! -f "${ARXIV_DIR}/main.tex" ]; then
-    echo "✗ Error: main.tex not generated"
-    exit 1
+# Step 2: Check if main.tex exists (skip conversion if manually edited)
+echo "[2/10] Checking for main.tex..."
+if [ -f "${ARXIV_DIR}/main.tex" ]; then
+    echo "✓ main.tex exists (skipping conversion to preserve manual edits)"
+else
+    echo "  Generating main.tex from paper.md..."
+    cd "${PROJECT_ROOT}"
+    pixi run python scripts/build_arxiv_paper.py
+    if [ ! -f "${ARXIV_DIR}/main.tex" ]; then
+        echo "✗ Error: main.tex not generated"
+        exit 1
+    fi
+    echo "✓ LaTeX generated"
 fi
-echo "✓ LaTeX generated"
 echo ""
 
 # Step 3: Copy figures

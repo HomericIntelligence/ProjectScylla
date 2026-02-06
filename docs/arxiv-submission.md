@@ -63,6 +63,21 @@ docs/paper-dryrun-arxiv/
 └── submission.tar.gz           # Will be created after successful compilation
 ```
 
+## Important: main.tex Manual Edits
+
+⚠️ **The build script will NOT overwrite `main.tex` if it already exists.**
+
+This protects your manual edits. The `build_arxiv_submission.sh` script will:
+- Skip LaTeX generation if `main.tex` exists
+- Only compile the existing `main.tex` → PDF
+- Copy figures, tables, and bibliography
+- Create the submission tarball
+
+If you need to regenerate `main.tex` from `paper.md` (discarding manual edits):
+```bash
+bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
+```
+
 ## How to Complete the Conversion
 
 ### Option A: Manual LaTeX Editing (Recommended for Quality)
