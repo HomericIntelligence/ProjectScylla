@@ -1,17 +1,9 @@
 {
-  "name": "verify-experiment-completion",
+  "name": "rescue-broken-prs",
   "version": "1.0.0",
-  "category": "evaluation",
-  "description": "Workflow for verifying E2E experiment completion and resuming interrupted runs",
+  "category": "testing",
+  "description": "Systematic workflow for diagnosing and fixing multiple failing PRs",
   "author": "Claude Sonnet 4.5",
-  "created": "2026-02-05",
-  "tags": ["evaluation", "experiments", "verification", "checkpoint", "resumption"],
-  "skills": [
-    {
-      "name": "verify-experiment-completion",
-      "description": "Complete workflow for verifying experiment completeness, fixing bugs, and resuming runs",
-      "trigger": "When validating that experiments are ready for analysis or paper writing",
-      "key_learning": "High run_result.json count and checkpoint status='completed' do not guarantee experiment completion. Always verify filesystem state."
-    }
-  ]
+  "date": "2026-02-06",
+  "tags": ["ci-cd", "pre-commit", "testing", "git", "github", "lint", "ruff", "pytest", "pr-rescue", "refactoring"]
 }
