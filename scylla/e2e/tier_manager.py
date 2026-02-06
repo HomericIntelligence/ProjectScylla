@@ -74,7 +74,7 @@ class TierManager:
 
         # Auto-detect shared_dir if not provided
         if shared_dir is None:
-            shared_dir = self._shared_dir
+            shared_dir = self._get_shared_dir()
         self._shared_dir = shared_dir
 
         # Initialize subtest provider
@@ -110,7 +110,6 @@ class TierManager:
             tools_enabled=global_tier_config.tools_enabled,
             delegation_enabled=global_tier_config.delegation_enabled,
         )
-
 
     def prepare_workspace(
         self,

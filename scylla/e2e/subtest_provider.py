@@ -48,6 +48,7 @@ class FileSystemSubtestProvider:
         Args:
             shared_dir: Path to the shared resources directory
                        (e.g., tests/claude-code/shared/)
+
         """
         self.shared_dir = shared_dir
 
@@ -65,6 +66,7 @@ class FileSystemSubtestProvider:
 
         Returns:
             List of SubTestConfig for each discovered sub-test.
+
         """
         from scylla.e2e.models import SubTestConfig
 
