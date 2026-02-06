@@ -1,17 +1,8 @@
 """Shared fixtures for analysis tests."""
 
-from unittest.mock import patch
-
 import numpy as np
 import pandas as pd
 import pytest
-
-
-@pytest.fixture(scope="function", autouse=True)
-def clear_patches():
-    """Clear all mock patches between tests to prevent pollution."""
-    yield
-    patch.stopall()
 
 
 @pytest.fixture
