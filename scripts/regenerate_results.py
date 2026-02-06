@@ -5,7 +5,8 @@ This script rebuilds experiment results without re-running agents or judges.
 It can also selectively re-run judges for runs that are missing judge results.
 
 Related Scripts:
-  - rerun_judges.py --regenerate-only: Regenerate consensus from existing judges (overlapping functionality)
+  - rerun_judges.py --regenerate-only: Regenerate consensus
+    from existing judges (overlapping functionality)
   - rerun_agents.py: Re-run failed agent executions
   - See scripts/README.md for complete recovery script reference
 
