@@ -187,18 +187,18 @@ class TierConfig:
     Attributes:
         tier_id: The tier identifier
         subtests: List of sub-test configurations
-        system_prompt_mode: How to handle system prompt ("none", "default", "custom")
-        custom_system_prompt: Custom system prompt if mode is "custom"
         prompt_content: Tier-specific prompt content (from config/tiers/*.md)
         tools_enabled: Whether tools are enabled for this tier
         delegation_enabled: Whether delegation is enabled for this tier
+
+    Note:
+        system_prompt_mode is determined per-subtest, not per-tier.
+        See SubTestConfig.system_prompt_mode for the actual configuration.
 
     """
 
     tier_id: TierID
     subtests: list[SubTestConfig]
-    system_prompt_mode: str = "default"  # "none", "default", "custom"
-    custom_system_prompt: str | None = None
     prompt_content: str | None = None
     tools_enabled: bool | None = None
     delegation_enabled: bool | None = None
@@ -208,8 +208,6 @@ class TierConfig:
         return {
             "tier_id": self.tier_id.value,
             "subtests": [s.to_dict() for s in self.subtests],
-            "system_prompt_mode": self.system_prompt_mode,
-            "custom_system_prompt": self.custom_system_prompt,
             "prompt_content": self.prompt_content,
             "tools_enabled": self.tools_enabled,
             "delegation_enabled": self.delegation_enabled,

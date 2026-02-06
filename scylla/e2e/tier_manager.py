@@ -75,18 +75,14 @@ class TierManager:
         # Discover sub-tests from test-specific directory
         tier_dir = self.tiers_dir / tier_id.value.lower()
 
-        # All tiers now have sub-tests with custom configurations
-        # The system_prompt_mode is determined per sub-test, not per tier
-        system_prompt_mode = "custom"
-
         # Discover sub-tests
         subtests = self._discover_subtests(tier_id, tier_dir, skip_agent_teams)
 
         # Create TierConfig with both global settings and subtests
+        # Note: system_prompt_mode is determined per-subtest, not per-tier
         return TierConfig(
             tier_id=tier_id,
             subtests=subtests,
-            system_prompt_mode=system_prompt_mode,
             prompt_content=global_tier_config.prompt_content,
             tools_enabled=global_tier_config.tools_enabled,
             delegation_enabled=global_tier_config.delegation_enabled,
