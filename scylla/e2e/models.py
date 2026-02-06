@@ -15,6 +15,8 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import yaml
+
 if TYPE_CHECKING:
     from scylla.e2e.rate_limit import RateLimitInfo
 
@@ -575,6 +577,161 @@ class TierResult:
 
 
 @dataclass
+class TestFixture:
+    """Complete test fixture definition.
+
+    This is the output schema that a benchmark generator must produce.
+    Represents all materials needed to run a test across all tiers.
+
+    Attributes:
+        id: Unique test identifier (e.g., "test-001")
+        name: Human-readable test name
+        description: Test description
+        language: Programming language ("python" or "mojo")
+        source_repo: Git repository URL
+        source_hash: Git commit hash
+        task_prompt: Content of prompt.md
+        criteria: Content of expected/criteria.md
+        rubric: Parsed expected/rubric.yaml
+        tiers: List of tier IDs to run (e.g., ["T0", "T1", "T2"])
+        timeout_seconds: Timeout per run in seconds
+
+    """
+
+    id: str
+    name: str
+    description: str
+    language: str
+    source_repo: str
+    source_hash: str
+    task_prompt: str
+    criteria: str
+    rubric: dict[str, Any]
+    tiers: list[str] = field(default_factory=list)
+    timeout_seconds: int = 3600
+
+    @classmethod
+    def from_directory(cls, path: Path) -> TestFixture:
+        """Load test fixture from directory structure.
+
+        Expected directory structure:
+            path/
+                test.yaml          # Main config
+                prompt.md          # Task prompt
+                expected/
+                    criteria.md    # Grading criteria
+                    rubric.yaml    # Rubric specification
+
+        Args:
+            path: Path to test fixture directory
+
+        Returns:
+            TestFixture instance
+
+        Raises:
+            FileNotFoundError: If required files are missing
+            ValueError: If required fields are missing from config
+
+        """
+        test_yaml = path / "test.yaml"
+        if not test_yaml.exists():
+            raise FileNotFoundError(f"test.yaml not found in {path}")
+
+        with open(test_yaml) as f:
+            config = yaml.safe_load(f) or {}
+
+        # Load task prompt
+        prompt_file = path / (config.get("task", {}).get("prompt_file") or "prompt.md")
+        if not prompt_file.exists():
+            raise FileNotFoundError(f"Task prompt not found: {prompt_file}")
+        task_prompt = prompt_file.read_text()
+
+        # Load criteria
+        criteria_file = path / "expected" / "criteria.md"
+        if not criteria_file.exists():
+            raise FileNotFoundError(f"Criteria not found: {criteria_file}")
+        criteria = criteria_file.read_text()
+
+        # Load rubric
+        rubric_file = path / "expected" / "rubric.yaml"
+        if not rubric_file.exists():
+            raise FileNotFoundError(f"Rubric not found: {rubric_file}")
+        with open(rubric_file) as f:
+            rubric = yaml.safe_load(f) or {}
+
+        # Extract required fields
+        test_id = config.get("id")
+        if not test_id:
+            raise ValueError("Missing required field: id")
+
+        language = config.get("language")
+        if not language:
+            raise ValueError("Missing required field: language")
+
+        source = config.get("source", {})
+        source_repo = source.get("repo")
+        source_hash = source.get("hash")
+        if not source_repo or not source_hash:
+            raise ValueError("Missing required fields: source.repo and source.hash")
+
+        return cls(
+            id=test_id,
+            name=config.get("name", test_id),
+            description=config.get("description", ""),
+            language=language,
+            source_repo=source_repo,
+            source_hash=source_hash,
+            task_prompt=task_prompt,
+            criteria=criteria,
+            rubric=rubric,
+            tiers=config.get("tiers", []),
+            timeout_seconds=config.get("task", {}).get("timeout_seconds", 3600),
+        )
+
+    def to_directory(self, path: Path) -> None:
+        """Write test fixture to directory structure.
+
+        Creates the standard test fixture directory layout.
+
+        Args:
+            path: Target directory path
+
+        """
+        path.mkdir(parents=True, exist_ok=True)
+
+        # Write test.yaml
+        test_config = {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "language": self.language,
+            "source": {
+                "repo": self.source_repo,
+                "hash": self.source_hash,
+            },
+            "task": {
+                "prompt_file": "prompt.md",
+                "timeout_seconds": self.timeout_seconds,
+            },
+            "tiers": self.tiers,
+        }
+        with open(path / "test.yaml", "w") as f:
+            yaml.dump(test_config, f, default_flow_style=False, sort_keys=False)
+
+        # Write prompt.md
+        (path / "prompt.md").write_text(self.task_prompt)
+
+        # Write expected/criteria.md
+        expected_dir = path / "expected"
+        expected_dir.mkdir(exist_ok=True)
+        (expected_dir / "criteria.md").write_text(self.criteria)
+
+        # Write expected/rubric.yaml
+        with open(expected_dir / "rubric.yaml", "w") as f:
+            yaml.dump(self.rubric, f, default_flow_style=False, sort_keys=False)
+
+
+@dataclass
 class ExperimentConfig:
     """Complete experiment configuration.
 
@@ -596,6 +753,8 @@ class ExperimentConfig:
         language: Programming language for build pipeline ('python' or 'mojo')
         thinking_mode: Thinking mode for agent execution (None, Low, High, UltraThink)
         use_containers: Run agents and judges in isolated Docker containers (default: False)
+        criteria_file: Optional explicit path to criteria.md (default: tiers_dir/../expected/criteria.md)
+        rubric_file: Optional explicit path to rubric.yaml (default: tiers_dir/../expected/rubric.yaml)
 
     """
 
@@ -617,6 +776,8 @@ class ExperimentConfig:
     use_containers: bool = (
         False  # DEPRECATED: Container isolation now at experiment level, not per-agent
     )
+    criteria_file: Path | None = None  # Optional explicit path to criteria.md
+    rubric_file: Path | None = None  # Optional explicit path to rubric.yaml
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
