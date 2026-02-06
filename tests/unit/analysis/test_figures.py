@@ -1,175 +1,168 @@
 """Unit tests for figure generation."""
 
-from pathlib import Path
-from unittest.mock import patch
 
-import pytest
-
-
-@pytest.fixture(scope="function")
-def mock_save_figure():
-    """Mock save_figure to avoid file I/O during tests."""
-    with patch("scylla.analysis.figures.spec_builder.save_figure") as mock:
-        yield mock
-
-
-def test_fig01_score_variance_by_tier(sample_runs_df, mock_save_figure):
-    """Test Fig 1 generates without errors."""
+def test_fig01_score_variance_by_tier(sample_runs_df, tmp_path):
+    """Test Fig 1 generates files correctly."""
     from scylla.analysis.figures.variance import fig01_score_variance_by_tier
 
-    # Should not raise
-    fig01_score_variance_by_tier(sample_runs_df, Path("/tmp"), render=False)
+    fig01_score_variance_by_tier(sample_runs_df, tmp_path, render=False)
 
-    # Verify save_figure was called
-    assert mock_save_figure.called
+    # Verify files created
+    assert (tmp_path / "fig01_score_variance_by_tier.vl.json").exists()
+    assert (tmp_path / "fig01_score_variance_by_tier.csv").exists()
 
 
-def test_fig04_pass_rate_by_tier(sample_runs_df, mock_save_figure):
-    """Test Fig 4 generates without errors."""
+def test_fig04_pass_rate_by_tier(sample_runs_df, tmp_path):
+    """Test Fig 4 generates files correctly."""
     from scylla.analysis.figures.tier_performance import fig04_pass_rate_by_tier
 
-    fig04_pass_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
-    assert mock_save_figure.called
+    fig04_pass_rate_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig04_pass_rate_by_tier.vl.json").exists()
+    assert (tmp_path / "fig04_pass_rate_by_tier.csv").exists()
 
 
-def test_fig06_cop_by_tier(sample_runs_df):
-    """Test Fig 6 generates without errors."""
+def test_fig06_cop_by_tier(sample_runs_df, tmp_path):
+    """Test Fig 6 generates files correctly."""
     from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier
 
-    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
-        fig06_cop_by_tier(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig06_cop_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig06_cop_by_tier.vl.json").exists()
+    assert (tmp_path / "fig06_cop_by_tier.csv").exists()
 
 
-def test_fig11_tier_uplift(sample_runs_df, mock_save_figure):
-    """Test Fig 11 generates without errors."""
+def test_fig11_tier_uplift(sample_runs_df, tmp_path):
+    """Test Fig 11 generates files correctly."""
     from scylla.analysis.figures.model_comparison import fig11_tier_uplift
 
-    fig11_tier_uplift(sample_runs_df, Path("/tmp"), render=False)
-    assert mock_save_figure.called
+    fig11_tier_uplift(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig11_tier_uplift.vl.json").exists()
+    assert (tmp_path / "fig11_tier_uplift.csv").exists()
 
 
-def test_fig02_judge_variance(sample_judges_df, mock_save_figure):
-    """Test Fig 2 generates without errors."""
+def test_fig02_judge_variance(sample_judges_df, tmp_path):
+    """Test Fig 2 generates files correctly."""
     from scylla.analysis.figures.judge_analysis import fig02_judge_variance
 
-    fig02_judge_variance(sample_judges_df, Path("/tmp"), render=False)
-    assert mock_save_figure.called
+    fig02_judge_variance(sample_judges_df, tmp_path, render=False)
+    assert (tmp_path / "fig02_judge_variance.vl.json").exists()
+    assert (tmp_path / "fig02_judge_variance.csv").exists()
 
 
-def test_fig03_failure_rate_by_tier(sample_runs_df):
-    """Test Fig 3 generates without errors."""
+def test_fig03_failure_rate_by_tier(sample_runs_df, tmp_path):
+    """Test Fig 3 generates files correctly."""
     from scylla.analysis.figures.variance import fig03_failure_rate_by_tier
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig03_failure_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig03_failure_rate_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig03_failure_rate_by_tier.vl.json").exists()
+    assert (tmp_path / "fig03_failure_rate_by_tier.csv").exists()
 
 
-def test_fig05_grade_heatmap(sample_runs_df):
-    """Test Fig 5 generates without errors."""
+def test_fig05_grade_heatmap(sample_runs_df, tmp_path):
+    """Test Fig 5 generates files correctly."""
     from scylla.analysis.figures.tier_performance import fig05_grade_heatmap
 
-    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
-        fig05_grade_heatmap(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig05_grade_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig05_grade_heatmap.vl.json").exists()
+    assert (tmp_path / "fig05_grade_heatmap.csv").exists()
 
 
-def test_fig07_token_distribution(sample_runs_df, mock_save_figure):
-    """Test Fig 7 generates without errors."""
+def test_fig07_token_distribution(sample_runs_df, tmp_path):
+    """Test Fig 7 generates files correctly."""
     from scylla.analysis.figures.token_analysis import fig07_token_distribution
 
-    fig07_token_distribution(sample_runs_df, Path("/tmp"), render=False)
-    assert mock_save_figure.called
+    fig07_token_distribution(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig07_token_distribution.vl.json").exists()
+    assert (tmp_path / "fig07_token_distribution.csv").exists()
 
 
-def test_fig08_cost_quality_pareto(sample_runs_df):
-    """Test Fig 8 generates without errors."""
+def test_fig08_cost_quality_pareto(sample_runs_df, tmp_path):
+    """Test Fig 8 generates files correctly."""
     from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
 
-    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
-        fig08_cost_quality_pareto(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig08_cost_quality_pareto(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig08_cost_quality_pareto.vl.json").exists()
+    assert (tmp_path / "fig08_cost_quality_pareto.csv").exists()
 
 
-def test_fig09_criteria_by_tier(sample_criteria_df, mock_save_figure):
-    """Test Fig 9 generates without errors."""
+def test_fig09_criteria_by_tier(sample_criteria_df, tmp_path):
+    """Test Fig 9 generates files correctly."""
     from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
 
-    fig09_criteria_by_tier(sample_criteria_df, Path("/tmp"), render=False)
-    assert mock_save_figure.called
+    fig09_criteria_by_tier(sample_criteria_df, tmp_path, render=False)
+    assert (tmp_path / "fig09_criteria_by_tier.vl.json").exists()
+    assert (tmp_path / "fig09_criteria_by_tier.csv").exists()
 
 
-def test_fig10_score_violin(sample_runs_df):
-    """Test Fig 10 generates without errors."""
+def test_fig10_score_violin(sample_runs_df, tmp_path):
+    """Test Fig 10 generates files correctly."""
     from scylla.analysis.figures.tier_performance import fig10_score_violin
 
-    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
-        fig10_score_violin(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig10_score_violin(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig10_score_violin.vl.json").exists()
+    assert (tmp_path / "fig10_score_violin.csv").exists()
 
 
-def test_fig12_consistency(sample_runs_df):
-    """Test Fig 12 generates without errors."""
+def test_fig12_consistency(sample_runs_df, tmp_path):
+    """Test Fig 12 generates files correctly."""
     from scylla.analysis.figures.model_comparison import fig12_consistency
 
-    with patch("scylla.analysis.figures.model_comparison.save_figure") as mock:
-        fig12_consistency(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig12_consistency(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig12_consistency.vl.json").exists()
+    assert (tmp_path / "fig12_consistency.csv").exists()
 
 
-def test_fig13_latency(sample_runs_df):
-    """Test Fig 13 generates without errors."""
+def test_fig13_latency(sample_runs_df, tmp_path):
+    """Test Fig 13 generates files correctly."""
     from scylla.analysis.figures.subtest_detail import fig13_latency
 
-    with patch("scylla.analysis.figures.subtest_detail.save_figure") as mock:
-        fig13_latency(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig13_latency(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig13_latency.vl.json").exists()
+    assert (tmp_path / "fig13_latency.csv").exists()
 
 
-def test_fig14_judge_agreement(sample_judges_df):
-    """Test Fig 14 generates without errors."""
+def test_fig14_judge_agreement(sample_judges_df, tmp_path):
+    """Test Fig 14 generates files correctly."""
     from scylla.analysis.figures.judge_analysis import fig14_judge_agreement
 
-    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
-        fig14_judge_agreement(sample_judges_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig14_judge_agreement(sample_judges_df, tmp_path, render=False)
+    assert (tmp_path / "fig14_judge_agreement.vl.json").exists()
+    assert (tmp_path / "fig14_judge_agreement.csv").exists()
 
 
-def test_fig15_subtest_heatmap(sample_runs_df):
-    """Test Fig 15 generates without errors."""
+def test_fig15_subtest_heatmap(sample_runs_df, tmp_path):
+    """Test Fig 15 generates files correctly."""
     from scylla.analysis.figures.subtest_detail import fig15_subtest_heatmap
 
-    with patch("scylla.analysis.figures.subtest_detail.save_figure") as mock:
-        fig15_subtest_heatmap(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig15_subtest_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig15_subtest_heatmap.vl.json").exists()
+    assert (tmp_path / "fig15_subtest_heatmap.csv").exists()
 
 
-def test_fig16_success_variance_by_test(sample_runs_df):
-    """Test Fig 16 generates without errors."""
+def test_fig16_success_variance_by_test(sample_runs_df, tmp_path):
+    """Test Fig 16 generates files correctly."""
     from scylla.analysis.figures.variance import fig16_success_variance_by_test
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig16_success_variance_by_test(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig16_success_variance_by_test(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig16_success_variance_by_test.vl.json").exists()
+    assert (tmp_path / "fig16_success_variance_by_test.csv").exists()
 
 
-def test_fig17_judge_variance_overall(sample_judges_df):
-    """Test Fig 17 generates without errors."""
+def test_fig17_judge_variance_overall(sample_judges_df, tmp_path):
+    """Test Fig 17 generates files correctly."""
     from scylla.analysis.figures.judge_analysis import fig17_judge_variance_overall
 
-    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
-        fig17_judge_variance_overall(sample_judges_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig17_judge_variance_overall(sample_judges_df, tmp_path, render=False)
+    assert (tmp_path / "fig17_judge_variance_overall.vl.json").exists()
+    assert (tmp_path / "fig17_judge_variance_overall.csv").exists()
 
 
-def test_fig18_failure_rate_by_test(sample_runs_df):
-    """Test Fig 18 generates without errors."""
+def test_fig18_failure_rate_by_test(sample_runs_df, tmp_path):
+    """Test Fig 18 generates files correctly."""
     from scylla.analysis.figures.variance import fig18_failure_rate_by_test
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig18_failure_rate_by_test(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig18_failure_rate_by_test(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig18_failure_rate_by_test.vl.json").exists()
+    assert (tmp_path / "fig18_failure_rate_by_test.csv").exists()
 
 
 def test_publication_theme():
@@ -248,59 +241,58 @@ def test_colors_constant():
     assert "Output" in COLORS["token_types"]
 
 
-def test_fig19_effect_size_forest(sample_runs_df):
-    """Test Fig 19 effect size forest plot generates without errors."""
+def test_fig19_effect_size_forest(sample_runs_df, tmp_path):
+    """Test Fig 19 effect size forest plot generates files correctly."""
     from scylla.analysis.figures.effect_size import fig19_effect_size_forest
 
-    with patch("scylla.analysis.figures.effect_size.save_figure") as mock:
-        fig19_effect_size_forest(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig19_effect_size_forest(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig19_effect_size_forest.vl.json").exists()
+    assert (tmp_path / "fig19_effect_size_forest.csv").exists()
 
 
-def test_fig20_metric_correlation_heatmap(sample_runs_df):
-    """Test Fig 20 correlation heatmap generates without errors."""
+def test_fig20_metric_correlation_heatmap(sample_runs_df, tmp_path):
+    """Test Fig 20 correlation heatmap generates files correctly."""
     from scylla.analysis.figures.correlation import fig20_metric_correlation_heatmap
 
-    with patch("scylla.analysis.figures.correlation.save_figure") as mock:
-        fig20_metric_correlation_heatmap(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig20_metric_correlation_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig20_metric_correlation_heatmap.vl.json").exists()
+    assert (tmp_path / "fig20_metric_correlation_heatmap.csv").exists()
 
 
-def test_fig21_cost_quality_regression(sample_runs_df):
-    """Test Fig 21 regression plot generates without errors."""
+def test_fig21_cost_quality_regression(sample_runs_df, tmp_path):
+    """Test Fig 21 regression plot generates files correctly."""
     from scylla.analysis.figures.correlation import fig21_cost_quality_regression
 
-    with patch("scylla.analysis.figures.correlation.save_figure") as mock:
-        fig21_cost_quality_regression(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig21_cost_quality_regression(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig21_cost_quality_regression.vl.json").exists()
+    assert (tmp_path / "fig21_cost_quality_regression.csv").exists()
 
 
-def test_fig22_cumulative_cost(sample_runs_df):
-    """Test Fig 22 cumulative cost curve generates without errors."""
+def test_fig22_cumulative_cost(sample_runs_df, tmp_path):
+    """Test Fig 22 cumulative cost curve generates files correctly."""
     from scylla.analysis.figures.cost_analysis import fig22_cumulative_cost
 
-    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
-        fig22_cumulative_cost(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig22_cumulative_cost(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig22_cumulative_cost.vl.json").exists()
+    assert (tmp_path / "fig22_cumulative_cost.csv").exists()
 
 
-def test_fig23_qq_plots(sample_runs_df):
-    """Test Fig 23 Q-Q plots generate without errors."""
+def test_fig23_qq_plots(sample_runs_df, tmp_path):
+    """Test Fig 23 Q-Q plots generate files correctly."""
     from scylla.analysis.figures.diagnostics import fig23_qq_plots
 
-    with patch("scylla.analysis.figures.diagnostics.save_figure"):
-        fig23_qq_plots(sample_runs_df, Path("/tmp"), render=False)
-        # Note: may not be called if insufficient data
-        # Just check it doesn't crash
+    fig23_qq_plots(sample_runs_df, tmp_path, render=False)
+    # Note: may not be called if insufficient data
+    # Just check it doesn't crash
 
 
-def test_fig24_score_histograms(sample_runs_df):
-    """Test Fig 24 histograms with KDE generate without errors."""
+def test_fig24_score_histograms(sample_runs_df, tmp_path):
+    """Test Fig 24 histograms with KDE generate files correctly."""
     from scylla.analysis.figures.diagnostics import fig24_score_histograms
 
-    with patch("scylla.analysis.figures.diagnostics.save_figure") as mock:
-        fig24_score_histograms(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig24_score_histograms(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig24_score_histograms.vl.json").exists()
+    assert (tmp_path / "fig24_score_histograms.csv").exists()
 
 
 def test_register_colors():
@@ -345,7 +337,7 @@ def test_figure_module_structure():
         assert module is not None
 
 
-def test_latex_snippet_generation(sample_runs_df, tmp_path, clear_patches):
+def test_latex_snippet_generation(sample_runs_df, tmp_path):
     """Test LaTeX snippet generation for figures."""
     import altair as alt
 
@@ -408,34 +400,34 @@ def test_latex_snippet_with_custom_caption(tmp_path):
     assert "\\caption{Custom caption for testing}" in content
 
 
-def test_fig25_impl_rate_by_tier(sample_runs_df):
-    """Test Fig 25 generates without errors."""
+def test_fig25_impl_rate_by_tier(sample_runs_df, tmp_path):
+    """Test Fig 25 generates files correctly."""
     from scylla.analysis.figures.impl_rate_analysis import fig25_impl_rate_by_tier
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
-        fig25_impl_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig25_impl_rate_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig25_impl_rate_by_tier.vl.json").exists()
+    assert (tmp_path / "fig25_impl_rate_by_tier.csv").exists()
 
 
-def test_fig26_impl_rate_vs_pass_rate(sample_runs_df):
-    """Test Fig 26 generates without errors."""
+def test_fig26_impl_rate_vs_pass_rate(sample_runs_df, tmp_path):
+    """Test Fig 26 generates files correctly."""
     from scylla.analysis.figures.impl_rate_analysis import fig26_impl_rate_vs_pass_rate
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
-        fig26_impl_rate_vs_pass_rate(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig26_impl_rate_vs_pass_rate(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig26_impl_rate_vs_pass_rate.vl.json").exists()
+    assert (tmp_path / "fig26_impl_rate_vs_pass_rate.csv").exists()
 
 
-def test_fig27_impl_rate_distribution(sample_runs_df):
-    """Test Fig 27 generates without errors."""
+def test_fig27_impl_rate_distribution(sample_runs_df, tmp_path):
+    """Test Fig 27 generates files correctly."""
     from scylla.analysis.figures.impl_rate_analysis import fig27_impl_rate_distribution
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
-        fig27_impl_rate_distribution(sample_runs_df, Path("/tmp"), render=False)
-        assert mock.called
+    fig27_impl_rate_distribution(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig27_impl_rate_distribution.vl.json").exists()
+    assert (tmp_path / "fig27_impl_rate_distribution.csv").exists()
 
 
-def test_impl_rate_figures_handle_missing_column():
+def test_impl_rate_figures_handle_missing_column(tmp_path):
     """Test Impl-Rate figures handle missing impl_rate column gracefully."""
     import pandas as pd
 
@@ -455,623 +447,618 @@ def test_impl_rate_figures_handle_missing_column():
         }
     )
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
-        # Should not raise, just skip generation
-        fig25_impl_rate_by_tier(df, Path("/tmp"), render=False)
-        fig26_impl_rate_vs_pass_rate(df, Path("/tmp"), render=False)
-        fig27_impl_rate_distribution(df, Path("/tmp"), render=False)
+    # Should not raise, just skip generation
+    fig25_impl_rate_by_tier(df, tmp_path, render=False)
+    fig26_impl_rate_vs_pass_rate(df, tmp_path, render=False)
+    fig27_impl_rate_distribution(df, tmp_path, render=False)
 
-        # save_figure should not be called since impl_rate is missing
-        assert not mock.called
+    # No files should be created since impl_rate is missing
+    assert not (tmp_path / "fig25_impl_rate_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig26_impl_rate_vs_pass_rate.vl.json").exists()
+    assert not (tmp_path / "fig27_impl_rate_distribution.vl.json").exists()
 
 
-def test_fig04_pass_rate_content_verification(sample_runs_df):
+def test_fig04_pass_rate_content_verification(sample_runs_df, tmp_path):
     """Test Fig 4 generates correct pass-rate data with bootstrap CIs."""
+    import pandas as pd
+
     from scylla.analysis.figures.tier_performance import fig04_pass_rate_by_tier
 
-    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
-        fig04_pass_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
+    fig04_pass_rate_by_tier(sample_runs_df, tmp_path, render=False)
 
-        # Verify save_figure was called
-        assert mock.called
+    # Read and verify data
+    csv_path = tmp_path / "fig04_pass_rate_by_tier.csv"
+    assert csv_path.exists()
 
-        # Get the data passed to save_figure
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    data_df = pd.read_csv(csv_path)
+    required_cols = [
+        "agent_model",
+        "tier",
+        "pass_rate",
+        "ci_low",
+        "ci_high",
+    ]
+    for col in required_cols:
+        assert col in data_df.columns, f"Missing column: {col}"
 
-        # Verify data structure
-        if data_df is not None:
-            required_cols = [
-                "agent_model",
-                "tier",
-                "pass_rate",
-                "ci_low",
-                "ci_high",
-            ]
-            for col in required_cols:
-                assert col in data_df.columns, f"Missing column: {col}"
+    # Verify pass_rate is in [0, 1]
+    assert data_df["pass_rate"].min() >= 0.0
+    assert data_df["pass_rate"].max() <= 1.0
 
-            # Verify pass_rate is in [0, 1]
-            assert data_df["pass_rate"].min() >= 0.0
-            assert data_df["pass_rate"].max() <= 1.0
+    # Verify CI bounds are valid
+    assert (data_df["ci_low"] <= data_df["pass_rate"]).all()
+    assert (data_df["ci_high"] >= data_df["pass_rate"]).all()
 
-            # Verify CI bounds are valid
-            assert (data_df["ci_low"] <= data_df["pass_rate"]).all()
-            assert (data_df["ci_high"] >= data_df["pass_rate"]).all()
-
-            # Verify we have data for multiple models/tiers
-            assert len(data_df["agent_model"].unique()) >= 1
-            assert len(data_df["tier"].unique()) >= 1
+    # Verify we have data for multiple models/tiers
+    assert len(data_df["agent_model"].unique()) >= 1
+    assert len(data_df["tier"].unique()) >= 1
 
 
-def test_fig06_cop_content_verification(sample_runs_df):
+def test_fig06_cop_content_verification(sample_runs_df, tmp_path):
     """Test Fig 6 generates correct CoP data."""
+    import pandas as pd
+
     from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier
 
-    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
-        fig06_cop_by_tier(sample_runs_df, Path("/tmp"), render=False)
+    fig06_cop_by_tier(sample_runs_df, tmp_path, render=False)
 
-        # Verify save_figure was called
-        assert mock.called
+    # Read and verify data
+    csv_path = tmp_path / "fig06_cop_by_tier.csv"
+    assert csv_path.exists()
 
-        # Get the data passed to save_figure
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    data_df = pd.read_csv(csv_path)
+    required_cols = ["agent_model", "tier", "cop", "is_inf"]
+    for col in required_cols:
+        assert col in data_df.columns, f"Missing column: {col}"
 
-        # Verify data structure
-        if data_df is not None:
-            required_cols = ["agent_model", "tier", "cop", "is_inf"]
-            for col in required_cols:
-                assert col in data_df.columns, f"Missing column: {col}"
+    # Verify CoP is non-negative (or inf)
+    finite_cop = data_df[~data_df["is_inf"]]["cop"]
+    if len(finite_cop) > 0:
+        assert (finite_cop >= 0).all()
 
-            # Verify CoP is non-negative (or inf)
-            finite_cop = data_df[~data_df["is_inf"]]["cop"]
-            if len(finite_cop) > 0:
-                assert (finite_cop >= 0).all()
+    # Verify is_inf is boolean
+    assert data_df["is_inf"].dtype == bool
 
-            # Verify is_inf is boolean
-            assert data_df["is_inf"].dtype == bool
-
-            # Verify we have data for multiple models/tiers
-            assert len(data_df["agent_model"].unique()) >= 1
-            assert len(data_df["tier"].unique()) >= 1
+    # Verify we have data for multiple models/tiers
+    assert len(data_df["agent_model"].unique()) >= 1
+    assert len(data_df["tier"].unique()) >= 1
 
 
-def test_fig08_pareto_content_verification(sample_runs_df):
+def test_fig08_pareto_content_verification(sample_runs_df, tmp_path):
     """Test Fig 8 generates correct Pareto frontier data structure."""
+    import pandas as pd
+
     from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
 
-    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
-        fig08_cost_quality_pareto(sample_runs_df, Path("/tmp"), render=False)
+    fig08_cost_quality_pareto(sample_runs_df, tmp_path, render=False)
 
-        # Verify save_figure was called
-        assert mock.called
+    # Read and verify data
+    csv_path = tmp_path / "fig08_cost_quality_pareto.csv"
+    assert csv_path.exists()
 
-        # Get the data passed to save_figure
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    data_df = pd.read_csv(csv_path)
+    required_cols = ["agent_model", "tier", "mean_cost", "mean_score", "is_pareto"]
+    for col in required_cols:
+        assert col in data_df.columns, f"Missing column: {col}"
 
-        # Verify data structure
-        if data_df is not None:
-            required_cols = ["agent_model", "tier", "mean_cost", "mean_score", "is_pareto"]
-            for col in required_cols:
-                assert col in data_df.columns, f"Missing column: {col}"
+    # Verify cost is non-negative
+    assert (data_df["mean_cost"] >= 0).all()
 
-            # Verify cost is non-negative
-            assert (data_df["mean_cost"] >= 0).all()
+    # Verify score is in [0, 1]
+    assert (data_df["mean_score"] >= 0).all()
+    assert (data_df["mean_score"] <= 1).all()
 
-            # Verify score is in [0, 1]
-            assert (data_df["mean_score"] >= 0).all()
-            assert (data_df["mean_score"] <= 1).all()
+    # Verify is_pareto is boolean
+    assert data_df["is_pareto"].dtype == bool
 
-            # Verify is_pareto is boolean
-            assert data_df["is_pareto"].dtype == bool
+    # Verify at least one point is on the Pareto frontier
+    assert data_df["is_pareto"].any()
 
-            # Verify at least one point is on the Pareto frontier
-            assert data_df["is_pareto"].any()
+    # Verify we have both Pareto and non-Pareto points (unless all points are Pareto)
+    num_pareto = data_df["is_pareto"].sum()
+    total_points = len(data_df)
+    assert 0 < num_pareto <= total_points
 
-            # Verify we have both Pareto and non-Pareto points (unless all points are Pareto)
-            num_pareto = data_df["is_pareto"].sum()
-            total_points = len(data_df)
-            assert 0 < num_pareto <= total_points
-
-            # Verify Pareto points have reasonable values
-            pareto_points = data_df[data_df["is_pareto"]]
-            assert len(pareto_points) > 0
-            assert (pareto_points["mean_cost"] >= 0).all()
-            assert (pareto_points["mean_score"] >= 0).all()
-            assert (pareto_points["mean_score"] <= 1).all()
+    # Verify Pareto points have reasonable values
+    pareto_points = data_df[data_df["is_pareto"]]
+    assert len(pareto_points) > 0
+    assert (pareto_points["mean_cost"] >= 0).all()
+    assert (pareto_points["mean_score"] >= 0).all()
+    assert (pareto_points["mean_score"] <= 1).all()
 
 
-def test_fig01_content_verification(sample_runs_df):
+def test_fig01_content_verification(sample_runs_df, tmp_path):
     """Test Fig 1 score variance generates correct data structure."""
+    import pandas as pd
+
     from scylla.analysis.figures.variance import fig01_score_variance_by_tier
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig01_score_variance_by_tier(sample_runs_df, Path("/tmp"), render=False)
+    fig01_score_variance_by_tier(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig01_score_variance_by_tier.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "agent_model" in data_df.columns
-            assert "tier" in data_df.columns
-            assert "score" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "agent_model" in data_df.columns
+    assert "tier" in data_df.columns
+    assert "score" in data_df.columns
 
-            # Verify scores in valid range
-            assert (data_df["score"] >= 0).all()
-            assert (data_df["score"] <= 1).all()
+    # Verify scores in valid range
+    assert (data_df["score"] >= 0).all()
+    assert (data_df["score"] <= 1).all()
 
-            # Verify we have data for multiple tiers
-            assert len(data_df["tier"].unique()) >= 1
+    # Verify we have data for multiple tiers
+    assert len(data_df["tier"].unique()) >= 1
 
 
-def test_fig02_content_verification(sample_judges_df):
+def test_fig02_content_verification(sample_judges_df, tmp_path):
     """Test Fig 2 judge variance generates correct data structure."""
+    import pandas as pd
+
     from scylla.analysis.figures.judge_analysis import fig02_judge_variance
 
-    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
-        fig02_judge_variance(sample_judges_df, Path("/tmp"), render=False)
+    fig02_judge_variance(sample_judges_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig02_judge_variance.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "tier" in data_df.columns
-            assert "judge_score" in data_df.columns
-            assert "judge_display" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "tier" in data_df.columns
+    assert "judge_score" in data_df.columns
+    assert "judge_display" in data_df.columns
 
-            # Verify scores in valid range
-            assert (data_df["judge_score"] >= 0).all()
-            assert (data_df["judge_score"] <= 1).all()
+    # Verify scores in valid range
+    assert (data_df["judge_score"] >= 0).all()
+    assert (data_df["judge_score"] <= 1).all()
 
 
-def test_fig03_content_verification(sample_runs_df):
+def test_fig03_content_verification(sample_runs_df, tmp_path):
     """Test Fig 3 failure rate generates correct grade distribution."""
+    import pandas as pd
+
     from scylla.analysis.figures.variance import fig03_failure_rate_by_tier
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig03_failure_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
+    fig03_failure_rate_by_tier(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig03_failure_rate_by_tier.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["agent_model", "tier", "grade", "count", "proportion"]
-            for col in required_cols:
-                assert col in data_df.columns, f"Missing column: {col}"
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["agent_model", "tier", "grade", "count", "proportion"]
+    for col in required_cols:
+        assert col in data_df.columns, f"Missing column: {col}"
 
-            # Verify proportions sum to ~1.0 per (model, tier)
-            for (model, tier), group in data_df.groupby(["agent_model", "tier"]):
-                total_prop = group["proportion"].sum()
-                assert abs(total_prop - 1.0) < 0.01, (
-                    f"Proportions don't sum to 1 for {model}, {tier}"
-                )
+    # Verify proportions sum to ~1.0 per (model, tier)
+    for (model, tier), group in data_df.groupby(["agent_model", "tier"]):
+        total_prop = group["proportion"].sum()
+        assert abs(total_prop - 1.0) < 0.01, f"Proportions don't sum to 1 for {model}, {tier}"
 
-            # Verify grades are valid
-            valid_grades = ["S", "A", "B", "C", "D", "F"]
-            assert data_df["grade"].isin(valid_grades).all()
+    # Verify grades are valid
+    valid_grades = ["S", "A", "B", "C", "D", "F"]
+    assert data_df["grade"].isin(valid_grades).all()
 
 
-def test_fig05_content_verification(sample_runs_df):
+def test_fig05_content_verification(sample_runs_df, tmp_path):
     """Test Fig 5 grade heatmap generates correct structure."""
+    import pandas as pd
+
     from scylla.analysis.figures.tier_performance import fig05_grade_heatmap
 
-    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
-        fig05_grade_heatmap(sample_runs_df, Path("/tmp"), render=False)
+    fig05_grade_heatmap(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig05_grade_heatmap.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            required_cols = ["agent_model", "tier", "grade", "count", "proportion"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    required_cols = ["agent_model", "tier", "grade", "count", "proportion"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify proportions are in [0, 1]
-            assert (data_df["proportion"] >= 0).all()
-            assert (data_df["proportion"] <= 1).all()
+    # Verify proportions are in [0, 1]
+    assert (data_df["proportion"] >= 0).all()
+    assert (data_df["proportion"] <= 1).all()
 
 
-def test_fig07_content_verification(sample_runs_df):
+def test_fig07_content_verification(sample_runs_df, tmp_path):
     """Test Fig 7 token distribution generates correct breakdown."""
+    import pandas as pd
+
     from scylla.analysis.figures.token_analysis import fig07_token_distribution
 
-    with patch("scylla.analysis.figures.token_analysis.save_figure") as mock:
-        fig07_token_distribution(sample_runs_df, Path("/tmp"), render=False)
+    fig07_token_distribution(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig07_token_distribution.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "agent_model" in data_df.columns
-            assert "tier" in data_df.columns
-            assert "token_type_label" in data_df.columns
-            assert "tokens" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "agent_model" in data_df.columns
+    assert "tier" in data_df.columns
+    assert "token_type_label" in data_df.columns
+    assert "tokens" in data_df.columns
 
-            # Verify token types are correct
-            expected_types = ["Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"]
-            assert set(data_df["token_type_label"].unique()).issubset(expected_types)
+    # Verify token types are correct
+    expected_types = ["Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"]
+    assert set(data_df["token_type_label"].unique()).issubset(expected_types)
 
-            # Verify tokens are non-negative
-            assert (data_df["tokens"] >= 0).all()
+    # Verify tokens are non-negative
+    assert (data_df["tokens"] >= 0).all()
 
 
-def test_fig09_content_verification(sample_criteria_df):
+def test_fig09_content_verification(sample_criteria_df, tmp_path):
     """Test Fig 9 criteria by tier generates correct structure."""
+    import pandas as pd
+
     from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
 
-    with patch("scylla.analysis.figures.criteria_analysis.save_figure") as mock:
-        fig09_criteria_by_tier(sample_criteria_df, Path("/tmp"), render=False)
+    fig09_criteria_by_tier(sample_criteria_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig09_criteria_by_tier.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "agent_model" in data_df.columns
-            assert "tier" in data_df.columns
-            assert "criterion" in data_df.columns
-            assert "criterion_score" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "agent_model" in data_df.columns
+    assert "tier" in data_df.columns
+    assert "criterion" in data_df.columns
+    assert "criterion_score" in data_df.columns
 
-            # Verify scores in valid range
-            assert (data_df["criterion_score"] >= 0).all()
-            assert (data_df["criterion_score"] <= 1).all()
+    # Verify scores in valid range
+    assert (data_df["criterion_score"] >= 0).all()
+    assert (data_df["criterion_score"] <= 1).all()
 
 
-def test_fig10_content_verification(sample_runs_df):
+def test_fig10_content_verification(sample_runs_df, tmp_path):
     """Test Fig 10 score violin generates correct distribution data."""
+    import pandas as pd
+
     from scylla.analysis.figures.tier_performance import fig10_score_violin
 
-    with patch("scylla.analysis.figures.tier_performance.save_figure") as mock:
-        fig10_score_violin(sample_runs_df, Path("/tmp"), render=False)
+    fig10_score_violin(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig10_score_violin.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "agent_model" in data_df.columns
-            assert "tier" in data_df.columns
-            assert "score" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "agent_model" in data_df.columns
+    assert "tier" in data_df.columns
+    assert "score" in data_df.columns
 
-            # Verify scores in valid range
-            assert (data_df["score"] >= 0).all()
-            assert (data_df["score"] <= 1).all()
+    # Verify scores in valid range
+    assert (data_df["score"] >= 0).all()
+    assert (data_df["score"] <= 1).all()
 
 
-def test_fig11_content_verification(sample_runs_df):
+def test_fig11_content_verification(sample_runs_df, tmp_path):
     """Test Fig 11 tier uplift generates correct uplift calculations."""
+    import pandas as pd
+
     from scylla.analysis.figures.model_comparison import fig11_tier_uplift
 
-    with patch("scylla.analysis.figures.model_comparison.save_figure") as mock:
-        fig11_tier_uplift(sample_runs_df, Path("/tmp"), render=False)
+    fig11_tier_uplift(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig11_tier_uplift.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["agent_model", "tier", "pass_rate", "uplift", "uplift_pct"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["agent_model", "tier", "pass_rate", "uplift", "uplift_pct"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify pass_rate in [0, 1]
-            assert (data_df["pass_rate"] >= 0).all()
-            assert (data_df["pass_rate"] <= 1).all()
+    # Verify pass_rate in [0, 1]
+    assert (data_df["pass_rate"] >= 0).all()
+    assert (data_df["pass_rate"] <= 1).all()
 
-            # Verify T0 has uplift=0 for all models
-            t0_data = data_df[data_df["tier"] == "T0"]
-            if len(t0_data) > 0:
-                assert (t0_data["uplift"].abs() < 1e-10).all()
+    # Verify T0 has uplift=0 for all models
+    t0_data = data_df[data_df["tier"] == "T0"]
+    if len(t0_data) > 0:
+        assert (t0_data["uplift"].abs() < 1e-10).all()
 
 
-def test_fig12_content_verification(sample_runs_df):
+def test_fig12_content_verification(sample_runs_df, tmp_path):
     """Test Fig 12 consistency generates valid consistency scores."""
+    import pandas as pd
+
     from scylla.analysis.figures.model_comparison import fig12_consistency
 
-    with patch("scylla.analysis.figures.model_comparison.save_figure") as mock:
-        fig12_consistency(sample_runs_df, Path("/tmp"), render=False)
+    fig12_consistency(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig12_consistency.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["agent_model", "tier", "mean_consistency", "ci_low", "ci_high"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["agent_model", "tier", "mean_consistency", "ci_low", "ci_high"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify consistency in [0, 1]
-            assert (data_df["mean_consistency"] >= 0).all()
-            assert (data_df["mean_consistency"] <= 1).all()
+    # Verify consistency in [0, 1]
+    assert (data_df["mean_consistency"] >= 0).all()
+    assert (data_df["mean_consistency"] <= 1).all()
 
-            # Verify CI bounds are valid
-            assert (data_df["ci_low"] <= data_df["mean_consistency"]).all()
-            assert (data_df["ci_high"] >= data_df["mean_consistency"]).all()
+    # Verify CI bounds are valid
+    assert (data_df["ci_low"] <= data_df["mean_consistency"]).all()
+    assert (data_df["ci_high"] >= data_df["mean_consistency"]).all()
 
 
-def test_fig13_content_verification(sample_runs_df):
+def test_fig13_content_verification(sample_runs_df, tmp_path):
     """Test Fig 13 latency generates correct duration breakdown."""
+    import pandas as pd
+
     from scylla.analysis.figures.subtest_detail import fig13_latency
 
-    with patch("scylla.analysis.figures.subtest_detail.save_figure") as mock:
-        fig13_latency(sample_runs_df, Path("/tmp"), render=False)
+    fig13_latency(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig13_latency.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "agent_model" in data_df.columns
-            assert "tier" in data_df.columns
-            assert "phase_label" in data_df.columns
-            assert "duration" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "agent_model" in data_df.columns
+    assert "tier" in data_df.columns
+    assert "phase_label" in data_df.columns
+    assert "duration" in data_df.columns
 
-            # Verify phase labels
-            expected_phases = ["Agent Execution", "Judge Evaluation"]
-            assert set(data_df["phase_label"].unique()).issubset(expected_phases)
+    # Verify phase labels
+    expected_phases = ["Agent Execution", "Judge Evaluation"]
+    assert set(data_df["phase_label"].unique()).issubset(expected_phases)
 
-            # Verify durations are non-negative
-            assert (data_df["duration"] >= 0).all()
+    # Verify durations are non-negative
+    assert (data_df["duration"] >= 0).all()
 
 
-def test_fig14_content_verification(sample_judges_df):
+def test_fig14_content_verification(sample_judges_df, tmp_path):
     """Test Fig 14 judge agreement generates pairwise comparisons."""
+    import pandas as pd
+
     from scylla.analysis.figures.judge_analysis import fig14_judge_agreement
 
-    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
-        fig14_judge_agreement(sample_judges_df, Path("/tmp"), render=False)
+    fig14_judge_agreement(sample_judges_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig14_judge_agreement.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["judge_x", "judge_y", "score_x", "score_y"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["judge_x", "judge_y", "score_x", "score_y"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify scores in [0, 1]
-            assert (data_df["score_x"] >= 0).all()
-            assert (data_df["score_x"] <= 1).all()
-            assert (data_df["score_y"] >= 0).all()
-            assert (data_df["score_y"] <= 1).all()
+    # Verify scores in [0, 1]
+    assert (data_df["score_x"] >= 0).all()
+    assert (data_df["score_x"] <= 1).all()
+    assert (data_df["score_y"] >= 0).all()
+    assert (data_df["score_y"] <= 1).all()
 
 
-def test_fig15_content_verification(sample_runs_df):
+def test_fig15_content_verification(sample_runs_df, tmp_path):
     """Test Fig 15 subtest heatmap generates correct structure."""
     from scylla.analysis.figures.subtest_detail import fig15_subtest_heatmap
 
-    with patch("scylla.analysis.figures.subtest_detail.save_figure") as mock:
-        fig15_subtest_heatmap(sample_runs_df, Path("/tmp"), render=False)
+    fig15_subtest_heatmap(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        chart = call_args[0][0]
-
-        # Chart is composed, so we verify it exists
-        assert chart is not None
+    # Verify files created
+    assert (tmp_path / "fig15_subtest_heatmap.vl.json").exists()
+    assert (tmp_path / "fig15_subtest_heatmap.csv").exists()
 
 
-def test_fig16_content_verification(sample_runs_df):
+def test_fig16_content_verification(sample_runs_df, tmp_path):
     """Test Fig 16 success variance generates correct variance metrics."""
+    import pandas as pd
+
     from scylla.analysis.figures.variance import fig16_success_variance_by_test
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig16_success_variance_by_test(sample_runs_df, Path("/tmp"), render=False)
+    fig16_success_variance_by_test(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig16_success_variance_by_test.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = [
-                "agent_model",
-                "tier",
-                "subtest",
-                "pass_variance",
-                "score_std",
-            ]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = [
+        "agent_model",
+        "tier",
+        "subtest",
+        "pass_variance",
+        "score_std",
+    ]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify pass_variance in [0, 0.25] (max is p(1-p) at p=0.5)
-            assert (data_df["pass_variance"] >= 0).all()
-            assert (data_df["pass_variance"] <= 0.25).all()
+    # Verify pass_variance in [0, 0.25] (max is p(1-p) at p=0.5)
+    assert (data_df["pass_variance"] >= 0).all()
+    assert (data_df["pass_variance"] <= 0.25).all()
 
-            # Verify score_std is non-negative
-            assert (data_df["score_std"] >= 0).all()
+    # Verify score_std is non-negative
+    assert (data_df["score_std"] >= 0).all()
 
 
-def test_fig17_content_verification(sample_judges_df):
+def test_fig17_content_verification(sample_judges_df, tmp_path):
     """Test Fig 17 judge variance overall generates correct summary."""
+    import pandas as pd
+
     from scylla.analysis.figures.judge_analysis import fig17_judge_variance_overall
 
-    with patch("scylla.analysis.figures.judge_analysis.save_figure") as mock:
-        fig17_judge_variance_overall(sample_judges_df, Path("/tmp"), render=False)
+    fig17_judge_variance_overall(sample_judges_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig17_judge_variance_overall.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            assert "judge_display" in data_df.columns
-            assert "judge_score" in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    assert "judge_display" in data_df.columns
+    assert "judge_score" in data_df.columns
 
-            # Verify scores in [0, 1]
-            assert (data_df["judge_score"] >= 0).all()
-            assert (data_df["judge_score"] <= 1).all()
+    # Verify scores in [0, 1]
+    assert (data_df["judge_score"] >= 0).all()
+    assert (data_df["judge_score"] <= 1).all()
 
 
-def test_fig18_content_verification(sample_runs_df):
+def test_fig18_content_verification(sample_runs_df, tmp_path):
     """Test Fig 18 failure rate by test generates correct failure rates."""
+    import pandas as pd
+
     from scylla.analysis.figures.variance import fig18_failure_rate_by_test
 
-    with patch("scylla.analysis.figures.variance.save_figure") as mock:
-        fig18_failure_rate_by_test(sample_runs_df, Path("/tmp"), render=False)
+    fig18_failure_rate_by_test(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig18_failure_rate_by_test.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["agent_model", "tier", "subtest", "failure_rate"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["agent_model", "tier", "subtest", "failure_rate"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify failure_rate in [0, 1]
-            assert (data_df["failure_rate"] >= 0).all()
-            assert (data_df["failure_rate"] <= 1).all()
+    # Verify failure_rate in [0, 1]
+    assert (data_df["failure_rate"] >= 0).all()
+    assert (data_df["failure_rate"] <= 1).all()
 
 
-def test_fig19_content_verification(sample_runs_df):
+def test_fig19_content_verification(sample_runs_df, tmp_path):
     """Test Fig 19 effect size forest generates correct effect sizes."""
+    import pandas as pd
+
     from scylla.analysis.figures.effect_size import fig19_effect_size_forest
 
-    with patch("scylla.analysis.figures.effect_size.save_figure") as mock:
-        fig19_effect_size_forest(sample_runs_df, Path("/tmp"), render=False)
+    fig19_effect_size_forest(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig19_effect_size_forest.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["agent_model", "transition", "delta", "ci_low", "ci_high"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["agent_model", "transition", "delta", "ci_low", "ci_high"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify delta (Cliff's delta) in [-1, 1]
-            assert (data_df["delta"] >= -1).all()
-            assert (data_df["delta"] <= 1).all()
+    # Verify delta (Cliff's delta) in [-1, 1]
+    assert (data_df["delta"] >= -1).all()
+    assert (data_df["delta"] <= 1).all()
 
-            # Verify CI bounds are within [-1, 1]
-            assert (data_df["ci_low"] >= -1).all()
-            assert (data_df["ci_high"] <= 1).all()
+    # Verify CI bounds are within [-1, 1]
+    assert (data_df["ci_low"] >= -1).all()
+    assert (data_df["ci_high"] <= 1).all()
 
 
-def test_fig20_content_verification(sample_runs_df):
+def test_fig20_content_verification(sample_runs_df, tmp_path):
     """Test Fig 20 correlation heatmap generates correct correlations."""
+    import pandas as pd
+
     from scylla.analysis.figures.correlation import fig20_metric_correlation_heatmap
 
-    with patch("scylla.analysis.figures.correlation.save_figure") as mock:
-        fig20_metric_correlation_heatmap(sample_runs_df, Path("/tmp"), render=False)
+    fig20_metric_correlation_heatmap(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        call_args = mock.call_args
-        data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # Read and verify data
+    csv_path = tmp_path / "fig20_metric_correlation_heatmap.csv"
+    assert csv_path.exists()
 
-        if data_df is not None:
-            # Verify required columns
-            required_cols = ["agent_model", "metric1", "metric2", "rho"]
-            for col in required_cols:
-                assert col in data_df.columns
+    data_df = pd.read_csv(csv_path)
+    # Verify required columns
+    required_cols = ["agent_model", "metric1", "metric2", "rho"]
+    for col in required_cols:
+        assert col in data_df.columns
 
-            # Verify rho (correlation) in [-1, 1]
-            assert (data_df["rho"] >= -1).all()
-            assert (data_df["rho"] <= 1).all()
+    # Verify rho (correlation) in [-1, 1]
+    assert (data_df["rho"] >= -1).all()
+    assert (data_df["rho"] <= 1).all()
 
 
-def test_fig21_content_verification(sample_runs_df):
+def test_fig21_content_verification(sample_runs_df, tmp_path):
     """Test Fig 21 cost-quality regression generates correct structure."""
     from scylla.analysis.figures.correlation import fig21_cost_quality_regression
 
-    with patch("scylla.analysis.figures.correlation.save_figure") as mock:
-        fig21_cost_quality_regression(sample_runs_df, Path("/tmp"), render=False)
+    fig21_cost_quality_regression(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        # Just verify it doesn't crash - data structure varies
+    # Just verify it doesn't crash - files created
+    assert (tmp_path / "fig21_cost_quality_regression.vl.json").exists()
 
 
-def test_fig22_content_verification(sample_runs_df):
+def test_fig22_content_verification(sample_runs_df, tmp_path):
     """Test Fig 22 cumulative cost generates correct cumulative data."""
     from scylla.analysis.figures.cost_analysis import fig22_cumulative_cost
 
-    with patch("scylla.analysis.figures.cost_analysis.save_figure") as mock:
-        fig22_cumulative_cost(sample_runs_df, Path("/tmp"), render=False)
+    fig22_cumulative_cost(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        # Just verify it doesn't crash - data structure varies
+    # Just verify it doesn't crash - files created
+    assert (tmp_path / "fig22_cumulative_cost.vl.json").exists()
 
 
-def test_fig23_content_verification(sample_runs_df):
+def test_fig23_content_verification(sample_runs_df, tmp_path):
     """Test Fig 23 Q-Q plots generate correct quantile data."""
     from scylla.analysis.figures.diagnostics import fig23_qq_plots
 
-    with patch("scylla.analysis.figures.diagnostics.save_figure"):
-        # Just verify it doesn't crash - may not generate data with small samples
-        fig23_qq_plots(sample_runs_df, Path("/tmp"), render=False)
+    # Just verify it doesn't crash - may not generate data with small samples
+    fig23_qq_plots(sample_runs_df, tmp_path, render=False)
 
 
-def test_fig24_content_verification(sample_runs_df):
+def test_fig24_content_verification(sample_runs_df, tmp_path):
     """Test Fig 24 score histograms generate correct distribution."""
     from scylla.analysis.figures.diagnostics import fig24_score_histograms
 
-    with patch("scylla.analysis.figures.diagnostics.save_figure") as mock:
-        fig24_score_histograms(sample_runs_df, Path("/tmp"), render=False)
+    fig24_score_histograms(sample_runs_df, tmp_path, render=False)
 
-        assert mock.called
-        # Just verify it doesn't crash - KDE data structure varies
+    # Just verify it doesn't crash - files created
+    assert (tmp_path / "fig24_score_histograms.vl.json").exists()
 
 
-def test_fig25_content_verification(sample_runs_df):
+def test_fig25_content_verification(sample_runs_df, tmp_path):
     """Test Fig 25 impl-rate by tier generates correct structure."""
+    import pandas as pd
+
     from scylla.analysis.figures.impl_rate_analysis import fig25_impl_rate_by_tier
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure") as mock:
-        fig25_impl_rate_by_tier(sample_runs_df, Path("/tmp"), render=False)
+    fig25_impl_rate_by_tier(sample_runs_df, tmp_path, render=False)
 
-        # May not be called if impl_rate column missing
-        if mock.called:
-            call_args = mock.call_args
-            data_df = call_args[0][3] if len(call_args[0]) > 3 else None
+    # May create files if impl_rate column exists
+    csv_path = tmp_path / "fig25_impl_rate_by_tier.csv"
+    if csv_path.exists():
+        data_df = pd.read_csv(csv_path)
+        # Verify required columns
+        required_cols = ["agent_model", "tier", "impl_rate", "ci_low", "ci_high"]
+        for col in required_cols:
+            assert col in data_df.columns
 
-            if data_df is not None:
-                # Verify required columns
-                required_cols = ["agent_model", "tier", "impl_rate", "ci_low", "ci_high"]
-                for col in required_cols:
-                    assert col in data_df.columns
-
-                # Verify impl_rate in [0, 1]
-                assert (data_df["impl_rate"] >= 0).all()
-                assert (data_df["impl_rate"] <= 1).all()
+        # Verify impl_rate in [0, 1]
+        assert (data_df["impl_rate"] >= 0).all()
+        assert (data_df["impl_rate"] <= 1).all()
 
 
-def test_fig26_content_verification(sample_runs_df):
+def test_fig26_content_verification(sample_runs_df, tmp_path):
     """Test Fig 26 impl-rate vs pass-rate generates correct scatter data."""
     from scylla.analysis.figures.impl_rate_analysis import fig26_impl_rate_vs_pass_rate
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure"):
-        # May not generate if impl_rate column missing
-        fig26_impl_rate_vs_pass_rate(sample_runs_df, Path("/tmp"), render=False)
+    # May not generate if impl_rate column missing
+    fig26_impl_rate_vs_pass_rate(sample_runs_df, tmp_path, render=False)
 
 
-def test_fig27_content_verification(sample_runs_df):
+def test_fig27_content_verification(sample_runs_df, tmp_path):
     """Test Fig 27 impl-rate distribution generates correct structure."""
     from scylla.analysis.figures.impl_rate_analysis import fig27_impl_rate_distribution
 
-    with patch("scylla.analysis.figures.impl_rate_analysis.save_figure"):
-        # May not generate if impl_rate column missing
-        fig27_impl_rate_distribution(sample_runs_df, Path("/tmp"), render=False)
+    # May not generate if impl_rate column missing
+    fig27_impl_rate_distribution(sample_runs_df, tmp_path, render=False)
 
 
 def test_get_color_with_static_colors():
