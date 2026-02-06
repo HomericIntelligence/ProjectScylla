@@ -509,6 +509,90 @@ class TestCreateSettingsJson:
         assert "git" in settings["mcpServers"]
 
 
+class TestSystemPromptMode:
+    """Tests for system_prompt_mode parsing in subtests."""
+
+    def test_parse_system_prompt_mode_none(self, tmp_path: Path) -> None:
+        """Test that system_prompt_mode='none' is parsed from T0 YAML."""
+        # Create directory structure
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t0"
+        shared_dir.mkdir(parents=True)
+
+        # Write config with system_prompt_mode='none'
+        config_file = shared_dir / "00-empty.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Empty System Prompt",
+                    "description": "No system prompt",
+                    "system_prompt_mode": "none",
+                }
+            )
+        )
+
+        # Discover subtests
+        manager = TierManager(tiers_dir)
+        subtests = manager._discover_subtests(TierID.T0, tiers_dir / "t0")
+
+        # Verify system_prompt_mode was parsed correctly
+        assert len(subtests) == 1
+        assert subtests[0].system_prompt_mode == "none"
+
+    def test_parse_system_prompt_mode_default(self, tmp_path: Path) -> None:
+        """Test that system_prompt_mode='default' is parsed from YAML."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t0"
+        shared_dir.mkdir(parents=True)
+
+        # Write config with system_prompt_mode='default'
+        config_file = shared_dir / "01-vanilla.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Vanilla System Prompt",
+                    "description": "Use Claude Code default",
+                    "system_prompt_mode": "default",
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        subtests = manager._discover_subtests(TierID.T0, tiers_dir / "t0")
+
+        assert len(subtests) == 1
+        assert subtests[0].system_prompt_mode == "default"
+
+    def test_system_prompt_mode_defaults_to_custom(self, tmp_path: Path) -> None:
+        """Test that system_prompt_mode defaults to 'custom' when not specified."""
+        tiers_dir = tmp_path / "tests" / "fixtures" / "tests" / "test-001"
+        tiers_dir.mkdir(parents=True)
+
+        shared_dir = tmp_path / "tests" / "claude-code" / "shared" / "subtests" / "t2"
+        shared_dir.mkdir(parents=True)
+
+        # Write config without system_prompt_mode field
+        config_file = shared_dir / "01-custom.yaml"
+        config_file.write_text(
+            yaml.safe_dump(
+                {
+                    "name": "Custom Config",
+                    "description": "Should default to custom mode",
+                }
+            )
+        )
+
+        manager = TierManager(tiers_dir)
+        subtests = manager._discover_subtests(TierID.T2, tiers_dir / "t2")
+
+        assert len(subtests) == 1
+        assert subtests[0].system_prompt_mode == "custom"
+
+
 class TestInheritBestFrom:
     """Tests for inherit_best_from functionality in T5 subtests."""
 
