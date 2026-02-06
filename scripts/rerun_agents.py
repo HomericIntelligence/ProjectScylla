@@ -11,6 +11,11 @@ Run Status Categories:
   - partial:   Agent started but incomplete execution
   - missing:   Run directory doesn't exist
 
+Related Scripts:
+  - regenerate_agent_results.py: Rebuild result.json from logs (no re-execution)
+  - rerun_judges.py: Re-run failed judge evaluations
+  - See scripts/README.md for complete recovery script reference
+
 Usage:
     # Scan and re-run all incomplete runs
     pixi run python scripts/rerun_agents.py /path/to/experiment/

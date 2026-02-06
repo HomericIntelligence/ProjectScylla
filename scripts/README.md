@@ -200,6 +200,114 @@ ls -la ~/.claude/.credentials.json
 export ANTHROPIC_API_KEY="your-key-here"
 ```
 
+## Recovery Scripts
+
+These scripts help recover from failures, rebuild results, or fix corrupted state.
+
+### Recovery Script Quick Reference
+
+| Goal | Use This Script |
+|------|----------------|
+| Re-run failed/missing agent executions | `rerun_agents.py` |
+| Re-run failed/missing judge evaluations | `rerun_judges.py` |
+| Regenerate consensus from existing judges | `rerun_judges.py --regenerate-only` |
+| Rebuild result.json from existing run_result.json | `regenerate_results.py` |
+| Rebuild agent result.json from logs | `regenerate_agent_results.py` |
+| Fix corrupted checkpoint | `repair_checkpoint.py` |
+
+### `rerun_agents.py`
+
+Re-run failed or missing agent executions from an existing experiment.
+
+**Usage:**
+```bash
+# Re-run all failed agents
+python scripts/rerun_agents.py results/experiment-001/
+
+# Re-run with custom model
+python scripts/rerun_agents.py results/experiment-001/ --model claude-sonnet-4-5-20250929
+```
+
+**When to use:**
+- Agent executions failed due to network errors
+- Some runs timed out
+- You want to use a different model for failed runs
+
+**See also:** `regenerate_agent_results.py` for rebuilding from logs
+
+### `rerun_judges.py`
+
+Re-run failed or missing judge evaluations, or regenerate consensus.
+
+**Usage:**
+```bash
+# Re-run all failed judges
+python scripts/rerun_judges.py results/experiment-001/
+
+# Regenerate consensus from existing judges (no API calls)
+python scripts/rerun_judges.py results/experiment-001/ --regenerate-only
+
+# Add a new judge model
+python scripts/rerun_judges.py results/experiment-001/ --add-judge opus-4-5
+```
+
+**When to use:**
+- Judge evaluations failed
+- You want to add a new judge model
+- Consensus needs recalculation from existing judges
+
+### `regenerate_results.py`
+
+Rebuild result.json files from existing run_result.json files.
+
+**Usage:**
+```bash
+# Regenerate results for one experiment
+python scripts/regenerate_results.py results/experiment-001/
+
+# Regenerate all experiments
+python scripts/regenerate_results.py results/
+```
+
+**When to use:**
+- result.json is missing or corrupted
+- You modified aggregation logic and want to recompute
+- run_result.json exists but result.json doesn't
+
+**See also:** `rerun_judges.py --regenerate-only` overlaps for consensus regeneration
+
+### `regenerate_agent_results.py`
+
+Rebuild agent result.json from execution logs.
+
+**Usage:**
+```bash
+# Regenerate from logs
+python scripts/regenerate_agent_results.py results/experiment-001/
+```
+
+**When to use:**
+- Agent result.json is missing or corrupted
+- Logs exist but result files don't
+- You need to reconstruct results from raw logs
+
+**See also:** `rerun_agents.py` for re-running executions
+
+### `repair_checkpoint.py`
+
+Fix corrupted checkpoint files.
+
+**Usage:**
+```bash
+# Repair checkpoint
+python scripts/repair_checkpoint.py results/experiment-001/.checkpoint.json
+```
+
+**When to use:**
+- Checkpoint file is corrupted (invalid JSON)
+- Experiment won't resume due to checkpoint errors
+- You need to manually fix checkpoint state
+
 ## Related Files
 
 - `../docker/Dockerfile` - Docker image definition

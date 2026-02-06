@@ -11,6 +11,11 @@ Judge Slot Status Categories:
   - failed:        judge_NN/ exists but judgment.json is invalid/missing
   - agent_failed:  Agent failed, cannot judge (skip)
 
+Related Scripts:
+  - regenerate_results.py: Rebuild results from existing judges (--rejudge option)
+  - rerun_agents.py: Re-run failed agent executions
+  - See scripts/README.md for complete recovery script reference
+
 Usage:
     # Scan and re-run all incomplete judge slots
     pixi run python scripts/rerun_judges.py /path/to/experiment/
