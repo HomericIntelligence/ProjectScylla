@@ -5,6 +5,9 @@ This script fixes checkpoints where completed_runs is empty despite having
 completed run_result.json files. This can happen when the main process
 overwrites worker progress during interrupt handling.
 
+Related Scripts:
+  - See scripts/README.md for complete recovery script reference
+
 Usage:
     python scripts/repair_checkpoint.py <checkpoint_path>
 

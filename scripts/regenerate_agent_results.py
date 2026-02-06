@@ -5,6 +5,10 @@ This script scans run directories for completed agents that are missing
 agent/result.json and regenerates them from the existing logs (stdout.log,
 stderr.log, command_log.json).
 
+Related Scripts:
+  - rerun_agents.py: Re-run failed agents (re-execution, not just rebuild)
+  - See scripts/README.md for complete recovery script reference
+
 Usage:
     pixi run python scripts/regenerate_agent_results.py /path/to/experiment/
 
