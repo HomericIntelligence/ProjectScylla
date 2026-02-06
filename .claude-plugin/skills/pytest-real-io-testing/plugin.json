@@ -1,0 +1,12 @@
+{
+  "name": "pytest-real-io-testing",
+  "version": "1.0.0",
+  "category": "debugging",
+  "description": "Pattern for replacing pytest mocks with real file I/O to fix test isolation issues",
+  "tags": ["pytest", "testing", "mocks", "test-isolation", "tmp_path", "ci-fixes"],
+  "created": "2026-02-05",
+  "author": "ProjectScylla",
+  "project": "ProjectScylla",
+  "related_issues": ["#353"],
+  "related_prs": ["#353"]
+}
