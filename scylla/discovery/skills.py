@@ -92,6 +92,7 @@ def get_skill_category(skill_name: str) -> str:
         'mojo'
         >>> get_skill_category("custom-skill")
         'other'
+
     """
     # Check explicit mappings first
     for category, skills in CATEGORY_MAPPINGS.items():
@@ -130,6 +131,7 @@ def discover_skills(source_dir: Path) -> dict[str, list[Path]]:
         >>> skills = discover_skills(Path(".claude/skills"))
         >>> skills["github"]
         [Path(".claude/skills/gh-review-pr"), ...]
+
     """
     # Get all skill directories (exclude template files and hidden dirs)
     skill_dirs = [d for d in source_dir.iterdir() if d.is_dir() and not d.name.startswith(".")]
@@ -174,6 +176,7 @@ def organize_skills(source_dir: Path, dest_dir: Path) -> dict[str, list[str]]:
         ...     Path("tests/shared/skills")
         ... )
         {'github': ['gh-review-pr', ...], 'mojo': [...], ...}
+
     """
     # Ensure destination directories exist
     all_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
