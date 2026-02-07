@@ -92,7 +92,7 @@ def fig20_metric_correlation_heatmap(
             color=alt.Color(
                 "rho:Q",
                 title="Spearman ρ",
-                scale=alt.Scale(domain=[-1, 1], scheme="redblue", reverse=True),
+                scale=alt.Scale(domain=[-1, 1], scheme="blueorange"),
             ),
             tooltip=[
                 alt.Tooltip("metric1:O", title="Metric 1"),
@@ -111,11 +111,7 @@ def fig20_metric_correlation_heatmap(
             x=alt.X("metric1:O", sort=list(metrics.values())),
             y=alt.Y("metric2:O", sort=list(metrics.values())),
             text="label:N",
-            color=alt.condition(
-                alt.datum.rho > 0 | alt.datum.rho < -0.5,
-                alt.value("white"),
-                alt.value("black"),
-            ),
+            color=alt.value("black"),
         )
     )
 
