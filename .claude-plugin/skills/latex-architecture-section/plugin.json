@@ -1,0 +1,16 @@
+{
+  "name": "latex-architecture-section",
+  "version": "1.0.0",
+  "category": "documentation",
+  "description": "Add architecture sections to academic LaTeX papers with TikZ diagrams, including fixing common TikZ syntax errors and managing arxiv builds",
+  "created": "2026-02-07",
+  "tags": ["latex", "tikz", "academic-writing", "architecture-diagrams", "paper-formatting"],
+  "trigger_keywords": [
+    "architecture section",
+    "tikz diagram",
+    "latex paper architecture",
+    "system architecture diagram",
+    "arxiv build",
+    "tikz syntax error"
+  ]
+}
