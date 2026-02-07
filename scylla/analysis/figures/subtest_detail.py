@@ -66,7 +66,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
             y=alt.Y(
                 "duration:Q",
                 title="Mean Duration (seconds)",
-                scale=alt.Scale(domain=[0, duration_long["duration"].max() * 1.1]),
+                scale=alt.Scale(domain=[0, duration_long["duration"].max()]),
             ),
             color=alt.Color(
                 "phase_label:N",

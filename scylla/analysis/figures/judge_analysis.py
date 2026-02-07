@@ -58,8 +58,8 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
         ),
     )
 
-    # Box plot - increase size from 20 to 50 for better visibility
-    boxplot = base.mark_boxplot(size=50)
+    # Box plot - increase size from 20 to 80 for better visibility
+    boxplot = base.mark_boxplot(size=80)
 
     # Derive tier order from data
     tier_order = derive_tier_order(data)

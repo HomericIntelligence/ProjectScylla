@@ -200,14 +200,14 @@ def fig26_impl_rate_vs_pass_rate(
         )
     )
 
-    # Linear regression line
+    # Linear regression line - use same scale as points
     regression = (
         alt.Chart(df)
         .mark_line(color="black", strokeDash=[5, 5])
         .transform_regression("impl_rate", "pass_rate")
         .encode(
-            x="impl_rate:Q",
-            y="pass_rate:Q",
+            x=alt.X("impl_rate:Q", scale=alt.Scale(domain=impl_rate_domain)),
+            y=alt.Y("pass_rate:Q", scale=alt.Scale(domain=[-0.1, 1.1])),
         )
     )
 
