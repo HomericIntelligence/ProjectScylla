@@ -1,4 +1,5 @@
 \documentclass[11pt]{article}
+\pdfoutput=1  % Required by arXiv
 
 % ===== Encoding & Fonts =====
 \usepackage[T1]{fontenc}
@@ -51,7 +52,7 @@
 
 \title{Taming Scylla: \\
 Understanding the multi-headed agentic daemon of the coding seas}
-\author{Micah Villmow\thanks{This paper combines the author's original research and writing with improvements, suggestions, and rewrites provided by Claude Code (claude.ai/code).} \\
+\author{Micah Villmow \\
 Individual \\
 research@villmow.us}
 \date{}
@@ -438,8 +439,9 @@ T6 & Super & 1 & Maximum capability configuration & All & All \\
 \end{enumerate}
 
 For each tier T(n), I compare it directly against T(n-1) to see what that
-specific change actually achieves in terms of performance and cost. These
-iers map onto a broader multi-dimensional search space.
+specific change actually achieves in terms of performance and cost.
+
+These tiers map onto a broader multi-dimensional search space.
 
 \subsection{Dimensional Search Space}\label{sec:dimensions}
 
@@ -1027,7 +1029,7 @@ Judges score five weighted categories: functional correctness (35\%),
 code quality (20\%), proportionality (15\%), build pipeline (10\%), overall quality
 (20\%). Table~\ref{tab:tab04_criteria_performance} shows detailed per-criteria performance across tiers, and Figure~\ref{fig:fig09_criteria_by_tier} visualizes the breakdown.
 
-\input{paper-dryrun/tables/tab04_criteria_performance.tex}
+\input{tables/tab04_criteria_performance.tex}
 
 \begin{figure}[htbp]
 \centering

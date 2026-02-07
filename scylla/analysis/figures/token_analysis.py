@@ -69,7 +69,7 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
         .mark_bar()
         .encode(
             x=alt.X("tier:O", title="Tier", sort=tier_order),
-            y=alt.Y("tokens:Q", title="Mean Tokens per Run"),
+            y=alt.Y("tokens:Q", title="Token Distribution (%)", stack="normalize"),
             color=alt.Color(
                 "token_type_label:N",
                 title="Token Type",

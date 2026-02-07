@@ -76,6 +76,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
                 alt.Tooltip("duration:Q", title="Duration (s)", format=".2f"),
             ],
         )
+        .properties(width=350, height=250)
         .facet(column=alt.Column("agent_model:N", title=None))
         .properties(title="Latency Breakdown by Tier")
     )
