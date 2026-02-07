@@ -30,7 +30,7 @@ def run_script(script_name: str, args: list[str], description: str) -> bool:
     print(f"{description}")
     print(f"{'=' * 70}\n")
 
-    cmd = ["pixi", "run", "-e", "analysis", "python", script_name, *args]
+    cmd = ["pixi", "run", "python", script_name, *args]
 
     try:
         result = subprocess.run(cmd, check=False)  # Don't raise on error
