@@ -1,10 +1,5 @@
 \begin{thebibliography}{10}
 
-\bibitem{ccmarketplace}
-{CC-Marketplace}: Community marketplace for {Claude Code} plugins and skills.
-\newblock \url{https://github.com/cc-marketplace}, 2025.
-\newblock Community-driven plugin repository.
-
 \bibitem{anthropic2024claude}
 {Anthropic}.
 \newblock {Claude Code}: Agentic {CLI} tool for software development.
@@ -49,6 +44,13 @@ Francesco Polo et~al.
 \newblock Efficient evaluation of language models.
 \newblock \url{https://arxiv.org/abs/2405.12345}, 2024.
 \newblock Framework for efficient LLM evaluation.
+
+\bibitem{ccmarketplace}
+Anand Tyagi.
+\newblock {CC-Marketplace}: Community marketplace for {Claude Code} plugins and
+  skills.
+\newblock \url{https://github.com/cc-marketplace}, 2025.
+\newblock Community-driven plugin repository.
 
 \bibitem{yao2024taubench}
 Shunyu Yao et~al.
