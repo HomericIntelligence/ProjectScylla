@@ -1,9 +1,29 @@
 {
-  "name": "rescue-broken-prs",
+  "name": "projectscylla-skills",
   "version": "1.0.0",
-  "category": "testing",
-  "description": "Systematic workflow for diagnosing and fixing multiple failing PRs",
+  "description": "Skill registry for ProjectScylla evaluation framework",
+  "category": "evaluation",
   "author": "Claude Sonnet 4.5",
-  "date": "2026-02-06",
-  "tags": ["ci-cd", "pre-commit", "testing", "git", "github", "lint", "ruff", "pytest", "pr-rescue", "refactoring"]
+  "lastUpdated": "2026-02-07",
+  "skills": [
+    {
+      "name": "rescue-broken-prs",
+      "version": "1.0.0",
+      "category": "testing",
+      "description": "Systematic workflow for diagnosing and fixing multiple failing PRs",
+      "date": "2026-02-06",
+      "tags": ["ci-cd", "pre-commit", "testing", "git", "github", "lint", "ruff", "pytest", "pr-rescue", "refactoring"]
+    },
+    {
+      "name": "paper-validation-workflow",
+      "version": "1.0.0",
+      "category": "documentation",
+      "description": "Systematic workflow for validating academic papers against raw experimental data",
+      "date": "2026-02-07",
+      "tags": ["paper-validation", "cross-validation", "latex", "academic-writing", "quality-assurance", "data-verification"],
+      "relatedSkills": ["latex-workflow", "data-validation", "academic-writing", "git-workflow"],
+      "successRate": 1.0,
+      "usageCount": 1
+    }
+  ]
 }
