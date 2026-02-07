@@ -58,8 +58,8 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
         ),
     )
 
-    # Box plot
-    boxplot = base.mark_boxplot(size=20)
+    # Box plot - increase size from 20 to 50 for better visibility
+    boxplot = base.mark_boxplot(size=50)
 
     # Derive tier order from data
     tier_order = derive_tier_order(data)
@@ -106,18 +106,22 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
     # Remove rows with missing judges
     judge_pivot = judge_pivot.dropna()
 
-    # Create pairwise comparison data (dynamic based on number of judges)
+    # Create pairwise comparison data - reorganized to show 1v2, 2v3, 1v3 in single row
     pairs = []
     n_judges = len(judge_cols_renamed)
 
-    for i in range(n_judges):
-        for j in range(i + 1, n_judges):
+    # Define specific pairs we want: (1,2), (2,3), (1,3) - in that order
+    pair_indices = [(0, 1), (1, 2), (0, 2)]  # (1v2), (2v3), (1v3)
+
+    for i, j in pair_indices:
+        if i < n_judges and j < n_judges:
             col_x = judge_cols_renamed[i]
             col_y = judge_cols_renamed[j]
 
             for _, row in judge_pivot.iterrows():
                 pairs.append(
                     {
+                        "pair_label": f"Judge {i + 1} vs {j + 1}",
                         "judge_x": f"Judge {i + 1}",
                         "judge_y": f"Judge {j + 1}",
                         "score_x": row[col_x],
@@ -148,22 +152,25 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
     score_x_domain = compute_dynamic_domain(pairs_df["score_x"])
     score_y_domain = compute_dynamic_domain(pairs_df["score_y"])
 
-    # Create scatter plot with faceting
-    # Use repeat instead of layer + facet to avoid issues
+    # Create scatter plot with faceting in a single row
+    # Increase point size from 10 to 60 for better visibility
     scatter = (
         alt.Chart(pairs_df)
-        .mark_circle(size=10, opacity=0.3)
+        .mark_circle(size=60, opacity=0.6)
         .encode(
             x=alt.X("score_x:Q", title="Score (Judge X)", scale=alt.Scale(domain=score_x_domain)),
             y=alt.Y("score_y:Q", title="Score (Judge Y)", scale=alt.Scale(domain=score_y_domain)),
             tooltip=[
+                alt.Tooltip("pair_label:N", title="Comparison"),
                 alt.Tooltip("score_x:Q", title="Judge X Score", format=".3f"),
                 alt.Tooltip("score_y:Q", title="Judge Y Score", format=".3f"),
             ],
         )
+        .properties(width=250, height=250)
         .facet(
-            row=alt.Row("judge_y:N", title=None),
-            column=alt.Column("judge_x:N", title=None),
+            column=alt.Column(
+                "pair_label:N", title=None, sort=["Judge 1 vs 2", "Judge 2 vs 3", "Judge 1 vs 3"]
+            ),
         )
         .properties(title="Inter-Judge Score Agreement")
         .resolve_scale(x="shared", y="shared")
