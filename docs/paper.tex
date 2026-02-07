@@ -89,7 +89,7 @@ AI
 Large language models have ushered in massive increases in capabilities for
 automated computer interactions. What used to require hand-coded algorithms and
 pipelines can now be done automatically using state of the art coding models.
-However, understanding what improves these language models is more of black
+However, understanding what improves these language models is more black
 magic than art, let alone a rigorous science. This paper's goal is to help
 demystify the magic of prompt engineering by proposing a rigorous evaluation
 framework to quantify the benefits of different architectural approaches.
@@ -214,8 +214,7 @@ between their results comes from the judge training and implementation
 differences and not from the prompt or test input. Each judge will receive the
 output of the task LLM, and provide the results based on the criteria. The
 judges have the following categories of evaluation; functional correctness, code
-quality, development pipeline, security and safety, proportionality and
-professionalism, and patchfile correctness.
+quality, proportionality, build pipeline, and overall quality.
 
 \begin{table}[htbp]
 \centering
@@ -300,8 +299,8 @@ which will launch the same set of tasks with the same parameters, where the only
 variation is the judgement of the LLM's judges when determining how to judge the
 work.
 
-This finishes the summary of a single test. However, the test themselves are
-defined differently. The test are a prompt and a configuration file that specify
+This finishes the summary of a single test. However, the tests themselves are
+defined differently. The tests are a prompt and a configuration file that specify
 a repository, a github hash, a set of configuration files to override any
 pre-defined tooling, set of commands to validate the results, and a container to
 run everything in to help with reproducibility. The first test is being used as
@@ -439,7 +438,7 @@ T6 & Super & 1 & Maximum capability configuration & All & All \\
 
 For each tier T(n), I compare it directly against T(n-1) to see what that
 specific change actually achieves in terms of performance and cost. These
-iers map onto a broader multi-dimensional search space.
+tiers map onto a broader multi-dimensional search space.
 
 \subsection{Dimensional Search Space}\label{sec:dimensions}
 
@@ -589,7 +588,7 @@ $$\text{Impl-Rate} = \frac{\text{satisfied\_requirements}}{\text{total\_requirem
 
 Range is 0.0 to 1.0. This gives you more detail than just pass/fail, you get
 partial credit for incomplete work. Checked using multiple LLM judges with
-median scoring for consensus.
+mean scoring for consensus.
 
 \subsection{Efficiency and Cost Metrics}
 
@@ -720,7 +719,7 @@ Model & Model ID & Primary Use \\
 \midrule
 Claude Opus 4.5 & claude-opus-4-5-20251101 & complex reasoning, hierarchical orchestration \\
 Claude Sonnet 4.5 & claude-sonnet-4-5-20250929 & standard execution, balanced cost/capability \\
-Claude Haiku 4.5 & claude-haiku-4-5-20250929 & simple tasks, cost optimization \\
+Claude Haiku 4.5 & claude-haiku-4-5-20251001 & simple tasks, cost optimization \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -730,7 +729,7 @@ Claude Haiku 4.5 & claude-haiku-4-5-20250929 & simple tasks, cost optimization \
 
 \begin{itemize}
 \item Three judges per evaluation: Opus 4.5, Sonnet 4.5, Haiku 4.5
-\item Take the median of the three scores for consensus
+\item Take the mean of the three scores for consensus
 \item Same prompt for all judges (only the model changes)
 \item Judge prompt: \texttt{config/judge/system\_prompt.md}
 \end{itemize}
@@ -818,7 +817,7 @@ Category & Description & Complexity & Key Challenges \\
 
 \subsection{Test Case Matrix}
 
-I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section~\ref{sec:discussion} (Further Work) for planned full-scale execution.
+I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section 10 (Further Work) for planned full-scale execution.
 
 \section{Results}\label{sec:results}
 
@@ -842,7 +841,7 @@ First, the dry run was executed with the following setup:
 \item \textbf{Pass rate}: 100\% (all 7 tiers passed, all grade A)
 \end{itemize}
 
-Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
+Table 1 shows the tier-by-tier summary. All tiers achieved grade A with mean
 consensus scores ranging from 0.943 (T6) to 0.983 (T2, T3, T5). The task is
 trivially easy, as expected, even T0 (minimal prompt) scores 0.973, with T4 at 0.9595.
 
@@ -1017,8 +1016,8 @@ Krippendorff's $\alpha$ (interval): -0.117. Poor agreement, but expected with N=
 tier. \textbf{Note}: N=7 is insufficient for reliable correlation estimates; these
 values are reported for completeness but interpret them with extreme caution.
 
-Despite low inter-rater agreement, the 3-judge median produces stable final
-scores. The median dampens extreme scores, Haiku's 1.00 perfects versus Opus's
+Despite low inter-rater agreement, the 3-judge mean produces stable final
+scores. The mean balances extreme scores, Haiku's 1.00 perfects versus Opus's
 0.93 conservatism. This supports the multi-judge consensus design.
 
 \subsection{Criteria Breakdown}
@@ -1058,7 +1057,7 @@ effects.
 \subsection{What the Dryrun Tells Us}
 
 The Hello World task is, by design, trivially easy. All seven tiers score grade
-A with median scores between 0.943-0.983. This validates exactly what I said in
+A with mean scores between 0.943-0.983. This validates exactly what I said in
 Section~\ref{sec:methodology}: "Even T0 should nail this test." And it did.
 
 \textbf{Ceiling effect dominates}: When quality converges at near-perfect levels, we
@@ -1130,8 +1129,8 @@ Inter-rater agreement is predictably low: Krippendorff's $\alpha$ = -0.117. But 
 expected with N=1 and near-perfect scores. On tasks with more variance,
 agreement improve as judges separate clear failures from clear successes.
 
-Despite the disagreement, the 3-judge median works. When Haiku awards 1.00 and
-Opus awards 0.93, the median captures the true quality without getting pulled to
+Despite the disagreement, the 3-judge mean works. When Haiku awards 1.00 and
+Opus awards 0.93, the mean captures the true quality without getting pulled to
 either extreme. This validates the multi-judge consensus design.
 
 One scaling problem: judge time dominates total latency. 77-86\% of execution
