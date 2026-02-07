@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
 from scylla.e2e.models import (
     ExperimentConfig,
     SubTestConfig,
@@ -365,3 +365,94 @@ class TestCheckpointOperations:
         cp.mark_run_completed("T0", "T0_01", 1)
 
         assert cp.get_completed_run_count() == 3
+
+    def test_checkpoint_round_trip_preserves_completed_runs(self, tmp_path: Path) -> None:
+        """Test that saving and loading checkpoint preserves int keys for completed runs."""
+        from scylla.e2e.checkpoint import save_checkpoint
+
+        # Create checkpoint and mark runs as completed
+        cp = E2ECheckpoint(
+            version="2.0",
+            experiment_id="test-exp",
+            experiment_dir=str(tmp_path),
+            config_hash="test-hash",
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            rate_limit_source=None,
+            rate_limit_until=None,
+            pause_count=0,
+        )
+        cp.mark_run_completed("T0", "T0_00", 1, "passed")
+        cp.mark_run_completed("T0", "T0_00", 2, "failed")
+        cp.mark_run_completed("T0", "T0_01", 1, "passed")
+
+        # Save checkpoint to disk
+        checkpoint_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, checkpoint_path)
+
+        # Load checkpoint from disk
+        loaded_cp = load_checkpoint(checkpoint_path)
+
+        # Verify int key lookups work after round-trip
+        assert loaded_cp.is_run_completed("T0", "T0_00", 1)
+        assert loaded_cp.is_run_completed("T0", "T0_00", 2)
+        assert loaded_cp.is_run_completed("T0", "T0_01", 1)
+        assert not loaded_cp.is_run_completed("T0", "T0_01", 2)
+
+        # Verify get_run_status works with int keys
+        assert loaded_cp.get_run_status("T0", "T0_00", 1) == "passed"
+        assert loaded_cp.get_run_status("T0", "T0_00", 2) == "failed"
+        assert loaded_cp.get_run_status("T0", "T0_01", 1) == "passed"
+        assert loaded_cp.get_run_status("T0", "T0_01", 2) is None
+
+        # Verify unmark_run_completed works after round-trip
+        loaded_cp.unmark_run_completed("T0", "T0_00", 1)
+        assert not loaded_cp.is_run_completed("T0", "T0_00", 1)
+        assert loaded_cp.get_run_status("T0", "T0_00", 1) is None
+
+        # Verify count is correct
+        assert loaded_cp.get_completed_run_count() == 2
+
+    def test_from_dict_converts_string_keys_to_int(self, tmp_path: Path) -> None:
+        """Test that from_dict() converts string keys to int (simulating JSON deserialization)."""
+        # Simulate raw JSON data with string keys (as returned by json.load)
+        raw_data = {
+            "version": "2.0",  # Required field
+            "experiment_id": "test-exp",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "test-hash",
+            "completed_runs": {
+                "T0": {
+                    "T0_00": {
+                        "1": "passed",  # String key from JSON
+                        "2": "failed",  # String key from JSON
+                    },
+                    "T0_01": {
+                        "1": "passed",  # String key from JSON
+                    },
+                },
+            },
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "status": "running",
+            "rate_limit_source": None,
+            "rate_limit_until": None,
+            "pause_count": 0,
+        }
+
+        # Create checkpoint from raw dict (with string keys)
+        cp = E2ECheckpoint.from_dict(raw_data)
+
+        # Verify int key lookups work (the fix ensures this)
+        assert cp.is_run_completed("T0", "T0_00", 1)
+        assert cp.is_run_completed("T0", "T0_00", 2)
+        assert cp.is_run_completed("T0", "T0_01", 1)
+        assert not cp.is_run_completed("T0", "T0_01", 2)
+
+        # Verify get_run_status works with int keys
+        assert cp.get_run_status("T0", "T0_00", 1) == "passed"
+        assert cp.get_run_status("T0", "T0_00", 2) == "failed"
+        assert cp.get_run_status("T0", "T0_01", 1) == "passed"
+        assert cp.get_run_status("T0", "T0_01", 2) is None

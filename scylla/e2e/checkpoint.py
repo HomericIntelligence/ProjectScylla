@@ -188,6 +188,30 @@ class E2ECheckpoint:
         }
 
     @classmethod
+    def _convert_completed_runs_keys(
+        cls, raw: dict[str, dict[str, dict[str, str]]]
+    ) -> dict[str, dict[str, dict[int, str]]]:
+        """Convert completed_runs run_number keys from JSON strings to int.
+
+        JSON serialization converts Python int dict keys to strings.
+        When loading from disk, we must convert them back to int for
+        correct lookups via get_run_status() and is_run_completed().
+
+        Args:
+            raw: completed_runs dict with string keys (from JSON)
+
+        Returns:
+            completed_runs dict with int keys (Python native)
+
+        """
+        result: dict[str, dict[str, dict[int, str]]] = {}
+        for tier_id, subtests in raw.items():
+            result[tier_id] = {}
+            for subtest_id, runs in subtests.items():
+                result[tier_id][subtest_id] = {int(k): v for k, v in runs.items()}
+        return result
+
+    @classmethod
     def from_dict(cls, data: dict[str, Any]) -> E2ECheckpoint:
         """Create from dictionary.
 
@@ -217,7 +241,7 @@ class E2ECheckpoint:
             experiment_id=data.get("experiment_id", ""),
             experiment_dir=data.get("experiment_dir", ""),
             config_hash=data.get("config_hash", ""),
-            completed_runs=data.get("completed_runs", {}),
+            completed_runs=cls._convert_completed_runs_keys(data.get("completed_runs", {})),
             started_at=data.get("started_at", ""),
             last_updated_at=data.get("last_updated_at", ""),
             status=data.get("status", "running"),
