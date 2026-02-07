@@ -63,7 +63,11 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         .mark_bar()
         .encode(
             x=alt.X("tier:O", title="Tier", sort=tier_order),
-            y=alt.Y("duration:Q", title="Mean Duration (seconds)"),
+            y=alt.Y(
+                "duration:Q",
+                title="Mean Duration (seconds)",
+                scale=alt.Scale(domain=[0, duration_long["duration"].max() * 1.1]),
+            ),
             color=alt.Color(
                 "phase_label:N",
                 title="Phase",
