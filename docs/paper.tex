@@ -419,7 +419,7 @@ T1 & Skills & 10 & Domain expertise via installed skills & Default & No \\
 T2 & Tooling & 15 & External tools and MCP servers & Yes & No \\
 T3 & Delegation & 41 & Flat multi-agent with specialists & Yes & Yes \\
 T4 & Hierarchy & 7 & Nested orchestration with orchestrators & Yes & Yes \\
-T5 & Hybrid & 15+ & Optimal combinations from all tiers & Yes & Yes \\
+T5 & Hybrid & 15 & Optimal combinations from all tiers & Yes & Yes \\
 T6 & Super & 1 & Maximum capability configuration & All & All \\
 \bottomrule
 \end{tabularx}
@@ -817,7 +817,7 @@ Category & Description & Complexity & Key Challenges \\
 
 \subsection{Test Case Matrix}
 
-I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section 10 (Further Work) for planned full-scale execution.
+I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section~\ref{sec:further} (Further Work) for planned full-scale execution.
 
 \section{Results}\label{sec:results}
 
@@ -1127,7 +1127,7 @@ This can be investigated in future analysis.
 
 Inter-rater agreement is predictably low: Krippendorff's $\alpha$ = -0.117. But that is
 expected with N=1 and near-perfect scores. On tasks with more variance,
-agreement improve as judges separate clear failures from clear successes.
+agreement should improve as judges separate clear failures from clear successes.
 
 Despite the disagreement, the 3-judge mean works. When Haiku awards 1.00 and
 Opus awards 0.93, the mean captures the true quality without getting pulled to
@@ -1207,7 +1207,7 @@ There is no real practical takeaway yet, since the testing was insufficient to
 come to any real conclusions. Answering those questions is left for the next
 exercise, and this framework can be used for doing so.
 
-\section{Further Work}
+\section{Further Work}\label{sec:further}
 
 The dryrun validates the framework works. Now it is time to scale up and fill in
 the gaps.
@@ -1299,9 +1299,9 @@ All raw data, figures, and tables are available in the repository at \texttt{doc
 
 \begin{itemize}
 \item Tier definitions: \texttt{config/tiers/tiers.yaml}
-\item Opus Model: \texttt{config/models/claude-opus-4.5.yaml}
-\item Sonnet Model: \texttt{config/models/claude-sonnet-4.5.yaml}
-\item Haiku Model: \texttt{config/models/claude-haiku-4.5.yaml}
+\item Opus Model: \texttt{config/models/claude-opus-4-5.yaml}
+\item Sonnet Model: \texttt{config/models/claude-sonnet-4-5.yaml}
+\item Haiku Model: \texttt{config/models/claude-haiku-4-5.yaml}
 \item Judge system prompt: \texttt{config/judge/system\_prompt.md}
 \item Test definitions: \texttt{tests/*/test.yaml}
 \item Rubric schemas: \texttt{tests/*/expected/rubric.yaml}
@@ -1328,7 +1328,7 @@ pixi install
 
 # 3. Run evaluation (example for test-001, tier T0)
 pixi run python scripts/run_e2e_experiment.py \
-  --test tests/001-hello-world \
+  --test tests/fixtures/tests/test-001 \
   --tier T0 \
   --runs 10
 
