@@ -12,7 +12,7 @@ import pandas as pd
 
 from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import save_figure
+from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 from scylla.analysis.stats import bootstrap_ci
 
 
@@ -69,13 +69,16 @@ def fig04_pass_rate_by_tier(
     models = sorted(stats_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
+    # Compute dynamic domain for pass rate axis
+    pass_rate_domain = compute_dynamic_domain(stats_df["pass_rate"])
+
     # Create grouped bar chart
     bars = (
         alt.Chart(stats_df)
         .mark_bar()
         .encode(
             x=alt.X("tier:O", title="Tier", sort=tier_order),
-            y=alt.Y("pass_rate:Q", title="Pass Rate", scale=alt.Scale(domain=[0, 1])),
+            y=alt.Y("pass_rate:Q", title="Pass Rate", scale=alt.Scale(domain=pass_rate_domain)),
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",

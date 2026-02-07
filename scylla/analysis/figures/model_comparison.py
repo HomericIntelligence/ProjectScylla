@@ -117,7 +117,11 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         .mark_line(point=True)
         .encode(
             x=alt.X("tier:O", title="Tier", sort=tier_order),
-            y=alt.Y("uplift:Q", title="Pass Rate Uplift vs T0 Baseline"),
+            y=alt.Y(
+                "uplift:Q",
+                title="Pass Rate Uplift vs T0 Baseline",
+                scale=alt.Scale(domain=[-0.1, 0.1]),
+            ),
             color=alt.Color(
                 "agent_model:N",
                 title="Agent Model",
@@ -138,7 +142,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     if len(significant_points) > 0:
         markers = (
             alt.Chart(significant_points)
-            .mark_text(text="*", fontSize=20, dy=-15, fontWeight="bold")
+            .mark_text(text="*", fontSize=14, dy=-15, fontWeight="bold")
             .encode(
                 x=alt.X("tier:O", sort=tier_order),
                 y="uplift:Q",

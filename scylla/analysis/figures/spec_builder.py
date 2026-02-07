@@ -64,9 +64,9 @@ def compute_dynamic_domain(
     domain_min = data_min - padding
     domain_max = data_max + padding
 
-    # Round to nearest 0.05 for clean axis labels
-    domain_min = round(domain_min / 0.05) * 0.05
-    domain_max = round(domain_max / 0.05) * 0.05
+    # Round to nearest 0.1 for clean axis labels
+    domain_min = round(domain_min / 0.1) * 0.1
+    domain_max = round(domain_max / 0.1) * 0.1
 
     # Clamp to [floor, ceiling]
     domain_min = max(floor, domain_min)
