@@ -194,24 +194,24 @@ professionalism, and patchfile correctness.
 
 \textbf{LLM-as-Judge Evaluation Categories}
 
-\begin{tabular}{|l|l|l|l|}
+\begin{tabular}{|l|l|l|p{4cm}|}
 \hline
 Category & Weight & Scoring Type & Description \\
 \hline
-Functional Correctness & 0.35 & Checklist & File existence, output correctness, exit codes, exact output matching \\
+Functional Correctness & 0.35 & Checklist & File existence, output correctness, \\ exit codes, exact output matching \\
 \hline
-Code Quality & 0.20 & Checklist & Syntax validity, idiomatic code, unused imports, PEP8 compliance \\
+Code Quality & 0.20 & Checklist & Syntax validity, idiomatic code, \\ unused imports, PEP8 compliance  \\
 \hline
-Proportionality & 0.15 & Checklist & Appropriate scope, minimal files, no unnecessary artifacts or tests \\
+Proportionality & 0.15 & Checklist & Appropriate scope, minimal files, \\ no unnecessary artifacts or tests  \\
 \hline
-Build Pipeline & 0.10 & Checklist & Build passes, format checks, tests (when applicable), pre-commit hooks \\
+Build Pipeline & 0.10 & Checklist & Build passes, format checks, \\ tests (when applicable), pre-commit hooks  \\
 \hline
-Overall Quality & 0.20 & Subjective & Engineering judgment on appropriateness, maintainability, and senior engineer approval \\
+Overall Quality & 0.20 & Subjective & Engineering judgment on appropriateness, \\ maintainability, and senior engineer approval \\
 \hline
 \end{tabular}
 
 
-\textbf{Total Weight}: 1.0 (100%)
+\textbf{Total Weight}: 1.0 (100\%)
 
 Each category contributes proportionally to the final score. Here is the formula:
 
@@ -254,7 +254,7 @@ Critical & 1.50+ & Non-functioning solutions, destructive operations \\
 
 The final score maps to a grade using this scale:
 
-\textbf{Industry-Aligned Grade Scale}
+\textbf{Grade Scale}
 
 \begin{tabular}{|l|l|l|l|}
 \hline
@@ -386,7 +386,7 @@ tested independently so we can isolate what each component contributes.
 
 \textbf{Testing Tiers (Ablation Study Framework)}
 
-\begin{tabular}{|l|l|l|l|l|l|l|}
+\begin{tabular}{|l|l|l|p{3cm}|l|l|p{3cm}|}
 \hline
 Tier & Name & Sub-tests & Primary Focus & Tools & Delegation & Key Characteristic \\
 \hline
@@ -444,7 +444,7 @@ $$\text{Pass-Rate} = \frac{\text{correct\_solutions}}{\text{total\_attempts}}$$
 
 Range is 0.0 (nothing worked) to 1.0 (everything worked). "Correct" means it
 passes the test suite for that specific task. Report this with confidence
- intervals (95% CI if you have 30+ runs).
+ intervals (95\% CI if you have 30+ runs).
 
 \textbf{Fine-Grained Progress Rate} ($R_{Prog}$) tracks how far you got through
  multi-step tasks:
@@ -730,7 +730,7 @@ First, the dry run was executed with the following setup:
 \item \textbf{Criteria}: 5 criteria per judge $\times$ 21 judges = 105 total criteria scores
 \item \textbf{Total cost}: \$1.01 (agent execution + judge evaluation)
 \item \textbf{Total duration}: ~1289 seconds (~21.5 minutes) sum of per-tier durations; actual wall-clock time was ~550 seconds due to parallel execution
-\item \textbf{Pass rate}: 100% (all 7 tiers passed, all grade A)
+\item \textbf{Pass rate}: 100\% (all 7 tiers passed, all grade A)
 \end{itemize}
 
 Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
@@ -871,7 +871,7 @@ T6 & 28.4 & 141.1 & 169.5 & 83.2\% \\
 \end{tabular}
 
 
-Judge evaluation dominates, 77-86% of total latency, ranging from 128-178
+Judge evaluation dominates, 77-86\% of total latency, ranging from 128-178
 seconds. This makes sense since 3 judges each evaluate the output independently.
 
 Agent time varies modestly, 24.8-41.2 seconds. T5 is fastest (24.8s), T4 slowest
@@ -992,7 +992,7 @@ Judges explicitly noted cache artifacts and unnecessary complexity. This lines
 up with the hypothesis that prompt complexity hurts quality when the task is in
 the model's training set.
 
-T4's hierarchical overhead is another example. T4 costs 30% more than T3
+T4's hierarchical overhead is another example. T4 costs 30\% more than T3
 (\$0.168 vs \$0.129) for this trivial task. The self-correction loops and nested
 orchestration add latency (41.2s vs 29.9s) without improving quality. On complex
 tasks needing iterative refinement, maybe T4 justifies the overhead. On simple
@@ -1033,7 +1033,7 @@ Despite the disagreement, the 3-judge median works. When Haiku awards 1.00 and
 Opus awards 0.93, the median captures the true quality without getting pulled to
 either extreme. This validates the multi-judge consensus design.
 
-One scaling problem: judge time dominates total latency. 77-86% of execution
+One scaling problem: judge time dominates total latency. 77-86\% of execution
 time is judge evaluation (128-178s), not agent execution (25-41s). With 3 judges
 per run, judge costs are 3x per evaluation. For large-scale experiments (N=10 $\times$
 113 subtests = 1,130 runs $\times$ 3 judges = 3,390 judge evaluations), judge cost uses
