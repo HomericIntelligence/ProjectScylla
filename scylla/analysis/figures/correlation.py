@@ -106,13 +106,13 @@ def fig20_metric_correlation_heatmap(
     # Add text labels
     text = (
         alt.Chart(corr_df)
-        .mark_text(baseline="middle")
+        .mark_text(baseline="middle", fontSize=10)
         .encode(
             x=alt.X("metric1:O", sort=list(metrics.values())),
             y=alt.Y("metric2:O", sort=list(metrics.values())),
             text="label:N",
             color=alt.condition(
-                alt.datum.rho > 0.5,
+                alt.datum.rho > 0 | alt.datum.rho < -0.5,
                 alt.value("white"),
                 alt.value("black"),
             ),
