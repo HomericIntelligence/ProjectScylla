@@ -70,7 +70,7 @@ framework to quantify the benefits of different architectural approaches.
 
 There are benchmarks for measuring LLM workflows in various domains, such as
 agent-bench\cite{liu2023agentbench}, swe-bench\cite{jimenez2024swebench}, and tau-bench\cite{yao2024taubench}. There are also prompt
-evaluation benchmarks such as PromptBench\cite{zhu2023promptbench2} and PromptEval\cite{polo2024efficient}. This paper
+evaluation benchmarks such as PromptBench\cite{zhu2024promptbench} and PromptEval\cite{polo2024efficient}. This paper
 focuses specifically on coding tools, particularly the industry-leading Claude
 Code\cite{anthropic2024claude}, and how prompt and architectural modifications affect model behavior.
 This paper introduces Scylla, a framework for evaluating agentic coding tools in
@@ -104,7 +104,7 @@ First, in Section~\ref{sec:related}, I will introduce the current work that is b
 this area, and explain how they approach the problem. Then, in Section~\ref{sec:methodology}, I will
 introduce the testing methodology along with an in-depth analysis of the first
 test case. This will provide the needed understanding of what is being tested,
-along with why, on something that should be easily analyzed and
+along with why, on something that is easily analyzed and
 understandable. Then I will go over the rest of the testing framework to
 showcase what is being tested, measured, and why these are being tested using
 simple cases introduced in the previous sections.
@@ -141,31 +141,19 @@ The models themselves are not fully documented publicly, as these details are
 competitive advantages, and the pre or post-processing that occurs is not always
 visible to the user as they can occur vendor-side.
 
-There are multiple benchmarks on judging the models, such as Agent-Bench\cite{liu2023agentbench},
-SWE-Bench\cite{jimenez2024swebench}, and TAU-Bench\cite{yao2024taubench}, but no standard benchmarks on CLI tools, like
-Claude Code, on how prompts affect them. The reader can also investigate
-PromptEval, PromptBench, or lm-evaluation-harness\cite{gao2024lmevalharness}, but these also do not
-benchmark the CLI tools, which are used in production today. The next paragraphs
-will explain in high level details the various other options on the market.
-
-There are several good benchmarks for evaluating LLM agents. SWE-Bench\cite{jimenez2024swebench} tests
-models on real GitHub issues, can they actually fix bugs and add features to real
-codebases? Agent-Bench\cite{liu2023agentbench} goes broader, testing multi-turn agents across
+There are several good benchmarks for evaluating LLM agents and prompts. SWE-Bench\cite{jimenez2024swebench} tests
+models on real GitHub issues. Agent-Bench\cite{liu2023agentbench} tests multi-turn agents across
 different environments like operating systems, databases, and knowledge graphs,
-with fine-grained metrics beyond just pass/fail. TAU-Bench\cite{yao2024taubench} focuses on whether
-agents can effectively use external tools. These benchmarks evaluate the models
-directly. They do not address the full agentic loop, hooks, skills, MCP servers,
-vendor optimizations, orchestration logic. My work focuses on that tool
-interface rather than the raw model underneath.
-
-For prompt evaluation, there is PromptBench\cite{zhu2023promptbench2} (unified testing across tasks),
+with fine-grained metrics beyond pass/fail. TAU-Bench\cite{yao2024taubench} focuses on whether
+agents can effectively use external tools. For prompt evaluation, there is PromptBench\cite{zhu2024promptbench} (unified testing across tasks),
 PromptEval\cite{polo2024efficient} (automated correctness and robustness checking), and EleutherAI's
-lm-evaluation-harness\cite{gao2024lmevalharness} (standardized multi-task comparison). There is a
-problem in that the aforementioned all assume direct access to model inputs and
-outputs. With production CLI tools like Claude Code, the model is wrapped in
-layers of system prompts, tool schemas, skill definitions, and orchestration
-logic. I cannot just test the model in isolation, so I must test the whole
-system.
+lm-evaluation-harness\cite{gao2024lmevalharness} (standardized multi-task comparison).
+
+However, these benchmarks all assume direct access to model inputs and outputs, evaluating models
+directly rather than complete CLI tools. With production CLI tools like Claude Code, the model is wrapped in
+layers of system prompts, tool schemas, skill definitions, hooks, skills, MCP servers,
+vendor optimizations, and orchestration logic. I cannot just test the model in isolation, so I must test the whole
+system. No standard benchmarks exist for CLI tools like Claude Code and how prompts affect them.
 
 My work is based solely on evaluating CLI tools, as the CLI's tools are more
 than the model themselves. As I mentioned earlier, the agentic loop, with hooks,
@@ -336,27 +324,13 @@ Pass Threshold & 0.60 (Grade B) \\
 \textbf{Task Prompt:}
 
 Create a Python script \texttt{hello.py} that prints "Hello, World!" to stdout, exits
-with code 0, and uses relative paths. The script should be created in the
+with code 0, and uses relative paths. The script is created in the
 current working directory.
 
 \textbf{Expected Output:}
 
 \begin{lstlisting}
 Hello, World!
-\end{lstlisting}
-
-\textbf{Expected Result:}
-
-\begin{lstlisting}
-print("Hello, World!")
-\end{lstlisting}
-
-or
-
-\begin{lstlisting}
-# /usr/bin/python3
-
-print("Hello, World!")
 \end{lstlisting}
 
 \textbf{Rubric Categories and Weights:}
@@ -384,7 +358,7 @@ Overall Quality & 20\% & Senior engineer approval; appropriately scoped for task
 Even T0 (no system prompt at all) is expected to get an 'A',
 since we are talking $\geq$ 0.80 scores. If T0 cannot do Hello World, I will assume
 that something is fundamentally wrong with the framework itself and throw out
-the results. Higher tiers (T1-T6) should also succeed, as there is no reason
+the results. Higher tiers (T1-T6) are also expected to succeed, as there is no reason
 fancy prompts or multi-agent setups would help with something this simple.
 However, if performance drops on this test, it means the added complexity is
 actually making things worse even on something so simple, so if this happens, we
@@ -396,7 +370,7 @@ prompt, if the tool allows it. This is to provide as close to a baseline as the
 base model as possible by overwriting the system prompt with an empty string and
 not using any configuration or non-default settings from the tool. This provides
 the baseline that all improvements are measured against. For something as simple
-as hello world, this baseline should solve the task. The test setup is such that
+as hello world, this baseline will solve the task. The test setup is such that
 variability in judging will occur, but there is not much one can do to improve
 the output of a hello world script. However, there are things that you can do
 that make things worse or break the expected behavior, but I would expect all
@@ -452,110 +426,13 @@ The framework tests across four different dimensions. Each one is an independent
 knob you can turn, and they all affect both what the agent can do and how much
 it costs.
 
-\subsubsection{Agent Complexity Axis (Tiers 0-6)}
+The framework tests across four independent dimensions that affect capability and cost:
 
-This is just the tier structure spelled out differently:
+\textbf{Prompt Complexity}: Ranges from 0 (empty) to 1787 lines (full CLAUDE.md from ProjectOdyssey\cite{projectodyssey}). Tested via 24 T0 subtests including individual blocks (B01-B18) and combined configurations (empty, minimal ~55 lines, core ~260 lines, standard ~400 lines, full 1787 lines).
 
+\textbf{Skill Complexity}: 46 skills across 7 categories (Agent, CI/CD, Documentation, GitHub, Language, Quality, Workflow). Skills bake domain knowledge into prompts with high token efficiency, avoiding massive tool schema loading.
 
-\begin{tabular}{|l|l|l|}
-\hline
-Tier Range & Complexity Level & Description \\
-\hline
-T0 & Single-agent, prompt-only & Base model with varying prompt sophistication \\
-\hline
-T1 & Single-agent with skills & Add in agentic skills to improve the quality of the work \\
-\hline
-T2 & Single-agent with tools & External API access via tool schemas \\
-\hline
-T3 & Multi-agent, flat & Specialist agents with central orchestrator \\
-\hline
-T4 & Multi-agent, hierarchical & Nested orchestration with self-correction loops \\
-\hline
-T5 & Best case scenarios & Attempt to pick the best case scenarios from previous runs to see if the sum is more than its parts \\
-\hline
-T6 & Maximum configuration & All features enabled simultaneously \\
-\hline
-\end{tabular}
-
-
-\subsubsection{Prompt Complexity Axis}
-
-Prompt complexity is measured in lines of system prompt content, ranging from 0
-(empty) to 1787 (full CLAUDE.md from ProjectOdyssey\cite{projectodyssey}):
-
-
-\begin{tabular}{|l|l|l|l|}
-\hline
-Level & Lines & Description & Representative Test \\
-\hline
-Empty & 0 & No system prompt & T0-00-empty \\
-\hline
-System & 0 & Only system prompt & T0-01-empty \\
-\hline
-Minimal & ~55 & Safety rules only & T0-06-B02 \\
-\hline
-Core & ~260 & Essential blocks (B02, B07, B18) & T0-03-core \\
-\hline
-Standard & ~400 & Seven core blocks & T0-02-standard \\
-\hline
-Full & 1787 & All 18 CLAUDE.md blocks & T0-03-full \\
-\hline
-\end{tabular}
-
-
-Each block (B01-B18) can be tested separately to see whether the part actually
-contributes to the whole.
-
-\subsubsection{Skill Complexity Axis}
-
-Skills are organized by domain. Here is what we are testing in T1:
-
-
-\begin{tabular}{|l|l|l|l|}
-\hline
-Category & Count & Example Domains & Token Efficiency \\
-\hline
-Agent & 5 & Agent management patterns & High \\
-\hline
-CI/CD & 7 & Build and deployment automation & High \\
-\hline
-Documentation & 4 & Technical writing assistance & Medium \\
-\hline
-GitHub & 10 & Repository management & Medium \\
-\hline
-Language & 10 & Programming language specific & High \\
-\hline
-Quality & 5 & Code quality and review & Medium \\
-\hline
-Workflow & 5 & Development workflow patterns & High \\
-\hline
-\end{tabular}
-
-
-\textbf{Total}: 46 skills across 7 categories. Skills bake knowledge into prompts, so
-you avoid loading massive tool schemas. But do these actually improve
-performance? That is an open question.
-
-\subsubsection{Agent Hierarchy Axis}
-
-Three ways to organize agents, tested across T3-T4:
-
-
-\begin{tabular}{|l|l|l|l|}
-\hline
-Pattern & Coordination & Communication Overhead & Use Cases \\
-\hline
-\textbf{Flat} & No supervision; peer-to-peer & Low & Simple, independent tasks \\
-\hline
-\textbf{Hierarchical} & L0-L4 levels with explicit supervision & High & Complex, interdependent tasks requiring planning \\
-\hline
-\textbf{Hybrid} & Selective hierarchy based on task complexity & Medium & Adaptive: flat for simple tasks, hierarchical for complex \\
-\hline
-\end{tabular}
-
-
-Hierarchy matters for costs because each supervision layer adds more
-orchestration tokens and potentially more self-correction iterations.
+\textbf{Agent Hierarchy}: Three coordination patterns (flat peer-to-peer, hierarchical L0-L4 supervision, hybrid adaptive). Hierarchy adds orchestration tokens and self-correction iterations, increasing costs.
 
 \section{Test Metrics}\label{sec:metrics}
 
@@ -832,45 +709,7 @@ Category & Description & Complexity & Key Challenges \\
 
 \subsection{Test Case Matrix}
 
-I have designed \textbf{47 planned test cases} covering different workflows and
-complexity levels:
-
-
-\begin{tabular}{|l|l|l|}
-\hline
-Test ID Range & Workflow Focus & Representative Task \\
-\hline
-001-010 & Baseline validation & Hello World (001), Simple scripts (002-010) \\
-\hline
-011-020 & Build system tasks & Justfile to Makefile conversion (011), Build automation \\
-\hline
-021-030 & Feature implementation & Add validation logic, Implement utility functions \\
-\hline
-031-040 & Bug fixing and refactoring & Fix type errors, Refactor duplicated code \\
-\hline
-041-047 & Complex multi-step tasks & Multi-file architectural changes, Full feature delivery \\
-\hline
-\end{tabular}
-
-
-Each test is defined in YAML:
-
-\begin{lstlisting}
-id: "NNN-kebab-case-description"
-source:
-  repo: "https://github.com/user/project"
-  hash: "abc123..."  # Pin to specific commit
-task:
-  prompt_file: "prompt.md"
-  timeout_seconds: 3600
-validation:
-  rubric_file: "expected/rubric.yaml"
-tiers: [T0, T1, T2, T3, T4, T5, T6]
-runs_per_tier: 10  # Get enough data for stats
-\end{lstlisting}
-
-Tests get progressively harder. Performance should drop as complexity increases,
-if it does not, the test is too easy even for the advanced models.
+I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section~\ref{sec:discussion} (Further Work) for planned full-scale execution.
 
 \section{Results}\label{sec:results}
 
@@ -896,7 +735,7 @@ First, the dry run was executed with the following setup:
 
 Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
 consensus scores ranging from 0.943 (T6) to 0.983 (T2, T3, T5). The task is
-trivially easy, as expected, even T0 (minimal prompt) scores 0.973.
+trivially easy, as expected, even T0 (minimal prompt) scores 0.973, with T4 at 0.9595.
 
 \textbf{Tier Summary (Dryrun)}
 
@@ -912,7 +751,7 @@ T2 & 1.000 & 0.983 & 0.983 & A & 0.14 \\
 \hline
 T3 & 1.000 & 0.983 & 0.983 & A & 0.13 \\
 \hline
-T4 & 1.000 & 0.960 & 0.960 & A & 0.17 \\
+T4 & 1.000 & 0.9595 & 0.9595 & A & 0.17 \\
 \hline
 T5 & 1.000 & 0.983 & 0.983 & A & 0.07 \\
 \hline
@@ -1068,8 +907,7 @@ Three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5) evaluated each run. Figure~\ref{f
 \item \textbf{Haiku}: Most generous judge, scores range 0.929-1.00 (rounded), awards S grade in 5/7 tiers
 \end{itemize}
 
-\textbf{Pairwise agreement} (Table 3 from
- \texttt{docs/paper-dryrun/tables/tab03\_judge\_agreement.md}):
+\textbf{Pairwise agreement}:
 \begin{itemize}
 \item \textbf{Opus-Sonnet}: Spearman $\rho$ = 0.333, Pearson r = 0.706, mean $\Delta$ = 0.033
 \item \textbf{Opus-Haiku}: Spearman $\rho$ = -0.273, Pearson r = -0.063, mean $\Delta$ = 0.045
@@ -1078,8 +916,7 @@ Three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5) evaluated each run. Figure~\ref{f
 
 Krippendorff's $\alpha$ (interval): -0.117. Poor agreement, but expected with N=1 per
 tier. \textbf{Note}: N=7 is insufficient for reliable correlation estimates; these
-values are reported for completeness but should be interpreted with extreme
-caution.
+values are reported for completeness but interpret them with extreme caution.
 
 Despite low inter-rater agreement, the 3-judge median produces stable final
 scores. The median dampens extreme scores, Haiku's 1.00 perfects versus Opus's
@@ -1133,10 +970,10 @@ requires a single \texttt{print()} statement.
 \textbf{Cost differentiation still works}: Despite quality convergence, Cost-of-Pass
 varies 3.8$\times$ from \$0.065 (T5) to \$0.247 (T6). This demonstrates the framework's
 ability to measure economic trade-offs even when quality metrics saturate. On
-more complex tasks with quality variance, both dimensions should differentiate.
+more complex tasks with quality variance, both dimensions differentiate.
 
 \textbf{Pipeline validation successful}: The framework executed all seven tiers,
-collected 21 judge evaluations, computed consensus scores, generated 25 figures
+collected 21 judge evaluations, computed consensus scores, generated 24 figures
 and 10 tables, and produced structured CSV exports. All components worked as
 designed.
 
@@ -1190,7 +1027,7 @@ This can be investigated in future analysis.
 
 Inter-rater agreement is predictably low: Krippendorff's $\alpha$ = -0.117. But that is
 expected with N=1 and near-perfect scores. On tasks with more variance,
-agreement should improve as judges separate clear failures from clear successes.
+agreement improve as judges separate clear failures from clear successes.
 
 Despite the disagreement, the 3-judge median works. When Haiku awards 1.00 and
 Opus awards 0.93, the median captures the true quality without getting pulled to
@@ -1200,7 +1037,7 @@ One scaling problem: judge time dominates total latency. 77-86% of execution
 time is judge evaluation (128-178s), not agent execution (25-41s). With 3 judges
 per run, judge costs are 3x per evaluation. For large-scale experiments (N=10 $\times$
 113 subtests = 1,130 runs $\times$ 3 judges = 3,390 judge evaluations), judge cost uses
-the budget fast. Future work should explore single-judge evaluation,
+the budget fast. Future work will explore single-judge evaluation,
 confidence-based selection (use Opus only when Sonnet/Haiku disagree), evaluate
 if prompt improvements can get the cheaper Haiku model to be an effective judge,
 or give different prompts to the same judge model.
@@ -1249,9 +1086,9 @@ What did I learn? Five things stand out:
 \begin{enumerate}
 \item The framework is operational.
 \item Quality converges on trivial tasks, making the framework overkill.
-\item All tiers scored grade A, suggesting that throwing more complexity at Hello World does not help, which should be obvious. That obviousness is what makes it a good pipe cleaning run.
+\item All tiers scored grade A, suggesting that throwing more complexity at Hello World does not help, which was expected. That obviousness is what makes it a good pipe cleaning run.
 \item Cost still varies 3.8x despite identical quality, showing the framework can measure economic trade-offs even when quality saturates. T5's hybrid approach achieves Frontier CoP by selectively loading features instead of maximizing everything.
-\item And the Token Efficiency Chasm I hypothesized in Section 4? The data is consistent with this, as T6 burns nearly double the tokens (218K vs 113K) compared to T0.
+\item And the Token Efficiency Chasm I hypothesized in Section~\ref{sec:tiered-ablation}? The data is consistent with this, as T6 burns nearly double the tokens (218K vs 113K) compared to T0.
 \end{enumerate}
 
 Did I answer my original questions? Partially. CoP lets me quantify efficiency;
@@ -1318,53 +1155,7 @@ reviewing early drafts of this paper and providing valuable feedback.
 
 \section{Detailed Metric Definitions}
 
-This appendix defines the core metrics used throughout the evaluation framework. For the complete definitions including future instrumentation, see the repository at \url{https://github.com/HomericIntelligence/ProjectScylla/blob/e33d627/.claude/shared/metrics-definitions.md}.
-
-\subsubsection{Quality Metrics}
-
-\textbf{Pass-Rate}: Proportion of attempts that produce a correct solution.
-
-Formula: $\text{Pass-Rate} = \frac{\text{correct\_solutions}}{\text{total\_attempts}}$
-
-Range: [0, 1], where 0.0 = no correct solutions, 1.0 = all solutions correct. ``Correct'' is defined by task-specific test suite. Report with confidence intervals (95\% CI recommended for N$\geq$30).
-
-\textbf{Implementation Rate (Impl-Rate)}: Proportion of semantic requirements satisfied by the solution.
-
-Formula: $\text{Impl-Rate} = \frac{\text{satisfied\_requirements}}{\text{total\_requirements}}$
-
-Range: [0, 1]. Measures partial credit for incomplete solutions, more granular than binary Pass-Rate. Requires predefined requirement checklist where each requirement is independently verifiable.
-
-\textbf{Fine-Grained Progress Rate ($R_{Prog}$)}: Proportion of expected progress steps achieved during problem-solving.
-
-Formula: $R_{Prog} = \frac{\text{achieved\_progress\_steps}}{\text{expected\_progress\_steps}}$
-
-Range: [0, 1+]. Captures step-by-step advancement and can exceed 1.0 if agent takes extra beneficial steps. Useful for debugging agent behavior in multi-step tasks.
-
-\textbf{Consistency}: Stability of outputs across multiple runs with identical inputs.
-
-Formula: $\text{Consistency} = 1 - \frac{\sigma(\text{outputs})}{\mu(\text{outputs})}$
-
-Range: [0, 1], where higher values indicate more deterministic behavior. Requires multiple runs per task; temperature=0 should yield high consistency.
-
-\subsubsection{Economic Metrics}
-
-\textbf{Cost-of-Pass (CoP)}: Expected monetary cost to obtain one correct solution.
-
-Formula: $\text{CoP} = \frac{\text{total\_cost}}{\text{pass\_rate}}$
-
-Unit: USD (\$). Range: [0, $\infty$), lower is better. Infinite if pass\_rate = 0 (configuration is economically dead). Primary economic metric for tier comparison; includes all costs (input tokens, output tokens, tools).
-
-\textbf{Frontier CoP}: Minimum Cost-of-Pass across all evaluated tiers.
-
-Formula: $\text{Frontier\_CoP} = \min(\text{CoP}_{T0}, \text{CoP}_{T1}, \ldots, \text{CoP}_{T6})$
-
-Identifies the most cost-effective tier and serves as the optimization target.
-
-\textbf{Token Distribution}: Breakdown of token usage by component.
-
-Formula: $\text{token\_dist} = \left\{\frac{\text{input}}{\text{total}}, \frac{\text{output}}{\text{total}}, \frac{\text{tool\_input}}{\text{total}}, \frac{\text{tool\_output}}{\text{total}}\right\}$
-
-Helps identify cost drivers and target optimization efforts.
+Core quality and economic metrics are defined in Section~\ref{sec:metrics}. This appendix provides additional metrics used for future analysis. For complete definitions including instrumentation details, see the repository at \url{https://github.com/HomericIntelligence/ProjectScylla/blob/e33d627/.claude/shared/metrics-definitions.md}.
 
 \textbf{Change Fail Percentage (CFP)}: Proportion of code changes that cause failures.
 
@@ -1504,7 +1295,7 @@ Additional diagnostic figures (failure rates, pass rates, effect sizes, tier upl
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/fig20_metric_correlation_heatmap.pdf}
-\caption{Metric correlation heatmap (Spearman $\rho$). Heatmap showing pairwise correlations between quality metrics (score, pass-rate) and cost metrics (cost, tokens, duration). Weak correlations between cost and quality suggest that increased spending does not guarantee better outcomes on ceiling-constrained tasks, supporting the economic analysis in Section~6.2.}
+\caption{Metric correlation heatmap (Spearman $\rho$). Heatmap showing pairwise correlations between quality metrics (score, pass-rate) and cost metrics (cost, tokens, duration). Weak correlations between cost and quality suggest that increased spending does not guarantee better outcomes on ceiling-constrained tasks, supporting the economic analysis in Section~\ref{sec:cost-tradeoffs}.}
 \label{fig:fig20_metric_correlation_heatmap}
 \end{figure}
 
@@ -1523,11 +1314,6 @@ Additional diagnostic figures (failure rates, pass rates, effect sizes, tier upl
 \caption{Cumulative cost over runs. Line chart showing cumulative cost accumulation across sequential evaluation runs for each tier.}
 \label{fig:fig22_cumulative_cost}
 \end{figure}
-
-
-\subsection{Implementation Rate}
-
-
 
 
 
