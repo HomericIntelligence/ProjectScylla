@@ -1,8 +1,8 @@
 agent_model,tier,passed,impl_rate,pass_rate
-Sonnet 4.5,T0,True,0.9923076923076923,1
+Sonnet 4.5,T0,True,0.9923076923076924,1
 Sonnet 4.5,T1,True,0.99,1
 Sonnet 4.5,T2,True,1.0,1
 Sonnet 4.5,T3,True,0.9933333333333334,1
-Sonnet 4.5,T4,True,0.9566666666666667,1
+Sonnet 4.5,T4,True,0.9566666666666668,1
 Sonnet 4.5,T5,True,1.0,1
-Sonnet 4.5,T6,True,0.9666666666666667,1
+Sonnet 4.5,T6,True,0.9666666666666668,1
