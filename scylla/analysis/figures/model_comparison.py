@@ -142,14 +142,10 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     if len(significant_points) > 0:
         markers = (
             alt.Chart(significant_points)
-            .mark_text(text="*", fontSize=14, dy=-15, fontWeight="bold")
+            .mark_text(text="*", fontSize=12, dy=-15, fontWeight="bold", color="black")
             .encode(
                 x=alt.X("tier:O", sort=tier_order),
                 y="uplift:Q",
-                color=alt.Color(
-                    "agent_model:N",
-                    scale=alt.Scale(domain=domain, range=range_),
-                ),
             )
         )
         chart = (line + markers).properties(
