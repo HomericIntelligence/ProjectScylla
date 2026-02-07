@@ -24,6 +24,24 @@
       "relatedSkills": ["latex-workflow", "data-validation", "academic-writing", "git-workflow"],
       "successRate": 1.0,
       "usageCount": 1
+    },
+    {
+      "name": "paper-final-review",
+      "version": "1.0.0",
+      "category": "documentation",
+      "description": "Comprehensive 10-category review workflow for academic paper publication readiness with GO/NO-GO assessment",
+      "date": "2026-02-07",
+      "tags": ["academic-writing", "paper-validation", "publication-readiness", "latex", "reproducibility", "numerical-verification", "go-no-go-assessment"],
+      "relatedSkills": ["paper-validation-workflow", "academic-paper-validation", "academic-paper-review", "academic-paper-qa"],
+      "metadata": {
+        "paper_title": "Taming Scylla: AI Agent Evaluation Framework",
+        "issues_found": 5,
+        "issues_critical": 0,
+        "fix_time_minutes": 30,
+        "outcome": "success"
+      },
+      "successRate": 1.0,
+      "usageCount": 1
     }
   ]
 }
