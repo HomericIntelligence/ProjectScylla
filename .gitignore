@@ -52,6 +52,17 @@ docs/data/
 docs/figures/
 docs/tables/
 
+# LaTeX build artifacts
+docs/arxiv/dryrun/*.aux
+docs/arxiv/dryrun/*.blg
+docs/arxiv/dryrun/*.log
+docs/arxiv/dryrun/*.out
+docs/arxiv/dryrun/*.bbl
+docs/*.aux
+docs/*.blg
+docs/*.log
+docs/*.out
+
 # Coverage reports
 .coverage
 htmlcov/
