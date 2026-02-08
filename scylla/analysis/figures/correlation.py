@@ -130,7 +130,7 @@ def fig20_metric_correlation_heatmap(
             .configure_view(strokeWidth=0)
         )
 
-    save_figure(chart, "fig20_metric_correlation_heatmap", output_dir, corr_df, render)
+    save_figure(chart, "fig20_metric_correlation_heatmap", output_dir, render)
 
 
 def fig21_cost_quality_regression(
@@ -195,8 +195,10 @@ def fig21_cost_quality_regression(
     models = sorted(subtest_stats["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for score axis
-    score_domain = compute_dynamic_domain(subtest_stats["mean_score"])
+    # Compute dynamic domain for score axis - include regression line Y values
+    reg_line_rows = reg_df[reg_df["type"] == "regression_line"]
+    all_y = pd.concat([subtest_stats["mean_score"], reg_line_rows["y"].dropna()])
+    score_domain = compute_dynamic_domain(all_y)
 
     # Create scatter plot
     scatter = (
@@ -261,10 +263,9 @@ def fig21_cost_quality_regression(
 
     # Facet by model if multiple models
     if subtest_stats["agent_model"].nunique() > 1:
-        # Need to combine data for layering
         chart = (
-            alt.layer(scatter, regression_lines, annotations, data=subtest_stats)
-            .facet(row=alt.Row("agent_model:N", title="Agent Model"))
+            alt.layer(scatter, regression_lines, annotations)
+            .facet(row=alt.Row("agent_model:N", title="Agent Model"), data=subtest_stats)
             .properties(title="Cost vs Quality Regression (Subtest Level)")
             .configure_view(strokeWidth=0)
         )
@@ -275,4 +276,4 @@ def fig21_cost_quality_regression(
             .configure_view(strokeWidth=0)
         )
 
-    save_figure(chart, "fig21_cost_quality_regression", output_dir, subtest_stats, render)
+    save_figure(chart, "fig21_cost_quality_regression", output_dir, render)

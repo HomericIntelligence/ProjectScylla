@@ -130,7 +130,7 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
 
     chart = chart.properties(title="Cost-of-Pass by Tier (Log Scale)").configure_view(strokeWidth=0)
 
-    save_figure(chart, "fig06_cop_by_tier", output_dir, stats_df, render)
+    save_figure(chart, "fig06_cop_by_tier", output_dir, render)
 
     # Also save frontier CoP table
     frontier_csv = output_dir / "fig06_frontier_cop.csv"
@@ -280,7 +280,7 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
 
     chart = chart.properties(title="Cost vs Quality Pareto Frontier").configure_view(strokeWidth=0)
 
-    save_figure(chart, "fig08_cost_quality_pareto", output_dir, tier_stats, render)
+    save_figure(chart, "fig08_cost_quality_pareto", output_dir, render)
 
 
 def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -354,4 +354,4 @@ def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     else:
         chart = lines.properties(title="Cumulative Cost Over Runs").configure_view(strokeWidth=0)
 
-    save_figure(chart, "fig22_cumulative_cost", output_dir, cumulative_df, render)
+    save_figure(chart, "fig22_cumulative_cost", output_dir, render)

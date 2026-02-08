@@ -73,7 +73,7 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
         .resolve_scale(x="independent")
     )
 
-    save_figure(chart, "fig02_judge_variance", output_dir, data, render)
+    save_figure(chart, "fig02_judge_variance", output_dir, render)
 
 
 def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -181,7 +181,7 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
     chart = scatter
 
     # Save with correlations in CSV
-    save_figure(chart, "fig14_judge_agreement", output_dir, pairs_df, render)
+    save_figure(chart, "fig14_judge_agreement", output_dir, render)
 
     # Also save correlation table
     corr_csv_path = output_dir / "fig14_judge_agreement_correlations.csv"
@@ -242,12 +242,19 @@ def fig17_judge_variance_overall(
     std_data = data.groupby("judge_display")["judge_score"].std().reset_index()
     std_data.columns = ["judge_display", "score_std"]
 
+    # Compute dynamic domain for score std dev
+    std_max = max(0.3, float(std_data["score_std"].max()) * 1.1)
+
     bars = (
         alt.Chart(std_data)
         .mark_bar()
         .encode(
             x=alt.X("judge_display:N", title="Judge Model", sort=judge_order),
-            y=alt.Y("score_std:Q", title="Score Std Dev", scale=alt.Scale(domain=[0, 0.3])),
+            y=alt.Y(
+                "score_std:Q",
+                title="Score Std Dev",
+                scale=alt.Scale(domain=[0, round(std_max / 0.05) * 0.05]),
+            ),
             color=alt.Color(
                 "judge_display:N",
                 scale=alt.Scale(domain=domain, range=range_),
@@ -264,4 +271,4 @@ def fig17_judge_variance_overall(
     # Combine panels horizontally
     chart = (boxplot | bars).properties(title="Judge Variance Overall")
 
-    save_figure(chart, "fig17_judge_variance_overall", output_dir, data, render)
+    save_figure(chart, "fig17_judge_variance_overall", output_dir, render)

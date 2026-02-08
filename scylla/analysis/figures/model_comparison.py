@@ -11,7 +11,11 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
+from scylla.analysis.figures.spec_builder import (
+    compute_dynamic_domain,
+    compute_dynamic_domain_with_ci,
+    save_figure,
+)
 from scylla.analysis.stats import (
     bonferroni_correction,
     bootstrap_ci,
@@ -120,7 +124,9 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             y=alt.Y(
                 "uplift:Q",
                 title="Pass Rate Uplift vs T0 Baseline",
-                scale=alt.Scale(domain=[-0.1, 0.1]),
+                scale=alt.Scale(
+                    domain=compute_dynamic_domain(uplift_df["uplift"], floor=-1.0, ceiling=1.0)
+                ),
             ),
             color=alt.Color(
                 "agent_model:N",
@@ -154,7 +160,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     else:
         chart = line.properties(title="Tier Transition Uplift (Relative to T0)")
 
-    save_figure(chart, "fig11_tier_uplift", output_dir, uplift_df, render)
+    save_figure(chart, "fig11_tier_uplift", output_dir, render)
 
     # Also save significance table
     sig_csv = output_dir / "fig11_tier_uplift_significance.csv"
@@ -234,8 +240,10 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     models = sorted(consistency_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for consistency axis
-    consistency_domain = compute_dynamic_domain(consistency_df["mean_consistency"])
+    # Compute dynamic domain for consistency axis - include CI bounds
+    consistency_domain = compute_dynamic_domain_with_ci(
+        consistency_df["mean_consistency"], consistency_df["ci_low"], consistency_df["ci_high"]
+    )
 
     # Create line chart
     line = (
@@ -283,4 +291,4 @@ def fig12_consistency(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         title="Consistency Score by Tier (Higher = More Deterministic)"
     )
 
-    save_figure(chart, "fig12_consistency", output_dir, consistency_df, render)
+    save_figure(chart, "fig12_consistency", output_dir, render)

@@ -16,7 +16,11 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
+from scylla.analysis.figures.spec_builder import (
+    compute_dynamic_domain,
+    compute_dynamic_domain_with_ci,
+    save_figure,
+)
 from scylla.analysis.stats import bootstrap_ci
 
 
@@ -74,8 +78,8 @@ def fig25_impl_rate_by_tier(
     models = sorted(df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for impl_rate axis
-    impl_rate_domain = compute_dynamic_domain(df["impl_rate"])
+    # Compute dynamic domain for impl_rate axis - include CI bounds
+    impl_rate_domain = compute_dynamic_domain_with_ci(df["impl_rate"], df["ci_low"], df["ci_high"])
 
     # Vega-Lite spec
     bars = (
@@ -128,7 +132,7 @@ def fig25_impl_rate_by_tier(
         height=300,
     )
 
-    save_figure(chart, "fig25_impl_rate_by_tier", output_dir, df, render=render)
+    save_figure(chart, "fig25_impl_rate_by_tier", output_dir, render=render)
 
 
 def fig26_impl_rate_vs_pass_rate(
@@ -225,7 +229,7 @@ def fig26_impl_rate_vs_pass_rate(
         height=300,
     )
 
-    save_figure(chart, "fig26_impl_rate_vs_pass_rate", output_dir, df, render=render)
+    save_figure(chart, "fig26_impl_rate_vs_pass_rate", output_dir, render=render)
 
 
 def fig27_impl_rate_distribution(
@@ -330,4 +334,4 @@ def fig27_impl_rate_distribution(
         )
     )
 
-    save_figure(chart, "fig27_impl_rate_distribution", output_dir, df, render=render)
+    save_figure(chart, "fig27_impl_rate_distribution", output_dir, render=render)

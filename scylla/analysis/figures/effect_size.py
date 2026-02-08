@@ -116,25 +116,30 @@ def fig19_effect_size_forest(runs_df: pd.DataFrame, output_dir: Path, render: bo
     )
 
     # Add vertical line at delta=0 (no effect)
-    zero_line = (
-        alt.Chart(pd.DataFrame({"x": [0]}))
-        .mark_rule(strokeDash=[5, 5], color="black")
-        .encode(x="x:Q")
-    )
-
     # Facet by model if multiple models
     if effect_df["agent_model"].nunique() > 1:
+        # Build zero line data with agent_model facet column
+        zero_data = pd.DataFrame(
+            [{"agent_model": m, "x": 0} for m in effect_df["agent_model"].unique()]
+        )
+        zero_line = alt.Chart(zero_data).mark_rule(strokeDash=[5, 5], color="black").encode(x="x:Q")
+
         chart = (
-            alt.layer(zero_line, error_bars, points, data=effect_df)
-            .facet(row=alt.Row("agent_model:N", title="Agent Model"))
+            alt.layer(zero_line, error_bars, points)
+            .facet(row=alt.Row("agent_model:N", title="Agent Model"), data=effect_df)
             .properties(title="Effect Size Forest Plot (Cliff's Delta with 95% CI)")
             .configure_view(strokeWidth=0)
         )
     else:
+        zero_line = (
+            alt.Chart(pd.DataFrame({"x": [0]}))
+            .mark_rule(strokeDash=[5, 5], color="black")
+            .encode(x="x:Q")
+        )
         chart = (
             alt.layer(zero_line, error_bars, points)
             .properties(title="Effect Size Forest Plot (Cliff's Delta with 95% CI)")
             .configure_view(strokeWidth=0)
         )
 
-    save_figure(chart, "fig19_effect_size_forest", output_dir, effect_df, render)
+    save_figure(chart, "fig19_effect_size_forest", output_dir, render)

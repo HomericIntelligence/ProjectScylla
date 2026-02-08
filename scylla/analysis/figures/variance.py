@@ -73,7 +73,7 @@ def fig01_score_variance_by_tier(
         .resolve_scale(x="independent")
     )
 
-    save_figure(chart, "fig01_score_variance_by_tier", output_dir, data, render)
+    save_figure(chart, "fig01_score_variance_by_tier", output_dir, render)
 
 
 def fig03_failure_rate_by_tier(
@@ -132,7 +132,7 @@ def fig03_failure_rate_by_tier(
         .properties(title="Grade Distribution by Tier")
     )
 
-    save_figure(chart, "fig03_failure_rate_by_tier", output_dir, grade_counts, render)
+    save_figure(chart, "fig03_failure_rate_by_tier", output_dir, render)
 
 
 def fig16_success_variance_by_test(
@@ -199,6 +199,9 @@ def fig16_success_variance_by_test(
     )
 
     # Panel B: Score std dev heatmap
+    # Compute dynamic domain for score std dev
+    std_max = max(0.3, float(variance_df["score_std"].max()) * 1.1)
+
     heatmap_score = (
         alt.Chart(variance_df)
         .mark_rect()
@@ -208,7 +211,7 @@ def fig16_success_variance_by_test(
             color=alt.Color(
                 "score_std:Q",
                 title="Score Std Dev",
-                scale=alt.Scale(scheme="plasma", domain=[0, 0.3]),
+                scale=alt.Scale(scheme="plasma", domain=[0, round(std_max / 0.05) * 0.05]),
             ),
             tooltip=[
                 alt.Tooltip("tier:O", title="Tier"),
@@ -225,7 +228,7 @@ def fig16_success_variance_by_test(
     # Combine faceted panels horizontally
     chart = (heatmap_pass | heatmap_score).properties(title="Success Variance by Test")
 
-    save_figure(chart, "fig16_success_variance_by_test", output_dir, variance_df, render)
+    save_figure(chart, "fig16_success_variance_by_test", output_dir, render)
 
 
 def fig18_failure_rate_by_test(
@@ -300,4 +303,4 @@ def fig18_failure_rate_by_test(
         .resolve_scale(y="independent")
     )
 
-    save_figure(chart, "fig18_failure_rate_by_test", output_dir, failure_df, render)
+    save_figure(chart, "fig18_failure_rate_by_test", output_dir, render)

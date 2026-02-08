@@ -81,7 +81,7 @@ def fig13_latency(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) 
         .properties(title="Latency Breakdown by Tier")
     )
 
-    save_figure(chart, "fig13_latency", output_dir, duration_long, render)
+    save_figure(chart, "fig13_latency", output_dir, render)
 
 
 def fig15_subtest_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -153,4 +153,4 @@ def fig15_subtest_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     # Concatenate horizontally
     chart = alt.hconcat(*charts).resolve_scale(color="shared")
 
-    save_figure(chart, "fig15_subtest_heatmap", output_dir, heatmap_data, render)
+    save_figure(chart, "fig15_subtest_heatmap", output_dir, render)

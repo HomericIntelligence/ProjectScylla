@@ -87,4 +87,4 @@ def fig09_criteria_by_tier(
         .properties(title="Per-Criteria Performance by Tier")
     )
 
-    save_figure(chart, "fig09_criteria_by_tier", output_dir, criteria_agg, render)
+    save_figure(chart, "fig09_criteria_by_tier", output_dir, render)

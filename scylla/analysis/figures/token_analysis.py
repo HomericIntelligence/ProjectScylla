@@ -86,4 +86,4 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
         .properties(title="Token Distribution by Tier")
     )
 
-    save_figure(chart, "fig07_token_distribution", output_dir, token_long, render)
+    save_figure(chart, "fig07_token_distribution", output_dir, render)

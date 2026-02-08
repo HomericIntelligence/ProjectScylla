@@ -12,7 +12,10 @@ import pandas as pd
 
 from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
+from scylla.analysis.figures.spec_builder import (
+    compute_dynamic_domain_with_ci,
+    save_figure,
+)
 from scylla.analysis.stats import bootstrap_ci
 
 
@@ -69,8 +72,10 @@ def fig04_pass_rate_by_tier(
     models = sorted(stats_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for pass rate axis
-    pass_rate_domain = compute_dynamic_domain(stats_df["pass_rate"])
+    # Compute dynamic domain for pass rate axis - include CI bounds
+    pass_rate_domain = compute_dynamic_domain_with_ci(
+        stats_df["pass_rate"], stats_df["ci_low"], stats_df["ci_high"]
+    )
 
     # Create grouped bar chart
     bars = (
@@ -118,7 +123,7 @@ def fig04_pass_rate_by_tier(
         .configure_view(strokeWidth=0)
     )
 
-    save_figure(chart, "fig04_pass_rate_by_tier", output_dir, stats_df, render)
+    save_figure(chart, "fig04_pass_rate_by_tier", output_dir, render)
 
 
 def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -190,4 +195,4 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
         .properties(title="Grade Distribution Heatmap by Tier")
     )
 
-    save_figure(chart, "fig05_grade_heatmap", output_dir, grade_counts, render)
+    save_figure(chart, "fig05_grade_heatmap", output_dir, render)

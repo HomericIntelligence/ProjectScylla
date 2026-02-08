@@ -157,13 +157,6 @@ colors:
     "Agent Execution": "#4C78A8"  # Blue
     "Judge Evaluation": "#E45756" # Red
 
-  # Token type colors (for token analysis)
-  token_types:
-    "Input (Fresh)": "#4C78A8"      # Blue
-    "Input (Cached)": "#72B7B2"     # Teal
-    "Output": "#E45756"             # Red
-    "Cache Creation": "#F58518"     # Orange
-
 # Data Loading Parameters
 data:
   # Experiment exclusions (override with --exclude CLI flag)

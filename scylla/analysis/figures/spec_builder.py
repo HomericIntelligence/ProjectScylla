@@ -8,6 +8,7 @@ Python Justification: altair is a Python-only library for Vega-Lite generation.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import altair as alt
@@ -64,9 +65,9 @@ def compute_dynamic_domain(
     domain_min = data_min - padding
     domain_max = data_max + padding
 
-    # Round to nearest 0.1 for clean axis labels
-    domain_min = round(domain_min / 0.1) * 0.1
-    domain_max = round(domain_max / 0.1) * 0.1
+    # Round to nearest 0.05 for clean axis labels
+    domain_min = round(domain_min / 0.05) * 0.05
+    domain_max = round(domain_max / 0.05) * 0.05
 
     # Clamp to [floor, ceiling]
     domain_min = max(floor, domain_min)
@@ -78,6 +79,35 @@ def compute_dynamic_domain(
         domain_max = ceiling
 
     return [domain_min, domain_max]
+
+
+def compute_dynamic_domain_with_ci(
+    means: pd.Series, ci_lows: pd.Series, ci_highs: pd.Series, **kwargs
+) -> list[float]:
+    """Compute tight axis domain from data including CI bounds.
+
+    Combines means and confidence interval bounds to compute a domain that
+    encompasses all error bar whiskers.
+
+    Args:
+        means: Pandas series containing mean values
+        ci_lows: Pandas series containing lower CI bounds
+        ci_highs: Pandas series containing upper CI bounds
+        **kwargs: Additional arguments passed to compute_dynamic_domain
+
+    Returns:
+        Two-element list [min, max] suitable for alt.Scale(domain=...)
+
+    Example:
+        >>> means = pd.Series([0.50, 0.60, 0.70])
+        >>> ci_lows = pd.Series([0.45, 0.55, 0.65])
+        >>> ci_highs = pd.Series([0.55, 0.65, 0.75])
+        >>> compute_dynamic_domain_with_ci(means, ci_lows, ci_highs)
+        [0.40, 0.80]  # Domain encompasses all whiskers
+
+    """
+    combined = pd.concat([means, ci_lows, ci_highs]).dropna()
+    return compute_dynamic_domain(combined, **kwargs)
 
 
 def apply_publication_theme() -> None:
@@ -133,18 +163,16 @@ def save_figure(
     chart: alt.Chart,
     name: str,
     output_dir: Path,
-    data: pd.DataFrame | None = None,
     render: bool = True,
     formats: list[str] | None = None,
     latex_caption: str | None = None,
 ) -> None:
-    """Save chart as Vega-Lite JSON + CSV + optionally rendered images + LaTeX snippet.
+    """Save chart as Vega-Lite JSON + optionally rendered images + LaTeX snippet.
 
     Args:
         chart: Altair chart
         name: Figure name (without extension)
         output_dir: Output directory
-        data: Optional DataFrame to save as CSV (if None, extracted from chart)
         render: Whether to render to raster/vector formats
         formats: List of formats to render ("png", "pdf", "svg")
         latex_caption: Optional custom LaTeX caption (defaults to chart title)
@@ -156,20 +184,11 @@ def save_figure(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save Vega-Lite JSON spec
+    # Save Vega-Lite JSON spec with proper formatting
+    spec = chart.to_dict()
     spec_path = output_dir / f"{name}.vl.json"
-    chart.save(str(spec_path))
+    spec_path.write_text(json.dumps(spec, indent=2) + "\n")
     print(f"  Saved spec: {spec_path}")
-
-    # Save data as CSV
-    if data is not None:
-        csv_path = output_dir / f"{name}.csv"
-        data.to_csv(csv_path, index=False)
-        print(f"  Saved data: {csv_path}")
-    elif hasattr(chart, "data") and isinstance(chart.data, pd.DataFrame):
-        csv_path = output_dir / f"{name}.csv"
-        chart.data.to_csv(csv_path, index=False)
-        print(f"  Saved data: {csv_path}")
 
     # Optionally render to images
     if render:

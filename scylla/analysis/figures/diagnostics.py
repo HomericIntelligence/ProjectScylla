@@ -103,24 +103,47 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
     q_min = min(qq_df["theoretical_quantile"].min(), qq_df["observed_quantile"].min())
     q_max = max(qq_df["theoretical_quantile"].max(), qq_df["observed_quantile"].max())
 
+    # Build per-facet reference line data with matching column names
+    ref_rows = []
+    for model in sorted(runs_df["agent_model"].unique()):
+        for tier in tier_order:
+            ref_rows.append(
+                {
+                    "agent_model": model,
+                    "tier": tier,
+                    "theoretical_quantile": q_min,
+                    "observed_quantile": q_min,
+                }
+            )
+            ref_rows.append(
+                {
+                    "agent_model": model,
+                    "tier": tier,
+                    "theoretical_quantile": q_max,
+                    "observed_quantile": q_max,
+                }
+            )
+    ref_df = pd.DataFrame(ref_rows)
+
     reference_line = (
-        alt.Chart(pd.DataFrame({"x": [q_min, q_max], "y": [q_min, q_max]}))
+        alt.Chart(ref_df)
         .mark_line(strokeDash=[5, 5], color="red")
-        .encode(x="x:Q", y="y:Q")
+        .encode(x="theoretical_quantile:Q", y="observed_quantile:Q")
     )
 
-    # Facet by (model, tier)
+    # Facet by (model, tier) - pass qq_df as data to facet
     chart = (
-        alt.layer(reference_line, scatter, data=qq_df)
+        alt.layer(reference_line, scatter)
         .facet(
             column=alt.Column("tier:N", title="Tier", sort=tier_order),
             row=alt.Row("agent_model:N", title="Agent Model"),
+            data=qq_df,
         )
         .properties(title="Q-Q Plots (Normal Distribution Assessment)")
         .configure_view(strokeWidth=0)
     )
 
-    save_figure(chart, "fig23_qq_plots", output_dir, qq_df, render)
+    save_figure(chart, "fig23_qq_plots", output_dir, render)
 
 
 def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -193,12 +216,15 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
 
     # Create KDE overlay
     if len(kde_df) > 0:
-        # Scale KDE to match histogram frequency
-        # Get histogram counts to determine scaling factor
-        max_count = runs_df.groupby(["agent_model", "tier"]).size().max()
-
-        # Normalize KDE density to match histogram scale
-        kde_df["scaled_density"] = kde_df["density"] * (max_count / kde_df["density"].max())
+        # Scale KDE to match histogram frequency per (model, tier) group
+        for (model, tier), group_idx in kde_df.groupby(["agent_model", "tier"]).groups.items():
+            group_mask = (kde_df["agent_model"] == model) & (kde_df["tier"] == tier)
+            group_density_max = kde_df.loc[group_mask, "density"].max()
+            tier_count = len(runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)])
+            if group_density_max > 0:
+                kde_df.loc[group_mask, "scaled_density"] = kde_df.loc[group_mask, "density"] * (
+                    tier_count / group_density_max
+                )
 
         kde_lines = (
             alt.Chart(kde_df)
@@ -213,10 +239,10 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
             )
         )
 
-        # Facet by tier
+        # Facet by tier - pass runs_df as data to facet
         chart = (
-            alt.layer(histogram, kde_lines, data=runs_df)
-            .facet(column=alt.Column("tier:N", title="Tier", sort=tier_order))
+            alt.layer(histogram, kde_lines)
+            .facet(column=alt.Column("tier:N", title="Tier", sort=tier_order), data=runs_df)
             .properties(title="Score Distributions with KDE Overlay")
             .configure_view(strokeWidth=0)
         )
@@ -228,4 +254,4 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
             .configure_view(strokeWidth=0)
         )
 
-    save_figure(chart, "fig24_score_histograms", output_dir, runs_df, render)
+    save_figure(chart, "fig24_score_histograms", output_dir, render)
