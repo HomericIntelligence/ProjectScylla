@@ -5,6 +5,6 @@
     "texlive_version": "2023"
   },
   "sources": [
-    { "filename": "main.tex", "usage": "toplevel" }
+    { "filename": "paper.tex", "usage": "toplevel" }
   ]
 }

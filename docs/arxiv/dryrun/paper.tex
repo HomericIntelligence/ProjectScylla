@@ -1,5 +1,5 @@
 \documentclass[11pt]{article}
-\pdfoutput=1  % Required by arXiv
+\pdfoutput=1 % Required by arXiv
 
 % ===== Encoding & Fonts =====
 \usepackage[T1]{fontenc}
@@ -25,7 +25,7 @@
 
 % ===== Figures =====
 \usepackage{graphicx}
-\graphicspath{{paper-dryrun/}}
+\graphicspath{{./}}
 \usepackage{subcaption}
 \usepackage{caption}
 \captionsetup{
@@ -47,6 +47,10 @@
 
 % ===== Links =====
 \usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+% ===== Diagrams =====
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, backgrounds}
 
 \raggedbottom
 
@@ -89,8 +93,8 @@ AI
 
 Large language models have ushered in massive increases in capabilities for
 automated computer interactions. What used to require hand-coded algorithms and
-pipelines can now be done automatically using state of the art coding models.
-However, understanding what improves these language models is more of black
+pipelines can now be done automatically using state-of-the-art coding models.
+However, understanding what improves these language models is more black
 magic than art, let alone a rigorous science. This paper's goal is to help
 demystify the magic of prompt engineering by proposing a rigorous evaluation
 framework to quantify the benefits of different architectural approaches.
@@ -108,7 +112,7 @@ varies 3.8$\times$ from \$0.065 (T5 hybrid) to \$0.247 (T6 super). The framework
 successfully differentiates cost structures across architectural choices even
 when quality converges, demonstrating that architectural complexity does not
 always improve quality. Careful hybrid designs (T5) can achieve Frontier
-Cost-of-Pass by selectively combining features rather than maximizing them.
+Cost-of-Pass (the minimum CoP across all tiers) by selectively combining features rather than maximizing them.
 
 Anthropic has many good resources for improving Claude Code on their engineering
 blog, but despite these, there are not any intuitive and user-friendly methods
@@ -119,7 +123,7 @@ day-to-day coding tasks. I wanted to know if sub-agents, skills, tools, or mcp
 servers were contributing to actual improved code output, without relying on my
 gut or intuition. This problem came up multiple times when asked by others to
 explain how to better utilize CLI tools for programming. In my experience, the
-quality of the prompts has a dramatic improvement on the output of the results.
+quality of the prompts has a dramatic effect on the output.
 Whether it is the prompt to call the tool or MCP server, the prompt to spawn a
 sub-agent, or the prompt to trigger a skill, these language-based triggers are
 fuzzy in their meaning. Unlike a traditional programming language that is very
@@ -132,16 +136,16 @@ this area, and explain how they approach the problem. Then, in Section~\ref{sec:
 introduce the testing methodology along with an in-depth analysis of the first
 test case. This will provide the needed understanding of what is being tested,
 along with why, on something that is easily analyzed and
-understandable. Then I will go over the rest of the testing framework to
+understandable. Section~\ref{sec:architecture} describes the framework's software architecture, explaining how the evaluation system is built and how it achieves model-agnostic evaluation through the adapter pattern. Then I will go over the rest of the testing framework to
 showcase what is being tested, measured, and why these are being tested using
 simple cases introduced in the previous sections.
 
 The framework is designed to investigate questions such as these in future studies:
 
 \begin{itemize}
-\item Whether it is possible to quantify whether a task is solveable more efficiently by one methodology over others
+\item Whether it is possible to quantify whether a task is solvable more efficiently by one methodology over others
 \item Whether the sum of a prompt is more than the individual parts
-\item Whether there are core improvements that can be made purely through extensions to claude code that are generic for all workloads
+\item Whether there are core improvements that can be made purely through extensions to Claude Code that are generic for all workloads
 \item Whether there are specific prompt techniques that have secondary effects, positive or negative, on other prompt techniques
 \item Holding the tool and prompt constant, how much the underlying model may contribute to the quality of the results
 \end{itemize}
@@ -198,16 +202,16 @@ interesting for probabilistic evaluation.
 
 \subsection{Experimental Design}
 
-This experiment is designed by testing english phrases, colloquially known as
+This experiment is designed by testing English phrases, colloquially known as
 prompts, via the various methodologies exposed by a CLI tool, in this case
 Claude Code. The prompts to be tested are taken from the ProjectOdyssey\cite{projectodyssey} git
-repository at github hash 011a3ff on December 30th 2025. The prompts are broken
+repository at github hash 011a3ff on December 30th, 2025. The prompts are broken
 down into their components and separated into various tiers which will be
 discussed later. These components are used to setup the experiment, which is run
 by allowing an agent a nearly unfettered access to the system, only blocking
 dangerous ops, thanks to the safety-net plugin\cite{safetynet} from cc-marketplace\cite{ccmarketplace}, to
 perform a task. The task has a well defined solution that is then judged by
-three different LLM's of various 'strength'. In this case Claude Opus 4.5,
+three different LLMs of various 'strength'. In this case Claude Opus 4.5,
 Claude Sonnet 4.5, and Claude Haiku 4.5. Each of the 4.5 models are sufficiently
 advanced in capabilities to be considered independent judges of a task with low
 failure rates. The judges are provided the same prompt, so the only difference
@@ -215,8 +219,7 @@ between their results comes from the judge training and implementation
 differences and not from the prompt or test input. Each judge will receive the
 output of the task LLM, and provide the results based on the criteria. The
 judges have the following categories of evaluation; functional correctness, code
-quality, development pipeline, security and safety, proportionality and
-professionalism, and patchfile correctness.
+quality, proportionality, build pipeline, and overall quality.
 
 \begin{table}[htbp]
 \centering
@@ -298,11 +301,11 @@ not expect many, if any, tests to get an S rating.
 
 Each experiment can be reproduced by running the top level test run script,
 which will launch the same set of tasks with the same parameters, where the only
-variation is the judgement of the LLM's judges when determining how to judge the
+variation is the judgement of the LLM judges when determining how to judge the
 work.
 
-This finishes the summary of a single test. However, the test themselves are
-defined differently. The test are a prompt and a configuration file that specify
+This finishes the summary of a single test. However, the tests themselves are
+defined differently. The tests are a prompt and a configuration file that specify
 a repository, a github hash, a set of configuration files to override any
 pre-defined tooling, set of commands to validate the results, and a container to
 run everything in to help with reproducibility. The first test is being used as
@@ -356,7 +359,7 @@ print("Hello, World!")
 or
 
 \begin{lstlisting}
-# /usr/bin/python3
+#!/usr/bin/python3
 
 print("Hello, World!")
 \end{lstlisting}
@@ -406,7 +409,7 @@ interesting results.
 
 The core idea is simple: start with nothing, then add one set of things at a
 time to see what actually helps. This ablation study uses seven tiers that
-progressively add complexity, with \textbf{113 sub-tests} total. Each tier gets
+progressively add complexity, with \textbf{113 subtests} total. Each tier gets
 tested independently so we can isolate what each component contributes.
 
 \begin{table}[htbp]
@@ -421,7 +424,7 @@ T1 & Skills & 10 & Domain expertise via installed skills & Default & No \\
 T2 & Tooling & 15 & External tools and MCP servers & Yes & No \\
 T3 & Delegation & 41 & Flat multi-agent with specialists & Yes & Yes \\
 T4 & Hierarchy & 7 & Nested orchestration with orchestrators & Yes & Yes \\
-T5 & Hybrid & 15+ & Optimal combinations from all tiers & Yes & Yes \\
+T5 & Hybrid & 15 & Optimal combinations from all tiers & Yes & Yes \\
 T6 & Super & 1 & Maximum capability configuration & All & All \\
 \bottomrule
 \end{tabularx}
@@ -434,13 +437,13 @@ T6 & Super & 1 & Maximum capability configuration & All & All \\
 \item \textbf{T0 (Baseline):} Start with an empty prompt (00-empty) to see what the raw model can do, then go all the way up to the full 1787-line CLAUDE.md (03-full). Individual blocks (B01-B18) let me test each piece of the prompt separately to see what actually matters.
 \item \textbf{T1-T2 (Skills vs Tools):} T1 uses skills, domain knowledge baked into prompts. Token-efficient. T2 uses external tools via JSON schemas. Problem is, loading all those tool definitions inflates token usage. I call this the "Token Efficiency Chasm", the gap between lean skill-based approaches and schema-heavy tool architectures.
 \item \textbf{T3-T4 (Multi-Agent Setups):} T3 does flat delegation, breaking tasks into smaller pieces and assigning them to specialist agents. T4 adds hierarchy with self-correction loops, but this complexity can increase costs.
-\item \textbf{T5 (Smart Combinations):} Take what works from the other tiers, combine them together in different combinations. A single test would have the best T1 skills, T2 tools, T3 agents, and T4 task delegation. We do not want to brute force here due to combinatorial explosion, but picking combinations of the top few categories can help give idea what combinations work best together.
+\item \textbf{T5 (Smart Combinations):} Take what works from the other tiers, combine them together in different combinations. A single test would have the best T1 skills, T2 tools, T3 agents, and T4 task delegation. We do not want to brute force here due to combinatorial explosion, but picking combinations of the top few categories can help give an idea of what combinations work best together.
 \item \textbf{T6 (Everything):} Turn on everything at once. All skills, tools, agents, prompt segments, and servers. This I hope establishes the theoretical max performance and shows where diminishing returns kick in, but also can show signs of over-engineering if it is occurring.
 \end{enumerate}
 
 For each tier T(n), I compare it directly against T(n-1) to see what that
 specific change actually achieves in terms of performance and cost. These
-iers map onto a broader multi-dimensional search space.
+tiers map onto a broader multi-dimensional search space.
 
 \subsection{Dimensional Search Space}\label{sec:dimensions}
 
@@ -450,12 +453,12 @@ it costs.
 
 \subsubsection{Agent Complexity Axis (Tiers 0-6)}
 
-This is just the tier structure spelled out differently:
-
+The agent complexity axis spans from simple single-agent configurations to hierarchical multi-agent systems, as shown in Table~\ref{tab:agent-complexity}.
 
 \begin{table}[htbp]
 \centering
 \caption{Agent Complexity Axis}
+\label{tab:agent-complexity}
 \begin{tabularx}{\textwidth}{llX}
 \toprule
 Tier Range & Complexity Level & Description \\
@@ -475,12 +478,12 @@ T6 & Maximum configuration & All features enabled simultaneously \\
 \subsubsection{Prompt Complexity Axis}
 
 Prompt complexity is measured in lines of system prompt content, ranging from 0
-(empty) to 1787 (full CLAUDE.md from ProjectOdyssey\cite{projectodyssey}):
-
+(empty) to 1787 (full CLAUDE.md from ProjectOdyssey\cite{projectodyssey}), as detailed in Table~\ref{tab:prompt-complexity}.
 
 \begin{table}[htbp]
 \centering
 \caption{Prompt Complexity Axis}
+\label{tab:prompt-complexity}
 \begin{tabular}{llll}
 \toprule
 Level & Lines & Description & Representative Test \\
@@ -501,12 +504,12 @@ contributes to the whole.
 
 \subsubsection{Skill Complexity Axis}
 
-Skills are organized by domain. Here is what we are testing in T1:
-
+Skills are organized by domain, as shown in Table~\ref{tab:skill-complexity}.
 
 \begin{table}[htbp]
 \centering
 \caption{Skill Complexity Axis}
+\label{tab:skill-complexity}
 \begin{tabularx}{\textwidth}{llXl}
 \toprule
 Category & Count & Example Domains & Token Efficiency \\
@@ -522,8 +525,7 @@ Workflow & 5 & Development workflow patterns & High \\
 \end{tabularx}
 \end{table}
 
-
-\textbf{Total}: 46 skills across 7 categories. Skills bake knowledge into prompts, so
+Table~\ref{tab:skill-complexity} shows the 46 skills across 7 categories tested in T1. Skills bake knowledge into prompts, so
 you avoid loading massive tool schemas. But do these actually improve
 performance? That is an open question.
 
@@ -550,7 +552,195 @@ Pattern & Coordination & Communication Overhead & Use Cases \\
 Hierarchy matters for costs because each supervision layer adds more
 orchestration tokens and potentially more self-correction iterations.
 
-Having established the experimental design and dimensional framework, I now turn to the specific metrics used to quantify performance, quality, and economic trade-offs.
+\section{Framework Architecture}\label{sec:architecture}
+
+Having established what is tested (tiers T0-T6) and the multi-dimensional search space they explore, I now describe how the Scylla framework is built. The architecture is designed around four principles: model-agnostic evaluation via the adapter pattern, full reproducibility through git worktrees and checkpoint recovery, crash recovery with atomic state persistence, and parallelism at both tier and subtest levels to minimize evaluation time.
+
+\subsection{System Overview}\label{sec:system-overview}
+
+The framework consists of six major subsystems that coordinate to execute evaluations, collect artifacts, score results, and produce analyses. Figure~\ref{fig:architecture} shows the component hierarchy and data flow.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  layer/.style={draw, rectangle, rounded corners, minimum width=10cm,
+    minimum height=1.2cm, text centered, font=\small, align=center},
+  arrow/.style={-Stealth, thick}
+]
+
+% Layer 1: E2E Runner
+\node[layer, fill=blue!10] (runner) at (0,0)
+  {\textbf{E2E Runner} \\ {\scriptsize Experiment Orchestration}};
+
+% Layer 2: Workspace Manager
+\node[layer, fill=blue!10, below=0.4cm of runner] (workspace)
+  {\textbf{Workspace Manager} \\ {\scriptsize Git Worktrees + Isolation}};
+
+% Layer 3: Tier Manager
+\node[layer, fill=blue!10, below=0.4cm of workspace] (tier)
+  {\textbf{Tier Manager} \\ {\scriptsize Config Injection (YAML/CLAUDE.md)}};
+
+% Layer 4: Checkpoint System
+\node[layer, fill=blue!10, below=0.4cm of tier] (checkpoint)
+  {\textbf{Checkpoint System} \\ {\scriptsize Resume + Rate Limiting}};
+
+% Layer 5: Adapter Layer
+\node[layer, fill=green!10, below=0.4cm of checkpoint] (adapter)
+  {\textbf{Adapter Layer} \\ {\scriptsize CLI Execution (Claude Code)}};
+
+% Layer 6: Judge Pipeline
+\node[layer, fill=orange!10, below=0.4cm of adapter] (judge)
+  {\textbf{Judge Pipeline} \\ {\scriptsize LLM Scoring (Opus 4.5, Sonnet 4.5, Haiku 4.5)}};
+
+% Layer 7: Analysis Pipeline
+\node[layer, fill=gray!10, below=0.4cm of judge] (analysis)
+  {\textbf{Analysis Pipeline} \\ {\scriptsize Metrics Calculation + Visualization}};
+
+% Arrows showing data flow
+\draw[arrow] (runner.south) -- (workspace.north);
+\draw[arrow] (workspace.south) -- (tier.north);
+\draw[arrow] (tier.south) -- (checkpoint.north);
+\draw[arrow] (checkpoint.south) -- (adapter.north);
+\draw[arrow] (adapter.south) -- (judge.north);
+\draw[arrow] (judge.south) -- (analysis.north);
+
+\end{tikzpicture}
+\caption{System architecture showing the seven-layer pipeline. Data flows top-to-bottom through: orchestration, workspace isolation, configuration injection, checkpoint management, CLI execution, LLM evaluation, and metrics analysis.}
+\label{fig:architecture}
+\end{figure}
+
+The E2E Runner coordinates all evaluation steps, managing parallel execution of tiers and subtests while enforcing dependency constraints (T5 waits for T0-T4; T6 waits for T5). The Workspace Manager creates isolated git worktrees at pinned commits to prevent cross-contamination. The Tier Manager injects configuration files (CLAUDE.md, skills, agent definitions) via symlinks into each workspace. The Checkpoint System saves JSON checkpoints after every completed run, enabling crash recovery and rate limit coordination. The Adapter Layer executes CLI commands via a standardized interface (AdapterConfig → AdapterResult). The Judge Pipeline runs three LLM judges in parallel, scoring outputs using weighted rubrics. The Analysis Pipeline aggregates data into DataFrames and generates figures and tables.
+
+\subsection{Adapter Layer}\label{sec:adapter}
+
+The adapter pattern is how Scylla achieves model-agnostic evaluation. All agent implementations inherit from the \texttt{BaseAdapter} abstract class, which defines two methods: \texttt{execute(config: AdapterConfig) -> AdapterResult} for running evaluations, and \texttt{extract\_tokens(stdout: str, stderr: str) -> AdapterTokenStats} for parsing token usage from CLI output.
+
+The current implementation includes the \texttt{ClaudeCodeAdapter} for Claude Code CLI, which is used for all evaluations in this paper. Each adapter receives an \texttt{AdapterConfig} containing the model, prompt file, workspace path, output directory, timeout, and environment variables. The adapter executes the CLI command, captures stdout/stderr, extracts token statistics from the output, calculates costs using vendor pricing tables, and returns an \texttt{AdapterResult} with exit code, output, duration, token stats, cost, API call count, and timeout status.
+
+This design enables future cross-vendor comparisons using identical tier configurations. Additional adapters for tools like Cline, OpenAI Codex, or other CLI-based coding assistants can be implemented by inheriting from \texttt{BaseAdapter} and providing tool-specific execution and token extraction logic. Token extraction logic adapts to each vendor's output format, but the framework sees a standardized \texttt{AdapterTokenStats} regardless of source.
+
+\subsection{Execution Pipeline}\label{sec:exec-pipeline}
+
+Every evaluation run follows a five-step pipeline from workspace preparation to metrics calculation. Figure~\ref{fig:exec-pipeline} shows the sequential flow.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  block/.style={draw, rectangle, rounded corners, text width=2.2cm,
+    minimum height=1.5cm, text centered, font=\small, align=center},
+  arrow/.style={-Stealth, thick}
+]
+
+\node[block, fill=blue!10] (workspace) at (0,0)
+  {\textbf{Workspace Prep} \\ \vspace{2mm} {\scriptsize Git worktree \\ + tier config \\ + CLAUDE.md}};
+\node[block, fill=green!10, right=0.8cm of workspace] (agent)
+  {\textbf{Agent Execution} \\ \vspace{2mm} {\scriptsize Adapter runs \\ CLI command \\ + replay.sh}};
+\node[block, fill=orange!10, right=0.8cm of agent] (artifact)
+  {\textbf{Artifact Capture} \\ \vspace{2mm} {\scriptsize stdout/stderr \\ git diff, logs \\ file listing}};
+\node[block, fill=purple!10, right=0.8cm of artifact] (judge)
+  {\textbf{Judge Evaluation} \\ \vspace{2mm} {\scriptsize 3 LLM judges \\ build pipeline \\ consensus mean}};
+\node[block, fill=gray!10, right=0.8cm of judge] (metrics)
+  {\textbf{Metrics Calc} \\ \vspace{2mm} {\scriptsize CoP, tokens \\ latency \\ pass-rate}};
+
+\draw[arrow] (workspace) -- (agent);
+\draw[arrow] (agent) -- (artifact);
+\draw[arrow] (artifact) -- (judge);
+\draw[arrow] (judge) -- (metrics);
+
+\end{tikzpicture}%
+}
+\caption{Execution pipeline for a single evaluation run. Each step produces inputs for the next, enabling reproducibility through saved artifacts at every boundary.}
+\label{fig:exec-pipeline}
+\end{figure}
+
+\textbf{Step 1: Workspace Prep} creates a fresh git worktree at the pinned commit and injects tier-specific configuration files via symlinks:
+
+\begin{itemize}
+\item CLAUDE.md from \texttt{config/tiers/TN/subtest-NN/CLAUDE.md}
+\item Skills from \texttt{config/tiers/TN/subtest-NN/.claude-plugin/skills}
+\item Agents from \texttt{config/tiers/TN/subtest-NN/.claude/agents}
+\item Generates a \texttt{replay.sh} script for manual reproduction
+\end{itemize}
+
+\textbf{Step 2: Agent Execution} invokes the adapter's \texttt{execute()} method with the workspace path and prompt file. The adapter runs the CLI command (e.g., \texttt{claude-code < prompt.txt}) with a timeout (default 3600s), captures stdout/stderr via subprocess pipes, and saves the output to \texttt{output\_dir/stdout.txt} and \texttt{output\_dir/stderr.txt}.
+
+\textbf{Step 3: Artifact Capture} collects all execution outputs: stdout/stderr, git diff of file changes, complete file listing, CLI logs, and the generated \texttt{replay.sh} script. Artifacts are saved to \texttt{results/test-NNN/TN/subtest-NN/run-MMMMM/} for later analysis.
+
+\textbf{Step 4: Judge Evaluation} runs three LLM judges in parallel (Opus 4.5, Sonnet 4.5, Haiku 4.5). Each judge receives the same prompt containing the task description, expected output, rubric, and captured artifacts. Judges score five weighted categories (functional correctness, code quality, proportionality, build pipeline, overall quality) and return a final score and grade. The framework computes the mean of the three scores for consensus.
+
+\textbf{Step 5: Metrics Calculation} aggregates judge scores, token statistics, and timing data to compute Pass-Rate, Implementation Rate, Cost-of-Pass, token distribution, latency breakdown, and judge agreement metrics. Results are saved to \texttt{runs.csv}, \texttt{judges.csv}, \texttt{criteria.csv}, and \texttt{summary.json}.
+
+\subsection{Tier Dependencies and Parallelism}\label{sec:tier-deps}
+
+Tiers execute in three sequential phases based on dependency constraints. Figure~\ref{fig:tier-deps} visualizes the dependency graph.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  tier/.style={draw, rectangle, rounded corners, minimum width=1.2cm,
+    minimum height=0.8cm, text centered, font=\small},
+  arrow/.style={-Stealth, thick},
+  phase/.style={draw, dashed, rounded corners, inner sep=8pt, font=\scriptsize}
+]
+
+% Phase 1: Independent tiers (T0-T4)
+\node[tier, fill=blue!10] (t0) at (0,0) {T0};
+\node[tier, fill=blue!10, below=0.3cm of t0] (t1) {T1};
+\node[tier, fill=blue!10, below=0.3cm of t1] (t2) {T2};
+\node[tier, fill=blue!10, below=0.3cm of t2] (t3) {T3};
+\node[tier, fill=blue!10, below=0.3cm of t3] (t4) {T4};
+
+% Phase 2: T5 (depends on T0-T4)
+\node[tier, fill=green!10] (t5) at (4,-2) {T5};
+
+% Phase 3: T6 (depends on T5)
+\node[tier, fill=orange!10] (t6) at (7,-2) {T6};
+
+% Arrows from T0-T4 to T5
+\draw[arrow] (t0.east) -- (t5.west);
+\draw[arrow] (t1.east) -- (t5.west);
+\draw[arrow] (t2.east) -- (t5.west);
+\draw[arrow] (t3.east) -- (t5.west);
+\draw[arrow] (t4.east) -- (t5.west);
+
+% Arrow from T5 to T6
+\draw[arrow] (t5) -- (t6);
+
+% Phase labels
+\node[phase, fit=(t0)(t4), label=above:\textbf{Phase 1}] (p1) {};
+\node[phase, fit=(t5), label=above:\textbf{Phase 2}] (p2) {};
+\node[phase, fit=(t6), label=above:\textbf{Phase 3}] (p3) {};
+
+% Annotations
+\node[font=\tiny, below=0.2cm of p1] {parallel};
+\node[font=\tiny, below=0.2cm of p2] {merge best};
+\node[font=\tiny, below=0.2cm of p3] {all};
+
+\end{tikzpicture}
+\caption{Tier dependency graph and parallel execution model. T0-T4 execute in parallel (Phase 1). T5 waits for T0-T4 completion and merges their best configurations (Phase 2). T6 waits for T5 and enables all features (Phase 3).}
+\label{fig:tier-deps}
+\end{figure}
+
+\textbf{Phase 1 (Parallel)}: T0-T4 have no dependencies and execute in parallel using a \texttt{ThreadPoolExecutor}. Each tier runs all its subtests concurrently via a \texttt{ProcessPoolExecutor} for subtest-level parallelism. This reduces total evaluation time from 7 sequential tier runs to 3 sequential phases with internal parallelism.
+
+\textbf{Phase 2 (Merge)}: T5 depends on T0-T4 and cannot start until all Phase 1 tiers complete. The Tier Manager merges configurations using the following rules: skills are unioned across all tiers (if T1 uses skill A and T3 uses skill B, T5 gets both), agents are unioned similarly, blocks from the highest-scoring tier replace conflicts (if T0 and T2 both define block B02, T5 uses the version from whichever tier scored higher), and tools follow an "all wins" policy (if any tier enables tools, T5 enables them).
+
+\textbf{Phase 3 (Everything)}: T6 depends on T5 and enables maximum configuration: all 61 skills, all tools, all 44 agents, and all CLAUDE.md blocks. This establishes the theoretical performance ceiling and demonstrates diminishing returns from over-engineering (as shown in Results).
+
+Parallelism is bounded by a global semaphore limiting concurrent agent executions to prevent API rate limit violations. The Checkpoint System coordinates rate limits across parallel workers by tracking timestamps and enforcing minimum delays between API calls.
+
+\subsection{Checkpoint and Reproducibility}\label{sec:checkpoint}
+
+Scylla is designed for long-running experiments that may crash or hit rate limits. The Checkpoint System saves progress after every completed run, enabling seamless resume.
+
+After each run completes, the runner writes a checkpoint JSON to {\small\texttt{results/test-NNN/checkpoint.json.tmp}}, atomically renames it to \texttt{checkpoint.json}, and validates the configuration hash on resume to detect experiment tampering. The checkpoint contains the list of completed runs (tier, subtest, run\_id, timestamp, pass/fail), current rate limit state (last API call timestamp, tokens consumed), and experiment metadata (test ID, total runs planned, start time).
+
+On resume, the runner reads the checkpoint, validates the config hash matches the current experiment, skips already-completed runs, and continues from the next pending run. This allows experiments to survive crashes, API timeouts, network failures, and manual interruptions (Ctrl+C) without losing work.
+
+Reproducibility is further ensured by the \texttt{replay.sh} script generated for each run. The script contains the exact git commit, CLI command, environment variables, and workspace setup needed to manually reproduce the run. This enables debugging, manual inspection, and verification of framework behavior.
+
+Having described how the framework is built, I now turn to the specific metrics used to quantify performance, quality, and economic trade-offs.
 
 \section{Test Metrics}\label{sec:metrics}
 
@@ -569,8 +759,7 @@ passes the test suite for that specific task. Report this with confidence
 
 $$R_{Prog} = \frac{\text{achieved\_progress\_steps}}{\text{expected\_progress\_steps}}$$
 
-Range is 0.0 to 1.0. If you get 1.0, it means the agent took extra steps
-that actually helped. This is super useful for debugging where things go wrong
+Range is 0.0 to 1.0. If you get 1.0, it means the agent completed all expected steps. This is super useful for debugging where things go wrong
 in complex workflows, especially in hierarchical setups with all their
 self-correction loops.
 
@@ -590,7 +779,7 @@ $$\text{Impl-Rate} = \frac{\text{satisfied\_requirements}}{\text{total\_requirem
 
 Range is 0.0 to 1.0. This gives you more detail than just pass/fail, you get
 partial credit for incomplete work. Checked using multiple LLM judges with
-median scoring for consensus.
+mean scoring for consensus.
 
 \subsection{Efficiency and Cost Metrics}
 
@@ -610,7 +799,7 @@ things down.
 
 $$\text{token\_dist} = \left\{ \frac{\text{input\_tokens}}{\text{total\_tokens}}, \frac{\text{output\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_input\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_output\_tokens}}{\text{total\_tokens}} \right\}$$
 
-Useful for figuring out what is actually contributing to the cost(like T3's
+Useful for figuring out what is actually contributing to the cost (like T3's
 massive agent prompts or T4's orchestration overhead).
 
 \textbf{Cost-of-Pass (CoP)} is the primary metric, what is the expected cost to get
@@ -688,11 +877,11 @@ other. Every container starts fresh with:
 \toprule
 Component & Version/Tool \\
 \midrule
-CLI Tool & Claude Code (primary evaluation target) \\
+CLI Tool & Claude Code\footnote{Claude Code requires either an Anthropic API key or a Claude Max subscription for operation.} (primary evaluation target) \\
 Language Runtime & Python 3.12.3, Mojo 0.26.1.0.dev2025122805 (211e2f5c) \\
 Package Manager & Pixi \\
 Container Runtime & Docker \\
-Orchestration & Custom Scylla framework \\
+Orchestration & Custom Scylla framework (Section~\ref{sec:architecture}) \\
 Validation & JSON Schema, YAML validation \\
 Version Control & Git Version 2.43.0 \\
 \bottomrule
@@ -721,7 +910,7 @@ Model & Model ID & Primary Use \\
 \midrule
 Claude Opus 4.5 & claude-opus-4-5-20251101 & complex reasoning, hierarchical orchestration \\
 Claude Sonnet 4.5 & claude-sonnet-4-5-20250929 & standard execution, balanced cost/capability \\
-Claude Haiku 4.5 & claude-haiku-4-5-20250929 & simple tasks, cost optimization \\
+Claude Haiku 4.5 & claude-haiku-4-5-20251001 & simple tasks, cost optimization \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -731,7 +920,7 @@ Claude Haiku 4.5 & claude-haiku-4-5-20250929 & simple tasks, cost optimization \
 
 \begin{itemize}
 \item Three judges per evaluation: Opus 4.5, Sonnet 4.5, Haiku 4.5
-\item Take the median of the three scores for consensus
+\item Take the mean of the three scores for consensus
 \item Same prompt for all judges (only the model changes)
 \item Judge prompt: \texttt{config/judge/system\_prompt.md}
 \end{itemize}
@@ -751,7 +940,7 @@ outputs without touching model APIs directly. This enables consistent metrics
 comparisons. The tier structure (T0-T6) applies to all tools, allowing direct
 architectural comparisons across vendors. Everything is in version-controlled
 YAML (model IDs, temperature, token limits), making it easy to reproduce across
-different tools and swap judges.
+different tools and swap judges. The adapter pattern enabling this is described in Section~\ref{sec:adapter}.
 
 \section{Test Cases}
 
@@ -819,7 +1008,7 @@ Category & Description & Complexity & Key Challenges \\
 
 \subsection{Test Case Matrix}
 
-I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section~\ref{sec:discussion} (Further Work) for planned full-scale execution.
+I have designed \textbf{47 planned test cases} spanning five complexity bands (baseline validation, build system tasks, feature implementation, bug fixing/refactoring, complex multi-step tasks). Each test is defined in YAML with pinned repository commits, task prompts, validation rubrics, and tier configurations. Tests are structured to increase in difficulty progressively. See Section~\ref{sec:further} (Further Work) for planned full-scale execution.
 
 \section{Results}\label{sec:results}
 
@@ -830,9 +1019,9 @@ successfully and generates the expected metrics, figures, and tables. Think of
 this as a "smoke test", if the pipeline works on the simplest possible task, I
 know it will handle the complex stuff later.
 
-\subsection{Pipeline Validation (Dryrun Overview)}
+\subsection{Pipeline Validation (dryrun Overview)}
 
-First, the dry run was executed with the following setup:
+First, the dryrun was executed with the following setup:
 
 \begin{itemize}
 \item \textbf{Scope}: 1 model (Sonnet 4.5), 7 tiers (T0-T6), 1 subtest per tier
@@ -843,13 +1032,13 @@ First, the dry run was executed with the following setup:
 \item \textbf{Pass rate}: 100\% (all 7 tiers passed, all grade A)
 \end{itemize}
 
-Table 1 shows the tier-by-tier summary. All tiers achieved grade A with median
+Table~\ref{tab:tier-summary} shows the tier-by-tier summary. All tiers achieved grade A with mean
 consensus scores ranging from 0.943 (T6) to 0.983 (T2, T3, T5). The task is
 trivially easy, as expected, even T0 (minimal prompt) scores 0.973, with T4 at 0.9595.
 
 \begin{table}[htbp]
 \centering
-\caption{Tier Summary (Dryrun)}
+\caption{Tier Summary (dryrun)}\label{tab:tier-summary}
 \begin{tabular}{llllll}
 \toprule
 Tier & Pass Rate & Mean Score & Median Score & Grade & CoP (\$) \\
@@ -872,16 +1061,7 @@ These results set the stage for deeper economic analysis of how architectural ch
 
 \subsection{Cost-of-Pass Analysis}
 
-Since all tiers pass (pass-rate = 1.0), Cost-of-Pass equals the raw cost. Figure~\ref{fig:fig06_cop_by_tier} visualizes CoP across tiers.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{figures/fig06_cop_by_tier.pdf}
-\caption{Cost-of-Pass by tier. Grouped bar chart showing CoP (cost per successful run) across T0--T6 with logarithmic scale. T5 achieves the Frontier CoP at \$0.065, while T6 is highest at \$0.247, demonstrating that architectural complexity amplifies costs without quality improvement on ceiling-constrained tasks.}
-\label{fig:fig06_cop_by_tier}
-\end{figure}
-
-\textbf{Frontier CoP}: \$0.065 (achieved by T5 hybrid)
+Since all tiers pass (pass-rate = 1.0), Cost-of-Pass equals the raw cost. The Frontier CoP is \$0.065 (achieved by T5 hybrid).
 
 \textbf{Cost ranking} (lowest to highest):
 \begin{enumerate}
@@ -941,18 +1121,12 @@ requires similar generation regardless of architecture.
 \subsection{Latency Analysis}
 
 Latency breaks into two components: agent execution time and judge evaluation
-time. Figure~\ref{fig:fig13_latency} shows the breakdown.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.9\textwidth]{figures/fig13_latency.pdf}
-\caption{Latency breakdown by tier. Stacked bar chart showing agent execution time versus judge evaluation time across T0--T6. Judge evaluation dominates (77--86\% of total latency), ranging from 128--178 seconds, because three independent judges evaluate each run. This overhead is task-specific; on complex multi-step tasks, agent time would dominate instead.}
-\label{fig:fig13_latency}
-\end{figure}
+time, as shown in Table~\ref{tab:latency-breakdown}.
 
 \begin{table}[htbp]
 \centering
 \caption{Latency Breakdown}
+\label{tab:latency-breakdown}
 \begin{tabular}{lrrrr}
 \toprule
 Tier & Agent Time (s) & Judge Time (s) & Total Time (s) & Judge \% of Total \\
@@ -1018,8 +1192,8 @@ Krippendorff's $\alpha$ (interval): -0.117. Poor agreement, but expected with N=
 tier. \textbf{Note}: N=7 is insufficient for reliable correlation estimates; these
 values are reported for completeness but interpret them with extreme caution.
 
-Despite low inter-rater agreement, the 3-judge median produces stable final
-scores. The median dampens extreme scores, Haiku's 1.00 perfects versus Opus's
+Despite low inter-rater agreement, the 3-judge mean produces stable final
+scores. The mean balances extreme scores, Haiku's 1.00 perfects versus Opus's
 0.93 conservatism. This supports the multi-judge consensus design.
 
 \subsection{Criteria Breakdown}
@@ -1051,15 +1225,15 @@ Having presented the quantitative results from the dryrun validation, I now turn
 
 \section{Discussion}\label{sec:discussion}
 
-The dry run is not very useful for serious analysis, but what I will dive into
+The dryrun is not very useful for serious analysis, but I will dive into
 what I learned about the framework's behavior on this trivially simple task,
 while being honest about the limitations inherent in N=1 experiments and ceiling
 effects.
 
-\subsection{What the Dryrun Tells Us}
+\subsection{What the dryrun Tells Us}
 
 The Hello World task is, by design, trivially easy. All seven tiers score grade
-A with median scores between 0.943-0.983. This validates exactly what I said in
+A with mean scores between 0.943-0.983. This validates exactly what I said in
 Section~\ref{sec:methodology}: "Even T0 should nail this test." And it did.
 
 \textbf{Ceiling effect dominates}: When quality converges at near-perfect levels, we
@@ -1129,10 +1303,10 @@ This can be investigated in future analysis.
 
 Inter-rater agreement is predictably low: Krippendorff's $\alpha$ = -0.117. But that is
 expected with N=1 and near-perfect scores. On tasks with more variance,
-agreement improve as judges separate clear failures from clear successes.
+agreement should improve as judges separate clear failures from clear successes.
 
-Despite the disagreement, the 3-judge median works. When Haiku awards 1.00 and
-Opus awards 0.93, the median captures the true quality without getting pulled to
+Despite the disagreement, the 3-judge mean works. When Haiku awards 1.00 and
+Opus awards 0.93, the mean captures the true quality without getting pulled to
 either extreme. This validates the multi-judge consensus design.
 
 One scaling problem: judge time dominates total latency. 77-86\% of execution
@@ -1190,11 +1364,11 @@ What did I learn? Five things stand out:
 \item Quality converges on trivial tasks, making the framework overkill.
 \item All tiers scored grade A, suggesting that throwing more complexity at Hello World does not help, which was expected. That obviousness is what makes it a good pipe cleaning run.
 \item Cost still varies 3.8x despite identical quality, showing the framework can measure economic trade-offs even when quality saturates. T5's hybrid approach achieves Frontier CoP by selectively loading features instead of maximizing everything.
-\item And the Token Efficiency Chasm I hypothesized in Section~\ref{sec:tiered-ablation}? The data is consistent with this, as T6 burns nearly double the tokens (218K vs 113K) compared to T0.
+\item And the Token Efficiency Chasm I hypothesized in Section~\ref{sec:tiered-ablation}? The data is consistent with this, as T6 burns nearly double the cache read tokens (219K vs 113K) compared to T0.
 \end{enumerate}
 
 Did I answer my original questions? Partially. CoP lets me quantify efficiency;
-T5 is significantly cheaper than T6 despite equivalent quality. On this task, the sum is
+T5 is substantially cheaper than T6 despite equivalent quality. On this task, the sum is
 \emph{not} more than the parts; T6 scores lowest despite highest cost. But the hard
 questions need harder tasks, I cannot tell if any tier dominates universally from
 a single Hello World run, and I have not tested model-to-model comparisons yet.
@@ -1209,7 +1383,7 @@ There is no real practical takeaway yet, since the testing was insufficient to
 come to any real conclusions. Answering those questions is left for the next
 exercise, and this framework can be used for doing so.
 
-\section{Further Work}
+\section{Further Work}\label{sec:further}
 
 The dryrun validates the framework works. Now it is time to scale up and fill in
 the gaps.
@@ -1235,8 +1409,8 @@ compute within my budget at the moment.
 
 \textbf{Advanced analysis}: I am by no means a statistician, and choices I have made
 here might be incorrect. My current analysis uses frequentist statistics. There
-are more advanced analysis that I am learning about that could help analyze the
-flood of data more efficiently. There is also other metrics and data points that
+are more advanced analyses that I am learning about that could help analyze the
+flood of data more efficiently. There are also other metrics and data points that
 could be useful in this analysis that I am not collecting. I also can save the
 runs and do longitudinal studies to see if the results change consistently over
 time.
@@ -1244,7 +1418,7 @@ time.
 Given the scale and scope of this task, it is going to be an ongoing effort of
 learning, testing, and analyzing.
 
-\section{Acknowledgements}
+\section*{Acknowledgements}
 
 This work was self-funded by the author. Special thanks to Tuan Nguyen for
 reviewing early drafts of this paper and providing valuable feedback.
@@ -1257,7 +1431,7 @@ reviewing early drafts of this paper and providing valuable feedback.
 
 \section{Detailed Metric Definitions}
 
-Core quality and economic metrics are defined in Section~\ref{sec:metrics}. This appendix provides additional metrics used for future analysis. For complete definitions including instrumentation details, see the repository at \url{https://github.com/HomericIntelligence/ProjectScylla/blob/e33d627/.claude/shared/metrics-definitions.md}.
+Core quality and economic metrics are defined in Section~\ref{sec:metrics}. This appendix provides additional metrics used for future analysis. For complete definitions including instrumentation details, see the repository at \url{https://github.com/HomericIntelligence/ProjectScylla/blob/main/.claude/shared/metrics-definitions.md}.
 
 \textbf{Change Fail Percentage (CFP)}: Proportion of code changes that cause failures.
 
@@ -1265,7 +1439,7 @@ Formula: $\text{CFP} = \frac{\text{failed\_changes}}{\text{total\_changes}}$
 
 Range: [0, 1], lower is better. Measures production stability.
 
-\subsubsection{Process Metrics}
+\subsection{Process Metrics}
 
 \textbf{Latency}: Time from query submission to response completion, measured in seconds. Components include Time-to-First-Token (TTFT), total response time, and tool execution time (if applicable).
 
@@ -1281,7 +1455,7 @@ Formula: $\text{Ablation\_Score} = \text{performance\_with\_component} - \text{p
 
 Positive values indicate the component improves performance, negative values indicate harm, near-zero indicates no effect.
 
-\subsubsection{Statistical Reporting}
+\subsection{Statistical Reporting}
 
 Always report metrics with: (1) point estimate, (2) confidence interval (95\% CI recommended), (3) sample size (n), and (4) comparison p-value (if comparing tiers).
 
@@ -1289,7 +1463,7 @@ Example: Pass-Rate: 0.67 (95\% CI: 0.54--0.80), n=50
 
 \section{Data Dictionary and Generated Outputs}
 
-All raw data, figures, and tables are available in the repository at \texttt{docs/paper-dryrun/}. The dataset includes 7 runs (one per tier), 21 judge evaluations (3 judges per run), and 105 criteria scores (5 criteria per judge), organized across 24 figures and 10 tables. Data files include \texttt{runs.csv}, \texttt{judges.csv}, \texttt{criteria.csv}, and \texttt{summary.json}. All figures are available in PNG/PDF/Vega-Lite/CSV formats for reproduction and analysis.
+All raw data, figures, and tables are available in the repository at \texttt{docs/arxiv/dryrun/}. The dataset includes 7 runs (one per tier), 21 judge evaluations (3 judges per run), and 105 criteria scores (5 criteria per judge), organized across 24 figures and 10 tables. Data files include \texttt{runs.csv}, \texttt{judges.csv}, \texttt{criteria.csv}, and \texttt{summary.json}. All figures are available in PNG/PDF/Vega-Lite/CSV formats for reproduction and analysis.
 
 \textbf{Repository}: \url{https://github.com/HomericIntelligence/ProjectScylla}
 
@@ -1301,9 +1475,9 @@ All raw data, figures, and tables are available in the repository at \texttt{doc
 
 \begin{itemize}
 \item Tier definitions: \texttt{config/tiers/tiers.yaml}
-\item Opus Model: \texttt{config/models/claude-opus-4.5.yaml}
-\item Sonnet Model: \texttt{config/models/claude-sonnet-4.5.yaml}
-\item Haiku Model: \texttt{config/models/claude-haiku-4.5.yaml}
+\item Opus Model: \texttt{config/models/claude-opus-4-5.yaml}
+\item Sonnet Model: \texttt{config/models/claude-sonnet-4-5.yaml}
+\item Haiku Model: \texttt{config/models/claude-haiku-4-5.yaml}
 \item Judge system prompt: \texttt{config/judge/system\_prompt.md}
 \item Test definitions: \texttt{tests/*/test.yaml}
 \item Rubric schemas: \texttt{tests/*/expected/rubric.yaml}
@@ -1314,7 +1488,7 @@ All raw data, figures, and tables are available in the repository at \texttt{doc
 \begin{itemize}
 \item Pixi (package manager)
 \item Docker (containerization)
-\item Claude Code CLI
+\item Claude Code CLI (requires Anthropic API key or Claude Max subscription)
 \item Python 3.12+
 \end{itemize}
 
@@ -1330,7 +1504,7 @@ pixi install
 
 # 3. Run evaluation (example for test-001, tier T0)
 pixi run python scripts/run_e2e_experiment.py \
-  --test tests/001-hello-world \
+  --test tests/fixtures/tests/test-001 \
   --tier T0 \
   --runs 10
 
