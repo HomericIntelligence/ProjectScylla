@@ -38,8 +38,8 @@ def fig01_score_variance_by_tier(
     models = sorted(data["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for score axis
-    score_domain = compute_dynamic_domain(data["score"])
+    # Compute dynamic domain for score axis with increased padding for boxplot whiskers
+    score_domain = compute_dynamic_domain(data["score"], padding_fraction=0.15)
 
     # Create base chart with faceting
     base = alt.Chart(data).encode(

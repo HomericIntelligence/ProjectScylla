@@ -210,8 +210,8 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
     shape_options = ["circle", "square", "triangle-up", "diamond", "cross"]
     shape_range = [shape_options[i % len(shape_options)] for i in range(len(models))]
 
-    # Compute dynamic domain for score axis
-    score_domain = compute_dynamic_domain(tier_stats["mean_score"])
+    # Compute dynamic domain for score axis with increased padding for text labels
+    score_domain = compute_dynamic_domain(tier_stats["mean_score"], padding_fraction=0.15)
 
     # Create scatter plot
     scatter = (
