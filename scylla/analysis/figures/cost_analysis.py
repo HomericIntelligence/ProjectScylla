@@ -74,9 +74,24 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
     # Create bar chart (exclude infinite values)
     finite_stats = stats_df[~stats_df["is_inf"]].copy()
 
+    # Handle case where all CoP values are infinite (zero pass rate)
+    if len(finite_stats) == 0:
+        print("Warning: No finite CoP values found for fig06. All tiers have zero pass rate.")
+        return  # Skip figure generation if no valid data
+
     # Get dynamic color scale for models
     models = sorted(stats_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
+
+    # Compute explicit domain for log scale
+    cop_min = finite_stats["cop"].min()
+    cop_max = finite_stats["cop"].max()
+    # Extend domain by 50% on each side in log space for padding
+    log_min = np.log10(cop_min)
+    log_max = np.log10(cop_max)
+    log_range = log_max - log_min
+    domain_min = 10 ** (log_min - 0.5 * log_range)
+    domain_max = 10 ** (log_max + 0.5 * log_range)
 
     bars = (
         alt.Chart(finite_stats)
@@ -86,7 +101,7 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             y=alt.Y(
                 "cop:Q",
                 title="Cost-of-Pass (USD, log scale)",
-                scale=alt.Scale(type="log", base=10),
+                scale=alt.Scale(type="log", base=10, domain=[domain_min, domain_max]),
             ),
             color=alt.Color(
                 "agent_model:N",
