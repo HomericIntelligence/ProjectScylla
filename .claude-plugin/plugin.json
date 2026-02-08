@@ -1,47 +1,44 @@
 {
-  "name": "projectscylla-skills",
+  "id": "arxiv-paper-polish",
   "version": "1.0.0",
-  "description": "Skill registry for ProjectScylla evaluation framework",
-  "category": "evaluation",
-  "author": "Claude Sonnet 4.5",
-  "lastUpdated": "2026-02-07",
-  "skills": [
-    {
-      "name": "rescue-broken-prs",
-      "version": "1.0.0",
-      "category": "testing",
-      "description": "Systematic workflow for diagnosing and fixing multiple failing PRs",
-      "date": "2026-02-06",
-      "tags": ["ci-cd", "pre-commit", "testing", "git", "github", "lint", "ruff", "pytest", "pr-rescue", "refactoring"]
-    },
-    {
-      "name": "paper-validation-workflow",
-      "version": "1.0.0",
-      "category": "documentation",
-      "description": "Systematic workflow for validating academic papers against raw experimental data",
-      "date": "2026-02-07",
-      "tags": ["paper-validation", "cross-validation", "latex", "academic-writing", "quality-assurance", "data-verification"],
-      "relatedSkills": ["latex-workflow", "data-validation", "academic-writing", "git-workflow"],
-      "successRate": 1.0,
-      "usageCount": 1
-    },
-    {
-      "name": "paper-final-review",
-      "version": "1.0.0",
-      "category": "documentation",
-      "description": "Comprehensive 10-category review workflow for academic paper publication readiness with GO/NO-GO assessment",
-      "date": "2026-02-07",
-      "tags": ["academic-writing", "paper-validation", "publication-readiness", "latex", "reproducibility", "numerical-verification", "go-no-go-assessment"],
-      "relatedSkills": ["paper-validation-workflow", "academic-paper-validation", "academic-paper-review", "academic-paper-qa"],
-      "metadata": {
-        "paper_title": "Taming Scylla: AI Agent Evaluation Framework",
-        "issues_found": 5,
-        "issues_critical": 0,
-        "fix_time_minutes": 30,
-        "outcome": "success"
-      },
-      "successRate": 1.0,
-      "usageCount": 1
-    }
-  ]
+  "name": "arXiv Paper Publication Polish",
+  "description": "Systematic application of publication-ready polish to LaTeX papers based on comprehensive review feedback. Applies fixes across 5 categories: precision, terminology, bibliography, paths, and grammar.",
+  "category": "documentation",
+  "created": "2026-02-07",
+  "author": "ProjectScylla",
+  "tags": [
+    "latex",
+    "arxiv",
+    "publication",
+    "bibliography",
+    "grammar",
+    "paper-polish",
+    "verification"
+  ],
+  "use_cases": [
+    "Apply systematic fixes to LaTeX papers before arXiv submission",
+    "Reduce bibliography to only cited entries (72% reduction achieved)",
+    "Standardize terminology and correct grammar/style across paper",
+    "Verify LaTeX compilation with full 4-step cycle",
+    "Correct file paths and glob patterns in reproducibility sections"
+  ],
+  "success_metrics": {
+    "compilation_success_rate": "100%",
+    "fix_application_rate": "100%",
+    "bibliography_reduction": "72%",
+    "precommit_pass_rate": "100%"
+  },
+  "requirements": {
+    "latex": "pdflatex (TeX Live 2023+)",
+    "bibliography": "bibtex",
+    "verification": "grep, wc"
+  },
+  "related_skills": [
+    "paper-final-review",
+    "latex-compilation-debug",
+    "bibliography-cleanup"
+  ],
+  "session_id": "32adcebf-b662-4e11-9617-b93b77fa0eeb",
+  "paper": "Taming Scylla: Measuring Cost-of-Pass in Agentic CLI Tools",
+  "outcome": "SUCCESS - 5 fix categories applied, paper compiles cleanly, ready for arXiv"
 }
