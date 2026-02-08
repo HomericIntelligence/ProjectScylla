@@ -66,7 +66,7 @@ research@villmow.us}
 \maketitle
 
 \begin{abstract}
-LLM-based tools are automating more software development tasks at an exponential rate, but
+LLM-based tools are automating more software development tasks at a rapid pace, but
 there's no rigorous way to evaluate how different architectural choices—prompts,
 skills, tools, multi-agent setups—materially affect both capability and cost.
 This paper introduces Scylla, an evaluation framework for benchmarking agentic
@@ -79,7 +79,7 @@ efficiency.
 The framework is model-agnostic, designed to work with any CLI tool; this paper
 demonstrates it with Claude Sonnet 4.5, using multiple LLM judges (Opus 4.5,
 Sonnet 4.5, Haiku 4.5) from the same vendor for evaluation consensus, where judges
-score results using direct tests, human-driven rubrics, and qualitative
+score results using direct tests, human-designed LLM-evaluated rubrics, and qualitative
 assessment.
 The result is a reproducible framework that quantifies trade-offs between agent
 complexity and actual outcomes, suggesting that architectural complexity does not always improve quality.
@@ -119,7 +119,7 @@ blog, but despite these, there are not any intuitive and user-friendly methods
 for comparing whether changes to the prompt instructions will yield tangible
 benefits. Therefore, I am introducing Scylla, a testing framework for evaluating
 prompts, tools, skills, and agents for solving problems that are common for
-day-to-day coding tasks. I wanted to know if sub-agents, skills, tools, or mcp
+day-to-day coding tasks. I wanted to know if sub-agents, skills, tools, or MCP
 servers were contributing to actual improved code output, without relying on my
 gut or intuition. This problem came up multiple times when asked by others to
 explain how to better utilize CLI tools for programming. In my experience, the
@@ -160,7 +160,7 @@ Some hypotheses the framework is designed to test in subsequent work include:
 \section{Related Work}\label{sec:related}
 
 Given that we are testing production tools and not models, many, if not all, of
-the prior work on evaluating prompts and benchmarks do not apply here. Since
+the prior work on evaluating prompts and benchmarks does not apply here. Since
 there is possibly a large level of indirection between what we are testing and
 what actually gets executed by the model due to engineering trade-offs, I am
 considering the tool to be a black box and not attempting to reverse engineer
@@ -205,9 +205,9 @@ interesting for probabilistic evaluation.
 This experiment is designed by testing English phrases, colloquially known as
 prompts, via the various methodologies exposed by a CLI tool, in this case
 Claude Code. The prompts to be tested are taken from the ProjectOdyssey\cite{projectodyssey} git
-repository at github hash 011a3ff on December 30th, 2025. The prompts are broken
+repository at GitHub hash 011a3ff on December 30th, 2025. The prompts are broken
 down into their components and separated into various tiers which will be
-discussed later. These components are used to setup the experiment, which is run
+discussed later. These components are used to set up the experiment, which is run
 by allowing an agent a nearly unfettered access to the system, only blocking
 dangerous ops, thanks to the safety-net plugin\cite{safetynet} from cc-marketplace\cite{ccmarketplace}, to
 perform a task. The task has a well defined solution that is then judged by
@@ -299,17 +299,17 @@ and meets requirements, even if there is room for minor improvements. An S grade
 needs a perfect 1.00 and you have to actually exceed what was asked for. I would
 not expect many, if any, tests to get an S rating.
 
-Each experiment can be reproduced by running the top level test run script,
+Each experiment can be reproduced by running the top-level test run script,
 which will launch the same set of tasks with the same parameters, where the only
 variation is the judgement of the LLM judges when determining how to judge the
 work.
 
 This finishes the summary of a single test. However, the tests themselves are
 defined differently. The tests are a prompt and a configuration file that specify
-a repository, a github hash, a set of configuration files to override any
-pre-defined tooling, set of commands to validate the results, and a container to
+a repository, a GitHub hash, a set of configuration files to override any
+pre-defined tooling, set of commands to validate the results, and a git worktree to
 run everything in to help with reproducibility. The first test is being used as
-an example in this paper, and also as a pipecleaner to show that everything
+an example in this paper, and also as a pipe-cleaner to show that everything
 works as expected. This example is 'hello world' from octocat, but forked to my
 repository just to make sure that the repository is not polluted. The precaution
 is done just in case the agents make mistakes or do things that the original
@@ -417,7 +417,7 @@ tested independently so we can isolate what each component contributes.
 \caption{Testing Tiers (Ablation Study Framework)}
 \begin{tabularx}{\textwidth}{llXllX}
 \toprule
-Tier & Name & Sub-tests & Primary Focus & Tools & Delegation \\
+Tier & Name & Subtests & Primary Focus & Tools & Delegation \\
 \midrule
 T0 & Prompts & 24 & System prompt ablation (empty $\rightarrow$ full) & - & No \\
 T1 & Skills & 10 & Domain expertise via installed skills & Default & No \\
@@ -435,7 +435,7 @@ T6 & Super & 1 & Maximum capability configuration & All & All \\
 
 \begin{enumerate}
 \item \textbf{T0 (Baseline):} Start with an empty prompt (00-empty) to see what the raw model can do, then go all the way up to the full 1787-line CLAUDE.md (03-full). Individual blocks (B01-B18) let me test each piece of the prompt separately to see what actually matters.
-\item \textbf{T1-T2 (Skills vs Tools):} T1 uses skills, domain knowledge baked into prompts. Token-efficient. T2 uses external tools via JSON schemas. Problem is, loading all those tool definitions inflates token usage. I call this the "Token Efficiency Chasm", the gap between lean skill-based approaches and schema-heavy tool architectures.
+\item \textbf{T1-T2 (Skills vs Tools):} T1 uses skills, domain knowledge baked into prompts which is token-efficient. T2 uses external tools via JSON schemas, but loading all those tool definitions inflates token usage. I call this the "Token Efficiency Chasm", the gap between lean skill-based approaches and schema-heavy tool architectures.
 \item \textbf{T3-T4 (Multi-Agent Setups):} T3 does flat delegation, breaking tasks into smaller pieces and assigning them to specialist agents. T4 adds hierarchy with self-correction loops, but this complexity can increase costs.
 \item \textbf{T5 (Smart Combinations):} Take what works from the other tiers, combine them together in different combinations. A single test would have the best T1 skills, T2 tools, T3 agents, and T4 task delegation. We do not want to brute force here due to combinatorial explosion, but picking combinations of the top few categories can help give an idea of what combinations work best together.
 \item \textbf{T6 (Everything):} Turn on everything at once. All skills, tools, agents, prompt segments, and servers. This I hope establishes the theoretical max performance and shows where diminishing returns kick in, but also can show signs of over-engineering if it is occurring.
@@ -752,14 +752,14 @@ $$\text{Pass-Rate} = \frac{\text{correct\_solutions}}{\text{total\_attempts}}$$
 
 Range is 0.0 (nothing worked) to 1.0 (everything worked). "Correct" means it
 passes the test suite for that specific task. Report this with confidence
- intervals (95\% CI if you have 30+ runs).
+ intervals (95\% CI when sample sizes exceed 30).
 
 \textbf{Fine-Grained Progress Rate} ($R_{Prog}$) tracks how far you got through
  multi-step tasks:
 
 $$R_{Prog} = \frac{\text{achieved\_progress\_steps}}{\text{expected\_progress\_steps}}$$
 
-Range is 0.0 to 1.0. If you get 1.0, it means the agent completed all expected steps. This is super useful for debugging where things go wrong
+Range is 0.0 to 1.0. If you get 1.0, it means the agent completed all expected steps. This is particularly useful for debugging where things go wrong
 in complex workflows, especially in hierarchical setups with all their
 self-correction loops.
 
@@ -799,7 +799,7 @@ things down.
 
 $$\text{token\_dist} = \left\{ \frac{\text{input\_tokens}}{\text{total\_tokens}}, \frac{\text{output\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_input\_tokens}}{\text{total\_tokens}}, \frac{\text{tool\_output\_tokens}}{\text{total\_tokens}} \right\}$$
 
-Useful for figuring out what is actually contributing to the cost (like T3's
+Useful for identifying what is actually contributing to the cost (like T3's
 massive agent prompts or T4's orchestration overhead).
 
 \textbf{Cost-of-Pass (CoP)} is the primary metric, what is the expected cost to get
@@ -856,9 +856,9 @@ Compute & Standard CPU (no GPU required for evaluation) \\
 \end{table}
 
 
-Each test runs in its own git clone with the repo at a specific git
+Each test runs in its own git worktree with the repo at a specific git
 commit. This means every run is reproducible and tests cannot mess with each
-other. Every container starts fresh with:
+other. Every worktree starts fresh with:
 
 \begin{itemize}
 \item Clean git workspace at the exact commit specified
@@ -1043,13 +1043,13 @@ trivially easy, as expected, even T0 (minimal prompt) scores 0.973, with T4 at 0
 \toprule
 Tier & Pass Rate & Mean Score & Median Score & Grade & CoP (\$) \\
 \midrule
-T0 & 1.000 & 0.973 & 0.973 & A & 0.14 \\
-T1 & 1.000 & 0.970 & 0.970 & A & 0.13 \\
-T2 & 1.000 & 0.983 & 0.983 & A & 0.14 \\
-T3 & 1.000 & 0.983 & 0.983 & A & 0.13 \\
-T4 & 1.000 & 0.9595 & 0.9595 & A & 0.17 \\
-T5 & 1.000 & 0.983 & 0.983 & A & 0.07 \\
-T6 & 1.000 & 0.943 & 0.943 & A & 0.25 \\
+T0 & 1.000 & 0.973 & 0.973 & A & 0.135 \\
+T1 & 1.000 & 0.970 & 0.970 & A & 0.127 \\
+T2 & 1.000 & 0.983 & 0.983 & A & 0.138 \\
+T3 & 1.000 & 0.983 & 0.983 & A & 0.129 \\
+T4 & 1.000 & 0.960 & 0.960 & A & 0.168 \\
+T5 & 1.000 & 0.983 & 0.983 & A & 0.065 \\
+T6 & 1.000 & 0.943 & 0.943 & A & 0.247 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1075,7 +1075,7 @@ Since all tiers pass (pass-rate = 1.0), Cost-of-Pass equals the raw cost. The Fr
 \end{enumerate}
 
 T6 (everything enabled) costs the most despite scoring the lowest (0.943). This
-is a kitchen sink approach, to see when more equals better.
+is a maximalist approach, to see when more equals better.
 
 \subsection{Token Analysis}\label{sec:token-analysis}
 
@@ -1110,10 +1110,9 @@ T6 & 29 & 722 & \textbf{44,337} & 218,778 & 263,866 \\
 \end{table}
 
 
-The Token Efficiency Chasm I mentioned in Section~\ref{sec:tiered-ablation}? The data is consistent with
-this hypothesis. T6 requires 218K cache read tokens versus T0's 113K, a 1.94x
+The Token Efficiency Chasm mentioned in Section~\ref{sec:tiered-ablation} is supported by this data. T6 requires 218K cache read tokens versus T0's 113K, a 1.94x
 increase (nearly double). T5 achieves efficiency by minimizing cache creation
-(4.6K vs 23-44K), supporting the hybrid strategy as discussed in the Token Analysis section.
+(4.6K vs 23-44K), supporting the hybrid strategy.
 
 Output tokens stay stable at 558-725 across tiers, showing the task itself
 requires similar generation regardless of architecture.
@@ -1287,7 +1286,7 @@ everything.
 
 The 3-judge consensus mechanism reveals interesting patterns.
 
-Haiku hands out S grades easily, 5 out of 7 tiers got perfect scores. Scores
+Haiku awards S grades more frequently, 5 out of 7 tiers got perfect scores. Scores
 range 0.93-1.00, and Haiku consistently scores higher than Opus or Sonnet.
 
 Opus never awards S grades. Scores range 0.93-0.96, consistently the toughest
@@ -1352,7 +1351,7 @@ multiplier. Parallel judge execution would reduce latency but not cost.
 
 This paper introduced the Scylla framework, and shows that it works, end-to-end.
 All seven tiers executed successfully, three judges scored everything, and the
-analysis pipeline spit out figures and tables automatically. The dryrun
+analysis pipeline produced figures and tables automatically. The dryrun
 validates the methodology on the simplest possible task, Hello World, before I
 scale up to complex multi-file repos. What is missing is review and feedback
 from others, which is what this paper helps enable.
@@ -1362,7 +1361,7 @@ What did I learn? Five things stand out:
 \begin{enumerate}
 \item The framework is operational.
 \item Quality converges on trivial tasks, making the framework overkill.
-\item All tiers scored grade A, suggesting that throwing more complexity at Hello World does not help, which was expected. That obviousness is what makes it a good pipe cleaning run.
+\item All tiers scored grade A, suggesting that throwing more complexity at Hello World does not help, which was expected. That obviousness is what makes it a good pipe-cleaner run.
 \item Cost still varies 3.8x despite identical quality, showing the framework can measure economic trade-offs even when quality saturates. T5's hybrid approach achieves Frontier CoP by selectively loading features instead of maximizing everything.
 \item And the Token Efficiency Chasm I hypothesized in Section~\ref{sec:tiered-ablation}? The data is consistent with this, as T6 burns nearly double the cache read tokens (219K vs 113K) compared to T0.
 \end{enumerate}
@@ -1479,15 +1478,14 @@ All raw data, figures, and tables are available in the repository at \texttt{doc
 \item Sonnet Model: \texttt{config/models/claude-sonnet-4-5.yaml}
 \item Haiku Model: \texttt{config/models/claude-haiku-4-5.yaml}
 \item Judge system prompt: \texttt{config/judge/system\_prompt.md}
-\item Test definitions: \texttt{tests/*/test.yaml}
-\item Rubric schemas: \texttt{tests/*/expected/rubric.yaml}
+\item Test definitions: \texttt{tests/fixtures/tests/*/test.yaml}
+\item Rubric schemas: \texttt{tests/fixtures/tests/*/expected/rubric.yaml}
 \end{itemize}
 
 \textbf{Required Software}:
 
 \begin{itemize}
 \item Pixi (package manager)
-\item Docker (containerization)
 \item Claude Code CLI (requires Anthropic API key or Claude Max subscription)
 \item Python 3.12+
 \end{itemize}
