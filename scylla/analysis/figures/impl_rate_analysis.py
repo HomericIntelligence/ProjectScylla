@@ -21,7 +21,7 @@ from scylla.analysis.figures.spec_builder import (
     compute_dynamic_domain_with_ci,
     save_figure,
 )
-from scylla.analysis.stats import bootstrap_ci
+from scylla.analysis.stats import bootstrap_ci, ols_regression
 
 
 def fig25_impl_rate_by_tier(
@@ -204,11 +204,22 @@ def fig26_impl_rate_vs_pass_rate(
         )
     )
 
-    # Linear regression line - use same scale as points
+    # Linear regression line - manually computed to prevent extrapolation
+    result = ols_regression(df["impl_rate"], df["pass_rate"])
+    x_min, x_max = df["impl_rate"].min(), df["impl_rate"].max()
+    reg_line_df = pd.DataFrame(
+        {
+            "impl_rate": [x_min, x_max],
+            "pass_rate": [
+                result["slope"] * x_min + result["intercept"],
+                result["slope"] * x_max + result["intercept"],
+            ],
+        }
+    )
+
     regression = (
-        alt.Chart(df)
+        alt.Chart(reg_line_df)
         .mark_line(color="black", strokeDash=[5, 5])
-        .transform_regression("impl_rate", "pass_rate")
         .encode(
             x=alt.X("impl_rate:Q", scale=alt.Scale(domain=impl_rate_domain)),
             y=alt.Y("pass_rate:Q", scale=alt.Scale(domain=[-0.1, 1.1])),
@@ -266,8 +277,8 @@ def fig27_impl_rate_distribution(
     models = sorted(df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for impl_rate axis
-    impl_rate_domain = compute_dynamic_domain(df["impl_rate"])
+    # Compute dynamic domain for impl_rate axis with increased padding for boxplot whiskers
+    impl_rate_domain = compute_dynamic_domain(df["impl_rate"], padding_fraction=0.15)
 
     # Create base layered chart without faceting
     base_violin = (

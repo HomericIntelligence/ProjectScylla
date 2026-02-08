@@ -39,8 +39,8 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
     # Get dynamic color scale
     domain, range_ = get_color_scale("judges", judge_order)
 
-    # Compute dynamic domain for judge score axis
-    score_domain = compute_dynamic_domain(data["judge_score"])
+    # Compute dynamic domain for judge score axis with increased padding for boxplot whiskers
+    score_domain = compute_dynamic_domain(data["judge_score"], padding_fraction=0.15)
 
     # Create violin plot with box plot overlay
     base = alt.Chart(data).encode(
@@ -214,8 +214,8 @@ def fig17_judge_variance_overall(
     # Get dynamic color scale
     domain, range_ = get_color_scale("judges", judge_order)
 
-    # Compute dynamic domain for judge score axis
-    score_domain = compute_dynamic_domain(data["judge_score"])
+    # Compute dynamic domain for judge score axis with increased padding for boxplot whiskers
+    score_domain = compute_dynamic_domain(data["judge_score"], padding_fraction=0.15)
 
     # Panel A: Box plot of score distributions
     boxplot = (

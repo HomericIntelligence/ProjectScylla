@@ -155,8 +155,9 @@ def fig21_cost_quality_regression(
     )
     subtest_stats.columns = ["agent_model", "tier", "subtest", "mean_cost", "mean_score"]
 
-    # Compute regression per model
-    regressions = []
+    # Compute regression per model - split into separate DataFrames for clarity
+    reg_stats_list = []
+    reg_lines_list = []
 
     for model in sorted(subtest_stats["agent_model"].unique()):
         model_data = subtest_stats[subtest_stats["agent_model"] == model]
@@ -164,7 +165,7 @@ def fig21_cost_quality_regression(
         # OLS regression
         result = ols_regression(model_data["mean_cost"], model_data["mean_score"])
 
-        regressions.append(
+        reg_stats_list.append(
             {
                 "agent_model": model,
                 "slope": result["slope"],
@@ -180,24 +181,17 @@ def fig21_cost_quality_regression(
 
         for x in [x_min, x_max]:
             y = result["slope"] * x + result["intercept"]
-            regressions.append(
-                {
-                    "agent_model": model,
-                    "x": x,
-                    "y": y,
-                    "type": "regression_line",
-                }
-            )
+            reg_lines_list.append({"agent_model": model, "x": x, "y": y})
 
-    reg_df = pd.DataFrame(regressions)
+    reg_stats_df = pd.DataFrame(reg_stats_list)
+    reg_lines_df = pd.DataFrame(reg_lines_list)
 
     # Get dynamic color scale for models
     models = sorted(subtest_stats["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
     # Compute dynamic domain for score axis - include regression line Y values
-    reg_line_rows = reg_df[reg_df["type"] == "regression_line"]
-    all_y = pd.concat([subtest_stats["mean_score"], reg_line_rows["y"].dropna()])
+    all_y = pd.concat([subtest_stats["mean_score"], reg_lines_df["y"].dropna()])
     score_domain = compute_dynamic_domain(all_y)
 
     # Create scatter plot
@@ -225,8 +219,6 @@ def fig21_cost_quality_regression(
     )
 
     # Add regression lines
-    reg_lines_df = reg_df[reg_df["type"] == "regression_line"].copy()
-
     regression_lines = (
         alt.Chart(reg_lines_df)
         .mark_line(strokeWidth=2)
@@ -241,7 +233,6 @@ def fig21_cost_quality_regression(
     )
 
     # Add R² annotations
-    reg_stats_df = reg_df[reg_df["type"].isna()].copy()
     reg_stats_df["annotation"] = reg_stats_df.apply(
         lambda row: f"R² = {row['r_squared']:.3f}, p = {row['p_value']:.4f}", axis=1
     )

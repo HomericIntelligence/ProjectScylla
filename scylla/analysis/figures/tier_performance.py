@@ -72,9 +72,13 @@ def fig04_pass_rate_by_tier(
     models = sorted(stats_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Compute dynamic domain for pass rate axis - include CI bounds
+    # Compute dynamic domain for pass rate axis - include CI bounds and pass_threshold
+    # Include pass_threshold so the reference line is always visible
+    threshold_series = pd.Series([pass_threshold])
     pass_rate_domain = compute_dynamic_domain_with_ci(
-        stats_df["pass_rate"], stats_df["ci_low"], stats_df["ci_high"]
+        pd.concat([stats_df["pass_rate"], threshold_series]),
+        pd.concat([stats_df["ci_low"], threshold_series]),
+        pd.concat([stats_df["ci_high"], threshold_series]),
     )
 
     # Create grouped bar chart
