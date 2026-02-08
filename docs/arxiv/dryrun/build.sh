@@ -66,13 +66,15 @@ if [ "${PDF_SIZE}" -lt 10000 ]; then
 fi
 
 # Check for LaTeX errors
-ERROR_COUNT=$(grep -c "^!" paper.log 2>/dev/null || echo 0)
+ERROR_COUNT=$(grep "^!" paper.log 2>/dev/null | wc -l | tr -d ' ')
+ERROR_COUNT=${ERROR_COUNT:-0}
 if [ "${ERROR_COUNT}" -gt 0 ]; then
     echo "✗ Warning: ${ERROR_COUNT} LaTeX errors found in log"
 fi
 
 # Check for unresolved references
-UNRESOLVED=$(grep "??" paper.log 2>/dev/null | grep -v pdfTeX | wc -l | tr -d ' ' || echo 0)
+UNRESOLVED=$(grep "??" paper.log 2>/dev/null | grep -v pdfTeX | wc -l | tr -d ' ')
+UNRESOLVED=${UNRESOLVED:-0}
 if [ "${UNRESOLVED}" -gt 0 ]; then
     echo "✗ Warning: ${UNRESOLVED} unresolved references"
 fi
