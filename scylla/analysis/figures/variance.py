@@ -51,22 +51,14 @@ def fig01_score_variance_by_tier(
         ),
     )
 
-    # Box plot layer
+    # Box plot only (removed jittered points for clarity)
     boxplot = base.mark_boxplot(size=30).encode(
         y=alt.Y("score:Q", title="Score", scale=alt.Scale(domain=score_domain)),
     )
 
-    # Jittered points layer
-    points = base.mark_circle(size=10, opacity=0.3).encode(
-        y=alt.Y("score:Q"),
-        x=alt.X("tier:O", sort=tier_order),
-        xOffset="agent_model:N",
-    )
-
-    # Combine layers and facet by model
+    # Facet by model
     chart = (
-        (boxplot + points)
-        .facet(column=alt.Column("agent_model:N", title=None))
+        boxplot.facet(column=alt.Column("agent_model:N", title=None))
         .properties(
             title="Score Distribution Across Tiers (T0-T6)",
         )
