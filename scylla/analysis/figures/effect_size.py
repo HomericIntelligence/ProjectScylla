@@ -89,6 +89,7 @@ def fig19_effect_size_forest(runs_df: pd.DataFrame, output_dir: Path, render: bo
                 title="Significant?",
                 scale=alt.Scale(domain=sig_domain, range=sig_range),
             ),
+            detail=alt.Detail("agent_model:N"),  # Enable filtering by model when faceting
             tooltip=[
                 alt.Tooltip("agent_model:N", title="Model"),
                 alt.Tooltip("transition:O", title="Transition"),
@@ -112,6 +113,7 @@ def fig19_effect_size_forest(runs_df: pd.DataFrame, output_dir: Path, render: bo
                 "significant:N",
                 scale=alt.Scale(domain=sig_domain, range=sig_range),
             ),
+            detail=alt.Detail("agent_model:N"),  # Enable filtering by model when faceting
         )
     )
 
@@ -124,6 +126,8 @@ def fig19_effect_size_forest(runs_df: pd.DataFrame, output_dir: Path, render: bo
         )
         zero_line = alt.Chart(zero_data).mark_rule(strokeDash=[5, 5], color="black").encode(x="x:Q")
 
+        # Layer charts, then facet using effect_df as the data source for faceting
+        # Each chart uses its own data, but facet field comes from effect_df
         chart = (
             alt.layer(zero_line, error_bars, points)
             .facet(row=alt.Row("agent_model:N", title="Agent Model"), data=effect_df)
