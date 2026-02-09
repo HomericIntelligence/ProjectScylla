@@ -10,7 +10,7 @@ from pathlib import Path
 import altair as alt
 import pandas as pd
 
-from scylla.analysis.figures import derive_tier_order, get_color_scale
+from scylla.analysis.figures import derive_tier_order
 from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
 
 
@@ -19,7 +19,9 @@ def fig09_criteria_by_tier(
 ) -> None:
     """Generate Fig 9: Per-Criteria Scores by Tier.
 
-    Grouped bar chart showing mean criterion scores.
+    Faceted bar chart with one subplot per criterion, showing mean scores by tier.
+    Uses row faceting to create a vertical stack of 5 criterion panels for improved
+    readability compared to the previous grouped bar chart.
 
     Args:
         criteria_df: Criteria DataFrame
@@ -48,43 +50,61 @@ def fig09_criteria_by_tier(
     # Derive tier order from aggregated data
     tier_order = derive_tier_order(criteria_agg)
 
-    # Get colors for criteria using centralized function
-    criterion_labels_list = [criterion_labels[c] for c in criterion_order]
-    _, criterion_colors = get_color_scale("criteria", criterion_order)
+    # Get colors for tiers (not criteria, since each criterion is now a separate subplot)
+    tier_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2"]
 
     # Dynamic domain rounded to nearest 0.1 for clean axis labels
     raw_domain = compute_dynamic_domain(criteria_agg["criterion_score"])
     score_domain = [round(raw_domain[0] / 0.1) * 0.1, round(raw_domain[1] / 0.1) * 0.1]
 
-    # Create grouped bar chart
-    chart = (
+    # Sort criteria labels for consistent ordering
+    criterion_labels_list = [criterion_labels[c] for c in criterion_order]
+
+    # Create base chart with tier-based coloring
+    base_chart = (
         alt.Chart(criteria_agg)
         .mark_bar()
         .encode(
             x=alt.X("tier:O", title="Tier", sort=tier_order),
             y=alt.Y(
                 "criterion_score:Q",
-                title="Mean Criterion Score",
+                title="Mean Score",
                 scale=alt.Scale(domain=score_domain),
             ),
             color=alt.Color(
-                "criterion_label:N",
-                title="Criterion",
-                scale=alt.Scale(
-                    domain=criterion_labels_list,
-                    range=criterion_colors,
-                ),
-                sort=criterion_labels_list,
+                "tier:O",
+                title="Tier",
+                scale=alt.Scale(domain=tier_order, range=tier_colors[: len(tier_order)]),
+                sort=tier_order,
+                legend=None,  # Remove legend since tier is already on x-axis
             ),
-            xOffset="criterion_label:N",
             tooltip=[
                 alt.Tooltip("tier:O", title="Tier"),
                 alt.Tooltip("criterion_label:N", title="Criterion"),
                 alt.Tooltip("criterion_score:Q", title="Mean Score", format=".3f"),
             ],
         )
-        .facet(column=alt.Column("agent_model:N", title=None))
+        .properties(
+            height=150,  # Individual subplot height for readability
+            width=180,  # Individual subplot width
+        )
+    )
+
+    # Facet by criterion (row) and agent_model (column)
+    chart = (
+        base_chart.facet(
+            row=alt.Row(
+                "criterion_label:N",
+                title="Criterion",
+                sort=criterion_labels_list,
+                header=alt.Header(labelAngle=0, labelAlign="left"),
+            ),
+            column=alt.Column("agent_model:N", title=None),
+        )
         .properties(title="Per-Criteria Performance by Tier")
+        .resolve_scale(
+            y="independent"  # Allow each criterion to have its own y-axis scale if needed
+        )
     )
 
     save_figure(chart, "fig09_criteria_by_tier", output_dir, render)
