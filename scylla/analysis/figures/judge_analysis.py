@@ -158,12 +158,16 @@ def fig14_judge_agreement(judges_df: pd.DataFrame, output_dir: Path, render: boo
         alt.Chart(pairs_df)
         .mark_circle(size=60, opacity=0.6)
         .encode(
-            x=alt.X("score_x:Q", title="Score (Judge X)", scale=alt.Scale(domain=score_x_domain)),
-            y=alt.Y("score_y:Q", title="Score (Judge Y)", scale=alt.Scale(domain=score_y_domain)),
+            x=alt.X("score_x:Q", title="First Judge Score", scale=alt.Scale(domain=score_x_domain)),
+            y=alt.Y(
+                "score_y:Q", title="Second Judge Score", scale=alt.Scale(domain=score_y_domain)
+            ),
             tooltip=[
                 alt.Tooltip("pair_label:N", title="Comparison"),
-                alt.Tooltip("score_x:Q", title="Judge X Score", format=".3f"),
-                alt.Tooltip("score_y:Q", title="Judge Y Score", format=".3f"),
+                alt.Tooltip("judge_x:N", title="Judge"),
+                alt.Tooltip("score_x:Q", title="Score X", format=".3f"),
+                alt.Tooltip("judge_y:N", title="Judge"),
+                alt.Tooltip("score_y:Q", title="Score Y", format=".3f"),
             ],
         )
         .properties(width=250, height=250)
