@@ -131,12 +131,20 @@ def test_fig17_judge_variance_overall(sample_judges_df, tmp_path):
     assert (tmp_path / "fig17_judge_variance_overall.vl.json").exists()
 
 
-def test_fig18_failure_rate_by_test(sample_runs_df, tmp_path):
-    """Test Fig 18 generates files correctly."""
-    from scylla.analysis.figures.variance import fig18_failure_rate_by_test
+def test_fig18a_failure_rate_per_subtest(sample_runs_df, tmp_path):
+    """Test Fig 18a generates files correctly."""
+    from scylla.analysis.figures.variance import fig18a_failure_rate_per_subtest
 
-    fig18_failure_rate_by_test(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig18_failure_rate_by_test.vl.json").exists()
+    fig18a_failure_rate_per_subtest(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig18a_failure_rate_per_subtest.vl.json").exists()
+
+
+def test_fig18b_failure_rate_aggregate(sample_runs_df, tmp_path):
+    """Test Fig 18b generates files correctly."""
+    from scylla.analysis.figures.variance import fig18b_failure_rate_aggregate
+
+    fig18b_failure_rate_aggregate(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig18b_failure_rate_aggregate.vl.json").exists()
 
 
 def test_publication_theme():

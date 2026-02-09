@@ -231,10 +231,10 @@ def fig16_success_variance_by_test(
     save_figure(chart, "fig16_success_variance_by_test", output_dir, render)
 
 
-def fig18_failure_rate_by_test(
+def fig18a_failure_rate_per_subtest(
     runs_df: pd.DataFrame, output_dir: Path, render: bool = True
 ) -> None:
-    """Generate Fig 18: Failure Rate by Test.
+    """Generate Fig 18a: Failure Rate per Subtest (Detailed).
 
     Horizontal bar chart showing failure rate (1 - pass_rate) per subtest,
     color-coded by tier, faceted by model.
@@ -299,8 +299,80 @@ def fig18_failure_rate_by_test(
             ],
         )
         .facet(column=alt.Column("agent_model:N", title=None))
-        .properties(title="Failure Rate by Test")
+        .properties(title="Failure Rate per Subtest (Detailed)")
         .resolve_scale(y="independent")
     )
 
-    save_figure(chart, "fig18_failure_rate_by_test", output_dir, render)
+    save_figure(chart, "fig18a_failure_rate_per_subtest", output_dir, render)
+
+
+def fig18b_failure_rate_aggregate(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig 18b: Aggregate Failure Rate by Tier (Summary).
+
+    Horizontal bar chart showing aggregate failure rate per tier,
+    computed across all subtests, faceted by model.
+
+    Args:
+        runs_df: Runs DataFrame
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    # Compute aggregate failure rate per (agent_model, tier)
+    # Aggregated across all subtests in the tier
+    failure_data = []
+
+    for (model, tier), group in runs_df.groupby(["agent_model", "tier"]):
+        pass_rate = group["passed"].mean()
+        failure_rate = 1 - pass_rate
+        n_subtests = group["subtest"].nunique()
+
+        failure_data.append(
+            {
+                "agent_model": model,
+                "tier": tier,
+                "failure_rate": failure_rate,
+                "n_runs": len(group),
+                "n_subtests": n_subtests,
+            }
+        )
+
+    failure_df = pd.DataFrame(failure_data)
+
+    # Sort by tier for display
+    failure_df = failure_df.sort_values("tier")
+
+    # Derive tier order from data
+    tier_order = derive_tier_order(failure_df)
+
+    # Get dynamic color scale for tiers
+    domain, range_ = get_color_scale("tiers", tier_order)
+
+    # Horizontal bar chart
+    chart = (
+        alt.Chart(failure_df)
+        .mark_bar()
+        .encode(
+            y=alt.Y("tier:N", title="Tier", sort=tier_order),
+            x=alt.X("failure_rate:Q", title="Failure Rate", scale=alt.Scale(domain=[0, 1])),
+            color=alt.Color(
+                "tier:N",
+                title="Tier",
+                sort=tier_order,
+                scale=alt.Scale(domain=domain, range=range_),
+            ),
+            tooltip=[
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("failure_rate:Q", title="Failure Rate", format=".2%"),
+                alt.Tooltip("n_subtests:Q", title="Subtests"),
+                alt.Tooltip("n_runs:Q", title="Runs"),
+            ],
+        )
+        .facet(column=alt.Column("agent_model:N", title=None))
+        .properties(title="Aggregate Failure Rate by Tier (Summary)")
+        .resolve_scale(y="independent")
+    )
+
+    save_figure(chart, "fig18b_failure_rate_aggregate", output_dir, render)
