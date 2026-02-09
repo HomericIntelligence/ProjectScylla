@@ -134,10 +134,10 @@ def fig03_failure_rate_by_tier(
     save_figure(chart, "fig03_failure_rate_by_tier", output_dir, render)
 
 
-def fig16_success_variance_by_test(
+def fig16a_success_variance_per_subtest(
     runs_df: pd.DataFrame, output_dir: Path, render: bool = True
 ) -> None:
-    """Generate Fig 16: Success Variance by Test.
+    """Generate Fig 16a: Success Variance Per Subtest.
 
     Two-panel heatmap showing per-subtest variance, grouped by tier, faceted by model:
     - Panel A: Binary pass/fail Bernoulli variance (p*(1-p))
@@ -225,9 +225,115 @@ def fig16_success_variance_by_test(
     )
 
     # Combine faceted panels horizontally
-    chart = (heatmap_pass | heatmap_score).properties(title="Success Variance by Test")
+    chart = (heatmap_pass | heatmap_score).properties(
+        title="Success Variance Per Subtest (Per-Tier View)"
+    )
 
-    save_figure(chart, "fig16_success_variance_by_test", output_dir, render)
+    save_figure(chart, "fig16a_success_variance_per_subtest", output_dir, render)
+
+
+def fig16b_success_variance_aggregate(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig 16b: Success Variance Aggregate.
+
+    Two-panel heatmap showing aggregate variance across all subtests combined per tier:
+    - Panel A: Binary pass/fail Bernoulli variance (p*(1-p))
+    - Panel B: Continuous score standard deviation
+
+    Aggregation is performed by pooling all subtest runs within each tier,
+    providing a tier-level summary of variance.
+
+    Args:
+        runs_df: Runs DataFrame
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    # Compute variance metrics per (agent_model, tier) - aggregating across subtests
+    variance_data = []
+
+    for (model, tier), group in runs_df.groupby(["agent_model", "tier"]):
+        pass_rate = group["passed"].mean()
+        pass_variance = pass_rate * (1 - pass_rate)  # Bernoulli variance: p(1-p)
+        score_std = group["score"].std()
+
+        variance_data.append(
+            {
+                "agent_model": model,
+                "tier": tier,
+                "pass_variance": pass_variance,
+                "score_std": score_std,
+                "n_runs": len(group),
+            }
+        )
+
+    variance_df = pd.DataFrame(variance_data)
+
+    # Derive tier order from data
+    tier_order = derive_tier_order(variance_df)
+
+    # Get dynamic color scale for models
+    models = sorted(variance_df["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
+    # Panel A: Pass/fail variance bar chart
+    bar_pass = (
+        alt.Chart(variance_df)
+        .mark_bar()
+        .encode(
+            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            y=alt.Y("pass_variance:Q", title="Pass Variance", scale=alt.Scale(domain=[0, 0.25])),
+            color=alt.Color(
+                "agent_model:N",
+                title="Agent Model",
+                scale=alt.Scale(domain=domain, range=range_),
+            ),
+            tooltip=[
+                alt.Tooltip("agent_model:N", title="Model"),
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("pass_variance:Q", title="Pass Variance", format=".3f"),
+                alt.Tooltip("n_runs:Q", title="Total Runs"),
+            ],
+        )
+        .properties(title="Panel A: Pass/Fail Variance (Aggregated)", width=400, height=300)
+    )
+
+    # Panel B: Score std dev bar chart
+    # Compute dynamic domain for score std dev
+    std_max = max(0.3, float(variance_df["score_std"].max()) * 1.1)
+
+    bar_score = (
+        alt.Chart(variance_df)
+        .mark_bar()
+        .encode(
+            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            y=alt.Y(
+                "score_std:Q",
+                title="Score Std Dev",
+                scale=alt.Scale(domain=[0, round(std_max / 0.05) * 0.05]),
+            ),
+            color=alt.Color(
+                "agent_model:N",
+                title="Agent Model",
+                scale=alt.Scale(domain=domain, range=range_),
+            ),
+            tooltip=[
+                alt.Tooltip("agent_model:N", title="Model"),
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("score_std:Q", title="Score Std Dev", format=".3f"),
+                alt.Tooltip("n_runs:Q", title="Total Runs"),
+            ],
+        )
+        .properties(title="Panel B: Score Standard Deviation (Aggregated)", width=400, height=300)
+    )
+
+    # Stack panels vertically for aggregate view
+    chart = (bar_pass & bar_score).properties(
+        title="Success Variance Aggregate (All Subtests Combined Per Tier)"
+    )
+
+    save_figure(chart, "fig16b_success_variance_aggregate", output_dir, render)
 
 
 def fig18a_failure_rate_per_subtest(

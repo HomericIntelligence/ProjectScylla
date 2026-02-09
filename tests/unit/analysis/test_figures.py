@@ -131,12 +131,20 @@ def test_fig15c_tier_summary_heatmap(sample_runs_df, tmp_path):
     assert (tmp_path / "fig15c_tier_summary_heatmap.vl.json").exists()
 
 
-def test_fig16_success_variance_by_test(sample_runs_df, tmp_path):
-    """Test Fig 16 generates files correctly."""
-    from scylla.analysis.figures.variance import fig16_success_variance_by_test
+def test_fig16a_success_variance_per_subtest(sample_runs_df, tmp_path):
+    """Test Fig 16a generates files correctly."""
+    from scylla.analysis.figures.variance import fig16a_success_variance_per_subtest
 
-    fig16_success_variance_by_test(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig16_success_variance_by_test.vl.json").exists()
+    fig16a_success_variance_per_subtest(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig16a_success_variance_per_subtest.vl.json").exists()
+
+
+def test_fig16b_success_variance_aggregate(sample_runs_df, tmp_path):
+    """Test Fig 16b generates files correctly."""
+    from scylla.analysis.figures.variance import fig16b_success_variance_aggregate
+
+    fig16b_success_variance_aggregate(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig16b_success_variance_aggregate.vl.json").exists()
 
 
 def test_fig17_judge_variance_overall(sample_judges_df, tmp_path):
