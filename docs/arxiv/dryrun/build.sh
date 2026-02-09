@@ -93,12 +93,10 @@ echo ""
 # Step 4: Create submission tarball
 echo "[4/4] Creating submission tarball..."
 
-# Files to include
+# Files to include (exclude paper.bbl and 00README.json per arXiv requirements)
 tar -czf arxiv-submission.tar.gz \
     paper.tex \
-    paper.bbl \
     references.bib \
-    00README.json \
     figures/*.pdf \
     tables/tab04_criteria_performance.tex 2>/dev/null || {
     echo "✗ Error creating tarball"
@@ -111,9 +109,9 @@ FILE_COUNT=$(tar -tzf arxiv-submission.tar.gz | wc -l | tr -d ' ')
 echo "✓ Tarball created: ${TARBALL_SIZE} bytes, ${FILE_COUNT} files"
 echo ""
 
-# Clean auxiliary files (keep .bbl for arXiv)
-echo "Cleaning auxiliary files (keeping paper.bbl)..."
-rm -f paper.aux paper.log paper.out paper.toc paper.lof paper.lot paper.blg
+# Clean auxiliary files (arXiv generates .bbl from .bib)
+echo "Cleaning auxiliary files..."
+rm -f paper.aux paper.log paper.out paper.toc paper.lof paper.lot paper.blg paper.bbl
 echo "✓ Cleaned"
 echo ""
 
