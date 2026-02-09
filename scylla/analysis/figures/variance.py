@@ -12,15 +12,15 @@ import pandas as pd
 
 from scylla.analysis.config import config
 from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_figure
+from scylla.analysis.figures.spec_builder import save_figure
 
 
 def fig01_score_variance_by_tier(
     runs_df: pd.DataFrame, output_dir: Path, render: bool = True
 ) -> None:
-    """Generate Fig 1: Score Variance by Tier & Subtest.
+    """Generate Fig 1: Score Variance by Tier.
 
-    Box plots with jittered points showing score distribution.
+    Histogram showing score distribution with 0.05 bin width, one subfigure per tier.
 
     Args:
         runs_df: Runs DataFrame
@@ -29,40 +29,24 @@ def fig01_score_variance_by_tier(
 
     """
     # Prepare data
-    data = runs_df[["agent_model", "tier", "score"]].copy()
+    data = runs_df[["tier", "score"]].copy()
 
     # Derive tier order from data
     tier_order = derive_tier_order(data)
 
-    # Get dynamic color scale for models
-    models = sorted(data["agent_model"].unique())
-    domain, range_ = get_color_scale("models", models)
-
-    # Compute dynamic domain for score axis with increased padding for boxplot whiskers
-    score_domain = compute_dynamic_domain(data["score"], padding_fraction=0.15)
-
-    # Create base chart with faceting
-    base = alt.Chart(data).encode(
-        x=alt.X("tier:O", title="Tier", sort=tier_order),
-        color=alt.Color(
-            "agent_model:N",
-            title="Agent Model",
-            scale=alt.Scale(domain=domain, range=range_),
-        ),
-    )
-
-    # Box plot only (removed jittered points for clarity)
-    boxplot = base.mark_boxplot(size=30).encode(
-        y=alt.Y("score:Q", title="Score", scale=alt.Scale(domain=score_domain)),
-    )
-
-    # Facet by model
-    chart = (
-        boxplot.facet(column=alt.Column("agent_model:N", title=None))
-        .properties(
-            title="Score Distribution Across Tiers (T0-T6)",
+    # Create histogram with 0.05 bin width
+    histogram = (
+        alt.Chart(data)
+        .mark_bar()
+        .encode(
+            x=alt.X("score:Q", bin=alt.Bin(step=0.05), title="Score"),
+            y=alt.Y("count():Q", title="Count"),
         )
-        .resolve_scale(x="independent")
+    )
+
+    # Facet by tier to create per-tier subfigures
+    chart = histogram.facet(column=alt.Column("tier:N", title="Tier", sort=tier_order)).properties(
+        title="Score Distribution per Tier"
     )
 
     save_figure(chart, "fig01_score_variance_by_tier", output_dir, render)
@@ -129,6 +113,7 @@ def fig03_failure_rate_by_tier(
         )
         .facet(column=alt.Column("agent_model:N", title=None))
         .properties(title="Grade Distribution by Tier")
+        .resolve_scale(x="independent")
     )
 
     save_figure(chart, "fig03_failure_rate_by_tier", output_dir, render)

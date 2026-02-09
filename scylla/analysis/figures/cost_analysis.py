@@ -16,9 +16,9 @@ from scylla.analysis.figures.spec_builder import compute_dynamic_domain, save_fi
 
 
 def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
-    """Generate Fig 6: Cost-of-Pass by Tier.
+    """Generate Fig 6: Cost Distribution by Tier.
 
-    Grouped bar chart with log scale, showing CoP per tier.
+    Histogram showing cost_usd distribution with log-scale bins, one subfigure per tier.
 
     Args:
         runs_df: Runs DataFrame
@@ -26,131 +26,35 @@ def fig06_cop_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         render: Whether to render to PNG/PDF
 
     """
-    # Compute CoP per (agent_model, tier)
+    # Prepare data - filter out zero or invalid costs
+    data = runs_df[["tier", "cost_usd"]].copy()
+    data = data[data["cost_usd"] > 0]  # Log scale requires positive values
+
     # Derive tier order from data
-    tier_order = derive_tier_order(runs_df)
+    tier_order = derive_tier_order(data)
 
-    stats = []
-    for model in runs_df["agent_model"].unique():
-        for tier in tier_order:
-            subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
-            if len(subset) == 0:
-                continue
-
-            pass_rate = subset["passed"].mean()
-            mean_cost = subset["cost_usd"].mean()
-
-            if pass_rate > 0:
-                cop = mean_cost / pass_rate
-                is_inf = False
-            else:
-                cop = float("inf")
-                is_inf = True
-
-            stats.append(
-                {
-                    "agent_model": model,
-                    "tier": tier,
-                    "cop": cop if not is_inf else np.nan,  # NaN for plotting
-                    "pass_rate": pass_rate,
-                    "mean_cost": mean_cost,
-                    "is_inf": is_inf,
-                }
-            )
-
-    stats_df = pd.DataFrame(stats)
-
-    # Compute frontier CoP per model
-    frontier_cops = []
-    for model in stats_df["agent_model"].unique():
-        model_stats = stats_df[stats_df["agent_model"] == model]
-        finite_cops = model_stats[~model_stats["is_inf"]]["cop"]
-        if len(finite_cops) > 0:
-            frontier_cop = finite_cops.min()
-            frontier_cops.append({"agent_model": model, "frontier_cop": frontier_cop})
-
-    frontier_df = pd.DataFrame(frontier_cops)
-
-    # Create bar chart (exclude infinite values)
-    finite_stats = stats_df[~stats_df["is_inf"]].copy()
-
-    # Handle case where all CoP values are infinite (zero pass rate)
-    if len(finite_stats) == 0:
-        print("Warning: No finite CoP values found for fig06. All tiers have zero pass rate.")
-        return  # Skip figure generation if no valid data
-
-    # Get dynamic color scale for models
-    models = sorted(stats_df["agent_model"].unique())
-    domain, range_ = get_color_scale("models", models)
-
-    # Compute explicit domain for log scale
-    cop_min = finite_stats["cop"].min()
-    cop_max = finite_stats["cop"].max()
-    # Extend domain by 50% on each side in log space for padding
-    log_min = np.log10(cop_min)
-    log_max = np.log10(cop_max)
-    log_range = log_max - log_min
-    domain_min = 10 ** (log_min - 0.5 * log_range)
-    domain_max = 10 ** (log_max + 0.5 * log_range)
-
-    bars = (
-        alt.Chart(finite_stats)
+    # Create histogram with log-binning
+    # Altair doesn't support log-binning directly, so we'll use regular bins with log scale
+    histogram = (
+        alt.Chart(data)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
-            y=alt.Y(
-                "cop:Q",
-                title="Cost-of-Pass (USD, log scale)",
-                scale=alt.Scale(type="log", base=10, domain=[domain_min, domain_max]),
+            x=alt.X(
+                "cost_usd:Q",
+                bin=alt.Bin(maxbins=20),  # Auto-binning with max 20 bins
+                title="Cost (USD)",
+                scale=alt.Scale(type="log", base=10),
             ),
-            color=alt.Color(
-                "agent_model:N",
-                title="Agent Model",
-                scale=alt.Scale(domain=domain, range=range_),
-            ),
-            xOffset="agent_model:N",
-            tooltip=[
-                alt.Tooltip("tier:O", title="Tier"),
-                alt.Tooltip("agent_model:N", title="Model"),
-                alt.Tooltip("cop:Q", title="CoP (USD)", format="$.4f"),
-                alt.Tooltip("pass_rate:Q", title="Pass Rate", format=".2%"),
-                alt.Tooltip("mean_cost:Q", title="Mean Cost", format="$.4f"),
-            ],
+            y=alt.Y("count():Q", title="Count"),
         )
     )
 
-    # Add infinity markers for tiers with zero pass rate
-    inf_stats = stats_df[stats_df["is_inf"]].copy()
-    if len(inf_stats) > 0:
-        # Place infinity markers at top of chart
-        max_finite_cop = finite_stats["cop"].max() if len(finite_stats) > 0 else 1.0
-        inf_stats["cop_plot"] = max_finite_cop * 1.5
-
-        inf_markers = (
-            alt.Chart(inf_stats)
-            .mark_text(text="∞", size=20, dy=-10)
-            .encode(
-                x=alt.X("tier:O", sort=tier_order),
-                y=alt.Y("cop_plot:Q"),
-                xOffset="agent_model:N",
-                color=alt.Color(
-                    "agent_model:N",
-                    scale=alt.Scale(domain=domain, range=range_),
-                ),
-            )
-        )
-        chart = bars + inf_markers
-    else:
-        chart = bars
-
-    chart = chart.properties(title="Cost-of-Pass by Tier (Log Scale)").configure_view(strokeWidth=0)
+    # Facet by tier to create per-tier subfigures
+    chart = histogram.facet(column=alt.Column("tier:N", title="Tier", sort=tier_order)).properties(
+        title="Cost Distribution per Tier (Log Scale)"
+    )
 
     save_figure(chart, "fig06_cop_by_tier", output_dir, render)
-
-    # Also save frontier CoP table
-    frontier_csv = output_dir / "fig06_frontier_cop.csv"
-    frontier_df.to_csv(frontier_csv, index=False)
-    print(f"  Saved frontier CoP: {frontier_csv}")
 
 
 def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
@@ -335,18 +239,30 @@ def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     tier_order = derive_tier_order(runs_df)
     domain, range_ = get_color_scale("tiers", tier_order)
 
-    # Create line chart
-    lines = (
+    # Get dynamic color scale for models
+    models = sorted(cumulative_df["agent_model"].unique())
+    model_domain, model_range = get_color_scale("models", models)
+
+    # Create line chart with both models in same graph
+    # Use different line types (strokeDash) for models
+    chart = (
         alt.Chart(cumulative_df)
         .mark_line()
         .encode(
             x=alt.X("run_index:Q", title="Run Index (Chronological Order)"),
             y=alt.Y("cumulative_cost:Q", title="Cumulative Cost (USD)"),
             color=alt.Color(
-                "tier:N",
-                title="Tier",
-                scale=alt.Scale(domain=domain, range=range_),
-                sort=tier_order,
+                "agent_model:N",
+                title="Model",
+                scale=alt.Scale(domain=model_domain, range=model_range),
+            ),
+            strokeDash=alt.StrokeDash(
+                "agent_model:N",
+                title="Model",
+                scale=alt.Scale(
+                    domain=model_domain,
+                    range=[[1, 0], [5, 5]] if len(models) == 2 else [[1, 0], [5, 5], [3, 3]],
+                ),
             ),
             tooltip=[
                 alt.Tooltip("agent_model:N", title="Model"),
@@ -357,16 +273,8 @@ def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool 
                 alt.Tooltip("cumulative_cost:Q", title="Cumulative Cost", format="$.2f"),
             ],
         )
+        .properties(title="Cumulative Cost Over Runs")
+        .configure_view(strokeWidth=0)
     )
-
-    # Facet by model if multiple models
-    if cumulative_df["agent_model"].nunique() > 1:
-        chart = (
-            lines.facet(row=alt.Row("agent_model:N", title="Agent Model"))
-            .properties(title="Cumulative Cost Over Runs")
-            .configure_view(strokeWidth=0)
-        )
-    else:
-        chart = lines.properties(title="Cumulative Cost Over Runs").configure_view(strokeWidth=0)
 
     save_figure(chart, "fig22_cumulative_cost", output_dir, render)

@@ -11,12 +11,8 @@ import altair as alt
 import pandas as pd
 
 from scylla.analysis.config import config
-from scylla.analysis.figures import derive_tier_order, get_color_scale
-from scylla.analysis.figures.spec_builder import (
-    compute_dynamic_domain_with_ci,
-    save_figure,
-)
-from scylla.analysis.stats import bootstrap_ci
+from scylla.analysis.figures import derive_tier_order
+from scylla.analysis.figures.spec_builder import save_figure
 
 
 def fig04_pass_rate_by_tier(
@@ -27,7 +23,8 @@ def fig04_pass_rate_by_tier(
 ) -> None:
     """Generate Fig 4: Pass-Rate by Tier.
 
-    Grouped bar chart with 95% bootstrap confidence intervals.
+    Histogram showing score distribution with 0.05 bin width and reference line at pass_threshold,
+    one subfigure per tier.
 
     Args:
         runs_df: Runs DataFrame
@@ -40,91 +37,35 @@ def fig04_pass_rate_by_tier(
     if pass_threshold is None:
         pass_threshold = config.pass_threshold
 
-    # Compute pass rate and CI per (agent_model, tier)
+    # Prepare data
+    data = runs_df[["tier", "score"]].copy()
+
     # Derive tier order from data
-    tier_order = derive_tier_order(runs_df)
+    tier_order = derive_tier_order(data)
 
-    stats = []
-    for model in runs_df["agent_model"].unique():
-        for tier in tier_order:
-            subset = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
-            if len(subset) == 0:
-                continue
+    # Build reference line data with tier column (one row per tier)
+    ref_data = pd.DataFrame([{"tier": tier, "threshold": pass_threshold} for tier in tier_order])
 
-            passed = subset["passed"].astype(int)
-            mean, ci_low, ci_high = bootstrap_ci(passed)
-
-            stats.append(
-                {
-                    "agent_model": model,
-                    "tier": tier,
-                    "pass_rate": mean,
-                    "ci_low": ci_low,
-                    "ci_high": ci_high,
-                    "ci_error_low": mean - ci_low,
-                    "ci_error_high": ci_high - mean,
-                }
-            )
-
-    stats_df = pd.DataFrame(stats)
-
-    # Get dynamic color scale for models
-    models = sorted(stats_df["agent_model"].unique())
-    domain, range_ = get_color_scale("models", models)
-
-    # Compute dynamic domain for pass rate axis - include CI bounds and pass_threshold
-    # Include pass_threshold so the reference line is always visible
-    threshold_series = pd.Series([pass_threshold])
-    pass_rate_domain = compute_dynamic_domain_with_ci(
-        pd.concat([stats_df["pass_rate"], threshold_series]),
-        pd.concat([stats_df["ci_low"], threshold_series]),
-        pd.concat([stats_df["ci_high"], threshold_series]),
-    )
-
-    # Create grouped bar chart
-    bars = (
-        alt.Chart(stats_df)
+    # Create histogram with 0.05 bin width
+    histogram = (
+        alt.Chart(data)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
-            y=alt.Y("pass_rate:Q", title="Pass Rate", scale=alt.Scale(domain=pass_rate_domain)),
-            color=alt.Color(
-                "agent_model:N",
-                title="Agent Model",
-                scale=alt.Scale(domain=domain, range=range_),
-            ),
-            xOffset="agent_model:N",
-            tooltip=[
-                alt.Tooltip("tier:O", title="Tier"),
-                alt.Tooltip("agent_model:N", title="Model"),
-                alt.Tooltip("pass_rate:Q", title="Pass Rate", format=".2%"),
-                alt.Tooltip("ci_low:Q", title="95% CI Low", format=".2%"),
-                alt.Tooltip("ci_high:Q", title="95% CI High", format=".2%"),
-            ],
+            x=alt.X("score:Q", bin=alt.Bin(step=0.05), title="Score"),
+            y=alt.Y("count():Q", title="Count"),
         )
     )
 
-    # Error bars
-    error_bars = (
-        alt.Chart(stats_df)
-        .mark_errorbar()
-        .encode(
-            x=alt.X("tier:O", sort=tier_order),
-            y=alt.Y("ci_low:Q", title=""),
-            y2="ci_high:Q",
-            xOffset="agent_model:N",
-        )
+    # Create reference line at pass_threshold
+    threshold_line = (
+        alt.Chart(ref_data).mark_rule(color="red", strokeDash=[5, 5]).encode(x="threshold:Q")
     )
 
-    # Reference line at pass_threshold
-    rule_data = pd.DataFrame({"y": [pass_threshold]})
-    rule = alt.Chart(rule_data).mark_rule(color="gray", strokeDash=[5, 5]).encode(y="y:Q")
-
-    # Combine layers
+    # Layer histogram and reference line, then facet by tier
     chart = (
-        (bars + error_bars + rule)
-        .properties(title="Pass Rate by Tier with 95% Confidence Intervals")
-        .configure_view(strokeWidth=0)
+        alt.layer(histogram, threshold_line)
+        .facet(column=alt.Column("tier:N", title="Tier", sort=tier_order), data=data)
+        .properties(title="Score Distribution per Tier (Pass Threshold Marked)")
     )
 
     save_figure(chart, "fig04_pass_rate_by_tier", output_dir, render)

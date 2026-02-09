@@ -101,60 +101,51 @@ def fig15a_subtest_run_heatmap(
     # Prepare data: one row per (tier, subtest, run_number)
     heatmap_data = runs_df[["agent_model", "tier", "subtest", "run_number", "score"]].copy()
 
-    # Create subtest labels combining tier and subtest ID
-    heatmap_data["subtest_label"] = heatmap_data["tier"] + "/" + heatmap_data["subtest"]
-
-    # Derive tier order from data and sort subtests by tier then subtest number
+    # Derive tier order from data
     tier_order = derive_tier_order(heatmap_data)
-    heatmap_data["tier_sort"] = heatmap_data["tier"].map({t: i for i, t in enumerate(tier_order)})
+
+    # Sort subtests numerically within each tier
     heatmap_data["subtest_num"] = heatmap_data["subtest"].astype(int)
-    heatmap_data = heatmap_data.sort_values(["tier_sort", "subtest_num"])
+    subtest_order = sorted(heatmap_data["subtest"].unique(), key=lambda x: int(x))
 
-    # Get sorted subtest labels
-    sorted_subtests = heatmap_data["subtest_label"].unique().tolist()
-
-    # Create heatmap per model
-    charts = []
-    for model in heatmap_data["agent_model"].unique():
-        model_data = heatmap_data[heatmap_data["agent_model"] == model]
-
-        heatmap = (
-            alt.Chart(model_data)
-            .mark_rect()
-            .encode(
-                x=alt.X("run_number:O", title="Run Number", axis=alt.Axis(labelAngle=0)),
-                y=alt.Y(
-                    "subtest_label:N",
-                    title="Tier/Subtest",
-                    sort=sorted_subtests,
-                    axis=alt.Axis(labelFontSize=8),
+    # Create heatmap with faceting by tier
+    heatmap = (
+        alt.Chart(heatmap_data)
+        .mark_rect()
+        .encode(
+            x=alt.X("run_number:O", title="Run Number", axis=alt.Axis(labelAngle=0)),
+            y=alt.Y(
+                "subtest:O",
+                title="Subtest",
+                sort=subtest_order,
+            ),
+            color=alt.Color(
+                "score:Q",
+                title="Score",
+                scale=alt.Scale(
+                    scheme="redyellowgreen",
+                    domain=[0, 1],
                 ),
-                color=alt.Color(
-                    "score:Q",
-                    title="Score",
-                    scale=alt.Scale(
-                        scheme="redyellowgreen",
-                        domain=[0, 1],
-                    ),
-                ),
-                tooltip=[
-                    alt.Tooltip("tier:O", title="Tier"),
-                    alt.Tooltip("subtest:O", title="Subtest"),
-                    alt.Tooltip("run_number:O", title="Run"),
-                    alt.Tooltip("score:Q", title="Score", format=".3f"),
-                ],
-            )
-            .properties(
-                width=300,
-                height=1200,  # Large height to accommodate all subtests
-                title=f"{model} - All Runs (Max Granularity)",
-            )
+            ),
+            tooltip=[
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("subtest:O", title="Subtest"),
+                alt.Tooltip("run_number:O", title="Run"),
+                alt.Tooltip("score:Q", title="Score", format=".3f"),
+            ],
         )
+        .properties(width=300, height=200)
+    )
 
-        charts.append(heatmap)
-
-    # Concatenate horizontally
-    chart = alt.hconcat(*charts).resolve_scale(color="shared")
+    # Facet by tier and agent_model
+    chart = (
+        heatmap.facet(
+            row=alt.Row("tier:O", title="Tier", sort=tier_order),
+            column=alt.Column("agent_model:N", title=None),
+        )
+        .properties(title="Subtest/Run Scores by Tier (All Runs)")
+        .resolve_scale(y="independent")
+    )
 
     save_figure(chart, "fig15a_subtest_run_heatmap", output_dir, render)
 
@@ -184,64 +175,55 @@ def fig15b_subtest_best_heatmap(
     # Prepare data
     heatmap_data = best_runs[["agent_model", "tier", "subtest", "run_number", "score"]].copy()
 
-    # Create subtest labels combining tier and subtest ID
-    heatmap_data["subtest_label"] = heatmap_data["tier"] + "/" + heatmap_data["subtest"]
-
-    # Derive tier order and sort subtests
+    # Derive tier order from data
     tier_order = derive_tier_order(heatmap_data)
-    heatmap_data["tier_sort"] = heatmap_data["tier"].map({t: i for i, t in enumerate(tier_order)})
+
+    # Sort subtests numerically within each tier
     heatmap_data["subtest_num"] = heatmap_data["subtest"].astype(int)
-    heatmap_data = heatmap_data.sort_values(["tier_sort", "subtest_num"])
+    subtest_order = sorted(heatmap_data["subtest"].unique(), key=lambda x: int(x))
 
-    # Get sorted subtest labels
-    sorted_subtests = heatmap_data["subtest_label"].unique().tolist()
-
-    # Create heatmap per model (no x-axis since only 1 run per subtest)
-    charts = []
-    for model in heatmap_data["agent_model"].unique():
-        model_data = heatmap_data[heatmap_data["agent_model"] == model]
-
-        heatmap = (
-            alt.Chart(model_data)
-            .mark_rect()
-            .encode(
-                x=alt.X(
-                    "agent_model:N",
-                    title=None,
-                    axis=alt.Axis(labels=False, ticks=False),
+    # Create heatmap with faceting by tier (single column since only best run)
+    heatmap = (
+        alt.Chart(heatmap_data)
+        .mark_rect()
+        .encode(
+            x=alt.X(
+                "agent_model:N",
+                title=None,
+                axis=alt.Axis(labels=False, ticks=False),
+            ),
+            y=alt.Y(
+                "subtest:O",
+                title="Subtest",
+                sort=subtest_order,
+            ),
+            color=alt.Color(
+                "score:Q",
+                title="Score",
+                scale=alt.Scale(
+                    scheme="redyellowgreen",
+                    domain=[0, 1],
                 ),
-                y=alt.Y(
-                    "subtest_label:N",
-                    title="Tier/Subtest",
-                    sort=sorted_subtests,
-                    axis=alt.Axis(labelFontSize=8),
-                ),
-                color=alt.Color(
-                    "score:Q",
-                    title="Score",
-                    scale=alt.Scale(
-                        scheme="redyellowgreen",
-                        domain=[0, 1],
-                    ),
-                ),
-                tooltip=[
-                    alt.Tooltip("tier:O", title="Tier"),
-                    alt.Tooltip("subtest:O", title="Subtest"),
-                    alt.Tooltip("run_number:O", title="Best Run"),
-                    alt.Tooltip("score:Q", title="Score", format=".3f"),
-                ],
-            )
-            .properties(
-                width=100,
-                height=1200,
-                title=f"{model} - Best Run Per Subtest",
-            )
+            ),
+            tooltip=[
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("subtest:O", title="Subtest"),
+                alt.Tooltip("run_number:O", title="Best Run"),
+                alt.Tooltip("score:Q", title="Score", format=".3f"),
+            ],
         )
+        .properties(width=100, height=200)
+    )
 
-        charts.append(heatmap)
-
-    # Concatenate horizontally
-    chart = alt.hconcat(*charts).resolve_scale(color="shared")
+    # Facet by tier and agent_model
+    chart = (
+        heatmap.facet(
+            row=alt.Row("tier:O", title="Tier", sort=tier_order),
+            column=alt.Column("agent_model:N", title=None),
+        )
+        .properties(title="Best Subtest Scores by Tier")
+        .resolve_scale(y="independent")
+    )
 
     save_figure(chart, "fig15b_subtest_best_heatmap", output_dir, render)
 
@@ -268,45 +250,40 @@ def fig15c_tier_summary_heatmap(
     # Derive tier order
     tier_order = derive_tier_order(tier_summary)
 
-    # Create heatmap per model
-    charts = []
-    for model in tier_summary["agent_model"].unique():
-        model_data = tier_summary[tier_summary["agent_model"] == model]
-
-        heatmap = (
-            alt.Chart(model_data)
-            .mark_rect()
-            .encode(
-                x=alt.X("run_number:O", title="Run Number", axis=alt.Axis(labelAngle=0)),
-                y=alt.Y(
-                    "tier:O",
-                    title="Tier",
-                    sort=tier_order,
+    # Create heatmap with faceting by model
+    heatmap = (
+        alt.Chart(tier_summary)
+        .mark_rect()
+        .encode(
+            x=alt.X("run_number:O", title="Run Number", axis=alt.Axis(labelAngle=0)),
+            y=alt.Y(
+                "tier:O",
+                title="Tier",
+                sort=tier_order,
+            ),
+            color=alt.Color(
+                "score:Q",
+                title="Mean Score",
+                scale=alt.Scale(
+                    scheme="redyellowgreen",
+                    domain=[0, 1],
                 ),
-                color=alt.Color(
-                    "score:Q",
-                    title="Mean Score",
-                    scale=alt.Scale(
-                        scheme="redyellowgreen",
-                        domain=[0, 1],
-                    ),
-                ),
-                tooltip=[
-                    alt.Tooltip("tier:O", title="Tier"),
-                    alt.Tooltip("run_number:O", title="Run"),
-                    alt.Tooltip("score:Q", title="Mean Score", format=".3f"),
-                ],
-            )
-            .properties(
-                width=300,
-                height=200,
-                title=f"{model} - Tier Summary (Mean Across Subtests)",
-            )
+            ),
+            tooltip=[
+                alt.Tooltip("agent_model:N", title="Model"),
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("run_number:O", title="Run"),
+                alt.Tooltip("score:Q", title="Mean Score", format=".3f"),
+            ],
         )
+        .properties(width=300, height=200)
+    )
 
-        charts.append(heatmap)
-
-    # Concatenate horizontally
-    chart = alt.hconcat(*charts).resolve_scale(color="shared")
+    # Facet by agent_model
+    chart = (
+        heatmap.facet(column=alt.Column("agent_model:N", title=None))
+        .properties(title="Tier Summary (Mean Across Subtests)")
+        .resolve_scale(color="shared")
+    )
 
     save_figure(chart, "fig15c_tier_summary_heatmap", output_dir, render)

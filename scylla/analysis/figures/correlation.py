@@ -106,7 +106,7 @@ def fig20_metric_correlation_heatmap(
     # Add text labels
     text = (
         alt.Chart(corr_df)
-        .mark_text(baseline="middle", fontSize=10)
+        .mark_text(baseline="middle", fontSize=7)  # Reduced from 10 to 7 (30% smaller)
         .encode(
             x=alt.X("metric1:O", sort=list(metrics.values())),
             y=alt.Y("metric2:O", sort=list(metrics.values())),

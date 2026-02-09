@@ -34,17 +34,24 @@ def fig09_criteria_by_tier(
         pd.to_numeric(criteria_df["criterion_score"], errors="coerce").notna()
     ].copy()
 
-    # Derive criterion order from data instead of hardcoding
-    criterion_order = sorted(criteria_numeric["criterion"].unique())
-
-    # Generate display labels from criterion names
-    criterion_labels = {c: c.replace("_", " ").title() for c in criterion_order}
-
-    criteria_agg = (
+    # Filter out criteria with no data (empty after grouping)
+    criteria_agg_temp = (
         criteria_numeric.groupby(["agent_model", "tier", "criterion"])["criterion_score"]
         .mean()
         .reset_index()
     )
+
+    # Only keep criteria that have at least one data point
+    valid_criteria = criteria_agg_temp["criterion"].unique()
+
+    # Derive criterion order from data (only valid criteria with data)
+    criterion_order = sorted(valid_criteria)
+
+    # Generate display labels from criterion names
+    criterion_labels = {c: c.replace("_", " ").title() for c in criterion_order}
+
+    # Use the pre-computed aggregation (already filtered to valid criteria)
+    criteria_agg = criteria_agg_temp
     criteria_agg["criterion_label"] = criteria_agg["criterion"].map(criterion_labels)
 
     # Derive tier order from aggregated data

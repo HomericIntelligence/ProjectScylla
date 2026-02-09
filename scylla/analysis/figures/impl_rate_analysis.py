@@ -21,7 +21,7 @@ from scylla.analysis.figures.spec_builder import (
     compute_dynamic_domain_with_ci,
     save_figure,
 )
-from scylla.analysis.stats import bootstrap_ci, ols_regression
+from scylla.analysis.stats import bootstrap_ci
 
 
 def fig25_impl_rate_by_tier(
@@ -160,10 +160,10 @@ def fig26_impl_rate_vs_pass_rate(
     output_dir: Path,
     render: bool = True,
 ) -> None:
-    """Generate Fig 26: Implementation Rate vs Pass-Rate Scatter.
+    """Generate Fig 26: Implementation Rate vs Pass-Rate Comparison.
 
-    Scatter plot showing relationship between Impl-Rate and Pass-Rate
-    with tier coloring and linear regression line.
+    Grouped bar chart showing Impl-Rate and Pass-Rate side-by-side per model,
+    with per-tier subfigures for detailed comparison.
 
     Args:
         runs_df: Runs DataFrame (must include impl_rate and passed columns)
@@ -176,88 +176,61 @@ def fig26_impl_rate_vs_pass_rate(
         print("Warning: impl_rate column not found in runs_df, skipping fig26")
         return
 
-    # Filter out NaN impl_rate values
-    df = runs_df[["agent_model", "tier", "passed", "impl_rate"]].dropna()
+    # Compute aggregate metrics per (agent_model, tier)
+    stats = []
+    for (model, tier), group in runs_df.groupby(["agent_model", "tier"]):
+        impl_rate_mean = group["impl_rate"].mean()
+        pass_rate_mean = group["passed"].mean()
+
+        stats.append(
+            {"agent_model": model, "tier": tier, "metric": "Impl-Rate", "value": impl_rate_mean}
+        )
+        stats.append(
+            {"agent_model": model, "tier": tier, "metric": "Pass-Rate", "value": pass_rate_mean}
+        )
+
+    df = pd.DataFrame(stats)
 
     if len(df) == 0:
         print("Warning: No valid data for fig26")
         return
 
-    # Convert passed to numeric for plotting
-    df = df.copy()
-    df["pass_rate"] = df["passed"].astype(int)
-
-    # Derive tier order for color scale
+    # Derive tier order
     tier_order = derive_tier_order(runs_df)
-    domain, range_ = get_color_scale("tiers", tier_order)
 
-    # Compute dynamic domain for impl_rate axis
-    impl_rate_domain = compute_dynamic_domain(df["impl_rate"])
+    # Get color scale for metrics
+    metric_domain = ["Impl-Rate", "Pass-Rate"]
+    metric_colors = ["#1f77b4", "#ff7f0e"]  # Blue for impl, orange for pass
 
-    # Scatter plot
-    points = (
+    # Create grouped bar chart with per-tier subfigures
+    bars = (
         alt.Chart(df)
-        .mark_circle(size=60, opacity=0.6)
+        .mark_bar()
         .encode(
-            x=alt.X(
-                "impl_rate:Q",
-                title="Implementation Rate",
-                scale=alt.Scale(domain=impl_rate_domain),
-            ),
-            y=alt.Y(
-                "pass_rate:Q",
-                title="Pass-Rate (Binary)",
-                scale=alt.Scale(domain=[-0.1, 1.1]),
-            ),
+            x=alt.X("agent_model:N", title="Agent Model"),
+            y=alt.Y("value:Q", title="Rate", scale=alt.Scale(domain=[0, 1])),
             color=alt.Color(
-                "tier:N",
-                title="Tier",
-                scale=alt.Scale(domain=domain, range=range_),
-                sort=tier_order,
+                "metric:N",
+                title="Metric",
+                scale=alt.Scale(domain=metric_domain, range=metric_colors),
             ),
+            xOffset="metric:N",
             tooltip=[
                 alt.Tooltip("agent_model:N", title="Model"),
-                alt.Tooltip("tier:N", title="Tier"),
-                alt.Tooltip("impl_rate:Q", title="Impl-Rate", format=".3f"),
-                alt.Tooltip("pass_rate:Q", title="Passed", format="d"),
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("metric:N", title="Metric"),
+                alt.Tooltip("value:Q", title="Rate", format=".3f"),
             ],
         )
     )
 
-    # Linear regression line - manually computed to prevent extrapolation
-    result = ols_regression(df["impl_rate"], df["pass_rate"])
-    x_min, x_max = df["impl_rate"].min(), df["impl_rate"].max()
-    reg_line_df = pd.DataFrame(
-        {
-            "impl_rate": [x_min, x_max],
-            "pass_rate": [
-                result["slope"] * x_min + result["intercept"],
-                result["slope"] * x_max + result["intercept"],
-            ],
-        }
-    )
-
-    regression = (
-        alt.Chart(reg_line_df)
-        .mark_line(color="black", strokeDash=[5, 5])
-        .encode(
-            x=alt.X("impl_rate:Q", scale=alt.Scale(domain=impl_rate_domain)),
-            y=alt.Y("pass_rate:Q", scale=alt.Scale(domain=[-0.1, 1.1])),
+    # Facet by tier
+    chart = (
+        bars.facet(
+            column=alt.Column("tier:O", title="Tier", sort=tier_order),
         )
-    )
-
-    # Diagonal reference line (perfect correlation)
-    diagonal_data = pd.DataFrame({"x": [0, 1], "y": [0, 1]})
-    diagonal = (
-        alt.Chart(diagonal_data)
-        .mark_line(color="gray", strokeDash=[2, 2], opacity=0.5)
-        .encode(x="x:Q", y="y:Q")
-    )
-
-    chart = (points + regression + diagonal).properties(
-        title="Implementation Rate vs Pass-Rate",
-        width=400,
-        height=300,
+        .properties(title="Implementation Rate vs Pass-Rate per Tier")
+        .resolve_scale(x="independent")
     )
 
     save_figure(chart, "fig26_impl_rate_vs_pass_rate", output_dir, render=render)

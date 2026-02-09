@@ -98,7 +98,11 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
         # Create base chart with data
         base = alt.Chart(tier_qq_df)
 
-        # Create scatter plot layer
+        # Get dynamic color scale for models
+        models = sorted(tier_qq_df["agent_model"].unique())
+        model_domain, model_range = get_color_scale("models", models)
+
+        # Create scatter plot layer with both models
         scatter = base.mark_circle(size=60, opacity=0.7).encode(
             x=alt.X(
                 "theoretical_quantile:Q",
@@ -110,7 +114,11 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
                 title="Observed Quantiles (Standardized Score)",
                 scale=alt.Scale(zero=False),
             ),
-            color=alt.Color("agent_model:N", title="Model"),
+            color=alt.Color(
+                "agent_model:N",
+                title="Model",
+                scale=alt.Scale(domain=model_domain, range=model_range),
+            ),
             tooltip=[
                 alt.Tooltip("agent_model:N", title="Model"),
                 alt.Tooltip("tier:O", title="Tier"),
@@ -120,24 +128,13 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
             ],
         )
 
-        # Create reference line data for each model
-        ref_rows = []
-        for model in sorted(tier_qq_df["agent_model"].unique()):
-            ref_rows.extend(
-                [
-                    {
-                        "agent_model": model,
-                        "theoretical_quantile": q_min,
-                        "observed_quantile": q_min,
-                    },
-                    {
-                        "agent_model": model,
-                        "theoretical_quantile": q_max,
-                        "observed_quantile": q_max,
-                    },
-                ]
-            )
-        ref_df = pd.DataFrame(ref_rows)
+        # Create single reference line (shared for both models)
+        ref_df = pd.DataFrame(
+            [
+                {"theoretical_quantile": q_min, "observed_quantile": q_min},
+                {"theoretical_quantile": q_max, "observed_quantile": q_max},
+            ]
+        )
 
         reference_line = (
             alt.Chart(ref_df)
@@ -145,17 +142,15 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
             .encode(x="theoretical_quantile:Q", y="observed_quantile:Q")
         )
 
-        # Facet by model for this tier
+        # Combine both models in single chart
         chart = (
-            alt.layer(reference_line, scatter, data=tier_qq_df)
-            .facet(
-                column=alt.Column("agent_model:N", title="Agent Model"),
-            )
+            alt.layer(reference_line, scatter)
             .properties(
                 title=f"Q-Q Plots - {tier} (Normal Distribution Assessment)",
+                width=400,
+                height=350,
             )
-            .configure_view(strokeWidth=0, continuousWidth=400, continuousHeight=350)
-            .resolve_scale(x="independent", y="independent")
+            .configure_view(strokeWidth=0)
         )
 
         # Save with tier-specific filename

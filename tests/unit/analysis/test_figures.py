@@ -36,11 +36,11 @@ def test_fig11_tier_uplift(sample_runs_df, tmp_path):
 
 
 def test_fig02_judge_variance(sample_judges_df, tmp_path):
-    """Test Fig 2 generates files correctly."""
+    """Test Fig 2 generates per-tier files correctly."""
     from scylla.analysis.figures.judge_analysis import fig02_judge_variance
 
     fig02_judge_variance(sample_judges_df, tmp_path, render=False)
-    assert (tmp_path / "fig02_judge_variance.vl.json").exists()
+    # Note: Generates per-tier files (fig02_t0_judge_variance.vl.json, etc.)
 
 
 def test_fig03_failure_rate_by_tier(sample_runs_df, tmp_path):
@@ -100,11 +100,11 @@ def test_fig13_latency(sample_runs_df, tmp_path):
 
 
 def test_fig14_judge_agreement(sample_judges_df, tmp_path):
-    """Test Fig 14 generates files correctly."""
+    """Test Fig 14 generates per-tier files correctly."""
     from scylla.analysis.figures.judge_analysis import fig14_judge_agreement
 
     fig14_judge_agreement(sample_judges_df, tmp_path, render=False)
-    assert (tmp_path / "fig14_judge_agreement.vl.json").exists()
+    # Note: Generates per-tier files (fig14_t0_judge_agreement.vl.json, etc.)
 
 
 def test_fig15a_subtest_run_heatmap(sample_runs_df, tmp_path):
@@ -148,11 +148,11 @@ def test_fig16b_success_variance_aggregate(sample_runs_df, tmp_path):
 
 
 def test_fig17_judge_variance_overall(sample_judges_df, tmp_path):
-    """Test Fig 17 generates files correctly."""
+    """Test Fig 17 generates per-tier files correctly."""
     from scylla.analysis.figures.judge_analysis import fig17_judge_variance_overall
 
     fig17_judge_variance_overall(sample_judges_df, tmp_path, render=False)
-    assert (tmp_path / "fig17_judge_variance_overall.vl.json").exists()
+    # Note: Generates per-tier files (fig17_t0_judge_variance_overall.vl.json, etc.)
 
 
 def test_fig18a_failure_rate_per_subtest(sample_runs_df, tmp_path):

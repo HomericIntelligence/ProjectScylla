@@ -179,7 +179,7 @@ def save_figure(
 
     """
     if formats is None:
-        formats = ["png", "pdf"]
+        formats = ["png"]  # PDF generation disabled by default
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)

@@ -264,6 +264,64 @@ tests/unit/analysis/test_figures.py           # Remove CSV tests
 
 5. **Per-Group Operations**: When faceting, ensure scaling/normalization happens per facet group, not globally
 
+## Follow-up Session: Per-Tier Histogram Refactoring (2026-02-08)
+
+**Issue**: Figures 1, 2, 4, and 6 used complex block diagrams with grouped bars and 95% CI error bars that were hard to read.
+
+**Solution**: Simplified to histograms with per-tier subfigures (0.05 bin width).
+
+### Changes Made
+
+| Figure | Before | After |
+|--------|--------|-------|
+| fig01 | Box plots faceted by model | Histogram per tier (0.05 bins) |
+| fig02 | Box plots per judge faceted by tier | Histogram per tier (0.05 bins) |
+| fig04 | Grouped bars with error bars | Histogram per tier + pass_threshold line |
+| fig06 | Grouped bars (log scale CoP) | Histogram per tier (log scale cost) |
+
+### Pattern Used
+
+```python
+# Histogram with 0.05 bin width
+histogram = (
+    alt.Chart(data)
+    .mark_bar()
+    .encode(
+        x=alt.X("metric:Q", bin=alt.Bin(step=0.05), title="Metric"),
+        y=alt.Y("count():Q", title="Count"),
+    )
+)
+
+# Facet by tier to create per-tier subfigures
+chart = histogram.facet(
+    column=alt.Column("tier:N", title="Tier", sort=tier_order)
+).properties(title="Metric Distribution per Tier")
+```
+
+### With Reference Line (fig04 example)
+
+```python
+# Build reference data with tier column
+tier_order = derive_tier_order(data)
+ref_data = pd.DataFrame([
+    {"tier": tier, "threshold": pass_threshold}
+    for tier in tier_order
+])
+
+histogram = alt.Chart(data).mark_bar().encode(...)
+threshold_line = alt.Chart(ref_data).mark_rule(
+    color="red", strokeDash=[5, 5]
+).encode(x="threshold:Q")
+
+# Layer and facet with explicit data
+chart = alt.layer(histogram, threshold_line).facet(
+    column=alt.Column("tier:N", title="Tier", sort=tier_order),
+    data=data
+).properties(title="Score Distribution per Tier (Pass Threshold Marked)")
+```
+
+**Test Results**: All 4 refactored figures pass tests, generating correct Vega-Lite specs with faceted histograms.
+
 ## Common Pitfalls
 
 1. **Forgetting to include facet columns in overlay data** → Invisible overlays
