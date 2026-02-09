@@ -94,12 +94,14 @@ def fig03_failure_rate_by_tier(
         runs_df.groupby(["agent_model", "tier", "grade"]).size().reset_index(name="count")
     )
 
-    # Derive tier order from data
-    tier_order = derive_tier_order(grade_counts)
-
     # Calculate proportions within each (agent_model, tier) group
     grade_counts["total"] = grade_counts.groupby(["agent_model", "tier"])["count"].transform("sum")
     grade_counts["proportion"] = grade_counts["count"] / grade_counts["total"]
+
+    # Add sample size labels to tier (e.g., "T0 (n=240)")
+    grade_counts["tier_label"] = grade_counts.apply(
+        lambda row: f"{row['tier']} (n={int(row['total'])})", axis=1
+    )
 
     # Get canonical grade order from config (reversed for bottom-to-top stacking)
     grade_order = list(reversed(config.grade_order))
@@ -112,7 +114,11 @@ def fig03_failure_rate_by_tier(
         alt.Chart(grade_counts)
         .mark_bar()
         .encode(
-            x=alt.X("tier:O", title="Tier", sort=tier_order),
+            x=alt.X(
+                "tier_label:N",
+                title="Tier",
+                sort=alt.EncodingSortField(field="tier", order="ascending"),
+            ),
             y=alt.Y("proportion:Q", title="Proportion", stack="normalize"),
             color=alt.Color(
                 "grade:O",
@@ -125,6 +131,7 @@ def fig03_failure_rate_by_tier(
                 alt.Tooltip("tier:O", title="Tier"),
                 alt.Tooltip("grade:O", title="Grade"),
                 alt.Tooltip("count:Q", title="Count"),
+                alt.Tooltip("total:Q", title="Total Runs"),
                 alt.Tooltip("proportion:Q", title="Proportion", format=".2%"),
             ],
         )
