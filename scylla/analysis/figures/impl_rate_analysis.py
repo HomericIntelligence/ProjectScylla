@@ -48,6 +48,16 @@ def fig25_impl_rate_by_tier(
     # Derive tier order from data
     tier_order = derive_tier_order(runs_df)
 
+    # Count unique subtests per tier for annotations
+    subtest_counts = {}
+    for tier in tier_order:
+        tier_data = runs_df[runs_df["tier"] == tier]
+        if "subtest" in tier_data.columns:
+            subtest_counts[tier] = tier_data["subtest"].nunique()
+        else:
+            # Fallback if subtest column doesn't exist
+            subtest_counts[tier] = 0
+
     stats = []
     for model in runs_df["agent_model"].unique():
         for tier in tier_order:
@@ -61,10 +71,14 @@ def fig25_impl_rate_by_tier(
 
             mean, ci_low, ci_high = bootstrap_ci(impl_rate)
 
+            # Add tier label with subtest count
+            tier_label = f"{tier} (n={subtest_counts[tier]})" if subtest_counts[tier] > 0 else tier
+
             stats.append(
                 {
                     "agent_model": model,
                     "tier": tier,
+                    "tier_label": tier_label,
                     "impl_rate": mean,
                     "ci_low": ci_low,
                     "ci_high": ci_high,
@@ -81,16 +95,22 @@ def fig25_impl_rate_by_tier(
     # Compute dynamic domain for impl_rate axis - include CI bounds
     impl_rate_domain = compute_dynamic_domain_with_ci(df["impl_rate"], df["ci_low"], df["ci_high"])
 
+    # Create tier_label_order based on tier_order with counts
+    tier_label_order = [
+        f"{tier} (n={subtest_counts[tier]})" if subtest_counts[tier] > 0 else tier
+        for tier in tier_order
+    ]
+
     # Vega-Lite spec
     bars = (
         alt.Chart(df)
         .mark_bar()
         .encode(
             x=alt.X(
-                "tier:N",
-                title="Tier",
+                "tier_label:N",
+                title="Tier (Subtest Count)",
                 axis=alt.Axis(labelAngle=0),
-                sort=tier_order,
+                sort=tier_label_order,
             ),
             y=alt.Y(
                 "impl_rate:Q",
@@ -119,7 +139,7 @@ def fig25_impl_rate_by_tier(
         alt.Chart(df)
         .mark_errorbar()
         .encode(
-            x=alt.X("tier:N", sort=tier_order),
+            x=alt.X("tier_label:N", sort=tier_label_order),
             y=alt.Y("ci_low:Q", title="Implementation Rate"),
             y2="ci_high:Q",
             xOffset="agent_model:N",
