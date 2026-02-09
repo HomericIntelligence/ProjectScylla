@@ -1,6 +1,7 @@
 """Diagnostic figures for distribution analysis.
 
 Generates Fig 23 (Q-Q plots) and Fig 24 (score histograms with KDE).
+Now split into per-tier figures for better readability.
 """
 
 from __future__ import annotations
@@ -22,6 +23,9 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
     Q-Q plots per (model, tier) to assess normality.
     Compares theoretical quantiles (normal distribution) vs observed quantiles.
     Points should fall on diagonal line if data is normally distributed.
+
+    Now generates separate figures per tier (fig23a-T0, fig23b-T1, etc.)
+    for improved readability and analysis.
 
     Args:
         runs_df: Runs DataFrame
@@ -80,14 +84,33 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
         print("  Warning: No data for Q-Q plots")
         return
 
-    # Create Q-Q scatter plot
-    scatter = (
-        alt.Chart(qq_df)
-        .mark_circle(size=40, opacity=0.6)
-        .encode(
-            x=alt.X("theoretical_quantile:Q", title="Theoretical Quantiles (Normal)"),
-            y=alt.Y("observed_quantile:Q", title="Observed Quantiles (Standardized Score)"),
-            color=alt.Color("tier:N", title="Tier"),
+    # Generate separate figure for each tier
+    for tier in tier_order:
+        tier_qq_df = qq_df[qq_df["tier"] == tier]
+
+        if len(tier_qq_df) == 0:
+            continue
+
+        # Get extent for reference line
+        q_min = min(tier_qq_df["theoretical_quantile"].min(), tier_qq_df["observed_quantile"].min())
+        q_max = max(tier_qq_df["theoretical_quantile"].max(), tier_qq_df["observed_quantile"].max())
+
+        # Create base chart with data
+        base = alt.Chart(tier_qq_df)
+
+        # Create scatter plot layer
+        scatter = base.mark_circle(size=60, opacity=0.7).encode(
+            x=alt.X(
+                "theoretical_quantile:Q",
+                title="Theoretical Quantiles (Normal)",
+                scale=alt.Scale(zero=False),
+            ),
+            y=alt.Y(
+                "observed_quantile:Q",
+                title="Observed Quantiles (Standardized Score)",
+                scale=alt.Scale(zero=False),
+            ),
+            color=alt.Color("agent_model:N", title="Model"),
             tooltip=[
                 alt.Tooltip("agent_model:N", title="Model"),
                 alt.Tooltip("tier:O", title="Tier"),
@@ -96,61 +119,56 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
                 alt.Tooltip("original_score:Q", title="Original Score", format=".3f"),
             ],
         )
-    )
 
-    # Add diagonal reference line (y=x)
-    # Get extent of data
-    q_min = min(qq_df["theoretical_quantile"].min(), qq_df["observed_quantile"].min())
-    q_max = max(qq_df["theoretical_quantile"].max(), qq_df["observed_quantile"].max())
-
-    # Build per-facet reference line data with matching column names
-    ref_rows = []
-    for model in sorted(runs_df["agent_model"].unique()):
-        for tier in tier_order:
-            ref_rows.append(
-                {
-                    "agent_model": model,
-                    "tier": tier,
-                    "theoretical_quantile": q_min,
-                    "observed_quantile": q_min,
-                }
+        # Create reference line data for each model
+        ref_rows = []
+        for model in sorted(tier_qq_df["agent_model"].unique()):
+            ref_rows.extend(
+                [
+                    {
+                        "agent_model": model,
+                        "theoretical_quantile": q_min,
+                        "observed_quantile": q_min,
+                    },
+                    {
+                        "agent_model": model,
+                        "theoretical_quantile": q_max,
+                        "observed_quantile": q_max,
+                    },
+                ]
             )
-            ref_rows.append(
-                {
-                    "agent_model": model,
-                    "tier": tier,
-                    "theoretical_quantile": q_max,
-                    "observed_quantile": q_max,
-                }
-            )
-    ref_df = pd.DataFrame(ref_rows)
+        ref_df = pd.DataFrame(ref_rows)
 
-    reference_line = (
-        alt.Chart(ref_df)
-        .mark_line(strokeDash=[5, 5], color="red")
-        .encode(x="theoretical_quantile:Q", y="observed_quantile:Q")
-    )
-
-    # Facet by (model, tier) - pass qq_df as data to facet
-    chart = (
-        alt.layer(reference_line, scatter)
-        .facet(
-            column=alt.Column("tier:N", title="Tier", sort=tier_order),
-            row=alt.Row("agent_model:N", title="Agent Model"),
-            data=qq_df,
+        reference_line = (
+            alt.Chart(ref_df)
+            .mark_line(strokeDash=[5, 5], color="red", strokeWidth=2)
+            .encode(x="theoretical_quantile:Q", y="observed_quantile:Q")
         )
-        .properties(title="Q-Q Plots (Normal Distribution Assessment)")
-        .configure_view(strokeWidth=0)
-    )
 
-    save_figure(chart, "fig23_qq_plots", output_dir, render)
+        # Facet by model for this tier
+        chart = (
+            alt.layer(reference_line, scatter, data=tier_qq_df)
+            .facet(
+                column=alt.Column("agent_model:N", title="Agent Model"),
+            )
+            .properties(
+                title=f"Q-Q Plots - {tier} (Normal Distribution Assessment)",
+            )
+            .configure_view(strokeWidth=0, continuousWidth=400, continuousHeight=350)
+            .resolve_scale(x="independent", y="independent")
+        )
+
+        # Save with tier-specific filename
+        tier_suffix = tier.lower().replace(" ", "-")
+        save_figure(chart, f"fig23_{tier_suffix}_qq_plots", output_dir, render)
 
 
 def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 24: Score Histograms with KDE Overlay.
 
     Histograms with kernel density estimate (KDE) overlay.
-    Faceted by tier, colored by model.
+    Now generates separate figures per tier (fig24a-T0, fig24b-T1, etc.)
+    for improved readability.
 
     Args:
         runs_df: Runs DataFrame
@@ -195,63 +213,76 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
     models = sorted(runs_df["agent_model"].unique())
     domain, range_ = get_color_scale("models", models)
 
-    # Create histogram
-    histogram = (
-        alt.Chart(runs_df)
-        .mark_bar(opacity=0.5, binSpacing=0)
-        .encode(
-            x=alt.X("score:Q", title="Score", bin=alt.Bin(maxbins=20)),
-            y=alt.Y("count():Q", title="Frequency"),
-            color=alt.Color(
-                "agent_model:N",
-                title="Agent Model",
-                scale=alt.Scale(domain=domain, range=range_),
-            ),
-            tooltip=[
-                alt.Tooltip("agent_model:N", title="Model"),
-                alt.Tooltip("count():Q", title="Count"),
-            ],
-        )
-    )
+    # Generate separate figure for each tier
+    for tier in tier_order:
+        tier_runs_df = runs_df[runs_df["tier"] == tier]
+        tier_kde_df = kde_df[kde_df["tier"] == tier]
 
-    # Create KDE overlay
-    if len(kde_df) > 0:
-        # Scale KDE to match histogram frequency per (model, tier) group
-        for (model, tier), group_idx in kde_df.groupby(["agent_model", "tier"]).groups.items():
-            group_mask = (kde_df["agent_model"] == model) & (kde_df["tier"] == tier)
-            group_density_max = kde_df.loc[group_mask, "density"].max()
-            tier_count = len(runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)])
-            if group_density_max > 0:
-                kde_df.loc[group_mask, "scaled_density"] = kde_df.loc[group_mask, "density"] * (
-                    tier_count / group_density_max
-                )
+        if len(tier_runs_df) == 0:
+            continue
 
-        kde_lines = (
-            alt.Chart(kde_df)
-            .mark_line(strokeWidth=2)
+        # Create histogram
+        histogram = (
+            alt.Chart(tier_runs_df)
+            .mark_bar(opacity=0.5, binSpacing=0)
             .encode(
-                x=alt.X("score:Q"),
-                y=alt.Y("scaled_density:Q"),
+                x=alt.X("score:Q", title="Score", bin=alt.Bin(maxbins=20)),
+                y=alt.Y("count():Q", title="Frequency"),
                 color=alt.Color(
                     "agent_model:N",
+                    title="Agent Model",
                     scale=alt.Scale(domain=domain, range=range_),
                 ),
+                tooltip=[
+                    alt.Tooltip("agent_model:N", title="Model"),
+                    alt.Tooltip("count():Q", title="Count"),
+                ],
             )
         )
 
-        # Facet by tier - pass runs_df as data to facet
+        # Create KDE overlay if data exists
+        if len(tier_kde_df) > 0:
+            # Scale KDE to match histogram frequency per model
+            tier_kde_df = tier_kde_df.copy()
+            for model in tier_kde_df["agent_model"].unique():
+                model_mask = tier_kde_df["agent_model"] == model
+                model_density_max = tier_kde_df.loc[model_mask, "density"].max()
+                model_count = len(tier_runs_df[tier_runs_df["agent_model"] == model])
+
+                if model_density_max > 0:
+                    tier_kde_df.loc[model_mask, "scaled_density"] = tier_kde_df.loc[
+                        model_mask, "density"
+                    ] * (model_count / model_density_max)
+
+            kde_lines = (
+                alt.Chart(tier_kde_df)
+                .mark_line(strokeWidth=2)
+                .encode(
+                    x=alt.X("score:Q"),
+                    y=alt.Y("scaled_density:Q"),
+                    color=alt.Color(
+                        "agent_model:N",
+                        scale=alt.Scale(domain=domain, range=range_),
+                    ),
+                )
+            )
+
+            chart = alt.layer(histogram, kde_lines, data=tier_runs_df)
+        else:
+            chart = histogram
+
+        # Configure chart
         chart = (
-            alt.layer(histogram, kde_lines)
-            .facet(column=alt.Column("tier:N", title="Tier", sort=tier_order), data=runs_df)
-            .properties(title="Score Distributions with KDE Overlay")
+            chart.properties(
+                title=f"Score Distribution - {tier} (with KDE Overlay)",
+                width=600,
+                height=400,
+            )
             .configure_view(strokeWidth=0)
-        )
-    else:
-        # No KDE data, just show histogram
-        chart = (
-            histogram.facet(column=alt.Column("tier:N", title="Tier", sort=tier_order))
-            .properties(title="Score Distributions")
-            .configure_view(strokeWidth=0)
+            .configure_axis(labelFontSize=12, titleFontSize=14)
+            .configure_legend(labelFontSize=12, titleFontSize=14)
         )
 
-    save_figure(chart, "fig24_score_histograms", output_dir, render)
+        # Save with tier-specific filename
+        tier_suffix = tier.lower().replace(" ", "-")
+        save_figure(chart, f"fig24_{tier_suffix}_score_histogram", output_dir, render)
