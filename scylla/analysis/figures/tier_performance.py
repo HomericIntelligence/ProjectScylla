@@ -172,18 +172,20 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
         )
     )
 
-    # Add text annotations
+    # Add text annotations with better contrast for viridis colormap
+    # Viridis goes dark purple (0.0) -> green (0.5) -> yellow (1.0)
+    # Use white text for dark colors (proportion < 0.7), black for light colors
     text = (
         alt.Chart(grade_counts)
-        .mark_text(baseline="middle")
+        .mark_text(baseline="middle", fontSize=12)
         .encode(
             x=alt.X("grade:O", sort=grade_order),
             y=alt.Y("tier:O", sort=tier_order),
             text=alt.Text("count:Q"),
             color=alt.condition(
-                alt.datum.proportion > 0.5,
-                alt.value("white"),
+                alt.datum.proportion > 0.7,  # Black text only on light yellow backgrounds
                 alt.value("black"),
+                alt.value("white"),  # White text on dark purple/green backgrounds
             ),
         )
     )
@@ -192,7 +194,12 @@ def fig05_grade_heatmap(runs_df: pd.DataFrame, output_dir: Path, render: bool = 
     chart = (
         (heatmap + text)
         .facet(column=alt.Column("agent_model:N", title=None))
-        .properties(title="Grade Distribution Heatmap by Tier")
+        .properties(
+            title={
+                "text": "Grade Distribution Heatmap by Tier",
+                "subtitle": "Empty cells indicate no runs with that grade for the tier",
+            }
+        )
     )
 
     save_figure(chart, "fig05_grade_heatmap", output_dir, render)
