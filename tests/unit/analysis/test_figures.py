@@ -107,12 +107,28 @@ def test_fig14_judge_agreement(sample_judges_df, tmp_path):
     assert (tmp_path / "fig14_judge_agreement.vl.json").exists()
 
 
-def test_fig15_subtest_heatmap(sample_runs_df, tmp_path):
-    """Test Fig 15 generates files correctly."""
-    from scylla.analysis.figures.subtest_detail import fig15_subtest_heatmap
+def test_fig15a_subtest_run_heatmap(sample_runs_df, tmp_path):
+    """Test Fig 15a generates files correctly."""
+    from scylla.analysis.figures.subtest_detail import fig15a_subtest_run_heatmap
 
-    fig15_subtest_heatmap(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig15_subtest_heatmap.vl.json").exists()
+    fig15a_subtest_run_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig15a_subtest_run_heatmap.vl.json").exists()
+
+
+def test_fig15b_subtest_best_heatmap(sample_runs_df, tmp_path):
+    """Test Fig 15b generates files correctly."""
+    from scylla.analysis.figures.subtest_detail import fig15b_subtest_best_heatmap
+
+    fig15b_subtest_best_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig15b_subtest_best_heatmap.vl.json").exists()
+
+
+def test_fig15c_tier_summary_heatmap(sample_runs_df, tmp_path):
+    """Test Fig 15c generates files correctly."""
+    from scylla.analysis.figures.subtest_detail import fig15c_tier_summary_heatmap
+
+    fig15c_tier_summary_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig15c_tier_summary_heatmap.vl.json").exists()
 
 
 def test_fig16_success_variance_by_test(sample_runs_df, tmp_path):
