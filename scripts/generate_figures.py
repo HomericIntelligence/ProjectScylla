@@ -56,7 +56,8 @@ from scylla.analysis.figures.token_analysis import fig07_token_distribution
 from scylla.analysis.figures.variance import (
     fig01_score_variance_by_tier,
     fig03_failure_rate_by_tier,
-    fig16_success_variance_by_test,
+    fig16a_success_variance_per_subtest,
+    fig16b_success_variance_aggregate,
     fig18a_failure_rate_per_subtest,
     fig18b_failure_rate_aggregate,
 )
@@ -79,7 +80,8 @@ FIGURES = {
     "fig15a_subtest_run_heatmap": ("subtest", fig15a_subtest_run_heatmap),
     "fig15b_subtest_best_heatmap": ("subtest", fig15b_subtest_best_heatmap),
     "fig15c_tier_summary_heatmap": ("subtest", fig15c_tier_summary_heatmap),
-    "fig16_success_variance_by_test": ("variance", fig16_success_variance_by_test),
+    "fig16a_success_variance_per_subtest": ("variance", fig16a_success_variance_per_subtest),
+    "fig16b_success_variance_aggregate": ("variance", fig16b_success_variance_aggregate),
     "fig17_judge_variance_overall": ("judge", fig17_judge_variance_overall),
     "fig18a_failure_rate_per_subtest": ("variance", fig18a_failure_rate_per_subtest),
     "fig18b_failure_rate_aggregate": ("variance", fig18b_failure_rate_aggregate),
