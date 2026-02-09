@@ -27,7 +27,7 @@ from scylla.analysis.stats import (
 def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 11: Tier Transition Uplift.
 
-    Line chart showing cumulative improvement relative to T0 baseline.
+    Line chart showing cumulative improvement relative to T0-Subtest0 baseline.
 
     Args:
         runs_df: Runs DataFrame
@@ -46,17 +46,23 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
         .rename(columns={"passed": "pass_rate"})
     )
 
-    # Compute uplift relative to T0 baseline
+    # Compute uplift relative to T0-Subtest0 baseline
     uplift_data = []
     for model in tier_stats["agent_model"].unique():
         model_data = tier_stats[tier_stats["agent_model"] == model]
-        t0_data = model_data[model_data["tier"] == "T0"]["pass_rate"]
 
-        # Skip model if no T0 baseline data
-        if len(t0_data) == 0:
+        # Get T0-Subtest0 baseline (no enhancements)
+        t0_subtest0_data = runs_df[
+            (runs_df["agent_model"] == model)
+            & (runs_df["tier"] == "T0")
+            & (runs_df["subtest"] == "00")
+        ]["passed"]
+
+        # Skip model if no T0-Subtest0 baseline data
+        if len(t0_subtest0_data) == 0:
             continue
 
-        t0_pass_rate = t0_data.iloc[0]
+        t0_pass_rate = t0_subtest0_data.mean()
 
         for _, row in model_data.iterrows():
             tier = row["tier"]
@@ -123,7 +129,7 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             x=alt.X("tier:O", title="Tier", sort=tier_order),
             y=alt.Y(
                 "uplift:Q",
-                title="Pass Rate Uplift vs T0 Baseline",
+                title="Pass Rate Uplift vs T0-Subtest0",
                 scale=alt.Scale(
                     domain=compute_dynamic_domain(uplift_df["uplift"], floor=-1.0, ceiling=1.0)
                 ),
@@ -155,10 +161,10 @@ def fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = Tr
             )
         )
         chart = (line + markers).properties(
-            title="Tier Transition Uplift (Relative to T0, * = p < 0.05)"
+            title="Tier Transition Uplift (vs T0-Subtest0, * = p < 0.05)"
         )
     else:
-        chart = line.properties(title="Tier Transition Uplift (Relative to T0)")
+        chart = line.properties(title="Tier Transition Uplift (vs T0-Subtest0)")
 
     save_figure(chart, "fig11_tier_uplift", output_dir, render)
 
