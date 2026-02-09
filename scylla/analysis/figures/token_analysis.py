@@ -17,12 +17,22 @@ from scylla.analysis.figures.spec_builder import save_figure
 def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 7: Token Distribution by Tier.
 
-    Stacked bar chart showing token breakdown by type.
+    Stacked bar chart showing token breakdown by type using normalized percentages.
+
+    **Note on T4/T6 Fresh Input Tokens**: Higher-tier architectures (T4, T6) show minimal
+    or invisible "Input (Fresh)" tokens due to extreme cache efficiency. For example:
+    - T4: ~23 fresh tokens vs ~92K cached tokens (0.02% fresh)
+    - T6: ~29 fresh tokens vs ~219K cached tokens (0.01% fresh)
+
+    This is expected behavior demonstrating that hierarchical/super-tier architectures
+    maximize prompt caching, with nearly all input coming from cache rather than fresh
+    parsing. The tooltip still shows absolute token counts for precise comparison.
 
     Args:
-        runs_df: Runs DataFrame
-        output_dir: Output directory
-        render: Whether to render to PNG/PDF
+        runs_df: Runs DataFrame with token columns (input_tokens, output_tokens,
+                 cache_creation_tokens, cache_read_tokens)
+        output_dir: Output directory for figure files
+        render: Whether to render to PNG/PDF (default: True)
 
     """
     # Aggregate tokens by (agent_model, tier)
@@ -63,7 +73,10 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
     token_type_labels = ["Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"]
     domain, range_ = get_color_scale("token_types", token_type_labels)
 
-    # Create stacked bar chart
+    # Create stacked bar chart with normalized percentages
+    # NOTE: stack="normalize" causes very small token counts to become invisible.
+    # This is expected for T4/T6 fresh input tokens (~0.01-0.02% of total).
+    # The tooltip preserves absolute counts for detailed inspection.
     chart = (
         alt.Chart(token_long)
         .mark_bar()
