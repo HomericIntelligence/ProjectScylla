@@ -57,7 +57,8 @@ from scylla.analysis.figures.variance import (
     fig01_score_variance_by_tier,
     fig03_failure_rate_by_tier,
     fig16_success_variance_by_test,
-    fig18_failure_rate_by_test,
+    fig18a_failure_rate_per_subtest,
+    fig18b_failure_rate_aggregate,
 )
 
 # Figure registry mapping names to generator functions
@@ -80,7 +81,8 @@ FIGURES = {
     "fig15c_tier_summary_heatmap": ("subtest", fig15c_tier_summary_heatmap),
     "fig16_success_variance_by_test": ("variance", fig16_success_variance_by_test),
     "fig17_judge_variance_overall": ("judge", fig17_judge_variance_overall),
-    "fig18_failure_rate_by_test": ("variance", fig18_failure_rate_by_test),
+    "fig18a_failure_rate_per_subtest": ("variance", fig18a_failure_rate_per_subtest),
+    "fig18b_failure_rate_aggregate": ("variance", fig18b_failure_rate_aggregate),
     "fig19_effect_size_forest": ("effect_size", fig19_effect_size_forest),
     "fig20_metric_correlation_heatmap": ("correlation", fig20_metric_correlation_heatmap),
     "fig21_cost_quality_regression": ("correlation", fig21_cost_quality_regression),
