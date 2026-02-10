@@ -301,6 +301,8 @@ def _save_judge_result(judge_dir: Path, result: JudgeResult) -> None:
         "passed": result.passed,
         "grade": result.grade,
         "reasoning": result.reasoning,
+        "is_valid": result.is_valid,
+        "criteria_scores": result.criteria_scores,
     }
 
     with open(judge_dir / RESULT_FILE, "w") as f:
@@ -1504,6 +1506,8 @@ class SubTestExecutor:
                     grade=judge_result.grade,
                     reasoning=judge_result.reasoning,
                     judge_number=judge_num,
+                    is_valid=judge_result.is_valid,
+                    criteria_scores=judge_result.criteria_scores,
                 )
                 judges.append(judge_summary)
 
@@ -1547,11 +1551,15 @@ class SubTestExecutor:
 
         # Build consensus dict (use primary judge's reasoning)
         primary_reasoning = judges[0].reasoning if judges else ""
+        # All judges must be valid for consensus to be valid
+        consensus_is_valid = all(j.is_valid for j in judges)
         consensus_dict = {
             "score": consensus_score,
             "passed": consensus_passed,
             "grade": consensus_grade,
             "reasoning": primary_reasoning,
+            "is_valid": consensus_is_valid,
+            "criteria_scores": judges[0].criteria_scores if judges else None,
         }
 
         return consensus_dict, judges

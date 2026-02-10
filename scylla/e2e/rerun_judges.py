@@ -133,6 +133,7 @@ def _is_valid_judgment(judgment_file: Path) -> bool:
 
     Returns:
         True if judgment file exists and is valid JSON with required fields
+        and is_valid flag is not False
 
     """
     if not judgment_file.exists():
@@ -141,8 +142,9 @@ def _is_valid_judgment(judgment_file: Path) -> bool:
     try:
         with open(judgment_file) as f:
             data = json.load(f)
-            # Must have at least score field
-            return "score" in data
+            # Must have score field and is_valid must not be False
+            # (missing is_valid defaults to True for backward compatibility)
+            return "score" in data and data.get("is_valid", True) is not False
     except (json.JSONDecodeError, OSError):
         return False
 
@@ -508,23 +510,45 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
         True if consensus was successfully regenerated
 
     """
-    # Load all judgment.json files
+    # Load all judgment.json files (including invalid ones for tracking)
     judges = []
     for judge_num, model in enumerate(judge_models, start=1):
         judgment_file = run_dir / "judge" / f"judge_{judge_num:02d}" / "judgment.json"
-        if judgment_file.exists() and _is_valid_judgment(judgment_file):
+        if judgment_file.exists():
             try:
                 data = json.loads(judgment_file.read_text())
-                judges.append(
-                    {
-                        "model": model,
-                        "score": data.get("score"),
-                        "passed": data.get("passed"),
-                        "grade": data.get("grade"),
-                        "reasoning": data.get("reasoning", ""),
-                        "judge_number": judge_num,
-                    }
-                )
+                # Check if this judgment has the required fields and is_valid flag
+                has_score = "score" in data
+                is_valid = data.get("is_valid", True) is not False
+
+                # Only include judgments that have score AND pass validity check
+                if has_score and is_valid:
+                    judges.append(
+                        {
+                            "model": model,
+                            "score": data.get("score"),
+                            "passed": data.get("passed"),
+                            "grade": data.get("grade"),
+                            "reasoning": data.get("reasoning", ""),
+                            "judge_number": judge_num,
+                            "is_valid": data.get("is_valid", True),
+                            "criteria_scores": data.get("criteria_scores"),
+                        }
+                    )
+                elif has_score and not is_valid:
+                    # Invalid judgment - include it but mark as invalid for tracking
+                    judges.append(
+                        {
+                            "model": model,
+                            "score": data.get("score"),
+                            "passed": data.get("passed"),
+                            "grade": data.get("grade"),
+                            "reasoning": data.get("reasoning", ""),
+                            "judge_number": judge_num,
+                            "is_valid": False,
+                            "criteria_scores": data.get("criteria_scores"),
+                        }
+                    )
             except Exception as e:
                 logger.warning(f"Failed to load judgment from {judgment_file}: {e}")
 
@@ -533,7 +557,8 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
         return False
 
     # Compute consensus (same logic as subtest_executor._compute_judge_consensus)
-    valid = [j for j in judges if j["score"] is not None]
+    # Only include judgments with is_valid=True for score averaging
+    valid = [j for j in judges if j["score"] is not None and j.get("is_valid", True)]
     if not valid:
         logger.warning(f"No valid scores for {run_dir}, skipping consensus")
         return False
@@ -543,12 +568,17 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
     passed = passed_votes > len(valid) / 2
     grade = assign_letter_grade(consensus_score)
 
+    # All judges must be valid for consensus to be valid
+    consensus_is_valid = all(j.get("is_valid", True) for j in judges)
+
     # Save judge/result.json
     result_data = {
         "score": consensus_score,
         "passed": passed,
         "grade": grade,
         "reasoning": valid[0]["reasoning"] if valid else "",
+        "is_valid": consensus_is_valid,
+        "criteria_scores": valid[0].get("criteria_scores") if valid else None,
     }
 
     judge_result_file = run_dir / "judge" / "result.json"
