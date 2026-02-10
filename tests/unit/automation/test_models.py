@@ -1,0 +1,246 @@
+"""Tests for automation Pydantic models."""
+
+from datetime import datetime
+
+from scylla.automation.models import (
+    DependencyGraph,
+    ImplementationPhase,
+    ImplementationState,
+    IssueInfo,
+    IssueState,
+    PlannerOptions,
+    PlanResult,
+    WorkerResult,
+)
+
+
+class TestIssueInfo:
+    """Tests for IssueInfo model."""
+
+    def test_basic_creation(self):
+        """Test creating a basic IssueInfo."""
+        issue = IssueInfo(
+            number=123,
+            title="Test issue",
+        )
+
+        assert issue.number == 123
+        assert issue.title == "Test issue"
+        assert issue.state == IssueState.OPEN
+        assert issue.labels == []
+        assert issue.dependencies == []
+        assert issue.priority == 0
+
+    def test_with_dependencies(self):
+        """Test IssueInfo with dependencies."""
+        issue = IssueInfo(
+            number=123,
+            title="Test issue",
+            dependencies=[100, 101, 102],
+        )
+
+        assert issue.dependencies == [100, 101, 102]
+
+    def test_hashable(self):
+        """Test IssueInfo is hashable."""
+        issue1 = IssueInfo(number=123, title="Test")
+        issue2 = IssueInfo(number=123, title="Different title")
+        issue3 = IssueInfo(number=456, title="Test")
+
+        # Same number should hash to same value
+        assert hash(issue1) == hash(issue2)
+        # Different number should hash differently (usually)
+        assert hash(issue1) != hash(issue3)
+
+        # Can be used in sets
+        issues = {issue1, issue2, issue3}
+        assert len(issues) == 2  # issue1 and issue2 are considered equal
+
+    def test_equality(self):
+        """Test IssueInfo equality."""
+        issue1 = IssueInfo(number=123, title="Test")
+        issue2 = IssueInfo(number=123, title="Different title")
+        issue3 = IssueInfo(number=456, title="Test")
+
+        assert issue1 == issue2  # Same number
+        assert issue1 != issue3  # Different number
+
+
+class TestImplementationState:
+    """Tests for ImplementationState model."""
+
+    def test_default_values(self):
+        """Test ImplementationState default values."""
+        state = ImplementationState(issue_number=123)
+
+        assert state.issue_number == 123
+        assert state.phase == ImplementationPhase.PLANNING
+        assert state.worktree_path is None
+        assert state.branch_name is None
+        assert state.pr_number is None
+        assert isinstance(state.started_at, datetime)
+        assert state.completed_at is None
+        assert state.error is None
+        assert state.attempts == 0
+        assert state.max_attempts == 3
+
+    def test_serialization(self):
+        """Test ImplementationState JSON serialization."""
+        state = ImplementationState(
+            issue_number=123,
+            phase=ImplementationPhase.IMPLEMENTING,
+            worktree_path="/tmp/worktree",
+            branch_name="123-test",
+        )
+
+        # Serialize to JSON
+        json_str = state.model_dump_json()
+        assert "123" in json_str
+        assert "implementing" in json_str
+
+        # Deserialize from JSON
+        restored = ImplementationState.model_validate_json(json_str)
+        assert restored.issue_number == state.issue_number
+        assert restored.phase == state.phase
+        assert restored.worktree_path == state.worktree_path
+
+
+class TestDependencyGraph:
+    """Tests for DependencyGraph model."""
+
+    def test_add_issue(self):
+        """Test adding issues to graph."""
+        graph = DependencyGraph()
+        issue = IssueInfo(number=123, title="Test")
+
+        graph.add_issue(issue)
+
+        assert 123 in graph.issues
+        assert graph.issues[123] == issue
+        assert 123 in graph.edges
+
+    def test_add_dependency(self):
+        """Test adding dependency edges."""
+        graph = DependencyGraph()
+
+        graph.add_dependency(123, 100)
+        graph.add_dependency(123, 101)
+
+        assert graph.get_dependencies(123) == [100, 101]
+
+    def test_get_all_dependencies(self):
+        """Test transitive dependency resolution."""
+        graph = DependencyGraph()
+
+        # Create chain: 123 -> 100 -> 50
+        graph.add_dependency(123, 100)
+        graph.add_dependency(100, 50)
+
+        deps = graph.get_all_dependencies(123)
+
+        assert deps == {100, 50}
+
+    def test_get_all_dependencies_diamond(self):
+        """Test transitive dependencies with diamond pattern."""
+        graph = DependencyGraph()
+
+        # Create diamond: 123 -> {100, 101} -> 50
+        graph.add_dependency(123, 100)
+        graph.add_dependency(123, 101)
+        graph.add_dependency(100, 50)
+        graph.add_dependency(101, 50)
+
+        deps = graph.get_all_dependencies(123)
+
+        assert deps == {100, 101, 50}
+
+
+class TestPlanResult:
+    """Tests for PlanResult model."""
+
+    def test_successful_plan(self):
+        """Test successful plan result."""
+        result = PlanResult(
+            issue_number=123,
+            success=True,
+        )
+
+        assert result.issue_number == 123
+        assert result.success is True
+        assert result.error is None
+        assert result.plan_already_exists is False
+
+    def test_failed_plan(self):
+        """Test failed plan result."""
+        result = PlanResult(
+            issue_number=123,
+            success=False,
+            error="Something went wrong",
+        )
+
+        assert result.success is False
+        assert result.error == "Something went wrong"
+
+
+class TestWorkerResult:
+    """Tests for WorkerResult model."""
+
+    def test_successful_implementation(self):
+        """Test successful implementation result."""
+        result = WorkerResult(
+            issue_number=123,
+            success=True,
+            pr_number=456,
+            branch_name="123-test",
+            worktree_path="/tmp/worktree",
+        )
+
+        assert result.issue_number == 123
+        assert result.success is True
+        assert result.pr_number == 456
+        assert result.branch_name == "123-test"
+
+    def test_failed_implementation(self):
+        """Test failed implementation result."""
+        result = WorkerResult(
+            issue_number=123,
+            success=False,
+            error="Implementation failed",
+        )
+
+        assert result.success is False
+        assert result.error == "Implementation failed"
+        assert result.pr_number is None
+
+
+class TestPlannerOptions:
+    """Tests for PlannerOptions model."""
+
+    def test_default_values(self):
+        """Test PlannerOptions default values."""
+        options = PlannerOptions(issues=[123, 456])
+
+        assert options.issues == [123, 456]
+        assert options.dry_run is False
+        assert options.force is False
+        assert options.parallel == 3
+        assert options.system_prompt_file is None
+        assert options.skip_closed is True
+
+    def test_custom_values(self):
+        """Test PlannerOptions with custom values."""
+        from pathlib import Path
+
+        options = PlannerOptions(
+            issues=[123],
+            dry_run=True,
+            force=True,
+            parallel=5,
+            system_prompt_file=Path("/tmp/prompt.md"),
+            skip_closed=False,
+        )
+
+        assert options.dry_run is True
+        assert options.force is True
+        assert options.parallel == 5
+        assert options.skip_closed is False

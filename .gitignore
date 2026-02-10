@@ -81,3 +81,7 @@ tests/fixtures/tests/*/t*/*/.claude/
 tests/fixtures/tests/*/t*/*/CLAUDE.md
 
 worktrees
+
+# Automation runtime directories
+.worktrees/
+.issue_implementer/
