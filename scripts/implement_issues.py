@@ -12,7 +12,6 @@ Usage:
 
 import argparse
 import logging
-import signal
 import sys
 
 # Project is installed via editable install, no sys.path manipulation needed
@@ -93,7 +92,9 @@ Examples:
         "--max-workers",
         type=int,
         default=3,
-        help="Maximum number of parallel workers (default: 3)",
+        choices=range(1, 33),
+        metavar="N",
+        help="Maximum number of parallel workers, 1-32 (default: 3)",
     )
 
     parser.add_argument(
@@ -136,17 +137,6 @@ def main() -> int:
     setup_logging(args.verbose)
 
     logger = logging.getLogger(__name__)
-
-    # Set up signal handling for graceful shutdown
-    shutdown_flag = {"shutdown": False}
-
-    def signal_handler(signum, frame):
-        """Handle SIGINT/SIGTERM gracefully."""
-        logger.warning("Received interrupt signal, shutting down gracefully...")
-        shutdown_flag["shutdown"] = True
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
 
     # Build options
     options = ImplementerOptions(

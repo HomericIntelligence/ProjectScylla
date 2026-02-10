@@ -185,22 +185,22 @@ class DependencyResolver:
             rec_stack.add(node)
             path.append(node)
 
-            for dep in self.graph.get_dependencies(node):
-                if dep not in visited:
-                    if dfs(dep, rec_stack, path):
+            try:
+                for dep in self.graph.get_dependencies(node):
+                    if dep not in visited:
+                        if dfs(dep, rec_stack, path):
+                            return True
+                    elif dep in rec_stack:
+                        # Found a cycle
+                        cycle_start = path.index(dep)
+                        cycles.append(path[cycle_start:] + [dep])
                         return True
-                elif dep in rec_stack:
-                    # Found a cycle
-                    cycle_start = path.index(dep)
-                    cycles.append(path[cycle_start:] + [dep])
-                    # Clean up before returning
-                    path.pop()
-                    rec_stack.remove(node)
-                    return True
 
-            path.pop()
-            rec_stack.remove(node)
-            return False
+                return False
+            finally:
+                # Always clean up recursion state
+                path.pop()
+                rec_stack.remove(node)
 
         for issue_num in self.graph.issues:
             if issue_num not in visited:

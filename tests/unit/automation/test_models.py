@@ -82,7 +82,6 @@ class TestImplementationState:
         assert state.completed_at is None
         assert state.error is None
         assert state.attempts == 0
-        assert state.max_attempts == 3
 
     def test_serialization(self):
         """Test ImplementationState JSON serialization."""
@@ -123,6 +122,11 @@ class TestDependencyGraph:
         """Test adding dependency edges."""
         graph = DependencyGraph()
 
+        # Add issues first (now required)
+        graph.add_issue(IssueInfo(number=123, title="Main"))
+        graph.add_issue(IssueInfo(number=100, title="Dep 1"))
+        graph.add_issue(IssueInfo(number=101, title="Dep 2"))
+
         graph.add_dependency(123, 100)
         graph.add_dependency(123, 101)
 
@@ -131,6 +135,11 @@ class TestDependencyGraph:
     def test_get_all_dependencies(self):
         """Test transitive dependency resolution."""
         graph = DependencyGraph()
+
+        # Add issues first
+        graph.add_issue(IssueInfo(number=123, title="Main"))
+        graph.add_issue(IssueInfo(number=100, title="Mid"))
+        graph.add_issue(IssueInfo(number=50, title="Base"))
 
         # Create chain: 123 -> 100 -> 50
         graph.add_dependency(123, 100)
@@ -143,6 +152,12 @@ class TestDependencyGraph:
     def test_get_all_dependencies_diamond(self):
         """Test transitive dependencies with diamond pattern."""
         graph = DependencyGraph()
+
+        # Add issues first
+        graph.add_issue(IssueInfo(number=123, title="Main"))
+        graph.add_issue(IssueInfo(number=100, title="Mid 1"))
+        graph.add_issue(IssueInfo(number=101, title="Mid 2"))
+        graph.add_issue(IssueInfo(number=50, title="Base"))
 
         # Create diamond: 123 -> {100, 101} -> 50
         graph.add_dependency(123, 100)

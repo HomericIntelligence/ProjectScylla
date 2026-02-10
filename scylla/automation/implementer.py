@@ -13,6 +13,7 @@ import json
 import logging
 import subprocess
 import threading
+import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
@@ -230,8 +231,6 @@ class IssueImplementer:
                     if not submitted_any and not futures:
                         break
                     # Add backoff when no work available
-                    import time
-
                     time.sleep(0.1)
                     continue
 
@@ -262,6 +261,18 @@ class IssueImplementer:
                 # If no futures pending and no new work submitted, we're done
                 if not futures and not ready:
                     break
+
+        # Detect and log issues that were skipped due to unresolved dependencies
+        attempted_issues = set(results.keys())
+        all_issues = set(self.resolver.graph.issues.keys())
+        skipped_issues = all_issues - attempted_issues - self.resolver.completed
+
+        if skipped_issues:
+            logger.warning(f"Skipped {len(skipped_issues)} issue(s) due to failed dependencies:")
+            for issue_num in sorted(skipped_issues):
+                deps = self.resolver.graph.get_dependencies(issue_num)
+                failed_deps = [d for d in deps if d not in self.resolver.completed]
+                logger.warning(f"  #{issue_num}: blocked by failed issue(s) {failed_deps}")
 
         self._print_summary(results)
         return results
@@ -430,8 +441,7 @@ class IssueImplementer:
         )
 
         if not result.stdout.strip():
-            logger.warning(f"No changes to commit for issue #{issue_number}")
-            return
+            raise RuntimeError("No changes to commit")
 
         # Stage only tracked modified files (not . to avoid secrets)
         # Get list of modified tracked files
@@ -454,10 +464,28 @@ class IssueImplementer:
             untracked_result.stdout.strip().split("\n") if untracked_result.stdout.strip() else []
         )
 
-        # Filter out potential secrets
+        # Filter out potential secrets - use exact filename matching
+        secret_files = {
+            ".env",
+            ".secret",
+            "credentials.json",
+            "id_rsa",
+            "id_dsa",
+            "id_ecdsa",
+            "id_ed25519",
+        }
+        secret_extensions = {".key", ".pem", ".pfx", ".p12"}
         files_to_add = []
         for f in modified_files + untracked_files:
-            if f and not any(secret in f for secret in [".env", "credentials", ".key", ".pem"]):
+            if not f:
+                continue
+            from pathlib import Path
+
+            filename = Path(f).name
+            # Check exact filename match or extension
+            if filename not in secret_files and not any(
+                filename.endswith(ext) for ext in secret_extensions
+            ):
                 files_to_add.append(f)
 
         if files_to_add:

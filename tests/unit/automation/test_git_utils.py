@@ -207,7 +207,8 @@ class TestSafeGitFetch:
         assert mock_run.call_count == 3
 
     @patch("scylla.automation.git_utils.run")
-    def test_all_retries_fail(self, mock_run):
+    @patch("scylla.automation.git_utils.time.sleep")
+    def test_all_retries_fail(self, mock_sleep, mock_run):
         """Test when all retries fail."""
         repo_root = Path("/home/user/repo")
         mock_run.side_effect = subprocess.CalledProcessError(1, "git")
@@ -216,3 +217,5 @@ class TestSafeGitFetch:
 
         assert result is False
         assert mock_run.call_count == 2
+        # Should call sleep once (after first failure, not after last)
+        assert mock_sleep.call_count == 1

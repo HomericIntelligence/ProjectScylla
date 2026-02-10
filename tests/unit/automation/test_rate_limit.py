@@ -113,8 +113,8 @@ class TestDetectClaudeUsageLimit:
         assert detect_claude_usage_limit(stderr) is True
 
     def test_detect_billing_issue(self):
-        """Test detecting billing issue."""
-        stderr = "billing error occurred"
+        """Test detecting billing limit specifically."""
+        stderr = "billing limit exceeded"
         assert detect_claude_usage_limit(stderr) is True
 
     def test_no_usage_limit(self):

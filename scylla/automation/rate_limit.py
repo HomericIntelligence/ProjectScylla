@@ -6,8 +6,10 @@ Handles:
 - Time parsing and waiting logic
 """
 
+import json
 import logging
 import re
+import subprocess
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -82,7 +84,8 @@ def detect_rate_limit(stderr: str) -> tuple[bool, int]:
             return True, reset_epoch
 
     # Fallback: check for rate limit keywords without reset time
-    if re.search(r"rate limit|too many requests|429", stderr, re.IGNORECASE):
+    # Use word boundary for 429 to avoid matching port numbers
+    if re.search(r"rate limit|too many requests|\b429\b", stderr, re.IGNORECASE):
         logger.warning("Rate limit detected but no reset time found")
         return True, 0
 
@@ -103,7 +106,7 @@ def detect_claude_usage_limit(stderr: str) -> bool:
         r"usage limit",
         r"quota exceeded",
         r"credit.*exhausted",
-        r"billing",
+        r"billing.*limit|billing.*exceeded",  # More specific to avoid false positives
     ]
 
     for pattern in patterns:
@@ -145,7 +148,8 @@ def wait_until(epoch: int, reason: str = "rate limit") -> None:
     for i in range(chunks):
         time.sleep(chunk_size)
         remaining = wait_seconds - ((i + 1) * chunk_size)
-        if remaining > 0 and remaining % 60 == 0:
+        # Log progress at minute boundaries (allow some slack for chunk alignment)
+        if remaining > 0 and remaining % 60 < chunk_size:
             logger.debug(f"{remaining // 60} minutes remaining...")
 
     if remainder > 0:
@@ -163,8 +167,6 @@ def check_rate_limit_status() -> tuple[int, int, int]:
 
     """
     try:
-        import subprocess
-
         result = subprocess.run(
             ["gh", "api", "rate_limit"],
             capture_output=True,
@@ -172,8 +174,6 @@ def check_rate_limit_status() -> tuple[int, int, int]:
             check=True,
             timeout=10,
         )
-
-        import json
 
         data = json.loads(result.stdout)
         core = data.get("rate", {})

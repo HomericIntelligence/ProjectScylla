@@ -2,9 +2,8 @@
 
 Contains templates for:
 - Issue implementation guidance
-- Commit message generation
-- CI failure fixes
-- Work summary generation
+- Planning guidance
+- PR descriptions
 """
 
 IMPLEMENTATION_PROMPT = """
@@ -38,59 +37,6 @@ When you're done:
 4. Create a PR that closes the issue
 """
 
-COMMIT_PROMPT = """
-Create a git commit for the changes you just made.
-
-**Requirements:**
-1. Use conventional commits format: type(scope): description
-2. Keep the first line under 70 characters
-3. Add "Closes #{issue_number}" in the commit body
-4. Add co-author line: Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-
-**Example:**
-```
-feat(automation): Add bulk issue planner
-
-Implements parallel planning of GitHub issues with rate limit handling.
-
-Closes #{issue_number}
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-```
-"""
-
-CI_FIX_PROMPT = """
-The CI checks failed on your PR. Please fix the issues and push again.
-
-**Common CI failures:**
-1. Test failures - Run: pixi run python -m pytest tests/ -v
-2. Type checking - Run: pre-commit run mypy --all-files
-3. Linting - Run: pre-commit run ruff --all-files
-4. Formatting - Run: pre-commit run black --all-files
-
-**Steps:**
-1. Review the CI failure logs
-2. Fix the issues locally
-3. Re-run the tests and checks
-4. Commit the fixes
-5. Push to update the PR
-
-Do NOT skip pre-commit hooks with --no-verify.
-"""
-
-SUMMARY_PROMPT = """
-Provide a brief summary of the work completed for issue #{issue_number}.
-
-**Include:**
-1. What was implemented
-2. Key files changed
-3. Test coverage added
-4. Any notable decisions or trade-offs
-
-**Format:**
-Keep it concise (3-5 sentences). Focus on what was done, not how long it took.
-"""
-
 PLAN_PROMPT = """
 Create an implementation plan for GitHub issue #{issue_number}.
 
@@ -113,41 +59,10 @@ Create an implementation plan for GitHub issue #{issue_number}.
 Use markdown with clear sections and bullet points.
 """
 
-PR_DESCRIPTION_TEMPLATE = """
-## Summary
-{summary}
-
-## Changes
-{changes}
-
-## Testing
-{testing}
-
-## Closes
-Closes #{issue_number}
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-"""
-
 
 def get_implementation_prompt(issue_number: int) -> str:
     """Get the implementation prompt for an issue."""
     return IMPLEMENTATION_PROMPT.format(issue_number=issue_number)
-
-
-def get_commit_prompt(issue_number: int) -> str:
-    """Get the commit prompt for an issue."""
-    return COMMIT_PROMPT.format(issue_number=issue_number)
-
-
-def get_ci_fix_prompt() -> str:
-    """Get the CI fix prompt."""
-    return CI_FIX_PROMPT
-
-
-def get_summary_prompt(issue_number: int) -> str:
-    """Get the summary prompt for an issue."""
-    return SUMMARY_PROMPT.format(issue_number=issue_number)
 
 
 def get_plan_prompt(issue_number: int) -> str:
@@ -173,9 +88,18 @@ def get_pr_description(
         Formatted PR description
 
     """
-    return PR_DESCRIPTION_TEMPLATE.format(
-        issue_number=issue_number,
-        summary=summary,
-        changes=changes,
-        testing=testing,
-    )
+    # Use f-string construction instead of .format() to avoid KeyError on curly braces in content
+    return f"""## Summary
+{summary}
+
+## Changes
+{changes}
+
+## Testing
+{testing}
+
+## Closes
+Closes #{issue_number}
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+"""
