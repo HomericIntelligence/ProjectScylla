@@ -882,6 +882,14 @@ def run_llm_judge(
         actual_judge_dir = judge_dir / f"judge_{judge_run_number:02d}"
         actual_judge_dir.mkdir(parents=True, exist_ok=True)
 
+    # Save judge_prompt.md early so it's available for reruns
+    # even if _call_claude_judge() fails with an exception
+    if actual_judge_dir:
+        run_dir = actual_judge_dir.parent.parent
+        judge_prompt_path = run_dir / "judge_prompt.md"
+        if not judge_prompt_path.exists():
+            judge_prompt_path.write_text(judge_prompt)
+
     # Call Claude CLI for judgment with workspace access
     stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
 
@@ -1065,7 +1073,7 @@ def _parse_judge_response(response: str) -> JudgeResult:
         )
 
     except json.JSONDecodeError as e:
-        logger.warning(f"Failed to parse judge response as JSON: {e}")
+        logger.error(f"Failed to parse judge response as JSON: {e}")
         # Try to extract a pass/fail from the text
         response_lower = response.lower()
         if "passed" in response_lower or "success" in response_lower:
@@ -1075,6 +1083,7 @@ def _parse_judge_response(response: str) -> JudgeResult:
                 grade="C",
                 reasoning=f"Extracted from text: {response[:200]}",
                 raw_response=response,
+                is_valid=False,
             )
         return JudgeResult(
             score=0.3,
@@ -1082,6 +1091,7 @@ def _parse_judge_response(response: str) -> JudgeResult:
             grade="F",
             reasoning=f"Could not parse judge response: {response[:200]}",
             raw_response=response,
+            is_valid=False,
         )
 
 
