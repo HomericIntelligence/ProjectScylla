@@ -76,13 +76,16 @@ class TokenUsage:
         """Total tokens (input + output)."""
         return self.input_tokens + self.output_tokens
 
-    def calculate_cost(
+    def calculate_cost_from_prices(
         self,
         input_price_per_million: float,
         output_price_per_million: float,
         cached_price_per_million: float = 0.0,
     ) -> float:
-        """Calculate cost for this component.
+        """Calculate cost for this component using explicit prices.
+
+        Note: For cost calculation with model-based pricing, use
+        scylla.config.pricing.calculate_cost() directly.
 
         Args:
             input_price_per_million: Price per million input tokens.
@@ -263,7 +266,7 @@ class TokenTracker:
         total_cost = 0.0
 
         for usage in self._usages:
-            cost = usage.calculate_cost(input_price, output_price, cached_price)
+            cost = usage.calculate_cost_from_prices(input_price, output_price, cached_price)
             total_input += usage.input_tokens
             total_output += usage.output_tokens
             total_cost += cost

@@ -41,29 +41,29 @@ class TestTokenUsage:
         )
         assert usage.total_tokens == 600
 
-    def test_calculate_cost(self) -> None:
-        """Test Calculate cost."""
+    def test_calculate_cost_from_prices(self) -> None:
+        """Test calculate_cost_from_prices method."""
         usage = TokenUsage(
             ComponentType.SYSTEM_PROMPT,
             input_tokens=1_000_000,  # 1M input
             output_tokens=500_000,  # 0.5M output
         )
         # Cost = 1M * $3/M + 0.5M * $15/M = $3 + $7.50 = $10.50
-        cost = usage.calculate_cost(
+        cost = usage.calculate_cost_from_prices(
             input_price_per_million=3.0,
             output_price_per_million=15.0,
         )
         assert cost == pytest.approx(10.5)
 
-    def test_calculate_cost_with_cache(self) -> None:
-        """Test Calculate cost with cache."""
+    def test_calculate_cost_from_prices_with_cache(self) -> None:
+        """Test calculate_cost_from_prices with cache."""
         usage = TokenUsage(
             ComponentType.CONTEXT,
             input_tokens=1_000_000,
             cached_tokens=500_000,
         )
         # Cost = 1M * $3/M + 0.5M * $0.30/M = $3 + $0.15 = $3.15
-        cost = usage.calculate_cost(
+        cost = usage.calculate_cost_from_prices(
             input_price_per_million=3.0,
             output_price_per_million=15.0,
             cached_price_per_million=0.30,
