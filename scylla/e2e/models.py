@@ -229,7 +229,7 @@ class JudgeResultSummary:
         grade: Letter grade (S-F)
         reasoning: Judge's reasoning text
         judge_number: Judge number for directory linking (1-indexed)
-        is_valid: Whether the evaluation was successfully completed (False if heuristic fallback)
+        is_valid: Whether the evaluation was successfully completed
         criteria_scores: Individual criterion evaluations with score and explanation
 
     """
