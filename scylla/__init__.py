@@ -15,4 +15,5 @@ __all__ = [
     "reporting",
     "orchestrator",
     "cli",
+    "automation",
 ]
