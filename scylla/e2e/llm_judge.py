@@ -883,74 +883,39 @@ def run_llm_judge(
         actual_judge_dir.mkdir(parents=True, exist_ok=True)
 
     # Call Claude CLI for judgment with workspace access
-    try:
-        stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
+    stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
 
-        # Parse the response
-        judge_result = _parse_judge_response(result)
+    # Parse the response
+    judge_result = _parse_judge_response(result)
 
-        # Save judge logs if directory provided
-        if actual_judge_dir:
-            _save_judge_logs(
-                actual_judge_dir,
-                judge_prompt,
-                result,
-                judge_result,
-                model,
-                workspace,
-                raw_stdout=stdout,
-                raw_stderr=stderr,
-                language=language,
+    # Save judge logs if directory provided
+    if actual_judge_dir:
+        _save_judge_logs(
+            actual_judge_dir,
+            judge_prompt,
+            result,
+            judge_result,
+            model,
+            workspace,
+            raw_stdout=stdout,
+            raw_stderr=stderr,
+            language=language,
+        )
+
+        # Write per-judge timing
+        judge_duration = time.time() - judge_start
+        timing_file = actual_judge_dir / "timing.json"
+        with open(timing_file, "w") as f:
+            json.dump(
+                {
+                    "judge_duration_seconds": judge_duration,
+                    "measured_at": datetime.now(timezone.utc).isoformat(),
+                },
+                f,
+                indent=2,
             )
 
-            # Write per-judge timing
-            judge_duration = time.time() - judge_start
-            timing_file = actual_judge_dir / "timing.json"
-            with open(timing_file, "w") as f:
-                json.dump(
-                    {
-                        "judge_duration_seconds": judge_duration,
-                        "measured_at": datetime.now(timezone.utc).isoformat(),
-                    },
-                    f,
-                    indent=2,
-                )
-
-        return judge_result
-
-    except Exception as e:
-        logger.warning(f"LLM judge failed, using fallback: {e}")
-
-        # Get fallback result
-        fallback_result = _fallback_judge(agent_output)
-
-        # Write timing and judgment even on failure
-        if actual_judge_dir:
-            judge_duration = time.time() - judge_start
-
-            # Save timing with fallback flag
-            timing_file = actual_judge_dir / "timing.json"
-            with open(timing_file, "w") as f:
-                json.dump(
-                    {
-                        "judge_duration_seconds": judge_duration,
-                        "measured_at": datetime.now(timezone.utc).isoformat(),
-                        "failed": True,
-                        "fallback": True,
-                    },
-                    f,
-                    indent=2,
-                )
-
-            # Save fallback judgment to prevent infinite retry
-            judgment_file = actual_judge_dir / "judgment.json"
-            with open(judgment_file, "w") as f:
-                judgment_data = fallback_result.to_dict()
-                judgment_data["fallback"] = True
-                judgment_data["fallback_reason"] = str(e)
-                json.dump(judgment_data, f, indent=2)
-
-        return fallback_result
+    return judge_result
 
 
 def _call_claude_judge(
@@ -1118,55 +1083,6 @@ def _parse_judge_response(response: str) -> JudgeResult:
             reasoning=f"Could not parse judge response: {response[:200]}",
             raw_response=response,
         )
-
-
-def _fallback_judge(agent_output: str) -> JudgeResult:
-    """Fallback heuristic judge when LLM fails.
-
-    Args:
-        agent_output: The agent's stdout output
-
-    Returns:
-        JudgeResult from heuristic evaluation.
-        Returns is_valid=False for agent errors (rate limits, crashes, etc.)
-
-    """
-    try:
-        data = json.loads(agent_output.strip())
-
-        # Check is_error FIRST (before subtype) - rate limits have both
-        # "subtype": "success" AND "is_error": true
-        if data.get("is_error"):
-            error_msg = data.get("result", data.get("error", "Unknown error"))
-            # Mark as INVALID, not pass/fail - cannot evaluate an errored run
-            return JudgeResult(
-                score=0.0,
-                passed=False,
-                grade="N/A",
-                reasoning=f"Invalid: Agent error - {error_msg}",
-                is_valid=False,
-            )
-
-        # Only check success if no error
-        if data.get("subtype") == "success":
-            return JudgeResult(
-                score=0.7,
-                passed=True,
-                grade="C",
-                reasoning="Fallback: Agent reported success",
-                is_valid=True,
-            )
-    except (json.JSONDecodeError, AttributeError):
-        pass
-
-    # Default fallback - mark as invalid since we can't determine success
-    return JudgeResult(
-        score=0.0,
-        passed=False,
-        grade="N/A",
-        reasoning="Invalid: Unable to evaluate agent output",
-        is_valid=False,
-    )
 
 
 def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "mojo") -> None:

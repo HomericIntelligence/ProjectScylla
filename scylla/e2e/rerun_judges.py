@@ -339,56 +339,133 @@ def _rerun_single_judge_slot(
     judge_dir = run_dir / "judge"
     judge_dir.mkdir(exist_ok=True)
 
-    # Load agent output
-    agent_output_file = run_dir / "agent" / "output.txt"
-    if not agent_output_file.exists():
-        logger.error(f"Agent output not found: {agent_output_file}")
-        return False
+    # Check if saved judge_prompt.md exists (from original run)
+    saved_judge_prompt_path = run_dir / "judge_prompt.md"
 
-    agent_output = agent_output_file.read_text()
-
-    # Load task prompt
-    task_prompt_file = experiment_dir / "prompt.md"
-    if not task_prompt_file.exists():
-        logger.error(f"Task prompt not found: {task_prompt_file}")
-        return False
-
-    task_prompt = task_prompt_file.read_text()
-
-    # Find rubric
-    rubric_path = experiment_dir / "rubric.yaml"
-    if not rubric_path.exists():
-        rubric_path = None
-
-    workspace = run_dir / "workspace"
-
-    logger.info(
-        f"Re-running judge slot {slot.judge_number} for "
-        f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d} "
-        f"with model {slot.judge_model}"
-    )
-
-    # Run judge for this specific slot
-    try:
-        judge_result = run_llm_judge(
-            workspace=workspace,
-            task_prompt=task_prompt,
-            agent_output=agent_output,
-            model=slot.judge_model,
-            judge_dir=judge_dir,
-            judge_run_number=slot.judge_number,
-            language=config.language,
-            rubric_path=rubric_path,
+    if saved_judge_prompt_path.exists():
+        # Reuse the original judge prompt to avoid rebuilding from potentially corrupted workspace
+        logger.info(
+            f"Re-running judge slot {slot.judge_number} for "
+            f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d} "
+            f"with model {slot.judge_model} (using saved prompt)"
         )
 
-        return judge_result.is_valid
+        judge_prompt = saved_judge_prompt_path.read_text()
+        workspace = run_dir / "workspace"
 
-    except Exception as e:
-        logger.error(
-            f"Failed to re-run judge slot {slot.judge_number} for "
-            f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d}: {e}"
+        # Run judge using the saved prompt directly
+        # (bypass run_llm_judge which would rebuild prompt)
+        import json
+        import time
+        from datetime import datetime, timezone
+
+        from scylla.e2e.llm_judge import _call_claude_judge, _parse_judge_response, _save_judge_logs
+
+        try:
+            judge_start = time.time()
+
+            # Create judge-specific directory
+            actual_judge_dir = judge_dir / f"judge_{slot.judge_number:02d}"
+            actual_judge_dir.mkdir(parents=True, exist_ok=True)
+
+            # Call Claude with saved prompt
+            stdout, stderr, result = _call_claude_judge(judge_prompt, slot.judge_model, workspace)
+            judge_result = _parse_judge_response(result)
+
+            # Save logs
+            _save_judge_logs(
+                actual_judge_dir,
+                judge_prompt,
+                result,
+                judge_result,
+                slot.judge_model,
+                workspace,
+                raw_stdout=stdout,
+                raw_stderr=stderr,
+                language=config.language,
+            )
+
+            # Save timing
+            judge_duration = time.time() - judge_start
+            timing_file = actual_judge_dir / "timing.json"
+            with open(timing_file, "w") as f:
+                json.dump(
+                    {
+                        "judge_duration_seconds": judge_duration,
+                        "measured_at": datetime.now(timezone.utc).isoformat(),
+                        "rerun": True,
+                        "used_saved_prompt": True,
+                    },
+                    f,
+                    indent=2,
+                )
+
+            return judge_result.is_valid
+
+        except Exception as e:
+            logger.error(
+                f"Failed to re-run judge slot {slot.judge_number} for "
+                f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d}: {e}"
+            )
+            return False
+
+    else:
+        # Fallback: rebuild from workspace (old behavior, but log warning)
+        logger.warning(
+            f"Saved judge_prompt.md not found at {saved_judge_prompt_path}, "
+            f"rebuilding from workspace (may be inaccurate if workspace was recreated)"
         )
-        return False
+
+        # Load agent output
+        agent_output_file = run_dir / "agent" / "output.txt"
+        if not agent_output_file.exists():
+            logger.error(f"Agent output not found: {agent_output_file}")
+            return False
+
+        agent_output = agent_output_file.read_text()
+
+        # Load task prompt
+        task_prompt_file = experiment_dir / "prompt.md"
+        if not task_prompt_file.exists():
+            logger.error(f"Task prompt not found: {task_prompt_file}")
+            return False
+
+        task_prompt = task_prompt_file.read_text()
+
+        # Find rubric
+        rubric_path = experiment_dir / "rubric.yaml"
+        if not rubric_path.exists():
+            rubric_path = None
+
+        workspace = run_dir / "workspace"
+
+        logger.info(
+            f"Re-running judge slot {slot.judge_number} for "
+            f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d} "
+            f"with model {slot.judge_model}"
+        )
+
+        # Run judge for this specific slot
+        try:
+            judge_result = run_llm_judge(
+                workspace=workspace,
+                task_prompt=task_prompt,
+                agent_output=agent_output,
+                model=slot.judge_model,
+                judge_dir=judge_dir,
+                judge_run_number=slot.judge_number,
+                language=config.language,
+                rubric_path=rubric_path,
+            )
+
+            return judge_result.is_valid
+
+        except Exception as e:
+            logger.error(
+                f"Failed to re-run judge slot {slot.judge_number} for "
+                f"{slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d}: {e}"
+            )
+            return False
 
 
 @dataclass
