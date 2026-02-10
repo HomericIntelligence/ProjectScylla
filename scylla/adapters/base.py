@@ -272,6 +272,7 @@ class BaseAdapter(ABC):
         tokens_input: int,
         tokens_output: int,
         model: str | None = None,
+        tokens_cached: int = 0,
     ) -> float:
         """Calculate execution cost from token counts.
 
@@ -281,12 +282,15 @@ class BaseAdapter(ABC):
             tokens_input: Number of input tokens.
             tokens_output: Number of output tokens.
             model: Optional model identifier for specific pricing.
+            tokens_cached: Number of cached tokens (optional).
 
         Returns:
             Estimated cost in USD.
 
         """
-        return pricing_calculate_cost(tokens_input, tokens_output, model=model)
+        return pricing_calculate_cost(
+            tokens_input, tokens_output, tokens_cached=tokens_cached, model=model
+        )
 
     def _get_input_cost_per_1k(self, model: str | None) -> float:
         """Get input token cost per 1K tokens for a model.
