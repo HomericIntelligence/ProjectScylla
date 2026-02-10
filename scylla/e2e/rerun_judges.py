@@ -144,7 +144,11 @@ def _is_valid_judgment(judgment_file: Path) -> bool:
             data = json.load(f)
             # Must have score field and is_valid must not be False
             # (missing is_valid defaults to True for backward compatibility)
-            return "score" in data and data.get("is_valid", True) is not False
+            is_valid = data.get("is_valid", True) is not False
+            # Old data has fallback=true with is_valid=true — treat as invalid
+            if data.get("fallback", False) is True:
+                is_valid = False
+            return "score" in data and is_valid
     except (json.JSONDecodeError, OSError):
         return False
 
@@ -520,6 +524,9 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
                 # Check if this judgment has the required fields and is_valid flag
                 has_score = "score" in data
                 is_valid = data.get("is_valid", True) is not False
+                # Old data has fallback=true with is_valid=true — treat as invalid
+                if data.get("fallback", False) is True:
+                    is_valid = False
 
                 # Only include judgments that have score AND pass validity check
                 if has_score and is_valid:
@@ -571,14 +578,23 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
     # All judges must be valid for consensus to be valid
     consensus_is_valid = all(j.get("is_valid", True) for j in judges)
 
+    # Use representative reasoning from judge closest to consensus score
+    if valid:
+        closest = min(valid, key=lambda j: abs(j["score"] - consensus_score))
+        representative_reasoning = closest["reasoning"]
+        representative_criteria = closest.get("criteria_scores")
+    else:
+        representative_reasoning = ""
+        representative_criteria = None
+
     # Save judge/result.json
     result_data = {
         "score": consensus_score,
         "passed": passed,
         "grade": grade,
-        "reasoning": valid[0]["reasoning"] if valid else "",
+        "reasoning": representative_reasoning,
         "is_valid": consensus_is_valid,
-        "criteria_scores": valid[0].get("criteria_scores") if valid else None,
+        "criteria_scores": representative_criteria,
     }
 
     judge_result_file = run_dir / "judge" / "result.json"
@@ -597,7 +613,7 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
             run_data["judge_score"] = consensus_score
             run_data["judge_passed"] = passed
             run_data["judge_grade"] = grade
-            run_data["judge_reasoning"] = valid[0]["reasoning"] if valid else ""
+            run_data["judge_reasoning"] = representative_reasoning
             with open(run_result_file, "w") as f:
                 json.dump(run_data, f, indent=2)
         except Exception as e:

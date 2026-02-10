@@ -401,7 +401,13 @@ def _has_valid_judge_result(run_dir: Path) -> bool:
         data = json.loads(result_file.read_text())
         # Check all required fields exist
         required_fields = ["score", "passed", "grade"]
-        return all(field in data for field in required_fields)
+        if not all(field in data for field in required_fields):
+            return False
+        # Check is_valid flag (map old fallback=true to is_valid=false)
+        is_valid = data.get("is_valid", True) is not False
+        if data.get("fallback", False) is True:
+            is_valid = False
+        return is_valid
     except (json.JSONDecodeError, KeyError, OSError):
         return False
 
@@ -1430,7 +1436,7 @@ class SubTestExecutor:
             return (None, None, None)
 
         # Filter judges with valid scores
-        valid = [j for j in judges if j.score is not None]
+        valid = [j for j in judges if j.score is not None and j.is_valid]
         if not valid:
             return (None, None, None)
 
@@ -1549,8 +1555,17 @@ class SubTestExecutor:
         # Compute consensus from all judges
         consensus_score, consensus_passed, consensus_grade = self._compute_judge_consensus(judges)
 
-        # Build consensus dict (use primary judge's reasoning)
-        primary_reasoning = judges[0].reasoning if judges else ""
+        # Build consensus dict (use representative judge's reasoning - closest to consensus)
+        if judges and consensus_score is not None:
+            closest_judge = min(
+                (j for j in judges if j.score is not None),
+                key=lambda j: abs(j.score - consensus_score),
+            )
+            primary_reasoning = closest_judge.reasoning
+            primary_criteria_scores = closest_judge.criteria_scores
+        else:
+            primary_reasoning = judges[0].reasoning if judges else ""
+            primary_criteria_scores = judges[0].criteria_scores if judges else None
         # All judges must be valid for consensus to be valid
         consensus_is_valid = all(j.is_valid for j in judges)
         consensus_dict = {
@@ -1559,7 +1574,7 @@ class SubTestExecutor:
             "grade": consensus_grade,
             "reasoning": primary_reasoning,
             "is_valid": consensus_is_valid,
-            "criteria_scores": judges[0].criteria_scores if judges else None,
+            "criteria_scores": primary_criteria_scores,
         }
 
         return consensus_dict, judges

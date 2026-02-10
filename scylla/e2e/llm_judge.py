@@ -782,7 +782,7 @@ def run_llm_judge(
     Do NOT use Sonnet or Haiku - quality matters more than speed for judging.
 
     Uses the Claude CLI to evaluate task completion with an LLM judge.
-    Falls back to heuristic evaluation if the LLM call fails.
+    Raises ValueError if the judge response cannot be parsed.
 
     Args:
         workspace: Path to the workspace with agent's output
@@ -1051,6 +1051,12 @@ def _parse_judge_response(response: str) -> JudgeResult:
     try:
         data = json.loads(response)
 
+        if "score" not in data:
+            raise ValueError(
+                f"Judge response missing required 'score' field. "
+                f"Keys found: {list(data.keys())}\nResponse: {response[:500]}"
+            )
+
         score = float(data.get("score", 0.0))
         passed = bool(data.get("passed", False))
         reasoning = str(data.get("reasoning", "No reasoning provided"))
@@ -1073,26 +1079,9 @@ def _parse_judge_response(response: str) -> JudgeResult:
         )
 
     except json.JSONDecodeError as e:
-        logger.error(f"Failed to parse judge response as JSON: {e}")
-        # Try to extract a pass/fail from the text
-        response_lower = response.lower()
-        if "passed" in response_lower or "success" in response_lower:
-            return JudgeResult(
-                score=0.7,
-                passed=True,
-                grade="C",
-                reasoning=f"Extracted from text: {response[:200]}",
-                raw_response=response,
-                is_valid=False,
-            )
-        return JudgeResult(
-            score=0.3,
-            passed=False,
-            grade="F",
-            reasoning=f"Could not parse judge response: {response[:200]}",
-            raw_response=response,
-            is_valid=False,
-        )
+        raise ValueError(
+            f"Judge response is not valid JSON: {e}\nResponse: {response[:500]}"
+        ) from e
 
 
 def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "mojo") -> None:
