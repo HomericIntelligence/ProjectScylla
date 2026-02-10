@@ -244,7 +244,7 @@ class CommandLogger:
 
         """
         script_path = self.log_dir / "replay.sh"
-        prompt_path = self.log_dir / "prompt.md"
+        prompt_path = self.log_dir / "replay_prompt.md"
 
         lines = [
             "#!/bin/bash",
@@ -277,14 +277,21 @@ class CommandLogger:
 
             # Check if this is a claude command with a prompt argument
             if len(log.command) > 0 and "claude" in log.command[0].lower():
-                # Extract the prompt (last argument) and write to prompt.md
+                # Extract the prompt (last argument) and write to replay_prompt.md
                 if len(log.command) > 1:
                     prompt = log.command[-1]
+                    # If last arg is already a file path, use it directly
+                    if Path(prompt).is_file():
+                        cmd_without_prompt = log.command[:-1]
+                        cmd_str = " ".join(shlex.quote(arg) for arg in cmd_without_prompt)
+                        lines.append(f"{cmd_str} {shlex.quote(prompt)}")
+                        lines.append("")
+                        continue
                     # Only extract if it looks like a multi-line prompt
                     if len(prompt) > 100 or "\n" in prompt:
                         prompt_path.write_text(prompt)
-                        # Build command referencing prompt.md with absolute path
-                        # replay.sh is in agent/, prompt.md is also in agent/
+                        # Build command referencing replay_prompt.md with absolute path
+                        # replay.sh is in agent/, replay_prompt.md is also in agent/
                         # But command runs from workspace/, so use absolute path
                         cmd_without_prompt = log.command[:-1]
                         cmd_str = " ".join(shlex.quote(arg) for arg in cmd_without_prompt)

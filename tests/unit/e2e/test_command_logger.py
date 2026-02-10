@@ -176,3 +176,72 @@ class TestCommandLogger:
                     os.environ["ANTHROPIC_API_KEY"] = original
                 else:
                     os.environ.pop("ANTHROPIC_API_KEY", None)
+
+    def test_replay_script_file_path_detection(self) -> None:
+        """Test that file paths in command args are detected and not extracted.
+
+        Regression test for Bug 1: save_replay_script() should detect when
+        the last argument is already a file path and not try to extract it
+        to replay_prompt.md, avoiding overwriting existing files.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger = CommandLogger(Path(tmpdir))
+
+            # Create a prompt file that should NOT be overwritten
+            prompt_file = Path(tmpdir) / "prompt.md"
+            original_content = "This is the actual task prompt content."
+            prompt_file.write_text(original_content)
+
+            # Log a claude command with the file path as the last argument
+            # (simulating what subtest_executor.py does)
+            logger.log_command(
+                cmd=["claude", "--model", "sonnet", str(prompt_file.resolve())],
+                stdout="Agent output",
+                stderr="",
+                exit_code=0,
+                duration=1.5,
+                cwd=tmpdir,
+            )
+
+            # Generate replay script
+            script_path = logger.save_replay_script()
+
+            # Bug 1 check: Original prompt.md should NOT be overwritten
+            assert prompt_file.exists()
+            assert prompt_file.read_text() == original_content
+
+            # replay_prompt.md should NOT be created (arg was already a file path)
+            replay_prompt = Path(tmpdir) / "replay_prompt.md"
+            assert not replay_prompt.exists()
+
+            # Replay script should reference the original file path
+            script_content = script_path.read_text()
+            assert str(prompt_file.resolve()) in script_content
+
+    def test_replay_script_inline_prompt_extraction(self) -> None:
+        """Test that inline prompts are correctly extracted to replay_prompt.md."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            logger = CommandLogger(Path(tmpdir))
+
+            # Log a claude command with an inline prompt (>100 chars)
+            inline_prompt = "This is a long inline prompt. " * 10
+            logger.log_command(
+                cmd=["claude", "--model", "sonnet", inline_prompt],
+                stdout="Agent output",
+                stderr="",
+                exit_code=0,
+                duration=1.5,
+                cwd=tmpdir,
+            )
+
+            # Generate replay script
+            script_path = logger.save_replay_script()
+
+            # replay_prompt.md should be created with the inline prompt
+            replay_prompt = Path(tmpdir) / "replay_prompt.md"
+            assert replay_prompt.exists()
+            assert replay_prompt.read_text() == inline_prompt
+
+            # Replay script should reference replay_prompt.md
+            script_content = script_path.read_text()
+            assert "replay_prompt.md" in script_content
