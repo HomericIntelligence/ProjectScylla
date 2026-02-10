@@ -201,6 +201,10 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
 
     save_figure(chart, "fig08_cost_quality_pareto", output_dir, render)
 
+    # Save tier stats with Pareto classification to CSV for analysis
+    csv_path = output_dir / "fig08_cost_quality_pareto.csv"
+    tier_stats.to_csv(csv_path, index=False)
+
 
 def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 22: Cumulative Cost Curve.
