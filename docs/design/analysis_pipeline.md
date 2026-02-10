@@ -67,14 +67,14 @@ Each figure has three files:
 
 ```bash
 # Install analysis dependencies (pandas, matplotlib, altair, etc.)
-pixi install -e analysis
+pixi install
 ```
 
 ### Export Data
 
 ```bash
 # Export all data to CSV
-pixi run -e analysis python scripts/export_data.py
+pixi run python scripts/export_data.py
 
 # Outputs:
 #   docs/data/runs.csv
@@ -88,15 +88,15 @@ pixi run -e analysis python scripts/export_data.py
 
 ```bash
 # Generate all figures (specs + CSV only, no rendering)
-pixi run -e analysis python scripts/generate_figures.py --no-render
+pixi run python scripts/generate_figures.py --no-render
 
 # Generate specific figures
-pixi run -e analysis python scripts/generate_figures.py \
+pixi run python scripts/generate_figures.py \
     --no-render \
     --figures fig01_score_variance_by_tier,fig02_judge_variance
 
 # List available figures
-pixi run -e analysis python scripts/generate_figures.py --list-figures
+pixi run python scripts/generate_figures.py --list-figures
 
 # Outputs:
 #   docs/figures/figNN_*.vl.json  (Vega-Lite specs)
@@ -107,7 +107,7 @@ pixi run -e analysis python scripts/generate_figures.py --list-figures
 
 ```bash
 # Requires vl-convert-python (already in pixi analysis environment)
-pixi run -e analysis python scripts/generate_figures.py
+pixi run python scripts/generate_figures.py
 
 # Outputs additional files:
 #   docs/figures/figNN_*.png  (300 DPI raster)
@@ -244,14 +244,14 @@ Each table has two files:
 
 ```bash
 # Generate all tables
-pixi run -e analysis python scripts/generate_tables.py
+pixi run python scripts/generate_tables.py
 
 # Generate specific tables
-pixi run -e analysis python scripts/generate_tables.py \
+pixi run python scripts/generate_tables.py \
     --tables table01_tier_summary,table02_tier_comparison
 
 # List available tables
-pixi run -e analysis python scripts/generate_tables.py --list-tables
+pixi run python scripts/generate_tables.py --list-tables
 
 # Outputs:
 #   docs/tables/tableNN_*.md   (Markdown)
@@ -263,7 +263,7 @@ pixi run -e analysis python scripts/generate_tables.py --list-tables
 Run the entire analysis pipeline (data export, figures, tables):
 
 ```bash
-pixi run -e analysis python scripts/generate_all_results.py
+pixi run python scripts/generate_all_results.py
 ```
 
 This script runs:

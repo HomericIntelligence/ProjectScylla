@@ -41,8 +41,8 @@ git clone https://github.com/HomericIntelligence/ProjectScylla.git
 cd ProjectScylla
 
 # 3. Run your first analysis
-pixi run -e analysis python --version  # Verify installation
-pixi run -e analysis python scripts/generate_all_results.py --data-dir ~/fullruns
+pixi run python --version  # Verify installation
+pixi run python scripts/generate_all_results.py --data-dir ~/fullruns
 
 # 4. View results (27 figures + 11 tables generated)
 open results/analysis/figures/*.png  # macOS
@@ -55,7 +55,7 @@ xdg-open results/analysis/figures/*.png  # Linux
 
 **Compare Two Agent Configurations:**
 ```bash
-pixi run -e analysis python scripts/generate_all_results.py \
+pixi run python scripts/generate_all_results.py \
   --data-dir ~/experiments/ \
   --output-dir comparison_results/ \
   --exclude test001-dryrun
@@ -64,7 +64,7 @@ pixi run -e analysis python scripts/generate_all_results.py \
 **Fast Development Mode (No Rendering):**
 ```bash
 # Quick iteration - generates Vega-Lite specs only
-pixi run -e analysis python scripts/generate_all_results.py \
+pixi run python scripts/generate_all_results.py \
   --data-dir ~/quick_test \
   --no-render \
   --skip-data  # Skip if CSVs already exist
@@ -110,7 +110,7 @@ Together: cohesive ecosystem for building, connecting, and refining agent workfl
 Generate all outputs (data exports, figures, tables):
 
 ```bash
-pixi run -e analysis python scripts/generate_all_results.py \
+pixi run python scripts/generate_all_results.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis
 ```
@@ -124,12 +124,12 @@ pixi run -e analysis python scripts/generate_all_results.py \
 
 ```bash
 # Development mode - no rendering
-pixi run -e analysis python scripts/generate_all_results.py \
+pixi run python scripts/generate_all_results.py \
   --no-render \
   --exclude test001-dryrun test001-debug
 
 # Regenerate tables only (assumes data/figures exist)
-pixi run -e analysis python scripts/generate_all_results.py \
+pixi run python scripts/generate_all_results.py \
   --skip-data --skip-figures
 ```
 
@@ -137,7 +137,7 @@ pixi run -e analysis python scripts/generate_all_results.py \
 
 **1. Export Data Only**
 ```bash
-pixi run -e analysis python scripts/export_data.py \
+pixi run python scripts/export_data.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/data
 ```
@@ -145,7 +145,7 @@ pixi run -e analysis python scripts/export_data.py \
 
 **2. Generate Figures Only (27 figures × 5 formats)**
 ```bash
-pixi run -e analysis python scripts/generate_figures.py \
+pixi run python scripts/generate_figures.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/figures
 ```
@@ -153,7 +153,7 @@ pixi run -e analysis python scripts/generate_figures.py \
 
 **3. Generate Tables Only (11 tables × 2 formats)**
 ```bash
-pixi run -e analysis python scripts/generate_tables.py \
+pixi run python scripts/generate_tables.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/tables
 ```
@@ -219,10 +219,10 @@ ProjectScylla provides comprehensive scripts for running, managing, and analyzin
 **Primary Experiment Runner:**
 ```bash
 # Run full experiment
-pixi run -e analysis python scripts/run_e2e_experiment.py --config config/test.yaml
+pixi run python scripts/run_e2e_experiment.py --config config/test.yaml
 
 # Run specific tiers
-pixi run -e analysis python scripts/run_e2e_experiment.py \
+pixi run python scripts/run_e2e_experiment.py \
   --tiers-dir tests/fixtures/tests/test-001 \
   --tiers T0 T1 --runs 10 -v
 ```
@@ -239,11 +239,11 @@ pixi run -e analysis python scripts/run_e2e_experiment.py \
 
 ```bash
 # Re-run failed agents
-pixi run -e analysis python scripts/rerun_agents.py \
+pixi run python scripts/rerun_agents.py \
   --data-dir ~/fullruns/test_experiment --tiers T0 T1
 
 # Re-run failed judges
-pixi run -e analysis python scripts/rerun_judges.py \
+pixi run python scripts/rerun_judges.py \
   --data-dir ~/fullruns/test_experiment
 ```
 
@@ -251,12 +251,12 @@ pixi run -e analysis python scripts/rerun_judges.py \
 
 ```bash
 # Regenerate all results
-pixi run -e analysis python scripts/regenerate_results.py \
+pixi run python scripts/regenerate_results.py \
   --data-dir ~/fullruns/test_experiment \
   --output-dir results/analysis
 
 # Regenerate agent-specific results
-pixi run -e analysis python scripts/regenerate_agent_results.py \
+pixi run python scripts/regenerate_agent_results.py \
   --data-dir ~/fullruns/test_experiment
 ```
 
@@ -328,31 +328,31 @@ ProjectScylla has a comprehensive test suite with **77+ test files** covering al
 #### Running Tests
 ```bash
 # All tests (comprehensive)
-pixi run -e analysis pytest tests/ --verbose
+pixi run pytest tests/ --verbose
 
 # Unit tests only (fastest)
-pixi run -e analysis pytest tests/unit/ -v
+pixi run pytest tests/unit/ -v
 
 # Specific modules
-pixi run -e analysis pytest tests/unit/analysis/ -v
-pixi run -e analysis pytest tests/unit/adapters/ -v
-pixi run -e analysis pytest tests/unit/config/ -v
+pixi run pytest tests/unit/analysis/ -v
+pixi run pytest tests/unit/adapters/ -v
+pixi run pytest tests/unit/config/ -v
 
 # Integration tests
-pixi run -e analysis pytest tests/integration/ -v
+pixi run pytest tests/integration/ -v
 
 # Coverage analysis
-pixi run -e analysis pytest tests/ --cov=scylla/scylla --cov-report=html
+pixi run pytest tests/ --cov=scylla/scylla --cov-report=html
 
 # Specific test file
-pixi run -e analysis pytest tests/unit/analysis/test_stats.py -v
+pixi run pytest tests/unit/analysis/test_stats.py -v
 ```
 
 #### Test Quality Assurance
 ```bash
 # Code quality (linting + formatting)
-pixi run -e analysis ruff check scylla/
-pixi run -e analysis ruff format scylla/ --check
+pixi run ruff check scylla/
+pixi run ruff format scylla/ --check
 ```
 
 ### Adding Components
@@ -371,11 +371,11 @@ pixi run -e analysis ruff format scylla/ --check
 ### Code Quality
 ```bash
 # Linting
-pixi run -e analysis ruff check scylla/analysis/
+pixi run ruff check scylla/analysis/
 
 # Auto-fix and format
-pixi run -e analysis ruff check --fix scylla/analysis/
-pixi run -e analysis ruff format scylla/analysis/
+pixi run ruff check --fix scylla/analysis/
+pixi run ruff format scylla/analysis/
 ```
 
 ---

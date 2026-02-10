@@ -338,7 +338,7 @@ This project uses Pixi for environment management with Python 3.10+:
 # Pixi is already configured - dependencies are in pixi.toml
 
 # Run Python tests
-pixi run -e analysis python -m pytest tests/ -v
+pixi run python -m pytest tests/ -v
 
 # Run pre-commit hooks (includes black, ruff, mypy)
 pre-commit run --all-files
