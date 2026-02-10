@@ -4,8 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
+from scylla.e2e.llm_judge import _parse_judge_response
 from scylla.e2e.models import JudgeResultSummary
-from scylla.e2e.subtest_executor import SubTestExecutor, _move_to_failed
+from scylla.e2e.subtest_executor import (
+    SubTestExecutor,
+    _has_valid_judge_result,
+    _move_to_failed,
+)
 
 
 class TestMoveToFailed:
@@ -129,7 +136,7 @@ class TestComputeJudgeConsensus:
         assert grade == "A"  # Grade for 0.85 (>= 0.80)
 
     def test_consensus_with_invalid_judge(self) -> None:
-        """Test consensus computation with one invalid judge (heuristic fallback)."""
+        """Test consensus computation excludes invalid judges."""
         from unittest.mock import MagicMock
 
         from scylla.e2e.models import ExperimentConfig, TierID
@@ -160,7 +167,7 @@ class TestComputeJudgeConsensus:
                 score=0.0,
                 passed=False,
                 grade="F",
-                reasoning="Heuristic fallback",
+                reasoning="Invalid judgment",
                 judge_number=2,
                 is_valid=False,
             ),
@@ -168,12 +175,10 @@ class TestComputeJudgeConsensus:
 
         score, passed, grade = executor._compute_judge_consensus(judges)
 
-        # Both judges included in consensus computation (we compute score from all)
-        # Note: _compute_judge_consensus doesn't filter by is_valid
-        # The filtering happens in _regenerate_consensus
-        assert abs(score - 0.45) < 0.001  # Average of 0.9 and 0.0
-        assert passed is False  # 1 passed, 1 failed
-        assert grade == "C"  # Grade for 0.45 (0.40 <= 0.45 < 0.60)
+        # Invalid judge is excluded from consensus
+        assert abs(score - 0.9) < 0.001  # Only valid judge (0.9)
+        assert passed is True
+        assert grade == "A"  # Grade for 0.9
 
     def test_consensus_no_judges(self) -> None:
         """Test consensus computation with no judges."""
@@ -197,3 +202,78 @@ class TestComputeJudgeConsensus:
         assert score is None
         assert passed is None
         assert grade is None
+
+
+class TestParseJudgeResponse:
+    """Tests for _parse_judge_response function."""
+
+    def test_parse_judge_response_raises_on_invalid_json(self) -> None:
+        """Test _parse_judge_response raises ValueError on non-JSON response."""
+        invalid_responses = [
+            "This is not JSON at all",
+            "The agent passed the test successfully",
+            "{ incomplete json",
+            '{"score": 0.8, invalid}',
+        ]
+
+        for response in invalid_responses:
+            with pytest.raises(ValueError, match="Judge response is not valid JSON"):
+                _parse_judge_response(response)
+
+    def test_parse_judge_response_raises_on_missing_score(self) -> None:
+        """Test _parse_judge_response raises ValueError when JSON has no score field."""
+        # Valid JSON but missing the required 'score' field
+        invalid_responses = [
+            '{"status": "ok"}',
+            '{"passed": true, "reasoning": "Good work"}',
+            '{"grade": "A", "reasoning": "Excellent"}',
+        ]
+
+        for response in invalid_responses:
+            with pytest.raises(ValueError, match="Judge response missing required 'score' field"):
+                _parse_judge_response(response)
+
+
+class TestHasValidJudgeResult:
+    """Tests for _has_valid_judge_result function."""
+
+    def test_has_valid_judge_result_rejects_invalid(self, tmp_path: Path) -> None:
+        """Test that _has_valid_judge_result returns False for is_valid=False."""
+        run_dir = tmp_path / "run_01"
+        judge_dir = run_dir / "judge"
+        judge_dir.mkdir(parents=True)
+        result_file = judge_dir / "result.json"
+        result_file.write_text('{"score": 0.8, "passed": true, "grade": "B", "is_valid": false}')
+
+        assert not _has_valid_judge_result(run_dir)
+
+    def test_has_valid_judge_result_rejects_fallback(self, tmp_path: Path) -> None:
+        """Test that _has_valid_judge_result returns False for fallback=true."""
+        run_dir = tmp_path / "run_01"
+        judge_dir = run_dir / "judge"
+        judge_dir.mkdir(parents=True)
+        result_file = judge_dir / "result.json"
+        # Old data: fallback=true with is_valid=true (or missing)
+        result_file.write_text('{"score": 0.0, "passed": false, "grade": "F", "fallback": true}')
+
+        assert not _has_valid_judge_result(run_dir)
+
+    def test_has_valid_judge_result_accepts_valid(self, tmp_path: Path) -> None:
+        """Test that _has_valid_judge_result returns True for valid judgment."""
+        run_dir = tmp_path / "run_01"
+        judge_dir = run_dir / "judge"
+        judge_dir.mkdir(parents=True)
+        result_file = judge_dir / "result.json"
+        result_file.write_text('{"score": 0.9, "passed": true, "grade": "A", "is_valid": true}')
+
+        assert _has_valid_judge_result(run_dir)
+
+    def test_has_valid_judge_result_accepts_valid_no_is_valid_field(self, tmp_path: Path) -> None:
+        """Test _has_valid_judge_result returns True when is_valid is missing (defaults to True)."""
+        run_dir = tmp_path / "run_01"
+        judge_dir = run_dir / "judge"
+        judge_dir.mkdir(parents=True)
+        result_file = judge_dir / "result.json"
+        result_file.write_text('{"score": 0.9, "passed": true, "grade": "A"}')
+
+        assert _has_valid_judge_result(run_dir)
