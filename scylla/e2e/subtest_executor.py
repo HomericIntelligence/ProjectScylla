@@ -1484,27 +1484,63 @@ class SubTestExecutor:
             )
 
             # Use the LLM judge for proper evaluation
-            judge_result = run_llm_judge(
-                workspace=workspace,
-                task_prompt=task_prompt,
-                agent_output=stdout,
-                model=model,
-                judge_dir=judge_dir,
-                judge_run_number=judge_num,  # Creates judge_01/, judge_02/, etc.
-                language=language,
-                rubric_path=rubric_path,
-            )
+            try:
+                judge_result = run_llm_judge(
+                    workspace=workspace,
+                    task_prompt=task_prompt,
+                    agent_output=stdout,
+                    model=model,
+                    judge_dir=judge_dir,
+                    judge_run_number=judge_num,  # Creates judge_01/, judge_02/, etc.
+                    language=language,
+                    rubric_path=rubric_path,
+                )
 
-            # Store individual judge result
-            judge_summary = JudgeResultSummary(
-                model=model,
-                score=judge_result.score,
-                passed=judge_result.passed,
-                grade=judge_result.grade,
-                reasoning=judge_result.reasoning,
-                judge_number=judge_num,
-            )
-            judges.append(judge_summary)
+                # Store individual judge result
+                judge_summary = JudgeResultSummary(
+                    model=model,
+                    score=judge_result.score,
+                    passed=judge_result.passed,
+                    grade=judge_result.grade,
+                    reasoning=judge_result.reasoning,
+                    judge_number=judge_num,
+                )
+                judges.append(judge_summary)
+
+            except Exception as e:
+                import json
+                from datetime import datetime, timezone
+
+                # Log error with full context
+                logger.error(
+                    f"Judge {judge_num} failed with model {model}: {e}",
+                    exc_info=True,
+                )
+
+                # Save error artifacts to the judge directory
+                judge_specific_dir = judge_dir / f"judge_{judge_num:02d}"
+                judge_specific_dir.mkdir(parents=True, exist_ok=True)
+
+                # Write timing with failed flag
+                timing_file = judge_specific_dir / "timing.json"
+                with open(timing_file, "w") as f:
+                    json.dump(
+                        {
+                            "judge_duration_seconds": 0.0,
+                            "measured_at": datetime.now(timezone.utc).isoformat(),
+                            "failed": True,
+                            "error": str(e),
+                        },
+                        f,
+                        indent=2,
+                    )
+
+                # Write error log
+                error_file = judge_specific_dir / "error.log"
+                error_file.write_text(f"Judge failed: {e}\n")
+
+                # Re-raise to mark the run as failed
+                raise
 
         # Compute consensus from all judges
         consensus_score, consensus_passed, consensus_grade = self._compute_judge_consensus(judges)

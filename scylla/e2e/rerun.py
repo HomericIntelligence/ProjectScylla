@@ -316,6 +316,17 @@ def rerun_single_run(
         workspace_manager=workspace_manager,
     )
 
+    # Safety check: don't destroy workspaces for completed or results-only runs
+    # These should be handled by regenerate or rerun_judges, not full agent rerun
+    if run_info.status in (RunStatus.COMPLETED, RunStatus.RESULTS):
+        logger.error(
+            f"Refusing to rerun {run_info.tier_id}/{run_info.subtest_id}/"
+            f"run_{run_info.run_number:02d}: status is {run_info.status.value}, "
+            f"which should not require agent re-execution. "
+            f"Use regenerate.py for RESULTS status or rerun_judges.py for COMPLETED status."
+        )
+        return None
+
     # If run_dir exists with old data, move it to .failed/
     if run_info.run_dir.exists():
         failed_dir = run_info.run_dir.parent / ".failed"

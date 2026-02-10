@@ -307,59 +307,90 @@ def rejudge_missing_runs(
                     judge_dir = run_dir / "judge"
                     judge_dir.mkdir(exist_ok=True)
 
-                    judge_result = run_llm_judge(
-                        workspace=workspace,
-                        task_prompt=task_prompt,
-                        agent_output=agent_output,
-                        model=judge_model,
-                        judge_dir=judge_dir,
-                        reference_patch_path=(
-                            experiment_dir / "reference.patch"
-                            if (experiment_dir / "reference.patch").exists()
-                            else None
-                        ),
-                        rubric_path=(
-                            experiment_dir / "rubric.yaml"
-                            if (experiment_dir / "rubric.yaml").exists()
-                            else None
-                        ),
-                    )
-
-                    # Update run result with new judge scores
-                    run.judge_score = judge_result.score
-                    run.judge_passed = judge_result.passed
-                    run.judge_grade = judge_result.grade
-                    run.judge_reasoning = judge_result.reasoning
-                    run.criteria_scores = judge_result.criteria_scores
-
-                    # Save updated run_result.json
-                    with open(run_result_file, "w") as f:
-                        json.dump(
-                            {
-                                "run_number": run.run_number,
-                                "exit_code": run.exit_code,
-                                "token_stats": run.token_stats.to_dict(),
-                                "cost_usd": run.cost_usd,
-                                "duration_seconds": run.duration_seconds,
-                                "agent_duration_seconds": run.agent_duration_seconds,
-                                "judge_duration_seconds": run.judge_duration_seconds,
-                                "judge_score": run.judge_score,
-                                "judge_passed": run.judge_passed,
-                                "judge_grade": run.judge_grade,
-                                "judge_reasoning": run.judge_reasoning,
-                                "workspace_path": str(run.workspace_path),
-                                "logs_path": str(run.logs_path),
-                                "command_log_path": (
-                                    str(run.command_log_path) if run.command_log_path else None
-                                ),
-                                "criteria_scores": run.criteria_scores,
-                            },
-                            f,
-                            indent=2,
+                    try:
+                        judge_result = run_llm_judge(
+                            workspace=workspace,
+                            task_prompt=task_prompt,
+                            agent_output=agent_output,
+                            model=judge_model,
+                            judge_dir=judge_dir,
+                            reference_patch_path=(
+                                experiment_dir / "reference.patch"
+                                if (experiment_dir / "reference.patch").exists()
+                                else None
+                            ),
+                            rubric_path=(
+                                experiment_dir / "rubric.yaml"
+                                if (experiment_dir / "rubric.yaml").exists()
+                                else None
+                            ),
                         )
 
-                    stats.runs_rejudged += 1
-                    logger.info(f"✅ Re-judged {run_dir}: score={judge_result.score:.2f}")
+                        # Update run result with new judge scores
+                        run.judge_score = judge_result.score
+                        run.judge_passed = judge_result.passed
+                        run.judge_grade = judge_result.grade
+                        run.judge_reasoning = judge_result.reasoning
+                        run.criteria_scores = judge_result.criteria_scores
+
+                        # Save updated run_result.json
+                        with open(run_result_file, "w") as f:
+                            json.dump(
+                                {
+                                    "run_number": run.run_number,
+                                    "exit_code": run.exit_code,
+                                    "token_stats": run.token_stats.to_dict(),
+                                    "cost_usd": run.cost_usd,
+                                    "duration_seconds": run.duration_seconds,
+                                    "agent_duration_seconds": run.agent_duration_seconds,
+                                    "judge_duration_seconds": run.judge_duration_seconds,
+                                    "judge_score": run.judge_score,
+                                    "judge_passed": run.judge_passed,
+                                    "judge_grade": run.judge_grade,
+                                    "judge_reasoning": run.judge_reasoning,
+                                    "workspace_path": str(run.workspace_path),
+                                    "logs_path": str(run.logs_path),
+                                    "command_log_path": (
+                                        str(run.command_log_path) if run.command_log_path else None
+                                    ),
+                                    "criteria_scores": run.criteria_scores,
+                                },
+                                f,
+                                indent=2,
+                            )
+
+                        stats.runs_rejudged += 1
+                        logger.info(f"✅ Re-judged {run_dir}: score={judge_result.score:.2f}")
+
+                    except Exception as judge_error:
+                        from datetime import datetime, timezone
+
+                        # Log error with context
+                        logger.error(
+                            f"❌ Judge failed for {run_dir} with model {judge_model}: "
+                            f"{judge_error}",
+                            exc_info=True,
+                        )
+
+                        # Save error artifacts
+                        timing_file = judge_dir / "timing.json"
+                        with open(timing_file, "w") as f:
+                            json.dump(
+                                {
+                                    "judge_duration_seconds": 0.0,
+                                    "measured_at": datetime.now(timezone.utc).isoformat(),
+                                    "failed": True,
+                                    "error": str(judge_error),
+                                },
+                                f,
+                                indent=2,
+                            )
+
+                        error_file = judge_dir / "error.log"
+                        error_file.write_text(f"Judge failed: {judge_error}\n")
+
+                        # Continue to next run instead of crashing
+                        continue
 
                 except Exception as e:
                     logger.error(f"❌ Failed to re-judge {run_dir}: {e}")
