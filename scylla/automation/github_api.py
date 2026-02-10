@@ -65,23 +65,42 @@ def _gh_call(
                     "Claude API usage limit reached. Please check your billing."
                 ) from e
 
-            # Check for rate limit
+            # Check for rate limit (regardless of retry_on_rate_limit flag)
             is_rate_limited, reset_epoch = detect_rate_limit(stderr)
-            if is_rate_limited and retry_on_rate_limit:
-                if reset_epoch > 0:
-                    wait_until(reset_epoch, "GitHub API rate limit")
+            if is_rate_limited:
+                if retry_on_rate_limit:
+                    if reset_epoch > 0:
+                        wait_until(reset_epoch, "GitHub API rate limit")
+                    else:
+                        # No reset time, use exponential backoff
+                        wait_seconds = min(60 * (2**attempt), 300)  # Max 5 minutes
+                        logger.warning(f"Rate limited but no reset time, waiting {wait_seconds}s")
+                        time.sleep(wait_seconds)
+                    continue
                 else:
-                    # No reset time, use exponential backoff
-                    wait_seconds = min(60 * (2**attempt), 300)  # Max 5 minutes
-                    logger.warning(f"Rate limited but no reset time, waiting {wait_seconds}s")
-                    time.sleep(wait_seconds)
-                continue
+                    # Don't retry, but provide clear error message
+                    raise RuntimeError(
+                        f"GitHub API rate limit reached. Reset at epoch {reset_epoch}"
+                    ) from e
 
-            # Not rate limited, re-raise
+            # Check if this is a non-transient error that shouldn't be retried
+            # Permission errors, not found, bad requests should fail fast
+            non_transient_patterns = [
+                r"403|forbidden|permission denied",
+                r"404|not found",
+                r"400|bad request",
+                r"401|unauthorized",
+                r"invalid argument",
+            ]
+            if any(re.search(pattern, stderr, re.IGNORECASE) for pattern in non_transient_patterns):
+                logger.error(f"Non-transient error detected: {stderr[:200]}")
+                raise
+
+            # Last retry attempt, re-raise
             if attempt == max_retries - 1:
                 raise
 
-            # Transient error, retry with backoff
+            # Transient error (network, timeout, 5xx), retry with backoff
             wait_seconds = 2**attempt
             logger.warning(f"gh call failed (attempt {attempt + 1}), retrying in {wait_seconds}s")
             time.sleep(wait_seconds)
@@ -168,7 +187,16 @@ def gh_pr_create(
 
         # Extract PR number from URL in output
         output = result.stdout.strip()
-        pr_number = int(output.split("/")[-1])
+        try:
+            # Try to extract number from URL (e.g., https://github.com/owner/repo/pull/123)
+            match = re.search(r"/pull/(\d+)", output)
+            if match:
+                pr_number = int(match.group(1))
+            else:
+                # Fallback to parsing last path component
+                pr_number = int(output.split("/")[-1])
+        except (ValueError, IndexError) as e:
+            raise RuntimeError(f"Failed to parse PR number from output: {output}") from e
 
         logger.info(f"Created PR #{pr_number}")
 
@@ -307,10 +335,16 @@ def parse_issue_dependencies(issue_body: str) -> list[int]:
             for match in re.finditer(r"#(\d+)", line):
                 dependencies.append(int(match.group(1)))
 
-    # Pattern 2: Find issue references in lists
-    list_pattern = r"^\s*[-*]\s*#(\d+)"
-    for match in re.finditer(list_pattern, issue_body, re.MULTILINE):
-        dependencies.append(int(match.group(1)))
+    # Pattern 2: Find issue references in lists under Dependencies heading
+    # Look for a "Dependencies" section and extract list items from it
+    dep_section_match = re.search(
+        r"##\s*Dependencies.*?\n(.*?)(?=##|\Z)", issue_body, re.IGNORECASE | re.DOTALL
+    )
+    if dep_section_match:
+        dep_section = dep_section_match.group(1)
+        list_pattern = r"^\s*[-*]\s*#(\d+)"
+        for match in re.finditer(list_pattern, dep_section, re.MULTILINE):
+            dependencies.append(int(match.group(1)))
 
     return list(set(dependencies))  # Remove duplicates
 

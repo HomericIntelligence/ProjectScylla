@@ -3,7 +3,7 @@
 Provides:
 - Thread-safe log buffer management
 - Real-time status display with curses
-- Daemon thread pool executor with graceful shutdown
+- Per-thread log routing
 """
 
 import curses
@@ -152,6 +152,9 @@ class CursesUI:
             curses.wrapper(self._curses_main)
         except Exception as e:
             logger.error(f"CursesUI error: {e}")
+        finally:
+            # Always reset running flag so UI can be restarted
+            self.running = False
 
     def _curses_main(self, stdscr: Any) -> None:
         """Run the main curses loop.
@@ -237,7 +240,8 @@ class CursesUI:
 
             # Gather recent logs from all threads
             all_logs: list[str] = []
-            for buffer in self.log_manager.buffers.values():
+            # Take snapshot to avoid RuntimeError if dict changes during iteration
+            for buffer in list(self.log_manager.buffers.values()):
                 all_logs.extend(buffer.get_recent(10))
 
             # Display most recent logs
@@ -257,30 +261,3 @@ class CursesUI:
                 row += 1
 
         self.stdscr.refresh()
-
-
-# Removed DaemonThreadPoolExecutor - it was non-functional since _threads
-# is empty at construction time
-
-
-def create_progress_bar(current: int, total: int, width: int = 40) -> str:
-    """Create a text progress bar.
-
-    Args:
-        current: Current progress value
-        total: Total progress value
-        width: Width of progress bar in characters
-
-    Returns:
-        Progress bar string
-
-    """
-    if total == 0:
-        percentage = 0
-    else:
-        percentage = min(100, int(100 * current / total))
-
-    filled = int(width * current / total) if total > 0 else 0
-    bar = "=" * filled + "-" * (width - filled)
-
-    return f"[{bar}] {percentage}% ({current}/{total})"

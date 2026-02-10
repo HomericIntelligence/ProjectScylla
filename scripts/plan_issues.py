@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import logging
-import signal
 import sys
 from pathlib import Path
 
@@ -83,7 +82,9 @@ Examples:
         "--parallel",
         type=int,
         default=3,
-        help="Number of parallel workers (default: 3)",
+        choices=range(1, 33),
+        metavar="N",
+        help="Number of parallel workers, 1-32 (default: 3)",
     )
 
     parser.add_argument(
@@ -114,15 +115,6 @@ def main() -> int:
     setup_logging(args.verbose)
 
     logger = logging.getLogger(__name__)
-
-    # Set up signal handling for graceful shutdown
-    def signal_handler(signum, frame):
-        """Handle SIGINT/SIGTERM gracefully."""
-        logger.warning("Received interrupt signal, shutting down gracefully...")
-        sys.exit(130)  # Standard exit code for SIGINT
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
 
     logger.info("Starting issue planner")
     logger.info(f"Issues to plan: {args.issues}")

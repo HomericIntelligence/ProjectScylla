@@ -22,11 +22,12 @@ class WorktreeManager:
     Allows parallel issue implementation in isolated worktrees.
     """
 
-    def __init__(self, base_dir: Path | None = None):
+    def __init__(self, base_dir: Path | None = None, base_branch: str | None = None):
         """Initialize worktree manager.
 
         Args:
             base_dir: Base directory for worktrees (default: repo_root/.worktrees)
+            base_branch: Base branch for worktrees (default: auto-detect from origin/HEAD)
 
         """
         self.repo_root = get_repo_root()
@@ -35,10 +36,28 @@ class WorktreeManager:
         self.base_dir = base_dir
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
+        # Auto-detect base branch if not specified
+        if base_branch is None:
+            try:
+                result = run(
+                    ["git", "symbolic-ref", "refs/remotes/origin/HEAD", "--short"],
+                    cwd=self.repo_root,
+                    capture_output=True,
+                )
+                base_branch = result.stdout.strip()
+                logger.debug(f"Auto-detected base branch: {base_branch}")
+            except Exception:
+                # Fallback to origin/main if auto-detection fails
+                base_branch = "origin/main"
+                logger.warning("Could not auto-detect base branch, using origin/main")
+
+        self.base_branch = base_branch
         self.worktrees: dict[int, Path] = {}
         self.lock = threading.Lock()
 
-        logger.debug(f"Initialized WorktreeManager at {self.base_dir}")
+        logger.debug(
+            f"Initialized WorktreeManager at {self.base_dir}, base branch: {self.base_branch}"
+        )
 
     def create_worktree(
         self,
@@ -71,10 +90,28 @@ class WorktreeManager:
             # Remove existing directory if present
             if worktree_path.exists():
                 logger.warning(f"Removing existing worktree directory: {worktree_path}")
-                shutil.rmtree(worktree_path)
+                # Try git worktree remove first to clean up git metadata
+                try:
+                    run(
+                        ["git", "worktree", "remove", "--force", str(worktree_path)],
+                        cwd=self.repo_root,
+                        check=False,
+                    )
+                except Exception as e:
+                    logger.debug(f"git worktree remove failed (expected if not a worktree): {e}")
+
+                # Fallback to direct directory removal
+                if worktree_path.exists():
+                    shutil.rmtree(worktree_path)
+
+                # Prune stale worktree metadata
+                try:
+                    run(["git", "worktree", "prune"], cwd=self.repo_root, check=False)
+                except Exception as e:
+                    logger.debug(f"git worktree prune failed: {e}")
 
             try:
-                # Create worktree with new branch from main
+                # Create worktree with new branch from base branch
                 run(
                     [
                         "git",
@@ -83,7 +120,7 @@ class WorktreeManager:
                         "-b",
                         branch_name,
                         str(worktree_path),
-                        "origin/main",
+                        self.base_branch,
                     ],
                     cwd=self.repo_root,
                 )
@@ -145,6 +182,12 @@ class WorktreeManager:
 
         Args:
             force: Force removal even with uncommitted changes
+
+        Note:
+            Known limitation: Releases lock between iterations to avoid
+            holding it during slow git operations. If concurrent create_worktree
+            is called, new worktrees may be added during cleanup. This is
+            acceptable since cleanup_all is typically called during shutdown.
 
         """
         with self.lock:

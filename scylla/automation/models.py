@@ -8,14 +8,11 @@ Defines data structures for:
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 
 from pydantic import BaseModel, Field
-
-logger = logging.getLogger(__name__)
 
 
 class IssueState(str, Enum):
@@ -46,16 +43,6 @@ class IssueInfo(BaseModel):
         return self.number == other.number
 
 
-class PausedIssue(BaseModel):
-    """Information about a paused issue implementation."""
-
-    issue_number: int
-    worktree_path: str
-    branch_name: str
-    paused_at: datetime
-    reason: str
-
-
 class ImplementationPhase(str, Enum):
     """Phase of issue implementation."""
 
@@ -81,9 +68,6 @@ class ImplementationState(BaseModel):
     completed_at: datetime | None = None
     error: str | None = None
     attempts: int = 0
-    max_attempts: int = 3
-
-    model_config = {"use_enum_values": True}
 
 
 class WorkerResult(BaseModel):
@@ -143,7 +127,23 @@ class DependencyGraph(BaseModel):
             self.edges[issue.number] = []
 
     def add_dependency(self, issue_number: int, depends_on: int) -> None:
-        """Add a dependency edge."""
+        """Add a dependency edge.
+
+        Args:
+            issue_number: Issue that depends on another
+            depends_on: Issue that must be completed first
+
+        Raises:
+            ValueError: If source issue doesn't exist in the graph
+
+        Note:
+            Dependency issue doesn't need to exist yet - it may be added later.
+            This allows building the graph incrementally.
+
+        """
+        if issue_number not in self.issues:
+            raise ValueError(f"Issue #{issue_number} not in graph")
+
         if issue_number not in self.edges:
             self.edges[issue_number] = []
         if depends_on not in self.edges[issue_number]:
