@@ -19,6 +19,7 @@ def test_e2e_pipeline_with_sample_data(sample_runs_df):
     3. Figures can be generated
     4. No exceptions raised during processing
     """
+    from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
     from scylla.analysis.figures.tier_performance import fig04_pass_rate_by_tier
     from scylla.analysis.tables.summary import table01_tier_summary
 
@@ -42,14 +43,15 @@ def test_e2e_pipeline_with_sample_data(sample_runs_df):
         assert "Tier" in table_md
         assert r"\begin{table}" in table_tex or r"\begin{longtable}" in table_tex
 
-        # Generate figure (smoke test)
+        # Generate figures (smoke test - test both CSV-generating and non-CSV figures)
         fig04_pass_rate_by_tier(sample_runs_df, output_dir, render=False)
+        fig08_cost_quality_pareto(sample_runs_df, output_dir, render=False)
 
         # Verify outputs exist
         vl_files = list(output_dir.glob("*.vl.json"))
         csv_files = list(output_dir.glob("*.csv"))
         assert len(vl_files) > 0, "Expected Vega-Lite spec files"
-        assert len(csv_files) > 0, "Expected CSV data files"
+        assert len(csv_files) > 0, "Expected CSV data files from fig08"
 
 
 def test_e2e_empty_dataframe_handling():
