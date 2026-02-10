@@ -5,6 +5,10 @@ workspace preparation, agent execution, judging, and result aggregation.
 
 Python Justification: Required for subprocess execution, parallel processing,
 and filesystem operations.
+
+KNOWN ISSUE: This file is 2269 lines with a 383-line function (_execute_single_run)
+See GitHub Issue #478 - Decompose god class (violates KISS and SOLID principles)
+TODO: Split into agent_runner.py, judge_runner.py, parallel_executor.py modules
 """
 
 from __future__ import annotations

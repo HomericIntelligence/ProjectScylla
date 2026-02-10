@@ -77,8 +77,6 @@ gh pr merge --auto --rebase
 
 ### Core Guidelines
 
-- [Mojo Syntax & Patterns](/.claude/shared/mojo-guidelines.md)
-- [Mojo Anti-Patterns](/.claude/shared/mojo-anti-patterns.md) - Common failure patterns
 - [PR Workflow](/.claude/shared/pr-workflow.md)
 - [GitHub Issue Workflow](/.claude/shared/github-issue-workflow.md)
 - [Common Constraints](/.claude/shared/common-constraints.md)
@@ -191,39 +189,15 @@ Each tier is evaluated against:
 
 ## Language Preference
 
-### Mojo First - For All Implementation
+### Python - Implementation Language
 
-**Default to Mojo** for ALL evaluation and benchmarking implementations:
+**Python 3.10+** is the implementation language for all ProjectScylla code:
 
 - Evaluation harnesses and benchmark runners
 - Metrics calculation and collection
 - Statistical analysis and data processing
-- Performance-critical tensor operations
-- Type-safe metric components
-- SIMD-optimized calculations
-
-**Use Python for Automation** when technical limitations require it:
-
-- Subprocess output capture (Mojo limitation - cannot capture stdout/stderr)
-- Regex-heavy text processing (no Mojo regex support in stdlib)
-- GitHub API interaction via Python libraries (`gh` CLI, REST API)
-- **MUST document justification** when using Python
-
-**Rule of Thumb** (Decision Tree):
-
-1. **Evaluation/benchmarking implementation?** -> Mojo (required)
-1. **Automation needing subprocess output?** -> Python (allowed, document why)
-1. **Automation needing regex?** -> Python (allowed, document why)
-1. **Interface with Python-only libraries?** -> Python (allowed, document why)
-1. **Everything else?** -> Mojo (default)
-
-### Why Mojo for Evaluation
-
-- **Performance**: Faster for numerical computations and metrics
-- **Type safety**: Catch errors at compile time
-- **Memory safety**: Built-in ownership and borrow checking
-- **SIMD optimization**: Parallel operations for large datasets
-- **Consistency**: Same language as ProjectOdyssey ecosystem
+- Agent execution and orchestration
+- Automation scripts and utilities
 
 ### Configuration Files
 
@@ -231,22 +205,16 @@ Each tier is evaluated against:
 - JSON for API schemas and tool definitions
 - Markdown for documentation and reports
 
-## Mojo Development Guidelines
+### Python Development Guidelines
 
-**Current Version**: Mojo 0.26.1
+**Current Version**: Python 3.10+
 
-**Quick Reference**: See [mojo-guidelines.md](/.claude/shared/mojo-guidelines.md) for v0.26.1 syntax
-
-**Critical Patterns**:
-
-- **Constructors**: Use `out self` (not `mut self`)
-- **Mutating methods**: Use `mut self`
-- **Ownership transfer**: Use `^` operator for List/Dict/String
-- **List initialization**: Use literals `[1, 2, 3]` not `List[Int](1, 2, 3)`
-
-**Common Mistakes**: See [mojo-anti-patterns.md](/.claude/shared/mojo-anti-patterns.md) for failure patterns
-
-**Compiler as Truth**: When uncertain, test with `mojo build` - the compiler is authoritative
+**Key Principles**:
+- Use type hints for all function signatures
+- Leverage dataclasses and Pydantic models for structured data
+- Follow PEP 8 style guidelines (enforced by pre-commit hooks)
+- Write comprehensive docstrings for public APIs
+- Use pytest for all testing with parametrized tests where appropriate
 
 ## Claude 4 & Claude Code Optimization
 
@@ -361,27 +329,18 @@ All agents reference these shared files to avoid duplication:
 | `.claude/shared/error-handling.md` | Retry strategy, timeout handling, escalation |
 | `.claude/shared/evaluation-guidelines.md` | Evaluation methodology and best practices |
 | `.claude/shared/metrics-definitions.md` | Complete metrics definitions and formulas |
-| `.claude/shared/mojo-guidelines.md` | Mojo v0.26.1 syntax, parameter conventions |
-| `.claude/shared/mojo-anti-patterns.md` | Common Mojo failure patterns |
 
 ## Environment Setup
 
-This project uses Pixi for environment management with Mojo 0.26.1:
+This project uses Pixi for environment management with Python 3.10+:
 
 ```bash
 # Pixi is already configured - dependencies are in pixi.toml
-# Mojo is the primary language for all implementations
 
-# Run Mojo tests
-pixi run mojo test tests/
+# Run Python tests
+pixi run -e analysis python -m pytest tests/ -v
 
-# Build Mojo package
-pixi run mojo build scylla/
-
-# Format Mojo code
-pixi run mojo format scylla/
-
-# Run pre-commit hooks
+# Run pre-commit hooks (includes black, ruff, mypy)
 pre-commit run --all-files
 ```
 
@@ -433,12 +392,19 @@ ProjectScylla/
 +-- docs/
 |   +-- research.md              # Research methodology
 |   +-- dev/                     # Developer documentation
-+-- scylla/                         # Mojo source code
-|   +-- metrics/                 # Metrics calculation (.mojo)
-|   +-- evaluation/              # Evaluation harnesses (.mojo)
-|   +-- benchmarks/              # Benchmark definitions (.mojo)
-|   +-- analysis/                # Statistical analysis (.mojo)
-+-- tests/                       # Mojo test suite
++-- scylla/                      # Python source code
+|   +-- metrics/                 # Metrics calculation (.py)
+|   +-- executor/                # Execution engine (.py)
+|   +-- e2e/                     # E2E testing framework (.py)
+|   +-- analysis/                # Statistical analysis (.py)
+|   +-- adapters/                # CLI adapters (.py)
+|   +-- judge/                   # LLM judge system (.py)
+|   +-- reporting/               # Report generation (.py)
+|   +-- config/                  # Configuration (.py)
+|   +-- cli/                     # CLI interface (.py)
+|   +-- core/                    # Core types (.py)
+|   +-- discovery/               # Resource discovery (.py)
++-- tests/                       # Python test suite (pytest)
 +-- experiments/                 # Experiment configurations (YAML)
 +-- results/                     # Benchmark results (JSON)
 +-- scripts/                     # Python automation scripts
@@ -565,14 +531,13 @@ gh auth status
 gh auth refresh -h github.com
 ```
 
-### Mojo Compilation Errors
+### Python Type Checking
 
-- Check Mojo version: `mojo --version` (requires 0.26.1+)
-- Review [mojo-anti-patterns.md](/.claude/shared/mojo-anti-patterns.md) for common issues
-- Test with `mojo build` - compiler is authoritative
-- Check ownership patterns (common source of errors)
+- Run mypy: `pre-commit run mypy --all-files`
+- Check Python version: `python3 --version` (requires 3.10+)
+- Review type hints in function signatures
 
-### Script Errors (Python Automation)
+### Script Errors
 
 - Verify Python version: `python3 --version` (requires 3.10+)
 - Check file permissions
