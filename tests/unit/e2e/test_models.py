@@ -7,6 +7,7 @@ from pathlib import Path
 
 from scylla.e2e.models import (
     ExperimentConfig,
+    JudgeResultSummary,
     ResourceManifest,
     RunResult,
     SubTestConfig,
@@ -120,6 +121,64 @@ class TestTierConfig:
         assert len(result["subtests"]) == 2
         # system_prompt_mode is per-subtest, not per-tier
         assert "system_prompt_mode" not in result
+
+
+class TestJudgeResultSummary:
+    """Tests for JudgeResultSummary."""
+
+    def test_to_dict_with_valid_result(self) -> None:
+        """Test that is_valid=True serializes correctly."""
+        summary = JudgeResultSummary(
+            model="claude-sonnet-4-5",
+            score=0.8,
+            passed=True,
+            grade="B",
+            reasoning="Good work",
+            judge_number=1,
+            is_valid=True,
+            criteria_scores={"accuracy": {"score": 0.9, "explanation": "Very accurate"}},
+        )
+
+        result = summary.to_dict()
+
+        assert result["model"] == "claude-sonnet-4-5"
+        assert result["score"] == 0.8
+        assert result["is_valid"] is True
+        assert result["criteria_scores"]["accuracy"]["score"] == 0.9
+
+    def test_to_dict_with_invalid_result(self) -> None:
+        """Test that is_valid=False serializes correctly (heuristic fallback)."""
+        summary = JudgeResultSummary(
+            model="claude-haiku-4-5",
+            score=0.0,
+            passed=False,
+            grade="F",
+            reasoning="Heuristic fallback: agent failed",
+            judge_number=2,
+            is_valid=False,
+            criteria_scores=None,
+        )
+
+        result = summary.to_dict()
+
+        assert result["is_valid"] is False
+        assert result["criteria_scores"] is None
+        assert result["score"] == 0.0
+
+    def test_default_is_valid_true(self) -> None:
+        """Test that is_valid defaults to True for backward compatibility."""
+        summary = JudgeResultSummary(
+            model="claude-opus-4-6",
+            score=0.95,
+            passed=True,
+            grade="A",
+            reasoning="Excellent",
+            judge_number=1,
+        )
+
+        assert summary.is_valid is True
+        result = summary.to_dict()
+        assert result["is_valid"] is True
 
 
 class TestRunResult:

@@ -229,6 +229,8 @@ class JudgeResultSummary:
         grade: Letter grade (S-F)
         reasoning: Judge's reasoning text
         judge_number: Judge number for directory linking (1-indexed)
+        is_valid: Whether the evaluation was successfully completed (False if heuristic fallback)
+        criteria_scores: Individual criterion evaluations with score and explanation
 
     """
 
@@ -238,6 +240,8 @@ class JudgeResultSummary:
     grade: str | None = None
     reasoning: str | None = None
     judge_number: int = 1
+    is_valid: bool = True
+    criteria_scores: dict[str, dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -248,6 +252,8 @@ class JudgeResultSummary:
             "grade": self.grade,
             "reasoning": self.reasoning,
             "judge_number": self.judge_number,
+            "is_valid": self.is_valid,
+            "criteria_scores": self.criteria_scores,
         }
 
 
