@@ -307,24 +307,92 @@ def rejudge_missing_runs(
                     judge_dir = run_dir / "judge"
                     judge_dir.mkdir(exist_ok=True)
 
+                    # Check if saved judge_prompt.md exists (from original run)
+                    saved_judge_prompt_path = run_dir / "judge_prompt.md"
+
                     try:
-                        judge_result = run_llm_judge(
-                            workspace=workspace,
-                            task_prompt=task_prompt,
-                            agent_output=agent_output,
-                            model=judge_model,
-                            judge_dir=judge_dir,
-                            reference_patch_path=(
-                                experiment_dir / "reference.patch"
-                                if (experiment_dir / "reference.patch").exists()
-                                else None
-                            ),
-                            rubric_path=(
-                                experiment_dir / "rubric.yaml"
-                                if (experiment_dir / "rubric.yaml").exists()
-                                else None
-                            ),
-                        )
+                        if saved_judge_prompt_path.exists():
+                            # Reuse the original judge prompt to avoid rebuilding
+                            # from potentially corrupted workspace
+                            logger.info(
+                                f"Re-judging {run_dir} with model {judge_model} "
+                                f"(using saved prompt)"
+                            )
+
+                            judge_prompt = saved_judge_prompt_path.read_text()
+
+                            # Run judge using the saved prompt directly
+                            # (bypass run_llm_judge which would rebuild prompt)
+                            import time
+                            from datetime import datetime, timezone
+
+                            from scylla.e2e.llm_judge import (
+                                _call_claude_judge,
+                                _parse_judge_response,
+                                _save_judge_logs,
+                            )
+                            from scylla.e2e.models import config
+
+                            judge_start = time.time()
+
+                            # Call Claude with saved prompt
+                            stdout, stderr, result = _call_claude_judge(
+                                judge_prompt, judge_model, workspace
+                            )
+                            judge_result = _parse_judge_response(result)
+
+                            # Save logs
+                            _save_judge_logs(
+                                judge_dir,
+                                judge_prompt,
+                                result,
+                                judge_result,
+                                judge_model,
+                                workspace,
+                                raw_stdout=stdout,
+                                raw_stderr=stderr,
+                                language=config.language,
+                            )
+
+                            # Save timing
+                            judge_duration = time.time() - judge_start
+                            timing_file = judge_dir / "timing.json"
+                            with open(timing_file, "w") as f:
+                                json.dump(
+                                    {
+                                        "judge_duration_seconds": judge_duration,
+                                        "measured_at": datetime.now(timezone.utc).isoformat(),
+                                        "rejudge": True,
+                                        "used_saved_prompt": True,
+                                    },
+                                    f,
+                                    indent=2,
+                                )
+
+                        else:
+                            # Fallback: rebuild from workspace (old behavior, but log warning)
+                            logger.warning(
+                                f"Saved judge_prompt.md not found at {saved_judge_prompt_path}, "
+                                f"rebuilding from workspace (may be inaccurate)"
+                            )
+
+                            judge_result = run_llm_judge(
+                                workspace=workspace,
+                                task_prompt=task_prompt,
+                                agent_output=agent_output,
+                                model=judge_model,
+                                judge_dir=judge_dir,
+                                reference_patch_path=(
+                                    experiment_dir / "reference.patch"
+                                    if (experiment_dir / "reference.patch").exists()
+                                    else None
+                                ),
+                                rubric_path=(
+                                    experiment_dir / "rubric.yaml"
+                                    if (experiment_dir / "rubric.yaml").exists()
+                                    else None
+                                ),
+                            )
 
                         # Update run result with new judge scores
                         run.judge_score = judge_result.score
