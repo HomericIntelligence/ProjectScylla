@@ -129,6 +129,13 @@ See [agents/hierarchy.md](agents/hierarchy.md) for the complete agent hierarchy 
 1. Modularity - Develop independent modules through well defined interfaces
 1. POLA - *P*rinciple *O*f *L*east *A*stonishment - Create intuitive and predictable interfaces
 
+Relevant links:
+
+- [Core Principles of Software Development](<https://softjourn.com/insights/core-principles-of-software-development>)
+- [7 Common Programming Principles](<https://www.geeksforgeeks.org/blogs/7-common-programming-principles-that-every-developer-must-follow/>)
+- [Software Development Principles](<https://coderower.com/blogs/software-development-principles-software-engineering>)
+- [Clean Coding Principles](<https://www.pullchecklist.com/posts/clean-coding-principles>)
+
 ### Documentation Rules
 
 - **Issue-specific outputs**: Post as comments on the GitHub issue using `gh issue comment <number>`
