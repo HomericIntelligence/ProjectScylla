@@ -7,6 +7,8 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scylla.reporting.result import (
     ExecutionInfo,
     GradingInfo,
@@ -81,7 +83,7 @@ class TestExecutionInfo:
             exit_code=0,
         )
         assert info.status == "completed"
-        assert info.duration_seconds == 45.0
+        assert info.duration_seconds == pytest.approx(45.0)
         assert info.exit_code == 0
 
     def test_failed_status(self) -> None:

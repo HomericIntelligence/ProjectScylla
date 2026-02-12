@@ -273,9 +273,9 @@ def test_dynamic_judge_discovery(tmp_path):
 
     # Verify scores match
     judge_scores = {judge.judge_number: judge.score for judge in run_data.judges}
-    assert abs(judge_scores[1] - 0.75) < 0.01
-    assert abs(judge_scores[3] - 0.85) < 0.01
-    assert abs(judge_scores[5] - 0.95) < 0.01
+    assert judge_scores[1] == pytest.approx(0.75, abs=0.01)
+    assert judge_scores[3] == pytest.approx(0.85, abs=0.01)
+    assert judge_scores[5] == pytest.approx(0.95, abs=0.01)
 
 
 def test_load_run_with_missing_fields(tmp_path):
@@ -399,7 +399,7 @@ def test_load_judgment_with_criteria(tmp_path):
     judge_eval = load_judgment(judgment_path, judge_number=1)
 
     # Verify top-level fields
-    assert judge_eval.score == 0.85
+    assert judge_eval.score == pytest.approx(0.85)
     assert judge_eval.passed is True
     assert judge_eval.grade == "A"
     # Note: load_judgment returns raw model ID, not display name
@@ -413,15 +413,15 @@ def test_load_judgment_with_criteria(tmp_path):
 
     # Verify functional criterion
     func_crit = judge_eval.criteria["functional"]
-    assert func_crit.achieved == 8.5
-    assert func_crit.max_points == 10.0
-    assert func_crit.score == 0.85
+    assert func_crit.achieved == pytest.approx(8.5)
+    assert func_crit.max_points == pytest.approx(10.0)
+    assert func_crit.score == pytest.approx(0.85)
     assert len(func_crit.items) == 2
 
     # Verify items
     assert "req1" in func_crit.items
-    assert func_crit.items["req1"].achieved == 5
-    assert func_crit.items["req1"].max_points == 5
+    assert func_crit.items["req1"].achieved == pytest.approx(5)
+    assert func_crit.items["req1"].max_points == pytest.approx(5)
 
 
 def test_load_judgment_with_none_criteria(tmp_path):
@@ -446,7 +446,7 @@ def test_load_judgment_with_none_criteria(tmp_path):
     # Load judgment - should handle None gracefully
     judge_eval = load_judgment(judgment_path, judge_number=2)
 
-    assert judge_eval.score == 0.5
+    assert judge_eval.score == pytest.approx(0.5)
     assert len(judge_eval.criteria) == 0  # Should be empty dict
 
 
@@ -798,8 +798,8 @@ def test_load_all_experiments_functionality(tmp_path):
     assert len(experiments["experiment2"]) == 1
 
     # Verify run data
-    assert experiments["experiment1"][0].score == 0.8
-    assert experiments["experiment2"][0].score == 0.6
+    assert experiments["experiment1"][0].score == pytest.approx(0.8)
+    assert experiments["experiment2"][0].score == pytest.approx(0.6)
 
 
 def test_load_all_experiments_excludes_experiments(tmp_path):
@@ -874,9 +874,9 @@ def test_load_rubric_weights_from_rubric_yaml(tmp_path):
 
     # Verify weights loaded
     assert weights is not None
-    assert weights["functional"] == 10.0
-    assert weights["code_quality"] == 5.0
-    assert weights["proportionality"] == 3.0
+    assert weights["functional"] == pytest.approx(10.0)
+    assert weights["code_quality"] == pytest.approx(5.0)
+    assert weights["proportionality"] == pytest.approx(3.0)
 
 
 def test_load_rubric_weights_returns_none_if_missing(tmp_path):
@@ -923,5 +923,5 @@ def test_load_rubric_weights_excludes_experiments(tmp_path):
     # Should load from experiment2 (first non-excluded)
     assert weights is not None
     assert "code_quality" in weights
-    assert weights["code_quality"] == 5.0
+    assert weights["code_quality"] == pytest.approx(5.0)
     assert "functional" not in weights

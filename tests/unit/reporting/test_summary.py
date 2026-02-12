@@ -7,6 +7,8 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scylla.reporting.summary import (
     EvaluationReport,
     ModelStatistics,
@@ -70,17 +72,17 @@ class EvaluationReportStatistics:
             max=0.9,
             std_dev=0.1,
         )
-        assert stats.median == 0.8
-        assert stats.mean == 0.75
-        assert stats.std_dev == 0.1
+        assert stats.median == pytest.approx(0.8)
+        assert stats.mean == pytest.approx(0.75)
+        assert stats.std_dev == pytest.approx(0.1)
 
     def test_to_dict(self) -> None:
         """Test To dict."""
         stats = make_statistics()
         data = stats.to_dict()
 
-        assert data["median"] == 0.8
-        assert data["mean"] == 0.75
+        assert data["median"] == pytest.approx(0.8)
+        assert data["mean"] == pytest.approx(0.75)
         assert "min" in data
         assert "max" in data
 
@@ -94,7 +96,7 @@ class EvaluationReportStatistics:
             max=0.0,
             std_dev=0.0,
         )
-        assert stats.median == 0.0
+        assert stats.median == pytest.approx(0.0)
 
 
 class TestModelStatistics:
@@ -124,7 +126,7 @@ class TestModelStatistics:
 
         # Nested statistics should be dicts
         assert isinstance(data["pass_rate"], dict)
-        assert data["pass_rate"]["median"] == 0.9
+        assert data["pass_rate"]["median"] == pytest.approx(0.9)
 
 
 class TestRankings:
@@ -448,9 +450,9 @@ class TestCreateStatistics:
             max_val=0.9,
             std_dev=0.1,
         )
-        assert stats.median == 0.8
-        assert stats.min == 0.6
-        assert stats.max == 0.9
+        assert stats.median == pytest.approx(0.8)
+        assert stats.min == pytest.approx(0.6)
+        assert stats.max == pytest.approx(0.9)
 
 
 class TestCreateModelStatistics:
