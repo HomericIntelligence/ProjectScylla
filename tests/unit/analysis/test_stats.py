@@ -538,8 +538,8 @@ def test_holm_bonferroni_monotonicity():
         )
 
     # Specific values for this case
-    assert corrected[0] == 0.02  # 0.01 * 2
-    assert corrected[1] == 0.02  # Enforced to match corrected[0]
+    assert corrected[0] == pytest.approx(0.02)  # 0.01 * 2
+    assert corrected[1] == pytest.approx(0.02)  # Enforced to match corrected[0]
 
     # General test with more p-values
     p_values_general = [0.001, 0.01, 0.011, 0.05, 0.06]
