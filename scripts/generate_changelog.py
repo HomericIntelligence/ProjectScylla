@@ -20,9 +20,13 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-# Add scripts directory to path for common utilities
-sys.path.insert(0, str(Path(__file__).parent))
-from common import get_repo_root
+# Enable importing from repository root and scripts directory
+_SCRIPT_DIR = Path(__file__).parent
+_REPO_ROOT = _SCRIPT_DIR.parent
+sys.path.insert(0, str(_REPO_ROOT))
+sys.path.insert(0, str(_SCRIPT_DIR))
+
+from common import get_repo_root  # noqa: E402
 
 
 def run_git_command(args: list[str]) -> str:

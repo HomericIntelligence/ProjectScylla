@@ -28,6 +28,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# Enable importing from repository root
+_SCRIPT_DIR = Path(__file__).parent
+_REPO_ROOT = _SCRIPT_DIR.parent
+sys.path.insert(0, str(_REPO_ROOT))
+
 
 class ConfigLinter:
     """Lints YAML configuration files."""
