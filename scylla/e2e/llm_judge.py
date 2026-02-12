@@ -534,7 +534,7 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
     return BuildPipelineResult(**results)
 
 
-def _run_build_pipeline(workspace: Path, language: str = "mojo") -> BuildPipelineResult:
+def _run_build_pipeline(workspace: Path, language: str = "python") -> BuildPipelineResult:
     """Run build/lint pipeline and capture results.
 
     Routes to language-specific pipeline based on language parameter.
@@ -772,7 +772,7 @@ def run_llm_judge(
     include_patchfile: bool = True,
     run_build_pipeline: bool = True,
     judge_run_number: int = 1,
-    language: str = "mojo",
+    language: str = "python",
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
 
@@ -1069,7 +1069,7 @@ def _parse_judge_response(response: str) -> JudgeResult:
     )
 
 
-def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "mojo") -> None:
+def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "python") -> None:
     """Save all build/lint/test commands as reproducible bash scripts.
 
     Creates individual scripts for each tool in run_dir/commands/ directory,
@@ -1333,7 +1333,7 @@ echo "=== All checks completed ==="
 
 
 def _save_pipeline_outputs(
-    run_dir: Path, result: BuildPipelineResult, language: str = "mojo"
+    run_dir: Path, result: BuildPipelineResult, language: str = "python"
 ) -> None:
     """Save outputs from each pipeline step for debugging.
 
@@ -1368,7 +1368,7 @@ def _save_judge_logs(
     workspace: Path | None = None,
     raw_stdout: str = "",
     raw_stderr: str = "",
-    language: str = "mojo",
+    language: str = "python",
 ) -> None:
     """Save judge evaluation logs and generate replay script.
 
