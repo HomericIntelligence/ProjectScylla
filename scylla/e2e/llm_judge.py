@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from scylla.e2e.filters import is_test_config_file
+from scylla.judge import extract_json_from_llm_response
 from scylla.judge.prompts import JUDGE_SYSTEM_PROMPT_FILE, build_task_prompt
 from scylla.metrics.grading import assign_letter_grade
 
@@ -1035,53 +1036,39 @@ def _parse_judge_response(response: str) -> JudgeResult:
         JudgeResult parsed from response.
 
     """
-    # Try to extract JSON from response
+    # Extract JSON from response using shared utility
     response = response.strip()
+    data = extract_json_from_llm_response(response)
 
-    # Handle markdown code blocks
-    if "```json" in response:
-        start = response.find("```json") + 7
-        end = response.find("```", start)
-        response = response[start:end].strip()
-    elif "```" in response:
-        start = response.find("```") + 3
-        end = response.find("```", start)
-        response = response[start:end].strip()
+    if data is None:
+        raise ValueError(f"Judge response does not contain valid JSON.\nResponse: {response[:500]}")
 
-    try:
-        data = json.loads(response)
-
-        if "score" not in data:
-            raise ValueError(
-                f"Judge response missing required 'score' field. "
-                f"Keys found: {list(data.keys())}\nResponse: {response[:500]}"
-            )
-
-        score = float(data.get("score", 0.0))
-        passed = bool(data.get("passed", False))
-        reasoning = str(data.get("reasoning", "No reasoning provided"))
-
-        # Support both old and new format
-        # New format: "categories" with structured breakdown
-        # Old format: "criteria_scores" with flat structure
-        criteria_scores = data.get("categories") or data.get("criteria_scores")
-
-        # Validate score range
-        score = max(0.0, min(1.0, score))
-
-        return JudgeResult(
-            score=score,
-            passed=passed,
-            grade=_score_to_grade(score),
-            reasoning=reasoning,
-            criteria_scores=criteria_scores,
-            raw_response=response,
+    if "score" not in data:
+        raise ValueError(
+            f"Judge response missing required 'score' field. "
+            f"Keys found: {list(data.keys())}\nResponse: {response[:500]}"
         )
 
-    except json.JSONDecodeError as e:
-        raise ValueError(
-            f"Judge response is not valid JSON: {e}\nResponse: {response[:500]}"
-        ) from e
+    score = float(data.get("score", 0.0))
+    passed = bool(data.get("passed", False))
+    reasoning = str(data.get("reasoning", "No reasoning provided"))
+
+    # Support both old and new format
+    # New format: "categories" with structured breakdown
+    # Old format: "criteria_scores" with flat structure
+    criteria_scores = data.get("categories") or data.get("criteria_scores")
+
+    # Validate score range
+    score = max(0.0, min(1.0, score))
+
+    return JudgeResult(
+        score=score,
+        passed=passed,
+        grade=_score_to_grade(score),
+        reasoning=reasoning,
+        criteria_scores=criteria_scores,
+        raw_response=response,
+    )
 
 
 def _save_pipeline_commands(run_dir: Path, workspace: Path, language: str = "mojo") -> None:
