@@ -7,9 +7,6 @@ Metrics defined:
 - Fine-Grained Progress Rate (R_Prog): Incremental advancement tracking
 - Strategic Drift: Goal coherence over multi-step tasks
 - Change Fail Percentage (CFP): Stability metric for agent changes
-
-Python Justification: Required for statistical calculations and data structures.
-
 References:
 - docs/research.md: Sections 4.1, 4.2, 4.3
 - docs/summary.md: Section IV (Experimental Protocol)

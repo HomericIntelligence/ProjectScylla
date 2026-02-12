@@ -2,8 +2,6 @@
 
 This module provides the EvalRunner class that orchestrates test execution
 across multiple tiers, models, and runs in Docker containers.
-
-Python Justification: Required for subprocess output capture, threading for
 parallel execution, and file I/O operations.
 """
 

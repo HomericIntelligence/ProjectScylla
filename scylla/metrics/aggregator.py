@@ -2,8 +2,6 @@
 
 This module provides aggregation of multiple runs into statistical
 summaries per tier with cross-tier analysis.
-
-Python Justification: Required for statistical aggregation and data structures.
 """
 
 from __future__ import annotations

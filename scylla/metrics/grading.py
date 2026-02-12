@@ -2,8 +2,6 @@
 
 This module provides grading functions for calculating pass rate,
 implementation rate, cost of pass, and composite scores.
-
-Python Justification: Required for grade calculation with edge case handling.
 """
 
 from __future__ import annotations

@@ -4,8 +4,6 @@ Generates figures for Impl-Rate metric analysis:
 - Fig 25: Impl-Rate by tier (bar chart with CIs)
 - Fig 26: Impl-Rate vs Pass-Rate scatter
 - Fig 27: Impl-Rate distribution by tier
-
-Python Justification: Uses altair for Vega-Lite visualization.
 """
 
 from __future__ import annotations

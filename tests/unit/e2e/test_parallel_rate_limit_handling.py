@@ -5,8 +5,6 @@ These tests validate that:
 2. All sub-tests get paused when any worker hits a rate limit
 3. The RateLimitCoordinator properly coordinates pause/resume behavior
 4. Consistent exception handling between single-subtest and parallel execution paths
-
-Python Justification: Tests require mocking subprocess execution, parallel processing,
 and rate limit detection to validate coordination behavior.
 """
 

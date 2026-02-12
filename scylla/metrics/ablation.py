@@ -4,8 +4,6 @@ This module provides metrics for measuring the isolated contribution
 of individual components to overall system performance, following
 the ablation study methodology described in the research documentation.
 
-Python Justification: Required for statistical calculations and data structures.
-
 References:
 - docs/research.md: Section 3.2 (Ablation Study Blueprint)
 - .claude/shared/metrics-definitions.md: Ablation Score definition

@@ -2,8 +2,6 @@
 
 Provides confidence intervals, significance tests, effect sizes,
 and inter-rater reliability calculations.
-
-Python Justification: scipy is a Python-only scientific computing library.
 """
 
 from __future__ import annotations

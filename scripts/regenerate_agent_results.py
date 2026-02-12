@@ -11,8 +11,6 @@ Related Scripts:
 
 Usage:
     pixi run python scripts/regenerate_agent_results.py /path/to/experiment/
-
-Python Justification: File I/O, JSON parsing, and data extraction from logs.
 """
 
 import argparse

@@ -2,8 +2,6 @@
 """Export experiment data to CSV files.
 
 Exports runs, judges, criteria, and subtests DataFrames to CSV for external use.
-
-Python Justification: Data export using pandas DataFrame.to_csv().
 """
 
 from __future__ import annotations

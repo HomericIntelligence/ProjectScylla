@@ -1,7 +1,5 @@
 """Hierarchical report generation for E2E experiments.
 
-Python Justification: Required for file I/O and string formatting.
-
 This module generates detailed reports at every level of the experiment:
 - Run level: Individual run results
 - Subtest level: Aggregated across runs

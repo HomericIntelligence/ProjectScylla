@@ -2,9 +2,6 @@
 
 This module provides an adapter for running the OpenAI Codex CLI
 within the Scylla evaluation framework.
-
-Python Justification: Required for subprocess execution and output capture.
-
 KNOWN ISSUE: This adapter shares ~80% code with opencode.py and cline.py
 See GitHub Issue #479 - Consolidate copy-paste CLI adapters (DRY violation)
 TODO: Extract shared logic into BaseCliAdapter to eliminate duplication

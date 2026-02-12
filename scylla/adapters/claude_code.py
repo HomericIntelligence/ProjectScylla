@@ -2,8 +2,6 @@
 
 This module provides an adapter for running the Claude Code CLI
 within the Scylla evaluation framework.
-
-Python Justification: Required for subprocess execution and output capture.
 """
 
 from __future__ import annotations

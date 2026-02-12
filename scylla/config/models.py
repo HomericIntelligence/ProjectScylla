@@ -2,8 +2,6 @@
 
 This module defines the configuration schema for test cases, rubrics,
 tier configurations, and model configurations used by the evaluation framework.
-
-Python Justification: Required for YAML parsing (no Mojo stdlib support)
 and Pydantic validation capabilities.
 """
 

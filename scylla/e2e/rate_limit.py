@@ -2,8 +2,6 @@
 
 This module provides rate limit detection from both agent (Claude Code subprocess)
 and judge (Opus API) responses, along with wait/retry logic.
-
-Python Justification: Required for JSON parsing, regex patterns, and subprocess interaction.
 """
 
 from __future__ import annotations

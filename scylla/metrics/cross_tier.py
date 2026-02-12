@@ -2,8 +2,6 @@
 
 This module provides statistical analysis for comparing results across
 evaluation tiers to measure prompt sensitivity and tier transition value.
-
-Python Justification: Required for statistical analysis and complex data structures.
 """
 
 from __future__ import annotations

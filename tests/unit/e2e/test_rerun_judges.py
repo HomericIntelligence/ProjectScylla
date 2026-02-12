@@ -1,7 +1,4 @@
-"""Tests for judge rerun functionality.
-
-Python Justification: Testing Python judge rerun module.
-"""
+"""Tests for judge rerun functionality."""
 
 import json
 from pathlib import Path

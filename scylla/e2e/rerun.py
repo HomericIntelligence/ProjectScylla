@@ -7,8 +7,6 @@ agent re-execution. It handles multiple categories:
 3. Agent failed - Agent ran but failed (stderr, no output.txt)
 4. Agent partial - Agent started but incomplete (some files exist, incomplete execution)
 5. Never started - Run directory doesn't exist at all
-
-Python Justification: Required for subprocess execution, filesystem traversal,
 and integration with existing Python-based evaluation infrastructure.
 """
 

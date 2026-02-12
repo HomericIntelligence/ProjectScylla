@@ -3,8 +3,6 @@
 This module evaluates agent-created cleanup scripts as part of the
 quality scoring system. Tests require agents to create cleanup scripts
 that return the environment to a clean state.
-
-Python Justification: Required for subprocess execution and file system operations.
 """
 
 from __future__ import annotations

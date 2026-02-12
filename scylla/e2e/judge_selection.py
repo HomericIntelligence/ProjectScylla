@@ -3,8 +3,6 @@
 This module implements the judge selection algorithm that determines
 the best-performing sub-test within a tier, including tie-breaking
 with an alternate LLM.
-
-Python Justification: Required for LLM API calls and statistical analysis.
 """
 
 from __future__ import annotations

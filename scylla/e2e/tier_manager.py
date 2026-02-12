@@ -2,8 +2,6 @@
 
 This module handles loading tier configurations, managing sub-tests,
 and implementing the copy+extend inheritance pattern between tiers.
-
-Python Justification: Required for filesystem operations and YAML parsing.
 """
 
 from __future__ import annotations

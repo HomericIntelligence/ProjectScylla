@@ -7,8 +7,6 @@ Key insight from research: T3 (Tooling) requires loading JSON schemas which
 can consume 50k+ tokens upfront, while T2 (Skills) uses prompt-based
 instructions that are much more token-efficient.
 
-Python Justification: Required for data aggregation and cost calculations.
-
 References:
 - docs/research.md: Section 2.2 (Token Efficiency Chasm)
 - docs/summary.md: Section III.A (Token Efficiency Chasm)

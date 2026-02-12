@@ -3,8 +3,6 @@
 This module provides Docker container orchestration for running AI agents
 in isolated, reproducible environments with complete Claude Code configuration
 isolation.
-
-Python Justification: Required for Docker SDK interaction and subprocess output
 capture (Mojo stdlib limitation - cannot capture stdout/stderr from subprocesses).
 
 Design Decisions:

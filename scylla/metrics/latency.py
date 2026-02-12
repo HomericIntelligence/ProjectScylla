@@ -3,8 +3,6 @@
 This module provides detailed latency tracking including Time-to-First-Token
 (TTFT) and component-level timing breakdowns.
 
-Python Justification: Required for time calculations and data structures.
-
 References:
 - docs/research.md: Section 4.1 (Latency metric)
 - .claude/shared/metrics-definitions.md: Latency components

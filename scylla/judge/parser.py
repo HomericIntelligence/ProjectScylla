@@ -2,8 +2,6 @@
 
 This module provides parsing and serialization of judgment data,
 including writing judgment.json to disk.
-
-Python Justification: Required for JSON parsing and file I/O.
 """
 
 from __future__ import annotations

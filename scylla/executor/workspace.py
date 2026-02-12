@@ -2,8 +2,6 @@
 
 This module handles git repository cloning, workspace directory management,
 and cleanup operations to create isolated test environments.
-
-Python Justification: Requires subprocess output capture for git commands
 (Mojo limitation - cannot capture stdout/stderr).
 """
 

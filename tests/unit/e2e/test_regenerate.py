@@ -1,7 +1,4 @@
-"""Tests for experiment regeneration functionality.
-
-Python Justification: Testing Python regeneration module.
-"""
+"""Tests for experiment regeneration functionality."""
 
 import json
 from pathlib import Path

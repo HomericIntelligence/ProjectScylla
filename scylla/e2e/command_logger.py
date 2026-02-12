@@ -3,8 +3,6 @@
 This module provides command logging functionality that captures all
 executed commands with their context, enabling full reproducibility
 of test runs.
-
-Python Justification: Required for subprocess execution and shell script generation.
 """
 
 from __future__ import annotations

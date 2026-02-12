@@ -2,8 +2,6 @@
 
 Loads experiment data from the fullruns/ directory hierarchy and converts
 to structured dataclasses for analysis.
-
-Python Justification: Required for file I/O and JSON parsing with complex
 data structures. Uses existing e2e.models data structures to avoid duplication.
 """
 

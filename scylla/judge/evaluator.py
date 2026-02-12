@@ -2,8 +2,6 @@
 
 This module provides the JudgeEvaluator class that runs evaluations
 with consensus-based scoring and retry logic for disagreement.
-
-Python Justification: Required for subprocess orchestration and JSON parsing.
 """
 
 from __future__ import annotations

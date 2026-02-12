@@ -1,8 +1,6 @@
 """Judge prompt templates for evaluation.
 
 This module provides prompt templates for the judge system.
-
-Python Justification: Required for string templating and Pydantic validation.
 """
 
 from __future__ import annotations

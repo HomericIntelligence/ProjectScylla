@@ -2,8 +2,6 @@
 
 Generates detailed tables (Table 3, 7-11) for judge agreement, subtest details,
 summary statistics, experiment configuration, and normality tests.
-
-Python Justification: Uses pandas for table formatting and data manipulation.
 """
 
 from __future__ import annotations

@@ -1,7 +1,5 @@
 """Workspace manager for E2E experiments using git worktrees.
 
-Python Justification: Required for subprocess orchestration and git operations.
-
 This module provides efficient workspace management by cloning a repository once
 and using git worktrees for each test run, reducing storage and network overhead.
 """

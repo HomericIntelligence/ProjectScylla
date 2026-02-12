@@ -35,8 +35,6 @@ Examples:
         ~/fullruns/2026-01-29T12-00-00-experiment/ \
         --rejudge --verbose
 
-Python Justification: Command-line tool for result regeneration.
-
 """
 
 import argparse

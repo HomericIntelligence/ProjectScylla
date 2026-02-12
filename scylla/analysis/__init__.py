@@ -2,8 +2,6 @@
 
 This module provides data loading, statistical analysis, figure generation,
 and table generation for the ProjectScylla experiment results.
-
-Python Justification: Required for scientific computing libraries (pandas,
 numpy, scipy, matplotlib, altair) which have no Mojo equivalents.
 """
 
