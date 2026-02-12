@@ -52,34 +52,49 @@ Implements metric calculations, collects evaluation data, and ensures measuremen
 
 ### Metrics Implementation Pattern
 
-```mojo
+```python
 # Standard metric implementation pattern
-fn calculate_metric(data: List[Result]) -> MetricResult:
-    """
-    Calculate metric from evaluation results.
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass
+class MetricResult:
+    """Result of metric calculation with confidence interval."""
+
+    value: float
+    ci_lower: float
+    ci_upper: float
+    n: int
+
+
+def calculate_metric(data: list[Result]) -> MetricResult:
+    """Calculate metric from evaluation results.
 
     Args:
         data: List of evaluation results
 
     Returns:
         MetricResult with value, confidence interval, sample size
+
     """
     # Validate input - return zeros for empty data
-    var n = len(data)
+    n = len(data)
     if n == 0:
         return MetricResult(0.0, 0.0, 0.0, 0)
 
     # Calculate point estimate
-    var value = _calculate_value(data)
+    value = _calculate_value(data)
 
     # Calculate confidence interval
-    var ci = _calculate_confidence_interval(data, alpha=0.05)
+    ci_lower, ci_upper = _calculate_confidence_interval(data, alpha=0.05)
 
     return MetricResult(
         value=value,
-        ci_lower=ci.get[0, Float64](),
-        ci_upper=ci.get[1, Float64](),
-        n=n
+        ci_lower=ci_lower,
+        ci_upper=ci_upper,
+        n=n,
     )
 ```
 
@@ -123,32 +138,51 @@ Metrics Specialist:
 
 ### Example 3: Collect Token Usage
 
-```mojo
-@fieldwise_init
-struct TokenUsage(Copyable, Movable):
+```python
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass
+class TokenUsage:
     """Token usage from API response."""
-    var input_tokens: Int
-    var output_tokens: Int
-    var total_tokens: Int
-    var cost: Float64
+
+    input_tokens: int
+    output_tokens: int
+    total_tokens: int
+    cost: float
 
 
-fn collect_token_usage(
-    prompt_tokens: Int,
-    completion_tokens: Int,
-    cost_per_1k_input: Float64,
-    cost_per_1k_output: Float64
+def collect_token_usage(
+    prompt_tokens: int,
+    completion_tokens: int,
+    cost_per_1k_input: float,
+    cost_per_1k_output: float,
 ) -> TokenUsage:
-    """Collect and calculate token usage."""
-    var total = prompt_tokens + completion_tokens
-    var cost = (Float64(prompt_tokens) / 1000.0 * cost_per_1k_input +
-                Float64(completion_tokens) / 1000.0 * cost_per_1k_output)
+    """Collect and calculate token usage.
+
+    Args:
+        prompt_tokens: Number of input tokens
+        completion_tokens: Number of output tokens
+        cost_per_1k_input: Cost per 1K input tokens
+        cost_per_1k_output: Cost per 1K output tokens
+
+    Returns:
+        TokenUsage with counts and calculated cost
+
+    """
+    total = prompt_tokens + completion_tokens
+    cost = (
+        prompt_tokens / 1000.0 * cost_per_1k_input
+        + completion_tokens / 1000.0 * cost_per_1k_output
+    )
 
     return TokenUsage(
         input_tokens=prompt_tokens,
         output_tokens=completion_tokens,
         total_tokens=total,
-        cost=cost
+        cost=cost,
     )
 ```
 
@@ -170,8 +204,7 @@ fn collect_token_usage(
 
 ## References
 
-- [Mojo Guidelines](/.claude/shared/mojo-guidelines.md)
-- [Mojo Anti-Patterns](/.claude/shared/mojo-anti-patterns.md)
 - [Metrics Definitions](/.claude/shared/metrics-definitions.md)
 - [Evaluation Guidelines](/.claude/shared/evaluation-guidelines.md)
 - [Common Constraints](/.claude/shared/common-constraints.md)
+- [Error Handling](/.claude/shared/error-handling.md)
