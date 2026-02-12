@@ -10,11 +10,12 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from scylla.judge.utils import extract_json_from_llm_response
 
 logger = logging.getLogger(__name__)
 
@@ -274,38 +275,7 @@ class JudgmentParser:
             Parsed JSON dict, or None if not found.
 
         """
-        # Try to find JSON in code blocks first
-        json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", output)
-        if json_block:
-            try:
-                return json.loads(json_block.group(1))
-            except json.JSONDecodeError:
-                pass
-
-        # Try to find raw JSON object
-        start = output.find("{")
-        if start == -1:
-            return None
-
-        # Find matching closing brace
-        depth = 0
-        end = start
-        for i, char in enumerate(output[start:], start):
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth == 0:
-                    end = i + 1
-                    break
-
-        if depth != 0:
-            return None
-
-        try:
-            return json.loads(output[start:end])
-        except json.JSONDecodeError:
-            return None
+        return extract_json_from_llm_response(output)
 
     def _build_judgment(
         self,

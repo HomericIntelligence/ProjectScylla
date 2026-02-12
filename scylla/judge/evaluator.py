@@ -8,7 +8,6 @@ Python Justification: Required for subprocess orchestration and JSON parsing.
 
 from __future__ import annotations
 
-import json
 import logging
 import statistics
 from dataclasses import dataclass, field
@@ -17,6 +16,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
+from scylla.judge.utils import extract_json_from_llm_response
 from scylla.metrics.grading import assign_letter_grade
 
 logger = logging.getLogger(__name__)
@@ -481,42 +481,7 @@ class JudgeEvaluator:
             Parsed JSON dict, or None if not found.
 
         """
-        # Try to find JSON block in output
-        import re
-
-        # Look for JSON in code blocks first
-        json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", output)
-        if json_block:
-            try:
-                return json.loads(json_block.group(1))
-            except json.JSONDecodeError:
-                pass
-
-        # Try to find raw JSON object
-        # Find the outermost { } pair
-        start = output.find("{")
-        if start == -1:
-            return None
-
-        # Find matching closing brace
-        depth = 0
-        end = start
-        for i, char in enumerate(output[start:], start):
-            if char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth == 0:
-                    end = i + 1
-                    break
-
-        if depth != 0:
-            return None
-
-        try:
-            return json.loads(output[start:end])
-        except json.JSONDecodeError:
-            return None
+        return extract_json_from_llm_response(output)
 
     def _judgment_from_dict(
         self,
