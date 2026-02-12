@@ -1,5 +1,7 @@
 """Unit tests for analysis configuration."""
 
+import pytest
+
 from scylla.analysis.config import ALPHA, AnalysisConfig, config
 
 
@@ -12,15 +14,15 @@ def test_config_singleton():
 
 def test_config_alpha():
     """Test alpha parameter."""
-    assert config.alpha == 0.05
-    assert ALPHA == 0.05
+    assert config.alpha == pytest.approx(0.05)
+    assert ALPHA == pytest.approx(0.05)
 
 
 def test_config_bootstrap_params():
     """Test bootstrap parameters."""
     assert config.bootstrap_resamples == 10000
     assert config.bootstrap_random_state == 42
-    assert config.bootstrap_confidence == 0.95
+    assert config.bootstrap_confidence == pytest.approx(0.95)
 
 
 def test_config_min_samples():
@@ -33,14 +35,14 @@ def test_config_min_samples():
 
 def test_config_figure_params():
     """Test figure parameters."""
-    assert config.png_dpi_scale == 3.0  # 300 DPI / 100
+    assert config.png_dpi_scale == pytest.approx(3.0)  # 300 DPI / 100
     assert config.figure_width == 400
     assert config.figure_height == 300
 
 
 def test_config_get_nested():
     """Test nested key access."""
-    assert config.get("statistical", "alpha") == 0.05
+    assert config.get("statistical", "alpha") == pytest.approx(0.05)
     assert config.get("figures", "dpi", "png") == 300
     assert config.get("nonexistent", "key", default="default") == "default"
 

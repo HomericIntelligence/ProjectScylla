@@ -7,6 +7,8 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scylla.reporting.scorecard import (
     EvalResult,
     ModelScorecard,
@@ -60,7 +62,7 @@ class TestEvalResult:
 
         assert data["runs_completed"] == 10
         assert data["grade"] == "B"
-        assert data["median_pass_rate"] == 0.9
+        assert data["median_pass_rate"] == pytest.approx(0.9)
         assert "median_cost_usd" in data
 
 
@@ -90,6 +92,8 @@ class TestOverallStats:
 
         assert data["tests_completed"] == 5
         assert data["average_grade"] == "B+"
+        assert data["total_cost_usd"] == pytest.approx(25.0)
+        assert data["total_runs"] == 50
 
 
 class TestModelScorecard:
@@ -168,23 +172,23 @@ class TestGradeConversion:
 
     def test_grade_to_points(self) -> None:
         """Test Grade to points."""
-        assert _grade_to_points("A") == 4.0
-        assert _grade_to_points("B") == 3.0
-        assert _grade_to_points("C") == 2.0
-        assert _grade_to_points("D") == 1.0
-        assert _grade_to_points("F") == 0.0
+        assert _grade_to_points("A") == pytest.approx(4.0)
+        assert _grade_to_points("B") == pytest.approx(3.0)
+        assert _grade_to_points("C") == pytest.approx(2.0)
+        assert _grade_to_points("D") == pytest.approx(1.0)
+        assert _grade_to_points("F") == pytest.approx(0.0)
 
     def test_grade_to_points_with_modifiers(self) -> None:
         """Test Grade to points with modifiers."""
-        assert _grade_to_points("A+") == 4.3
-        assert _grade_to_points("A-") == 3.7
-        assert _grade_to_points("B+") == 3.3
-        assert _grade_to_points("B-") == 2.7
+        assert _grade_to_points("A+") == pytest.approx(4.3)
+        assert _grade_to_points("A-") == pytest.approx(3.7)
+        assert _grade_to_points("B+") == pytest.approx(3.3)
+        assert _grade_to_points("B-") == pytest.approx(2.7)
 
     def test_grade_to_points_edge_cases(self) -> None:
         """Test Grade to points edge cases."""
-        assert _grade_to_points("") == 0.0
-        assert _grade_to_points("F-") == 0.0  # Can't go below 0
+        assert _grade_to_points("") == pytest.approx(0.0)
+        assert _grade_to_points("F-") == pytest.approx(0.0)  # Can't go below 0
 
     def test_points_to_grade(self) -> None:
         """Test Points to grade."""
@@ -219,7 +223,7 @@ class TestScorecardGeneratorCalculateOverall:
 
         assert overall.tests_completed == 0
         assert overall.average_grade == "F"
-        assert overall.total_cost_usd == 0.0
+        assert overall.total_cost_usd == pytest.approx(0.0)
         assert overall.total_runs == 0
 
     def test_single_test(self) -> None:
@@ -257,7 +261,7 @@ class TestScorecardGeneratorCalculateOverall:
         overall = generator.calculate_overall(tests)
 
         # Total cost = 5 * 1.0 + 10 * 2.0 = 25.0
-        assert overall.total_cost_usd == 25.0
+        assert overall.total_cost_usd == pytest.approx(25.0)
 
 
 class TestScorecardGeneratorGenerateScorecard:
@@ -396,4 +400,4 @@ class TestCreateEvalResult:
         )
         assert result.runs_completed == 10
         assert result.grade == "A"
-        assert result.median_pass_rate == 1.0
+        assert result.median_pass_rate == pytest.approx(1.0)

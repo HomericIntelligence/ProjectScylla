@@ -6,6 +6,8 @@ Python justification: Required for pytest testing framework.
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scylla.reporting.markdown import (
     MarkdownReportGenerator,
     ReportData,
@@ -56,12 +58,12 @@ class TestTierMetrics:
             uplift=0.13,
         )
         assert metrics.tier_id == "T1"
-        assert metrics.pass_rate_median == 0.9
+        assert metrics.pass_rate_median == pytest.approx(0.9)
 
     def test_default_uplift(self) -> None:
         """Test Default uplift."""
         metrics = make_tier_metrics()
-        assert metrics.uplift == 0.0
+        assert metrics.uplift == pytest.approx(0.0)
 
 
 class TestSensitivityAnalysis:
@@ -74,7 +76,7 @@ class TestSensitivityAnalysis:
             impl_rate_variance=0.03,
             cost_variance=0.10,
         )
-        assert analysis.pass_rate_variance == 0.05
+        assert analysis.pass_rate_variance == pytest.approx(0.05)
 
     def test_get_sensitivity_level_low(self) -> None:
         """Test Get sensitivity level low."""
