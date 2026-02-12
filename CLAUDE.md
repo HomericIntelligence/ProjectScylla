@@ -396,25 +396,28 @@ ProjectScylla/
 |   +-- hierarchy.md             # Visual hierarchy diagram
 |   +-- delegation-rules.md      # Coordination patterns
 |   +-- templates/               # Agent configuration templates
++-- config/                      # Configuration files
+|   +-- models/                  # Model configurations (YAML)
++-- docker/                      # Docker configurations
 +-- docs/
 |   +-- research.md              # Research methodology
 |   +-- dev/                     # Developer documentation
++-- schemas/                     # JSON schemas
 +-- scylla/                      # Python source code
-|   +-- metrics/                 # Metrics calculation (.py)
-|   +-- executor/                # Execution engine (.py)
-|   +-- e2e/                     # E2E testing framework (.py)
-|   +-- analysis/                # Statistical analysis (.py)
 |   +-- adapters/                # CLI adapters (.py)
-|   +-- judge/                   # LLM judge system (.py)
-|   +-- reporting/               # Report generation (.py)
-|   +-- config/                  # Configuration (.py)
+|   +-- analysis/                # Statistical analysis (.py)
+|   +-- automation/              # Automation utilities (.py)
 |   +-- cli/                     # CLI interface (.py)
+|   +-- config/                  # Configuration (.py)
 |   +-- core/                    # Core types (.py)
 |   +-- discovery/               # Resource discovery (.py)
-+-- tests/                       # Python test suite (pytest)
-+-- experiments/                 # Experiment configurations (YAML)
-+-- results/                     # Benchmark results (JSON)
+|   +-- e2e/                     # E2E testing framework (.py)
+|   +-- executor/                # Execution engine (.py)
+|   +-- judge/                   # LLM judge system (.py)
+|   +-- metrics/                 # Metrics calculation (.py)
+|   +-- reporting/               # Report generation (.py)
 +-- scripts/                     # Python automation scripts
++-- tests/                       # Python test suite (pytest)
 +-- .claude/                     # Operational configurations
 |   +-- agents/                  # Agent configs
 |   +-- shared/                  # Shared reference files
