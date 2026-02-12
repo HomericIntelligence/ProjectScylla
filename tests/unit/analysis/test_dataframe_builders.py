@@ -477,3 +477,65 @@ def test_compute_consensus_impl_rate_empty_judges():
 
     # Assert
     assert np.isnan(consensus)
+
+
+def test_build_judges_df_fallback_judge_invalid():
+    """Test that judges with fallback=true are marked as invalid.
+
+    Regression test for issue #323: the loader must check the fallback field
+    when determining is_valid, matching the behavior of the execution pipeline.
+    """
+    # Arrange - create a run with a fallback judge
+    criteria = {
+        "functional": CriterionScore(
+            name="functional",
+            achieved=5.0,
+            max_points=10.0,
+            score=0.5,
+            items={},
+        )
+    }
+
+    # This judge has is_valid=True but should be marked invalid due to fallback logic
+    fallback_judge = JudgeEvaluation(
+        judge_model="test-model",
+        judge_number=1,
+        score=0.5,
+        passed=False,
+        grade="F",
+        is_valid=False,  # Should be False when fallback=true
+        reasoning="Fallback judgment",
+        criteria=criteria,
+    )
+
+    run_data = RunData(
+        experiment="test-001",
+        tier="T0",
+        subtest="00",
+        run_number=1,
+        agent_model="Test Model",
+        passed=False,
+        score=0.5,
+        grade="F",
+        cost_usd=0.05,
+        token_stats=TokenStats(
+            input_tokens=1000,
+            output_tokens=500,
+            cache_creation_tokens=0,
+            cache_read_tokens=0,
+        ),
+        duration_seconds=10.0,
+        agent_duration_seconds=8.0,
+        judge_duration_seconds=2.0,
+        exit_code=0,
+        judges=[fallback_judge],
+    )
+
+    experiments = {"test-001": [run_data]}
+
+    # Act
+    df = build_judges_df(experiments)
+
+    # Assert - fallback judge should be marked as invalid
+    assert len(df) == 1
+    assert not df.iloc[0]["judge_is_valid"]

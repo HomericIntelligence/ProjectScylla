@@ -399,13 +399,18 @@ def load_judgment(judgment_path: Path, judge_number: int) -> JudgeEvaluation:
             items=items,
         )
 
+    # Check is_valid flag (map old fallback=true to is_valid=false)
+    is_valid_raw = data.get("is_valid", True) is not False
+    if data.get("fallback", False) is True:
+        is_valid_raw = False
+
     return JudgeEvaluation(
         judge_model=judge_model,
         judge_number=judge_number,
         score=data.get("score", np.nan),
         passed=data.get("passed", False),
         grade=data.get("grade", "F"),
-        is_valid=data.get("is_valid", True),
+        is_valid=is_valid_raw,
         reasoning=data.get("reasoning", ""),
         criteria=criteria,
     )

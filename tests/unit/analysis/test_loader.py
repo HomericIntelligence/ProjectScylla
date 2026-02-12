@@ -48,17 +48,17 @@ def test_validate_numeric_with_valid_values():
     from scylla.analysis.loader import validate_numeric
 
     # Valid float
-    assert validate_numeric(1.5, "test") == 1.5
+    assert validate_numeric(1.5, "test") == pytest.approx(1.5)
 
     # Valid int (coerced to float)
-    assert validate_numeric(42, "test") == 42.0
+    assert validate_numeric(42, "test") == pytest.approx(42.0)
 
     # Valid string (coerced to float)
-    assert validate_numeric("3.14", "test") == 3.14
+    assert validate_numeric("3.14", "test") == pytest.approx(3.14)
 
     # Zero is valid
-    assert validate_numeric(0, "test") == 0.0
-    assert validate_numeric(0.0, "test") == 0.0
+    assert validate_numeric(0, "test") == pytest.approx(0.0)
+    assert validate_numeric(0.0, "test") == pytest.approx(0.0)
 
 
 def test_validate_numeric_with_invalid_values():
@@ -69,7 +69,7 @@ def test_validate_numeric_with_invalid_values():
 
     # None returns default
     assert np.isnan(validate_numeric(None, "test", np.nan))
-    assert validate_numeric(None, "test", 99.0) == 99.0
+    assert validate_numeric(None, "test", 99.0) == pytest.approx(99.0)
 
     # Invalid string returns default
     assert np.isnan(validate_numeric("invalid", "test", np.nan))
@@ -87,7 +87,7 @@ def test_validate_numeric_with_special_values():
 
     # inf returns default
     assert np.isnan(validate_numeric(np.inf, "test", np.nan))
-    assert validate_numeric(np.inf, "test", 0.0) == 0.0
+    assert validate_numeric(np.inf, "test", 0.0) == pytest.approx(0.0)
 
     # -inf returns default
     assert np.isnan(validate_numeric(-np.inf, "test", np.nan))

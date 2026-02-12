@@ -17,7 +17,7 @@ class TestCliffsDetaDegenerate:
 
         # Both groups have all same values -> delta = 0
         delta = cliffs_delta(degenerate_all_same, degenerate_all_same)
-        assert delta == 0.0
+        assert delta == pytest.approx(0.0)
 
     def test_cliffs_delta_single_element_groups(self, degenerate_single_element):
         """Test Cliff's delta with single-element groups."""
@@ -25,13 +25,13 @@ class TestCliffsDetaDegenerate:
 
         # n1=1, n2=1
         delta = cliffs_delta(degenerate_single_element, degenerate_single_element)
-        assert delta == 0.0
+        assert delta == pytest.approx(0.0)
 
         # Test with different single values
         g1 = np.array([0.3])
         g2 = np.array([0.7])
         delta = cliffs_delta(g1, g2)
-        assert delta == -1.0  # g1 < g2
+        assert delta == pytest.approx(-1.0)  # g1 < g2
 
     def test_cliffs_delta_unbalanced_groups(self, degenerate_unbalanced_groups):
         """Test Cliff's delta with severely unbalanced group sizes."""
@@ -73,9 +73,9 @@ class TestBootstrapCIDegenerate:
 
         mean, ci_low, ci_high = bootstrap_ci(degenerate_all_same)
         # All values are 0.7
-        assert abs(mean - 0.7) < 1e-6
-        assert abs(ci_low - 0.7) < 1e-6
-        assert abs(ci_high - 0.7) < 1e-6
+        assert mean == pytest.approx(0.7, abs=1e-6)
+        assert ci_low == pytest.approx(0.7, abs=1e-6)
+        assert ci_high == pytest.approx(0.7, abs=1e-6)
 
     def test_bootstrap_binary(self, degenerate_binary_data):
         """Test bootstrap CI with binary data."""
@@ -170,7 +170,7 @@ class TestConsistencyDegenerate:
         std = np.std(degenerate_all_same)
         # All same values -> std = 0 -> CV = 0 -> consistency = 1.0
         consistency = compute_consistency(mean, std)
-        assert abs(consistency - 1.0) < 1e-6
+        assert consistency == pytest.approx(1.0, abs=1e-6)
 
     def test_consistency_single_element(self, degenerate_single_element):
         """Test consistency with single element."""
@@ -180,7 +180,7 @@ class TestConsistencyDegenerate:
         std = np.std(degenerate_single_element)
         # n=1 -> std=0 -> CV = 0 -> consistency = 1.0
         consistency = compute_consistency(mean, std)
-        assert abs(consistency - 1.0) < 1e-6
+        assert consistency == pytest.approx(1.0, abs=1e-6)
 
     def test_consistency_high_variance(self, degenerate_high_variance):
         """Test consistency with extreme variance."""

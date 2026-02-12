@@ -53,7 +53,7 @@ class TestCliffsDeltaParametrized:
         from scylla.analysis.stats import cliffs_delta
 
         delta = cliffs_delta(g1, g2)
-        assert abs(delta - expected_delta) < 1e-6
+        assert delta == pytest.approx(expected_delta, abs=1e-6)
 
     @pytest.mark.parametrize(
         "g1,g2",
@@ -109,7 +109,7 @@ class TestBootstrapCIParametrized:
         from scylla.analysis.stats import bootstrap_ci
 
         mean, ci_low, ci_high = bootstrap_ci(data)
-        assert abs(mean - expected_mean) < 1e-6
+        assert mean == pytest.approx(expected_mean, abs=1e-6)
 
     @pytest.mark.parametrize(
         "data",
@@ -142,9 +142,9 @@ class TestBootstrapCIParametrized:
 
         mean, ci_low, ci_high = bootstrap_ci(data)
         exp_mean, exp_low, exp_high = expected
-        assert abs(mean - exp_mean) < 1e-6
-        assert abs(ci_low - exp_low) < 1e-6
-        assert abs(ci_high - exp_high) < 1e-6
+        assert mean == pytest.approx(exp_mean, abs=1e-6)
+        assert ci_low == pytest.approx(exp_low, abs=1e-6)
+        assert ci_high == pytest.approx(exp_high, abs=1e-6)
 
 
 class TestMannWhitneyUParametrized:
@@ -186,8 +186,8 @@ class TestMannWhitneyUParametrized:
 
         u_stat, p_value = mann_whitney_u(g1, g2)
         # Should return (0.0, 1.0) for insufficient data
-        assert u_stat == 0.0
-        assert p_value == 1.0
+        assert u_stat == pytest.approx(0.0)
+        assert p_value == pytest.approx(1.0)
 
 
 class TestConsistencyParametrized:
@@ -209,7 +209,7 @@ class TestConsistencyParametrized:
         from scylla.analysis.stats import compute_consistency
 
         consistency = compute_consistency(mean_score, std_score)
-        assert abs(consistency - expected_consistency) < 1e-6
+        assert consistency == pytest.approx(expected_consistency, abs=1e-6)
 
     @pytest.mark.parametrize(
         "mean_score,std_score,expected",
@@ -224,7 +224,7 @@ class TestConsistencyParametrized:
         from scylla.analysis.stats import compute_consistency
 
         consistency = compute_consistency(mean_score, std_score)
-        assert abs(consistency - expected) < 1e-6
+        assert consistency == pytest.approx(expected, abs=1e-6)
 
 
 class TestCostOfPassParametrized:
@@ -245,7 +245,7 @@ class TestCostOfPassParametrized:
         from scylla.analysis.stats import compute_cop
 
         cop = compute_cop(mean_cost, pass_rate)
-        assert abs(cop - expected_cop) < 1e-6
+        assert cop == pytest.approx(expected_cop, abs=1e-6)
 
     @pytest.mark.parametrize(
         "mean_cost,pass_rate",
@@ -337,7 +337,7 @@ class TestImplRateParametrized:
         from scylla.analysis.stats import compute_impl_rate
 
         rate = compute_impl_rate(achieved, max_points)
-        assert abs(rate - expected_rate) < 1e-6
+        assert rate == pytest.approx(expected_rate, abs=1e-6)
 
     @pytest.mark.parametrize(
         "achieved,max_points",
