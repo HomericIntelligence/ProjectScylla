@@ -30,6 +30,7 @@ __all__ = [
     "compute_consistency",
     "compute_cop",
     "compute_frontier_cop",
+    "compute_delegation_overhead",
     "compute_impl_rate",
     "shapiro_wilk",
     "kruskal_wallis",
@@ -293,6 +294,25 @@ def compute_cop(mean_cost: float, pass_rate: float) -> float:
     if pass_rate == 0:
         return float("inf")
     return mean_cost / pass_rate
+
+
+def compute_delegation_overhead(delegated_cost: float, base_cost: float) -> float:
+    """Compute delegation overhead as percentage increase over base cost.
+
+    Measures the cost increase when using delegation (T3-T5) compared to
+    non-delegation tiers (T0-T2).
+
+    Args:
+        delegated_cost: Total cost with delegation (T3-T5)
+        base_cost: Baseline cost without delegation (T0-T2)
+
+    Returns:
+        Overhead as ratio (0.5 = 50% overhead), or inf if base_cost is 0
+
+    """
+    if base_cost == 0:
+        return float("inf")
+    return (delegated_cost - base_cost) / base_cost
 
 
 def compute_frontier_cop(cop_values: list[float]) -> float:

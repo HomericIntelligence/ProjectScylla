@@ -200,6 +200,31 @@ class JudgeEvaluation:
 
 
 @dataclass
+class ModelUsage:
+    """Per-model token usage from agent execution.
+
+    Tracks individual model usage when multiple models are involved
+    (relevant for T3-T5 delegation tiers).
+
+    Attributes:
+        model: Model identifier
+        input_tokens: Input tokens consumed
+        output_tokens: Output tokens generated
+        cache_creation_tokens: Cache creation tokens
+        cache_read_tokens: Cache read tokens
+        cost_usd: Cost for this model's usage
+
+    """
+
+    model: str
+    input_tokens: int
+    output_tokens: int
+    cache_creation_tokens: int = 0
+    cache_read_tokens: int = 0
+    cost_usd: float = 0.0
+
+
+@dataclass
 class RunData:
     """Complete data for a single run.
 
@@ -219,6 +244,9 @@ class RunData:
         token_stats: Detailed token usage
         exit_code: Agent exit code
         judges: Per-judge evaluations
+        api_calls: Number of API calls (optional, for delegation tiers)
+        num_turns: Number of agentic turns (optional, for delegation tiers)
+        model_usage: Per-model token usage (optional, for delegation tiers)
 
     """
 
@@ -237,6 +265,10 @@ class RunData:
     token_stats: TokenStats
     exit_code: int
     judges: list[JudgeEvaluation]
+    # Optional agent result fields (from agent/result.json)
+    api_calls: int | None = None
+    num_turns: int | None = None
+    model_usage: list[ModelUsage] | None = None
 
 
 def model_id_to_display(model_id: str) -> str:
@@ -345,6 +377,28 @@ def parse_judge_model(model_md_path: Path) -> str:
     if not match:
         raise ValueError(f"Could not find model in {model_md_path}")
     return match.group(1).strip()
+
+
+def load_agent_result(run_dir: Path) -> dict[str, any]:
+    """Load agent execution result from agent/result.json.
+
+    Args:
+        run_dir: Path to the run directory
+
+    Returns:
+        Dictionary with agent result data, or empty dict if not available
+
+    """
+    agent_result_path = run_dir / "agent" / "result.json"
+    if not agent_result_path.exists():
+        return {}
+
+    try:
+        with agent_result_path.open() as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        logger.warning("Failed to load agent result %s: %s", agent_result_path, e)
+        return {}
 
 
 def load_judgment(judgment_path: Path, judge_number: int) -> JudgeEvaluation:
@@ -469,6 +523,48 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
             judge_num = int(judge_path.parent.name.replace("judge_", ""))
             judges.append(load_judgment(judge_path, judge_num))
 
+    # Load optional agent result data
+    agent_data = load_agent_result(run_dir)
+    api_calls_val = None
+    num_turns_val = None
+    model_usage_val = None
+
+    if agent_data:
+        # Extract API calls and turns if present
+        if "api_calls" in agent_data:
+            api_calls_val = validate_int(agent_data["api_calls"], "api_calls", 0) or None
+        if "num_turns" in agent_data:
+            num_turns_val = validate_int(agent_data["num_turns"], "num_turns", 0) or None
+
+        # Parse model_usage if present (for delegation tiers)
+        raw_usage = agent_data.get("model_usage") or agent_data.get("modelUsage")
+        if raw_usage and isinstance(raw_usage, list):
+            model_usage_val = []
+            for usage in raw_usage:
+                if isinstance(usage, dict):
+                    model_usage_val.append(
+                        ModelUsage(
+                            model=usage.get("model", "unknown"),
+                            input_tokens=validate_int(
+                                usage.get("input_tokens") or usage.get("inputTokens"),
+                                "input_tokens",
+                                0,
+                            ),
+                            output_tokens=validate_int(
+                                usage.get("output_tokens") or usage.get("outputTokens"),
+                                "output_tokens",
+                                0,
+                            ),
+                            cache_creation_tokens=validate_int(
+                                usage.get("cache_creation_tokens"), "cache_creation_tokens", 0
+                            ),
+                            cache_read_tokens=validate_int(
+                                usage.get("cache_read_tokens"), "cache_read_tokens", 0
+                            ),
+                            cost_usd=validate_numeric(usage.get("cost_usd"), "cost_usd", 0.0),
+                        )
+                    )
+
     # Validate and coerce all numeric/boolean fields with type checking
     return RunData(
         experiment=experiment,
@@ -492,6 +588,9 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
         token_stats=token_stats,
         exit_code=validate_int(result.get("exit_code"), "exit_code", -1),
         judges=judges,
+        api_calls=api_calls_val,
+        num_turns=num_turns_val,
+        model_usage=model_usage_val,
     )
 
 
