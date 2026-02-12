@@ -4,7 +4,7 @@ Python justification: Required for pytest testing framework.
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 
 from scylla.cli.progress import (
@@ -37,7 +37,7 @@ class TestRunProgress:
         run = RunProgress(
             run_number=1,
             status=RunStatus.EXECUTING,
-            start_time=datetime.now() - timedelta(seconds=10),
+            start_time=datetime.now(timezone.utc) - timedelta(seconds=10),
         )
         assert run.elapsed >= timedelta(seconds=10)
 
