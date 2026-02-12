@@ -14,7 +14,7 @@ References:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -105,7 +105,7 @@ class LatencyTracker:
 
     def start_request(self) -> None:
         """Mark the start of a request."""
-        self._request_start = datetime.now()
+        self._request_start = datetime.now(timezone.utc)
 
     def start_phase(
         self,
@@ -121,7 +121,7 @@ class LatencyTracker:
         """
         self._phases[phase] = PhaseLatency(
             phase=phase,
-            start_time=datetime.now(),
+            start_time=datetime.now(timezone.utc),
             metadata=metadata or {},
         )
         self._active_phase = phase
@@ -140,7 +140,7 @@ class LatencyTracker:
             return 0.0
 
         phase_data = self._phases[phase]
-        phase_data.end_time = datetime.now()
+        phase_data.end_time = datetime.now(timezone.utc)
 
         if phase_data.start_time:
             delta = phase_data.end_time - phase_data.start_time
@@ -158,7 +158,7 @@ class LatencyTracker:
             Time to first token in milliseconds from request start.
 
         """
-        self._first_token_time = datetime.now()
+        self._first_token_time = datetime.now(timezone.utc)
 
         if self._request_start:
             delta = self._first_token_time - self._request_start
@@ -204,7 +204,7 @@ class LatencyTracker:
         # Calculate total duration
         total_ms = 0.0
         if self._request_start:
-            end_time = datetime.now()
+            end_time = datetime.now(timezone.utc)
             delta = end_time - self._request_start
             total_ms = delta.total_seconds() * 1000
 

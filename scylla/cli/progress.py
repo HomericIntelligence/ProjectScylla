@@ -5,7 +5,7 @@ Python justification: Terminal output formatting and progress tracking.
 
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 
@@ -36,7 +36,7 @@ class RunProgress:
         """Get elapsed time for this run."""
         if self.start_time is None:
             return timedelta(0)
-        end = self.end_time or datetime.now()
+        end = self.end_time or datetime.now(timezone.utc)
         return end - self.start_time
 
 
@@ -82,7 +82,7 @@ class TierProgress:
         """Get elapsed time for this tier."""
         if self.start_time is None:
             return timedelta(0)
-        end = self.end_time or datetime.now()
+        end = self.end_time or datetime.now(timezone.utc)
         return end - self.start_time
 
 
@@ -122,7 +122,7 @@ class EvalProgress:
         """Get elapsed time for this test."""
         if self.start_time is None:
             return timedelta(0)
-        end = self.end_time or datetime.now()
+        end = self.end_time or datetime.now(timezone.utc)
         return end - self.start_time
 
 
@@ -203,7 +203,7 @@ class ProgressDisplay:
         progress = EvalProgress(
             test_id=test_id,
             tiers=[TierProgress(t, runs_per_tier) for t in tiers],
-            start_time=datetime.now(),
+            start_time=datetime.now(timezone.utc),
         )
         self._current_progress = progress
 
@@ -224,7 +224,7 @@ class ProgressDisplay:
 
         for tier in self._current_progress.tiers:
             if tier.tier_id == tier_id:
-                tier.start_time = datetime.now()
+                tier.start_time = datetime.now(timezone.utc)
                 break
 
         self._write(f"Tier: {tier_id}")
@@ -244,7 +244,7 @@ class ProgressDisplay:
             if tier.tier_id == tier_id:
                 run = tier.runs[run_number - 1]
                 run.status = RunStatus.EXECUTING
-                run.start_time = datetime.now()
+                run.start_time = datetime.now(timezone.utc)
                 break
 
         elapsed = format_duration(self._current_progress.elapsed)
@@ -296,7 +296,7 @@ class ProgressDisplay:
             if tier.tier_id == tier_id:
                 run = tier.runs[run_number - 1]
                 run.status = RunStatus.COMPLETE
-                run.end_time = datetime.now()
+                run.end_time = datetime.now(timezone.utc)
                 run.passed = passed
                 run.grade = grade
                 run.cost_usd = cost_usd
@@ -321,7 +321,7 @@ class ProgressDisplay:
         tier: TierProgress | None = None
         for t in self._current_progress.tiers:
             if t.tier_id == tier_id:
-                t.end_time = datetime.now()
+                t.end_time = datetime.now(timezone.utc)
                 tier = t
                 break
 
@@ -363,7 +363,7 @@ class ProgressDisplay:
         if self._current_progress is None:
             return
 
-        self._current_progress.end_time = datetime.now()
+        self._current_progress.end_time = datetime.now(timezone.utc)
 
         self._write("")
         self._write(f"Test completed in {format_duration(self._current_progress.elapsed)}")
