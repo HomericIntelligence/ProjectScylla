@@ -49,9 +49,9 @@ MODEL_PRICING: dict[str, ModelPricing] = {
     ),
     "claude-opus-4-5-20251101": ModelPricing(
         model_id="claude-opus-4-5-20251101",
-        input_cost_per_million=15.0,
-        output_cost_per_million=75.0,
-        cached_cost_per_million=1.5,  # 0.1x base input cost
+        input_cost_per_million=5.0,
+        output_cost_per_million=25.0,
+        cached_cost_per_million=0.5,  # 0.1x base input cost
     ),
     # Anthropic Claude 3.5 models
     "claude-3-5-sonnet-20241022": ModelPricing(

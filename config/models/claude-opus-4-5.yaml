@@ -7,7 +7,7 @@ temperature: 0.0
 max_tokens: 8192
 
 # Pricing per 1K tokens (as of 1/1/2026)
-cost_per_1k_input: 0.005   # $5.00 per 1M = $0.015 per 1K
+cost_per_1k_input: 0.005   # $5.00 per 1M = $0.005 per 1K
 cost_per_1k_output: 0.025  # $25.00 per 1M = $0.025 per 1K
 
 # Optional overrides (null uses defaults)
