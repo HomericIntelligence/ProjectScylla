@@ -279,9 +279,6 @@ This script runs:
 - Section 10: Discussion (diminishing returns, hypothesis validation)
 - Section 11: Conclusions
 - Appendix B: Detailed results
-
-## Python Justification
-
 This entire module uses Python because it interfaces with Python-only scientific computing libraries:
 
 - **pandas**: DataFrame operations, aggregation

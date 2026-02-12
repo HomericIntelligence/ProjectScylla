@@ -2,8 +2,6 @@
 
 Converts loaded experiment data into pandas DataFrames for analysis.
 Provides aggregation functions for computing tier, subtest, and judge statistics.
-
-Python Justification: pandas is a Python-only library with no Mojo equivalent.
 """
 
 from __future__ import annotations

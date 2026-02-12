@@ -2,8 +2,6 @@
 
 Loads and provides access to centralized analysis parameters from config.yaml.
 Ensures reproducibility by centralizing all tunable parameters.
-
-Python Justification: YAML loading and dict access (no Mojo stdlib support yet).
 """
 
 from __future__ import annotations

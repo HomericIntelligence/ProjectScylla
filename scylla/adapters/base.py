@@ -2,8 +2,6 @@
 
 This module provides the abstract base class that all agent adapters inherit from.
 Adapters bridge the Scylla test runner and specific AI agent implementations.
-
-Python Justification: Required for subprocess execution and API interactions.
 """
 
 from __future__ import annotations

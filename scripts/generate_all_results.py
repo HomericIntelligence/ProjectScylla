@@ -2,8 +2,6 @@
 """Master script to generate all analysis outputs.
 
 Runs data export, figure generation, and table generation in sequence.
-
-Python Justification: Orchestrates other Python scripts.
 """
 
 from __future__ import annotations

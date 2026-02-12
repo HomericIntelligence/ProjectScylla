@@ -2,8 +2,6 @@
 
 This module provides the main entry point for running E2E experiments,
 coordinating tier execution, inheritance, and result aggregation.
-
-Python Justification: Required for orchestration, filesystem operations,
 and report generation.
 """
 

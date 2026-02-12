@@ -2,8 +2,6 @@
 
 This module provides a single source of truth for model pricing data
 and cost calculation utilities.
-
-Python Justification: Required for Pydantic models and configuration.
 """
 
 from __future__ import annotations

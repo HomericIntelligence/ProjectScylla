@@ -3,9 +3,6 @@
 This module provides foundational types that are extended by domain-specific
 result classes throughout the codebase. These base types ensure consistent
 field naming and structure across different modules.
-
-Python Justification: Required for dataclass and Pydantic base types.
-
 Architecture Notes:
     The codebase has multiple result types for different purposes:
 

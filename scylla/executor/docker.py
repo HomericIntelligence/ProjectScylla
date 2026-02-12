@@ -2,8 +2,6 @@
 
 This module provides Docker container lifecycle management for running agent
 evaluations in isolated, reproducible environments.
-
-Python Justification: Required for Docker SDK interaction and subprocess output
 capture (Mojo stdlib limitation - cannot capture stdout/stderr from subprocesses).
 
 Design Decisions (from plan review):

@@ -3,8 +3,6 @@
 This module provides the ConfigLoader class for loading and merging YAML
 configuration files with a three-level priority hierarchy:
     test-specific > model defaults > global defaults
-
-Python Justification: Required for YAML parsing (no Mojo stdlib support)
 and complex file operations with error handling.
 """
 

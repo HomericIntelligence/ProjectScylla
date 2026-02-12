@@ -4,8 +4,6 @@
 This script checks that all section headings from paper.md appear in paper.tex.
 paper.tex can have additional content not in paper.md (that's expected), but
 all paper.md sections should be present in paper.tex.
-
-Python Justification: Text parsing and comparison logic.
 """
 
 import re

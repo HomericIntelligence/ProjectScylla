@@ -9,8 +9,6 @@ LaTeX Dependencies:
     - booktabs package (for professional table formatting)
     - longtable package (for multi-page tables)
     - threeparttable package (for table notes/footnotes)
-
-Python Justification: Uses pandas for table formatting and data manipulation.
 """
 
 from __future__ import annotations

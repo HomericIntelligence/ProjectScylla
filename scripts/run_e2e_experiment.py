@@ -7,8 +7,6 @@ with the ProjectScylla evaluation framework.
 Usage:
     python scripts/run_e2e_experiment.py --config experiment.yaml
     python scripts/run_e2e_experiment.py --repo <url> --commit <hash> --prompt <file>
-
-Python Justification: Required for CLI argument parsing and experiment orchestration.
 """
 
 from __future__ import annotations

@@ -2,8 +2,6 @@
 
 Provides helpers for creating publication-quality Vega-Lite charts with
 consistent theming and color schemes.
-
-Python Justification: altair is a Python-only library for Vega-Lite generation.
 """
 
 from __future__ import annotations

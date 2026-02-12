@@ -3,8 +3,6 @@
 This module provides functionality to rebuild experiment results without re-running
 agents or judges. It can also selectively re-run judges for runs that are missing
 judge results.
-
-Python Justification: Required for JSON manipulation, filesystem traversal,
 and integration with existing Python-based evaluation infrastructure.
 """
 

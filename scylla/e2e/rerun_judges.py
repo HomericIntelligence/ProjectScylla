@@ -8,8 +8,6 @@ This module scans an experiment directory and identifies individual judge slots
 4. Agent failed - Agent failed, cannot judge (skip)
 
 After re-running missing judge slots, regenerates judge/result.json consensus.
-
-Python Justification: Required for subprocess execution, filesystem traversal,
 and integration with existing Python-based evaluation infrastructure.
 """
 

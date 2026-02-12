@@ -2,8 +2,6 @@
 
 This module defines the core data structures used throughout the E2E
 testing pipeline, including configurations, results, and aggregations.
-
-Python Justification: Required for dataclass support and JSON serialization.
 """
 
 from __future__ import annotations

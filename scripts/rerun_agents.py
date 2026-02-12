@@ -60,8 +60,6 @@ Examples:
     # Verbose output for debugging
     pixi run python scripts/rerun_agents.py ~/fullruns/test001-nothinking-haiku/ -v
 
-Python Justification: Command-line tool for agent re-execution.
-
 """
 
 import argparse

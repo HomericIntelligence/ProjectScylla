@@ -2,8 +2,6 @@
 
 This module provides statistical functions for analyzing
 results from multiple evaluation runs.
-
-Python Justification: Required for statistical calculations with edge case handling.
 """
 
 from __future__ import annotations

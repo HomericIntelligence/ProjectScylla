@@ -1,8 +1,6 @@
 """Summary statistics tables.
 
 Generates summary tables (Table 1, 5) for tier-level and cost analysis.
-
-Python Justification: Uses pandas for table formatting and data manipulation.
 """
 
 from __future__ import annotations

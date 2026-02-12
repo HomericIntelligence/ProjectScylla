@@ -2,8 +2,6 @@
 
 This module provides checkpoint state tracking for E2E experiments,
 enabling pause/resume functionality for overnight runs with rate limit handling.
-
-Python Justification: Required for JSON serialization and file I/O.
 """
 
 from __future__ import annotations

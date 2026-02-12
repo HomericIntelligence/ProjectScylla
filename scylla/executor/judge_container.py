@@ -2,8 +2,6 @@
 
 This module provides Docker container management specifically for running
 the judge (evaluator) in isolation from the agent container.
-
-Python Justification: Required for Docker SDK interaction and subprocess output
 capture (Mojo stdlib limitation - cannot capture stdout/stderr from subprocesses).
 
 Design Decisions:

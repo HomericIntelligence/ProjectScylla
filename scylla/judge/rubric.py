@@ -2,8 +2,6 @@
 
 This module provides classes for parsing rubric.yaml files and
 calculating weighted scores for judge evaluations.
-
-Python Justification: Required for YAML parsing and complex data structures.
 """
 
 from __future__ import annotations

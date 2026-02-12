@@ -2,8 +2,6 @@
 
 This module provides LLM-based evaluation of agent task completion,
 using structured prompts and rubrics for consistent scoring.
-
-Python Justification: Required for Anthropic API interaction.
 """
 
 from __future__ import annotations

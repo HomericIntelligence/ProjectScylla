@@ -2,8 +2,6 @@
 """Generate all figures for the paper.
 
 Loads experiment data and generates Vega-Lite specifications with CSV data.
-
-Python Justification: Orchestrates Python-only scientific libraries (pandas,
 altair) for figure generation.
 """
 

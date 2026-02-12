@@ -6,8 +6,6 @@ organized by table purpose:
 - summary: Summary statistics tables (Table 1, 5)
 - comparison: Statistical comparison tables (Table 2, 2b, 4, 6)
 - detail: Detailed and appendix tables (Table 3, 7-11)
-
-Python Justification: Uses pandas for table formatting and data manipulation.
 """
 
 from __future__ import annotations

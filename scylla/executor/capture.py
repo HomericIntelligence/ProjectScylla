@@ -2,8 +2,6 @@
 
 This module provides utilities for capturing stdout, stderr, and metrics
 during test execution in Docker containers.
-
-Python Justification: Required for subprocess output capture and streaming
 file I/O (Mojo stdlib limitation - cannot capture stdout/stderr).
 """
 

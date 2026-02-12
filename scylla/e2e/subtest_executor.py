@@ -2,8 +2,6 @@
 
 This module handles executing individual sub-tests, including
 workspace preparation, agent execution, judging, and result aggregation.
-
-Python Justification: Required for subprocess execution, parallel processing,
 and filesystem operations.
 
 KNOWN ISSUE: This file is 2269 lines with a 383-line function (_execute_single_run)

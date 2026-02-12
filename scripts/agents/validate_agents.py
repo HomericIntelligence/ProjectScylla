@@ -368,7 +368,6 @@ Validation Checks:
     - YAML frontmatter syntax and required fields
     - Tool names are valid
     - Required sections present (Role, Scope, Responsibilities, etc.)
-    - Mojo-specific content included
     - Delegation patterns defined
     - Workflow phases specified
     - Links to other agents are valid

@@ -2,8 +2,6 @@
 """Generate statistical tables for the paper.
 
 Generates both markdown and LaTeX versions of all tables.
-
-Python Justification: Table generation using pandas and custom formatters.
 """
 
 from __future__ import annotations
