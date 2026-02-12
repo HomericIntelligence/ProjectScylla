@@ -168,31 +168,15 @@ Each tier is evaluated against:
 
 ## Core Metrics
 
-### Quality Metrics
+ProjectScylla evaluates agent performance across three metric categories:
 
-| Metric | Formula | Description |
-|--------|---------|-------------|
-| Pass-Rate | `correct_solutions / total_attempts` | Functional test coverage |
-| Impl-Rate | `satisfied_requirements / total_requirements` | Semantic requirement satisfaction |
-| R_Prog | `progress_steps / expected_steps` | Fine-grained advancement tracking |
-| Consistency | `std(outputs) / mean(outputs)` | Output stability across runs |
+1. **Quality Metrics**: Pass-Rate, Implementation Rate, Fine-Grained Progress
+2. **Economic Metrics**: Cost-of-Pass (CoP), Token Distribution, Change Fail Percentage
+3. **Process Metrics**: Latency, Strategic Drift, Ablation Score
 
-### Economic Metrics
-
-| Metric | Formula | Description |
-|--------|---------|-------------|
-| Cost-of-Pass (CoP) | `total_cost / pass_rate` | Expected cost per correct solution |
-| Frontier CoP | `min(CoP_tier0, ..., CoP_tier6)` | Minimum cost across all tiers |
-| Token Distribution | `tokens_by_component / total_tokens` | Component-level cost breakdown |
-| CFP | `failed_changes / total_changes` | Change Fail Percentage |
-
-### Process Metrics
-
-| Metric | Description |
-|--------|-------------|
-| Latency | Time from query to resolution |
-| Strategic Drift | Goal coherence over multi-step tasks |
-| Ablation Score | Isolated component contribution |
+**For complete metric definitions, formulas, and calculation methods, see:**
+- [Metrics Definitions](/.claude/shared/metrics-definitions.md) - Authoritative reference
+- [Research Methodology](/docs/research.md) - Context and usage
 
 ## Language Preference
 

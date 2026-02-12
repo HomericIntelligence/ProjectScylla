@@ -1,3 +1,6 @@
+> **DEPRECATED**: This is an older research document (Project Odyssey context).
+> See [research.md](research.md) for current ProjectScylla research methodology.
+
 # **Integrating Theory and Practice in Project Odyssey: A Tiered Architectural Analysis of Scalable Multi-Agent Systems**
 
 ## **I. Foundational Principles and Theoretical Context of Agentic Scaling**

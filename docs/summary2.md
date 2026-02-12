@@ -1,3 +1,6 @@
+> **DEPRECATED**: This is an older summary document (Project Odyssey context).
+> See [research.md](research.md) for current ProjectScylla documentation.
+
 # Project Odyssey: Comprehensive Architectural Efficacy and Economic Sustainability Blueprint
 
 ## **Executive Summary**
