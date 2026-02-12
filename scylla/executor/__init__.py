@@ -55,7 +55,6 @@ from scylla.executor.tier_config import (
 )
 from scylla.executor.workspace import (
     WorkspaceError,
-    WorkspaceManager,
     checkout_hash,
     cleanup_workspace,
     clone_repo,
@@ -108,7 +107,6 @@ __all__ = [
     "TiersDefinitionFile",
     # Workspace
     "WorkspaceError",
-    "WorkspaceManager",
     "checkout_hash",
     "cleanup_workspace",
     "clone_repo",

@@ -12,7 +12,7 @@ from pathlib import Path
 
 from scylla.cli.progress import ProgressDisplay, RunStatus
 from scylla.config import ConfigLoader, EvalCase, Rubric
-from scylla.executor import WorkspaceManager
+from scylla.executor import checkout_hash, cleanup_workspace, clone_repo, create_workspace
 from scylla.reporting import ResultWriter, RunResult, create_run_result
 
 
@@ -33,7 +33,7 @@ class EvalOrchestrator:
 
     Wires together:
     - ConfigLoader: Loads test configurations
-    - WorkspaceManager: Creates and manages workspaces
+    - Workspace functions: Creates and manages workspaces
     - Adapters: Runs agents
     - Judge: Evaluates results
     - ResultWriter: Writes results
@@ -109,7 +109,7 @@ class EvalOrchestrator:
         self.progress.start_run(tier_id, run_number)
 
         # Create workspace
-        workspace = WorkspaceManager.create(
+        workspace = create_workspace(
             test_id=test_id,
             model_id=model_id,
             run_number=run_number,
@@ -119,15 +119,15 @@ class EvalOrchestrator:
 
         try:
             # Clone repository
-            WorkspaceManager.clone(
+            clone_repo(
                 repo_url=test_case.source.repo,
-                workspace=workspace,
+                workspace_path=workspace,
             )
 
             # Checkout specific hash
-            WorkspaceManager.checkout(
-                workspace=workspace,
-                hash=test_case.source.hash,
+            checkout_hash(
+                workspace_path=workspace,
+                git_hash=test_case.source.hash,
             )
 
             # Execute adapter (if configured)
@@ -211,7 +211,7 @@ class EvalOrchestrator:
 
         finally:
             # Cleanup workspace (keep logs)
-            WorkspaceManager.cleanup(workspace, keep_logs=True)
+            cleanup_workspace(workspace_path=workspace, keep_logs=True)
 
     def _run_adapter(
         self,

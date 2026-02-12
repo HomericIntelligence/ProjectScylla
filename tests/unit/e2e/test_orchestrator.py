@@ -310,10 +310,8 @@ output:
         with patch.object(
             orchestrator.loader.__class__, "_load_yaml", wraps=orchestrator.loader._load_yaml
         ):
-            from scylla.executor import WorkspaceManager
-
-            with patch.object(WorkspaceManager, "clone"):
-                with patch.object(WorkspaceManager, "checkout"):
+            with patch("scylla.executor.workspace.clone_repo"):
+                with patch("scylla.executor.workspace.checkout_hash"):
                     result = orchestrator.run_single(
                         test_id="001-test",
                         model_id="test-model",
@@ -345,10 +343,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.9, "grade": "A"})
 
-        from scylla.executor import WorkspaceManager
-
-        with patch.object(WorkspaceManager, "clone"):
-            with patch.object(WorkspaceManager, "checkout"):
+        with patch("scylla.executor.workspace.clone_repo"):
+            with patch("scylla.executor.workspace.checkout_hash"):
                 orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
@@ -386,10 +382,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.8, "grade": "B"})
 
-        from scylla.executor import WorkspaceManager
-
-        with patch.object(WorkspaceManager, "clone"):
-            with patch.object(WorkspaceManager, "checkout"):
+        with patch("scylla.executor.workspace.clone_repo"):
+            with patch("scylla.executor.workspace.checkout_hash"):
                 results = orchestrator.run_test(
                     test_id="001-test",
                     models=["test-model"],
@@ -423,10 +417,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": False, "score": 0.3, "grade": "F"})
 
-        from scylla.executor import WorkspaceManager
-
-        with patch.object(WorkspaceManager, "clone"):
-            with patch.object(WorkspaceManager, "checkout"):
+        with patch("scylla.executor.workspace.clone_repo"):
+            with patch("scylla.executor.workspace.checkout_hash"):
                 result = orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
@@ -457,10 +449,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.80, "grade": "B"})
 
-        from scylla.executor import WorkspaceManager
-
-        with patch.object(WorkspaceManager, "clone"):
-            with patch.object(WorkspaceManager, "checkout"):
+        with patch("scylla.executor.workspace.clone_repo"):
+            with patch("scylla.executor.workspace.checkout_hash"):
                 result = orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
