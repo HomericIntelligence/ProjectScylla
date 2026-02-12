@@ -24,9 +24,16 @@ import sys
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from agent_utils import extract_frontmatter_parsed
-from common import get_agents_dir, get_repo_root
+# Enable importing from repository root and scripts directory
+_SCRIPT_DIR = Path(__file__).parent
+_SCRIPTS_DIR = _SCRIPT_DIR.parent
+_REPO_ROOT = _SCRIPTS_DIR.parent
+sys.path.insert(0, str(_REPO_ROOT))
+sys.path.insert(0, str(_SCRIPTS_DIR))
+sys.path.insert(0, str(_SCRIPT_DIR))
+
+from agent_utils import extract_frontmatter_parsed  # noqa: E402
+from common import get_agents_dir, get_repo_root  # noqa: E402
 
 # Required fields and their types
 REQUIRED_FIELDS = {
