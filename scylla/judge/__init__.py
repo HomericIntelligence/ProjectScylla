@@ -42,6 +42,7 @@ from scylla.judge.rubric import (
     RubricParser,
     RubricValidationError,
 )
+from scylla.judge.utils import extract_json_from_llm_response
 
 __all__ = [
     # Cleanup evaluator
@@ -77,4 +78,6 @@ __all__ = [
     "RubricError",
     "RubricParser",
     "RubricValidationError",
+    # Utils
+    "extract_json_from_llm_response",
 ]

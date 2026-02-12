@@ -217,7 +217,7 @@ class TestParseJudgeResponse:
         ]
 
         for response in invalid_responses:
-            with pytest.raises(ValueError, match="Judge response is not valid JSON"):
+            with pytest.raises(ValueError, match="Judge response does not contain valid JSON"):
                 _parse_judge_response(response)
 
     def test_parse_judge_response_raises_on_missing_score(self) -> None:
@@ -232,6 +232,39 @@ class TestParseJudgeResponse:
         for response in invalid_responses:
             with pytest.raises(ValueError, match="Judge response missing required 'score' field"):
                 _parse_judge_response(response)
+
+    def test_parse_judge_response_handles_xml_wrapped_json(self) -> None:
+        """Test _parse_judge_response handles XML-wrapped JSON with preamble text."""
+        response = """Here is the evaluation result:
+<json_evaluation>
+{"score": 0.8, "passed": true, "reasoning": "Good work"}
+</json_evaluation>
+"""
+        result = _parse_judge_response(response)
+        assert result.score == 0.8
+        assert result.passed is True
+        assert result.reasoning == "Good work"
+        assert result.grade == "A"
+
+    def test_parse_judge_response_handles_preamble_text(self) -> None:
+        """Test _parse_judge_response handles JSON with preamble text."""
+        response = (
+            'Here is my evaluation: {"score": 0.95, "passed": true, "reasoning": "Excellent work"}'
+        )
+        result = _parse_judge_response(response)
+        assert result.score == 0.95
+        assert result.passed is True
+        assert result.reasoning == "Excellent work"
+        assert result.grade == "A"
+
+    def test_parse_judge_response_handles_markdown_code_block(self) -> None:
+        """Test _parse_judge_response handles JSON in markdown code blocks."""
+        response = '```json\n{"score": 0.7, "passed": true, "reasoning": "Good"}\n```'
+        result = _parse_judge_response(response)
+        assert result.score == 0.7
+        assert result.passed is True
+        assert result.reasoning == "Good"
+        assert result.grade == "B"
 
 
 class TestHasValidJudgeResult:
