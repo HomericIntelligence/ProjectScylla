@@ -1,33 +1,34 @@
 """Test degenerate input fixtures for edge case testing."""
 
 import numpy as np
+import pytest
 
 
 def test_degenerate_single_element(degenerate_single_element):
     """Verify single-element fixture."""
     assert len(degenerate_single_element) == 1
-    assert degenerate_single_element[0] == 0.5
+    assert degenerate_single_element[0] == pytest.approx(0.5)
 
 
 def test_degenerate_all_same(degenerate_all_same):
     """Verify all-same-value fixture."""
     assert len(degenerate_all_same) == 5
-    assert np.all(degenerate_all_same == 0.7)
-    assert np.std(degenerate_all_same) == 0.0
+    assert np.all(degenerate_all_same == pytest.approx(0.7))
+    assert np.std(degenerate_all_same) == pytest.approx(0.0)
 
 
 def test_degenerate_all_pass(degenerate_all_pass):
     """Verify all-pass fixture."""
     assert len(degenerate_all_pass) == 5
     assert np.all(degenerate_all_pass == 1)
-    assert np.mean(degenerate_all_pass) == 1.0
+    assert np.mean(degenerate_all_pass) == pytest.approx(1.0)
 
 
 def test_degenerate_all_fail(degenerate_all_fail):
     """Verify all-fail fixture."""
     assert len(degenerate_all_fail) == 5
     assert np.all(degenerate_all_fail == 0)
-    assert np.mean(degenerate_all_fail) == 0.0
+    assert np.mean(degenerate_all_fail) == pytest.approx(0.0)
 
 
 def test_degenerate_unbalanced_groups(degenerate_unbalanced_groups):
@@ -70,8 +71,8 @@ def test_degenerate_binary_data(degenerate_binary_data):
 def test_degenerate_boundary_values(degenerate_boundary_values):
     """Verify boundary values fixture."""
     assert len(degenerate_boundary_values) == 5
-    assert np.min(degenerate_boundary_values) == 0.0
-    assert np.max(degenerate_boundary_values) == 1.0
+    assert np.min(degenerate_boundary_values) == pytest.approx(0.0)
+    assert np.max(degenerate_boundary_values) == pytest.approx(1.0)
     assert 0.5 in degenerate_boundary_values
 
 
@@ -80,7 +81,7 @@ def test_degenerate_near_zero(degenerate_near_zero):
     assert len(degenerate_near_zero) == 5
     assert np.all(degenerate_near_zero > 0)
     assert np.all(degenerate_near_zero < 1e-5)
-    assert np.max(degenerate_near_zero) == 1e-6
+    assert np.max(degenerate_near_zero) == pytest.approx(1e-6)
 
 
 def test_degenerate_high_variance(degenerate_high_variance):

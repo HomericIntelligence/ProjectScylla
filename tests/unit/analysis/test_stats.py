@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 
 def test_cliffs_delta_basic():
@@ -23,7 +24,7 @@ def test_cliffs_delta_basic():
     # Less = 0, Equal = 1 (5 vs 5)
     # delta = (24 - 0) / 25 = 0.96
     expected = 24 / 25
-    assert abs(delta - expected) < 1e-6
+    assert delta == pytest.approx(expected)
 
 
 def test_cliffs_delta_identical():
@@ -34,7 +35,7 @@ def test_cliffs_delta_identical():
     g2 = [1, 2, 3, 4, 5]
 
     delta = cliffs_delta(g1, g2)
-    assert abs(delta) < 1e-6
+    assert delta == pytest.approx(0.0, abs=1e-6)
 
 
 def test_cliffs_delta_negative():
@@ -47,7 +48,7 @@ def test_cliffs_delta_negative():
     delta = cliffs_delta(g1, g2)
 
     # All g1 values < all g2 values: -1.0
-    assert abs(delta - (-1.0)) < 1e-6
+    assert delta == pytest.approx(-1.0)
 
 
 def test_cliffs_delta_empty():
@@ -72,7 +73,7 @@ def test_cliffs_delta_pandas_series():
     delta = cliffs_delta(g1, g2)
 
     # All g1 > all g2: delta = 1.0
-    assert abs(delta - 1.0) < 1e-6
+    assert delta == pytest.approx(1.0)
 
 
 def test_cliffs_delta_reference():
@@ -101,7 +102,7 @@ def test_cliffs_delta_reference():
     expected = 2 / 12
 
     delta = cliffs_delta(g1, g2)
-    assert abs(delta - expected) < 1e-6
+    assert delta == pytest.approx(expected)
 
 
 def test_bootstrap_ci_deterministic():
@@ -114,7 +115,7 @@ def test_bootstrap_ci_deterministic():
     mean2, lower2, upper2 = bootstrap_ci(data, n_resamples=1000)
 
     # Should be identical due to random_state=42 in implementation
-    assert mean1 == mean2
+    assert mean1 == pytest.approx(mean2)
 
 
 def test_bootstrap_ci_single_element():
@@ -128,9 +129,9 @@ def test_bootstrap_ci_single_element():
     data = np.array([5.0])
     mean, lower, upper = bootstrap_ci(data)
 
-    assert mean == 5.0
-    assert lower == 5.0
-    assert upper == 5.0
+    assert mean == pytest.approx(5.0)
+    assert lower == pytest.approx(5.0)
+    assert upper == pytest.approx(5.0)
 
 
 def test_bootstrap_ci_empty_array():
@@ -187,22 +188,22 @@ def test_mann_whitney_u_degenerate_input():
     g1 = [1]
     g2 = [2, 3, 4]
     u_stat, p_value = mann_whitney_u(g1, g2)
-    assert u_stat == 0.0
-    assert p_value == 1.0
+    assert u_stat == pytest.approx(0.0)
+    assert p_value == pytest.approx(1.0)
 
     # Single element in both groups
     g1 = [1]
     g2 = [2]
     u_stat, p_value = mann_whitney_u(g1, g2)
-    assert u_stat == 0.0
-    assert p_value == 1.0
+    assert u_stat == pytest.approx(0.0)
+    assert p_value == pytest.approx(1.0)
 
     # Empty group
     g1 = []
     g2 = [1, 2, 3]
     u_stat, p_value = mann_whitney_u(g1, g2)
-    assert u_stat == 0.0
-    assert p_value == 1.0
+    assert u_stat == pytest.approx(0.0)
+    assert p_value == pytest.approx(1.0)
 
 
 def test_krippendorff_alpha_perfect_agreement():
@@ -221,7 +222,7 @@ def test_krippendorff_alpha_perfect_agreement():
     alpha = krippendorff_alpha(ratings, level="interval")
 
     # Perfect agreement should give alpha = 1.0
-    assert abs(alpha - 1.0) < 1e-6
+    assert alpha == pytest.approx(1.0)
 
 
 def test_krippendorff_alpha_ordinal():
@@ -266,12 +267,12 @@ def test_bonferroni_correction():
     from scylla.analysis.stats import bonferroni_correction
 
     # Test basic correction
-    assert bonferroni_correction(0.01, 5) == 0.05
-    assert bonferroni_correction(0.02, 10) == 0.20
+    assert bonferroni_correction(0.01, 5) == pytest.approx(0.05)
+    assert bonferroni_correction(0.02, 10) == pytest.approx(0.20)
 
     # Test clamping to 1.0
-    assert bonferroni_correction(0.5, 3) == 1.0
-    assert bonferroni_correction(1.0, 2) == 1.0
+    assert bonferroni_correction(0.5, 3) == pytest.approx(1.0)
+    assert bonferroni_correction(1.0, 2) == pytest.approx(1.0)
 
 
 def test_compute_consistency():
@@ -279,21 +280,21 @@ def test_compute_consistency():
     from scylla.analysis.stats import compute_consistency
 
     # Perfect consistency (no variation)
-    assert compute_consistency(10.0, 0.0) == 1.0
+    assert compute_consistency(10.0, 0.0) == pytest.approx(1.0)
 
     # High variation
-    assert compute_consistency(10.0, 10.0) == 0.0
+    assert compute_consistency(10.0, 10.0) == pytest.approx(0.0)
 
     # Moderate variation
     consistency = compute_consistency(10.0, 2.0)
     assert 0.7 < consistency < 0.9
 
     # Zero mean (edge case)
-    assert compute_consistency(0.0, 5.0) == 0.0
+    assert compute_consistency(0.0, 5.0) == pytest.approx(0.0)
 
     # Negative consistency should be clamped to 0
     consistency = compute_consistency(5.0, 10.0)  # std > mean
-    assert consistency == 0.0
+    assert consistency == pytest.approx(0.0)
 
 
 def test_compute_cop():
@@ -302,11 +303,11 @@ def test_compute_cop():
 
     # Basic calculation
     cop = compute_cop(1.0, 0.5)
-    assert abs(cop - 2.0) < 1e-6
+    assert cop == pytest.approx(2.0, abs=1e-6)
 
     # High pass rate
     cop = compute_cop(1.0, 0.9)
-    assert abs(cop - (1.0 / 0.9)) < 1e-6
+    assert cop == pytest.approx(1.0 / 0.9, abs=1e-6)
 
     # Zero pass rate (edge case)
     cop = compute_cop(1.0, 0.0)
@@ -320,12 +321,12 @@ def test_compute_frontier_cop():
     # Basic case: find minimum
     cops = [2.50, 1.75, 3.20, 2.10]
     frontier = compute_frontier_cop(cops)
-    assert abs(frontier - 1.75) < 1e-6
+    assert frontier == pytest.approx(1.75, abs=1e-6)
 
     # With inf values (should ignore them)
     cops_with_inf = [2.50, float("inf"), 1.75, float("inf"), 3.20]
     frontier = compute_frontier_cop(cops_with_inf)
-    assert abs(frontier - 1.75) < 1e-6
+    assert frontier == pytest.approx(1.75, abs=1e-6)
 
     # All inf (edge case)
     all_inf = [float("inf"), float("inf"), float("inf")]
@@ -338,7 +339,7 @@ def test_compute_frontier_cop():
 
     # Single value
     frontier = compute_frontier_cop([2.50])
-    assert abs(frontier - 2.50) < 1e-6
+    assert frontier == pytest.approx(2.50, abs=1e-6)
 
 
 def test_compute_impl_rate():
@@ -349,15 +350,15 @@ def test_compute_impl_rate():
 
     # Perfect implementation (all requirements satisfied)
     impl_rate = compute_impl_rate(10.0, 10.0)
-    assert abs(impl_rate - 1.0) < 1e-6
+    assert impl_rate == pytest.approx(1.0, abs=1e-6)
 
     # Partial implementation
     impl_rate = compute_impl_rate(8.5, 10.0)
-    assert abs(impl_rate - 0.85) < 1e-6
+    assert impl_rate == pytest.approx(0.85, abs=1e-6)
 
     # Zero implementation (complete failure)
     impl_rate = compute_impl_rate(0.0, 10.0)
-    assert abs(impl_rate - 0.0) < 1e-6
+    assert impl_rate == pytest.approx(0.0, abs=1e-6)
 
     # Edge case: zero max_points (no rubric defined)
     impl_rate = compute_impl_rate(0.0, 0.0)
@@ -365,7 +366,7 @@ def test_compute_impl_rate():
 
     # Edge case: float precision
     impl_rate = compute_impl_rate(7.3, 12.5)
-    assert abs(impl_rate - 0.584) < 1e-6
+    assert impl_rate == pytest.approx(0.584, abs=1e-6)
 
 
 def test_spearman_correlation():
@@ -376,14 +377,14 @@ def test_spearman_correlation():
     x = [1, 2, 3, 4, 5]
     y = [2, 4, 6, 8, 10]
     corr, p_value = spearman_correlation(x, y)
-    assert abs(corr - 1.0) < 1e-6
+    assert corr == pytest.approx(1.0, abs=1e-6)
     assert p_value < 0.01
 
     # Perfect negative correlation
     x = [1, 2, 3, 4, 5]
     y = [10, 8, 6, 4, 2]
     corr, p_value = spearman_correlation(x, y)
-    assert abs(corr - (-1.0)) < 1e-6
+    assert corr == pytest.approx(-1.0, abs=1e-6)
 
 
 def test_pearson_correlation():
@@ -394,7 +395,7 @@ def test_pearson_correlation():
     x = [1, 2, 3, 4, 5]
     y = [2, 4, 6, 8, 10]
     corr, p_value = pearson_correlation(x, y)
-    assert abs(corr - 1.0) < 1e-6
+    assert corr == pytest.approx(1.0, abs=1e-6)
     assert p_value < 0.01
 
     # No correlation
@@ -613,9 +614,9 @@ def test_ols_regression_perfect_line():
     result = ols_regression(x, y)
 
     # Perfect fit
-    assert abs(result["slope"] - 2.0) < 1e-10
-    assert abs(result["intercept"] - 0.0) < 1e-10
-    assert abs(result["r_squared"] - 1.0) < 1e-10
+    assert result["slope"] == pytest.approx(2.0, abs=1e-10)
+    assert result["intercept"] == pytest.approx(0.0, abs=1e-10)
+    assert result["r_squared"] == pytest.approx(1.0, abs=1e-10)
     assert result["p_value"] < 1e-10  # Highly significant
     assert result["std_err"] < 1e-10  # Nearly zero error
 

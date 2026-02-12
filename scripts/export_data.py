@@ -668,6 +668,14 @@ def main() -> None:
             "n_subtests": int(tier_df["subtest"].nunique()),
         }
 
+    # Verify consistency between summary count and CSV count
+    # (both come from the same judges_df, so they must match)
+    assert summary["total_judge_evaluations"] == len(judges_df), (
+        f"Judge count mismatch: summary reports {summary['total_judge_evaluations']} "
+        f"but judges_df has {len(judges_df)} rows. This indicates the summary and CSV "
+        f"were generated from different data states."
+    )
+
     summary_path = output_dir / "summary.json"
     with summary_path.open("w") as f:
         json.dump(summary, f, indent=2, default=json_nan_handler)

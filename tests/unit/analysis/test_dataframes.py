@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 
 def test_build_runs_df_structure(sample_runs_df):
@@ -184,7 +185,7 @@ def test_tier_summary_aggregation(sample_runs_df):
     ]
 
     expected_pass_rate = tier_data["passed"].mean()
-    assert abs(first_row["pass_rate"] - expected_pass_rate) < 1e-6
+    assert first_row["pass_rate"] == pytest.approx(expected_pass_rate, abs=1e-6)
 
 
 def test_model_comparison_aggregation(sample_runs_df):
@@ -213,21 +214,21 @@ def test_consistency_calculation():
     from scylla.analysis.stats import compute_consistency
 
     # Test with known values
-    assert compute_consistency(10.0, 2.0) == 0.8
-    assert compute_consistency(10.0, 0.0) == 1.0
-    assert compute_consistency(10.0, 10.0) == 0.0
-    assert compute_consistency(0.0, 5.0) == 0.0
+    assert compute_consistency(10.0, 2.0) == pytest.approx(0.8)
+    assert compute_consistency(10.0, 0.0) == pytest.approx(1.0)
+    assert compute_consistency(10.0, 10.0) == pytest.approx(0.0)
+    assert compute_consistency(0.0, 5.0) == pytest.approx(0.0)
 
     # Negative consistency should be clamped
-    assert compute_consistency(5.0, 10.0) == 0.0
+    assert compute_consistency(5.0, 10.0) == pytest.approx(0.0)
 
 
 def test_cop_calculation():
     """Test Cost-of-Pass calculation."""
     from scylla.analysis.stats import compute_cop
 
-    assert abs(compute_cop(1.0, 0.5) - 2.0) < 1e-6
-    assert abs(compute_cop(2.0, 0.8) - 2.5) < 1e-6
+    assert compute_cop(1.0, 0.5) == pytest.approx(2.0, abs=1e-6)
+    assert compute_cop(2.0, 0.8) == pytest.approx(2.5, abs=1e-6)
     assert compute_cop(1.0, 0.0) == float("inf")
 
 
@@ -305,7 +306,7 @@ def test_judge_summary_aggregation(sample_judges_df):
     actual_mean = summary[summary["judge_model"] == first_judge_model][
         ("judge_score", "mean")
     ].iloc[0]
-    assert abs(actual_mean - expected_mean) < 1e-6
+    assert actual_mean == pytest.approx(expected_mean, abs=1e-6)
 
 
 def test_judge_summary_empty_dataframe():
@@ -371,7 +372,7 @@ def test_criteria_summary_aggregation(sample_criteria_df):
         & (summary["tier"] == tier)
         & (summary["criterion"] == criterion)
     ][("criterion_score", "mean")].iloc[0]
-    assert abs(actual_mean - expected_mean) < 1e-6
+    assert actual_mean == pytest.approx(expected_mean, abs=1e-6)
 
 
 def test_criteria_summary_empty_dataframe():
