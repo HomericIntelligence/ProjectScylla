@@ -26,6 +26,31 @@ __all__ = [
 ]
 
 
+def _compute_delegation_cost_ratio(run: RunData) -> float | None:
+    """Compute ratio of delegated model cost to primary model cost.
+
+    Returns None if model_usage data is not available or has < 2 models.
+
+    Args:
+        run: Run data with optional model_usage field
+
+    Returns:
+        Delegation cost ratio (0.0 to 1.0) or None
+
+    """
+    if not run.model_usage or len(run.model_usage) < 2:
+        return None
+
+    total_cost = sum(u.cost_usd for u in run.model_usage)
+    if total_cost == 0:
+        return None
+
+    # Primary model = first in list (highest cost typically)
+    primary_cost = run.model_usage[0].cost_usd
+    delegated_cost = total_cost - primary_cost
+    return delegated_cost / total_cost
+
+
 def compute_judge_impl_rate(judge: JudgeEvaluation) -> float:
     """Compute implementation rate for a single judge.
 
@@ -111,6 +136,11 @@ def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
                     "cache_read_tokens": run.token_stats.cache_read_tokens,
                     "total_tokens": run.token_stats.total_tokens,
                     "exit_code": run.exit_code,
+                    # Optional delegation metrics (T3-T6)
+                    "api_calls": run.api_calls,
+                    "num_turns": run.num_turns,
+                    "num_models": len(run.model_usage) if run.model_usage else None,
+                    "delegation_cost_ratio": _compute_delegation_cost_ratio(run),
                 }
             )
 
