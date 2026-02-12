@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 
 def test_cliffs_delta_basic():
@@ -128,9 +129,9 @@ def test_bootstrap_ci_single_element():
     data = np.array([5.0])
     mean, lower, upper = bootstrap_ci(data)
 
-    assert mean == 5.0
-    assert lower == 5.0
-    assert upper == 5.0
+    assert mean == pytest.approx(5.0)
+    assert lower == pytest.approx(5.0)
+    assert upper == pytest.approx(5.0)
 
 
 def test_bootstrap_ci_empty_array():
@@ -187,22 +188,22 @@ def test_mann_whitney_u_degenerate_input():
     g1 = [1]
     g2 = [2, 3, 4]
     u_stat, p_value = mann_whitney_u(g1, g2)
-    assert u_stat == 0.0
-    assert p_value == 1.0
+    assert u_stat == pytest.approx(0.0)
+    assert p_value == pytest.approx(1.0)
 
     # Single element in both groups
     g1 = [1]
     g2 = [2]
     u_stat, p_value = mann_whitney_u(g1, g2)
-    assert u_stat == 0.0
-    assert p_value == 1.0
+    assert u_stat == pytest.approx(0.0)
+    assert p_value == pytest.approx(1.0)
 
     # Empty group
     g1 = []
     g2 = [1, 2, 3]
     u_stat, p_value = mann_whitney_u(g1, g2)
-    assert u_stat == 0.0
-    assert p_value == 1.0
+    assert u_stat == pytest.approx(0.0)
+    assert p_value == pytest.approx(1.0)
 
 
 def test_krippendorff_alpha_perfect_agreement():
@@ -266,12 +267,12 @@ def test_bonferroni_correction():
     from scylla.analysis.stats import bonferroni_correction
 
     # Test basic correction
-    assert bonferroni_correction(0.01, 5) == 0.05
-    assert bonferroni_correction(0.02, 10) == 0.20
+    assert bonferroni_correction(0.01, 5) == pytest.approx(0.05)
+    assert bonferroni_correction(0.02, 10) == pytest.approx(0.20)
 
     # Test clamping to 1.0
-    assert bonferroni_correction(0.5, 3) == 1.0
-    assert bonferroni_correction(1.0, 2) == 1.0
+    assert bonferroni_correction(0.5, 3) == pytest.approx(1.0)
+    assert bonferroni_correction(1.0, 2) == pytest.approx(1.0)
 
 
 def test_compute_consistency():
@@ -279,21 +280,21 @@ def test_compute_consistency():
     from scylla.analysis.stats import compute_consistency
 
     # Perfect consistency (no variation)
-    assert compute_consistency(10.0, 0.0) == 1.0
+    assert compute_consistency(10.0, 0.0) == pytest.approx(1.0)
 
     # High variation
-    assert compute_consistency(10.0, 10.0) == 0.0
+    assert compute_consistency(10.0, 10.0) == pytest.approx(0.0)
 
     # Moderate variation
     consistency = compute_consistency(10.0, 2.0)
     assert 0.7 < consistency < 0.9
 
     # Zero mean (edge case)
-    assert compute_consistency(0.0, 5.0) == 0.0
+    assert compute_consistency(0.0, 5.0) == pytest.approx(0.0)
 
     # Negative consistency should be clamped to 0
     consistency = compute_consistency(5.0, 10.0)  # std > mean
-    assert consistency == 0.0
+    assert consistency == pytest.approx(0.0)
 
 
 def test_compute_cop():
@@ -537,8 +538,8 @@ def test_holm_bonferroni_monotonicity():
         )
 
     # Specific values for this case
-    assert corrected[0] == 0.02  # 0.01 * 2
-    assert corrected[1] == 0.02  # Enforced to match corrected[0]
+    assert corrected[0] == pytest.approx(0.02)  # 0.01 * 2
+    assert corrected[1] == pytest.approx(0.02)  # Enforced to match corrected[0]
 
     # General test with more p-values
     p_values_general = [0.001, 0.01, 0.011, 0.05, 0.06]
