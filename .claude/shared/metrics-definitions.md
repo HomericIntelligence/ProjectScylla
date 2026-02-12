@@ -2,6 +2,10 @@
 
 Complete definitions of all metrics used in ProjectScylla evaluations.
 
+**See also:**
+- [CLAUDE.md](/CLAUDE.md#core-metrics) - Quick reference summary
+- [Research Methodology](/docs/research.md) - Application and context
+
 ## Quality Metrics
 
 ### Pass-Rate
