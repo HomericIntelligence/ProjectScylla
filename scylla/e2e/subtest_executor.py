@@ -1462,7 +1462,7 @@ class SubTestExecutor:
         task_prompt: str,
         stdout: str,
         judge_dir: Path,
-        language: str = "mojo",
+        language: str = "python",
         rubric_path: Path | None = None,
     ) -> tuple[dict, list[JudgeResultSummary]]:
         """Run LLM judge evaluation(s) on the result.
