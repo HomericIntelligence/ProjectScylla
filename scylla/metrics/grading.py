@@ -7,29 +7,10 @@ implementation rate, cost of pass, and composite scores.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
 
 # Default pass threshold (Good grade - B)
 # See docs/design/grading-scale.md for specification
 DEFAULT_PASS_THRESHOLD = 0.60
-
-
-class JudgmentProtocol(Protocol):
-    """Protocol for judgment objects."""
-
-    @property
-    def summary(self) -> SummaryProtocol:
-        """Get the summary."""
-        ...
-
-
-class SummaryProtocol(Protocol):
-    """Protocol for summary objects."""
-
-    @property
-    def weighted_score(self) -> float:
-        """Get the weighted score."""
-        ...
 
 
 @dataclass

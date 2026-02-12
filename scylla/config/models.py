@@ -318,8 +318,4 @@ class ScyllaConfig(BaseModel):
     test_id: str | None = Field(default=None)
     model_id: str | None = Field(default=None)
 
-    def is_valid(self) -> bool:
-        """Check if configuration is valid for execution."""
-        return True  # Pydantic validation ensures validity
-
     model_config = {"frozen": True}

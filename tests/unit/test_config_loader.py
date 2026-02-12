@@ -318,13 +318,6 @@ class TestConfigLoaderMerged:
         with pytest.raises(Exception):  # Pydantic ValidationError
             config.timeout_seconds = 9999  # type: ignore
 
-    def test_load_merged_is_valid(self) -> None:
-        """Merged config passes validation."""
-        loader = ConfigLoader(base_path=FIXTURES_PATH)
-        config = loader.load(test_id="test-001", model_id="test-model")
-
-        assert config.is_valid()
-
 
 class TestConfigLoaderEdgeCases:
     """Edge case and error handling tests."""

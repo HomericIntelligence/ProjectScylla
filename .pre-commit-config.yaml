@@ -1,4 +1,4 @@
-# Pre-commit hooks for ML Odyssey
+# Pre-commit hooks for ProjectScylla
 # See https://pre-commit.com for more information
 
 repos:
