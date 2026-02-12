@@ -7,15 +7,15 @@ import pytest
 
 @pytest.fixture
 def sample_runs_df():
-    """Sample runs DataFrame for testing (~70 rows).
+    """Sample runs DataFrame for testing (~140 rows).
 
-    Covers 2 models, 3 tiers, 2 subtests, 5 runs per combination.
+    Covers 2 models, 7 tiers (T0-T6), 2 subtests, 5 runs per combination.
     """
     np.random.seed(42)
     data = []
 
     models = ["Sonnet 4.5", "Haiku 4.5"]
-    tiers = ["T0", "T1", "T2"]
+    tiers = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
     subtests = ["00", "01"]
 
     for model in models:
