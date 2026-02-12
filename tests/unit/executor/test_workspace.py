@@ -17,7 +17,6 @@ import pytest
 
 from scylla.executor.workspace import (
     WorkspaceError,
-    WorkspaceManager,
     checkout_hash,
     cleanup_workspace,
     clone_repo,
@@ -414,64 +413,6 @@ class TestCleanupWorkspace:
         assert not run_dir.exists()
 
 
-class TestWorkspaceManager:
-    """Tests for WorkspaceManager class."""
-
-    def test_create_delegates_to_function(self, tmp_path: Path) -> None:
-        """WorkspaceManager.create delegates to create_workspace."""
-        workspace = WorkspaceManager.create(
-            test_id="001-test",
-            model_id="claude",
-            run_number=1,
-            timestamp="2024-01-15T14-30-00",
-            base_path=tmp_path,
-        )
-
-        assert workspace.exists()
-        assert workspace.name == "workspace"
-
-    def test_clone_delegates_to_function(self, tmp_path: Path) -> None:
-        """WorkspaceManager.clone delegates to clone_repo."""
-        workspace = tmp_path / "workspace"
-        workspace.mkdir()
-
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stderr = ""
-
-        with patch("subprocess.run", return_value=mock_result):
-            WorkspaceManager.clone(
-                repo_url="https://github.com/example/repo",
-                workspace=workspace,
-            )
-
-    def test_checkout_delegates_to_function(self, tmp_path: Path) -> None:
-        """WorkspaceManager.checkout delegates to checkout_hash."""
-        workspace = tmp_path / "workspace"
-        workspace.mkdir()
-        (workspace / ".git").mkdir()
-
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stderr = ""
-
-        with patch("subprocess.run", return_value=mock_result):
-            WorkspaceManager.checkout(
-                workspace=workspace,
-                hash="abc123",
-            )
-
-    def test_cleanup_delegates_to_function(self, tmp_path: Path) -> None:
-        """WorkspaceManager.cleanup delegates to cleanup_workspace."""
-        run_dir = tmp_path / "run-01"
-        workspace = run_dir / "workspace"
-        workspace.mkdir(parents=True)
-
-        WorkspaceManager.cleanup(workspace)
-
-        assert not workspace.exists()
-
-
 class TestGitRetryLogic:
     """Tests for git command retry logic."""
 
@@ -532,51 +473,3 @@ class TestGitRetryLogic:
                 )
 
             assert mock_run.call_count == 1
-
-
-class TestWorkspaceManagerIntegration:
-    """Integration tests for full workspace workflow."""
-
-    def test_full_workflow_with_mocks(self, tmp_path: Path) -> None:
-        """Full workflow: create -> clone -> checkout -> cleanup."""
-        # Create
-        workspace = WorkspaceManager.create(
-            test_id="001-justfile-to-makefile",
-            model_id="claude-opus-4-5-20251101",
-            run_number=1,
-            timestamp="2024-01-15T14-30-00",
-            base_path=tmp_path,
-        )
-
-        assert workspace.exists()
-
-        # Clone (mocked)
-        mock_result = MagicMock()
-        mock_result.returncode = 0
-        mock_result.stderr = ""
-
-        with patch("subprocess.run", return_value=mock_result):
-            WorkspaceManager.clone(
-                repo_url="https://github.com/mvillmow/ProjectOdyssey",
-                workspace=workspace,
-            )
-
-        # Simulate git repo creation
-        (workspace / ".git").mkdir()
-
-        # Checkout (mocked)
-        with patch("subprocess.run", return_value=mock_result):
-            WorkspaceManager.checkout(
-                workspace=workspace,
-                hash="ce739d4aa328f1c0815b33e2812c4b889868b740",
-            )
-
-        # Verify logs directory exists before cleanup
-        logs_dir = workspace.parent / "logs"
-        assert logs_dir.exists()
-
-        # Cleanup
-        WorkspaceManager.cleanup(workspace, keep_logs=True)
-
-        assert not workspace.exists()
-        assert logs_dir.exists()
