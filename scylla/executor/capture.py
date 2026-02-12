@@ -47,10 +47,15 @@ class LogCapture:
     during test execution, writing to files in real-time.
 
     Example:
+        >>> # Context manager (recommended)
+        >>> with LogCapture(Path("/output")) as capture:
+        ...     capture.write_stdout("output line\n")
+        ...     capture.write_stderr("error line\n")
+
+        >>> # Manual usage
         >>> capture = LogCapture(Path("/output"))
         >>> capture.start()
         >>> capture.write_stdout("output line\n")
-        >>> capture.write_stderr("error line\n")
         >>> metrics = capture.stop(exit_code=0)
 
     """
@@ -73,6 +78,29 @@ class LogCapture:
         self.stderr_path = self.output_dir / "stderr.log"
         self.agent_log_path = self.output_dir / "agent.log"
         self.metrics_path = self.output_dir / "metrics.json"
+
+    def __enter__(self) -> LogCapture:
+        """Context manager entry.
+
+        Returns:
+            Self for use in with statement.
+
+        """
+        self.start()
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Context manager exit.
+
+        Args:
+            exc_type: Exception type if raised.
+            exc_val: Exception value if raised.
+            exc_tb: Exception traceback if raised.
+
+        """
+        error_msg = str(exc_val) if exc_val else None
+        exit_code = 1 if exc_type else 0
+        self.stop(exit_code=exit_code, error=error_msg)
 
     def start(self) -> None:
         """Start log capture session.

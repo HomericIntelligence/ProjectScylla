@@ -17,7 +17,7 @@ import argparse
 import subprocess
 import sys
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Enable importing from repository root and scripts directory
@@ -159,7 +159,7 @@ def generate_changelog(
     # Header
     lines.append(f"# Changelog for {version}")
     lines.append("")
-    lines.append(f"**Release Date**: {datetime.now().strftime('%Y-%m-%d')}")
+    lines.append(f"**Release Date**: {datetime.now(timezone.utc).strftime('%Y-%m-%d')}")
     lines.append("")
 
     # Determine range

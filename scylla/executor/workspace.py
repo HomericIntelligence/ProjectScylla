@@ -10,7 +10,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -186,7 +186,7 @@ def create_workspace(
 
     # Generate timestamp if not provided
     if timestamp is None:
-        timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
 
     # Ensure base_path is a Path
     base_path = Path(base_path)
