@@ -300,8 +300,8 @@ class TestCostCalculation:
         adapter = ConcreteAdapter()
         cost = adapter.calculate_cost(1000, 500, model="claude-opus-4-5-20251101")
 
-        # Opus: 0.015 per 1K input, 0.075 per 1K output
-        expected = (1000 / 1000 * 0.015) + (500 / 1000 * 0.075)
+        # Opus 4.5: 0.005 per 1K input, 0.025 per 1K output
+        expected = (1000 / 1000 * 0.005) + (500 / 1000 * 0.025)
         assert cost == pytest.approx(expected)
 
     def test_calculate_cost_zero_tokens(self) -> None:
