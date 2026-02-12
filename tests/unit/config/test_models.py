@@ -498,7 +498,6 @@ class TestScyllaConfig:
         assert config.runs_per_tier == 10
         assert config.timeout_seconds == 3600
         assert config.max_cost_usd == 10.0
-        assert config.is_valid() is True
 
     def test_scylla_config_with_model(self) -> None:
         """ScyllaConfig with model configuration."""
@@ -523,7 +522,7 @@ class TestScyllaConfig:
         """ScyllaConfig should validate via Pydantic."""
         # Valid config
         config = ScyllaConfig(runs_per_tier=5, timeout_seconds=1800)
-        assert config.is_valid() is True
+        assert config.runs_per_tier == 5
 
         # Invalid config should raise during construction
         with pytest.raises(ValidationError):

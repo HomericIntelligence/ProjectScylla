@@ -16,10 +16,6 @@ from pydantic import BaseModel, Field
 from scylla.config.pricing import (
     calculate_cost as pricing_calculate_cost,
 )
-from scylla.config.pricing import (
-    get_input_cost_per_1k,
-    get_output_cost_per_1k,
-)
 from scylla.e2e.models import TokenStats
 
 if TYPE_CHECKING:
@@ -124,10 +120,6 @@ class BaseAdapter(ABC):
         ...         return AdapterResult(exit_code=0)
 
     """
-
-    # Model pricing (per 1K tokens) - override in subclasses for specific models
-    DEFAULT_INPUT_COST_PER_1K: float = 0.003
-    DEFAULT_OUTPUT_COST_PER_1K: float = 0.015
 
     def __init__(self, adapter_config: dict[str, Any] | None = None) -> None:
         """Initialize the adapter.
@@ -289,34 +281,6 @@ class BaseAdapter(ABC):
         return pricing_calculate_cost(
             tokens_input, tokens_output, tokens_cached=tokens_cached, model=model
         )
-
-    def _get_input_cost_per_1k(self, model: str | None) -> float:
-        """Get input token cost per 1K tokens for a model.
-
-        Uses centralized pricing from scylla.config.pricing.
-
-        Args:
-            model: Model identifier.
-
-        Returns:
-            Cost per 1K input tokens.
-
-        """
-        return get_input_cost_per_1k(model)
-
-    def _get_output_cost_per_1k(self, model: str | None) -> float:
-        """Get output token cost per 1K tokens for a model.
-
-        Uses centralized pricing from scylla.config.pricing.
-
-        Args:
-            model: Model identifier.
-
-        Returns:
-            Cost per 1K output tokens.
-
-        """
-        return get_output_cost_per_1k(model)
 
     def load_prompt(self, prompt_file: Path) -> str:
         """Load prompt content from file.

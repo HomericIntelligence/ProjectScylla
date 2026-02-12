@@ -1,5 +1,8 @@
 # Taming Scylla
 
+> **DEPRECATED**: This markdown version is no longer actively maintained.
+> See `research_paper.tex` for the current LaTeX source.
+
 ## Understanding the multi-headed agentic daemon of the coding seas
 
 Micah Villmow
