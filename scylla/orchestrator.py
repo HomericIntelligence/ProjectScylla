@@ -155,7 +155,7 @@ class EvalOrchestrator:
             cost_usd = execution_result.get("cost_usd", 0.0)
             pass_rate = 1.0 if passed else 0.0
             cost_of_pass = cost_usd / pass_rate if pass_rate > 0 else float("inf")
-            # Composite score: equal weight (50/50) per metrics-formulas.md
+            # Composite score: equal weight (50/50) per .claude/shared/metrics-definitions.md
             composite_score = (pass_rate + impl_rate) / 2
 
             # Create result
