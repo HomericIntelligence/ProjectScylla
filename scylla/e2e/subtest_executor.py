@@ -345,7 +345,7 @@ class SubTestExecutor:
                 # Setup workspace with git worktree
                 _setup_workspace(
                     workspace=workspace,
-                    command_logger=CommandLogger(run_dir),
+                    command_logger=CommandLogger(log_dir=run_dir),
                     tier_id=tier_id,
                     subtest_id=subtest.id,
                     run_number=run_num,
@@ -492,7 +492,7 @@ class SubTestExecutor:
         judge_dir.chmod(0o777)
 
         # Agent command logger outputs to agent/
-        command_logger = CommandLogger(agent_dir)
+        command_logger = CommandLogger(log_dir=agent_dir)
 
         # Resource suffix is now handled in CLAUDE.md by tier_manager.prepare_workspace()
         # Task prompt stays clean - just symlink to experiment-level copy for deduplication
