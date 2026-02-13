@@ -356,7 +356,7 @@ def rerun_single_run(
 
     executor._setup_workspace(
         workspace,
-        CommandLogger(run_dir),
+        CommandLogger(log_dir=run_dir),
         tier_id,
         subtest_config.id,
         run_number=run_info.run_number,

@@ -536,14 +536,8 @@ Analyze the results of running all 47 E2E tests and file summaries to GitHub.
 
 ## Configuration
 - Date: {date}
-<<<<<<< HEAD
-- Model: {config["model"]} | Judge: {config["judge_model"]}
-- Runs: {config["runs"]} | Max Subtests: {config["max_subtests"]}
-- Thinking: {config["thinking"]}
-=======
 - Model: {config["model"]} | Judge: {config["judge_model"]} | Runs: {config["runs"]}
 - Max Subtests: {config["max_subtests"]} | Thinking: {config["thinking"]}
->>>>>>> 14b6d9a (fix(batch-runner): Fix crashes, terminal corruption, and improve UX)
 - Tiers: {", ".join(config["tiers"])}
 - Results directory: {results_dir}/
 

@@ -190,9 +190,7 @@ class TierManager:
                         final_merged = temp_merged
 
             # Create temporary SubTestConfig for resource suffix generation
-            from dataclasses import replace
-
-            temp_subtest = replace(subtest, resources=final_merged)
+            temp_subtest = subtest.model_copy(update={"resources": final_merged})
             resource_suffix = self.build_resource_suffix(temp_subtest)
 
             # Apply merged resources with suffix
@@ -200,9 +198,7 @@ class TierManager:
         # Normal baseline extension for other tiers
         elif baseline and subtest.extends_previous:
             # Build resource suffix from baseline
-            from dataclasses import replace
-
-            temp_subtest = replace(subtest, resources=baseline.resources)
+            temp_subtest = subtest.model_copy(update={"resources": baseline.resources})
             resource_suffix = self.build_resource_suffix(temp_subtest)
             self._apply_baseline(workspace, baseline, resource_suffix)
         else:
