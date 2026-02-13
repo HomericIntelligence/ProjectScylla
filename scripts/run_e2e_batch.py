@@ -16,6 +16,7 @@ import json
 import logging
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -36,6 +37,44 @@ DEFAULT_JUDGE_MODEL = "haiku"
 DEFAULT_RUNS = 1
 DEFAULT_MAX_SUBTESTS = 2
 DEFAULT_TIERS = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+
+
+def _restore_terminal() -> None:
+    """Restore terminal to sane state using stty.
+
+    Call this on exit to fix terminal corruption from child processes.
+    """
+    if sys.stdin.isatty():
+        try:
+            subprocess.run(["stty", "sane"], stdin=sys.stdin, check=False)
+        except Exception:
+            pass  # Best effort, don't crash on cleanup
+
+
+def format_duration(seconds: float) -> str:
+    """Convert seconds to human-readable duration string.
+
+    Args:
+        seconds: Duration in seconds
+
+    Returns:
+        Formatted string like "5m 23s" or "2h 14m" or "N/A" for 0/None
+
+    """
+    if not seconds or seconds <= 0:
+        return "N/A"
+
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = int(seconds % 60)
+
+    if hours > 0:
+        return f"{hours}h {minutes}m"
+    elif minutes > 0:
+        return f"{minutes}m {secs}s"
+    else:
+        return f"{secs}s"
+
 
 # Configure logging
 logging.basicConfig(
@@ -283,6 +322,7 @@ def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) ->
             cmd,
             stdout=log_file,
             stderr=subprocess.STDOUT,
+            stdin=subprocess.DEVNULL,
             text=True,
             check=False,  # Don't raise on error
         )
@@ -312,7 +352,8 @@ def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) ->
 
     # Determine status
     if exit_code == 0 and metrics:
-        status = "pass" if metrics.get("best_score", 0) > 0.5 else "fail"
+        score = metrics.get("best_score") or 0.0
+        status = "pass" if score > 0.5 else "fail"
     elif exit_code == 0:
         status = "unknown"
     else:
@@ -322,6 +363,7 @@ def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) ->
 
     result = {
         "test_id": test_id,
+        "test_name": test.get("name", ""),
         "thread_id": thread_id,
         "status": status,
         "exit_code": exit_code,
@@ -405,14 +447,22 @@ def extract_metrics(result_dir: Path) -> dict | None:
         with open(report_path) as f:
             report = json.load(f)
 
+        # Read from nested structure: report["summary"] and report["children"]
+        summary = report.get("summary", {})
+        best_tier = summary.get("best_tier")
+        best_score = 0.0
+        if best_tier:
+            for child in report.get("children", []):
+                if child.get("tier") == best_tier:
+                    best_score = child.get("best_score", 0.0) or 0.0
+                    break
+
         return {
-            "best_tier": report.get("best_overall_tier"),
-            "best_score": report.get("tier_results", {})
-            .get(report.get("best_overall_tier", ""), {})
-            .get("best_subtest_score", 0.0),
-            "frontier_cop": report.get("frontier_cop", float("inf")),
-            "total_cost": report.get("total_cost", 0.0),
-            "total_duration": report.get("total_duration_seconds", 0.0),
+            "best_tier": best_tier,
+            "best_score": best_score,
+            "frontier_cop": summary.get("frontier_cop"),
+            "total_cost": summary.get("total_cost", 0.0),
+            "total_duration": summary.get("total_duration", 0.0),
         }
     except Exception as e:
         logger.warning(f"Failed to extract metrics from {report_path}: {e}")
@@ -486,9 +536,14 @@ Analyze the results of running all 47 E2E tests and file summaries to GitHub.
 
 ## Configuration
 - Date: {date}
+<<<<<<< HEAD
 - Model: {config["model"]} | Judge: {config["judge_model"]}
 - Runs: {config["runs"]} | Max Subtests: {config["max_subtests"]}
 - Thinking: {config["thinking"]}
+=======
+- Model: {config["model"]} | Judge: {config["judge_model"]} | Runs: {config["runs"]}
+- Max Subtests: {config["max_subtests"]} | Thinking: {config["thinking"]}
+>>>>>>> 14b6d9a (fix(batch-runner): Fix crashes, terminal corruption, and improve UX)
 - Tiers: {", ".join(config["tiers"])}
 - Results directory: {results_dir}/
 
@@ -633,26 +688,30 @@ def print_summary_table(all_results: list[dict]) -> None:
         all_results: List of all result dicts
 
     """
-    print(f"\n{Colors.BOLD}{'=' * 100}{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}{'=' * 120}{Colors.ENDC}")
     print(f"{Colors.BOLD}Batch Run Summary{Colors.ENDC}")
-    print(f"{Colors.BOLD}{'=' * 100}{Colors.ENDC}\n")
+    print(f"{Colors.BOLD}{'=' * 120}{Colors.ENDC}\n")
 
     # Header
     print(
-        f"{Colors.BOLD}{'Test ID':<12} {'Status':<8} {'Best Tier':<10} "
-        f"{'Score':<8} {'CoP ($)':<10} {'Cost ($)':<10} {'Duration (s)':<12}{Colors.ENDC}"
+        f"{Colors.BOLD}{'Test ID':<12} {'Name':<28} {'Status':<8} {'Best Tier':<10} "
+        f"{'Score':<8} {'CoP ($)':<10} {'Cost ($)':<10} {'Duration':<12}{Colors.ENDC}"
     )
-    print("-" * 100)
+    print("-" * 120)
 
     # Results
     for result in sorted(all_results, key=lambda r: r["test_id"]):
         test_id = result["test_id"]
+        test_name = result.get("test_name", "")
+        # Truncate name to 28 chars
+        if len(test_name) > 28:
+            test_name = test_name[:25] + "..."
         status = result["status"].upper()
-        best_tier = result.get("best_tier", "N/A")
-        best_score = result.get("best_score", 0.0)
-        frontier_cop = result.get("frontier_cop", float("inf"))
-        total_cost = result.get("total_cost", 0.0)
-        total_duration = result.get("total_duration", 0.0)
+        best_tier = result.get("best_tier") or "N/A"
+        best_score = result.get("best_score") or 0.0
+        frontier_cop = result.get("frontier_cop")
+        total_cost = result.get("total_cost") or 0.0
+        total_duration = result.get("total_duration") or 0.0
 
         # Color code status
         if status == "PASS":
@@ -664,16 +723,16 @@ def print_summary_table(all_results: list[dict]) -> None:
 
         # Format values
         score_str = f"{best_score:.2f}" if best_score > 0 else "N/A"
-        cop_str = f"{frontier_cop:.4f}" if frontier_cop != float("inf") else "N/A"
-        cost_str = f"{total_cost:.4f}" if total_cost > 0 else "N/A"
-        duration_str = f"{total_duration:.0f}" if total_duration > 0 else "N/A"
+        cop_str = f"${frontier_cop:.4f}" if frontier_cop is not None else "N/A"
+        cost_str = f"${total_cost:.4f}" if total_cost > 0 else "N/A"
+        duration_str = format_duration(total_duration)
 
         print(
-            f"{test_id:<12} {status_colored:<16} {best_tier:<10} "
+            f"{test_id:<12} {test_name:<28} {status_colored:<16} {best_tier:<10} "
             f"{score_str:<8} {cop_str:<10} {cost_str:<10} {duration_str:<12}"
         )
 
-    print(f"\n{Colors.BOLD}{'=' * 100}{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}{'=' * 120}{Colors.ENDC}")
 
     # Statistics
     total = len(all_results)
@@ -686,6 +745,16 @@ def print_summary_table(all_results: list[dict]) -> None:
     print(f"  {Colors.OKGREEN}Passed:  {passed} ({100 * passed / total:.1f}%){Colors.ENDC}")
     print(f"  {Colors.WARNING}Failed:  {failed} ({100 * failed / total:.1f}%){Colors.ENDC}")
     print(f"  {Colors.FAIL}Errored: {errored} ({100 * errored / total:.1f}%){Colors.ENDC}")
+
+    # Aggregate metrics
+    total_cost_sum = sum(r.get("total_cost", 0) or 0 for r in all_results)
+    avg_cost = total_cost_sum / total if total > 0 else 0
+    total_duration_sum = sum(r.get("total_duration", 0) or 0 for r in all_results)
+
+    print(f"\n{Colors.BOLD}Aggregate Metrics:{Colors.ENDC}")
+    print(f"  Total cost:       ${total_cost_sum:.4f}")
+    print(f"  Average cost:     ${avg_cost:.4f}")
+    print(f"  Total duration:   {format_duration(total_duration_sum)}")
     print()
 
 
@@ -809,6 +878,8 @@ Examples:
         "threads": args.threads,
     }
 
+    batch_start_time = time.time()
+
     try:
         # 0. Check for rate limits before starting
         is_rate_limited, rate_msg = check_rate_limit()
@@ -881,6 +952,9 @@ Examples:
         print(f"\n{Colors.BOLD}Running {len(tests)} tests...{Colors.ENDC}\n")
 
         new_results = []
+        completed_count = 0
+        total_tests = len(tests)
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as executor:
             # Submit all threads
             futures = [
@@ -893,6 +967,17 @@ Examples:
                 try:
                     results = future.result()
                     new_results.extend(results)
+                    completed_count += len(results)
+
+                    # Print progress
+                    elapsed = time.time() - batch_start_time
+                    progress_pct = (
+                        int(100 * completed_count / total_tests) if total_tests > 0 else 0
+                    )
+                    print(
+                        f"  Progress: {completed_count}/{total_tests} tests "
+                        f"({progress_pct}%) - Elapsed: {format_duration(elapsed)}"
+                    )
                 except Exception as e:
                     logger.error(f"Thread failed with exception: {e}")
 
@@ -915,6 +1000,14 @@ Examples:
         print(f"  Result Dirs:      {args.results_dir}/*-test-*/")
         print()
 
+        # What to do next
+        print(f"{Colors.BOLD}What to Do Next:{Colors.ENDC}")
+        print(f"  1. Review results:  less {args.results_dir}/batch_summary.json")
+        print(f"  2. Analyze with AI: Follow the prompt in {args.results_dir}/ANALYZE_RESULTS.md")
+        print(f"  3. Check failures:  Look at {args.results_dir}/thread_logs/ for error details")
+        print("  4. Retry errors:    python scripts/run_e2e_batch.py --retry-errors")
+        print()
+
         return 0
 
     except KeyboardInterrupt:
@@ -924,6 +1017,10 @@ Examples:
     except Exception as e:
         logger.exception(f"Batch run failed: {e}")
         return 1
+
+    finally:
+        # Always restore terminal on exit
+        _restore_terminal()
 
 
 if __name__ == "__main__":
