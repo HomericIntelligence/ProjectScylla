@@ -169,6 +169,36 @@ class TestLogCapture:
             assert metrics.exit_code == 1
             assert metrics.error == "Connection refused"
 
+    def test_start_partial_open_failure(self) -> None:
+        """Test that partial open failure cleans up successfully opened files."""
+        from unittest.mock import Mock, patch
+
+        with TemporaryDirectory() as tmpdir:
+            capture = LogCapture(Path(tmpdir))
+
+            # Mock open() to succeed twice then fail on third call
+            mock_file1 = Mock()
+            mock_file2 = Mock()
+            open_results = [mock_file1, mock_file2, OSError("Permission denied")]
+
+            def side_effect(*args, **kwargs):
+                result = open_results.pop(0)
+                if isinstance(result, Exception):
+                    raise result
+                return result
+
+            with patch("builtins.open", side_effect=side_effect):
+                with pytest.raises(OSError, match="Permission denied"):
+                    capture.start()
+
+            # Verify that successfully opened files were closed
+            mock_file1.close.assert_called_once()
+            mock_file2.close.assert_called_once()
+            # Verify file handles were reset
+            assert capture._stdout_file is None
+            assert capture._stderr_file is None
+            assert capture._agent_log_file is None
+
 
 class TestStreamingCapture:
     """Tests for StreamingCapture context manager."""

@@ -111,10 +111,26 @@ class LogCapture:
         self._started_at = datetime.now(timezone.utc)
         self._metrics = ExecutionMetrics(started_at=self._started_at.isoformat())
 
-        # Open files for streaming writes
-        self._stdout_file = open(self.stdout_path, "w")
-        self._stderr_file = open(self.stderr_path, "w")
-        self._agent_log_file = open(self.agent_log_path, "w")
+        # Open files for streaming writes with proper cleanup on partial failure
+        opened_files = []
+        try:
+            self._stdout_file = open(self.stdout_path, "w")
+            opened_files.append(self._stdout_file)
+            self._stderr_file = open(self.stderr_path, "w")
+            opened_files.append(self._stderr_file)
+            self._agent_log_file = open(self.agent_log_path, "w")
+        except Exception:
+            # Close any files that were successfully opened
+            for f in opened_files:
+                try:
+                    f.close()
+                except Exception:
+                    pass
+            # Reset file handles
+            self._stdout_file = None
+            self._stderr_file = None
+            self._agent_log_file = None
+            raise
 
     def write_stdout(self, data: str) -> None:
         """Write data to stdout log.

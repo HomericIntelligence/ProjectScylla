@@ -16,7 +16,7 @@ import json
 import logging
 import subprocess
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 # Add scripts/ to path for common utilities
@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from common import Colors, get_repo_root
+
 from scylla.e2e.models import TestFixture
 from scylla.e2e.rate_limit import check_api_rate_limit_status
 
@@ -176,9 +177,7 @@ def discover_tests(tests_dir: Path, test_filter: list[str] | None = None) -> lis
                     "path": test_dir,
                 }
             )
-            logger.debug(
-                f"Found {test_id}: {fixture.name} (timeout: {fixture.timeout_seconds}s)"
-            )
+            logger.debug(f"Found {test_id}: {fixture.name} (timeout: {fixture.timeout_seconds}s)")
         except Exception as e:
             logger.warning(f"Failed to load test {test_id}: {e}")
             continue
@@ -221,8 +220,7 @@ def partition_tests(tests: list[dict], num_threads: int) -> list[list[dict]]:
     for i, thread_tests in enumerate(threads):
         total_time = sum(t["timeout_seconds"] for t in thread_tests)
         logger.info(
-            f"Thread {i}: {len(thread_tests)} tests, "
-            f"~{total_time}s ({total_time / 3600:.1f}h)"
+            f"Thread {i}: {len(thread_tests)} tests, ~{total_time}s ({total_time / 3600:.1f}h)"
         )
 
     return threads
@@ -488,8 +486,10 @@ Analyze the results of running all 47 E2E tests and file summaries to GitHub.
 
 ## Configuration
 - Date: {date}
-- Model: {config['model']} | Judge: {config['judge_model']} | Runs: {config['runs']} | Max Subtests: {config['max_subtests']} | Thinking: {config['thinking']}
-- Tiers: {', '.join(config['tiers'])}
+- Model: {config["model"]} | Judge: {config["judge_model"]}
+- Runs: {config["runs"]} | Max Subtests: {config["max_subtests"]}
+- Thinking: {config["thinking"]}
+- Tiers: {", ".join(config["tiers"])}
 - Results directory: {results_dir}/
 
 ## What to Do
@@ -564,12 +564,12 @@ Post a final comment on the epic with:
 **Status**: {{PASS/FAIL/ERROR}}
 
 ## Configuration
-- Model: {config['model']}
-- Judge: {config['judge_model']}
-- Runs: {config['runs']}
-- Max Subtests: {config['max_subtests']}
-- Thinking: {config['thinking']}
-- Tiers: {', '.join(config['tiers'])}
+- Model: {config["model"]}
+- Judge: {config["judge_model"]}
+- Runs: {config["runs"]}
+- Max Subtests: {config["max_subtests"]}
+- Thinking: {config["thinking"]}
+- Tiers: {", ".join(config["tiers"])}
 
 ## Results
 - Best Tier: {{best_tier}}
@@ -857,12 +857,14 @@ Examples:
             logger.info(f"All {len(all_tests)} tests already completed. Nothing to run.")
             print(f"\n{Colors.OKGREEN}✓ All tests already completed!{Colors.ENDC}")
             print(f"  Skipped: {len(completed_test_ids)} tests")
-            print(f"  Use --fresh to restart from scratch, or --retry-errors to retry failed tests.\n")
+            print(
+                "  Use --fresh to restart from scratch, or --retry-errors to retry failed tests.\n"
+            )
             return 0
 
         # Log resume info
         if completed_test_ids:
-            logger.info(f"Resuming batch run:")
+            logger.info("Resuming batch run:")
             logger.info(f"  Total tests: {len(all_tests)}")
             logger.info(f"  Already completed: {len(completed_test_ids)}")
             logger.info(f"  To run: {len(tests)}")
