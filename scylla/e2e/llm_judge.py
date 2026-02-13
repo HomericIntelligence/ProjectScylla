@@ -11,9 +11,10 @@ import logging
 import os
 import subprocess
 import tempfile
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from pydantic import BaseModel
 
 from scylla.e2e.filters import is_test_config_file
 from scylla.judge import extract_json_from_llm_response
@@ -23,8 +24,7 @@ from scylla.metrics.grading import assign_letter_grade
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class JudgeResult:
+class JudgeResult(BaseModel):
     """Result from LLM judge evaluation.
 
     Attributes:
@@ -63,8 +63,7 @@ class JudgeResult:
 _score_to_grade = assign_letter_grade
 
 
-@dataclass
-class BuildPipelineResult:
+class BuildPipelineResult(BaseModel):
     """Results from running build/lint pipeline.
 
     Attributes:

@@ -12,10 +12,11 @@ import re
 import subprocess
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, model_validator
 
 from scylla.e2e.paths import get_agent_dir
 
@@ -25,8 +26,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class RateLimitInfo:
+class RateLimitInfo(BaseModel):
     """Information about a detected rate limit.
 
     Attributes:
@@ -42,10 +42,12 @@ class RateLimitInfo:
     error_message: str
     detected_at: str
 
-    def __post_init__(self) -> None:
+    @model_validator(mode="after")
+    def validate_source(self) -> RateLimitInfo:
         """Validate source field."""
         if self.source not in ("agent", "judge"):
             raise ValueError(f"Invalid source: {self.source}. Must be 'agent' or 'judge'.")
+        return self
 
 
 class RateLimitError(Exception):

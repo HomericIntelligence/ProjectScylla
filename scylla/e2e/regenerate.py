@@ -12,8 +12,9 @@ import json
 import logging
 import shutil
 import statistics
-from dataclasses import dataclass
 from pathlib import Path
+
+from pydantic import BaseModel
 
 from scylla.e2e.judge_selection import select_best_subtest
 from scylla.e2e.llm_judge import run_llm_judge
@@ -37,8 +38,7 @@ from scylla.e2e.run_report import (
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class RegenerateStats:
+class RegenerateStats(BaseModel):
     """Statistics from regeneration process."""
 
     runs_found: int = 0

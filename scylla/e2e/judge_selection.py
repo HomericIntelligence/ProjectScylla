@@ -8,15 +8,15 @@ with an alternate LLM.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from scylla.e2e.models import SubTestResult
 
 
-@dataclass
-class JudgeVote:
+class JudgeVote(BaseModel):
     """A judge's vote for a sub-test.
 
     Attributes:
@@ -42,8 +42,7 @@ class JudgeVote:
         }
 
 
-@dataclass
-class JudgeSelection:
+class JudgeSelection(BaseModel):
     """Result of the judge selection process.
 
     Attributes:
