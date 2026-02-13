@@ -241,6 +241,7 @@ class TestPlannerOptions:
         assert options.parallel == 3
         assert options.system_prompt_file is None
         assert options.skip_closed is True
+        assert options.enable_advise is True
 
     def test_custom_values(self):
         """Test PlannerOptions with custom values."""
@@ -253,9 +254,11 @@ class TestPlannerOptions:
             parallel=5,
             system_prompt_file=Path("/tmp/prompt.md"),
             skip_closed=False,
+            enable_advise=False,
         )
 
         assert options.dry_run is True
         assert options.force is True
         assert options.parallel == 5
         assert options.skip_closed is False
+        assert options.enable_advise is False

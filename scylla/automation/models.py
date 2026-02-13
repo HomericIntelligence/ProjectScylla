@@ -99,6 +99,7 @@ class PlannerOptions(BaseModel):
     parallel: int = 3
     system_prompt_file: Path | None = None
     skip_closed: bool = True
+    enable_advise: bool = True
 
 
 class ImplementerOptions(BaseModel):

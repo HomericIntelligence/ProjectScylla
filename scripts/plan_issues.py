@@ -100,6 +100,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--no-advise",
+        action="store_true",
+        help="Skip the advise step (don't search team knowledge base before planning)",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -128,6 +134,7 @@ def main() -> int:
             parallel=args.parallel,
             system_prompt_file=args.system_prompt,
             skip_closed=not args.no_skip_closed,
+            enable_advise=not args.no_advise,
         )
 
         # Run planner

@@ -144,7 +144,7 @@ class IssueImplementer:
 
         # Check Claude Code
         try:
-            run(["claude-code", "--version"], check=True)
+            run(["claude", "--version"], check=True)
             logger.info("✓ Claude Code available")
         except Exception as e:
             logger.error(f"✗ Claude Code not available: {e}")
@@ -424,7 +424,7 @@ class IssueImplementer:
 
         try:
             run(
-                ["claude-code", "--message", prompt],
+                ["claude", "--message", prompt],
                 cwd=worktree_path,
                 timeout=1800,  # 30 minutes
             )
