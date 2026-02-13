@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from pydantic import BaseModel, Field
 
 from scylla.judge.utils import extract_json_from_llm_response
 
@@ -24,8 +25,7 @@ class JudgmentParseError(Exception):
     pass
 
 
-@dataclass
-class RequirementScore:
+class RequirementScore(BaseModel):
     """Score for a single requirement.
 
     Attributes:
@@ -36,23 +36,13 @@ class RequirementScore:
 
     """
 
-    id: str
-    score: float
-    confidence: float = 0.5
-    notes: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to JSON-serializable dict."""
-        return {
-            "id": self.id,
-            "score": self.score,
-            "confidence": self.confidence,
-            "notes": self.notes,
-        }
+    id: str = Field(..., description="Requirement identifier")
+    score: float = Field(..., ge=0.0, le=1.0, description="The score (0.0 to 1.0)")
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="Confidence in the score")
+    notes: str = Field(default="", description="Brief explanation of the score")
 
 
-@dataclass
-class CategoryScore:
+class CategoryScore(BaseModel):
     """Score for an evaluation category.
 
     Attributes:
@@ -64,25 +54,14 @@ class CategoryScore:
 
     """
 
-    name: str
-    score: float
-    confidence: float = 0.5
-    weight: float = 1.0
-    notes: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to JSON-serializable dict."""
-        return {
-            "name": self.name,
-            "score": self.score,
-            "confidence": self.confidence,
-            "weight": self.weight,
-            "notes": self.notes,
-        }
+    name: str = Field(..., description="Category name")
+    score: float = Field(..., ge=0.0, le=1.0, description="The score (0.0 to 1.0)")
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="Confidence in the score")
+    weight: float = Field(default=1.0, description="Category weight")
+    notes: str = Field(default="", description="Brief explanation of the score")
 
 
-@dataclass
-class JudgmentSummary:
+class JudgmentSummary(BaseModel):
     """Summary of a judgment.
 
     Attributes:
@@ -95,27 +74,15 @@ class JudgmentSummary:
 
     """
 
-    weighted_score: float
-    passed: bool
-    letter_grade: str
-    overall_confidence: float = 0.5
-    strengths: list[str] = field(default_factory=list)
-    weaknesses: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to JSON-serializable dict."""
-        return {
-            "weighted_score": self.weighted_score,
-            "passed": self.passed,
-            "letter_grade": self.letter_grade,
-            "overall_confidence": self.overall_confidence,
-            "strengths": self.strengths,
-            "weaknesses": self.weaknesses,
-        }
+    weighted_score: float = Field(..., ge=0.0, le=1.0, description="The weighted score")
+    passed: bool = Field(..., description="Whether the evaluation passed")
+    letter_grade: str = Field(..., description="Letter grade (A/B/C/D/F)")
+    overall_confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="Overall confidence")
+    strengths: list[str] = Field(default_factory=list, description="List of identified strengths")
+    weaknesses: list[str] = Field(default_factory=list, description="List of identified weaknesses")
 
 
-@dataclass
-class ExploratoryTestingResult:
+class ExploratoryTestingResult(BaseModel):
     """Results from exploratory testing phase.
 
     Attributes:
@@ -125,21 +92,14 @@ class ExploratoryTestingResult:
 
     """
 
-    commands_run: list[str] = field(default_factory=list)
-    observations: list[str] = field(default_factory=list)
-    failures: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to JSON-serializable dict."""
-        return {
-            "commands_run": self.commands_run,
-            "observations": self.observations,
-            "failures": self.failures,
-        }
+    commands_run: list[str] = Field(
+        default_factory=list, description="Commands executed during testing"
+    )
+    observations: list[str] = Field(default_factory=list, description="Observations made")
+    failures: list[str] = Field(default_factory=list, description="Failures encountered")
 
 
-@dataclass
-class Judgment:
+class Judgment(BaseModel):
     """Complete judgment from an evaluation.
 
     Attributes:
@@ -154,41 +114,25 @@ class Judgment:
 
     """
 
-    timestamp: str = ""
-    judge_model: str = ""
-    requirements: dict[str, RequirementScore] = field(default_factory=dict)
-    categories: dict[str, CategoryScore] = field(default_factory=dict)
-    summary: JudgmentSummary | None = None
-    exploratory_testing: ExploratoryTestingResult | None = None
-    qualitative_feedback: str = ""
-    raw_output: str = ""
+    timestamp: str = Field(default="", description="ISO 8601 timestamp")
+    judge_model: str = Field(default="", description="Model used for judging")
+    requirements: dict[str, RequirementScore] = Field(
+        default_factory=dict, description="Scores for each requirement"
+    )
+    categories: dict[str, CategoryScore] = Field(
+        default_factory=dict, description="Scores for each category"
+    )
+    summary: JudgmentSummary | None = Field(default=None, description="Judgment summary")
+    exploratory_testing: ExploratoryTestingResult | None = Field(
+        default=None, description="Results from exploratory testing"
+    )
+    qualitative_feedback: str = Field(default="", description="Free-form qualitative feedback")
+    raw_output: str = Field(default="", description="Raw output from the judge")
 
-    def __post_init__(self) -> None:
+    def model_post_init(self, __context: Any) -> None:
         """Set timestamp if not provided."""
         if not self.timestamp:
             self.timestamp = datetime.now(timezone.utc).isoformat()
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to JSON-serializable dict."""
-        result: dict[str, Any] = {
-            "timestamp": self.timestamp,
-            "judge_model": self.judge_model,
-            "requirements": {
-                req_id: score.to_dict() for req_id, score in self.requirements.items()
-            },
-            "categories": {
-                cat_name: score.to_dict() for cat_name, score in self.categories.items()
-            },
-            "qualitative_feedback": self.qualitative_feedback,
-        }
-
-        if self.summary:
-            result["summary"] = self.summary.to_dict()
-
-        if self.exploratory_testing:
-            result["exploratory_testing"] = self.exploratory_testing.to_dict()
-
-        return result
 
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string.
@@ -200,7 +144,7 @@ class Judgment:
             JSON string representation.
 
         """
-        return json.dumps(self.to_dict(), indent=indent)
+        return self.model_dump_json(indent=indent, exclude={"raw_output"})
 
     def write_json(self, output_path: Path) -> None:
         """Write judgment to JSON file.

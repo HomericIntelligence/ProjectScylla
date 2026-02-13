@@ -10,14 +10,14 @@ from __future__ import annotations
 import json
 import os
 import shlex
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class CommandLog:
+
+class CommandLog(BaseModel):
     """A single logged command with full context.
 
     Captures everything needed to reproduce a command execution.
@@ -34,41 +34,14 @@ class CommandLog:
 
     """
 
-    timestamp: str
-    command: list[str]
-    cwd: str
-    env_vars: dict[str, str]
-    exit_code: int
-    stdout_file: str
-    stderr_file: str
-    duration_seconds: float
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "timestamp": self.timestamp,
-            "command": self.command,
-            "cwd": self.cwd,
-            "env_vars": self.env_vars,
-            "exit_code": self.exit_code,
-            "stdout_file": self.stdout_file,
-            "stderr_file": self.stderr_file,
-            "duration_seconds": self.duration_seconds,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> CommandLog:
-        """Create from dictionary."""
-        return cls(
-            timestamp=data["timestamp"],
-            command=data["command"],
-            cwd=data["cwd"],
-            env_vars=data["env_vars"],
-            exit_code=data["exit_code"],
-            stdout_file=data["stdout_file"],
-            stderr_file=data["stderr_file"],
-            duration_seconds=data["duration_seconds"],
-        )
+    timestamp: str = Field(..., description="ISO format timestamp of execution")
+    command: list[str] = Field(..., description="The command as a list of arguments")
+    cwd: str = Field(..., description="Working directory when command was executed")
+    env_vars: dict[str, str] = Field(..., description="Relevant environment variables")
+    exit_code: int = Field(..., description="Process exit code")
+    stdout_file: str = Field(..., description="Relative path to stdout log file")
+    stderr_file: str = Field(..., description="Relative path to stderr log file")
+    duration_seconds: float = Field(..., description="Execution duration in seconds")
 
 
 # Environment variables relevant for reproducibility
@@ -86,15 +59,14 @@ RELEVANT_ENV_VARS = [
 ]
 
 
-@dataclass
-class CommandLogger:
+class CommandLogger(BaseModel):
     """Logger that captures commands for reproducibility.
 
     Tracks all executed commands with their context and generates
     replay scripts for reproducing test runs.
 
     Example:
-        >>> logger = CommandLogger(Path("/results/run_01/logs"))
+        >>> logger = CommandLogger(log_dir=Path("/results/run_01/logs"))
         >>> logger.log_command(
         ...     cmd=["claude", "--print", "hello"],
         ...     stdout="Hello!",
@@ -108,15 +80,14 @@ class CommandLogger:
 
     """
 
-    log_dir: Path
-    commands: list[CommandLog] = field(default_factory=list)
-    _initialized: bool = field(default=False, repr=False)
+    log_dir: Path = Field(..., description="Directory for command logs")
+    commands: list[CommandLog] = Field(default_factory=list, description="List of logged commands")
 
-    def __post_init__(self) -> None:
+    model_config = {"arbitrary_types_allowed": True}
+
+    def model_post_init(self, __context: Any) -> None:
         """Initialize the log directory."""
-        if not self._initialized:
-            self.log_dir.mkdir(parents=True, exist_ok=True)
-            self._initialized = True
+        self.log_dir.mkdir(parents=True, exist_ok=True)
 
     def _extract_relevant_env(self) -> dict[str, str]:
         """Extract relevant environment variables for reproducibility."""
@@ -222,7 +193,7 @@ class CommandLogger:
                 {
                     "generated_at": datetime.now(timezone.utc).isoformat(),
                     "total_commands": len(self.commands),
-                    "commands": [c.to_dict() for c in self.commands],
+                    "commands": [c.model_dump() for c in self.commands],
                 },
                 f,
                 indent=2,
@@ -327,5 +298,5 @@ class CommandLogger:
             data = json.load(f)
 
         logger = cls(log_dir=log_dir)
-        logger.commands = [CommandLog.from_dict(c) for c in data["commands"]]
+        logger.commands = [CommandLog.model_validate(c) for c in data["commands"]]
         return logger

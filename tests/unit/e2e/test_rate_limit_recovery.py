@@ -248,7 +248,7 @@ class TestSubTestResultSerialization:
     """Tests for SubTestResult with rate_limit_info field."""
 
     def test_to_dict_with_rate_limit_info(self) -> None:
-        """Test SubTestResult.to_dict() with rate_limit_info."""
+        """Test SubTestResult.model_dump() with rate_limit_info."""
         rate_info = RateLimitInfo(
             source="agent",
             retry_after_seconds=60.0,
@@ -264,14 +264,14 @@ class TestSubTestResultSerialization:
             rate_limit_info=rate_info,
         )
 
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["rate_limit_info"] is not None
         assert data["rate_limit_info"]["source"] == "agent"
         assert data["rate_limit_info"]["retry_after_seconds"] == 60.0
 
     def test_to_dict_without_rate_limit_info(self) -> None:
-        """Test SubTestResult.to_dict() without rate_limit_info."""
+        """Test SubTestResult.model_dump() without rate_limit_info."""
         result = SubTestResult(
             subtest_id="01",
             tier_id=TierID.T5,
@@ -279,6 +279,6 @@ class TestSubTestResultSerialization:
             pass_rate=1.0,
         )
 
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["rate_limit_info"] is None

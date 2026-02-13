@@ -76,7 +76,7 @@ class EvaluationReportStatistics:
     def test_to_dict(self) -> None:
         """Test To dict."""
         stats = make_statistics()
-        data = stats.to_dict()
+        data = stats.model_dump()
 
         assert data["median"] == pytest.approx(0.8)
         assert data["mean"] == pytest.approx(0.75)
@@ -108,7 +108,7 @@ class TestModelStatistics:
     def test_to_dict(self) -> None:
         """Test To dict."""
         model_stats = make_model_statistics()
-        data = model_stats.to_dict()
+        data = model_stats.model_dump()
 
         assert data["runs_completed"] == 10
         assert data["grade"] == "B"
@@ -119,7 +119,7 @@ class TestModelStatistics:
     def test_to_dict_nested_stats(self) -> None:
         """Test To dict nested stats."""
         model_stats = make_model_statistics()
-        data = model_stats.to_dict()
+        data = model_stats.model_dump()
 
         # Nested statistics should be dicts
         assert isinstance(data["pass_rate"], dict)
@@ -153,7 +153,7 @@ class TestRankings:
             by_cost_efficiency=["model-b"],
             by_speed=["model-a"],
         )
-        data = rankings.to_dict()
+        data = rankings.model_dump()
 
         assert data["by_quality"] == ["model-a"]
         assert data["by_cost_efficiency"] == ["model-b"]
@@ -194,7 +194,7 @@ class TestEvaluationReport:
             models={"model-a": make_model_statistics()},
             rankings=Rankings(by_quality=["model-a"]),
         )
-        data = summary.to_dict()
+        data = summary.model_dump()
 
         assert data["test_id"] == "001-test"
         assert data["test_name"] == "Test Name"

@@ -55,7 +55,7 @@ class TestEvalResult:
     def test_to_dict(self) -> None:
         """Test To dict."""
         result = make_test_result()
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["runs_completed"] == 10
         assert data["grade"] == "B"
@@ -85,7 +85,7 @@ class TestOverallStats:
             total_cost_usd=25.0,
             total_runs=50,
         )
-        data = stats.to_dict()
+        data = stats.model_dump()
 
         assert data["tests_completed"] == 5
         assert data["average_grade"] == "B+"
@@ -102,7 +102,9 @@ class TestModelScorecard:
             model_id="claude-opus-4-5-20251101",
             model_name="Claude Opus 4.5",
             updated="2024-01-15T14:30:00Z",
-            overall=OverallStats(5, "B", 25.0, 50),
+            overall=OverallStats(
+                tests_completed=5, average_grade="B", total_cost_usd=25.0, total_runs=50
+            ),
         )
         assert scorecard.model_id == "claude-opus-4-5-20251101"
         assert scorecard.model_name == "Claude Opus 4.5"
@@ -113,7 +115,9 @@ class TestModelScorecard:
             model_id="claude-opus-4-5-20251101",
             model_name="Claude Opus 4.5",
             updated="2024-01-15T14:30:00Z",
-            overall=OverallStats(1, "A", 10.0, 10),
+            overall=OverallStats(
+                tests_completed=1, average_grade="A", total_cost_usd=10.0, total_runs=10
+            ),
             tests={"001-test": make_test_result()},
         )
         assert "001-test" in scorecard.tests
@@ -124,10 +128,12 @@ class TestModelScorecard:
             model_id="claude-opus-4-5-20251101",
             model_name="Claude Opus 4.5",
             updated="2024-01-15T14:30:00Z",
-            overall=OverallStats(1, "A", 10.0, 10),
+            overall=OverallStats(
+                tests_completed=1, average_grade="A", total_cost_usd=10.0, total_runs=10
+            ),
             tests={"001-test": make_test_result()},
         )
-        data = scorecard.to_dict()
+        data = scorecard.model_dump()
 
         assert data["model_id"] == "claude-opus-4-5-20251101"
         assert "overall" in data
@@ -139,7 +145,9 @@ class TestModelScorecard:
             model_id="test-model",
             model_name="Test Model",
             updated="2024-01-15T14:30:00Z",
-            overall=OverallStats(1, "A", 10.0, 10),
+            overall=OverallStats(
+                tests_completed=1, average_grade="A", total_cost_usd=10.0, total_runs=10
+            ),
         )
         json_str = scorecard.to_json()
 
@@ -153,7 +161,9 @@ class TestModelScorecard:
             model_id="test-model",
             model_name="Test Model",
             updated="2024-01-15T14:30:00Z",
-            overall=OverallStats(1, "A", 10.0, 10),
+            overall=OverallStats(
+                tests_completed=1, average_grade="A", total_cost_usd=10.0, total_runs=10
+            ),
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:

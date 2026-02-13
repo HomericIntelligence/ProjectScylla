@@ -9,10 +9,11 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from scylla.e2e.models import ExperimentConfig
@@ -30,8 +31,7 @@ class ConfigMismatchError(CheckpointError):
     pass
 
 
-@dataclass
-class E2ECheckpoint:
+class E2ECheckpoint(BaseModel):
     """Checkpoint state for E2E experiment resume capability.
 
     Stored at: results/{experiment}/checkpoint.json
@@ -56,27 +56,31 @@ class E2ECheckpoint:
 
     """
 
-    version: str = "2.0"  # Bumped for schema change
-    experiment_id: str = ""
-    experiment_dir: str = ""
-    config_hash: str = ""
+    version: str = Field(default="2.0", description="Checkpoint format version")
+    experiment_id: str = Field(default="", description="Unique experiment identifier")
+    experiment_dir: str = Field(default="", description="Absolute path to experiment directory")
+    config_hash: str = Field(default="", description="SHA256 hash of config")
 
     # Progress tracking: tier_id -> subtest_id -> {run_number: status}
     # status: "passed", "failed", "agent_complete"
-    completed_runs: dict[str, dict[str, dict[int, str]]] = field(default_factory=dict)
+    completed_runs: dict[str, dict[str, dict[int, str]]] = Field(
+        default_factory=dict, description="Completed runs tracking"
+    )
 
     # Timing
-    started_at: str = ""
-    last_updated_at: str = ""
+    started_at: str = Field(default="", description="ISO timestamp of experiment start")
+    last_updated_at: str = Field(default="", description="ISO timestamp of last update")
 
     # Rate limit state
-    status: str = "running"  # running, paused_rate_limit, completed, failed
-    rate_limit_source: str | None = None  # agent or judge
-    rate_limit_until: str | None = None  # ISO timestamp
-    pause_count: int = 0
+    status: str = Field(default="running", description="Current status")
+    rate_limit_source: str | None = Field(default=None, description="Source of rate limit")
+    rate_limit_until: str | None = Field(
+        default=None, description="ISO timestamp when rate limit expires"
+    )
+    pause_count: int = Field(default=0, description="Number of times paused")
 
     # Process info for monitoring
-    pid: int | None = None
+    pid: int | None = Field(default=None, description="Process ID of running experiment")
 
     def mark_run_completed(
         self, tier_id: str, subtest_id: str, run_number: int, status: str = "passed"
@@ -163,28 +167,6 @@ class E2ECheckpoint:
                 total += len(subtest_runs)
         return total
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization.
-
-        Returns:
-            Dictionary representation of checkpoint
-
-        """
-        return {
-            "version": self.version,
-            "experiment_id": self.experiment_id,
-            "experiment_dir": self.experiment_dir,
-            "config_hash": self.config_hash,
-            "completed_runs": self.completed_runs,
-            "started_at": self.started_at,
-            "last_updated_at": self.last_updated_at,
-            "status": self.status,
-            "rate_limit_source": self.rate_limit_source,
-            "rate_limit_until": self.rate_limit_until,
-            "pause_count": self.pause_count,
-            "pid": self.pid,
-        }
-
     @classmethod
     def _convert_completed_runs_keys(
         cls, raw: dict[str, dict[str, dict[str, str]]]
@@ -210,8 +192,8 @@ class E2ECheckpoint:
         return result
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> E2ECheckpoint:
-        """Create from dictionary.
+    def model_validate(cls, data: dict[str, Any]) -> E2ECheckpoint:
+        """Create from dictionary with version validation.
 
         Args:
             data: Dictionary representation
@@ -234,20 +216,11 @@ class E2ECheckpoint:
                 "Please delete the old checkpoint and re-run the experiment."
             )
 
-        return cls(
-            version=version,
-            experiment_id=data.get("experiment_id", ""),
-            experiment_dir=data.get("experiment_dir", ""),
-            config_hash=data.get("config_hash", ""),
-            completed_runs=cls._convert_completed_runs_keys(data.get("completed_runs", {})),
-            started_at=data.get("started_at", ""),
-            last_updated_at=data.get("last_updated_at", ""),
-            status=data.get("status", "running"),
-            rate_limit_source=data.get("rate_limit_source"),
-            rate_limit_until=data.get("rate_limit_until"),
-            pause_count=data.get("pause_count", 0),
-            pid=data.get("pid"),
-        )
+        # Convert string keys to int keys for completed_runs
+        if "completed_runs" in data:
+            data["completed_runs"] = cls._convert_completed_runs_keys(data["completed_runs"])
+
+        return super().model_validate(data)
 
 
 def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
@@ -272,7 +245,7 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         # Use process ID to avoid race conditions in parallel execution
         temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}{path.suffix}"
         with open(temp_path, "w") as f:
-            json.dump(checkpoint.to_dict(), f, indent=2)
+            json.dump(checkpoint.model_dump(), f, indent=2)
 
         # Atomic rename
         temp_path.replace(path)
@@ -300,7 +273,7 @@ def load_checkpoint(path: Path) -> E2ECheckpoint:
     try:
         with open(path) as f:
             data = json.load(f)
-        return E2ECheckpoint.from_dict(data)
+        return E2ECheckpoint.model_validate(data)
     except (OSError, json.JSONDecodeError) as e:
         raise CheckpointError(f"Failed to load checkpoint from {path}: {e}")
 
@@ -318,7 +291,7 @@ def compute_config_hash(config: ExperimentConfig) -> str:
         16-character hex hash (first 16 chars of SHA256)
 
     """
-    config_dict = config.to_dict()
+    config_dict = config.model_dump()
 
     # Remove fields that don't affect results
     config_dict.pop("parallel_subtests", None)  # Just parallelization setting

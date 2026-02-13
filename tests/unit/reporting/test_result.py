@@ -196,7 +196,7 @@ class TestRunResult:
     def test_to_dict(self) -> None:
         """Test To dict."""
         result = make_run_result()
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["test_id"] == "001-test"
         assert data["tier_id"] == "T1"
@@ -210,7 +210,7 @@ class TestRunResult:
     def test_to_dict_execution(self) -> None:
         """Test To dict execution."""
         result = make_run_result()
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["execution"]["status"] == "completed"
         assert data["execution"]["duration_seconds"] == 45.0
@@ -219,7 +219,7 @@ class TestRunResult:
     def test_to_dict_metrics(self) -> None:
         """Test To dict metrics."""
         result = make_run_result()
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["metrics"]["tokens_input"] == 10000
         assert data["metrics"]["tokens_output"] == 5000
@@ -229,7 +229,7 @@ class TestRunResult:
     def test_to_dict_judgment(self) -> None:
         """Test To dict judgment."""
         result = make_run_result()
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["judgment"]["passed"] is True
         assert data["judgment"]["impl_rate"] == 0.85
@@ -238,7 +238,7 @@ class TestRunResult:
     def test_to_dict_grading(self) -> None:
         """Test To dict grading."""
         result = make_run_result()
-        data = result.to_dict()
+        data = result.model_dump()
 
         assert data["grading"]["pass_rate"] == 1.0
         assert data["grading"]["cost_of_pass"] == 0.50
