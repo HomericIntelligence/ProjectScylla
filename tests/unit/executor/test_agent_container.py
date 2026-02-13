@@ -72,8 +72,9 @@ def test_build_volumes_without_claude_md(mock_docker_executor, temp_directories)
 
     volumes = manager._build_volumes(config)
 
-    # Check volume structure
-    assert len(volumes) == 3
+    # Check volume structure (3 required volumes + optional credentials)
+    assert len(volumes) >= 3
+    assert len(volumes) <= 4  # Allow for optional credentials volume
 
     # Workspace should be read-write
     workspace_key = str(config.workspace_dir.resolve())
@@ -104,8 +105,9 @@ def test_build_volumes_with_claude_md(mock_docker_executor, temp_directories):
 
     volumes = manager._build_volumes(config)
 
-    # Should have 4 volumes now
-    assert len(volumes) == 4
+    # Should have 4 required volumes + optional credentials
+    assert len(volumes) >= 4
+    assert len(volumes) <= 5  # Allow for optional credentials volume
 
     # CLAUDE.md should be read-only
     claude_md_key = str(config.claude_md_path.resolve())
