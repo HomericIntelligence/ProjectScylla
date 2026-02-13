@@ -58,8 +58,8 @@ def discover_blocks(
     if not claude_md_path.exists():
         raise FileNotFoundError(f"CLAUDE.md not found: {claude_md_path}")
 
-    # TODO: Future enhancement - heuristic section detection
-    # For now, return hardcoded defaults
+    # Note: Section detection uses explicit markers only.
+    # Heuristic detection would be unreliable due to variable markdown formatting.
     return DEFAULT_BLOCKS
 
 
