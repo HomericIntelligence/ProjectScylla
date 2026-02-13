@@ -27,6 +27,7 @@ from scylla.analysis.stats import (
     holm_bonferroni_correction,
     kruskal_wallis,
     mann_whitney_u,
+    scheirer_ray_hare,
     shapiro_wilk,
     spearman_correlation,
 )
@@ -63,6 +64,7 @@ def compute_statistical_results(runs_df, tier_order):
         "effect_sizes": [],
         "correlations": [],
         "tier_descriptives": [],  # Tier-level descriptive statistics (CoP, etc.)
+        "interaction_tests": [],  # Model x Tier interaction analysis
     }
 
     models = sorted(runs_df["agent_model"].unique())
@@ -493,6 +495,35 @@ def compute_statistical_results(runs_df, tier_order):
                     "median_cost": None,
                     "cop": float(frontier),
                     "frontier_tier": frontier_tier,
+                }
+            )
+
+    # Model x Tier interaction tests (Scheirer-Ray-Hare)
+    # Test for interaction effects on key metrics
+    interaction_metrics = ["score", "impl_rate", "cost_usd", "duration_seconds"]
+
+    for metric in interaction_metrics:
+        # Prepare data for interaction test
+        metric_data = runs_df[["agent_model", "tier", metric]].dropna()
+
+        if len(metric_data) < 10:  # Minimum sample size for meaningful test
+            continue
+
+        # Run Scheirer-Ray-Hare test
+        srh_results = scheirer_ray_hare(
+            metric_data, value_col=metric, factor_a_col="agent_model", factor_b_col="tier"
+        )
+
+        # Store results for each effect
+        for effect_name, effect_result in srh_results.items():
+            results["interaction_tests"].append(
+                {
+                    "metric": metric,
+                    "effect": effect_name,
+                    "h_statistic": effect_result["h_statistic"],
+                    "df": effect_result["df"],
+                    "p_value": effect_result["p_value"],
+                    "is_significant": bool(effect_result["p_value"] < 0.05),
                 }
             )
 
