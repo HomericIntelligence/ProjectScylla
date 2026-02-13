@@ -14,7 +14,9 @@
 Use this skill when you encounter:
 
 - **Error signature**: `AttributeError: 'ClassName' object has no attribute 'model_dump'`
+- **Error signature**: `TypeError: BaseModel.__init__() takes 1 positional argument but 2 were given`
 - CI test failures after Pydantic migration commits
+- E2E tests crashing before any agent invocation
 - Mixed codebase with both Pydantic BaseModel and Python dataclasses
 - Need to unblock PR merge without completing full migration
 
@@ -209,6 +211,20 @@ After merging bandaid fix, create separate PR for:
 - PR #585: Initial Pydantic migration (partial)
 - PR #588: TODO resolution with bandaid fix (this session)
 
+## Pydantic Migration Checklist
+
+When migrating from dataclasses to Pydantic BaseModel:
+
+- [ ] Update class definition: `@dataclass` → `BaseModel`
+- [ ] Update all instantiation call sites: positional → keyword args
+- [ ] Replace `dataclasses.replace()` → `.model_copy(update={...})`
+- [ ] Replace `.to_dict()` → `.model_dump()`
+- [ ] Replace `.from_dict()` → `.model_validate()`
+- [ ] Remove `from dataclasses import` statements
+- [ ] Verify no conflict markers from merges/rebases
+- [ ] Test that positional args are rejected
+- [ ] Verify all modules import successfully
+
 ## Key Takeaways
 
 1. **Scope discipline**: Don't expand PR scope to fix unrelated issues
@@ -216,3 +232,15 @@ After merging bandaid fix, create separate PR for:
 3. **Conflict resolution**: Always grep for markers before pushing
 4. **Test skipping**: Document pre-existing failures clearly
 5. **Git safety**: Use `-d` for merged branches, not `-D`
+6. **Complete migrations**: Incomplete Pydantic migrations cause cascading failures
+7. **Grep for call sites**: Find ALL usage before claiming migration is complete
+
+## Sessions
+
+1. **Session 1 (2026-02-13)**: Bandaid fix for test failures - reverted `.model_dump()` → `.to_dict()`
+   - See: `references/notes.md`
+   - PR #588: Unblock CI with minimal changes
+
+2. **Session 2 (2026-02-13)**: Complete Pydantic migration - fixed E2E framework crashes
+   - See: `references/session-2-complete-migration.md`
+   - PR #605: Fixed positional args, merge conflicts, dataclasses.replace()
