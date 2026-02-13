@@ -22,60 +22,52 @@ if TYPE_CHECKING:
     from scylla.e2e.models import ExperimentResult, SubTestResult, TierID, TierResult
 
 
-def generate_run_report(
-    tier_id: str,
-    subtest_id: str,
-    run_number: int,
-    score: float,
-    grade: str,
-    passed: bool,
-    reasoning: str,
-    cost_usd: float,
-    duration_seconds: float,
-    tokens_input: int,
-    tokens_output: int,
-    exit_code: int,
-    task_prompt: str,
-    workspace_path: Path,
-    judges: list | None = None,
-    criteria_scores: dict[str, dict[str, Any]] | None = None,
-    agent_output: str | None = None,
-    token_stats: dict[str, int] | None = None,
-    agent_duration_seconds: float | None = None,
-    judge_duration_seconds: float | None = None,
-) -> str:
-    """Generate markdown report content for a single run.
+def _generate_token_breakdown_section(token_stats: dict[str, int]) -> list[str]:
+    """Generate detailed token breakdown section markdown.
 
     Args:
-        tier_id: Tier identifier (e.g., "T0", "T1")
-        subtest_id: Sub-test identifier (e.g., "baseline", "01")
-        run_number: Run number (1-indexed)
-        score: Overall judge score (0.0-1.0)
-        grade: Letter grade (S-F)
-        passed: Whether the run passed
-        reasoning: Judge's overall reasoning
-        cost_usd: Total cost in USD
-        duration_seconds: Total execution duration (agent + judge)
-        tokens_input: Number of input tokens (legacy, use token_stats if available)
-        tokens_output: Number of output tokens (legacy, use token_stats if available)
-        exit_code: Process exit code
-        task_prompt: The task prompt given to the agent
-        workspace_path: Path to the workspace directory
-        criteria_scores: Optional detailed criteria evaluations
-        agent_output: Optional truncated agent output
-        token_stats: Optional detailed token statistics dict with keys:
-            input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens
-        agent_duration_seconds: Agent execution time (optional)
-        judge_duration_seconds: Judge evaluation time (optional)
+        token_stats: Token statistics dictionary
 
     Returns:
-        Formatted markdown report string.
+        List of markdown lines for token breakdown section
 
     """
-    timestamp = datetime.now(timezone.utc).isoformat()
-    pass_status = "\u2713 PASS" if passed else "\u2717 FAIL"
+    input_tok = token_stats.get("input_tokens", 0)
+    output_tok = token_stats.get("output_tokens", 0)
+    cache_read = token_stats.get("cache_read_tokens", 0)
+    cache_create = token_stats.get("cache_creation_tokens", 0)
+    total = input_tok + output_tok + cache_read + cache_create
 
-    # Use detailed token stats if available, otherwise fallback to legacy
+    return [
+        "### Token Breakdown",
+        "",
+        "| Type | Count |",
+        "|------|-------|",
+        f"| Input (fresh) | {input_tok:,} |",
+        f"| Output | {output_tok:,} |",
+        f"| Cache Read | {cache_read:,} |",
+        f"| Cache Created | {cache_create:,} |",
+        f"| **Total** | **{total:,}** |",
+        "",
+    ]
+
+
+def _format_token_display(
+    token_stats: dict[str, int] | None,
+    tokens_input: int,
+    tokens_output: int,
+) -> str:
+    """Format token display string with cache information.
+
+    Args:
+        token_stats: Optional detailed token statistics dict
+        tokens_input: Legacy input token count (fallback)
+        tokens_output: Legacy output token count (fallback)
+
+    Returns:
+        Formatted token display string
+
+    """
     if token_stats:
         input_tok = token_stats.get("input_tokens", 0)
         output_tok = token_stats.get("output_tokens", 0)
@@ -91,76 +83,233 @@ def generate_run_report(
             token_display = f"{total_input:,} in / {output_tok:,} out"
     else:
         token_display = f"{tokens_input:,} in / {tokens_output:,} out"
+    return token_display
 
+
+def _generate_tier_summary_table(result: ExperimentResult) -> list[str]:
+    """Generate tier summary table markdown.
+
+    Args:
+        result: ExperimentResult with tier data
+
+    Returns:
+        List of markdown lines for tier summary table
+
+    """
     lines = [
-        f"# Run Report: {tier_id}/{subtest_id}/run_{run_number:02d}",
+        "## Tier Summary",
         "",
-        f"**Generated**: {timestamp}",
-        "",
-        "## Summary",
-        "",
-        "| Metric | Value |",
-        "|--------|-------|",
-        f"| Score | {score:.3f} |",
-        f"| Grade | {grade} |",
-        f"| Status | {pass_status} |",
-        f"| Cost | ${cost_usd:.4f} |",
-        f"| Duration (Total) | {duration_seconds:.2f}s |",
+        "| Tier | Subtests | Duration | Cost | In | Out | Cache R | Cache W | CoP |",
+        "|------|----------|----------|------|-----|-----|---------|---------|-----|",
     ]
 
-    # Add duration breakdown if available
-    if agent_duration_seconds is not None and judge_duration_seconds is not None:
-        lines.extend(
-            [
-                f"| - Agent | {agent_duration_seconds:.2f}s |",
-                f"| - Judge | {judge_duration_seconds:.2f}s |",
-            ]
-        )
+    for tier_id in result.config.tiers_to_run:
+        tier_result = result.tier_results.get(tier_id)
+        if tier_result:
+            ts = tier_result.token_stats
+            # Calculate cost-of-pass for this tier
+            best_subtest = result.tier_results[tier_id].subtest_results.get(
+                tier_result.best_subtest
+            )
+            if best_subtest and best_subtest.pass_rate > 0:
+                cop = tier_result.total_cost / best_subtest.pass_rate
+                cop_str = f"${cop:.2f}"
+            else:
+                cop_str = "N/A"
 
+            num_subtests = len(tier_result.subtest_results)
+            lines.append(
+                f"| {tier_id.value} | {num_subtests} | "
+                f"{tier_result.total_duration:.1f}s | "
+                f"${tier_result.total_cost:.2f} | "
+                f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
+                f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {cop_str} |"
+            )
+
+    lines.append("")
+    return lines
+
+
+def _generate_best_subtest_table(result: ExperimentResult) -> list[str]:
+    """Generate best subtest per tier table markdown.
+
+    Args:
+        result: ExperimentResult with tier and subtest data
+
+    Returns:
+        List of markdown lines for best subtest table
+
+    """
+    lines = [
+        "## Best Subtest per Tier",
+        "",
+        "| Tier | Best | Score | Pass | Cost | Duration |",
+        "|------|------|-------|------|------|----------|",
+    ]
+
+    for tier_id in result.config.tiers_to_run:
+        tier_result = result.tier_results.get(tier_id)
+        if tier_result and tier_result.best_subtest:
+            best_subtest = tier_result.subtest_results.get(tier_result.best_subtest)
+            if best_subtest:
+                # Calculate subtest-level duration (sum of all runs in this subtest)
+                subtest_duration = sum(r.duration_seconds for r in best_subtest.runs)
+                lines.append(
+                    f"| {tier_id.value} | {tier_result.best_subtest} | "
+                    f"{tier_result.best_subtest_score:.2f} | "
+                    f"{best_subtest.pass_rate:.0%} | "
+                    f"${best_subtest.total_cost:.2f} | "
+                    f"{subtest_duration:.1f}s |"
+                )
+
+    lines.append("")
+    return lines
+
+
+def _generate_grade_statistics_section(result: SubTestResult) -> list[str]:
+    """Generate grade statistics section markdown.
+
+    Args:
+        result: SubTestResult with grade distribution data
+
+    Returns:
+        List of markdown lines for grade statistics section
+
+    """
+    if not result.grade_distribution:
+        return []
+
+    lines = ["", "## Grade Statistics", ""]
+    # Sort grades from best to worst (S to F)
+    grade_order = ["S", "A", "B", "C", "D", "F"]
+    sorted_dist = sorted(
+        result.grade_distribution.items(),
+        key=lambda x: grade_order.index(x[0]) if x[0] in grade_order else 99,
+    )
+    dist_str = ", ".join(f"{g}={c}" for g, c in sorted_dist)
+    lines.append(f"**Distribution**: {dist_str}")
+    lines.append(f"**Modal Grade**: {result.modal_grade}")
+    if result.min_grade and result.max_grade:
+        lines.append(f"**Grade Range**: {result.min_grade} - {result.max_grade}")
+    return lines
+
+
+def _generate_workspace_state_section(workspace_path: Path) -> list[str]:
+    """Generate workspace state section markdown.
+
+    Args:
+        workspace_path: Path to workspace directory
+
+    Returns:
+        List of markdown lines for workspace state section
+
+    """
+    lines = [
+        "---",
+        "",
+        "## Workspace State",
+        "",
+    ]
+
+    workspace_files = _get_workspace_files(workspace_path)
+    if workspace_files:
+        lines.append("Files created/modified:")
+        lines.append("")
+        for file_path, status in workspace_files:
+            # Create markdown link to file in workspace with status indicator
+            status_indicator = "✓" if status == "committed" else "⚠"
+            lines.append(f"- [{file_path}](./workspace/{file_path}) {status_indicator} {status}")
+        lines.append("")
+    else:
+        lines.append("No files created in workspace.")
+        lines.append("")
+
+    return lines
+
+
+def _generate_criteria_scores_section(criteria_scores: dict[str, dict[str, Any]]) -> list[str]:
+    """Generate criteria scores section markdown.
+
+    Args:
+        criteria_scores: Dictionary of criterion -> score data
+
+    Returns:
+        List of markdown lines for criteria scores section
+
+    """
+    lines = [
+        "### Criteria Scores",
+        "",
+        "| Criterion | Score | Explanation |",
+        "|-----------|-------|-------------|",
+    ]
+
+    for criterion, data in criteria_scores.items():
+        if isinstance(data, dict):
+            crit_score = data.get("score", "N/A")
+            explanation = data.get("explanation", "No explanation provided")
+            # Truncate long explanations for table, escape pipes
+            explanation_short = explanation[:100].replace("|", "\\|")
+            if len(explanation) > 100:
+                explanation_short += "..."
+            if isinstance(crit_score, int | float):
+                lines.append(f"| {criterion} | {crit_score:.2f} | {explanation_short} |")
+            else:
+                lines.append(f"| {criterion} | {crit_score} | {explanation_short} |")
+        else:
+            # Legacy format: just a number
+            lines.append(f"| {criterion} | {data:.2f} | - |")
+
+    lines.append("")
+
+    # Add full explanations section
     lines.extend(
         [
-            f"| Tokens | {token_display} |",
-            f"| Exit Code | {exit_code} |",
+            "### Detailed Explanations",
             "",
         ]
     )
 
-    # Add detailed token statistics table if available
-    if token_stats:
-        input_tok = token_stats.get("input_tokens", 0)
-        output_tok = token_stats.get("output_tokens", 0)
-        cache_read = token_stats.get("cache_read_tokens", 0)
-        cache_create = token_stats.get("cache_creation_tokens", 0)
-        total = input_tok + output_tok + cache_read + cache_create
+    for criterion, data in criteria_scores.items():
+        if isinstance(data, dict):
+            crit_score = data.get("score", "N/A")
+            explanation = data.get("explanation", "No explanation provided")
+            score_str = (
+                f"{crit_score:.2f}" if isinstance(crit_score, int | float) else str(crit_score)
+            )
+            lines.extend(
+                [
+                    f"#### {criterion.replace('_', ' ').title()} ({score_str})",
+                    "",
+                    explanation,
+                    "",
+                ]
+            )
 
-        lines.extend(
-            [
-                "### Token Breakdown",
-                "",
-                "| Type | Count |",
-                "|------|-------|",
-                f"| Input (fresh) | {input_tok:,} |",
-                f"| Output | {output_tok:,} |",
-                f"| Cache Read | {cache_read:,} |",
-                f"| Cache Created | {cache_create:,} |",
-                f"| **Total** | **{total:,}** |",
-                "",
-            ]
-        )
+    return lines
 
-    lines.extend(
-        [
-            "---",
-            "",
-            "## Task",
-            "",
-            "[View task prompt](./task_prompt.md)",
-            "",
-            "---",
-            "",
-        ]
-    )
 
+def _generate_judge_section(
+    judges: list | None,
+    score: float,
+    grade: str,
+    passed: bool,
+    reasoning: str,
+) -> list[str]:
+    """Generate judge evaluation section lines.
+
+    Args:
+        judges: Optional list of judge results
+        score: Overall judge score
+        grade: Letter grade
+        passed: Whether the run passed
+        reasoning: Judge's overall reasoning
+
+    Returns:
+        List of markdown lines for judge section
+
+    """
+    lines = []
     # Judge Evaluation section - handle single or multiple judges
     if judges and len(judges) > 1:
         # Multiple judges - show consensus summary and individual results
@@ -216,84 +365,126 @@ def generate_run_report(
                 "",
             ]
         )
+    return lines
 
-    lines.extend([""])
 
-    # Add criteria scores if available
-    if criteria_scores:
+def generate_run_report(
+    tier_id: str,
+    subtest_id: str,
+    run_number: int,
+    score: float,
+    grade: str,
+    passed: bool,
+    reasoning: str,
+    cost_usd: float,
+    duration_seconds: float,
+    tokens_input: int,
+    tokens_output: int,
+    exit_code: int,
+    task_prompt: str,
+    workspace_path: Path,
+    judges: list | None = None,
+    criteria_scores: dict[str, dict[str, Any]] | None = None,
+    agent_output: str | None = None,
+    token_stats: dict[str, int] | None = None,
+    agent_duration_seconds: float | None = None,
+    judge_duration_seconds: float | None = None,
+) -> str:
+    """Generate markdown report content for a single run.
+
+    Args:
+        tier_id: Tier identifier (e.g., "T0", "T1")
+        subtest_id: Sub-test identifier (e.g., "baseline", "01")
+        run_number: Run number (1-indexed)
+        score: Overall judge score (0.0-1.0)
+        grade: Letter grade (S-F)
+        passed: Whether the run passed
+        reasoning: Judge's overall reasoning
+        cost_usd: Total cost in USD
+        duration_seconds: Total execution duration (agent + judge)
+        tokens_input: Number of input tokens (legacy, use token_stats if available)
+        tokens_output: Number of output tokens (legacy, use token_stats if available)
+        exit_code: Process exit code
+        task_prompt: The task prompt given to the agent
+        workspace_path: Path to the workspace directory
+        criteria_scores: Optional detailed criteria evaluations
+        agent_output: Optional truncated agent output
+        token_stats: Optional detailed token statistics dict with keys:
+            input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens
+        agent_duration_seconds: Agent execution time (optional)
+        judge_duration_seconds: Judge evaluation time (optional)
+
+    Returns:
+        Formatted markdown report string.
+
+    """
+    timestamp = datetime.now(timezone.utc).isoformat()
+    pass_status = "\u2713 PASS" if passed else "\u2717 FAIL"
+
+    # Format token display
+    token_display = _format_token_display(token_stats, tokens_input, tokens_output)
+
+    lines = [
+        f"# Run Report: {tier_id}/{subtest_id}/run_{run_number:02d}",
+        "",
+        f"**Generated**: {timestamp}",
+        "",
+        "## Summary",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| Score | {score:.3f} |",
+        f"| Grade | {grade} |",
+        f"| Status | {pass_status} |",
+        f"| Cost | ${cost_usd:.4f} |",
+        f"| Duration (Total) | {duration_seconds:.2f}s |",
+    ]
+
+    # Add duration breakdown if available
+    if agent_duration_seconds is not None and judge_duration_seconds is not None:
         lines.extend(
             [
-                "### Criteria Scores",
-                "",
-                "| Criterion | Score | Explanation |",
-                "|-----------|-------|-------------|",
+                f"| - Agent | {agent_duration_seconds:.2f}s |",
+                f"| - Judge | {judge_duration_seconds:.2f}s |",
             ]
         )
 
-        for criterion, data in criteria_scores.items():
-            if isinstance(data, dict):
-                crit_score = data.get("score", "N/A")
-                explanation = data.get("explanation", "No explanation provided")
-                # Truncate long explanations for table, escape pipes
-                explanation_short = explanation[:100].replace("|", "\\|")
-                if len(explanation) > 100:
-                    explanation_short += "..."
-                if isinstance(crit_score, int | float):
-                    lines.append(f"| {criterion} | {crit_score:.2f} | {explanation_short} |")
-                else:
-                    lines.append(f"| {criterion} | {crit_score} | {explanation_short} |")
-            else:
-                # Legacy format: just a number
-                lines.append(f"| {criterion} | {data:.2f} | - |")
-
-        lines.append("")
-
-        # Add full explanations section
-        lines.extend(
-            [
-                "### Detailed Explanations",
-                "",
-            ]
-        )
-
-        for criterion, data in criteria_scores.items():
-            if isinstance(data, dict):
-                crit_score = data.get("score", "N/A")
-                explanation = data.get("explanation", "No explanation provided")
-                score_str = (
-                    f"{crit_score:.2f}" if isinstance(crit_score, int | float) else str(crit_score)
-                )
-                lines.extend(
-                    [
-                        f"#### {criterion.replace('_', ' ').title()} ({score_str})",
-                        "",
-                        explanation,
-                        "",
-                    ]
-                )
-
-    # Add workspace state
     lines.extend(
         [
-            "---",
-            "",
-            "## Workspace State",
+            f"| Tokens | {token_display} |",
+            f"| Exit Code | {exit_code} |",
             "",
         ]
     )
 
-    workspace_files = _get_workspace_files(workspace_path)
-    if workspace_files:
-        lines.append("Files created/modified:")
-        lines.append("")
-        for file_path, status in workspace_files:
-            # Create markdown link to file in workspace with status indicator
-            status_indicator = "✓" if status == "committed" else "⚠"
-            lines.append(f"- [{file_path}](./workspace/{file_path}) {status_indicator} {status}")
-        lines.append("")
-    else:
-        lines.append("No files created in workspace.")
-        lines.append("")
+    # Add detailed token statistics table if available
+    if token_stats:
+        lines.extend(_generate_token_breakdown_section(token_stats))
+
+    lines.extend(
+        [
+            "---",
+            "",
+            "## Task",
+            "",
+            "[View task prompt](./task_prompt.md)",
+            "",
+            "---",
+            "",
+        ]
+    )
+
+    # Add judge evaluation section
+    judge_lines = _generate_judge_section(judges, score, grade, passed, reasoning)
+    lines.extend(judge_lines)
+    lines.extend([""])
+
+    # Add criteria scores if available
+    if criteria_scores:
+        lines.extend(_generate_criteria_scores_section(criteria_scores))
+
+    # Add workspace state
+    lines.extend(_generate_workspace_state_section(workspace_path))
 
     # Add agent output link
     lines.extend(
@@ -317,6 +508,111 @@ def generate_run_report(
     )
 
     return "\n".join(lines)
+
+
+def _generate_token_stats_section(token_stats: Any) -> list[str]:
+    """Generate token statistics section markdown.
+
+    Args:
+        token_stats: Token statistics object with attributes
+
+    Returns:
+        List of markdown lines for token statistics section
+
+    """
+    return [
+        "",
+        "## Token Statistics (Total)",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| Input (fresh) | {token_stats.input_tokens:,} |",
+        f"| Output | {token_stats.output_tokens:,} |",
+        f"| Cache Read | {token_stats.cache_read_tokens:,} |",
+        f"| Cache Created | {token_stats.cache_creation_tokens:,} |",
+        f"| **Total** | **{token_stats.total_tokens:,}** |",
+        "",
+    ]
+
+
+def _generate_criteria_comparison_table(
+    all_criteria: set[str],
+    items: dict[str, Any],
+    column_header_fn: callable,
+) -> list[str]:
+    """Generate per-criteria comparison table markdown.
+
+    This is shared across subtest, tier, and experiment reports.
+
+    Args:
+        all_criteria: Set of all criterion names
+        items: Dict mapping item_id -> item (with .criteria_scores and .judge_score)
+        column_header_fn: Function to format column header (e.g., lambda k: f"Run {k:02d}")
+
+    Returns:
+        List of markdown lines for the criteria comparison table
+
+    """
+    lines = []
+
+    # Build header
+    header = "| Criterion |"
+    separator = "|-----------|"
+    for item_id in sorted(items.keys()):
+        header += f" {column_header_fn(item_id)} |"
+        separator += "--------|"
+    lines.extend([header, separator])
+
+    # Add rows with best values bolded/italicized
+    for criterion in sorted(all_criteria):
+        row = f"| {criterion} |"
+        scores = []
+        score_cells = []
+
+        for item_id in sorted(items.keys()):
+            item = items[item_id]
+            if (
+                hasattr(item, "criteria_scores")
+                and item.criteria_scores
+                and criterion in item.criteria_scores
+            ):
+                score_data = item.criteria_scores[criterion]
+                score = score_data.get("score") if isinstance(score_data, dict) else score_data
+                if isinstance(score, int | float):
+                    scores.append((score, len(score_cells)))
+                    score_cells.append(f"{score:.2f}")
+                else:
+                    score_cells.append(f"{score}" if score else "-")
+            else:
+                score_cells.append("-")
+
+        # Bold/italicize best scores (***text*** = bold+italic)
+        # Only apply formatting if more than one result to compare
+        if scores:
+            max_score = max(s[0] for s in scores)
+            best_indices = {s[1] for s in scores if s[0] == max_score}
+            should_highlight = len(score_cells) > 1
+            for idx, cell in enumerate(score_cells):
+                if should_highlight and idx in best_indices and cell != "-":
+                    row += f" ***{cell}*** |"
+                else:
+                    row += f" {cell} |"
+        else:
+            row += "".join(f" {cell} |" for cell in score_cells)
+
+        lines.append(row)
+
+    # Add Total row with judge's final scores
+    total_row = "| **Total** |"
+    for item_id in sorted(items.keys()):
+        item = items[item_id]
+        if hasattr(item, "judge_score"):
+            total_row += f" **{item.judge_score:.2f}** |"
+        else:
+            total_row += " **—** |"
+    lines.append(total_row)
+
+    return lines
 
 
 def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
@@ -585,19 +881,7 @@ def save_subtest_report(
         )
 
     # Add grade statistics if available
-    if result.grade_distribution:
-        md_lines.extend(["", "## Grade Statistics", ""])
-        # Sort grades from best to worst (S to F)
-        grade_order = ["S", "A", "B", "C", "D", "F"]
-        sorted_dist = sorted(
-            result.grade_distribution.items(),
-            key=lambda x: grade_order.index(x[0]) if x[0] in grade_order else 99,
-        )
-        dist_str = ", ".join(f"{g}={c}" for g, c in sorted_dist)
-        md_lines.append(f"**Distribution**: {dist_str}")
-        md_lines.append(f"**Modal Grade**: {result.modal_grade}")
-        if result.min_grade and result.max_grade:
-            md_lines.append(f"**Grade Range**: {result.min_grade} - {result.max_grade}")
+    md_lines.extend(_generate_grade_statistics_section(result))
 
     # Collect all criteria across runs
     all_criteria: set[str] = set()
@@ -615,71 +899,17 @@ def save_subtest_report(
             ]
         )
 
-        # Build header WITHOUT "Best" column
-        header = "| Criterion |"
-        separator = "|-----------|"
-        for run in result.runs:
-            header += f" Run {run.run_number:02d} |"
-            separator += "--------|"
-        md_lines.extend([header, separator])
-
-        # Add rows with best values bolded/italicized
-        for criterion in sorted(all_criteria):
-            row = f"| {criterion} |"
-            scores = []
-            score_cells = []
-
-            for run in result.runs:
-                if run.criteria_scores and criterion in run.criteria_scores:
-                    score_data = run.criteria_scores[criterion]
-                    score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                    if isinstance(score, int | float):
-                        scores.append((score, len(score_cells)))
-                        score_cells.append(f"{score:.2f}")
-                    else:
-                        score_cells.append(f"{score}" if score else "-")
-                else:
-                    score_cells.append("-")
-
-            # Bold/italicize best scores (***text*** = bold+italic)
-            # Only apply formatting if more than one result to compare
-            if scores:
-                max_score = max(s[0] for s in scores)
-                best_indices = {s[1] for s in scores if s[0] == max_score}
-                should_highlight = len(score_cells) > 1
-                for idx, cell in enumerate(score_cells):
-                    if should_highlight and idx in best_indices and cell != "-":
-                        row += f" ***{cell}*** |"
-                    else:
-                        row += f" {cell} |"
-            else:
-                row += "".join(f" {cell} |" for cell in score_cells)
-
-            md_lines.append(row)
-
-        # Add Total row with judge's final scores
-        total_row = "| **Total** |"
-        for run in result.runs:
-            total_row += f" **{run.judge_score:.2f}** |"
-        md_lines.append(total_row)
+        # Build items dict for helper
+        items_dict = {run.run_number: run for run in result.runs}
+        criteria_table = _generate_criteria_comparison_table(
+            all_criteria,
+            items_dict,
+            column_header_fn=lambda run_num: f"Run {run_num:02d}",
+        )
+        md_lines.extend(criteria_table)
 
     # Add aggregated token statistics
-    ts = result.token_stats
-    md_lines.extend(
-        [
-            "",
-            "## Token Statistics (Total)",
-            "",
-            "| Metric | Value |",
-            "|--------|-------|",
-            f"| Input (fresh) | {ts.input_tokens:,} |",
-            f"| Output | {ts.output_tokens:,} |",
-            f"| Cache Read | {ts.cache_read_tokens:,} |",
-            f"| Cache Created | {ts.cache_creation_tokens:,} |",
-            f"| **Total** | **{ts.total_tokens:,}** |",
-            "",
-        ]
-    )
+    md_lines.extend(_generate_token_stats_section(result.token_stats))
 
     # Add run links
     md_lines.extend(
@@ -898,73 +1128,16 @@ def save_tier_report(
             ]
         )
 
-        # Build header WITHOUT "Best" column
-        header = "| Criterion |"
-        separator = "|-----------|"
-        for subtest_id in sorted(best_runs.keys()):
-            header += f" {subtest_id} |"
-            separator += "------|"
-        md_lines.extend([header, separator])
-
-        # Add row for each criterion with best bolded
-        for criterion in sorted(all_criteria):
-            row = f"| {criterion} |"
-            scores = []
-            score_cells = []
-
-            for subtest_id in sorted(best_runs.keys()):
-                best_run = best_runs[subtest_id]
-                if best_run.criteria_scores and criterion in best_run.criteria_scores:
-                    score_data = best_run.criteria_scores[criterion]
-                    score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                    if isinstance(score, int | float):
-                        scores.append((score, len(score_cells)))
-                        score_cells.append(f"{score:.2f}")
-                    else:
-                        score_cells.append(f"{score}" if score else "-")
-                else:
-                    score_cells.append("-")
-
-            # Bold/italicize best scores
-            # Only apply formatting if more than one result to compare
-            if scores:
-                max_score = max(s[0] for s in scores)
-                best_indices = {s[1] for s in scores if s[0] == max_score}
-                should_highlight = len(score_cells) > 1
-                for idx, cell in enumerate(score_cells):
-                    if should_highlight and idx in best_indices and cell != "-":
-                        row += f" ***{cell}*** |"
-                    else:
-                        row += f" {cell} |"
-            else:
-                row += "".join(f" {cell} |" for cell in score_cells)
-
-            md_lines.append(row)
-
-        # Add Total row with judge's final scores
-        total_row = "| **Total** |"
-        for subtest_id in sorted(best_runs.keys()):
-            best_run = best_runs[subtest_id]
-            total_row += f" **{best_run.judge_score:.2f}** |"
-        md_lines.append(total_row)
+        # Use helper to generate table
+        criteria_table = _generate_criteria_comparison_table(
+            all_criteria,
+            best_runs,
+            column_header_fn=lambda subtest_id: subtest_id,
+        )
+        md_lines.extend(criteria_table)
 
     # Add aggregated token statistics
-    ts = result.token_stats
-    md_lines.extend(
-        [
-            "",
-            "## Token Statistics (Total)",
-            "",
-            "| Metric | Value |",
-            "|--------|-------|",
-            f"| Input (fresh) | {ts.input_tokens:,} |",
-            f"| Output | {ts.output_tokens:,} |",
-            f"| Cache Read | {ts.cache_read_tokens:,} |",
-            f"| Cache Created | {ts.cache_creation_tokens:,} |",
-            f"| **Total** | **{ts.total_tokens:,}** |",
-            "",
-        ]
-    )
+    md_lines.extend(_generate_token_stats_section(result.token_stats))
 
     # Add subtest links
     md_lines.extend(
@@ -1054,59 +1227,13 @@ def save_experiment_report(
         if result.frontier_cop != float("inf")
         else "- **Frontier CoP**: N/A",
         "",
-        "## Tier Summary",
-        "",
-        "| Tier | Subtests | Duration | Cost | In | Out | Cache R | Cache W | CoP |",
-        "|------|----------|----------|------|-----|-----|---------|---------|-----|",
     ]
 
-    for tier_id in result.config.tiers_to_run:
-        tier_result = result.tier_results.get(tier_id)
-        if tier_result:
-            ts = tier_result.token_stats
-            # Calculate cost-of-pass for this tier
-            best_subtest = result.tier_results[tier_id].subtest_results.get(
-                tier_result.best_subtest
-            )
-            if best_subtest and best_subtest.pass_rate > 0:
-                cop = tier_result.total_cost / best_subtest.pass_rate
-                cop_str = f"${cop:.2f}"
-            else:
-                cop_str = "N/A"
+    # Add tier summary table
+    md_lines.extend(_generate_tier_summary_table(result))
 
-            num_subtests = len(tier_result.subtest_results)
-            md_lines.append(
-                f"| {tier_id.value} | {num_subtests} | "
-                f"{tier_result.total_duration:.1f}s | "
-                f"${tier_result.total_cost:.2f} | "
-                f"{ts.input_tokens:,} | {ts.output_tokens:,} | "
-                f"{ts.cache_read_tokens:,} | {ts.cache_creation_tokens:,} | {cop_str} |"
-            )
-
-    md_lines.extend(
-        [
-            "",
-            "## Best Subtest per Tier",
-            "",
-            "| Tier | Best | Score | Pass | Cost | Duration |",
-            "|------|------|-------|------|------|----------|",
-        ]
-    )
-
-    for tier_id in result.config.tiers_to_run:
-        tier_result = result.tier_results.get(tier_id)
-        if tier_result and tier_result.best_subtest:
-            best_subtest = tier_result.subtest_results.get(tier_result.best_subtest)
-            if best_subtest:
-                # Calculate subtest-level duration (sum of all runs in this subtest)
-                subtest_duration = sum(r.duration_seconds for r in best_subtest.runs)
-                md_lines.append(
-                    f"| {tier_id.value} | {tier_result.best_subtest} | "
-                    f"{tier_result.best_subtest_score:.2f} | "
-                    f"{best_subtest.pass_rate:.0%} | "
-                    f"${best_subtest.total_cost:.2f} | "
-                    f"{subtest_duration:.1f}s |"
-                )
+    # Add best subtest per tier table
+    md_lines.extend(_generate_best_subtest_table(result))
 
     # Collect all criteria across best runs from each tier's best subtest
     all_criteria: set[str] = set()
@@ -1130,73 +1257,16 @@ def save_experiment_report(
             ]
         )
 
-        # Build header WITHOUT "Best" column
-        header = "| Criterion |"
-        separator = "|-----------|"
-        for tier_val in sorted(best_runs_by_tier.keys()):
-            header += f" {tier_val} |"
-            separator += "------|"
-        md_lines.extend([header, separator])
-
-        # Add row for each criterion with best bolded
-        for criterion in sorted(all_criteria):
-            row = f"| {criterion} |"
-            scores = []
-            score_cells = []
-
-            for tier_val in sorted(best_runs_by_tier.keys()):
-                best_run = best_runs_by_tier[tier_val]
-                if best_run.criteria_scores and criterion in best_run.criteria_scores:
-                    score_data = best_run.criteria_scores[criterion]
-                    score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                    if isinstance(score, int | float):
-                        scores.append((score, len(score_cells)))
-                        score_cells.append(f"{score:.2f}")
-                    else:
-                        score_cells.append(f"{score}" if score else "-")
-                else:
-                    score_cells.append("-")
-
-            # Bold/italicize best scores
-            # Only apply formatting if more than one result to compare
-            if scores:
-                max_score = max(s[0] for s in scores)
-                best_indices = {s[1] for s in scores if s[0] == max_score}
-                should_highlight = len(score_cells) > 1
-                for idx, cell in enumerate(score_cells):
-                    if should_highlight and idx in best_indices and cell != "-":
-                        row += f" ***{cell}*** |"
-                    else:
-                        row += f" {cell} |"
-            else:
-                row += "".join(f" {cell} |" for cell in score_cells)
-
-            md_lines.append(row)
-
-        # Add Total row with judge's final scores
-        total_row = "| **Total** |"
-        for tier_val in sorted(best_runs_by_tier.keys()):
-            best_run = best_runs_by_tier[tier_val]
-            total_row += f" **{best_run.judge_score:.2f}** |"
-        md_lines.append(total_row)
+        # Use helper to generate table
+        criteria_table = _generate_criteria_comparison_table(
+            all_criteria,
+            best_runs_by_tier,
+            column_header_fn=lambda tier_val: tier_val,
+        )
+        md_lines.extend(criteria_table)
 
     # Add aggregated token statistics
-    ts = result.token_stats
-    md_lines.extend(
-        [
-            "",
-            "## Token Statistics (Total)",
-            "",
-            "| Metric | Value |",
-            "|--------|-------|",
-            f"| Input (fresh) | {ts.input_tokens:,} |",
-            f"| Output | {ts.output_tokens:,} |",
-            f"| Cache Read | {ts.cache_read_tokens:,} |",
-            f"| Cache Created | {ts.cache_creation_tokens:,} |",
-            f"| **Total** | **{ts.total_tokens:,}** |",
-            "",
-        ]
-    )
+    md_lines.extend(_generate_token_stats_section(result.token_stats))
 
     md_lines.extend(
         [

@@ -35,19 +35,27 @@ _FMT_RATE = f".{config.precision_rates}f"
 _FMT_COST = f".{config.precision_costs}f"
 
 
-def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
-    """Generate Table 2: Tier Pairwise Comparison.
+def _generate_pairwise_comparison(
+    runs_df: pd.DataFrame,
+    metric_column: str,
+    metric_name: str,
+    table_title: str,
+    table_label: str,
+) -> tuple[str, str]:
+    """Generate pairwise comparison table for a metric.
 
-    Uses Kruskal-Wallis omnibus test followed by pairwise Mann-Whitney U tests
-    with Holm-Bonferroni correction (step-down, less conservative than Bonferroni).
-
-    Statistical workflow:
-    1. Run Kruskal-Wallis omnibus test across all tiers
+    Shared statistical pipeline:
+    1. Kruskal-Wallis omnibus test across all tiers
     2. If omnibus p < ALPHA, proceed to pairwise comparisons
     3. Apply Holm-Bonferroni correction to pairwise p-values
+    4. Generate markdown and LaTeX tables
 
     Args:
         runs_df: Runs DataFrame
+        metric_column: Column name for the metric (e.g., "passed", "impl_rate")
+        metric_name: Display name for the metric (e.g., "Pass Rate", "Impl-Rate")
+        table_title: Title for the table
+        table_label: LaTeX label for the table
 
     Returns:
         Tuple of (markdown_table, latex_table)
@@ -69,7 +77,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
         # Step 1: Kruskal-Wallis omnibus test across all tiers
         tier_groups = [
-            model_runs[model_runs["tier"] == tier]["passed"].astype(int) for tier in tier_order
+            model_runs[model_runs["tier"] == tier][metric_column].dropna() for tier in tier_order
         ]
         # Filter out empty groups
         tier_groups = [g for g in tier_groups if len(g) > 0]
@@ -103,21 +111,21 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
             if n1 < 10 or n2 < 10:
                 logger.warning(f"Model {model}, {tier1}→{tier2}: Small sample size (N={n1}, {n2})")
 
-            # Pass rate delta
-            pr1 = tier1_data["passed"].mean()
-            pr2 = tier2_data["passed"].mean()
-            pr_delta = pr2 - pr1
+            # Metric delta
+            m1 = tier1_data[metric_column].mean()
+            m2 = tier2_data[metric_column].mean()
+            metric_delta = m2 - m1
 
             # Mann-Whitney U test (raw p-value)
             _, pvalue_raw = mann_whitney_u(
-                tier1_data["passed"].astype(int),
-                tier2_data["passed"].astype(int),
+                tier1_data[metric_column].dropna(),
+                tier2_data[metric_column].dropna(),
             )
 
             # Effect size (Cliff's delta)
             delta = cliffs_delta(
-                tier2_data["passed"].astype(int),
-                tier1_data["passed"].astype(int),
+                tier2_data[metric_column].dropna(),
+                tier1_data[metric_column].dropna(),
             )
 
             pairwise_data.append(
@@ -126,7 +134,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
                     "Transition": f"{tier1}→{tier2}",
                     "N1": n1,
                     "N2": n2,
-                    "Pass Rate Δ": pr_delta,
+                    f"{metric_name} Δ": metric_delta,
                     "p_raw": pvalue_raw,
                     "Cliff's δ": delta,
                 }
@@ -140,18 +148,18 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
         if len(first_data) > 0 and len(last_data) > 0:
             n1, n2 = len(first_data), len(last_data)
-            pr_first = first_data["passed"].mean()
-            pr_last = last_data["passed"].mean()
-            pr_delta = pr_last - pr_first
+            m_first = first_data[metric_column].mean()
+            m_last = last_data[metric_column].mean()
+            metric_delta = m_last - m_first
 
             _, pvalue_raw = mann_whitney_u(
-                first_data["passed"].astype(int),
-                last_data["passed"].astype(int),
+                first_data[metric_column].dropna(),
+                last_data[metric_column].dropna(),
             )
 
             delta = cliffs_delta(
-                last_data["passed"].astype(int),
-                first_data["passed"].astype(int),
+                last_data[metric_column].dropna(),
+                first_data[metric_column].dropna(),
             )
 
             pairwise_data.append(
@@ -160,7 +168,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
                     "Transition": f"{first_tier}→{last_tier}",
                     "N1": n1,
                     "N2": n2,
-                    "Pass Rate Δ": pr_delta,
+                    f"{metric_name} Δ": metric_delta,
                     "p_raw": pvalue_raw,
                     "Cliff's δ": delta,
                 }
@@ -186,7 +194,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
 
     # Markdown table
     md_lines = [
-        "# Table 2: Tier Pairwise Comparison",
+        f"# {table_title}",
         "",
         "*Statistical workflow: Kruskal-Wallis omnibus test, then pairwise Mann-Whitney U "
         "with Holm-Bonferroni correction (step-down)*",
@@ -203,7 +211,8 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     md_lines.append("")
 
     md_lines.append(
-        "| Model | Transition | N (T1, T2) | Pass Rate Δ | p-value | Cliff's δ | Significant? |"
+        f"| Model | Transition | N (T1, T2) | {metric_name} Δ | p-value | "
+        f"Cliff's δ | Significant? |"
     )
     md_lines.append(
         "|-------|------------|------------|-------------|---------|-----------|--------------|"
@@ -215,7 +224,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
 
         md_lines.append(
-            f"| {row['Model']} | {row['Transition']} | {n_str} | {row['Pass Rate Δ']:+.4f} | "
+            f"| {row['Model']} | {row['Transition']} | {n_str} | {row[f'{metric_name} Δ']:+.4f} | "
             f"{pval_str} | {cliffs_delta_val:+.3f} | {row['Significant']} |"
         )
 
@@ -225,11 +234,11 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     latex_lines = [
         r"\begin{table}[htbp]",
         r"\centering",
-        r"\caption{Tier Pairwise Comparison}",
-        r"\label{tab:tier_comparison}",
+        rf"\caption{{{table_title}}}",
+        rf"\label{{tab:{table_label}}}",
         r"\begin{tabular}{llrrrrl}",
         r"\toprule",
-        r"Model & Transition & N (T1, T2) & Pass Rate $\Delta$ & p-value & "
+        rf"Model & Transition & N (T1, T2) & {metric_name} $\Delta$ & p-value & "
         r"Cliff's $\delta$ & Significant? \\",
         r"\midrule",
     ]
@@ -241,7 +250,7 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
 
         latex_lines.append(
-            f"{row['Model']} & {row['Transition']} & {n_str} & {row['Pass Rate Δ']:+.4f} & "
+            f"{row['Model']} & {row['Transition']} & {n_str} & {row[f'{metric_name} Δ']:+.4f} & "
             f"{pval_str} & {cliffs_delta_val:+.3f} & {sig_mark} \\\\"
         )
 
@@ -278,6 +287,37 @@ def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     return markdown, latex
 
 
+def table02_tier_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
+    """Generate Table 2: Tier Pairwise Comparison.
+
+    Uses Kruskal-Wallis omnibus test followed by pairwise Mann-Whitney U tests
+    with Holm-Bonferroni correction (step-down, less conservative than Bonferroni).
+
+    Statistical workflow:
+    1. Run Kruskal-Wallis omnibus test across all tiers
+    2. If omnibus p < ALPHA, proceed to pairwise comparisons
+    3. Apply Holm-Bonferroni correction to pairwise p-values
+
+    Args:
+        runs_df: Runs DataFrame
+
+    Returns:
+        Tuple of (markdown_table, latex_table)
+
+    """
+    # Convert boolean to int for statistical tests
+    runs_df_copy = runs_df.copy()
+    runs_df_copy["passed"] = runs_df_copy["passed"].astype(int)
+
+    return _generate_pairwise_comparison(
+        runs_df_copy,
+        metric_column="passed",
+        metric_name="Pass Rate",
+        table_title="Table 2: Tier Pairwise Comparison",
+        table_label="tier_comparison",
+    )
+
+
 def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     """Generate Table 2b: Impl-Rate Tier Pairwise Comparison.
 
@@ -307,260 +347,13 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
         logger.error("impl_rate column not found in runs_df")
         return "Error: impl_rate column not found", "Error: impl_rate column not found"
 
-    # Derive tier order from data
-    tier_order = derive_tier_order(runs_df)
-
-    # Compute pairwise comparisons
-    rows = []
-    omnibus_results = []  # Store omnibus test results for table footer
-
-    for model in sorted(runs_df["agent_model"].unique()):
-        model_runs = runs_df[runs_df["agent_model"] == model]
-
-        # Step 1: Kruskal-Wallis omnibus test across all tiers
-        tier_groups = [
-            model_runs[model_runs["tier"] == tier]["impl_rate"].dropna() for tier in tier_order
-        ]
-        # Filter out empty groups
-        tier_groups = [g for g in tier_groups if len(g) > 0]
-
-        if len(tier_groups) < 2:
-            logger.warning(
-                f"Model {model}: Insufficient tier groups ({len(tier_groups)}) for omnibus test"
-            )
-            continue
-
-        h_stat, omnibus_p = kruskal_wallis(*tier_groups)
-        dof = len(tier_groups) - 1  # Degrees of freedom for Kruskal-Wallis
-        omnibus_results.append((model, h_stat, omnibus_p, dof))
-
-        # Step 2: Only proceed to pairwise tests if omnibus is significant
-        proceed_to_pairwise = omnibus_p < ALPHA
-
-        # Collect all pairwise raw p-values for Holm-Bonferroni correction
-        pairwise_data = []
-
-        for i in range(len(tier_order) - 1):
-            tier1, tier2 = tier_order[i], tier_order[i + 1]
-            tier1_data = model_runs[model_runs["tier"] == tier1]
-            tier2_data = model_runs[model_runs["tier"] == tier2]
-
-            if len(tier1_data) == 0 or len(tier2_data) == 0:
-                continue
-
-            # Check for small sample sizes
-            n1, n2 = len(tier1_data), len(tier2_data)
-            if n1 < 10 or n2 < 10:
-                logger.warning(f"Model {model}, {tier1}→{tier2}: Small sample size (N={n1}, {n2})")
-
-            # Impl-Rate delta
-            ir1 = tier1_data["impl_rate"].mean()
-            ir2 = tier2_data["impl_rate"].mean()
-            ir_delta = ir2 - ir1
-
-            # Mann-Whitney U test (raw p-value)
-            _, pvalue_raw = mann_whitney_u(
-                tier1_data["impl_rate"].dropna(),
-                tier2_data["impl_rate"].dropna(),
-            )
-
-            # Effect size (Cliff's delta)
-            delta = cliffs_delta(
-                tier2_data["impl_rate"].dropna(),
-                tier1_data["impl_rate"].dropna(),
-            )
-
-            pairwise_data.append(
-                {
-                    "Model": model,
-                    "Transition": f"{tier1}→{tier2}",
-                    "N1": n1,
-                    "N2": n2,
-                    "Impl-Rate Δ": ir_delta,
-                    "p_raw": pvalue_raw,
-                    "Cliff's δ": delta,
-                }
-            )
-
-        # Add overall first→last tier comparison
-        first_tier = tier_order[0]
-        last_tier = tier_order[-1]
-        first_data = model_runs[model_runs["tier"] == first_tier]
-        last_data = model_runs[model_runs["tier"] == last_tier]
-
-        if len(first_data) > 0 and len(last_data) > 0:
-            ir_first = first_data["impl_rate"].mean()
-            ir_last = last_data["impl_rate"].mean()
-            ir_delta_overall = ir_last - ir_first
-
-            _, pvalue_raw_overall = mann_whitney_u(
-                first_data["impl_rate"].dropna(),
-                last_data["impl_rate"].dropna(),
-            )
-
-            delta_overall = cliffs_delta(
-                last_data["impl_rate"].dropna(),
-                first_data["impl_rate"].dropna(),
-            )
-
-            pairwise_data.append(
-                {
-                    "Model": model,
-                    "Transition": f"{first_tier}→{last_tier} (Overall)",
-                    "N1": len(first_data),
-                    "N2": len(last_data),
-                    "Impl-Rate Δ": ir_delta_overall,
-                    "p_raw": pvalue_raw_overall,
-                    "Cliff's δ": delta_overall,
-                }
-            )
-
-        # Step 3: Apply Holm-Bonferroni correction to all pairwise p-values for this model
-        if proceed_to_pairwise:
-            raw_p_values = [d["p_raw"] for d in pairwise_data]
-            corrected_p_values = holm_bonferroni_correction(raw_p_values)
-
-            for i, corrected_p in enumerate(corrected_p_values):
-                pairwise_data[i]["p-value"] = corrected_p
-                pairwise_data[i]["Significant"] = "Yes" if corrected_p < ALPHA else "No"
-        else:
-            # Omnibus test not significant - don't perform pairwise tests
-            for i in range(len(pairwise_data)):
-                pairwise_data[i]["p-value"] = None
-                pairwise_data[i]["Significant"] = "N/A (omnibus n.s.)"
-
-        rows.extend(pairwise_data)
-
-    # Generate markdown table
-    md_lines = [
-        "# Table 2b: Impl-Rate Tier Pairwise Comparison",
-        "",
-        "*Statistical workflow: Kruskal-Wallis omnibus test, then pairwise Mann-Whitney U "
-        "with Holm-Bonferroni correction (step-down)*",
-        "",
-    ]
-
-    # Add omnibus results to header
-    md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
-    for model, h_stat, omnibus_p, dof in omnibus_results:
-        sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
-        md_lines.append(
-            f"- {model}: H({dof})={h_stat:{_FMT_COST}}, p={omnibus_p:{_FMT_PVAL}} {sig_str}"
-        )
-    md_lines.append("")
-
-    md_lines.append(
-        "| Model | Transition | N (T1, T2) | Impl-Rate Δ | p-value | Cliff's δ | Significant? |"
+    return _generate_pairwise_comparison(
+        runs_df,
+        metric_column="impl_rate",
+        metric_name="Impl-Rate",
+        table_title="Table 2b: Impl-Rate Tier Pairwise Comparison",
+        table_label="impl_rate_tier_comparison",
     )
-    md_lines.append(
-        "|-------|------------|------------|-------------|---------|-----------|--------------|"
-    )
-
-    for row in rows:
-        n_str = f"({row['N1']}, {row['N2']})"
-        delta_str = f"{row['Impl-Rate Δ']:+.3f}"
-        cliffs_delta_val = row["Cliff's δ"]
-        cliffs_str = f"{cliffs_delta_val:+.3f}" if cliffs_delta_val is not None else "N/A"
-
-        if row["p-value"] is not None:
-            p_str = f"{row['p-value']:{_FMT_PVAL}}"
-        else:
-            p_str = "—"
-
-        md_lines.append(
-            f"| {row['Model']} | {row['Transition']} | {n_str} | {delta_str} | "
-            f"{p_str} | {cliffs_str} | {row['Significant']} |"
-        )
-
-    md_lines.extend(
-        [
-            "",
-            "*Statistical notes:*",
-            "- *Positive Δ indicates improvement from T1 → T2*",
-            "- *Cliff's δ: negligible (<0.11), small (0.11-0.28), "
-            "medium (0.28-0.43), large (>0.43)*",
-            "- *p-values are Holm-Bonferroni corrected (more powerful than Bonferroni)*",
-            "- *N/A (omnibus n.s.) = Kruskal-Wallis omnibus test was not significant, "
-            "pairwise tests skipped*",
-        ]
-    )
-
-    markdown = "\n".join(md_lines)
-
-    # Generate LaTeX table
-    latex_lines = [
-        r"\begin{table}[htbp]",
-        r"\centering",
-        r"\caption{Impl-Rate Tier Pairwise Comparison}",
-        r"\label{tab:impl_rate_tier_comparison}",
-        r"\small",
-        r"\begin{tabular}{llccccc}",
-        r"\toprule",
-        r"Model & Transition & N (T1, T2) & Impl-Rate $\Delta$ & "
-        r"p-value & Cliff's $\delta$ & Significant? \\",
-        r"\midrule",
-    ]
-
-    for row in rows:
-        n_str = f"({row['N1']}, {row['N2']})"
-        delta_str = f"{row['Impl-Rate Δ']:+.3f}"
-        cliffs_delta_val = row["Cliff's δ"]
-        cliffs_str = f"{cliffs_delta_val:+.3f}" if cliffs_delta_val is not None else "N/A"
-
-        if row["p-value"] is not None:
-            p_str = f"{row['p-value']:{_FMT_PVAL}}"
-        else:
-            p_str = r"---"
-
-        sig_str = row["Significant"]
-        if sig_str == "Yes":
-            sig_str = r"$\checkmark$"
-        elif sig_str == "No":
-            sig_str = r"$\times$"
-
-        latex_lines.append(
-            f"{row['Model']} & {row['Transition']} & {n_str} & {delta_str} & "
-            f"{p_str} & {cliffs_str} & {sig_str} \\\\"
-        )
-
-    latex_lines.extend(
-        [
-            r"\midrule",
-            r"\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\",
-        ]
-    )
-
-    for model, h_stat, omnibus_p, dof in omnibus_results:
-        sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
-        latex_lines.append(
-            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:{_FMT_COST}}$, "
-            rf"$p={omnibus_p:{_FMT_PVAL}}$ {sig_str}}} \\"
-        )
-
-    # Add correction method footnote
-    latex_lines.append(
-        r"\multicolumn{7}{l}{\footnotesize "
-        r"Pairwise p-values corrected with Holm-Bonferroni method.} \\"
-    )
-
-    latex_lines.extend(
-        [
-            r"\bottomrule",
-            r"\end{tabular}",
-            r"\begin{tablenotes}",
-            r"\small",
-            r"\item Positive $\Delta$ indicates improvement from T1 $\to$ T2.",
-            r"\item Cliff's $\delta$: negligible ($<0.11$), small ($0.11$--$0.28$), "
-            r"medium ($0.28$--$0.43$), large ($>0.43$).",
-            r"\item p-values are Holm-Bonferroni corrected (step-down).",
-            r"\end{tablenotes}",
-            r"\end{table}",
-        ]
-    )
-
-    latex = "\n".join(latex_lines)
-
-    return markdown, latex
 
 
 def table04_criteria_performance(
