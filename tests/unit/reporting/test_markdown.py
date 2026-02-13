@@ -1,7 +1,4 @@
-"""Tests for Markdown report generator.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for Markdown report generator."""
 
 import tempfile
 from pathlib import Path

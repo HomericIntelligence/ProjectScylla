@@ -1,7 +1,4 @@
-"""Tests for log and metrics capture.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for log and metrics capture."""
 
 import json
 from pathlib import Path

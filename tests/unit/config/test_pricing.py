@@ -1,7 +1,4 @@
-"""Tests for centralized pricing configuration.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for centralized pricing configuration."""
 
 import pytest
 

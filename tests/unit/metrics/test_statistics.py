@@ -1,7 +1,4 @@
-"""Tests for statistical calculations.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for statistical calculations."""
 
 import math
 

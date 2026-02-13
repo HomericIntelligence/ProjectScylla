@@ -1,7 +1,4 @@
-"""Tests for judgment parser.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for judgment parser."""
 
 import json
 from pathlib import Path

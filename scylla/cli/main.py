@@ -1,7 +1,4 @@
-"""Command-line interface for ProjectScylla.
-
-Python justification: Click library for CLI parsing and subprocess orchestration.
-"""
+"""Command-line interface for ProjectScylla."""
 
 import json
 import statistics

@@ -1,7 +1,4 @@
-"""Tests for tier configuration loading.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for tier configuration loading."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

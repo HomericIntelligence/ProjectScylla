@@ -1,7 +1,4 @@
-"""Tests for scylla.core.results module.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for scylla.core.results module."""
 
 from scylla.core.results import BaseExecutionInfo, BaseRunMetrics, BaseRunResult
 

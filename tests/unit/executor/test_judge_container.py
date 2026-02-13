@@ -1,7 +1,4 @@
-"""Tests for judge container orchestration.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for judge container orchestration."""
 
 from pathlib import Path
 from unittest.mock import MagicMock, patch

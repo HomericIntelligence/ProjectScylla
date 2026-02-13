@@ -1,7 +1,4 @@
-"""Tests for progress display.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for progress display."""
 
 import sys
 from datetime import datetime, timedelta, timezone

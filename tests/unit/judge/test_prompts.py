@@ -1,7 +1,4 @@
-"""Tests for judge prompt templates.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for judge prompt templates."""
 
 import pytest
 

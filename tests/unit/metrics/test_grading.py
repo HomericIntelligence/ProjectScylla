@@ -1,7 +1,4 @@
-"""Tests for grading calculations.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for grading calculations."""
 
 import math
 

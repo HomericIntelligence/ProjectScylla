@@ -1,7 +1,4 @@
-"""Tests for OpenAI Codex CLI adapter.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for OpenAI Codex CLI adapter."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

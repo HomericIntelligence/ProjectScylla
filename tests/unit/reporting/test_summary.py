@@ -1,7 +1,4 @@
-"""Tests for summary.json generator.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for summary.json generator."""
 
 import json
 import tempfile

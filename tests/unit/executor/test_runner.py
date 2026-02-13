@@ -1,7 +1,4 @@
-"""Tests for test runner orchestration.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for test runner orchestration."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

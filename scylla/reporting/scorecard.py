@@ -1,7 +1,4 @@
-"""Scorecard generator for model-level result aggregation.
-
-Python justification: JSON serialization and file I/O for scorecard persistence.
-"""
+"""Scorecard generator for model-level result aggregation."""
 
 import json
 from dataclasses import dataclass, field

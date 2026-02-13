@@ -1,7 +1,4 @@
-"""Test orchestrator for agent evaluations.
-
-Python justification: Required for subprocess orchestration and file I/O.
-"""
+"""Test orchestrator for agent evaluations."""
 
 from __future__ import annotations
 
