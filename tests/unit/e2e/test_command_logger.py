@@ -25,7 +25,7 @@ class TestCommandLog:
             duration_seconds=1.5,
         )
 
-        d = log.to_dict()
+        d = log.model_dump()
 
         assert d["command"] == ["claude", "--print", "hello"]
         assert d["exit_code"] == 0
@@ -44,7 +44,7 @@ class TestCommandLog:
             "duration_seconds": 0.5,
         }
 
-        log = CommandLog.from_dict(data)
+        log = CommandLog.model_validate(data)
 
         assert log.command == ["git", "status"]
         assert log.exit_code == 0
@@ -56,7 +56,7 @@ class TestCommandLogger:
     def test_log_command(self) -> None:
         """Test logging a command."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            logger = CommandLogger(Path(tmpdir))
+            logger = CommandLogger(log_dir=Path(tmpdir))
 
             log = logger.log_command(
                 cmd=["echo", "hello"],
@@ -78,7 +78,7 @@ class TestCommandLogger:
     def test_save(self) -> None:
         """Test saving command log to JSON."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            logger = CommandLogger(Path(tmpdir))
+            logger = CommandLogger(log_dir=Path(tmpdir))
 
             logger.log_command(
                 cmd=["cmd1"],
@@ -108,7 +108,7 @@ class TestCommandLogger:
     def test_save_replay_script(self) -> None:
         """Test generating replay script."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            logger = CommandLogger(Path(tmpdir))
+            logger = CommandLogger(log_dir=Path(tmpdir))
 
             logger.log_command(
                 cmd=["echo", "hello world"],
@@ -133,7 +133,7 @@ class TestCommandLogger:
         """Test loading saved command log."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create and save logger
-            logger1 = CommandLogger(Path(tmpdir))
+            logger1 = CommandLogger(log_dir=Path(tmpdir))
             logger1.log_command(
                 cmd=["test", "cmd"],
                 stdout="output",
@@ -159,7 +159,7 @@ class TestCommandLogger:
             os.environ["ANTHROPIC_API_KEY"] = "secret-key-12345"
 
             try:
-                logger = CommandLogger(Path(tmpdir))
+                logger = CommandLogger(log_dir=Path(tmpdir))
                 log = logger.log_command(
                     cmd=["test"],
                     stdout="",
@@ -185,7 +185,7 @@ class TestCommandLogger:
         to replay_prompt.md, avoiding overwriting existing files.
         """
         with tempfile.TemporaryDirectory() as tmpdir:
-            logger = CommandLogger(Path(tmpdir))
+            logger = CommandLogger(log_dir=Path(tmpdir))
 
             # Create a prompt file that should NOT be overwritten
             prompt_file = Path(tmpdir) / "prompt.md"
@@ -221,7 +221,7 @@ class TestCommandLogger:
     def test_replay_script_inline_prompt_extraction(self) -> None:
         """Test that inline prompts are correctly extracted to replay_prompt.md."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            logger = CommandLogger(Path(tmpdir))
+            logger = CommandLogger(log_dir=Path(tmpdir))
 
             # Log a claude command with an inline prompt (>100 chars)
             inline_prompt = "This is a long inline prompt. " * 10

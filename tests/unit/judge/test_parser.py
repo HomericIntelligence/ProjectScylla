@@ -32,7 +32,7 @@ class TestRequirementScore:
     def test_to_dict(self) -> None:
         """Test To dict."""
         score = RequirementScore(id="R001", score=0.8, confidence=0.9)
-        d = score.to_dict()
+        d = score.model_dump()
         assert d["id"] == "R001"
         assert d["score"] == 0.8
 
@@ -50,7 +50,7 @@ class TestCategoryScore:
     def test_to_dict(self) -> None:
         """Test To dict."""
         score = CategoryScore(name="test", score=0.7)
-        d = score.to_dict()
+        d = score.model_dump()
         assert d["name"] == "test"
         assert d["score"] == 0.7
 
@@ -79,7 +79,7 @@ class TestJudgmentSummary:
             passed=True,
             letter_grade="B",
         )
-        d = summary.to_dict()
+        d = summary.model_dump()
         assert d["weighted_score"] == 0.8
         assert d["passed"] is True
 
@@ -97,7 +97,7 @@ class TestExploratoryTestingResult:
     def test_to_dict(self) -> None:
         """Test To dict."""
         result = ExploratoryTestingResult(commands_run=["pytest"])
-        d = result.to_dict()
+        d = result.model_dump()
         assert d["commands_run"] == ["pytest"]
 
 
@@ -120,7 +120,7 @@ class TestJudgment:
                 letter_grade="A",
             ),
         )
-        d = judgment.to_dict()
+        d = judgment.model_dump()
         assert d["judge_model"] == "test-model"
         assert "R001" in d["requirements"]
         assert d["summary"]["passed"] is True

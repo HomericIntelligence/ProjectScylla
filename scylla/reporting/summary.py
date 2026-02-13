@@ -1,103 +1,59 @@
 """Summary generator for test-level result aggregation."""
 
 import json
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class SummaryStatistics:
+
+class SummaryStatistics(BaseModel):
     """Statistical summary of a metric across multiple runs."""
 
-    median: float
-    mean: float
-    mode: float
-    min: float
-    max: float
-    std_dev: float
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "median": self.median,
-            "mean": self.mean,
-            "mode": self.mode,
-            "min": self.min,
-            "max": self.max,
-            "std_dev": self.std_dev,
-        }
+    median: float = Field(..., description="Median value")
+    mean: float = Field(..., description="Mean value")
+    mode: float = Field(..., description="Mode value")
+    min: float = Field(..., description="Minimum value")
+    max: float = Field(..., description="Maximum value")
+    std_dev: float = Field(..., description="Standard deviation")
 
 
-@dataclass
-class ModelStatistics:
+class ModelStatistics(BaseModel):
     """Statistics for a single model on a test."""
 
-    runs_completed: int
-    pass_rate: SummaryStatistics
-    impl_rate: SummaryStatistics
-    cost_usd: SummaryStatistics
-    duration_seconds: SummaryStatistics
-    composite_score: SummaryStatistics
-    cost_of_pass: SummaryStatistics
-    grade: str
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "runs_completed": self.runs_completed,
-            "pass_rate": self.pass_rate.to_dict(),
-            "impl_rate": self.impl_rate.to_dict(),
-            "cost_usd": self.cost_usd.to_dict(),
-            "duration_seconds": self.duration_seconds.to_dict(),
-            "composite_score": self.composite_score.to_dict(),
-            "cost_of_pass": self.cost_of_pass.to_dict(),
-            "grade": self.grade,
-        }
+    runs_completed: int = Field(..., description="Number of completed runs")
+    pass_rate: SummaryStatistics = Field(..., description="Pass rate statistics")
+    impl_rate: SummaryStatistics = Field(..., description="Implementation rate statistics")
+    cost_usd: SummaryStatistics = Field(..., description="Cost statistics")
+    duration_seconds: SummaryStatistics = Field(..., description="Duration statistics")
+    composite_score: SummaryStatistics = Field(..., description="Composite score statistics")
+    cost_of_pass: SummaryStatistics = Field(..., description="Cost of pass statistics")
+    grade: str = Field(..., description="Letter grade")
 
 
-@dataclass
-class Rankings:
+class Rankings(BaseModel):
     """Model rankings by different criteria."""
 
-    by_quality: list[str] = field(default_factory=list)
-    by_cost_efficiency: list[str] = field(default_factory=list)
-    by_speed: list[str] = field(default_factory=list)
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "by_quality": self.by_quality,
-            "by_cost_efficiency": self.by_cost_efficiency,
-            "by_speed": self.by_speed,
-        }
+    by_quality: list[str] = Field(default_factory=list, description="Rankings by quality")
+    by_cost_efficiency: list[str] = Field(
+        default_factory=list, description="Rankings by cost efficiency"
+    )
+    by_speed: list[str] = Field(default_factory=list, description="Rankings by speed")
 
 
-@dataclass
-class EvaluationReport:
+class EvaluationReport(BaseModel):
     """Summary of all model results for a single test."""
 
-    test_id: str
-    test_name: str
-    updated: str
-    runs_per_model: int
-    models: dict[str, ModelStatistics] = field(default_factory=dict)
-    rankings: Rankings = field(default_factory=Rankings)
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "test_id": self.test_id,
-            "test_name": self.test_name,
-            "updated": self.updated,
-            "runs_per_model": self.runs_per_model,
-            "models": {k: v.to_dict() for k, v in self.models.items()},
-            "rankings": self.rankings.to_dict(),
-        }
+    test_id: str = Field(..., description="Test identifier")
+    test_name: str = Field(..., description="Human-readable test name")
+    updated: str = Field(..., description="ISO timestamp of last update")
+    runs_per_model: int = Field(..., description="Expected runs per model")
+    models: dict[str, ModelStatistics] = Field(default_factory=dict, description="Model statistics")
+    rankings: Rankings = Field(default_factory=Rankings, description="Model rankings")
 
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
-        return json.dumps(self.to_dict(), indent=indent)
+        return self.model_dump_json(indent=indent)
 
     def write(self, output_dir: Path) -> Path:
         """Write summary.json to output directory.
@@ -246,35 +202,7 @@ class SummaryGenerator:
             return None
 
         data = json.loads(summary_path.read_text())
-
-        models = {}
-        for model_id, model_data in data.get("models", {}).items():
-            models[model_id] = ModelStatistics(
-                runs_completed=model_data["runs_completed"],
-                pass_rate=SummaryStatistics(**model_data["pass_rate"]),
-                impl_rate=SummaryStatistics(**model_data["impl_rate"]),
-                cost_usd=SummaryStatistics(**model_data["cost_usd"]),
-                duration_seconds=SummaryStatistics(**model_data["duration_seconds"]),
-                composite_score=SummaryStatistics(**model_data["composite_score"]),
-                cost_of_pass=SummaryStatistics(**model_data["cost_of_pass"]),
-                grade=model_data["grade"],
-            )
-
-        rankings_data = data.get("rankings", {})
-        rankings = Rankings(
-            by_quality=rankings_data.get("by_quality", []),
-            by_cost_efficiency=rankings_data.get("by_cost_efficiency", []),
-            by_speed=rankings_data.get("by_speed", []),
-        )
-
-        return EvaluationReport(
-            test_id=data["test_id"],
-            test_name=data["test_name"],
-            updated=data["updated"],
-            runs_per_model=data["runs_per_model"],
-            models=models,
-            rankings=rankings,
-        )
+        return EvaluationReport.model_validate(data)
 
 
 def create_statistics(

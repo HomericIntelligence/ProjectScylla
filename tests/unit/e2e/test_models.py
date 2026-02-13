@@ -50,7 +50,7 @@ class TestSubTestConfig:
             claude_md_path=Path("/path/to/CLAUDE.md"),
         )
 
-        result = config.to_dict()
+        result = config.model_dump()
 
         assert result["id"] == "01"
         assert result["name"] == "Minimal"
@@ -65,7 +65,7 @@ class TestSubTestConfig:
             description="No customization",
         )
 
-        result = config.to_dict()
+        result = config.model_dump()
 
         assert result["claude_md_path"] is None
         assert result["claude_dir_path"] is None
@@ -79,7 +79,7 @@ class TestSubTestConfig:
             description="Default system prompt mode",
         )
         assert config_default.system_prompt_mode == "custom"
-        assert config_default.to_dict()["system_prompt_mode"] == "custom"
+        assert config_default.model_dump()["system_prompt_mode"] == "custom"
 
         # Test explicit "none" mode (for T0/00 subtest)
         config_none = SubTestConfig(
@@ -89,7 +89,7 @@ class TestSubTestConfig:
             system_prompt_mode="none",
         )
         assert config_none.system_prompt_mode == "none"
-        assert config_none.to_dict()["system_prompt_mode"] == "none"
+        assert config_none.model_dump()["system_prompt_mode"] == "none"
 
         # Test "default" mode
         config_default_mode = SubTestConfig(
@@ -99,7 +99,7 @@ class TestSubTestConfig:
             system_prompt_mode="default",
         )
         assert config_default_mode.system_prompt_mode == "default"
-        assert config_default_mode.to_dict()["system_prompt_mode"] == "default"
+        assert config_default_mode.model_dump()["system_prompt_mode"] == "default"
 
 
 class TestTierConfig:
@@ -115,7 +115,7 @@ class TestTierConfig:
             ],
         )
 
-        result = config.to_dict()
+        result = config.model_dump()
 
         assert result["tier_id"] == "T2"
         assert len(result["subtests"]) == 2
@@ -139,7 +139,7 @@ class TestJudgeResultSummary:
             criteria_scores={"accuracy": {"score": 0.9, "explanation": "Very accurate"}},
         )
 
-        result = summary.to_dict()
+        result = summary.model_dump()
 
         assert result["model"] == "claude-sonnet-4-5"
         assert result["score"] == 0.8
@@ -159,7 +159,7 @@ class TestJudgeResultSummary:
             criteria_scores=None,
         )
 
-        result = summary.to_dict()
+        result = summary.model_dump()
 
         assert result["is_valid"] is False
         assert result["criteria_scores"] is None
@@ -177,7 +177,7 @@ class TestJudgeResultSummary:
         )
 
         assert summary.is_valid is True
-        result = summary.to_dict()
+        result = summary.model_dump()
         assert result["is_valid"] is True
 
 
@@ -204,7 +204,7 @@ class TestRunResult:
             logs_path=Path("/logs"),
         )
 
-        d = result.to_dict()
+        d = result.model_dump()
 
         assert d["run_number"] == 1
         assert d["exit_code"] == 0
@@ -237,7 +237,7 @@ class TestSubTestResult:
             consistency=0.93,
         )
 
-        d = result.to_dict()
+        d = result.model_dump()
 
         assert d["pass_rate"] == 0.8
         assert d["median_score"] == 0.77
@@ -256,7 +256,7 @@ class TestTierBaseline:
             claude_dir_path=Path("/config/.claude"),
         )
 
-        d = baseline.to_dict()
+        d = baseline.model_dump()
 
         assert d["tier_id"] == "T2"
         assert d["subtest_id"] == "01"
@@ -278,7 +278,7 @@ class TestResourceManifest:
             inherited_from={"claude_md": {"blocks": ["B01"]}},
         )
 
-        d = manifest.to_dict()
+        d = manifest.model_dump()
 
         assert d["tier_id"] == "T2"
         assert d["subtest_id"] == "03"
@@ -327,7 +327,7 @@ class TestExperimentConfig:
             tiers_to_run=[TierID.T0, TierID.T1],
         )
 
-        d = config.to_dict()
+        d = config.model_dump()
 
         assert d["experiment_id"] == "test-001"
         assert d["task_repo"] == "https://github.com/test/repo"

@@ -1,13 +1,13 @@
 """Result writer for per-run evaluation results."""
 
 import json
-from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class ExecutionInfo:
+
+class ExecutionInfo(BaseModel):
     """Execution metadata for a run.
 
     This is the minimal execution info for result persistence.
@@ -16,41 +16,37 @@ class ExecutionInfo:
     - core/results.py:BaseExecutionInfo (base type)
     """
 
-    status: str
-    duration_seconds: float
-    exit_code: int
+    status: str = Field(..., description="Execution status")
+    duration_seconds: float = Field(..., description="Duration in seconds")
+    exit_code: int = Field(..., description="Process exit code")
 
 
-@dataclass
-class MetricsInfo:
+class MetricsInfo(BaseModel):
     """Token and cost metrics for a run."""
 
-    tokens_input: int
-    tokens_output: int
-    cost_usd: float
-    api_calls: int
+    tokens_input: int = Field(..., description="Input tokens")
+    tokens_output: int = Field(..., description="Output tokens")
+    cost_usd: float = Field(..., description="Cost in USD")
+    api_calls: int = Field(..., description="Number of API calls")
 
 
-@dataclass
-class JudgmentInfo:
+class JudgmentInfo(BaseModel):
     """Judge evaluation results for a run."""
 
-    passed: bool
-    impl_rate: float
-    letter_grade: str
+    passed: bool = Field(..., description="Whether the run passed")
+    impl_rate: float = Field(..., description="Implementation rate (0.0-1.0)")
+    letter_grade: str = Field(..., description="Letter grade")
 
 
-@dataclass
-class GradingInfo:
+class GradingInfo(BaseModel):
     """Calculated grading metrics for a run."""
 
-    pass_rate: float
-    cost_of_pass: float
-    composite_score: float
+    pass_rate: float = Field(..., description="Pass rate (0.0 or 1.0)")
+    cost_of_pass: float = Field(..., description="Cost per successful pass")
+    composite_score: float = Field(..., description="Combined quality score")
 
 
-@dataclass
-class RunResult:
+class RunResult(BaseModel):
     """Complete result for a single evaluation run.
 
     Contains all execution, metrics, judgment, and grading data
@@ -64,33 +60,19 @@ class RunResult:
     - core/results.py:BaseRunResult (base type)
     """
 
-    test_id: str
-    tier_id: str
-    model_id: str
-    run_number: int
-    timestamp: str
-    execution: ExecutionInfo
-    metrics: MetricsInfo
-    judgment: JudgmentInfo
-    grading: GradingInfo
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "test_id": self.test_id,
-            "tier_id": self.tier_id,
-            "model_id": self.model_id,
-            "run_number": self.run_number,
-            "timestamp": self.timestamp,
-            "execution": asdict(self.execution),
-            "metrics": asdict(self.metrics),
-            "judgment": asdict(self.judgment),
-            "grading": asdict(self.grading),
-        }
+    test_id: str = Field(..., description="Test identifier")
+    tier_id: str = Field(..., description="Tier identifier")
+    model_id: str = Field(..., description="Model identifier")
+    run_number: int = Field(..., description="Run number (1-10)")
+    timestamp: str = Field(..., description="ISO timestamp")
+    execution: ExecutionInfo = Field(..., description="Execution metadata")
+    metrics: MetricsInfo = Field(..., description="Token and cost metrics")
+    judgment: JudgmentInfo = Field(..., description="Judge evaluation results")
+    grading: GradingInfo = Field(..., description="Calculated grading metrics")
 
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
-        return json.dumps(self.to_dict(), indent=indent)
+        return self.model_dump_json(indent=indent)
 
     def write(self, output_dir: Path) -> Path:
         """Write result.json to output directory.
@@ -166,17 +148,7 @@ class ResultWriter:
             return None
 
         data = json.loads(result_path.read_text())
-        return RunResult(
-            test_id=data["test_id"],
-            tier_id=data["tier_id"],
-            model_id=data["model_id"],
-            run_number=data["run_number"],
-            timestamp=data["timestamp"],
-            execution=ExecutionInfo(**data["execution"]),
-            metrics=MetricsInfo(**data["metrics"]),
-            judgment=JudgmentInfo(**data["judgment"]),
-            grading=GradingInfo(**data["grading"]),
-        )
+        return RunResult.model_validate(data)
 
 
 def create_run_result(

@@ -1,76 +1,44 @@
 """Scorecard generator for model-level result aggregation."""
 
 import json
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class EvalResult:
+
+class EvalResult(BaseModel):
     """Summary of a model's performance on a single test."""
 
-    runs_completed: int
-    grade: str
-    median_pass_rate: float
-    median_impl_rate: float
-    median_cost_usd: float
-    median_duration_seconds: float
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "runs_completed": self.runs_completed,
-            "grade": self.grade,
-            "median_pass_rate": self.median_pass_rate,
-            "median_impl_rate": self.median_impl_rate,
-            "median_cost_usd": self.median_cost_usd,
-            "median_duration_seconds": self.median_duration_seconds,
-        }
+    runs_completed: int = Field(..., description="Number of completed runs")
+    grade: str = Field(..., description="Letter grade")
+    median_pass_rate: float = Field(..., description="Median pass rate")
+    median_impl_rate: float = Field(..., description="Median implementation rate")
+    median_cost_usd: float = Field(..., description="Median cost in USD")
+    median_duration_seconds: float = Field(..., description="Median duration in seconds")
 
 
-@dataclass
-class OverallStats:
+class OverallStats(BaseModel):
     """Overall statistics for a model across all tests."""
 
-    tests_completed: int
-    average_grade: str
-    total_cost_usd: float
-    total_runs: int
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "tests_completed": self.tests_completed,
-            "average_grade": self.average_grade,
-            "total_cost_usd": self.total_cost_usd,
-            "total_runs": self.total_runs,
-        }
+    tests_completed: int = Field(..., description="Number of completed tests")
+    average_grade: str = Field(..., description="Average letter grade")
+    total_cost_usd: float = Field(..., description="Total cost in USD")
+    total_runs: int = Field(..., description="Total number of runs")
 
 
-@dataclass
-class ModelScorecard:
+class ModelScorecard(BaseModel):
     """Scorecard aggregating all test results for a single model."""
 
-    model_id: str
-    model_name: str
-    updated: str
-    overall: OverallStats
-    tests: dict[str, EvalResult] = field(default_factory=dict)
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "model_id": self.model_id,
-            "model_name": self.model_name,
-            "updated": self.updated,
-            "overall": self.overall.to_dict(),
-            "tests": {k: v.to_dict() for k, v in self.tests.items()},
-        }
+    model_id: str = Field(..., description="Model identifier")
+    model_name: str = Field(..., description="Human-readable model name")
+    updated: str = Field(..., description="ISO timestamp of last update")
+    overall: OverallStats = Field(..., description="Overall statistics")
+    tests: dict[str, EvalResult] = Field(default_factory=dict, description="Test results")
 
     def to_json(self, indent: int = 2) -> str:
         """Convert to JSON string."""
-        return json.dumps(self.to_dict(), indent=indent)
+        return self.model_dump_json(indent=indent)
 
     def write(self, output_dir: Path) -> Path:
         """Write scorecard.json to output directory.
@@ -278,33 +246,7 @@ class ScorecardGenerator:
             return None
 
         data = json.loads(scorecard_path.read_text())
-
-        tests = {}
-        for test_id, test_data in data.get("tests", {}).items():
-            tests[test_id] = EvalResult(
-                runs_completed=test_data["runs_completed"],
-                grade=test_data["grade"],
-                median_pass_rate=test_data["median_pass_rate"],
-                median_impl_rate=test_data["median_impl_rate"],
-                median_cost_usd=test_data["median_cost_usd"],
-                median_duration_seconds=test_data["median_duration_seconds"],
-            )
-
-        overall_data = data["overall"]
-        overall = OverallStats(
-            tests_completed=overall_data["tests_completed"],
-            average_grade=overall_data["average_grade"],
-            total_cost_usd=overall_data["total_cost_usd"],
-            total_runs=overall_data["total_runs"],
-        )
-
-        return ModelScorecard(
-            model_id=data["model_id"],
-            model_name=data["model_name"],
-            updated=data["updated"],
-            overall=overall,
-            tests=tests,
-        )
+        return ModelScorecard.model_validate(data)
 
 
 def create_test_result(
