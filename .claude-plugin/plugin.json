@@ -1,9 +1,9 @@
 {
-  "name": "paper-readiness-epic",
+  "name": "issue-validation-workflow",
   "version": "1.0.0",
-  "category": "testing",
-  "description": "Complete multi-issue epic for research paper preparation with statistical tests and comprehensive validation",
-  "tags": ["epic", "testing", "statistical-analysis", "power-analysis", "interaction-tests", "pytest"],
+  "category": "evaluation",
+  "description": "Validate GitHub issue state against codebase reality before implementation. Use when starting work on multiple issues to prevent wasted effort on already-resolved issues.",
+  "tags": ["github", "issue-validation", "parallel-exploration", "triage", "advise"],
   "created": "2026-02-12",
   "author": "ProjectScylla Team"
 }
