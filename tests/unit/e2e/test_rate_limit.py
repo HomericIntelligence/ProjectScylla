@@ -337,6 +337,71 @@ class TestDetectRateLimit:
         # Should try JSON message first, then stderr (which has Retry-After: 30)
         assert info.retry_after_seconds is not None
 
+    def test_detect_ollama_weekly_usage_limit_from_json(self) -> None:
+        """Test detection of Ollama weekly usage limit from JSON."""
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "result": (
+                    "Rate limit exceeded: 429 Too Many Requests: "
+                    "you've reached your weekly usage limit"
+                ),
+            }
+        )
+        stderr = ""
+
+        info = detect_rate_limit(stdout, stderr)
+
+        assert info is not None
+        assert "weekly usage limit" in info.error_message.lower()
+
+    def test_detect_ollama_weekly_usage_limit_from_stderr(self) -> None:
+        """Test detection of Ollama weekly usage limit from stderr."""
+        stdout = ""
+        stderr = (
+            "Rate limit exceeded: 429 Too Many Requests: you've reached your weekly usage limit"
+        )
+
+        info = detect_rate_limit(stdout, stderr)
+
+        assert info is not None
+        assert info.error_message == "Weekly usage limit reached"
+
+    def test_detect_ollama_upgrade_to_continue(self) -> None:
+        """Test detection of Ollama 'upgrade to continue' message."""
+        stdout = ""
+        stderr = "You've reached your limit. Please upgrade to continue using this service."
+
+        info = detect_rate_limit(stdout, stderr)
+
+        assert info is not None
+        assert info.error_message == "Usage limit - upgrade required"
+
+    def test_detect_goose_provider_config_failure(self) -> None:
+        """Test detection of Goose provider configuration failure."""
+        stdout = ""
+        stderr = "Error: Failed to configure provider - rate limit reached"
+
+        info = detect_rate_limit(stdout, stderr)
+
+        assert info is not None
+        assert info.error_message == "Provider configuration failed"
+
+    def test_detect_ollama_429_standalone(self) -> None:
+        """Test detection of standalone 429 in Ollama error."""
+        stdout = json.dumps(
+            {
+                "is_error": True,
+                "result": "429 Too Many Requests",
+            }
+        )
+        stderr = ""
+
+        info = detect_rate_limit(stdout, stderr)
+
+        assert info is not None
+        assert "429" in info.error_message
+
 
 class TestWaitForRateLimit:
     """Tests for wait_for_rate_limit function."""
