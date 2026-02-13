@@ -4,7 +4,7 @@
 
 **Status**: ⚠️ **IN PROGRESS** - LaTeX conversion has been partially completed but requires manual fixes before submission.
 
-The conversion from `docs/paper.md` to arXiv-ready LaTeX has been implemented with the following components:
+The conversion from `docs/research_paper.tex` to arXiv-ready submission package has been implemented with the following components:
 
 ### Completed
 
@@ -73,7 +73,7 @@ This protects your manual edits. The `build_arxiv_submission.sh` script will:
 - Copy figures, tables, and bibliography
 - Create the submission tarball
 
-If you need to regenerate `main.tex` from `paper.md` (discarding manual edits):
+If you need to regenerate `main.tex` from `research_paper.tex` (discarding manual edits):
 ```bash
 bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
 ```
@@ -170,7 +170,7 @@ bash scripts/build_arxiv_submission.sh
 3. **Enter metadata**:
    - **Title**: Measuring the Value of Enhanced Reasoning in Agentic AI Architectures: An Economic Analysis of Testing Tiers
    - **Authors**: [Your Name]
-   - **Abstract**: (Plain text version from paper.md Abstract section)
+   - **Abstract**: (Plain text version from research_paper.tex Abstract section)
    - **Primary Category**: cs.AI (Artificial Intelligence)
    - **Secondary Categories**: cs.SE (Software Engineering), cs.LG (Machine Learning)
    - **Comments**: 32 pages, 25 figures, 10 tables
@@ -195,12 +195,12 @@ Before submitting to arXiv:
 - [ ] No absolute paths in .tex files
 - [ ] No auxiliary files in tarball (.aux, .log, etc.)
 - [ ] 00README.json is present and valid
-- [ ] Abstract and sections match paper.md content
+- [ ] Abstract and sections match research_paper.tex content
 - [ ] Bibliography complete (all [1]-[10] citations defined)
 
 ## Content Preservation
 
-The converter has been designed to preserve all content from `paper.md` without changes:
+The converter has been designed to preserve all content from `research_paper.tex` without changes:
 - ✅ All data values, statistics, and numerical results unchanged
 - ✅ All 7 testing tiers (T0-T6) descriptions intact
 - ✅ All metrics formulas and definitions preserved
@@ -226,7 +226,7 @@ The converter has been designed to preserve all content from `paper.md` without 
 
 - **Converter Script**: `scripts/build_arxiv_paper.py`
 - **Build Pipeline**: `scripts/build_arxiv_submission.sh`
-- **Source Paper**: `docs/paper.md` (DO NOT MODIFY)
+- **Source Paper**: `docs/research_paper.tex` (Canonical LaTeX source)
 - **arXiv Help**: https://info.arxiv.org/help/submit_tex.html
 
 ## Next Steps
