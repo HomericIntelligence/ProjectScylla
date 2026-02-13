@@ -2,35 +2,48 @@
 
 This module handles executing individual sub-tests, including
 workspace preparation, agent execution, judging, and result aggregation.
-and filesystem operations.
 
-KNOWN ISSUE: This file is 2269 lines with a 383-line function (_execute_single_run)
-See GitHub Issue #478 - Decompose god class (violates KISS and SOLID principles)
-TODO: Split into agent_runner.py, judge_runner.py, parallel_executor.py modules
+This file was decomposed from a 2269-line god class into focused modules:
+- parallel_executor.py: Parallel execution and rate limit coordination
+- agent_runner.py: Agent execution helpers
+- judge_runner.py: Judge execution and consensus
+- workspace_setup.py: Workspace management
+- subtest_executor.py: Core SubTestExecutor class (this file)
+
+See GitHub Issue #478 for decomposition history.
 """
 
 from __future__ import annotations
 
+import json
 import logging
-import shutil
 import statistics
-import subprocess
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from enum import Enum
-from multiprocessing import Manager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scylla.adapters.base import AdapterConfig
 from scylla.adapters.claude_code import ClaudeCodeAdapter
+
+# Import helpers from decomposed modules
+from scylla.e2e.agent_runner import (
+    _create_agent_model_md,
+    _has_valid_agent_result,
+    _load_agent_result,
+    _save_agent_result,
+)
 from scylla.e2e.command_logger import CommandLogger
-from scylla.e2e.llm_judge import run_llm_judge
+from scylla.e2e.judge_runner import (
+    _compute_judge_consensus,
+    _has_valid_judge_result,
+    _load_judge_result,
+    _run_judge,
+    _save_judge_result,
+)
 from scylla.e2e.models import (
     ExperimentConfig,
-    JudgeResultSummary,
     RunResult,
     SubTestConfig,
     SubTestResult,
@@ -40,30 +53,75 @@ from scylla.e2e.models import (
     TokenStats,
 )
 from scylla.e2e.paths import (
-    RESULT_FILE,
     get_agent_dir,
-    get_agent_result_file,
     get_judge_dir,
-    get_judge_result_file,
 )
 from scylla.e2e.rate_limit import (
     RateLimitError,
-    RateLimitInfo,
     detect_rate_limit,
-    wait_for_rate_limit,
 )
 from scylla.e2e.run_report import save_run_report, save_run_report_json
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
+from scylla.e2e.workspace_setup import (
+    _commit_test_config,
+    _move_to_failed,
+    _setup_workspace,
+)
 
 if TYPE_CHECKING:
-    from multiprocessing.managers import SyncManager
-
-    from scylla.adapters.base import AdapterResult
     from scylla.e2e.checkpoint import E2ECheckpoint
-    from scylla.judge.evaluator import JudgeResult
+    from scylla.e2e.parallel_executor import RateLimitCoordinator
 
 logger = logging.getLogger(__name__)
+
+# Re-export functions for backward compatibility
+# These imports ensure existing code like:
+#   from scylla.e2e.subtest_executor import _commit_test_config
+#   from scylla.e2e.subtest_executor import run_tier_subtests_parallel
+# continue to work without modification
+__all__ = [
+    "SubTestExecutor",
+    "ExecutionStage",
+    # Agent runner exports
+    "_save_agent_result",
+    "_load_agent_result",
+    "_create_agent_model_md",
+    "_has_valid_agent_result",
+    # Judge runner exports
+    "_save_judge_result",
+    "_load_judge_result",
+    "_has_valid_judge_result",
+    "_compute_judge_consensus",
+    "_run_judge",
+    # Workspace setup exports
+    "_move_to_failed",
+    "_commit_test_config",
+    "_setup_workspace",
+    # Parallel executor exports (imported lazily to avoid circular imports)
+    "RateLimitCoordinator",  # noqa: F822
+    "run_tier_subtests_parallel",  # noqa: F822
+    "_detect_rate_limit_from_results",  # noqa: F822
+    "_retry_with_new_pool",  # noqa: F822
+    "_run_subtest_in_process_safe",  # noqa: F822
+    "_run_subtest_in_process",  # noqa: F822
+]
+
+
+def __getattr__(name: str):
+    """Lazy import for parallel executor functions to avoid circular dependency."""
+    if name in [
+        "RateLimitCoordinator",
+        "run_tier_subtests_parallel",
+        "_detect_rate_limit_from_results",
+        "_retry_with_new_pool",
+        "_run_subtest_in_process_safe",
+        "_run_subtest_in_process",
+    ]:
+        from scylla.e2e import parallel_executor
+
+        return getattr(parallel_executor, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class ExecutionStage(str, Enum):
@@ -103,428 +161,6 @@ def _stage_log(
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     elapsed_str = f" ({elapsed:.1f}s)" if elapsed is not None else ""
     logger.info(f"{timestamp} [{subtest_id}] Stage: {stage.value} - {status}{elapsed_str}")
-
-
-def _move_to_failed(run_dir: Path, attempt: int = 1) -> Path:
-    """Move a failed run directory to .failed/ subdirectory.
-
-    Args:
-        run_dir: Path to the run directory (e.g., results/T0/01/run_01/)
-        attempt: Attempt number for naming (default 1)
-
-    Returns:
-        Path to the new location in .failed/
-
-    """
-    failed_dir = run_dir.parent / ".failed"
-    failed_dir.mkdir(parents=True, exist_ok=True)
-
-    # Generate new name: run_03 -> .failed/run_03_attempt_01
-    run_name = run_dir.name
-    new_name = f"{run_name}_attempt_{attempt:02d}"
-    new_path = failed_dir / new_name
-
-    # Find next available attempt number if exists
-    while new_path.exists():
-        attempt += 1
-        new_name = f"{run_name}_attempt_{attempt:02d}"
-        new_path = failed_dir / new_name
-
-    # Move the directory
-    shutil.move(str(run_dir), str(new_path))
-    logger.info(f"Moved failed run to {new_path}")
-
-    return new_path
-
-
-def _save_agent_result(agent_dir: Path, result: AdapterResult) -> None:
-    """Save agent execution result to agent/result.json.
-
-    Args:
-        agent_dir: Path to agent directory
-        result: AdapterResult from agent execution
-
-    """
-    import json
-
-    result_data = {
-        "exit_code": result.exit_code,
-        "stdout": result.stdout,
-        "stderr": result.stderr,
-        "token_stats": result.token_stats.model_dump(),
-        "cost_usd": result.cost_usd,
-        "api_calls": result.api_calls,
-    }
-
-    with open(agent_dir / RESULT_FILE, "w") as f:
-        json.dump(result_data, f, indent=2)
-
-
-def _create_agent_model_md(agent_dir: Path, model: str) -> None:
-    """Create MODEL.md file with agent model and version information.
-
-    Args:
-        agent_dir: Path to agent directory
-        model: Model identifier used for the agent
-
-    """
-    import subprocess
-
-    # Try to get claude-code version
-    try:
-        result = subprocess.run(
-            ["claude", "--version"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            claude_code_version = result.stdout.strip()
-        else:
-            claude_code_version = "unknown"
-    except Exception:
-        claude_code_version = "unknown"
-
-    model_info = f"""# Agent Model Information
-
-**Model**: {model}
-**Claude Code Version**: {claude_code_version}
-**Timestamp**: {datetime.now(timezone.utc).isoformat()}
-
-## Configuration
-- Model ID: {model}
-- Output Format: text
-- Permissions: dangerously-skip-permissions (for testing)
-
-## Environment
-- Generated by ProjectScylla E2E Framework
-"""
-
-    agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "MODEL.md").write_text(model_info)
-
-
-def _commit_test_config(workspace: Path) -> None:
-    """Commit test configuration files so agent sees them as existing state.
-
-    Commits CLAUDE.md and .claude/ directory if they exist, so the agent
-    sees them as part of the repository's existing state rather than
-    uncommitted changes.
-
-    Args:
-        workspace: Path to the workspace directory
-
-    """
-    import subprocess
-
-    # Stage CLAUDE.md if it exists
-    claude_md = workspace / "CLAUDE.md"
-    if claude_md.exists():
-        subprocess.run(
-            ["git", "add", "CLAUDE.md"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-    # Stage .claude/ directory if it exists
-    claude_dir = workspace / ".claude"
-    if claude_dir.exists():
-        subprocess.run(
-            ["git", "add", ".claude/"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-    # Check if there are staged changes
-    status_result = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"],
-        cwd=workspace,
-        capture_output=True,
-        timeout=30,
-    )
-
-    # If there are staged changes, commit them
-    if status_result.returncode != 0:
-        subprocess.run(
-            ["git", "commit", "-m", "[scylla] Initialize test configuration"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-
-def _load_agent_result(agent_dir: Path) -> AdapterResult:
-    """Load agent execution result from agent/result.json.
-
-    Args:
-        agent_dir: Path to agent directory
-
-    Returns:
-        AdapterResult loaded from file
-
-    """
-    import json
-
-    from scylla.adapters.base import AdapterResult, AdapterTokenStats
-
-    with open(agent_dir / RESULT_FILE) as f:
-        data = json.load(f)
-
-    token_stats = AdapterTokenStats(**data["token_stats"])
-
-    return AdapterResult(
-        exit_code=data["exit_code"],
-        stdout=data["stdout"],
-        stderr=data["stderr"],
-        token_stats=token_stats,
-        cost_usd=data["cost_usd"],
-        api_calls=data["api_calls"],
-    )
-
-
-def _save_judge_result(judge_dir: Path, result: JudgeResult) -> None:
-    """Save judge evaluation result to judge/result.json.
-
-    Args:
-        judge_dir: Path to judge directory
-        result: JudgeResult from judge evaluation
-
-    """
-    import json
-
-    # Save to result.json (simplified version for quick checking)
-    result_data = {
-        "score": result.score,
-        "passed": result.passed,
-        "grade": result.grade,
-        "reasoning": result.reasoning,
-        "is_valid": result.is_valid,
-        "criteria_scores": result.criteria_scores,
-    }
-
-    with open(judge_dir / RESULT_FILE, "w") as f:
-        json.dump(result_data, f, indent=2)
-
-
-def _load_judge_result(judge_dir: Path) -> dict:
-    """Load judge evaluation result from judge/result.json.
-
-    Args:
-        judge_dir: Path to judge directory
-
-    Returns:
-        Dict with score, passed, grade, reasoning
-
-    """
-    import json
-
-    # FIX: Use result.json (same file that _has_valid_judge_result validates)
-    # Previously tried to read judgment.json which doesn't exist at this path
-    result_file = judge_dir / RESULT_FILE
-    with open(result_file) as f:
-        data = json.load(f)
-
-    return data
-
-
-def _has_valid_agent_result(run_dir: Path) -> bool:
-    """Check if a valid agent result exists for the run.
-
-    A result is considered invalid if:
-    - Result file doesn't exist
-    - JSON is malformed
-    - Required fields are missing
-    - exit_code is -1 AND all token_stats are 0 (incomplete execution)
-
-    Args:
-        run_dir: Path to the run directory
-
-    Returns:
-        True if valid agent result exists, False otherwise
-
-    """
-    import json
-
-    result_file = get_agent_result_file(run_dir)
-    if not result_file.exists():
-        return False
-
-    try:
-        data = json.loads(result_file.read_text())
-        # Check all required fields exist
-        required_fields = ["exit_code", "token_stats", "cost_usd"]
-        if not all(field in data for field in required_fields):
-            return False
-
-        # Check for incomplete execution: exit_code=-1 AND all token stats are 0
-        # This indicates the agent threw an exception but created files
-        if data["exit_code"] == -1:
-            token_stats = data["token_stats"]
-            all_tokens_zero = (
-                token_stats.get("input_tokens", 0) == 0
-                and token_stats.get("output_tokens", 0) == 0
-                and token_stats.get("cache_creation_tokens", 0) == 0
-                and token_stats.get("cache_read_tokens", 0) == 0
-            )
-            if all_tokens_zero:
-                logger.warning(
-                    f"Invalid result detected at {run_dir}: "
-                    f"exit_code=-1 with zero token stats (incomplete execution)"
-                )
-                return False
-
-        return True
-    except (json.JSONDecodeError, KeyError, OSError):
-        return False
-
-
-def _has_valid_judge_result(run_dir: Path) -> bool:
-    """Check if a valid judge result exists for the run.
-
-    Args:
-        run_dir: Path to the run directory
-
-    Returns:
-        True if valid judge result exists, False otherwise
-
-    """
-    import json
-
-    result_file = get_judge_result_file(run_dir)
-    if not result_file.exists():
-        return False
-
-    try:
-        data = json.loads(result_file.read_text())
-        # Check all required fields exist
-        required_fields = ["score", "passed", "grade"]
-        if not all(field in data for field in required_fields):
-            return False
-        # Check is_valid flag
-        is_valid = data.get("is_valid", True) is not False
-        return is_valid
-    except (json.JSONDecodeError, KeyError, OSError):
-        return False
-
-
-class RateLimitCoordinator:
-    """Coordinates rate limit pause across parallel workers.
-
-    When ANY worker detects a rate limit, this coordinator:
-    1. Signals all workers to pause
-    2. Waits for the rate limit to expire
-    3. Signals all workers to resume
-
-    Uses multiprocessing.Manager for cross-process coordination.
-
-    Example:
-        >>> manager = Manager()
-        >>> coordinator = RateLimitCoordinator(manager)
-        >>> # In worker process:
-        >>> if coordinator.check_if_paused():
-        >>>     # Worker blocks here until resume
-        >>>     pass
-
-    """
-
-    def __init__(self, manager: SyncManager) -> None:
-        """Initialize coordinator with shared state.
-
-        Args:
-            manager: Multiprocessing manager for shared objects
-
-        """
-        self._pause_event = manager.Event()
-        self._resume_event = manager.Event()
-        self._rate_limit_info = manager.dict()
-        self._shutdown_event = manager.Event()
-
-    def signal_rate_limit(self, info: RateLimitInfo) -> None:
-        """Signal that a rate limit was detected (called by worker).
-
-        This sets the pause event, causing all workers to block.
-
-        Args:
-            info: Rate limit detection information
-
-        """
-        self._rate_limit_info.update(
-            {
-                "source": info.source,
-                "retry_after_seconds": info.retry_after_seconds,
-                "error_message": info.error_message,
-                "detected_at": info.detected_at,
-            }
-        )
-        self._pause_event.set()
-        logger.info(f"Rate limit coordinator: pause signal from {info.source}")
-
-    def check_if_paused(self) -> bool:
-        """Check if pause is active and wait if needed (called by workers).
-
-        Workers call this before each operation. If pause is active,
-        they block here until resume signal.
-
-        Returns:
-            True if was paused and now resumed, False if never paused
-
-        """
-        if self._pause_event.is_set():
-            logger.debug("Worker blocked on pause event, waiting for resume...")
-            self._resume_event.wait()  # Block until resume
-            self._resume_event.clear()
-            logger.debug("Worker resumed after rate limit wait")
-            return True
-        return False
-
-    def get_rate_limit_info(self) -> RateLimitInfo | None:
-        """Get current rate limit info if available.
-
-        Returns:
-            RateLimitInfo if rate limit is active, None otherwise
-
-        """
-        if not self._pause_event.is_set():
-            return None
-
-        info_dict = dict(self._rate_limit_info)
-        if not info_dict:
-            return None
-
-        return RateLimitInfo(
-            source=info_dict["source"],
-            retry_after_seconds=info_dict["retry_after_seconds"],
-            error_message=info_dict["error_message"],
-            detected_at=info_dict["detected_at"],
-        )
-
-    def resume_all_workers(self) -> None:
-        """Signal all workers to resume (called by main thread after wait).
-
-        Clears the pause event and sets resume event.
-        """
-        self._pause_event.clear()
-        self._resume_event.set()
-        logger.info("Rate limit coordinator: resume signal sent to all workers")
-
-    def signal_shutdown(self) -> None:
-        """Signal all workers to stop accepting new work and exit gracefully."""
-        self._shutdown_event.set()
-        logger.info("Shutdown signal sent to all workers")
-
-    def is_shutdown_requested(self) -> bool:
-        """Check if shutdown has been requested.
-
-        Returns:
-            True if shutdown is requested, False otherwise
-
-        """
-        return self._shutdown_event.is_set()
 
 
 class SubTestExecutor:
@@ -655,11 +291,6 @@ class SubTestExecutor:
                             f"{tier_id.value}/{subtest.id}/run_{run_num:02d}"
                         )
                         # Load from saved RunResult
-                        import json
-                        from pathlib import Path
-
-                        from scylla.e2e.models import TokenStats
-
                         with open(run_result_file) as f:
                             report_data = json.load(f)
 
@@ -712,8 +343,14 @@ class SubTestExecutor:
                 # Skip workspace setup - use existing workspace
             else:
                 # Setup workspace with git worktree
-                self._setup_workspace(
-                    workspace, CommandLogger(run_dir), tier_id, subtest.id, run_number=run_num
+                _setup_workspace(
+                    workspace=workspace,
+                    command_logger=CommandLogger(run_dir),
+                    tier_id=tier_id,
+                    subtest_id=subtest.id,
+                    run_number=run_num,
+                    base_repo=self.workspace_manager.base_repo,
+                    task_commit=self.config.task_commit,
                 )
 
             # Build merged resources for T5 subtests with inherit_best_from
@@ -801,112 +438,6 @@ class SubTestExecutor:
         # Aggregate results
         return self._aggregate_results(tier_id, subtest.id, runs)
 
-    def _run_via_replay_script(
-        self,
-        replay_script: Path,
-        agent_dir: Path,
-        workspace: Path,
-        adapter_config: AdapterConfig,
-        tier_config: TierConfig,
-    ) -> AdapterResult:
-        """Execute agent via replay.sh script.
-
-        This method runs replay.sh and parses the results from log files.
-
-        Args:
-            replay_script: Path to replay.sh
-            agent_dir: Directory for agent outputs
-            workspace: Workspace directory
-            adapter_config: Adapter configuration
-            tier_config: Tier configuration
-
-        Returns:
-            AdapterResult with execution details
-
-        """
-        import subprocess
-
-        from scylla.adapters.base import AdapterResult
-
-        # Execute replay.sh (resolve to absolute path for subprocess)
-        result = subprocess.run(
-            ["bash", str(replay_script.resolve())],
-            capture_output=True,
-            text=True,
-            timeout=adapter_config.timeout,
-            cwd=workspace.resolve(),
-        )
-
-        # Read stdout/stderr from captured subprocess output
-        # (Log files exist but are empty until we update them later)
-        stdout = result.stdout
-        stderr = result.stderr
-
-        # Parse token stats and cost from stdout
-        token_stats = self.adapter._parse_token_stats(stdout, stderr)
-        api_calls = self.adapter._parse_api_calls(stdout, stderr)
-        cost = self.adapter._parse_cost(stdout)
-
-        if cost == 0.0 and (token_stats.input_tokens > 0 or token_stats.output_tokens > 0):
-            total_input = token_stats.input_tokens + token_stats.cache_read_tokens
-            cost = self.adapter.calculate_cost(
-                total_input, token_stats.output_tokens, adapter_config.model
-            )
-
-        # Write logs (for consistency with adapter behavior)
-        self.adapter.write_logs(agent_dir, stdout, stderr)
-
-        return AdapterResult(
-            exit_code=result.returncode,
-            stdout=stdout,
-            stderr=stderr,
-            token_stats=token_stats,
-            cost_usd=cost,
-            api_calls=api_calls,
-        )
-
-    def _run_agent_execution(
-        self,
-        tier_config: TierConfig,
-        adapter_config: AdapterConfig,
-        task_prompt: str,
-        agent_dir: Path,
-        workspace: Path,
-        prompt_file: Path,
-        agent_name: str | None = None,
-    ) -> AdapterResult:
-        """Run agent execution directly (DEPRECATED - not used in current flow).
-
-        This method is kept for compatibility but is not called by _execute_single_run.
-        The current execution flow uses replay.sh via _run_via_replay_script.
-
-        Container isolation is now handled at the experiment level - the entire
-        run_e2e_experiment.py script runs inside a container. This method always
-        runs the agent directly using the adapter.
-
-        Args:
-            tier_config: Tier configuration (unused, kept for compatibility)
-            adapter_config: Adapter configuration
-            task_prompt: Task prompt text
-            agent_dir: Directory for agent outputs
-            workspace: Workspace directory
-            prompt_file: Path to task prompt file
-            agent_name: Optional agent name for T3/T4 delegation tiers
-
-        Returns:
-            AdapterResult with execution details
-
-        """
-        # DEPRECATED: This path is not used. system_prompt_mode should come from
-        # SubTestConfig in the actual execution path.
-        # Kept for backwards compatibility.
-        return self.adapter.run(
-            config=adapter_config,
-            tier_config=None,
-            system_prompt_mode="custom",  # Default fallback
-            agent_name=agent_name,
-        )
-
     def _execute_single_run(
         self,
         tier_id: TierID,
@@ -939,13 +470,12 @@ class SubTestExecutor:
             run_dir: Directory for this run's outputs
             workspace: Shared workspace at subtest level
             task_prompt: The task prompt text
+            experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
         Returns:
             RunResult with execution details.
 
         """
-        import json
-
         # Track execution timing and stages
         subtest_id = f"{tier_id.value}_{subtest.id}"
         start_time = time.time()
@@ -993,6 +523,8 @@ class SubTestExecutor:
 
         if _has_valid_agent_result(run_dir):
             # Reuse existing valid agent result
+            from scylla.e2e.paths import get_agent_result_file
+
             agent_result_file = get_agent_result_file(run_dir)
             logger.info(f"[SKIP] Agent already completed: {agent_result_file}")
             result = _load_agent_result(agent_dir)
@@ -1139,6 +671,8 @@ class SubTestExecutor:
         # Only reuse judge result if agent was reused AND valid judge result exists
         if not agent_ran and _has_valid_judge_result(run_dir):
             # Reuse existing valid judge result (only if agent was also reused)
+            from scylla.e2e.paths import get_judge_result_file
+
             judge_result_file = get_judge_result_file(run_dir)
             logger.info(f"[SKIP] Judge already completed: {judge_result_file}")
             judgment = _load_judge_result(judge_dir)
@@ -1157,18 +691,19 @@ class SubTestExecutor:
 
             # Find rubric path (symlinked at experiment root)
             # results_dir structure: experiment_dir/T0/01/
-            experiment_dir = run_dir.parent.parent.parent
-            rubric_path = experiment_dir / "rubric.yaml"
+            experiment_dir_calc = run_dir.parent.parent.parent
+            rubric_path = experiment_dir_calc / "rubric.yaml"
             if not rubric_path.exists():
                 rubric_path = None
 
-            judgment, judges = self._run_judge(
+            judgment, judges = _run_judge(
                 workspace=workspace,
                 task_prompt=task_prompt,
                 stdout=result.stdout,
                 judge_dir=judge_dir,
                 language=self.config.language,
                 rubric_path=rubric_path,
+                judge_models=self.config.judge_models,
             )
 
             # Save pipeline commands once per run (not per judge)
@@ -1207,8 +742,6 @@ class SubTestExecutor:
         token_stats = result.token_stats.to_token_stats()
 
         # Check for rate limit in run artifacts BEFORE considering complete
-        from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
-
         # Check stderr and stdout for rate limit patterns (adapter may have missed it)
         stderr_content = result.stderr or ""
         stdout_content = result.stdout or ""
@@ -1245,8 +778,6 @@ class SubTestExecutor:
         )
 
         # Save full RunResult for checkpoint resume
-        import json
-
         with open(run_dir / "run_result.json", "w") as f:
             json.dump(run_result.to_dict(), f, indent=2)
 
@@ -1292,138 +823,77 @@ class SubTestExecutor:
 
         return run_result
 
-    def _setup_workspace(
+    def _run_via_replay_script(
         self,
+        replay_script: Path,
+        agent_dir: Path,
         workspace: Path,
-        command_logger: CommandLogger,
-        tier_id: TierID,
-        subtest_id: str,
-        run_number: int,
-    ) -> None:
-        """Set up workspace using git worktree from base repo with named branch.
+        adapter_config: AdapterConfig,
+        tier_config: TierConfig,
+    ):
+        """Execute agent via replay.sh script.
+
+        This method runs replay.sh and parses the results from log files.
 
         Args:
-            workspace: Target workspace directory
-            command_logger: Logger for commands
-            tier_id: Tier identifier for branch naming
-            subtest_id: Subtest identifier for branch naming
-            run_number: Run number for branch naming
+            replay_script: Path to replay.sh
+            agent_dir: Directory for agent outputs
+            workspace: Workspace directory
+            adapter_config: Adapter configuration
+            tier_config: Tier configuration
+
+        Returns:
+            AdapterResult with execution details
 
         """
-        import shlex
+        import subprocess
 
-        start_time = datetime.now(timezone.utc)
+        from scylla.adapters.base import AdapterResult
 
-        # Ensure workspace path is absolute for git worktree
-        workspace_abs = workspace.resolve()
-
-        # Generate branch name with run number
-        branch_name = f"{tier_id.value}_{subtest_id}_run_{run_number:02d}"
-
-        # Log worktree creation phase
-        _phase_log("WORKTREE", f"Creating worktree [{branch_name}] @ [{workspace_abs}]")
-
-        # Create worktree with named branch
-        worktree_cmd = [
-            "git",
-            "-C",
-            str(self.workspace_manager.base_repo),
-            "worktree",
-            "add",
-            "-b",
-            branch_name,
-            str(workspace_abs),
-        ]
-
-        # Add commit reference if specified
-        if self.config.task_commit:
-            worktree_cmd.append(self.config.task_commit)
-
+        # Execute replay.sh (resolve to absolute path for subprocess)
         result = subprocess.run(
-            worktree_cmd,
+            ["bash", str(replay_script.resolve())],
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=adapter_config.timeout,
+            cwd=workspace.resolve(),
         )
 
-        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-        command_logger.log_command(
-            cmd=worktree_cmd,
-            stdout=result.stdout,
-            stderr=result.stderr,
-            exit_code=result.returncode,
-            duration=duration,
-        )
+        # Read stdout/stderr from captured subprocess output
+        # (Log files exist but are empty until we update them later)
+        stdout = result.stdout
+        stderr = result.stderr
 
-        # Handle branch already exists (resume scenario)
-        if result.returncode != 0 and "already exists" in result.stderr:
-            logger.info(f"Branch {branch_name} exists, attempting recovery for resume...")
+        # Parse token stats and cost from stdout
+        token_stats = self.adapter._parse_token_stats(stdout, stderr)
+        api_calls = self.adapter._parse_api_calls(stdout, stderr)
+        cost = self.adapter._parse_cost(stdout)
 
-            # Step 1: Remove stale worktree entry if it exists
-            prune_cmd = [
-                "git",
-                "-C",
-                str(self.workspace_manager.base_repo),
-                "worktree",
-                "prune",
-            ]
-            subprocess.run(prune_cmd, capture_output=True, text=True, timeout=30)
-
-            # Step 2: Try to remove existing worktree (may fail if already gone)
-            remove_cmd = [
-                "git",
-                "-C",
-                str(self.workspace_manager.base_repo),
-                "worktree",
-                "remove",
-                "--force",
-                str(workspace_abs),
-            ]
-            subprocess.run(remove_cmd, capture_output=True, text=True, timeout=30)
-
-            # Step 3: Delete the branch
-            delete_branch_cmd = [
-                "git",
-                "-C",
-                str(self.workspace_manager.base_repo),
-                "branch",
-                "-D",
-                branch_name,
-            ]
-            subprocess.run(delete_branch_cmd, capture_output=True, text=True, timeout=30)
-
-            # Step 4: Clean up workspace directory if exists
-            if workspace_abs.exists():
-                shutil.rmtree(workspace_abs)
-
-            # Step 5: Retry worktree creation
-            result = subprocess.run(
-                worktree_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60,
+        if cost == 0.0 and (token_stats.input_tokens > 0 or token_stats.output_tokens > 0):
+            total_input = token_stats.input_tokens + token_stats.cache_read_tokens
+            cost = self.adapter.calculate_cost(
+                total_input, token_stats.output_tokens, adapter_config.model
             )
 
-            if result.returncode != 0:
-                raise RuntimeError(f"Failed to create worktree even after cleanup: {result.stderr}")
+        # Write logs (for consistency with adapter behavior)
+        self.adapter.write_logs(agent_dir, stdout, stderr)
 
-        elif result.returncode != 0:
-            raise RuntimeError(f"Failed to create worktree: {result.stderr}")
-
-        # Save worktree creation command (create only, no cleanup)
-        subtest_dir = workspace.parent
-        worktree_script = subtest_dir / "worktree_create.sh"
-        worktree_script.write_text(
-            f"#!/bin/bash\n# Worktree: {branch_name} @ {workspace_abs}\n"
-            + " ".join(shlex.quote(arg) for arg in worktree_cmd)
-            + "\n"
+        return AdapterResult(
+            exit_code=result.returncode,
+            stdout=stdout,
+            stderr=stderr,
+            token_stats=token_stats,
+            cost_usd=cost,
+            api_calls=api_calls,
         )
-        worktree_script.chmod(0o755)
 
     def _compute_judge_consensus(
-        self, judges: list[JudgeResultSummary]
+        self, judges: list
     ) -> tuple[float | None, bool | None, str | None]:
         """Compute consensus score from multiple judges using simple average.
+
+        This is a wrapper method for backward compatibility.
+        The actual implementation is in judge_runner._compute_judge_consensus.
 
         Args:
             judges: List of individual judge results
@@ -1432,152 +902,7 @@ class SubTestExecutor:
             Tuple of (consensus_score, passed, grade)
 
         """
-        if not judges:
-            return (None, None, None)
-
-        # Filter judges with valid scores
-        valid = [j for j in judges if j.score is not None and j.is_valid]
-        if not valid:
-            return (None, None, None)
-
-        # Simple average across judges
-        consensus_score = sum(j.score for j in valid) / len(valid)
-
-        # Majority vote for passed
-        passed_votes = sum(1 for j in valid if j.passed)
-        passed = passed_votes > len(valid) / 2
-
-        # Grade from consensus score using standard grading function
-        from scylla.metrics.grading import assign_letter_grade
-
-        grade = assign_letter_grade(consensus_score)
-
-        return (consensus_score, passed, grade)
-
-    def _run_judge(
-        self,
-        workspace: Path,
-        task_prompt: str,
-        stdout: str,
-        judge_dir: Path,
-        language: str = "python",
-        rubric_path: Path | None = None,
-    ) -> tuple[dict, list[JudgeResultSummary]]:
-        """Run LLM judge evaluation(s) on the result.
-
-        Runs multiple judges if configured, computes consensus.
-
-        Args:
-            workspace: Workspace with agent's output
-            task_prompt: The original task prompt
-            stdout: Agent's stdout output
-            judge_dir: Directory for judge outputs
-                (judge_01/, judge_02/, etc. for each judge)
-            language: Programming language for build pipeline ('python' or 'mojo')
-            rubric_path: Optional path to rubric YAML file
-
-        Returns:
-            Tuple of (consensus_dict, judges_list)
-            - consensus_dict: Dict with consensus score, passed, grade, reasoning
-            - judges_list: List of JudgeResultSummary for each judge
-
-        """
-        judges = []
-
-        # Run each configured judge
-        for judge_num, model in enumerate(self.config.judge_models, start=1):
-            _phase_log(
-                "JUDGE",
-                f"Running judge {judge_num}/{len(self.config.judge_models)} with model[{model}]",
-            )
-
-            # Use the LLM judge for proper evaluation
-            try:
-                judge_result = run_llm_judge(
-                    workspace=workspace,
-                    task_prompt=task_prompt,
-                    agent_output=stdout,
-                    model=model,
-                    judge_dir=judge_dir,
-                    judge_run_number=judge_num,  # Creates judge_01/, judge_02/, etc.
-                    language=language,
-                    rubric_path=rubric_path,
-                )
-
-                # Store individual judge result
-                judge_summary = JudgeResultSummary(
-                    model=model,
-                    score=judge_result.score,
-                    passed=judge_result.passed,
-                    grade=judge_result.grade,
-                    reasoning=judge_result.reasoning,
-                    judge_number=judge_num,
-                    is_valid=judge_result.is_valid,
-                    criteria_scores=judge_result.criteria_scores,
-                )
-                judges.append(judge_summary)
-
-            except Exception as e:
-                import json
-                from datetime import datetime, timezone
-
-                # Log error with full context
-                logger.error(
-                    f"Judge {judge_num} failed with model {model}: {e}",
-                    exc_info=True,
-                )
-
-                # Save error artifacts to the judge directory
-                judge_specific_dir = judge_dir / f"judge_{judge_num:02d}"
-                judge_specific_dir.mkdir(parents=True, exist_ok=True)
-
-                # Write timing with failed flag
-                timing_file = judge_specific_dir / "timing.json"
-                with open(timing_file, "w") as f:
-                    json.dump(
-                        {
-                            "judge_duration_seconds": 0.0,
-                            "measured_at": datetime.now(timezone.utc).isoformat(),
-                            "failed": True,
-                            "error": str(e),
-                        },
-                        f,
-                        indent=2,
-                    )
-
-                # Write error log
-                error_file = judge_specific_dir / "error.log"
-                error_file.write_text(f"Judge failed: {e}\n")
-
-                # Re-raise to mark the run as failed
-                raise
-
-        # Compute consensus from all judges
-        consensus_score, consensus_passed, consensus_grade = self._compute_judge_consensus(judges)
-
-        # Build consensus dict (use representative judge's reasoning - closest to consensus)
-        if judges and consensus_score is not None:
-            closest_judge = min(
-                (j for j in judges if j.score is not None),
-                key=lambda j: abs(j.score - consensus_score),
-            )
-            primary_reasoning = closest_judge.reasoning
-            primary_criteria_scores = closest_judge.criteria_scores
-        else:
-            primary_reasoning = judges[0].reasoning if judges else ""
-            primary_criteria_scores = judges[0].criteria_scores if judges else None
-        # All judges must be valid for consensus to be valid
-        consensus_is_valid = all(j.is_valid for j in judges)
-        consensus_dict = {
-            "score": consensus_score,
-            "passed": consensus_passed,
-            "grade": consensus_grade,
-            "reasoning": primary_reasoning,
-            "is_valid": consensus_is_valid,
-            "criteria_scores": primary_criteria_scores,
-        }
-
-        return consensus_dict, judges
+        return _compute_judge_consensus(judges)
 
     def _aggregate_results(
         self,
@@ -1666,604 +991,3 @@ class SubTestExecutor:
             min_grade=min_grade,
             max_grade=max_grade,
         )
-
-
-def run_tier_subtests_parallel(
-    config: ExperimentConfig,
-    tier_id: TierID,
-    tier_config: TierConfig,
-    tier_manager: TierManager,
-    workspace_manager: WorkspaceManager,
-    baseline: TierBaseline | None,
-    results_dir: Path,
-    checkpoint: E2ECheckpoint | None = None,
-    checkpoint_path: Path | None = None,
-    global_semaphore=None,
-    experiment_dir: Path | None = None,
-) -> dict[str, SubTestResult]:
-    """Run all sub-tests for a tier in parallel with rate limit handling.
-
-    When any worker hits a rate limit, ALL workers are paused until
-    the rate limit expires, then all resume.
-
-    Args:
-        config: Experiment configuration
-        tier_id: The tier being executed
-        tier_config: Tier configuration with sub-tests
-        tier_manager: Tier configuration manager
-        workspace_manager: Workspace manager for git worktrees
-        baseline: Previous tier's winning baseline
-        results_dir: Base directory for tier results
-        checkpoint: Optional checkpoint for resume capability
-        checkpoint_path: Path to checkpoint file for saving
-        global_semaphore: Optional global semaphore to limit total concurrent agents
-        experiment_dir: Path to experiment directory (needed for T5 inheritance)
-
-    Returns:
-        Dict mapping sub-test ID to results.
-
-    """
-    results: dict[str, SubTestResult] = {}
-    executor = SubTestExecutor(config, tier_manager, workspace_manager)
-
-    # Create rate limit coordinator for parallel execution
-    manager = Manager()
-    coordinator = RateLimitCoordinator(manager)
-
-    # For single sub-test (T0, T1), run directly (no need for coordinator)
-    if len(tier_config.subtests) <= 1:
-        for subtest in tier_config.subtests:
-            subtest_dir = results_dir / subtest.id
-            try:
-                results[subtest.id] = executor.run_subtest(
-                    tier_id=tier_id,
-                    tier_config=tier_config,
-                    subtest=subtest,
-                    baseline=baseline,
-                    results_dir=subtest_dir,
-                    checkpoint=checkpoint,
-                    checkpoint_path=checkpoint_path,
-                    coordinator=None,  # No parallel workers
-                    experiment_dir=experiment_dir,
-                )
-            except RateLimitError as e:
-                # Handle rate limit in main thread for single subtest
-                if checkpoint and checkpoint_path:
-                    logger.info(f"Rate limit detected from {e.info.source}, waiting...")
-                    wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)
-                    # Retry the subtest after wait
-                    results[subtest.id] = executor.run_subtest(
-                        tier_id=tier_id,
-                        tier_config=tier_config,
-                        subtest=subtest,
-                        baseline=baseline,
-                        results_dir=subtest_dir,
-                        checkpoint=checkpoint,
-                        checkpoint_path=checkpoint_path,
-                        coordinator=None,
-                        experiment_dir=experiment_dir,
-                    )
-                else:
-                    raise  # No checkpoint, can't handle - propagate
-        return results
-
-    # For multiple sub-tests, run in parallel with coordinator
-    total_subtests = len(tier_config.subtests)
-    start_time = time.time()
-
-    try:
-        with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
-            futures = {}
-
-            for subtest in tier_config.subtests:
-                subtest_dir = results_dir / subtest.id
-                future = pool.submit(
-                    _run_subtest_in_process_safe,  # Use safe wrapper to prevent pool crashes
-                    config=config,
-                    tier_id=tier_id,
-                    tier_config=tier_config,
-                    subtest=subtest,
-                    baseline=baseline,
-                    results_dir=subtest_dir,
-                    tiers_dir=tier_manager.tiers_dir,
-                    base_repo=workspace_manager.base_repo,
-                    repo_url=workspace_manager.repo_url,
-                    commit=workspace_manager.commit,
-                    checkpoint=checkpoint,
-                    checkpoint_path=checkpoint_path,
-                    coordinator=coordinator,
-                    global_semaphore=global_semaphore,
-                    experiment_dir=experiment_dir,
-                )
-                futures[future] = subtest.id
-
-            # Monitor futures and handle rate limits
-            completed_count = 0
-            for future in as_completed(futures):
-                subtest_id = futures[future]
-                try:
-                    results[subtest_id] = future.result()
-                    completed_count += 1
-
-                    # Log progress after each completion
-                    elapsed = time.time() - start_time
-                    active_workers = total_subtests - completed_count
-                    logger.info(
-                        f"[PROGRESS] Tier {tier_id.value}: "
-                        f"{completed_count}/{total_subtests} complete, "
-                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
-                    )
-
-                    # Check for shutdown request
-                    from scylla.e2e.runner import is_shutdown_requested
-
-                    if is_shutdown_requested():
-                        logger.warning("Shutdown requested, signaling workers to stop...")
-                        coordinator.signal_shutdown()
-                        break
-
-                    # Check if rate limit was signaled during execution
-                    rate_limit_info = coordinator.get_rate_limit_info()
-                    if rate_limit_info and checkpoint and checkpoint_path:
-                        logger.info(f"Rate limit from {rate_limit_info.source}, pausing workers...")
-                        # Wait for rate limit to expire
-                        wait_for_rate_limit(
-                            rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
-                        )
-                        # Resume all workers
-                        coordinator.resume_all_workers()
-
-                except RateLimitError as e:
-                    # Rate limit from a worker - re-raise to maintain consistent behavior
-                    # with single-subtest path
-                    logger.warning(
-                        f"Rate limit detected from {e.info.source} in parallel worker "
-                        f"for {subtest_id}, re-raising for proper handling"
-                    )
-                    raise
-
-                except Exception as e:
-                    # Other errors
-                    results[subtest_id] = SubTestResult(
-                        subtest_id=subtest_id,
-                        tier_id=tier_id,
-                        runs=[],
-                        pass_rate=0.0,
-                        mean_score=0.0,
-                        median_score=0.0,
-                        std_dev_score=0.0,
-                        mean_cost=0.0,
-                        total_cost=0.0,
-                        consistency=0.0,
-                        selection_reason=f"Error: {e}",
-                    )
-                    completed_count += 1
-
-                    # Log progress after error
-                    elapsed = time.time() - start_time
-                    active_workers = total_subtests - completed_count
-                    logger.info(
-                        f"[PROGRESS] Tier {tier_id.value}: "
-                        f"{completed_count}/{total_subtests} complete, "
-                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
-                    )
-
-    except (KeyboardInterrupt, BrokenProcessPool) as e:
-        if isinstance(e, BrokenProcessPool):
-            # Scan results for rate limit indicators
-            rate_limit_info = _detect_rate_limit_from_results(results, results_dir)
-
-            if rate_limit_info and checkpoint and checkpoint_path:
-                logger.warning(
-                    f"BrokenProcessPool caused by rate limit from {rate_limit_info.source}"
-                )
-                logger.info(f"Waiting {rate_limit_info.retry_after_seconds or 60}s before retry...")
-
-                wait_for_rate_limit(
-                    rate_limit_info.retry_after_seconds,
-                    checkpoint,
-                    checkpoint_path,
-                )
-
-                # Identify remaining subtests (not yet completed OR marked as rate_limited)
-                remaining = [
-                    s
-                    for s in tier_config.subtests
-                    if s.id not in results
-                    or results[s.id].selection_reason.startswith("RateLimitError:")
-                ]
-
-                if remaining:
-                    logger.info(f"Retrying {len(remaining)} subtests after rate limit...")
-                    retry_results = _retry_with_new_pool(
-                        remaining_subtests=remaining,
-                        config=config,
-                        tier_id=tier_id,
-                        tier_config=tier_config,
-                        tier_manager=tier_manager,
-                        workspace_manager=workspace_manager,
-                        baseline=baseline,
-                        results_dir=results_dir,
-                        checkpoint=checkpoint,
-                        checkpoint_path=checkpoint_path,
-                        global_semaphore=global_semaphore,
-                    )
-                    results.update(retry_results)
-                    return results
-
-            # Not a rate limit, or no checkpoint - fall through to cleanup
-            logger.error(f"BrokenProcessPool with no recovery path: {e}")
-
-        # KeyboardInterrupt or unrecoverable - cleanup
-        logger.warning("Experiment interrupted, cleaning up...")
-        # Cancel pending futures
-        for future in futures:
-            if not future.done():
-                future.cancel()
-
-    return results
-
-
-def _detect_rate_limit_from_results(
-    results: dict[str, SubTestResult],
-    results_dir: Path,
-) -> RateLimitInfo | None:
-    """Detect rate limit from completed results OR .failed/ directories.
-
-    Checks:
-    1. SubTestResult.rate_limit_info field (from safe wrapper)
-    2. SubTestResult.selection_reason for "RateLimitError:" prefix
-    3. .failed/*/agent/result.json for rate limit patterns in stderr
-
-    Args:
-        results: Dictionary of completed subtest results
-        results_dir: Base directory for tier results
-
-    Returns:
-        RateLimitInfo if rate limit detected, None otherwise
-
-    """
-    # Check structured results first (from safe wrapper)
-    for subtest_id, result in results.items():
-        if result.rate_limit_info:
-            logger.debug(f"Rate limit found in {subtest_id}.rate_limit_info")
-            return result.rate_limit_info
-        if result.selection_reason.startswith("RateLimitError:"):
-            # Parse from selection_reason if rate_limit_info not available
-            logger.debug(f"Rate limit found in {subtest_id}.selection_reason")
-            return RateLimitInfo(
-                source="agent",
-                retry_after_seconds=None,  # Will use default
-                error_message=result.selection_reason,
-                detected_at=datetime.now(timezone.utc).isoformat(),
-            )
-
-    # Check .failed/ directories for crashed workers
-    for failed_dir in results_dir.rglob(".failed/*/agent/result.json"):
-        try:
-            import json
-
-            data = json.loads(failed_dir.read_text())
-            stderr = data.get("stderr", "")
-            stdout = data.get("stdout", "")
-
-            rate_info = detect_rate_limit(stdout, stderr, source="agent")
-            if rate_info:
-                logger.debug(f"Rate limit found in failed run: {failed_dir}")
-                return rate_info
-        except Exception as e:
-            logger.debug(f"Failed to check {failed_dir} for rate limit: {e}")
-            continue
-
-    return None
-
-
-def _retry_with_new_pool(
-    remaining_subtests: list[SubTestConfig],
-    config: ExperimentConfig,
-    tier_id: TierID,
-    tier_config: TierConfig,
-    tier_manager: TierManager,
-    workspace_manager: WorkspaceManager,
-    baseline: TierBaseline | None,
-    results_dir: Path,
-    checkpoint: E2ECheckpoint | None,
-    checkpoint_path: Path | None,
-    global_semaphore,
-    max_retries: int = 3,
-) -> dict[str, SubTestResult]:
-    """Create new ProcessPoolExecutor and retry remaining subtests.
-
-    Has its own retry loop for repeated rate limits.
-
-    Args:
-        remaining_subtests: Subtests that need to be retried
-        config: Experiment configuration
-        tier_id: Tier identifier
-        tier_config: Tier configuration
-        tier_manager: Tier manager instance
-        workspace_manager: Workspace manager instance
-        baseline: Previous tier's baseline
-        results_dir: Base directory for tier results
-        checkpoint: Optional checkpoint for resume
-        checkpoint_path: Path to checkpoint file
-        global_semaphore: Global semaphore for limiting concurrent agents
-        max_retries: Maximum retry attempts for rate limits
-
-    Returns:
-        Dictionary of SubTestResults for retried subtests
-
-    """
-    results: dict[str, SubTestResult] = {}
-    retries = 0
-
-    while remaining_subtests and retries < max_retries:
-        logger.info(
-            f"Retry attempt {retries + 1}/{max_retries} for {len(remaining_subtests)} subtests"
-        )
-
-        try:
-            # Fresh coordinator for new pool
-            manager = Manager()
-            coordinator = RateLimitCoordinator(manager)
-
-            with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
-                futures = {}
-                for subtest in remaining_subtests:
-                    subtest_dir = results_dir / subtest.id
-                    future = pool.submit(
-                        _run_subtest_in_process_safe,  # Use safe wrapper
-                        config=config,
-                        tier_id=tier_id,
-                        tier_config=tier_config,
-                        subtest=subtest,
-                        baseline=baseline,
-                        results_dir=subtest_dir,
-                        tiers_dir=tier_manager.tiers_dir,
-                        base_repo=workspace_manager.base_repo,
-                        repo_url=workspace_manager.repo_url,
-                        commit=workspace_manager.commit,
-                        checkpoint=checkpoint,
-                        checkpoint_path=checkpoint_path,
-                        coordinator=coordinator,
-                        global_semaphore=global_semaphore,
-                    )
-                    futures[future] = subtest.id
-
-                # Collect results
-                for future in as_completed(futures):
-                    subtest_id = futures[future]
-                    try:
-                        result = future.result()
-                        results[subtest_id] = result
-                    except Exception as e:
-                        # Should not happen with safe wrapper, but be defensive
-                        logger.error(f"Unexpected exception from safe wrapper: {e}")
-                        results[subtest_id] = SubTestResult(
-                            subtest_id=subtest_id,
-                            tier_id=tier_id,
-                            runs=[],
-                            pass_rate=0.0,
-                            selection_reason=f"UnexpectedError: {e}",
-                        )
-
-            # Check for rate-limited results that need retry
-            remaining_subtests = [
-                s
-                for s in remaining_subtests
-                if s.id in results and results[s.id].selection_reason.startswith("RateLimitError:")
-            ]
-
-            if remaining_subtests:
-                # More rate limits - wait and retry
-                rate_info = _detect_rate_limit_from_results(results, results_dir)
-                if rate_info and checkpoint and checkpoint_path:
-                    logger.info(
-                        f"Rate limit still active after retry {retries + 1}, waiting again..."
-                    )
-                    wait_for_rate_limit(
-                        rate_info.retry_after_seconds,
-                        checkpoint,
-                        checkpoint_path,
-                    )
-                else:
-                    # No rate limit info but still failing - give up
-                    logger.warning(
-                        f"Subtests still failing after retry {retries + 1} "
-                        f"but no rate limit detected"
-                    )
-                    break
-
-                retries += 1
-            else:
-                # All subtests completed successfully or with non-rate-limit errors
-                break
-
-        except BrokenProcessPool as e:
-            # Pool crashed again - check for rate limit and retry
-            logger.warning(f"BrokenProcessPool during retry attempt {retries + 1}: {e}")
-            rate_info = _detect_rate_limit_from_results(results, results_dir)
-            if rate_info and checkpoint and checkpoint_path:
-                wait_for_rate_limit(
-                    rate_info.retry_after_seconds,
-                    checkpoint,
-                    checkpoint_path,
-                )
-                retries += 1
-            else:
-                # Pool crashed but not due to rate limit - give up
-                logger.error("BrokenProcessPool without rate limit, cannot retry")
-                break
-
-    if retries >= max_retries:
-        logger.warning(
-            f"Max retries ({max_retries}) reached, {len(remaining_subtests)} subtests still failing"
-        )
-
-    return results
-
-
-def _run_subtest_in_process_safe(
-    config: ExperimentConfig,
-    tier_id: TierID,
-    tier_config: TierConfig,
-    subtest: SubTestConfig,
-    baseline: TierBaseline | None,
-    results_dir: Path,
-    tiers_dir: Path,
-    base_repo: Path,
-    repo_url: str,
-    commit: str | None,
-    checkpoint: E2ECheckpoint | None = None,
-    checkpoint_path: Path | None = None,
-    coordinator: RateLimitCoordinator | None = None,
-    global_semaphore=None,
-    experiment_dir: Path | None = None,
-) -> SubTestResult:
-    """Safe wrapper that catches ALL exceptions and returns structured error.
-
-    This prevents worker crashes from poisoning the entire ProcessPoolExecutor.
-    Any exception (including RateLimitError) is converted to a SubTestResult
-    with error details in selection_reason.
-
-    Args:
-        (same as _run_subtest_in_process)
-
-    Returns:
-        SubTestResult (never raises exceptions)
-
-    """
-    try:
-        return _run_subtest_in_process(
-            config=config,
-            tier_id=tier_id,
-            tier_config=tier_config,
-            subtest=subtest,
-            baseline=baseline,
-            results_dir=results_dir,
-            tiers_dir=tiers_dir,
-            base_repo=base_repo,
-            repo_url=repo_url,
-            commit=commit,
-            checkpoint=checkpoint,
-            checkpoint_path=checkpoint_path,
-            coordinator=coordinator,
-            global_semaphore=global_semaphore,
-            experiment_dir=experiment_dir,
-        )
-    except RateLimitError as e:
-        # Return structured error, don't crash pool
-        logger.warning(
-            f"Rate limit in worker for {tier_id.value}/{subtest.id}: {e.info.error_message}"
-        )
-        return SubTestResult(
-            subtest_id=subtest.id,
-            tier_id=tier_id,
-            runs=[],
-            pass_rate=0.0,
-            mean_score=0.0,
-            median_score=0.0,
-            std_dev_score=0.0,
-            mean_cost=0.0,
-            total_cost=0.0,
-            consistency=0.0,
-            selected_as_best=False,
-            selection_reason=f"RateLimitError: {e.info.error_message}",
-            # Store rate limit info for retry logic
-            rate_limit_info=e.info,
-        )
-    except Exception as e:
-        # ANY exception becomes structured error
-        logger.error(
-            f"Worker exception for {tier_id.value}/{subtest.id}: {type(e).__name__}: {e}",
-            exc_info=True,
-        )
-        return SubTestResult(
-            subtest_id=subtest.id,
-            tier_id=tier_id,
-            runs=[],
-            pass_rate=0.0,
-            mean_score=0.0,
-            median_score=0.0,
-            std_dev_score=0.0,
-            mean_cost=0.0,
-            total_cost=0.0,
-            consistency=0.0,
-            selected_as_best=False,
-            selection_reason=f"WorkerError: {type(e).__name__}: {e}",
-        )
-
-
-def _run_subtest_in_process(
-    config: ExperimentConfig,
-    tier_id: TierID,
-    tier_config: TierConfig,
-    subtest: SubTestConfig,
-    baseline: TierBaseline | None,
-    results_dir: Path,
-    tiers_dir: Path,
-    base_repo: Path,
-    repo_url: str,
-    commit: str | None,
-    checkpoint: E2ECheckpoint | None = None,
-    checkpoint_path: Path | None = None,
-    coordinator: RateLimitCoordinator | None = None,
-    global_semaphore=None,
-    experiment_dir: Path | None = None,
-) -> SubTestResult:
-    """Run a sub-test in a separate process.
-
-    This is a helper for parallel execution with checkpoint and rate limit support.
-
-    Args:
-        config: Experiment configuration
-        tier_id: Tier ID
-        tier_config: Tier configuration
-        subtest: Subtest configuration
-        baseline: Baseline from previous tier
-        results_dir: Results directory for this subtest
-        tiers_dir: Path to tier configurations
-        base_repo: Base repository path
-        repo_url: Repository URL
-        commit: Commit hash
-        checkpoint: Optional checkpoint for resume
-        checkpoint_path: Path to checkpoint file
-        coordinator: Optional rate limit coordinator
-        global_semaphore: Optional global semaphore to limit concurrent agents across all tiers
-        experiment_dir: Path to experiment directory (needed for T5 inheritance)
-
-    Returns:
-        SubTestResult
-
-    """
-    # Acquire global semaphore to limit concurrent agents across all tiers
-    if global_semaphore:
-        global_semaphore.acquire()
-
-    try:
-        tier_manager = TierManager(tiers_dir)
-        # Recreate workspace manager in child process
-        workspace_manager = WorkspaceManager(
-            experiment_dir=base_repo.parent,
-            repo_url=repo_url,
-            commit=commit,
-        )
-        workspace_manager._is_setup = True  # Base repo already exists
-        workspace_manager.base_repo = base_repo
-
-        executor = SubTestExecutor(config, tier_manager, workspace_manager)
-        return executor.run_subtest(
-            tier_id=tier_id,
-            tier_config=tier_config,
-            subtest=subtest,
-            baseline=baseline,
-            results_dir=results_dir,
-            checkpoint=checkpoint,
-            checkpoint_path=checkpoint_path,
-            coordinator=coordinator,
-            experiment_dir=experiment_dir,
-        )
-    finally:
-        # Always release semaphore, even if exception occurred
-        if global_semaphore:
-            global_semaphore.release()

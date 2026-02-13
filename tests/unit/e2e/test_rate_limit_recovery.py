@@ -149,7 +149,7 @@ class TestRunSubtestInProcessSafe:
 
         # Patch _run_subtest_in_process to return success
         with patch(
-            "scylla.e2e.subtest_executor._run_subtest_in_process",
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
             return_value=expected_result,
         ):
             result = _run_subtest_in_process_safe(
@@ -189,7 +189,7 @@ class TestRunSubtestInProcessSafe:
 
         # Patch _run_subtest_in_process to raise RateLimitError
         with patch(
-            "scylla.e2e.subtest_executor._run_subtest_in_process",
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
             side_effect=RateLimitError(rate_info),
         ):
             result = _run_subtest_in_process_safe(
@@ -224,7 +224,7 @@ class TestRunSubtestInProcessSafe:
 
         # Patch _run_subtest_in_process to raise generic exception
         with patch(
-            "scylla.e2e.subtest_executor._run_subtest_in_process",
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
             side_effect=ValueError("Something went wrong"),
         ):
             result = _run_subtest_in_process_safe(
