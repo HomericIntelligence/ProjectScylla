@@ -405,10 +405,8 @@ def _has_valid_judge_result(run_dir: Path) -> bool:
         required_fields = ["score", "passed", "grade"]
         if not all(field in data for field in required_fields):
             return False
-        # Check is_valid flag (map old fallback=true to is_valid=false)
+        # Check is_valid flag
         is_valid = data.get("is_valid", True) is not False
-        if data.get("fallback", False) is True:
-            is_valid = False
         return is_valid
     except (json.JSONDecodeError, KeyError, OSError):
         return False
