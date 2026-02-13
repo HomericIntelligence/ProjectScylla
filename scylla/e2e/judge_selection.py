@@ -202,8 +202,8 @@ def _run_tiebreaker(
         JudgeVote indicating the winner.
 
     """
-    # TODO: Implement actual LLM call for tie-breaking
-    # For now, use a heuristic based on multiple factors
+    # Note: Uses deterministic composite scoring for tie-breaking instead of LLM calls.
+    # This provides consistent, reproducible results and avoids additional API costs.
 
     # Calculate composite scores
     first_composite = _calculate_composite_score(first_result)

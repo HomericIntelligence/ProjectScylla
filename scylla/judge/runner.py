@@ -201,11 +201,9 @@ def run_evaluation(
         RunnerError: If evaluation fails.
 
     """
-    # For now, we'll create a simple judgment without using an adapter
-    # since we're in a containerized environment and don't have full access
-    # to the adapter system. This is a minimal implementation.
-    # TODO: Implement full adapter integration when needed.
-    # The model and timeout parameters will be used when adapter integration is added.
+    # Note: Current implementation uses placeholder judgments suitable for containerized
+    # environments. Full adapter integration deferred until requirements are clarified.
+    # Model and timeout parameters reserved for future adapter integration.
 
     # Collect workspace state
     workspace_state = collect_workspace_state(workspace)

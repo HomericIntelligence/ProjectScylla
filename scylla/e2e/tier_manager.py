@@ -425,11 +425,6 @@ class TierManager:
         # Get block IDs from spec
         block_ids = spec.get("blocks", [])
 
-        # Handle presets (would need a preset mapping, for now just use blocks)
-        if not block_ids and "preset" in spec:
-            # TODO: Add preset mappings if needed
-            return
-
         # If no blocks but we have a resource suffix, create CLAUDE.md anyway
         if not block_ids and not resource_suffix:
             return

@@ -489,6 +489,7 @@ def status(test_id: str) -> None:
     """
     click.echo(f"Status for: {test_id}\n")
 
+<<<<<<< HEAD
     # Load from runs directory
     runs_dir = Path("runs")
     results = []
@@ -534,6 +535,11 @@ def status(test_id: str) -> None:
         click.echo(f"    Pass Rate: {pass_rate:.1%}")
         click.echo(f"    Avg Cost: ${avg_cost:.3f}")
         click.echo()
+=======
+    # TODO(#484): Load from results when available
+    click.echo("  No results found.")
+    click.echo("\n  Run 'scylla run {test_id}' to start evaluation.")
+>>>>>>> 4b6cee7 (chore(tech-debt): Resolve remaining TODO/FIXME markers)
 
 
 def main() -> None:
