@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "bootstrap_ci",
     "mann_whitney_u",
+    "mann_whitney_power",
+    "kruskal_wallis_power",
     "cliffs_delta",
     "spearman_correlation",
     "pearson_correlation",
@@ -134,6 +136,120 @@ def mann_whitney_u(
             f"Sample sizes: {len(g1)}, {len(g2)}. Returning U=0, p=1.0."
         )
         return 0.0, 1.0
+
+
+def mann_whitney_power(
+    n1: int,
+    n2: int,
+    effect_size: float,
+    alpha: float | None = None,
+    n_simulations: int | None = None,
+) -> float:
+    """Compute post-hoc power for Mann-Whitney U test via simulation.
+
+    Generates data under the alternative hypothesis using the observed
+    Cliff's delta as effect size, then computes the proportion of
+    significant test results.
+
+    Args:
+        n1: Sample size of group 1
+        n2: Sample size of group 2
+        effect_size: Cliff's delta (observed effect size in [-1, 1])
+        alpha: Significance level (default from config: 0.05)
+        n_simulations: Number of simulation iterations (default: 10000)
+
+    Returns:
+        Achieved power in [0, 1]
+
+    """
+    if alpha is None:
+        alpha = config.alpha
+    if n_simulations is None:
+        n_simulations = config.power_n_simulations
+
+    # Handle edge cases
+    if n1 < 2 or n2 < 2:
+        return np.nan
+    if abs(effect_size) < 1e-10:  # Zero effect
+        return alpha  # Power equals Type I error rate
+
+    # Convert Cliff's delta to normal distribution shift
+    # d = 2 * Phi(shift/sqrt(2)) - 1, so shift = sqrt(2) * Phi^(-1)((d + 1) / 2)
+    from scipy.stats import norm
+
+    shift = np.sqrt(2) * norm.ppf((effect_size + 1) / 2)
+
+    # Run simulations
+    rng = np.random.RandomState(config.power_random_state)
+    significant_count = 0
+
+    for _ in range(n_simulations):
+        # Generate data under alternative hypothesis
+        group1_sim = rng.normal(0, 1, n1)
+        group2_sim = rng.normal(shift, 1, n2)
+
+        # Run Mann-Whitney U test
+        _, p_value = mann_whitney_u(group1_sim, group2_sim)
+
+        if p_value < alpha:
+            significant_count += 1
+
+    return significant_count / n_simulations
+
+
+def kruskal_wallis_power(
+    group_sizes: list[int],
+    effect_size: float,
+    alpha: float | None = None,
+    n_simulations: int | None = None,
+) -> float:
+    """Compute post-hoc power for Kruskal-Wallis H test via simulation.
+
+    Generates data under the alternative hypothesis using the observed
+    effect size (epsilon-squared), then computes the proportion of
+    significant test results.
+
+    Args:
+        group_sizes: List of sample sizes for each group
+        effect_size: Epsilon-squared effect size (H / (N-1))
+        alpha: Significance level (default from config: 0.05)
+        n_simulations: Number of simulation iterations (default: 10000)
+
+    Returns:
+        Achieved power in [0, 1]
+
+    """
+    if alpha is None:
+        alpha = config.alpha
+    if n_simulations is None:
+        n_simulations = config.power_n_simulations
+
+    # Handle edge cases
+    if len(group_sizes) < 2 or any(n < 2 for n in group_sizes):
+        return np.nan
+    if abs(effect_size) < 1e-10:  # Zero effect
+        return alpha  # Power equals Type I error rate
+
+    # Distribute effect across groups using simple shift model
+    # Each group gets a shift proportional to its expected rank deviation
+    k = len(group_sizes)
+    shifts = np.linspace(-1, 1, k) * np.sqrt(effect_size) * 2
+
+    # Run simulations
+    rng = np.random.RandomState(config.power_random_state)
+    significant_count = 0
+
+    for _ in range(n_simulations):
+        # Generate data for each group with different shifts
+        groups = [rng.normal(shift, 1, n) for shift, n in zip(shifts, group_sizes)]
+
+        # Run Kruskal-Wallis test
+        _, p_value = kruskal_wallis(*groups)
+
+        if p_value < alpha:
+            significant_count += 1
+
+    return significant_count / n_simulations
 
 
 def cliffs_delta(group1: pd.Series | np.ndarray, group2: pd.Series | np.ndarray) -> float:

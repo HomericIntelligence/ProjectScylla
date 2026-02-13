@@ -104,6 +104,21 @@ class AnalysisConfig:
         return self.get("statistical", "min_samples", "kruskal_wallis", default=2)
 
     @property
+    def power_n_simulations(self) -> int:
+        """Number of simulations for power analysis."""
+        return self.get("statistical", "power_analysis", "n_simulations", default=10000)
+
+    @property
+    def power_random_state(self) -> int:
+        """Random state for power analysis simulations."""
+        return self.get("statistical", "power_analysis", "random_state", default=42)
+
+    @property
+    def adequate_power_threshold(self) -> float:
+        """Threshold for adequate statistical power."""
+        return self.get("statistical", "power_analysis", "adequate_power_threshold", default=0.80)
+
+    @property
     def png_dpi_scale(self) -> float:
         """PNG DPI scale factor (300 DPI / 100 base = 3.0)."""
         dpi = self.get("figures", "dpi", "png", default=300)
