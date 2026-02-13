@@ -313,9 +313,9 @@ value = data.get("required_field", default_value)
 
 ## Related Issues
 
-- **#475** - Remove fallback compatibility paths (future cleanup)
-  - Once old data is migrated, remove all `data.get("fallback")` checks
-  - Simplify to just `data.get("is_valid", True) is not False`
+- **#475** - Remove fallback compatibility paths ✅ COMPLETED
+  - All `data.get("fallback")` checks have been removed
+  - Simplified to just `data.get("is_valid", True) is not False`
 
 ## References
 

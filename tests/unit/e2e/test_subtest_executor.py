@@ -280,17 +280,6 @@ class TestHasValidJudgeResult:
 
         assert not _has_valid_judge_result(run_dir)
 
-    def test_has_valid_judge_result_rejects_fallback(self, tmp_path: Path) -> None:
-        """Test that _has_valid_judge_result returns False for fallback=true."""
-        run_dir = tmp_path / "run_01"
-        judge_dir = run_dir / "judge"
-        judge_dir.mkdir(parents=True)
-        result_file = judge_dir / "result.json"
-        # Old data: fallback=true with is_valid=true (or missing)
-        result_file.write_text('{"score": 0.0, "passed": false, "grade": "F", "fallback": true}')
-
-        assert not _has_valid_judge_result(run_dir)
-
     def test_has_valid_judge_result_accepts_valid(self, tmp_path: Path) -> None:
         """Test that _has_valid_judge_result returns True for valid judgment."""
         run_dir = tmp_path / "run_01"

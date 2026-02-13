@@ -1,7 +1,7 @@
 {
   "name": "judge-rerun-workspace-corruption",
   "version": "1.0.0",
-  "description": "Fix judge reruns producing incorrect results due to workspace corruption and fallback judge masking",
+  "description": "Fix judge reruns producing incorrect results due to workspace corruption",
   "category": "architecture",
   "tags": [
     "evaluation",

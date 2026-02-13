@@ -143,9 +143,6 @@ def _is_valid_judgment(judgment_file: Path) -> bool:
             # Must have score field and is_valid must not be False
             # (missing is_valid defaults to True for backward compatibility)
             is_valid = data.get("is_valid", True) is not False
-            # Old data has fallback=true with is_valid=true — treat as invalid
-            if data.get("fallback", False) is True:
-                is_valid = False
             return "score" in data and is_valid
     except (json.JSONDecodeError, OSError):
         return False
@@ -522,9 +519,6 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
                 # Check if this judgment has the required fields and is_valid flag
                 has_score = "score" in data
                 is_valid = data.get("is_valid", True) is not False
-                # Old data has fallback=true with is_valid=true — treat as invalid
-                if data.get("fallback", False) is True:
-                    is_valid = False
 
                 # Only include judgments that have score AND pass validity check
                 if has_score and is_valid:

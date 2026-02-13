@@ -479,13 +479,13 @@ def test_compute_consensus_impl_rate_empty_judges():
     assert np.isnan(consensus)
 
 
-def test_build_judges_df_fallback_judge_invalid():
-    """Test that judges with fallback=true are marked as invalid.
+def test_build_judges_df_invalid_judge():
+    """Test that judges with is_valid=False are marked as invalid.
 
-    Regression test for issue #323: the loader must check the fallback field
-    when determining is_valid, matching the behavior of the execution pipeline.
+    Regression test for issue #323: the loader must check the is_valid field
+    when determining judge validity, matching the behavior of the execution pipeline.
     """
-    # Arrange - create a run with a fallback judge
+    # Arrange - create a run with an invalid judge
     criteria = {
         "functional": CriterionScore(
             name="functional",
@@ -496,15 +496,15 @@ def test_build_judges_df_fallback_judge_invalid():
         )
     }
 
-    # This judge has is_valid=True but should be marked invalid due to fallback logic
-    fallback_judge = JudgeEvaluation(
+    # This judge has is_valid=False and should be marked invalid
+    invalid_judge = JudgeEvaluation(
         judge_model="test-model",
         judge_number=1,
         score=0.5,
         passed=False,
         grade="F",
-        is_valid=False,  # Should be False when fallback=true
-        reasoning="Fallback judgment",
+        is_valid=False,  # Explicitly invalid
+        reasoning="Invalid judgment",
         criteria=criteria,
     )
 
@@ -528,7 +528,7 @@ def test_build_judges_df_fallback_judge_invalid():
         agent_duration_seconds=8.0,
         judge_duration_seconds=2.0,
         exit_code=0,
-        judges=[fallback_judge],
+        judges=[invalid_judge],
     )
 
     experiments = {"test-001": [run_data]}
@@ -536,6 +536,6 @@ def test_build_judges_df_fallback_judge_invalid():
     # Act
     df = build_judges_df(experiments)
 
-    # Assert - fallback judge should be marked as invalid
+    # Assert - invalid judge should be marked as invalid
     assert len(df) == 1
     assert not df.iloc[0]["judge_is_valid"]
