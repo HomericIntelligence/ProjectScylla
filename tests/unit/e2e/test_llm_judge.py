@@ -45,7 +45,7 @@ class TestJudgeResult:
             raw_response='{"score": 0.85}',
         )
 
-        d = result.model_dump()
+        d = result.to_dict()
 
         assert d["score"] == 0.85
         assert d["passed"] is True
@@ -64,7 +64,7 @@ class TestJudgeResult:
             reasoning="Needs improvement",
         )
 
-        d = result.model_dump()
+        d = result.to_dict()
 
         assert d["score"] == 0.5
         assert d["is_valid"] is True  # Default value
@@ -82,7 +82,7 @@ class TestJudgeResult:
 
         assert result.is_valid is False
         assert result.score == 0.0
-        assert result.model_dump()["is_valid"] is False
+        assert result.to_dict()["is_valid"] is False
 
 
 class TestBuildPipelineResult:
