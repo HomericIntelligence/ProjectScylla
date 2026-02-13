@@ -40,6 +40,118 @@ docker run \
     scylla-runner:latest --run
 ```
 
+## Build Verification
+
+After building the Docker image, verify the build completed successfully:
+
+### Verify Image Exists
+
+```bash
+# Check that the image was created
+docker images scylla-runner:latest
+
+# Expected output should show:
+# REPOSITORY      TAG       IMAGE ID       CREATED         SIZE
+# scylla-runner   latest    <image-id>     <time>          <size>
+```
+
+### Test Container Start
+
+```bash
+# Verify container starts without errors
+docker run --rm scylla-runner:latest --version
+
+# Expected output should display versions of:
+# - Python
+# - Node.js
+# - Claude CLI
+# - Git
+```
+
+### Validate Core Components
+
+```bash
+# Run full environment validation
+docker run --rm -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY scylla-runner:latest --validate
+
+# This checks:
+# - All required binaries are present
+# - Python imports work correctly
+# - Claude CLI is accessible
+# - Environment variables are set
+```
+
+### Verify Build Size
+
+```bash
+# Check image size is reasonable (should be < 2GB)
+docker images scylla-runner:latest --format "{{.Size}}"
+
+# If size is excessive, consider:
+# - Clearing npm cache during build
+# - Using multi-stage build
+# - Removing unnecessary dependencies
+```
+
+## Component Verification
+
+Verify all installed components are functioning correctly:
+
+### Python Environment
+
+```bash
+# Check Python version (should be 3.10+)
+docker run --rm scylla-runner:latest python --version
+
+# Verify scylla package imports
+docker run --rm scylla-runner:latest python -c "import scylla; print('scylla package OK')"
+
+# Check Python package installations
+docker run --rm scylla-runner:latest python -c "import pytest, yaml, json; print('Core packages OK')"
+```
+
+### Node.js and Claude CLI
+
+```bash
+# Check Node.js version (should be 20.x LTS)
+docker run --rm scylla-runner:latest node --version
+
+# Check npm version
+docker run --rm scylla-runner:latest npm --version
+
+# Verify Claude CLI installation
+docker run --rm scylla-runner:latest claude --version
+
+# Check Claude CLI path
+docker run --rm scylla-runner:latest which claude
+```
+
+### System Tools
+
+```bash
+# Verify git installation
+docker run --rm scylla-runner:latest git --version
+
+# Verify make installation
+docker run --rm scylla-runner:latest make --version
+
+# Verify GCC/G++ for compilation
+docker run --rm scylla-runner:latest gcc --version
+docker run --rm scylla-runner:latest g++ --version
+```
+
+### User Permissions
+
+```bash
+# Verify non-root user
+docker run --rm scylla-runner:latest whoami
+# Expected output: scylla
+
+# Verify user can write to workspace
+docker run --rm -v /tmp/test-workspace:/workspace scylla-runner:latest \
+    sh -c "touch /workspace/test.txt && rm /workspace/test.txt && echo 'Workspace writable'"
+```
+
 ## Image Contents
 
 The `scylla-runner:latest` image includes:
@@ -139,6 +251,54 @@ OPENAI_API_KEY=optional-key
 WORKSPACE_PATH=/path/to/your/workspace
 ```
 
+## Pre-Deployment Checklist
+
+Before deploying the Docker image to production or CI/CD pipelines, verify all components:
+
+### Build Verification
+
+- [ ] Docker build completes without errors
+- [ ] Image size is reasonable (< 2GB)
+- [ ] Image appears in `docker images` output
+- [ ] No security vulnerabilities reported by `docker scan` (if available)
+
+### Component Verification
+
+- [ ] Python version is 3.10 or higher
+- [ ] Node.js version is 20.x LTS
+- [ ] Claude CLI is installed and accessible
+- [ ] Git, make, gcc, g++ are available
+- [ ] `scylla` package imports successfully
+
+### Functional Verification
+
+- [ ] `--version` command displays all component versions
+- [ ] `--validate` command passes with valid API key
+- [ ] Container starts and stops cleanly
+- [ ] Non-root user (`scylla`) is configured correctly
+- [ ] Workspace volume is writable
+
+### Security Verification
+
+- [ ] Container runs as non-root user
+- [ ] No API keys are baked into the image
+- [ ] No sensitive data in image layers
+- [ ] Image uses official base images only
+
+### Integration Verification
+
+- [ ] Test execution completes successfully with `--run`
+- [ ] Environment variables are respected
+- [ ] Timeout mechanism works correctly
+- [ ] Results are captured from stdout/stderr
+
+### Documentation Verification
+
+- [ ] README.md is up to date
+- [ ] All entry point commands are documented
+- [ ] Environment variables are documented
+- [ ] Troubleshooting section covers common issues
+
 ## CI/CD Integration
 
 ### GitHub Actions Example
@@ -207,6 +367,75 @@ docker run -u $(id -u):$(id -g) ...
 
 ```bash
 docker run -e TIMEOUT=600 ... scylla-runner:latest --run
+```
+
+### Missing Entry Point Commands
+
+**Issue**: `--run-agent` or `--run-judge` commands not recognized
+**Context**: These commands are planned for future implementation to support specialized execution modes.
+
+**Current Workaround**: Use the `--run` command with appropriate environment variables:
+
+```bash
+# For agent execution (current approach)
+docker run \
+    -e TIER=T3 \
+    -e MODEL=claude-sonnet-4-5-20250929 \
+    -e TEST_ID=agent-test-001 \
+    -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+    scylla-runner:latest --run
+
+# For judge execution (future enhancement)
+# Currently not implemented - use external judge scripts
+```
+
+**Planned Enhancement**: Add dedicated entry point commands for:
+- `--run-agent`: Execute agent-specific tests with delegation support
+- `--run-judge`: Run LLM judge evaluation on agent outputs
+- `--run-benchmark`: Execute full benchmark suite
+
+### Python Import Errors
+
+**Issue**: `ImportError: No module named 'scylla'`
+**Solution**: Verify the scylla package is installed in the container
+
+```bash
+# Check if scylla is installed
+docker run --rm scylla-runner:latest pip list | grep scylla
+
+# If missing, rebuild with --no-cache
+docker build --no-cache -t scylla-runner:latest .
+```
+
+### Container Exit Without Output
+
+**Issue**: Container exits immediately without producing output
+**Solution**: Check entry point script and logs
+
+```bash
+# Run with verbose logging
+docker run --rm scylla-runner:latest --help
+
+# Check container logs for errors
+docker logs <container-id>
+
+# Run interactive shell to debug
+docker run --rm -it scylla-runner:latest /bin/bash
+```
+
+### API Key Not Recognized
+
+**Issue**: `ANTHROPIC_API_KEY` environment variable not found
+**Solution**: Ensure the key is passed correctly at runtime
+
+```bash
+# Verify environment variable is set on host
+echo $ANTHROPIC_API_KEY
+
+# Pass explicitly to container
+docker run -e ANTHROPIC_API_KEY=sk-ant-... scylla-runner:latest --validate
+
+# For docker-compose, use .env file in docker/ directory
 ```
 
 ## File Structure
