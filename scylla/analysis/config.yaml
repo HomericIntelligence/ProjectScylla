@@ -31,6 +31,12 @@ statistical:
     # Minimum for Kruskal-Wallis omnibus test
     kruskal_wallis: 2
 
+  # Power analysis parameters
+  power_analysis:
+    n_simulations: 10000
+    random_state: 42
+    adequate_power_threshold: 0.80
+
 # Figure Generation Parameters
 figures:
   # Publication-quality output settings
