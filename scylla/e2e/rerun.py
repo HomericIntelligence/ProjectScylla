@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING
 
 from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint
 from scylla.e2e.models import ExperimentConfig, RunResult, TierBaseline, TierID
+from scylla.e2e.rerun_base import load_rerun_context, print_dry_run_summary
 from scylla.e2e.subtest_executor import SubTestExecutor, _commit_test_config
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
@@ -444,54 +445,13 @@ def rerun_experiment(
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    logger.info(f"Scanning experiment directory: {experiment_dir}")
+    # Load experiment config and auto-detect tiers directory
+    ctx = load_rerun_context(experiment_dir)
+    config = ctx.config
+    tier_manager = ctx.tier_manager
 
-    # Load experiment config
-    config_file = experiment_dir / "config" / "experiment.json"
-    if not config_file.exists():
-        raise FileNotFoundError(f"Experiment config not found: {config_file}")
+    # Create workspace manager
 
-    config = ExperimentConfig.load(config_file)
-    logger.info(f"Loaded config: {config.experiment_id}")
-
-    # Auto-detect tiers_dir: look for tests/fixtures/tests/ in parent directories
-    current = experiment_dir
-    tiers_dir = None
-    for _ in range(5):  # Search up to 5 levels up
-        candidate = current / "tests" / "fixtures" / "tests"
-        if candidate.exists() and candidate.is_dir():
-            # Find test-NNN directory
-            test_dirs = [
-                d for d in candidate.iterdir() if d.is_dir() and d.name.startswith("test-")
-            ]
-            if test_dirs:
-                tiers_dir = sorted(test_dirs)[0]  # Use first test dir
-                break
-        current = current.parent
-        if current == current.parent:  # Reached root
-            break
-
-    if not tiers_dir:
-        # Fallback: try ProjectScylla root
-        project_root = Path(__file__).parent.parent.parent.parent
-        candidate = project_root / "tests" / "fixtures" / "tests"
-        if candidate.exists():
-            test_dirs = [
-                d for d in candidate.iterdir() if d.is_dir() and d.name.startswith("test-")
-            ]
-            if test_dirs:
-                tiers_dir = sorted(test_dirs)[0]
-
-    if not tiers_dir:
-        raise FileNotFoundError(
-            "Could not auto-detect tiers directory. Please ensure the experiment was created "
-            "with a valid test fixture directory."
-        )
-
-    logger.info(f"Using tiers directory: {tiers_dir}")
-
-    # Create managers
-    tier_manager = TierManager(tiers_dir)
     workspace_manager = WorkspaceManager(
         experiment_dir=experiment_dir,
         repo_url=config.task_repo,
@@ -532,19 +492,9 @@ def rerun_experiment(
     logger.info(f"  missing:   {stats.missing}")
 
     if dry_run:
-        print("\n" + "=" * 70)
-        print("DRY RUN MODE - No changes will be made")
-        print("=" * 70)
-
-        for status, runs in runs_by_status.items():
-            if runs:
-                print(f"\n{status.value.upper().replace('_', ' ')} ({len(runs)} runs):")
-                for run in runs[:10]:  # Show first 10
-                    print(
-                        f"  - {run.tier_id}/{run.subtest_id}/run_{run.run_number:02d}: {run.reason}"
-                    )
-                if len(runs) > 10:
-                    print(f"  ... and {len(runs) - 10} more")
+        # Use shared dry-run summary formatter
+        status_names = {status: status.value.upper().replace("_", " ") for status in RunStatus}
+        print_dry_run_summary(runs_by_status, status_names)
 
         stats.print_summary()
         return stats

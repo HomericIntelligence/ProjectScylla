@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from scylla.e2e.models import ExperimentConfig
+from scylla.e2e.rerun_base import load_rerun_context, print_dry_run_summary
 from scylla.e2e.tier_manager import TierManager
 from scylla.metrics.grading import assign_letter_grade
 
@@ -654,53 +655,11 @@ def rerun_judges_experiment(
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    logger.info(f"Scanning experiment directory: {experiment_dir}")
-
-    # Load experiment config
-    config_file = experiment_dir / "config" / "experiment.json"
-    if not config_file.exists():
-        raise FileNotFoundError(f"Experiment config not found: {config_file}")
-
-    config = ExperimentConfig.load(config_file)
-    logger.info(f"Loaded config: {config.experiment_id}")
+    # Load experiment config and auto-detect tiers directory
+    ctx = load_rerun_context(experiment_dir)
+    config = ctx.config
+    tier_manager = ctx.tier_manager
     logger.info(f"Judge models: {config.judge_models}")
-
-    # Auto-detect tiers_dir
-    current = experiment_dir
-    tiers_dir = None
-    for _ in range(5):
-        candidate = current / "tests" / "fixtures" / "tests"
-        if candidate.exists() and candidate.is_dir():
-            test_dirs = [
-                d for d in candidate.iterdir() if d.is_dir() and d.name.startswith("test-")
-            ]
-            if test_dirs:
-                tiers_dir = sorted(test_dirs)[0]
-                break
-        current = current.parent
-        if current == current.parent:
-            break
-
-    if not tiers_dir:
-        project_root = Path(__file__).parent.parent.parent.parent
-        candidate = project_root / "tests" / "fixtures" / "tests"
-        if candidate.exists():
-            test_dirs = [
-                d for d in candidate.iterdir() if d.is_dir() and d.name.startswith("test-")
-            ]
-            if test_dirs:
-                tiers_dir = sorted(test_dirs)[0]
-
-    if not tiers_dir:
-        raise FileNotFoundError(
-            "Could not auto-detect tiers directory. Please ensure the experiment was created "
-            "with a valid test fixture directory."
-        )
-
-    logger.info(f"Using tiers directory: {tiers_dir}")
-
-    # Create tier manager
-    tier_manager = TierManager(tiers_dir)
 
     # Scan for judge slots by status
     stats = RerunJudgeStats()
@@ -755,20 +714,11 @@ def rerun_judges_experiment(
 
     # Standard dry-run mode (not regenerate-only)
     if dry_run:
-        print("\n" + "=" * 70)
-        print("DRY RUN MODE - No changes will be made")
-        print("=" * 70)
-
-        for status, slots in slots_by_status.items():
-            if slots:
-                print(f"\n{status.value.upper().replace('_', ' ')} ({len(slots)} slots):")
-                for slot in slots[:10]:
-                    print(
-                        f"  - {slot.tier_id}/{slot.subtest_id}/run_{slot.run_number:02d} "
-                        f"judge_{slot.judge_number:02d} ({slot.judge_model}): {slot.reason}"
-                    )
-                if len(slots) > 10:
-                    print(f"  ... and {len(slots) - 10} more")
+        # Use shared dry-run summary formatter
+        status_names = {
+            status: status.value.upper().replace("_", " ") for status in JudgeSlotStatus
+        }
+        print_dry_run_summary(slots_by_status, status_names)
 
         stats.print_summary(config.judge_models)
         return stats
