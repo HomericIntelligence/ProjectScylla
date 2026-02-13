@@ -1,9 +1,29 @@
 {
-  "name": "issue-validation-workflow",
+  "name": "parallel-issue-resolution-with-worktrees",
   "version": "1.0.0",
-  "category": "evaluation",
-  "description": "Validate GitHub issue state against codebase reality before implementation. Use when starting work on multiple issues to prevent wasted effort on already-resolved issues.",
-  "tags": ["github", "issue-validation", "parallel-exploration", "triage", "advise"],
-  "created": "2026-02-12",
-  "author": "ProjectScylla Team"
+  "description": "Resolve multiple GitHub issues simultaneously using parallel sub-agents and git worktrees for conflict-free development",
+  "category": "architecture",
+  "tags": ["parallel-execution", "git-worktrees", "agent-orchestration", "code-refactoring", "technical-debt"],
+  "created": "2026-02-13",
+  "session_context": {
+    "objective": "Resolve 10 GitHub issues from pre-release code quality audit",
+    "outcome": "All 10 issues resolved, 9 PRs merged, ~1,335 lines eliminated",
+    "speedup": "6-8x faster than sequential approach"
+  },
+  "key_innovations": [
+    "Git worktrees eliminate merge conflicts",
+    "Wave-based dependency management",
+    "Single message launches 6+ parallel agents",
+    "Auto-merge with rebase maintains velocity"
+  ],
+  "best_for": [
+    "Multiple independent code refactoring tasks",
+    "Time-critical batch work (release prep, tech debt sprints)",
+    "Issues with clear dependency chains"
+  ],
+  "not_suitable_for": [
+    "Issues requiring shared state or coordinated changes",
+    "Single complex issue requiring sequential reasoning",
+    "Issues touching the same files"
+  ]
 }
