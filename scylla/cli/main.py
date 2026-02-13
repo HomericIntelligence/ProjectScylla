@@ -372,10 +372,32 @@ def list_tests(verbose: bool) -> None:
         scylla list --verbose
 
     """
-    # TODO: Load from tests directory when available
-    tests = [
-        ("001-justfile-to-makefile", "Convert Justfile to Makefile"),
-    ]
+    # Load from tests/fixtures/tests directory
+    tests_dir = Path("tests/fixtures/tests")
+    tests = []
+
+    if tests_dir.exists():
+        for test_path in sorted(tests_dir.iterdir()):
+            if test_path.is_dir():
+                test_yaml = test_path / "test.yaml"
+                if test_yaml.exists():
+                    import yaml
+
+                    try:
+                        with open(test_yaml) as f:
+                            test_data = yaml.safe_load(f)
+                        test_id = test_data.get("id", test_path.name)
+                        description = test_data.get("name", "No description")
+                        tests.append((test_id, description))
+                    except Exception:
+                        # Skip invalid test files
+                        continue
+
+    # Fallback to default list if no tests found (for backward compatibility)
+    if not tests:
+        tests = [
+            ("001-justfile-to-makefile", "Convert Justfile to Makefile"),
+        ]
 
     click.echo("Available tests:\n")
 
@@ -467,9 +489,51 @@ def status(test_id: str) -> None:
     """
     click.echo(f"Status for: {test_id}\n")
 
-    # TODO: Load from results when available
-    click.echo("  No results found.")
-    click.echo("\n  Run 'scylla run {test_id}' to start evaluation.")
+    # Load from runs directory
+    runs_dir = Path("runs")
+    results = []
+
+    if runs_dir.exists():
+        # Find all result.json files for this test_id
+        for result_file in runs_dir.glob(f"**/{test_id}/**/result.json"):
+            try:
+                with open(result_file) as f:
+                    result_data = json.load(f)
+                results.append(result_data)
+            except Exception:
+                # Skip invalid result files
+                continue
+
+    if not results:
+        click.echo("  No results found.")
+        click.echo(f"\n  Run 'scylla run {test_id}' to start evaluation.")
+        return
+
+    # Display summary by tier
+    tiers = {}
+    for result in results:
+        tier_id = result.get("tier_id", "unknown")
+        if tier_id not in tiers:
+            tiers[tier_id] = {"total": 0, "passed": 0, "costs": []}
+
+        tiers[tier_id]["total"] += 1
+        if result.get("judgment", {}).get("passed", False):
+            tiers[tier_id]["passed"] += 1
+        cost = result.get("metrics", {}).get("cost_usd", 0.0)
+        tiers[tier_id]["costs"].append(cost)
+
+    click.echo(f"  Total runs: {len(results)}\n")
+
+    for tier_id in sorted(tiers.keys()):
+        tier_data = tiers[tier_id]
+        pass_rate = tier_data["passed"] / tier_data["total"] if tier_data["total"] > 0 else 0.0
+        avg_cost = statistics.mean(tier_data["costs"]) if tier_data["costs"] else 0.0
+
+        click.echo(f"  {tier_id}:")
+        click.echo(f"    Runs: {tier_data['total']}")
+        click.echo(f"    Pass Rate: {pass_rate:.1%}")
+        click.echo(f"    Avg Cost: ${avg_cost:.3f}")
+        click.echo()
 
 
 def main() -> None:
