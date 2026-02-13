@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import logging
 import os
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, ConfigDict
 
 from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint
 from scylla.e2e.models import ExperimentConfig, RunResult, TierBaseline, TierID
@@ -43,8 +44,7 @@ class RunStatus(Enum):
     RESULTS = "results"  # Agent finished, but run_result.json or agent/result.json missing
 
 
-@dataclass
-class RerunStats:
+class RerunStats(BaseModel):
     """Statistics from rerun process."""
 
     total_expected_runs: int = 0
@@ -79,9 +79,10 @@ class RerunStats:
         print("=" * 70)
 
 
-@dataclass
-class RunToRerun:
+class RunToRerun(BaseModel):
     """A single run that needs re-running."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     tier_id: str  # e.g., "T0"
     subtest_id: str  # e.g., "00"

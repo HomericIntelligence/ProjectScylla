@@ -18,10 +18,11 @@ import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from scylla.e2e.models import ExperimentConfig
 from scylla.e2e.rerun_base import load_rerun_context, print_dry_run_summary
@@ -43,12 +44,13 @@ class JudgeSlotStatus(Enum):
     AGENT_FAILED = "agent_failed"  # Agent failed, cannot judge
 
 
-@dataclass
-class RerunJudgeStats:
+class RerunJudgeStats(BaseModel):
     """Statistics from judge rerun process."""
 
     total_expected_slots: int = 0  # Total judge slots expected (runs x judges)
-    per_slot_stats: dict[int, dict[str, int]] = None  # Stats per judge slot number
+    per_slot_stats: dict[int, dict[str, int]] = Field(
+        default_factory=dict
+    )  # Stats per judge slot number
 
     # Overall stats
     complete: int = 0
@@ -59,11 +61,6 @@ class RerunJudgeStats:
     slots_rerun_failed: int = 0
     consensus_regenerated: int = 0  # Number of run_dirs where consensus was regenerated
     runs_skipped_by_filter: int = 0
-
-    def __post_init__(self):
-        """Initialize per_slot_stats if not provided."""
-        if self.per_slot_stats is None:
-            self.per_slot_stats = {}
 
     def print_summary(self, judge_models: list[str]) -> None:
         """Print a summary of rerun statistics."""
@@ -93,9 +90,10 @@ class RerunJudgeStats:
         print("=" * 70)
 
 
-@dataclass
-class JudgeSlotToRerun:
+class JudgeSlotToRerun(BaseModel):
     """A single judge slot that needs re-running."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     tier_id: str  # e.g., "T0"
     subtest_id: str  # e.g., "00"
@@ -470,8 +468,7 @@ def _rerun_single_judge_slot(
             return False
 
 
-@dataclass
-class _JudgeSlotResult:
+class _JudgeSlotResult(BaseModel):
     """Result from a parallel judge slot execution."""
 
     slot: JudgeSlotToRerun

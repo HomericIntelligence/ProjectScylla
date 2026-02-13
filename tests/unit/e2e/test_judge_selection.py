@@ -41,8 +41,8 @@ class TestJudgeSelection:
             winning_subtest="01",
             winning_score=0.85,
             votes=[
-                JudgeVote("01", 0.85, 0.9, "Good"),
-                JudgeVote("02", 0.80, 0.8, "Okay"),
+                JudgeVote(subtest_id="01", score=0.85, confidence=0.9, reasoning="Good"),
+                JudgeVote(subtest_id="02", score=0.80, confidence=0.8, reasoning="Okay"),
             ],
             margin=0.05,
             tiebreaker_needed=False,

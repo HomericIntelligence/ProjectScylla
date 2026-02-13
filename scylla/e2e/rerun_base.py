@@ -7,9 +7,10 @@ including config loading, tiers directory detection, and dry-run output formatti
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from pydantic import BaseModel, ConfigDict
 
 from scylla.e2e.models import ExperimentConfig
 from scylla.e2e.tier_manager import TierManager
@@ -20,9 +21,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class RerunContext:
+class RerunContext(BaseModel):
     """Shared context for rerun operations."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     experiment_dir: Path
     config: ExperimentConfig

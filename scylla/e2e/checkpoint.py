@@ -291,7 +291,7 @@ def compute_config_hash(config: ExperimentConfig) -> str:
         16-character hex hash (first 16 chars of SHA256)
 
     """
-    config_dict = config.to_dict()
+    config_dict = config.model_dump(mode="json")
 
     # Remove fields that don't affect results
     config_dict.pop("parallel_subtests", None)  # Just parallelization setting

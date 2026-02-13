@@ -7,20 +7,22 @@ testing pipeline, including configurations, results, and aggregations.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
+from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
-    from scylla.e2e.rate_limit import RateLimitInfo
+    pass
+
+# Import after models are defined to avoid circular import at module level
+# This is safe because RateLimitInfo is only used in type hints within SubTestResult
 
 
-@dataclass
-class TokenStats:
+class TokenStats(BaseModel):
     """Detailed token usage statistics.
 
     Tracks all token types including cache operations for
@@ -125,8 +127,7 @@ TIER_DEPENDENCIES: dict[TierID, list[TierID]] = {
 }
 
 
-@dataclass
-class SubTestConfig:
+class SubTestConfig(BaseModel):
     """Configuration for a single sub-test within a tier.
 
     Each sub-test represents a variation of the tier configuration,
@@ -153,14 +154,16 @@ class SubTestConfig:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     id: str
     name: str
     description: str
     claude_md_path: Path | None = None
     claude_dir_path: Path | None = None
     extends_previous: bool = True
-    resources: dict[str, Any] = field(default_factory=dict)
-    inherit_best_from: list[TierID] = field(default_factory=list)
+    resources: dict[str, Any] = Field(default_factory=dict)
+    inherit_best_from: list[TierID] = Field(default_factory=list)
     agent_teams: bool = False  # Enable experimental agent teams feature
     system_prompt_mode: str = "custom"  # "none", "default", "custom"
 
@@ -180,8 +183,7 @@ class SubTestConfig:
         }
 
 
-@dataclass
-class TierConfig:
+class TierConfig(BaseModel):
     """Configuration for a tier including all sub-tests.
 
     Attributes:
@@ -196,6 +198,8 @@ class TierConfig:
         See SubTestConfig.system_prompt_mode for the actual configuration.
 
     """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     tier_id: TierID
     subtests: list[SubTestConfig]
@@ -214,8 +218,7 @@ class TierConfig:
         }
 
 
-@dataclass
-class JudgeResultSummary:
+class JudgeResultSummary(BaseModel):
     """Summary of a single judge's evaluation.
 
     Used when multiple judges evaluate the same run.
@@ -255,8 +258,7 @@ class JudgeResultSummary:
         }
 
 
-@dataclass
-class RunResult:
+class RunResult(BaseModel):
     """Result from a single run of a sub-test.
 
     Captures all execution details, metrics, and judge evaluation
@@ -289,6 +291,8 @@ class RunResult:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     run_number: int
     exit_code: int
     token_stats: TokenStats
@@ -302,9 +306,9 @@ class RunResult:
     judge_reasoning: str
     workspace_path: Path
     logs_path: Path
-    judges: list[JudgeResultSummary] = field(default_factory=list)
+    judges: list[JudgeResultSummary] = Field(default_factory=list)
     command_log_path: Path | None = None
-    criteria_scores: dict[str, dict[str, Any]] = field(default_factory=dict)
+    criteria_scores: dict[str, dict[str, Any]] = Field(default_factory=dict)
 
     # Legacy properties for backwards compatibility
     @property
@@ -342,8 +346,7 @@ class RunResult:
         }
 
 
-@dataclass
-class SubTestResult:
+class SubTestResult(BaseModel):
     """Aggregated results for a sub-test across all runs.
 
     Contains statistics computed from all runs of a single sub-test.
@@ -369,6 +372,8 @@ class SubTestResult:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     subtest_id: str
     tier_id: TierID
     runs: list[RunResult]
@@ -378,7 +383,7 @@ class SubTestResult:
     std_dev_score: float = 0.0
     mean_cost: float = 0.0
     total_cost: float = 0.0
-    token_stats: TokenStats = field(default_factory=TokenStats)
+    token_stats: TokenStats = Field(default_factory=TokenStats)
     consistency: float = 0.0
     # Grade aggregation across runs
     grade_distribution: dict[str, int] | None = None
@@ -423,8 +428,7 @@ class SubTestResult:
         }
 
 
-@dataclass
-class TierBaseline:
+class TierBaseline(BaseModel):
     """Reference to a tier's best configuration for inheritance.
 
     Used to track which sub-test configuration should be inherited
@@ -441,11 +445,13 @@ class TierBaseline:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     tier_id: TierID
     subtest_id: str
     claude_md_path: Path | None
     claude_dir_path: Path | None
-    resources: dict[str, Any] = field(default_factory=dict)
+    resources: dict[str, Any] = Field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -458,8 +464,7 @@ class TierBaseline:
         }
 
 
-@dataclass
-class ResourceManifest:
+class ResourceManifest(BaseModel):
     """Records which resources were used for a subtest run.
 
     Enables reproducibility without copying files. Instead of duplicating
@@ -520,8 +525,7 @@ class ResourceManifest:
         )
 
 
-@dataclass
-class TierResult:
+class TierResult(BaseModel):
     """Complete results for a tier including all sub-tests.
 
     Attributes:
@@ -537,6 +541,8 @@ class TierResult:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     tier_id: TierID
     subtest_results: dict[str, SubTestResult]
     best_subtest: str | None = None
@@ -545,7 +551,7 @@ class TierResult:
     tiebreaker_needed: bool = False
     total_cost: float = 0.0
     total_duration: float = 0.0
-    token_stats: TokenStats = field(default_factory=TokenStats)
+    token_stats: TokenStats = Field(default_factory=TokenStats)
 
     @property
     def cost_of_pass(self) -> float:
@@ -580,8 +586,7 @@ class TierResult:
         }
 
 
-@dataclass
-class TestFixture:
+class TestFixture(BaseModel):
     """Complete test fixture definition.
 
     This is the output schema that a benchmark generator must produce.
@@ -611,7 +616,7 @@ class TestFixture:
     task_prompt: str
     criteria: str
     rubric: dict[str, Any]
-    tiers: list[str] = field(default_factory=list)
+    tiers: list[str] = Field(default_factory=list)
     timeout_seconds: int = 3600
 
     @classmethod
@@ -735,8 +740,7 @@ class TestFixture:
             yaml.dump(self.rubric, f, default_flow_style=False, sort_keys=False)
 
 
-@dataclass
-class ExperimentConfig:
+class ExperimentConfig(BaseModel):
     """Complete experiment configuration.
 
     Defines all parameters for running an E2E experiment.
@@ -764,15 +768,17 @@ class ExperimentConfig:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     experiment_id: str
     task_repo: str
     task_commit: str
     task_prompt_file: Path
     language: str  # REQUIRED: Programming language for build pipeline
-    models: list[str] = field(default_factory=lambda: ["claude-sonnet-4-5-20250929"])
+    models: list[str] = Field(default_factory=lambda: ["claude-sonnet-4-5-20250929"])
     runs_per_subtest: int = 10
-    tiers_to_run: list[TierID] = field(default_factory=lambda: list(TierID))
-    judge_models: list[str] = field(default_factory=lambda: ["claude-opus-4-5-20251101"])
+    tiers_to_run: list[TierID] = Field(default_factory=lambda: list(TierID))
+    judge_models: list[str] = Field(default_factory=lambda: ["claude-opus-4-5-20251101"])
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
@@ -844,8 +850,7 @@ class ExperimentConfig:
         )
 
 
-@dataclass
-class ExperimentResult:
+class ExperimentResult(BaseModel):
     """Complete experiment results.
 
     Contains all results and analysis from running the full experiment.
@@ -865,6 +870,8 @@ class ExperimentResult:
 
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     config: ExperimentConfig
     tier_results: dict[TierID, TierResult]
     best_overall_tier: TierID | None = None
@@ -873,8 +880,8 @@ class ExperimentResult:
     frontier_cop_tier: TierID | None = None
     total_cost: float = 0.0
     total_duration_seconds: float = 0.0
-    token_stats: TokenStats = field(default_factory=TokenStats)
-    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    token_stats: TokenStats = Field(default_factory=TokenStats)
+    started_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     completed_at: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -898,3 +905,10 @@ class ExperimentResult:
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
+
+
+# Resolve forward references after all models are defined
+# Import RateLimitInfo and rebuild SubTestResult to resolve the forward reference
+from scylla.e2e.rate_limit import RateLimitInfo  # noqa: E402
+
+SubTestResult.model_rebuild()
