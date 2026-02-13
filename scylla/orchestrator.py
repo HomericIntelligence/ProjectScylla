@@ -115,33 +115,20 @@ class EvalOrchestrator:
         )
 
         try:
-            # Clone repository
-            clone_repo(
-                repo_url=test_case.source.repo,
-                workspace_path=workspace,
-            )
+            # Setup workspace
+            self._setup_workspace(workspace, test_case)
 
-            # Checkout specific hash
-            checkout_hash(
-                workspace_path=workspace,
-                git_hash=test_case.source.hash,
-            )
-
-            # Execute adapter (if configured)
-            start_time = datetime.now(timezone.utc)
-            execution_result = self._run_adapter(
+            # Execute and judge
+            execution_result, duration = self._execute_agent(
                 workspace=workspace,
                 test_case=test_case,
                 model_id=model_id,
                 tier_id=tier_id,
             )
-            end_time = datetime.now(timezone.utc)
-            duration = (end_time - start_time).total_seconds()
 
             # Update progress to judging
             self.progress.update_run_status(tier_id, run_number, RunStatus.JUDGING)
 
-            # Run judge evaluation
             judgment = self._run_judge(
                 workspace=workspace,
                 test_case=test_case,
@@ -149,43 +136,22 @@ class EvalOrchestrator:
                 execution_result=execution_result,
             )
 
-            # Extract values for result creation
-            passed = judgment.get("passed", False)
-            impl_rate = judgment.get("score", 0.0)
-            cost_usd = execution_result.get("cost_usd", 0.0)
-            pass_rate = 1.0 if passed else 0.0
-            cost_of_pass = cost_usd / pass_rate if pass_rate > 0 else float("inf")
-            # Composite score: equal weight (50/50) per .claude/shared/metrics-definitions.md
-            composite_score = (pass_rate + impl_rate) / 2
-
-            # Create result
-            result = create_run_result(
+            # Create and write result
+            result = self._create_result(
                 test_id=test_id,
                 tier_id=tier_id,
                 model_id=model_id,
                 run_number=run_number,
-                status="completed",
-                duration_seconds=duration,
-                exit_code=execution_result.get("exit_code", 0),
-                tokens_input=execution_result.get("tokens_in", 0),
-                tokens_output=execution_result.get("tokens_out", 0),
-                cost_usd=cost_usd,
-                api_calls=execution_result.get("api_calls", 1),
-                passed=passed,
-                impl_rate=impl_rate,
-                letter_grade=judgment.get("grade", "F"),
-                pass_rate=pass_rate,
-                cost_of_pass=cost_of_pass,
-                composite_score=composite_score,
+                execution_result=execution_result,
+                judgment=judgment,
+                duration=duration,
             )
 
-            # Write result
             result_path = self.result_writer.write_result(result)
 
-            # Write logs to result directory for independent validation
-            result_dir = result_path.parent
+            # Write logs for validation
             self._write_run_logs(
-                result_dir=result_dir,
+                result_dir=result_path.parent,
                 execution_result=execution_result,
                 judgment=judgment,
                 test_case=test_case,
@@ -193,22 +159,149 @@ class EvalOrchestrator:
             )
 
             # Complete progress
-            self.progress.complete_run(
+            self._finalize_progress(
                 tier_id=tier_id,
                 run_number=run_number,
-                passed=result.judgment.passed,
-                grade=result.judgment.letter_grade,
-                cost_usd=result.metrics.cost_usd,
+                result=result,
+                skip_progress_init=_skip_progress_init,
             )
-            if not _skip_progress_init:
-                self.progress.complete_tier(tier_id)
-                self.progress.complete_test()
 
             return result
 
         finally:
             # Cleanup workspace (keep logs)
             cleanup_workspace(workspace_path=workspace, keep_logs=True)
+
+    def _setup_workspace(
+        self,
+        workspace: Path,
+        test_case: EvalCase,
+    ) -> None:
+        """Set up workspace with repository checkout.
+
+        Args:
+            workspace: Path to workspace.
+            test_case: Test configuration.
+
+        """
+        clone_repo(
+            repo_url=test_case.source.repo,
+            workspace_path=workspace,
+        )
+        checkout_hash(
+            workspace_path=workspace,
+            git_hash=test_case.source.hash,
+        )
+
+    def _execute_agent(
+        self,
+        workspace: Path,
+        test_case: EvalCase,
+        model_id: str,
+        tier_id: str,
+    ) -> tuple[dict, float]:
+        """Execute agent and measure duration.
+
+        Args:
+            workspace: Path to workspace.
+            test_case: Test configuration.
+            model_id: Model identifier.
+            tier_id: Tier identifier.
+
+        Returns:
+            Tuple of (execution_result, duration_seconds).
+
+        """
+        start_time = datetime.now(timezone.utc)
+        execution_result = self._run_adapter(
+            workspace=workspace,
+            test_case=test_case,
+            model_id=model_id,
+            tier_id=tier_id,
+        )
+        end_time = datetime.now(timezone.utc)
+        duration = (end_time - start_time).total_seconds()
+        return execution_result, duration
+
+    def _create_result(
+        self,
+        test_id: str,
+        tier_id: str,
+        model_id: str,
+        run_number: int,
+        execution_result: dict,
+        judgment: dict,
+        duration: float,
+    ) -> RunResult:
+        """Create RunResult from execution and judgment.
+
+        Args:
+            test_id: Test identifier.
+            tier_id: Tier identifier.
+            model_id: Model identifier.
+            run_number: Run number.
+            execution_result: Results from adapter.
+            judgment: Judgment from judge.
+            duration: Execution duration in seconds.
+
+        Returns:
+            RunResult object.
+
+        """
+        passed = judgment.get("passed", False)
+        impl_rate = judgment.get("score", 0.0)
+        cost_usd = execution_result.get("cost_usd", 0.0)
+        pass_rate = 1.0 if passed else 0.0
+        cost_of_pass = cost_usd / pass_rate if pass_rate > 0 else float("inf")
+        # Composite score: equal weight (50/50) per .claude/shared/metrics-definitions.md
+        composite_score = (pass_rate + impl_rate) / 2
+
+        return create_run_result(
+            test_id=test_id,
+            tier_id=tier_id,
+            model_id=model_id,
+            run_number=run_number,
+            status="completed",
+            duration_seconds=duration,
+            exit_code=execution_result.get("exit_code", 0),
+            tokens_input=execution_result.get("tokens_in", 0),
+            tokens_output=execution_result.get("tokens_out", 0),
+            cost_usd=cost_usd,
+            api_calls=execution_result.get("api_calls", 1),
+            passed=passed,
+            impl_rate=impl_rate,
+            letter_grade=judgment.get("grade", "F"),
+            pass_rate=pass_rate,
+            cost_of_pass=cost_of_pass,
+            composite_score=composite_score,
+        )
+
+    def _finalize_progress(
+        self,
+        tier_id: str,
+        run_number: int,
+        result: RunResult,
+        skip_progress_init: bool,
+    ) -> None:
+        """Finalize progress tracking for run.
+
+        Args:
+            tier_id: Tier identifier.
+            run_number: Run number.
+            result: RunResult with execution details.
+            skip_progress_init: Whether to skip tier/test completion.
+
+        """
+        self.progress.complete_run(
+            tier_id=tier_id,
+            run_number=run_number,
+            passed=result.judgment.passed,
+            grade=result.judgment.letter_grade,
+            cost_usd=result.metrics.cost_usd,
+        )
+        if not skip_progress_init:
+            self.progress.complete_tier(tier_id)
+            self.progress.complete_test()
 
     def _run_adapter(
         self,

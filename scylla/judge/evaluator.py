@@ -557,12 +557,14 @@ class JudgeEvaluator:
             ConsensusJudgment with weighted scores.
 
         """
+        # Guard: No judgments
         if not judgments:
             return ConsensusJudgment()
 
         # Filter out empty judgments
         valid_judgments = [j for j in judgments if j.requirements or j.categories]
 
+        # Guard: No valid judgments
         if not valid_judgments:
             return ConsensusJudgment(
                 individual_runs=judgments,
@@ -602,24 +604,15 @@ class JudgeEvaluator:
                     )
                 )
 
-        if overall_scores:
-            weighted_score = weighted_consensus(overall_scores)
-        else:
-            # Fall back to average of category scores
-            if category_consensus:
-                weighted_score = sum(category_consensus.values()) / len(category_consensus)
-            else:
-                weighted_score = 0.0
+        # Determine weighted score
+        weighted_score = self._calculate_weighted_score(overall_scores, category_consensus)
 
         # Determine pass/fail based on consensus score
         passed = weighted_score >= self.config.pass_threshold
         letter_grade = assign_letter_grade(weighted_score)
 
         # Calculate overall confidence
-        if overall_scores:
-            overall_confidence = sum(s.confidence for s in overall_scores) / len(overall_scores)
-        else:
-            overall_confidence = 0.5
+        overall_confidence = self._calculate_overall_confidence(overall_scores)
 
         return ConsensusJudgment(
             requirements=requirement_consensus,
@@ -631,3 +624,45 @@ class JudgeEvaluator:
             individual_runs=judgments,
             run_count=len(judgments),
         )
+
+    def _calculate_weighted_score(
+        self,
+        overall_scores: list[JudgeScore],
+        category_consensus: dict[str, float],
+    ) -> float:
+        """Calculate weighted score from overall scores or category consensus.
+
+        Args:
+            overall_scores: List of overall scores.
+            category_consensus: Category consensus scores.
+
+        Returns:
+            Weighted score (0.0 to 1.0).
+
+        """
+        if overall_scores:
+            return weighted_consensus(overall_scores)
+
+        # Fall back to average of category scores
+        if category_consensus:
+            return sum(category_consensus.values()) / len(category_consensus)
+
+        return 0.0
+
+    def _calculate_overall_confidence(
+        self,
+        overall_scores: list[JudgeScore],
+    ) -> float:
+        """Calculate overall confidence from scores.
+
+        Args:
+            overall_scores: List of overall scores.
+
+        Returns:
+            Overall confidence (0.0 to 1.0).
+
+        """
+        if overall_scores:
+            return sum(s.confidence for s in overall_scores) / len(overall_scores)
+
+        return 0.5
