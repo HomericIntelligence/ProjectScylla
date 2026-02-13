@@ -1,9 +1,25 @@
 """Tests for judge rerun functionality."""
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
+from unittest.mock import patch
 
-from scylla.e2e.rerun_judges import _is_valid_judgment, _regenerate_consensus
+import pytest
+
+from scylla.e2e.models import ExperimentConfig, SubTestConfig, TierConfig, TierID
+from scylla.e2e.rerun_judges import (
+    JudgeSlotStatus,
+    JudgeSlotToRerun,
+    RerunJudgeStats,
+    _classify_judge_slots,
+    _has_valid_agent_result,
+    _is_valid_judgment,
+    _regenerate_consensus,
+    scan_judges_needing_rerun,
+)
+from scylla.e2e.tier_manager import TierManager
 
 
 def test_is_valid_judgment_missing_file(tmp_path: Path) -> None:
@@ -384,3 +400,402 @@ def test_regenerate_consensus_representative_reasoning(tmp_path: Path) -> None:
     assert abs(consensus["score"] - 0.675) < 0.001  # Average of 0.5 and 0.85
     assert consensus["reasoning"] == "Agent mostly succeeded"
     assert consensus["criteria_scores"]["accuracy"]["score"] == 0.9
+
+
+class TestHasValidAgentResult:
+    """Tests for _has_valid_agent_result()."""
+
+    def test_valid_agent_result(self, tmp_path: Path) -> None:
+        """Test with valid agent result."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        # Create valid agent files
+        (agent_dir / "output.txt").write_text("Agent output")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        assert _has_valid_agent_result(run_dir)
+
+    def test_missing_output_file(self, tmp_path: Path) -> None:
+        """Test with missing output.txt."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        assert not _has_valid_agent_result(run_dir)
+
+    def test_empty_output_file(self, tmp_path: Path) -> None:
+        """Test with empty output.txt."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        (agent_dir / "output.txt").write_text("")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        assert not _has_valid_agent_result(run_dir)
+
+    def test_missing_result_json(self, tmp_path: Path) -> None:
+        """Test with missing result.json."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        (agent_dir / "output.txt").write_text("Agent output")
+
+        assert not _has_valid_agent_result(run_dir)
+
+    def test_missing_agent_dir(self, tmp_path: Path) -> None:
+        """Test with missing agent directory."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        assert not _has_valid_agent_result(run_dir)
+
+
+class TestClassifyJudgeSlots:
+    """Tests for _classify_judge_slots()."""
+
+    def test_all_complete(self, tmp_path: Path) -> None:
+        """Test classification when all judge slots are complete."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        # Valid agent result
+        (agent_dir / "output.txt").write_text("Agent output")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        # Create valid judge results
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        for i, model in enumerate(judge_models, start=1):
+            judge_dir = run_dir / "judge" / f"judge_{i:02d}"
+            judge_dir.mkdir(parents=True)
+            (judge_dir / "judgment.json").write_text(
+                json.dumps(
+                    {
+                        "score": 0.8,
+                        "passed": True,
+                        "grade": "B",
+                        "reasoning": "Good",
+                        "is_valid": True,
+                    }
+                )
+            )
+
+        results = _classify_judge_slots(run_dir, judge_models)
+
+        assert len(results) == 2
+        assert all(status == JudgeSlotStatus.COMPLETE for _, _, status in results)
+
+    def test_missing_judge_slots(self, tmp_path: Path) -> None:
+        """Test classification when judge slots are missing."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        # Valid agent result
+        (agent_dir / "output.txt").write_text("Agent output")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        results = _classify_judge_slots(run_dir, judge_models)
+
+        assert len(results) == 2
+        assert all(status == JudgeSlotStatus.MISSING for _, _, status in results)
+
+    def test_failed_judge_slots(self, tmp_path: Path) -> None:
+        """Test classification when judge slots failed."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        # Valid agent result
+        (agent_dir / "output.txt").write_text("Agent output")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        # Create judge directories without valid judgment.json
+        judge_models = ["claude-opus-4-6"]
+        judge_dir = run_dir / "judge" / "judge_01"
+        judge_dir.mkdir(parents=True)
+        (judge_dir / "judgment.json").write_text(json.dumps({"score": 0.0, "is_valid": False}))
+
+        results = _classify_judge_slots(run_dir, judge_models)
+
+        assert len(results) == 1
+        assert results[0][2] == JudgeSlotStatus.FAILED
+
+    def test_agent_failed(self, tmp_path: Path) -> None:
+        """Test classification when agent failed."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        results = _classify_judge_slots(run_dir, judge_models)
+
+        assert len(results) == 2
+        assert all(status == JudgeSlotStatus.AGENT_FAILED for _, _, status in results)
+
+    def test_mixed_statuses(self, tmp_path: Path) -> None:
+        """Test classification with mixed judge slot statuses."""
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        # Valid agent result
+        (agent_dir / "output.txt").write_text("Agent output")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5", "claude-haiku-4-5"]
+
+        # Judge 1: Complete
+        judge_1_dir = run_dir / "judge" / "judge_01"
+        judge_1_dir.mkdir(parents=True)
+        (judge_1_dir / "judgment.json").write_text(json.dumps({"score": 0.8, "is_valid": True}))
+
+        # Judge 2: Missing (no directory)
+
+        # Judge 3: Failed (invalid judgment)
+        judge_3_dir = run_dir / "judge" / "judge_03"
+        judge_3_dir.mkdir(parents=True)
+        (judge_3_dir / "judgment.json").write_text("invalid json")
+
+        results = _classify_judge_slots(run_dir, judge_models)
+
+        assert len(results) == 3
+        assert results[0][2] == JudgeSlotStatus.COMPLETE
+        assert results[1][2] == JudgeSlotStatus.MISSING
+        assert results[2][2] == JudgeSlotStatus.FAILED
+
+
+class TestScanJudgesNeedingRerun:
+    """Tests for scan_judges_needing_rerun()."""
+
+    @pytest.fixture
+    def experiment_setup(self, tmp_path: Path) -> tuple[Path, ExperimentConfig, TierManager]:
+        """Create a minimal experiment setup for testing."""
+        # Create experiment directory structure
+        experiment_dir = tmp_path / "experiment"
+        experiment_dir.mkdir()
+
+        # Create tier directory
+        tier_dir = experiment_dir / "T0"
+        subtest_dir = tier_dir / "00"
+        subtest_dir.mkdir(parents=True)
+
+        # Create run directory with valid agent
+        run_dir = subtest_dir / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+        (agent_dir / "output.txt").write_text("Agent output")
+        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+
+        # Create config
+        config = ExperimentConfig(
+            experiment_id="test-scan",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("/tmp/prompt.md"),
+            language="python",
+            models=["claude-sonnet-4-5"],
+            runs_per_subtest=1,
+            tiers_to_run=[TierID.T0],
+            judge_models=["claude-opus-4-6", "claude-sonnet-4-5"],
+            parallel_subtests=1,
+            timeout_seconds=300,
+        )
+
+        # Create tier manager
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        tier_manager = TierManager(tiers_dir)
+
+        return experiment_dir, config, tier_manager
+
+    def test_scan_finds_missing_judges(
+        self, experiment_setup: tuple[Path, ExperimentConfig, TierManager]
+    ) -> None:
+        """Test scanning finds missing judge slots."""
+        experiment_dir, config, tier_manager = experiment_setup
+
+        with patch.object(tier_manager, "load_tier_config") as mock_load:
+            mock_load.return_value = TierConfig(
+                tier_id=TierID.T0,
+                subtests=[SubTestConfig(id="00", name="Test", description="Test", resources={})],
+            )
+
+            stats = RerunJudgeStats()
+            slots_by_status = scan_judges_needing_rerun(
+                experiment_dir=experiment_dir,
+                config=config,
+                tier_manager=tier_manager,
+                stats=stats,
+            )
+
+            # Should find missing judge slots
+            assert len(slots_by_status[JudgeSlotStatus.MISSING]) == 2
+            assert stats.missing == 2
+            assert stats.total_expected_slots == 2
+
+    def test_scan_with_tier_filter(
+        self, experiment_setup: tuple[Path, ExperimentConfig, TierManager]
+    ) -> None:
+        """Test scanning with tier filter."""
+        experiment_dir, config, tier_manager = experiment_setup
+
+        with patch.object(tier_manager, "load_tier_config") as mock_load:
+            mock_load.return_value = TierConfig(
+                tier_id=TierID.T0,
+                subtests=[SubTestConfig(id="00", name="Test", description="Test", resources={})],
+            )
+
+            # Filter to non-existent tier
+            stats = RerunJudgeStats()
+            scan_judges_needing_rerun(
+                experiment_dir=experiment_dir,
+                config=config,
+                tier_manager=tier_manager,
+                tier_filter=["T1"],
+                stats=stats,
+            )
+
+            # Should find nothing
+            assert stats.total_expected_slots == 0
+
+    def test_scan_with_status_filter(
+        self, experiment_setup: tuple[Path, ExperimentConfig, TierManager]
+    ) -> None:
+        """Test scanning with status filter."""
+        experiment_dir, config, tier_manager = experiment_setup
+
+        with patch.object(tier_manager, "load_tier_config") as mock_load:
+            mock_load.return_value = TierConfig(
+                tier_id=TierID.T0,
+                subtests=[SubTestConfig(id="00", name="Test", description="Test", resources={})],
+            )
+
+            # Filter to only COMPLETE status
+            stats = RerunJudgeStats()
+            slots_by_status = scan_judges_needing_rerun(
+                experiment_dir=experiment_dir,
+                config=config,
+                tier_manager=tier_manager,
+                status_filter=[JudgeSlotStatus.COMPLETE],
+                stats=stats,
+            )
+
+            # Should find slots but not include them in results (filtered)
+            assert len(slots_by_status[JudgeSlotStatus.COMPLETE]) == 0
+            assert stats.total_expected_slots == 2
+
+    def test_scan_with_run_filter(
+        self, experiment_setup: tuple[Path, ExperimentConfig, TierManager]
+    ) -> None:
+        """Test scanning with run filter."""
+        experiment_dir, config, tier_manager = experiment_setup
+
+        with patch.object(tier_manager, "load_tier_config") as mock_load:
+            mock_load.return_value = TierConfig(
+                tier_id=TierID.T0,
+                subtests=[SubTestConfig(id="00", name="Test", description="Test", resources={})],
+            )
+
+            # Filter to run 2 (doesn't exist)
+            stats = RerunJudgeStats()
+            scan_judges_needing_rerun(
+                experiment_dir=experiment_dir,
+                config=config,
+                tier_manager=tier_manager,
+                run_filter=[2],
+                stats=stats,
+            )
+
+            # Should skip all runs
+            assert stats.total_expected_slots == 0
+            assert stats.runs_skipped_by_filter == 1
+
+
+class TestRerunJudgeStats:
+    """Tests for RerunJudgeStats dataclass."""
+
+    def test_default_initialization(self) -> None:
+        """Test default initialization."""
+        stats = RerunJudgeStats()
+        assert stats.total_expected_slots == 0
+        assert stats.complete == 0
+        assert stats.missing == 0
+        assert stats.failed == 0
+        assert stats.agent_failed == 0
+        assert stats.per_slot_stats == {}
+
+    def test_print_summary(self, capsys) -> None:
+        """Test print_summary output."""
+        stats = RerunJudgeStats(
+            total_expected_slots=10,
+            complete=5,
+            missing=3,
+            failed=2,
+            slots_rerun_success=4,
+            slots_rerun_failed=1,
+            consensus_regenerated=3,
+        )
+        stats.per_slot_stats = {
+            1: {"complete": 3, "missing": 2, "failed": 0},
+            2: {"complete": 2, "missing": 1, "failed": 2},
+        }
+
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        stats.print_summary(judge_models)
+
+        captured = capsys.readouterr()
+        assert "Total expected judge slots: 10" in captured.out
+        assert "Judge slots rerun successfully:  4" in captured.out
+        assert "Consensus regenerated (runs):    3" in captured.out
+
+
+class TestJudgeSlotToRerun:
+    """Tests for JudgeSlotToRerun dataclass."""
+
+    def test_initialization(self) -> None:
+        """Test JudgeSlotToRerun initialization."""
+        run_dir = Path("/tmp/run_01")
+        slot = JudgeSlotToRerun(
+            tier_id="T0",
+            subtest_id="00",
+            run_number=1,
+            run_dir=run_dir,
+            judge_number=1,
+            judge_model="claude-opus-4-6",
+            status=JudgeSlotStatus.MISSING,
+            reason="Never ran",
+        )
+
+        assert slot.tier_id == "T0"
+        assert slot.subtest_id == "00"
+        assert slot.run_number == 1
+        assert slot.run_dir == run_dir
+        assert slot.judge_number == 1
+        assert slot.judge_model == "claude-opus-4-6"
+        assert slot.status == JudgeSlotStatus.MISSING
+        assert slot.reason == "Never ran"
+
+
+class TestJudgeSlotStatus:
+    """Tests for JudgeSlotStatus enum."""
+
+    def test_enum_values(self) -> None:
+        """Test enum values."""
+        assert JudgeSlotStatus.COMPLETE.value == "complete"
+        assert JudgeSlotStatus.MISSING.value == "missing"
+        assert JudgeSlotStatus.FAILED.value == "failed"
+        assert JudgeSlotStatus.AGENT_FAILED.value == "agent_failed"
+
+    def test_enum_membership(self) -> None:
+        """Test enum membership."""
+        assert JudgeSlotStatus.COMPLETE in JudgeSlotStatus
+        assert JudgeSlotStatus.MISSING in JudgeSlotStatus
+        assert JudgeSlotStatus.FAILED in JudgeSlotStatus
+        assert JudgeSlotStatus.AGENT_FAILED in JudgeSlotStatus
