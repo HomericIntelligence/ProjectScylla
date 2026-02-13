@@ -1,7 +1,4 @@
-"""Tests for scorecard.json generator.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for scorecard.json generator."""
 
 import json
 import tempfile

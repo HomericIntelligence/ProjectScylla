@@ -1,7 +1,4 @@
-"""Tests for scylla.discovery.blocks module.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for scylla.discovery.blocks module."""
 
 from pathlib import Path
 

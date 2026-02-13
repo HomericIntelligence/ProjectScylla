@@ -1,7 +1,4 @@
-"""Integration tests for test orchestrator.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Integration tests for test orchestrator."""
 
 from pathlib import Path
 

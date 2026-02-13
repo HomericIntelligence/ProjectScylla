@@ -2,8 +2,6 @@
 
 This module provides the TierConfigLoader class for loading tier definitions
 from YAML and their associated prompt templates from markdown files.
-
-Python justification: Required for YAML parsing, file I/O, and Pydantic validation.
 """
 
 from pathlib import Path

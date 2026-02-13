@@ -1,7 +1,4 @@
-"""Tests for base adapter class.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for base adapter class."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

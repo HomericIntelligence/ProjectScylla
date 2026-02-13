@@ -1,7 +1,4 @@
-"""Tests for ablation score metrics.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for ablation score metrics."""
 
 import pytest
 

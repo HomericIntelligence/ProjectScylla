@@ -1,7 +1,4 @@
-"""Tests for Pydantic configuration models.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for Pydantic configuration models."""
 
 import pytest
 from pydantic import ValidationError

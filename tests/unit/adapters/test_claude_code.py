@@ -1,7 +1,4 @@
-"""Tests for Claude Code CLI adapter.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for Claude Code CLI adapter."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

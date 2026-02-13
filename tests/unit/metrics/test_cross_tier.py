@@ -1,7 +1,4 @@
-"""Tests for cross-tier analysis.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for cross-tier analysis."""
 
 import pytest
 

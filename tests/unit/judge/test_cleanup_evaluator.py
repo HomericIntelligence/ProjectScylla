@@ -1,7 +1,4 @@
-"""Tests for cleanup script evaluation.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for cleanup script evaluation."""
 
 from pathlib import Path
 

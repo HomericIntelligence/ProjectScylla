@@ -1,7 +1,4 @@
-"""Tests for component-level token tracking.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for component-level token tracking."""
 
 import math
 

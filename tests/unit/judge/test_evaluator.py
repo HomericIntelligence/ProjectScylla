@@ -1,7 +1,4 @@
-"""Tests for judge evaluator.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for judge evaluator."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

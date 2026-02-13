@@ -1,7 +1,4 @@
-"""Summary generator for test-level result aggregation.
-
-Python justification: JSON serialization and file I/O for summary persistence.
-"""
+"""Summary generator for test-level result aggregation."""
 
 import json
 from dataclasses import dataclass, field

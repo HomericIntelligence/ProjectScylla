@@ -1,7 +1,4 @@
-"""Tests for run aggregation.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for run aggregation."""
 
 import pytest
 

@@ -1,7 +1,4 @@
-"""Tests for process metrics calculations.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for process metrics calculations."""
 
 import pytest
 

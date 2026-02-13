@@ -1,7 +1,4 @@
-"""Tests for rubric parser.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for rubric parser."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

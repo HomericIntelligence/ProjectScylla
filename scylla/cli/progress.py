@@ -1,7 +1,4 @@
-"""Progress display for test execution.
-
-Python justification: Terminal output formatting and progress tracking.
-"""
+"""Progress display for test execution."""
 
 import sys
 from dataclasses import dataclass, field

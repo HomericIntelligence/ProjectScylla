@@ -1,7 +1,4 @@
-"""Tests for result.json writer.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for result.json writer."""
 
 import json
 import tempfile

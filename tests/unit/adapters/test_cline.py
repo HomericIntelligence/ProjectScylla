@@ -1,7 +1,4 @@
-"""Tests for Cline CLI adapter.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for Cline CLI adapter."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

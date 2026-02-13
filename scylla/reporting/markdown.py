@@ -1,7 +1,4 @@
-"""Markdown report generator for evaluation results.
-
-Python justification: String templating and file I/O for report generation.
-"""
+"""Markdown report generator for evaluation results."""
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone

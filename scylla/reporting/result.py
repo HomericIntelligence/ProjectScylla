@@ -1,7 +1,4 @@
-"""Result writer for per-run evaluation results.
-
-Python justification: JSON serialization and file I/O for result persistence.
-"""
+"""Result writer for per-run evaluation results."""
 
 import json
 from dataclasses import asdict, dataclass

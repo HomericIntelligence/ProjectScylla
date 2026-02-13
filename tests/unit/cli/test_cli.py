@@ -1,7 +1,4 @@
-"""Tests for CLI commands.
-
-Python justification: Required for pytest testing framework and Click testing.
-"""
+"""Tests for CLI commands."""
 
 from click.testing import CliRunner
 

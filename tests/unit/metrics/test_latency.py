@@ -1,7 +1,4 @@
-"""Tests for latency metrics.
-
-Python justification: Required for pytest testing framework.
-"""
+"""Tests for latency metrics."""
 
 from datetime import datetime, timedelta
 
