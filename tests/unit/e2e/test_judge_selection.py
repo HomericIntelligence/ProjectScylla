@@ -25,7 +25,7 @@ class TestJudgeVote:
             reasoning="Good performance",
         )
 
-        d = vote.model_dump()
+        d = vote.to_dict()
 
         assert d["subtest_id"] == "01"
         assert d["score"] == 0.85
@@ -48,7 +48,7 @@ class TestJudgeSelection:
             tiebreaker_needed=False,
         )
 
-        d = selection.model_dump()
+        d = selection.to_dict()
 
         assert d["winning_subtest"] == "01"
         assert d["margin"] == 0.05
