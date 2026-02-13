@@ -174,7 +174,6 @@ Foreground tasks: `gh-create-pr-linked` (invoke explicitly)
   doc-update-blog
 - **CI/CD**: run-precommit, validate-workflow, fix-ci-failures, install-workflow,
   analyze-ci-failure-logs, build-run-local
-- **Plan**: plan-regenerate-issues, plan-validate-structure, plan-create-component
 - **Quality**: quality-run-linters, quality-fix-formatting, quality-security-scan,
   quality-coverage-report, quality-complexity-check
 - **Testing & Analysis**: test-diff-analyzer, extract-test-failures, generate-fix-suggestions,
@@ -1894,9 +1893,6 @@ Maximize usage of the following skills to complete this task:
 - phase-package
 - phase-plan-generate
 - phase-test-tdd
-- plan-create-component
-- plan-regenerate-issues
-- plan-validate-structure
 - quality-complexity-check
 - quality-coverage-report
 - quality-fix-formatting
