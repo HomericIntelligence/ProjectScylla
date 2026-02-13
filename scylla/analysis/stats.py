@@ -38,6 +38,7 @@ __all__ = [
     "benjamini_hochberg_correction",
     "cliffs_delta_ci",
     "ols_regression",
+    "scheirer_ray_hare",
 ]
 
 
@@ -598,4 +599,129 @@ def ols_regression(x: pd.Series | np.ndarray, y: pd.Series | np.ndarray) -> dict
         "r_squared": float(model.rsquared),
         "p_value": float(model.pvalues[1]),
         "std_err": float(model.bse[1]),
+    }
+
+
+def scheirer_ray_hare(
+    data: pd.DataFrame,
+    value_col: str,
+    factor_a_col: str,
+    factor_b_col: str,
+) -> dict[str, dict[str, float]]:
+    """Scheirer-Ray-Hare test (non-parametric two-way ANOVA).
+
+    Tests for main effects and interaction between two factors using ranks.
+    This is a non-parametric alternative to two-way ANOVA that does not assume
+    normality or homoscedasticity.
+
+    Algorithm:
+        1. Rank all observations across the entire dataset
+        2. Compute sum of squares for ranks using two-way ANOVA formulas
+        3. Test each effect against chi-squared distribution
+
+    Args:
+        data: DataFrame containing the data
+        value_col: Name of the dependent variable column
+        factor_a_col: Name of the first factor column
+        factor_b_col: Name of the second factor column
+
+    Returns:
+        Dictionary with keys 'factor_a', 'factor_b', and 'interaction', each containing:
+            - h_statistic: H-statistic (similar to chi-squared)
+            - df: Degrees of freedom
+            - p_value: P-value from chi-squared distribution
+
+    Example:
+        >>> df = pd.DataFrame({
+        ...     'score': [0.8, 0.9, 0.6, 0.7, 0.85, 0.95],
+        ...     'model': ['A', 'A', 'B', 'B', 'A', 'B'],
+        ...     'tier': ['T0', 'T1', 'T0', 'T1', 'T2', 'T2']
+        ... })
+        >>> results = scheirer_ray_hare(df, 'score', 'model', 'tier')
+        >>> results['model']['p_value']  # Main effect of model
+        >>> results['interaction']['p_value']  # Model x Tier interaction
+
+    """
+    # Rank all observations across entire dataset
+    ranks = data[value_col].rank()
+
+    # Get factor levels
+    levels_a = data[factor_a_col].unique()
+    levels_b = data[factor_b_col].unique()
+
+    # Total number of observations
+    n = len(data)
+
+    # Degrees of freedom
+    a = len(levels_a)  # Number of levels in factor A
+    b = len(levels_b)  # Number of levels in factor B
+    df_a = a - 1
+    df_b = b - 1
+    df_ab = (a - 1) * (b - 1)
+
+    # Compute mean rank (for centering)
+    mean_rank = ranks.mean()
+
+    # Compute sum of squared deviations of ranks from mean (MS_total denominator)
+    ss_total = ((ranks - mean_rank) ** 2).sum()
+
+    # Compute SS for factor A (main effect)
+    ss_a = 0.0
+    for level in levels_a:
+        mask = data[factor_a_col] == level
+        n_i = mask.sum()
+        mean_rank_i = ranks[mask].mean()
+        ss_a += n_i * (mean_rank_i - mean_rank) ** 2
+
+    # Compute SS for factor B (main effect)
+    ss_b = 0.0
+    for level in levels_b:
+        mask = data[factor_b_col] == level
+        n_j = mask.sum()
+        mean_rank_j = ranks[mask].mean()
+        ss_b += n_j * (mean_rank_j - mean_rank) ** 2
+
+    # Compute SS for cells (A x B)
+    ss_cells = 0.0
+    for level_a in levels_a:
+        for level_b in levels_b:
+            mask = (data[factor_a_col] == level_a) & (data[factor_b_col] == level_b)
+            n_ij = mask.sum()
+            if n_ij > 0:
+                mean_rank_ij = ranks[mask].mean()
+                ss_cells += n_ij * (mean_rank_ij - mean_rank) ** 2
+
+    # Compute SS for interaction (what's left after removing main effects)
+    ss_ab = ss_cells - ss_a - ss_b
+
+    # Compute MS_total (variance of ranks)
+    ms_total = ss_total / (n - 1)
+
+    # Compute H-statistics (analogous to F-statistics in parametric ANOVA)
+    # H = SS / MS_total follows chi-squared distribution under null
+    h_a = ss_a / ms_total
+    h_b = ss_b / ms_total
+    h_ab = ss_ab / ms_total
+
+    # Compute p-values from chi-squared distribution
+    p_a = 1 - stats.chi2.cdf(h_a, df_a)
+    p_b = 1 - stats.chi2.cdf(h_b, df_b)
+    p_ab = 1 - stats.chi2.cdf(h_ab, df_ab)
+
+    return {
+        factor_a_col: {
+            "h_statistic": float(h_a),
+            "df": int(df_a),
+            "p_value": float(p_a),
+        },
+        factor_b_col: {
+            "h_statistic": float(h_b),
+            "df": int(df_b),
+            "p_value": float(p_b),
+        },
+        "interaction": {
+            "h_statistic": float(h_ab),
+            "df": int(df_ab),
+            "p_value": float(p_ab),
+        },
     }

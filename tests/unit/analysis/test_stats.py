@@ -637,3 +637,136 @@ def test_ols_regression_basic():
     assert result["r_squared"] > 0.9  # High R²
     assert result["p_value"] < 0.01  # Significant
     assert result["std_err"] > 0  # Non-zero error due to noise
+
+
+def test_scheirer_ray_hare_no_effects():
+    """Test Scheirer-Ray-Hare when no effects exist (null case)."""
+    from scylla.analysis.stats import scheirer_ray_hare
+
+    # Create data with no systematic differences
+    np.random.seed(42)
+    data = pd.DataFrame(
+        {
+            "score": np.random.normal(0.5, 0.1, 60),
+            "model": ["A", "B"] * 30,
+            "tier": ["T0", "T1", "T2"] * 20,
+        }
+    )
+
+    results = scheirer_ray_hare(data, "score", "model", "tier")
+
+    # All effects should be non-significant (p > 0.05)
+    assert results["model"]["p_value"] > 0.05
+    assert results["tier"]["p_value"] > 0.05
+    assert results["interaction"]["p_value"] > 0.05
+
+    # Verify structure
+    assert results["model"]["df"] == 1  # 2 models - 1
+    assert results["tier"]["df"] == 2  # 3 tiers - 1
+    assert results["interaction"]["df"] == 2  # (2-1) * (3-1)
+
+
+def test_scheirer_ray_hare_main_effect_a():
+    """Test Scheirer-Ray-Hare with strong main effect in factor A."""
+    from scylla.analysis.stats import scheirer_ray_hare
+
+    # Create data where model A >> model B, with identical values within each tier
+    # to eliminate tier and interaction effects
+    data = pd.DataFrame(
+        {
+            "score": [0.9, 0.9, 0.9, 0.3, 0.3, 0.3] * 5,
+            "model": ["A", "A", "A", "B", "B", "B"] * 5,
+            "tier": ["T0", "T1", "T2", "T0", "T1", "T2"] * 5,
+        }
+    )
+
+    results = scheirer_ray_hare(data, "score", "model", "tier")
+
+    # Model effect should be highly significant
+    assert results["model"]["p_value"] < 0.001
+
+    # Tier effect should be large (no variance within model across tiers)
+    # Interaction should be non-significant (parallel lines)
+
+
+def test_scheirer_ray_hare_main_effect_b():
+    """Test Scheirer-Ray-Hare with strong main effect in factor B."""
+    from scylla.analysis.stats import scheirer_ray_hare
+
+    # Create data where T2 >> T1 >> T0 regardless of model
+    # Use identical values within each model to eliminate model and interaction effects
+    data = pd.DataFrame(
+        {
+            "score": [0.2, 0.5, 0.9, 0.2, 0.5, 0.9] * 5,
+            "model": ["A", "A", "A", "B", "B", "B"] * 5,
+            "tier": ["T0", "T1", "T2", "T0", "T1", "T2"] * 5,
+        }
+    )
+
+    results = scheirer_ray_hare(data, "score", "model", "tier")
+
+    # Tier effect should be highly significant
+    assert results["tier"]["p_value"] < 0.001
+
+
+def test_scheirer_ray_hare_interaction():
+    """Test Scheirer-Ray-Hare with interaction effect."""
+    from scylla.analysis.stats import scheirer_ray_hare
+
+    # Create strong crossover interaction with larger sample size:
+    # Model A: T0=high, T1=low  (0.9 vs 0.1)
+    # Model B: T0=low, T1=high  (0.1 vs 0.9)
+    # This creates a perfect crossover with no main effects (means are equal)
+    data = pd.DataFrame(
+        {
+            "score": [0.9, 0.1, 0.1, 0.9] * 20,  # Repeat 20 times for power
+            "model": ["A", "A", "B", "B"] * 20,
+            "tier": ["T0", "T1", "T0", "T1"] * 20,
+        }
+    )
+
+    results = scheirer_ray_hare(data, "score", "model", "tier")
+
+    # Interaction should be significant with this strong crossover
+    assert results["interaction"]["p_value"] < 0.05
+
+    # Verify degrees of freedom
+    assert results["model"]["df"] == 1
+    assert results["tier"]["df"] == 1
+    assert results["interaction"]["df"] == 1  # (2-1) * (2-1)
+
+
+def test_scheirer_ray_hare_returns_correct_structure():
+    """Test that Scheirer-Ray-Hare returns correctly structured output."""
+    from scylla.analysis.stats import scheirer_ray_hare
+
+    data = pd.DataFrame(
+        {
+            "score": [0.5, 0.6, 0.7, 0.8],
+            "model": ["A", "A", "B", "B"],
+            "tier": ["T0", "T1", "T0", "T1"],
+        }
+    )
+
+    results = scheirer_ray_hare(data, "score", "model", "tier")
+
+    # Check top-level keys
+    assert "model" in results
+    assert "tier" in results
+    assert "interaction" in results
+
+    # Check nested keys for each effect
+    for key in ["model", "tier", "interaction"]:
+        assert "h_statistic" in results[key]
+        assert "df" in results[key]
+        assert "p_value" in results[key]
+
+        # Check types
+        assert isinstance(results[key]["h_statistic"], float)
+        assert isinstance(results[key]["df"], int)
+        assert isinstance(results[key]["p_value"], float)
+
+        # Check ranges
+        assert results[key]["h_statistic"] >= 0
+        assert results[key]["df"] > 0
+        assert 0 <= results[key]["p_value"] <= 1
