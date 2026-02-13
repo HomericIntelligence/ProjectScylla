@@ -9,6 +9,7 @@ platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 test = "pytest"
 lint = "ruff check scylla scripts tests"
 format = "ruff format scylla scripts tests"
+plan-issues = "python scripts/plan_issues.py"
 
 [dependencies]
 python = ">=3.10"

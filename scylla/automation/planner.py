@@ -15,6 +15,7 @@ import subprocess
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 
+from .git_utils import get_repo_root
 from .github_api import (
     _gh_call,
     gh_issue_comment,
@@ -22,7 +23,7 @@ from .github_api import (
     prefetch_issue_states,
 )
 from .models import PlannerOptions, PlanResult
-from .prompts import get_plan_prompt
+from .prompts import get_advise_prompt, get_plan_prompt
 from .rate_limit import detect_rate_limit, wait_until
 from .status_tracker import StatusTracker
 
@@ -221,6 +222,138 @@ class Planner:
         finally:
             self.status_tracker.release_slot(slot_id)
 
+    def _call_claude(
+        self,
+        prompt: str,
+        *,
+        max_retries: int = 3,
+        timeout: int = 300,
+        extra_args: list[str] | None = None,
+    ) -> str:
+        """Call Claude CLI with retry logic for rate limits.
+
+        Args:
+            prompt: The prompt to send to Claude
+            max_retries: Maximum retry attempts for rate limits
+            timeout: Timeout in seconds
+            extra_args: Additional CLI arguments
+
+        Returns:
+            Claude's response text
+
+        Raises:
+            RuntimeError: If Claude call fails
+
+        """
+        # Build command
+        cmd = [
+            "claude",
+            "--print",
+            prompt,
+            "--output-format",
+            "text",
+        ]
+
+        # Add system prompt if configured
+        if self.options.system_prompt_file and self.options.system_prompt_file.exists():
+            cmd.extend(["--system-prompt", str(self.options.system_prompt_file)])
+
+        # Add extra args
+        if extra_args:
+            cmd.extend(extra_args)
+
+        # Invoke Claude
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=timeout,
+                env={"CLAUDECODE": ""},  # Avoid nested-session guard
+            )
+
+            response = result.stdout.strip()
+
+            if not response:
+                raise RuntimeError("Claude returned empty response")
+
+            return response
+
+        except subprocess.CalledProcessError as e:
+            stderr = e.stderr if e.stderr else ""
+
+            # Check for rate limit
+            is_rate_limited, reset_epoch = detect_rate_limit(stderr)
+            if is_rate_limited and max_retries > 0:
+                if reset_epoch > 0:
+                    wait_until(reset_epoch, "Claude API rate limit")
+                else:
+                    # No reset time, wait a bit
+                    import time
+
+                    time.sleep(5)
+                # Retry with decremented counter
+                return self._call_claude(
+                    prompt,
+                    max_retries=max_retries - 1,
+                    timeout=timeout,
+                    extra_args=extra_args,
+                )
+
+            raise RuntimeError(f"Claude failed: {stderr}") from e
+
+        except subprocess.TimeoutExpired as e:
+            raise RuntimeError(f"Claude timed out after {timeout}s") from e
+
+    def _run_advise(self, issue_number: int, issue_title: str, issue_body: str) -> str:
+        """Search team knowledge base for relevant prior learnings.
+
+        Args:
+            issue_number: Issue number
+            issue_title: Issue title
+            issue_body: Issue body/description
+
+        Returns:
+            Advise findings text, or empty string if advise fails
+
+        """
+        try:
+            # Locate ProjectMnemosyne
+            repo_root = get_repo_root()
+            mnemosyne_root = repo_root / "build" / "ProjectMnemosyne"
+
+            if not mnemosyne_root.exists():
+                logger.warning(
+                    "ProjectMnemosyne not found at build/ProjectMnemosyne, skipping advise step"
+                )
+                return ""
+
+            marketplace_path = mnemosyne_root / ".claude-plugin" / "marketplace.json"
+            if not marketplace_path.exists():
+                logger.warning(
+                    f"Marketplace file not found at {marketplace_path}, skipping advise step"
+                )
+                return ""
+
+            # Build advise prompt
+            advise_prompt = get_advise_prompt(
+                issue_number=issue_number,
+                issue_title=issue_title,
+                issue_body=issue_body,
+                marketplace_path=str(marketplace_path),
+            )
+
+            # Call Claude with shorter timeout
+            logger.info(f"Running advise for issue #{issue_number}...")
+            findings = self._call_claude(advise_prompt, timeout=180)
+
+            return findings
+
+        except Exception as e:
+            logger.warning(f"Advise step failed for issue #{issue_number}: {e}")
+            return ""
+
     def _generate_plan(self, issue_number: int, max_retries: int = 3) -> str:
         """Generate implementation plan using Claude Code.
 
@@ -240,69 +373,38 @@ class Planner:
         issue_title = issue_data.get("title", f"Issue #{issue_number}")
         issue_body = issue_data.get("body", "")
 
+        # Run advise step if enabled
+        advise_findings = ""
+        if self.options.enable_advise:
+            advise_findings = self._run_advise(issue_number, issue_title, issue_body)
+
         # Build prompt
         prompt = get_plan_prompt(issue_number)
 
         # Add issue context
-        context = f"""
-# Issue #{issue_number}: {issue_title}
+        context_parts = [f"# Issue #{issue_number}: {issue_title}", "", issue_body]
 
-{issue_body}
-
----
-
-{prompt}
-"""
-
-        # Load system prompt if provided
-        system_prompt_args = []
-        if self.options.system_prompt_file and self.options.system_prompt_file.exists():
-            system_prompt_args = ["--system-prompt", str(self.options.system_prompt_file)]
-
-        # Invoke Claude Code
-        try:
-            result = subprocess.run(
+        # Inject advise findings if available
+        if advise_findings:
+            context_parts.extend(
                 [
-                    "claude-code",
-                    "--message",
-                    context,
-                    "--output-format",
-                    "text",
+                    "",
+                    "---",
+                    "",
+                    "## Prior Learnings from Team Knowledge Base",
+                    "",
+                    advise_findings,
                 ]
-                + system_prompt_args,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=300,  # 5 minutes
             )
 
-            plan = result.stdout.strip()
+        context_parts.extend(["", "---", "", prompt])
 
-            if not plan:
-                raise RuntimeError("Claude Code returned empty plan")
+        context = "\n".join(context_parts)
 
-            return plan
+        # Call Claude to generate plan
+        plan = self._call_claude(context, timeout=300)
 
-        except subprocess.CalledProcessError as e:
-            stderr = e.stderr if e.stderr else ""
-
-            # Check for rate limit
-            is_rate_limited, reset_epoch = detect_rate_limit(stderr)
-            if is_rate_limited and max_retries > 0:
-                if reset_epoch > 0:
-                    wait_until(reset_epoch, "Claude API rate limit")
-                else:
-                    # No reset time, wait a bit
-                    import time
-
-                    time.sleep(5)
-                # Retry with decremented counter
-                return self._generate_plan(issue_number, max_retries - 1)
-
-            raise RuntimeError(f"Claude Code failed: {stderr}") from e
-
-        except subprocess.TimeoutExpired as e:
-            raise RuntimeError("Claude Code timed out") from e
+        return plan
 
     def _post_plan(self, issue_number: int, plan: str) -> None:
         """Post plan to issue as a comment.
