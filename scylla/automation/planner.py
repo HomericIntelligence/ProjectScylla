@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import subprocess
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
@@ -264,13 +265,17 @@ class Planner:
 
         # Invoke Claude
         try:
+            # Preserve existing environment and set CLAUDECODE
+            env = os.environ.copy()
+            env["CLAUDECODE"] = ""
+
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 check=True,
                 timeout=timeout,
-                env={"CLAUDECODE": ""},  # Avoid nested-session guard
+                env=env,  # Avoid nested-session guard
             )
 
             response = result.stdout.strip()
