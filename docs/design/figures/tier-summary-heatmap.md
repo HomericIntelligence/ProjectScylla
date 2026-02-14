@@ -21,6 +21,7 @@ Figure 15c visualizes tier-level performance through an aggregated heatmap showi
 **DataFrame**: `runs_df`
 
 **Columns Used**:
+
 - `agent_model` (str): Agent model identifier
 - `tier` (str): Testing tier (T0-T6)
 - `run_number` (int): Run identifier
@@ -29,6 +30,7 @@ Figure 15c visualizes tier-level performance through an aggregated heatmap showi
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/subtest_detail.py:231-290`
 
 **Data Requirements**:
+
 - One row per (agent_model, tier, subtest, run_number) combination
 - Scores are aggregated by taking the mean across all subtests within each (agent_model, tier, run_number) group
 - Must contain at least one score per tier for meaningful visualization
@@ -58,18 +60,21 @@ def fig15c_tier_summary_heatmap(
 ### Key Technical Decisions
 
 **Score Aggregation**:
+
 - Aggregates by (agent_model, tier, run_number) using mean
 - **Rationale**: Reduces noise from individual subtest variations, highlights tier-level trends
 - **Trade-off**: Loses subtest-level detail, but gains clarity for high-level patterns
 - **Benefit**: Simplifies interpretation for executive summaries and tier-level comparisons
 
 **Faceting by Model**:
+
 - Creates separate heatmap panels for each agent model
 - **Rationale**: Enables side-by-side model comparison while maintaining readability
 - **Width**: 300px per panel (compact for multi-panel layouts)
 - **Height**: 200px (sufficient for 7 tiers)
 
 **Color Scale**:
+
 - Scheme: "redyellowgreen" (diverging scale)
 - Domain: [0, 1] (full score range)
 - Shared across all facets
@@ -77,12 +82,14 @@ def fig15c_tier_summary_heatmap(
 - **Benefit**: Enables cross-model comparison using consistent color mapping
 
 **Natural Tier Ordering**:
+
 - Uses `derive_tier_order()` to sort tiers naturally (T0, T1, ..., T6)
 - **Benefit**: Prevents alphabetical sorting issues (e.g., T10 before T2)
 
 ### Algorithm
 
 1. **Data Aggregation**:
+
    ```python
    tier_summary = (
        runs_df.groupby(["agent_model", "tier", "run_number"])["score"]
@@ -92,11 +99,13 @@ def fig15c_tier_summary_heatmap(
    ```
 
 2. **Derive Tier Order**:
+
    ```python
    tier_order = derive_tier_order(tier_summary)
    ```
 
 3. **Create Base Heatmap**:
+
    ```python
    heatmap = (
        alt.Chart(tier_summary)
@@ -121,6 +130,7 @@ def fig15c_tier_summary_heatmap(
    ```
 
 4. **Facet by Agent Model**:
+
    ```python
    chart = (
        heatmap.facet(column=alt.Column("agent_model:N", title=None))
@@ -130,6 +140,7 @@ def fig15c_tier_summary_heatmap(
    ```
 
 5. **Save Figure**:
+
    ```python
    save_figure(chart, "fig15c_tier_summary_heatmap", output_dir, render)
    ```
@@ -141,6 +152,7 @@ def fig15c_tier_summary_heatmap(
 **Pattern**: `fig15c_tier_summary_heatmap.{ext}`
 
 **Examples**:
+
 - `fig15c_tier_summary_heatmap.vl.json` - Vega-Lite specification
 - `fig15c_tier_summary_heatmap.csv` - Aggregated data
 - `fig15c_tier_summary_heatmap.png` - Rendered image (300 DPI, if render=True)
@@ -159,14 +171,17 @@ def fig15c_tier_summary_heatmap(
 **Chart Type**: Faceted heatmap (rectangular marks with color encoding)
 
 **Faceting**:
+
 - Column facets: One panel per agent model
 - Shared color scale across all panels
 
 **Dimensions (Per Panel)**:
+
 - Width: 300px
 - Height: 200px
 
 **Axes**:
+
 - **X-axis**: Run Number (ordinal)
   - Label angle: 0° (horizontal)
   - Title: "Run Number"
@@ -177,6 +192,7 @@ def fig15c_tier_summary_heatmap(
 **Title**: "Tier Summary (Mean Across Subtests)"
 
 **Color Encoding**:
+
 - Variable: Mean score (aggregated across subtests)
 - Scale: "redyellowgreen" (diverging)
 - Domain: [0.0, 1.0]
@@ -186,6 +202,7 @@ def fig15c_tier_summary_heatmap(
   - Green (0.6-1.0): Good performance
 
 **Tooltip**:
+
 - Model: Agent model identifier
 - Tier: Testing tier
 - Run: Run number
@@ -194,11 +211,13 @@ def fig15c_tier_summary_heatmap(
 ### Expected Patterns
 
 **Ideal Pattern**:
+
 - Gradient from red (T0) to green (T6) → Performance improves with tier advancement
 - Consistent color within columns → Run-to-run consistency
 - Similar patterns across models → Tier difficulty is model-independent
 
 **Problematic Patterns**:
+
 - Vertical red stripes → Specific runs failed across all tiers
 - Horizontal red bands → Specific tiers universally difficult
 - Checkerboard pattern → High run-to-run variance
@@ -209,15 +228,18 @@ def fig15c_tier_summary_heatmap(
 ### Reading the Heatmap
 
 **Color Intensity**:
+
 - **Dark red cells**: Mean score near 0.0 (tier failed on average)
 - **Yellow cells**: Mean score around 0.5 (mixed success)
 - **Dark green cells**: Mean score near 1.0 (tier succeeded on average)
 
 **Horizontal Patterns (Across Runs)**:
+
 - **Consistent color**: Stable tier performance across runs
 - **Color variation**: Run-to-run variance in tier performance
 
 **Vertical Patterns (Across Tiers)**:
+
 - **Red → Green gradient**: Performance improves with tier advancement
 - **Consistent color**: All tiers perform similarly (unexpected)
 - **Green → Red gradient**: Performance degrades (potential issue)
@@ -225,16 +247,19 @@ def fig15c_tier_summary_heatmap(
 ### Comparative Analysis
 
 **Across Models** (Horizontal Comparison):
+
 - Compare corresponding cells across facet panels
 - Identify model-specific strengths/weaknesses at tier level
 - Example: Model A consistently green in T5, Model B consistently red → Model A better at T5
 
 **Across Tiers** (Vertical Comparison):
+
 - Compare rows within a single panel
 - Identify which tiers are universally hard/easy
 - Example: T3 consistently red across all models → T3 is universally difficult
 
 **Across Runs** (Column Comparison):
+
 - Compare columns within a single panel
 - Identify run-to-run consistency
 - Example: Run 1 all green, Run 2 all red → High variance between runs
@@ -242,18 +267,21 @@ def fig15c_tier_summary_heatmap(
 ### Action Items
 
 **If Horizontal Red Bands Detected**:
+
 1. Investigate tier definition for universal difficulty
 2. Review subtest composition within that tier
 3. Check for common failure modes across models
 4. Consider tier redesign or recalibration
 
 **If Vertical Red Stripes Detected**:
+
 1. Investigate run-specific issues (environment, randomness)
 2. Check for outlier runs in raw data
 3. Consider increasing run count for robustness
 4. Review run initialization and setup procedures
 
 **If Checkerboard Pattern Detected**:
+
 1. Analyze score variance at subtest level
 2. Investigate sources of run-to-run variance
 3. Consider increasing run count or adding warmup runs
@@ -310,6 +338,7 @@ docs/figures/
 ### Viewing the Figure
 
 **Vega-Lite Spec (Recommended)**:
+
 ```bash
 # Open in Vega Editor
 open https://vega.github.io/editor/
@@ -317,12 +346,14 @@ open https://vega.github.io/editor/
 ```
 
 **CSV Data**:
+
 ```bash
 # Inspect aggregated data
 head docs/figures/fig15c_tier_summary_heatmap.csv
 ```
 
 **Rendered Images**:
+
 ```bash
 # View PNG
 open docs/figures/fig15c_tier_summary_heatmap.png

@@ -7,6 +7,7 @@
 This file MUST exist and contain type aliases for all custom dtypes.
 
 **Required content**:
+
 ```mojo
 # Use comptime (not alias) per Mojo best practices
 comptime BF16 = DType.bfloat16
@@ -22,10 +23,12 @@ The E8M0 format is exponent-only (8 exponent bits, 0 mantissa bits). Native Mojo
 conversion DOES NOT work correctly for this format. Manual helpers MUST be provided.
 
 **Required functions**:
+
 - `_e8m0_from_float32(scale: Float32) -> Scalar[E8M0]`
 - `_e8m0_to_float32(e8m0_val: Scalar[E8M0]) -> Float32`
 
 **Key implementation details**:
+
 - Use `bitcast` for raw bit manipulation
 - Extract exponent from Float32 bits: `((bits >> 23) & 0xFF)`
 - Round to nearest power of 2 based on mantissa
@@ -34,6 +37,7 @@ conversion DOES NOT work correctly for this format. Manual helpers MUST be provi
 ### Deleted Files
 
 The following files should be DELETED:
+
 - Custom dtype struct implementations in `shared/core/types/`
 - Obsolete test files for old implementations
 - Any file that only existed to support the custom structs
@@ -41,6 +45,7 @@ The following files should be DELETED:
 ### Modified Files
 
 The following should be UPDATED:
+
 - `shared/core/__init__.mojo` - Export from dtype_aliases instead of individual files
 - `shared/core/types/mxfp4.mojo` - Use native types
 - `shared/core/types/nvfp4.mojo` - Use native types

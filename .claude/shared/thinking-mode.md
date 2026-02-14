@@ -43,6 +43,7 @@ Include special keywords in your message to trigger thinking for that specific r
 - `think harder` or `ultrathink` - Maximum thinking level
 
 Example:
+
 ```
 "Please ultrathink about the statistical significance of these benchmark results."
 ```

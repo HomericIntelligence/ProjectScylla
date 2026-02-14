@@ -3,6 +3,7 @@
 *Statistical workflow: Kruskal-Wallis omnibus test, then pairwise Mann-Whitney U with Holm-Bonferroni correction (step-down)*
 
 **Omnibus Test Results (Kruskal-Wallis):**
+
 - Sonnet 4.5: H(6)=nan, p=nan ✗ (skip pairwise)
 
 | Model | Transition | N (T1, T2) | Pass Rate Δ | p-value | Cliff's δ | Significant? |

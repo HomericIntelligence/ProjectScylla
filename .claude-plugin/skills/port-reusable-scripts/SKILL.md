@@ -22,12 +22,14 @@
 ### Phase 1: Inventory and Planning
 
 **Filter for reusable scripts** - Exclude:
+
 - Domain-specific (Mojo, ML, etc.)
 - Issue-specific fixes
 - One-time migrations
 - Hardcoded generators
 
 **Organize into categories:**
+
 - Foundation (common utilities, retry, validation)
 - Agent management (frontmatter, stats, validation)
 - Documentation (markdown fixes, links, READMEs)
@@ -35,6 +37,7 @@
 - Config/Coverage (linting, validation, coverage)
 
 **Plan sequential PRs:**
+
 ```
 PR 1 (Foundation) → PR 2, 3, 4, 5 (all depend on PR 1)
 ```
@@ -105,6 +108,7 @@ def get_open_prs():
 ```
 
 **Benefits:**
+
 - ✅ Zero Python dependencies
 - ✅ Uses existing \`gh auth\`
 - ✅ Faster for simple queries
@@ -172,6 +176,7 @@ from common import get_agents_dir, get_repo_root  # noqa: E402
 ```
 
 **Why \`# noqa: E402\`:**
+
 - Ruff/flake8 require imports at top
 - We MUST modify sys.path before imports
 - \`noqa: E402\` suppresses warning (correct pattern)
@@ -262,6 +267,7 @@ gh pr merge --auto --rebase
 ### ❌ Failed: Using PyGithub library
 
 **Why failed:**
+
 - Heavy external dependency
 - Slower than gh CLI
 - Complex authentication
@@ -269,6 +275,7 @@ gh pr merge --auto --rebase
 **Solution:** Rewrote to gh CLI subprocess calls
 
 **Metrics:**
+
 - merge_prs.py: ~220 lines (vs ~150 with PyGithub)
 - get_stats.py: ~310 lines (vs ~120 with PyGithub)
 - Slightly more code but ZERO dependencies
@@ -276,6 +283,7 @@ gh pr merge --auto --rebase
 ### ❌ Failed: Leaving stubs
 
 **Why failed:**
+
 - Coverage checks always passed (useless)
 - False sense of security
 
@@ -284,6 +292,7 @@ gh pr merge --auto --rebase
 ### ⚠️ Warning: Pre-commit iterations
 
 **Pattern:** Expect 3-4 fix cycles per PR
+
 - First run: 10-15 errors (D400, D401, E501)
 - Second run: 5-7 errors
 - Final run: All pass
@@ -305,21 +314,26 @@ gh pr merge --auto --rebase
 ### PR Organization
 
 **PR 1 - Foundation** (4 files, ~575 lines)
+
 - scripts/common.py
 - scripts/validation.py
 - scylla/automation/retry.py
 - tests/unit/automation/test_retry.py
 
 **PR 2 - Agent Management** (6 files, ~1,478 lines)
+
 - scripts/agents/*.py (5 scripts)
 
 **PR 3 - Markdown Tools** (3 files, ~855 lines)
+
 - fix_markdown.py, validate_links.py, check_readmes.py
 
 **PR 4 - Git/GitHub Tools** (3 files, ~813 lines)
+
 - generate_changelog.py, merge_prs.py (REWRITTEN), get_stats.py (REWRITTEN)
 
 **PR 5 - Config/Coverage** (3 files, ~1,209 lines)
+
 - lint_configs.py, validate_agents.py, check_coverage.py (real parsing)
 
 ### Copy-Paste Checklist

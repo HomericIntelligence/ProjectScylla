@@ -9,6 +9,7 @@
 ## Implementation Timeline
 
 ### Phase 1: Core Implementation
+
 1. Modified `workspace_manager.py`:
    - Added `repos_dir` parameter to `__init__()`
    - Implemented deterministic UUID: `hashlib.sha256(repo_url.encode()).hexdigest()[:16]`
@@ -35,6 +36,7 @@
    - Auto-detect both layouts
 
 ### Phase 2: Testing
+
 1. Updated existing tests:
    - Added `fcntl.flock` mock to all 11 tests
    - Used `replace_all=true` for batch updates
@@ -56,6 +58,7 @@
    - Tested parallel scenarios
 
 ### Phase 3: Documentation
+
 1. Created `CENTRALIZED_REPOS_ANALYSIS.md`:
    - Complete technical analysis
    - Architecture diagrams
@@ -66,6 +69,7 @@
 ## Test Results
 
 ### Unit Tests
+
 ```
 tests/unit/e2e/test_workspace_manager.py: 19 passed
 tests/unit/e2e/: 438 passed, 2 skipped
@@ -73,6 +77,7 @@ tests/: 2100 passed, 6 skipped
 ```
 
 ### Integration Test
+
 ```
 Repository: anthropics/anthropic-sdk-python
 Base repo size: 8.0 MB
@@ -86,6 +91,7 @@ All verification checks: PASSED
 ```
 
 ### Pre-commit Hooks
+
 ```
 ✓ Check for shell=True (Security)
 ✓ Ruff Format Python
@@ -99,6 +105,7 @@ All verification checks: PASSED
 ## Code Changes Summary
 
 ### Files Modified
+
 1. `scylla/e2e/workspace_manager.py` (+158 lines, core logic)
 2. `scylla/e2e/workspace_setup.py` (+24 lines, separate checkout)
 3. `scylla/e2e/runner.py` (+3 lines, wire repos_dir)
@@ -106,9 +113,11 @@ All verification checks: PASSED
 5. `tests/unit/e2e/test_workspace_manager.py` (+219 lines, new tests)
 
 ### Files Created
+
 1. `CENTRALIZED_REPOS_ANALYSIS.md` (complete technical documentation)
 
 ### Total Changes
+
 - 6 files changed
 - 1,075 insertions(+)
 - 113 deletions(-)
@@ -116,6 +125,7 @@ All verification checks: PASSED
 ## Key Insights
 
 ### What Worked Well
+
 1. **Deterministic UUIDs**: SHA-256 hash provides perfect collision resistance
 2. **File locking**: fcntl.flock prevents race conditions elegantly
 3. **Separate checkout**: Decoupling worktree creation from checkout solved major issues
@@ -125,61 +135,75 @@ All verification checks: PASSED
 ### Failed Approaches
 
 #### 1. Commit in Worktree Add
+
 ```bash
 git worktree add -b branch /path abc123  # FAILED
 ```
+
 **Error**: `fatal: reference is not a tree: abc123`
 **Reason**: Base repo not checked out to that commit
 **Fix**: Separate creation and checkout
 
 #### 2. Checkout in Base Repo
+
 ```python
 git checkout abc123  # In base repo - FAILED
 ```
+
 **Reason**: Conflicts when multiple experiments use different commits
 **Fix**: Only fetch into object store, checkout in worktrees
 
 #### 3. Shallow Clone for Centralized
+
 ```bash
 git clone --depth=1 url  # FAILED
 ```
+
 **Reason**: Cannot reliably fetch arbitrary commits
 **Fix**: Use full clone for centralized repos
 
 #### 4. Invalid Commit in Test
+
 ```python
 test_commit = "b0a8fff..."  # FAILED
 ```
+
 **Error**: `fatal: reference is not a tree`
 **Fix**: Use `test_commit = None` for HEAD
 
 #### 5. Branch Name Collision
+
 ```python
 # Both experiments: T0_01_run_01 - FAILED
 ```
+
 **Error**: `fatal: a branch named 'T0_01_run_01' already exists`
 **Fix**: Use different subtest IDs in test
 
 ### Technical Decisions
 
 #### UUID Length: 16 hex chars (64 bits)
+
 - Collision probability: ~1 in 18 quintillion
 - Short enough for paths
 - Long enough for uniqueness
 - Deterministic from URL
 
 #### Locking Strategy: fcntl.flock
+
 - Exclusive lock (LOCK_EX)
 - Advisory (not mandatory)
 - Auto-released on crash
 - Per-repo locking
 
 #### Clone Strategy: Full vs Shallow
+
 - Centralized: Full (all history available)
 - Legacy: Shallow (minimal size)
 - Trade-off: Initial cost vs reusability
 
 #### Backward Compatibility: Auto-detect
+
 - Try centralized first
 - Fallback to legacy
 - Zero configuration
@@ -188,6 +212,7 @@ test_commit = "b0a8fff..."  # FAILED
 ## Performance Data
 
 ### Disk Space Scaling
+
 ```
 N  | Legacy | Centralized | Savings | %
 ---|--------|-------------|---------|---
@@ -201,6 +226,7 @@ N  | Legacy | Centralized | Savings | %
 Formula: `Savings = (N-1) × clone_size`
 
 ### Time Savings
+
 ```
 Operation          | Before | After  | Speedup
 -------------------|--------|--------|--------
@@ -212,6 +238,7 @@ Nth experiment     | 5.1s   | 0.1s   | 51x
 ## Commands Used
 
 ### Git Commands
+
 ```bash
 # Full clone
 git clone https://github.com/repo.git /path
@@ -233,6 +260,7 @@ git worktree list
 ```
 
 ### Testing Commands
+
 ```bash
 # Run specific test file
 pixi run python -m pytest tests/unit/e2e/test_workspace_manager.py -v
@@ -251,6 +279,7 @@ python test_centralized_repos_integration.py
 ```
 
 ### Git Workflow
+
 ```bash
 # Create feature branch
 git checkout -b centralize-e2e-repo-clones
@@ -271,28 +300,33 @@ gh pr create --title "..." --body "..." --label "enhancement"
 ## Lessons Learned
 
 ### 1. Git Worktree Behavior
+
 - `git worktree add /path commit` requires commit in current branch's history
 - Separate creation and checkout more reliable
 - Worktrees share `.git/objects/` but have independent `HEAD`
 
 ### 2. File Locking on Linux
+
 - `fcntl.flock` is advisory, not mandatory
 - Lock released automatically on file close
 - Works across processes, not threads
 - Per-file descriptor, not per-file
 
 ### 3. Git Clone Strategies
+
 - Shallow clones fast but limited
 - Full clones slower but complete
 - Centralized repos benefit from full clone
 - Per-experiment repos benefit from shallow
 
 ### 4. Testing Strategies
+
 - Unit tests for logic (mock git commands)
 - Integration tests for end-to-end (real git operations)
 - Both necessary for confidence
 
 ### 5. Backward Compatibility
+
 - Auto-detection better than migration
 - Check new layout first, fallback to old
 - Zero user configuration ideal
@@ -300,16 +334,19 @@ gh pr create --title "..." --body "..." --label "enhancement"
 ## Files to Reference
 
 ### Production Code
+
 - `scylla/e2e/workspace_manager.py` - Core centralized clone logic
 - `scylla/e2e/workspace_setup.py` - Separate worktree creation/checkout
 - `scylla/e2e/runner.py` - Wire repos_dir parameter
 - `scylla/e2e/rerun.py` - Backward-compatible discovery
 
 ### Test Code
+
 - `tests/unit/e2e/test_workspace_manager.py` - Unit tests (19 tests)
 - `test_centralized_repos_integration.py` - Integration test (deleted after run)
 
 ### Documentation
+
 - `CENTRALIZED_REPOS_ANALYSIS.md` - Complete technical analysis
 - `CENTRALIZED_REPOS_ANALYSIS.md#Architecture Changes` - Before/after diagrams
 - `CENTRALIZED_REPOS_ANALYSIS.md#Performance Benchmarks` - Real data
@@ -317,26 +354,34 @@ gh pr create --title "..." --body "..." --label "enhancement"
 ## Future Enhancements
 
 ### 1. Garbage Collection
+
 Add cleanup command to remove unused repos:
+
 ```bash
 scylla e2e gc --unused-days 30
 ```
 
 ### 2. Global Cache
+
 Share repos across all Scylla installations:
+
 ```bash
 ~/.cache/scylla/repos/<uuid>/
 ```
 
 ### 3. Shallow Clone with Deepen
+
 Start shallow, deepen on demand:
+
 ```python
 git clone --depth=1 url
 git fetch --depth=1000 origin commit  # If not found
 ```
 
 ### 4. Partial Clone Check
+
 Verify `.git/config` exists before reusing:
+
 ```python
 if (base_repo / ".git" / "config").exists():
     # Safe to reuse
@@ -414,6 +459,7 @@ and achieve 37-73% disk space savings across multiple experiments.
 See commit message and CENTRALIZED_REPOS_ANALYSIS.md for complete details.
 
 Key points:
+
 - 37-73% disk savings
 - 51x time savings on repeat experiments
 - File locking for parallel safety

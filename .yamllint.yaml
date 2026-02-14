@@ -1,0 +1,26 @@
+---
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: {}
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+  document-start: disable
+  braces:
+    max-spaces-inside: 1
+  key-duplicates: enable
+
+ignore: |
+  .pixi/
+  build/
+  .git/
+  node_modules/
+  tests/fixtures/invalid/

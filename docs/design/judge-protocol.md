@@ -150,6 +150,7 @@ The judge system uses a **two-layer prompt architecture**:
 ### 1. Global System Prompt (config/judge/system_prompt.md)
 
 The system prompt is loaded from `config/judge/system_prompt.md` and contains:
+
 - Evaluation methodology (checklist vs subjective scoring)
 - Deduction tier guidelines (Tiny → Catastrophic)
 - N/A handling rules

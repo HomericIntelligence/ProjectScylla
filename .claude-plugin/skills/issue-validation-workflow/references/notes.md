@@ -163,6 +163,7 @@ Searched marketplace.json (2167 lines, 100+ plugins).
 ## Test Pattern Observations
 
 From existing tests:
+
 - Module docstring format: No "Python justification" (except in test files)
 - Test classes: `class TestFunctionName:`
 - Fixtures: `tmp_path` for filesystem, custom fixtures with `@pytest.fixture`
@@ -193,12 +194,14 @@ cat .pre-commit-config.yaml | head -5
 ## Time Savings
 
 **Without validation**:
+
 - 6 duplicate implementations (issues already resolved)
 - 1 wrong-direction implementation (issue 426)
 - 1 monolithic PR instead of 8 parallel PRs (issue 421)
 - Estimated wasted effort: 8-12 hours
 
 **With validation**:
+
 - 6 issues closed in 5 minutes
 - 1 issue scope corrected before work
 - 1 issue split into optimal parallel structure

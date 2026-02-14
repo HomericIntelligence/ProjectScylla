@@ -20,6 +20,7 @@
 ### Migration Execution
 
 **Order of migration:**
+
 1. `scylla/e2e/models.py` - Largest file, all others depend on these types
 2. `scylla/e2e/rate_limit.py` - Referenced by `SubTestResult`
 3. Remaining files in parallel - `judge_selection.py`, `llm_judge.py`, `rerun*.py`
@@ -33,18 +34,21 @@
 **Problem:** `SubTestResult` in models.py references `RateLimitInfo` from rate_limit.py, but rate_limit.py doesn't import models.py (no circular import).
 
 **Initial approach (failed):**
+
 ```python
 if TYPE_CHECKING:
     from scylla.e2e.rate_limit import RateLimitInfo
 ```
 
 **Error:**
+
 ```
 pydantic.errors.PydanticUserError: `SubTestResult` is not fully defined;
 you should define `RateLimitInfo`, then call `SubTestResult.model_rebuild()`.
 ```
 
 **Solution:**
+
 ```python
 # In class definition
 rate_limit_info: "RateLimitInfo | None" = None
@@ -61,6 +65,7 @@ SubTestResult.model_rebuild()
 **Problem:** Computing config hash for checkpointing requires JSON serialization, but `Path` objects aren't JSON serializable.
 
 **Test failure:**
+
 ```
 TypeError: Object of type PosixPath is not JSON serializable
 when serializing dict item 'task_prompt_file'
@@ -81,11 +86,13 @@ config_dict = config.model_dump(mode="json")
 **Problem:** Test code using positional arguments fails with Pydantic.
 
 **Error:**
+
 ```
 TypeError: BaseModel.__init__() takes 1 positional argument but 5 were given
 ```
 
 **Example:**
+
 ```python
 # ❌ Fails
 vote = JudgeVote("01", 0.85, 0.9, "Good")
@@ -151,7 +158,7 @@ class ExperimentConfig(BaseModel):
 
 **Effort:** Medium (need to identify which classes need `arbitrary_types_allowed`)
 
-#### Pattern 4: Dataclass with Validation __post_init__
+#### Pattern 4: Dataclass with Validation **post_init**
 
 ```python
 # Before
@@ -176,7 +183,7 @@ class RateLimitInfo(BaseModel):
 
 **Effort:** Medium (requires understanding validation logic)
 
-#### Pattern 5: Dataclass with Initialization __post_init__
+#### Pattern 5: Dataclass with Initialization **post_init**
 
 ```python
 # Before
@@ -200,6 +207,7 @@ class RerunJudgeStats(BaseModel):
 All custom methods work seamlessly with Pydantic:
 
 **✅ Properties:**
+
 ```python
 @property
 def total_tokens(self) -> int:
@@ -207,12 +215,14 @@ def total_tokens(self) -> int:
 ```
 
 **✅ Dunder methods:**
+
 ```python
 def __add__(self, other: TokenStats) -> TokenStats:
     return TokenStats(...)
 ```
 
 **✅ Class methods:**
+
 ```python
 @classmethod
 def load(cls, path: Path) -> ExperimentConfig:
@@ -222,12 +232,14 @@ def load(cls, path: Path) -> ExperimentConfig:
 ```
 
 **✅ Instance methods:**
+
 ```python
 def save(self, path: Path) -> None:
     path.write_text(json.dumps(self.to_dict(), indent=2))
 ```
 
 **✅ Custom serialization:**
+
 ```python
 def to_dict(self) -> dict[str, Any]:
     return {
@@ -239,9 +251,11 @@ def to_dict(self) -> dict[str, Any]:
 ### Test Results
 
 **Before migration:**
+
 - 2,044 tests pass
 
 **After migration:**
+
 - 2,044 tests pass (100% retention)
 - 430 e2e tests pass specifically
 - Pre-commit hooks pass (black, ruff, mypy)
@@ -249,16 +263,19 @@ def to_dict(self) -> dict[str, Any]:
 ### Performance Impact
 
 No measurable performance impact observed:
+
 - Test suite runtime: ~38s (same as before)
 - E2E test suite runtime: ~10s (same as before)
 
 ### Code Quality Metrics
 
 **Lines changed:** +94, -80 (net: +14 lines)
+
 - Added: import statements, model_config declarations, model_validator decorators
-- Removed: dataclass decorators, redundant __post_init__ methods
+- Removed: dataclass decorators, redundant **post_init** methods
 
 **Type safety:** Improved
+
 - Pydantic provides runtime validation
 - Better error messages for type mismatches
 - Automatic type coercion where appropriate

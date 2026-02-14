@@ -21,6 +21,7 @@ This figure addresses three critical evaluation questions:
 3. **Model Comparison**: How do different agent models compare in their grade distributions at the same tier?
 
 **Key Use Cases**:
+
 - Identify tiers where failures concentrate (high F/D proportions)
 - Detect grade distribution anomalies (e.g., bimodal distributions)
 - Compare model robustness across tiers
@@ -32,6 +33,7 @@ This figure addresses three critical evaluation questions:
 **Input DataFrame**: `runs_df` (standardized runs DataFrame from analysis pipeline)
 
 **Required Columns**:
+
 - `agent_model` (str): Agent model identifier (e.g., "claude-opus-4", "claude-sonnet-3-5")
 - `tier` (str): Testing tier (e.g., "T0", "T1", ..., "T6")
 - `grade` (str): Letter grade assigned to run (S/A/B/C/D/F)
@@ -39,6 +41,7 @@ This figure addresses three critical evaluation questions:
 **Data Grouping**: Runs are grouped by `["agent_model", "tier", "grade"]` and counted.
 
 **Proportion Calculation**:
+
 ```python
 # Count runs per (agent_model, tier, grade) combination
 grade_counts = runs_df.groupby(["agent_model", "tier", "grade"]).size()
@@ -63,6 +66,7 @@ P(g, t, m) = \frac{N(g, t, m)}{\sum_{g' \in \text{Grades}} N(g', t, m)}
 $$
 
 Where:
+
 - $P(g, t, m)$ = Proportion of runs with grade $g$ in tier $t$ for model $m$
 - $N(g, t, m)$ = Count of runs with grade $g$ in tier $t$ for model $m$
 - $\text{Grades} = \{S, A, B, C, D, F\}$
@@ -81,6 +85,7 @@ $$
 $$
 
 Where:
+
 - $P(D, t, m)$ = Proportion of D grades (marginal)
 - $P(F, t, m)$ = Proportion of F grades (failing)
 
@@ -112,12 +117,14 @@ $$
 **Hypothesis**: As tiers increase (T0 → T6), agents gain more capabilities, which should improve grade distributions.
 
 **Expected Pattern**:
+
 - **T0 (Prompts Only)**: High failure rate (F/D), low success rate (S/A/B)
 - **T1-T3 (Skills/Tools/Delegation)**: Gradual improvement, shifting distribution toward passing grades
 - **T4-T5 (Hierarchy/Hybrid)**: Significant improvement, majority of grades in B/A/S range
 - **T6 (Super)**: Best grade distribution, minimal F/D, high S/A concentration
 
 **Counter-Indicators** (anomalies to investigate):
+
 - **Tier regression**: Higher tier shows worse distribution than lower tier
 - **Bimodal distribution**: Sharp peaks at both high and low grades (indicates inconsistent performance)
 - **Plateau effect**: No improvement beyond certain tier (diminishing returns)
@@ -125,12 +132,14 @@ $$
 ### Grade Distribution Interpretation
 
 **Healthy Distribution** (well-calibrated rubrics):
+
 - Continuous distribution across grades (not clustered at extremes)
 - Modal grade around B/A (pass threshold)
 - Small but non-zero S grade proportion (achievable excellence)
 - Small F proportion (clear failures are rare)
 
 **Problematic Distribution**:
+
 - **Bimodal** (F/S peaks): Rubric may have binary criteria rather than gradable spectrum
 - **Uniform** (flat across all grades): Rubric may not discriminate performance levels
 - **All-or-nothing** (only S/F): Rubric may be too coarse-grained
@@ -154,6 +163,7 @@ Small proportions (e.g., S grade at 5%) have wider confidence intervals and may 
 **Stacked Bar Chart** with normalized stacking (proportions sum to 1.0 per tier).
 
 **Encoding Channels**:
+
 - **X-axis**: Tier (categorical, ordered T0 → T6)
   - Label format: `"T0 (n=240)"` (tier + sample size)
   - Sorting: Natural tier order (T0 < T1 < ... < T6)
@@ -185,6 +195,7 @@ Grades are assigned colors from `scylla/analysis/config.yaml`:
 ### Tooltip Information
 
 Hovering over a bar segment displays:
+
 - **Tier**: Testing tier (e.g., "T0")
 - **Grade**: Letter grade (e.g., "A")
 - **Count**: Number of runs with this grade
@@ -205,17 +216,20 @@ Example: `Tier: T0 | Grade: A | Count: 45 | Total: 240 | Proportion: 18.75%`
 ### Reading the Figure
 
 **Vertical Slices** (single tier, single model):
+
 - Each bar represents 100% of runs in that tier
 - Height of each colored segment = proportion of runs with that grade
 - Taller segments at top (S/A/B) = better performance
 - Taller segments at bottom (F/D) = more failures
 
 **Horizontal Comparison** (across tiers, same model):
+
 - Look for shifts in color distribution from left (T0) to right (T6)
 - **Expected**: F/D segments shrink, S/A/B segments grow
 - **Anomaly**: Regression (later tiers worse than earlier) or plateau (no change)
 
 **Cross-Model Comparison** (same tier, different facets):
+
 - Compare bar patterns across facets at the same tier
 - Identify models with consistently better grade distributions
 - Detect model-specific tier sensitivities
@@ -223,39 +237,50 @@ Example: `Tier: T0 | Grade: A | Count: 45 | Total: 240 | Proportion: 18.75%`
 ### Example Interpretations
 
 **Scenario 1: Ideal Tier Progression**
+
 ```
 T0: [F=60%, D=20%, C=10%, B=8%, A=2%, S=0%]
 T3: [F=20%, D=15%, C=20%, B=30%, A=12%, S=3%]
 T6: [F=5%, D=5%, C=15%, B=40%, A=30%, S=5%]
 ```
+
 **Interpretation**: Clear improvement trajectory. T0 dominated by failures, T6 dominated by passing grades. System is working as expected.
 
 **Scenario 2: Tier Regression**
+
 ```
 T2: [F=30%, D=15%, C=20%, B=25%, A=8%, S=2%]
 T3: [F=45%, D=20%, C=15%, B=15%, A=4%, S=1%]
 ```
+
 **Interpretation**: T3 performs worse than T2 despite added capabilities. Investigate T3 tier definition for:
+
 - Over-complex delegation patterns
 - Incompatible tool combinations
 - Increased latency causing timeouts
 
 **Scenario 3: Bimodal Distribution**
+
 ```
 T4: [F=35%, D=5%, C=5%, B=5%, A=10%, S=40%]
 ```
+
 **Interpretation**: Sharp peaks at F and S, minimal mid-range grades. Suggests:
+
 - Rubric has binary criteria (all-or-nothing)
 - Test cases have high variance in difficulty
 - Agent behavior is inconsistent (works perfectly or fails completely)
 
 **Scenario 4: Plateau Effect**
+
 ```
 T3: [F=15%, D=10%, C=20%, B=35%, A=15%, S=5%]
 T4: [F=14%, D=10%, C=21%, B=34%, A=16%, S=5%]
 T5: [F=15%, D=9%, C=20%, B=35%, A=16%, S=5%]
 ```
+
 **Interpretation**: No meaningful improvement from T3 → T5. Suggests:
+
 - Diminishing returns beyond T3
 - T4/T5 capabilities don't address remaining failure modes
 - May need different architectural approaches rather than incremental capabilities
@@ -277,6 +302,7 @@ T5: [F=15%, D=9%, C=20%, B=35%, A=16%, S=5%]
 When comparing grade distributions across tiers or models, consider:
 
 **Chi-squared test** for distribution equality:
+
 - Null hypothesis: Grade distributions are identical
 - Use when sample sizes are sufficient (n ≥ 30 per group)
 - p < 0.05 indicates statistically significant difference
@@ -346,6 +372,7 @@ def fig03_failure_rate_by_tier(
 ### Implementation Steps
 
 1. **Data Aggregation** (lines 69-75):
+
    ```python
    # Count runs per (agent_model, tier, grade)
    grade_counts = (
@@ -360,6 +387,7 @@ def fig03_failure_rate_by_tier(
    ```
 
 2. **Sample Size Annotation** (lines 78-80):
+
    ```python
    # Add sample size to tier labels: "T0 (n=240)"
    grade_counts["tier_label"] = grade_counts.apply(
@@ -368,6 +396,7 @@ def fig03_failure_rate_by_tier(
    ```
 
 3. **Color Scale Configuration** (lines 82-86):
+
    ```python
    # Get canonical grade order (reversed for bottom-to-top stacking)
    grade_order = list(reversed(config.grade_order))
@@ -377,6 +406,7 @@ def fig03_failure_rate_by_tier(
    ```
 
 4. **Altair Chart Specification** (lines 89-117):
+
    ```python
    chart = (
        alt.Chart(grade_counts)
@@ -404,9 +434,11 @@ def fig03_failure_rate_by_tier(
    ```
 
 5. **Output** (line 119):
+
    ```python
    save_figure(chart, "fig03_failure_rate_by_tier", output_dir, render)
    ```
+
    Generates:
    - `fig03_failure_rate_by_tier.json` (Vega-Lite specification)
    - `fig03_failure_rate_by_tier.png` (if `render=True`)
@@ -447,6 +479,7 @@ fig03_failure_rate_by_tier(runs_df, output_dir, render=True)
 ### Testing
 
 See test coverage in `tests/analysis/figures/test_variance.py` (if exists) for:
+
 - Data aggregation correctness
 - Proportion calculation validation
 - Color scale consistency

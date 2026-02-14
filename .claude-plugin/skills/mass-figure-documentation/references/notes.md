@@ -66,6 +66,7 @@ scylla/analysis/figures/
 ## Agent Execution Timeline
 
 ### Batch 1 (10 agents) - Launched at T+0
+
 - fig01 (#441) - ⚠️ Old naming
 - fig03 (#442) - ⚠️ Old naming
 - fig16a (#443) - ⚠️ Old naming
@@ -80,6 +81,7 @@ scylla/analysis/figures/
 **User intervention**: Requested removal of figure numbers from filenames
 
 ### Batch 2 (10 agents) - Launched at T+5min
+
 - fig05 (#451) - ✅ Correct naming
 - fig06 (#452) - ✅ Correct naming
 - fig08 (#453) - ✅ Correct naming
@@ -92,6 +94,7 @@ scylla/analysis/figures/
 - fig15a (#460) - ✅ Correct naming
 
 ### Batch 3 (10 agents) - Launched at T+10min
+
 - fig15b (#461) - ✅ Correct naming
 - fig15c (#462) - ✅ Correct naming
 - fig19 (#463) - ✅ Correct naming
@@ -117,22 +120,26 @@ scylla/analysis/figures/
 ### Created PRs (31 total)
 
 **Figure documentation PRs (29)**:
+
 - #545-#573 (gaps due to non-sequential PR numbers)
 - 15+ merged within 3 hours
 - 14+ pending CI checks (auto-merge enabled)
 
 **Standardization PRs (2)**:
+
 - #574: Renamed 7 files (MERGED immediately)
 - #575: Renamed 3 remaining files (pending CI)
 
 ### Auto-Merge Configuration
 
 All PRs used:
+
 ```bash
 gh pr merge --auto --rebase
 ```
 
 This ensures:
+
 - Automatic merge when CI passes
 - Linear git history (rebase strategy)
 - No manual intervention required
@@ -140,6 +147,7 @@ This ensures:
 ## Naming Convention Evolution
 
 ### Initial Convention (Batch 1)
+
 ```
 figNN-descriptive-name.md
 Examples:
@@ -148,6 +156,7 @@ Examples:
 ```
 
 ### Final Convention (Batch 2+3)
+
 ```
 descriptive-name.md
 Examples:
@@ -158,6 +167,7 @@ Examples:
 ### Standardization Process
 
 **PR #574** (7 files from main branch):
+
 ```bash
 git mv fig01-score-variance-by-tier.md score-variance-by-tier.md
 git mv fig02-judge-variance.md judge-variance.md
@@ -169,6 +179,7 @@ git mv fig18b-failure-rate-aggregate.md failure-rate-aggregate.md
 ```
 
 **PR #575** (3 files from recent merges):
+
 ```bash
 git mv fig03-failure-rate-by-tier.md failure-rate-by-tier.md
 git mv fig04-pass-rate-by-tier.md pass-rate-by-tier.md
@@ -215,11 +226,13 @@ create PR for #441, enable auto-merge, cleanup worktree.
 ## Documentation Quality Metrics
 
 ### Average Documentation Length
+
 - Minimum: 230 lines (fig13 - latency)
 - Maximum: 882 lines (fig09 - criteria performance)
 - Average: ~350-450 lines per figure
 
 ### Content Breakdown (Typical)
+
 - Overview: 50-75 lines
 - Purpose: 75-100 lines
 - Data Source: 50-75 lines

@@ -80,7 +80,6 @@
 
 - [View judgment](./judge/judge_03/judgment.json)
 
-
 ---
 
 ## Workspace State

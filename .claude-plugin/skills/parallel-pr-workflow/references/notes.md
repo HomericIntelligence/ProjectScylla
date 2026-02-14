@@ -64,7 +64,7 @@
 
 ### Group B: After PR2a merges (1 PR)
 
-8. **PR #514** - Fix language defaults (#401 P1)
+1. **PR #514** - Fix language defaults (#401 P1)
    - Branch: `401-fix-language-defaults`
    - Dependency: Needed PR #509 to merge first
    - Changed: 6 function signatures
@@ -73,7 +73,7 @@
 
 ### Group C: After PR2d merges (1 PR)
 
-9. **PR #516** - Consolidate docs (#413, #414)
+1. **PR #516** - Consolidate docs (#413, #414)
    - Branch: `413-consolidate-docs`
    - Dependency: Needed PR #511 to merge first
    - Replaced metrics tables with links
@@ -108,11 +108,13 @@
 ## Git Worktree Commands Used
 
 ### Initial Setup
+
 ```bash
 git checkout main && git pull
 ```
 
 ### Group A Worktrees (all created together)
+
 ```bash
 git worktree add ../scylla-pr1 -b 400-fix-model-configs main
 git worktree add ../scylla-pr2a -b 401-delete-mojo-guides main
@@ -124,18 +126,21 @@ git worktree add ../scylla-pr6 -b 418-remove-workspace-manager main
 ```
 
 ### Group B Worktree (after PR #509 merged)
+
 ```bash
 git checkout main && git pull  # Get merged PR #509
 git worktree add ../scylla-pr2b -b 401-fix-language-defaults main
 ```
 
 ### Group C Worktree (after PR #511 merged)
+
 ```bash
 git checkout main && git pull  # Get merged PR #511
 git worktree add ../scylla-pr4 -b 413-consolidate-docs main
 ```
 
 ### Cleanup
+
 ```bash
 for wt in scylla-pr1 scylla-pr2a scylla-pr2b scylla-pr2c scylla-pr2d scylla-pr3 scylla-pr4 scylla-pr5 scylla-pr6; do
   git worktree remove ../$wt 2>&1
@@ -148,6 +153,7 @@ git worktree prune
 ### Python Scripts for Batch Operations
 
 **Remove Python Justification (68 files):**
+
 ```python
 import re
 from pathlib import Path
@@ -183,6 +189,7 @@ for file_path in files_to_fix:
 ```
 
 **Fix datetime.now() (16 occurrences):**
+
 ```python
 import re
 from pathlib import Path
@@ -217,6 +224,7 @@ for file_path in files_to_fix:
 ### GitHub CLI Commands
 
 **Create PR with auto-merge:**
+
 ```bash
 gh pr create \
   --title "type(scope): Brief description" \
@@ -241,16 +249,19 @@ gh pr merge --auto --rebase
 ```
 
 **Monitor PR status:**
+
 ```bash
 gh pr list --author "@me" --state open --json number,title,statusCheckRollup
 ```
 
 **Close issues:**
+
 ```bash
 gh issue close 405 --comment "Fixed in PR #512 - changed header"
 ```
 
 **Check issue status:**
+
 ```bash
 for issue in 400 401 402; do
   gh issue view $issue --json state --jq "\"#$issue: \(.state)\""
@@ -260,16 +271,19 @@ done
 ## Pre-commit Hook Patterns
 
 **Run all hooks:**
+
 ```bash
 pixi run pre-commit run --all-files
 ```
 
 **Run specific hook:**
+
 ```bash
 pixi run pre-commit run ruff-check-python --all-files
 ```
 
 **Common failure pattern:**
+
 1. Commit fails with auto-fixes applied
 2. Files are already staged
 3. Just add and commit again - will succeed
@@ -277,16 +291,19 @@ pixi run pre-commit run ruff-check-python --all-files
 ## Testing Patterns
 
 **Run specific test:**
+
 ```bash
 pixi run pytest tests/unit/adapters/test_base.py::TestCostCalculation::test_calculate_cost_claude_opus -v
 ```
 
 **Run all workspace tests:**
+
 ```bash
 pixi run pytest tests/unit/executor/test_workspace.py -v
 ```
 
 **Check test output:**
+
 ```bash
 pixi run pytest tests/unit -v 2>&1 | grep -E "PASSED|FAILED|ERROR"
 ```
@@ -298,6 +315,7 @@ pixi run pytest tests/unit -v 2>&1 | grep -E "PASSED|FAILED|ERROR"
 **Cause:** File format different than expected
 
 **Fix:**
+
 ```python
 # Always Read first to see exact format
 Read(file_path="...")
@@ -310,6 +328,7 @@ Read(file_path="...")
 **Cause:** Formatting or linting issues
 
 **Fix:**
+
 ```bash
 # Run hooks manually to auto-fix
 pixi run pre-commit run --all-files
@@ -324,6 +343,7 @@ git commit -m "..."
 **Cause:** Updated code but not tests
 
 **Fix:**
+
 ```bash
 # Find related tests
 grep -r "function_name" tests/
@@ -337,6 +357,7 @@ pixi run pytest tests/unit/path -v
 **Cause:** Main branch updated after worktree created
 
 **Fix:**
+
 ```bash
 cd ../worktree-path
 git fetch origin main
@@ -351,6 +372,7 @@ git push --force-with-lease
 ## Metrics & Performance
 
 ### Time Breakdown
+
 - Planning: 30 minutes
 - Worktree setup: 5 minutes
 - Implementation (Group A): 2 hours
@@ -360,11 +382,13 @@ git push --force-with-lease
 - **Total: ~4.5 hours**
 
 ### Efficiency Gains
+
 - Sequential approach: ~15-20 hours (estimated)
 - Parallel approach: ~4.5 hours (actual)
 - **Time saved: ~70%**
 
 ### Error Rate
+
 - Total CI failures: 2/9 (22%)
 - Test expectation issues: 2
 - Code errors: 0

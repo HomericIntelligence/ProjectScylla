@@ -111,6 +111,7 @@ Authenticate Claude (if needed):
 ### Issue: "No Claude Code credentials found"
 
 **Symptom:**
+
 ```
 [WARN] No Claude Code credentials or ANTHROPIC_API_KEY found
 [WARN] Run 'claude auth' inside container to authenticate
@@ -119,11 +120,13 @@ Authenticate Claude (if needed):
 **Solutions:**
 
 1. **Check host credentials exist:**
+
    ```bash
    ls -la ~/.claude/.credentials.json
    ```
 
 2. **Authenticate on host first:**
+
    ```bash
    claude auth
    # Then launch container again
@@ -131,6 +134,7 @@ Authenticate Claude (if needed):
    ```
 
 3. **Authenticate inside container:**
+
    ```bash
    ./scripts/launch_container_shell.sh
    # Inside container:
@@ -138,6 +142,7 @@ Authenticate Claude (if needed):
    ```
 
 4. **Use API key instead:**
+
    ```bash
    export ANTHROPIC_API_KEY=your-key-here
    ./scripts/launch_container_shell.sh
@@ -146,6 +151,7 @@ Authenticate Claude (if needed):
 ### Issue: "Authentication expired"
 
 **Symptom:**
+
 ```
 Error: Your authentication token has expired
 ```
@@ -153,6 +159,7 @@ Error: Your authentication token has expired
 **Solution:**
 
 Refresh authentication inside container:
+
 ```bash
 # Inside container:
 claude auth
@@ -163,6 +170,7 @@ The credentials file is writable (600 permissions) so Claude can refresh tokens.
 ### Issue: "Permission denied on .credentials.json"
 
 **Symptom:**
+
 ```
 Permission denied: /home/scylla/.claude/.credentials.json
 ```
@@ -172,6 +180,7 @@ Permission denied: /home/scylla/.claude/.credentials.json
 This should not happen with our scripts. If it does:
 
 1. **Check container user:**
+
    ```bash
    # Inside container:
    whoami  # Should be 'scylla'
@@ -179,6 +188,7 @@ This should not happen with our scripts. If it does:
    ```
 
 2. **Rebuild image:**
+
    ```bash
    docker build -t scylla-runner:latest -f docker/Dockerfile .
    ```
@@ -186,6 +196,7 @@ This should not happen with our scripts. If it does:
 ### Issue: "claude: command not found"
 
 **Symptom:**
+
 ```
 bash: claude: command not found
 ```
@@ -206,6 +217,7 @@ docker build -t scylla-runner:latest -f docker/Dockerfile .
 ### Issue: Cannot authenticate interactively (OAuth flow fails)
 
 **Symptom:**
+
 ```
 Error: Cannot open browser for authentication
 ```
@@ -274,16 +286,19 @@ ls -la ~/.claude/.credentials.json
 ### Credential Cleanup
 
 When using `run_experiment_in_container.sh`:
+
 - Temp credentials cleaned up automatically via trap on EXIT
 - Located at `${PROJECT_DIR}/.tmp-container-creds/`
 
 When using `launch_container_shell.sh`:
+
 - Container removed on exit (--rm flag)
 - Temp credentials cleaned up via trap on EXIT
 
 ### API Keys
 
 If passing `ANTHROPIC_API_KEY` as environment variable:
+
 - Only visible inside container
 - Not stored anywhere
 - Removed when container exits

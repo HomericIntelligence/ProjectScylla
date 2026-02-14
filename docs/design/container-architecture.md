@@ -19,6 +19,7 @@ Host Machine
 ```
 
 **Benefits:**
+
 - Much simpler: one container for the entire experiment
 - No nested containers or complex orchestration
 - Easier credential mounting (one mount point)
@@ -38,6 +39,7 @@ Host Machine
 ```
 
 **Issues with old architecture:**
+
 - Complex nested container orchestration
 - Multiple credential mount points
 - Permission handling complexity
@@ -74,6 +76,7 @@ python scripts/run_e2e_experiment.py \
 ```
 
 Both methods produce identical results. Use containers when you need:
+
 - Complete isolation from host environment
 - Reproducible execution environment
 - Different Python/system dependencies
@@ -83,6 +86,7 @@ Both methods produce identical results. Use containers when you need:
 ### Docker Image (`scylla-runner:latest`)
 
 The Docker image includes:
+
 - Python 3.10+ environment
 - Node.js 20 (for Claude Code CLI)
 - Claude Code CLI (`@anthropic-ai/claude-code`)
@@ -99,6 +103,7 @@ docker build -t scylla-runner:latest -f docker/Dockerfile .
 ### Entrypoint Script
 
 The `docker/entrypoint.sh` script:
+
 - Sets up Claude Code credentials (from mounted volume or env var)
 - Ensures clean environment (no config leakage)
 - Executes arbitrary commands (supports Python scripts, bash, etc.)
@@ -119,6 +124,7 @@ docker run scylla-runner:latest --run-agent
 ### Wrapper Script
 
 The `scripts/run_experiment_in_container.sh` wrapper:
+
 - Checks if Docker is installed and running
 - Builds image if not present
 - Mounts project directory to `/workspace`
@@ -162,6 +168,7 @@ The wrapper script mounts:
 ## File Permissions
 
 The container runs as user `scylla` (UID 999). The entrypoint script:
+
 - Copies mounted credentials to `~/.claude/.credentials.json` with correct permissions
 - Ensures clean environment (no pre-existing config)
 - Writes results to `/workspace` (mounted from host)
@@ -174,7 +181,7 @@ The container runs as user `scylla` (UID 999). The entrypoint script:
 ERROR: Docker is not installed or not in PATH
 ```
 
-**Solution:** Install Docker from https://docs.docker.com/get-docker/
+**Solution:** Install Docker from <https://docs.docker.com/get-docker/>
 
 ### Docker Daemon Not Running
 
@@ -212,6 +219,7 @@ WARN: Claude Code credentials not found
 ```
 
 **Solution:** Either:
+
 1. Ensure `~/.claude/.credentials.json` exists on host
 2. Set `ANTHROPIC_API_KEY` environment variable
 

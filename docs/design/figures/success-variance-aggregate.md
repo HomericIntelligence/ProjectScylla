@@ -16,6 +16,7 @@ This figure serves to:
 4. **Guide Tier Selection**: Help practitioners choose tiers with appropriate stability characteristics for their use case
 
 The aggregate view is particularly useful for:
+
 - Identifying tiers with systematically high or low variance across all tasks
 - Understanding whether variance patterns are tier-specific or model-specific
 - Making architecture decisions based on overall tier stability rather than individual subtest behavior
@@ -32,6 +33,7 @@ The figure aggregates data from:
   - Sample size (total number of runs across all subtests in the tier)
 
 **Key Aggregation Logic**:
+
 ```python
 for (model, tier), group in runs_df.groupby(["agent_model", "tier"]):
     pass_rate = group["passed"].mean()  # Aggregate pass rate across all subtests
@@ -53,16 +55,19 @@ pass_variance = pass_rate × (1 - pass_rate)
 ```
 
 **Bernoulli Variance Formula**:
+
 ```
 Var(X) = p(1 - p)
 ```
 
 Where:
+
 - `p` = aggregate pass rate across all subtests in the tier
 - Maximum variance occurs at `p = 0.5` (variance = 0.25)
 - Variance approaches 0 as `p → 0` or `p → 1` (consistent failure or success)
 
 **Interpretation**:
+
 - **High variance (≈0.25)**: Tier passes ~50% of the time (highly unpredictable)
 - **Low variance (≈0)**: Tier consistently passes or consistently fails (predictable)
 
@@ -75,16 +80,19 @@ score_std = std(score_i) for all runs i in tier
 ```
 
 **Standard Deviation Formula**:
+
 ```
 σ = sqrt(Σ(x_i - μ)² / N)
 ```
 
 Where:
+
 - `x_i` = score for run i
 - `μ` = mean score across all runs in the tier
 - `N` = total number of runs in the tier
 
 **Interpretation**:
+
 - **High std dev**: Scores vary widely across runs (inconsistent quality)
 - **Low std dev**: Scores are tightly clustered (consistent quality)
 
@@ -114,6 +122,7 @@ Where:
 ### Panel A: Pass/Fail Variance (Aggregated)
 
 **Chart Type**: Grouped bar chart
+
 - **X-axis**: Tier (categorical, ordered T0 → T6)
 - **Y-axis**: Pass variance (quantitative, range 0-0.25)
 - **Color**: Agent model (categorical, color-coded)
@@ -129,6 +138,7 @@ Where:
 ### Panel B: Score Standard Deviation (Aggregated)
 
 **Chart Type**: Grouped bar chart
+
 - **X-axis**: Tier (categorical, ordered T0 → T6)
 - **Y-axis**: Score standard deviation (quantitative, dynamic range)
 - **Color**: Agent model (categorical, color-coded, same as Panel A)
@@ -140,6 +150,7 @@ Where:
   - Total runs (across all subtests)
 
 **Y-axis Scale**: Dynamic domain computed as:
+
 ```python
 std_max = max(0.3, variance_df["score_std"].max() * 1.1)
 domain = [0, round(std_max / 0.05) * 0.05]  # Round to nearest 0.05
@@ -150,6 +161,7 @@ This ensures the scale adapts to data while maintaining a minimum range of 0.3.
 ### Layout
 
 Panels are **stacked vertically** (`bar_pass & bar_score`), creating a unified view:
+
 ```
 +-----------------------------------+
 | Panel A: Pass/Fail Variance       |
@@ -163,6 +175,7 @@ The vertical stacking emphasizes comparison across panels for the same tier, rat
 ### Color Encoding
 
 Both panels use the same color scale for agent models to ensure visual consistency:
+
 ```python
 models = sorted(variance_df["agent_model"].unique())
 domain, range_ = get_color_scale("models", models)
@@ -183,18 +196,22 @@ This allows direct comparison of the same model's behavior across both metrics.
 ### Key Patterns to Look For
 
 **High Aggregate Variance (Both Panels)**:
+
 - **Interpretation**: The tier is fundamentally unstable, producing inconsistent results across all subtests
 - **Implication**: Avoid this tier for production use unless variance can be reduced
 
 **High Variance in Panel A, Low in Panel B**:
+
 - **Interpretation**: Pass/fail outcomes are unpredictable (~50% success), but when it succeeds, quality is consistent
 - **Implication**: Focus on improving pass rate reliability
 
 **Low Variance in Panel A, High in Panel B**:
+
 - **Interpretation**: Pass/fail is predictable, but quality varies widely across runs
 - **Implication**: Focus on stabilizing implementation quality
 
 **Low Aggregate Variance (Both Panels)**:
+
 - **Interpretation**: The tier is highly consistent and reliable across all tasks
 - **Implication**: Good candidate for production deployment
 
@@ -235,6 +252,7 @@ This allows direct comparison of the same model's behavior across both metrics.
 **Key Implementation Steps**:
 
 1. **Aggregate data by tier**:
+
    ```python
    for (model, tier), group in runs_df.groupby(["agent_model", "tier"]):
        pass_rate = group["passed"].mean()
@@ -243,6 +261,7 @@ This allows direct comparison of the same model's behavior across both metrics.
    ```
 
 2. **Create Panel A (pass variance)**:
+
    ```python
    bar_pass = alt.Chart(variance_df).mark_bar().encode(
        x=alt.X("tier:O", sort=tier_order),
@@ -252,6 +271,7 @@ This allows direct comparison of the same model's behavior across both metrics.
    ```
 
 3. **Create Panel B (score std dev)**:
+
    ```python
    bar_score = alt.Chart(variance_df).mark_bar().encode(
        x=alt.X("tier:O", sort=tier_order),
@@ -261,6 +281,7 @@ This allows direct comparison of the same model's behavior across both metrics.
    ```
 
 4. **Stack panels vertically**:
+
    ```python
    chart = (bar_pass & bar_score).properties(
        title="Success Variance Aggregate (All Subtests Combined Per Tier)"
@@ -268,16 +289,19 @@ This allows direct comparison of the same model's behavior across both metrics.
    ```
 
 5. **Save figure**:
+
    ```python
    save_figure(chart, "fig16b_success_variance_aggregate", output_dir, render)
    ```
 
 **Output Files**:
+
 - `fig16b_success_variance_aggregate.json` (Vega-Lite specification)
 - `fig16b_success_variance_aggregate.png` (rasterized image, if `render=True`)
 - `fig16b_success_variance_aggregate.pdf` (vector graphic, if `render=True`)
 
 **Dependencies**:
+
 - `derive_tier_order()`: Determines canonical tier ordering from data
 - `get_color_scale()`: Provides consistent color mapping for agent models
 - `save_figure()`: Handles file output in multiple formats

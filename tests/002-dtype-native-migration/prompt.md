@@ -8,6 +8,7 @@ uses workarounds because earlier Mojo versions lacked native BFloat16, FP8, and 
 exotic dtype support.
 
 The codebase currently contains custom struct implementations for:
+
 - `BF16` (BFloat16 - 8 exponent bits, 7 mantissa bits)
 - `FP8` (E4M3 - 4 exponent bits, 3 mantissa bits)
 - `BF8` (E5M2 - 5 exponent bits, 2 mantissa bits)
@@ -45,6 +46,7 @@ Use `comptime` (not `alias`) for declarations to follow current Mojo best practi
 helpers because native Mojo conversion does not handle this edge case correctly.
 
 You must implement:
+
 - `_e8m0_from_float32(scale: Float32) -> Scalar[E8M0]` - Convert Float32 to E8M0
 - `_e8m0_to_float32(e8m0_val: Scalar[E8M0]) -> Float32` - Convert E8M0 to Float32
 
@@ -54,6 +56,7 @@ requires extracting/reconstructing the exponent via bitcast operations.
 ### 3. Update Dependent Code
 
 Update all code that uses the old struct types:
+
 - Replace `E8M0Scale` struct field access with bitcast patterns
 - Replace custom struct constructors with native scalar creation
 - Update MXFP4 and NVFP4 blocked format handlers
@@ -62,6 +65,7 @@ Update all code that uses the old struct types:
 ### 4. Delete Obsolete Files
 
 After migration, delete:
+
 - Old dtype struct implementation files in `shared/core/types/`
 - Obsolete test files that tested the old custom implementations
 - Remove deleted test files from CI workflow patterns
@@ -99,6 +103,7 @@ instead of individual dtype files.
 ## Validation
 
 You CAN and SHOULD run these commands to verify your solution:
+
 - `pixi run mojo build scylla/` - Verify code compiles
 - `pixi run mojo test tests/` - Run tests to verify functionality
 - `pixi run mojo format scylla/` - Format your code
@@ -106,11 +111,13 @@ You CAN and SHOULD run these commands to verify your solution:
 ## Expected Output
 
 When complete, your workspace should contain:
+
 - New file: `shared/core/types/dtype_aliases.mojo` with type definitions
 - Modified files: Updated to use native types instead of custom structs
 - Deleted files: Old custom dtype implementation files
 
 Your solution will be evaluated based on:
+
 1. Functional correctness (tests pass)
 2. Completeness (all types migrated)
 3. Code quality (follows Mojo idioms)

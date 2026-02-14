@@ -9,6 +9,7 @@
 ## Initial State
 
 Current branch already had some fixes:
+
 - `_parse_judge_response()` fallback scoring removed
 - Consensus reasoning uses closest-judge-to-consensus
 - Some docstrings cleaned up
@@ -56,6 +57,7 @@ AssertionError: assert False
 ```
 
 **Debug process**:
+
 1. Checked actual function source with `inspect.getsource()`
 2. Discovered function signature: `_has_valid_judge_result(run_dir: Path)`
 3. Function internally calls `get_judge_result_file(run_dir)`
@@ -96,13 +98,14 @@ gh pr create --title "fix(e2e): Fix judge data quality bugs..." --body "..."
 gh pr merge 476 --auto --rebase
 ```
 
-**PR #476**: https://github.com/HomericIntelligence/ProjectScylla/pull/476
+**PR #476**: <https://github.com/HomericIntelligence/ProjectScylla/pull/476>
 
 ### Related Issue
 
 User requested sub-agent create issue for future cleanup:
 
 **Issue #475**: "Remove fallback compatibility paths in E2E judge system"
+
 - Created by general-purpose agent
 - Tracks removal of backward compatibility code
 - Labels: `refactor`, `tech-debt`, `judge`

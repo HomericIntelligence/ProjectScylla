@@ -7,6 +7,7 @@ Fix the build errors in `examples/custom-layers/prelu_activation.mojo` so it com
 ## Problem
 
 The example file has build errors due to:
+
 - Importing non-existent 'Tensor' type (should be 'ExTensor')
 - Using deprecated API patterns
 - Module trait implementation causing linker issues

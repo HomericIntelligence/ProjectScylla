@@ -21,6 +21,7 @@ Apply this pattern when:
 - ✅ Need to support multiple commits from the same repository
 
 **Do NOT use** when:
+
 - ❌ Only running single experiments (no benefit)
 - ❌ Each experiment uses different repositories
 - ❌ Cannot use git worktrees (need full independent clones)
@@ -37,6 +38,7 @@ results/experiment-3/repo/  # 8 MB clone (DUPLICATE!)
 ```
 
 **Issues**:
+
 - Wasted disk space (N × clone_size)
 - Redundant network downloads
 - Slower experiment startup
@@ -54,6 +56,7 @@ results/experiment-3/workspace/      # 3 MB (lightweight worktree)
 ```
 
 **Benefits**:
+
 - 37-73% disk savings (scales with experiment count)
 - Skip clone on subsequent experiments
 - Parallel-safe with file locking
@@ -86,6 +89,7 @@ def __init__(
 ```
 
 **Why SHA-256?**
+
 - Collision-resistant (64-bit UUID = 18 quintillion possibilities)
 - Deterministic (same URL → same path)
 - URL-safe (hex characters only)
@@ -125,6 +129,7 @@ def setup_base_repo(self) -> None:
 ```
 
 **Critical Points**:
+
 - Use exclusive lock (`LOCK_EX`) to prevent concurrent clones
 - Lock auto-released on crash (OS handles cleanup)
 - Check for existing `.git` directory before cloning
@@ -135,6 +140,7 @@ def setup_base_repo(self) -> None:
 **CRITICAL**: This is required for centralized repos to work correctly.
 
 **Problem**: `git worktree add -b branch /path commit` doesn't work when:
+
 - Base repo is on different branch than target commit
 - Commit not yet in object store
 - Using centralized repos with multiple commits
@@ -164,6 +170,7 @@ def create_worktree(self, workspace_path: Path) -> None:
 ```
 
 **Why this works**:
+
 1. Worktree created on default branch
 2. Commit fetched into shared object store
 3. Checkout in worktree uses shared objects
@@ -188,6 +195,7 @@ def _ensure_commit_available(self) -> None:
 ```
 
 **Why no checkout in base?**
+
 - Base repo stays on default branch (shared across experiments)
 - Multiple experiments can use different commits
 - Commits stored in shared `.git/objects/`
@@ -250,11 +258,13 @@ workspace_manager.base_repo = base_repo
 ### ❌ Attempt 1: Include Commit in `git worktree add`
 
 **What we tried**:
+
 ```python
 git worktree add -b branch /path abc123  # Specify commit directly
 ```
 
 **Why it failed**:
+
 - Fails when base repo not checked out to that commit
 - Doesn't fetch commit before creating worktree
 - Error: `fatal: reference is not a tree: abc123`
@@ -264,6 +274,7 @@ git worktree add -b branch /path abc123  # Specify commit directly
 ### ❌ Attempt 2: Checkout Commits in Base Repo
 
 **What we tried**:
+
 ```python
 # Setup base repo
 git clone url base/
@@ -274,6 +285,7 @@ git worktree add /path  # Inherits from base
 ```
 
 **Why it failed**:
+
 - Base repo changes state for each experiment
 - Second experiment with different commit breaks
 - Race condition: two experiments change base repo simultaneously
@@ -283,11 +295,13 @@ git worktree add /path  # Inherits from base
 ### ❌ Attempt 3: Use Shallow Clone for Centralized Repos
 
 **What we tried**:
+
 ```python
 git clone --depth=1 url  # Shallow clone for speed
 ```
 
 **Why it failed**:
+
 - Fetching specific commits unreliable in shallow clones
 - Cannot fetch arbitrary commits (depth limitation)
 - Error: `fatal: couldn't find remote ref abc123`
@@ -297,11 +311,13 @@ git clone --depth=1 url  # Shallow clone for speed
 ### ❌ Attempt 4: Integration Test with Invalid Commit
 
 **What we tried**:
+
 ```python
 test_commit = "b0a8fff99de90117e46f2e0db84a3bb1b0bfc5d2"  # Hardcoded
 ```
 
 **Why it failed**:
+
 - Commit doesn't exist in repository
 - Error: `fatal: reference is not a tree: b0a8fff...`
 
@@ -310,6 +326,7 @@ test_commit = "b0a8fff99de90117e46f2e0db84a3bb1b0bfc5d2"  # Hardcoded
 ### ❌ Attempt 5: Same Branch Names in Integration Test
 
 **What we tried**:
+
 ```python
 # Experiment 1
 create_worktree(workspace1, tier_id="T0", subtest_id="01", run_number=1)
@@ -321,6 +338,7 @@ create_worktree(workspace2, tier_id="T0", subtest_id="01", run_number=1)
 ```
 
 **Why it failed**:
+
 - Both experiments use same tier/subtest/run numbers
 - Git error: `fatal: a branch named 'T0_01_run_01' already exists`
 
@@ -331,10 +349,12 @@ create_worktree(workspace2, tier_id="T0", subtest_id="01", run_number=1)
 ### Unit Tests
 
 **Test coverage**: 19 tests total
+
 - 11 existing tests (retry logic, error handling) - updated for file locking
 - 8 new tests (centralized functionality)
 
 **New test cases**:
+
 ```python
 def test_repos_dir_sets_centralized_path()
 def test_repos_dir_none_fallback()
@@ -389,6 +409,7 @@ Time savings: 5.0s (49%)
 | 100 | 1.1 GB | 308 MB | 792 MB | 73% |
 
 **Formula**:
+
 - Legacy: `N × (clone_size + worktree_size)`
 - Centralized: `clone_size + (N × worktree_size)`
 - Savings: `(N-1) × clone_size`
@@ -397,6 +418,7 @@ Time savings: 5.0s (49%)
 ## Key Parameters
 
 ### Repository UUID Generation
+
 ```python
 import hashlib
 repo_uuid = hashlib.sha256(repo_url.encode()).hexdigest()[:16]
@@ -404,24 +426,28 @@ repo_uuid = hashlib.sha256(repo_url.encode()).hexdigest()[:16]
 ```
 
 **Properties**:
+
 - Length: 16 hex characters = 64 bits
 - Collision probability: ~1 in 18 quintillion
 - Deterministic: Same URL always produces same UUID
 - URL-safe: No special characters
 
 ### Lock File Pattern
+
 ```python
 lock_path = base_repo.parent / f".{base_repo.name}.lock"
 # Example: .e36d60bacf989bf2.lock
 ```
 
 **Properties**:
+
 - Hidden file (starts with `.`)
 - Per-repo locking (different repos lock independently)
 - Advisory locking (fcntl.LOCK_EX)
 - Auto-released on process exit
 
 ### Clone Strategy
+
 ```python
 # Centralized repos (repos_dir set)
 git clone <url> <path>  # Full clone, all history
@@ -431,12 +457,14 @@ git clone --depth=1 <url> <path>  # Shallow clone, minimal size
 ```
 
 **Trade-off**:
+
 - Centralized: Larger initial clone, but reused across all experiments
 - Legacy: Smaller per-experiment clone, but duplicated
 
 ## Testing Strategy
 
 ### Unit Test Structure
+
 ```python
 class TestCentralizedRepos:
     def test_repos_dir_sets_centralized_path(self, tmp_path):
@@ -452,10 +480,12 @@ class TestCentralizedRepos:
 ```
 
 **Mock requirements**:
+
 - `fcntl.flock`: File locking (prevents actual lock files)
 - `subprocess.run`: Git commands (prevents actual clones)
 
 ### Integration Test Structure
+
 ```python
 def test_centralized_repos():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -480,6 +510,7 @@ def test_centralized_repos():
 ```
 
 **Real git operations**:
+
 - Actual clone from GitHub
 - Real worktree creation
 - Verify git state (branches, commits)
@@ -487,9 +518,11 @@ def test_centralized_repos():
 ## Edge Cases
 
 ### 1. Parallel Experiment Starts
+
 **Scenario**: Two experiments start simultaneously
 
 **Handling**: File locking ensures only one clones
+
 ```python
 # Process 1
 with fcntl.flock(lock_file):  # Acquires lock
@@ -503,6 +536,7 @@ with fcntl.flock(lock_file):  # Waits for lock
 ```
 
 ### 2. Process Crash During Clone
+
 **Scenario**: Process crashes mid-clone
 
 **Current behavior**: Partial clone directory left behind, next run may fail
@@ -510,9 +544,11 @@ with fcntl.flock(lock_file):  # Waits for lock
 **Improvement needed**: Check `.git/config` exists before reusing
 
 ### 3. Different Commits Same Repo
+
 **Scenario**: Experiments use different commits
 
 **Handling**: All commits fetched into shared object store
+
 ```python
 # Experiment 1
 _ensure_commit_available("abc123")  # Fetches into .git/objects/
@@ -524,9 +560,11 @@ _ensure_commit_available("def456")  # Fetches into .git/objects/
 ```
 
 ### 4. Legacy Experiment Reruns
+
 **Scenario**: Rerun experiment from before centralized repos
 
 **Handling**: Auto-detect legacy layout
+
 ```python
 if centralized_repo.exists():
     use centralized
@@ -537,26 +575,31 @@ elif legacy_repo.exists():  # ✓ Backward compatible
 ## Common Pitfalls
 
 ### ❌ Pitfall 1: Forgetting File Locking
+
 **Problem**: Race condition when experiments start in parallel
 
 **Solution**: Always use `fcntl.flock` around clone check/create
 
 ### ❌ Pitfall 2: Shallow Clone for Centralized
+
 **Problem**: Cannot fetch arbitrary commits from shallow clones
 
 **Solution**: Use full clone (`git clone` without `--depth=1`)
 
 ### ❌ Pitfall 3: Including Commit in Worktree Add
+
 **Problem**: Fails when base repo not on that commit
 
 **Solution**: Separate `git worktree add` and `git checkout`
 
 ### ❌ Pitfall 4: Checking Out in Base Repo
+
 **Problem**: Breaks when multiple experiments use different commits
 
 **Solution**: Only fetch into object store, checkout in worktrees
 
 ### ❌ Pitfall 5: Not Handling Legacy Layout
+
 **Problem**: Old experiments fail on rerun
 
 **Solution**: Auto-detect both centralized and legacy layouts
@@ -586,6 +629,7 @@ The implementation is fully backward compatible:
 ## Performance Impact
 
 ### Time Complexity
+
 | Operation | Before | After | Change |
 |-----------|--------|-------|--------|
 | First experiment | O(clone) | O(clone) | Same |
@@ -593,6 +637,7 @@ The implementation is fully backward compatible:
 | Nth experiment | O(clone) | O(1) | **51x faster** |
 
 ### Space Complexity
+
 | Metric | Formula | Example (N=10) |
 |--------|---------|----------------|
 | Legacy | N × (C + W) | 110 MB |
@@ -600,6 +645,7 @@ The implementation is fully backward compatible:
 | Savings | (N-1) × C | 72 MB (65%) |
 
 Where:
+
 - N = number of experiments
 - C = clone size (8 MB)
 - W = worktree size (3 MB)
@@ -613,9 +659,9 @@ Where:
 
 ## References
 
-- Git worktrees: https://git-scm.com/docs/git-worktree
-- fcntl locking: https://docs.python.org/3/library/fcntl.html
-- SHA-256 hashing: https://docs.python.org/3/library/hashlib.html
+- Git worktrees: <https://git-scm.com/docs/git-worktree>
+- fcntl locking: <https://docs.python.org/3/library/fcntl.html>
+- SHA-256 hashing: <https://docs.python.org/3/library/hashlib.html>
 - Integration test: `/home/mvillmow/ProjectScylla/test_centralized_repos_integration.py`
 - Full analysis: `/home/mvillmow/ProjectScylla/CENTRALIZED_REPOS_ANALYSIS.md`
 

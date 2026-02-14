@@ -22,6 +22,7 @@ Use this approach when:
 5. **Documentation references** the deprecated approach
 
 This pattern applies to:
+
 - Field renames (e.g., `fallback` → `is_valid`)
 - API migrations (e.g., old endpoint → new endpoint)
 - Configuration format changes (e.g., YAML v1 → v2)
@@ -32,6 +33,7 @@ This pattern applies to:
 ### Phase 1: Identify All Compatibility Code
 
 1. **Search for compatibility shims** using grep:
+
    ```bash
    grep -rn 'data.get("fallback"' scylla/
    grep -rn 'fallback.*backward' tests/
@@ -50,6 +52,7 @@ This pattern applies to:
 For each location, remove the backward compatibility check while preserving the new logic:
 
 **Before** (with compatibility shim):
+
 ```python
 # Check is_valid flag (map old fallback=true to is_valid=false)
 is_valid = data.get("is_valid", True) is not False
@@ -59,6 +62,7 @@ return is_valid
 ```
 
 **After** (clean):
+
 ```python
 # Check is_valid flag
 is_valid = data.get("is_valid", True) is not False
@@ -66,6 +70,7 @@ return is_valid
 ```
 
 **Key principles**:
+
 - Remove ONLY the compatibility code, not the new logic
 - Simplify comments to remove references to old field
 - Keep the same functionality for the new field
@@ -75,11 +80,13 @@ return is_valid
 Delete test functions that ONLY exercised the deprecated code path:
 
 **Criteria for deletion**:
+
 - Test name explicitly mentions deprecated field (e.g., `test_*_with_fallback_true`)
 - Test only verifies backward compatibility behavior
 - Test has no value once compatibility code is removed
 
 **Example deletions**:
+
 ```python
 # DELETE - tests deprecated fallback=true behavior
 def test_is_valid_judgment_with_fallback_true(tmp_path: Path) -> None:
@@ -91,6 +98,7 @@ def test_is_valid_judgment_with_fallback_false(tmp_path: Path) -> None:
 ```
 
 **Do NOT delete**:
+
 - Tests that verify core functionality using the new field
 - Tests that happen to use both fields but aren't about compatibility
 
@@ -99,6 +107,7 @@ def test_is_valid_judgment_with_fallback_false(tmp_path: Path) -> None:
 If a test uses the NEW field but has a name referencing the OLD field:
 
 **Before**:
+
 ```python
 def test_build_judges_df_fallback_judge_invalid():
     """Test that judges with fallback=true are marked as invalid."""
@@ -107,6 +116,7 @@ def test_build_judges_df_fallback_judge_invalid():
 ```
 
 **After**:
+
 ```python
 def test_build_judges_df_invalid_judge():
     """Test that judges with is_valid=False are marked as invalid."""
@@ -114,6 +124,7 @@ def test_build_judges_df_invalid_judge():
 ```
 
 **Changes**:
+
 - Rename function to reflect actual behavior
 - Update docstring to remove deprecated field references
 - Update variable names (e.g., `fallback_judge` → `invalid_judge`)
@@ -122,12 +133,14 @@ def test_build_judges_df_invalid_judge():
 ### Phase 5: Update Documentation
 
 1. **Skill documentation** - mark related cleanup tasks as completed:
+
    ```markdown
    ## Related Issues
    - **#475** - Remove fallback compatibility paths ✅ COMPLETED
    ```
 
 2. **Plugin descriptions** - remove references to deprecated features:
+
    ```json
    - "description": "Fix reruns due to corruption and fallback masking"
    + "description": "Fix reruns due to workspace corruption"
@@ -136,6 +149,7 @@ def test_build_judges_df_invalid_judge():
 ### Phase 6: Verify and Commit
 
 1. **Run affected tests** to ensure nothing broke:
+
    ```bash
    pixi run pytest tests/unit/e2e/test_rerun_judges.py \
                    tests/unit/e2e/test_subtest_executor.py \
@@ -143,16 +157,19 @@ def test_build_judges_df_invalid_judge():
    ```
 
 2. **Run full test suite** to catch integration issues:
+
    ```bash
    pixi run pytest tests/ -v
    ```
 
 3. **Run pre-commit hooks**:
+
    ```bash
    pre-commit run --all-files
    ```
 
 4. **Commit with clear message**:
+
    ```bash
    git commit -m "refactor(judge): Remove deprecated fallback field compatibility
 
@@ -172,16 +189,19 @@ If you have BOTH documentation cleanup AND code refactoring:
 **Best practice**: Create TWO separate PRs
 
 **PR 1: Documentation Cleanup** (low-risk, quick review)
+
 - Delete deprecated docs
 - Create documentation indices
 - Update references
 
 **PR 2: Code Refactoring** (requires test verification)
+
 - Remove compatibility shims
 - Delete deprecated tests
 - Update skill docs
 
 **Rationale**:
+
 - Documentation PRs are low-risk and merge quickly
 - Code PRs need more careful review and testing
 - Keeps PR sizes manageable and focused
@@ -190,6 +210,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 ## Results
 
 ### Metrics
+
 - **Files modified**: 9 files
 - **Lines removed**: 135 lines (code + tests)
 - **Tests removed**: 5 functions
@@ -199,6 +220,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 ### Files Changed
 
 **Production code** (5 locations):
+
 1. `scylla/e2e/rerun_judges.py:146-148` - `_is_valid_judgment()`
 2. `scylla/e2e/rerun_judges.py:525-527` - `_regenerate_consensus()`
 3. `scylla/e2e/subtest_executor.py:408-411` - `_has_valid_judge_result()`
@@ -206,6 +228,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 5. `scylla/analysis/loader.py:456-459` - `load_judgment()`
 
 **Tests deleted** (5 functions):
+
 1. `test_is_valid_judgment_with_fallback_true`
 2. `test_is_valid_judgment_with_fallback_false`
 3. `test_regenerate_consensus_rejects_fallback_judgments`
@@ -213,6 +236,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 5. `test_has_valid_judge_result_rejects_fallback`
 
 **Tests renamed** (1 function):
+
 - `test_build_judges_df_fallback_judge_invalid` → `test_build_judges_df_invalid_judge`
 
 ## Failed Attempts
@@ -222,6 +246,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 **What we tried**: Consider keeping the deprecated tests disabled with `@pytest.mark.skip`
 
 **Why it failed**:
+
 - Tests exercising deprecated code paths have zero value once the code is removed
 - Skipped tests create maintenance burden (someone has to remember why they're skipped)
 - If the compatibility code is truly gone, the tests can't pass anyway
@@ -233,6 +258,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 **What we tried**: Modify `test_regenerate_consensus_rejects_fallback_judgments` to test `is_valid=False` instead
 
 **Why it failed**:
+
 - Other tests already cover `is_valid=False` behavior
 - The test name explicitly references `fallback`, making it confusing
 - Duplication of test coverage with no added value
@@ -242,6 +268,7 @@ If you have BOTH documentation cleanup AND code refactoring:
 ## Common Patterns
 
 ### Pattern: Compatibility Shim
+
 ```python
 # Remove these 2-3 lines everywhere:
 if data.get("old_field", False) is True:
@@ -249,6 +276,7 @@ if data.get("old_field", False) is True:
 ```
 
 ### Pattern: Test That Exercises Deprecated Path
+
 ```python
 # Delete entire function if it only tests deprecated behavior:
 def test_function_with_deprecated_field():
@@ -257,6 +285,7 @@ def test_function_with_deprecated_field():
 ```
 
 ### Pattern: Misleading Test Name
+
 ```python
 # Rename function + docstring + variables:
 - def test_thing_with_old_field():
@@ -279,12 +308,14 @@ def test_function_with_deprecated_field():
 ## Anti-Patterns to Avoid
 
 ❌ **Don't leave orphaned comments**:
+
 ```python
 # Check is_valid flag (map old fallback=true to is_valid=false)  # DELETE THIS PART
 is_valid = data.get("is_valid", True) is not False
 ```
 
 ❌ **Don't keep disabled tests**:
+
 ```python
 @pytest.mark.skip("Deprecated - fallback field removed")  # DELETE ENTIRE TEST
 def test_old_behavior():
@@ -292,6 +323,7 @@ def test_old_behavior():
 ```
 
 ❌ **Don't mix unrelated changes**:
+
 - Keep backward-compat removal separate from new features
 - Keep documentation cleanup separate from code refactoring
 

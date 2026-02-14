@@ -102,6 +102,7 @@ Unique identifier for the test case. Must be:
 - Followed by lowercase alphanumeric words separated by hyphens
 
 **Examples**:
+
 ```yaml
 id: "001-justfile-to-makefile"    # Valid
 id: "042-api-integration-test"    # Valid
@@ -119,6 +120,7 @@ id: "001_justfile_to_makefile"    # Invalid (underscores not allowed)
 Human-readable name displayed in reports and dashboards.
 
 **Examples**:
+
 ```yaml
 name: "Convert Justfile to Makefile"
 name: "API Integration Test Suite"
@@ -133,6 +135,7 @@ name: "API Integration Test Suite"
 Detailed description of the test case. Supports multiline YAML syntax.
 
 **Example**:
+
 ```yaml
 description: |
   Convert ProjectOdyssey's justfile to an equivalent Makefile.
@@ -159,6 +162,7 @@ Git repository configuration for the test case.
 Git repository URL. Supports HTTPS URLs only.
 
 **Examples**:
+
 ```yaml
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
@@ -174,6 +178,7 @@ Full 40-character Git commit SHA hash. Short hashes are not accepted
 to ensure reproducibility.
 
 **Examples**:
+
 ```yaml
 source:
   hash: "ce739d4aa328f1c0815b33e2812c4b889868b740"  # Valid
@@ -190,6 +195,7 @@ Git branch name. Used for informational purposes when the hash is
 on a feature branch.
 
 **Example**:
+
 ```yaml
 source:
   repo: "https://github.com/mvillmow/ProjectOdyssey"
@@ -216,6 +222,7 @@ Relative path to the prompt markdown file. Path is relative to the
 `test.yaml` file location.
 
 **Examples**:
+
 ```yaml
 task:
   prompt_file: "prompt.md"           # Same directory
@@ -234,6 +241,7 @@ Maximum time in seconds for the agent to complete the task.
 Defaults to 1 hour (3600 seconds).
 
 **Examples**:
+
 ```yaml
 task:
   prompt_file: "prompt.md"
@@ -258,6 +266,7 @@ References to validation files.
 Relative path to the human-readable success criteria file.
 
 **Example**:
+
 ```yaml
 validation:
   criteria_file: "expected/criteria.md"
@@ -272,6 +281,7 @@ validation:
 Relative path to the scoring rubric YAML file.
 
 **Example**:
+
 ```yaml
 validation:
   rubric_file: "expected/rubric.yaml"
@@ -293,6 +303,7 @@ Each entry specifies a tier and the model to use:
 | `models[].model` | string | Yes | Model identifier |
 
 **Example**:
+
 ```yaml
 models:
   - tier: "T0"
@@ -310,6 +321,7 @@ Classification tags for filtering and organization.
 **Default**: Empty array
 
 **Example**:
+
 ```yaml
 tags:
   - "build-system"
@@ -406,11 +418,13 @@ validation:
 ### Adding a New Test Case
 
 1. **Create directory structure**:
+
    ```bash
    mkdir -p tests/<NNN>-<description>/expected
    ```
 
 2. **Create test.yaml** with required fields:
+
    ```yaml
    id: "<NNN>-<description>"
    name: "Your Test Name"
@@ -431,6 +445,7 @@ validation:
 5. **Create expected/rubric.yaml** following [rubric-schema.md](rubric-schema.md)
 
 6. **Validate** using the JSON Schema:
+
    ```bash
    # Using ajv-cli or similar
    ajv validate -s schemas/test.schema.json -d tests/<NNN>-*/test.yaml

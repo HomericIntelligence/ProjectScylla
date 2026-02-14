@@ -3,6 +3,7 @@
 ## Objective
 
 Update GitHub Actions dependencies to their latest versions:
+
 - `actions/checkout` from v4 to v6
 - `actions/setup-python` to latest version
 

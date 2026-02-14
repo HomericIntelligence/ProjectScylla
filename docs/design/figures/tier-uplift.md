@@ -18,6 +18,7 @@ This figure addresses the core research question: **How much does each tier impr
 ### Pass Rate Uplift
 
 **Formula:**
+
 ```
 uplift = pass_rate_tier - pass_rate_T0_Subtest0
 ```
@@ -26,6 +27,7 @@ uplift = pass_rate_tier - pass_rate_T0_Subtest0
 - **pass_rate_T0_Subtest0**: Baseline pass rate from T0-Subtest0 (no enhancements)
 
 **Interpretation:**
+
 - Positive uplift indicates improvement over baseline
 - Negative uplift indicates degradation from baseline
 - Zero uplift indicates no change
@@ -33,11 +35,13 @@ uplift = pass_rate_tier - pass_rate_T0_Subtest0
 ### Uplift Percentage
 
 **Formula:**
+
 ```
 uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 ```
 
 **Interpretation:**
+
 - Shows relative improvement as percentage of baseline
 - Example: 50% uplift_pct means tier performance is 1.5× baseline
 
@@ -46,6 +50,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 **Method:** Mann-Whitney U test with Bonferroni correction
 
 **Process:**
+
 1. Compare consecutive tiers (T0→T1, T1→T2, etc.) using Mann-Whitney U test
 2. Apply Bonferroni correction: `p_corrected = p_raw × n_tests` where `n_tests = len(tier_order) - 1`
 3. Mark transitions as significant if `p_corrected < 0.05`
@@ -57,6 +62,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 ### Input DataFrame Schema
 
 **Required Columns:**
+
 - `agent_model` (str): Agent model identifier
 - `tier` (str): Tier identifier (T0, T1, T2, etc.)
 - `subtest` (str): Subtest identifier (00, 01, 02, etc.)
@@ -73,6 +79,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 ### Data Processing Pipeline
 
 1. **Compute Tier Pass Rates:**
+
    ```python
    tier_stats = (
        runs_df.groupby(["agent_model", "tier"])["passed"]
@@ -83,6 +90,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
    ```
 
 2. **Extract T0-Subtest0 Baseline:**
+
    ```python
    t0_subtest0_data = runs_df[
        (runs_df["agent_model"] == model)
@@ -92,12 +100,14 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
    ```
 
 3. **Compute Uplift Per Tier:**
+
    ```python
    uplift = pass_rate - t0_pass_rate
    uplift_pct = (uplift / t0_pass_rate) * 100 if t0_pass_rate > 0 else 0
    ```
 
 4. **Statistical Testing:**
+
    ```python
    _, pvalue_raw = mann_whitney_u(tier1_data, tier2_data)
    pvalue = bonferroni_correction(pvalue_raw, n_tests)
@@ -108,12 +118,14 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 **Chart Type:** Line chart with points and optional significance markers
 
 **Axes:**
+
 - X-axis: Tier (ordinal, sorted by tier order)
 - Y-axis: Pass Rate Uplift vs T0-Subtest0 (quantitative, dynamic domain with floor=-1.0, ceiling=1.0)
 
 **Color Encoding:** Agent model (categorical, dynamic color scale)
 
 **Tooltip Fields:**
+
 - Tier (ordinal)
 - Model (nominal)
 - Pass Rate (quantitative, formatted as percentage)
@@ -121,6 +133,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 - Uplift % (quantitative, formatted as decimal)
 
 **Significance Markers:**
+
 - Text: "*" (asterisk)
 - Position: dy=-15 (15 pixels above point)
 - Style: fontSize=12, fontWeight="bold", color="black"
@@ -139,6 +152,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 **File:** `fig11_tier_uplift_significance.csv`
 
 **Schema:**
+
 - `agent_model` (str): Agent model identifier
 - `tier` (str): Destination tier of transition
 - `transition` (str): Transition label (e.g., "T0→T1")
@@ -158,18 +172,22 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 ### Expected Patterns
 
 **Ideal Case:** Monotonically increasing uplift across tiers
+
 - T0 < T1 < T2 < T3 < T4 < T5 < T6
 - All transitions marked as significant
 
 **Diminishing Returns:** Uplift increases but at decreasing rates
+
 - Large jumps early (T0→T1, T1→T2)
 - Smaller gains later (T4→T5, T5→T6)
 
 **Capability Interference:** Negative uplift in mid-tiers
+
 - Could indicate poor prompt engineering, skill conflicts, or delegation overhead
 - Requires deeper investigation into tier configuration
 
 **Model Divergence:** Different models show different uplift patterns
+
 - Some models may benefit more from certain capabilities
 - Helps identify model-specific optimization strategies
 
@@ -186,6 +204,7 @@ uplift_pct = (uplift / pass_rate_T0_Subtest0) × 100
 **Function:** `fig11_tier_uplift(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)`
 
 **Dependencies:**
+
 - `scylla.analysis.figures.derive_tier_order()`: Derives tier ordering from data
 - `scylla.analysis.figures.get_color_scale()`: Generates dynamic color scales
 - `scylla.analysis.figures.spec_builder.compute_dynamic_domain()`: Computes axis domains

@@ -13,6 +13,7 @@
 ## When to Use
 
 Use this skill when:
+
 - Completing multi-issue epics with dependencies
 - Implementing statistical tests for research papers
 - Adding power analysis or interaction tests
@@ -89,6 +90,7 @@ assert x == pytest.approx(y, abs=1e-6)
 **Files affected**: ~12 test files, ~100+ assertions
 
 **Keep as-is**:
+
 - `np.isnan()` / `np.isinf()` checks
 - Integer equality
 - String comparisons
@@ -127,6 +129,7 @@ def mann_whitney_power(n1: int, n2: int, effect_size: float,
 ```
 
 **Config parameters:**
+
 ```yaml
 power_analysis:
   n_simulations: 10000
@@ -303,6 +306,7 @@ Delta: classifyHandoffIfNeeded is not defined
 ### Configuration Values
 
 **Bootstrap (config.yaml):**
+
 ```yaml
 bootstrap:
   n_resamples: 10000
@@ -312,6 +316,7 @@ bootstrap:
 ```
 
 **Power Analysis (config.yaml):**
+
 ```yaml
 power_analysis:
   n_simulations: 10000
@@ -320,6 +325,7 @@ power_analysis:
 ```
 
 **Statistical Thresholds:**
+
 ```yaml
 statistical:
   alpha: 0.05

@@ -9,6 +9,7 @@
 ## Root Cause Analysis
 
 ### Problem 1: Workspace Corruption Chain
+
 1. User runs `rerun_agents.py` to retry failed runs
 2. Script calls `rerun_single_run()` which moves old `run_dir` to `.failed/`
 3. Script recreates workspace with `_setup_workspace()` - fresh git worktree
@@ -19,6 +20,7 @@
 8. But F-grade is incorrect for the **original** agent work that was destroyed
 
 ### Problem 2: Fallback Judge Masking
+
 1. LLM judge hits rate limit or timeout
 2. Exception caught by try/except in `run_llm_judge()` (lines 886-953)
 3. `_fallback_judge()` called, returns blanket 0.7/grade-C
@@ -28,6 +30,7 @@
 ## Code Structure Discovery
 
 ### Judge Prompt Storage Location
+
 ```
 run_dir/
 ├── judge_prompt.md          # Saved once during original execution
@@ -79,6 +82,7 @@ MISSING → PARTIAL → FAILED/RESULTS → COMPLETED
 **File**: `scylla/e2e/llm_judge.py`
 
 Before (lines 886-953):
+
 ```python
 try:
     stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
@@ -93,6 +97,7 @@ except Exception as e:
 ```
 
 After (lines 886-919):
+
 ```python
 stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
 judge_result = _parse_judge_response(result)
@@ -108,6 +113,7 @@ Also deleted `_fallback_judge()` function (was lines 1123-1169).
 **File**: `scylla/e2e/rerun_judges.py`
 
 Added logic at line 342:
+
 ```python
 saved_judge_prompt_path = run_dir / "judge_prompt.md"
 
@@ -132,6 +138,7 @@ else:
 **File**: `scylla/e2e/rerun.py`
 
 Added at line 320 (before workspace operations):
+
 ```python
 if run_info.status in (RunStatus.COMPLETED, RunStatus.RESULTS):
     logger.error(
@@ -148,6 +155,7 @@ if run_info.status in (RunStatus.COMPLETED, RunStatus.RESULTS):
 **Files**: `scylla/e2e/subtest_executor.py:1487`, `scylla/e2e/regenerate.py:310`
 
 Both now wrap `run_llm_judge()` in try/except that:
+
 1. Logs error with full context
 2. Saves error artifacts (timing.json with `failed: true`, error.log)
 3. Either re-raises (subtest_executor) or continues to next (regenerate)
@@ -173,6 +181,7 @@ $ grep -n "fallback" scylla/e2e/*.py | wc -l
 ### Correct Usage Pattern
 
 For a run with failed judge:
+
 ```bash
 # 1. If agent also failed, rerun agent first
 pixi run python scripts/rerun_agents.py ~/experiment/ --status failed
@@ -182,6 +191,7 @@ pixi run python scripts/rerun_judges.py ~/experiment/
 ```
 
 For a run with missing result files:
+
 ```bash
 # Use regenerate, not rerun_agents (no need to re-execute agent)
 pixi run python scripts/regenerate.py ~/experiment/ --status results
@@ -190,11 +200,13 @@ pixi run python scripts/regenerate.py ~/experiment/ --status results
 ### Why This Matters
 
 Before this fix:
+
 1. Running `rerun_agents.py` would destroy workspace
 2. Running `rerun_judges.py` would judge the empty workspace
 3. Fallback judge would give passing grades, masking the issue
 
 After this fix:
+
 1. `rerun_judges.py` uses saved `judge_prompt.md` (original workspace state)
 2. No fallback judge - failures are visible
 3. Safety check prevents accidental workspace destruction
@@ -208,6 +220,7 @@ After this fix:
 ## Related Issues Prevented
 
 This fix also prevents:
+
 - Judges evaluating against partial/incomplete agent work if agent was interrupted
 - Judges evaluating against wrong git branch if workspace was reset
 - Silently passing broken runs due to fallback judge

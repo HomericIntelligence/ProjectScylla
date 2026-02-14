@@ -94,14 +94,14 @@ export ANTHROPIC_API_KEY="your-key-here"
 
 ## When to Use Each Script
 
-### Use `run_experiment_in_container.sh` (Docker) when:
+### Use `run_experiment_in_container.sh` (Docker) when
 
 - You need complete isolation from host environment
 - You want reproducible execution environment
 - You're running on different machines and want consistency
 - You want to ensure no config leakage between runs
 
-### Use `run_e2e_experiment.py` (Direct) when:
+### Use `run_e2e_experiment.py` (Direct) when
 
 - You're developing and iterating quickly
 - You want faster execution (no container overhead)
@@ -220,6 +220,7 @@ These scripts help recover from failures, rebuild results, or fix corrupted stat
 Re-run failed or missing agent executions from an existing experiment.
 
 **Usage:**
+
 ```bash
 # Re-run all failed agents
 python scripts/rerun_agents.py results/experiment-001/
@@ -229,6 +230,7 @@ python scripts/rerun_agents.py results/experiment-001/ --model claude-sonnet-4-5
 ```
 
 **When to use:**
+
 - Agent executions failed due to network errors
 - Some runs timed out
 - You want to use a different model for failed runs
@@ -240,6 +242,7 @@ python scripts/rerun_agents.py results/experiment-001/ --model claude-sonnet-4-5
 Re-run failed or missing judge evaluations, or regenerate consensus.
 
 **Usage:**
+
 ```bash
 # Re-run all failed judges
 python scripts/rerun_judges.py results/experiment-001/
@@ -252,6 +255,7 @@ python scripts/rerun_judges.py results/experiment-001/ --add-judge opus-4-5
 ```
 
 **When to use:**
+
 - Judge evaluations failed
 - You want to add a new judge model
 - Consensus needs recalculation from existing judges
@@ -261,6 +265,7 @@ python scripts/rerun_judges.py results/experiment-001/ --add-judge opus-4-5
 Rebuild result.json files from existing run_result.json files.
 
 **Usage:**
+
 ```bash
 # Regenerate results for one experiment
 python scripts/regenerate_results.py results/experiment-001/
@@ -270,6 +275,7 @@ python scripts/regenerate_results.py results/
 ```
 
 **When to use:**
+
 - result.json is missing or corrupted
 - You modified aggregation logic and want to recompute
 - run_result.json exists but result.json doesn't
@@ -281,12 +287,14 @@ python scripts/regenerate_results.py results/
 Rebuild agent result.json from execution logs.
 
 **Usage:**
+
 ```bash
 # Regenerate from logs
 python scripts/regenerate_agent_results.py results/experiment-001/
 ```
 
 **When to use:**
+
 - Agent result.json is missing or corrupted
 - Logs exist but result files don't
 - You need to reconstruct results from raw logs
@@ -298,12 +306,14 @@ python scripts/regenerate_agent_results.py results/experiment-001/
 Fix corrupted checkpoint files.
 
 **Usage:**
+
 ```bash
 # Repair checkpoint
 python scripts/repair_checkpoint.py results/experiment-001/.checkpoint.json
 ```
 
 **When to use:**
+
 - Checkpoint file is corrupted (invalid JSON)
 - Experiment won't resume due to checkpoint errors
 - You need to manually fix checkpoint state

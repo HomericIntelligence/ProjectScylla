@@ -85,6 +85,7 @@ You CAN and SHOULD:
 ## Enforcement
 
 The evaluation system monitors for forbidden commands. If detected:
+
 1. The run will be flagged as invalid
 2. The agent output will be marked as "violated constraints"
 3. No score will be assigned

@@ -96,6 +96,7 @@ def _run_advise(self, issue_number: int, issue_title: str, issue_body: str) -> s
 ```
 
 **Why:** The planning workflow should work even if:
+
 - ProjectMnemosyne repository is not cloned
 - marketplace.json is missing
 - Advise step times out or errors
@@ -121,6 +122,7 @@ context = "\n".join(context_parts)
 ```
 
 **Why:**
+
 - Clear section separator with `---`
 - Descriptive header so Claude knows this is prior context
 - Placed between issue body and plan instructions (middle of prompt)
@@ -190,6 +192,7 @@ options:
 **Rationale:** Team knowledge should be leveraged by default. Users can opt-out with `--no-advise` if needed.
 
 **Alternatives considered:**
+
 - ❌ Default OFF with `--enable-advise` flag - Requires users to remember to enable it
 - ❌ Auto-detect ProjectMnemosyne - Too implicit, hard to debug
 
@@ -198,6 +201,7 @@ options:
 **Rationale:** `--print` mode is non-interactive, so slash commands don't work. Instead, instruct Claude to read marketplace.json directly.
 
 **Alternatives considered:**
+
 - ❌ Spawn interactive session for `/advise` - Too heavyweight, slower
 - ❌ Parse marketplace.json in Python - Less flexible, can't leverage Claude's search capabilities
 
@@ -206,6 +210,7 @@ options:
 **Rationale:** Planning should work even without team knowledge. Warn but don't block.
 
 **Alternatives considered:**
+
 - ❌ Fail hard if ProjectMnemosyne missing - Breaks workflow unnecessarily
 - ❌ Silent fallback - Users won't know advise step was skipped
 
@@ -214,6 +219,7 @@ options:
 **Rationale:** DRY principle - both advise and plan steps need same subprocess + retry logic.
 
 **Alternatives considered:**
+
 - ❌ Inline subprocess calls - Code duplication
 - ❌ Separate advise and plan callers - Inconsistent retry behavior
 
@@ -258,10 +264,11 @@ Potential follow-up work:
 
 **Branch:** `integrate-advise-skill-plan-issues`
 **Commit:** `d5cd588`
-**PR:** https://github.com/HomericIntelligence/ProjectScylla/pull/606
+**PR:** <https://github.com/HomericIntelligence/ProjectScylla/pull/606>
 **Auto-merge:** Enabled (will merge on CI pass)
 
 **Files changed:** 9 files, 491 insertions(+), 47 deletions(-)
+
 - 7 modified files
 - 2 new test files
 

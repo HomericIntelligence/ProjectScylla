@@ -1,4 +1,5 @@
 # Evaluation Criteria\n\n## R001: Dead
+
 Dead code removed
 
 **Verification**: Validate the requirement is satisfied.

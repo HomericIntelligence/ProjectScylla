@@ -21,6 +21,7 @@ Use this skill when you need to:
 - Resolve technical debt from mixed dataclass/Pydantic usage
 
 **Trigger conditions:**
+
 - Code review identifies dataclass usage in modules that use Pydantic
 - Need for runtime validation on existing data models
 - Type checking errors with dataclass serialization
@@ -69,6 +70,7 @@ class TokenStats(BaseModel):
 #### Step C: Add Model Configuration (if needed)
 
 Add `ConfigDict(arbitrary_types_allowed=True)` for classes with:
+
 - `Path` fields
 - Enum fields (like `TierID`)
 - Other non-standard types
@@ -205,6 +207,7 @@ pre-commit run --all-files
 ### ❌ Attempt 1: Import RateLimitInfo under TYPE_CHECKING
 
 **What was tried:**
+
 ```python
 from typing import TYPE_CHECKING
 
@@ -216,6 +219,7 @@ class SubTestResult(BaseModel):
 ```
 
 **Why it failed:**
+
 ```
 pydantic.errors.PydanticUserError: `SubTestResult` is not fully defined;
 you should define `RateLimitInfo`, then call `SubTestResult.model_rebuild()`.
@@ -224,6 +228,7 @@ you should define `RateLimitInfo`, then call `SubTestResult.model_rebuild()`.
 Pydantic needs the actual type at runtime for validation, not just for type checking.
 
 **Solution:** Use string annotation + import at module end + `model_rebuild()`:
+
 ```python
 class SubTestResult(BaseModel):
     rate_limit_info: "RateLimitInfo | None" = None
@@ -236,12 +241,14 @@ SubTestResult.model_rebuild()
 ### ❌ Attempt 2: Use model_dump() for JSON Serialization Without mode="json"
 
 **What was tried:**
+
 ```python
 config_dict = config.model_dump()
 json.dumps(config_dict, sort_keys=True)
 ```
 
 **Why it failed:**
+
 ```
 TypeError: Object of type PosixPath is not JSON serializable
 when serializing dict item 'task_prompt_file'
@@ -250,6 +257,7 @@ when serializing dict item 'task_prompt_file'
 Pydantic's default `model_dump()` returns Python objects as-is. Path objects aren't JSON serializable.
 
 **Solution:** Use `mode="json"` parameter:
+
 ```python
 config_dict = config.model_dump(mode="json")  # Converts Path → str
 json.dumps(config_dict, sort_keys=True)
@@ -258,6 +266,7 @@ json.dumps(config_dict, sort_keys=True)
 ### ❌ Attempt 3: Forgot to Remove @dataclass Decorator
 
 **What was tried:**
+
 ```python
 @dataclass
 class _JudgeSlotResult(BaseModel):
@@ -266,6 +275,7 @@ class _JudgeSlotResult(BaseModel):
 ```
 
 **Why it failed:**
+
 ```
 NameError: name 'dataclass' is not defined
 ```
@@ -289,6 +299,7 @@ After removing the import, the decorator was still present.
 ### Files Modified
 
 **Source files (8):**
+
 - `scylla/e2e/models.py` (12 classes)
 - `scylla/e2e/rate_limit.py` (1 class)
 - `scylla/e2e/judge_selection.py` (2 classes)
@@ -299,9 +310,11 @@ After removing the import, the decorator was still present.
 - `scylla/e2e/rerun_base.py` (1 class)
 
 **Workaround reverted (1):**
+
 - `scylla/e2e/checkpoint.py:294` - `to_dict()` → `model_dump(mode="json")`
 
 **Test files (1):**
+
 - `tests/unit/e2e/test_judge_selection.py` - positional → keyword arguments
 
 ### Migration Checklist
@@ -353,11 +366,11 @@ def to_dict(self) -> dict[str, Any]:
 
 ## References
 
-- **PR:** https://github.com/HomericIntelligence/ProjectScylla/pull/592
+- **PR:** <https://github.com/HomericIntelligence/ProjectScylla/pull/592>
 - **Commit:** a06e434 "refactor(e2e): Migrate all dataclasses to Pydantic BaseModel"
 - **Previous migration:** 086e0b4 (migrated 19 dataclasses, left e2e/ untouched)
-- **Pydantic docs:** https://docs.pydantic.dev/latest/
-- **Forward references:** https://docs.pydantic.dev/latest/concepts/postponed_annotations/
+- **Pydantic docs:** <https://docs.pydantic.dev/latest/>
+- **Forward references:** <https://docs.pydantic.dev/latest/concepts/postponed_annotations/>
 
 ## Success Criteria
 

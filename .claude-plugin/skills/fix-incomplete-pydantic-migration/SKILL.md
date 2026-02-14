@@ -25,11 +25,13 @@ Use this skill when you encounter:
 **Symptom**: Tests fail with `AttributeError` on `.model_dump()` after partial Pydantic migration
 
 **Root Cause**:
+
 - Some classes migrated to Pydantic BaseModel (use `.model_dump()`)
 - Other classes still Python dataclasses (use `.to_dict()`)
 - Test code uniformly calls `.model_dump()` assuming all classes are Pydantic
 
 **Example Error**:
+
 ```
 AttributeError: 'ExperimentConfig' object has no attribute 'model_dump'
 ```
@@ -131,6 +133,7 @@ gh pr merge <number> --rebase --delete-branch
 **Why it failed**: Left `<<<<<<< HEAD` markers in code, causing syntax errors in CI
 
 **Fix**: Always verify no conflict markers after rebase:
+
 ```bash
 grep -r "<<<<<<" <file>
 ```
@@ -144,6 +147,7 @@ grep -r "<<<<<<" <file>
 **Why it failed**: Triggered safety net hook - force delete bypasses merge checks
 
 **Fix**: Use safe delete for merged branches:
+
 ```bash
 git branch -d <branch>  # Safe delete (checks merge status)
 ```
@@ -155,6 +159,7 @@ git branch -d <branch>  # Safe delete (checks merge status)
 ### Test Fixes Applied
 
 **Files modified**:
+
 - `scylla/e2e/checkpoint.py` (line 294)
 - `tests/unit/e2e/test_models.py` (14 occurrences)
 - `tests/unit/e2e/test_checkpoint.py` (multiple tests)
@@ -165,6 +170,7 @@ git branch -d <branch>  # Safe delete (checks merge status)
 - `tests/unit/executor/test_agent_container.py`
 
 **Pattern**:
+
 ```python
 # Changed from:
 result = config.model_dump()

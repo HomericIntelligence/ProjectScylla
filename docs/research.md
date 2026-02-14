@@ -187,71 +187,77 @@ Table 5.1: Economic Sustainability and Cost Metrics
 The following metrics are **fully implemented** in both the metrics calculation layer (`scylla/metrics/`) and analysis pipeline (`scylla/analysis/`):
 
 **Quality Metrics:**
-- **Pass-Rate**: Functional test coverage (automated test-based assessment)
-- **Implementation Rate (Impl-Rate)**: Semantic requirement satisfaction (LLM-as-Judge verification)
-- **Score**: Overall performance score based on grading rubric
-- **Consistency**: Output stability measured as 1 - Coefficient of Variation (1-CV)
+
+* **Pass-Rate**: Functional test coverage (automated test-based assessment)
+* **Implementation Rate (Impl-Rate)**: Semantic requirement satisfaction (LLM-as-Judge verification)
+* **Score**: Overall performance score based on grading rubric
+* **Consistency**: Output stability measured as 1 - Coefficient of Variation (1-CV)
 
 **Economic Metrics:**
-- **Cost-of-Pass (CoP)**: Expected cost per correct solution
-- **Frontier CoP**: Minimum CoP across all tiers
-- **Token Distribution**: Component-level cost breakdown (input/output/total tokens)
-- **Cost per Token**: Average cost per input/output token
+
+* **Cost-of-Pass (CoP)**: Expected cost per correct solution
+* **Frontier CoP**: Minimum CoP across all tiers
+* **Token Distribution**: Component-level cost breakdown (input/output/total tokens)
+* **Cost per Token**: Average cost per input/output token
 
 **Process Metrics:**
-- **Latency**: Time from query initiation to resolution
-- **Judge Agreement**: Inter-rater reliability using Krippendorff's alpha
+
+* **Latency**: Time from query initiation to resolution
+* **Judge Agreement**: Inter-rater reliability using Krippendorff's alpha
 
 ### **6.2. Metrics Defined but Not Yet Integrated**
 
 The following metrics are **implemented** in `scylla/metrics/process.py` but **not yet integrated** into the analysis pipeline (`scylla/analysis/`):
 
 **Process Metrics (Future Integration):**
-- **Fine-Grained Progress Rate (R_Prog)**: Incremental advancement tracking through expected steps
-  - Implementation: `scylla/metrics/process.py:calculate_r_prog()`
-  - Status: Data structures defined (ProgressTracker, ProgressStep), calculation functions complete
-  - Integration needed: Add to dataframes.py, loader.py, and create analysis figures/tables
 
-- **Change Fail Percentage (CFP)**: Stability metric for production changes requiring remediation
-  - Implementation: `scylla/metrics/process.py:calculate_cfp()`
-  - Status: Data structures defined (ChangeResult), calculation functions complete
-  - Integration needed: Add to dataframes.py, loader.py, and create comparison tables
+* **Fine-Grained Progress Rate (R_Prog)**: Incremental advancement tracking through expected steps
+  * Implementation: `scylla/metrics/process.py:calculate_r_prog()`
+  * Status: Data structures defined (ProgressTracker, ProgressStep), calculation functions complete
+  * Integration needed: Add to dataframes.py, loader.py, and create analysis figures/tables
 
-- **PR Revert Rate**: Frequency of agent-generated changes reverted by human reviewers
-  - Implementation: `scylla/metrics/process.py:calculate_pr_revert_rate()`
-  - Status: Uses ChangeResult dataclass, calculation functions complete
-  - Integration needed: Add to dataframes.py, loader.py, and create quality analysis tables
+* **Change Fail Percentage (CFP)**: Stability metric for production changes requiring remediation
+  * Implementation: `scylla/metrics/process.py:calculate_cfp()`
+  * Status: Data structures defined (ChangeResult), calculation functions complete
+  * Integration needed: Add to dataframes.py, loader.py, and create comparison tables
+
+* **PR Revert Rate**: Frequency of agent-generated changes reverted by human reviewers
+  * Implementation: `scylla/metrics/process.py:calculate_pr_revert_rate()`
+  * Status: Uses ChangeResult dataclass, calculation functions complete
+  * Integration needed: Add to dataframes.py, loader.py, and create quality analysis tables
 
 **Strategic Drift:**
-- Defined in research methodology (Section 4.1) as goal coherence over multi-step tasks
-- Implementation: Partially covered by ProgressStep.goal_alignment field
-- Status: Needs dedicated calculation function and integration
+
+* Defined in research methodology (Section 4.1) as goal coherence over multi-step tasks
+* Implementation: Partially covered by ProgressStep.goal_alignment field
+* Status: Needs dedicated calculation function and integration
 
 **S_Full (Full Completion Score):**
-- Mentioned in assessment but not fully defined in research.md or implemented
-- Status: Requires specification before implementation
+
+* Mentioned in assessment but not fully defined in research.md or implemented
+* Status: Requires specification before implementation
 
 ### **6.3. Future Work Recommendations**
 
 1. **Integrate Process Metrics** (R_Prog, CFP, PR Revert Rate):
-   - Extend `run_result.json` schema to include process tracking data
-   - Update `loader.py` to extract process metrics from experiment results
-   - Add columns to `runs_df` in `dataframes.py`
-   - Create dedicated figures (e.g., Fig_RProg: Progress Rate by Tier)
-   - Add to comparison tables (e.g., Table_CFP: Change Fail Percentage Analysis)
+   * Extend `run_result.json` schema to include process tracking data
+   * Update `loader.py` to extract process metrics from experiment results
+   * Add columns to `runs_df` in `dataframes.py`
+   * Create dedicated figures (e.g., Fig_RProg: Progress Rate by Tier)
+   * Add to comparison tables (e.g., Table_CFP: Change Fail Percentage Analysis)
 
 2. **Advanced Statistical Modeling**:
-   - Implement Hierarchical Bayesian Generalised Linear Models (HiBayES) for multi-level data structure
-   - Account for asymmetric and nested evaluation data (domains, subdomains, repetitions)
-   - Ensure statistically sound conclusions about complexity and difficulty effects
+   * Implement Hierarchical Bayesian Generalised Linear Models (HiBayES) for multi-level data structure
+   * Account for asymmetric and nested evaluation data (domains, subdomains, repetitions)
+   * Ensure statistically sound conclusions about complexity and difficulty effects
 
 3. **Power Analysis**:
-   - Add statistical power reporting to comparison tables
-   - Ensure sufficient sample sizes for detecting meaningful effect sizes
+   * Add statistical power reporting to comparison tables
+   * Ensure sufficient sample sizes for detecting meaningful effect sizes
 
 4. **Multi-Experiment Support**:
-   - Enhance rubric conflict handling when loading multiple experiments
-   - Add multi-experiment comparison tables
+   * Enhance rubric conflict handling when loading multiple experiments
+   * Add multi-experiment comparison tables
 
 ## **7\. Conclusion and Strategic Research Recommendations**
 
@@ -265,7 +271,7 @@ The strategic recommendation for future deployment will be based on the **T6 hyb
 
 Finally, the complexity of evaluating hierarchically nested agentic data—where performance metrics are gathered across multiple domains, subdomains, and repetitions—requires advanced statistical treatment.36 For future research, it is recommended to adopt statistical frameworks such as Hierarchical Bayesian Generalised Linear Models (HiBayES) to provide a robust statistical analysis that properly accounts for the asymmetric and multi-level structure of the generated evaluation data.36 This advanced modeling will ensure that conclusions regarding the effects of complexity and difficulty are statistically sound.
 
-#### **Works cited**
+### **Works cited**
 
 1. What are AI Agents? \- Artificial Intelligence \- AWS, accessed December 12, 2025, [https://aws.amazon.com/what-is/ai-agents/](https://aws.amazon.com/what-is/ai-agents/)
 2. AmirLayegh/agentic-ablation: Automated neural network ablation studies using LLM agents and LangGraph. Systematically remove components, test performance, and gain insights into architecture importance through an intelligent multi-agent workflow. \- GitHub, accessed December 12, 2025, [https://github.com/AmirLayegh/agentic-ablation](https://github.com/AmirLayegh/agentic-ablation)

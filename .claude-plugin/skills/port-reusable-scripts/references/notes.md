@@ -52,7 +52,7 @@ from common import get_repo_root  # noqa: E402
 
 - D400/D401/D415: Docstring formatting
 - E501: Line too long (break into vars)
-- D107: Missing __init__ docstring
+- D107: Missing **init** docstring
 - E402: Suppress with noqa (correct for path setup)
 
 ## Time Investment

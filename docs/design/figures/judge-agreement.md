@@ -5,6 +5,7 @@
 Figure 14 visualizes inter-judge agreement through pairwise scatter plots comparing judge scores across all evaluation runs. This figure is generated separately for each tier, producing a 3x3 scatter matrix that displays all pairwise judge comparisons.
 
 **Key Characteristics**:
+
 - Separate figure per tier (T0-T6)
 - 3x3 scatter matrix layout
 - Pairwise comparisons: Judge 1 vs 2, Judge 2 vs 3, Judge 1 vs 3
@@ -21,11 +22,13 @@ The primary purposes of Figure 14 are to:
 4. **Diagnose Evaluation Quality**: Low agreement may indicate ambiguous rubrics, unclear criteria, or borderline cases
 
 **What Good Agreement Looks Like**:
+
 - Points cluster tightly around the diagonal (y = x line)
 - High correlation across all three pairwise comparisons
 - Minimal scatter perpendicular to the diagonal
 
 **What Poor Agreement Looks Like**:
+
 - Wide scatter away from the diagonal
 - Different patterns in different pairwise comparisons
 - Systematic bias (points consistently above or below diagonal)
@@ -35,6 +38,7 @@ The primary purposes of Figure 14 are to:
 **Input**: `judges_df` - Judge scores DataFrame from `scylla.analysis.loader.load_judges_results()`
 
 **Required Columns**:
+
 - `agent_model` - Agent model being evaluated (e.g., "claude-opus-4-5")
 - `tier` - Testing tier (T0-T6)
 - `subtest` - Subtest identifier within the tier
@@ -43,6 +47,7 @@ The primary purposes of Figure 14 are to:
 - `judge_score` - Judge weighted score [0.0, 1.0]
 
 **Data Transformation**:
+
 1. Pivot judges_df from long to wide format using `judge_number` as columns
 2. Creates columns: `judge_1`, `judge_2`, `judge_3`
 3. Drop rows with missing judge scores (incomplete consensus)
@@ -55,6 +60,7 @@ The primary purposes of Figure 14 are to:
 For each pair of judges (i, j), agreement can be quantified using:
 
 **Pearson Correlation Coefficient**:
+
 ```
 r = Σ[(x_i - x̄)(y_i - ȳ)] / √[Σ(x_i - x̄)² · Σ(y_i - ȳ)²]
 
@@ -66,6 +72,7 @@ where:
 ```
 
 **Interpretation**:
+
 - r = 1.0: Perfect positive correlation (identical scores)
 - r = 0.0: No correlation (random agreement)
 - r = -1.0: Perfect negative correlation (inverse scores)
@@ -85,6 +92,7 @@ where:
 ```
 
 **Interpretation Thresholds** (Landis & Koch, 1977):
+
 | Kappa | Agreement Level |
 |-------|----------------|
 | < 0.00 | Poor |
@@ -106,6 +114,7 @@ where:
 ```
 
 **Interpretation**:
+
 - MAD = 0.00: Perfect agreement (identical scores)
 - MAD = 0.05: Excellent agreement (±5% variation)
 - MAD = 0.10: Good agreement (±10% variation)
@@ -122,6 +131,7 @@ Inter-rater reliability measures the degree of agreement among independent rater
 - **Scale**: Continuous scores [0.0, 1.0] representing weighted rubric scores
 
 **Key Assumptions**:
+
 1. **Independence**: Each judge run operates independently without knowledge of other judge scores
 2. **Common Rubric**: All judges use the same evaluation criteria and rubric
 3. **Stochastic Variance**: Disagreements arise from inherent non-determinism in LLM evaluation
@@ -149,6 +159,7 @@ where:
 ```
 
 This mechanism:
+
 - Weights high-confidence judgments more heavily
 - Reduces impact of uncertain scores
 - Provides single consensus score for downstream metrics
@@ -160,17 +171,20 @@ This mechanism:
 **Type**: Scatter plot matrix (faceted)
 
 **Layout**:
+
 - **Columns**: Comparison pairs ("Judge 1 vs 2", "Judge 2 vs 3", "Judge 1 vs 3")
 - **Rows**: Agent models (e.g., "claude-opus-4-5", "claude-sonnet-4")
 - **Cell**: Scatter plot with 60px circles, 0.6 opacity
 
 **Axes**:
+
 - **X-axis**: First judge score [0.0, 1.0]
 - **Y-axis**: Second judge score [0.0, 1.0]
 - **Scales**: Shared across all panels for direct comparison
 - **Domain**: Dynamically computed with 10% padding, rounded to nearest 0.05
 
 **Visual Encoding**:
+
 - **Position X**: Score from first judge in pair
 - **Position Y**: Score from second judge in pair
 - **Tooltip**: Comparison pair, judge identifiers, both scores (3 decimal places)
@@ -190,6 +204,7 @@ y=alt.Y("score_y:Q", scale=alt.Scale(domain=score_y_domain))
 ```
 
 **Algorithm**:
+
 1. Compute data min/max
 2. Add 10% padding on both sides
 3. Enforce minimum range of 0.1
@@ -209,6 +224,7 @@ for tier in tier_order:
 ```
 
 **Output Files** (per tier):
+
 - `fig14_t0_judge_agreement.vl.json` - Vega-Lite spec for T0
 - `fig14_t0_judge_agreement.png` - Rendered PNG (300 DPI)
 - `fig14_t1_judge_agreement.vl.json` - Vega-Lite spec for T1
@@ -233,6 +249,7 @@ Visual assessment of scatter plot agreement:
 ### Diagnostic Patterns
 
 **Pattern 1: High Agreement (Good)**
+
 ```
 Score Judge 2
 1.0  │              ●
@@ -243,9 +260,11 @@ Score Judge 2
      0.0          1.0
          Score Judge 1
 ```
+
 Points cluster tightly on diagonal → Reliable consensus
 
 **Pattern 2: Systematic Bias (Concerning)**
+
 ```
 Score Judge 2
 1.0  │          ●●●●●
@@ -256,9 +275,11 @@ Score Judge 2
      0.0          1.0
          Score Judge 1
 ```
+
 Points consistently above diagonal → Judge 2 systematically scores higher
 
 **Pattern 3: Random Scatter (Poor)**
+
 ```
 Score Judge 2
 1.0  │  ●   ●     ●
@@ -269,6 +290,7 @@ Score Judge 2
      0.0          1.0
          Score Judge 1
 ```
+
 No correlation → Unreliable evaluation
 
 ### Implications of Low Agreement
@@ -291,6 +313,7 @@ No correlation → Unreliable evaluation
    - Insufficient context
 
 **Recommended Actions**:
+
 1. Review and refine rubric definitions
 2. Add objective validation commands to rubric
 3. Increase judge runs (3 → 5) for high-variance tasks
@@ -300,16 +323,19 @@ No correlation → Unreliable evaluation
 ## Related Figures
 
 ### Figure 2: Judge Score Variance
+
 - Shows distribution of judge scores across all runs
 - Complements pairwise agreement with overall variance metrics
 - Helps identify high-variance tiers/subtests
 
 ### Figure 17: Overall Judge Agreement
+
 - Aggregate agreement metrics across all tiers
 - Provides single summary statistic per tier
 - Useful for comparing agreement levels between tiers
 
 **Relationship**:
+
 - Fig 14 (this): Detailed pairwise scatter plots per tier
 - Fig 2: Variance distributions
 - Fig 17: Aggregate agreement metrics
@@ -323,6 +349,7 @@ Together, these figures provide complete picture of judge reliability.
 **Function**: `fig14_judge_agreement(judges_df, output_dir, render=True)`
 
 **Dependencies**:
+
 - `scylla.analysis.figures.derive_tier_order()` - Extract tier ordering from data
 - `scylla.analysis.figures.spec_builder.compute_dynamic_domain()` - Calculate axis domains
 - `scylla.analysis.figures.spec_builder.save_figure()` - Save Vega-Lite spec and renders
@@ -330,6 +357,7 @@ Together, these figures provide complete picture of judge reliability.
 **Key Implementation Details**:
 
 1. **Pivot to Wide Format**:
+
 ```python
 judge_pivot = judges_df.pivot_table(
     index=["agent_model", "tier", "subtest", "run_number"],
@@ -338,7 +366,8 @@ judge_pivot = judges_df.pivot_table(
 ).reset_index()
 ```
 
-2. **Generate Pairwise Comparisons**:
+1. **Generate Pairwise Comparisons**:
+
 ```python
 pair_indices = [(0, 1), (1, 2), (0, 2)]  # (1v2), (2v3), (1v3)
 for i, j in pair_indices:
@@ -349,7 +378,8 @@ for i, j in pair_indices:
     })
 ```
 
-3. **Per-Tier Figure Generation**:
+1. **Per-Tier Figure Generation**:
+
 ```python
 for tier in tier_order:
     tier_pairs_df = pairs_df[pairs_df["tier"] == tier]

@@ -5,6 +5,7 @@ This directory contains the research methodology, design documentation, and supp
 ## Canonical Research Documentation
 
 **[research.md](research.md)** is the authoritative research methodology document for ProjectScylla. It defines:
+
 - Testing tiers and ablation framework
 - Core metrics (Quality, Economic, Process)
 - Evaluation protocols and statistical methods
@@ -17,21 +18,26 @@ This document is referenced by 20+ locations across 13 files in the codebase.
 ## Other Documentation
 
 ### Research Paper
+
 - **[research_paper.tex](research_paper.tex)** — LaTeX source for the research paper
 - **[arxiv-submission.md](arxiv-submission.md)** — arXiv submission guidelines and metadata
 - **[arxiv/](arxiv/)** — arXiv submission artifacts
 
 ### Design Documentation
+
 - **[design/](design/)** — Architectural design documents and decision records
 
 ### Developer Documentation
+
 - **[dev/](dev/)** — Developer guides and technical documentation
 
 ### Figures
+
 - **[figures/](figures/)** — All figure documentation and assets
   - Each figure has a corresponding `.md` file documenting its purpose, data sources, and interpretation
 
 ### Templates and Summaries
+
 - **[template.md](template.md)** — Markdown template for documentation
 - **[template.tex](template.tex)** — LaTeX template for papers
 - **[summary.md](summary.md)** — Project summary and overview

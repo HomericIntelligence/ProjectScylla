@@ -288,12 +288,14 @@ class AiderAdapter(BaseAdapter):
 To add a new adapter:
 
 1. **Create the adapter class**:
+
    ```bash
    # Create file
    touch scylla/adapters/my_adapter.py
    ```
 
 2. **Implement BaseAdapter**:
+
    ```python
    from scylla.adapters.base import BaseAdapter
 
@@ -304,6 +306,7 @@ To add a new adapter:
    ```
 
 3. **Register the adapter**:
+
    ```python
    # In scylla/adapters/__init__.py
    from .my_adapter import MyAdapter
@@ -317,6 +320,7 @@ To add a new adapter:
    ```
 
 4. **Add tests**:
+
    ```python
    # In tests/unit/adapters/test_my_adapter.py
    def test_my_adapter_basic():

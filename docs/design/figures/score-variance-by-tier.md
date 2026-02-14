@@ -9,6 +9,7 @@ Figure 01 visualizes the distribution of evaluation scores across all testing ti
 **Primary Question**: How does score variance evolve as we add architectural complexity (prompts → skills → tooling → delegation → hierarchy)?
 
 **Secondary Questions**:
+
 - Which tiers exhibit high variance (indicating inconsistent performance)?
 - Do higher tiers (T4-T6) show tighter score distributions due to iterative refinement?
 - Are there multi-modal distributions suggesting distinct performance clusters?
@@ -21,10 +22,12 @@ This figure enables researchers to identify whether architectural investments yi
 **Primary DataFrame**: `runs_df`
 
 **Required Columns**:
+
 - `tier` (categorical): Testing tier identifier (T0, T1, T2, T3, T4, T5, T6)
 - `score` (float): Normalized evaluation score on [0, 1] scale
 
 **Data Preparation**:
+
 ```python
 data = runs_df[["tier", "score"]].copy()
 ```
@@ -40,6 +43,7 @@ data = runs_df[["tier", "score"]].copy()
 For each tier $T_i$, we observe a set of scores $S_i = \{s_1, s_2, \ldots, s_n\}$ where $s_j \in [0, 1]$.
 
 **Histogram Binning**:
+
 - Bin width: $\Delta = 0.05$
 - Bin edges: $[0.00, 0.05), [0.05, 0.10), \ldots, [0.95, 1.00]$
 - Number of bins: $k = \lceil 1.0 / 0.05 \rceil = 20$
@@ -139,9 +143,11 @@ Report p-values with α = 0.05 threshold for significance.
 ## 6. Visualization Details
 
 ### Chart Type
+
 **Histogram** with vertical bars (`alt.Chart.mark_bar()`)
 
 ### Axes
+
 - **X-axis**: `score:Q` (quantitative)
   - Title: "Score"
   - Domain: [0, 1]
@@ -154,20 +160,25 @@ Report p-values with α = 0.05 threshold for significance.
   - Shows frequency (number of runs) in each score bin
 
 ### Faceting
+
 - **Column Facets**: `alt.Column("tier:N", title="Tier", sort=tier_order)`
   - Each tier displayed as separate histogram panel
   - Left-to-right progression: T0 → T1 → T2 → T3 → T4 → T5 → T6
   - Natural sorting ensures correct tier order even with gaps (e.g., if T2 is missing)
 
 ### Color Scheme
+
 - **Single Color**: Default blue (`#4C78A8` from publication theme)
 - No color encoding by tier (tiers are separated spatially via facets)
 
 ### Title
+
 "Score Distribution per Tier"
 
 ### Theme
+
 Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
+
 - Font: Serif
 - Axis label size: 11pt
 - Axis title size: 13pt
@@ -175,6 +186,7 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
 - Domain color: `#333333`
 
 ### Interactive Features (if rendered in browser)
+
 - **Tooltip**: Hovering over bars shows:
   - Score bin range (e.g., "[0.45, 0.50)")
   - Count (number of runs in bin)
@@ -203,6 +215,7 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
 ### What "Good" Looks Like
 
 **Ideal Pattern (T4-T5)**:
+
 - Tight distribution (narrow histogram)
 - Peak near 1.0 (high mean score)
 - Minimal left tail (few catastrophic failures)
@@ -212,6 +225,7 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
 ### What "Bad" Looks Like
 
 **Problematic Pattern (T3)**:
+
 - Wide distribution (σ > 0.25)
 - Bimodal with peaks at extremes (0.0 and 1.0)
 - Suggests tool failures causing catastrophic collapses
@@ -228,20 +242,24 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
 ### Example Interpretations
 
 **Scenario 1: T0 bimodal [0.0-0.1, 0.8-1.0], T5 unimodal [0.85-1.0]**
+
 - Interpretation: Baseline (T0) has binary outcomes (either solves or fails). Advanced architecture (T5) consistently achieves high scores through iterative refinement.
 - Conclusion: T5 justifies its cost through reduced failure rate.
 
 **Scenario 2: T2 σ=0.15, T3 σ=0.28**
+
 - Interpretation: Adding tools (T3) increased variance compared to skills (T2), likely due to tool call failures and token budget issues.
 - Conclusion: Investigate tool reliability and schema optimization (see "Token Efficiency Chasm" in research.md).
 
 **Scenario 3: T4 peak at [0.60-0.70], T5 peak at [0.90-1.0]**
+
 - Interpretation: Flat delegation (T4) improves over baseline but hierarchical orchestration (T5) provides substantial quality gains.
 - Conclusion: Iterative refinement in T5 is effective; measure Cost-of-Pass to assess economic viability.
 
 ## 8. Related Figures
 
 ### Direct Variance Analysis
+
 - **Figure 16a**: Success Variance Per Subtest (heatmap)
   - Shows per-subtest variance grouped by tier
   - Complements Fig 01 by breaking down tier-level variance into subtest components
@@ -252,6 +270,7 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
   - Provides quantitative comparison (σ², CV) where Fig 01 shows distributions
 
 ### Related Failure Analysis
+
 - **Figure 03**: Failure Rate by Tier (stacked bar chart)
   - Shows grade distribution (A/B/C/D/F) per tier
   - Complements Fig 01 by categorizing scores into discrete grades
@@ -266,12 +285,14 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
   - Summarizes binary pass/fail trends that manifest as bimodal distributions in Fig 01
 
 ### Cross-Reference to Tables
+
 - **Table 2.1** (in `/docs/research.md`): Tier definitions and hypothesized variance patterns
 - **Metrics Definitions** (in `.claude/shared/metrics-definitions.md`): Consistency formula (1 - CV)
 
 ## 9. Code Reference
 
 ### Implementation
+
 **File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/variance.py`
 
 **Function**: `fig01_score_variance_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)`
@@ -281,16 +302,19 @@ Publication-quality theme (see `scylla/analysis/figures/spec_builder.py`):
 ### Key Code Sections
 
 **Data Preparation** (lines 31-32):
+
 ```python
 data = runs_df[["tier", "score"]].copy()
 ```
 
 **Tier Ordering** (lines 34-35):
+
 ```python
 tier_order = derive_tier_order(data)
 ```
 
 **Histogram Specification** (lines 37-45):
+
 ```python
 histogram = (
     alt.Chart(data)
@@ -303,6 +327,7 @@ histogram = (
 ```
 
 **Faceting by Tier** (lines 47-50):
+
 ```python
 chart = histogram.facet(
     column=alt.Column("tier:N", title="Tier", sort=tier_order)
@@ -310,18 +335,22 @@ chart = histogram.facet(
 ```
 
 **Output** (line 52):
+
 ```python
 save_figure(chart, "fig01_score_variance_by_tier", output_dir, render)
 ```
 
 ### Output Files
+
 When `render=True`, generates:
+
 - `fig01_score_variance_by_tier.vl.json` - Vega-Lite JSON specification
 - `fig01_score_variance_by_tier.png` - Rasterized image (300 DPI for publication)
 - `fig01_score_variance_by_tier.pdf` - Vector PDF (if enabled)
 - `fig01_score_variance_by_tier_include.tex` - LaTeX inclusion snippet (if PDF enabled)
 
 ### Dependencies
+
 - `altair` - Declarative visualization library for Vega-Lite specs
 - `pandas` - Data manipulation
 - `scylla.analysis.config` - Configuration loading
@@ -329,6 +358,7 @@ When `render=True`, generates:
 - `scylla.analysis.figures.spec_builder` - Figure saving utilities
 
 ### Usage Example
+
 ```python
 from pathlib import Path
 import pandas as pd
@@ -343,19 +373,23 @@ fig01_score_variance_by_tier(runs_df, output_dir, render=True)
 ```
 
 ### Testing
+
 Tested via end-to-end analysis pipeline in `scylla/analysis/generate_all_figures.py`, which:
+
 1. Loads experiment results from `runs_df` aggregation
 2. Calls all figure generation functions including `fig01_score_variance_by_tier`
 3. Outputs figures to `results/figures/` directory
 4. Validates Vega-Lite JSON spec structure
 
 ### Configuration
+
 - **Bin width**: Hardcoded as `0.05` in line 42
 - **Tier order**: Dynamically derived from data (no hardcoded tier list)
 - **Color scheme**: Uses default publication theme (no tier-specific colors)
 - **Title**: "Score Distribution per Tier" (line 49)
 
 ### Related Functions
+
 - `fig03_failure_rate_by_tier()` (lines 55-119) - Grade distribution analysis
 - `fig16a_success_variance_per_subtest()` (lines 122-217) - Per-subtest variance heatmap
 - `fig16b_success_variance_aggregate()` (lines 220-321) - Aggregate variance bar charts

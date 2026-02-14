@@ -12,10 +12,12 @@
 Initial bug report: LLM judge failing with Haiku model when JSON wrapped in XML tags.
 
 Error was in `scylla/e2e/llm_judge.py:_parse_judge_response()` which only handled:
+
 - Markdown code blocks (`` ```json `` or `` ``` ``)
 - Raw JSON via `json.loads()`
 
 **Did NOT handle**:
+
 - XML-wrapped JSON: `<json_evaluation>{"score": 0.8}</json_evaluation>`
 - Preamble text before JSON: `Here is the result: {"score": 0.8}`
 
@@ -49,11 +51,13 @@ grep -r 're.search.*json' scylla/
 ## Implementation Strategy
 
 Chose to:
+
 1. Extract proven implementation to shared utility
 2. Update all 3 consumers
 3. Add comprehensive tests
 
 **Why this approach**:
+
 - Fixes the bug in llm_judge.py
 - Removes duplicate code (113 lines removed)
 - Prevents future drift
@@ -126,6 +130,7 @@ Exact copy of working implementation, now in `extract_json_from_llm_response()`.
 ### Unit Tests (test_utils.py)
 
 16 test cases covering:
+
 - Happy paths (raw JSON, code blocks)
 - Edge cases (XML tags, preamble, trailing text)
 - Error cases (no JSON, malformed, unbalanced braces)
@@ -134,6 +139,7 @@ Exact copy of working implementation, now in `extract_json_from_llm_response()`.
 ### Integration Tests (test_subtest_executor.py)
 
 Added 3 tests for `_parse_judge_response()`:
+
 1. XML-wrapped JSON (the original bug)
 2. Preamble text
 3. Markdown code block
@@ -145,10 +151,12 @@ Added 3 tests for `_parse_judge_response()`:
 ### 1. Test Grade Expectations
 
 Initial tests expected:
+
 - 0.8 → "B" grade
 - 0.7 → "C" grade
 
 Actual grading scale:
+
 - 0.8 → "A" grade
 - 0.7 → "B" grade
 
@@ -167,6 +175,7 @@ Ruff error: `D301 Use r""" if any backslashes in a docstring`
 Full test suite showed 2 failures in `tests/unit/executor/test_agent_container.py`.
 
 **Investigation**:
+
 ```bash
 git stash
 pixi run python -m pytest tests/unit/executor/test_agent_container.py::test_build_volumes_without_claude_md -q
@@ -257,7 +266,7 @@ gh issue comment 503 --body "Implementation Complete ✅..."
 
 ## Links
 
-- **Issue**: https://github.com/HomericIntelligence/ProjectScylla/issues/503
-- **PR**: https://github.com/HomericIntelligence/ProjectScylla/pull/505
+- **Issue**: <https://github.com/HomericIntelligence/ProjectScylla/issues/503>
+- **PR**: <https://github.com/HomericIntelligence/ProjectScylla/pull/505>
 - **Commit**: cfa6869
 - **Branch**: fix-llm-judge-json-parsing

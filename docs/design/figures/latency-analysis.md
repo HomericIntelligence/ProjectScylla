@@ -19,6 +19,7 @@ The latency analysis figure serves multiple purposes:
 **Primary DataFrame**: `runs_df` (Runs DataFrame)
 
 **Required Columns**:
+
 - `agent_model`: Model identifier (e.g., "claude-opus-4", "claude-sonnet-4")
 - `tier`: Testing tier (T0, T1, T2, T3, T4, T5, T6)
 - `agent_duration_seconds`: Time spent in agent execution phase (float, seconds)
@@ -48,6 +49,7 @@ judge_proportion = judge_duration_mean / total_duration_mean
 ```
 
 Where:
+
 - `agent_proportion + judge_proportion = 1.0`
 - Values range from 0.0 to 1.0
 
@@ -69,6 +71,7 @@ max_concurrent_runs = budget_hours * 3600 / p95_latency
 **Critical Path Analysis**: The total stacked height represents the critical path duration for a single evaluation run, essential for pipeline scheduling.
 
 **Resource Utilization**: Phase breakdown indicates whether optimization efforts should focus on:
+
 - Agent execution (model inference, tool calls, reasoning)
 - Judge evaluation (LLM-based assessment, criteria checking)
 
@@ -93,6 +96,7 @@ These budgets inform SLA definitions and timeout configurations.
 ### Chart Type
 
 **Stacked Bar Chart** with faceting:
+
 - X-axis: Tier (T0, T1, T2, T3, T4, T5, T6)
 - Y-axis: Mean Duration (seconds)
 - Stack: Two phases (Agent Execution, Judge Evaluation)
@@ -101,11 +105,13 @@ These budgets inform SLA definitions and timeout configurations.
 ### Visual Encoding
 
 **Colors**:
+
 - Agent Execution: Retrieved from centralized color palette (`get_color_scale("phases", ...)`)
 - Judge Evaluation: Retrieved from centralized color palette (`get_color_scale("phases", ...)`)
 - Colors are consistent across all figures using the phase category
 
 **Dimensions**:
+
 - Chart width: 350 pixels per facet
 - Chart height: 250 pixels
 - Title: "Latency Breakdown by Tier"
@@ -113,11 +119,13 @@ These budgets inform SLA definitions and timeout configurations.
 ### Interactive Elements
 
 **Tooltips** display on hover:
+
 - Tier: Testing tier identifier
 - Phase: "Agent Execution" or "Judge Evaluation"
 - Duration (s): Mean duration formatted to 2 decimal places
 
 **Sort Order**:
+
 - Tiers: Natural order (T0, T1, ..., T6) derived from data
 - Phases: Ascending order (Agent before Judge in stack)
 
@@ -136,16 +144,19 @@ These budgets inform SLA definitions and timeout configurations.
 ### Acceptable Latency Ranges
 
 **Good Performance** (within budget):
+
 - Total latency ≤ upper bound of tier budget
 - Agent phase dominates (>60% of total)
 - Minimal variance across runs
 
 **Acceptable Performance** (near budget):
+
 - Total latency within 20% of budget
 - Balanced phase distribution (40-60% each)
 - Moderate variance
 
 **Poor Performance** (exceeds budget):
+
 - Total latency >120% of budget
 - Judge phase dominates (>60% of total, indicating evaluation bottleneck)
 - High variance (unreliable performance)
@@ -153,11 +164,13 @@ These budgets inform SLA definitions and timeout configurations.
 ### Pattern Analysis
 
 **Tier Scaling Patterns**:
+
 - Linear scaling: Latency increases proportionally with tier complexity (expected)
 - Sublinear scaling: Efficiency gains at higher tiers (good optimization)
 - Superlinear scaling: Performance degradation at higher tiers (investigate bottlenecks)
 
 **Phase Distribution Patterns**:
+
 - Agent-heavy: Complex reasoning, many tool calls, extended thinking
 - Judge-heavy: Complex criteria, multi-dimensional evaluation, slow judge model
 - Balanced: Well-optimized evaluation pipeline
@@ -195,14 +208,17 @@ Based on observed patterns:
 ### Cross-Metric Insights
 
 **Latency vs Cost**:
+
 - Higher latency often correlates with higher token usage and cost
 - Judge latency may be disproportionate to judge cost if using faster, cheaper models
 
 **Latency vs Quality**:
+
 - Longer agent latency may indicate more thorough reasoning (higher quality)
 - Optimal tier balances latency, cost, and quality
 
 **Latency vs Variance**:
+
 - High latency variance indicates unstable performance
 - Compare with variance figures to identify consistency issues
 
@@ -215,6 +231,7 @@ Based on observed patterns:
 **Line Range**: 17-84
 
 **Key Dependencies**:
+
 - `altair`: Chart generation and Vega-Lite specification
 - `pandas`: Data aggregation and transformation
 - `scylla.analysis.figures.derive_tier_order`: Natural tier sorting
@@ -222,6 +239,7 @@ Based on observed patterns:
 - `scylla.analysis.figures.spec_builder.save_figure`: Multi-format export
 
 **Output Files**:
+
 - `fig13_latency.json`: Vega-Lite specification
 - `fig13_latency.png`: Raster image (if render=True)
 - `fig13_latency.pdf`: Vector graphic (if render=True)

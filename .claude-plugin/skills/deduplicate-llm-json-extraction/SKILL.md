@@ -22,6 +22,7 @@ Apply this pattern when you encounter:
 5. **Missing test coverage** - implementations lack comprehensive tests
 
 **Trigger signals**:
+
 - Finding same regex patterns in multiple files
 - Same algorithm (e.g., brace-matching) duplicated across modules
 - Bug report affects one consumer but identical code exists elsewhere
@@ -55,6 +56,7 @@ grep -r "re.search.*json" scylla/
 ```
 
 **What to look for**:
+
 - Same regex patterns (e.g., `` r"```(?:json)?\s*(\{[\s\S]*?\})\s*```" ``)
 - Same algorithmic structure (find opening brace, match depth, extract substring)
 - Same error handling patterns
@@ -63,6 +65,7 @@ grep -r "re.search.*json" scylla/
 ### Step 2: Choose the Best Implementation as Source
 
 **Selection criteria** (in order):
+
 1. ✅ **Most robust** - handles the most edge cases
 2. ✅ **Best tested** - has existing test coverage
 3. ✅ **Most recent** - likely to have latest fixes
@@ -77,12 +80,14 @@ In this case: `parser.py:267-308` was chosen (identical to `evaluator.py`, both 
 **Created**: `scylla/judge/utils.py`
 
 **Key decisions**:
+
 - ✅ Use descriptive name: `extract_json_from_llm_response()`
 - ✅ Add comprehensive docstring with examples
 - ✅ Include all edge cases in docstring
 - ✅ Keep same signature as original functions
 
 **Template**:
+
 ```python
 """Shared utilities for <module>-related operations."""
 
@@ -139,6 +144,7 @@ __all__ = [
 **Pattern for each consumer**:
 
 **Before** (full implementation):
+
 ```python
 def _extract_json(self, output: str) -> dict[str, Any] | None:
     """Extract JSON object from output text."""
@@ -150,6 +156,7 @@ def _extract_json(self, output: str) -> dict[str, Any] | None:
 ```
 
 **After** (delegation):
+
 ```python
 from <module>.utils import extract_json_from_llm_response
 
@@ -159,6 +166,7 @@ def _extract_json(self, output: str) -> dict[str, Any] | None:
 ```
 
 **For standalone functions** (like `_parse_judge_response`):
+
 ```python
 # Before: 40+ lines of extraction + validation
 # After:
@@ -173,6 +181,7 @@ if data is None:
 **Create**: `tests/unit/<module>/test_utils.py`
 
 **Test coverage checklist**:
+
 - ✅ Raw JSON (happy path)
 - ✅ JSON in markdown code blocks (`` ```json `` and `` ``` ``)
 - ✅ JSON wrapped in XML tags with preamble
@@ -190,6 +199,7 @@ if data is None:
 - ✅ Multiple JSON objects (extracts first)
 
 **Template**:
+
 ```python
 """Tests for <module> utility functions."""
 
@@ -260,6 +270,7 @@ pre-commit run --files <changed-files>
 ```
 
 **Expected results**:
+
 - ✅ All new tests pass
 - ✅ All integration tests pass (including new cases)
 - ✅ Full test suite passes (or pre-existing failures documented)
@@ -268,6 +279,7 @@ pre-commit run --files <changed-files>
 ### Step 9: Commit and PR
 
 **Commit message format**:
+
 ```
 refactor(<module>): deduplicate <functionality> & fix <bug>
 
@@ -301,6 +313,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
 **PR workflow**:
+
 ```bash
 git checkout -b fix-<description>
 git add <files>
@@ -329,6 +342,7 @@ gh pr merge --auto --rebase
 **Fix**: Updated test expectations in `test_subtest_executor.py:220` to match new message.
 
 **Lesson**: When changing error messages, always grep for tests that assert on those messages:
+
 ```bash
 grep -r "Judge response is not valid JSON" tests/
 ```
@@ -352,6 +366,7 @@ grep -r "Judge response is not valid JSON" tests/
 **Conclusion**: Pre-existing failures unrelated to our changes.
 
 **Lesson**: Always verify test failures by checking if they exist on main branch:
+
 ```bash
 git stash
 pixi run python -m pytest <failing-test> -q
@@ -424,6 +439,6 @@ git stash pop
 
 ## References
 
-- Issue: https://github.com/HomericIntelligence/ProjectScylla/issues/503
-- PR: https://github.com/HomericIntelligence/ProjectScylla/pull/505
+- Issue: <https://github.com/HomericIntelligence/ProjectScylla/issues/503>
+- PR: <https://github.com/HomericIntelligence/ProjectScylla/pull/505>
 - Commit: `cfa6869`

@@ -22,6 +22,7 @@ This figure visualizes the distribution of Implementation Rate (Impl-Rate) acros
 **DataFrame**: `runs_df`
 
 **Columns Used**:
+
 - `tier` (str): Testing tier (T0-T6)
 - `agent_model` (str): Model identifier (e.g., "opus", "sonnet", "haiku")
 - `impl_rate` (float): Implementation Rate [0.0, 1.0]
@@ -29,6 +30,7 @@ This figure visualizes the distribution of Implementation Rate (Impl-Rate) acros
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/impl_rate_analysis.py:237-340`
 
 **Data Requirements**:
+
 - One row per run
 - Must contain valid impl_rate values (NaN values are filtered out)
 - Typical dataset: ~746 runs across 7 tiers × 3 models
@@ -58,28 +60,33 @@ def fig27_impl_rate_distribution(
 ### Key Technical Decisions
 
 **Violin + Box Plot Overlay**:
+
 - Combines density estimation (violin) with statistical summary (box plot)
 - **Rationale**: Violin shows full distribution shape, box plot highlights quartiles and outliers
 - **Trade-off**: More complex visualization vs. richer information content
 - **Benefit**: Reveals both shape characteristics (bimodality, skewness) and statistical summaries
 
 **Horizontal Orientation**:
+
 - Density extends horizontally from y-axis
 - **Rationale**: Maximizes vertical space for tier faceting
 - **Benefit**: Enables clear per-tier comparison across many tiers
 
 **Dynamic Domain Calculation**:
+
 - Uses `compute_dynamic_domain()` with 15% padding
 - **Rationale**: Focuses on actual data range with extra padding for box plot whiskers
 - **Sensitivity**: Reveals subtle variations without wasting visual space on empty ranges
 - **Example**: If data ranges [0.60, 0.95], domain becomes [0.55, 1.00] after padding and rounding
 
 **Density Transform**:
+
 - Altair's `transform_density()` for automatic kernel density estimation
 - Grouped by tier and agent_model
 - **Benefit**: Smooth distribution curves without manual binning
 
 **Faceting Strategy**:
+
 - Row faceting by tier with derived natural ordering
 - **Rationale**: Enables vertical stacking for easy tier-to-tier comparison
 - **Alternative**: Could use color/column faceting, but vertical stacking is clearer for progression
@@ -87,6 +94,7 @@ def fig27_impl_rate_distribution(
 ### Algorithm
 
 1. **Data Validation**:
+
    ```python
    if "impl_rate" not in runs_df.columns:
        print("Warning: impl_rate column not found, skipping fig27")
@@ -96,17 +104,20 @@ def fig27_impl_rate_distribution(
    ```
 
 2. **Tier Ordering**:
+
    ```python
    tier_order = derive_tier_order(runs_df)
    ```
 
 3. **Color Scale Setup**:
+
    ```python
    models = sorted(df["agent_model"].unique())
    domain, range_ = get_color_scale("models", models)
    ```
 
 4. **Dynamic Domain Calculation**:
+
    ```python
    impl_rate_domain = compute_dynamic_domain(
        df["impl_rate"],
@@ -115,6 +126,7 @@ def fig27_impl_rate_distribution(
    ```
 
 5. **Violin Plot Construction**:
+
    ```python
    base_violin = (
        alt.Chart(df)
@@ -135,6 +147,7 @@ def fig27_impl_rate_distribution(
    ```
 
 6. **Box Plot Construction**:
+
    ```python
    base_box = (
        alt.Chart(df)
@@ -149,6 +162,7 @@ def fig27_impl_rate_distribution(
    ```
 
 7. **Layering and Faceting**:
+
    ```python
    chart = (
        (base_violin + base_box)
@@ -159,6 +173,7 @@ def fig27_impl_rate_distribution(
    ```
 
 8. **Save Figure**:
+
    ```python
    save_figure(chart, "fig27_impl_rate_distribution", output_dir, render=render)
    ```
@@ -170,6 +185,7 @@ def fig27_impl_rate_distribution(
 **Pattern**: `fig27_impl_rate_distribution.{ext}`
 
 **Examples**:
+
 - `fig27_impl_rate_distribution.vl.json` - Vega-Lite specification
 - `fig27_impl_rate_distribution.png` - Rendered image (300 DPI, if render=True)
 - `fig27_impl_rate_distribution.pdf` - Vector format (if render=True)
@@ -187,15 +203,18 @@ def fig27_impl_rate_distribution(
 **Chart Type**: Layered violin plot + box plot, faceted by tier
 
 **Dimensions**:
+
 - Width: 300px per facet
 - Height: 100px per facet
 - Total height: ~700px (7 tiers × 100px)
 
 **Faceting**:
+
 - **Rows**: One per tier (T0-T6)
 - **Ordering**: Natural tier order (T0 → T1 → ... → T6)
 
 **Axes**:
+
 - **X-axis (Violin)**: Density (hidden - no labels, ticks, or grid)
   - Horizontal orientation for violin shapes
 - **X-axis (Box)**: Agent Model (categorical, labels hidden)
@@ -205,11 +224,13 @@ def fig27_impl_rate_distribution(
   - Shared across all facets
 
 **Color Encoding**:
+
 - Maps to `agent_model`
 - Uses consistent color scheme from config
 - Applied to both violin and box plot layers
 
 **Opacity**:
+
 - Violin: 0.5 (semi-transparent for overlapping visibility)
 - Box plot: 0.7 (slightly more opaque for quartile emphasis)
 
@@ -218,17 +239,20 @@ def fig27_impl_rate_distribution(
 ### Expected Patterns
 
 **Ideal Distribution**:
+
 - Narrow violins centered near 1.0 (complete implementation)
 - Low variance (most runs achieve high Impl-Rate)
 - Few outliers below 0.7
 
 **Progression Patterns**:
+
 - **T0 (baseline)**: High variance, bimodal (partial vs. full implementation)
 - **T1-T2 (skills/tools)**: Narrowing distribution, shifting toward higher Impl-Rate
 - **T3-T4 (delegation/hierarchy)**: Continued improvement in completeness
 - **T5-T6 (hybrid/super)**: Tight distribution near 1.0
 
 **Problematic Patterns**:
+
 - Wide violins → Inconsistent implementation quality
 - Bimodal distribution → All-or-nothing implementation (no partial credit)
 - Low ceiling (< 0.8) → Systematic implementation gaps
@@ -239,17 +263,20 @@ def fig27_impl_rate_distribution(
 ### Reading the Violin Plot
 
 **Violin Width**:
+
 - Wide sections → High density of runs at that Impl-Rate
 - Narrow sections → Few runs with that score
 - Multiple bulges → Multimodal distribution (distinct performance clusters)
 
 **Box Plot Elements**:
+
 - **Center line**: Median Impl-Rate
 - **Box edges**: 25th and 75th percentiles (IQR)
 - **Whiskers**: 1.5 × IQR or min/max
 - **Points**: Outliers beyond whiskers
 
 **Color Groups**:
+
 - Each color represents a different agent model
 - Compare shapes across colors within same tier
 - Compare same color across tiers for model progression
@@ -257,16 +284,19 @@ def fig27_impl_rate_distribution(
 ### Comparative Analysis
 
 **Across Tiers**:
+
 - Expected: Distribution shifts right and narrows as tiers advance
 - Variance reduction → More consistent implementation
 - Median increase → Better average completeness
 
 **Across Models**:
+
 - Compare violin shapes within same tier
 - Identify which models achieve more complete implementations
 - Detect model-specific patterns (e.g., one model bimodal, another unimodal)
 
 **Violin vs. Box Plot**:
+
 - Violin reveals shape (skewness, multimodality)
 - Box plot highlights statistical summary (median, quartiles)
 - Discrepancies reveal distribution characteristics (e.g., long tail vs. symmetric)
@@ -274,18 +304,21 @@ def fig27_impl_rate_distribution(
 ### Action Items
 
 **If High Variance Detected**:
+
 1. Review task specification clarity
 2. Check for ambiguous requirements
 3. Investigate partial implementation patterns
 4. Consider requirement decomposition granularity
 
 **If Bimodal Distribution Detected**:
+
 1. Identify which requirements separate the modes
 2. Check for task-specific difficulty spikes
 3. Investigate agent failure patterns (e.g., planning vs. execution)
 4. Consider splitting task into subtasks
 
 **If Low Ceiling Detected**:
+
 1. Review requirement definitions for completeness
 2. Check for missing or unmeasurable requirements
 3. Investigate systematic gaps in agent capabilities
@@ -340,6 +373,7 @@ docs/figures/
 ### Viewing the Figure
 
 **Vega-Lite Spec (Recommended)**:
+
 ```bash
 # Open in Vega Editor
 open https://vega.github.io/editor/
@@ -347,6 +381,7 @@ open https://vega.github.io/editor/
 ```
 
 **Rendered Images**:
+
 ```bash
 # View PNG
 open docs/figures/fig27_impl_rate_distribution.png

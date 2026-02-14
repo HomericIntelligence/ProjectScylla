@@ -20,12 +20,14 @@ Thank you for your interest in contributing to ProjectScylla! This guide will he
 **New to ProjectScylla?** Start here:
 
 1. **Fork and Clone**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/ProjectScylla.git
    cd ProjectScylla
    ```
 
 2. **Environment Setup**
+
    ```bash
    # Install Pixi (package manager)
    curl -fsSL https://pixi.sh/install.sh | bash
@@ -36,6 +38,7 @@ Thank you for your interest in contributing to ProjectScylla! This guide will he
    ```
 
 3. **Verify Installation**
+
    ```bash
    pixi run python --version  # Should be 3.14+
    pixi run pytest tests/ -v  # Run tests
@@ -76,10 +79,12 @@ cp .env.example .env
 ```
 
 **Required variables:**
+
 - `ANTHROPIC_API_KEY` - For LLM judge and agent execution
 - `GITHUB_TOKEN` - For GitHub operations
 
 **Optional variables:**
+
 - `OPENAI_API_KEY` - For OpenAI-based agents
 - `SCYLLA_LOG_LEVEL` - Set to `DEBUG` for verbose output
 
@@ -145,6 +150,7 @@ Closes #<issue-number>"
 ```
 
 **Commit types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -153,6 +159,7 @@ Closes #<issue-number>"
 - `chore`: Maintenance tasks
 
 **Examples:**
+
 ```
 feat(metrics): Add Cost-of-Pass calculation
 fix(evaluation): Correct token counting logic
@@ -303,6 +310,7 @@ How you tested the changes
 ### Responding to Review Comments
 
 Reply to each comment with:
+
 - `Fixed - [brief description of change]`
 - `Won't fix - [explanation]`
 - `Question - [clarifying question]`
@@ -356,6 +364,7 @@ Any other relevant information
 ### Questions
 
 For questions about usage or implementation:
+
 1. Check existing documentation first
 2. Search closed issues
 3. Create a new issue with `question` label

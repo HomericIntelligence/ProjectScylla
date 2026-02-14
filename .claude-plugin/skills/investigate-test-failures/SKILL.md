@@ -11,6 +11,7 @@
 ## When to Use This Skill
 
 Use this investigation workflow when:
+
 - ✅ Test runs show unexpected failures (agent claims success but deliverables missing)
 - ✅ Suspecting either framework bugs OR model issues
 - ✅ Need to differentiate between "framework deleted files" vs "model never created files"
@@ -18,6 +19,7 @@ Use this investigation workflow when:
 - ✅ Need evidence trail for upstream bug reports
 
 **Trigger phrases:**
+
 - "analyze test failures"
 - "determine if framework is deleting files"
 - "investigate why files are missing"
@@ -65,6 +67,7 @@ ls -la $FAILED_TEST/workspace/
 ```
 
 **Key Questions**:
+
 - Does agent claim success? ✅ Yes - detailed success message
 - Does file exist? ❌ No - only initialization files
 - What does judge say? 🔍 "File does not exist, no changes detected"
@@ -98,6 +101,7 @@ grep -r "cleanup\|git reset\|git clean\|shutil.rmtree" \
 ```
 
 **Evidence for Framework Integrity**:
+
 - ✅ Workspace timestamps unchanged
 - ✅ No git commits during agent window
 - ✅ No cleanup code runs between agent and judge
@@ -128,6 +132,7 @@ ls $SUCCESSFUL_TEST/workspace/hello.py
 ```
 
 **Smoking Gun Evidence**:
+
 - ❌ `server_tool_use: 0` - No tools invoked
 - ❌ No Write tool calls in session data
 - ✅ Successful tests DO have files - framework works correctly
@@ -158,6 +163,7 @@ gh issue comment <issue_number> --repo anthropics/claude-code \
 ```
 
 **Bug Report Structure**:
+
 1. Confirmation of existing issue (if applicable)
 2. New evidence (model, configuration, failure rate)
 3. Verification framework is not at fault
@@ -171,6 +177,7 @@ gh issue comment <issue_number> --repo anthropics/claude-code \
 **Hypothesis**: Framework might be deleting files after agent creates them
 
 **Why It Failed**:
+
 - Workspace timestamps showed no modifications during agent window
 - Git status confirmed no changes between initialization and evaluation
 - No cleanup code executes between agent and judge stages
@@ -187,6 +194,7 @@ grep -r "error\|Error\|ERROR" ~/testruns/haiku --include="*.log"
 ```
 
 **Why It Failed**:
+
 - Found too many false positives (signal 13 errors, unrelated warnings)
 - The real issue had NO error logs - agent claimed success
 - Hallucination failures are silent - they don't produce errors
@@ -198,6 +206,7 @@ grep -r "error\|Error\|ERROR" ~/testruns/haiku --include="*.log"
 **Approach**: Analyzed individual failures before looking at patterns
 
 **Why It Was Inefficient**:
+
 - Spent time on deep-dive before seeing the bigger picture
 - Pattern (4% failure rate, concentrated in T0/T2) emerged only after survey
 - Would have been faster to do Phase 1 (survey) first
@@ -238,6 +247,7 @@ T2/10: ~/testruns/haiku/test001/2026-02-12T17-01-34-test-001/T2/10/run_01/
 ### Evidence Package (T2/10 Example)
 
 **Agent Claim**:
+
 ```markdown
 Perfect! I've successfully created the `hello.py` script.
 ✅ Created file `hello.py` in the current working directory
@@ -247,6 +257,7 @@ Perfect! I've successfully created the `hello.py` script.
 ```
 
 **Tool Usage**:
+
 ```json
 {
   "server_tool_use": {
@@ -257,6 +268,7 @@ Perfect! I've successfully created the `hello.py` script.
 ```
 
 **Workspace Reality**:
+
 ```bash
 $ ls workspace/
 .claude  .git  .pytest_cache  CLAUDE.md  README
@@ -268,6 +280,7 @@ nothing to commit, working tree clean
 ```
 
 **Judge Verdict**:
+
 ```json
 {
   "judge_score": 0.0,
@@ -279,11 +292,12 @@ nothing to commit, working tree clean
 
 ### Upstream Bug Report
 
-**Filed**: https://github.com/anthropics/claude-code/issues/25265#issuecomment-3893104244
+**Filed**: <https://github.com/anthropics/claude-code/issues/25265#issuecomment-3893104244>
 
 **Related Issue**: #25265 - Claude Opus had same pattern (claims file write, never executes Write tool)
 
 **New Evidence Contributed**:
+
 - Confirms issue affects Claude Haiku 4.5 (not just Opus)
 - Occurs in batch mode `--print --output-format json` (not just interactive)
 - 4% systematic failure rate across simple tasks
@@ -294,6 +308,7 @@ nothing to commit, working tree clean
 ### 🎯 Hallucination Pattern Recognition
 
 **Signs of Model Hallucination** (vs framework bug):
+
 1. ✅ Agent provides detailed success claims with checkmarks
 2. ❌ Zero tool calls in usage statistics (`server_tool_use: 0`)
 3. ❌ Files don't exist despite claimed creation
@@ -303,6 +318,7 @@ nothing to commit, working tree clean
 ### 🔍 Framework Integrity Verification Checklist
 
 Before blaming the model, verify:
+
 - [ ] Workspace timestamps unchanged during agent window
 - [ ] Git status shows "nothing to commit, working tree clean"
 - [ ] No git commits between agent start and judge evaluation
@@ -315,6 +331,7 @@ If all ✅ → Framework is innocent, issue is model-level
 ### 📊 Systematic vs Isolated Failures
 
 **4% failure rate indicates**:
+
 - NOT isolated incident (reproducible)
 - NOT user error (automated framework)
 - Likely model behavior under specific conditions:
@@ -325,12 +342,14 @@ If all ✅ → Framework is innocent, issue is model-level
 ### 🚨 Impact on Evaluation Frameworks
 
 **Critical reliability issues**:
+
 1. Cannot trust agent self-reporting
 2. Wasted compute on hallucinated success
 3. Metrics contaminated by false positives
 4. Requires post-hoc validation of all tool operations
 
 **Mitigation strategies**:
+
 - Add independent verification after agent claims success
 - Flag hallucination failures separately in metrics
 - Re-run failed cases with explicit verification prompts
@@ -339,12 +358,14 @@ If all ✅ → Framework is innocent, issue is model-level
 ## When NOT to Use This Workflow
 
 ❌ **Don't use this approach when**:
+
 - Tests have actual errors in logs (not hallucinations)
 - Framework changes were just made (might legitimately be framework bugs)
 - Only one or two isolated failures (not pattern)
 - Failures have clear error messages explaining cause
 
 ✅ **Use simpler approaches for**:
+
 - Syntax errors → Check build pipeline logs
 - Timeout failures → Check duration_seconds
 - Permission issues → Check stderr logs
@@ -353,7 +374,7 @@ If all ✅ → Framework is innocent, issue is model-level
 ## References
 
 - Original analysis: `/home/mvillmow/testruns/haiku/test001/ANALYSIS_hallucination_issue.md`
-- Upstream issue: https://github.com/anthropics/claude-code/issues/25265
+- Upstream issue: <https://github.com/anthropics/claude-code/issues/25265>
 - Framework code: `~/Scylla2/scylla/e2e/subtest_executor.py`
 - Test structure: `~/testruns/haiku/test001/2026-02-12T17-01-34-test-001/`
 

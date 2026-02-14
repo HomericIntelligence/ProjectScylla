@@ -5,6 +5,7 @@
 Figure 15b visualizes the best-performing run for each subtest within each tier, organized as a heatmap. This figure provides a mid-level granularity view that removes run-to-run variance and focuses on the capability ceiling of each agent-tier-subtest combination. By showing only the maximum score achieved across all runs, it reveals the potential performance of each configuration under optimal conditions.
 
 The visualization is structured as a multi-faceted heatmap where:
+
 - Rows represent individual subtests (sorted numerically)
 - Columns represent agent models
 - Rows are grouped by tiers (T0, T1, T2, etc.)
@@ -102,11 +103,13 @@ where:
 The best-run approach enables several derived metrics:
 
 **Best-Case Pass Rate** (per tier-subtest):
+
 ```
 best_pass_rate(tier, subtest) = best_score(tier, subtest)  # If score ∈ {0,1}
 ```
 
 **Capability Gap** (comparing with typical performance):
+
 ```
 capability_gap(agent, tier, subtest) = best_score - mean_score
 
@@ -116,6 +119,7 @@ where:
 ```
 
 **Tier Ceiling** (maximum achievable score for a tier):
+
 ```
 tier_ceiling(tier) = (1/|S|) * Σ best_score(tier, s)
                               s∈S
@@ -132,6 +136,7 @@ Best-run analysis is based on the principle of **capability ceiling measurement*
 1. **Possibility Proof**: If a configuration achieves a high score even once, it proves the capability exists, even if not consistently accessible. This is valuable for understanding the theoretical limits of an architecture.
 
 2. **Variance Decomposition**: Agent performance variance can be decomposed into:
+
    ```
    Total Variance = Systematic Variance + Stochastic Variance
 
@@ -142,6 +147,7 @@ Best-run analysis is based on the principle of **capability ceiling measurement*
    ```
 
 3. **Upper Confidence Bound**: The best-run score approximates the upper confidence bound of the performance distribution:
+
    ```
    UCB ≈ best_score ≈ μ + c√(σ²/n)
 
@@ -165,11 +171,13 @@ where:
 ```
 
 **High Gap (best >> mean)**:
+
 - Indicates high variance/inconsistency
 - Configuration has capability but reliability issues
 - Potential for improvement through stability enhancements
 
 **Low Gap (best ≈ mean)**:
+
 - Indicates consistent performance
 - Configuration reliably achieves near-ceiling results
 - Less room for improvement through repeated trials
@@ -204,6 +212,7 @@ Normalization: Linear
 ```
 
 Color assignment:
+
 ```python
 color=alt.Color(
     "score:Q",
@@ -218,6 +227,7 @@ color=alt.Color(
 ### Layout Structure
 
 **Faceting Strategy**:
+
 - **Rows**: Tiers (T0, T1, T2, ...) - naturally sorted
 - **Columns**: Agent models (dynamically determined from data)
 - **Independent Y-scales**: Each tier panel has independent y-axis (subtests vary by tier)
@@ -230,6 +240,7 @@ chart = heatmap.facet(
 ```
 
 **Panel Dimensions**:
+
 ```python
 width=100   # Narrow width since only one column per model (vs 10 for all runs)
 height=200  # Sufficient height for multiple subtests
@@ -238,6 +249,7 @@ height=200  # Sufficient height for multiple subtests
 ### Axes Configuration
 
 **X-Axis**: Suppressed since there's only one cell per subtest (the best run)
+
 ```python
 x=alt.X(
     "agent_model:N",
@@ -247,6 +259,7 @@ x=alt.X(
 ```
 
 **Y-Axis**: Subtest identifiers, numerically sorted
+
 ```python
 y=alt.Y(
     "subtest:O",
@@ -258,6 +271,7 @@ y=alt.Y(
 ### Interactive Elements
 
 **Tooltip Information**:
+
 ```python
 tooltip=[
     alt.Tooltip("tier:O", title="Tier"),
@@ -290,6 +304,7 @@ The tooltip includes the run number that achieved the best score, allowing users
 ### Comparative Analysis
 
 **Comparing with Fig 15a (All Runs)**:
+
 ```
 Performance Gap = best_score (fig15b) - mean_score (fig15a)
 
@@ -300,6 +315,7 @@ Interpretation:
 ```
 
 **Comparing with Fig 15c (Tier Summary)**:
+
 ```
 Tier Ceiling vs Tier Mean:
   - Ceiling >> Mean: Potential for optimization
@@ -309,6 +325,7 @@ Tier Ceiling vs Tier Mean:
 ### Performance Benchmarks
 
 **Score Interpretation**:
+
 - **[0.0, 0.3)**: Poor performance - architectural mismatch or task too difficult
 - **[0.3, 0.5)**: Below average - some capability but significant gaps
 - **[0.5, 0.7)**: Moderate performance - partial task completion
@@ -316,6 +333,7 @@ Tier Ceiling vs Tier Mean:
 - **[0.9, 1.0]**: Excellent performance - near-complete success
 
 **Best-Run Specific Benchmarks**:
+
 - **Best < 0.5**: Fundamental capability limitation (even optimal runs fail)
 - **Best ∈ [0.5, 0.9)**: Capability exists but not fully realized
 - **Best ≥ 0.9**: Configuration can achieve high performance (reliability issue if mean << best)
@@ -356,28 +374,33 @@ The three figures provide complementary views of subtest performance:
 ### Upstream Dependencies
 
 These figures provide input context:
+
 - **Fig 01**: Agent-level performance overview (establishes baseline)
 - **Fig 02**: Judge variance analysis (score reliability)
 
 ### Downstream Dependencies
 
 This figure informs:
+
 - **Fig 15c**: Tier summary aggregation uses best-run insights
 - **Cost-of-Pass Analysis**: Best-run costs establish lower bound for optimization
 
 ### Complementary Analyses
 
 **Fig 15a (All Runs)**: Shows complete picture including variance
+
 ```
 Fig 15b = max(Fig 15a runs)  # Vertical compression
 ```
 
 **Fig 15c (Tier Summary)**: Aggregates across subtests
+
 ```
 Fig 15c = mean_across_subtests(Fig 15b)  # Horizontal aggregation
 ```
 
 **Combined Insights**:
+
 ```
 Performance Profile:
   - Best-case: Fig 15b (capability ceiling)
@@ -423,6 +446,7 @@ def fig15b_subtest_best_heatmap(
 ### Key Implementation Details
 
 **Best-Run Selection** (lines 168-173):
+
 ```python
 best_runs = (
     runs_df.sort_values("score", ascending=False)
@@ -433,12 +457,14 @@ best_runs = (
 ```
 
 **Subtest Ordering** (lines 182-183):
+
 ```python
 heatmap_data["subtest_num"] = heatmap_data["subtest"].astype(int)
 subtest_order = sorted(heatmap_data["subtest"].unique(), key=lambda x: int(x))
 ```
 
 **Tier Ordering** (line 179):
+
 ```python
 tier_order = derive_tier_order(heatmap_data)
 # Uses natural sorting: T0 < T1 < ... < T99

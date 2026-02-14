@@ -25,6 +25,7 @@ the project's patterns and conventions.
 ## Expected Output
 
 When running the example:
+
 ```
 Hello, world
 ```

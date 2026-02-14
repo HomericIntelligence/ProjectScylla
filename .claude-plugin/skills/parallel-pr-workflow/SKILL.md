@@ -19,6 +19,7 @@ Use this parallel PR workflow when:
 5. **CI confidence** - Have good test coverage to catch regressions
 
 **Don't use when:**
+
 - Issues are interdependent (use sequential PRs instead)
 - Codebase is unstable (fix stability first)
 - Limited CI resources (parallel PRs can overwhelm CI)
@@ -28,6 +29,7 @@ Use this parallel PR workflow when:
 ### Phase 1: Planning & Grouping
 
 **Create dependency groups:**
+
 ```
 Group A (parallel from main):
   - PR1: Independent fix A
@@ -119,12 +121,14 @@ gh pr merge --auto --rebase
 ### Phase 4: CI Monitoring & Fixes
 
 **Monitor all PRs:**
+
 ```bash
 gh pr list --author "@me" --state open --json number,title,statusCheckRollup \
   --jq '.[] | {number, title, status: (.statusCheckRollup | map(.conclusion) | unique)}'
 ```
 
 **When CI fails:**
+
 ```bash
 cd ../project-pr1  # Go to the failing PR's worktree
 
@@ -144,6 +148,7 @@ git push
 ### Phase 5: Cleanup
 
 **After all PRs merge:**
+
 ```bash
 # Go back to main repo
 cd /path/to/main/repo
@@ -169,6 +174,7 @@ git branch --list
 ### Phase 6: Issue Cleanup
 
 **Close any orphaned issues:**
+
 ```bash
 # Check which issues are still open
 for issue in 400 401 402 403; do
@@ -184,6 +190,7 @@ gh issue close 400 --comment "Fixed in PR #508 - [brief explanation]"
 ### ❌ Failed: Creating All Worktrees Upfront
 
 **What we tried:**
+
 ```bash
 # Created all 14 worktrees at the start
 git worktree add ../scylla-pr1 -b pr1 main
@@ -192,11 +199,13 @@ git worktree add ../scylla-pr2 -b pr2 main
 ```
 
 **Why it failed:**
+
 - Some PRs depended on others (PR4 needed PR2d to merge first)
 - Created worktrees from stale main when dependencies were still in flight
 - Had to rebase or recreate worktrees later
 
 **Solution:**
+
 - Create worktrees in **dependency groups**
 - Wait for dependencies to merge before creating dependent worktrees
 - Pull main between groups
@@ -204,6 +213,7 @@ git worktree add ../scylla-pr2 -b pr2 main
 ### ❌ Failed: Trying to Edit Files Without Reading Them First
 
 **What happened:**
+
 ```python
 # Error: File has not been read yet
 Edit(file_path="...", old_string="...", new_string="...")
@@ -213,6 +223,7 @@ Edit(file_path="...", old_string="...", new_string="...")
 Claude Code's Edit tool requires reading files first to establish context.
 
 **Solution:**
+
 ```python
 # Always read first
 Read(file_path="...")
@@ -226,6 +237,7 @@ Edit(file_path="...", old_string="...", new_string="...")
 Tried to replace strings in config files assuming their exact format, but the actual file had different spacing/formatting.
 
 **Example:**
+
 ```python
 # Assumed format:
 old_string = "model_id: claude-opus\nname: Claude Opus"
@@ -235,6 +247,7 @@ old_string = "model_id: claude-opus\nname: Claude Opus"
 ```
 
 **Solution:**
+
 - Always `Read` the file first to see exact format
 - Copy-paste the exact string from the Read output
 - Include line numbers in Read output for precision
@@ -243,6 +256,7 @@ old_string = "model_id: claude-opus\nname: Claude Opus"
 
 **What happened:**
 PR #508 and #513 initially failed CI because tests expected old behavior:
+
 - Pricing test expected $15/$75 but code now used $5/$25
 - Datetime test used naive `datetime.now()` but code now used `datetime.now(timezone.utc)`
 
@@ -250,6 +264,7 @@ PR #508 and #513 initially failed CI because tests expected old behavior:
 Changed production code but forgot to update corresponding tests.
 
 **Solution:**
+
 ```bash
 # After changing code, grep for related tests
 grep -r "function_name\|ClassName" tests/
@@ -265,6 +280,7 @@ pixi run pytest tests/unit/path -v
 Committed code, but pre-commit hooks auto-fixed formatting, causing the commit to fail. Then tried to commit again but got "nothing to commit" because changes were already staged from the first attempt.
 
 **Solution:**
+
 ```bash
 # If pre-commit auto-fixes:
 # 1. Run it manually first
@@ -284,6 +300,7 @@ git commit -m "..."
 ### Final Statistics
 
 **PRs Created:** 9
+
 - All created within 2 hours
 - All merged within 4 hours
 - 100% CI pass rate (after fixes)
@@ -291,6 +308,7 @@ git commit -m "..."
 **Issues Resolved:** 19 (18 individual + 1 epic)
 
 **Code Removed:** 1,500+ lines
+
 - 416 lines: Mojo documentation
 - 211 lines: Config/tooling cleanup
 - 188 lines: WorkspaceManager wrapper
@@ -298,6 +316,7 @@ git commit -m "..."
 - 105 lines: Redundant tests
 
 **Git Worktrees:** 9 total
+
 - Group A: 7 worktrees (parallel)
 - Group B: 1 worktree (after PR2a merged)
 - Group C: 1 worktree (after PR2d merged)
@@ -305,6 +324,7 @@ git commit -m "..."
 ### Key Parameters
 
 **Branch naming convention:**
+
 ```
 <issue-number>-<brief-description>
 Examples:
@@ -314,6 +334,7 @@ Examples:
 ```
 
 **PR title format:**
+
 ```
 type(scope): Brief description
 Examples:
@@ -323,6 +344,7 @@ Examples:
 ```
 
 **Commit message format:**
+
 ```
 type(scope): brief description (#issue)
 
@@ -340,19 +362,23 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
 **Auto-merge command:**
+
 ```bash
 gh pr merge --auto --rebase
 ```
+
 **Critical:** Use `--rebase` to maintain linear history. Auto-merge will trigger once CI passes.
 
 ### Verification Commands
 
 **Check PR status:**
+
 ```bash
 gh pr list --author "@me" --state open --json number,title,statusCheckRollup
 ```
 
 **Check issue status:**
+
 ```bash
 for issue in $(seq 400 418); do
   gh issue view $issue --json state --jq "\"#$issue: \(.state)\""
@@ -360,6 +386,7 @@ done
 ```
 
 **Verify worktree cleanup:**
+
 ```bash
 git worktree list  # Should show only main repo
 ```

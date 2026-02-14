@@ -16,6 +16,7 @@
 Use this skill when encountering these symptoms in Altair/Vega-Lite charts:
 
 ### Trigger Conditions
+
 1. **"Facet charts require data to be specified at the top level"** error when using `+` operator with `.facet()`
 2. Overlay layers (reference lines, KDE curves, regression lines) are **invisible** in faceted charts
 3. Data points rendered **outside chart bounds** (axis domains too narrow)
@@ -23,6 +24,7 @@ Use this skill when encountering these symptoms in Altair/Vega-Lite charts:
 5. Static axis domains don't fit actual data range
 
 ### When NOT to Use
+
 - Simple non-faceted charts (use standard Altair patterns)
 - Single data source charts (no layering needed)
 - Charts without overlays or reference lines
@@ -332,6 +334,6 @@ chart = alt.layer(histogram, threshold_line).facet(
 
 ## References
 
-- Altair Documentation: https://altair-viz.github.io/user_guide/compound_charts.html#layered-charts
-- Vega-Lite Faceting: https://vega.github.io/vega-lite/docs/facet.html
+- Altair Documentation: <https://altair-viz.github.io/user_guide/compound_charts.html#layered-charts>
+- Vega-Lite Faceting: <https://vega.github.io/vega-lite/docs/facet.html>
 - Issue #322: Analysis figure generation bugs and PNG/PDF rendering

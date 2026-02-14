@@ -14,12 +14,14 @@ Successfully resolved 10 GitHub issues simultaneously by launching 6-8 parallel 
 ## When to Use This Pattern
 
 **Ideal for:**
+
 - Multiple independent or loosely-coupled issues (3+ issues)
 - Code refactoring that touches different files/modules
 - Time-critical batch work (release prep, technical debt sprints)
 - Issues with clear dependency chains (can parallelize waves)
 
 **Not suitable for:**
+
 - Issues requiring shared state or coordinated changes
 - Single complex issue requiring sequential reasoning
 - Issues touching the same files (high conflict risk)
@@ -46,6 +48,7 @@ Wave 4 (Independent):    #481, #486+#484, #482 → 3 PRs (can run anytime)
 Send ONE message with 6+ Task tool invocations to launch all agents simultaneously. Each agent gets a unique worktree:
 
 **Agent Template:**
+
 ```
 Execute Wave N PRX of the plan: Create PR for issue #XXX.
 
@@ -64,6 +67,7 @@ Work in the worktree to avoid conflicts with other parallel PRs.
 ```
 
 **Critical Requirements:**
+
 - Each agent must work in a unique worktree directory
 - Each agent must use a unique branch name
 - Provide complete, detailed instructions (agents have no context of other agents)
@@ -104,6 +108,7 @@ All target issues should show CLOSED.
 **What we tried:** Launch one agent, wait for completion, then launch the next.
 
 **Why it failed:**
+
 - 10 issues × ~3 min/agent = 30 minutes total
 - Human bottleneck waiting for each agent
 - No parallelism benefit
@@ -115,6 +120,7 @@ All target issues should show CLOSED.
 **What we tried:** Have multiple agents work directly on main or shared branches.
 
 **Why it failed:**
+
 - Merge conflicts when agents push simultaneously
 - Race conditions on git state
 - Failed pushes require manual resolution
@@ -128,6 +134,7 @@ All target issues should show CLOSED.
 **Reality:** This error occurs AFTER agents complete their work successfully. It's a post-processing bug in the agent cleanup logic.
 
 **Verification:** Check if PR was created and merged:
+
 ```bash
 gh pr view PR_NUMBER --json state,title
 ```
@@ -139,11 +146,13 @@ If state=MERGED, the agent succeeded despite the error notification.
 **What we tried:** "Fix issues #479, #478, and #481 in parallel."
 
 **Why it failed:**
+
 - Agents lack detail on exact changes needed
 - Agents waste time exploring instead of executing
 - Inconsistent approach across agents
 
 **Fix:** Provide detailed, step-by-step instructions with:
+
 - Exact file paths to modify
 - Specific functions to extract
 - Expected line counts
@@ -152,6 +161,7 @@ If state=MERGED, the agent succeeded despite the error notification.
 ### ✅ Success: Wave-Based Dependency Management
 
 **Pattern:**
+
 ```
 Independent waves (1, 2, 4) → Launch immediately in parallel
 Dependent wave (3) → Launch AFTER wave 2 PRs merge
@@ -208,6 +218,7 @@ ProjectScylla/                     # Main repo
 ### Branch Protection Settings
 
 **Critical:** Main branch must be protected:
+
 - Require pull request before merging
 - Require status checks to pass
 - Enable auto-merge with rebase

@@ -2,11 +2,7 @@
   "default": true,
   "MD003": { "style": "atx" },
   "MD007": { "indent": 2 },
-  "MD013": {
-    "line_length": 120,
-    "code_blocks": false,
-    "tables": false
-  },
+  "MD013": false,
   "MD024": false,
   "MD025": true,
   "MD033": {
@@ -19,9 +15,14 @@
       "sub",
       "sup",
       "issue-number",
-      "number"
+      "number",
+      "role"
     ]
   },
   "MD036": false,
-  "MD041": false
+  "MD040": false,
+  "MD041": false,
+  "MD042": false,
+  "MD051": false,
+  "MD060": false
 }

@@ -32,7 +32,7 @@ Compiled artifacts: .pyc, .pyo, .class, .o, .so files and similar compiler outpu
 
 Evaluate only source files, configuration files explicitly required by the task, output files specified in requirements, and documentation the agent was asked to produce. The presence or absence of ignored artifacts must not influence your scoring unless the task explicitly required managing them.
 
-**Tool Access**: You have access to Read, Glob, and Grep tools to inspect workspace files directly. Use these tools when you need to verify file contents, search for patterns, or examine code structure. The "Workspace State" section shows what files exist, but you can read their full contents using the Read tool to verify implementation details.
+__Tool Access__: You have access to Read, Glob, and Grep tools to inspect workspace files directly. Use these tools when you need to verify file contents, search for patterns, or examine code structure. The "Workspace State" section shows what files exist, but you can read their full contents using the Read tool to verify implementation details.
 </workspace_inspection_rules>
 
 <functional_verification>
@@ -46,6 +46,7 @@ For functional criteria that require verifying script execution or program behav
 4. If a functional criterion requires specific output, verify against the actual execution results provided
 
 Do not assume a script works or fails based solely on the git diff. The git diff may not show uncommitted files. Verify functionality based on:
+
 - Workspace State (lists all created/modified files, committed or not)
 - Build Pipeline Results (shows actual execution and output)
 - Actual file contents (when provided in the evaluation context)
@@ -92,7 +93,8 @@ Moderate issues warrant 0.30 to 0.50 point deductions. These include code duplic
 
 Major issues warrant 0.50 to 0.80 point deductions. These include non-critical security vulnerabilities, race conditions in concurrent code, fundamentally suboptimal approaches, and missing error handling for common failure modes.
 
-**Score Thresholds**:
+__Score Thresholds__:
+
 - 1.00: Superior - Above and beyond production readiness
 - 0.8-0.99: Excellent - Production ready, no issues
 - 0.6-0.79: Good - Minor improvements possible
@@ -300,6 +302,7 @@ Example structure:
   }
 }
 ```
+
 </output_format>
 
 <common_errors_to_avoid>

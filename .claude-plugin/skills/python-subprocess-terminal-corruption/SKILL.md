@@ -29,10 +29,13 @@ Apply this skill when you encounter:
 ## Root Causes
 
 ### 1. Terminal Corruption
+
 **Cause**: `subprocess.run()` without `stdin=subprocess.DEVNULL` allows child processes to inherit terminal stdin. When child processes (like Node.js CLI tools) alter terminal settings (disable echo, raw mode) and crash/timeout, settings aren't restored.
 
 ### 2. None-Safe Formatting
+
 **Cause**: `.get("key", "default")` returns None (not "default") when key exists but value is None:
+
 ```python
 data = {"best_tier": None}
 best_tier = data.get("best_tier", "N/A")  # Returns None, not "N/A"!
@@ -40,7 +43,9 @@ f"{best_tier:<10}"  # TypeError: unsupported format string
 ```
 
 ### 3. JSON Structure Mismatch
+
 **Cause**: Code assumes flat structure but actual JSON is nested:
+
 ```python
 # WRONG (old code)
 report.get("best_overall_tier")  # None
@@ -54,6 +59,7 @@ report.get("summary", {}).get("best_tier")  # Correct value
 ### Fix 1: Prevent Terminal Corruption
 
 **Add stdin isolation to subprocess calls**:
+
 ```python
 import subprocess
 import sys
@@ -70,6 +76,7 @@ result = subprocess.run(
 ```
 
 **Add terminal restoration on exit**:
+
 ```python
 def _restore_terminal() -> None:
     """Restore terminal to sane state using stty.
@@ -94,6 +101,7 @@ def main():
 ### Fix 2: None-Safe Dictionary Access
 
 **Use `or` coalescing instead of `.get()` defaults**:
+
 ```python
 # WRONG - Returns None when key exists with None value
 best_tier = result.get("best_tier", "N/A")  # None if key exists but value is None
@@ -104,6 +112,7 @@ best_score = result.get("best_score") or 0.0  # Always returns float
 ```
 
 **Special handling for values where None is meaningful**:
+
 ```python
 # For values where None is distinct from missing, use explicit check
 frontier_cop = result.get("frontier_cop")
@@ -113,6 +122,7 @@ cop_str = f"${frontier_cop:.4f}" if frontier_cop is not None else "N/A"
 ### Fix 3: Read Nested JSON Structure
 
 **Match actual JSON structure in extraction logic**:
+
 ```python
 def extract_metrics(result_dir: Path) -> dict | None:
     """Read report.json and extract summary metrics."""
@@ -189,16 +199,19 @@ def format_duration(seconds: float) -> str:
 ## Failed Attempts
 
 ### ❌ Attempt 1: Using `.get()` with defaults
+
 **What we tried**: Using `.get("key", "default")` pattern throughout
 **Why it failed**: When key exists but value is None, `.get()` returns None (not the default)
 **Lesson**: Use `or` coalescing for None-safe defaults: `value = dict.get("key") or "default"`
 
 ### ❌ Attempt 2: Reading flat JSON structure
+
 **What we tried**: `report.get("best_overall_tier")` and `report.get("frontier_cop")`
 **Why it failed**: Actual JSON structure nests data under `summary` and `children` keys
 **Lesson**: Always read reference implementation (e.g., `scylla/e2e/run_report.py`) to verify JSON structure before writing extraction logic
 
 ### ❌ Attempt 3: Relying on subprocess stdout/stderr capture
+
 **What we tried**: Only capturing stdout/stderr, assuming terminal would stay clean
 **Why it failed**: Child processes inherit stdin by default, can alter terminal settings
 **Lesson**: Always use `stdin=subprocess.DEVNULL` for subprocess calls that don't need user input, especially in parallel/background execution
@@ -206,9 +219,11 @@ def format_duration(seconds: float) -> str:
 ## Results & Parameters
 
 ### Files Modified
+
 - `/home/mvillmow/Scylla2/scripts/run_e2e_batch.py` (only file changed)
 
 ### Key Changes
+
 1. **Line 20**: Added `timedelta` import
 2. **Lines 40-49**: Added `_restore_terminal()` helper
 3. **Lines 39-63**: Added `format_duration()` helper
@@ -219,6 +234,7 @@ def format_duration(seconds: float) -> str:
 8. **Line 1013**: Added `finally` block calling `_restore_terminal()`
 
 ### Verification Commands
+
 ```bash
 # Syntax check
 python -m py_compile scripts/run_e2e_batch.py
@@ -252,7 +268,9 @@ pre-commit run --files scripts/run_e2e_batch.py
 ```
 
 ### Output
+
 All tests pass ✅:
+
 - `format_duration(0)` → `"N/A"`
 - `format_duration(45)` → `"45s"`
 - `format_duration(323)` → `"5m 23s"`
@@ -264,11 +282,13 @@ All tests pass ✅:
 ## References
 
 ### Related Files
+
 - Source file: `/home/mvillmow/Scylla2/scripts/run_e2e_batch.py`
 - JSON structure reference: `/home/mvillmow/Scylla2/scylla/e2e/run_report.py:1015-1039`
 - Test fixture model: `/home/mvillmow/Scylla2/scylla/e2e/models.py:584-614`
 
 ### Key Insights
+
 1. **subprocess stdin inheritance**: Child processes inherit stdin by default, can corrupt terminal
 2. **None vs missing distinction**: `.get("key", "default")` returns None when key exists with None value
 3. **Always verify JSON structure**: Read authoritative implementation before writing extraction logic
@@ -276,6 +296,7 @@ All tests pass ✅:
 5. **Progressive enhancement**: Fix bugs first, then add UX improvements (human-friendly durations, progress updates)
 
 ### Documentation
-- Python subprocess docs: https://docs.python.org/3/library/subprocess.html
+
+- Python subprocess docs: <https://docs.python.org/3/library/subprocess.html>
 - stty manual: `man stty`
-- None coalescing pattern: https://peps.python.org/pep-0505/ (proposed but use `or` for now)
+- None coalescing pattern: <https://peps.python.org/pep-0505/> (proposed but use `or` for now)

@@ -19,6 +19,7 @@ The grade distribution heatmap serves three primary analytical purposes:
 3. **Model Comparison**: Evaluate how different agent models perform across the same tier structure through faceted views
 
 This figure is particularly valuable for:
+
 - Validating that tier difficulty increases monotonically (higher tiers should show better grade distributions)
 - Identifying anomalies where specific grade-tier combinations are over/under-represented
 - Assessing whether grading criteria are appropriately calibrated across tiers
@@ -28,11 +29,13 @@ This figure is particularly valuable for:
 **Primary Input**: `runs_df` - Runs DataFrame containing evaluation results
 
 **Required Columns**:
+
 - `agent_model`: Model identifier for faceting (e.g., "claude-opus-4", "claude-sonnet-3.5")
 - `tier`: Evaluation tier (T0, T1, T2, T3, T4, T5, T6)
 - `grade`: Letter grade assigned (S, A, B, C, D, F)
 
 **Data Processing Pipeline**:
+
 1. Group runs by `(agent_model, tier, grade)` and count occurrences
 2. Calculate total runs per `(agent_model, tier)` combination
 3. Compute proportion: `count / total` for each grade within tier
@@ -40,6 +43,7 @@ This figure is particularly valuable for:
 5. Use canonical grade ordering from `config.grade_order`
 
 **Example Data Structure**:
+
 ```
 agent_model          tier  grade  count  total  proportion
 claude-opus-4        T0    F      45     50     0.90
@@ -59,6 +63,7 @@ $$
 $$
 
 Where:
+
 - $m$ = agent model
 - $t$ = tier
 - $g$ = grade
@@ -95,11 +100,13 @@ ProjectScylla uses an industry-aligned grading scale focused on production readi
 ### Expected Distribution Characteristics
 
 **Tier Difficulty Hypothesis**: As tier complexity increases (T0 → T6), the grade distribution should shift toward higher grades, assuming:
+
 - Lower tiers (T0-T2) test basic capabilities → expect more F/D/C grades
 - Mid tiers (T3-T4) test intermediate capabilities → expect more C/B/A grades
 - Upper tiers (T5-T6) test advanced capabilities → expect more A/S grades (only advanced agents reach these tiers)
 
 **Distribution Shape**:
+
 - **Baseline tiers** (T0) should show right-skewed distributions (concentrated in F/D)
 - **Skill-augmented tiers** (T1-T2) should show increased spread
 - **Advanced tiers** (T5-T6) should show left-skewed distributions (concentrated in A/S)
@@ -107,6 +114,7 @@ ProjectScylla uses an industry-aligned grading scale focused on production readi
 ### Viridis Color Scale Rationale
 
 The viridis colormap was chosen for several reasons:
+
 1. **Perceptually uniform**: Equal steps in proportion yield equal steps in perceived color
 2. **Colorblind-safe**: Distinguishable under common color vision deficiencies
 3. **Print-friendly**: Maintains contrast when converted to grayscale
@@ -119,12 +127,14 @@ The viridis colormap was chosen for several reasons:
 **Chart Type**: `mark_rect()` (rectangular heatmap cells)
 
 **Encodings**:
+
 - **X-axis**: `grade:O` (ordinal) - ordered as `["S", "A", "B", "C", "D", "F"]`
 - **Y-axis**: `tier:O` (ordinal) - ordered dynamically from data
 - **Color**: `proportion:Q` (quantitative) - viridis scale, domain `[0, 1]`
 - **Facet**: `agent_model:N` (nominal) - one column per model
 
 **Text Annotations**:
+
 - **Position**: Centered in each cell (`baseline="middle"`)
 - **Content**: `count:Q` (actual number of runs)
 - **Font**: 12pt
@@ -145,6 +155,7 @@ color=alt.condition(
 ```
 
 **Threshold Rationale**: The 0.7 threshold was empirically chosen based on viridis luminance:
+
 - Proportion 0.0 → dark purple (viridis start) → needs white text
 - Proportion 0.5 → green (viridis mid) → needs white text
 - Proportion 1.0 → bright yellow (viridis end) → needs black text
@@ -153,6 +164,7 @@ color=alt.condition(
 ### Empty Cells
 
 When a grade-tier combination has zero runs, no rectangle or text is rendered. This design choice:
+
 - Reduces visual clutter
 - Makes rare grade-tier combinations immediately apparent
 - Prevents confusion between "0 proportion" and "no data"
@@ -162,6 +174,7 @@ The subtitle clarifies this behavior: "Empty cells indicate no runs with that gr
 ### Tooltip Information
 
 Hovering over any cell displays:
+
 - **Tier**: Tier identifier
 - **Grade**: Letter grade
 - **Count**: Number of runs (integer)
@@ -187,6 +200,7 @@ Hovering over any cell displays:
 ### Pattern Recognition
 
 **Healthy Progression** (Expected Pattern):
+
 ```
 Tier  S  A  B  C  D  F
 T0    ·  ·  ·  ·  ·  ████  (mostly F/D - baseline low)
@@ -199,6 +213,7 @@ T6    ███ ██ ·  ·  ·  ·   (very high grades)
 ```
 
 **Anomaly Indicators**:
+
 - **Flat distributions**: Every grade has similar proportion (suggests evaluation criteria too lenient/harsh)
 - **Inverted progression**: Higher tiers show worse grades than lower tiers (suggests tier ordering issue)
 - **Isolated bright cells**: One grade dominates entirely (suggests rubric targets single outcome)
@@ -227,11 +242,13 @@ T6    ███ ██ ·  ·  ·  ·   (very high grades)
 ### Comparative Analysis
 
 **Between Models**:
+
 - Models with similar patterns have similar capability profiles
 - Models with shifted patterns (e.g., one tier ahead) have capability advantages
 - Models with different pattern shapes may specialize in different task types
 
 **Between Tiers**:
+
 - Large jumps in distribution (e.g., T1→T2) indicate significant capability gain from enhancements
 - Small changes suggest diminishing returns or redundant enhancements
 - Reversals indicate negative interference between enhancements
@@ -241,31 +258,37 @@ T6    ███ ██ ·  ·  ·  ·   (very high grades)
 ### Complementary Visualizations
 
 **Figure 04 - Pass-Rate by Tier**:
+
 - Shows score distributions with pass/fail threshold
 - Provides finer granularity than letter grades
 - Use Fig 04 for precise threshold analysis, Fig 05 for categorical patterns
 
 **Figure 09 - Criteria Performance by Tier** (if exists):
+
 - Shows which rubric criteria drive grade differences
 - Use together to understand *why* certain grades dominate in specific tiers
 
 **Figure 03 - Score vs Cost Scatter** (if exists):
+
 - Maps grade distributions to economic costs
 - Helps identify cost-optimal tiers for desired grade targets
 
 ### Analysis Workflows
 
 **Workflow 1: Validate Tier Progression**
+
 1. Start with Fig 05 to identify overall grade distribution trends
 2. Use Fig 04 to verify pass-rate increases monotonically
 3. Check Fig 09 to confirm specific criteria improve across tiers
 
 **Workflow 2: Identify Optimal Tier**
+
 1. Use Fig 05 to find first tier with acceptable grade distribution (e.g., 80% A/B grades)
 2. Check Fig 03 for cost at that tier
 3. Use Fig 04 to verify pass-rate exceeds target threshold
 
 **Workflow 3: Debug Grading Issues**
+
 1. Notice anomaly in Fig 05 (e.g., unexpected grade distribution)
 2. Drill into Fig 09 to identify problematic criteria
 3. Review rubric definitions and adjust thresholds
@@ -281,12 +304,14 @@ T6    ███ ██ ·  ·  ·  ·   (very high grades)
 ### Implementation Details
 
 **Key Dependencies**:
+
 - `altair`: Declarative visualization library for heatmap rendering
 - `pandas`: DataFrame operations for grouping and proportion calculation
 - `scylla.analysis.config`: Grade ordering and color configuration
 - `scylla.analysis.figures.derive_tier_order`: Dynamic tier ordering from data
 
 **Configuration Sources**:
+
 - `config.grade_order`: `["S", "A", "B", "C", "D", "F"]` from `scylla/analysis/config.yaml:119`
 - Viridis color scale: Built-in Altair scheme, domain fixed at `[0, 1]`
 - Text color threshold: Hardcoded at `0.7` in conditional logic
@@ -307,6 +332,7 @@ grade_counts["proportion"] = grade_counts["count"] / grade_counts["total"]
 ### Output Files
 
 **Generated Files** (when `render=True`):
+
 - `{output_dir}/fig05_grade_heatmap.png` - Raster image (300 DPI)
 - `{output_dir}/fig05_grade_heatmap.pdf` - Vector PDF for publication
 - `{output_dir}/fig05_grade_heatmap.json` - Vega-Lite specification for reproducibility
@@ -350,12 +376,14 @@ fig05_grade_heatmap(runs_df, output_dir, render=True)
 ### Testing Considerations
 
 **Edge Cases to Test**:
+
 1. **Single grade dominates**: All runs in one tier receive same grade
 2. **Empty tiers**: Some agent-tier combinations have zero runs
 3. **Missing grades**: No runs achieve certain grades (e.g., no S grades)
 4. **Single model**: Only one agent_model in dataset (faceting still works)
 
 **Visual Validation**:
+
 - Verify proportions sum to 1.0 for each tier (brightness distribution)
 - Confirm empty cells render as blank (not 0)
 - Check text readability on darkest and lightest cells

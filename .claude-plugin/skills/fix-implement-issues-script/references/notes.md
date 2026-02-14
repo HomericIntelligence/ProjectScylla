@@ -3,9 +3,11 @@
 ## Timeline of Fixes
 
 ### Issue 1: Git Status Parsing (ests/unit/...)
+
 **Error**: `Command '['git', 'add', 'ests/unit/analysis/test_tables.py', ...]' returned non-zero exit status 128`
 
 **Root cause**: Line parsing issue
+
 ```python
 # Position 0: index status
 # Position 1: working tree status
@@ -20,9 +22,11 @@ filename_part = line[3:]
 ```
 
 ### Issue 2: Branch Already Exists
+
 **Error**: `fatal: a branch named '595-auto-impl' already exists`
 
 **Solution**: Check branch existence before creating worktree
+
 ```python
 result = run(["git", "rev-parse", "--verify", branch_name], check=False)
 if result.returncode == 0:
@@ -34,15 +38,18 @@ else:
 ```
 
 ### Issue 3: Branch Not Pushed
+
 **Error**: `Branch 595-auto-impl not found on origin. Claude may not have pushed`
 
 **Original approach** (too strict):
+
 ```python
 if not branch_on_remote:
     raise RuntimeError("Not pushed")
 ```
 
 **Better approach** (fallback):
+
 ```python
 if not branch_on_remote:
     logger.warning("Not pushed, pushing now...")
@@ -50,9 +57,11 @@ if not branch_on_remote:
 ```
 
 ### Issue 4: Import Error
+
 **Error**: `cannot import name 'gh_call' from 'scylla.automation.github_api'`
 
 **Fix**: Use `_gh_call` (private function) and parse JSON:
+
 ```python
 from .github_api import _gh_call
 result = _gh_call(["pr", "list", "--head", branch_name, "--json", "number"])
@@ -96,6 +105,7 @@ if not pr_created:
 ## Test Results
 
 All 199 automation tests pass ✅
+
 - 18 worktree manager tests
 - 25 implementer tests
 - 6 prompt tests
@@ -104,6 +114,7 @@ All 199 automation tests pass ✅
 ## PR Summary
 
 **PR #624**: 6 commits
+
 1. Fix git status parsing
 2. Move git ops to Claude
 3. Reuse existing branches

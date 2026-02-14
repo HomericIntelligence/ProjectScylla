@@ -7,6 +7,7 @@ Fix the failing Docker Build and Publish workflow by ensuring lowercase image na
 ## Problem
 
 The SBOM generation step is failing with:
+
 ```
 could not parse reference: ghcr.io/mvillmow/ProjectOdyssey:main
 ```

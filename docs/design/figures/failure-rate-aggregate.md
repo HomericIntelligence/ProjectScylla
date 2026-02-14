@@ -16,6 +16,7 @@ Figure 18b serves several analytical purposes:
 4. **Trend identification**: Reveal overall patterns in tier effectiveness across the testing hierarchy
 
 This figure is particularly useful for:
+
 - Executive summaries showing overall tier success/failure trends
 - Identifying tiers that need systematic improvement across all subtests
 - Understanding which tier levels pose the most challenges for agents
@@ -26,18 +27,21 @@ This figure is particularly useful for:
 The figure uses aggregated failure counts from the runs DataFrame:
 
 **Input**: `runs_df` - DataFrame containing evaluation run results with columns:
+
 - `agent_model`: Model identifier (e.g., "opus", "sonnet", "haiku")
 - `tier`: Tier identifier (e.g., "T0", "T1", "T2", etc.)
 - `subtest`: Subtest identifier within the tier
 - `passed`: Boolean indicating test pass/fail status
 
 **Aggregation Process**:
+
 1. Group runs by `(agent_model, tier)` - combining all subtests within each tier
 2. Calculate mean pass rate across all subtests in the tier
 3. Derive failure rate as `1 - pass_rate`
 4. Count number of subtests and runs aggregated per tier
 
 **Aggregated Data Structure**:
+
 ```python
 {
     "agent_model": str,      # Model identifier
@@ -55,17 +59,20 @@ The figure uses aggregated failure counts from the runs DataFrame:
 The aggregate failure rate for a tier is computed by first calculating the mean pass rate across all subtests and runs within that tier, then converting to a failure rate:
 
 **Pass Rate (Tier-level)**:
+
 ```
 pass_rate(tier) = mean(passed) for all runs in tier
                 = (sum of all passed values) / (total number of runs)
 ```
 
 **Failure Rate (Tier-level)**:
+
 ```
 failure_rate(tier) = 1 - pass_rate(tier)
 ```
 
 where:
+
 - `tier` = specific tier identifier (T0, T1, T2, etc.)
 - `passed` = boolean values (0 or 1) from all runs across all subtests in the tier
 - `mean(passed)` = average of all passed values in the tier group
@@ -75,11 +82,13 @@ where:
 For tier T1 with 3 subtests and 4 runs per subtest:
 
 **Individual subtest pass rates**:
+
 - Subtest A: 3/4 = 0.75 (3 passes out of 4 runs)
 - Subtest B: 2/4 = 0.50 (2 passes out of 4 runs)
 - Subtest C: 4/4 = 1.00 (4 passes out of 4 runs)
 
 **Aggregate calculation**:
+
 - Total runs: 12 (3 subtests × 4 runs)
 - Total passes: 3 + 2 + 4 = 9
 - Aggregate pass rate: 9/12 = 0.75
@@ -126,10 +135,12 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
 **Horizontal Bar Chart** with the following specifications:
 
 **Mark**: `mark_bar()`
+
 - Horizontal orientation (bars extend left-to-right)
 - Solid fill colored by tier
 
 **Encodings**:
+
 - **Y-axis** (`y`): Tier identifier (nominal/ordinal)
   - Sorted by tier order (T0, T1, T2, ...)
   - Label: "Tier"
@@ -149,12 +160,14 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
   - Total number of runs
 
 **Faceting**:
+
 - **Column** (`facet`): Agent model
   - Creates separate panel for each model
   - Enables direct model-to-model comparison
   - Independent Y-axis scale per facet
 
 **Layout**:
+
 - Title: "Aggregate Failure Rate by Tier (Summary)"
 - Column facet headers show agent model names
 - Bars sorted vertically by tier order
@@ -172,17 +185,20 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
 ### Reading the Chart
 
 **Tier Success/Failure Trends**:
+
 - **Short bars** (near 0.0): High success rate, low failure rate - tier is performing well
 - **Long bars** (near 1.0): High failure rate, low success rate - tier has systematic issues
 - **Mid-length bars** (around 0.5): Mixed success - tier shows moderate difficulty
 
 **Cross-Tier Patterns**:
+
 - **Increasing trend** (T0 → T6): Difficulty increases with capability level
 - **Decreasing trend** (T0 → T6): Effectiveness improves with more capabilities
 - **U-shaped pattern**: Performance dips at middle tiers, recovers at higher tiers
 - **Flat pattern**: Consistent performance across all tier levels
 
 **Cross-Model Patterns**:
+
 - **Consistent bars**: Similar failure rates across models - tier difficulty is model-independent
 - **Divergent bars**: Different failure rates - some models handle specific tiers better
 - **Model superiority**: One model shows consistently shorter bars - better overall performance
@@ -208,18 +224,21 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
 ### Comparison with Related Figures
 
 **vs. Figure 18a (Per-Subtest Failure Rate)**:
+
 - Fig 18a: Shows granular per-subtest failure rates within each tier
 - Fig 18b: Shows aggregated tier-level failure rates across all subtests
 - **Use Fig 18a**: When investigating specific subtest issues or variation within a tier
 - **Use Fig 18b**: When comparing overall tier effectiveness or presenting summary results
 
 **vs. Figure 03 (Failure Rate by Tier - Grade Proportions)**:
+
 - Fig 03: Shows stacked bar chart with grade proportions (P/D/C/B/A/S)
 - Fig 18b: Shows simple failure rate (pass/fail binary)
 - **Use Fig 03**: When granular grade distribution matters (e.g., understanding partial success)
 - **Use Fig 18b**: When binary pass/fail outcome is sufficient for tier comparison
 
 **Complementary Analysis**:
+
 - Fig 18b identifies *which* tiers have high failure rates
 - Fig 18a reveals *which subtests* within those tiers contribute most to failures
 - Fig 03 shows *how* failures manifest across the grading spectrum
@@ -227,16 +246,19 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
 ## Related Figures
 
 ### Figure 18a: Failure Rate per Subtest (Detailed)
+
 - **Purpose**: Per-subtest granular failure rate analysis
 - **Relationship**: Provides detailed breakdown of the aggregated rates shown in Fig 18b
 - **When to use**: Investigating specific subtest failures within a tier
 
 ### Figure 03: Failure Rate by Tier (Grade Proportions)
+
 - **Purpose**: Stacked bar chart showing grade distribution (P/D/C/B/A/S)
 - **Relationship**: Alternative tier-level view with grade-based categorization instead of binary pass/fail
 - **When to use**: Understanding grade distribution and partial success rates
 
 ### Figure 01: Score Variance by Tier
+
 - **Purpose**: Distribution of evaluation scores within each tier
 - **Relationship**: Complements failure rate with score variance analysis
 - **When to use**: Understanding score variability and consistency within tiers
@@ -246,6 +268,7 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/variance.py`
 
 **Function**: `fig18b_failure_rate_aggregate()`
+
 - **Lines**: 399-468
 - **Signature**: `fig18b_failure_rate_aggregate(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None`
 
@@ -272,10 +295,12 @@ Aggregate failure rates reveal which capability levels pose the most systematic 
    - Uses `save_figure()` utility for consistent file handling
 
 **Dependencies**:
+
 - `derive_tier_order()`: Determines tier sort order from data
 - `get_color_scale()`: Retrieves dynamic tier color scheme
 - `save_figure()`: Handles multi-format output (PNG/PDF/JSON)
 
 **Related Functions**:
+
 - `fig18a_failure_rate_per_subtest()`: Per-subtest detailed view
 - `fig03_failure_rate_by_tier()`: Grade-based tier failure rates

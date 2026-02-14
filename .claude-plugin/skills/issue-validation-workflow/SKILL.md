@@ -18,6 +18,7 @@ Systematically validate GitHub issue state against codebase reality before start
 ## When to Use
 
 Use this workflow when:
+
 - (1) Starting work on multiple GitHub issues simultaneously
 - (2) Issues were filed weeks/months ago and may be stale
 - (3) You want to avoid duplicate work
@@ -44,17 +45,20 @@ Task tool with subagent_type=Explore (2-3 parallel agents recommended)
 ```
 
 **Agent 1 - Docker/Config Issues (340, 341, 342, 422, 423)**:
+
 - Verify missing modules exist/don't exist
 - Check Docker README state
 - Verify workflow files
 - Check pixi.toml and .pre-commit-config.yaml
 
 **Agent 2 - Test Coverage Issues (419, 420, 421)**:
+
 - Check if test files already exist
 - Count lines of existing tests vs source
 - Identify actual coverage gaps
 
 **Agent 3 - Dead Code Issues (424, 425, 426)**:
+
 - Grep for methods/constants claimed to exist
 - Verify they're actually unused
 - Check if requirements are in CLAUDE.md
@@ -79,6 +83,7 @@ For each issue, categorize:
 ```
 
 Example:
+
 ```
 /advise Implement GitHub issues 340, 341, 342, 346, 421 in parallel using worktrees
 ```
@@ -126,6 +131,7 @@ Total: ~1200 lines of comprehensive test coverage."
 ### Optimal Parallel Agent Configuration
 
 **2-3 Explore agents** grouped by:
+
 - Domain similarity (e.g., Docker issues together)
 - Complexity (simple file checks vs deep code analysis)
 
@@ -138,6 +144,7 @@ Agent 3: Code Cleanup (2-3 issues)
 ### Evidence Collection Template
 
 For "already resolved" issues:
+
 ```
 Issue #XXX: <title>
 Status: Already resolved
@@ -149,6 +156,7 @@ Evidence:
 ```
 
 For "scope inverted" issues:
+
 ```
 Issue #XXX: <title>
 Status: Scope inverted
@@ -160,11 +168,13 @@ Evidence: <grep/file content>
 ## Integration with Other Skills
 
 This skill **must run before**:
+
 - `/advise` - Search skills marketplace with validated objectives
 - `parallel-issue-implementation` - Implement validated issues in parallel
 - `git-worktree-workflow` - Create worktrees only for valid issues
 
 This skill **builds on**:
+
 - `gh-read-issue-context` - Read issue body and comments
 - Explore agents - Parallel codebase exploration
 

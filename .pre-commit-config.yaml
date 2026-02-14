@@ -43,14 +43,24 @@ repos:
         pass_filenames: false
 
   # Markdown linting
-#  - repo: https://github.com/DavidAnson/markdownlint-cli2
-#    rev: v0.12.1
-#    hooks:
-#      - id: markdownlint-cli2
-#        name: Markdown Lint
-#        description: Lint markdown files for consistency
-#        exclude: ^notes/(plan|issues|review|blog)/
-#        args: ['--config', '.markdownlint.json']
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.20.0
+    hooks:
+      - id: markdownlint-cli2
+        name: Markdown Lint
+        description: Lint markdown files for consistency
+        exclude: ^(notes/(plan|issues|review|blog)/|build/|docs/template\.md|docs/arxiv/|docs/design/figures/)
+        args: ['--config', '.markdownlint.json', '--fix']
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: YAML Lint
+        description: Lint YAML files for syntax and style
+        args: ['--config-file', '.yamllint.yaml']
+        exclude: ^(\.pixi|build)/
 
   # Jupyter notebook output stripping
   # TODO: Re-enable after pre-commit/identify is upgraded to support 'jupyter' type tag
@@ -73,8 +83,6 @@ repos:
       - id: end-of-file-fixer
         name: Fix End of Files
         exclude: ^notes/(plan|review|issues)/
-#      - id: check-yaml
-#      - name: Check YAML
       - id: check-added-large-files
         name: Check for Large Files
         args: ['--maxkb=5000']

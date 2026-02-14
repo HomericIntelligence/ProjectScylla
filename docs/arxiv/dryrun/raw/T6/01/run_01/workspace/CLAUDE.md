@@ -10,7 +10,6 @@ comprehensive 4-level hierarchical planning structure with automated GitHub issu
 **Current Status**: Planning phase - repository structure and GitHub issues are being
 established before implementation begins.
 
-
 ## ⚠️ CRITICAL RULES - READ FIRST
 
 ### 🚫 NEVER Push Directly to Main
@@ -67,7 +66,6 @@ gh pr merge --auto --rebase
 
 - PR Best Practices: [PR Workflow](/.claude/shared/pr-workflow.md)
 
-
 ## Quick Links
 
 ### Core Guidelines
@@ -85,7 +83,6 @@ gh pr merge --auto --rebase
 - [Agent Hierarchy](/agents/hierarchy.md) - 6-level hierarchy
 - [Agent Configurations](/.claude/agents/) - 44 agents
 - [Skills Directory](/.claude/skills/) - 82+ capabilities
-
 
 ## Working with Agents
 
@@ -109,8 +106,6 @@ See [agents/hierarchy.md](agents/hierarchy.md) for the complete agent hierarchy 
 1. **No scope creep** - focus only on issue requirements
 1. **Reply to each review comment** with `✅ Fixed - [brief description]`
 1. **Delegate to skills** - Use "Use the X skill to..." pattern for automation
-
-
 
 ### Skill Delegation Patterns
 
@@ -180,8 +175,6 @@ Foreground tasks: `gh-create-pr-linked` (invoke explicitly)
   track-implementation-progress
 - **Review**: review-pr-changes, create-review-checklist
 
-
-
 ### Key Development Principles
 
 1. KISS - *K*eep *I*t *S*imple *S*tupid -> Don't add complexity when a simpler solution works
@@ -211,7 +204,6 @@ Relevant links:
 - **Team guides**: `/agents/` (quick start, hierarchy, templates)
 - **Never duplicate** documentation across locations - link instead
 - See `.claude/shared/github-issue-workflow.md` for GitHub issue read/write patterns
-
 
 ### Language Preference
 
@@ -261,7 +253,6 @@ for complete language selection strategy, technical evidence (test results), and
 requirements
 
 See `/agents/README.md` for complete agent documentation and `/agents/hierarchy.md` for visual hierarchy.
-
 
 ## Claude 4 & Claude Code Optimization
 
@@ -329,8 +320,6 @@ Extended thinking consumes tokens. Use appropriate budgets based on task complex
 2. **Break down complex tasks** - Split large problems into smaller, focused subtasks
 3. **Use examples** - Show expected patterns rather than describing them
 4. **Reference existing code** - Point to similar implementations as templates
-
-
 
 ### Agent Skills vs Sub-Agents
 
@@ -402,7 +391,6 @@ Workflow:
 4. [Sub-agent] Use `ci-check-status` skill to verify CI passes
 ```
 
-
 ### Hooks Best Practices
 
 Hooks enable proactive automation and safety checks. Use hooks for guardrails and background tasks.
@@ -469,7 +457,6 @@ Hooks enable proactive automation and safety checks. Use hooks for guardrails an
 | **Automation** | pr_merge | Cleanup | Remove worktree |
 
 See `.claude/shared/error-handling.md` for retry strategies and timeout handling in hooks.
-
 
 ### Output Style Guidelines
 
@@ -619,8 +606,6 @@ error: ExTensor.mojo:145:16: cannot transfer ownership of
            ^
 ```
 
-
-
 ### Tool Use Optimization
 
 Efficient tool use reduces latency and token consumption. Follow these patterns:
@@ -724,7 +709,6 @@ for file in files:
 result = Bash("find . -name 'test_*.mojo'")
 # Now have to parse shell output
 ```
-
 
 ### Agentic Loop Patterns
 
@@ -843,7 +827,6 @@ Output: PR ready for merge, issue resolved
 - [Output Styles](<https://code.claude.com/docs/en/output-styles>)
 - [Hooks Guide](<https://code.claude.com/docs/en/hooks-guide>)
 
-
 ## Delegation to Agent Hub
 
 .claude/ is the centralized location for agentic descriptions and SKILLs. Sub-agents reference
@@ -892,7 +875,6 @@ This project uses Pixi for environment management:
 # Pixi is already configured - dependencies are in pixi.toml
 # Mojo is the primary language target for future implementations
 ```
-
 
 ## Common Commands
 
@@ -1113,7 +1095,6 @@ all PRs and pushes to `main`.
 
 **See:** [Git Commit Policy](.claude/shared/git-commit-policy.md) for complete enforcement rules.
 
-
 ## Repository Architecture
 
 ### Project Structure
@@ -1249,7 +1230,6 @@ Every component follows a hierarchical workflow with clear dependencies:
 - Cleanup collects issues discovered during the parallel phases
 - Each phase has a separate GitHub issue with detailed instructions
 
-
 ## Testing Strategy
 
 ML Odyssey uses a comprehensive two-tier testing strategy designed for fast PR validation
@@ -1362,7 +1342,6 @@ pixi run mojo test tests/models/test_*_layers.mojo
 ```
 
 See [Testing Strategy Guide](docs/dev/testing-strategy.md) for comprehensive documentation.
-
 
 ## GitHub Issue Structure
 
@@ -1802,7 +1781,6 @@ gh auth refresh -h github.com
 - `scripts/README.md` - Complete scripts documentation
 - `README.md` - Main project documentation
 - `.claude/shared/github-issue-workflow.md` - GitHub issue read/write patterns
-
 
 Maximize usage of the following sub-agents to solve this task:
 
