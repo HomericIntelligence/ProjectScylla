@@ -54,6 +54,7 @@ def _gh_call(
                 ["gh"] + args,
                 check=check,
                 capture_output=True,
+                timeout=120,  # 2 minute timeout for gh CLI calls
             )
             return result
         except subprocess.CalledProcessError as e:
@@ -251,7 +252,7 @@ def gh_pr_create(
             try:
                 _gh_call(["pr", "merge", str(pr_number), "--auto", "--rebase"])
                 logger.info(f"Enabled auto-merge for PR #{pr_number}")
-            except subprocess.CalledProcessError as e:
+            except Exception as e:
                 logger.warning(f"Failed to enable auto-merge for PR #{pr_number}: {e}")
 
         return pr_number
