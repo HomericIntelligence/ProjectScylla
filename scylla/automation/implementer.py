@@ -829,13 +829,16 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
             logger.info(f"✓ Branch {branch_name} already on origin")
 
         # Check if PR exists, if not create it
-        from .github_api import gh_call
+        import json
+
+        from .github_api import _gh_call
 
         pr_number = None
         try:
-            pr_data = gh_call(
+            result = _gh_call(
                 ["pr", "list", "--head", branch_name, "--json", "number", "--limit", "1"]
             )
+            pr_data = json.loads(result.stdout)
             if pr_data and len(pr_data) > 0:
                 pr_number = pr_data[0]["number"]
                 logger.info(f"✓ PR #{pr_number} already exists")
