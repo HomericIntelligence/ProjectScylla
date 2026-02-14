@@ -154,8 +154,13 @@ class TestRunRetrospective:
             assert args[0] == "claude"
             assert args[1] == "--resume"
             assert args[2] == "abc123"
-            assert "--message" in args
-            assert "/skills-registry-commands:retrospective" in " ".join(args)
+            assert "/skills-registry-commands:retrospective" in args[3]
+            assert "--print" in args
+            assert "--tools" in args
+            assert "Bash" in args
+            assert "--allowedTools" in args
+            assert "Bash(git:*)" in args
+            assert "Bash(gh:*)" in args
 
             # Should log success
             mock_logger.info.assert_called_once()
