@@ -37,8 +37,12 @@ def implementer(mock_options):
 class TestRunClaudeCode:
     """Tests for _run_claude_code method."""
 
-    def test_captures_session_id_from_json(self, implementer):
+    def test_captures_session_id_from_json(self, implementer, tmp_path):
         """Test successful session_id capture from JSON output."""
+        implementer.state_dir = tmp_path
+        worktree_path = tmp_path / "worktree"
+        worktree_path.mkdir(exist_ok=True)
+
         mock_result = MagicMock()
         mock_result.stdout = json.dumps(
             {
@@ -51,14 +55,12 @@ class TestRunClaudeCode:
 
         with (
             patch("scylla.automation.implementer.run") as mock_run,
-            patch.object(Path, "write_text"),
-            patch.object(Path, "unlink"),
         ):
             mock_run.return_value = mock_result
 
             session_id = implementer._run_claude_code(
                 issue_number=123,
-                worktree_path=Path("/tmp/worktree"),
+                worktree_path=worktree_path,
                 prompt="Implement issue",
             )
 
@@ -76,22 +78,24 @@ class TestRunClaudeCode:
             assert "--allowedTools" in args
             assert "Read,Write,Edit,Glob,Grep,Bash" in args
 
-    def test_graceful_failure_on_json_parse_error(self, implementer):
+    def test_graceful_failure_on_json_parse_error(self, implementer, tmp_path):
         """Test graceful handling when JSON parse fails."""
+        implementer.state_dir = tmp_path
+        worktree_path = tmp_path / "worktree"
+        worktree_path.mkdir(exist_ok=True)
+
         mock_result = MagicMock()
         mock_result.stdout = "Not valid JSON"
 
         with (
             patch("scylla.automation.implementer.run") as mock_run,
             patch("scylla.automation.implementer.logger") as mock_logger,
-            patch.object(Path, "write_text"),
-            patch.object(Path, "unlink"),
         ):
             mock_run.return_value = mock_result
 
             session_id = implementer._run_claude_code(
                 issue_number=123,
-                worktree_path=Path("/tmp/worktree"),
+                worktree_path=worktree_path,
                 prompt="Implement issue",
             )
 
@@ -99,8 +103,12 @@ class TestRunClaudeCode:
             mock_logger.warning.assert_called_once()
             assert "Could not parse session_id" in str(mock_logger.warning.call_args)
 
-    def test_graceful_failure_on_missing_session_id(self, implementer):
+    def test_graceful_failure_on_missing_session_id(self, implementer, tmp_path):
         """Test graceful handling when session_id is missing from JSON."""
+        implementer.state_dir = tmp_path
+        worktree_path = tmp_path / "worktree"
+        worktree_path.mkdir(exist_ok=True)
+
         mock_result = MagicMock()
         mock_result.stdout = json.dumps(
             {
@@ -111,33 +119,33 @@ class TestRunClaudeCode:
 
         with (
             patch("scylla.automation.implementer.run") as mock_run,
-            patch.object(Path, "write_text"),
-            patch.object(Path, "unlink"),
         ):
             mock_run.return_value = mock_result
 
             session_id = implementer._run_claude_code(
                 issue_number=123,
-                worktree_path=Path("/tmp/worktree"),
+                worktree_path=worktree_path,
                 prompt="Implement issue",
             )
 
             # Should return None when session_id is missing
             assert session_id is None
 
-    def test_timeout_raises_runtime_error(self, implementer):
+    def test_timeout_raises_runtime_error(self, implementer, tmp_path):
         """Test timeout handling."""
+        implementer.state_dir = tmp_path
+        worktree_path = tmp_path / "worktree"
+        worktree_path.mkdir(exist_ok=True)
+
         with (
             patch("scylla.automation.implementer.run") as mock_run,
-            patch.object(Path, "write_text"),
-            patch.object(Path, "unlink"),
         ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 1800)
 
             with pytest.raises(RuntimeError, match="timed out"):
                 implementer._run_claude_code(
                     issue_number=123,
-                    worktree_path=Path("/tmp/worktree"),
+                    worktree_path=worktree_path,
                     prompt="Implement issue",
                 )
 
@@ -153,6 +161,79 @@ class TestRunClaudeCode:
         )
 
         assert session_id is None
+
+    def test_claude_code_output_saved_to_log(self, implementer, tmp_path):
+        """Test that Claude Code stdout is saved to log file on success."""
+        # Use tmp_path for state_dir to enable actual file writes
+        implementer.state_dir = tmp_path
+        implementer.state_dir.mkdir(exist_ok=True)
+
+        # Create worktree directory
+        worktree_path = tmp_path / "worktree"
+        worktree_path.mkdir(exist_ok=True)
+
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps(
+            {
+                "type": "result",
+                "session_id": "test-session-123",
+                "result": "Implementation complete",
+            }
+        )
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+        ):
+            mock_run.return_value = mock_result
+
+            implementer._run_claude_code(
+                issue_number=123,
+                worktree_path=worktree_path,
+                prompt="Implement issue",
+            )
+
+            # Verify log file was created and contains stdout
+            log_file = tmp_path / "claude-123.log"
+            assert log_file.exists()
+            assert "test-session-123" in log_file.read_text()
+
+    def test_claude_code_failure_saved_to_log(self, implementer, tmp_path):
+        """Test that Claude Code failure output is saved to log file."""
+        # Use tmp_path for state_dir
+        implementer.state_dir = tmp_path
+        implementer.state_dir.mkdir(exist_ok=True)
+
+        # Create worktree directory
+        worktree_path = tmp_path / "worktree"
+        worktree_path.mkdir(exist_ok=True)
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+        ):
+            error = subprocess.CalledProcessError(
+                returncode=1,
+                cmd=["claude"],
+                output="Some output",
+                stderr="Error message",
+            )
+            error.stdout = "Claude stdout output"
+            error.stderr = "Claude stderr output"
+            mock_run.side_effect = error
+
+            with pytest.raises(RuntimeError, match="Claude Code failed"):
+                implementer._run_claude_code(
+                    issue_number=456,
+                    worktree_path=worktree_path,
+                    prompt="Implement issue",
+                )
+
+            # Verify log file was created with failure details
+            log_file = tmp_path / "claude-456.log"
+            assert log_file.exists()
+            content = log_file.read_text()
+            assert "EXIT CODE: 1" in content
+            assert "Claude stdout output" in content
+            assert "Claude stderr output" in content
 
 
 class TestRunRetrospective:
@@ -205,8 +286,10 @@ class TestRunRetrospective:
             assert "Retrospective completed" in str(mock_logger.info.call_args_list[0])
             assert "Retrospective log" in str(mock_logger.info.call_args_list[1])
 
-    def test_graceful_failure_on_error(self, implementer):
+    def test_graceful_failure_on_error(self, implementer, tmp_path):
         """Test graceful failure when retrospective errors."""
+        implementer.state_dir = tmp_path
+
         with (
             patch("scylla.automation.implementer.run") as mock_run,
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -224,8 +307,10 @@ class TestRunRetrospective:
             mock_logger.warning.assert_called_once()
             assert "Retrospective failed" in str(mock_logger.warning.call_args)
 
-    def test_timeout_is_non_blocking(self, implementer):
+    def test_timeout_is_non_blocking(self, implementer, tmp_path):
         """Test timeout in retrospective doesn't block pipeline."""
+        implementer.state_dir = tmp_path
+
         with (
             patch("scylla.automation.implementer.run") as mock_run,
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -241,6 +326,41 @@ class TestRunRetrospective:
 
             # Should log warning
             mock_logger.warning.assert_called_once()
+
+    def test_retrospective_failure_saved_to_log(self, implementer, tmp_path):
+        """Test that retrospective failure output is saved to log file."""
+        # Use tmp_path for state_dir
+        implementer.state_dir = tmp_path
+        implementer.state_dir.mkdir(exist_ok=True)
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger"),
+        ):
+            error = subprocess.CalledProcessError(
+                returncode=1,
+                cmd=["claude"],
+                output="Retrospective output",
+                stderr="Retrospective error",
+            )
+            error.stdout = "Retrospective stdout"
+            error.stderr = "Retrospective stderr"
+            mock_run.side_effect = error
+
+            # Should not raise (non-blocking)
+            implementer._run_retrospective(
+                session_id="test123",
+                worktree_path=Path("/tmp/worktree"),
+                issue_number=789,
+            )
+
+            # Verify log file was created with failure details
+            log_file = tmp_path / "retrospective-789.log"
+            assert log_file.exists()
+            content = log_file.read_text()
+            assert "FAILED:" in content
+            assert "Retrospective stdout" in content
+            assert "Retrospective stderr" in content
 
 
 class TestImplementIssuePipeline:
@@ -436,8 +556,10 @@ class TestParseFollowUpItems:
 class TestRunFollowUpIssues:
     """Tests for _run_follow_up_issues method."""
 
-    def test_successful_creation(self, implementer):
+    def test_successful_creation(self, implementer, tmp_path):
         """Test successful follow-up issue creation."""
+        implementer.state_dir = tmp_path
+
         mock_result = MagicMock()
         mock_result.stdout = json.dumps(
             {"result": '[{"title": "Add tests", "body": "Need tests", "labels": ["test"]}]'}
@@ -461,8 +583,10 @@ class TestRunFollowUpIssues:
             mock_comment.assert_called_once()
             assert "#456" in mock_comment.call_args[0][1]
 
-    def test_no_items_identified(self, implementer):
+    def test_no_items_identified(self, implementer, tmp_path):
         """Test when no follow-up items are identified."""
+        implementer.state_dir = tmp_path
+
         mock_result = MagicMock()
         mock_result.stdout = json.dumps({"result": "[]"})
 
@@ -480,8 +604,10 @@ class TestRunFollowUpIssues:
                 "No follow-up items" in str(call) for call in mock_logger.info.call_args_list
             )
 
-    def test_graceful_failure_on_error(self, implementer):
+    def test_graceful_failure_on_error(self, implementer, tmp_path):
         """Test graceful handling when run fails."""
+        implementer.state_dir = tmp_path
+
         with (
             patch("scylla.automation.implementer.run") as mock_run,
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -493,8 +619,10 @@ class TestRunFollowUpIssues:
 
             assert any("failed" in str(call).lower() for call in mock_logger.warning.call_args_list)
 
-    def test_partial_failure_creates_available_issues(self, implementer):
+    def test_partial_failure_creates_available_issues(self, implementer, tmp_path):
         """Test that partial failures still create available issues."""
+        implementer.state_dir = tmp_path
+
         mock_result = MagicMock()
         mock_result.stdout = json.dumps(
             {
@@ -521,6 +649,64 @@ class TestRunFollowUpIssues:
             mock_comment.assert_called_once()
             # Only successful issue in summary
             assert "#789" in mock_comment.call_args[0][1]
+
+    def test_follow_up_output_saved_to_log(self, implementer, tmp_path):
+        """Test that follow-up output is saved to log file on success."""
+        # Use tmp_path for state_dir
+        implementer.state_dir = tmp_path
+        implementer.state_dir.mkdir(exist_ok=True)
+
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps(
+            {"result": '[{"title": "Follow-up", "body": "Body", "labels": []}]'}
+        )
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create", return_value=999),
+            patch("scylla.automation.implementer.gh_issue_comment"),
+            patch("scylla.automation.implementer.time.sleep"),
+        ):
+            mock_run.return_value = mock_result
+
+            implementer._run_follow_up_issues("session456", Path("/tmp"), 321)
+
+            # Verify log file was created with output
+            log_file = tmp_path / "follow-up-321.log"
+            assert log_file.exists()
+            content = log_file.read_text()
+            assert "Follow-up" in content
+
+    def test_follow_up_failure_saved_to_log(self, implementer, tmp_path):
+        """Test that follow-up failure output is saved to log file."""
+        # Use tmp_path for state_dir
+        implementer.state_dir = tmp_path
+        implementer.state_dir.mkdir(exist_ok=True)
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger"),
+        ):
+            error = subprocess.CalledProcessError(
+                returncode=1,
+                cmd=["claude"],
+                output="Follow-up output",
+                stderr="Follow-up error",
+            )
+            error.stdout = "Follow-up stdout"
+            error.stderr = "Follow-up stderr"
+            mock_run.side_effect = error
+
+            # Should not raise (non-blocking)
+            implementer._run_follow_up_issues("session456", Path("/tmp"), 555)
+
+            # Verify log file was created with failure details
+            log_file = tmp_path / "follow-up-555.log"
+            assert log_file.exists()
+            content = log_file.read_text()
+            assert "FAILED:" in content
+            assert "Follow-up stdout" in content
+            assert "Follow-up stderr" in content
 
 
 class TestImplementIssuePipelineFollowUp:

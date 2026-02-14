@@ -13,25 +13,36 @@ Usage:
 import argparse
 import logging
 import sys
+from pathlib import Path
 
 # Project is installed via editable install, no sys.path manipulation needed
 from scylla.automation.implementer import IssueImplementer
 from scylla.automation.models import ImplementerOptions
 
 
-def setup_logging(verbose: bool = False) -> None:
+def setup_logging(verbose: bool = False, log_dir: Path | None = None) -> None:
     """Configure logging.
 
     Args:
         verbose: Enable verbose (DEBUG) logging
+        log_dir: Optional directory to write log files
 
     """
     level = logging.DEBUG if verbose else logging.INFO
+    fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
     logging.basicConfig(
         level=level,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+        format=fmt,
+        datefmt=datefmt,
     )
+
+    if log_dir:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        fh = logging.FileHandler(log_dir / "run.log", mode="a")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter(fmt, datefmt=datefmt))
+        logging.getLogger().addHandler(fh)
 
 
 def parse_args() -> argparse.Namespace:
@@ -168,7 +179,12 @@ Examples:
 def main() -> int:
     """Execute the issue implementation workflow."""
     args = parse_args()
-    setup_logging(args.verbose)
+
+    # Set up logging with file handler
+    from scylla.automation.git_utils import get_repo_root
+
+    state_dir = get_repo_root() / ".issue_implementer"
+    setup_logging(args.verbose, log_dir=state_dir)
 
     logger = logging.getLogger(__name__)
 
