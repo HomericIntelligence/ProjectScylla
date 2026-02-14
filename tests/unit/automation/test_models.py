@@ -27,6 +27,7 @@ class TestIssueInfo:
 
         assert issue.number == 123
         assert issue.title == "Test issue"
+        assert issue.body == ""
         assert issue.state == IssueState.OPEN
         assert issue.labels == []
         assert issue.dependencies == []

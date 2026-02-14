@@ -9,7 +9,19 @@ Contains templates for:
 IMPLEMENTATION_PROMPT = """
 Implement GitHub issue #{issue_number}.
 
-Follow the project's Python conventions and type hint all function signatures.
+**Working Directory:** {worktree_path}
+**Branch:** {branch_name}
+
+**Issue Title:** {issue_title}
+
+**Issue Description:**
+{issue_body}
+
+---
+
+**Implementation Context:**
+- Run `gh issue view {issue_number} --comments` to read the full plan and any comments
+- Follow the project's Python conventions and type hint all function signatures
 
 **Critical Requirements:**
 1. Read the issue description and any existing plan carefully
@@ -152,9 +164,33 @@ to verify end-to-end behavior with real GitHub API.",
 """
 
 
-def get_implementation_prompt(issue_number: int) -> str:
-    """Get the implementation prompt for an issue."""
-    return IMPLEMENTATION_PROMPT.format(issue_number=issue_number)
+def get_implementation_prompt(
+    issue_number: int,
+    issue_title: str = "",
+    issue_body: str = "",
+    branch_name: str = "",
+    worktree_path: str = "",
+) -> str:
+    """Get the implementation prompt for an issue.
+
+    Args:
+        issue_number: GitHub issue number
+        issue_title: Issue title (optional, for backward compatibility)
+        issue_body: Issue body/description (optional, for backward compatibility)
+        branch_name: Git branch name (optional, for backward compatibility)
+        worktree_path: Working directory path (optional, for backward compatibility)
+
+    Returns:
+        Formatted implementation prompt
+
+    """
+    return IMPLEMENTATION_PROMPT.format(
+        issue_number=issue_number,
+        issue_title=issue_title,
+        issue_body=issue_body,
+        branch_name=branch_name,
+        worktree_path=worktree_path,
+    )
 
 
 def get_plan_prompt(issue_number: int) -> str:

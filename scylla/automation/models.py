@@ -27,6 +27,7 @@ class IssueInfo(BaseModel):
 
     number: int
     title: str
+    body: str = ""
     state: IssueState = IssueState.OPEN
     labels: list[str] = Field(default_factory=list)
     dependencies: list[int] = Field(default_factory=list)

@@ -10,11 +10,30 @@ from scylla.automation.prompts import (
 
 
 def test_get_implementation_prompt():
-    """Test implementation prompt generation."""
+    """Test implementation prompt generation with backward compatibility."""
+    # Test backward compatibility - should work with just issue_number
     prompt = get_implementation_prompt(123)
     assert "123" in prompt
     assert "pytest" in prompt
     assert "type hint" in prompt.lower()
+
+
+def test_get_implementation_prompt_with_context():
+    """Test implementation prompt with full context."""
+    prompt = get_implementation_prompt(
+        issue_number=123,
+        issue_title="Add feature X",
+        issue_body="Implement feature X with Y and Z",
+        branch_name="123-add-feature-x",
+        worktree_path="/tmp/worktree",
+    )
+
+    assert "123" in prompt
+    assert "Add feature X" in prompt
+    assert "Implement feature X with Y and Z" in prompt
+    assert "123-add-feature-x" in prompt
+    assert "/tmp/worktree" in prompt
+    assert "gh issue view" in prompt
 
 
 def test_get_plan_prompt():

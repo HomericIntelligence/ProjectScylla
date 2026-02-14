@@ -361,12 +361,36 @@ class IssueImplementer:
                 state.phase = ImplementationPhase.IMPLEMENTING
             self._save_state(state)
 
+            # Fetch issue info for context
+            issue = fetch_issue_info(issue_number)
             session_id = self._run_claude_code(
-                issue_number, worktree_path, get_implementation_prompt(issue_number)
+                issue_number,
+                worktree_path,
+                get_implementation_prompt(
+                    issue_number=issue_number,
+                    issue_title=issue.title,
+                    issue_body=issue.body,
+                    branch_name=branch_name,
+                    worktree_path=str(worktree_path),
+                ),
             )
             with self.state_lock:
                 state.session_id = session_id
             self._save_state(state)
+
+            # Check for changes before attempting commit
+            status_check = run(
+                ["git", "status", "--porcelain"],
+                cwd=worktree_path,
+                capture_output=True,
+            )
+            if not status_check.stdout.strip():
+                logger.warning(
+                    f"No changes detected for issue #{issue_number} "
+                    f"after Claude session {session_id}. "
+                    "Claude may not have implemented the changes. "
+                    "Check the session transcript."
+                )
 
             # Commit
             self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Committing")
@@ -669,7 +693,16 @@ class IssueImplementer:
 
         try:
             result = run(
-                ["claude", str(prompt_file), "--output-format", "json"],
+                [
+                    "claude",
+                    str(prompt_file),
+                    "--output-format",
+                    "json",
+                    "--permission-mode",
+                    "dontAsk",
+                    "--allowedTools",
+                    "Read,Write,Edit,Glob,Grep,Bash",
+                ],
                 cwd=worktree_path,
                 timeout=1800,  # 30 minutes
             )
@@ -699,30 +732,16 @@ class IssueImplementer:
         )
 
         if not result.stdout.strip():
-            raise RuntimeError("No changes to commit")
+            raise RuntimeError(
+                f"No changes to commit for issue #{issue_number}. "
+                "Check if the implementation was successful or if the plan needs revision."
+            )
 
-        # Stage only tracked modified files (not . to avoid secrets)
-        # Get list of modified tracked files
-        modified_result = run(
-            ["git", "diff", "--name-only", "HEAD"],
-            cwd=worktree_path,
-            capture_output=True,
-        )
-        modified_files = (
-            modified_result.stdout.strip().split("\n") if modified_result.stdout.strip() else []
-        )
-
-        # Also get untracked files that might have been created
-        untracked_result = run(
-            ["git", "ls-files", "--others", "--exclude-standard"],
-            cwd=worktree_path,
-            capture_output=True,
-        )
-        untracked_files = (
-            untracked_result.stdout.strip().split("\n") if untracked_result.stdout.strip() else []
-        )
-
-        # Filter out potential secrets - use exact filename matching
+        # Parse git status --porcelain output to get all changed files
+        # Format: XY filename or XY "quoted filename" for special chars
+        # X = index status, Y = worktree status
+        # Common codes: M (modified), A (added), D (deleted), R (renamed), ?? (untracked)
+        files_to_add = []
         secret_files = {
             ".env",
             ".secret",
@@ -733,21 +752,45 @@ class IssueImplementer:
             "id_ed25519",
         }
         secret_extensions = {".key", ".pem", ".pfx", ".p12"}
-        files_to_add = []
-        for f in modified_files + untracked_files:
-            if not f:
+
+        for line in result.stdout.strip().split("\n"):
+            if not line:
                 continue
+
+            # Parse status code and filename
+            # First two chars are status codes, rest is filename
+            status = line[:2]
+            filename_part = line[3:].strip()
+
+            # Handle renamed files (format: "old -> new")
+            if status.startswith("R"):
+                # For renames, only stage the new name (after ->)
+                if " -> " in filename_part:
+                    filename_part = filename_part.split(" -> ", 1)[1]
+
+            # Handle quoted filenames (git quotes names with special chars)
+            if filename_part.startswith('"') and filename_part.endswith('"'):
+                # Remove quotes - git uses C-style escaping
+                filename_part = filename_part[1:-1]
+
+            # Check if file is a potential secret
             from pathlib import Path
 
-            filename = Path(f).name
-            # Check exact filename match or extension
-            if filename not in secret_files and not any(
-                filename.endswith(ext) for ext in secret_extensions
-            ):
-                files_to_add.append(f)
+            filename = Path(filename_part).name
+            if filename in secret_files or any(filename.endswith(ext) for ext in secret_extensions):
+                logger.warning(f"Skipping potential secret file: {filename_part}")
+                continue
 
-        if files_to_add:
-            run(["git", "add"] + files_to_add, cwd=worktree_path)
+            files_to_add.append(filename_part)
+
+        if not files_to_add:
+            raise RuntimeError(
+                f"No non-secret files to commit for issue #{issue_number}. "
+                "All changes appear to be secret files."
+            )
+
+        # Stage the files
+        run(["git", "add"] + files_to_add, cwd=worktree_path)
 
         # Generate commit message
         issue = fetch_issue_info(issue_number)
