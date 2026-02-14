@@ -52,6 +52,7 @@ class ImplementationPhase(str, Enum):
     COMMITTING = "committing"
     PUSHING = "pushing"
     CREATING_PR = "creating_pr"
+    RETROSPECTIVE = "retrospective"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -64,6 +65,7 @@ class ImplementationState(BaseModel):
     worktree_path: str | None = None
     branch_name: str | None = None
     pr_number: int | None = None
+    session_id: str | None = None
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: datetime | None = None
     error: str | None = None
@@ -113,6 +115,7 @@ class ImplementerOptions(BaseModel):
     skip_closed: bool = True
     auto_merge: bool = True
     dry_run: bool = False
+    enable_retrospective: bool = False
 
 
 class DependencyGraph(BaseModel):

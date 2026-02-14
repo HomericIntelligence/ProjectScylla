@@ -116,6 +116,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--retrospective",
+        action="store_true",
+        help="Run /retrospective after implementation to capture learnings as skills",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -148,6 +154,7 @@ def main() -> int:
         skip_closed=not args.no_skip_closed,
         auto_merge=not args.no_auto_merge,
         dry_run=args.dry_run,
+        enable_retrospective=args.retrospective,
     )
 
     if args.health_check:
