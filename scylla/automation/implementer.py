@@ -682,7 +682,16 @@ class IssueImplementer:
                 return data.get("session_id")
             except (json.JSONDecodeError, AttributeError):
                 logger.warning(f"Could not parse session_id for issue #{issue_number}")
+                logger.debug(f"Claude stdout: {result.stdout[:500]}")
                 return None
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Claude Code failed for issue #{issue_number}")
+            logger.error(f"Exit code: {e.returncode}")
+            if e.stdout:
+                logger.error(f"Stdout: {e.stdout[:1000]}")
+            if e.stderr:
+                logger.error(f"Stderr: {e.stderr[:1000]}")
+            raise RuntimeError(f"Claude Code failed: {e.stderr or e.stdout}") from e
         except subprocess.TimeoutExpired as e:
             raise RuntimeError("Claude Code timed out") from e
         finally:
