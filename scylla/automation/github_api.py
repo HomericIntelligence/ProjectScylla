@@ -149,6 +149,52 @@ def gh_issue_comment(issue_number: int, body: str) -> None:
         raise RuntimeError(f"Failed to post comment to issue #{issue_number}: {e}") from e
 
 
+def gh_issue_create(title: str, body: str, labels: list[str] | None = None) -> int:
+    """Create a new GitHub issue.
+
+    Args:
+        title: Issue title
+        body: Issue body/description
+        labels: Optional list of label names to apply
+
+    Returns:
+        Created issue number
+
+    Raises:
+        RuntimeError: If issue creation fails
+
+    """
+    try:
+        # Build command
+        cmd = ["issue", "create", "--title", title, "--body", body]
+
+        # Add labels if provided
+        if labels:
+            for label in labels:
+                cmd.extend(["--label", label])
+
+        result = _gh_call(cmd)
+
+        # Extract issue number from URL in output
+        output = result.stdout.strip()
+        try:
+            # Try to extract number from URL (e.g., https://github.com/owner/repo/issues/123)
+            match = re.search(r"/issues/(\d+)", output)
+            if match:
+                issue_number = int(match.group(1))
+            else:
+                # Fallback to parsing last path component
+                issue_number = int(output.split("/")[-1])
+        except (ValueError, IndexError) as e:
+            raise RuntimeError(f"Failed to parse issue number from output: {output}") from e
+
+        logger.info(f"Created issue #{issue_number}")
+        return issue_number
+
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Failed to create issue: {e}") from e
+
+
 def gh_pr_create(
     branch: str,
     title: str,

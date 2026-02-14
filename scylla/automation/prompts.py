@@ -47,7 +47,8 @@ Create an implementation plan for GitHub issue #{issue_number}.
 4. **Files to Modify** - Existing files to change with specific changes
 5. **Implementation Order** - Numbered sequence of steps
 6. **Verification** - How to test and verify the implementation
-7. **Skills Used** - List skills invoked during planning (e.g., /explore, /search)
+7. **Skills Used** - List skills invoked during planning AND any team
+   knowledge base skills referenced in the Prior Learnings section above
 
 **Guidelines:**
 - Be specific about file paths and function names
@@ -55,6 +56,8 @@ Create an implementation plan for GitHub issue #{issue_number}.
 - Include test file creation in the plan
 - Consider dependencies and integration points
 - Keep the plan focused on the issue requirements
+- In the Skills Used section, include both skills you invoked directly
+  and any team knowledge base skills provided in the Prior Learnings
 - Document which skills you used during planning so implementers know what context was gathered
 
 **Format:**
@@ -107,6 +110,45 @@ None found
 **Important:** Only return findings from the actual marketplace. Do not speculate or invent skills.
 """
 
+FOLLOW_UP_PROMPT = """
+Review your work on issue #{issue_number} and identify any follow-up tasks,
+enhancements, or edge cases discovered during implementation.
+
+**Output format:**
+Return a JSON array of follow-up items (max 5). Each item must have:
+- `title`: Brief, specific title (under 70 characters)
+- `body`: Detailed description of the follow-up work
+- `labels`: Array of relevant labels from:
+  ["enhancement", "bug", "test", "docs", "refactor", "research"]
+
+If there are no follow-up items, return an empty array: `[]`
+
+**Example:**
+```json
+[
+  {{
+    "title": "Add edge case handling for empty input",
+    "body": "During implementation, discovered that empty input returns
+misleading error. Should add validation and specific error message.",
+    "labels": ["enhancement", "bug"]
+  }},
+  {{
+    "title": "Add integration tests for new feature",
+    "body": "Current tests only cover unit level. Need integration tests
+to verify end-to-end behavior with real GitHub API.",
+    "labels": ["test"]
+  }}
+]
+```
+
+**Guidelines:**
+- Only include concrete, actionable items discovered during this implementation
+- Don't include speculative future features
+- Keep descriptions concise but specific enough for another developer
+- Max 5 items - prioritize the most important
+- Return `[]` if no follow-ups needed
+"""
+
 
 def get_implementation_prompt(issue_number: int) -> str:
     """Get the implementation prompt for an issue."""
@@ -142,6 +184,19 @@ def get_advise_prompt(
         issue_body=issue_body,
         marketplace_path=marketplace_path,
     )
+
+
+def get_follow_up_prompt(issue_number: int) -> str:
+    """Get the follow-up prompt for identifying future work.
+
+    Args:
+        issue_number: GitHub issue number
+
+    Returns:
+        Formatted follow-up prompt
+
+    """
+    return FOLLOW_UP_PROMPT.format(issue_number=issue_number)
 
 
 def get_pr_description(

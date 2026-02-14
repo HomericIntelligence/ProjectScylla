@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import subprocess
 import threading
 import time
@@ -21,7 +22,7 @@ from pathlib import Path
 from .curses_ui import CursesUI, ThreadLogManager
 from .dependency_resolver import DependencyResolver
 from .git_utils import get_repo_root, run
-from .github_api import fetch_issue_info, gh_pr_create
+from .github_api import fetch_issue_info, gh_issue_comment, gh_issue_create, gh_pr_create
 from .models import (
     ImplementationPhase,
     ImplementationState,
@@ -29,6 +30,7 @@ from .models import (
     WorkerResult,
 )
 from .prompts import (
+    get_follow_up_prompt,
     get_implementation_prompt,
     get_pr_description,
 )
@@ -366,6 +368,14 @@ class IssueImplementer:
                 self._save_state(state)
                 self._run_retrospective(state.session_id, worktree_path, issue_number)
 
+            # Follow-up issues phase (after RETROSPECTIVE, before COMPLETED)
+            if self.options.enable_follow_up and state.session_id:
+                self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Follow-up issues")
+                with self.state_lock:
+                    state.phase = ImplementationPhase.FOLLOW_UP_ISSUES
+                self._save_state(state)
+                self._run_follow_up_issues(state.session_id, worktree_path, issue_number)
+
             # Mark as completed
             with self.state_lock:
                 state.phase = ImplementationPhase.COMPLETED
@@ -430,6 +440,141 @@ class IssueImplementer:
             ["python", str(plan_script), "--issues", str(issue_number)],
             timeout=600,  # 10 minutes
         )
+
+    def _parse_follow_up_items(self, text: str) -> list[dict]:
+        """Parse follow-up items from Claude's JSON response.
+
+        Args:
+            text: Claude's response text (may contain JSON in code blocks)
+
+        Returns:
+            List of follow-up item dictionaries with title, body, labels
+
+        """
+        # Try to extract JSON from code blocks or bare JSON
+        json_match = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            # Try to find bare JSON array
+            json_match = re.search(r"(\[.*\])", text, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                logger.warning("No JSON array found in follow-up response")
+                return []
+
+        try:
+            items = json.loads(json_str)
+            if not isinstance(items, list):
+                logger.warning("Follow-up response is not a JSON array")
+                return []
+
+            # Validate and filter items
+            valid_items = []
+            for item in items[:5]:  # Cap at 5
+                if not isinstance(item, dict):
+                    continue
+                if "title" not in item or "body" not in item:
+                    logger.warning(f"Skipping follow-up item missing required fields: {item}")
+                    continue
+
+                # Ensure labels is a list
+                if "labels" not in item:
+                    item["labels"] = []
+                elif not isinstance(item["labels"], list):
+                    item["labels"] = []
+
+                valid_items.append(item)
+
+            return valid_items
+
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse follow-up JSON: {e}")
+            return []
+
+    def _run_follow_up_issues(
+        self, session_id: str, worktree_path: Path, issue_number: int
+    ) -> None:
+        """Resume Claude session to identify and file follow-up issues.
+
+        Args:
+            session_id: Claude session ID to resume
+            worktree_path: Path to git worktree
+            issue_number: Parent issue number
+
+        """
+        try:
+            # Resume session and get follow-up items
+            result = run(
+                [
+                    "claude",
+                    "--resume",
+                    session_id,
+                    "--message",
+                    get_follow_up_prompt(issue_number),
+                    "--output-format",
+                    "json",
+                ],
+                cwd=worktree_path,
+                timeout=600,  # 10 minutes
+            )
+
+            # Parse JSON output
+            try:
+                data = json.loads(result.stdout)
+                response_text = data.get("result", "")
+            except (json.JSONDecodeError, AttributeError) as e:
+                logger.warning(f"Could not parse follow-up response for issue #{issue_number}: {e}")
+                return
+
+            # Extract follow-up items
+            items = self._parse_follow_up_items(response_text)
+
+            if not items:
+                logger.info(f"No follow-up items identified for issue #{issue_number}")
+                return
+
+            # Create follow-up issues
+            created_issues = []
+            for item in items:
+                try:
+                    # Append reference to parent issue
+                    body_with_ref = f"{item['body']}\n\n_Follow-up from #{issue_number}_"
+
+                    # Create issue with labels
+                    new_issue_num = gh_issue_create(
+                        title=item["title"],
+                        body=body_with_ref,
+                        labels=item.get("labels"),
+                    )
+                    created_issues.append(new_issue_num)
+
+                    # Rate limit: sleep between creates
+                    time.sleep(1)
+
+                except Exception as e:
+                    logger.warning(f"Failed to create follow-up issue '{item['title']}': {e}")
+                    # Continue with remaining items
+
+            # Post summary comment on parent issue
+            if created_issues:
+                summary = f"Created {len(created_issues)} follow-up issue(s): " + ", ".join(
+                    f"#{num}" for num in created_issues
+                )
+                try:
+                    gh_issue_comment(issue_number, summary)
+                    logger.info(f"Posted follow-up summary to issue #{issue_number}")
+                except Exception as e:
+                    logger.warning(f"Failed to post follow-up summary: {e}")
+
+            logger.info(
+                f"Follow-up issues completed for #{issue_number}: created {len(created_issues)}"
+            )
+
+        except Exception as e:
+            logger.warning(f"Follow-up issues failed for issue #{issue_number}: {e}")
+            # Non-blocking: never re-raise
 
     def _run_retrospective(self, session_id: str, worktree_path: Path, issue_number: int) -> None:
         """Resume Claude session to run /retrospective.

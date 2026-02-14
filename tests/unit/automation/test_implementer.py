@@ -19,6 +19,7 @@ def mock_options():
         dry_run=False,
         max_workers=1,
         enable_retrospective=False,
+        enable_follow_up=False,  # Disable for most tests
     )
 
 
@@ -302,4 +303,289 @@ class TestImplementIssuePipeline:
 
                 # Retrospective should NOT have been called (no session_id)
                 mock_retro.assert_not_called()
+                assert result.success is True
+
+
+class TestParseFollowUpItems:
+    """Tests for _parse_follow_up_items method."""
+
+    def test_valid_json_in_code_block(self, implementer):
+        """Test parsing JSON from code blocks."""
+        text = """Here are the follow-up items:
+```json
+[
+  {
+    "title": "Add tests",
+    "body": "Need more tests",
+    "labels": ["test"]
+  }
+]
+```
+"""
+        items = implementer._parse_follow_up_items(text)
+
+        assert len(items) == 1
+        assert items[0]["title"] == "Add tests"
+        assert items[0]["body"] == "Need more tests"
+        assert items[0]["labels"] == ["test"]
+
+    def test_valid_bare_json(self, implementer):
+        """Test parsing bare JSON array."""
+        text = '[{"title": "Fix bug", "body": "Found a bug", "labels": ["bug"]}]'
+
+        items = implementer._parse_follow_up_items(text)
+
+        assert len(items) == 1
+        assert items[0]["title"] == "Fix bug"
+
+    def test_empty_array(self, implementer):
+        """Test parsing empty array."""
+        text = "```json\n[]\n```"
+
+        items = implementer._parse_follow_up_items(text)
+
+        assert items == []
+
+    def test_empty_string(self, implementer):
+        """Test handling empty string."""
+        items = implementer._parse_follow_up_items("")
+
+        assert items == []
+
+    def test_invalid_json(self, implementer):
+        """Test graceful handling of invalid JSON."""
+        text = "This is not valid JSON {{"
+
+        items = implementer._parse_follow_up_items(text)
+
+        assert items == []
+
+    def test_missing_required_fields_skipped(self, implementer):
+        """Test that items missing required fields are skipped."""
+        text = """
+[
+  {"title": "Valid item", "body": "Has both fields", "labels": []},
+  {"title": "Missing body"},
+  {"body": "Missing title"},
+  {"title": "Another valid", "body": "Also valid"}
+]
+"""
+        items = implementer._parse_follow_up_items(text)
+
+        assert len(items) == 2
+        assert items[0]["title"] == "Valid item"
+        assert items[1]["title"] == "Another valid"
+
+    def test_caps_at_five_items(self, implementer):
+        """Test that items are capped at 5."""
+        items_json = [{"title": f"Item {i}", "body": f"Body {i}", "labels": []} for i in range(10)]
+        text = f"```json\n{json.dumps(items_json)}\n```"
+
+        items = implementer._parse_follow_up_items(text)
+
+        assert len(items) == 5
+
+
+class TestRunFollowUpIssues:
+    """Tests for _run_follow_up_issues method."""
+
+    def test_successful_creation(self, implementer):
+        """Test successful follow-up issue creation."""
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps(
+            {"result": '[{"title": "Add tests", "body": "Need tests", "labels": ["test"]}]'}
+        )
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
+            patch("scylla.automation.implementer.gh_issue_comment") as mock_comment,
+            patch("scylla.automation.implementer.time.sleep"),
+        ):
+            mock_run.return_value = mock_result
+            mock_create.return_value = 456
+
+            implementer._run_follow_up_issues("session123", Path("/tmp"), 123)
+
+            mock_create.assert_called_once()
+            assert "Need tests" in mock_create.call_args[1]["body"]
+            assert "Follow-up from #123" in mock_create.call_args[1]["body"]
+
+            mock_comment.assert_called_once()
+            assert "#456" in mock_comment.call_args[0][1]
+
+    def test_no_items_identified(self, implementer):
+        """Test when no follow-up items are identified."""
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps({"result": "[]"})
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
+            patch("scylla.automation.implementer.logger") as mock_logger,
+        ):
+            mock_run.return_value = mock_result
+
+            implementer._run_follow_up_issues("session123", Path("/tmp"), 123)
+
+            mock_create.assert_not_called()
+            assert any(
+                "No follow-up items" in str(call) for call in mock_logger.info.call_args_list
+            )
+
+    def test_graceful_failure_on_error(self, implementer):
+        """Test graceful handling when run fails."""
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger") as mock_logger,
+        ):
+            mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
+
+            # Should not raise
+            implementer._run_follow_up_issues("session123", Path("/tmp"), 123)
+
+            assert any("failed" in str(call).lower() for call in mock_logger.warning.call_args_list)
+
+    def test_partial_failure_creates_available_issues(self, implementer):
+        """Test that partial failures still create available issues."""
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps(
+            {
+                "result": """[
+                    {"title": "Item 1", "body": "Body 1", "labels": []},
+                    {"title": "Item 2", "body": "Body 2", "labels": []}
+                ]"""
+            }
+        )
+
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
+            patch("scylla.automation.implementer.gh_issue_comment") as mock_comment,
+            patch("scylla.automation.implementer.time.sleep"),
+        ):
+            mock_run.return_value = mock_result
+            # First succeeds, second fails
+            mock_create.side_effect = [789, RuntimeError("API error")]
+
+            implementer._run_follow_up_issues("session123", Path("/tmp"), 123)
+
+            assert mock_create.call_count == 2
+            mock_comment.assert_called_once()
+            # Only successful issue in summary
+            assert "#789" in mock_comment.call_args[0][1]
+
+
+class TestImplementIssuePipelineFollowUp:
+    """Tests for follow-up phase in _implement_issue pipeline."""
+
+    def test_follow_up_enabled_runs_phase(self):
+        """Test that follow-up phase runs when enabled and session_id exists."""
+        mock_options = ImplementerOptions(
+            epic_number=123,
+            dry_run=False,
+            max_workers=1,
+            enable_follow_up=True,
+        )
+
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=True),
+                patch.object(implementer, "_run_claude_code", return_value="session789"),
+                patch.object(implementer, "_commit_changes"),
+                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_run_follow_up_issues") as mock_follow_up,
+                patch.object(implementer, "_save_state"),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch("scylla.automation.implementer.run"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123, session_id="session789")
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Follow-up should have been called
+                mock_follow_up.assert_called_once()
+                assert result.success is True
+
+    def test_follow_up_disabled_skips_phase(self):
+        """Test that follow-up phase is skipped when disabled."""
+        mock_options = ImplementerOptions(
+            epic_number=123,
+            dry_run=False,
+            max_workers=1,
+            enable_follow_up=False,
+        )
+
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=True),
+                patch.object(implementer, "_run_claude_code", return_value="session789"),
+                patch.object(implementer, "_commit_changes"),
+                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_run_follow_up_issues") as mock_follow_up,
+                patch.object(implementer, "_save_state"),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch("scylla.automation.implementer.run"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123, session_id="session789")
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Follow-up should NOT have been called
+                mock_follow_up.assert_not_called()
+                assert result.success is True
+
+    def test_no_session_id_skips_follow_up(self):
+        """Test that follow-up is skipped when session_id is None."""
+        mock_options = ImplementerOptions(
+            epic_number=123,
+            dry_run=False,
+            max_workers=1,
+            enable_follow_up=True,
+        )
+
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=True),
+                patch.object(implementer, "_run_claude_code", return_value=None),
+                patch.object(implementer, "_commit_changes"),
+                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_run_follow_up_issues") as mock_follow_up,
+                patch.object(implementer, "_save_state"),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch("scylla.automation.implementer.run"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123)
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Follow-up should NOT have been called (no session_id)
+                mock_follow_up.assert_not_called()
                 assert result.success is True
