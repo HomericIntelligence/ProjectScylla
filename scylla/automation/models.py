@@ -116,7 +116,7 @@ class ImplementerOptions(BaseModel):
     skip_closed: bool = True
     auto_merge: bool = True
     dry_run: bool = False
-    enable_retrospective: bool = False
+    enable_retrospective: bool = True
     enable_follow_up: bool = True
 
 
