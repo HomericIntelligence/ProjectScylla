@@ -6,6 +6,7 @@ from scylla.automation.models import (
     DependencyGraph,
     ImplementationPhase,
     ImplementationState,
+    ImplementerOptions,
     IssueInfo,
     IssueState,
     PlannerOptions,
@@ -78,6 +79,7 @@ class TestImplementationState:
         assert state.worktree_path is None
         assert state.branch_name is None
         assert state.pr_number is None
+        assert state.session_id is None
         assert isinstance(state.started_at, datetime)
         assert state.completed_at is None
         assert state.error is None
@@ -90,18 +92,32 @@ class TestImplementationState:
             phase=ImplementationPhase.IMPLEMENTING,
             worktree_path="/tmp/worktree",
             branch_name="123-test",
+            session_id="abc123",
         )
 
         # Serialize to JSON
         json_str = state.model_dump_json()
         assert "123" in json_str
         assert "implementing" in json_str
+        assert "abc123" in json_str
 
         # Deserialize from JSON
         restored = ImplementationState.model_validate_json(json_str)
         assert restored.issue_number == state.issue_number
         assert restored.phase == state.phase
         assert restored.worktree_path == state.worktree_path
+        assert restored.session_id == state.session_id
+
+    def test_retrospective_phase(self):
+        """Test RETROSPECTIVE phase in ImplementationPhase enum."""
+        assert ImplementationPhase.RETROSPECTIVE == "retrospective"
+
+        # Verify it can be used in state
+        state = ImplementationState(
+            issue_number=123,
+            phase=ImplementationPhase.RETROSPECTIVE,
+        )
+        assert state.phase == ImplementationPhase.RETROSPECTIVE
 
 
 class TestDependencyGraph:
@@ -262,3 +278,45 @@ class TestPlannerOptions:
         assert options.parallel == 5
         assert options.skip_closed is False
         assert options.enable_advise is False
+
+
+class TestImplementerOptions:
+    """Tests for ImplementerOptions model."""
+
+    def test_default_values(self):
+        """Test ImplementerOptions default values."""
+        options = ImplementerOptions(epic_number=123)
+
+        assert options.epic_number == 123
+        assert options.analyze_only is False
+        assert options.health_check is False
+        assert options.resume is False
+        assert options.max_workers == 3
+        assert options.skip_closed is True
+        assert options.auto_merge is True
+        assert options.dry_run is False
+        assert options.enable_retrospective is False
+
+    def test_custom_values(self):
+        """Test ImplementerOptions with custom values."""
+        options = ImplementerOptions(
+            epic_number=456,
+            analyze_only=True,
+            health_check=True,
+            resume=True,
+            max_workers=5,
+            skip_closed=False,
+            auto_merge=False,
+            dry_run=True,
+            enable_retrospective=True,
+        )
+
+        assert options.epic_number == 456
+        assert options.analyze_only is True
+        assert options.health_check is True
+        assert options.resume is True
+        assert options.max_workers == 5
+        assert options.skip_closed is False
+        assert options.auto_merge is False
+        assert options.dry_run is True
+        assert options.enable_retrospective is True

@@ -324,9 +324,12 @@ class IssueImplementer:
                 state.phase = ImplementationPhase.IMPLEMENTING
             self._save_state(state)
 
-            self._run_claude_code(
+            session_id = self._run_claude_code(
                 issue_number, worktree_path, get_implementation_prompt(issue_number)
             )
+            with self.state_lock:
+                state.session_id = session_id
+            self._save_state(state)
 
             # Commit
             self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Committing")
@@ -353,6 +356,18 @@ class IssueImplementer:
             pr_number = self._create_pr(issue_number, branch_name)
             with self.state_lock:
                 state.pr_number = pr_number
+            self._save_state(state)
+
+            # Retrospective phase (after CREATING_PR, before COMPLETED)
+            if self.options.enable_retrospective and state.session_id:
+                self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Retrospective")
+                with self.state_lock:
+                    state.phase = ImplementationPhase.RETROSPECTIVE
+                self._save_state(state)
+                self._run_retrospective(state.session_id, worktree_path, issue_number)
+
+            # Mark as completed
+            with self.state_lock:
                 state.phase = ImplementationPhase.COMPLETED
                 state.completed_at = datetime.now(timezone.utc)
             self._save_state(state)
@@ -416,18 +431,57 @@ class IssueImplementer:
             timeout=600,  # 10 minutes
         )
 
-    def _run_claude_code(self, issue_number: int, worktree_path: Path, prompt: str) -> None:
-        """Run Claude Code in a worktree."""
-        if self.options.dry_run:
-            logger.info(f"[DRY RUN] Would run Claude Code for issue #{issue_number}")
-            return
+    def _run_retrospective(self, session_id: str, worktree_path: Path, issue_number: int) -> None:
+        """Resume Claude session to run /retrospective.
 
+        Args:
+            session_id: Claude session ID to resume
+            worktree_path: Path to git worktree
+            issue_number: Issue number for logging
+
+        """
         try:
             run(
-                ["claude", "--message", prompt],
+                [
+                    "claude",
+                    "--resume",
+                    session_id,
+                    "--message",
+                    "Use the /skills-registry-commands:retrospective skill to capture "
+                    "what was learned implementing this issue.",
+                ],
+                cwd=worktree_path,
+                timeout=600,  # 10 minutes
+            )
+            logger.info(f"Retrospective completed for issue #{issue_number}")
+        except Exception as e:
+            logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
+            # Non-blocking: never re-raise
+
+    def _run_claude_code(self, issue_number: int, worktree_path: Path, prompt: str) -> str | None:
+        """Run Claude Code in a worktree.
+
+        Returns:
+            Session ID if captured, None otherwise
+
+        """
+        if self.options.dry_run:
+            logger.info(f"[DRY RUN] Would run Claude Code for issue #{issue_number}")
+            return None
+
+        try:
+            result = run(
+                ["claude", "--message", prompt, "--output-format", "json"],
                 cwd=worktree_path,
                 timeout=1800,  # 30 minutes
             )
+            # Parse session_id from JSON output
+            try:
+                data = json.loads(result.stdout)
+                return data.get("session_id")
+            except (json.JSONDecodeError, AttributeError):
+                logger.warning(f"Could not parse session_id for issue #{issue_number}")
+                return None
         except subprocess.TimeoutExpired as e:
             raise RuntimeError("Claude Code timed out") from e
 
