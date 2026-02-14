@@ -18,7 +18,7 @@ def mock_options():
         epic_number=123,
         dry_run=False,
         max_workers=1,
-        enable_retrospective=False,
+        enable_retrospective=False,  # Explicitly disable for most tests
         enable_follow_up=False,  # Disable for most tests
     )
 
