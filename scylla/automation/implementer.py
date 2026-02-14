@@ -446,9 +446,14 @@ class IssueImplementer:
                     "claude",
                     "--resume",
                     session_id,
-                    "--message",
-                    "Use the /skills-registry-commands:retrospective skill to capture "
-                    "what was learned implementing this issue.",
+                    "/skills-registry-commands:retrospective commit the results and create a PR",
+                    "--print",
+                    "--tools",
+                    "Bash",
+                    "--allowedTools",
+                    "Bash(git:*)",
+                    "--allowedTools",
+                    "Bash(gh:*)",
                 ],
                 cwd=worktree_path,
                 timeout=600,  # 10 minutes
