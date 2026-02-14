@@ -752,15 +752,17 @@ class IssueImplementer:
             "id_ed25519",
         }
         secret_extensions = {".key", ".pem", ".pfx", ".p12"}
+        backup_extensions = {".orig", ".bak", ".swp", ".swo", "~"}
 
         for line in result.stdout.strip().split("\n"):
             if not line:
                 continue
 
             # Parse status code and filename
-            # First two chars are status codes, rest is filename
+            # Format: "XY filename" where X and Y are status codes
+            # Position 0-1: status codes, position 2: space, position 3+: filename
             status = line[:2]
-            filename_part = line[3:].strip()
+            filename_part = line[3:]  # Don't strip - filename starts at position 3
 
             # Handle renamed files (format: "old -> new")
             if status.startswith("R"):
@@ -773,12 +775,21 @@ class IssueImplementer:
                 # Remove quotes - git uses C-style escaping
                 filename_part = filename_part[1:-1]
 
-            # Check if file is a potential secret
+            # Check if file is a potential secret or backup file
             from pathlib import Path
 
             filename = Path(filename_part).name
+
+            # Skip secret files (never stage these)
             if filename in secret_files or any(filename.endswith(ext) for ext in secret_extensions):
                 logger.warning(f"Skipping potential secret file: {filename_part}")
+                continue
+
+            # Skip backup files ONLY if they're being added (not if deleted)
+            # We want to stage deletions of backup files to clean them up
+            is_deleted = "D" in status
+            if not is_deleted and any(filename.endswith(ext) for ext in backup_extensions):
+                logger.debug(f"Skipping backup file: {filename_part}")
                 continue
 
             files_to_add.append(filename_part)
