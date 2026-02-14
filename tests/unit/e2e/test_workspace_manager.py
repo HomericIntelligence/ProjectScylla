@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 from unittest.mock import MagicMock, call, patch
 
@@ -26,9 +27,10 @@ class TestSetupBaseRepoRetry:
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result) as mock_run:
-            manager.setup_base_repo()
+            with patch("fcntl.flock"):  # Mock file locking
+                manager.setup_base_repo()
 
-        # Should only call once
+        # Should only call once (for clone)
         assert mock_run.call_count == 1
         assert manager.is_setup is True
 
@@ -50,7 +52,8 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", side_effect=[fail_result, success_result]) as mock_run:
             with patch("time.sleep") as mock_sleep:
-                manager.setup_base_repo()
+                with patch("fcntl.flock"):  # Mock file locking
+                    manager.setup_base_repo()
 
         # Should retry and succeed
         assert mock_run.call_count == 2
@@ -75,7 +78,8 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", side_effect=[fail_result, success_result]):
             with patch("time.sleep"):
-                manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    manager.setup_base_repo()
 
         assert manager.is_setup is True
 
@@ -100,7 +104,8 @@ class TestSetupBaseRepoRetry:
             side_effect=[fail_result, fail_result, success_result],
         ):
             with patch("time.sleep") as mock_sleep:
-                manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    manager.setup_base_repo()
 
         # Should have exponential backoff: 1s, 2s
         assert mock_sleep.call_count == 2
@@ -120,8 +125,9 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", return_value=fail_result) as mock_run:
             with patch("time.sleep") as mock_sleep:
-                with pytest.raises(RuntimeError, match="Failed to clone repository"):
-                    manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    with pytest.raises(RuntimeError, match="Failed to clone repository"):
+                        manager.setup_base_repo()
 
         # Should NOT retry
         assert mock_run.call_count == 1
@@ -140,8 +146,9 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", return_value=fail_result) as mock_run:
             with patch("time.sleep") as mock_sleep:
-                with pytest.raises(RuntimeError, match="Failed to clone repository"):
-                    manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    with pytest.raises(RuntimeError, match="Failed to clone repository"):
+                        manager.setup_base_repo()
 
         # Should NOT retry
         assert mock_run.call_count == 1
@@ -161,8 +168,9 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", return_value=fail_result) as mock_run:
             with patch("time.sleep") as mock_sleep:
-                with pytest.raises(RuntimeError, match="Failed to clone repository"):
-                    manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    with pytest.raises(RuntimeError, match="Failed to clone repository"):
+                        manager.setup_base_repo()
 
         # Should retry max times (3 total attempts)
         assert mock_run.call_count == 3
@@ -185,7 +193,8 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", side_effect=[fail_result, success_result]):
             with patch("time.sleep"):
-                manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    manager.setup_base_repo()
 
         assert manager.is_setup is True
 
@@ -206,7 +215,8 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", side_effect=[fail_result, success_result]):
             with patch("time.sleep"):
-                manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    manager.setup_base_repo()
 
         assert manager.is_setup is True
 
@@ -223,8 +233,9 @@ class TestSetupBaseRepoRetry:
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result) as mock_run:
-            manager.setup_base_repo()
-            manager.setup_base_repo()  # Second call should be no-op
+            with patch("fcntl.flock"):
+                manager.setup_base_repo()
+                manager.setup_base_repo()  # Second call should be no-op
 
         # Should only run once
         assert mock_run.call_count == 1
@@ -247,6 +258,190 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", side_effect=[fail_result, success_result]):
             with patch("time.sleep"):
-                manager.setup_base_repo()
+                with patch("fcntl.flock"):
+                    manager.setup_base_repo()
 
         assert manager.is_setup is True
+
+
+class TestCentralizedRepos:
+    """Tests for centralized repository functionality."""
+
+    def test_repos_dir_sets_centralized_path(self, tmp_path: Path) -> None:
+        """Test that repos_dir parameter sets centralized path correctly."""
+        repos_dir = tmp_path / "repos"
+        repo_url = "https://github.com/test/repo.git"
+
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path / "experiment",
+            repo_url=repo_url,
+            repos_dir=repos_dir,
+        )
+
+        # Calculate expected UUID
+        expected_uuid = hashlib.sha256(repo_url.encode()).hexdigest()[:16]
+        expected_path = repos_dir / expected_uuid
+
+        assert manager.base_repo == expected_path
+        assert manager.repos_dir == repos_dir
+
+    def test_repos_dir_none_fallback(self, tmp_path: Path) -> None:
+        """Test that repos_dir=None uses legacy per-experiment layout."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            repos_dir=None,
+        )
+
+        assert manager.base_repo == tmp_path / "repo"
+        assert manager.repos_dir is None
+
+    def test_deterministic_repo_uuid(self, tmp_path: Path) -> None:
+        """Test that same URL always produces same UUID."""
+        repos_dir = tmp_path / "repos"
+        repo_url = "https://github.com/test/repo.git"
+
+        manager1 = WorkspaceManager(
+            experiment_dir=tmp_path / "exp1",
+            repo_url=repo_url,
+            repos_dir=repos_dir,
+        )
+        manager2 = WorkspaceManager(
+            experiment_dir=tmp_path / "exp2",
+            repo_url=repo_url,
+            repos_dir=repos_dir,
+        )
+
+        assert manager1.base_repo == manager2.base_repo
+
+    def test_reuses_existing_clone(self, tmp_path: Path) -> None:
+        """Test that existing clone is reused without re-cloning."""
+        repos_dir = tmp_path / "repos"
+        repo_url = "https://github.com/test/repo.git"
+
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path / "experiment",
+            repo_url=repo_url,
+            repos_dir=repos_dir,
+        )
+
+        # Create mock existing repo
+        manager.base_repo.mkdir(parents=True)
+        (manager.base_repo / ".git").mkdir()
+
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            with patch("fcntl.flock"):
+                manager.setup_base_repo()
+
+        # Should NOT clone (no git clone call)
+        assert mock_run.call_count == 0
+        assert manager.is_setup is True
+
+    def test_ensure_commit_available_fetches(self, tmp_path: Path) -> None:
+        """Test that _ensure_commit_available fetches commit if not in object store."""
+        repos_dir = tmp_path / "repos"
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path / "experiment",
+            repo_url="https://github.com/test/repo.git",
+            commit="abc123",
+            repos_dir=repos_dir,
+        )
+
+        # Mock that commit doesn't exist, then fetch succeeds
+        check_result = MagicMock()
+        check_result.returncode = 1  # Not found
+
+        fetch_result = MagicMock()
+        fetch_result.returncode = 0
+        fetch_result.stderr = ""
+
+        with patch("subprocess.run", side_effect=[check_result, fetch_result]) as mock_run:
+            manager._ensure_commit_available()
+
+        # Should call cat-file check, then fetch
+        assert mock_run.call_count == 2
+        assert "cat-file" in str(mock_run.call_args_list[0])
+        assert "fetch" in str(mock_run.call_args_list[1])
+
+    def test_full_clone_for_centralized(self, tmp_path: Path) -> None:
+        """Test that centralized repos use full clone (no --depth=1)."""
+        repos_dir = tmp_path / "repos"
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path / "experiment",
+            repo_url="https://github.com/test/repo.git",
+            repos_dir=repos_dir,
+        )
+
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            with patch("fcntl.flock"):
+                manager.setup_base_repo()
+
+        # Check that clone command does NOT include --depth=1
+        clone_call = mock_run.call_args_list[0]
+        clone_cmd = clone_call[0][0]
+        assert "--depth=1" not in clone_cmd
+        assert "clone" in clone_cmd
+
+    def test_shallow_clone_for_legacy(self, tmp_path: Path) -> None:
+        """Test that legacy per-experiment layout uses shallow clone."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            repos_dir=None,  # Legacy layout
+        )
+
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            with patch("fcntl.flock"):
+                manager.setup_base_repo()
+
+        # Check that clone command DOES include --depth=1
+        clone_call = mock_run.call_args_list[0]
+        clone_cmd = clone_call[0][0]
+        assert "--depth=1" in clone_cmd
+
+    def test_worktree_separate_checkout(self, tmp_path: Path) -> None:
+        """Test that git worktree add does not include commit, checkout is separate."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            commit="abc123",
+        )
+        manager._is_setup = True
+        manager.base_repo.mkdir(parents=True)
+
+        workspace = tmp_path / "workspace"
+
+        # Mock worktree creation and checkout
+        worktree_result = MagicMock()
+        worktree_result.returncode = 0
+
+        checkout_result = MagicMock()
+        checkout_result.returncode = 0
+
+        with patch("subprocess.run", side_effect=[worktree_result, checkout_result]) as mock_run:
+            manager.create_worktree(workspace, "T0", "01", 1)
+
+        # Should have 2 calls: worktree add, then checkout
+        assert mock_run.call_count == 2
+
+        # First call: git worktree add (should NOT have commit)
+        worktree_cmd = mock_run.call_args_list[0][0][0]
+        assert "worktree" in worktree_cmd
+        assert "add" in worktree_cmd
+        assert "abc123" not in worktree_cmd
+
+        # Second call: git checkout (should have commit)
+        checkout_cmd = mock_run.call_args_list[1][0][0]
+        assert "checkout" in checkout_cmd
+        assert "abc123" in checkout_cmd
