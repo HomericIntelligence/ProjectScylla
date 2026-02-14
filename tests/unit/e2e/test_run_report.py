@@ -238,7 +238,7 @@ class TestGenerateRunReport:
             ),
             JudgeResultSummary(
                 judge_number=2,
-                model="claude-sonnet-4",
+                model="claude-sonnet-4-5",
                 score=0.80,
                 grade="B",
                 passed=True,
@@ -267,7 +267,7 @@ class TestGenerateRunReport:
         assert "Judge Evaluation (Consensus)" in report
         assert "Individual Judges" in report
         assert "Judge 1: claude-opus-4" in report
-        assert "Judge 2: claude-sonnet-4" in report
+        assert "Judge 2: claude-sonnet-4-5" in report
         assert "0.850" in report
         assert "0.800" in report
 

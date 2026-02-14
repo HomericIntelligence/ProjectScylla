@@ -55,7 +55,7 @@ def test_load_rerun_context_success(tmp_path: Path):
         "experiment_id": "test-001",
         "tiers_to_run": ["T0"],
         "runs_per_subtest": 3,
-        "judge_models": ["claude-sonnet-4"],
+        "judge_models": ["claude-sonnet-4-5"],
         "task_repo": "test-repo",
         "task_commit": "abc123",
         "task_prompt_file": "prompt.md",
@@ -109,7 +109,7 @@ def test_load_rerun_context_missing_tiers_dir(tmp_path: Path, monkeypatch):
         "experiment_id": "test-001",
         "tiers_to_run": ["T0"],
         "runs_per_subtest": 3,
-        "judge_models": ["claude-sonnet-4"],
+        "judge_models": ["claude-sonnet-4-5"],
         "task_repo": "test-repo",
         "task_commit": "abc123",
         "task_prompt_file": "prompt.md",
@@ -163,11 +163,11 @@ def test_print_dry_run_summary_judges(capsys):
     """Test dry-run summary for judge items."""
     # Create test items
     failed_slots = [
-        _TestJudgeItem("T0", "00", 1, 1, "claude-sonnet-4", "Judge failed"),
+        _TestJudgeItem("T0", "00", 1, 1, "claude-sonnet-4-5", "Judge failed"),
         _TestJudgeItem("T0", "00", 1, 2, "claude-opus-4", "Judge failed"),
     ]
     missing_slots = [
-        _TestJudgeItem("T0", "00", 2, 1, "claude-sonnet-4", "Never ran"),
+        _TestJudgeItem("T0", "00", 2, 1, "claude-sonnet-4-5", "Never ran"),
     ]
 
     items_by_status = {
@@ -187,10 +187,10 @@ def test_print_dry_run_summary_judges(capsys):
     captured = capsys.readouterr()
     assert "DRY RUN MODE - No changes will be made" in captured.out
     assert "FAILED (2 items):" in captured.out
-    assert "T0/00/run_01 judge_01 (claude-sonnet-4): Judge failed" in captured.out
+    assert "T0/00/run_01 judge_01 (claude-sonnet-4-5): Judge failed" in captured.out
     assert "T0/00/run_01 judge_02 (claude-opus-4): Judge failed" in captured.out
     assert "MISSING (1 items):" in captured.out
-    assert "T0/00/run_02 judge_01 (claude-sonnet-4): Never ran" in captured.out
+    assert "T0/00/run_02 judge_01 (claude-sonnet-4-5): Never ran" in captured.out
 
 
 def test_print_dry_run_summary_truncation(capsys):
