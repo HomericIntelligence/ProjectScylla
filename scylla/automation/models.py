@@ -108,7 +108,8 @@ class PlannerOptions(BaseModel):
 class ImplementerOptions(BaseModel):
     """Options for the Implementer."""
 
-    epic_number: int
+    epic_number: int = 0
+    issues: list[int] = Field(default_factory=list)
     analyze_only: bool = False
     health_check: bool = False
     resume: bool = False

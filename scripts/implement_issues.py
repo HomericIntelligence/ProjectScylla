@@ -44,6 +44,12 @@ Examples:
   # Implement all issues in an epic
   %(prog)s --epic 123
 
+  # Implement specific issues
+  %(prog)s --issues 595 596 597
+
+  # Implement a single issue
+  %(prog)s --issues 595
+
   # Analyze dependencies without implementing
   %(prog)s --epic 123 --analyze
 
@@ -54,13 +60,13 @@ Examples:
   %(prog)s --health-check
 
   # Dry run
-  %(prog)s --epic 123 --dry-run
+  %(prog)s --issues 595 --dry-run
 
   # Use more workers
   %(prog)s --epic 123 --max-workers 5
 
   # Don't auto-merge PRs
-  %(prog)s --epic 123 --no-auto-merge
+  %(prog)s --issues 595 --no-auto-merge
         """,
     )
 
@@ -68,6 +74,13 @@ Examples:
         "--epic",
         type=int,
         help="Epic issue number containing sub-issues",
+    )
+
+    parser.add_argument(
+        "--issues",
+        type=int,
+        nargs="+",
+        help="Specific issue numbers to implement (alternative to --epic)",
     )
 
     parser.add_argument(
@@ -137,8 +150,11 @@ Examples:
     args = parser.parse_args()
 
     # Validation
-    if not args.health_check and not args.epic:
-        parser.error("Either --epic or --health-check is required")
+    if not args.health_check and not args.epic and not args.issues:
+        parser.error("Either --epic, --issues, or --health-check is required")
+
+    if args.epic and args.issues:
+        parser.error("Cannot specify both --epic and --issues")
 
     return args
 
@@ -153,6 +169,7 @@ def main() -> int:
     # Build options
     options = ImplementerOptions(
         epic_number=args.epic or 0,
+        issues=args.issues or [],
         analyze_only=args.analyze,
         health_check=args.health_check,
         resume=args.resume,
@@ -166,6 +183,8 @@ def main() -> int:
 
     if args.health_check:
         logger.info("Running health check")
+    elif args.issues:
+        logger.info(f"Starting implementation of issues: {args.issues}")
     else:
         logger.info(f"Starting implementation of epic #{args.epic}")
 

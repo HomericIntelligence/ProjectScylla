@@ -27,6 +27,7 @@ from .models import (
     ImplementationPhase,
     ImplementationState,
     ImplementerOptions,
+    IssueState,
     WorkerResult,
 )
 from .prompts import (
@@ -84,9 +85,13 @@ class IssueImplementer:
         if self.options.health_check:
             return self._health_check()
 
-        # Load epic and resolve dependencies
-        logger.info(f"Loading epic #{self.options.epic_number}")
-        self.resolver.load_epic(self.options.epic_number)
+        # Load issues or epic and resolve dependencies
+        if self.options.issues:
+            logger.info(f"Loading issues: {self.options.issues}")
+            self._load_issues(self.options.issues)
+        else:
+            logger.info(f"Loading epic #{self.options.epic_number}")
+            self.resolver.load_epic(self.options.epic_number)
 
         # Detect cycles
         try:
@@ -120,6 +125,36 @@ class IssueImplementer:
             # Cleanup worktrees
             if not self.options.dry_run:
                 self.worktree_manager.cleanup_all()
+
+    def _load_issues(self, issue_numbers: list[int]) -> None:
+        """Load specific issues into the dependency graph.
+
+        Args:
+            issue_numbers: List of issue numbers to load
+
+        """
+        from .github_api import fetch_issue_info, prefetch_issue_states
+
+        # Prefetch states for efficiency
+        cached_states = prefetch_issue_states(issue_numbers)
+
+        for issue_num in issue_numbers:
+            if self.options.skip_closed and cached_states.get(issue_num) == IssueState.CLOSED:
+                logger.info(f"Skipping closed issue #{issue_num}")
+                self.resolver.completed.add(issue_num)
+                continue
+
+            try:
+                issue = fetch_issue_info(issue_num)
+                self.resolver.add_issue(issue)
+
+                # Load dependencies recursively
+                self.resolver._load_dependencies(issue, cached_states)
+
+            except Exception as e:
+                logger.error(f"Failed to load issue #{issue_num}: {e}")
+
+        logger.info(f"Loaded {len(self.resolver.graph.issues)} issues")
 
     def _health_check(self) -> dict[int, WorkerResult]:
         """Perform health check of dependencies and environment.
