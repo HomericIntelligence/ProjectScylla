@@ -260,17 +260,16 @@ class E2ERunner:
 
         # Create/resume workspace manager
         if not hasattr(self, "workspace_manager") or self.workspace_manager is None:
+            # Use centralized repos directory for shared clones across experiments
+            repos_dir = self.results_base_dir / "repos"
             self.workspace_manager = WorkspaceManager(
                 experiment_dir=self.experiment_dir,
                 repo_url=self.config.task_repo,
                 commit=self.config.task_commit,
+                repos_dir=repos_dir,
             )
-            # Setup base repo if needed (idempotent)
-            if not self.workspace_manager.base_repo.exists():
-                self.workspace_manager.setup_base_repo()
-            else:
-                # Resuming - base repo already exists
-                logger.debug(f"Using existing base repo: {self.workspace_manager.base_repo}")
+            # Setup base repo (idempotent - checks for existing clone internally)
+            self.workspace_manager.setup_base_repo()
 
         # Run tiers (with shutdown handling)
         tier_results: dict[TierID, TierResult] = {}

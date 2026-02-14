@@ -353,13 +353,16 @@ def rerun_single_run(
 
     # Setup workspace with git worktree
     from scylla.e2e.command_logger import CommandLogger
+    from scylla.e2e.workspace_setup import _setup_workspace
 
-    executor._setup_workspace(
-        workspace,
-        CommandLogger(log_dir=run_dir),
-        tier_id,
-        subtest_config.id,
+    _setup_workspace(
+        workspace=workspace,
+        command_logger=CommandLogger(log_dir=run_dir),
+        tier_id=tier_id,
+        subtest_id=subtest_config.id,
         run_number=run_info.run_number,
+        base_repo=workspace_manager.base_repo,
+        task_commit=config.task_commit,
     )
 
     # Build merged resources for T5 subtests with inherit_best_from
@@ -451,25 +454,39 @@ def rerun_experiment(
     config = ctx.config
     tier_manager = ctx.tier_manager
 
-    # Create workspace manager
+    # Create workspace manager with centralized repo discovery
+    import hashlib
+
+    # Try centralized repos directory first (new layout)
+    repos_dir = experiment_dir.parent / "repos"
+    repo_uuid = hashlib.sha256(config.task_repo.encode()).hexdigest()[:16]
+    centralized_repo = repos_dir / repo_uuid
+    legacy_repo = experiment_dir / "repo"
+
+    if centralized_repo.exists() and (centralized_repo / ".git").exists():
+        base_repo = centralized_repo
+        ws_repos_dir = repos_dir
+        logger.info(f"Using centralized base repo: {base_repo}")
+    elif legacy_repo.exists():
+        base_repo = legacy_repo
+        ws_repos_dir = None
+        logger.info(f"Using legacy base repo: {base_repo}")
+    else:
+        raise FileNotFoundError(
+            f"Base repository not found at {centralized_repo} or {legacy_repo}. "
+            f"Cannot create worktrees for re-runs."
+        )
 
     workspace_manager = WorkspaceManager(
         experiment_dir=experiment_dir,
         repo_url=config.task_repo,
         commit=config.task_commit,
+        repos_dir=ws_repos_dir,
     )
-
-    # Verify base repo exists (required for creating worktrees)
-    base_repo = experiment_dir / "repo"
-    if not base_repo.exists():
-        raise FileNotFoundError(
-            f"Base repository not found: {base_repo}. Cannot create worktrees for re-runs."
-        )
 
     # Mark workspace_manager as setup (base repo already exists)
     workspace_manager._is_setup = True
     workspace_manager.base_repo = base_repo
-    logger.info(f"Using existing base repo: {base_repo}")
 
     # Scan for runs by status
     stats = RerunStats()

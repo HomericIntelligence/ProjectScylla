@@ -6,6 +6,8 @@ and using git worktrees for each test run, reducing storage and network overhead
 
 from __future__ import annotations
 
+import fcntl
+import hashlib
 import logging
 import subprocess
 import time
@@ -30,6 +32,7 @@ class WorkspaceManager:
         experiment_dir: Path,
         repo_url: str,
         commit: str | None = None,
+        repos_dir: Path | None = None,
     ) -> None:
         """Initialize workspace manager.
 
@@ -37,95 +40,130 @@ class WorkspaceManager:
             experiment_dir: Root directory for the experiment
             repo_url: Git repository URL to clone
             commit: Specific commit to checkout (optional)
+            repos_dir: Optional directory for centralized repo clones.
+                      If provided, clones are shared across experiments.
+                      If None, uses legacy per-experiment layout.
 
         """
         self.experiment_dir = experiment_dir
         self.repo_url = repo_url
         self.commit = commit
-        self.base_repo = experiment_dir / "repo"
+        self.repos_dir = repos_dir
         self._is_setup = False
         self._worktree_count = 0
+
+        # Calculate base_repo path based on repos_dir
+        if repos_dir is not None:
+            # Centralized clone: use deterministic UUID from repo URL
+            repo_uuid = hashlib.sha256(repo_url.encode()).hexdigest()[:16]
+            self.base_repo = repos_dir / repo_uuid
+        else:
+            # Legacy per-experiment clone
+            self.base_repo = experiment_dir / "repo"
 
     def setup_base_repo(self) -> None:
         """Clone repository once at experiment start.
 
-        Creates a shallow clone with the specified commit checked out.
-        This is the single source for all worktrees.
+        For centralized repos (repos_dir set):
+        - Creates a full clone shared across experiments
+        - Uses file locking for parallel safety
+        - Reuses existing clone if present
+        - Only fetches specific commits (no checkout in base)
 
-        Uses exponential backoff retry for transient network errors
-        (connection reset, curl failures, timeouts).
+        For per-experiment repos (repos_dir=None):
+        - Creates shallow clone in experiment directory
+        - Checks out specific commit in base repo
+
+        Uses exponential backoff retry for transient network errors.
         """
         if self._is_setup:
             logger.debug("Base repo already set up")
             return
 
-        logger.info(f"Cloning base repo to {self.base_repo}")
+        # Create parent directory
+        self.base_repo.parent.mkdir(parents=True, exist_ok=True)
 
-        # Create experiment directory if needed
-        self.experiment_dir.mkdir(parents=True, exist_ok=True)
+        # Use file-based locking for centralized repos to handle parallel access
+        lock_path = self.base_repo.parent / f".{self.base_repo.name}.lock"
+        with open(lock_path, "w") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                # Check if base repo already exists (centralized repos reuse)
+                if self.base_repo.exists() and (self.base_repo / ".git").exists():
+                    logger.info(f"Reusing existing base repo: {self.base_repo}")
+                else:
+                    logger.info(f"Cloning base repo to {self.base_repo}")
 
-        # Clone with depth=1 for efficiency
-        clone_cmd = [
-            "git",
-            "clone",
-            "--depth=1",
-            self.repo_url,
-            str(self.base_repo),
-        ]
+                    # Determine clone depth based on layout
+                    # Centralized repos need full clone for commit availability
+                    # Per-experiment repos can use shallow clone
+                    use_shallow = self.repos_dir is None
 
-        # Retry logic for transient network errors
-        max_retries = 3
-        base_delay = 1.0
+                    clone_cmd = ["git", "clone"]
+                    if use_shallow:
+                        clone_cmd.append("--depth=1")
+                    clone_cmd.extend([self.repo_url, str(self.base_repo)])
 
-        for attempt in range(max_retries):
-            result = subprocess.run(
-                clone_cmd,
-                capture_output=True,
-                text=True,
-            )
+                    # Retry logic for transient network errors
+                    max_retries = 3
+                    base_delay = 1.0
 
-            if result.returncode == 0:
-                break
+                    for attempt in range(max_retries):
+                        result = subprocess.run(
+                            clone_cmd,
+                            capture_output=True,
+                            text=True,
+                        )
 
-            stderr = result.stderr.lower()
+                        if result.returncode == 0:
+                            break
 
-            # Detect transient network errors (retry-able)
-            transient_patterns = [
-                "connection reset",
-                "connection refused",
-                "network unreachable",
-                "network is unreachable",
-                "temporary failure",
-                "could not resolve host",
-                "curl 56",  # RPC failed curl error
-                "timed out",
-                "early eof",
-                "recv failure",
-            ]
+                        stderr = result.stderr.lower()
 
-            is_transient = any(pattern in stderr for pattern in transient_patterns)
+                        # Detect transient network errors (retry-able)
+                        transient_patterns = [
+                            "connection reset",
+                            "connection refused",
+                            "network unreachable",
+                            "network is unreachable",
+                            "temporary failure",
+                            "could not resolve host",
+                            "curl 56",  # RPC failed curl error
+                            "timed out",
+                            "early eof",
+                            "recv failure",
+                        ]
 
-            # Fail immediately on non-transient errors or last attempt
-            if not is_transient or attempt == max_retries - 1:
-                raise RuntimeError(f"Failed to clone repository: {result.stderr}")
+                        is_transient = any(pattern in stderr for pattern in transient_patterns)
 
-            # Exponential backoff: 1s, 2s, 4s
-            delay = base_delay * (2**attempt)
-            logger.warning(
-                f"Git clone failed (attempt {attempt + 1}/{max_retries}), "
-                f"retrying in {delay}s: {result.stderr.strip()}"
-            )
-            time.sleep(delay)
+                        # Fail immediately on non-transient errors or last attempt
+                        if not is_transient or attempt == max_retries - 1:
+                            raise RuntimeError(f"Failed to clone repository: {result.stderr}")
 
-        # If specific commit requested, fetch and checkout
+                        # Exponential backoff: 1s, 2s, 4s
+                        delay = base_delay * (2**attempt)
+                        logger.warning(
+                            f"Git clone failed (attempt {attempt + 1}/{max_retries}), "
+                            f"retrying in {delay}s: {result.stderr.strip()}"
+                        )
+                        time.sleep(delay)
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+
+        # Handle commit checkout/fetch based on layout
         if self.commit:
-            self._checkout_commit()
+            if self.repos_dir is not None:
+                # Centralized: only ensure commit is available, no checkout in base
+                self._ensure_commit_available()
+            else:
+                # Legacy: checkout commit in base repo
+                self._checkout_commit()
 
         self._is_setup = True
         logger.info("Base repo setup complete")
 
     def _checkout_commit(self) -> None:
-        """Fetch and checkout specific commit in base repo."""
+        """Fetch and checkout specific commit in base repo (legacy per-experiment layout)."""
         # Try to fetch the specific commit
         fetch_cmd = [
             "git",
@@ -164,6 +202,25 @@ class WorkspaceManager:
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to checkout commit {self.commit}: {result.stderr}")
+
+    def _ensure_commit_available(self) -> None:
+        """Ensure the target commit exists in repo object store (centralized layout).
+
+        Only fetches the commit into the object store without checking it out.
+        Base repo HEAD stays on default branch so it can be shared across experiments.
+        """
+        # Check if commit already exists in object store
+        check_cmd = ["git", "-C", str(self.base_repo), "cat-file", "-t", self.commit]
+        result = subprocess.run(check_cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            logger.debug(f"Commit {self.commit} already available in object store")
+            return  # Already available
+
+        # Fetch the specific commit
+        fetch_cmd = ["git", "-C", str(self.base_repo), "fetch", "origin", self.commit]
+        result = subprocess.run(fetch_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.debug(f"Fetch returned non-zero (may be ok): {result.stderr}")
 
     def create_worktree(
         self,
@@ -215,9 +272,8 @@ class WorkspaceManager:
             str(workspace_path),
         ]
 
-        # Add commit reference if specified
-        if self.commit:
-            worktree_cmd.append(self.commit)
+        # Do NOT add commit to worktree command - checkout happens separately
+        # This allows centralized repos to work correctly
 
         result = subprocess.run(
             worktree_cmd,
@@ -227,6 +283,17 @@ class WorkspaceManager:
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree at {workspace_path}: {result.stderr}")
+
+        # If specific commit requested, checkout in the worktree (separate step)
+        if self.commit:
+            checkout_cmd = ["git", "-C", str(workspace_path), "checkout", self.commit]
+            result = subprocess.run(
+                checkout_cmd,
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"Failed to checkout {self.commit}: {result.stderr}")
 
         logger.debug(f"Created worktree at {workspace_path} on branch {branch_name}")
 
