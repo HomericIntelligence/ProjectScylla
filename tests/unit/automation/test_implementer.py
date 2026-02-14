@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from scylla.automation.implementer import IssueImplementer
-from scylla.automation.models import ImplementerOptions
+from scylla.automation.models import ImplementerOptions, IssueInfo
 
 
 @pytest.fixture
@@ -242,8 +242,11 @@ class TestImplementIssuePipeline:
                 patch.object(implementer, "_get_or_create_state") as mock_state,
                 patch.object(implementer, "_has_plan", return_value=True),
                 patch.object(implementer, "_run_claude_code", return_value="session123"),
-                patch.object(implementer, "_commit_changes"),
-                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
+                ),
                 patch.object(implementer, "_run_retrospective") as mock_retro,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
@@ -275,8 +278,11 @@ class TestImplementIssuePipeline:
                 patch.object(implementer, "_get_or_create_state") as mock_state,
                 patch.object(implementer, "_has_plan", return_value=True),
                 patch.object(implementer, "_run_claude_code", return_value="session123"),
-                patch.object(implementer, "_commit_changes"),
-                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
+                ),
                 patch.object(implementer, "_run_retrospective") as mock_retro,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
@@ -307,8 +313,11 @@ class TestImplementIssuePipeline:
                 patch.object(implementer, "_get_or_create_state") as mock_state,
                 patch.object(implementer, "_has_plan", return_value=True),
                 patch.object(implementer, "_run_claude_code", return_value=None),
-                patch.object(implementer, "_commit_changes"),
-                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
+                ),
                 patch.object(implementer, "_run_retrospective") as mock_retro,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
@@ -518,8 +527,11 @@ class TestImplementIssuePipelineFollowUp:
                 patch.object(implementer, "_get_or_create_state") as mock_state,
                 patch.object(implementer, "_has_plan", return_value=True),
                 patch.object(implementer, "_run_claude_code", return_value="session789"),
-                patch.object(implementer, "_commit_changes"),
-                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
+                ),
                 patch.object(implementer, "_run_follow_up_issues") as mock_follow_up,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
@@ -555,8 +567,11 @@ class TestImplementIssuePipelineFollowUp:
                 patch.object(implementer, "_get_or_create_state") as mock_state,
                 patch.object(implementer, "_has_plan", return_value=True),
                 patch.object(implementer, "_run_claude_code", return_value="session789"),
-                patch.object(implementer, "_commit_changes"),
-                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
+                ),
                 patch.object(implementer, "_run_follow_up_issues") as mock_follow_up,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
@@ -592,8 +607,11 @@ class TestImplementIssuePipelineFollowUp:
                 patch.object(implementer, "_get_or_create_state") as mock_state,
                 patch.object(implementer, "_has_plan", return_value=True),
                 patch.object(implementer, "_run_claude_code", return_value=None),
-                patch.object(implementer, "_commit_changes"),
-                patch.object(implementer, "_create_pr", return_value=456),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
+                ),
                 patch.object(implementer, "_run_follow_up_issues") as mock_follow_up,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
