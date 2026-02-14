@@ -260,7 +260,7 @@ class WorkspaceManager:
             self._worktree_count += 1
             branch_name = f"worktree-{self._worktree_count}"
 
-        # Create worktree with named branch instead of detached HEAD
+        # Create worktree with named branch and commit in a single step
         worktree_cmd = [
             "git",
             "-C",
@@ -271,9 +271,8 @@ class WorkspaceManager:
             branch_name,
             str(workspace_path),
         ]
-
-        # Do NOT add commit to worktree command - checkout happens separately
-        # This allows centralized repos to work correctly
+        if self.commit:
+            worktree_cmd.append(self.commit)
 
         result = subprocess.run(
             worktree_cmd,
@@ -283,17 +282,6 @@ class WorkspaceManager:
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree at {workspace_path}: {result.stderr}")
-
-        # If specific commit requested, checkout in the worktree (separate step)
-        if self.commit:
-            checkout_cmd = ["git", "-C", str(workspace_path), "checkout", self.commit]
-            result = subprocess.run(
-                checkout_cmd,
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"Failed to checkout {self.commit}: {result.stderr}")
 
         logger.debug(f"Created worktree at {workspace_path} on branch {branch_name}")
 

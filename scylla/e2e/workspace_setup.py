@@ -139,7 +139,7 @@ def _setup_workspace(
     # Log worktree creation phase
     _phase_log("WORKTREE", f"Creating worktree [{branch_name}] @ [{workspace_abs}]")
 
-    # Create worktree with named branch (without commit - checkout happens separately)
+    # Create worktree with named branch and commit in a single step
     worktree_cmd = [
         "git",
         "-C",
@@ -150,8 +150,8 @@ def _setup_workspace(
         branch_name,
         str(workspace_abs),
     ]
-
-    # Do NOT add commit to worktree command - checkout happens as separate step
+    if task_commit:
+        worktree_cmd.append(task_commit)
 
     result = subprocess.run(
         worktree_cmd,
@@ -168,28 +168,6 @@ def _setup_workspace(
         exit_code=result.returncode,
         duration=duration,
     )
-
-    # Checkout specific commit in the worktree (separate from creation)
-    if result.returncode == 0 and task_commit:
-        checkout_cmd = ["git", "-C", str(workspace_abs), "checkout", task_commit]
-        checkout_result = subprocess.run(
-            checkout_cmd,
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        checkout_duration = (datetime.now(timezone.utc) - start_time).total_seconds()
-        command_logger.log_command(
-            cmd=checkout_cmd,
-            stdout=checkout_result.stdout,
-            stderr=checkout_result.stderr,
-            exit_code=checkout_result.returncode,
-            duration=checkout_duration,
-        )
-        if checkout_result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to checkout {task_commit} in worktree: {checkout_result.stderr}"
-            )
 
     # Handle branch already exists (resume scenario)
     if result.returncode != 0 and "already exists" in result.stderr:
@@ -232,7 +210,7 @@ def _setup_workspace(
         if workspace_abs.exists():
             shutil.rmtree(workspace_abs)
 
-        # Step 5: Retry worktree creation
+        # Step 5: Retry worktree creation (commit already included in worktree_cmd)
         result = subprocess.run(
             worktree_cmd,
             capture_output=True,
@@ -242,20 +220,6 @@ def _setup_workspace(
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to create worktree even after cleanup: {result.stderr}")
-
-        # Step 6: Checkout commit in recovered worktree
-        if task_commit:
-            checkout_cmd = ["git", "-C", str(workspace_abs), "checkout", task_commit]
-            checkout_result = subprocess.run(
-                checkout_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            if checkout_result.returncode != 0:
-                raise RuntimeError(
-                    f"Failed to checkout {task_commit} after recovery: {checkout_result.stderr}"
-                )
 
     elif result.returncode != 0:
         raise RuntimeError(f"Failed to create worktree: {result.stderr}")

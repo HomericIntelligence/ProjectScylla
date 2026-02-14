@@ -606,6 +606,19 @@ class TierManager:
         else:
             base_message = "\n\n".join(suffixes)
 
+        # Test environment constraints (always applied)
+        test_constraints = (
+            "\n\n## Test Environment Constraints\n\n"
+            "**CRITICAL: This is a test environment. "
+            "The following WRITE operations are FORBIDDEN:**\n\n"
+            "- DO NOT run `git push` or push to any remote repository\n"
+            "- DO NOT create pull requests (`gh pr create` or similar)\n"
+            "- DO NOT comment on or modify GitHub issues or PRs\n"
+            "- DO NOT delete remote branches (`git push origin --delete`)\n"
+            "- All changes must remain LOCAL to this workspace - no remote writes\n"
+            "- Read-only remote operations (`git fetch`, `git pull`) are permitted\n"
+        )
+
         # Always add cleanup instructions (temporary files only)
         cleanup_instructions = (
             "\n\n## Cleanup Requirements\n\n"
@@ -614,7 +627,7 @@ class TierManager:
             "- Clean up after yourself - the workspace should contain only final deliverables\n"
         )
 
-        return base_message + cleanup_instructions
+        return base_message + test_constraints + cleanup_instructions
 
     def get_baseline_for_subtest(
         self,

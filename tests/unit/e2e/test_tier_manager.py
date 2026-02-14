@@ -9,13 +9,29 @@ import yaml
 from scylla.e2e.models import SubTestConfig, TierID
 from scylla.e2e.tier_manager import TierManager
 
+# Test constraints that are appended to all prompts
+TEST_CONSTRAINTS = (
+    "\n\n## Test Environment Constraints\n\n"
+    "**CRITICAL: This is a test environment. "
+    "The following WRITE operations are FORBIDDEN:**\n\n"
+    "- DO NOT run `git push` or push to any remote repository\n"
+    "- DO NOT create pull requests (`gh pr create` or similar)\n"
+    "- DO NOT comment on or modify GitHub issues or PRs\n"
+    "- DO NOT delete remote branches (`git push origin --delete`)\n"
+    "- All changes must remain LOCAL to this workspace - no remote writes\n"
+    "- Read-only remote operations (`git fetch`, `git pull`) are permitted\n"
+)
+
 # Cleanup instructions that are appended to all prompts
-CLEANUP_INSTRUCTIONS = (
+SUFFIX_TAIL = (
     "\n\n## Cleanup Requirements\n\n"
     "- Remove any temporary files created during task completion "
     "(build artifacts, cache files, etc.)\n"
     "- Clean up after yourself - the workspace should contain only final deliverables\n"
 )
+
+# Combined suffix tail (test constraints + cleanup instructions)
+SUFFIX_TAIL = TEST_CONSTRAINTS + SUFFIX_TAIL
 
 
 class TestBuildResourceSuffix:
@@ -31,9 +47,7 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        expected = (
-            "Maximize usage of all available tools to complete this task." + CLEANUP_INSTRUCTIONS
-        )
+        expected = "Maximize usage of all available tools to complete this task." + SUFFIX_TAIL
         assert result == expected
 
     def test_tools_with_names(self) -> None:
@@ -48,7 +62,7 @@ class TestBuildResourceSuffix:
         result = manager.build_resource_suffix(subtest)
         expected = (
             "Maximize usage of the following tools to complete this task:\n\n"
-            "- Bash\n- Read\n- Write" + CLEANUP_INSTRUCTIONS
+            "- Bash\n- Read\n- Write" + SUFFIX_TAIL
         )
         assert result == expected
 
@@ -64,7 +78,7 @@ class TestBuildResourceSuffix:
         result = manager.build_resource_suffix(subtest)
         expected = (
             "Maximize usage of the following MCP servers to complete this task:\n\n"
-            "- filesystem\n- git\n- memory" + CLEANUP_INSTRUCTIONS
+            "- filesystem\n- git\n- memory" + SUFFIX_TAIL
         )
         assert result == expected
 
@@ -78,10 +92,7 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        expected = (
-            "Complete this task using available tools and your best judgment."
-            + CLEANUP_INSTRUCTIONS
-        )
+        expected = "Complete this task using available tools and your best judgment." + SUFFIX_TAIL
         assert result == expected
 
     def test_single_tool(self) -> None:
@@ -94,7 +105,7 @@ class TestBuildResourceSuffix:
         )
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
-        expected = "Use the following tool to complete this task:\n\n- Read" + CLEANUP_INSTRUCTIONS
+        expected = "Use the following tool to complete this task:\n\n- Read" + SUFFIX_TAIL
         assert result == expected
 
     def test_single_mcp_server(self) -> None:
@@ -108,8 +119,7 @@ class TestBuildResourceSuffix:
         manager = TierManager(Path("/tmp/tiers"))
         result = manager.build_resource_suffix(subtest)
         expected = (
-            "Use the following MCP server to complete this task:\n\n- filesystem"
-            + CLEANUP_INSTRUCTIONS
+            "Use the following MCP server to complete this task:\n\n- filesystem" + SUFFIX_TAIL
         )
         assert result == expected
 
