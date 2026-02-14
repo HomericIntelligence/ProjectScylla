@@ -175,6 +175,7 @@ class TestRunRetrospective:
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
+                slot_id=None,
             )
 
             mock_run.assert_called_once()
@@ -218,6 +219,7 @@ class TestRunRetrospective:
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
+                slot_id=None,
             )
 
             # Should log warning
@@ -237,6 +239,7 @@ class TestRunRetrospective:
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
+                slot_id=None,
             )
 
             # Should log warning
@@ -644,4 +647,222 @@ class TestImplementIssuePipelineFollowUp:
 
                 # Follow-up should NOT have been called (no session_id)
                 mock_follow_up.assert_not_called()
+                assert result.success is True
+
+
+class TestLogHelper:
+    """Tests for _log helper method."""
+
+    def test_log_helper_routes_to_ui(self, implementer):
+        """Test that _log writes to both logger and log_manager."""
+        with (
+            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch.object(implementer.log_manager, "log") as mock_log_manager,
+            patch("scylla.automation.implementer.threading") as mock_threading,
+        ):
+            mock_threading.get_ident.return_value = 12345
+
+            implementer._log("error", "Test error message")
+
+            # Should log to standard logger
+            mock_logger.error.assert_called_once_with("Test error message")
+
+            # Should log to UI with ERROR prefix
+            mock_log_manager.assert_called_once_with(12345, "ERROR: Test error message")
+
+    def test_log_helper_warning_level(self, implementer):
+        """Test _log with warning level."""
+        with (
+            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch.object(implementer.log_manager, "log") as mock_log_manager,
+            patch("scylla.automation.implementer.threading") as mock_threading,
+        ):
+            mock_threading.get_ident.return_value = 12345
+
+            implementer._log("warning", "Test warning")
+
+            mock_logger.warning.assert_called_once_with("Test warning")
+            mock_log_manager.assert_called_once_with(12345, "WARN: Test warning")
+
+    def test_log_helper_info_level(self, implementer):
+        """Test _log with info level (no prefix)."""
+        with (
+            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch.object(implementer.log_manager, "log") as mock_log_manager,
+            patch("scylla.automation.implementer.threading") as mock_threading,
+        ):
+            mock_threading.get_ident.return_value = 12345
+
+            implementer._log("info", "Test info")
+
+            mock_logger.info.assert_called_once_with("Test info")
+            mock_log_manager.assert_called_once_with(12345, "Test info")
+
+    def test_log_helper_custom_thread_id(self, implementer):
+        """Test _log with custom thread_id."""
+        with (
+            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch.object(implementer.log_manager, "log") as mock_log_manager,
+        ):
+            implementer._log("error", "Custom thread", thread_id=99999)
+
+            mock_logger.error.assert_called_once_with("Custom thread")
+            mock_log_manager.assert_called_once_with(99999, "ERROR: Custom thread")
+
+
+class TestErrorVisibility:
+    """Tests for error visibility in UI."""
+
+    def test_failure_shows_in_status_slot(self, mock_options):
+        """Test that slot shows FAILED before release."""
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=True),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch.object(implementer, "_save_state"),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    side_effect=RuntimeError("API error"),
+                ),
+                patch.object(implementer.status_tracker, "update_slot") as mock_update,
+                patch.object(implementer.status_tracker, "release_slot"),
+                patch.object(implementer.status_tracker, "acquire_slot", return_value=0),
+                patch("scylla.automation.implementer.time.sleep"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123)
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Should show failure in slot before release
+                assert any(
+                    "FAILED" in str(call) and "#123" in str(call)
+                    for call in mock_update.call_args_list
+                )
+                assert result.success is False
+
+    def test_exception_classification_timeout(self, mock_options):
+        """Test TimeoutExpired exceptions are classified correctly."""
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=True),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch.object(implementer, "_save_state"),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    side_effect=subprocess.TimeoutExpired(["claude", "code"], 1800),
+                ),
+                patch.object(implementer.status_tracker, "update_slot"),
+                patch.object(implementer.status_tracker, "release_slot"),
+                patch.object(implementer.status_tracker, "acquire_slot", return_value=0),
+                patch.object(implementer, "_log") as mock_log,
+                patch("scylla.automation.implementer.time.sleep"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123)
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Should log with "Timeout" classification
+                assert any("Timeout" in str(call) for call in mock_log.call_args_list)
+                assert result.success is False
+
+    def test_exception_classification_called_process_error(self, mock_options):
+        """Test CalledProcessError exceptions are classified correctly."""
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=True),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch.object(implementer, "_save_state"),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    side_effect=subprocess.CalledProcessError(
+                        1, ["gh", "issue", "view"], stderr="Error"
+                    ),
+                ),
+                patch.object(implementer.status_tracker, "update_slot"),
+                patch.object(implementer.status_tracker, "release_slot"),
+                patch.object(implementer.status_tracker, "acquire_slot", return_value=0),
+                patch.object(implementer, "_log") as mock_log,
+                patch("scylla.automation.implementer.time.sleep"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123)
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Should log with "Command failed" classification
+                assert any("Command failed" in str(call) for call in mock_log.call_args_list)
+                assert result.success is False
+
+
+class TestGranularStatusUpdates:
+    """Tests for granular status updates."""
+
+    def test_granular_status_updates(self, mock_options):
+        """Test that status shows granular sub-steps."""
+        with (
+            patch("scylla.automation.implementer.get_repo_root"),
+            patch.object(Path, "mkdir"),
+        ):
+            implementer = IssueImplementer(mock_options)
+
+            with (
+                patch.object(implementer, "_get_or_create_state") as mock_state,
+                patch.object(implementer, "_has_plan", return_value=False),
+                patch.object(implementer, "_generate_plan"),
+                patch.object(implementer, "_run_claude_code", return_value="session123"),
+                patch.object(implementer, "_ensure_pr_created", return_value=456),
+                patch(
+                    "scylla.automation.implementer.fetch_issue_info",
+                    return_value=IssueInfo(number=123, title="Test", body="Body"),
+                ),
+                patch.object(implementer, "_save_state"),
+                patch.object(implementer.worktree_manager, "create_worktree"),
+                patch.object(implementer.status_tracker, "update_slot") as mock_update,
+                patch.object(implementer.status_tracker, "release_slot"),
+                patch.object(implementer.status_tracker, "acquire_slot", return_value=0),
+                patch("scylla.automation.implementer.time.sleep"),
+            ):
+                from scylla.automation.models import ImplementationState
+
+                mock_state_obj = ImplementationState(issue_number=123)
+                mock_state.return_value = mock_state_obj
+
+                result = implementer._implement_issue(123)
+
+                # Should have multiple granular status updates
+                status_messages = [str(call) for call in mock_update.call_args_list]
+
+                # Check for key sub-steps
+                assert any("Creating worktree" in msg for msg in status_messages)
+                assert any("Checking plan" in msg for msg in status_messages)
+                assert any("Generating plan" in msg for msg in status_messages)
+                assert any("Fetching issue" in msg for msg in status_messages)
+                assert any("Running Claude Code" in msg for msg in status_messages)
+
                 assert result.success is True

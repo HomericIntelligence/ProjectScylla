@@ -74,6 +74,21 @@ class IssueImplementer:
 
         self.ui: CursesUI | None = None
 
+    def _log(self, level: str, msg: str, thread_id: int | None = None) -> None:
+        """Log to both standard logger and UI thread buffer.
+
+        Args:
+            level: Log level ("error", "warning", or "info")
+            msg: Message to log
+            thread_id: Thread ID (defaults to current thread)
+
+        """
+        getattr(logger, level)(msg)
+        tid = thread_id or threading.get_ident()
+        prefix = {"error": "ERROR", "warning": "WARN", "info": ""}.get(level, "")
+        ui_msg = f"{prefix}: {msg}" if prefix else msg
+        self.log_manager.log(tid, ui_msg)
+
     def run(self) -> dict[int, WorkerResult]:
         """Run the implementer.
 
@@ -335,8 +350,8 @@ class IssueImplementer:
         thread_id = threading.get_ident()
 
         try:
-            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Starting")
-            self.log_manager.log(thread_id, f"Starting issue #{issue_number}")
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Creating worktree")
+            self._log("info", f"Starting issue #{issue_number}", thread_id)
 
             # Initialize state
             state = self._get_or_create_state(issue_number)
@@ -351,18 +366,24 @@ class IssueImplementer:
             self._save_state(state)
 
             # Check for existing plan
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Checking plan")
             if not self._has_plan(issue_number):
-                self.log_manager.log(thread_id, f"Issue #{issue_number} has no plan, generating...")
+                self.status_tracker.update_slot(slot_id, f"#{issue_number}: Generating plan")
+                self._log("info", f"Issue #{issue_number} has no plan, generating...", thread_id)
+                with self.state_lock:
+                    state.phase = ImplementationPhase.PLANNING
+                self._save_state(state)
                 self._generate_plan(issue_number)
 
-            # Implement
-            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Implementing")
+            # Fetch issue info for context
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Fetching issue")
             with self.state_lock:
                 state.phase = ImplementationPhase.IMPLEMENTING
             self._save_state(state)
 
-            # Fetch issue info for context
+            # Run Claude Code
             issue = fetch_issue_info(issue_number)
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Running Claude Code")
             session_id = self._run_claude_code(
                 issue_number,
                 worktree_path,
@@ -373,37 +394,37 @@ class IssueImplementer:
                     branch_name=branch_name,
                     worktree_path=str(worktree_path),
                 ),
+                slot_id=slot_id,
             )
             with self.state_lock:
                 state.session_id = session_id
             self._save_state(state)
 
             # Verify commit, push, and PR were created by Claude
-            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Verifying")
             with self.state_lock:
                 state.phase = ImplementationPhase.CREATING_PR
             self._save_state(state)
 
-            pr_number = self._ensure_pr_created(issue_number, branch_name, worktree_path)
+            pr_number = self._ensure_pr_created(issue_number, branch_name, worktree_path, slot_id)
             with self.state_lock:
                 state.pr_number = pr_number
             self._save_state(state)
 
             # Retrospective phase (after CREATING_PR, before COMPLETED)
             if self.options.enable_retrospective and state.session_id:
-                self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Retrospective")
+                self.status_tracker.update_slot(slot_id, f"#{issue_number}: Running retrospective")
                 with self.state_lock:
                     state.phase = ImplementationPhase.RETROSPECTIVE
                 self._save_state(state)
-                self._run_retrospective(state.session_id, worktree_path, issue_number)
+                self._run_retrospective(state.session_id, worktree_path, issue_number, slot_id)
 
             # Follow-up issues phase (after RETROSPECTIVE, before COMPLETED)
             if self.options.enable_follow_up and state.session_id:
-                self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Follow-up issues")
+                self.status_tracker.update_slot(slot_id, f"#{issue_number}: Identifying follow-ups")
                 with self.state_lock:
                     state.phase = ImplementationPhase.FOLLOW_UP_ISSUES
                 self._save_state(state)
-                self._run_follow_up_issues(state.session_id, worktree_path, issue_number)
+                self._run_follow_up_issues(state.session_id, worktree_path, issue_number, slot_id)
 
             # Mark as completed
             with self.state_lock:
@@ -411,7 +432,7 @@ class IssueImplementer:
                 state.completed_at = datetime.now(timezone.utc)
             self._save_state(state)
 
-            self.log_manager.log(thread_id, f"Issue #{issue_number} completed: PR #{pr_number}")
+            self._log("info", f"Issue #{issue_number} completed: PR #{pr_number}", thread_id)
 
             return WorkerResult(
                 issue_number=issue_number,
@@ -421,8 +442,78 @@ class IssueImplementer:
                 worktree_path=str(worktree_path),
             )
 
+        except subprocess.TimeoutExpired as e:
+            error_msg = f"Timeout: {' '.join(e.cmd[:3])} exceeded {e.timeout}s"
+            self._log("error", error_msg, thread_id)
+
+            # Show failure in UI before releasing slot
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
+
+            state = self._get_state(issue_number)
+            if state:
+                with self.state_lock:
+                    state.phase = ImplementationPhase.FAILED
+                    state.error = error_msg
+                    state.attempts += 1
+                self._save_state(state)
+
+            return WorkerResult(
+                issue_number=issue_number,
+                success=False,
+                error=error_msg,
+            )
+
+        except subprocess.CalledProcessError as e:
+            error_msg = f"Command failed (exit {e.returncode}): {' '.join(e.cmd[:3])}"
+            self._log("error", error_msg, thread_id)
+            if e.stderr:
+                self._log("error", f"stderr: {e.stderr[:300]}", thread_id)
+
+            # Show failure in UI before releasing slot
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
+
+            state = self._get_state(issue_number)
+            if state:
+                with self.state_lock:
+                    state.phase = ImplementationPhase.FAILED
+                    state.error = str(e)
+                    state.attempts += 1
+                self._save_state(state)
+
+            return WorkerResult(
+                issue_number=issue_number,
+                success=False,
+                error=str(e),
+            )
+
+        except RuntimeError as e:
+            self._log("error", f"Runtime error: {e}", thread_id)
+
+            # Show failure in UI before releasing slot
+            error_msg = str(e)[:80]
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
+
+            state = self._get_state(issue_number)
+            if state:
+                with self.state_lock:
+                    state.phase = ImplementationPhase.FAILED
+                    state.error = str(e)
+                    state.attempts += 1
+                self._save_state(state)
+
+            return WorkerResult(
+                issue_number=issue_number,
+                success=False,
+                error=str(e),
+            )
+
         except Exception as e:
-            logger.error(f"Failed to implement issue #{issue_number}: {e}")
+            self._log("error", f"Unexpected {type(e).__name__}: {e}", thread_id)
+
+            # Show failure in UI before releasing slot
+            error_msg = str(e)[:80]
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
+
             state = self._get_state(issue_number)
             if state:
                 with self.state_lock:
@@ -437,6 +528,8 @@ class IssueImplementer:
                 error=str(e),
             )
         finally:
+            # Brief pause so UI shows final status before going idle
+            time.sleep(1)
             self.status_tracker.release_slot(slot_id)
 
     def _has_plan(self, issue_number: int) -> bool:
@@ -523,7 +616,11 @@ class IssueImplementer:
             return []
 
     def _run_follow_up_issues(
-        self, session_id: str, worktree_path: Path, issue_number: int
+        self,
+        session_id: str,
+        worktree_path: Path,
+        issue_number: int,
+        slot_id: int | None = None,
     ) -> None:
         """Resume Claude session to identify and file follow-up issues.
 
@@ -531,6 +628,7 @@ class IssueImplementer:
             session_id: Claude session ID to resume
             worktree_path: Path to git worktree
             issue_number: Parent issue number
+            slot_id: Worker slot ID for status updates
 
         """
         # Write follow-up prompt to temp file in worktree
@@ -569,8 +667,14 @@ class IssueImplementer:
 
             # Create follow-up issues
             created_issues = []
-            for item in items:
+            for i, item in enumerate(items, 1):
                 try:
+                    # Update status
+                    if slot_id is not None:
+                        self.status_tracker.update_slot(
+                            slot_id, f"#{issue_number}: Creating follow-up {i}/{len(items)}"
+                        )
+
                     # Append reference to parent issue
                     body_with_ref = f"{item['body']}\n\n_Follow-up from #{issue_number}_"
 
@@ -614,11 +718,24 @@ class IssueImplementer:
             except Exception:
                 pass  # Best effort cleanup
 
-    def _run_retrospective(self, session_id: str, worktree_path: Path, issue_number: int) -> None:
+    def _run_retrospective(
+        self,
+        session_id: str,
+        worktree_path: Path,
+        issue_number: int,
+        slot_id: int | None = None,
+    ) -> None:
         """Resume Claude session to run /retrospective.
+
+        Args:
+            session_id: Claude session ID
+            worktree_path: Path to worktree
+            issue_number: Issue number
+            slot_id: Worker slot ID for status updates
 
         Runs from repo root so ProjectMnemosyne clone persists in build/.
         Output is logged to .issue_implementer/retrospective-{issue_number}.log.
+
         """
         log_file = self.state_dir / f"retrospective-{issue_number}.log"
         try:
@@ -645,8 +762,16 @@ class IssueImplementer:
             logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
             # Non-blocking: never re-raise
 
-    def _run_claude_code(self, issue_number: int, worktree_path: Path, prompt: str) -> str | None:
+    def _run_claude_code(
+        self, issue_number: int, worktree_path: Path, prompt: str, slot_id: int | None = None
+    ) -> str | None:
         """Run Claude Code in a worktree.
+
+        Args:
+            issue_number: Issue number
+            worktree_path: Path to worktree
+            prompt: Implementation prompt
+            slot_id: Worker slot ID for status updates
 
         Returns:
             Session ID if captured, None otherwise
@@ -790,8 +915,20 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
             cwd=worktree_path,
         )
 
-    def _ensure_pr_created(self, issue_number: int, branch_name: str, worktree_path: Path) -> int:
+    def _ensure_pr_created(
+        self,
+        issue_number: int,
+        branch_name: str,
+        worktree_path: Path,
+        slot_id: int | None = None,
+    ) -> int:
         """Ensure commit is pushed and PR is created (fallback if Claude didn't do it).
+
+        Args:
+            issue_number: Issue number
+            branch_name: Git branch name
+            worktree_path: Path to worktree
+            slot_id: Worker slot ID for status updates
 
         Returns:
             PR number
@@ -801,6 +938,8 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
         """
         # Check if commit exists
+        if slot_id is not None:
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Checking commit")
         result = run(
             ["git", "log", "-1", "--oneline"],
             cwd=worktree_path,
@@ -814,6 +953,8 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
         logger.info(f"✓ Commit exists: {result.stdout.strip()[:80]}")
 
         # Check if branch was pushed, if not push it
+        if slot_id is not None:
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Pushing branch")
         result = run(
             ["git", "ls-remote", "--heads", "origin", branch_name],
             cwd=worktree_path,
@@ -828,6 +969,8 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
             logger.info(f"✓ Branch {branch_name} already on origin")
 
         # Check if PR exists, if not create it
+        if slot_id is not None:
+            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Creating PR")
         import json
 
         from .github_api import _gh_call
