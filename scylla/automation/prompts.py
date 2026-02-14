@@ -42,13 +42,23 @@ Implement GitHub issue #{issue_number}.
 - Follow PEP 8 style guidelines
 - Keep solutions simple and focused
 
-**IMPORTANT:**
-- DO NOT create git commits - the automation will handle that
-- DO NOT push changes - the automation will handle that
-- DO NOT create PRs - the automation will handle that
-- ONLY implement the code and run tests to verify it works
+**File Handling:**
+- DO NOT create backup files (.orig, .bak, .swp, etc.)
+- DO NOT leave temporary or editor backup files
+- Clean up any backup files before finishing
+- Only stage actual implementation files
 
-When you're done, just let me know the implementation is complete.
+**Git Workflow:**
+After implementation is complete and tests pass:
+1. Create a git commit using the /commit-commands:commit skill
+   - Use a descriptive commit message following conventional commits format
+   - Include "Closes #{issue_number}" in the commit message
+2. Push the changes to origin
+3. Create a pull request using the /commit-commands:commit-push-pr skill
+   - Link the PR to this issue
+   - Include a clear summary of changes and testing done
+
+When you're done, the PR should be created and ready for review.
 """
 
 PLAN_PROMPT = """

@@ -16,6 +16,8 @@ def test_get_implementation_prompt():
     assert "123" in prompt
     assert "pytest" in prompt
     assert "type hint" in prompt.lower()
+    # Verify backup file warning is present
+    assert "backup file" in prompt.lower() or ".orig" in prompt
 
 
 def test_get_implementation_prompt_with_context():

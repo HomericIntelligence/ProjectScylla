@@ -378,43 +378,13 @@ class IssueImplementer:
                 state.session_id = session_id
             self._save_state(state)
 
-            # Check for changes before attempting commit
-            status_check = run(
-                ["git", "status", "--porcelain"],
-                cwd=worktree_path,
-                capture_output=True,
-            )
-            if not status_check.stdout.strip():
-                logger.warning(
-                    f"No changes detected for issue #{issue_number} "
-                    f"after Claude session {session_id}. "
-                    "Claude may not have implemented the changes. "
-                    "Check the session transcript."
-                )
-
-            # Commit
-            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Committing")
-            with self.state_lock:
-                state.phase = ImplementationPhase.COMMITTING
-            self._save_state(state)
-
-            self._commit_changes(issue_number, worktree_path)
-
-            # Push
-            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Pushing")
-            with self.state_lock:
-                state.phase = ImplementationPhase.PUSHING
-            self._save_state(state)
-
-            run(["git", "push", "-u", "origin", branch_name], cwd=worktree_path)
-
-            # Create PR
-            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Creating PR")
+            # Verify commit, push, and PR were created by Claude
+            self.status_tracker.update_slot(slot_id, f"Issue #{issue_number}: Verifying")
             with self.state_lock:
                 state.phase = ImplementationPhase.CREATING_PR
             self._save_state(state)
 
-            pr_number = self._create_pr(issue_number, branch_name)
+            pr_number = self._verify_pr_created(issue_number, branch_name, worktree_path)
             with self.state_lock:
                 state.pr_number = pr_number
             self._save_state(state)
@@ -752,7 +722,6 @@ class IssueImplementer:
             "id_ed25519",
         }
         secret_extensions = {".key", ".pem", ".pfx", ".p12"}
-        backup_extensions = {".orig", ".bak", ".swp", ".swo", "~"}
 
         for line in result.stdout.strip().split("\n"):
             if not line:
@@ -775,7 +744,7 @@ class IssueImplementer:
                 # Remove quotes - git uses C-style escaping
                 filename_part = filename_part[1:-1]
 
-            # Check if file is a potential secret or backup file
+            # Check if file is a potential secret
             from pathlib import Path
 
             filename = Path(filename_part).name
@@ -783,13 +752,6 @@ class IssueImplementer:
             # Skip secret files (never stage these)
             if filename in secret_files or any(filename.endswith(ext) for ext in secret_extensions):
                 logger.warning(f"Skipping potential secret file: {filename_part}")
-                continue
-
-            # Skip backup files ONLY if they're being added (not if deleted)
-            # We want to stage deletions of backup files to clean them up
-            is_deleted = "D" in status
-            if not is_deleted and any(filename.endswith(ext) for ext in backup_extensions):
-                logger.debug(f"Skipping backup file: {filename_part}")
                 continue
 
             files_to_add.append(filename_part)
@@ -818,6 +780,61 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
         run(
             ["git", "commit", "-m", commit_msg],
             cwd=worktree_path,
+        )
+
+    def _verify_pr_created(self, issue_number: int, branch_name: str, worktree_path: Path) -> int:
+        """Verify that Claude created commit, pushed, and created PR.
+
+        Returns:
+            PR number
+
+        Raises:
+            RuntimeError: If verification fails
+
+        """
+        # Check if commit exists
+        result = run(
+            ["git", "log", "-1", "--oneline"],
+            cwd=worktree_path,
+            capture_output=True,
+        )
+        if not result.stdout.strip():
+            raise RuntimeError(
+                f"No commit found for issue #{issue_number}. Claude may not have created a commit."
+            )
+
+        logger.info(f"Verified commit exists: {result.stdout.strip()[:80]}")
+
+        # Check if branch was pushed
+        result = run(
+            ["git", "ls-remote", "--heads", "origin", branch_name],
+            cwd=worktree_path,
+            capture_output=True,
+        )
+        if not result.stdout.strip():
+            raise RuntimeError(
+                f"Branch {branch_name} not found on origin. Claude may not have pushed the changes."
+            )
+
+        logger.info(f"Verified branch {branch_name} pushed to origin")
+
+        # Find PR number
+        # Try to get PR number from gh pr list
+        from .github_api import gh_call
+
+        try:
+            pr_data = gh_call(
+                ["pr", "list", "--head", branch_name, "--json", "number", "--limit", "1"]
+            )
+            if pr_data and len(pr_data) > 0:
+                pr_number = pr_data[0]["number"]
+                logger.info(f"Found PR #{pr_number} for branch {branch_name}")
+                return pr_number
+        except Exception as e:
+            logger.warning(f"Could not find PR via gh pr list: {e}")
+
+        raise RuntimeError(
+            f"No PR found for branch {branch_name}. Claude may not have created a pull request."
         )
 
     def _create_pr(self, issue_number: int, branch_name: str) -> int:
