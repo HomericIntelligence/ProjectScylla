@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from scylla.core.results import RunResultBase
+
 if TYPE_CHECKING:
     pass
 
@@ -258,25 +260,24 @@ class JudgeResultSummary(BaseModel):
         }
 
 
-class RunResult(BaseModel):
+class E2ERunResult(RunResultBase):
     """Result from a single run of a sub-test.
 
     Captures all execution details, metrics, and judge evaluation
     for one run of an agent against the canonical task.
 
     This is the E2E testing result with detailed paths and judge fields.
-    For other RunResult types, see:
-    - executor/runner.py:RunResult (execution tracking with status)
-    - reporting/result.py:RunResult (persistence with nested info)
-    - metrics/aggregator.py:RunResult (statistical aggregation)
-    - core/results.py:BaseRunResult (base type)
+    Inherits common fields (run_number, cost_usd, duration_seconds) from RunResultBase.
+
+    For other RunResult types in the hierarchy, see:
+    - RunResultBase (core/results.py) - Base Pydantic model
+    - ExecutorRunResult (executor/runner.py) - Execution tracking with status
+    - ReportingRunResult (reporting/result.py) - Persistence with nested info
+    - MetricsRunResult (metrics/aggregator.py) - Statistical aggregation
 
     Attributes:
-        run_number: The run number (1-indexed)
         exit_code: Process exit code
         token_stats: Detailed token usage statistics
-        cost_usd: Total cost in USD
-        duration_seconds: Total execution duration (agent + judge)
         agent_duration_seconds: Agent execution time
         judge_duration_seconds: Judge evaluation time
         judge_score: Consensus score from all judges (0.0 - 1.0)
@@ -293,11 +294,9 @@ class RunResult(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    run_number: int
+    # E2E-specific fields (common fields inherited from RunResultBase)
     exit_code: int
     token_stats: TokenStats
-    cost_usd: float
-    duration_seconds: float
     agent_duration_seconds: float
     judge_duration_seconds: float
     judge_score: float
@@ -346,6 +345,10 @@ class RunResult(BaseModel):
         }
 
 
+# Backward-compatible type alias
+RunResult = E2ERunResult
+
+
 class SubTestResult(BaseModel):
     """Aggregated results for a sub-test across all runs.
 
@@ -376,7 +379,7 @@ class SubTestResult(BaseModel):
 
     subtest_id: str
     tier_id: TierID
-    runs: list[RunResult]
+    runs: list[E2ERunResult]
     pass_rate: float = 0.0
     mean_score: float = 0.0
     median_score: float = 0.0

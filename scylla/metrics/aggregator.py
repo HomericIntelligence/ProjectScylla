@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from pydantic import Field
+
+from scylla.core.results import RunResultBase
 from scylla.metrics.grading import assign_letter_grade
 from scylla.metrics.statistics import (
     Statistics,
@@ -19,30 +22,35 @@ from scylla.metrics.statistics import (
 AggregatedStats = Statistics
 
 
-@dataclass
-class RunResult:
+class MetricsRunResult(RunResultBase):
     """Result from a single evaluation run for aggregation.
 
     This is a simplified result type used for statistical aggregation.
-    For detailed execution results, see:
-    - executor/runner.py:RunResult (execution tracking)
-    - e2e/models.py:RunResult (E2E test results)
-    - reporting/result.py:RunResult (persistence)
+    Inherits common fields (run_number, cost_usd, duration_seconds) from RunResultBase.
+
+    Note: This class uses run_id (string) instead of run_number (int) for identification,
+    as the metrics aggregation system requires string identifiers.
+
+    For other RunResult types in the hierarchy, see:
+    - RunResultBase (core/results.py) - Base Pydantic model
+    - ExecutorRunResult (executor/runner.py) - Execution tracking
+    - E2ERunResult (e2e/models.py) - E2E test results
+    - ReportingRunResult (reporting/result.py) - Persistence
 
     Attributes:
-        run_id: Unique identifier for the run.
+        run_id: Unique string identifier for the run.
         pass_rate: Binary pass/fail (1.0 or 0.0).
         impl_rate: Implementation rate (0.0 to 1.0).
-        cost_usd: Cost in USD.
-        duration_seconds: Duration of the run.
 
     """
 
-    run_id: str
-    pass_rate: float
-    impl_rate: float
-    cost_usd: float
-    duration_seconds: float
+    run_id: str = Field(..., description="Unique string identifier for the run")
+    pass_rate: float = Field(..., description="Binary pass/fail (1.0 or 0.0)")
+    impl_rate: float = Field(..., description="Implementation rate (0.0 to 1.0)")
+
+
+# Backward-compatible type alias
+RunResult = MetricsRunResult
 
 
 @dataclass
