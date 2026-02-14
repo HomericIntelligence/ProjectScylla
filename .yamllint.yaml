@@ -7,7 +7,7 @@ rules:
     level: warning
   indentation:
     spaces: 2
-    indent-sequences: consistent
+    indent-sequences: whatever
   comments:
     min-spaces-from-content: 1
   comments-indentation: {}
@@ -16,7 +16,6 @@ rules:
   document-start: disable
   braces:
     max-spaces-inside: 1
-  key-duplicates: enable
 
 ignore: |
   .pixi/
