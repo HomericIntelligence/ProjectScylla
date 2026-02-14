@@ -466,12 +466,21 @@ Required packages for document compilation:
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our contributing guidelines:
+We welcome contributions! Please see **[CONTRIBUTING.md](CONTRIBUTING.md)** for detailed guidelines on:
 
-- **Development Setup**: Follow Quick Start guide above
-- **Code Standards**: Run linting and formatting before submitting
-- **Testing**: Ensure all tests pass (`pytest tests/`)
-- **Documentation**: Update README and docs for new features
+- Development setup and environment configuration
+- Git workflow and branch management
+- Code quality standards and testing requirements
+- Pull request and code review process
+- Issue reporting guidelines
+
+**Quick Start for Contributors:**
+
+1. Fork the repository and clone locally
+2. Copy `.env.example` to `.env` and configure API keys
+3. Install dependencies: `curl -fsSL https://pixi.sh/install.sh | bash`
+4. Run tests: `pixi run pytest tests/ -v`
+5. Check [CONTRIBUTING.md](CONTRIBUTING.md) for detailed workflow
 
 **Areas for contribution:**
 - Additional statistical methods and metrics
