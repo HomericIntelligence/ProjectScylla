@@ -306,7 +306,7 @@ class TestImplementerOptions:
         assert options.skip_closed is True
         assert options.auto_merge is True
         assert options.dry_run is False
-        assert options.enable_retrospective is False
+        assert options.enable_retrospective is True
         assert options.enable_follow_up is True  # Enabled by default
 
     def test_custom_values(self):
