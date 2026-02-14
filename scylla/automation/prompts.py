@@ -16,8 +16,8 @@ Follow the project's Python conventions and type hint all function signatures.
 2. Follow existing code patterns in scylla/
 3. Write tests in tests/ using pytest
 4. Run tests with: pixi run python -m pytest tests/ -v
-5. Ensure all tests pass before committing
-6. Follow the commit message format in CLAUDE.md
+5. Ensure all tests pass before finishing
+6. Follow the code quality guidelines in CLAUDE.md
 
 **Testing:**
 - Write unit tests for new functionality
@@ -30,11 +30,13 @@ Follow the project's Python conventions and type hint all function signatures.
 - Follow PEP 8 style guidelines
 - Keep solutions simple and focused
 
-When you're done:
-1. Run the test suite
-2. Create a commit following the conventional commits format
-3. Push the changes
-4. Create a PR that closes the issue
+**IMPORTANT:**
+- DO NOT create git commits - the automation will handle that
+- DO NOT push changes - the automation will handle that
+- DO NOT create PRs - the automation will handle that
+- ONLY implement the code and run tests to verify it works
+
+When you're done, just let me know the implementation is complete.
 """
 
 PLAN_PROMPT = """
