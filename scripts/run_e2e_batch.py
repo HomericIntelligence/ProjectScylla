@@ -14,8 +14,10 @@ import argparse
 import concurrent.futures
 import json
 import logging
+import shutil
 import subprocess
 import sys
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -84,6 +86,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Thread-safe lock for incremental saves
+_save_lock = threading.Lock()
+
 
 def load_existing_results(results_dir: Path) -> list[dict]:
     """Load existing results from batch_summary.json if it exists.
@@ -114,6 +119,7 @@ def save_incremental_result(results_dir: Path, result: dict, config: dict) -> No
     """Save a single result incrementally to batch_summary.json.
 
     Loads existing summary, appends the new result, and writes atomically.
+    Thread-safe using a lock to prevent race conditions.
 
     Args:
         results_dir: Results directory
@@ -122,15 +128,26 @@ def save_incremental_result(results_dir: Path, result: dict, config: dict) -> No
 
     """
     summary_path = results_dir / "batch_summary.json"
-    tmp_path = results_dir / "batch_summary.json.tmp"
+    # Use thread-specific temp file to prevent race conditions
+    tmp_path = results_dir / f"batch_summary.json.tmp.{threading.get_ident()}"
 
-    # Load existing summary or create fresh structure
-    if summary_path.exists():
-        try:
-            with open(summary_path) as f:
-                summary = json.load(f)
-        except Exception as e:
-            logger.warning(f"Failed to load existing summary, creating fresh: {e}")
+    # Use lock to prevent concurrent read-modify-write cycles
+    with _save_lock:
+        # Load existing summary or create fresh structure
+        if summary_path.exists():
+            try:
+                with open(summary_path) as f:
+                    summary = json.load(f)
+            except Exception as e:
+                logger.warning(f"Failed to load existing summary, creating fresh: {e}")
+                summary = {
+                    "started_at": config.get("started_at", datetime.now(timezone.utc).isoformat()),
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                    "config": config,
+                    "threads": [],
+                    "results": [],
+                }
+        else:
             summary = {
                 "started_at": config.get("started_at", datetime.now(timezone.utc).isoformat()),
                 "completed_at": datetime.now(timezone.utc).isoformat(),
@@ -138,23 +155,15 @@ def save_incremental_result(results_dir: Path, result: dict, config: dict) -> No
                 "threads": [],
                 "results": [],
             }
-    else:
-        summary = {
-            "started_at": config.get("started_at", datetime.now(timezone.utc).isoformat()),
-            "completed_at": datetime.now(timezone.utc).isoformat(),
-            "config": config,
-            "threads": [],
-            "results": [],
-        }
 
-    # Append new result
-    summary["results"].append(result)
-    summary["completed_at"] = datetime.now(timezone.utc).isoformat()
+        # Append new result
+        summary["results"].append(result)
+        summary["completed_at"] = datetime.now(timezone.utc).isoformat()
 
-    # Write atomically (tmp + rename)
-    with open(tmp_path, "w") as f:
-        json.dump(summary, f, indent=2)
-    tmp_path.rename(summary_path)
+        # Write atomically (tmp + rename)
+        with open(tmp_path, "w") as f:
+            json.dump(summary, f, indent=2)
+        tmp_path.rename(summary_path)
 
     logger.debug(f"Saved incremental result for {result['test_id']} to {summary_path}")
 
@@ -265,7 +274,9 @@ def partition_tests(tests: list[dict], num_threads: int) -> list[list[dict]]:
     return threads
 
 
-def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) -> dict:
+def run_single_test(
+    test: dict, thread_id: int, log_file, args, config: dict, pixi_path: str
+) -> dict:
     """Run one test via subprocess, capture output to log file.
 
     Args:
@@ -274,6 +285,7 @@ def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) ->
         log_file: Open file handle for logging
         args: Parsed CLI arguments
         config: Configuration dict for incremental saves
+        pixi_path: Full path to pixi executable
 
     Returns:
         Result dict with status, metrics, and paths
@@ -284,7 +296,7 @@ def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) ->
 
     # Build command (conditionally add --fresh)
     cmd = [
-        "pixi",
+        pixi_path,
         "run",
         "python",
         "scripts/run_e2e_experiment.py",
@@ -378,7 +390,9 @@ def run_single_test(test: dict, thread_id: int, log_file, args, config: dict) ->
     return result
 
 
-def run_thread(thread_id: int, tests: list[dict], log_dir: Path, args, config: dict) -> list[dict]:
+def run_thread(
+    thread_id: int, tests: list[dict], log_dir: Path, args, config: dict, pixi_path: str
+) -> list[dict]:
     """Run all assigned tests sequentially within one thread.
 
     Args:
@@ -387,6 +401,7 @@ def run_thread(thread_id: int, tests: list[dict], log_dir: Path, args, config: d
         log_dir: Directory for log files
         args: Parsed CLI arguments
         config: Configuration dict for incremental saves
+        pixi_path: Full path to pixi executable
 
     Returns:
         List of result dicts
@@ -400,8 +415,25 @@ def run_thread(thread_id: int, tests: list[dict], log_dir: Path, args, config: d
     # Use append mode to preserve logs on restart
     with open(log_file_path, "a") as log_file:
         for test in tests:
-            result = run_single_test(test, thread_id, log_file, args, config)
-            results.append(result)
+            try:
+                result = run_single_test(test, thread_id, log_file, args, config, pixi_path)
+                results.append(result)
+            except Exception as e:
+                logger.error(f"[Thread {thread_id}] Unexpected error for {test['id']}: {e}")
+                # Record error result
+                error_result = {
+                    "test_id": test["id"],
+                    "test_name": test.get("name", ""),
+                    "thread_id": thread_id,
+                    "status": "error",
+                    "exit_code": -1,
+                    "result_dir": None,
+                    "error": str(e),
+                }
+                results.append(error_result)
+                # Log to file
+                log_file.write(f"\nUNEXPECTED ERROR: {e}\n")
+                log_file.flush()
 
     logger.info(f"[Thread {thread_id}] Completed all tests")
     return results
@@ -875,7 +907,20 @@ Examples:
     batch_start_time = time.time()
 
     try:
-        # 0. Check for rate limits before starting
+        # 0. Resolve pixi executable path
+        pixi_path = shutil.which("pixi")
+        if pixi_path is None:
+            logger.error("pixi not found on PATH. Install pixi or add ~/.pixi/bin to PATH")
+            print(f"\n{Colors.FAIL}ERROR: pixi not found on PATH{Colors.ENDC}\n")
+            print("Please ensure pixi is installed and available:")
+            print("  1. Install pixi: curl -fsSL https://pixi.sh/install.sh | bash")
+            print('  2. Add to PATH: export PATH="$HOME/.pixi/bin:$PATH"')
+            print()
+            return 1
+
+        logger.info(f"Using pixi from: {pixi_path}")
+
+        # 1. Check for rate limits before starting
         is_rate_limited, rate_msg = check_rate_limit()
         if is_rate_limited:
             logger.error(f"API is currently rate-limited: {rate_msg}")
@@ -884,7 +929,7 @@ Examples:
             print("The batch runner will auto-resume from where it left off.\n")
             return 2  # Distinct exit code for rate limit
 
-        # 1. Load existing results (unless --fresh)
+        # 2. Load existing results (unless --fresh)
         existing_results = []
         if args.fresh:
             # Clear existing batch_summary.json
@@ -906,7 +951,7 @@ Examples:
         if args.retry_errors:
             existing_results = [r for r in existing_results if r["status"] != "error"]
 
-        # 2. Discover tests
+        # 3. Discover tests
         repo_root = get_repo_root()
         tests_dir = repo_root / "tests" / "fixtures" / "tests"
         all_tests = discover_tests(tests_dir, args.tests)
@@ -938,10 +983,10 @@ Examples:
             print(f"  {Colors.OKGREEN}Already completed: {len(completed_test_ids)}{Colors.ENDC}")
             print(f"  To run: {len(tests)}\n")
 
-        # 3. Partition across threads
+        # 4. Partition across threads
         threads = partition_tests(tests, args.threads)
 
-        # 4. Run tests in parallel
+        # 5. Run tests in parallel
         logger.info(f"Starting {len(tests)} tests across {args.threads} threads")
         print(f"\n{Colors.BOLD}Running {len(tests)} tests...{Colors.ENDC}\n")
 
@@ -952,7 +997,7 @@ Examples:
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as executor:
             # Submit all threads
             futures = [
-                executor.submit(run_thread, i, thread_tests, log_dir, args, config)
+                executor.submit(run_thread, i, thread_tests, log_dir, args, config, pixi_path)
                 for i, thread_tests in enumerate(threads)
             ]
 
@@ -975,15 +1020,15 @@ Examples:
                 except Exception as e:
                     logger.error(f"Thread failed with exception: {e}")
 
-        # 5. Merge existing and new results
+        # 6. Merge existing and new results
         all_results = existing_results + new_results
 
-        # 6. Write final outputs
+        # 7. Write final outputs
         logger.info("Writing final batch summary and analysis prompt")
         write_batch_summary(args.results_dir, all_results, config, threads)
         write_analysis_prompt(args.results_dir, config)
 
-        # 5. Print summary
+        # 8. Print summary
         print_summary_table(all_results)
 
         # Final output locations
