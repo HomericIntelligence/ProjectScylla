@@ -12,8 +12,8 @@ services:
   # Main scylla-runner service
   scylla-runner:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     image: scylla-runner:latest
     environment:
       # Required environment variables
