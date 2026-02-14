@@ -122,6 +122,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--no-follow-up",
+        action="store_true",
+        help="Disable automatic filing of follow-up issues (enabled by default)",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -155,6 +161,7 @@ def main() -> int:
         auto_merge=not args.no_auto_merge,
         dry_run=args.dry_run,
         enable_retrospective=args.retrospective,
+        enable_follow_up=not args.no_follow_up,
     )
 
     if args.health_check:

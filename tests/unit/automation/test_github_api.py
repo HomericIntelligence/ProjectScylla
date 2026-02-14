@@ -10,6 +10,7 @@ from scylla.automation.github_api import (
     _gh_call,
     fetch_issue_info,
     gh_issue_comment,
+    gh_issue_create,
     gh_issue_json,
     gh_pr_create,
     is_issue_closed,
@@ -323,6 +324,71 @@ class TestGhIssueComment:
 
         with pytest.raises(RuntimeError, match="Failed to post comment"):
             gh_issue_comment(123, "Test comment")
+
+
+class TestGhIssueCreate:
+    """Tests for gh_issue_create function."""
+
+    @patch("scylla.automation.github_api._gh_call")
+    def test_successful_creation(self, mock_gh_call):
+        """Test successful issue creation."""
+        mock_result = Mock()
+        mock_result.stdout = "https://github.com/owner/repo/issues/789"
+        mock_gh_call.return_value = mock_result
+
+        issue_number = gh_issue_create(
+            title="Test issue",
+            body="Test body",
+        )
+
+        assert issue_number == 789
+        mock_gh_call.assert_called_once()
+        call_args = mock_gh_call.call_args[0][0]
+        assert call_args == ["issue", "create", "--title", "Test issue", "--body", "Test body"]
+
+    @patch("scylla.automation.github_api._gh_call")
+    def test_creation_with_labels(self, mock_gh_call):
+        """Test issue creation with labels."""
+        mock_result = Mock()
+        mock_result.stdout = "https://github.com/owner/repo/issues/790"
+        mock_gh_call.return_value = mock_result
+
+        issue_number = gh_issue_create(
+            title="Test issue",
+            body="Test body",
+            labels=["bug", "enhancement"],
+        )
+
+        assert issue_number == 790
+        call_args = mock_gh_call.call_args[0][0]
+        assert "--label" in call_args
+        assert "bug" in call_args
+        assert "enhancement" in call_args
+
+    @patch("scylla.automation.github_api._gh_call")
+    def test_creation_without_labels(self, mock_gh_call):
+        """Test issue creation without labels."""
+        mock_result = Mock()
+        mock_result.stdout = "https://github.com/owner/repo/issues/791"
+        mock_gh_call.return_value = mock_result
+
+        issue_number = gh_issue_create(
+            title="Test issue",
+            body="Test body",
+            labels=None,
+        )
+
+        assert issue_number == 791
+        call_args = mock_gh_call.call_args[0][0]
+        assert "--label" not in call_args
+
+    @patch("scylla.automation.github_api._gh_call")
+    def test_failed_creation(self, mock_gh_call):
+        """Test failed issue creation."""
+        mock_gh_call.side_effect = subprocess.CalledProcessError(1, "gh")
+
+        with pytest.raises(RuntimeError, match="Failed to create issue"):
+            gh_issue_create("Test", "Body")
 
 
 class TestGhPrCreate:

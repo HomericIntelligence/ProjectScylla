@@ -2,6 +2,7 @@
 
 from scylla.automation.prompts import (
     get_advise_prompt,
+    get_follow_up_prompt,
     get_implementation_prompt,
     get_plan_prompt,
     get_pr_description,
@@ -22,6 +23,8 @@ def test_get_plan_prompt():
     assert "456" in prompt
     assert "Objective" in prompt
     assert "Implementation Order" in prompt
+    # Verify it references advise findings
+    assert "Prior Learnings" in prompt or "knowledge base" in prompt
 
 
 def test_get_advise_prompt():
@@ -40,6 +43,19 @@ def test_get_advise_prompt():
     assert "Related Skills" in prompt
     assert "What Worked" in prompt
     assert "What Failed" in prompt
+
+
+def test_get_follow_up_prompt():
+    """Test follow-up prompt generation."""
+    prompt = get_follow_up_prompt(789)
+    assert "789" in prompt
+    assert "JSON" in prompt
+    assert "title" in prompt
+    assert "body" in prompt
+    assert "labels" in prompt
+    assert "enhancement" in prompt
+    assert "bug" in prompt
+    assert "test" in prompt
 
 
 def test_get_pr_description():

@@ -53,6 +53,7 @@ class ImplementationPhase(str, Enum):
     PUSHING = "pushing"
     CREATING_PR = "creating_pr"
     RETROSPECTIVE = "retrospective"
+    FOLLOW_UP_ISSUES = "follow_up_issues"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -116,6 +117,7 @@ class ImplementerOptions(BaseModel):
     auto_merge: bool = True
     dry_run: bool = False
     enable_retrospective: bool = False
+    enable_follow_up: bool = True
 
 
 class DependencyGraph(BaseModel):

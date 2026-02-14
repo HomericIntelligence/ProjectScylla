@@ -119,6 +119,17 @@ class TestImplementationState:
         )
         assert state.phase == ImplementationPhase.RETROSPECTIVE
 
+    def test_follow_up_issues_phase(self):
+        """Test FOLLOW_UP_ISSUES phase in ImplementationPhase enum."""
+        assert ImplementationPhase.FOLLOW_UP_ISSUES == "follow_up_issues"
+
+        # Verify it can be used in state
+        state = ImplementationState(
+            issue_number=123,
+            phase=ImplementationPhase.FOLLOW_UP_ISSUES,
+        )
+        assert state.phase == ImplementationPhase.FOLLOW_UP_ISSUES
+
 
 class TestDependencyGraph:
     """Tests for DependencyGraph model."""
@@ -296,6 +307,7 @@ class TestImplementerOptions:
         assert options.auto_merge is True
         assert options.dry_run is False
         assert options.enable_retrospective is False
+        assert options.enable_follow_up is True  # Enabled by default
 
     def test_custom_values(self):
         """Test ImplementerOptions with custom values."""
@@ -309,6 +321,7 @@ class TestImplementerOptions:
             auto_merge=False,
             dry_run=True,
             enable_retrospective=True,
+            enable_follow_up=True,
         )
 
         assert options.epic_number == 456
@@ -320,3 +333,4 @@ class TestImplementerOptions:
         assert options.auto_merge is False
         assert options.dry_run is True
         assert options.enable_retrospective is True
+        assert options.enable_follow_up is True
