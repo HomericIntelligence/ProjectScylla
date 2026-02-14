@@ -70,6 +70,11 @@ class TestRunClaudeCode:
             assert ".claude-prompt-123.md" in args[1]
             assert "--output-format" in args
             assert "json" in args
+            # Verify permission mode and allowed tools
+            assert "--permission-mode" in args
+            assert "dontAsk" in args
+            assert "--allowedTools" in args
+            assert "Read,Write,Edit,Glob,Grep,Bash" in args
 
     def test_graceful_failure_on_json_parse_error(self, implementer):
         """Test graceful handling when JSON parse fails."""

@@ -413,6 +413,7 @@ def fetch_issue_info(issue_number: int) -> IssueInfo:
     return IssueInfo(
         number=issue_data["number"],
         title=issue_data["title"],
+        body=issue_data.get("body", ""),
         state=IssueState(issue_data["state"]),
         labels=[label["name"] for label in issue_data.get("labels", [])],
         dependencies=parse_issue_dependencies(issue_data.get("body", "")),
