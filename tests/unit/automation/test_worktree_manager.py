@@ -47,8 +47,8 @@ class TestWorktreeManager:
         assert worktree_path == manager.base_dir / "issue-123"
         assert manager.worktrees[123] == worktree_path
 
-        # Verify git worktree add was called (plus one call for base branch detection)
-        assert mock_run.call_count == 2
+        # Verify git calls: 1) base branch detection 2) rev-parse check 3) worktree add
+        assert mock_run.call_count == 3
         # Check the worktree add call
         call_args = mock_run.call_args[0][0]
         assert call_args[0:2] == ["git", "worktree"]
@@ -83,9 +83,9 @@ class TestWorktreeManager:
         path2 = manager.create_worktree(123, "123-feature")
 
         assert path1 == path2
-        # Should call git twice: once for base branch detection, once for first creation
+        # Should call git 3 times: base branch detection, rev-parse check, worktree add
         # Second creation returns early without calling git
-        assert mock_run.call_count == 2
+        assert mock_run.call_count == 3
 
     @patch("scylla.automation.worktree_manager.shutil.rmtree")
     @patch("scylla.automation.worktree_manager.run")

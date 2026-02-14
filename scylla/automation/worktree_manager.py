@@ -111,19 +111,46 @@ class WorktreeManager:
                     logger.debug(f"git worktree prune failed: {e}")
 
             try:
-                # Create worktree with new branch from base branch
-                run(
-                    [
-                        "git",
-                        "worktree",
-                        "add",
-                        "-b",
-                        branch_name,
-                        str(worktree_path),
-                        self.base_branch,
-                    ],
-                    cwd=self.repo_root,
-                )
+                # Check if branch already exists
+                branch_exists = False
+                try:
+                    result = run(
+                        ["git", "rev-parse", "--verify", branch_name],
+                        cwd=self.repo_root,
+                        capture_output=True,
+                        check=False,
+                    )
+                    branch_exists = result.returncode == 0
+                except Exception:
+                    branch_exists = False
+
+                if branch_exists:
+                    logger.info(f"Branch {branch_name} already exists, reusing it")
+                    # Create worktree from existing branch
+                    run(
+                        [
+                            "git",
+                            "worktree",
+                            "add",
+                            str(worktree_path),
+                            branch_name,
+                        ],
+                        cwd=self.repo_root,
+                    )
+                else:
+                    # Create worktree with new branch from base branch
+                    run(
+                        [
+                            "git",
+                            "worktree",
+                            "add",
+                            "-b",
+                            branch_name,
+                            str(worktree_path),
+                            self.base_branch,
+                        ],
+                        cwd=self.repo_root,
+                    )
 
                 self.worktrees[issue_number] = worktree_path
                 logger.info(f"Created worktree for issue #{issue_number} at {worktree_path}")
