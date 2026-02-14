@@ -108,8 +108,8 @@ class IssueImplementer:
         if self.options.resume:
             self._load_state()
 
-        # Start UI if not in dry run
-        if not self.options.dry_run:
+        # Start UI if enabled and not in dry run
+        if not self.options.dry_run and self.options.enable_ui:
             self.ui = CursesUI(self.status_tracker, self.log_manager)
             self.ui.start()
 
