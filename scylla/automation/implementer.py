@@ -504,6 +504,10 @@ class IssueImplementer:
             issue_number: Parent issue number
 
         """
+        # Write follow-up prompt to temp file in worktree
+        prompt_file = worktree_path / f".claude-followup-{issue_number}.md"
+        prompt_file.write_text(get_follow_up_prompt(issue_number))
+
         try:
             # Resume session and get follow-up items
             result = run(
@@ -511,8 +515,7 @@ class IssueImplementer:
                     "claude",
                     "--resume",
                     session_id,
-                    "--message",
-                    get_follow_up_prompt(issue_number),
+                    str(prompt_file),
                     "--output-format",
                     "json",
                 ],
@@ -575,6 +578,12 @@ class IssueImplementer:
         except Exception as e:
             logger.warning(f"Follow-up issues failed for issue #{issue_number}: {e}")
             # Non-blocking: never re-raise
+        finally:
+            # Clean up temp file
+            try:
+                prompt_file.unlink()
+            except Exception:
+                pass  # Best effort cleanup
 
     def _run_retrospective(self, session_id: str, worktree_path: Path, issue_number: int) -> None:
         """Resume Claude session to run /retrospective.
@@ -619,9 +628,13 @@ class IssueImplementer:
             logger.info(f"[DRY RUN] Would run Claude Code for issue #{issue_number}")
             return None
 
+        # Write prompt to temp file in worktree
+        prompt_file = worktree_path / f".claude-prompt-{issue_number}.md"
+        prompt_file.write_text(prompt)
+
         try:
             result = run(
-                ["claude", "--message", prompt, "--output-format", "json"],
+                ["claude", str(prompt_file), "--output-format", "json"],
                 cwd=worktree_path,
                 timeout=1800,  # 30 minutes
             )
@@ -634,6 +647,12 @@ class IssueImplementer:
                 return None
         except subprocess.TimeoutExpired as e:
             raise RuntimeError("Claude Code timed out") from e
+        finally:
+            # Clean up temp file
+            try:
+                prompt_file.unlink()
+            except Exception:
+                pass  # Best effort cleanup
 
     def _commit_changes(self, issue_number: int, worktree_path: Path) -> None:
         """Commit changes in worktree."""

@@ -49,7 +49,11 @@ class TestRunClaudeCode:
             }
         )
 
-        with patch("scylla.automation.implementer.run") as mock_run:
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch.object(Path, "write_text"),
+            patch.object(Path, "unlink"),
+        ):
             mock_run.return_value = mock_result
 
             session_id = implementer._run_claude_code(
@@ -62,7 +66,8 @@ class TestRunClaudeCode:
             mock_run.assert_called_once()
             args = mock_run.call_args[0][0]
             assert args[0] == "claude"
-            assert "--message" in args
+            # Should now pass a file path, not --message
+            assert ".claude-prompt-123.md" in args[1]
             assert "--output-format" in args
             assert "json" in args
 
@@ -74,6 +79,8 @@ class TestRunClaudeCode:
         with (
             patch("scylla.automation.implementer.run") as mock_run,
             patch("scylla.automation.implementer.logger") as mock_logger,
+            patch.object(Path, "write_text"),
+            patch.object(Path, "unlink"),
         ):
             mock_run.return_value = mock_result
 
@@ -97,7 +104,11 @@ class TestRunClaudeCode:
             }
         )
 
-        with patch("scylla.automation.implementer.run") as mock_run:
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch.object(Path, "write_text"),
+            patch.object(Path, "unlink"),
+        ):
             mock_run.return_value = mock_result
 
             session_id = implementer._run_claude_code(
@@ -111,7 +122,11 @@ class TestRunClaudeCode:
 
     def test_timeout_raises_runtime_error(self, implementer):
         """Test timeout handling."""
-        with patch("scylla.automation.implementer.run") as mock_run:
+        with (
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch.object(Path, "write_text"),
+            patch.object(Path, "unlink"),
+        ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 1800)
 
             with pytest.raises(RuntimeError, match="timed out"):
