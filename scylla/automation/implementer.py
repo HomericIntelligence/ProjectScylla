@@ -617,31 +617,30 @@ class IssueImplementer:
     def _run_retrospective(self, session_id: str, worktree_path: Path, issue_number: int) -> None:
         """Resume Claude session to run /retrospective.
 
-        Args:
-            session_id: Claude session ID to resume
-            worktree_path: Path to git worktree
-            issue_number: Issue number for logging
-
+        Runs from repo root so ProjectMnemosyne clone persists in build/.
+        Output is logged to .issue_implementer/retrospective-{issue_number}.log.
         """
+        log_file = self.state_dir / f"retrospective-{issue_number}.log"
         try:
-            run(
+            result = run(
                 [
                     "claude",
                     "--resume",
                     session_id,
                     "/skills-registry-commands:retrospective commit the results and create a PR",
                     "--print",
-                    "--tools",
-                    "Bash",
+                    "--permission-mode",
+                    "dontAsk",
                     "--allowedTools",
-                    "Bash(git:*)",
-                    "--allowedTools",
-                    "Bash(gh:*)",
+                    "Read,Write,Edit,Glob,Grep,Bash",
                 ],
-                cwd=worktree_path,
+                cwd=self.repo_root,
                 timeout=600,  # 10 minutes
             )
+            # Write output to log file
+            log_file.write_text(result.stdout or "")
             logger.info(f"Retrospective completed for issue #{issue_number}")
+            logger.info(f"Retrospective log: {log_file}")
         except Exception as e:
             logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
             # Non-blocking: never re-raise
