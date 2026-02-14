@@ -13,6 +13,13 @@ from scylla.e2e.llm_judge import (
     BuildPipelineResult,
     JudgeResult,
     _call_claude_judge,
+    _create_mojo_build_script,
+    _create_mojo_format_script,
+    _create_mojo_scripts,
+    _create_mojo_test_script,
+    _create_precommit_script,
+    _create_python_scripts,
+    _create_run_all_script,
     _get_deleted_files,
     _get_patchfile,
     _get_pipeline_env,
@@ -1010,3 +1017,259 @@ class TestRunLlmJudge:
         assert (judge_dir / "judge_01").exists()
         assert (judge_dir / "judge_01" / "judgment.json").exists()
         assert result.score == 0.8
+
+
+class TestPipelineCommandGeneration:
+    """Tests for pipeline command script generation helper functions."""
+
+    def test_create_python_scripts(self, tmp_path: Path) -> None:
+        """Test Python script generation."""
+        commands_dir = tmp_path / "commands"
+        commands_dir.mkdir()
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_python_scripts(commands_dir, workspace)
+
+        # Verify scripts created
+        assert (commands_dir / "python_check.sh").exists()
+        assert (commands_dir / "python_format.sh").exists()
+        assert (commands_dir / "python_test.sh").exists()
+
+        # Verify executable permissions
+        assert (commands_dir / "python_check.sh").stat().st_mode & 0o111
+        assert (commands_dir / "python_format.sh").stat().st_mode & 0o111
+        assert (commands_dir / "python_test.sh").stat().st_mode & 0o111
+
+        # Verify content
+        check_content = (commands_dir / "python_check.sh").read_text()
+        assert "python -m compileall" in check_content
+        assert str(workspace) in check_content
+
+        format_content = (commands_dir / "python_format.sh").read_text()
+        assert "ruff check" in format_content
+        assert str(workspace) in format_content
+
+        test_content = (commands_dir / "python_test.sh").read_text()
+        assert "pytest -v" in test_content
+        assert str(workspace) in test_content
+
+    def test_create_mojo_build_script_modular(self, tmp_path: Path) -> None:
+        """Test Mojo build script generation for modular repo."""
+        build_script = tmp_path / "mojo_build.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_build_script(build_script, workspace, is_modular=True)
+
+        assert build_script.exists()
+        assert build_script.stat().st_mode & 0o111  # Executable
+
+        content = build_script.read_text()
+        assert "./bazelw build //mojo/..." in content
+        assert str(workspace) in content
+        assert "modular repo" in content
+
+    def test_create_mojo_build_script_standalone(self, tmp_path: Path) -> None:
+        """Test Mojo build script generation for standalone repo."""
+        build_script = tmp_path / "mojo_build.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_build_script(build_script, workspace, is_modular=False)
+
+        assert build_script.exists()
+        content = build_script.read_text()
+        assert "pixi run mojo build" in content
+        assert str(workspace) in content
+
+    def test_create_mojo_format_script_modular(self, tmp_path: Path) -> None:
+        """Test Mojo format script generation for modular repo."""
+        format_script = tmp_path / "mojo_format.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_format_script(format_script, workspace, is_modular=True)
+
+        assert format_script.exists()
+        assert format_script.stat().st_mode & 0o111  # Executable
+
+        content = format_script.read_text()
+        assert "./bazelw run format" in content
+        assert str(workspace) in content
+
+    def test_create_mojo_format_script_standalone_with_mojo_dir(self, tmp_path: Path) -> None:
+        """Test Mojo format script with mojo/ subdirectory."""
+        format_script = tmp_path / "mojo_format.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        mojo_dir = workspace / "mojo"
+        mojo_dir.mkdir()
+
+        _create_mojo_format_script(format_script, workspace, is_modular=False)
+
+        assert format_script.exists()
+        content = format_script.read_text()
+        assert 'cd "$WORKSPACE/mojo"' in content
+        assert "pixi run mojo format" in content
+
+    def test_create_mojo_format_script_standalone_no_mojo_dir(self, tmp_path: Path) -> None:
+        """Test Mojo format script without mojo/ subdirectory."""
+        format_script = tmp_path / "mojo_format.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_format_script(format_script, workspace, is_modular=False)
+
+        assert format_script.exists()
+        content = format_script.read_text()
+        assert 'cd "$WORKSPACE"' in content
+        assert "pixi run mojo format" in content
+
+    def test_create_mojo_test_script_modular(self, tmp_path: Path) -> None:
+        """Test Mojo test script generation for modular repo."""
+        test_script = tmp_path / "mojo_test.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_test_script(test_script, workspace, is_modular=True)
+
+        assert test_script.exists()
+        assert test_script.stat().st_mode & 0o111  # Executable
+
+        content = test_script.read_text()
+        assert 'cd "$WORKSPACE/mojo"' in content
+        assert "pixi run tests" in content
+
+    def test_create_mojo_test_script_standalone(self, tmp_path: Path) -> None:
+        """Test Mojo test script generation for standalone repo."""
+        test_script = tmp_path / "mojo_test.sh"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_test_script(test_script, workspace, is_modular=False)
+
+        assert test_script.exists()
+        content = test_script.read_text()
+        assert "pixi run mojo test" in content
+        assert str(workspace) in content
+
+    @patch("scylla.e2e.llm_judge._is_modular_repo")
+    def test_create_mojo_scripts(self, mock_is_modular: MagicMock, tmp_path: Path) -> None:
+        """Test Mojo scripts orchestrator."""
+        mock_is_modular.return_value = False
+        commands_dir = tmp_path / "commands"
+        commands_dir.mkdir()
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_mojo_scripts(commands_dir, workspace)
+
+        # Verify all Mojo scripts created
+        assert (commands_dir / "mojo_build.sh").exists()
+        assert (commands_dir / "mojo_format.sh").exists()
+        assert (commands_dir / "mojo_test.sh").exists()
+
+        # Verify _is_modular_repo was called
+        mock_is_modular.assert_called_once_with(workspace)
+
+    def test_create_precommit_script(self, tmp_path: Path) -> None:
+        """Test pre-commit script generation."""
+        commands_dir = tmp_path / "commands"
+        commands_dir.mkdir()
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _create_precommit_script(commands_dir, workspace)
+
+        precommit_script = commands_dir / "precommit.sh"
+        assert precommit_script.exists()
+        assert precommit_script.stat().st_mode & 0o111  # Executable
+
+        content = precommit_script.read_text()
+        assert "pre-commit run --all-files" in content
+        assert str(workspace) in content
+
+    def test_create_run_all_script_python(self, tmp_path: Path) -> None:
+        """Test run_all.sh generation for Python."""
+        commands_dir = tmp_path / "commands"
+        commands_dir.mkdir()
+
+        _create_run_all_script(commands_dir, language="python")
+
+        run_all_script = commands_dir / "run_all.sh"
+        assert run_all_script.exists()
+        assert run_all_script.stat().st_mode & 0o111  # Executable
+
+        content = run_all_script.read_text()
+        assert "python_check.sh" in content
+        assert "python_format.sh" in content
+        assert "python_test.sh" in content
+        assert "precommit.sh" in content
+        assert "All checks completed" in content
+
+    def test_create_run_all_script_mojo(self, tmp_path: Path) -> None:
+        """Test run_all.sh generation for Mojo."""
+        commands_dir = tmp_path / "commands"
+        commands_dir.mkdir()
+
+        _create_run_all_script(commands_dir, language="mojo")
+
+        run_all_script = commands_dir / "run_all.sh"
+        assert run_all_script.exists()
+        assert run_all_script.stat().st_mode & 0o111  # Executable
+
+        content = run_all_script.read_text()
+        assert "mojo_build.sh" in content
+        assert "mojo_format.sh" in content
+        assert "mojo_test.sh" in content
+        assert "precommit.sh" in content
+        assert "All checks completed" in content
+
+    def test_save_pipeline_commands_python_integration(self, tmp_path: Path) -> None:
+        """Test end-to-end pipeline command generation for Python."""
+        run_dir = tmp_path / "run_01"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _save_pipeline_commands(run_dir, workspace, language="python")
+
+        commands_dir = run_dir / "commands"
+        assert commands_dir.exists()
+
+        # Verify all Python scripts created
+        assert (commands_dir / "python_check.sh").exists()
+        assert (commands_dir / "python_format.sh").exists()
+        assert (commands_dir / "python_test.sh").exists()
+        assert (commands_dir / "precommit.sh").exists()
+        assert (commands_dir / "run_all.sh").exists()
+
+        # Verify run_all.sh references Python scripts
+        run_all_content = (commands_dir / "run_all.sh").read_text()
+        assert "python_check.sh" in run_all_content
+
+    @patch("scylla.e2e.llm_judge._is_modular_repo")
+    def test_save_pipeline_commands_mojo_integration(
+        self, mock_is_modular: MagicMock, tmp_path: Path
+    ) -> None:
+        """Test end-to-end pipeline command generation for Mojo."""
+        mock_is_modular.return_value = False
+        run_dir = tmp_path / "run_01"
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        _save_pipeline_commands(run_dir, workspace, language="mojo")
+
+        commands_dir = run_dir / "commands"
+        assert commands_dir.exists()
+
+        # Verify all Mojo scripts created
+        assert (commands_dir / "mojo_build.sh").exists()
+        assert (commands_dir / "mojo_format.sh").exists()
+        assert (commands_dir / "mojo_test.sh").exists()
+        assert (commands_dir / "precommit.sh").exists()
+        assert (commands_dir / "run_all.sh").exists()
+
+        # Verify run_all.sh references Mojo scripts
+        run_all_content = (commands_dir / "run_all.sh").read_text()
+        assert "mojo_build.sh" in run_all_content
