@@ -158,12 +158,19 @@ class TestRunClaudeCode:
 class TestRunRetrospective:
     """Tests for _run_retrospective method."""
 
-    def test_successful_retrospective(self, implementer):
+    def test_successful_retrospective(self, implementer, tmp_path):
         """Test successful retrospective run."""
+        # Use tmp_path for state_dir to enable actual file writes
+        implementer.state_dir = tmp_path
+        implementer.state_dir.mkdir(exist_ok=True)
+
         with (
             patch("scylla.automation.implementer.run") as mock_run,
             patch("scylla.automation.implementer.logger") as mock_logger,
         ):
+            # Mock successful run with stdout
+            mock_run.return_value = MagicMock(stdout="Retrospective output")
+
             implementer._run_retrospective(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
@@ -172,20 +179,31 @@ class TestRunRetrospective:
 
             mock_run.assert_called_once()
             args = mock_run.call_args[0][0]
+            kwargs = mock_run.call_args[1]
+
+            # Verify command args
             assert args[0] == "claude"
             assert args[1] == "--resume"
             assert args[2] == "abc123"
             assert "/skills-registry-commands:retrospective" in args[3]
             assert "--print" in args
-            assert "--tools" in args
-            assert "Bash" in args
+            assert "--permission-mode" in args
+            assert "dontAsk" in args
             assert "--allowedTools" in args
-            assert "Bash(git:*)" in args
-            assert "Bash(gh:*)" in args
+            assert "Read,Write,Edit,Glob,Grep,Bash" in args
 
-            # Should log success
-            mock_logger.info.assert_called_once()
-            assert "Retrospective completed" in str(mock_logger.info.call_args)
+            # Verify cwd is repo_root, not worktree_path
+            assert kwargs["cwd"] == Path("/repo")
+
+            # Verify log file was created and written
+            log_file = tmp_path / "retrospective-123.log"
+            assert log_file.exists()
+            assert log_file.read_text() == "Retrospective output"
+
+            # Should log success with log file path
+            assert mock_logger.info.call_count == 2
+            assert "Retrospective completed" in str(mock_logger.info.call_args_list[0])
+            assert "Retrospective log" in str(mock_logger.info.call_args_list[1])
 
     def test_graceful_failure_on_error(self, implementer):
         """Test graceful failure when retrospective errors."""
