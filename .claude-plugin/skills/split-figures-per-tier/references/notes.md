@@ -7,6 +7,7 @@
 User request: "Lets run regenerating everything as a sub-agent and find out what is failing"
 
 Launched 3 parallel agents:
+
 1. Figure generation agent → Found 27/30 succeeded, 3 failed
 2. Test runner agent → 49/49 tests passed
 3. Explore agent → Found 5 unused imports
@@ -14,11 +15,13 @@ Launched 3 parallel agents:
 ### Root Cause Analysis
 
 **Failing Figures**:
+
 - `fig02_judge_variance` - 7,236 rows
 - `fig14_judge_agreement` - 7,194 rows
 - `fig17_judge_variance_overall` - 7,236 rows
 
 **Error Message**:
+
 ```
 altair.utils.schemapi.SchemaValidationError: Invalid specification
 Data source has more than 5000 rows
@@ -29,10 +32,12 @@ Data source has more than 5000 rows
 ### Solution Pattern Discovery
 
 Found working examples in codebase:
+
 - `fig23_qq_plots` - Already using per-tier loop
 - `fig24_score_histograms` - Already using per-tier loop
 
 Pattern:
+
 ```python
 for tier in tier_order:
     tier_data = data[data["tier"] == tier]
@@ -63,6 +68,7 @@ for tier in tier_order:
 ### Bug Fixes
 
 1. **NameError in fig14** (line 171):
+
    ```python
    # OLD CODE (removed during refactor):
    corr_data = []
@@ -122,11 +128,13 @@ All per-tier subsets are well under 5,000 rows.
 ### File Output Pattern
 
 **Aggregate figures** (single file):
+
 - `fig01_score_variance_by_tier.vl.json`
 - `fig04_pass_rate_by_tier.vl.json`
 - `fig25_impl_rate_by_tier.vl.json`
 
 **Per-tier figures** (7 files each):
+
 - `fig02_t{0-6}_judge_variance.vl.json`
 - `fig14_t{0-6}_judge_agreement.vl.json`
 - `fig17_t{0-6}_judge_variance_overall.vl.json`
@@ -134,6 +142,7 @@ All per-tier subsets are well under 5,000 rows.
 - `fig24_t{0-6}_score_histogram.vl.json`
 
 **When to use each**:
+
 - Aggregate: Dataset allows faceting (<5K rows per facet group)
 - Per-tier: Dataset too large (>5K rows total) or per-tier stories needed
 
@@ -165,6 +174,7 @@ ls -lh docs/figures/fig17_t*.vl.json
 1. **Faceting ≠ Data Splitting**: Altair's `facet()` is a visual operation that still embeds the full dataset in the spec.
 
 2. **Filter Before Charting**: Always filter data before passing to `alt.Chart()`:
+
    ```python
    # WRONG: Full dataset still in spec
    alt.Chart(df).facet(column="group:N")
@@ -176,6 +186,7 @@ ls -lh docs/figures/fig17_t*.vl.json
    ```
 
 3. **Preserve Grouping Columns**: When restructuring data (pivot, melt, explode), ensure ALL grouping columns are carried forward:
+
    ```python
    pairs.append({
        "tier": row["tier"],  # ← Don't forget!
@@ -185,6 +196,7 @@ ls -lh docs/figures/fig17_t*.vl.json
    ```
 
 4. **Grep for Leftover References**: After removing computation logic, search for variable usage:
+
    ```bash
    grep -n "corr_df" scylla/analysis/figures/judge_analysis.py
    # Found leftover at line 171 → delete it

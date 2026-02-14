@@ -6,6 +6,7 @@
 ## Context
 
 Two cleanup issues needed implementation:
+
 - **#432** - Research documentation consolidation
 - **#475** - Remove deprecated `fallback` field compatibility code
 
@@ -14,17 +15,20 @@ The session followed a plan from a previous planning session that identified all
 ## Issue #432: Research Documentation Cleanup
 
 ### What Existed
+
 - `docs/summary2.md` - deprecated redirect to `research.md`
 - `docs/paper.md` - deprecated redirect to `research_paper.tex`
 - References in `docs/arxiv-submission.md` to the deprecated `paper.md`
 
 ### What Was Done
+
 1. Deleted `docs/summary2.md` and `docs/paper.md`
 2. Created `docs/README.md` as a documentation index
 3. Updated 6 references in `docs/arxiv-submission.md` from `paper.md` → `research_paper.tex`
 4. Verified no other files referenced the deleted files
 
 ### Results
+
 - PR #577 created and merged
 - 1,486 lines removed (mostly from deleted markdown files)
 - 50 lines added (new docs/README.md)
@@ -32,12 +36,15 @@ The session followed a plan from a previous planning session that identified all
 ## Issue #475: Remove Fallback Compatibility Paths
 
 ### Background
+
 The judge system originally used a `fallback` field to mark invalid judgments when the judge hit rate limits. This was later unified to use `is_valid` as the sole source of truth. Compatibility shims were added to handle old data with `fallback=true`.
 
 After data migration, the compatibility shims needed removal.
 
 ### Locations Identified
+
 **Production code** (5 locations):
+
 1. `scylla/e2e/rerun_judges.py:146-148` in `_is_valid_judgment()`
 2. `scylla/e2e/rerun_judges.py:525-527` in `_regenerate_consensus()`
 3. `scylla/e2e/subtest_executor.py:408-411` in `_has_valid_judge_result()`
@@ -45,6 +52,7 @@ After data migration, the compatibility shims needed removal.
 5. `scylla/analysis/loader.py:456-459` in `load_judgment()`
 
 **Test functions** (5 functions):
+
 1. `test_is_valid_judgment_with_fallback_true` - tests fallback=true rejection
 2. `test_is_valid_judgment_with_fallback_false` - tests fallback=false acceptance
 3. `test_regenerate_consensus_rejects_fallback_judgments` - tests consensus ignores fallback
@@ -52,10 +60,12 @@ After data migration, the compatibility shims needed removal.
 5. `test_has_valid_judge_result_rejects_fallback` - tests executor rejects fallback
 
 **Misleading test** (1 function):
+
 - `test_build_judges_df_fallback_judge_invalid` - already uses `is_valid=False`, not `fallback`
   - Renamed to `test_build_judges_df_invalid_judge`
 
 **Documentation** (2 files):
+
 - `.claude-plugin/skills/unify-judge-validity-logic/SKILL.md:316-318`
 - `.claude-plugin/skills/judge-rerun-workspace-corruption/plugin.json:4`
 
@@ -64,6 +74,7 @@ After data migration, the compatibility shims needed removal.
 1. **Created branch**: `475-remove-fallback-compatibility`
 
 2. **Removed compatibility shims** - Changed from:
+
    ```python
    # Check is_valid flag (map old fallback=true to is_valid=false)
    is_valid = data.get("is_valid", True) is not False
@@ -73,6 +84,7 @@ After data migration, the compatibility shims needed removal.
    ```
 
    To:
+
    ```python
    # Check is_valid flag
    is_valid = data.get("is_valid", True) is not False
@@ -91,6 +103,7 @@ After data migration, the compatibility shims needed removal.
    - Removed "fallback judge masking" from plugin description
 
 6. **Ran tests**:
+
    ```
    65 tests passed in 1.13s
    ```
@@ -98,6 +111,7 @@ After data migration, the compatibility shims needed removal.
 7. **Committed and created PR #578**
 
 ### Results
+
 - 9 files modified
 - 135 lines removed
 - 18 lines added (simplified code)
@@ -107,29 +121,36 @@ After data migration, the compatibility shims needed removal.
 ## Key Decisions
 
 ### Decision: Separate PRs for Docs and Code
+
 **Choice**: Create two separate PRs instead of one combined PR
 **Rationale**:
+
 - Documentation changes are low-risk and quick to review
 - Code refactoring requires careful test verification
 - Smaller, focused PRs are easier to review
 - Can merge documentation immediately while code gets more scrutiny
 
 **Outcome**:
+
 - PR #577 (docs) merged immediately
 - PR #578 (code) pending CI checks
 
 ### Decision: Delete Tests vs Rename
+
 **Choice**: Delete tests that ONLY exercise deprecated behavior; rename tests that use new field but have misleading names
 **Rationale**:
+
 - Tests like `test_is_valid_judgment_with_fallback_true` have zero value once compatibility code is removed
 - Test like `test_build_judges_df_fallback_judge_invalid` still tests valid behavior (is_valid=False) but has confusing name
 - Skipped tests create maintenance burden
 
 **Outcome**:
+
 - 5 tests deleted (sole purpose was testing fallback compatibility)
 - 1 test renamed (was already testing is_valid, just poorly named)
 
 ### Decision: Simplify Comments
+
 **Choice**: Remove backward compatibility references from comments
 **Before**: `# Check is_valid flag (map old fallback=true to is_valid=false)`
 **After**: `# Check is_valid flag`
@@ -168,12 +189,14 @@ After data migration, the compatibility shims needed removal.
 ## Metrics
 
 ### PR #577 (Documentation)
+
 - Files changed: 4
 - Lines added: 50
 - Lines removed: 1,486
 - Status: Merged
 
 ### PR #578 (Code Refactoring)
+
 - Files changed: 9
 - Lines added: 18
 - Lines removed: 153
@@ -181,6 +204,7 @@ After data migration, the compatibility shims needed removal.
 - Status: Auto-merge pending CI
 
 ## Related Issues
+
 - #432 - Research documentation consolidation
 - #475 - Remove fallback compatibility paths
 - #323 - Original issue that created the fallback field

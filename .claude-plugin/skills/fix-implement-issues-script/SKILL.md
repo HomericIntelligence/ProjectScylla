@@ -10,6 +10,7 @@
 ## Overview
 
 The `implement_issues.py` script automates GitHub issue implementation by:
+
 1. Creating git worktrees
 2. Running Claude Code to implement the issue
 3. Creating commits and PRs
@@ -19,6 +20,7 @@ Multiple failure modes were discovered and fixed through iterative debugging.
 ## When to Use This Skill
 
 Invoke when:
+
 - `implement_issues.py` fails with git errors
 - Claude Code exits with non-zero status
 - Worktree creation fails with "branch already exists"
@@ -34,6 +36,7 @@ Invoke when:
 **Root Cause**: `line[3:].strip()` - the `.strip()` removed first character
 
 **Solution**:
+
 ```python
 # WRONG:
 filename_part = line[3:].strip()  # Removes first char!
@@ -49,6 +52,7 @@ filename_part = line[3:]  # Position 3 is start of filename
 **Problem**: `git worktree add -b branch` fails if branch exists from previous run
 
 **Solution**:
+
 ```python
 # Check if branch exists first
 result = run(
@@ -71,6 +75,7 @@ else:
 **Problem**: Pipeline failed if Claude didn't push or create PR
 
 **Solution**: Verify-and-fallback pattern
+
 ```python
 def _ensure_pr_created(issue_number, branch_name, worktree_path):
     # 1. Verify commit exists (MUST have this)
@@ -93,6 +98,7 @@ def _ensure_pr_created(issue_number, branch_name, worktree_path):
 ### 4. Move Git Operations to Claude Agent
 
 **Updated Prompt**:
+
 ```markdown
 **Git Workflow:**
 After implementation is complete and tests pass:
@@ -102,6 +108,7 @@ After implementation is complete and tests pass:
 ```
 
 **File Handling Guidelines**:
+
 ```markdown
 **File Handling:**
 - DO NOT create backup files (.orig, .bak, .swp, etc.)
@@ -111,6 +118,7 @@ After implementation is complete and tests pass:
 ### 5. Add Critical CLI Flags
 
 **Required flags** for `claude` command:
+
 ```python
 [
     "claude",
@@ -126,6 +134,7 @@ After implementation is complete and tests pass:
 **Problem**: `cannot import name 'gh_call'`
 
 **Solution**: Use private function `_gh_call` and parse JSON:
+
 ```python
 from .github_api import _gh_call
 
@@ -138,6 +147,7 @@ pr_data = json.loads(result.stdout)  # Must parse stdout
 ### ❌ Strict Verification Without Fallbacks
 
 **What we tried**:
+
 ```python
 # Fail if branch not pushed
 if not branch_on_remote:
@@ -169,6 +179,7 @@ if not branch_on_remote:
 **All tests pass**: 199 automation tests ✅
 
 **Key configurations**:
+
 ```python
 # Worktree settings
 base_dir = repo_root / ".worktrees"
@@ -185,6 +196,7 @@ timeout = 1800  # 30 minutes
 ```
 
 **Error logging added**:
+
 ```python
 except subprocess.CalledProcessError as e:
     logger.error(f"Claude Code failed")

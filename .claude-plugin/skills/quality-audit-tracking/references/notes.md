@@ -18,6 +18,7 @@ gh issue create --title "[P1] pixi.toml lint/format commands target wrong direct
 ```
 
 **Error:**
+
 ```
 Exit code 1
 could not add label: 'tooling' not found
@@ -25,6 +26,7 @@ could not add label: 'tooling' not found
 ```
 
 **Root cause:**
+
 - Label 'tooling' doesn't exist in repository
 - Parallel execution cancelled all sibling calls after first error
 
@@ -35,6 +37,7 @@ gh label list --limit 100
 ```
 
 **Available labels:**
+
 - Priority: P0, P1, P2, P3
 - Type: bug, documentation, duplicate, enhancement, epic, tech-debt, etc.
 - Component: adapter, core, judge, metrics, reporting, cli, etc.
@@ -45,6 +48,7 @@ gh label list --limit 100
 ### 3. Manual Issue Creation (SUCCESS)
 
 Created first 3 P0 issues manually:
+
 - #400 - Model config mismatches
 - #401 - CLAUDE.md Mojo vs Python reality
 - #402 - CLAUDE.md architecture tree wrong
@@ -54,6 +58,7 @@ All succeeded with correct labels.
 ### 4. Tracking Issue Creation (SUCCESS)
 
 Created epic tracking issue #403 with:
+
 - Executive summary table
 - Phase-by-phase breakdown
 - 24 issue checklist
@@ -63,6 +68,7 @@ Created epic tracking issue #403 with:
 ### 5. Batch Script Generation
 
 Created `/tmp/create_audit_issues.sh`:
+
 - Sequential execution (`set -e`)
 - Echo progress for each issue
 - Heredoc for multi-line bodies
@@ -75,6 +81,7 @@ Created `/tmp/create_audit_issues.sh`:
 ```
 
 **Output:**
+
 ```
 Creating issue #4: pixi.toml wrong directories (P1)
 https://github.com/HomericIntelligence/ProjectScylla/issues/404
@@ -89,6 +96,7 @@ All issues created successfully!
 ### 7. Bonus Fix: arXiv Submission Script
 
 Fixed `docs/arxiv/dryrun/build.sh`:
+
 - Removed `paper.bbl` from tarball (arXiv generates from .bib)
 - Removed `00README.json` from tarball (not needed)
 - Updated cleanup to remove paper.bbl
@@ -150,11 +158,13 @@ POLA - Files must match their actual content
 ## Issues Created
 
 ### P0 (Critical - 3 issues)
+
 - #400 - Model config mismatches (2h)
 - #401 - CLAUDE.md Mojo First vs Python (1h)
 - #402 - CLAUDE.md architecture tree wrong (1.5h)
 
 ### P1 (High Priority - 12 issues)
+
 - #404 - pixi.toml wrong directories (10m)
 - #405 - Pre-commit header wrong (5m)
 - #406 - is_valid() unused (15m)
@@ -168,6 +178,7 @@ POLA - Files must match their actual content
 - #421 - Test e2e modules (10h)
 
 ### P2 (Cleanup - 9 issues)
+
 - #409 - Unused protocols (10m)
 - #410 - Dead verification script (15m)
 - #411 - Deprecated paper.md (10m)
@@ -177,6 +188,7 @@ POLA - Files must match their actual content
 - #417 - Mojo template invalid patterns (30m)
 
 ### Tracking
+
 - #403 - Epic tracking issue
 
 ## Time Analysis
@@ -225,12 +237,14 @@ POLA - Files must match their actual content
 ## Related Patterns
 
 ### Similar Workflows
+
 - Migrating Jira tickets to GitHub
 - Converting roadmap into issues
 - Batch PR creation from branches
 - Issue templating/standardization
 
 ### Anti-patterns to Avoid
+
 - Creating issues without effort estimates
 - Missing principle attribution
 - No phase grouping (hard to prioritize)
@@ -240,6 +254,6 @@ POLA - Files must match their actual content
 ## References
 
 - Audit plan: `/home/mvillmow/.claude/projects/-home-mvillmow-ProjectScylla/935899d8-c3b7-49e7-a4b8-571ce9cc225a.jsonl`
-- Tracking issue: https://github.com/HomericIntelligence/ProjectScylla/issues/403
-- GitHub CLI docs: https://cli.github.com/manual/gh_issue_create
+- Tracking issue: <https://github.com/HomericIntelligence/ProjectScylla/issues/403>
+- GitHub CLI docs: <https://cli.github.com/manual/gh_issue_create>
 - CLAUDE.md guidelines: `/home/mvillmow/ProjectScylla/CLAUDE.md`

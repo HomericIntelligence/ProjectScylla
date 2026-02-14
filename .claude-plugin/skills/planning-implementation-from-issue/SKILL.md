@@ -13,6 +13,7 @@
 ## When to Use This Skill
 
 Use this skill when:
+
 - GitHub issue requires implementation but approach is unclear
 - Multiple test failures need systematic investigation
 - Migration issues (Pydantic, library upgrades) affect multiple tests
@@ -20,6 +21,7 @@ Use this skill when:
 - Issue involves both investigation and implementation work
 
 **Triggers:**
+
 - User provides a GitHub issue number and asks for an implementation plan
 - Issue has multiple affected files with different root causes
 - Test failures have unclear origins requiring investigation
@@ -36,12 +38,14 @@ Use this skill when:
    - Success criteria
 
 2. **Examine each affected file** using Read tool:
+
    ```bash
    # For skipped tests, read around the skip marker
    Read tests/unit/cli/test_cli.py offset=96 limit=30
    ```
 
 3. **Search for patterns** across codebase:
+
    ```bash
    # Find all skipped tests
    Grep pattern="@pytest\.mark\.skip" path=tests/ output_mode=content
@@ -51,6 +55,7 @@ Use this skill when:
    ```
 
 4. **Check current behavior** vs expected:
+
    ```bash
    # Verify actual test ID format
    ls tests/fixtures/tests/
@@ -67,12 +72,14 @@ Use this skill when:
 For each affected test/file, categorize the issue:
 
 **Common Categories:**
+
 - **Format mismatch**: Test expects old format (e.g., "001-name" vs "test-001")
 - **Pydantic migration**: Missing required fields, `.dict()` vs `.model_dump()`
 - **Directory structure**: Glob patterns not matching test isolation setup
 - **Mock configuration**: Mocks targeting wrong methods after refactoring
 
 **Investigation Pattern:**
+
 ```python
 # 1. Read the test
 Read test_file.py offset=N limit=M
@@ -95,6 +102,7 @@ Read tests/unit/module/conftest.py
 2. **Approach** - High-level strategy and key decisions
 3. **Files to Create** - New files needed (usually none for test fixes)
 4. **Files to Modify** - Specific changes per file:
+
    ```markdown
    ### 1. tests/unit/cli/test_cli.py (Line 106-116)
 
@@ -110,9 +118,11 @@ Read tests/unit/module/conftest.py
    # New
    assert "test-001" in result.output
    ```
+
    ```
 
 5. **Implementation Order** - Numbered steps with verification:
+
    ```markdown
    ### Step 1: Clean up merge artifacts
    ### Step 2: Fix easiest test first (CLI format)
@@ -123,6 +133,7 @@ Read tests/unit/module/conftest.py
    ```
 
 6. **Verification** - How to test each change:
+
    ```bash
    # Individual test
    pixi run pytest tests/unit/cli/test_cli.py::TestClass::test_name -v
@@ -223,6 +234,7 @@ pre-commit run --all-files
 ### ✅ Systematic Investigation Before Planning
 
 **Pattern:**
+
 1. Read GitHub issue for full context
 2. Examine each affected file (Read with offset/limit)
 3. Search for patterns (Grep for skip markers, class definitions)
@@ -230,6 +242,7 @@ pre-commit run --all-files
 5. Review team knowledge (read related skills)
 
 **Why it worked:**
+
 - Avoided assumptions about root causes
 - Discovered different issues require different fixes
 - Found actual test ID format ("test-001") vs expected ("001-justfile-to-makefile")
@@ -239,11 +252,13 @@ pre-commit run --all-files
 
 **Pattern:**
 Group similar issues together:
+
 - Format mismatches (CLI test)
 - Pydantic migrations (rerun, tables tests)
 - Directory structure (rate limit test)
 
 **Why it worked:**
+
 - Enabled ordering fixes from easiest to hardest
 - Identified reusable patterns (Pydantic migration steps)
 - Made verification strategy clearer
@@ -252,6 +267,7 @@ Group similar issues together:
 
 **Pattern:**
 For unclear failures, don't guess - plan to investigate:
+
 ```markdown
 **Investigation steps:**
 1. Run the test to see actual error
@@ -260,6 +276,7 @@ For unclear failures, don't guess - plan to investigate:
 ```
 
 **Why it worked:**
+
 - Avoids making wrong assumptions in the plan
 - Sets expectation that some fixes need runtime verification
 - Documents the investigation process for future reference
@@ -267,12 +284,14 @@ For unclear failures, don't guess - plan to investigate:
 ### ✅ Ordering Fixes by Difficulty
 
 **Pattern:**
+
 1. Cleanup (delete .orig files) - trivial
 2. Simple assertion update (CLI test) - easy, known fix
 3. Directory structure fix (rate limit test) - medium, understand pattern
 4. Pydantic investigation (rerun, tables) - hard, need to run tests first
 
 **Why it worked:**
+
 - Early wins build confidence
 - Isolates complex issues to later steps
 - Each success validates the investigation approach
@@ -280,12 +299,14 @@ For unclear failures, don't guess - plan to investigate:
 ### ✅ Specific File Paths and Line Numbers
 
 **Pattern:**
+
 ```markdown
 ### 1. tests/unit/cli/test_cli.py (Line 106-116)
 **Change**: Update assertion
 ```
 
 **Why it worked:**
+
 - Eliminates ambiguity about what to change
 - Makes implementation straightforward
 - Easy to verify changes are in the right place
@@ -298,12 +319,14 @@ For unclear failures, don't guess - plan to investigate:
 Started to plan fixes based only on skip reason messages without examining actual code.
 
 **Why it failed:**
+
 - Skip reasons were vague ("Pre-existing failure")
 - Couldn't determine actual root cause from message alone
 - Would have created incomplete plan
 
 **Fix:**
 Read each affected test file and understand:
+
 - What the test is actually checking
 - What the implementation does
 - Why the assertion might be failing
@@ -317,6 +340,7 @@ Always read the actual code before planning fixes - don't trust summary messages
 Initially thought all 4 skipped tests were Pydantic migration issues because of commit 38a3df1 mention.
 
 **Why it failed:**
+
 - CLI test was actually a format mismatch (test IDs changed)
 - Rate limit test was a directory structure issue
 - Only 2/4 were actually Pydantic-related
@@ -333,6 +357,7 @@ Don't over-generalize - examine each affected component separately.
 Attempted to guess what Pydantic fields were missing by reading model definitions.
 
 **Why it failed:**
+
 - Models can be complex with inherited fields
 - Required fields might be in validators or computed properties
 - Can't know the exact error without running the test
@@ -348,6 +373,7 @@ For unclear failures, plan the investigation, don't try to solve it in the plan.
 ### Plan Deliverables
 
 **Created:**
+
 - Comprehensive implementation plan for issue #595
 - 7 ordered implementation steps
 - File-by-file modification strategy
@@ -355,6 +381,7 @@ For unclear failures, plan the investigation, don't try to solve it in the plan.
 - Risk mitigation strategies
 
 **Structure:**
+
 ```
 1. Clean merge artifacts (trivial)
 2. Fix CLI test format (easy - known fix)
@@ -401,12 +428,14 @@ pre-commit run --all-files
 ## When NOT to Use This Skill
 
 Don't use for:
+
 - Simple single-test fixes with obvious solutions
 - Issues with clear implementation already defined
 - Trivial changes (typos, formatting)
 - When user wants implementation, not planning
 
 **Instead:**
+
 - For simple fixes: Just fix them directly
 - For implementation requests: Use /feature-dev or implement directly
 - For trivial changes: Make the change without planning phase

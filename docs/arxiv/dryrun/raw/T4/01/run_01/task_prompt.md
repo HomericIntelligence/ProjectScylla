@@ -12,6 +12,7 @@ Create a simple Python script called `hello.py` that prints "Hello, World!" to s
 ## Expected Output
 
 When running `python hello.py`, the output should be:
+
 ```
 Hello, World!
 ```

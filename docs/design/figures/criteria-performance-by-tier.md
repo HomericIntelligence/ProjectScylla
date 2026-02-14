@@ -24,17 +24,20 @@ By analyzing criterion-level patterns, researchers can make informed decisions a
 **Primary DataFrame**: `criteria_df` - One row per (run, judge, criterion) with 30,929 total rows
 
 **Key Columns**:
+
 - `agent_model`: Agent model name (e.g., "Sonnet 4.5", "Haiku 4.5")
 - `tier`: Testing tier (T0-T6)
 - `criterion`: Criterion name (derived from rubric `categories` field)
 - `criterion_score`: Numeric score for this criterion (0.0-1.0 scale)
 
 **Data Filters**:
+
 1. Exclude non-numeric scores (filters out "N/A" entries where criterion was not evaluated)
 2. Only include criteria with at least one data point across all runs
 3. Dynamic criterion discovery - no hardcoded criterion list
 
 **Aggregation**:
+
 ```python
 criteria_agg = criteria_numeric.groupby(["agent_model", "tier", "criterion"])["criterion_score"].mean().reset_index()
 ```
@@ -52,6 +55,7 @@ mean_criterion_score = (1/N) × Σ(criterion_score_i)
 ```
 
 Where:
+
 - `N` = number of (run, judge) pairs for this (agent_model, tier, criterion)
 - `criterion_score_i` = individual criterion score from judge evaluation (0.0-1.0)
 
@@ -64,6 +68,7 @@ criterion_label = criterion.replace("_", " ").title()
 ```
 
 Examples:
+
 - `functional_correctness` → "Functional Correctness"
 - `code_quality` → "Code Quality"
 - `architectural_cleanliness` → "Architectural Cleanliness"
@@ -86,6 +91,7 @@ This ensures axis ranges adapt to actual data while maintaining readable tick ma
 Criteria are defined in each test's `rubric.yaml` file under the `categories` section. Unlike requirements (R001-R008) which are task-specific binary/scaled checks, criteria represent higher-level quality dimensions that aggregate related requirements.
 
 **Common Criteria** (varies by test):
+
 1. **Functional Correctness**: Does the code work as intended? Do all features function correctly?
 2. **Code Quality**: Is the code readable, maintainable, and well-structured?
 3. **Architectural Cleanliness**: Is the code well-organized with proper separation of concerns?
@@ -102,16 +108,19 @@ Criteria are defined in each test's `rubric.yaml` file under the `categories` se
 Different criteria exhibit distinct progression patterns as tiers advance:
 
 **Strong Tier Dependency (Expected Improvement)**:
+
 - **Documentation**: Should improve significantly with documentation skills (T1) and documentation-focused agents (T3)
 - **Test Coverage**: Should improve with testing tools (T2) and test specialist agents (T3)
 - **Architectural Cleanliness**: Should improve with architect agents (T3) and hierarchy (T4)
 
 **Moderate Tier Dependency (Variable Improvement)**:
+
 - **Code Quality**: May improve gradually with skills (T1) and code review agents (T3)
 - **Completeness**: Should improve with better planning (T3+) but may plateau early for simple tasks
 - **Efficiency**: Requires specialized optimization agents (T3+) to show meaningful gains
 
 **Weak Tier Dependency (Minimal Improvement)**:
+
 - **Functional Correctness**: Often achieves high scores at T0/T1 for simple tasks; complex tasks may require T3+
 - **Simplicity**: May actually decrease with higher tiers as agents over-engineer solutions (strategic drift)
 
@@ -131,6 +140,7 @@ By analyzing criterion-specific patterns, researchers can construct task-specifi
 ### Chart Type
 
 **Faceted Bar Chart** with:
+
 - **Row facets**: One subplot per criterion (vertically stacked)
 - **Column facets**: One subplot group per agent model (side-by-side comparison)
 - **X-axis**: Testing tier (T0-T6)
@@ -140,10 +150,12 @@ By analyzing criterion-specific patterns, researchers can construct task-specifi
 ### Layout Specifications
 
 **Individual Subplot Dimensions**:
+
 - Height: 150px per criterion subplot
 - Width: 180px per agent model column
 
 **Faceting Configuration**:
+
 ```python
 row=alt.Row(
     "criterion_label:N",
@@ -159,6 +171,7 @@ column=alt.Column("agent_model:N", title=None)
 ### Color Scheme
 
 **Tier Colors** (Tableau palette):
+
 ```python
 tier_colors = [
     "#1f77b4",  # T0: Blue
@@ -176,6 +189,7 @@ Colors are assigned in tier order, using only the number of colors needed for ti
 ### Interactive Elements
 
 **Tooltip** displays on hover:
+
 - Tier name
 - Criterion name (human-readable label)
 - Mean criterion score (formatted to 3 decimal places)
@@ -185,6 +199,7 @@ Colors are assigned in tier order, using only the number of colors needed for ti
 ### Data Filtering and Validation
 
 **Filter 1 - Numeric Scores Only**:
+
 ```python
 criteria_numeric = criteria_df[
     pd.to_numeric(criteria_df["criterion_score"], errors="coerce").notna()
@@ -194,6 +209,7 @@ criteria_numeric = criteria_df[
 This removes "N/A" scores where judges could not evaluate a criterion (e.g., test coverage for runs with no tests).
 
 **Filter 2 - Valid Criteria Only**:
+
 ```python
 valid_criteria = criteria_agg_temp["criterion"].unique()
 ```
@@ -211,21 +227,25 @@ Only criteria with at least one data point after aggregation are included, preve
 ### Key Patterns to Identify
 
 **Positive Tier Progression** (bars increase left-to-right):
+
 - Indicates the criterion benefits from tier additions
 - Steep increases after specific tiers reveal high-ROI capabilities
 - Example: Documentation score jumps from T0 to T1 when documentation skills are added
 
 **Flat Progression** (bars remain constant across tiers):
+
 - Indicates the criterion is unaffected by tier additions
 - May suggest the criterion is too easy (scores at ceiling) or too hard (scores at floor)
 - Candidate for tier simplification - higher tiers provide no benefit
 
 **Negative Progression** (bars decrease with higher tiers):
+
 - Indicates strategic drift or over-engineering
 - Higher tiers may add complexity that harms simplicity or architectural cleanliness
 - Signals the need for better prompt engineering or tier configuration
 
 **Criterion-Specific Patterns**:
+
 - **Documentation**: Should show strong improvement with documentation skills (T1)
 - **Test Coverage**: Should improve with testing tools (T2) and test specialists (T3)
 - **Functional Correctness**: May plateau early for simple tasks, require T3+ for complex tasks
@@ -255,6 +275,7 @@ Only criteria with at least one data point after aggregation are included, preve
 **Function**: `fig09_criteria_by_tier(criteria_df, output_dir, render=True)`
 
 **Key Implementation Details**:
+
 1. Dynamic criterion discovery from data (no hardcoded criterion list)
 2. Automatic generation of display labels from criterion names (snake_case → Title Case)
 3. Independent y-axis scales per criterion for optimal readability
@@ -262,12 +283,14 @@ Only criteria with at least one data point after aggregation are included, preve
 5. Tier color encoding with automatic palette truncation
 
 **Output Files**:
+
 - `docs/figures/fig09_criteria_by_tier.vl.json` - Vega-Lite specification
 - `docs/figures/fig09_criteria_by_tier.csv` - Data slice (aggregated criteria scores)
 - `docs/figures/fig09_criteria_by_tier.png` - Rendered image (if `render=True`)
 - `docs/figures/fig09_criteria_by_tier.pdf` - Vector graphic (if `render=True`)
 
 **Dependencies**:
+
 - `derive_tier_order()` - Determines tier ordering from data
 - `compute_dynamic_domain()` - Calculates optimal y-axis range
 - `save_figure()` - Exports chart to multiple formats

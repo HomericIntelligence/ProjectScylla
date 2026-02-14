@@ -49,6 +49,7 @@ Each point in the scatter plot represents these aggregated statistics for a spec
 A point (configuration) is on the Pareto frontier if it is not dominated by any other point. The dominance relationship is defined as:
 
 **Definition**: Point A dominates Point B if and only if:
+
 - `cost_A ≤ cost_B` AND `score_A ≥ score_B`
 - At least one inequality is strict (i.e., `cost_A < cost_B` OR `score_A > score_B`)
 
@@ -63,6 +64,7 @@ Pareto_Frontier = {P | ∄Q : Q dominates P}
 ```
 
 Where:
+
 - `P` = a point (mean_cost, mean_score)
 - `Q` = any other point in the dataset
 - `∄` = "there does not exist"
@@ -207,16 +209,19 @@ The CSV file includes all tier statistics with the `is_pareto` boolean column, e
 ### Decision-Making Scenarios
 
 **Scenario 1: Budget-Constrained Selection**
+
 - Identify maximum acceptable cost on x-axis
 - Select the Pareto point with highest score below that cost threshold
 - This maximizes quality within budget
 
 **Scenario 2: Quality-Threshold Selection**
+
 - Identify minimum acceptable score on y-axis
 - Select the Pareto point with lowest cost above that quality threshold
 - This minimizes cost while meeting quality requirements
 
 **Scenario 3: Model Selection**
+
 - Compare Pareto frontiers across models
 - Select the model whose frontier dominates others in the region of interest
 - Consider shape differences: some models may excel at low-cost tiers, others at high-quality tiers
@@ -274,6 +279,7 @@ The Pareto frontier reveals several key insights:
 **Location**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/cost_analysis.py:60-207`
 
 **Function Signature**:
+
 ```python
 def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 8: Cost vs Quality Pareto Frontier.
@@ -288,6 +294,7 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
 ```
 
 **Dependencies**:
+
 - `scylla.analysis.figures.get_color_scale`: Dynamic color scale generation
 - `scylla.analysis.figures.spec_builder.compute_dynamic_domain`: Y-axis domain calculation with padding
 - `scylla.analysis.figures.spec_builder.save_figure`: Multi-format figure saving (JSON, PNG, PDF)
@@ -300,6 +307,7 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
 4. **Export** (lines 202-206): Saves figure in multiple formats plus CSV data table
 
 **Algorithm**:
+
 ```python
 # Simplified Pareto detection logic
 for model in models:
@@ -314,12 +322,14 @@ for model in models:
 ```
 
 **Testing**: Verify using unit tests that check:
+
 - Pareto detection correctness on synthetic data with known frontiers
 - Handling of edge cases (single point, all points on frontier, no points on frontier)
 - CSV output contains correct `is_pareto` classifications
 - Visual output matches expected layout
 
 **Example Usage**:
+
 ```python
 from pathlib import Path
 import pandas as pd

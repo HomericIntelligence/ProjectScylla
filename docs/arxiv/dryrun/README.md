@@ -16,6 +16,7 @@ cd docs/arxiv/dryrun
 ```
 
 **Output**:
+
 - `paper.pdf` - Compiled paper (494KB, 32 pages)
 - `arxiv-submission.tar.gz` - Upload this to arXiv (398KB, 29 files)
 
@@ -73,6 +74,7 @@ tar -czf arxiv-submission.tar.gz \
 ## Recent Changes
 
 **2026-02-07**: Publication polish applied
+
 - ✅ CoP values updated to 3 decimal places
 - ✅ Terminology standardized (git worktrees, not containers)
 - ✅ Bibliography cleaned to 10 cited entries
@@ -86,8 +88,9 @@ tar -czf arxiv-submission.tar.gz \
 See `SUBMISSION-CHECKLIST.md` for detailed instructions.
 
 **Quick steps**:
+
 1. Review `paper.pdf` one final time
-2. Upload `arxiv-submission.tar.gz` to https://arxiv.org/submit
+2. Upload `arxiv-submission.tar.gz` to <https://arxiv.org/submit>
 3. Select category: **cs.SE** (Software Engineering)
 4. Monitor processing (24-48 hours)
 
@@ -110,6 +113,7 @@ Verify all PDFs exist in `figures/` directory. The paper references 24 figures (
 ### arXiv compilation fails
 
 Check arXiv logs for specific errors. Common issues:
+
 - Missing LaTeX packages (add to preamble)
 - Figure paths incorrect (use relative paths)
 - Bibliography issues (ensure paper.bbl is valid)

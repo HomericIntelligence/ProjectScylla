@@ -36,6 +36,7 @@ fullruns/
 ### Generated Figures (`docs/figures/`)
 
 Each figure has three files:
+
 - `.vl.json` - Vega-Lite specification (text-based, human-readable)
 - `.csv` - Data slice used by the figure
 - `.png`, `.pdf` (optional) - Rendered images
@@ -117,15 +118,18 @@ pixi run python scripts/generate_figures.py
 ### View Figures
 
 **Vega-Lite Specs (Recommended):**
+
 - Open `.vl.json` files in [Vega Editor](https://vega.github.io/editor/)
 - Interactive, zoomable, tooltips work
 - Can export to PNG/SVG/PDF from the editor
 
 **CSV Data:**
+
 - Open in Excel, R, Python, or any tool
 - Portable, text-based
 
 **Rendered Images:**
+
 - Use for quick preview
 - Embed in LaTeX or Markdown documents
 
@@ -227,6 +231,7 @@ COLORS = {
 ### Generated Tables (`docs/tables/`)
 
 Each table has two files:
+
 - `.md` - Markdown format (GitHub-rendered)
 - `.tex` - LaTeX format (paper integration)
 
@@ -267,6 +272,7 @@ pixi run python scripts/generate_all_results.py
 ```
 
 This script runs:
+
 1. `export_data.py` - Export DataFrames to CSV
 2. `generate_figures.py --no-render` - Generate all 18 figures
 3. `generate_tables.py` - Generate all 7 tables

@@ -1,4 +1,5 @@
 # ProjectScylla
+
 [![Python](https://img.shields.io/badge/python-3.14+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2026%2B-brightgreen.svg)](#)
@@ -19,6 +20,7 @@
 ## 🎯 What is ProjectScylla?
 
 ProjectScylla is a comprehensive testing framework for AI agent workflows that:
+
 - **🔬 Measures** agent performance under constrained conditions
 - **📈 Analyzes** results with rigorous statistical methods
 - **⚖️ Optimizes** agent decisions through trade-off evaluation
@@ -54,6 +56,7 @@ xdg-open results/analysis/figures/*.png  # Linux
 ### 💡 Usage Examples
 
 **Compare Two Agent Configurations:**
+
 ```bash
 pixi run python scripts/generate_all_results.py \
   --data-dir ~/experiments/ \
@@ -62,6 +65,7 @@ pixi run python scripts/generate_all_results.py \
 ```
 
 **Fast Development Mode (No Rendering):**
+
 ```bash
 # Quick iteration - generates Vega-Lite specs only
 pixi run python scripts/generate_all_results.py \
@@ -73,11 +77,13 @@ pixi run python scripts/generate_all_results.py \
 ## 📊 System Requirements
 
 **Minimum Requirements:**
+
 - Python 3.14+
 - 8GB RAM for full dataset analysis
 - 2GB disk space for results
 
 **Typical Performance:**
+
 - Full analysis: 10-15 minutes (10,000 bootstrap samples)
 - Figures only: 2-3 minutes
 - Tables only: 1-2 minutes
@@ -116,6 +122,7 @@ pixi run python scripts/generate_all_results.py \
 ```
 
 **Key Options:**
+
 - `--data-dir` → Directory with experiment results (default: `~/fullruns`)
 - `--output-dir` → Base output directory (default: `docs/`)
 - `--no-render` → Skip PNG/PDF (faster, Vega-Lite specs only)
@@ -136,27 +143,33 @@ pixi run python scripts/generate_all_results.py \
 ### Individual Pipeline Steps
 
 **1. Export Data Only**
+
 ```bash
 pixi run python scripts/export_data.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/data
 ```
+
 **Outputs:** `runs.csv`, `judges.csv`, `criteria.csv`, `subtests.csv`, `summary.json`, `statistical_results.json`
 
 **2. Generate Figures Only (27 figures × 5 formats)**
+
 ```bash
 pixi run python scripts/generate_figures.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/figures
 ```
+
 **Outputs:** `*.vl.json`, `*.csv`, `*.png` (300 DPI), `*.pdf`, `*_include.tex`
 
 **3. Generate Tables Only (11 tables × 2 formats)**
+
 ```bash
 pixi run python scripts/generate_tables.py \
   --data-dir ~/fullruns \
   --output-dir results/analysis/tables
 ```
+
 **Outputs:** `*.md` (human-readable), `*.tex` (LaTeX, booktabs formatted)
 
 ### Output Structure
@@ -183,6 +196,7 @@ results/analysis/
 ### Using the Outputs
 
 **LaTeX Integration:**
+
 ```latex
 \begin{figure}
   \centering
@@ -195,6 +209,7 @@ results/analysis/
 ```
 
 **Python/Jupyter:**
+
 ```python
 import pandas as pd
 import json
@@ -217,6 +232,7 @@ ProjectScylla provides comprehensive scripts for running, managing, and analyzin
 ### 🧪 Running Experiments
 
 **Primary Experiment Runner:**
+
 ```bash
 # Run full experiment
 pixi run python scripts/run_e2e_experiment.py --config config/test.yaml
@@ -228,6 +244,7 @@ pixi run python scripts/run_e2e_experiment.py \
 ```
 
 **Container-Based Execution:**
+
 ```bash
 ./scripts/setup_api_key.sh
 ./scripts/run_experiment_in_container.sh \
@@ -279,23 +296,27 @@ Configuration: `scylla/analysis/config.yaml` (all parameters externalized)
 ### Metrics
 
 **Quality:**
+
 - Pass-Rate (functional test coverage)
 - Implementation Rate (semantic satisfaction)
 - Score (weighted rubric evaluation)
 - Consistency (1 - Coefficient of Variation)
 
 **Economic:**
+
 - Cost-of-Pass (expected cost per success)
 - Frontier CoP (minimum CoP across configs)
 - Token Distribution (cost breakdown)
 
 **Process:**
+
 - Latency (query to resolution time)
 - Judge Agreement (Krippendorff's alpha)
 
 ### Data Requirements
 
 Expected structure:
+
 ```
 fullruns/{experiment_name}/{timestamp}/
 ├── config/experiment.json            # Metadata
@@ -305,6 +326,7 @@ fullruns/{experiment_name}/{timestamp}/
 ```
 
 **Required in run.json:**
+
 - `run_number` (integer)
 - `exit_code` (0 = success)
 - `judges` (list with grades & criteria)
@@ -320,12 +342,14 @@ Schema: `scylla/analysis/schemas/run_result_schema.json`
 ProjectScylla has a comprehensive test suite with **85+ test files** covering all functionality.
 
 #### Test Categories
+
 - **Unit Tests** (67+ files): Analysis, adapters, config, executors, judges, metrics, reporting
 - **Integration Tests** (2 files): End-to-end workflow testing
 - **E2E Tests** (1 file): Full pipeline validation
 - **Test Fixtures** (47+ scenarios): Complete test cases with expected outputs
 
 #### Running Tests
+
 ```bash
 # All tests (comprehensive)
 pixi run pytest tests/ --verbose
@@ -349,6 +373,7 @@ pixi run pytest tests/unit/analysis/test_stats.py -v
 ```
 
 #### Test Quality Assurance
+
 ```bash
 # Code quality (linting + formatting)
 pixi run ruff check scylla/
@@ -358,17 +383,20 @@ pixi run ruff format scylla/ --check
 ### Adding Components
 
 **New Figures:**
+
 1. Create module in `scylla/analysis/figures/`
 2. Implement function following existing pattern
 3. Register in `scripts/generate_figures.py`
 4. Add tests in `tests/unit/analysis/test_figures.py`
 
 **New Tables:**
+
 1. Add function to module in `scylla/analysis/tables/`
 2. Register in `scripts/generate_tables.py`
 3. Add tests in `tests/unit/analysis/test_tables.py`
 
 ### Code Quality
+
 ```bash
 # Linting
 pixi run ruff check scylla/analysis/
@@ -395,24 +423,31 @@ pixi run ruff format scylla/analysis/
 ### Common Issues
 
 **1. Data Validation Errors**
+
 ```
 Schema validation failed: 'N/A' does not match '^[SABCDF]$'
 ```
+
 **Fix:** Review problematic runs, ensure valid grades S/A/B/C/D/F or update schema.
 
 **2. Missing Files**
+
 ```
 Failed to load: [Errno 2] No such file or directory
 ```
+
 **Fix:** Incomplete runs skipped with warnings. Investigate:
+
 ```bash
 find ~/fullruns -name "run_*" -type d -exec sh -c 'test -f "$1/run_result.json" || echo "Missing: $1"' _ {} \;
 ```
 
 **3. Type Errors**
+
 ```
 TypeError: unsupported operand type(s) for +: 'float' and 'str'
 ```
+
 **Fix:** Some `criterion.achieved` are strings. Fix in data generation or add coercion.
 
 ### Getting Help
@@ -449,6 +484,7 @@ See `docs/research.md` for complete research methodology and metric definitions.
 ### LaTeX Dependencies
 
 Required packages for document compilation:
+
 ```latex
 \documentclass{article}
  \usepackage{booktabs}   % Professional tables
@@ -483,6 +519,7 @@ We welcome contributions! Please see **[CONTRIBUTING.md](CONTRIBUTING.md)** for 
 5. Check [CONTRIBUTING.md](CONTRIBUTING.md) for detailed workflow
 
 **Areas for contribution:**
+
 - Additional statistical methods and metrics
 - New visualization types and formats
 - Performance optimizations

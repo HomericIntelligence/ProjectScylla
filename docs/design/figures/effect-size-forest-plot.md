@@ -21,6 +21,7 @@ Effect Size Forest Plot visualizes Cliff's delta effect sizes with 95% confidenc
 **DataFrame**: `runs_df`
 
 **Columns Used**:
+
 - `tier` (str): Testing tier (T0-T6)
 - `agent_model` (str): Agent model identifier
 - `passed` (bool): Binary pass/fail outcome
@@ -28,6 +29,7 @@ Effect Size Forest Plot visualizes Cliff's delta effect sizes with 95% confidenc
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/effect_size.py:18-150`
 
 **Data Requirements**:
+
 - One row per experimental run
 - At least two tiers with data for comparison
 - Minimum sample size: 2 runs per tier per model (for CI calculation)
@@ -59,12 +61,14 @@ def fig19_effect_size_forest(
 ### Key Technical Decisions
 
 **Cliff's Delta Selection**:
+
 - Non-parametric effect size measure
 - **Rationale**: Binary pass/fail data violates normality assumptions for Cohen's d
 - **Interpretation**: δ ∈ [-1, 1] where |δ| represents probability of superiority
 - **Benefits**: Robust to outliers, no distributional assumptions, intuitive interpretation
 
 **Bootstrap Confidence Intervals**:
+
 - Method: BCa (bias-corrected and accelerated)
 - Resamples: 10,000 by default
 - Confidence level: 95%
@@ -72,12 +76,14 @@ def fig19_effect_size_forest(
 - **Trade-off**: Computational cost (~1-2 seconds per transition) vs. accuracy
 
 **Consecutive Tier Transitions**:
+
 - Only compares adjacent tiers (T0→T1, T1→T2, etc.)
 - **Rationale**: Isolates incremental effects of each architectural change
 - **Alternative**: All pairwise comparisons would conflate multiple changes
 - **Benefit**: Clean attribution of effects to specific tier additions
 
 **Significance Visualization**:
+
 - Color coding: Gray (non-significant), Red (significant)
 - **Criterion**: CI excludes zero (CI_low > 0 or CI_high < 0)
 - **Rationale**: Visual distinction between statistical and non-statistical effects
@@ -86,17 +92,20 @@ def fig19_effect_size_forest(
 ### Algorithm
 
 1. **Tier Order Derivation**:
+
    ```python
    tier_order = derive_tier_order(runs_df)  # e.g., ["T0", "T1", "T2", ...]
    ```
 
 2. **Model-Stratified Analysis**:
+
    ```python
    for model in sorted(runs_df["agent_model"].unique()):
        model_runs = runs_df[runs_df["agent_model"] == model]
    ```
 
 3. **Consecutive Tier Comparisons**:
+
    ```python
    for i in range(len(tier_order) - 1):
        tier1, tier2 = tier_order[i], tier_order[i + 1]
@@ -105,6 +114,7 @@ def fig19_effect_size_forest(
    ```
 
 4. **Effect Size Calculation**:
+
    ```python
    delta, ci_low, ci_high = cliffs_delta_ci(
        tier2_data["passed"].astype(int),
@@ -113,14 +123,17 @@ def fig19_effect_size_forest(
        n_resamples=10000,
    )
    ```
+
    - **Note**: `tier2` is group1, `tier1` is group2
    - Positive delta → tier2 outperforms tier1
    - Uses vectorized numpy operations for performance
 
 5. **Significance Determination**:
+
    ```python
    is_significant = not (ci_low <= 0 <= ci_high)
    ```
+
    - Significant if CI excludes zero
    - Two-tailed test (detects both improvements and regressions)
 
@@ -131,6 +144,7 @@ def fig19_effect_size_forest(
    - **Faceting**: Separate rows for each agent model (if multiple models)
 
 7. **Save Output**:
+
    ```python
    save_figure(chart, "fig19_effect_size_forest", output_dir, render)
    ```
@@ -138,19 +152,23 @@ def fig19_effect_size_forest(
 ### Statistical Foundation
 
 **Cliff's Delta Formula**:
+
 ```
 δ = (# pairs where x₂ > x₁) - (# pairs where x₂ < x₁) / (n₁ × n₂)
 ```
+
 - Where x₁ ∈ tier1, x₂ ∈ tier2
 - Vectorized implementation: `np.sign(g1[:, None] - g2[None, :]).sum() / (n1 * n2)`
 
 **Interpretation Thresholds** (Romano et al., 2006):
+
 - |δ| < 0.11: Negligible effect
 - |δ| < 0.28: Small effect
 - |δ| < 0.43: Medium effect
 - |δ| ≥ 0.43: Large effect
 
 **Bootstrap CI Algorithm**:
+
 1. Resample tier1 and tier2 independently with replacement
 2. Compute Cliff's delta for each resample
 3. Apply BCa correction for bias and skewness
@@ -163,6 +181,7 @@ def fig19_effect_size_forest(
 **Pattern**: `fig19_effect_size_forest.{ext}`
 
 **Files**:
+
 - `fig19_effect_size_forest.vl.json` - Vega-Lite specification
 - `fig19_effect_size_forest.csv` - Effect size data
 - `fig19_effect_size_forest.png` - Rendered image (300 DPI, if render=True)
@@ -181,10 +200,12 @@ def fig19_effect_size_forest(
 **Chart Type**: Forest plot (horizontal dot plot with error bars)
 
 **Layout**:
+
 - **Single model**: Layered chart (zero line + error bars + points)
 - **Multiple models**: Faceted by row (one row per model)
 
 **Axes**:
+
 - **X-axis**: Cliff's Delta (continuous, -1.0 to 1.0)
   - Domain: [-1, 1] (fixed scale for cross-model comparison)
   - Title: "Cliff's Delta (Effect Size)"
@@ -193,6 +214,7 @@ def fig19_effect_size_forest(
   - Title: "Tier Transition"
 
 **Marks**:
+
 - **Points**: Circle marks (size=100)
   - Position: (delta, transition)
   - Color: Gray (non-significant) or Red (significant)
@@ -204,12 +226,14 @@ def fig19_effect_size_forest(
   - Style: Black, strokeDash=[5, 5]
 
 **Color Scheme**:
+
 - Non-significant: #999999 (gray)
 - Significant: #d62728 (red)
 
 **Title**: "Effect Size Forest Plot (Cliff's Delta with 95% CI)"
 
 **Tooltip** (interactive):
+
 - Model: {agent_model}
 - Transition: {tier1}→{tier2}
 - Cliff's δ: {delta} (formatted to 3 decimals)
@@ -220,12 +244,14 @@ def fig19_effect_size_forest(
 ### Expected Patterns
 
 **Ideal Progression**:
+
 - Positive deltas for all transitions (monotonic improvement)
 - Larger effects for early tiers (T0→T1, T1→T2)
 - Diminishing returns in later tiers (T4→T5, T5→T6)
 - Most CIs exclude zero (significant improvements)
 
 **Problematic Patterns**:
+
 - Negative deltas → Tier regression (higher tier performs worse)
 - CIs crossing zero → Unreliable or negligible improvements
 - Inconsistent effects across models → Model-specific tier benefits
@@ -236,38 +262,45 @@ def fig19_effect_size_forest(
 ### Reading the Forest Plot
 
 **Horizontal Position**:
+
 - **Right of zero** (δ > 0): Tier2 outperforms Tier1
 - **Left of zero** (δ < 0): Tier1 outperforms Tier2 (regression)
 - **At zero** (δ ≈ 0): No meaningful difference
 
 **Error Bar Width**:
+
 - **Narrow CI**: Precise effect estimate, high confidence
 - **Wide CI**: Uncertain effect, low sample size or high variance
 - **CI excludes zero**: Statistically significant effect
 - **CI includes zero**: Non-significant, cannot rule out null
 
 **Color Coding**:
+
 - **Red**: Significant improvement (CI excludes zero)
 - **Gray**: Non-significant (CI includes zero)
 
 ### Effect Size Magnitude
 
 **Negligible** (|δ| < 0.11):
+
 - Minimal practical difference
 - Tier investment may not be justified
 - Example: T4→T5 with δ=0.08
 
 **Small** (0.11 ≤ |δ| < 0.28):
+
 - Noticeable but modest improvement
 - Cost-benefit analysis needed
 - Example: T2→T3 with δ=0.22
 
 **Medium** (0.28 ≤ |δ| < 0.43):
+
 - Substantial improvement
 - Strong justification for tier
 - Example: T1→T2 with δ=0.35
 
 **Large** (|δ| ≥ 0.43):
+
 - Transformative improvement
 - High-priority tier investment
 - Example: T0→T1 with δ=0.67
@@ -275,11 +308,13 @@ def fig19_effect_size_forest(
 ### Comparative Analysis
 
 **Across Transitions**:
+
 - Identify highest-impact transitions
 - Expected: Early tiers (T0→T1) show largest effects
 - Diminishing returns: Later tiers show smaller deltas
 
 **Across Models**:
+
 - Compare effect patterns when faceted
 - Check if tier benefits are model-specific
 - Identify models with consistent vs. inconsistent improvements
@@ -287,16 +322,19 @@ def fig19_effect_size_forest(
 ### Action Items
 
 **If Large Effects Detected**:
+
 1. Prioritize those tier transitions for deployment
 2. Investigate what architectural features drive the effect
 3. Consider skipping intermediate tiers with small effects
 
 **If Non-Significant Effects Detected**:
+
 1. Increase sample size to narrow CIs
 2. Re-evaluate tier necessity
 3. Check for implementation errors or data quality issues
 
 **If Regression Detected** (negative deltas):
+
 1. Urgent investigation required
 2. Check for data collection errors
 3. Review tier implementation for bugs
@@ -350,6 +388,7 @@ docs/figures/
 ### Viewing the Figure
 
 **Vega-Lite Spec (Recommended)**:
+
 ```bash
 # Open in Vega Editor
 open https://vega.github.io/editor/
@@ -357,12 +396,14 @@ open https://vega.github.io/editor/
 ```
 
 **CSV Data**:
+
 ```bash
 # Inspect effect sizes
 head docs/figures/fig19_effect_size_forest.csv
 ```
 
 **Rendered Images**:
+
 ```bash
 # View PNG
 open docs/figures/fig19_effect_size_forest.png
@@ -384,6 +425,7 @@ claude-opus-4,T5→T6,T5,T6,0.023,-0.093,0.138,No
 ```
 
 **Interpretation**:
+
 - T0→T1: Large significant effect (δ=0.657, CI=[0.548, 0.752])
 - T1→T2: Medium significant effect (δ=0.312, CI=[0.198, 0.425])
 - T2→T3: Small significant effect (δ=0.185, CI=[0.067, 0.301])

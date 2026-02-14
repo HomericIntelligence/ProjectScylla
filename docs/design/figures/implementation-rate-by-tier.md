@@ -22,6 +22,7 @@ Figure 25 visualizes Implementation Rate (Impl-Rate) across testing tiers throug
 **DataFrame**: `runs_df`
 
 **Columns Used**:
+
 - `tier` (str): Testing tier (T0-T6)
 - `agent_model` (str): Agent model name
 - `impl_rate` (float): Implementation Rate [0.0, 1.0]
@@ -30,6 +31,7 @@ Figure 25 visualizes Implementation Rate (Impl-Rate) across testing tiers throug
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/impl_rate_analysis.py:25-153`
 
 **Data Requirements**:
+
 - One row per run (task attempt)
 - `impl_rate` column must exist (gracefully skips if missing)
 - At least one run per (agent_model, tier) combination
@@ -60,22 +62,26 @@ def fig25_impl_rate_by_tier(
 ### Key Technical Decisions
 
 **Bootstrap Confidence Intervals**:
+
 - Uses 95% bootstrap CI via `bootstrap_ci(impl_rate)`
 - **Rationale**: Provides robust uncertainty quantification without normality assumptions
 - **Trade-off**: Computationally expensive vs. parametric CI, but more accurate for skewed distributions
 - **Benefit**: Enables rigorous statistical comparison across tiers and models
 
 **Subtest Count Annotations**:
+
 - Tier labels show `{tier} (n={count})` format (e.g., "T0 (n=24)")
 - **Rationale**: Provides context for statistical power and sample size
 - **Benefit**: Readers can assess confidence interval reliability at a glance
 
 **Dynamic Domain Computation**:
+
 - Uses `compute_dynamic_domain_with_ci()` to include CI bounds in axis range
 - **Rationale**: Prevents error bars from being clipped at plot boundaries
 - **Sensitivity**: Adds padding to ensure full visibility of uncertainty
 
 **Grouped Encoding with xOffset**:
+
 - Groups bars by model using `xOffset="agent_model:N"`
 - **Rationale**: Enables direct within-tier comparisons across models
 - **Alternative Considered**: Faceted charts (rejected due to reduced comparability)
@@ -83,6 +89,7 @@ def fig25_impl_rate_by_tier(
 ### Algorithm
 
 1. **Data Validation**:
+
    ```python
    if "impl_rate" not in runs_df.columns:
        print("Warning: impl_rate column not found, skipping fig25")
@@ -90,6 +97,7 @@ def fig25_impl_rate_by_tier(
    ```
 
 2. **Tier Discovery and Subtest Counting**:
+
    ```python
    tier_order = derive_tier_order(runs_df)
 
@@ -103,6 +111,7 @@ def fig25_impl_rate_by_tier(
    ```
 
 3. **Bootstrap Statistics Calculation**:
+
    ```python
    stats = []
    for model in runs_df["agent_model"].unique():
@@ -126,12 +135,14 @@ def fig25_impl_rate_by_tier(
    ```
 
 4. **Color Scale Assignment**:
+
    ```python
    models = sorted(df["agent_model"].unique())
    domain, range_ = get_color_scale("models", models)
    ```
 
 5. **Dynamic Domain Computation**:
+
    ```python
    impl_rate_domain = compute_dynamic_domain_with_ci(
        df["impl_rate"], df["ci_low"], df["ci_high"]
@@ -139,6 +150,7 @@ def fig25_impl_rate_by_tier(
    ```
 
 6. **Vega-Lite Spec Construction**:
+
    ```python
    bars = alt.Chart(df).mark_bar().encode(
        x=alt.X("tier_label:N", title="Tier (Subtest Count)", sort=tier_label_order),
@@ -161,6 +173,7 @@ def fig25_impl_rate_by_tier(
    ```
 
 7. **Save to Disk**:
+
    ```python
    save_figure(chart, "fig25_impl_rate_by_tier", output_dir, render=render)
    ```
@@ -172,6 +185,7 @@ def fig25_impl_rate_by_tier(
 **Pattern**: `fig25_impl_rate_by_tier.{ext}`
 
 **Extensions**:
+
 - `.vl.json` - Vega-Lite specification (always generated)
 - `.csv` - Aggregated statistics with bootstrap CIs (always generated)
 - `.png` - Rendered image at 300 DPI (if `render=True`)
@@ -190,10 +204,12 @@ def fig25_impl_rate_by_tier(
 **Chart Type**: Grouped bar chart with error bars
 
 **Dimensions**:
+
 - Width: 400px
 - Height: 300px
 
 **Axes**:
+
 - **X-axis**: Tier (Subtest Count) (nominal, ordered)
   - Format: "T0 (n=24)", "T1 (n=10)", etc.
   - Title: "Tier (Subtest Count)"
@@ -207,16 +223,19 @@ def fig25_impl_rate_by_tier(
 **Title**: "Implementation Rate by Tier (95% Bootstrap CI)"
 
 **Color Encoding**:
+
 - Maps `agent_model` to distinct colors via `get_color_scale("models", models)`
 - Legend title: "Model"
 - Colors are consistent across all analysis figures
 
 **Error Bars**:
+
 - Represent 95% bootstrap confidence intervals
 - Vertical bars spanning `ci_low` to `ci_high`
 - Aligned with corresponding bars via `xOffset`
 
 **Tooltip**:
+
 - Model: Agent model name
 - Tier: Testing tier
 - Impl-Rate: Mean implementation rate (3 decimal places)
@@ -227,26 +246,31 @@ def fig25_impl_rate_by_tier(
 ### Expected Patterns
 
 **High Implementation Rate (>0.8)**:
+
 - Agent consistently attempts implementation
 - Indicates strong execution capability
 - If Pass-Rate is low, suggests bugs in implementation rather than strategic failures
 
 **Medium Implementation Rate (0.4-0.8)**:
+
 - Partial implementation attempts
 - May indicate complexity-driven abandonment
 - Compare with Pass-Rate to diagnose issue
 
 **Low Implementation Rate (<0.4)**:
+
 - Frequent implementation abandonment
 - Possible strategic drift or capability ceiling
 - Critical issue requiring investigation
 
 **Wide Confidence Intervals**:
+
 - High variance in implementation behavior
 - May indicate inconsistent agent behavior or small sample size
 - Check `n` in tooltip for sample size
 
 **Narrow Confidence Intervals**:
+
 - Consistent implementation behavior
 - Reliable estimates (especially with larger `n`)
 
@@ -255,14 +279,17 @@ def fig25_impl_rate_by_tier(
 ### Reading the Chart
 
 **Bar Heights**:
+
 - Represent mean implementation rate across all runs for (model, tier)
 - Higher bars = more consistent implementation attempts
 
 **Error Bar Overlap**:
+
 - Overlapping CIs suggest no statistically significant difference
 - Non-overlapping CIs indicate likely significant difference (approximate test)
 
 **Subtest Counts (n)**:
+
 - Displayed in tier labels: "T0 (n=24)"
 - Higher `n` = more statistical power
 - Low `n` (e.g., n=1 for T6-Super) may have unreliable CIs
@@ -270,16 +297,19 @@ def fig25_impl_rate_by_tier(
 ### Comparative Analysis
 
 **Across Tiers**:
+
 - Expected: Implementation rate should remain stable or increase with tier
 - **If decreasing**: Strategic drift (agent gives up on harder tasks)
 - **If stable with low Pass-Rate**: Execution bugs, not capability issues
 
 **Across Models**:
+
 - Compare bars within each tier group
 - Identifies which models maintain implementation efforts
 - Useful for model selection based on persistence
 
 **Impl-Rate vs. Pass-Rate (use with Fig 04)**:
+
 - High Impl-Rate, High Pass-Rate: Ideal performance
 - High Impl-Rate, Low Pass-Rate: Bugs in implementation
 - Low Impl-Rate, Low Pass-Rate: Strategic failure or capability ceiling
@@ -288,18 +318,21 @@ def fig25_impl_rate_by_tier(
 ### Action Items
 
 **If Impl-Rate Declines with Tier**:
+
 1. Investigate agent prompts for task abandonment triggers
 2. Check timeout settings (premature termination)
 3. Review task complexity scaling
 4. Consider agent capability ceiling reached
 
 **If Impl-Rate High but Pass-Rate Low**:
+
 1. Focus on debugging implementation quality
 2. Check test harness for edge cases
 3. Review judge scoring criteria
 4. Investigate common failure patterns
 
 **If Impl-Rate Varies Widely Across Models**:
+
 1. Analyze prompt engineering differences
 2. Compare model architectures for persistence mechanisms
 3. Consider ensemble approaches using high-Impl-Rate models
@@ -361,6 +394,7 @@ docs/figures/
 ### Viewing the Figure
 
 **Vega-Lite Spec (Recommended)**:
+
 ```bash
 # Open in Vega Editor
 open https://vega.github.io/editor/
@@ -368,6 +402,7 @@ open https://vega.github.io/editor/
 ```
 
 **CSV Data**:
+
 ```bash
 # Inspect aggregated statistics
 head docs/figures/fig25_impl_rate_by_tier.csv
@@ -379,6 +414,7 @@ head docs/figures/fig25_impl_rate_by_tier.csv
 ```
 
 **Rendered Images**:
+
 ```bash
 # View PNG
 open docs/figures/fig25_impl_rate_by_tier.png

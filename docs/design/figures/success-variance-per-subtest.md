@@ -45,6 +45,7 @@ Two-panel heatmap showing per-subtest variance metrics, grouped by tier and face
 ### Input Schema
 
 Requires `runs_df` DataFrame with columns:
+
 - `agent_model` (str): Model identifier (e.g., "opus-4", "sonnet-3.5")
 - `tier` (str): Tier identifier (e.g., "T0", "T1", "T2")
 - `subtest` (str): Subtest identifier
@@ -54,6 +55,7 @@ Requires `runs_df` DataFrame with columns:
 ### Aggregations
 
 Per (`agent_model`, `tier`, `subtest`) group:
+
 1. **Pass Rate**: `mean(passed)`
 2. **Pass Variance**: `pass_rate * (1 - pass_rate)` (Bernoulli variance)
 3. **Score Std Dev**: `std(score)` (standard deviation)
@@ -85,6 +87,7 @@ Per (`agent_model`, `tier`, `subtest`) group:
 ### High Variance Subtests
 
 Subtests with high variance (bright colors) indicate:
+
 - **Flaky tests**: Outcomes sensitive to non-deterministic factors
 - **Borderline difficulty**: Tasks at the edge of agent capability
 - **Environment sensitivity**: Performance affected by external factors

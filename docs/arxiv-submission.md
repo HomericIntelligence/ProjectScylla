@@ -68,12 +68,14 @@ docs/paper-dryrun-arxiv/
 ⚠️ **The build script will NOT overwrite `main.tex` if it already exists.**
 
 This protects your manual edits. The `build_arxiv_submission.sh` script will:
+
 - Skip LaTeX generation if `main.tex` exists
 - Only compile the existing `main.tex` → PDF
 - Copy figures, tables, and bibliography
 - Create the submission tarball
 
 If you need to regenerate `main.tex` from `research_paper.tex` (discarding manual edits):
+
 ```bash
 bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
 ```
@@ -89,6 +91,7 @@ bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
    - Ensure all rows end with `\\`
    - Fix any text split across rows
    - Example fix:
+
      ```latex
      % BEFORE (broken):
      Category & Weight & Description \\
@@ -104,6 +107,7 @@ bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
      ```
 
 3. **Escape underscores in text** (search for `_` outside of `\texttt{}`):
+
    ```latex
    % BEFORE:
    pass_rate = 1.0
@@ -113,6 +117,7 @@ bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
    ```
 
 4. **Convert Greek letters to math mode** (search for ρ, Δ, α, σ):
+
    ```latex
    % BEFORE:
    correlation ρ = 0.95
@@ -122,6 +127,7 @@ bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
    ```
 
 5. **Escape dollar signs in tables**:
+
    ```latex
    % BEFORE:
    Claude Opus & $15.00 & $75.00 \\
@@ -131,6 +137,7 @@ bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
    ```
 
 6. **Compile and test**:
+
    ```bash
    cd docs/paper-dryrun-arxiv
    pdflatex main.tex
@@ -140,6 +147,7 @@ bash scripts/regenerate_main_tex.sh  # Will prompt for confirmation
    ```
 
 7. **Create submission tarball**:
+
    ```bash
    tar -czf submission.tar.gz main.tex main.bbl references.bib 00README.json figures/ tables/
    ```
@@ -154,16 +162,17 @@ If you want to automate the fixes, enhance `scripts/build_arxiv_paper.py`:
 4. **Dollar sign handling**: Context-aware escaping
 
 Then re-run:
+
 ```bash
 bash scripts/build_arxiv_submission.sh
 ```
 
 ## arXiv Submission Steps (After Fixes)
 
-1. **Create arXiv account** at https://arxiv.org/user/register
+1. **Create arXiv account** at <https://arxiv.org/user/register>
 
 2. **Upload submission package**:
-   - Go to https://arxiv.org/submit
+   - Go to <https://arxiv.org/submit>
    - Upload `docs/paper-dryrun-arxiv/submission.tar.gz`
    - arXiv will automatically detect main.tex and compile
 
@@ -201,6 +210,7 @@ Before submitting to arXiv:
 ## Content Preservation
 
 The converter has been designed to preserve all content from `research_paper.tex` without changes:
+
 - ✅ All data values, statistics, and numerical results unchanged
 - ✅ All 7 testing tiers (T0-T6) descriptions intact
 - ✅ All metrics formulas and definitions preserved
@@ -227,7 +237,7 @@ The converter has been designed to preserve all content from `research_paper.tex
 - **Converter Script**: `scripts/build_arxiv_paper.py`
 - **Build Pipeline**: `scripts/build_arxiv_submission.sh`
 - **Source Paper**: `docs/research_paper.tex` (Canonical LaTeX source)
-- **arXiv Help**: https://info.arxiv.org/help/submit_tex.html
+- **arXiv Help**: <https://info.arxiv.org/help/submit_tex.html>
 
 ## Next Steps
 

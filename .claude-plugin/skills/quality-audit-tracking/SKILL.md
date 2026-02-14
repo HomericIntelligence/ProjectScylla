@@ -13,6 +13,7 @@
 ## When to Use This Skill
 
 Use this skill when:
+
 - You have completed a comprehensive code quality audit with 15+ findings
 - Findings are categorized by priority (P0/P1/P2) and development principles (KISS, YAGNI, TDD, etc.)
 - You need to convert findings into trackable GitHub issues with proper organization
@@ -20,6 +21,7 @@ Use this skill when:
 - Issues need proper labeling, effort estimates, and phase grouping
 
 **Trigger phrases:**
+
 - "Create GitHub issues from audit findings"
 - "File all the audit issues"
 - "Convert the audit plan to tracked issues"
@@ -151,6 +153,7 @@ chmod +x /tmp/create_issues.sh
 ```
 
 **Key points:**
+
 - Use `set -e` to exit on first error
 - Echo progress for each issue
 - Use heredoc (`<<'EOF'`) for multi-line bodies
@@ -184,12 +187,14 @@ gh issue list --label P2 | wc -l  # Should match P2 count
 ### ❌ Attempt 1: Parallel Issue Creation with Unknown Labels
 
 **What we tried:**
+
 ```bash
 # Attempted to create all 20 issues in parallel
 gh issue create --label "P1,bug,tooling" ...  # FAILED
 ```
 
 **Why it failed:**
+
 - Used label 'tooling' which doesn't exist in repository
 - Parallel execution means all subsequent calls failed due to sibling error
 - No label validation before attempting creation
@@ -199,10 +204,12 @@ gh issue create --label "P1,bug,tooling" ...  # FAILED
 ### ❌ Attempt 2: Continuing After First Failure
 
 **What we tried:**
+
 - Continued with remaining issue creation calls after first failure
 - All calls showed `<tool_use_error>Sibling tool call errored</tool_use_error>`
 
 **Why it failed:**
+
 - Once one parallel tool call fails, siblings are cancelled
 - No recovery mechanism in parallel execution
 
@@ -211,6 +218,7 @@ gh issue create --label "P1,bug,tooling" ...  # FAILED
 ### ✅ Solution: Sequential Shell Script
 
 **What worked:**
+
 1. Created first 3 issues manually to verify labels work
 2. Generated shell script with sequential `gh issue create` calls
 3. Each issue creation independent (one failure doesn't block others)
@@ -224,12 +232,14 @@ gh issue create --label "P1,bug,tooling" ...  # FAILED
 ### Session Outcome
 
 **Issues Created:** 24 total
+
 - P0: #400, #401, #402 (critical - data correctness)
 - P1: #404-408, #413-414, #418-421 (high priority)
 - P2: #409-412, #415-417 (cleanup)
 - Tracking: #403 (epic)
 
 **Time Breakdown:**
+
 - Label validation: 2 minutes
 - Manual issue creation (first 3): 5 minutes
 - Tracking issue creation: 3 minutes
@@ -274,6 +284,7 @@ gh issue create --label "P1,bug,tooling" ...  # FAILED
 ### Tracking Issue Format
 
 **Essential sections:**
+
 1. Overview - One paragraph summary
 2. Executive Summary - Table with priority breakdown
 3. Phase-by-phase breakdown - Grouped issues with checkboxes
@@ -284,20 +295,25 @@ gh issue create --label "P1,bug,tooling" ...  # FAILED
 ## Common Pitfalls
 
 ### 1. Label Typos/Non-existence
+
 **Symptom:** `could not add label: 'X' not found`
 **Fix:** Run `gh label list` first, use exact label names
 
 ### 2. Heredoc Variable Expansion
+
 **Symptom:** Variables in issue body get expanded
 **Fix:** Use `<<'EOF'` (single-quoted) not `<<EOF`
 
 ### 3. Tracking Issue Created Last
+
 **Symptom:** Issue numbers in tracking issue are TBD
 **Fix:** Create tracking issue AFTER first batch, before final batch
 
 ### 4. Missing Co-Author
+
 **Symptom:** Commits don't credit Claude
 **Fix:** Always include in commit message:
+
 ```
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
@@ -305,18 +321,21 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ## Integration Points
 
 ### Before This Skill
+
 - Complete code quality audit (use code review/analysis skills)
 - Categorize findings by priority and principle
 - Estimate effort for each finding
 - Group findings into logical phases
 
 ### After This Skill
+
 - Start working on P0 issues first
 - Create PRs using `/commit` and PR creation workflows
 - Update tracking issue checkboxes as issues close
 - Monitor progress via `gh issue list --label epic`
 
 ### Related Skills
+
 - `pr-workflow` - Creating PRs for issue fixes
 - `github-issue-workflow` - Reading/commenting on issues
 - `code-review` - Generating audit findings
@@ -353,6 +372,7 @@ gh issue list --label epic
 ## Metrics
 
 **Success Indicators:**
+
 - All planned issues created without errors
 - Issue numbers sequential (no gaps from failures)
 - All issues properly labeled
@@ -360,6 +380,7 @@ gh issue list --label epic
 - Time: 30-45 minutes for 20-30 issues
 
 **Failure Indicators:**
+
 - Missing issues (gaps in numbering)
 - Issues with missing/wrong labels
 - Tracking issue created before batch (wrong numbers)

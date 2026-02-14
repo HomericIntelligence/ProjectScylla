@@ -39,6 +39,7 @@ Phase 5: Render PNG/PDF
 ### Phase 1: Core Infrastructure ✅
 
 **spec_builder.py changes**:
+
 1. Fixed rounding: `0.1` → `0.05` (lines 67-69)
 2. Added `compute_dynamic_domain_with_ci()` function
 3. Removed CSV output from `save_figure()` (removed lines 164-172)
@@ -50,12 +51,14 @@ Phase 5: Render PNG/PDF
 ### Phase 2: Critical Domain Fixes ✅
 
 **fig11 (model_comparison.py:120-124)**:
+
 ```python
 # Before: scale=alt.Scale(domain=[-0.1, 0.1])
 # After: scale=alt.Scale(domain=compute_dynamic_domain(uplift_df["uplift"], floor=-1.0, ceiling=1.0))
 ```
 
 **fig21 (correlation.py:192-199)**:
+
 ```python
 # Added regression Y-values to domain computation
 reg_line_rows = reg_df[reg_df["type"] == "regression_line"]
@@ -64,12 +67,14 @@ score_domain = compute_dynamic_domain(all_y)
 ```
 
 **fig21 multi-model (correlation.py:264-271)**:
+
 ```python
 # Before: alt.layer(scatter, regression_lines, annotations, data=subtest_stats)
 # After: alt.layer(scatter, regression_lines, annotations).facet(..., data=subtest_stats)
 ```
 
 **fig04, fig12, fig25 CI fixes**:
+
 - tier_performance.py:73 → `compute_dynamic_domain_with_ci()`
 - model_comparison.py:249 → `compute_dynamic_domain_with_ci()`
 - impl_rate_analysis.py:78 → `compute_dynamic_domain_with_ci()`
@@ -77,6 +82,7 @@ score_domain = compute_dynamic_domain(all_y)
 ### Phase 3: Invisible Overlay Layers ✅
 
 **fig23 Q-Q plots (diagnostics.py:101-129)**:
+
 ```python
 # Before: Simple reference line with generic x, y columns
 reference_line = alt.Chart(pd.DataFrame({"x": [q_min, q_max], "y": [q_min, q_max]}))...
@@ -97,12 +103,14 @@ chart = alt.layer(reference_line, scatter).facet(..., data=qq_df)  # ✅ WORKS
 **fig24 KDE overlay (diagnostics.py:195-232)**:
 
 Bug 1 - Invisible KDE:
+
 ```python
 # Before: (histogram + kde_lines).facet(...)  # ❌ FAILS
 # After: alt.layer(histogram, kde_lines).facet(..., data=runs_df)  # ✅ WORKS
 ```
 
 Bug 2 - Wrong KDE scaling:
+
 ```python
 # Before: Global scaling
 kde_df["scaled_density"] = kde_df["density"] * (max_count / kde_df["density"].max())
@@ -117,6 +125,7 @@ for (model, tier), group_idx in kde_df.groupby(["agent_model", "tier"]).groups.i
 ```
 
 **fig19 effect size (effect_size.py:118-144)**:
+
 ```python
 # Multi-model path: Build zero line data with facet column
 if effect_df["agent_model"].nunique() > 1:
@@ -128,6 +137,7 @@ if effect_df["agent_model"].nunique() > 1:
 ### Phase 4: Static Domain Fixes ✅
 
 **fig16 Panel B (variance.py:201-211)**:
+
 ```python
 # Before: scale=alt.Scale(scheme="plasma", domain=[0, 0.3])
 # After:
@@ -136,6 +146,7 @@ scale=alt.Scale(scheme="plasma", domain=[0, round(std_max / 0.05) * 0.05])
 ```
 
 **fig17 Panel B (judge_analysis.py:241-250)**:
+
 ```python
 # Before: scale=alt.Scale(domain=[0, 0.3])
 # After:
@@ -146,17 +157,20 @@ scale=alt.Scale(domain=[0, round(std_max / 0.05) * 0.05])
 ### Phase 5: Test Cleanup ✅
 
 **Removed CSV assertions**:
+
 ```bash
 sed -i '/assert (tmp_path \/ "fig.*\.csv")\.exists()/d' tests/unit/analysis/test_figures.py
 ```
 
 **Removed content verification tests**:
+
 - Attempted regex removal → left broken bodies
 - Manual cleanup with awk → worked
 - Added `import pytest` at top
 - Fixed LaTeX snippet test (removed `data` parameter)
 
 **Final test results**:
+
 - 71 tests → 45 tests (26 CSV tests removed)
 - 0 failures
 - All figure generation tests passing
@@ -166,6 +180,7 @@ sed -i '/assert (tmp_path \/ "fig.*\.csv")\.exists()/d' tests/unit/analysis/test
 ### Error 1: "Facet charts require data to be specified at the top level"
 
 **Trigger**: Using `+` operator with charts from different data sources
+
 ```python
 chart1 = alt.Chart(df1).mark_line()...
 chart2 = alt.Chart(df2).mark_circle()...
@@ -173,6 +188,7 @@ chart2 = alt.Chart(df2).mark_circle()...
 ```
 
 **Solution**: Use `alt.layer()` with explicit data
+
 ```python
 alt.layer(chart1, chart2).facet(..., data=df1)  # ✅ WORKS
 ```
@@ -180,6 +196,7 @@ alt.layer(chart1, chart2).facet(..., data=df1)  # ✅ WORKS
 ### Error 2: Invisible overlay layers
 
 **Trigger**: Data override in faceting
+
 ```python
 # scatter uses columns from qq_df
 # reference_line uses columns from ref_df (different structure)
@@ -187,6 +204,7 @@ alt.layer(reference_line, scatter, data=qq_df).facet(...)  # reference_line invi
 ```
 
 **Solution**: Include facet columns in overlay data
+
 ```python
 # Build ref_df with same facet columns as qq_df
 ref_df = pd.DataFrame([
@@ -198,6 +216,7 @@ ref_df = pd.DataFrame([
 ### Error 3: Data clipped outside bounds
 
 **Trigger**: Domain computed from incomplete data
+
 ```python
 # Only uses means, ignores CI bounds
 domain = compute_dynamic_domain(df["mean_value"])
@@ -205,6 +224,7 @@ domain = compute_dynamic_domain(df["mean_value"])
 ```
 
 **Solution**: Include all rendered data
+
 ```python
 domain = compute_dynamic_domain_with_ci(df["mean_value"], df["ci_low"], df["ci_high"])
 ```

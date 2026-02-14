@@ -24,6 +24,7 @@ The batch runner (`scripts/run_e2e_batch.py`) was verified against test-001 and 
 **Files Modified**: `scripts/run_e2e_batch.py`
 
 **New Functions**:
+
 ```python
 def load_existing_results(results_dir: Path) -> list[dict]:
     """Load existing results from batch_summary.json if it exists."""
@@ -87,6 +88,7 @@ def save_incremental_result(results_dir: Path, result: dict, config: dict) -> No
 ```
 
 **Modified Functions**:
+
 - `run_single_test()`: Added `config` param, call `save_incremental_result()` after each test
 - `run_thread()`: Added `config` param, pass through to `run_single_test()`
 - `main()`: Load existing results, filter completed tests, merge results at end
@@ -94,6 +96,7 @@ def save_incremental_result(results_dir: Path, result: dict, config: dict) -> No
 ### Phase 2: Rate Limit Pre-Flight Check
 
 **New Function**:
+
 ```python
 def check_rate_limit() -> tuple[bool, str]:
     """Check if API is currently rate-limited.
@@ -114,6 +117,7 @@ def check_rate_limit() -> tuple[bool, str]:
 ```
 
 **Modified main()**:
+
 ```python
 # 0. Check for rate limits before starting
 is_rate_limited, rate_msg = check_rate_limit()
@@ -128,6 +132,7 @@ if is_rate_limited:
 ### Phase 3: Fix `--fresh` Flag Bug
 
 **BEFORE (buggy)**:
+
 ```python
 cmd = [
     "pixi", "run", "python", "scripts/run_e2e_experiment.py",
@@ -137,6 +142,7 @@ cmd = [
 ```
 
 **AFTER (fixed)**:
+
 ```python
 cmd = [
     "pixi", "run", "python", "scripts/run_e2e_experiment.py",
@@ -149,6 +155,7 @@ if args.fresh:
 ### Phase 4: Thread Logs Append Mode
 
 **BEFORE**:
+
 ```python
 with open(log_file_path, "w") as log_file:  # Truncates on restart
     for test in tests:
@@ -157,6 +164,7 @@ with open(log_file_path, "w") as log_file:  # Truncates on restart
 ```
 
 **AFTER**:
+
 ```python
 with open(log_file_path, "a") as log_file:  # Appends on restart
     for test in tests:
@@ -167,6 +175,7 @@ with open(log_file_path, "a") as log_file:  # Appends on restart
 ### Phase 5: Add `--retry-errors` Flag
 
 **CLI Argument**:
+
 ```python
 parser.add_argument(
     "--retry-errors",
@@ -176,6 +185,7 @@ parser.add_argument(
 ```
 
 **Filter Logic**:
+
 ```python
 # Build set of completed test IDs to skip
 completed_test_ids = set()
@@ -195,6 +205,7 @@ tests = [t for t in all_tests if t["id"] not in completed_test_ids]
 ### Phase 6: Add `--fresh` Flag
 
 **CLI Argument**:
+
 ```python
 parser.add_argument(
     "--fresh",
@@ -204,6 +215,7 @@ parser.add_argument(
 ```
 
 **Startup Logic**:
+
 ```python
 # 1. Load existing results (unless --fresh)
 existing_results = []
@@ -220,18 +232,21 @@ else:
 ## Verification Steps
 
 1. **Syntax Check**:
+
    ```bash
    python -m py_compile scripts/run_e2e_batch.py
    # Success: No output
    ```
 
 2. **Import Check**:
+
    ```bash
    python -c "from scripts.run_e2e_batch import load_existing_results, save_incremental_result, check_rate_limit; print('✓ All new functions import successfully')"
    # Output: ✓ All new functions import successfully
    ```
 
 3. **CLI Help**:
+
    ```bash
    python scripts/run_e2e_batch.py --help
    # Verified: --fresh and --retry-errors flags present
@@ -242,6 +257,7 @@ else:
 **Branch**: `skill/evaluation/investigate-test-failures`
 
 **Commit**:
+
 ```bash
 git add scripts/run_e2e_batch.py
 git commit -m "feat(scripts): Add resume & rate limit handling to batch runner
@@ -294,6 +310,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ```
 
 **PR Creation**:
+
 ```bash
 gh pr create --title "feat(scripts): Add resume & rate limit handling to batch runner" --body "..."
 # Created: https://github.com/HomericIntelligence/ProjectScylla/pull/526
@@ -305,11 +322,13 @@ gh pr merge 526 --auto --rebase
 ## Dependencies & Imports
 
 **New Import**:
+
 ```python
 from scylla.e2e.rate_limit import check_api_rate_limit_status
 ```
 
 **Existing Imports Used**:
+
 ```python
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
@@ -331,17 +350,20 @@ import logging
 ## Performance Considerations
 
 **Incremental Save Overhead**:
+
 - One JSON write per test completion
 - For 47 tests: ~47 writes total
 - Each write: ~2-3ms (atomic rename is fast)
 - Total overhead: ~150ms (negligible for hours-long batch)
 
 **Checkpoint Size**:
+
 - ~100 bytes per result
 - 47 tests: ~5KB total
 - Atomic writes use double disk space temporarily (.tmp file)
 
 **Memory**:
+
 - Full checkpoint kept in memory during processing
 - 47 tests: ~5KB (negligible)
 
@@ -379,11 +401,13 @@ import logging
 ## Related Work
 
 **Similar Patterns in Codebase**:
+
 - `scylla/e2e/runner.py` - Per-test checkpoint (orthogonal to batch-level)
 - `scylla/e2e/checkpoint.py` - Checkpoint data models
 - `scylla/e2e/rate_limit.py` - Rate limit detection (imported by batch runner)
 
 **Differences**:
+
 - Batch runner: Checkpoint at test granularity (skip whole tests)
 - Experiment runner: Checkpoint at tier/subtest/run granularity (skip partial test)
 - Both use JSON for checkpoints, but different schemas
@@ -401,6 +425,7 @@ import logging
 ## Production Readiness
 
 ✅ **Ready for production use** after PR #526 merges:
+
 - Syntax valid, imports work
 - CLI help correct
 - Follows existing patterns (JSON checkpoints, atomic writes)

@@ -11,6 +11,7 @@
 ## When to Use This Skill
 
 Use this pattern when:
+
 - Judge evaluations are producing incorrect results after workspace operations
 - Rerun scripts are destroying agent work before re-judging
 - You need to preserve evaluation context across multiple script invocations
@@ -21,6 +22,7 @@ Use this pattern when:
 ### The Workspace Corruption Issue
 
 When running `rerun_agents.py` followed by `rerun_judges.py`:
+
 1. Agent rerun script recreated git worktrees, destroying agent's work
 2. Judge rerun script rebuilt judge prompts from the now-empty workspace
 3. Judges correctly gave F-grades for empty workspaces (not the original agent work)
@@ -28,6 +30,7 @@ When running `rerun_agents.py` followed by `rerun_judges.py`:
 ### The Fallback Judge Masking Issue
 
 When LLM judges hit rate limits or errors:
+
 1. Fallback judge gave blanket 0.7/grade-C scores regardless of actual work
 2. Produced 2307/3600 (64%) garbage judgments in test001-nothinking
 3. Masked the workspace corruption issue by giving passing grades to empty workspaces
@@ -149,6 +152,7 @@ except Exception as e:
 **What we tried**: Adding an optional `judge_prompt: str | None = None` parameter to `run_llm_judge()` to accept pre-built prompts.
 
 **Why it didn't work**:
+
 - `run_llm_judge()` has complex logic for building prompts (workspace state, patchfile, pipeline results, rubric)
 - Adding a parameter would require threading it through multiple internal calls
 - Makes the API confusing - when would you pass a prompt vs. rebuild?
@@ -160,6 +164,7 @@ except Exception as e:
 **What we tried**: Checking if workspace exists and skipping `_setup_workspace()` call.
 
 **Why it didn't work**:
+
 - Runs with `FAILED`, `PARTIAL`, `MISSING` status genuinely need fresh workspaces
 - Only `COMPLETED` and `RESULTS` status should preserve workspaces
 - `rerun_experiment()` already has correct logic - it doesn't call `rerun_single_run()` for RESULTS status

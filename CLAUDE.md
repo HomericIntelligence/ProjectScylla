@@ -175,6 +175,7 @@ ProjectScylla evaluates agent performance across three metric categories:
 3. **Process Metrics**: Latency, Strategic Drift, Ablation Score
 
 **For complete metric definitions, formulas, and calculation methods, see:**
+
 - [Metrics Definitions](/.claude/shared/metrics-definitions.md) - Authoritative reference
 - [Research Methodology](/docs/research.md) - Context and usage
 
@@ -201,6 +202,7 @@ ProjectScylla evaluates agent performance across three metric categories:
 **Current Version**: Python 3.10+
 
 **Key Principles**:
+
 - Use type hints for all function signatures
 - Leverage dataclasses and Pydantic models for structured data
 - Follow PEP 8 style guidelines (enforced by pre-commit hooks)
@@ -292,6 +294,7 @@ When using `/retrospective` to capture session learnings:
 
 1. **Create skill in ProjectScylla** first (`.claude-plugin/skills/{name}/`)
 2. **Push to ProjectMnemosyne** for team-wide sharing:
+
    ```bash
    # Copy skill to knowledge base
    cp -r .claude-plugin/skills/{name} build/ProjectMnemosyne/skills/

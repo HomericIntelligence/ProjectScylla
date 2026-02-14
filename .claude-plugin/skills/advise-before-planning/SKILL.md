@@ -70,6 +70,7 @@ def _call_claude(
 ```
 
 **Key Details:**
+
 - Use `--print` for non-interactive mode (not `--message`)
 - Set `CLAUDECODE=""` to bypass nested-session detection
 - Shorter timeout for advise (180s) vs plan (300s)
@@ -120,6 +121,7 @@ def _run_advise(self, issue_number: int, issue_title: str, issue_body: str) -> s
 ```
 
 **Key Details:**
+
 - Return `""` (empty string) on any failure
 - Log warnings but don't raise exceptions
 - Check for both directory and marketplace.json existence
@@ -170,6 +172,7 @@ def _generate_plan(self, issue_number: int) -> str:
 ```
 
 **Key Details:**
+
 - Check `if advise_findings:` to avoid injecting empty sections
 - Clear section header: "Prior Learnings from Team Knowledge Base"
 - Insert between issue context and plan instructions (middle of prompt)
@@ -194,6 +197,7 @@ class PlannerOptions(BaseModel):
 ```
 
 **CLI Flag:**
+
 ```python
 parser.add_argument(
     "--no-advise",
@@ -209,6 +213,7 @@ options = PlannerOptions(
 ```
 
 **Key Details:**
+
 - Default to `True` (advise enabled by default)
 - Use `--no-advise` flag (negative flag pattern)
 - Follow existing pattern like `--no-skip-closed`
@@ -268,6 +273,7 @@ None found
 ```
 
 **Key Details:**
+
 - Direct Claude to read files using absolute path
 - Structure output for easy parsing/injection
 - Include issue title and body for better search relevance
@@ -278,6 +284,7 @@ None found
 ### ❌ Attempt 1: Using `--message` flag
 
 **What was tried:**
+
 ```python
 result = subprocess.run(
     ["claude-code", "--message", prompt],
@@ -286,11 +293,13 @@ result = subprocess.run(
 ```
 
 **Why it failed:**
+
 - `claude-code` binary doesn't exist (correct binary is `claude`)
 - `--message` is for interactive sessions, not batch/automation mode
 - This would hang waiting for user interaction
 
 **Fix:**
+
 ```python
 result = subprocess.run(
     ["claude", "--print", prompt],  # Use --print for non-interactive
@@ -304,12 +313,14 @@ result = subprocess.run(
 Initially planned to invoke the `/advise` skill directly as a slash command in the prompt.
 
 **Why it failed:**
+
 - Slash commands only work in interactive Claude Code sessions
 - `--print` mode doesn't support slash command invocation
 - Would require spawning an interactive session (heavyweight)
 
 **Fix:**
 Instead, the advise prompt instructs Claude to:
+
 1. Read the marketplace.json file directly using its file-reading tools
 2. Search for relevant plugins by keywords/tags
 3. Read matching SKILL.md files
@@ -323,10 +334,12 @@ This achieves the same result without slash command infrastructure.
 Running `claude` CLI from within a Claude Code session without special handling.
 
 **Why it failed:**
+
 - Claude CLI detects nested sessions and may show warnings or alter behavior
 - Can cause confusion in error messages
 
 **Fix:**
+
 ```python
 result = subprocess.run(
     cmd,
@@ -340,6 +353,7 @@ result = subprocess.run(
 ### Copy-Paste Configuration
 
 **PlannerOptions model:**
+
 ```python
 class PlannerOptions(BaseModel):
     """Options for the Planner."""
@@ -353,6 +367,7 @@ class PlannerOptions(BaseModel):
 ```
 
 **CLI usage:**
+
 ```bash
 # Plan with advise (default)
 pixi run plan-issues --issues 123 456
@@ -365,6 +380,7 @@ pixi run plan-issues --issues 123 --dry-run -v
 ```
 
 **Pixi task:**
+
 ```toml
 [tasks]
 plan-issues = "python scripts/plan_issues.py"
@@ -384,6 +400,7 @@ plan-issues = "python scripts/plan_issues.py"
 ### Test Coverage
 
 **Created 14 new tests:**
+
 - `test_prompts.py`: 4 tests for prompt generation
   - `test_get_advise_prompt()` - Verify advise prompt formatting
   - `test_get_plan_prompt()` - Verify plan prompt formatting

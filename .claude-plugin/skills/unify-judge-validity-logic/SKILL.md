@@ -21,6 +21,7 @@ Use this skill when:
 5. **Ensuring filtering consistency** between live execution and regeneration logic
 
 **Trigger Patterns**:
+
 - Judge consensus scores include obviously invalid judgments (e.g., fallback scores)
 - Different code paths accept/reject the same judgment inconsistently
 - JSON responses with missing required fields get silent defaults
@@ -53,6 +54,7 @@ rg "_has_valid.*result|_is_valid.*judgment" scylla/e2e/ --type py
 ```
 
 **Key locations found**:
+
 - `scylla/e2e/llm_judge.py` - Judge response parsing
 - `scylla/e2e/subtest_executor.py` - Live consensus, result validation
 - `scylla/e2e/rerun_judges.py` - Judgment validation, consensus regeneration
@@ -63,6 +65,7 @@ rg "_has_valid.*result|_is_valid.*judgment" scylla/e2e/ --type py
 **Pattern**: Replace separate `is_valid` and `fallback` checks with unified logic
 
 **Before** (inconsistent - two separate checks):
+
 ```python
 return (
     "score" in data
@@ -72,6 +75,7 @@ return (
 ```
 
 **After** (unified - map fallback into is_valid):
+
 ```python
 is_valid = data.get("is_valid", True) is not False
 # Old data has fallback=true with is_valid=true — treat as invalid
@@ -81,6 +85,7 @@ return "score" in data and is_valid
 ```
 
 **Apply to**:
+
 - `_is_valid_judgment()` in `rerun_judges.py`
 - `_regenerate_consensus()` in `rerun_judges.py`
 - `_has_valid_judge_result()` in `subtest_executor.py`
@@ -113,11 +118,13 @@ try:
 **Problem**: Live consensus includes invalid judges, regeneration excludes them → inconsistency
 
 **Before**:
+
 ```python
 valid = [j for j in judges if j.score is not None]
 ```
 
 **After**:
+
 ```python
 valid = [j for j in judges if j.score is not None and j.is_valid]
 ```
@@ -138,6 +145,7 @@ valid = [j for j in judges if j.score is not None and j.is_valid]
 | `test_has_valid_judge_result_accepts_valid_no_is_valid_field` | Missing `is_valid` defaults to True |
 
 **Critical**: Update existing tests that assume invalid judges are included:
+
 ```python
 # OLD: test_consensus_with_invalid_judge
 # Expected: average of 0.9 and 0.0 = 0.45
@@ -176,6 +184,7 @@ assert _has_valid_judge_result(run_dir)  # WORKS!
 **What We Tried**: Created tests for `_has_valid_judge_result()` passing file paths directly
 
 **Why It Failed**:
+
 ```
 AssertionError: assert False
  +  where False = _has_valid_judge_result(PosixPath('.../judge_result.json'))
@@ -184,10 +193,12 @@ AssertionError: assert False
 **Root Cause**: Function signature is `_has_valid_judge_result(run_dir: Path)`, not `result_file: Path`
 
 **Lesson**: Always check function signatures! The function calls `get_judge_result_file(run_dir)` internally, which expects:
+
 - Input: `run_dir` (e.g., `run_01/`)
 - Output: `run_dir/judge/result.json`
 
 **Fix**: Create proper directory structure in tests:
+
 ```python
 run_dir = tmp_path / "run_01"
 judge_dir = run_dir / "judge"
@@ -198,17 +209,20 @@ result_file = judge_dir / "result.json"  # Proper path
 ### ❌ Attempt 2: Line Length Violations
 
 **What Happened**: Pre-commit hook failed:
+
 ```
 E501 Line too long (105 > 100)
 tests/unit/e2e/test_subtest_executor.py:272:101
 ```
 
 **Docstring**:
+
 ```python
 """Test that _has_valid_judge_result returns True when is_valid is missing (defaults to True)."""
 ```
 
 **Fix**: Remove redundant "that" to shorten:
+
 ```python
 """Test _has_valid_judge_result returns True when is_valid is missing (defaults to True)."""
 ```
@@ -246,6 +260,7 @@ pre-commit run --all-files
 ```
 
 **All Passed**:
+
 - Check for shell=True (Security)
 - Ruff Format Python
 - Ruff Check Python
@@ -274,6 +289,7 @@ return is_valid
 ```
 
 **Benefits**:
+
 - Single code path for new and old data
 - Clear migration story
 - Easy to remove later (just delete step 2)
@@ -287,6 +303,7 @@ When you have both live execution and regeneration:
 3. **Verify with tests** that both produce identical results
 
 **Example**:
+
 - `_regenerate_consensus()` filters by `is_valid` → consensus from valid judges only
 - `_compute_judge_consensus()` must filter identically → add `and j.is_valid`
 
@@ -306,6 +323,7 @@ value = data["required_field"]
 ```
 
 **Avoid**:
+
 ```python
 # BAD: Silent default makes invalid data look valid
 value = data.get("required_field", default_value)
@@ -321,4 +339,4 @@ value = data.get("required_field", default_value)
 
 - Investigation: `~/fullruns/test001-nothinking/` and `~/fullruns/test001-nothinking-haiku/`
 - Implementation plan: Conversation transcript at `.claude/projects/-home-mvillmow-ProjectScylla/e3f19152-82e8-4da1-9a1e-7e5f547f0511.jsonl`
-- PR: https://github.com/HomericIntelligence/ProjectScylla/pull/476
+- PR: <https://github.com/HomericIntelligence/ProjectScylla/pull/476>

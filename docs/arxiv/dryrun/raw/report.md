@@ -46,7 +46,7 @@
 
 ## Configuration
 
-- **Task Repo**: https://github.com/mvillmow/Hello-World
+- **Task Repo**: <https://github.com/mvillmow/Hello-World>
 - **Task Commit**: 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d
 - **Runs per Sub-test**: 1
 - **Judge Models**: claude-opus-4-5-20251101, claude-sonnet-4-5-20250929, claude-haiku-4-5

@@ -105,6 +105,7 @@ reproducibility:
 ```
 
 When making breaking changes to the configuration schema:
+
 1. Increment `config_version` (major.minor.patch)
 2. Update `pipeline_version` if analysis logic changes
 3. Document changes in this README
@@ -122,12 +123,14 @@ pixi run pytest tests/unit/analysis/test_config.py -v
 ### From Hardcoded Constants
 
 **Before:**
+
 ```python
 ALPHA = 0.05  # Hardcoded in tables.py
 n_resamples = 10000  # Hardcoded in stats.py
 ```
 
 **After:**
+
 ```python
 from scylla.analysis.config import ALPHA, BOOTSTRAP_RESAMPLES
 

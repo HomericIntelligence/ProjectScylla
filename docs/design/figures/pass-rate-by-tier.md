@@ -45,6 +45,7 @@ score = (pass_rate + impl_rate) / 2
 ```
 
 Where:
+
 - `pass_rate`: Binary indicator (1.0 if passed, 0.0 if failed)
 - `impl_rate`: Judge's weighted implementation score (0.0-1.0)
 
@@ -163,6 +164,7 @@ These patterns are valuable for identifying architectural anti-patterns and guid
 ### Example Interpretations
 
 **Scenario 1: Monotonic Improvement**
+
 ```
 T0: Most scores < 0.40 (left of threshold)
 T1: Scores spread 0.30-0.70 (centered on threshold)
@@ -170,25 +172,31 @@ T2: Most scores > 0.60 (right of threshold)
 ...
 T6: All scores > 0.80 (far right of threshold)
 ```
+
 **Interpretation**: Architecture components provide cumulative benefit. Each tier adds value.
 
 **Scenario 2: Non-Monotonic Pattern**
+
 ```
 T2: Most scores > 0.70 (strong performance)
 T3: Most scores < 0.60 (weak performance)
 T4: Most scores > 0.75 (strong performance)
 ```
+
 **Interpretation**: T3 (external tools) degrades performance compared to T2 (skills). Possible causes:
+
 - Tool selection overhead dominates benefit
 - Prompts don't effectively guide tool usage
 - Tools conflict with existing skills
 
 **Scenario 3: Plateau Effect**
+
 ```
 T4: Scores distributed 0.60-0.90
 T5: Scores distributed 0.60-0.90 (identical to T4)
 T6: Scores distributed 0.60-0.90 (identical to T4)
 ```
+
 **Interpretation**: Hierarchical orchestration (T5) and optimization (T6) provide no additional benefit. Architecture has reached capability ceiling for this task set.
 
 ### Statistical Considerations
@@ -202,21 +210,25 @@ T6: Scores distributed 0.60-0.90 (identical to T4)
 This figure should be analyzed in conjunction with:
 
 ### Fig 11: Tier Uplift
+
 - **Purpose**: Quantifies the improvement from tier N to tier N+1
 - **Connection**: Fig04 shows distributions, Fig11 shows pairwise differences
 - **Analysis**: Use Fig11 to identify which tier transitions provide the largest gains
 
 ### Fig 01: Score Variance by Tier
+
 - **Purpose**: Box plots showing score distribution with quartiles
 - **Connection**: Fig01 shows statistical summaries, Fig04 shows full distributions
 - **Analysis**: Use Fig04 to see bimodal patterns that box plots might obscure
 
 ### Fig 03: Failure Rate by Tier
+
 - **Purpose**: Stacked bar chart of grade distributions
 - **Connection**: Fig03 shows categorical grades, Fig04 shows continuous scores
 - **Analysis**: Use Fig04 to see fine-grained score patterns within each grade category
 
 ### Fig 06: Cost-of-Pass by Tier
+
 - **Purpose**: Economic analysis of tier efficiency
 - **Connection**: Combines pass rate (from Fig04) with cost data
 - **Analysis**: High pass rate (Fig04) + low cost (Fig06) = optimal tier
@@ -247,6 +259,7 @@ def fig04_pass_rate_by_tier(
    - Override: Pass `pass_threshold` parameter to use custom value
 
 2. **Data Preparation**:
+
    ```python
    data = runs_df[["tier", "score"]].copy()
    ```
@@ -260,6 +273,7 @@ def fig04_pass_rate_by_tier(
    - Enables facet-aware threshold line rendering
 
 5. **Layering**:
+
    ```python
    chart = alt.layer(histogram, threshold_line).facet(...)
    ```
@@ -305,9 +319,11 @@ fig04_pass_rate_by_tier(
 ### Testing
 
 Tests for this figure are located in:
+
 - `/home/mvillmow/ProjectScylla/tests/analysis/test_figures.py`
 
 Verify figure generation with:
+
 ```bash
 pixi run pytest tests/analysis/test_figures.py::test_fig04_pass_rate_by_tier -v
 ```

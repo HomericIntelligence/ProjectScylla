@@ -22,6 +22,7 @@ The Metric Correlation Heatmap visualizes pairwise Spearman rank correlations be
 **DataFrame**: `runs_df`
 
 **Columns Used**:
+
 - `agent_model` (str): Agent model name (e.g., "Sonnet 4.5", "Haiku 4.5")
 - `score` (float): Consensus score from judge evaluations [0.0, 1.0]
 - `cost_usd` (float): Total cost in USD for the run
@@ -31,6 +32,7 @@ The Metric Correlation Heatmap visualizes pairwise Spearman rank correlations be
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/correlation.py:19-134`
 
 **Data Requirements**:
+
 - One row per agent run
 - Typical dataset: ~2,238 runs across multiple tiers and models
 - Minimum 3 runs per model required for correlation analysis (enforced by `config.min_sample_correlation`)
@@ -61,12 +63,14 @@ def fig20_metric_correlation_heatmap(
 ### Key Technical Decisions
 
 **Spearman vs. Pearson Correlation**:
+
 - Uses Spearman rank correlation (`spearman_correlation()` from `scylla.analysis.stats`)
 - **Rationale**: Robust to non-linear monotonic relationships and outliers
 - **Trade-off**: Captures rank-order relationships, not linear relationships
 - **Benefit**: More appropriate for skewed distributions (e.g., cost data)
 
 **Holm-Bonferroni Correction**:
+
 - Applies `holm_bonferroni_correction()` to control family-wise error rate (FWER)
 - **Rationale**: Multiple pairwise tests increase Type I error risk
 - **Correction Method**: Step-down procedure, less conservative than standard Bonferroni
@@ -74,17 +78,20 @@ def fig20_metric_correlation_heatmap(
 - **Benefit**: Valid statistical inference across all metric pairs
 
 **Per-Model Analysis**:
+
 - Computes separate correlation matrices for each agent model
 - **Rationale**: Different models may exhibit different trade-off profiles
 - **Implementation**: Faceted visualization with shared scales
 - **Benefit**: Enables model-specific correlation pattern comparison
 
 **Pairwise Deletion for Missing Data**:
+
 - Uses index alignment to handle missing values
 - **Implementation**: `common_idx = data1.index.intersection(data2.index)`
 - **Benefit**: Maximizes sample size for each correlation pair
 
 **Centralized Metric Configuration**:
+
 - Metrics sourced from `config.correlation_metrics` (defined in `scylla/analysis/config.yaml`)
 - Default metrics: `score`, `cost_usd`, `total_tokens`, `duration_seconds`
 - **Benefit**: Consistent metric selection across analyses, easy to extend
@@ -92,18 +99,21 @@ def fig20_metric_correlation_heatmap(
 ### Algorithm
 
 1. **Load Metric Configuration**:
+
    ```python
    metrics = config.correlation_metrics
    # metrics = {"score": "Score", "cost_usd": "Cost (USD)", ...}
    ```
 
 2. **Per-Model Iteration**:
+
    ```python
    for model in sorted(runs_df["agent_model"].unique()):
        model_data = runs_df[runs_df["agent_model"] == model]
    ```
 
 3. **Pairwise Correlation Computation**:
+
    ```python
    for metric1_col, metric1_name in metrics.items():
        for metric2_col, metric2_name in metrics.items():
@@ -120,6 +130,7 @@ def fig20_metric_correlation_heatmap(
    ```
 
 4. **Multiple Comparison Correction**:
+
    ```python
    raw_p_values = corr_df["p_value"].tolist()
    corrected_p_values = holm_bonferroni_correction(raw_p_values)
@@ -128,6 +139,7 @@ def fig20_metric_correlation_heatmap(
    ```
 
 5. **Heatmap Construction**:
+
    ```python
    heatmap = (
        alt.Chart(corr_df)
@@ -145,6 +157,7 @@ def fig20_metric_correlation_heatmap(
    ```
 
 6. **Text Annotation Overlay**:
+
    ```python
    text = (
        alt.Chart(corr_df)
@@ -159,6 +172,7 @@ def fig20_metric_correlation_heatmap(
    ```
 
 7. **Faceting and Finalization**:
+
    ```python
    if corr_df["agent_model"].nunique() > 1:
        chart = (
@@ -170,6 +184,7 @@ def fig20_metric_correlation_heatmap(
    ```
 
 8. **Save Output**:
+
    ```python
    save_figure(chart, "fig20_metric_correlation_heatmap", output_dir, render)
    ```
@@ -181,6 +196,7 @@ def fig20_metric_correlation_heatmap(
 **Pattern**: `fig20_metric_correlation_heatmap.{ext}`
 
 **Generated Files**:
+
 - `fig20_metric_correlation_heatmap.vl.json` - Vega-Lite specification (version control)
 - `fig20_metric_correlation_heatmap.csv` - Correlation data (all metric pairs, all models)
 - `fig20_metric_correlation_heatmap.png` - Rendered image (300 DPI, if render=True)
@@ -195,6 +211,7 @@ def fig20_metric_correlation_heatmap(
 ### CSV Data Structure
 
 **Columns**:
+
 - `agent_model`: Model name
 - `metric1`: First metric display name
 - `metric2`: Second metric display name
@@ -211,15 +228,18 @@ def fig20_metric_correlation_heatmap(
 **Chart Type**: Heatmap with text annotations (layered composition)
 
 **Dimensions**:
+
 - Width: Auto-sized based on metric count and facet columns
 - Height: Auto-sized to maintain square cells
 
 **Faceting**:
+
 - **Column**: Agent model (if multiple models present)
 - **Shared Scales**: Color scale consistent across facets
 - **Title**: "Metric Correlation Heatmap (Spearman ρ)"
 
 **Axes**:
+
 - **X-axis**: Metric 1 (ordinal, sorted by config order)
   - No axis title (labels are self-explanatory)
   - Labels: "Score", "Cost (USD)", "Total Tokens", "Duration (s)"
@@ -228,6 +248,7 @@ def fig20_metric_correlation_heatmap(
   - Labels: Same as X-axis
 
 **Color Encoding**:
+
 - **Variable**: Spearman ρ (rho)
 - **Scale**: Diverging color scheme (`blueorange`)
   - Blue: Negative correlation (-1)
@@ -236,12 +257,14 @@ def fig20_metric_correlation_heatmap(
 - **Domain**: [-1.0, 1.0] (fixed for cross-model comparison)
 
 **Text Annotations**:
+
 - **Content**: Correlation coefficient formatted as "{rho:.2f}"
 - **Font Size**: 7pt (30% reduction from default for readability)
 - **Color**: Black (constant, not data-driven)
 - **Alignment**: Center-middle within each cell
 
 **Tooltip** (interactive in browser):
+
 - Metric 1: First metric name
 - Metric 2: Second metric name
 - Spearman ρ: Correlation coefficient (3 decimal places)
@@ -250,28 +273,34 @@ def fig20_metric_correlation_heatmap(
 ### Expected Patterns
 
 **Diagonal Cells** (metric vs. itself):
+
 - **Value**: ρ = 1.00 (perfect correlation)
 - **Color**: Deep orange
 - **Interpretation**: Self-correlation baseline
 
 **Cost vs. Tokens**:
+
 - **Expected**: Strong positive correlation (ρ > 0.7)
 - **Interpretation**: More tokens → higher cost (API pricing model)
 
 **Tokens vs. Duration**:
+
 - **Expected**: Moderate to strong positive (ρ > 0.5)
 - **Interpretation**: More tokens → longer processing time
 
 **Score vs. Cost**:
+
 - **Expected**: Weak to moderate positive (ρ = 0.2 to 0.5)
 - **Interpretation**: Quality gains may require more expensive architectures
 - **Alternative**: Negative correlation suggests inefficiency
 
 **Score vs. Duration**:
+
 - **Expected**: Weak correlation (ρ < 0.3)
 - **Interpretation**: Quality improvements don't necessarily require longer runs
 
 **Symmetric Matrix**:
+
 - Correlation matrix is symmetric: `corr(A, B) = corr(B, A)`
 - Heatmap displays full matrix (not just upper/lower triangle)
 
@@ -280,21 +309,25 @@ def fig20_metric_correlation_heatmap(
 ### Reading the Heatmap
 
 **Color Intensity**:
+
 - **Deep blue/orange**: Strong correlation (|ρ| > 0.7)
 - **Light blue/orange**: Moderate correlation (0.3 < |ρ| < 0.7)
 - **White/pale**: Weak correlation (|ρ| < 0.3)
 
 **Sign Interpretation**:
+
 - **Positive (orange)**: Metrics increase together
 - **Negative (blue)**: Metrics move in opposite directions
 
 **Statistical Significance**:
+
 - Check `significant` column in CSV for Holm-Bonferroni corrected significance
 - Non-significant correlations may be spurious (sampling noise)
 
 ### Key Trade-Off Patterns
 
 **Quality-Cost Trade-Off** (Score vs. Cost):
+
 - **Positive ρ**: Higher quality requires higher investment
   - Supports tier progression hypothesis (T0 → T6)
   - Justifies cost-benefit analysis for tier selection
@@ -303,6 +336,7 @@ def fig20_metric_correlation_heatmap(
   - Candidate for ablation or removal
 
 **Efficiency Frontier** (Score vs. Duration):
+
 - **Weak ρ**: Quality gains possible without latency increase
   - Opportunity for optimization
   - Parallel processing or caching may help
@@ -311,18 +345,21 @@ def fig20_metric_correlation_heatmap(
   - Consider latency constraints for deployment
 
 **Resource Utilization** (Tokens vs. Cost, Tokens vs. Duration):
+
 - **Expected strong positive**: Validates token-based cost model
 - **Deviation**: Investigate caching effects or pricing anomalies
 
 ### Comparative Analysis
 
 **Across Models** (faceted panels):
+
 - Compare correlation structures between models
 - **Divergence**: Different models have different trade-off profiles
   - Example: Haiku may show weaker Score-Cost correlation (better efficiency)
 - **Convergence**: Universal constraints (tokens always correlate with cost)
 
 **Validation Checks**:
+
 - Diagonal should be all 1.00 (self-correlation)
 - Matrix should be symmetric
 - Token-Cost correlation should be strong (validates pricing model)
@@ -330,21 +367,25 @@ def fig20_metric_correlation_heatmap(
 ### Action Items
 
 **If Strong Score-Cost Correlation (ρ > 0.7)**:
+
 1. Confirm tier progression justifies cost increases
 2. Compute cost-effectiveness (CoP) for pareto analysis
 3. Identify diminishing returns threshold
 
 **If Weak Score-Cost Correlation (ρ < 0.3)**:
+
 1. Investigate inefficiencies in higher tiers
 2. Check for confounding variables (task difficulty)
 3. Consider tier re-design or skill optimization
 
 **If Tokens-Duration Weak (ρ < 0.5)**:
+
 1. Check for I/O bottlenecks or network latency
 2. Investigate batching or parallelization opportunities
 3. Validate timestamp accuracy in duration measurements
 
 **If Unexpected Negative Correlations**:
+
 1. Investigate data quality issues
 2. Check for tier-specific anomalies
 3. Validate metric calculation logic
@@ -401,6 +442,7 @@ docs/figures/
 ### Viewing the Figure
 
 **Vega-Lite Spec (Recommended)**:
+
 ```bash
 # Open in Vega Editor
 open https://vega.github.io/editor/
@@ -408,6 +450,7 @@ open https://vega.github.io/editor/
 ```
 
 **CSV Data**:
+
 ```bash
 # Inspect correlation coefficients
 head docs/figures/fig20_metric_correlation_heatmap.csv
@@ -417,6 +460,7 @@ awk -F',' '$7 == "True"' docs/figures/fig20_metric_correlation_heatmap.csv
 ```
 
 **Rendered Images**:
+
 ```bash
 # View PNG
 open docs/figures/fig20_metric_correlation_heatmap.png
@@ -428,6 +472,7 @@ open docs/figures/fig20_metric_correlation_heatmap.png
 ### Customizing Metrics
 
 **Edit Configuration** (`scylla/analysis/config.yaml`):
+
 ```yaml
 figures:
   correlation_metrics:
@@ -440,6 +485,7 @@ figures:
 ```
 
 **Benefits**:
+
 - No code changes required
 - Automatic propagation to heatmap
 - Centralized metric definitions

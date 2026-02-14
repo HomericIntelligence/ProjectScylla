@@ -7,14 +7,17 @@ Maximum capability configuration with ALL components enabled.
 This tier enables every available component at maximum capacity:
 
 ### Prompts
+
 - Full 1787-line CLAUDE.md with all 18 blocks
 
 ### Skills
+
 - All 61 skills from all categories installed:
   - agent (5), cicd (7), documentation (4), github (10)
   - mojo (10), other (11), quality (5), workflow (5), worktree (4)
 
 ### Tools
+
 - All built-in tools enabled
 - All MCP servers configured:
   - filesystem, git, memory, fetch
@@ -22,6 +25,7 @@ This tier enables every available component at maximum capacity:
   - github, postgres, playwright
 
 ### Agents
+
 - All 44 agents registered:
   - L0 Chief Architect (1)
   - L1 Orchestrators (6)

@@ -25,6 +25,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ --d
 ```
 
 This shows:
+
 - Classification of all judges by status
 - How many judges would be rerun
 - Summary statistics
@@ -36,6 +37,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/
 ```
 
 This will:
+
 1. Re-run judges for missing, failed, and partial statuses
 2. Skip complete and agent_failed runs
 3. Use the default judge model from experiment config (opus)
@@ -117,6 +119,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
 **Problem**: Experiment was killed mid-execution. Agents completed but judges didn't run.
 
 **Solution**:
+
 ```bash
 # Dry run to see what needs judging
 pixi run python scripts/rerun_judges.py ~/fullruns/test001/ --dry-run
@@ -131,6 +134,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 **Problem**: Multiple judges failed due to API rate limits. Want to retry just the failures.
 
 **Solution**:
+
 ```bash
 # Re-run only failed judges
 pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
@@ -142,6 +146,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 **Problem**: Original judges used sonnet, want to re-judge failed runs with opus.
 
 **Solution**:
+
 ```bash
 # Re-run failed judges with opus
 pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
@@ -153,6 +158,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 **Problem**: Judges for runs 1, 5, and 7 in T0/00 had issues. Want to re-judge just those.
 
 **Solution**:
+
 ```bash
 pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
     --tier T0 --subtest 00 --runs 1,5,7
@@ -218,6 +224,7 @@ Failed rerun:            0
 ### File Classification Logic
 
 The script examines:
+
 - `run_dir/agent/output.txt` - Agent must have succeeded
 - `run_dir/agent/result.json` - Agent result must exist
 - `run_dir/judge/result.json` - Judge result (must have `score` field)
@@ -227,6 +234,7 @@ The script examines:
 ### Integration with regenerate.py
 
 The script uses `regenerate_experiment(rejudge=True)` to re-run judges, which:
+
 1. Identifies runs with valid agent results but missing/invalid judge results
 2. Re-runs the judge evaluation
 3. Updates `judge/result.json`

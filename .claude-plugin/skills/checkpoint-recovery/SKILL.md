@@ -21,6 +21,7 @@ Use this skill when you need to add checkpoint/resume functionality to any batch
 - ✅ Want to selectively retry failed items without re-running successful ones
 
 **Common Scenarios**:
+
 - Batch E2E test runners
 - Data migration scripts with API calls
 - Multi-file processing pipelines
@@ -47,6 +48,7 @@ Use this skill when you need to add checkpoint/resume functionality to any batch
 ```
 
 **Key Principles**:
+
 - Append-only results list (never modify existing entries)
 - Include timestamp metadata for debugging
 - Snapshot config to detect incompatible restarts
@@ -82,6 +84,7 @@ def save_incremental_result(checkpoint_path: Path, result: dict, config: dict) -
 ```
 
 **Why Atomic Writes Matter**:
+
 - `tmp + rename` prevents corrupt JSON if process is killed during write
 - Filesystem rename is atomic on POSIX systems
 - Ensures checkpoint is always valid or non-existent (never half-written)
@@ -113,6 +116,7 @@ items_to_process = [item for item in all_items if item["id"] not in completed_id
 ```
 
 **Decision**: Treat ALL existing results as "completed" (pass, fail, error).
+
 - Prevents re-running tests that legitimately failed
 - User can inspect failures in checkpoint and logs
 - Add `--retry-errors` flag for selective re-run
@@ -140,6 +144,7 @@ if is_rate_limited:
 ```
 
 **Why Distinct Exit Codes**:
+
 - `0` = Success (all items completed)
 - `1` = Error (permanent failure, investigate)
 - `2` = Transient failure (rate limit, retry later)
@@ -160,6 +165,7 @@ with open(log_file, "a") as f:
 ```
 
 **Rationale**:
+
 - Preserves debugging context from previous attempts
 - Shows full history of retries and rate limit waits
 - Slightly larger logs acceptable (can add rotation later)
@@ -205,6 +211,7 @@ if args.fresh:
 ### ❌ FAILED: Conditional String in Command List
 
 **What We Tried**:
+
 ```python
 cmd = [
     "python", "script.py",
@@ -213,11 +220,13 @@ cmd = [
 ```
 
 **Why It Failed**:
+
 - When `args.fresh` is False, appends empty string `""` to command
 - Subprocess interprets `""` as a literal argument
 - Causes cryptic errors or unexpected behavior
 
 **Solution**:
+
 ```python
 cmd = ["python", "script.py"]
 if args.fresh:
@@ -229,15 +238,18 @@ if args.fresh:
 ### ❌ FAILED: Writing Checkpoint Only at End
 
 **What We Tried** (initial design):
+
 - Save checkpoint once when all items complete
 - Fast (single write), simple implementation
 
 **Why It Failed**:
+
 - Ctrl+C or crash loses ALL progress
 - Long-running jobs (hours) have to restart from scratch
 - Defeats the purpose of checkpointing
 
 **Solution**:
+
 - Save checkpoint after EACH item completes
 - Atomic writes ensure integrity even if killed mid-save
 - Small performance cost (~1 write/item) vs huge UX win
@@ -247,15 +259,18 @@ if args.fresh:
 ### ❌ FAILED: Treating Errors as Incomplete
 
 **What We Tried**:
+
 - Only mark "pass" and "fail" as completed
 - Always re-run "error" status items on restart
 
 **Why It Failed**:
+
 - Some errors are permanent (bad test fixture, missing deps)
 - Re-running them wastes time and resources
 - Hard to distinguish transient (rate limit) from permanent (bug)
 
 **Solution**:
+
 - Treat ALL results (pass, fail, error) as "completed" by default
 - Add `--retry-errors` flag for selective re-run
 - User inspects logs to decide what to retry
@@ -267,10 +282,12 @@ if args.fresh:
 **Problem**: What if checkpoint structure changes between versions?
 
 **Current Approach**:
+
 - Graceful fallback: If load fails, return `[]` and start fresh
 - Log warning so user knows checkpoint was ignored
 
 **Better Future Approach**:
+
 - Add `"version": 1` field to checkpoint
 - Check version on load, reject incompatible formats
 - Provide migration script for major changes
@@ -282,14 +299,17 @@ if args.fresh:
 **Problem**: What if two processes write checkpoint simultaneously?
 
 **Current Mitigation**:
+
 - Atomic rename prevents corrupt JSON
 - Last write wins (one process's results may be lost)
 
 **Not Addressed**:
+
 - No file locking (acceptable for single-user scripts)
 - No merge conflict detection
 
 **When This Matters**:
+
 - Multi-machine batch jobs (distributed systems)
 - Shared filesystem with multiple writers
 
@@ -342,6 +362,7 @@ python scripts/run_e2e_batch.py
 **Decision**: A test is "completed" if it has ANY result (pass, fail, error, unknown).
 
 **Rationale**:
+
 - Prevents re-running tests that failed due to legitimate issues
 - User can inspect failures in checkpoint and decide what to retry
 - `--retry-errors` provides selective re-run for transient failures
@@ -353,6 +374,7 @@ python scripts/run_e2e_batch.py
 **Decision**: Write to `.tmp`, then rename (atomic operation).
 
 **Rationale**:
+
 - Prevents corrupt JSON if killed during write
 - Ensures checkpoint is always valid or non-existent
 - Standard pattern for atomic file updates
@@ -364,6 +386,7 @@ python scripts/run_e2e_batch.py
 **Decision**: Use `open(log_file, "a")` instead of `"w"`.
 
 **Rationale**:
+
 - Preserves debugging context from previous attempts
 - Shows full history of retries, rate limit waits, and failures
 - Correlation between checkpoint state and execution logs
@@ -375,11 +398,13 @@ python scripts/run_e2e_batch.py
 **Decision**: Use distinct exit code for rate limits (not generic error code 1).
 
 **Rationale**:
+
 - Enables automation to distinguish transient from permanent failures
 - Scripts can `if exit_code == 2: sleep_and_retry()`
 - Clear signal to user: "wait and re-run, don't debug"
 
 **Standard**:
+
 - 0 = Success
 - 1 = Permanent error
 - 2 = Transient failure (retry later)

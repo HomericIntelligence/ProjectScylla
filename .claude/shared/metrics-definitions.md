@@ -3,6 +3,7 @@
 Complete definitions of all metrics used in ProjectScylla evaluations.
 
 **See also:**
+
 - [CLAUDE.md](/CLAUDE.md#core-metrics) - Quick reference summary
 - [Research Methodology](/docs/research.md) - Application and context
 
@@ -354,6 +355,7 @@ Tool_Success_Rate = successful_tool_calls / total_tool_calls
    - Timestamp for each tool call
 
 2. **Data schema extension** in `agent/result.json`:
+
    ```json
    "toolMetrics": {
      "total_tool_calls": 42,
@@ -400,6 +402,7 @@ Tool_Utilization = tasks_using_tools / total_tasks
    - Count of unique tools used per task
 
 2. **Data schema extension** in `agent/result.json`:
+
    ```json
    "taskMetrics": {
      "task_id": "benchmark-42",
@@ -445,6 +448,7 @@ Task_Distribution_Efficiency = 1 - (idle_time / total_time)
    - Parallel vs. sequential execution markers
 
 2. **Data schema extension** in `agent/result.json`:
+
    ```json
    "delegationMetrics": {
      "agents": [
@@ -508,6 +512,7 @@ Correction_Frequency = corrections_made / total_steps
    - Message similarity analysis (detect repeated attempts)
 
 3. **Data schema extension** in `agent/result.json`:
+
    ```json
    "correctionMetrics": {
      "total_steps": 24,
@@ -573,6 +578,7 @@ Iterations_to_Success = number_of_self_correction_loops
    - Track success/failure per attempt
 
 3. **Data schema extension** in `agent/result.json`:
+
    ```json
    "iterationMetrics": {
      "total_attempts": 3,
@@ -638,6 +644,7 @@ Iterations_to_Success = number_of_self_correction_loops
 2. Implement P0 instrumentation (tool success tracking, tool utilization flags)
 3. Validate data collection with small-scale pilot experiments
 4. Implement P1/P2 instrumentation based on research needs
+
 ## Example Calculations
 
 ### Example 1: Single Run
@@ -714,6 +721,7 @@ r_prog = achieved_steps / expected_steps
 ```
 
 **Interpretation**:
+
 - 1.0 = all expected steps completed
 - 0.5 = halfway through expected steps
 - 0.0 = no progress
@@ -734,6 +742,7 @@ strategic_drift = 1 - (goal_aligned_actions / total_actions)
 ```
 
 **Interpretation**:
+
 - 0.0 = perfect alignment (no drift)
 - 1.0 = complete misalignment (all actions off-track)
 
@@ -746,6 +755,7 @@ cfp = failed_changes / total_changes
 ```
 
 **Interpretation**:
+
 - 0.0 = no failures (stable output)
 - 0.1 = 10% of changes cause failures
 - High CFP indicates brittle solutions
@@ -781,6 +791,7 @@ skill_efficiency = skill_tokens / (skill_tokens + schema_overhead)
 ```
 
 **Interpretation**:
+
 - 1.0 = no schema overhead (pure T2)
 - 0.2 = 80% of tokens are schema overhead
 
@@ -793,6 +804,7 @@ token_efficiency_ratio = schema_tokens / skill_tokens
 ```
 
 **Interpretation**:
+
 - ratio > 1.0 = schemas use more tokens than skills
 - ratio = 10.0 = schemas use 10x more tokens
 

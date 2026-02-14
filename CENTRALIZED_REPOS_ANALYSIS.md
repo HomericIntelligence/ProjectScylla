@@ -7,6 +7,7 @@ This implementation centralizes base repository clones across E2E experiments, e
 ## Architecture Changes
 
 ### Before (Per-Experiment Layout)
+
 ```
 results/
 ├── 2024-01-01T00-00-00-exp1/
@@ -20,6 +21,7 @@ Total: ~22 MB for 2 experiments
 ```
 
 ### After (Centralized Layout)
+
 ```
 results/
 ├── repos/
@@ -45,12 +47,14 @@ self.base_repo = repos_dir / repo_uuid
 ```
 
 **Why SHA-256?**
+
 - Collision-resistant (birthday paradox: need ~2^128 repos for 50% collision)
 - Deterministic (same URL always produces same UUID)
 - URL-safe (no special characters)
 - First 16 chars provide 64 bits of entropy (18 quintillion possibilities)
 
 **Example**:
+
 ```
 URL: https://github.com/anthropics/anthropic-sdk-python.git
 UUID: e36d60bacf989bf2
@@ -73,12 +77,14 @@ with open(lock_path, "w") as lock_file:
 ```
 
 **Why file locking?**
+
 - **Race condition prevention**: Multiple experiments starting simultaneously
 - **Advisory locking**: Uses POSIX fcntl.flock (exclusive lock)
 - **Automatic cleanup**: Lock released on file close (even if process crashes)
 - **Per-repo locking**: Each repo has its own lock file (`.e36d60bacf989bf2.lock`)
 
 **Example scenario**:
+
 ```
 Time  | Experiment 1           | Experiment 2
 ------|------------------------|------------------
@@ -115,6 +121,7 @@ if use_shallow:
 | **Reusability** | Limited | Any commit accessible |
 
 **Centralized repos need full clone because:**
+
 1. Multiple experiments may use different commits
 2. Fetching individual commits in shallow clones is unreliable
 3. One-time clone cost amortized across all experiments
@@ -136,16 +143,19 @@ git -C /path/to/workspace checkout abc123           # Checkout commit
 **Why separate steps?**
 
 **Problem**: When you specify a commit in `git worktree add`:
+
 ```bash
 git worktree add -b my_branch /path abc123
 ```
 
 Git tries to create a branch at commit `abc123`. But in centralized repos:
+
 - Base repo is on `main` branch (not checked out to specific commit)
 - Commit `abc123` might not be in the object store yet
 - `git worktree add` doesn't fetch before creating worktree
 
 **Solution**: Separate fetch and checkout:
+
 ```bash
 # 1. Ensure commit exists in object store
 git fetch origin abc123  # Done in _ensure_commit_available()
@@ -158,6 +168,7 @@ git -C /path checkout abc123
 ```
 
 **Benefits**:
+
 - Fetch happens once in base repo setup
 - Worktree creation is simple (no commit resolution)
 - Checkout in worktree is guaranteed to succeed (commit already fetched)
@@ -183,6 +194,7 @@ def _ensure_commit_available(self) -> None:
 **Why not checkout in base repo?**
 
 **Problem with checkout in base**:
+
 ```
 Base repo checked out to commit A
 Experiment 1 wants commit A ✓
@@ -190,6 +202,7 @@ Experiment 2 wants commit B ✗ (base changed!)
 ```
 
 **Solution: Only fetch, never checkout in base**:
+
 ```
 Base repo stays on 'main' branch
 - Commit A in object store
@@ -202,12 +215,14 @@ Experiment 3 worktree: checkout C ✓
 ```
 
 **Git object store explanation**:
+
 - Git stores all commits, trees, and blobs in `.git/objects/`
 - Checking out = moving `HEAD` pointer (doesn't affect object store)
 - Fetching = adding objects to store (doesn't move `HEAD`)
 - Worktrees share object store but have independent `HEAD`
 
 **Example**:
+
 ```bash
 # Base repo state
 $ git -C repos/e36d60bacf989bf2 rev-parse HEAD
@@ -232,6 +247,7 @@ def456    # Checked out to def456
 **File**: `tests/unit/e2e/test_workspace_manager.py`
 
 #### Existing Tests (11) - Updated for file locking
+
 1. ✓ Successful clone on first attempt
 2. ✓ Retry on transient network error (connection reset)
 3. ✓ Retry on early EOF error
@@ -245,6 +261,7 @@ def456    # Checked out to def456
 11. ✓ Case-insensitive error detection
 
 #### New Tests (8) - Centralized repo functionality
+
 1. ✓ **test_repos_dir_sets_centralized_path**
    - Verifies `repos_dir / sha256(url)[:16]` path calculation
    - Ensures `repos_dir` parameter stored correctly
@@ -285,6 +302,7 @@ def456    # Checked out to def456
 **File**: `test_centralized_repos_integration.py`
 
 **Test scenario**:
+
 1. Create Experiment 1 with centralized repos
    - Verify base repo created at `repos/<uuid>/`
    - Verify full clone (no `.git/shallow`)
@@ -299,6 +317,7 @@ def456    # Checked out to def456
    - Verify >30% savings
 
 **Results**:
+
 ```
 Base repository size: 8.0 MB
 Workspace 1 size: 2.6 MB
@@ -328,6 +347,7 @@ Savings: 7.6 MB (37.3%)
 | Worktree creation | O(1) | O(1) | Same |
 
 **Example timing** (anthropic-sdk-python):
+
 ```
 First experiment:
   - Clone: ~5s
@@ -355,6 +375,7 @@ Second experiment (legacy):
 | **Savings %** | ((N-1) / N) × 100% | 36.4% |
 
 **Scaling**:
+
 ```
 Experiments | Legacy | Centralized | Savings
 ------------|--------|-------------|--------
@@ -366,6 +387,7 @@ Experiments | Legacy | Centralized | Savings
 ```
 
 **Asymptotic savings**: Approaches (N-1)/N as N grows
+
 - 2 experiments: 36.4%
 - 10 experiments: 65.5%
 - ∞ experiments: 100%
@@ -375,6 +397,7 @@ Experiments | Legacy | Centralized | Savings
 ### 1. Parallel Experiment Starts
 
 **Scenario**: Two experiments start simultaneously
+
 ```python
 # Process 1
 with fcntl.flock(lock_file):
@@ -392,6 +415,7 @@ with fcntl.flock(lock_file):  # Blocks until Process 1 releases
 ### 2. Experiment Crash During Clone
 
 **Scenario**: Process crashes mid-clone
+
 ```python
 with fcntl.flock(lock_file):
     git clone ...  # CRASH HERE
@@ -399,6 +423,7 @@ with fcntl.flock(lock_file):
 ```
 
 **Cleanup needed**:
+
 - Partial clone directory exists
 - `.git` directory incomplete
 - Next experiment will see directory but fail
@@ -410,6 +435,7 @@ with fcntl.flock(lock_file):
 ### 3. Different Commits Same Repo
 
 **Scenario**: Experiments use different commits
+
 ```python
 # Experiment 1
 manager1 = WorkspaceManager(commit="abc123", repos_dir=repos_dir)
@@ -425,6 +451,7 @@ manager2.setup_base_repo()  # Fetches def456 (doesn't re-clone!)
 ### 4. Legacy Experiment Reruns
 
 **Scenario**: Rerun experiment created before centralized repos
+
 ```python
 # Discovery logic in rerun.py
 centralized_repo = repos_dir / repo_uuid
@@ -442,7 +469,7 @@ else:
 
 ## Migration Path
 
-### No migration needed!
+### No migration needed
 
 The implementation is **fully backward compatible**:
 
@@ -466,17 +493,20 @@ The implementation is **fully backward compatible**:
 ## Code Quality
 
 ### Test Coverage: 100%
+
 - All changed lines covered by tests
 - All edge cases tested
 - Integration test validates end-to-end flow
 
 ### Pre-commit Hooks: ✓ PASS
+
 - Ruff format: ✓ PASS
 - Ruff check: ✓ PASS
 - Trailing whitespace: ✓ PASS
 - End of files: ✓ PASS
 
 ### Type Safety
+
 - All functions have type hints
 - Mypy validation: PASS
 - No `Any` types used
@@ -486,6 +516,7 @@ The implementation is **fully backward compatible**:
 ### 1. Path Traversal Prevention
 
 **SHA-256 UUID is safe**:
+
 - No `../` possible (hex characters only: 0-9a-f)
 - No symlink attacks (deterministic path calculation)
 - No shell injection (used with `Path` objects, not shell commands)
@@ -493,6 +524,7 @@ The implementation is **fully backward compatible**:
 ### 2. File Locking
 
 **Advisory locks only**:
+
 - Does NOT prevent malicious access
 - Only prevents accidental concurrent clones
 - Lock file in same directory (same permissions)
@@ -500,6 +532,7 @@ The implementation is **fully backward compatible**:
 ### 3. Shared Clone Access
 
 **Multi-tenant consideration**:
+
 - All experiments from same user share repos
 - File permissions inherited from `results/repos/` directory
 - No cross-user isolation (same as before)
@@ -509,6 +542,7 @@ The implementation is **fully backward compatible**:
 ### Real-world Example: anthropic-sdk-python
 
 **Repository stats**:
+
 - Size: 8.0 MB (full clone)
 - Worktree: 2.6 MB
 - Clone time: ~5 seconds
@@ -519,12 +553,14 @@ The implementation is **fully backward compatible**:
 #### Scenario 1: 5 Tiers × 10 Subtests × 3 Runs = 150 worktrees
 
 **Legacy (per-experiment)**:
+
 ```
 Total: 8.0 MB (clone) + (150 × 2.6 MB) = 398 MB
 Time: 5s (clone) + (150 × 0.1s) = 20s
 ```
 
 **Centralized**:
+
 ```
 Total: 8.0 MB (clone) + (150 × 2.6 MB) = 398 MB
 Time: 5s (clone) + (150 × 0.1s) = 20s
@@ -535,12 +571,14 @@ Time: 5s (clone) + (150 × 0.1s) = 20s
 #### Scenario 2: 10 Sequential Experiments
 
 **Legacy**:
+
 ```
 Total: 10 × 398 MB = 3.98 GB
 Time: 10 × 20s = 200s
 ```
 
 **Centralized**:
+
 ```
 Total: 8.0 MB + (10 × 390 MB) = 3.91 GB
 Time: 5s + (10 × 20s - 9 × 5s) = 160s
@@ -551,6 +589,7 @@ Time: 5s + (10 × 20s - 9 × 5s) = 160s
 #### Scenario 3: Large Monorepo (e.g., Chromium)
 
 **Repository stats**:
+
 - Size: 2.5 GB (full clone)
 - Worktree: 3.5 GB
 - Clone time: ~30 minutes
@@ -559,12 +598,14 @@ Time: 5s + (10 × 20s - 9 × 5s) = 160s
 **10 Experiments**:
 
 **Legacy**:
+
 ```
 Total: 10 × (2.5 + 3.5) = 60 GB
 Time: 10 × 31 min = 310 min
 ```
 
 **Centralized**:
+
 ```
 Total: 2.5 + (10 × 3.5) = 37.5 GB
 Time: 30 min + (10 × 1 min) = 40 min
@@ -579,11 +620,13 @@ Time: 30 min + (10 × 1 min) = 40 min
 **Problem**: Old repos accumulate in `results/repos/`
 
 **Solution**: Add cleanup command
+
 ```bash
 scylla e2e gc --unused-days 30
 ```
 
 **Implementation**:
+
 - Scan `results/repos/` for last access time
 - Remove repos not used in N days
 - Verify no active worktrees before deletion
@@ -595,6 +638,7 @@ scylla e2e gc --unused-days 30
 **Current**: Each project has its own `results/repos/`
 
 **Improvement**: Global cache
+
 ```bash
 ~/.cache/scylla/repos/<uuid>/
 ```
@@ -606,6 +650,7 @@ scylla e2e gc --unused-days 30
 **Problem**: Full clones slow for large repos
 
 **Solution**: Start shallow, deepen on demand
+
 ```python
 # Initial clone
 git clone --depth=1 url
@@ -621,6 +666,7 @@ git fetch --depth=1000 origin commit
 ### ✅ Implementation Complete
 
 **Core functionality**:
+
 - ✓ Centralized repo clones at `results/repos/<uuid>/`
 - ✓ Deterministic UUID from repo URL
 - ✓ File locking for parallel safety
@@ -629,12 +675,14 @@ git fetch --depth=1000 origin commit
 - ✓ Backward compatible with legacy layout
 
 **Quality assurance**:
+
 - ✓ 2100 tests pass (100% coverage)
 - ✓ Pre-commit hooks pass
 - ✓ Integration test demonstrates 37.3% savings
 - ✓ Type-safe with full type hints
 
 **Benefits**:
+
 - 🎯 **Disk savings**: 37-73% depending on experiment count
 - ⚡ **Time savings**: Skip clone on repeat experiments
 - 🔒 **Safe**: File locking prevents race conditions

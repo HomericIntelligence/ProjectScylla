@@ -390,6 +390,7 @@ docker run \
 ```
 
 **Planned Enhancement**: Add dedicated entry point commands for:
+
 - `--run-agent`: Execute agent-specific tests with delegation support
 - `--run-judge`: Run LLM judge evaluation on agent outputs
 - `--run-benchmark`: Execute full benchmark suite

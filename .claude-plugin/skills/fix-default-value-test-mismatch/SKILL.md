@@ -25,6 +25,7 @@ Use this skill when:
 **Root Cause**: Source code default value changed, but test assertion not updated.
 
 **Example**:
+
 ```python
 # Commit 6055dda changed this in scylla/automation/models.py:
 enable_retrospective: bool = True  # Was: False
@@ -43,6 +44,7 @@ pixi run python -m pytest tests/unit/automation/test_models.py::TestImplementerO
 ```
 
 **Look for**:
+
 - Assertion errors with `is False` vs `is True`
 - Test method named `test_default_values` or `test_defaults`
 - Recent commits that changed default values
@@ -55,6 +57,7 @@ git log --oneline --all -S "enable_retrospective" | head -5
 ```
 
 **Check**:
+
 - What is the CURRENT default value in source code?
 - When was it changed (git blame)?
 - Was the test updated in the same commit?
@@ -87,6 +90,7 @@ pre-commit run --all-files
 ```
 
 **Expected Output**:
+
 - Specific test: PASSED ✅
 - Full suite: All tests passing
 - Pre-commit: All checks green
@@ -120,6 +124,7 @@ gh pr merge --auto --rebase
 ## Failed Attempts
 
 None in this session - the approach was straightforward:
+
 1. Read test file to confirm mismatch
 2. Edit one line
 3. Verify with test run
@@ -134,6 +139,7 @@ None in this session - the approach was straightforward:
 **File**: `tests/unit/automation/test_models.py:309`
 
 **Change**:
+
 ```python
 # Before
 assert options.enable_retrospective is False

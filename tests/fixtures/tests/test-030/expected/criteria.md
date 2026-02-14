@@ -1,4 +1,5 @@
 # Evaluation Criteria\n\n## R001: Inlining
+
 Inlining added
 
 **Verification**: Validate the requirement is satisfied.

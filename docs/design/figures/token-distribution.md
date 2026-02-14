@@ -37,10 +37,12 @@ The figure is generated from the runs DataFrame (`runs_df`) with the following t
 - **`cache_read_tokens`**: Cached input tokens retrieved from cache
 
 **Aggregation Method**: Mean tokens per tier and agent model
+
 - Group by: `agent_model`, `tier`
 - Aggregation: Mean of each token column
 
 **Data Transformation**: Long format reshape for stacking
+
 - Variables: `input_tokens`, `output_tokens`, `cache_creation_tokens`, `cache_read_tokens`
 - Labels: "Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"
 
@@ -111,16 +113,19 @@ Claude's prompt caching system stores frequently reused input content (e.g., sys
 Different tier architectures produce distinct token distribution patterns:
 
 **T0 (Prompts Only)**:
+
 - High fresh input (no caching optimization)
 - Moderate output (single-shot responses)
 - Zero cache creation/reuse
 
 **T1-T3 (Skills/Tooling/Delegation)**:
+
 - Increasing cache creation as context grows
 - Growing cached input as repeated operations reuse context
 - Variable output based on tool usage
 
 **T4-T6 (Hierarchy/Hybrid/Super)**:
+
 - Extreme cache efficiency (>99.98% cached input)
 - Minimal fresh input (~0.01-0.02% of total input)
 - High cache creation to support hierarchical context sharing
@@ -191,11 +196,13 @@ Interactive tooltip displays:
 The `stack="normalize"` parameter converts absolute token counts to percentages of total tokens per tier. This causes very small token counts to become visually invisible:
 
 **T4 Example**:
+
 - Fresh input: ~23 tokens
 - Cached input: ~92,000 tokens
 - Fresh % = 23 / 92,023 ≈ 0.02% (invisible in visualization)
 
 **T6 Example**:
+
 - Fresh input: ~29 tokens
 - Cached input: ~219,000 tokens
 - Fresh % = 29 / 219,029 ≈ 0.01% (invisible in visualization)
@@ -229,11 +236,13 @@ This is **expected behavior** demonstrating extreme cache efficiency in higher-t
 ### Cache Efficiency Patterns
 
 **High Cache Efficiency** (Desirable):
+
 - Minimal "Input (Fresh)" segment
 - Large "Input (Cached)" segment
 - Indicates effective prompt caching, 90% cost savings on input
 
 **Low Cache Efficiency** (Undesirable):
+
 - Large "Input (Fresh)" segment
 - Small "Input (Cached)" segment
 - Indicates poor caching, missing optimization opportunities
@@ -260,14 +269,17 @@ This is **expected behavior** demonstrating extreme cache efficiency in higher-t
 ### Tier-Specific Expectations
 
 **T0 (Prompts Only)**:
+
 - Expect: High fresh input, minimal/zero caching
 - Warning: Any significant cache usage indicates configuration error
 
 **T1-T3 (Progressive Features)**:
+
 - Expect: Growing cache creation and reuse
 - Warning: Decreasing cache efficiency indicates architectural issues
 
 **T4-T6 (Advanced Architectures)**:
+
 - Expect: Extreme cache efficiency (>99.98% cached input)
 - Warning: Visible fresh input indicates caching failure
 
@@ -291,6 +303,7 @@ When fresh input tokens are invisible in T4/T6 visualizations:
 - **Analysis workflow**: CoP identifies expensive tiers → Token distribution explains why
 
 **Example**: If T3 has high CoP, check token distribution for:
+
 - Excessive output tokens (verbose responses)
 - Low cache efficiency (high fresh input)
 - Inefficient cache creation (creation without reuse)
@@ -304,6 +317,7 @@ When fresh input tokens are invisible in T4/T6 visualizations:
 - **Analysis workflow**: Cumulative cost shows total spend → Token distribution shows which token types drive spending
 
 **Example**: If cumulative cost accelerates in T4+, check token distribution for:
+
 - Unexpected fresh input increase (cache invalidation?)
 - Output token growth (more complex responses?)
 - Cache creation inefficiency (creating but not reusing?)
@@ -376,6 +390,7 @@ From lines 22-29 (docstring):
 
 > **Note on T4/T6 Fresh Input Tokens**: Higher-tier architectures (T4, T6) show minimal
 > or invisible "Input (Fresh)" tokens due to extreme cache efficiency. For example:
+>
 > - T4: ~23 fresh tokens vs ~92K cached tokens (0.02% fresh)
 > - T6: ~29 fresh tokens vs ~219K cached tokens (0.01% fresh)
 >

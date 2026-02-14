@@ -10,6 +10,7 @@
 ## When to Use This Skill
 
 Use this audit process when:
+
 - **Preparing for public release** - need comprehensive quality assessment
 - **Taking over legacy codebase** - understand technical debt
 - **Post-rapid-development cleanup** - after sprint, assess code health
@@ -17,6 +18,7 @@ Use this audit process when:
 - **Team onboarding** - document known issues upfront
 
 **Don't use when**:
+
 - Single feature development (too heavyweight)
 - Already have recent audit (< 3 months old)
 - Just need specific issue analysis (not full audit)
@@ -24,35 +26,45 @@ Use this audit process when:
 ## The 7 Development Principles
 
 ### 1. KISS - Keep It Simple Stupid
+
 **Rule**: Don't add complexity when a simpler solution works
 **Red flags**:
+
 - Functions >100 lines
 - Nested conditionals >5 levels deep
 - Complex logic that requires comments to understand
 
 ### 2. YAGNI - You Ain't Gonna Need It
+
 **Rule**: Don't add things until they are required
 **Red flags**:
+
 - Unused functions/classes
 - Over-engineered abstractions
 - Features built for hypothetical future needs
 
 ### 3. TDD - Test Driven Development
+
 **Rule**: Write tests to drive implementation
 **Red flags**:
+
 - Modules with 0% test coverage
 - Code without corresponding tests
 - Tests written after implementation (acceptable but suboptimal)
 
 ### 4. DRY - Don't Repeat Yourself
+
 **Rule**: Don't duplicate functionality, data structures, or algorithms
 **Red flags**:
+
 - Copy-paste code across files
 - Same logic in >2 places
 - Repeated patterns not extracted
 
 ### 5. SOLID Principles
+
 **Rules**:
+
 - **S**ingle Responsibility - one class, one purpose
 - **O**pen-Closed - open for extension, closed for modification
 - **L**iskov Substitution - subtypes must be substitutable
@@ -60,20 +72,25 @@ Use this audit process when:
 - **D**ependency Inversion - depend on abstractions, not concretions
 
 **Red flags**:
+
 - God classes (>500 lines, many responsibilities)
 - Classes that do everything
 - Tight coupling between modules
 
 ### 6. Modularity
+
 **Rule**: Develop independent modules through well-defined interfaces
 **Red flags**:
+
 - Circular dependencies
 - Modules that can't be tested independently
 - No clear separation of concerns
 
 ### 7. POLA - Principle of Least Astonishment
+
 **Rule**: Create intuitive and predictable interfaces
 **Red flags**:
+
 - Surprising behavior
 - Inconsistent naming
 - Unclear error messages
@@ -131,6 +148,7 @@ For each major module, evaluate against all 7 principles:
 ```
 
 **Modules to assess**:
+
 1. Core business logic (e2e/, executor/, judge/)
 2. Supporting libraries (metrics/, analysis/, reporting/)
 3. Adapters and integrations (adapters/, config/)
@@ -142,17 +160,20 @@ For each major module, evaluate against all 7 principles:
 Classify findings into priority tiers:
 
 **P0 - Blocking for Release**:
+
 - Critical violations that confuse users immediately
 - Missing tests for foundational code
 - Severe DRY violations (>80% duplication)
 - God classes (>2000 lines)
 
 **P1 - High Priority**:
+
 - Missing tests for important modules
 - Large functions (>200 lines)
 - Moderate duplication
 
 **P2 - Should Address Soon**:
+
 - Minor duplication
 - Documentation issues
 - TODO markers
@@ -172,6 +193,7 @@ TODO: [What needs to be done]
 ```
 
 **Benefits**:
+
 - Acknowledges technical debt
 - Prevents confusion
 - Provides tracking reference
@@ -213,6 +235,7 @@ EOF
 ```
 
 **Issue template sections**:
+
 - Objective (1-2 sentences)
 - Problem (with code examples/metrics)
 - Proposed Solution (actionable steps)
@@ -253,25 +276,30 @@ Create comprehensive audit document:
 ## Failed Attempts
 
 ### ❌ Attempt 1: Fix Everything Immediately
+
 **What we tried**: Decompose 2269-line god class during audit
 **Why it failed**: Too risky - high chance of breaking tests, time-consuming
 **Lesson**: Audit should document and track, not fix immediately. Create issues + known-issue comments instead.
 
 ### ❌ Attempt 2: Rate Each Principle Subjectively
+
 **What we tried**: Assign scores based on "feels"
 **Why it failed**: Inconsistent, hard to justify ratings
 **Lesson**: Use objective metrics:
+
 - KISS: Function length, nesting depth
 - TDD: Test file count, coverage %
 - DRY: Duplicate code detection
 - SOLID: Class size, responsibility count
 
 ### ❌ Attempt 3: Audit Without Gathering Stats First
+
 **What we tried**: Start assessing modules without baseline
 **Why it failed**: No context for relative severity (is 500 lines large for this codebase?)
 **Lesson**: Always start with statistics phase - establishes baseline
 
 ### ❌ Attempt 4: Create Issues Without Proposed Solutions
+
 **What we tried**: File issues that just describe problems
 **Why it failed**: Team doesn't know how to fix, issues languish
 **Lesson**: Every issue must include proposed solution section
@@ -283,6 +311,7 @@ Create comprehensive audit document:
 **Overall Rating**: 6.3/10 (GO with conditions)
 
 **Top Issues Filed**:
+
 - #478 [P0] - God class (2269 lines, 383-line function)
 - #479 [P0] - Copy-paste adapters (~80% duplication)
 - #480 [P1] - Missing tests for core/discovery (0% coverage)
@@ -290,6 +319,7 @@ Create comprehensive audit document:
 - #482-490 [P2] - Various cleanup items
 
 **Module Ratings**:
+
 | Module | Rating | Status | Key Issue |
 |--------|--------|--------|-----------|
 | metrics/ | 8/10 | GO | Minor duplication |
@@ -300,26 +330,31 @@ Create comprehensive audit document:
 ### Scoring Rubric
 
 **10/10** - Exemplary
+
 - All principles followed perfectly
 - Comprehensive tests
 - Clean, maintainable code
 
 **8-9/10** - Good
+
 - Minor violations only
 - Good test coverage (>80%)
 - Mostly clean code
 
 **6-7/10** - Acceptable
+
 - Some violations
 - Decent coverage (>60%)
 - Fixable issues
 
 **4-5/10** - Concerning
+
 - Major violations
 - Poor coverage (<60%)
 - Significant refactoring needed
 
 **1-3/10** - Critical
+
 - Severe violations
 - Little/no tests
 - Major overhaul required
@@ -327,17 +362,20 @@ Create comprehensive audit document:
 ### Issue Priority Guidelines
 
 **P0** - Must fix before public release:
+
 - Documentation inaccuracies that confuse immediately
 - Critical DRY violations (>50% duplication)
 - Zero test coverage for core modules
 - God classes (>2000 lines with >5 responsibilities)
 
 **P1** - Fix in first post-release sprint:
+
 - Missing tests for important modules
 - Functions >200 lines
 - Moderate duplication (20-50%)
 
 **P2** - Address in backlog:
+
 - Minor issues
 - TODO markers
 - Documentation improvements
@@ -346,24 +384,30 @@ Create comprehensive audit document:
 ## Recovery from Failures
 
 ### Issue: Discovered Huge God Class
+
 **Symptom**: File is >2000 lines with multiple responsibilities
 **Don't**: Try to refactor immediately during audit
 **Do**:
+
 1. File detailed GitHub issue with decomposition plan
 2. Add known-issue comment to file
 3. Mark module as NO-GO* (conditional)
 4. Schedule refactoring for separate session
 
 ### Issue: Found Documentation Inaccuracy
+
 **Symptom**: Documentation claims X but code does Y (e.g., "Mojo First" but 0 .mojo files)
 **Do**:
+
 1. Fix documentation immediately (low risk)
 2. Commit fix in audit PR
 3. Note in audit report
 
 ### Issue: Discovered Pre-Existing Test Failures
+
 **Symptom**: Running full test suite reveals failures unrelated to current work
 **Do**:
+
 1. Create separate branch to fix test failures
 2. File issue tracking the failures
 3. Fix tests in isolated PR
@@ -372,6 +416,7 @@ Create comprehensive audit document:
 ## Success Metrics
 
 Audit is successful if:
+
 - ✅ Every module has rating and GO/NO-GO status
 - ✅ All P0 issues have GitHub issues filed
 - ✅ Known-issue comments added to problem areas

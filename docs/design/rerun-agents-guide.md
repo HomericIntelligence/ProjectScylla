@@ -25,6 +25,7 @@ pixi run python scripts/rerun_agents.py ~/fullruns/test001-nothinking-haiku/ --d
 ```
 
 This shows:
+
 - Classification of all runs by status
 - How many runs would be rerun vs regenerated
 - Summary statistics
@@ -36,6 +37,7 @@ pixi run python scripts/rerun_agents.py ~/fullruns/test001-nothinking-haiku/
 ```
 
 This will:
+
 1. Re-run agent+judge for failed, partial, and never-started runs
 2. Regenerate run_result.json for agent-complete-missing-results
 3. Rebuild all tier and experiment results
@@ -109,6 +111,7 @@ pixi run python scripts/rerun_agents.py ~/fullruns/test001-nothinking-haiku/ \
 **Problem**: Experiment was killed mid-execution. Some runs started but didn't complete.
 
 **Solution**:
+
 ```bash
 # Dry run to see what needs completion
 pixi run python scripts/rerun_agents.py ~/fullruns/test001/ --dry-run
@@ -123,6 +126,7 @@ pixi run python scripts/rerun_agents.py ~/fullruns/test001/ \
 **Problem**: Multiple runs failed due to API rate limits. Want to retry just the failures.
 
 **Solution**:
+
 ```bash
 # Re-run only failed agents
 pixi run python scripts/rerun_agents.py ~/fullruns/test001/ \
@@ -134,6 +138,7 @@ pixi run python scripts/rerun_agents.py ~/fullruns/test001/ \
 **Problem**: You deleted some `run_result.json` files to force re-judging, but agents ran successfully.
 
 **Solution**:
+
 ```bash
 # Regenerate without re-running agents (fast)
 pixi run python scripts/rerun_agents.py ~/fullruns/test001/ \
@@ -145,6 +150,7 @@ pixi run python scripts/rerun_agents.py ~/fullruns/test001/ \
 **Problem**: Runs 1, 5, and 7 in T0/00 had issues. Want to re-run just those.
 
 **Solution**:
+
 ```bash
 pixi run python scripts/rerun_agents.py ~/fullruns/test001/ \
     --tier T0 --subtest 00 --runs 1,5,7

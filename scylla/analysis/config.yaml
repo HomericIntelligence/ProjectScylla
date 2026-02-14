@@ -150,19 +150,6 @@ colors:
     "Output": "#E45756"            # Red
     "Cache Creation": "#F58518"    # Orange
 
-  # Criteria colors (for criteria analysis)
-  criteria:
-    functional: "#4C78A8"       # Blue
-    code_quality: "#E45756"     # Red
-    proportionality: "#72B7B2"  # Teal
-    build_pipeline: "#F58518"   # Orange
-    overall_quality: "#54A24B"  # Green
-
-  # Phase colors (for timing breakdown)
-  phases:
-    "Agent Execution": "#4C78A8"  # Blue
-    "Judge Evaluation": "#E45756" # Red
-
 # Data Loading Parameters
 data:
   # Experiment exclusions (override with --exclude CLI flag)

@@ -128,6 +128,7 @@ Unique identifier for the requirement. Must be:
 - Followed by exactly 3 digits (zero-padded)
 
 **Examples**:
+
 ```yaml
 requirements:
   - id: "R001"   # Valid
@@ -150,6 +151,7 @@ Clear description of what this requirement evaluates. Should be:
 - Evaluable by an LLM judge
 
 **Examples**:
+
 ```yaml
 requirements:
   - id: "R001"
@@ -180,6 +182,7 @@ to the final score.
 | 3.0+ | Essential | Must-pass requirement |
 
 **Example**:
+
 ```yaml
 requirements:
   - id: "R001"
@@ -210,6 +213,7 @@ Evaluation type determines how the requirement is scored:
 | `scaled` | Partial credit makes sense | Coverage percentage, code quality |
 
 **Example**:
+
 ```yaml
 requirements:
   # Binary: Either the file exists or it doesn't
@@ -256,6 +260,7 @@ Minimum weighted score (as a decimal) required to pass the test.
 | 0.90 | Very strict (90% required) |
 
 **Example**:
+
 ```yaml
 grading:
   pass_threshold: 0.70  # 70% weighted score required to pass
@@ -287,6 +292,7 @@ Letter grade thresholds. If omitted, only pass/fail is reported.
 - Score >= threshold receives that grade
 
 **Industry-Aligned Scale** (Recommended):
+
 ```yaml
 grading:
   pass_threshold: 0.60
@@ -327,11 +333,13 @@ Where:
 ### Binary vs Scaled Scoring
 
 **Binary Evaluation**:
+
 ```
 score = 1.0 if requirement_met else 0.0
 ```
 
 **Scaled Evaluation**:
+
 ```
 score = degree_of_completion  # 0.0 to 1.0
 ```
@@ -354,11 +362,13 @@ requirements:
 ```
 
 And these scores:
+
 - R001: 1.0 (passed)
 - R002: 0.75 (75% complete)
 - R003: 0.0 (failed)
 
 Calculation:
+
 ```
 final_score = (1.0 * 2.0 + 0.75 * 2.0 + 0.0 * 1.0) / (2.0 + 2.0 + 1.0)
             = (2.0 + 1.5 + 0.0) / 5.0

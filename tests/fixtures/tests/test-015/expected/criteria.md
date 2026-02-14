@@ -1,4 +1,5 @@
 # Evaluation Criteria\n\n## R001: Type
+
 Type errors fixed
 
 **Verification**: Validate the requirement is satisfied.

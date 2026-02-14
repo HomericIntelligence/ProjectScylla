@@ -10,6 +10,7 @@
 ## When to Use This Skill
 
 Use this approach when:
+
 - **Multiple independent tasks** need to be completed simultaneously
 - **No shared file conflicts** between tasks (different modules/directories)
 - **Time is critical** - need to parallelize work
@@ -17,6 +18,7 @@ Use this approach when:
 - **Multiple PRs** will be created from the work
 
 **Don't use when**:
+
 - Tasks modify the same files (conflicts likely)
 - Tasks have dependencies on each other
 - Single sequential task is sufficient
@@ -42,6 +44,7 @@ git worktree list
 ```
 
 **Expected output**:
+
 ```
 /home/user/ProjectScylla      main
 /home/user/worktree-480       480-add-core-discovery-tests
@@ -64,6 +67,7 @@ Each agent gets:
 ```
 
 **Agent 1 Prompt Template**:
+
 ```
 You are working on GitHub Issue #480: [Title].
 
@@ -86,6 +90,7 @@ You are working on GitHub Issue #480: [Title].
 ```
 
 **Critical**: Each agent must:
+
 - Work exclusively in their assigned worktree
 - Create their own branch
 - Push their branch independently
@@ -104,6 +109,7 @@ tail -f /tmp/claude-1000/tasks/<agent-id>.output
 ```
 
 **Notifications received**:
+
 - `Agent <id> completed` with summary
 - Individual agent transcripts available at output file paths
 
@@ -125,6 +131,7 @@ git worktree list  # Should show only main worktree
 ```
 
 **Important**: Only remove worktrees AFTER:
+
 - All commits are pushed
 - All PRs are created
 - No uncommitted work remains
@@ -132,16 +139,19 @@ git worktree list  # Should show only main worktree
 ## Failed Attempts
 
 ### ❌ Attempt 1: Sequential Task Execution
+
 **What we tried**: Process issues one at a time with single agent
 **Why it failed**: Would take 3x longer (each task took ~5 minutes)
 **Lesson**: Use parallelization when tasks are independent
 
 ### ❌ Attempt 2: Parallel Agents Without Worktrees
+
 **What we tried**: Launch multiple agents in same repository
 **Why it failed**: Risk of file conflicts, harder to track which agent is doing what
 **Lesson**: Worktrees provide clean isolation
 
 ### ❌ Attempt 3: Complex In-Place Refactoring (God Class)
+
 **What we tried**: Immediately decompose 2269-line file during audit
 **Why it failed**: Too risky for single session, high chance of breaking tests
 **Lesson**: For complex refactoring, file GitHub issue + add known-issue comment instead of immediate fix
@@ -191,6 +201,7 @@ Examples:
 ### PR Creation Pattern
 
 Each agent should create PR with:
+
 ```bash
 gh pr create \
   --title "type(scope): Brief description" \
@@ -203,8 +214,10 @@ gh pr merge --auto --rebase  # Enable auto-merge
 ## Recovery from Failures
 
 ### Issue: Sub-Agent Gets Stuck
+
 **Symptom**: No progress for >10 minutes
 **Solution**:
+
 ```bash
 # Check output
 tail -f /tmp/claude-1000/tasks/<agent-id>.output
@@ -213,8 +226,10 @@ tail -f /tmp/claude-1000/tasks/<agent-id>.output
 ```
 
 ### Issue: Agent Encounters Merge Conflict
+
 **Symptom**: Git push fails due to conflicts
 **Solution**: This shouldn't happen with proper worktree isolation, but if it does:
+
 ```bash
 cd ../worktree-xxx
 git fetch origin main
@@ -225,8 +240,10 @@ git push --force-with-lease
 ```
 
 ### Issue: Pre-Existing Test Failures Block CI
+
 **Symptom**: New PRs fail CI due to unrelated test failures
 **Solution**:
+
 1. Create separate branch to fix pre-existing failures
 2. Fix the failing tests
 3. Create PR for test fixes first
@@ -237,6 +254,7 @@ git push --force-with-lease
 ## Success Metrics
 
 This workflow is working if:
+
 - ✅ All agents complete without errors
 - ✅ Each agent creates independent PR
 - ✅ No file conflicts between PRs

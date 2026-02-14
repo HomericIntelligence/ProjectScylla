@@ -9,6 +9,7 @@
 ## Detailed Timeline
 
 ### Phase 1: Issue #315 (Expand Test Fixtures)
+
 - Branch: `315-expand-tier-fixtures`
 - Modified: `tests/unit/analysis/conftest.py`
 - Change: `tiers = ["T0", "T1", "T2"]` → `tiers = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]`
@@ -17,6 +18,7 @@
 - Result: All tests passed ✅
 
 ### Phase 2: Issue #323 (Judge Count Discrepancy)
+
 - Branch: `323-judge-count-discrepancy`
 - Root cause: `loader.py` line 408 didn't check `fallback` field
 - Files modified:
@@ -28,6 +30,7 @@
 - Result: All tests passed ✅
 
 ### Phase 3: Issue #316 (pytest.approx)
+
 - Branch: `316-pytest-approx`
 - Background agent a8c402e failed with "classifyHandoffIfNeeded is not defined"
 - Completed manually: 8 test files total, ~100+ assertions
@@ -36,6 +39,7 @@
 - Result: All tests passed ✅
 
 ### Phase 4: Issue #314 (Tier-Specific Metrics)
+
 - Branch: `314-tier-specific-metrics`
 - Added `ModelUsage` dataclass
 - Extended `RunData` with optional fields: `api_calls`, `num_turns`, `model_usage`
@@ -47,11 +51,13 @@
 - Result: All tests passed ✅
 
 ### Phase 5: PR Creation (Batch)
+
 - Created PRs #519-#522 for issues #315, #323, #316, #314
 - All 4 PRs auto-merged successfully
 - Note: Label 'analysis' didn't exist, had to remove
 
 ### Phase 6: Issue #328 (Power Analysis)
+
 - Branch: `328-post-hoc-power-analysis`
 - Added power_analysis section to config.yaml
 - Added 3 properties to config.py
@@ -64,6 +70,7 @@
 - Result: All tests passed ✅
 
 ### Phase 7: Issue #329 (Interaction Tests)
+
 - Branch: `329-model-tier-interaction`
 - Implemented Scheirer-Ray-Hare test
 - Algorithm: Rank → SS computation → χ² test
@@ -135,18 +142,21 @@ for metric in ["score", "impl_rate", "cost_usd", "duration_seconds"]:
 ## Error Messages
 
 ### Background Agent Failure
+
 ```
 Task a8c402e (type: local_agent) (status: failed)
 Delta: classifyHandoffIfNeeded is not defined
 ```
 
 ### Git Label Issue
+
 ```
 Label 'analysis' didn't exist when creating PR
 Fixed by: Removing the invalid label
 ```
 
 ### Linter Auto-Formatting
+
 ```
 Ruff Format Python.......................................................Failed
 - hook id: ruff-format-python
@@ -196,6 +206,7 @@ gh pr list --state all --limit 50 --json number,title,state
 ## Configuration Files Modified
 
 **config.yaml additions:**
+
 ```yaml
 power_analysis:
   n_simulations: 10000
@@ -204,6 +215,7 @@ power_analysis:
 ```
 
 **config.py additions:**
+
 ```python
 @property
 def power_n_simulations(self) -> int:
@@ -221,6 +233,7 @@ def adequate_power_threshold(self) -> float:
 ## Metrics
 
 **Lines of Code by Issue:**
+
 - #316: ~100 modified assertions (no new code)
 - #315: 1 line changed + docstring
 - #323: ~50 lines (loader + export + test)
@@ -230,6 +243,7 @@ def adequate_power_threshold(self) -> float:
 - **Total: ~760 lines changed**
 
 **Test Coverage by Issue:**
+
 - #316: 0 new tests (refactoring existing)
 - #315: 0 new tests (fixture expansion)
 - #323: 1 new test (regression)
@@ -239,6 +253,7 @@ def adequate_power_threshold(self) -> float:
 - **Total: 25 new tests**
 
 **Time Estimates:**
+
 - #316: 30 minutes (manual replacement)
 - #315: 5 minutes (1-line change)
 - #323: 45 minutes (debugging + fix)

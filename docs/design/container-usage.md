@@ -27,6 +27,7 @@ Run one experiment and exit automatically:
 ```
 
 **Use this when:**
+
 - Running a single experiment
 - Running in CI/CD pipelines
 - You want the container to clean up after completion
@@ -54,6 +55,7 @@ exit
 ```
 
 **Use this when:**
+
 - Running multiple experiments back-to-back
 - Debugging experiment issues
 - Iterating on experiment configurations
@@ -96,6 +98,7 @@ Results are written to the mounted `results/` directory and persist on the host.
 ```
 
 **Features:**
+
 - Auto-builds image if missing
 - Mounts credentials and project directory
 - Runs `python scripts/run_e2e_experiment.py` with your arguments
@@ -133,6 +136,7 @@ Results are written to the mounted `results/` directory and persist on the host.
 ```
 
 **Features:**
+
 - Auto-builds image if missing
 - Launches interactive bash shell
 - Container auto-removes on exit (`--rm`)
@@ -210,11 +214,13 @@ docker build -t scylla-runner:latest -f docker/Dockerfile .
 **Solutions:**
 
 1. Ensure `~/.claude/.credentials.json` exists:
+
    ```bash
    ls -la ~/.claude/.credentials.json
    ```
 
 2. Or set API key in environment:
+
    ```bash
    export ANTHROPIC_API_KEY=your-key-here
    ./scripts/run_experiment_in_container.sh ...
@@ -325,6 +331,7 @@ Unlike the previous architecture, the current design runs the **entire experimen
 - **NEW**: Host → Single container → All agents + judges (simple)
 
 This provides:
+
 - ✅ Better performance (no container startup overhead per execution)
 - ✅ Simpler debugging (everything in one place)
 - ✅ Easier credential management (mount once)

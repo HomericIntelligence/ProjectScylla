@@ -18,6 +18,7 @@ Use this skill when you need to:
 - Complete **large-scale documentation efforts** efficiently
 
 **Trigger conditions**:
+
 - 10+ items requiring similar documentation structure
 - Each item is independent (no cross-dependencies during generation)
 - Documentation follows a consistent template/format
@@ -43,6 +44,7 @@ Required sections (9 for analysis figures):
 ```
 
 **Create issue mapping** linking each documentation task to:
+
 - Issue number
 - Output filename
 - Source code location (file, function, line range)
@@ -78,6 +80,7 @@ create PR for #{issue.number}, enable auto-merge, cleanup."""
 ```
 
 **Key parameters**:
+
 - `subagent_type="general-purpose"` - Flexible agent for documentation tasks
 - `model="sonnet"` - Balance quality and cost (haiku for simpler docs)
 - `run_in_background=true` - Essential for parallel execution
@@ -96,6 +99,7 @@ create PR for #{issue.number}, enable auto-merge, cleanup."""
 ```
 
 **Progress tracking**:
+
 - Initial: 0/30 (0%)
 - After 1 hour: 10/30 (33%)
 - After 2 hours: 20/30 (67%)
@@ -120,6 +124,7 @@ gh pr merge --auto --rebase
 ```
 
 **Final verification**:
+
 - All 30 PRs created ✅
 - All issues linked to PRs ✅
 - Naming conventions consistent ✅
@@ -132,6 +137,7 @@ gh pr merge --auto --rebase
 **What we tried**: Document figures one-by-one in the main conversation.
 
 **Why it failed**:
+
 - Would take 30+ hours (1 hour per figure × 30 figures)
 - Context window pollution with repetitive documentation
 - High cognitive overhead switching between figures
@@ -144,6 +150,7 @@ gh pr merge --auto --rebase
 ### ❌ Single Agent with All 30 Tasks (Not Attempted)
 
 **Why we avoided this**:
+
 - Single agent can't parallelize work
 - Risk of context overflow with 30 items
 - No fault isolation (one failure blocks everything)
@@ -160,12 +167,14 @@ gh pr merge --auto --rebase
 **Root cause**: User requested naming change mid-execution, but first batch had already launched.
 
 **How we fixed**:
+
 1. Let all agents complete (don't interrupt running agents)
 2. Created post-completion PRs to rename files
 3. Used `git mv` to preserve history
 4. Two standardization PRs: #574 (7 files), #575 (3 files)
 
 **Lesson**:
+
 - Finalize naming conventions **before** launching agents
 - If changes occur mid-flight, fix with post-completion consolidation PR
 - Never interrupt running agents - let them complete and fix after
@@ -179,6 +188,7 @@ gh pr merge --auto --rebase
 **Impact**: Minimal - agent detected existing doc and reported completion.
 
 **How to prevent**:
+
 ```bash
 # Check for existing docs before launching agents
 for fig in figures:
@@ -265,6 +275,7 @@ cd - && git worktree remove ../worktree-{issue}
 ### Naming Standardization
 
 **Files requiring rename**:
+
 - 10 files from first batch: `figNN-name.md` → `name.md`
 - Method: Two consolidation PRs (#574, #575) using `git mv`
 - Preserved git history for all renames
@@ -272,10 +283,12 @@ cd - && git worktree remove ../worktree-{issue}
 ## Cross-References
 
 **Related skills**:
+
 - `checkpoint-recovery` - Resume interrupted batch operations
 - `issue-validation-workflow` - Validate GitHub issue structure before automation
 
 **Related documentation**:
+
 - `.claude/shared/pr-workflow.md` - PR creation and auto-merge patterns
 - `CLAUDE.md` - Never push directly to main (always use PRs)
 - Issue #471 - Original tracking issue for all 30 figures
@@ -283,6 +296,7 @@ cd - && git worktree remove ../worktree-{issue}
 ## Next Time Improvements
 
 1. **Pre-flight validation**:
+
    ```bash
    # Check for existing docs
    # Verify all source files exist

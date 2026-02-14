@@ -21,6 +21,7 @@ This figure visualizes the correlation between Implementation Rate (Impl-Rate) a
 **DataFrame**: `runs_df`
 
 **Columns Used**:
+
 - `agent_model` (str): Agent model identifier (e.g., "opus-4", "sonnet-3.5")
 - `tier` (str): Testing tier (T0-T6)
 - `impl_rate` (float): Implementation rate [0.0, 1.0] - fraction of implementation criteria completed
@@ -29,6 +30,7 @@ This figure visualizes the correlation between Implementation Rate (Impl-Rate) a
 **Source File**: `/home/mvillmow/ProjectScylla/scylla/analysis/figures/impl_rate_analysis.py:156-235`
 
 **Data Requirements**:
+
 - One row per run
 - `impl_rate` column must exist (function returns early if missing)
 - Typical dataset: 2,238+ runs across multiple models and tiers
@@ -59,24 +61,28 @@ def fig26_impl_rate_vs_pass_rate(
 ### Key Technical Decisions
 
 **Grouped Bar Chart Design**:
+
 - Displays two metrics (Impl-Rate, Pass-Rate) side-by-side per model
 - **Rationale**: Enables direct visual comparison of both metrics for each model
 - **Trade-off**: More visual complexity vs. single-metric clarity
 - **Benefit**: Immediate identification of implementation-quality gaps
 
 **Per-Tier Faceting**:
+
 - Separate column for each tier using Altair's facet functionality
 - **Rationale**: Shows tier progression and enables tier-specific model comparison
 - **Design**: Independent x-axis scales per tier allow different model sets per tier
 - **Benefit**: Handles incomplete tier coverage gracefully
 
 **Fixed Color Encoding**:
+
 - Blue (#1f77b4) for Impl-Rate
 - Orange (#ff7f0e) for Pass-Rate
 - **Rationale**: Color consistency across all instances of these metrics
 - **Benefit**: Immediate visual recognition of metric type
 
 **Y-Axis Domain**:
+
 - Fixed [0, 1] scale
 - **Rationale**: Both metrics are rates (fractions)
 - **Benefit**: Consistent scale enables cross-tier and cross-model comparison
@@ -84,6 +90,7 @@ def fig26_impl_rate_vs_pass_rate(
 ### Algorithm
 
 1. **Column Validation**:
+
    ```python
    if "impl_rate" not in runs_df.columns:
        print("Warning: impl_rate column not found in runs_df, skipping fig26")
@@ -91,6 +98,7 @@ def fig26_impl_rate_vs_pass_rate(
    ```
 
 2. **Metric Aggregation**:
+
    ```python
    stats = []
    for (model, tier), group in runs_df.groupby(["agent_model", "tier"]):
@@ -100,23 +108,28 @@ def fig26_impl_rate_vs_pass_rate(
        stats.append({"agent_model": model, "tier": tier, "metric": "Impl-Rate", "value": impl_rate_mean})
        stats.append({"agent_model": model, "tier": tier, "metric": "Pass-Rate", "value": pass_rate_mean})
    ```
+
    - Computes mean for both metrics per (model, tier) group
    - Reshapes data to long format with separate rows per metric
 
 3. **Tier Discovery**:
+
    ```python
    tier_order = derive_tier_order(runs_df)
    ```
+
    - Dynamic tier detection from data
    - Natural sorting (T0 < T1 < ... < T99)
 
 4. **Color Scale Configuration**:
+
    ```python
    metric_domain = ["Impl-Rate", "Pass-Rate"]
    metric_colors = ["#1f77b4", "#ff7f0e"]  # Blue for impl, orange for pass
    ```
 
 5. **Grouped Bar Chart Construction**:
+
    ```python
    bars = (
        alt.Chart(df)
@@ -131,9 +144,11 @@ def fig26_impl_rate_vs_pass_rate(
        )
    )
    ```
+
    - `xOffset` creates grouped bars within each model category
 
 6. **Faceting by Tier**:
+
    ```python
    chart = (
        bars.facet(column=alt.Column("tier:O", title="Tier", sort=tier_order))
@@ -143,6 +158,7 @@ def fig26_impl_rate_vs_pass_rate(
    ```
 
 7. **Save Output**:
+
    ```python
    save_figure(chart, "fig26_impl_rate_vs_pass_rate", output_dir, render=render)
    ```
@@ -154,6 +170,7 @@ def fig26_impl_rate_vs_pass_rate(
 **Pattern**: `fig26_impl_rate_vs_pass_rate.{ext}`
 
 **Files Generated**:
+
 - `fig26_impl_rate_vs_pass_rate.vl.json` - Vega-Lite specification
 - `fig26_impl_rate_vs_pass_rate.csv` - Aggregated data (reshaped to long format)
 - `fig26_impl_rate_vs_pass_rate.png` - Rendered image (300 DPI, if render=True)
@@ -172,11 +189,13 @@ def fig26_impl_rate_vs_pass_rate(
 **Chart Type**: Grouped bar chart with faceted columns
 
 **Dimensions**:
+
 - Width: Auto (determined by Altair based on number of facets)
 - Height: Auto (determined by Altair)
 - Subfigure width: ~150-200px per tier (auto-scaled)
 
 **Axes**:
+
 - **X-axis** (per tier): Agent Model (nominal)
   - Title: "Agent Model"
   - Independent scales per tier (different models may appear in different tiers)
@@ -185,11 +204,13 @@ def fig26_impl_rate_vs_pass_rate(
   - Fixed domain: [0, 1]
 
 **Color Encoding**:
+
 - **Impl-Rate**: Blue (#1f77b4)
 - **Pass-Rate**: Orange (#ff7f0e)
 - Legend title: "Metric"
 
 **Faceting**:
+
 - **Column**: Tier (T0, T1, ..., T6)
 - **Sort**: Natural tier order
 - **Title**: "Tier"
@@ -197,6 +218,7 @@ def fig26_impl_rate_vs_pass_rate(
 **Chart Title**: "Implementation Rate vs Pass-Rate per Tier"
 
 **Tooltips**:
+
 - Model (agent_model)
 - Tier
 - Metric (Impl-Rate or Pass-Rate)
@@ -205,11 +227,13 @@ def fig26_impl_rate_vs_pass_rate(
 ### Expected Patterns
 
 **Ideal Correlation**:
+
 - Impl-Rate and Pass-Rate bars roughly equal height
 - Both metrics increase together across tiers
 - Indicates implementations directly lead to passing outcomes
 
 **Implementation-Quality Gap**:
+
 - Impl-Rate > Pass-Rate (blue bar taller than orange)
 - Agents complete steps but fail validation
 - Common causes:
@@ -218,11 +242,13 @@ def fig26_impl_rate_vs_pass_rate(
   - Partial feature completion counted as "implemented"
 
 **Over-Specification**:
+
 - Pass-Rate > Impl-Rate (orange bar taller than blue)
 - Rare but possible if pass criteria are broader than implementation criteria
 - May indicate measurement issue or overly strict implementation rubric
 
 **Tier Progression**:
+
 - Both metrics should increase from T0 to T6
 - Flatter progression indicates diminishing returns from capability tiers
 
@@ -231,15 +257,18 @@ def fig26_impl_rate_vs_pass_rate(
 ### Reading the Bars
 
 **Bar Height**:
+
 - Represents mean rate across all runs for that (model, tier) group
 - Values range from 0.0 (never achieved) to 1.0 (always achieved)
 
 **Bar Positioning**:
+
 - Grouped by model (x-axis)
 - Colored by metric (blue vs. orange)
 - Side-by-side within each model category
 
 **Gap Analysis**:
+
 - **Large gap** (blue >> orange): Implementation without quality
 - **Small gap** (blue ≈ orange): Quality implementations
 - **Negative gap** (blue < orange): Possible measurement issue
@@ -247,16 +276,19 @@ def fig26_impl_rate_vs_pass_rate(
 ### Comparative Analysis
 
 **Across Models**:
+
 - Compare bar heights within each tier
 - Identify which models have better implementation vs. pass-rate performance
 - Look for models with consistent gaps vs. aligned metrics
 
 **Across Tiers**:
+
 - Follow a single model across tier columns
 - Expected pattern: Both bars rise together
 - Problematic pattern: Impl-Rate rises but Pass-Rate stagnates
 
 **Metric Correlation**:
+
 - Visual correlation: Do bars rise/fall together?
 - Strong correlation → Quality implementations
 - Weak correlation → Execution without understanding
@@ -264,17 +296,20 @@ def fig26_impl_rate_vs_pass_rate(
 ### Action Items
 
 **If Large Implementation-Quality Gap Detected**:
+
 1. Review evaluation rubric for implementation criteria clarity
 2. Check if partial implementations are over-credited
 3. Investigate common failure modes in passing criteria
 4. Consider stricter implementation validation
 
 **If Metrics Are Uncorrelated**:
+
 1. Validate that implementation criteria align with pass criteria
 2. Check for edge cases where implementation steps succeed but outcome fails
 3. Review whether "implementation" measures activity vs. correctness
 
 **If Pass-Rate Exceeds Impl-Rate**:
+
 1. Investigate potential measurement error
 2. Check if pass criteria are too lenient
 3. Verify implementation criteria aren't overly strict
@@ -334,6 +369,7 @@ docs/figures/
 ### Viewing the Figure
 
 **Vega-Lite Spec (Recommended)**:
+
 ```bash
 # Open in Vega Editor
 open https://vega.github.io/editor/
@@ -341,6 +377,7 @@ open https://vega.github.io/editor/
 ```
 
 **CSV Data**:
+
 ```bash
 # Inspect aggregated data
 head docs/figures/fig26_impl_rate_vs_pass_rate.csv
@@ -349,6 +386,7 @@ head docs/figures/fig26_impl_rate_vs_pass_rate.csv
 ```
 
 **Rendered Images**:
+
 ```bash
 # View PNG
 open docs/figures/fig26_impl_rate_vs_pass_rate.png

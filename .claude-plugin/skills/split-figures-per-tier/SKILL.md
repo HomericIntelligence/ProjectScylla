@@ -11,12 +11,14 @@
 ## When to Use This Skill
 
 Use this skill when:
+
 - Altair figure generation fails with `MaxRowsError` or row limit warnings
 - Dataset size exceeds 5,000 rows (Altair's hard limit)
 - Faceted visualizations need to show per-category breakdowns
 - Need to split aggregate views into detailed per-group subfigures
 
 **Trigger Patterns**:
+
 ```python
 # Error message:
 # altair.utils.schemapi.SchemaValidationError: Invalid specification
@@ -42,6 +44,7 @@ pixi run python scripts/generate_figures.py --no-render
 ### 2. Pattern: Convert Faceted Figure to Per-Tier Loop
 
 **Before** (faceted on full dataset):
+
 ```python
 def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 2: Per-Judge Scoring Variance."""
@@ -66,6 +69,7 @@ def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool
 ```
 
 **After** (per-tier loop):
+
 ```python
 def fig02_judge_variance(judges_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 2: Per-Judge Scoring Variance.
@@ -141,6 +145,7 @@ for tier in tier_order:
 ### 4. Update Test Expectations
 
 **Before** (asserting single file):
+
 ```python
 def test_fig02_judge_variance(judges_df, tmp_path):
     fig02_judge_variance(judges_df, tmp_path, render=False)
@@ -148,6 +153,7 @@ def test_fig02_judge_variance(judges_df, tmp_path):
 ```
 
 **After** (note per-tier pattern):
+
 ```python
 def test_fig02_judge_variance(judges_df, tmp_path):
     fig02_judge_variance(judges_df, tmp_path, render=False)
@@ -158,6 +164,7 @@ def test_fig02_judge_variance(judges_df, tmp_path):
 ### 5. Clean Up Leftover Code
 
 After refactoring, check for:
+
 - Removed correlation computations → delete corresponding CSV saves
 - Removed aggregations → delete summary statistics code
 - Changed variable names → update all references
@@ -179,6 +186,7 @@ corr_df.to_csv(corr_csv_path, index=False)  # NameError!
 **Why it failed**: Altair's `facet()` doesn't split the data before passing it to `alt.Chart()`. The full dataset is still embedded in the Vega-Lite spec, hitting the 5,000-row limit.
 
 **Error**:
+
 ```
 altair.utils.schemapi.SchemaValidationError: Invalid specification
 Data source has more than 5000 rows
@@ -201,6 +209,7 @@ Data source has more than 5000 rows
 **Why it failed**: `corr_df.to_csv()` failed with `NameError: name 'corr_df' is not defined` because the variable was removed during refactoring.
 
 **Error**:
+
 ```python
 corr_csv_path = output_dir / "fig14_judge_agreement_correlations.csv"
 corr_df.to_csv(corr_csv_path, index=False)  # NameError!
@@ -213,11 +222,13 @@ corr_df.to_csv(corr_csv_path, index=False)  # NameError!
 ### Figure Generation Results
 
 **Before**:
+
 - 27/30 figures succeeded
 - 3 figures failed (fig02, fig14, fig17)
 - All failures due to Altair row limit
 
 **After**:
+
 - 30/30 figures succeeded ✓
 - 21 new per-tier files generated (7 tiers × 3 figures)
 - All tests passing (49/49) ✓
@@ -260,6 +271,6 @@ Examples:
 
 ## References
 
-- Altair documentation: https://altair-viz.github.io/user_guide/data.html#maxrows
+- Altair documentation: <https://altair-viz.github.io/user_guide/data.html#maxrows>
 - Original issue: Figure generation failures (27/30 succeeded)
 - Solution: Per-tier pattern from fig23/fig24 (already working examples)

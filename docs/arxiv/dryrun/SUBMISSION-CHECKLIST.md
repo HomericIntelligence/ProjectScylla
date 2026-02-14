@@ -35,7 +35,7 @@ tables/tab04_criteria_performance.tex  # 1 table file
 
 ### 1. Upload to arXiv
 
-1. Go to https://arxiv.org/submit
+1. Go to <https://arxiv.org/submit>
 2. Click "Start New Submission"
 3. Select category: **cs.SE** (Software Engineering) or **cs.AI** (Artificial Intelligence)
 4. Upload: `arxiv-submission.tar.gz`
@@ -43,6 +43,7 @@ tables/tab04_criteria_performance.tex  # 1 table file
 ### 2. arXiv Processing
 
 arXiv will:
+
 - Extract tarball
 - Read `00README.json` for compiler settings
 - Run: `pdflatex paper.tex` (no bibtex - uses paper.bbl)
@@ -67,6 +68,7 @@ arXiv will:
 **Abstract**: [Copy from paper.tex lines 69-86]
 
 **Categories**:
+
 - Primary: cs.SE (Software Engineering)
 - Secondary: cs.AI (Artificial Intelligence), cs.LG (Machine Learning)
 

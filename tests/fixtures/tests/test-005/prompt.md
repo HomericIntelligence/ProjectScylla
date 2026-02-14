@@ -7,6 +7,7 @@ Fix the Docker build failure caused by CLI tools (gh, claude) being installed af
 ## Problem
 
 Docker build is failing with:
+
 ```
 sudo: a terminal is required to read the password
 ```

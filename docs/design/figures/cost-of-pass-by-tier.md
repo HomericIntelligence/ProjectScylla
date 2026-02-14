@@ -20,10 +20,12 @@ This analysis supports economic efficiency evaluation by revealing not just mean
 **Input DataFrame**: `runs_df` (runs-level aggregation)
 
 **Required Columns**:
+
 - `tier` (string): Tier identifier (T0-T6)
 - `cost_usd` (float): Total cost per run in USD (sum of input, output, tool tokens)
 
 **Filtering**:
+
 - Only rows where `cost_usd > 0` are included
 - Log-scale visualization requires positive values, so zero-cost runs are excluded
 
@@ -41,6 +43,7 @@ cost_usd = (input_tokens × price_per_input_token) +
 ```
 
 **Histogram Binning**:
+
 - Auto-binning with max 20 bins per tier subfigure
 - Bin edges determined by Altair's auto-binning algorithm on log-transformed data
 - Each bin represents a range of cost values: `[bin_start, bin_end)`
@@ -75,11 +78,13 @@ Using logarithmic binning (base 10) serves several purposes:
 ### Cost Stability and Predictability
 
 Low-variance cost distributions indicate:
+
 - Consistent agent behavior across runs
 - Predictable economic performance
 - Lower financial risk for production deployment
 
 High-variance distributions suggest:
+
 - Sensitivity to task complexity or randomness
 - Potential optimization opportunities
 - Need for cost guardrails or budgeting mechanisms
@@ -89,6 +94,7 @@ High-variance distributions suggest:
 **Chart Type**: Histogram (bar chart with binned continuous variable)
 
 **Axes**:
+
 - **X-axis**: `cost_usd` (quantitative)
   - Title: "Cost (USD)"
   - Scale: Logarithmic (base 10)
@@ -99,17 +105,20 @@ High-variance distributions suggest:
   - Represents the number of runs in each cost bin
 
 **Faceting**:
+
 - **Column facet**: `tier` (nominal)
   - Each tier displayed as a separate subfigure
   - Tier order derived from data using natural sort (T0 < T1 < ... < T6)
   - Enables side-by-side comparison of cost distributions
 
 **Visual Encoding**:
+
 - Bar height encodes the count of runs in each cost bin
 - Bar width represents the cost bin range (varies due to log-scale binning)
 - No color encoding (uniform bar color across all tiers)
 
 **Implementation Details** (from `scylla/analysis/figures/cost_analysis.py:18-57`):
+
 - Data filtered to exclude `cost_usd <= 0` before visualization
 - Altair's `alt.Bin(maxbins=20)` used for automatic bin edge calculation
 - Tier order derived dynamically from data (no hardcoded tier list)
@@ -127,21 +136,25 @@ High-variance distributions suggest:
 ### Key Patterns to Look For
 
 **Normal Distribution** (symmetric bell curve on log scale):
+
 - Indicates consistent, predictable costs
 - Most runs cluster around the mean
 - Rare outliers on both ends
 
 **Right-Skewed Distribution** (long tail toward high costs):
+
 - Common in AI agent systems
 - Indicates occasional expensive runs (retries, complex tasks)
 - May signal optimization opportunities
 
 **Bimodal Distribution** (two distinct peaks):
+
 - Suggests two distinct cost regimes (e.g., simple vs. complex tasks)
 - May indicate task heterogeneity within tier
 - Could reveal subgroups requiring separate analysis
 
 **Uniform Distribution** (flat histogram):
+
 - Indicates high cost unpredictability
 - Rare in practice; may signal data quality issues
 
@@ -213,15 +226,18 @@ save_figure(chart, "fig06_cop_by_tier", output_dir, render)
 ```
 
 **Dependencies**:
+
 - `derive_tier_order()` - Natural sort for tier labels (from `scylla/analysis/figures/__init__.py`)
 - `save_figure()` - Saves Vega-Lite spec and renders to PNG/PDF (from `scylla/analysis/figures/spec_builder.py`)
 
 **Output Files**:
+
 - `fig06_cop_by_tier.json` - Vega-Lite specification
 - `fig06_cop_by_tier.png` - Rasterized figure (if `render=True`)
 - `fig06_cop_by_tier.pdf` - Vector figure (if `render=True`)
 
 **Reproducibility**:
+
 ```bash
 # Regenerate figure from analysis pipeline
 scylla analyze --runs runs.csv --output-dir ./figures/

@@ -248,6 +248,7 @@ The Judge evaluates agent outputs using Claude + Opus 4.5 with a two-layer promp
 - **Judgment Parser** (`parser.py`): Parse judgment JSON from LLM response
 
 **Prompt Architecture**:
+
 1. **Global System Prompt**: `config/judge/system_prompt.md` (evaluation methodology, grading scale reference at `docs/design/grading-scale.md`)
 2. **Task-Specific Prompt**: Generated dynamically with rubric, agent output, workspace state, and pipeline results
 
