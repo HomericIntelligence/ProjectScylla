@@ -170,19 +170,19 @@ class E2ERunner:
 
         return groups
 
-    def run(self) -> ExperimentResult:
-        """Run the complete E2E experiment with auto-resume support.
+    def _initialize_or_resume_experiment(self) -> Path:
+        """Initialize fresh experiment or resume from checkpoint.
 
-        Automatically resumes from checkpoint if one exists (unless --fresh flag).
-        Checkpoints are saved after each completed run for crash recovery and
-        rate limit pause/resume.
+        Handles:
+        - Finding existing checkpoint
+        - Loading checkpoint and validating config
+        - Creating fresh experiment directory if needed
+        - Writing PID file for monitoring
 
         Returns:
-            ExperimentResult with all tier results and analysis.
+            Path to checkpoint file for this experiment
 
         """
-        start_time = datetime.now(timezone.utc)
-
         # Check for existing checkpoint (auto-resume unless --fresh)
         checkpoint_path = self._find_existing_checkpoint()
 
@@ -258,6 +258,15 @@ class E2ERunner:
         # Write PID file for status monitoring
         self._write_pid_file()
 
+        return self.experiment_dir / "checkpoint.json"
+
+    def _setup_workspace_and_semaphore(self):
+        """Set up workspace manager and global semaphore for parallel execution.
+
+        Returns:
+            Global semaphore for limiting concurrent agents
+
+        """
         # Create/resume workspace manager
         if not hasattr(self, "workspace_manager") or self.workspace_manager is None:
             # Use centralized repos directory for shared clones across experiments
@@ -271,11 +280,6 @@ class E2ERunner:
             # Setup base repo (idempotent - checks for existing clone internally)
             self.workspace_manager.setup_base_repo()
 
-        # Run tiers (with shutdown handling)
-        tier_results: dict[TierID, TierResult] = {}
-        previous_baseline: TierBaseline | None = None
-        checkpoint_path = self.experiment_dir / "checkpoint.json"
-
         # Create global semaphore for limiting concurrent agents across ALL tiers
         from multiprocessing import Manager
 
@@ -285,170 +289,211 @@ class E2ERunner:
             f"Created global semaphore with {self.config.parallel_subtests} concurrent agent limit"
         )
 
-        # Group tiers by dependencies for parallel execution
-        tier_groups = self._get_tier_groups(self.config.tiers_to_run)
-        logger.info(f"Tier groups for parallel execution: {tier_groups}")
+        return global_semaphore
 
-        try:
-            for group in tier_groups:
-                # Check for shutdown before starting group
-                if is_shutdown_requested():
-                    logger.warning("Shutdown requested before tier group, stopping...")
-                    break
+    def _handle_experiment_interrupt(self, checkpoint_path: Path) -> None:
+        """Handle graceful shutdown on interrupt.
 
-                if len(group) == 1:
-                    # Single tier - run sequentially
-                    tier_id = group[0]
-                    logger.info(f"Starting tier {tier_id.value}")
+        Args:
+            checkpoint_path: Path to checkpoint file
 
-                    tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
-                    tier_results[tier_id] = tier_result
+        Side effects:
+            - Reloads checkpoint from disk
+            - Updates status to 'interrupted'
+            - Saves checkpoint
 
-                    # Set baseline for next tier
-                    if tier_result.best_subtest:
-                        subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
-                        previous_baseline = self.tier_manager.get_baseline_for_subtest(
-                            tier_id=tier_id,
-                            subtest_id=tier_result.best_subtest,
-                            results_dir=subtest_dir,
-                        )
+        """
+        if checkpoint_path and checkpoint_path.exists():
+            # CRITICAL: Reload checkpoint from disk to preserve worker-saved completions
+            # Workers save their progress to the checkpoint file, but the main process
+            # has a stale copy. We must reload to avoid overwriting worker progress.
+            try:
+                logger.info("🔄 Reloading checkpoint from disk to preserve worker progress...")
+                current_checkpoint = load_checkpoint(checkpoint_path)
+                current_checkpoint.status = "interrupted"
+                current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
+                save_checkpoint(current_checkpoint, checkpoint_path)
+                logger.warning("💾 Checkpoint saved after interrupt")
+            except Exception as reload_error:
+                # If reload fails, save what we have (better than nothing)
+                logger.error(f"⚠️  Failed to reload checkpoint: {reload_error}")
+                logger.warning("Saving checkpoint from memory (may lose some worker progress)")
+                if self.checkpoint:
+                    self.checkpoint.status = "interrupted"
+                    self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
+                    save_checkpoint(self.checkpoint, checkpoint_path)
+                    logger.warning("💾 Checkpoint saved after interrupt")
 
-                    # Save intermediate results
-                    self._save_tier_result(tier_id, tier_result)
+    def _execute_tier_groups(
+        self,
+        tier_groups: list[list[TierID]],
+        global_semaphore,
+        previous_baseline: TierBaseline | None = None,
+    ) -> dict[TierID, TierResult]:
+        """Execute all tier groups with parallel/sequential orchestration.
 
-                else:
-                    # Multiple tiers - run in parallel
-                    logger.info(
-                        f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}"
+        Args:
+            tier_groups: List of tier groups for parallel execution
+            global_semaphore: Semaphore for limiting concurrent agents
+            previous_baseline: Optional baseline from previous tier
+
+        Returns:
+            Dictionary mapping tier IDs to their results
+
+        """
+        tier_results: dict[TierID, TierResult] = {}
+
+        for group in tier_groups:
+            # Check for shutdown before starting group
+            if is_shutdown_requested():
+                logger.warning("Shutdown requested before tier group, stopping...")
+                break
+
+            if len(group) == 1:
+                # Single tier - run sequentially
+                tier_id = group[0]
+                logger.info(f"Starting tier {tier_id.value}")
+
+                tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
+                tier_results[tier_id] = tier_result
+
+                # Set baseline for next tier
+                if tier_result.best_subtest:
+                    subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
+                    previous_baseline = self.tier_manager.get_baseline_for_subtest(
+                        tier_id=tier_id,
+                        subtest_id=tier_result.best_subtest,
+                        results_dir=subtest_dir,
                     )
 
-                    with ThreadPoolExecutor(max_workers=len(group)) as executor:
-                        # Submit all tiers in this group
-                        futures = {
-                            executor.submit(
-                                self._run_tier, tier_id, previous_baseline, global_semaphore
-                            ): tier_id
-                            for tier_id in group
-                        }
+                # Save intermediate results
+                self._save_tier_result(tier_id, tier_result)
 
-                        # Collect results as they complete
-                        for future in as_completed(futures):
-                            tier_id = futures[future]
-                            try:
-                                tier_result = future.result()
-                                tier_results[tier_id] = tier_result
-
-                                # Save intermediate results
-                                self._save_tier_result(tier_id, tier_result)
-
-                                logger.info(f"Completed tier {tier_id.value} in parallel group")
-                            except Exception as e:
-                                logger.error(f"Tier {tier_id.value} failed: {e}")
-                                raise
-
-                    # After parallel group completes, find best tier for baseline
-                    # (only relevant for T0-T4 group before T5)
-                    if TierID.T5 in self.config.tiers_to_run:
-                        best_cop = float("inf")
-                        best_tier = None
-                        for tier_id in group:
-                            if (
-                                tier_id in tier_results
-                                and tier_results[tier_id].cost_of_pass < best_cop
-                            ):
-                                best_cop = tier_results[tier_id].cost_of_pass
-                                best_tier = tier_id
-
-                        if best_tier and tier_results[best_tier].best_subtest:
-                            subtest_dir = (
-                                self.experiment_dir
-                                / best_tier.value
-                                / tier_results[best_tier].best_subtest
-                            )
-                            previous_baseline = self.tier_manager.get_baseline_for_subtest(
-                                tier_id=best_tier,
-                                subtest_id=tier_results[best_tier].best_subtest,
-                                results_dir=subtest_dir,
-                            )
-                            logger.info(
-                                f"Selected {best_tier.value} as baseline for next tier group "
-                                f"(CoP: ${best_cop:.4f})"
-                            )
-
-        except (KeyboardInterrupt, BrokenProcessPool) as e:
-            # Clean exit for Ctrl+C or process pool failure
-            if isinstance(e, KeyboardInterrupt):
-                logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
             else:
-                logger.warning("Process pool interrupted, cleaning up...")
-        except Exception as e:
-            # Other errors should propagate
-            logger.error(f"Experiment failed: {e}")
-            raise
+                # Multiple tiers - run in parallel
+                logger.info(f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}")
 
-        finally:
-            # Save checkpoint on interrupt
-            if is_shutdown_requested() and checkpoint_path and checkpoint_path.exists():
-                # CRITICAL: Reload checkpoint from disk to preserve worker-saved completions
-                # Workers save their progress to the checkpoint file, but the main process
-                # has a stale copy. We must reload to avoid overwriting worker progress.
-                try:
-                    logger.info("🔄 Reloading checkpoint from disk to preserve worker progress...")
-                    current_checkpoint = load_checkpoint(checkpoint_path)
-                    current_checkpoint.status = "interrupted"
-                    current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
-                    save_checkpoint(current_checkpoint, checkpoint_path)
-                    logger.warning("💾 Checkpoint saved after interrupt")
-                except Exception as reload_error:
-                    # If reload fails, save what we have (better than nothing)
-                    logger.error(f"⚠️  Failed to reload checkpoint: {reload_error}")
-                    logger.warning("Saving checkpoint from memory (may lose some worker progress)")
-                    if self.checkpoint:
-                        self.checkpoint.status = "interrupted"
-                        self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
-                        save_checkpoint(self.checkpoint, checkpoint_path)
-                        logger.warning("💾 Checkpoint saved after interrupt")
-            self._cleanup_pid_file()
+                with ThreadPoolExecutor(max_workers=len(group)) as executor:
+                    # Submit all tiers in this group
+                    futures = {
+                        executor.submit(
+                            self._run_tier, tier_id, previous_baseline, global_semaphore
+                        ): tier_id
+                        for tier_id in group
+                    }
 
-        # If shutdown was requested, return partial results
-        if is_shutdown_requested():
-            logger.warning("Experiment interrupted - returning partial results")
-            end_time = datetime.now(timezone.utc)
-            total_duration = (end_time - start_time).total_seconds()
-            total_cost = sum(t.total_cost for t in tier_results.values())
+                    # Collect results as they complete
+                    for future in as_completed(futures):
+                        tier_id = futures[future]
+                        try:
+                            tier_result = future.result()
+                            tier_results[tier_id] = tier_result
 
-            # Find frontier from completed tiers
-            frontier_tier, frontier_cop = self._find_frontier(tier_results)
+                            # Save intermediate results
+                            self._save_tier_result(tier_id, tier_result)
 
-            # Aggregate token stats from completed tiers
-            from functools import reduce
+                            logger.info(f"Completed tier {tier_id.value} in parallel group")
+                        except Exception as e:
+                            logger.error(f"Tier {tier_id.value} failed: {e}")
+                            raise
 
-            experiment_token_stats = (
-                reduce(
-                    lambda a, b: a + b,
-                    [t.token_stats for t in tier_results.values()],
-                    TokenStats(),
-                )
-                if tier_results
-                else TokenStats()
+                # After parallel group completes, find best tier for baseline
+                # (only relevant for T0-T4 group before T5)
+                if TierID.T5 in self.config.tiers_to_run:
+                    best_cop = float("inf")
+                    best_tier = None
+                    for tier_id in group:
+                        if (
+                            tier_id in tier_results
+                            and tier_results[tier_id].cost_of_pass < best_cop
+                        ):
+                            best_cop = tier_results[tier_id].cost_of_pass
+                            best_tier = tier_id
+
+                    if best_tier and tier_results[best_tier].best_subtest:
+                        subtest_dir = (
+                            self.experiment_dir
+                            / best_tier.value
+                            / tier_results[best_tier].best_subtest
+                        )
+                        previous_baseline = self.tier_manager.get_baseline_for_subtest(
+                            tier_id=best_tier,
+                            subtest_id=tier_results[best_tier].best_subtest,
+                            results_dir=subtest_dir,
+                        )
+                        logger.info(
+                            f"Selected {best_tier.value} as baseline for next tier group "
+                            f"(CoP: ${best_cop:.4f})"
+                        )
+
+        return tier_results
+
+    def _aggregate_partial_results(
+        self,
+        tier_results: dict[TierID, TierResult],
+        start_time: datetime,
+    ) -> ExperimentResult:
+        """Create partial result for interrupted experiments.
+
+        Args:
+            tier_results: Completed tier results
+            start_time: Experiment start timestamp
+
+        Returns:
+            Partial ExperimentResult with completed tiers
+
+        """
+        end_time = datetime.now(timezone.utc)
+        total_duration = (end_time - start_time).total_seconds()
+        total_cost = sum(t.total_cost for t in tier_results.values())
+
+        # Find frontier from completed tiers
+        frontier_tier, frontier_cop = self._find_frontier(tier_results)
+
+        # Aggregate token stats from completed tiers
+        from functools import reduce
+
+        experiment_token_stats = (
+            reduce(
+                lambda a, b: a + b,
+                [t.token_stats for t in tier_results.values()],
+                TokenStats(),
             )
+            if tier_results
+            else TokenStats()
+        )
 
-            return ExperimentResult(
-                config=self.config,
-                tier_results=tier_results,
-                best_overall_tier=frontier_tier,
-                best_overall_subtest=(
-                    tier_results[frontier_tier].best_subtest if frontier_tier else None
-                ),
-                frontier_cop=frontier_cop,
-                frontier_cop_tier=frontier_tier,
-                total_cost=total_cost,
-                total_duration_seconds=total_duration,
-                started_at=start_time.isoformat(),
-                completed_at=end_time.isoformat(),
-                token_stats=experiment_token_stats,
-            )
+        return ExperimentResult(
+            config=self.config,
+            tier_results=tier_results,
+            best_overall_tier=frontier_tier,
+            best_overall_subtest=(
+                tier_results[frontier_tier].best_subtest if frontier_tier else None
+            ),
+            frontier_cop=frontier_cop,
+            frontier_cop_tier=frontier_tier,
+            total_cost=total_cost,
+            total_duration_seconds=total_duration,
+            started_at=start_time.isoformat(),
+            completed_at=end_time.isoformat(),
+            token_stats=experiment_token_stats,
+        )
 
+    def _aggregate_final_results(
+        self,
+        tier_results: dict[TierID, TierResult],
+        start_time: datetime,
+    ) -> ExperimentResult:
+        """Create final result for completed experiments.
+
+        Args:
+            tier_results: All tier results
+            start_time: Experiment start timestamp
+
+        Returns:
+            Complete ExperimentResult
+
+        """
         # Calculate overall metrics (normal completion)
         end_time = datetime.now(timezone.utc)
         total_duration = (end_time - start_time).total_seconds()
@@ -467,7 +512,7 @@ class E2ERunner:
         )
 
         # Create final result
-        result = ExperimentResult(
+        return ExperimentResult(
             config=self.config,
             tier_results=tier_results,
             best_overall_tier=frontier_tier,
@@ -483,6 +528,19 @@ class E2ERunner:
             token_stats=experiment_token_stats,
         )
 
+    def _finalize_experiment(self, result: ExperimentResult) -> None:
+        """Finalize experiment with reports and cleanup.
+
+        Args:
+            result: The complete experiment result
+
+        Side effects:
+            - Saves final results to disk
+            - Generates reports
+            - Marks checkpoint as completed
+            - Logs completion message
+
+        """
         # Save final results
         self._save_final_results(result)
 
@@ -493,8 +551,66 @@ class E2ERunner:
         self._mark_checkpoint_completed()
 
         logger.info(
-            f"✅ Experiment completed in {total_duration:.1f}s, total cost: ${total_cost:.2f}"
+            f"✅ Experiment completed in {result.total_duration_seconds:.1f}s, "
+            f"total cost: ${result.total_cost:.2f}"
         )
+
+    def run(self) -> ExperimentResult:
+        """Run the complete E2E experiment with auto-resume support.
+
+        Automatically resumes from checkpoint if one exists (unless --fresh flag).
+        Checkpoints are saved after each completed run for crash recovery and
+        rate limit pause/resume.
+
+        Returns:
+            ExperimentResult with all tier results and analysis.
+
+        """
+        start_time = datetime.now(timezone.utc)
+
+        # Initialize or resume from checkpoint
+        checkpoint_path = self._initialize_or_resume_experiment()
+
+        # Setup workspace and global semaphore
+        global_semaphore = self._setup_workspace_and_semaphore()
+
+        # Group tiers by dependencies
+        tier_groups = self._get_tier_groups(self.config.tiers_to_run)
+        logger.info(f"Tier groups for parallel execution: {tier_groups}")
+
+        # Execute tier groups with error handling
+        tier_results: dict[TierID, TierResult] = {}
+        try:
+            tier_results = self._execute_tier_groups(tier_groups, global_semaphore)
+
+        except (KeyboardInterrupt, BrokenProcessPool) as e:
+            # Clean exit for Ctrl+C or process pool failure
+            if isinstance(e, KeyboardInterrupt):
+                logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
+            else:
+                logger.warning("Process pool interrupted, cleaning up...")
+
+        except Exception as e:
+            # Other errors should propagate
+            logger.error(f"Experiment failed: {e}")
+            raise
+
+        finally:
+            # Save checkpoint on interrupt
+            if is_shutdown_requested():
+                self._handle_experiment_interrupt(checkpoint_path)
+            self._cleanup_pid_file()
+
+        # Check for shutdown request
+        if is_shutdown_requested():
+            logger.warning("Experiment interrupted - returning partial results")
+            return self._aggregate_partial_results(tier_results, start_time)
+
+        # Aggregate final results
+        result = self._aggregate_final_results(tier_results, start_time)
+
+        # Finalize experiment
+        self._finalize_experiment(result)
 
         return result
 
