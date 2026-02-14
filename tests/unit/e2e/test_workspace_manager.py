@@ -410,8 +410,8 @@ class TestCentralizedRepos:
         clone_cmd = clone_call[0][0]
         assert "--depth=1" in clone_cmd
 
-    def test_worktree_separate_checkout(self, tmp_path: Path) -> None:
-        """Test that git worktree add does not include commit, checkout is separate."""
+    def test_worktree_includes_commit(self, tmp_path: Path) -> None:
+        """Test that git worktree add includes commit hash directly."""
         manager = WorkspaceManager(
             experiment_dir=tmp_path,
             repo_url="https://github.com/test/repo.git",
@@ -422,26 +422,18 @@ class TestCentralizedRepos:
 
         workspace = tmp_path / "workspace"
 
-        # Mock worktree creation and checkout
+        # Mock worktree creation
         worktree_result = MagicMock()
         worktree_result.returncode = 0
 
-        checkout_result = MagicMock()
-        checkout_result.returncode = 0
-
-        with patch("subprocess.run", side_effect=[worktree_result, checkout_result]) as mock_run:
+        with patch("subprocess.run", return_value=worktree_result) as mock_run:
             manager.create_worktree(workspace, "T0", "01", 1)
 
-        # Should have 2 calls: worktree add, then checkout
-        assert mock_run.call_count == 2
+        # Should have only 1 call: git worktree add with commit
+        assert mock_run.call_count == 1
 
-        # First call: git worktree add (should NOT have commit)
+        # Single call: git worktree add (should include commit)
         worktree_cmd = mock_run.call_args_list[0][0][0]
         assert "worktree" in worktree_cmd
         assert "add" in worktree_cmd
-        assert "abc123" not in worktree_cmd
-
-        # Second call: git checkout (should have commit)
-        checkout_cmd = mock_run.call_args_list[1][0][0]
-        assert "checkout" in checkout_cmd
-        assert "abc123" in checkout_cmd
+        assert "abc123" in worktree_cmd
