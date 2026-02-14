@@ -1,6 +1,5 @@
 """Tests for CLI commands."""
 
-import pytest
 from click.testing import CliRunner
 
 from scylla.cli.main import cli
@@ -103,9 +102,6 @@ class TestListCommand:
         assert result.exit_code == 0
         assert "List available test cases" in result.output
 
-    @pytest.mark.skip(
-        reason="Pre-existing failure - test expects old test ID format - will fix in follow-up PR"
-    )
     def test_list_basic(self) -> None:
         """Test List basic."""
         runner = CliRunner()
@@ -113,7 +109,7 @@ class TestListCommand:
 
         assert result.exit_code == 0
         assert "Available tests:" in result.output
-        assert "001-justfile-to-makefile" in result.output
+        assert "test-001" in result.output
 
     def test_list_verbose(self) -> None:
         """Test List verbose."""

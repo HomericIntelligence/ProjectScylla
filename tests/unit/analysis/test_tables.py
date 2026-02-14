@@ -605,9 +605,6 @@ def test_table02b_handles_missing_impl_rate():
     assert "impl_rate" in markdown
 
 
-@pytest.mark.skip(
-    reason="Pre-existing failure from incomplete Pydantic migration - will fix in follow-up PR"
-)
 def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
     """Test that Holm-Bonferroni correction is applied to p-values."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
@@ -616,7 +613,7 @@ def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
 
     # Verify correction is documented
     assert "Holm-Bonferroni" in markdown
-    assert "corrected" in markdown.lower()
+    assert "correction" in markdown.lower()
 
 
 def test_table08_calculation_verification():
