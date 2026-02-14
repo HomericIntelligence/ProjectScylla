@@ -33,6 +33,14 @@ repos:
         files: ^(scripts|scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
+      - id: mypy-check-python
+        name: Mypy Type Check Python
+        description: Type check Python files in scripts/, scylla/, tests/ using pixi run mypy
+        entry: pixi run mypy scripts/ scylla/ tests/
+        language: system
+        files: ^(scripts|scylla|tests)/.*\.py$
+        types: [python]
+        pass_filenames: false
 
   # Markdown linting
 #  - repo: https://github.com/DavidAnson/markdownlint-cli2
@@ -45,14 +53,15 @@ repos:
 #        args: ['--config', '.markdownlint.json']
 
   # Jupyter notebook output stripping
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.7.1
-    hooks:
-      - id: nbstripout
-        name: Strip Notebook Outputs
-        description: Remove outputs from Jupyter notebooks before commit
-        files: \.ipynb$
-        args: ['--extra-keys', 'metadata.kernelspec']
+  # TODO: Re-enable after pre-commit/identify is upgraded to support 'jupyter' type tag
+  # - repo: https://github.com/kynan/nbstripout
+  #   rev: 0.8.1
+  #   hooks:
+  #     - id: nbstripout
+  #       name: Strip Notebook Outputs
+  #       description: Remove outputs from Jupyter notebooks before commit
+  #       files: \.ipynb$
+  #       args: ['--extra-keys', 'metadata.kernelspec']
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
