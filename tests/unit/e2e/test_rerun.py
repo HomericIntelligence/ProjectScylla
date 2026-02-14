@@ -494,9 +494,6 @@ class TestRerunSingleRun:
 
         assert result is None
 
-    @pytest.mark.skip(
-        reason="Pre-existing failure from incomplete Pydantic migration - will fix in follow-up PR"
-    )
     def test_rerun_single_run_moves_existing_to_failed(self, tmp_path: Path) -> None:
         """Test rerun_single_run moves existing run to .failed directory."""
         from scylla.e2e.rerun import rerun_single_run
@@ -519,6 +516,7 @@ class TestRerunSingleRun:
         config.task_prompt_file = tmp_path / "task.md"
         config.task_prompt_file.write_text("Task prompt")
         config.thinking_mode = None
+        config.task_commit = "abc123"
 
         subtest = SubTestConfig(id="00", name="Test", description="Test subtest")
         tier_config = TierConfig(tier_id=TierID.T0, subtests=[subtest])
@@ -529,8 +527,11 @@ class TestRerunSingleRun:
 
         workspace_manager = MagicMock()
 
-        # Mock SubTestExecutor to avoid actual execution
-        with patch("scylla.e2e.rerun.SubTestExecutor") as mock_executor_class:
+        # Mock SubTestExecutor and _setup_workspace to avoid actual execution
+        with (
+            patch("scylla.e2e.rerun.SubTestExecutor") as mock_executor_class,
+            patch("scylla.e2e.workspace_setup._setup_workspace"),
+        ):
             mock_executor = MagicMock()
             mock_executor_class.return_value = mock_executor
             mock_executor._execute_single_run.return_value = None

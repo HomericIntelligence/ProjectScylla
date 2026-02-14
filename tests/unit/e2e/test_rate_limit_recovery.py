@@ -6,8 +6,6 @@ import json
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import pytest
-
 from scylla.e2e.models import SubTestResult, TierID
 from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
 from scylla.e2e.subtest_executor import (
@@ -63,9 +61,6 @@ class TestDetectRateLimitFromResults:
         assert detected.source == "agent"
         assert "RateLimitError" in detected.error_message
 
-    @pytest.mark.skip(
-        reason="Glob pattern matching issue - works in practice but test isolation problem"
-    )
     def test_detects_from_failed_directory(self, tmp_path: Path) -> None:
         """Test detection from .failed/ directory."""
         # Create .failed/ directory structure
