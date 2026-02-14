@@ -141,6 +141,12 @@ Examples:
     )
 
     parser.add_argument(
+        "--no-ui",
+        action="store_true",
+        help="Disable curses UI (use plain logging instead)",
+    )
+
+    parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
@@ -179,6 +185,7 @@ def main() -> int:
         dry_run=args.dry_run,
         enable_retrospective=not args.no_retrospective,
         enable_follow_up=not args.no_follow_up,
+        enable_ui=not args.no_ui,
     )
 
     if args.health_check:

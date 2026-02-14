@@ -119,6 +119,7 @@ class ImplementerOptions(BaseModel):
     dry_run: bool = False
     enable_retrospective: bool = True
     enable_follow_up: bool = True
+    enable_ui: bool = True
 
 
 class DependencyGraph(BaseModel):
