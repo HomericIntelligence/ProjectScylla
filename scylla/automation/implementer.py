@@ -631,6 +631,8 @@ class IssueImplementer:
             slot_id: Worker slot ID for status updates
 
         """
+        self.state_dir.mkdir(parents=True, exist_ok=True)
+
         # Write follow-up prompt to temp file in worktree
         prompt_file = worktree_path / f".claude-followup-{issue_number}.md"
         prompt_file.write_text(get_follow_up_prompt(issue_number))
@@ -649,6 +651,10 @@ class IssueImplementer:
                 cwd=worktree_path,
                 timeout=600,  # 10 minutes
             )
+
+            # Save successful output to log file
+            follow_up_log = self.state_dir / f"follow-up-{issue_number}.log"
+            follow_up_log.write_text(result.stdout or "")
 
             # Parse JSON output
             try:
@@ -710,6 +716,16 @@ class IssueImplementer:
 
         except Exception as e:
             logger.warning(f"Follow-up issues failed for issue #{issue_number}: {e}")
+
+            # Save failure output to log file
+            follow_up_log = self.state_dir / f"follow-up-{issue_number}.log"
+            error_output = f"FAILED: {e}\n"
+            if hasattr(e, "stdout"):
+                error_output += f"\nSTDOUT:\n{e.stdout or ''}"
+            if hasattr(e, "stderr"):
+                error_output += f"\nSTDERR:\n{e.stderr or ''}"
+            follow_up_log.write_text(error_output)
+
             # Non-blocking: never re-raise
         finally:
             # Clean up temp file
@@ -737,6 +753,7 @@ class IssueImplementer:
         Output is logged to .issue_implementer/retrospective-{issue_number}.log.
 
         """
+        self.state_dir.mkdir(parents=True, exist_ok=True)
         log_file = self.state_dir / f"retrospective-{issue_number}.log"
         try:
             result = run(
@@ -760,6 +777,15 @@ class IssueImplementer:
             logger.info(f"Retrospective log: {log_file}")
         except Exception as e:
             logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
+
+            # Save failure output to log file
+            error_output = f"FAILED: {e}\n"
+            if hasattr(e, "stdout"):
+                error_output += f"\nSTDOUT:\n{e.stdout or ''}"
+            if hasattr(e, "stderr"):
+                error_output += f"\nSTDERR:\n{e.stderr or ''}"
+            log_file.write_text(error_output)
+
             # Non-blocking: never re-raise
 
     def _run_claude_code(
@@ -780,6 +806,8 @@ class IssueImplementer:
         if self.options.dry_run:
             logger.info(f"[DRY RUN] Would run Claude Code for issue #{issue_number}")
             return None
+
+        self.state_dir.mkdir(parents=True, exist_ok=True)
 
         # Write prompt to temp file in worktree
         prompt_file = worktree_path / f".claude-prompt-{issue_number}.md"
@@ -803,10 +831,21 @@ class IssueImplementer:
             # Parse session_id from JSON output
             try:
                 data = json.loads(result.stdout)
-                return data.get("session_id")
+                session_id = data.get("session_id")
+
+                # Save successful output to log file
+                log_file = self.state_dir / f"claude-{issue_number}.log"
+                log_file.write_text(result.stdout or "")
+
+                return session_id
             except (json.JSONDecodeError, AttributeError):
                 logger.warning(f"Could not parse session_id for issue #{issue_number}")
                 logger.debug(f"Claude stdout: {result.stdout[:500]}")
+
+                # Save output even if JSON parsing failed
+                log_file = self.state_dir / f"claude-{issue_number}.log"
+                log_file.write_text(result.stdout or "")
+
                 return None
         except subprocess.CalledProcessError as e:
             logger.error(f"Claude Code failed for issue #{issue_number}")
@@ -815,8 +854,20 @@ class IssueImplementer:
                 logger.error(f"Stdout: {e.stdout[:1000]}")
             if e.stderr:
                 logger.error(f"Stderr: {e.stderr[:1000]}")
+
+            # Save failure output to log file
+            log_file = self.state_dir / f"claude-{issue_number}.log"
+            stdout = e.stdout or ""
+            stderr = e.stderr or ""
+            output = f"EXIT CODE: {e.returncode}\n\nSTDOUT:\n{stdout}\n\nSTDERR:\n{stderr}"
+            log_file.write_text(output)
+
             raise RuntimeError(f"Claude Code failed: {e.stderr or e.stdout}") from e
         except subprocess.TimeoutExpired as e:
+            # Save timeout info to log file
+            log_file = self.state_dir / f"claude-{issue_number}.log"
+            log_file.write_text(f"TIMEOUT after {e.timeout}s\n\nOutput:\n{e.output or ''}")
+
             raise RuntimeError("Claude Code timed out") from e
         finally:
             # Clean up temp file
