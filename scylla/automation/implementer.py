@@ -384,7 +384,7 @@ class IssueImplementer:
                 state.phase = ImplementationPhase.CREATING_PR
             self._save_state(state)
 
-            pr_number = self._verify_pr_created(issue_number, branch_name, worktree_path)
+            pr_number = self._ensure_pr_created(issue_number, branch_name, worktree_path)
             with self.state_lock:
                 state.pr_number = pr_number
             self._save_state(state)
@@ -791,14 +791,14 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
             cwd=worktree_path,
         )
 
-    def _verify_pr_created(self, issue_number: int, branch_name: str, worktree_path: Path) -> int:
-        """Verify that Claude created commit, pushed, and created PR.
+    def _ensure_pr_created(self, issue_number: int, branch_name: str, worktree_path: Path) -> int:
+        """Ensure commit is pushed and PR is created (fallback if Claude didn't do it).
 
         Returns:
             PR number
 
         Raises:
-            RuntimeError: If verification fails
+            RuntimeError: If commit doesn't exist or PR creation fails
 
         """
         # Check if commit exists
@@ -809,42 +809,45 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
         )
         if not result.stdout.strip():
             raise RuntimeError(
-                f"No commit found for issue #{issue_number}. Claude may not have created a commit."
+                f"No commit found for issue #{issue_number}. Claude did not create any commits."
             )
 
-        logger.info(f"Verified commit exists: {result.stdout.strip()[:80]}")
+        logger.info(f"✓ Commit exists: {result.stdout.strip()[:80]}")
 
-        # Check if branch was pushed
+        # Check if branch was pushed, if not push it
         result = run(
             ["git", "ls-remote", "--heads", "origin", branch_name],
             cwd=worktree_path,
             capture_output=True,
+            check=False,
         )
         if not result.stdout.strip():
-            raise RuntimeError(
-                f"Branch {branch_name} not found on origin. Claude may not have pushed the changes."
-            )
+            logger.warning(f"Branch {branch_name} not pushed, pushing now...")
+            run(["git", "push", "-u", "origin", branch_name], cwd=worktree_path)
+            logger.info(f"✓ Pushed branch {branch_name} to origin")
+        else:
+            logger.info(f"✓ Branch {branch_name} already on origin")
 
-        logger.info(f"Verified branch {branch_name} pushed to origin")
-
-        # Find PR number
-        # Try to get PR number from gh pr list
+        # Check if PR exists, if not create it
         from .github_api import gh_call
 
+        pr_number = None
         try:
             pr_data = gh_call(
                 ["pr", "list", "--head", branch_name, "--json", "number", "--limit", "1"]
             )
             if pr_data and len(pr_data) > 0:
                 pr_number = pr_data[0]["number"]
-                logger.info(f"Found PR #{pr_number} for branch {branch_name}")
+                logger.info(f"✓ PR #{pr_number} already exists")
                 return pr_number
         except Exception as e:
-            logger.warning(f"Could not find PR via gh pr list: {e}")
+            logger.debug(f"Could not find existing PR: {e}")
 
-        raise RuntimeError(
-            f"No PR found for branch {branch_name}. Claude may not have created a pull request."
-        )
+        # PR doesn't exist, create it
+        logger.warning(f"No PR found for branch {branch_name}, creating one...")
+        pr_number = self._create_pr(issue_number, branch_name)
+        logger.info(f"✓ Created PR #{pr_number}")
+        return pr_number
 
     def _create_pr(self, issue_number: int, branch_name: str) -> int:
         """Create pull request for issue."""
