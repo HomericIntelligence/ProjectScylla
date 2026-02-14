@@ -47,6 +47,7 @@ Create an implementation plan for GitHub issue #{issue_number}.
 4. **Files to Modify** - Existing files to change with specific changes
 5. **Implementation Order** - Numbered sequence of steps
 6. **Verification** - How to test and verify the implementation
+7. **Skills Used** - List skills invoked during planning (e.g., /explore, /search)
 
 **Guidelines:**
 - Be specific about file paths and function names
@@ -54,6 +55,7 @@ Create an implementation plan for GitHub issue #{issue_number}.
 - Include test file creation in the plan
 - Consider dependencies and integration points
 - Keep the plan focused on the issue requirements
+- Document which skills you used during planning so implementers know what context was gathered
 
 **Format:**
 Use markdown with clear sections and bullet points.
