@@ -6,6 +6,8 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from scylla.core.results import RunResultBase
+
 
 class ExecutionInfo(BaseModel):
     """Execution metadata for a run.
@@ -46,24 +48,28 @@ class GradingInfo(BaseModel):
     composite_score: float = Field(..., description="Combined quality score")
 
 
-class RunResult(BaseModel):
+class ReportingRunResult(RunResultBase):
     """Complete result for a single evaluation run.
 
     Contains all execution, metrics, judgment, and grading data
     using composition with nested info objects.
 
     This is the persistence result with nested info objects.
-    For other RunResult types, see:
-    - executor/runner.py:RunResult (execution tracking with status)
-    - e2e/models.py:RunResult (E2E testing with paths)
-    - metrics/aggregator.py:RunResult (statistical aggregation)
-    - core/results.py:BaseRunResult (base type)
+    Inherits common fields (run_number, cost_usd, duration_seconds) from RunResultBase.
+
+    Note: cost_usd and duration_seconds are inherited from RunResultBase but also
+    present in the nested metrics/execution objects for backward compatibility.
+
+    For other RunResult types in the hierarchy, see:
+    - RunResultBase (core/results.py) - Base Pydantic model
+    - ExecutorRunResult (executor/runner.py) - Execution tracking with status
+    - E2ERunResult (e2e/models.py) - E2E testing with paths
+    - MetricsRunResult (metrics/aggregator.py) - Statistical aggregation
     """
 
     test_id: str = Field(..., description="Test identifier")
     tier_id: str = Field(..., description="Tier identifier")
     model_id: str = Field(..., description="Model identifier")
-    run_number: int = Field(..., description="Run number (1-10)")
     timestamp: str = Field(..., description="ISO timestamp")
     execution: ExecutionInfo = Field(..., description="Execution metadata")
     metrics: MetricsInfo = Field(..., description="Token and cost metrics")
@@ -88,6 +94,10 @@ class RunResult(BaseModel):
         output_path = output_dir / "result.json"
         output_path.write_text(self.to_json())
         return output_path
+
+
+# Backward-compatible type alias
+RunResult = ReportingRunResult
 
 
 class ResultWriter:
@@ -204,6 +214,8 @@ def create_run_result(
         tier_id=tier_id,
         model_id=model_id,
         run_number=run_number,
+        cost_usd=cost_usd,  # Inherited from RunResultBase
+        duration_seconds=duration_seconds,  # Inherited from RunResultBase
         timestamp=timestamp,
         execution=ExecutionInfo(
             status=status,

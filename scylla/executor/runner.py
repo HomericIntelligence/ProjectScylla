@@ -20,6 +20,8 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
+from scylla.core.results import RunResultBase
+
 if TYPE_CHECKING:
     from scylla.executor.docker import ContainerResult, DockerExecutor
     from scylla.executor.tier_config import TierConfig, TierConfigLoader
@@ -83,22 +85,27 @@ class JudgmentResult(BaseModel):
     consensus_runs: int = Field(default=3, description="Number of judge runs for consensus")
 
 
-class RunResult(BaseModel):
+class ExecutorRunResult(RunResultBase):
     """Result of a single run with execution tracking.
 
     This is the executor's run result with status tracking and optional
-    judgment. For other RunResult types, see:
-    - e2e/models.py:RunResult (E2E testing with judge fields)
-    - reporting/result.py:RunResult (persistence with nested info)
-    - metrics/aggregator.py:RunResult (statistical aggregation)
-    - core/results.py:BaseRunResult (base type)
+    judgment. Inherits common fields (run_number, cost_usd, duration_seconds) from RunResultBase.
+
+    For other RunResult types in the hierarchy, see:
+    - RunResultBase (core/results.py) - Base Pydantic model
+    - E2ERunResult (e2e/models.py) - E2E testing with judge fields
+    - ReportingRunResult (reporting/result.py) - Persistence with nested info
+    - MetricsRunResult (metrics/aggregator.py) - Statistical aggregation
     """
 
-    run_number: int = Field(..., description="Run number (1-10)")
     status: RunStatus = Field(..., description="Run status")
     execution_info: ExecutionInfo | None = Field(default=None, description="Execution details")
     judgment: JudgmentResult | None = Field(default=None, description="Judge evaluation")
     error_message: str | None = Field(default=None, description="Error message if failed")
+
+
+# Backward-compatible type alias
+RunResult = ExecutorRunResult
 
 
 class TierSummary(BaseModel):
