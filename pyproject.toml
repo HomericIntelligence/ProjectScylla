@@ -80,6 +80,55 @@ ignore = [
 testpaths = ["tests"]
 pythonpath = ["."]
 
+[tool.mypy]
+python_version = "3.10"
+# Incremental mypy adoption - start with basic checks
+# Catches syntax errors, undefined names, and import issues
+# TODO #XXX: Gradually enable stricter checks as existing type errors are fixed (159 errors as of 2026-02-14)
+warn_unused_configs = true
+ignore_missing_imports = true
+show_error_codes = true
+# Minimal strictness for now - prevents new egregious errors
+check_untyped_defs = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_any_generics = false
+warn_return_any = false
+warn_redundant_casts = false
+warn_unused_ignores = false
+# Allow flexible typing while codebase type coverage improves
+allow_redefinition = true
+implicit_reexport = true
+# Temporarily disable error codes with most violations during initial rollout
+# Re-enable these incrementally as codebase type errors are fixed
+disable_error_code = [
+    "assignment",      # 10 violations - type mismatches in assignments
+    "operator",        # 8 violations - incompatible operand types
+    "arg-type",        # 6 violations - incompatible argument types
+    "valid-type",      # 5 violations - invalid type annotations (e.g., "callable" vs "Callable")
+    "index",           # 3 violations - invalid indexing operations
+    "attr-defined",    # 3 violations - attribute not defined
+    "misc",            # 2 violations - miscellaneous type issues
+    "override",        # 1 violation - incompatible method override
+    "no-redef",        # 1 violation - name redefinition
+    "exit-return",     # 1 violation - context manager __exit__ return type
+    "union-attr",      # Multiple violations - accessing attributes on unions
+    "var-annotated",   # Multiple violations - missing type annotations for variables
+    "call-arg",        # Multiple violations - incorrect function call arguments
+    "return-value",    # 1 violation - incompatible return value type
+    "call-overload",   # 1 violation - no matching overload variant
+]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+# Skip type checking for tests - focus on source code first
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "scripts.*"
+# Skip type checking for scripts - focus on source code first
+ignore_errors = true
+
 [tool.coverage.run]
 branch = true
 source = ["scylla"]
