@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import math
-import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
