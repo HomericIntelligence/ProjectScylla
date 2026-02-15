@@ -16,15 +16,16 @@ jobs:
         with:
           pixi-version: v0.62.2
           cache: true
+          environments: lint
 
       - name: Run pre-commit
         run: |
-          # Ensure pixi is properly initialized
-          pixi install
+          # Use lightweight lint environment (skips heavy scientific packages)
+          pixi install --environment lint
           pixi --version
 
-          # Run pre-commit with all files
-          pixi run pre-commit run --all-files --show-diff-on-failure
+          # Run pre-commit with all files using lint environment
+          pixi run --environment lint pre-commit run --all-files --show-diff-on-failure
 
       - name: Upload pre-commit diff
         if: failure()
