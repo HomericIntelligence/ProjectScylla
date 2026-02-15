@@ -167,6 +167,18 @@ For alternative approaches where the agent solved the problem differently than e
 For work with errors where the agent completed the task but introduced bugs or issues, distinguish between fundamental failures that prevent the solution from working and incidental issues that affect quality but not functionality. Score accordingly.
 </partial_attempt_handling>
 
+<baseline_regression>
+Baseline pipeline results (before agent) and post-agent pipeline results are provided. Evaluate pipeline failures based on whether they are regressions, pre-existing, or improvements:
+
+__Regressions__ (passed in baseline → failed after agent): These are NEW failures introduced by the agent's changes. Penalize these heavily as the agent broke previously working functionality. This indicates the agent did not properly validate their changes.
+
+__Pre-existing failures__ (failed in baseline → failed after agent): These failures existed before the agent started. Mark the corresponding rubric items as N/A and do not penalize the agent for them, unless the task explicitly required fixing these failures.
+
+__Improvements__ (failed in baseline → passed after agent): The agent fixed a pre-existing failure. Recognize this positively in your evaluation, especially if the task did not explicitly require fixing pipeline issues.
+
+When evaluating build_pipeline rubric items, check the baseline first to determine if failures are regressions or pre-existing before scoring.
+</baseline_regression>
+
 <exceptional_work_recognition>
 The S grade exists to recognize work that exceeds requirements. To justify an S grade, the evaluation must identify specific ways the solution goes beyond what was asked.
 

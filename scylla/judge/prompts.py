@@ -154,6 +154,7 @@ def build_task_prompt(
     reference_patch: str | None = None,
     pipeline_result_str: str | None = None,
     rubric_content: str | None = None,
+    baseline_pipeline_str: str | None = None,
 ) -> str:
     """Build task-specific prompt for judge evaluation.
 
@@ -169,6 +170,7 @@ def build_task_prompt(
         reference_patch: Reference solution patch for comparison (optional)
         pipeline_result_str: Build/lint/test pipeline results formatted string (optional)
         rubric_content: YAML rubric with checklist items (optional)
+        baseline_pipeline_str: Baseline pipeline results before agent execution (optional)
 
     Returns:
         Formatted evaluation context for the judge LLM.
@@ -228,9 +230,21 @@ def build_task_prompt(
             f"the same semantic result (same files created/modified, similar structure)."
         )
 
-    # Add build pipeline results if available
+    # Add baseline pipeline results if available (before agent execution)
+    if baseline_pipeline_str:
+        sections.append(
+            f"## Baseline Pipeline Results (Before Agent)\n\n"
+            f"*This shows the build/lint/test status BEFORE the agent made any changes. "
+            f"Use this to distinguish regressions (things that got worse) "
+            f"from pre-existing failures.*\n\n"
+            f"{baseline_pipeline_str}"
+        )
+
+    # Add build pipeline results if available (after agent execution)
     if pipeline_result_str:
-        sections.append(f"## Build/Lint/Test Pipeline Results\n\n{pipeline_result_str}")
+        sections.append(
+            f"## Build/Lint/Test Pipeline Results (After Agent)\n\n{pipeline_result_str}"
+        )
 
     sections.append(
         "---\n\nEvaluate the agent's work using the rubric and criteria in your system prompt."

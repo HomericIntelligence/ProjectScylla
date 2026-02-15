@@ -308,6 +308,7 @@ class E2ERunResult(RunResultBase):
     judges: list[JudgeResultSummary] = Field(default_factory=list)
     command_log_path: Path | None = None
     criteria_scores: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    baseline_pipeline_summary: dict[str, Any] | None = None
 
     # Legacy properties for backwards compatibility
     @property
@@ -342,6 +343,7 @@ class E2ERunResult(RunResultBase):
             "logs_path": str(self.logs_path),
             "command_log_path": str(self.command_log_path) if self.command_log_path else None,
             "criteria_scores": self.criteria_scores,
+            "baseline_pipeline_summary": self.baseline_pipeline_summary,
         }
 
 

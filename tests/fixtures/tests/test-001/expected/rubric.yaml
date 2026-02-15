@@ -69,23 +69,24 @@ categories:
     scoring_type: "checklist"
     items:
       - id: B1
-        check: "Python build/syntax check passes without errors"
+        check: "Python build/syntax check passes without errors (or was already failing in baseline)"
         points: 1.0
+        na_condition: "Build already failed in baseline"
 
       - id: B2
-        check: "Python format check passes (if ruff available)"
+        check: "Python format check passes (or was already failing in baseline)"
         points: 1.0
-        na_condition: "ruff not available in workspace"
+        na_condition: "ruff not available in workspace OR lint already failed in baseline"
 
       - id: B3
-        check: "Tests pass (if task requires tests)"
+        check: "Tests pass (or were already failing in baseline)"
         points: 1.0
-        na_condition: "Task does not require tests"
+        na_condition: "Task does not require tests OR tests already failed in baseline"
 
       - id: B4
-        check: "Pre-commit hooks pass"
+        check: "Pre-commit hooks pass (or were already failing in baseline)"
         points: 1.0
-        na_condition: "Workspace lacks .pre-commit-config.yaml"
+        na_condition: "Workspace lacks .pre-commit-config.yaml OR hooks already failed in baseline"
 
   overall_quality:
     weight: 0.20

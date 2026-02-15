@@ -772,6 +772,7 @@ def run_llm_judge(
     run_build_pipeline: bool = True,
     judge_run_number: int = 1,
     language: str = "python",
+    pipeline_baseline: BuildPipelineResult | None = None,
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
 
@@ -794,6 +795,7 @@ def run_llm_judge(
         run_build_pipeline: Whether to run build/lint/test pipeline (default True)
         judge_run_number: Judge run number for creating judge_{N}/ subdirectory (default 1)
         language: Programming language ("python" or "mojo") for pipeline selection (default "mojo")
+        pipeline_baseline: Optional baseline pipeline result from before agent execution
 
     Returns:
         JudgeResult with evaluation details.
@@ -863,6 +865,14 @@ def run_llm_judge(
             f"**Overall Status**: {overall_status}\n\n{pipeline_result.to_context_string()}"
         )
 
+    # Format baseline pipeline result if provided
+    baseline_pipeline_str = None
+    if pipeline_baseline:
+        baseline_status = "ALL PASSED ✓" if pipeline_baseline.all_passed else "SOME FAILED ✗"
+        baseline_pipeline_str = (
+            f"**Overall Status**: {baseline_status}\n\n{pipeline_baseline.to_context_string()}"
+        )
+
     judge_prompt = build_task_prompt(
         task_prompt=task_prompt,
         agent_output=agent_output,
@@ -872,6 +882,7 @@ def run_llm_judge(
         reference_patch=reference_patch,
         pipeline_result_str=pipeline_result_str,
         rubric_content=rubric_content,
+        baseline_pipeline_str=baseline_pipeline_str,
     )
 
     # Create judge_{N}/ subdirectory if judge_dir provided
