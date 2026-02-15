@@ -17,6 +17,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from scylla.e2e.filters import is_test_config_file
+from scylla.e2e.repo_detection import is_modular_repo
 from scylla.e2e.template_loader import write_script
 from scylla.judge import extract_json_from_llm_response
 from scylla.judge.prompts import JUDGE_SYSTEM_PROMPT_FILE, build_task_prompt
