@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict
 
 from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint
-from scylla.e2e.models import ExperimentConfig, RunResult, TierBaseline, TierID
+from scylla.e2e.models import E2ERunResult, ExperimentConfig, TierBaseline, TierID
 from scylla.e2e.rerun_base import load_rerun_context, print_dry_run_summary
 from scylla.e2e.subtest_executor import SubTestExecutor, _commit_test_config
 from scylla.e2e.tier_manager import TierManager
@@ -266,7 +266,7 @@ def rerun_single_run(
     tier_manager: TierManager,
     workspace_manager: WorkspaceManager,
     baseline: TierBaseline | None,
-) -> RunResult | None:
+) -> E2ERunResult | None:
     """Re-run a single agent+judge for a failed/missing run.
 
     Steps:
@@ -286,7 +286,7 @@ def rerun_single_run(
         baseline: Baseline configuration from previous tier (or None for T0)
 
     Returns:
-        RunResult if successful, None if failed
+        E2ERunResult if successful, None if failed
 
     """
     logger.info(

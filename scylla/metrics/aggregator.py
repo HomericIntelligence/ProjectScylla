@@ -49,10 +49,6 @@ class MetricsRunResult(RunResultBase):
     impl_rate: float = Field(..., description="Implementation rate (0.0 to 1.0)")
 
 
-# Backward-compatible type alias
-RunResult = MetricsRunResult
-
-
 @dataclass
 class TierStatistics:
     """Aggregated statistics for a single tier.
@@ -112,7 +108,7 @@ class RunAggregator:
     def aggregate_tier(
         self,
         tier_id: str,
-        runs: list[RunResult],
+        runs: list[MetricsRunResult],
     ) -> TierStatistics:
         """Aggregate runs into statistical summary for one tier.
 
@@ -222,7 +218,7 @@ class RunAggregator:
 
     def aggregate_all_tiers(
         self,
-        runs_by_tier: dict[str, list[RunResult]],
+        runs_by_tier: dict[str, list[MetricsRunResult]],
     ) -> tuple[dict[str, TierStatistics], CrossTierAnalysis]:
         """Aggregate all tiers and perform cross-tier analysis.
 

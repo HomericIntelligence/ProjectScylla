@@ -88,22 +88,3 @@ class BaseRunMetrics:
     tokens_input: int
     tokens_output: int
     cost_usd: float
-
-
-@dataclass
-class BaseRunResult:
-    """Legacy base run result with common fields.
-
-    DEPRECATED: Use RunResultBase (Pydantic) instead.
-    This dataclass is maintained for backward compatibility only.
-
-    Attributes:
-        run_number: Run number/identifier.
-        cost_usd: Cost in USD.
-        duration_seconds: Execution duration.
-
-    """
-
-    run_number: int
-    cost_usd: float
-    duration_seconds: float

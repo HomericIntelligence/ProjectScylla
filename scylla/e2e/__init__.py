@@ -19,9 +19,9 @@ from scylla.e2e.checkpoint import (
 )
 from scylla.e2e.llm_judge import JudgeResult, run_llm_judge
 from scylla.e2e.models import (
+    E2ERunResult,
     ExperimentConfig,
     ExperimentResult,
-    RunResult,
     SubTestConfig,
     SubTestResult,
     TierConfig,
@@ -59,7 +59,7 @@ __all__ = [
     "parse_retry_after",
     "wait_for_rate_limit",
     # Results
-    "RunResult",
+    "E2ERunResult",
     "SubTestConfig",
     "SubTestResult",
     "TierConfig",
