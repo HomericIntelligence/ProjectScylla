@@ -143,7 +143,7 @@ Return a JSON array of follow-up items (max 5). Each item must have:
 - `title`: Brief, specific title (under 70 characters)
 - `body`: Detailed description of the follow-up work
 - `labels`: Array of relevant labels from:
-  ["enhancement", "bug", "test", "docs", "refactor", "research"]
+  ["enhancement", "bug", "testing", "documentation", "refactor", "research"]
 
 If there are no follow-up items, return an empty array: `[]`
 
@@ -160,7 +160,7 @@ misleading error. Should add validation and specific error message.",
     "title": "Add integration tests for new feature",
     "body": "Current tests only cover unit level. Need integration tests
 to verify end-to-end behavior with real GitHub API.",
-    "labels": ["test"]
+    "labels": ["testing"]
   }}
 ]
 ```
