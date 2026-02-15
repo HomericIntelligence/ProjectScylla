@@ -1,0 +1,10 @@
+# ShellCheck configuration for ProjectScylla
+
+# Disable checks for template files that will be processed by string.Template
+# SC2034: Variable appears unused (false positive for template variables)
+# SC2154: Variable is referenced but not assigned (false positive for $workspace)
+# SC1036: Invalid parentheses (false positive for $$ escaping)
+# SC1088: Parsing stopped (false positive for $$ escaping)
+
+# Globally disable these for .template files (they're substituted at runtime)
+disable=SC2034,SC2154,SC1036,SC1088

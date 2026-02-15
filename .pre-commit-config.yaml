@@ -62,6 +62,16 @@ repos:
         args: ['--config-file', '.yamllint.yaml']
         exclude: ^(\.pixi|build)/
 
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: ShellCheck
+        description: Lint shell scripts and templates for best practices
+        files: \.(sh|bash|sh\.template)$
+        types: [text]
+
   # Jupyter notebook output stripping
   # TODO: Re-enable after pre-commit/identify is upgraded to support 'jupyter' type tag
   # - repo: https://github.com/kynan/nbstripout
