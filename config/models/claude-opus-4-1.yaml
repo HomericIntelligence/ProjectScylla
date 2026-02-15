@@ -1,4 +1,11 @@
 # Claude Opus 4.1 (Legacy) Model Configuration
+#
+# File naming convention:
+#   - Filename: {model_id}.yaml (e.g., claude-opus-4-1.yaml)
+#   - model_id: API identifier from provider (e.g., "claude-opus-4-1")
+#   - name: Human-readable display name (e.g., "Claude Opus 4.1")
+#
+# The filename MUST match the model_id field for ConfigLoader resolution.
 model_id: "claude-opus-4-1"
 name: "Claude Opus 4.1"
 provider: "anthropic"
