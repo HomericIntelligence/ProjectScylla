@@ -356,79 +356,147 @@ class E2ERunner:
                 tier_id = group[0]
                 logger.info(f"Starting tier {tier_id.value}")
 
-                tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
+                tier_result, previous_baseline = self._execute_single_tier(
+                    tier_id, previous_baseline, global_semaphore
+                )
                 tier_results[tier_id] = tier_result
-
-                # Set baseline for next tier
-                if tier_result.best_subtest:
-                    subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
-                    previous_baseline = self.tier_manager.get_baseline_for_subtest(
-                        tier_id=tier_id,
-                        subtest_id=tier_result.best_subtest,
-                        results_dir=subtest_dir,
-                    )
-
-                # Save intermediate results
-                self._save_tier_result(tier_id, tier_result)
 
             else:
                 # Multiple tiers - run in parallel
                 logger.info(f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}")
 
-                with ThreadPoolExecutor(max_workers=len(group)) as executor:
-                    # Submit all tiers in this group
-                    futures = {
-                        executor.submit(
-                            self._run_tier, tier_id, previous_baseline, global_semaphore
-                        ): tier_id
-                        for tier_id in group
-                    }
+                group_results = self._execute_parallel_tier_group(
+                    group, previous_baseline, global_semaphore
+                )
+                tier_results.update(group_results)
 
-                    # Collect results as they complete
-                    for future in as_completed(futures):
-                        tier_id = futures[future]
-                        try:
-                            tier_result = future.result()
-                            tier_results[tier_id] = tier_result
-
-                            # Save intermediate results
-                            self._save_tier_result(tier_id, tier_result)
-
-                            logger.info(f"Completed tier {tier_id.value} in parallel group")
-                        except Exception as e:
-                            logger.error(f"Tier {tier_id.value} failed: {e}")
-                            raise
-
-                # After parallel group completes, find best tier for baseline
-                # (only relevant for T0-T4 group before T5)
-                if TierID.T5 in self.config.tiers_to_run:
-                    best_cop = float("inf")
-                    best_tier = None
-                    for tier_id in group:
-                        if (
-                            tier_id in tier_results
-                            and tier_results[tier_id].cost_of_pass < best_cop
-                        ):
-                            best_cop = tier_results[tier_id].cost_of_pass
-                            best_tier = tier_id
-
-                    if best_tier and tier_results[best_tier].best_subtest:
-                        subtest_dir = (
-                            self.experiment_dir
-                            / best_tier.value
-                            / tier_results[best_tier].best_subtest
-                        )
-                        previous_baseline = self.tier_manager.get_baseline_for_subtest(
-                            tier_id=best_tier,
-                            subtest_id=tier_results[best_tier].best_subtest,
-                            results_dir=subtest_dir,
-                        )
-                        logger.info(
-                            f"Selected {best_tier.value} as baseline for next tier group "
-                            f"(CoP: ${best_cop:.4f})"
-                        )
+                # Select best baseline from group for next tier group
+                previous_baseline = self._select_best_baseline_from_group(group, tier_results)
 
         return tier_results
+
+    def _execute_single_tier(
+        self,
+        tier_id: TierID,
+        previous_baseline: TierBaseline | None,
+        global_semaphore,
+    ) -> tuple[TierResult, TierBaseline | None]:
+        """Execute a single tier sequentially and update baseline.
+
+        Args:
+            tier_id: The tier to execute
+            previous_baseline: Baseline from previous tier (if any)
+            global_semaphore: Semaphore for limiting concurrent agents
+
+        Returns:
+            Tuple of (tier_result, updated_baseline)
+
+        """
+        tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
+
+        # Set baseline for next tier
+        updated_baseline = previous_baseline
+        if tier_result.best_subtest:
+            subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
+            updated_baseline = self.tier_manager.get_baseline_for_subtest(
+                tier_id=tier_id,
+                subtest_id=tier_result.best_subtest,
+                results_dir=subtest_dir,
+            )
+
+        # Save intermediate results
+        self._save_tier_result(tier_id, tier_result)
+
+        return tier_result, updated_baseline
+
+    def _execute_parallel_tier_group(
+        self,
+        group: list[TierID],
+        previous_baseline: TierBaseline | None,
+        global_semaphore,
+    ) -> dict[TierID, TierResult]:
+        """Execute multiple tiers in parallel using ThreadPoolExecutor.
+
+        Args:
+            group: List of tier IDs to execute in parallel
+            previous_baseline: Shared baseline for all tiers
+            global_semaphore: Semaphore for limiting concurrent agents
+
+        Returns:
+            Dictionary mapping tier IDs to their results
+
+        """
+        tier_results: dict[TierID, TierResult] = {}
+
+        with ThreadPoolExecutor(max_workers=len(group)) as executor:
+            # Submit all tiers in this group
+            futures = {
+                executor.submit(
+                    self._run_tier, tier_id, previous_baseline, global_semaphore
+                ): tier_id
+                for tier_id in group
+            }
+
+            # Collect results as they complete
+            for future in as_completed(futures):
+                tier_id = futures[future]
+                try:
+                    tier_result = future.result()
+                    tier_results[tier_id] = tier_result
+
+                    # Save intermediate results
+                    self._save_tier_result(tier_id, tier_result)
+
+                    logger.info(f"Completed tier {tier_id.value} in parallel group")
+                except Exception as e:
+                    logger.error(f"Tier {tier_id.value} failed: {e}")
+                    raise
+
+        return tier_results
+
+    def _select_best_baseline_from_group(
+        self,
+        group: list[TierID],
+        tier_results: dict[TierID, TierResult],
+    ) -> TierBaseline | None:
+        """Select best tier from group based on cost-of-pass for next baseline.
+
+        Only relevant when T5 is in the experiment (for T0-T4 → T5 transition).
+
+        Args:
+            group: List of tier IDs that were executed in parallel
+            tier_results: Results from all tiers in the group
+
+        Returns:
+            TierBaseline for best tier, or None if no valid baseline found
+
+        """
+        # Only select baseline if T5 is in the experiment
+        if TierID.T5 not in self.config.tiers_to_run:
+            return None
+
+        best_cop = float("inf")
+        best_tier = None
+        for tier_id in group:
+            if tier_id in tier_results and tier_results[tier_id].cost_of_pass < best_cop:
+                best_cop = tier_results[tier_id].cost_of_pass
+                best_tier = tier_id
+
+        if best_tier and tier_results[best_tier].best_subtest:
+            subtest_dir = (
+                self.experiment_dir / best_tier.value / tier_results[best_tier].best_subtest
+            )
+            baseline = self.tier_manager.get_baseline_for_subtest(
+                tier_id=best_tier,
+                subtest_id=tier_results[best_tier].best_subtest,
+                results_dir=subtest_dir,
+            )
+            logger.info(
+                f"Selected {best_tier.value} as baseline for next tier group (CoP: ${best_cop:.4f})"
+            )
+            return baseline
+
+        return None
 
     def _aggregate_partial_results(
         self,
