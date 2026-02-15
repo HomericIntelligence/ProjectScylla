@@ -560,11 +560,14 @@ def write_analysis_prompt(results_dir: Path, config: dict) -> None:
     prompt_path = results_dir / "ANALYZE_RESULTS.md"
 
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    tiers_str = "-".join(config["tiers"])
+    run_name = f"{config['model']}-{tiers_str}-{date}"
 
-    content = f"""# E2E Dry Run Analysis
+    content = f"""# E2E Batch Run Analysis
 
 ## Task
-Analyze the results of running all 47 E2E tests and file summaries to GitHub.
+Analyze the results of running all 47 E2E tests and write comprehensive reports to
+`docs/runs/{run_name}/`.
 
 ## Configuration
 - Date: {date}
@@ -572,133 +575,237 @@ Analyze the results of running all 47 E2E tests and file summaries to GitHub.
 - Max Subtests: {config["max_subtests"]} | Thinking: {config["thinking"]}
 - Tiers: {", ".join(config["tiers"])}
 - Results directory: {results_dir}/
+- Output directory: docs/runs/{run_name}/
 
 ## What to Do
 
-### 1. Read the batch summary
+### Step 1: Read the batch summary
 Read `{results_dir}/batch_summary.json` for the structured results of all 47 tests.
 
-### 2. Create a GitHub tracking epic
-Create an issue titled "E2E Dry Run: All 47 Tests (Haiku, {date})" with label "evaluation".
-Include a summary table of all test results in the body.
-
-Example table format:
-```markdown
-| Test ID | Status | Best Tier | Score | CoP ($) | Cost ($) | Duration (s) |
-|---------|--------|-----------|-------|---------|----------|--------------|
-| test-001 | PASS | T0 | 1.00 | 0.0165 | 0.48 | 273 |
-| test-002 | FAIL | T1 | 0.45 | 2.22 | 1.24 | 450 |
-| ... | ... | ... | ... | ... | ... | ... |
-```
-
-### 3. For each test, create a linked GitHub issue
-For each test in the batch summary, create an issue:
-- Title: `[E2E] {{test_id}}: {{name}} - {{PASS/FAIL/ERROR}}`
-- Label: `evaluation`
-- Body should include:
-  - Status and overall result
-  - Configuration (model, runs, tiers tested)
-  - Best tier and frontier CoP
-  - Total cost and duration
-  - Link to results directory: `{results_dir}/{{timestamp}}-{{test_id}}/`
-  - Any errors encountered
-  - Next steps (if failed)
-
-Use the gh CLI to create issues:
+### Step 2: Create output directory and write master summary
+Create the output directory structure:
 ```bash
-gh issue create \\
-  --title "[E2E] test-001: Example Test - PASS" \\
-  --body "..." \\
-  --label "evaluation"
+mkdir -p docs/runs/{run_name}/failures
 ```
 
-### 4. Link per-test issues to the epic
-Reference each per-test issue in the epic body using "Closes #N" or "Related: #N" syntax.
+Write `docs/runs/{run_name}/README.md` containing:
 
-### 5. Identify and analyze failures
-For any test that failed or errored:
-- Read the thread log: `{results_dir}/thread_logs/thread_N.log`
-- Check the result directory for partial results
-- Determine if it's a framework bug, model issue, or test fixture problem
-- Document findings in the per-test issue
-- Consider creating separate bug reports for framework issues
+#### Configuration Section
+```markdown
+# E2E Batch Run: {run_name}
 
-### 6. Post final analysis
-Post a final comment on the epic with:
-- Overall pass/fail statistics (e.g., "42/47 passed (89%)")
-- Common failure patterns (e.g., "5 tests timed out", "3 tests failed rubric criteria")
-- Framework bugs identified (link to bug issues)
-- Model performance observations
-- Recommendations for next steps
+**Configuration:**
+- Date: {date}
+- Model: {config["model"]}
+- Judge: {config["judge_model"]}
+- Runs per test: {config["runs"]}
+- Max Subtests: {config["max_subtests"]}
+- Extended Thinking: {config["thinking"]}
+- Tiers Tested: {", ".join(config["tiers"])}
+```
+
+#### Aggregate Statistics Section
+Calculate and include:
+- Overall pass rate (e.g., "42/47 passed (89.4%)")
+- Total cost across all tests
+- Total duration
+- Mean Cost-of-Pass (CoP) for passing tests
+- Median CoP
+- Min/Max CoP
+
+#### Full Results Table
+Create a comprehensive table sorted by test_id with columns:
+- Test ID
+- Name
+- Status (PASS/FAIL/ERROR)
+- Best Tier
+- Best Score
+- CoP ($)
+- Total Cost ($)
+- Total Duration (s)
+
+#### Links Section
+- Link to each test's existing `report.md` in the results directory:
+  `{results_dir}/{{timestamp}}-{{test_id}}/report.md`
+- Link to `failures/README.md` for failure analysis
+- Link to `analysis.md` for detailed findings
+
+### Step 3: Analyze failures and write failure reports
+For each failed or errored test:
+
+1. Read the thread log: `{results_dir}/thread_logs/thread_N.log`
+2. Read the test results: `{results_dir}/{{timestamp}}-{{test_id}}/report.json`
+3. Determine root cause and categorize:
+   - **Framework bug**: Test harness, executor, or infrastructure issue
+   - **Model limitation**: Model unable to solve task despite framework working correctly
+   - **Test fixture issue**: Test definition, rubric, or setup problem
+   - **Zero-cost instant-fail**: Test failed immediately without agent execution (cost = $0)
+
+4. Write `docs/runs/{run_name}/failures/{{test_id}}.md`:
+```markdown
+# Failure Analysis: {{test_id}} - {{name}}
+
+**Status**: {{FAIL/ERROR}}
+**Category**: {{Framework Bug/Model Limitation/Test Fixture Issue/Zero-Cost Instant-Fail}}
+
+## Results
+- Best Subtest Score: {{best_score}} (threshold: {{pass_threshold}})
+- Total Token Usage: {{total_tokens}}
+- Total Cost: ${{total_cost}}
+- Total Duration: {{duration}}s
+
+## Root Cause
+{{Detailed analysis from thread logs and results}}
+
+## Relevant Errors
+{{Error messages from logs, if any}}
+
+## Recommendations
+{{Next steps: fix framework, adjust rubric, investigate model behavior, etc.}}
+```
+
+5. Write `docs/runs/{run_name}/failures/README.md`:
+```markdown
+# Failure Analysis Summary
+
+**Total Failures**: {{num_failures}}/47
+
+## Summary Table
+| Test ID | Name | Category | Best Score | Cost ($) |
+|---------|------|----------|------------|----------|
+| ... | ... | ... | ... | ... |
+
+## Failure Categories
+
+### Framework Bugs ({{count}})
+{{List of framework-related failures}}
+
+### Model Limitations ({{count}})
+{{List of model capability failures}}
+
+### Test Fixture Issues ({{count}})
+{{List of test definition problems}}
+
+### Zero-Cost Instant-Fails ({{count}})
+{{List of tests that failed without execution}}
+
+## Common Patterns
+{{Identify recurring failure modes across tests}}
+```
+
+### Step 4: Write final analysis
+Write `docs/runs/{run_name}/analysis.md`:
+
+```markdown
+# Final Analysis: {run_name}
+
+## Overall Statistics
+
+### Pass/Fail Breakdown
+- **Passed**: {{num_pass}}/47 ({{pass_rate}}%)
+- **Failed**: {{num_fail}}/47 ({{fail_rate}}%)
+- **Errors**: {{num_error}}/47 ({{error_rate}}%)
+
+### Cost Analysis
+- **Total Cost**: ${{total_cost}}
+- **Mean CoP**: ${{mean_cop}} (passing tests only)
+- **Median CoP**: ${{median_cop}}
+- **Min CoP**: ${{min_cop}} ({{test_id}})
+- **Max CoP**: ${{max_cop}} ({{test_id}})
+
+### Duration Analysis
+- **Total Duration**: {{total_duration}}s ({{hours}}h {{minutes}}m)
+- **Mean Duration**: {{mean_duration}}s per test
+- **Median Duration**: {{median_duration}}s
+
+## Failure Analysis
+
+### Common Failure Patterns
+{{Categorized patterns from failures/README.md}}
+
+### Zero-Cost Failures
+**Count**: {{zero_cost_count}}
+{{Analysis of tests that failed instantly without agent execution - likely framework bugs}}
+
+## Model Performance Observations
+{{Observations about model behavior:}}
+- Tier performance comparison
+- Common model errors or limitations
+- Success patterns in passing tests
+
+## Recommendations
+
+### Framework Improvements
+{{Based on framework bugs identified}}
+
+### Test Fixture Updates
+{{Based on test definition issues}}
+
+### Future Evaluation
+{{Suggestions for next batch runs: different tiers, models, configurations}}
+```
+
+### Step 5: Run the analysis pipeline
+Execute the existing data analysis and visualization pipeline:
+
+```bash
+pixi run python scripts/generate_all_results.py \\
+  --data-dir {results_dir} \\
+  --output-dir docs/runs/{run_name} \\
+  --no-render
+```
+
+This will generate:
+- `docs/runs/{run_name}/data/runs.csv` - Run-level data
+- `docs/runs/{run_name}/data/judges.csv` - Judge-level data
+- `docs/runs/{run_name}/data/criteria.csv` - Criteria-level data
+- `docs/runs/{run_name}/data/subtests.csv` - Subtest-level data
+- `docs/runs/{run_name}/data/summary.json` - Aggregated statistics
+- `docs/runs/{run_name}/data/statistical_results.json` - Statistical analysis
+- `docs/runs/{run_name}/figures/*.vl.json` - Vega-Lite figure specifications
+- `docs/runs/{run_name}/figures/*.csv` - Figure data files
+- `docs/runs/{run_name}/tables/*.md` - Markdown tables
+- `docs/runs/{run_name}/tables/*.tex` - LaTeX tables
+
+## Final Output Structure
+
+```
+docs/runs/{run_name}/
+├── README.md              # Master summary (epic equivalent)
+├── analysis.md            # Final analysis with statistics & recommendations
+├── failures/
+│   ├── README.md          # Failure analysis summary
+│   └── test-XXX.md        # Per-failed-test root cause analysis
+├── data/                  # From generate_all_results.py
+│   ├── runs.csv
+│   ├── judges.csv
+│   ├── criteria.csv
+│   ├── subtests.csv
+│   ├── summary.json
+│   └── statistical_results.json
+├── figures/               # From generate_all_results.py
+│   └── *.vl.json, *.csv
+└── tables/                # From generate_all_results.py
+    └── *.md, *.tex
+```
 
 ## Files to Read
 - `{results_dir}/batch_summary.json` — All results in structured format
-- `{results_dir}/thread_logs/thread_*.log` — Per-thread execution logs with full output
+- `{results_dir}/thread_logs/thread_*.log` — Per-thread execution logs
 - `{results_dir}/{{timestamp}}-test-XXX/report.json` — Per-test detailed results
 - `{results_dir}/{{timestamp}}-test-XXX/report.md` — Per-test markdown reports
+  (link to these, don't copy)
 
-## Example Issue Body Template
-
-```markdown
-# Test: {{name}}
-
-**Status**: {{PASS/FAIL/ERROR}}
-
-## Configuration
-- Model: {config["model"]}
-- Judge: {config["judge_model"]}
-- Runs: {config["runs"]}
-- Max Subtests: {config["max_subtests"]}
-- Thinking: {config["thinking"]}
-- Tiers: {", ".join(config["tiers"])}
-
-## Results
-- Best Tier: {{best_tier}}
-- Best Score: {{best_score}}
-- Frontier CoP: ${{frontier_cop}}
-- Total Cost: ${{total_cost}}
-- Total Duration: {{total_duration}}s
-
-## Details
-Results directory: `{results_dir}/{{timestamp}}-{{test_id}}/`
-
-{{Additional details from report.json or logs}}
-
-## Next Steps
-{{For failures: investigation needed, fix required, etc.}}
-{{For passes: verification, production deployment, etc.}}
-```
-
-## Workflow Example
-
-```bash
-# 1. Read batch summary
-cat {results_dir}/batch_summary.json
-
-# 2. Create epic
-gh issue create \\
-  --title "E2E Dry Run: All 47 Tests (Haiku, {date})" \\
-  --label "evaluation" \\
-  --body "Full dry run results..."
-
-# 3. Create per-test issues (repeat for each test)
-gh issue create \\
-  --title "[E2E] test-001: ... - PASS" \\
-  --label "evaluation" \\
-  --body "..."
-
-# 4. Update epic with links
-gh issue comment <epic-number> --body "Per-test issues: #N1, #N2, ..."
-
-# 5. Analyze failures
-for thread_log in {results_dir}/thread_logs/*.log; do
-  # Review logs for errors
-  grep -i error "$thread_log"
-done
-
-# 6. Post final analysis
-gh issue comment <epic-number> --body "Final analysis: ..."
-```
+## Important Notes
+- **No GitHub interaction** - All outputs are files, no `gh issue create` or
+  `gh issue comment` commands
+- **Only failures get dedicated files** - Passing tests are referenced via links
+  to existing `report.md`
+- **Zero-cost failures** - Pay special attention to tests that failed immediately
+  (cost = $0) as these indicate framework bugs
+- **Versionable output** - All reports are committed to git for historical tracking
+- **Complete pipeline** - Run `generate_all_results.py` to produce CSVs, figures,
+  and tables alongside narrative reports
 """
 
     with open(prompt_path, "w") as f:
