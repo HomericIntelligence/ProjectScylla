@@ -160,6 +160,38 @@ class TestDockerfileContent:
             "container health monitoring in orchestration platforms"
         )
 
+    def test_npm_packages_are_pinned(self, dockerfile_path):
+        """Dockerfile pins npm packages to specific versions for reproducibility."""
+        import re
+
+        content = dockerfile_path.read_text()
+
+        # Find all npm install -g commands
+        npm_install_pattern = r"npm\s+install\s+-g\s+((?:@[\w-]+/)?[\w-]+(?:@[\w.-]+)?)"
+        matches = re.findall(npm_install_pattern, content)
+
+        # Check that each package has a version specifier (@version)
+        for package in matches:
+            # Count @ symbols: scoped packages have 1, scoped+versioned have 2
+            # Non-scoped packages should have 1 for version
+            at_count = package.count("@")
+            is_scoped = package.startswith("@")
+
+            if is_scoped:
+                # Scoped package needs 2 @ symbols (@scope/name@version)
+                assert at_count >= 2, (
+                    f"npm package '{package}' should be pinned to specific version "
+                    f"(e.g., {package}@2.1.42) for build reproducibility. "
+                    f"See: https://github.com/mvillmow/ProjectScylla/issues/650"
+                )
+            else:
+                # Non-scoped package needs 1 @ symbol (name@version)
+                assert at_count >= 1, (
+                    f"npm package '{package}' should be pinned to specific version "
+                    f"(e.g., {package}@1.0.0) for build reproducibility. "
+                    f"See: https://github.com/mvillmow/ProjectScylla/issues/650"
+                )
+
 
 class TestDockerComposeContent:
     """Tests for docker-compose.yml content and configuration."""
