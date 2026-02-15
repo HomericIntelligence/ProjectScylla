@@ -110,6 +110,10 @@ RUN chmod +x /entrypoint.sh
 # Switch to non-root user
 USER scylla
 
+# Health check for container orchestration platforms
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD python -c 'import scylla; print("OK")' || exit 1
+
 # Default entry point
 ENTRYPOINT ["/entrypoint.sh"]
 

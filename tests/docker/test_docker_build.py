@@ -152,6 +152,14 @@ class TestDockerfileContent:
         content = dockerfile_path.read_text()
         assert "ENV" in content, "Dockerfile should set environment variables"
 
+    def test_dockerfile_has_healthcheck(self, dockerfile_path):
+        """Dockerfile contains HEALTHCHECK instruction for container orchestration."""
+        content = dockerfile_path.read_text()
+        assert "HEALTHCHECK" in content, (
+            "Dockerfile should contain HEALTHCHECK instruction for "
+            "container health monitoring in orchestration platforms"
+        )
+
 
 class TestDockerComposeContent:
     """Tests for docker-compose.yml content and configuration."""
