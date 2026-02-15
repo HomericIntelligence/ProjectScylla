@@ -1,29 +1,36 @@
 {
-  "name": "enable-yaml-markdown-linting",
+  "name": "resolve-skipped-tests",
   "version": "1.0.0",
-  "category": "ci-cd",
-  "description": "Enable yamllint and markdownlint-cli2 pre-commit hooks with GitHub Actions compatibility",
-  "tags": ["yamllint", "markdownlint", "pre-commit", "github-actions", "linting", "code-quality"],
-  "created": "2026-02-14",
-  "author": "Claude Sonnet 4.5",
-  "source_issue": "#603",
-  "source_pr": "#653",
-  "outcome": "success",
-  "related_skills": [
-    "quality-run-linters",
-    "run-precommit",
-    "validate-workflow"
+  "description": "Workflow for resolving pytest.skip guards by fixing underlying test configuration issues",
+  "category": "testing",
+  "author": "ProjectScylla",
+  "created": "2026-02-15",
+  "source": "issue-670",
+  "tags": [
+    "pytest",
+    "testing",
+    "test-cleanup",
+    "integration-tests",
+    "pydantic",
+    "configuration"
   ],
-  "trigger_phrases": [
-    "enable YAML linting",
-    "add yamllint to pre-commit",
-    "configure yamllint for GitHub Actions",
-    "fix yamllint errors in workflows"
+  "skills": [
+    {
+      "name": "resolve-skipped-tests",
+      "file": "skills/resolve-skipped-tests/SKILL.md",
+      "triggers": [
+        "pytest.skip found in tests",
+        "skipped tests in CI",
+        "need to clean up test suite",
+        "ValidationError in test configs",
+        "FileNotFoundError in integration tests"
+      ]
+    }
   ],
-  "key_learnings": [
-    "Use indent-sequences: whatever for flexible YAML list indentation",
-    "Add 'on'/'off' to truthy values for GitHub Actions workflows",
-    "Set braces: max-spaces-inside: 1 to allow GitHub Actions ${{ }} syntax",
-    "Exclude tests/fixtures/invalid/ for intentionally broken test files"
-  ]
+  "metadata": {
+    "issue": 670,
+    "pr": 688,
+    "tests_fixed": 2,
+    "outcome": "success"
+  }
 }
