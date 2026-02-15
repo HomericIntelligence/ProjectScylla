@@ -25,6 +25,18 @@
         "ValidationError in test configs",
         "FileNotFoundError in integration tests"
       ]
+    },
+    {
+      "name": "manager-proxy-type-hints",
+      "file": "skills/manager-proxy-type-hints/SKILL.md",
+      "category": "architecture",
+      "triggers": [
+        "Adding type hints to Manager proxy return types",
+        "Type checker complains about implicit Any",
+        "Methods returning Manager().Semaphore() or Manager().Queue()",
+        "Need explicit return type for multiprocessing objects",
+        "Following up on type safety improvements"
+      ]
     }
   ],
   "metadata": {
