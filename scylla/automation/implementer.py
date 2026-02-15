@@ -119,9 +119,14 @@ class IssueImplementer:
         if self.options.analyze_only:
             return self._analyze_dependencies()
 
-        # Resume mode
-        if self.options.resume:
-            self._load_state()
+        # Always load state to detect failed retrospectives
+        self._load_state()
+
+        # Re-run failed retrospectives before normal processing
+        if self.options.enable_retrospective:
+            retro_results = self._rerun_failed_retrospectives()
+            if retro_results:
+                logger.info(f"Re-ran {len(retro_results)} failed retrospective(s)")
 
         # Start UI if enabled and not in dry run
         if not self.options.dry_run and self.options.enable_ui:
@@ -416,7 +421,12 @@ class IssueImplementer:
                 with self.state_lock:
                     state.phase = ImplementationPhase.RETROSPECTIVE
                 self._save_state(state)
-                self._run_retrospective(state.session_id, worktree_path, issue_number, slot_id)
+                retro_success = self._run_retrospective(
+                    state.session_id, worktree_path, issue_number, slot_id
+                )
+                with self.state_lock:
+                    state.retrospective_completed = retro_success
+                self._save_state(state)
 
             # Follow-up issues phase (after RETROSPECTIVE, before COMPLETED)
             if self.options.enable_follow_up and state.session_id:
@@ -734,13 +744,90 @@ class IssueImplementer:
             except Exception:
                 pass  # Best effort cleanup
 
+    def _retrospective_needs_rerun(self, issue_number: int) -> bool:
+        """Check if retrospective log indicates failure.
+
+        Args:
+            issue_number: Issue number
+
+        Returns:
+            True if retrospective needs to be re-run (missing or failed log)
+
+        """
+        log_file = self.state_dir / f"retrospective-{issue_number}.log"
+        if not log_file.exists():
+            return True
+        try:
+            content = log_file.read_text()
+            return content.startswith("FAILED:")
+        except Exception:
+            return True
+
+    def _rerun_failed_retrospectives(self) -> dict[int, bool]:
+        """Re-run failed retrospectives for completed issues.
+
+        Returns:
+            Dictionary mapping issue number to success status
+
+        """
+        results: dict[int, bool] = {}
+
+        for issue_number, state in self.states.items():
+            # Only re-run for completed issues with failed retrospectives
+            if (
+                state.phase != ImplementationPhase.COMPLETED
+                or state.retrospective_completed
+                or not state.session_id
+            ):
+                continue
+
+            # Check if log indicates failure
+            if not self._retrospective_needs_rerun(issue_number):
+                continue
+
+            # Verify worktree exists
+            if not state.worktree_path:
+                logger.warning(
+                    f"Skipping retrospective re-run for #{issue_number}: no worktree_path"
+                )
+                continue
+
+            worktree_path = Path(state.worktree_path)
+            if not worktree_path.exists():
+                logger.warning(
+                    f"Skipping retrospective re-run for #{issue_number}: worktree not found"
+                )
+                continue
+
+            # Re-run retrospective
+            logger.info(f"Re-running failed retrospective for issue #{issue_number}")
+            success = self._run_retrospective(
+                state.session_id, worktree_path, issue_number, slot_id=None
+            )
+
+            # Update and save state
+            with self.state_lock:
+                state.retrospective_completed = success
+            self._save_state(state)
+
+            results[issue_number] = success
+
+        if results:
+            success_count = sum(1 for s in results.values() if s)
+            logger.info(
+                f"Re-ran {len(results)} retrospective(s): {success_count} succeeded, "
+                f"{len(results) - success_count} failed"
+            )
+
+        return results
+
     def _run_retrospective(
         self,
         session_id: str,
         worktree_path: Path,
         issue_number: int,
         slot_id: int | None = None,
-    ) -> None:
+    ) -> bool:
         """Resume Claude session to run /retrospective.
 
         Args:
@@ -749,7 +836,10 @@ class IssueImplementer:
             issue_number: Issue number
             slot_id: Worker slot ID for status updates
 
-        Runs from repo root so ProjectMnemosyne clone persists in build/.
+        Returns:
+            True if retrospective completed successfully, False otherwise
+
+        Runs from worktree directory so Claude can find the session.
         Output is logged to .issue_implementer/retrospective-{issue_number}.log.
 
         """
@@ -768,13 +858,14 @@ class IssueImplementer:
                     "--allowedTools",
                     "Read,Write,Edit,Glob,Grep,Bash",
                 ],
-                cwd=self.repo_root,
+                cwd=worktree_path,
                 timeout=600,  # 10 minutes
             )
             # Write output to log file
             log_file.write_text(result.stdout or "")
             logger.info(f"Retrospective completed for issue #{issue_number}")
             logger.info(f"Retrospective log: {log_file}")
+            return True
         except Exception as e:
             logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
 
@@ -787,6 +878,7 @@ class IssueImplementer:
             log_file.write_text(error_output)
 
             # Non-blocking: never re-raise
+            return False
 
     def _run_claude_code(
         self, issue_number: int, worktree_path: Path, prompt: str, slot_id: int | None = None
