@@ -22,6 +22,7 @@ Apply this pattern when:
 5. **Clear separation** between build-time and runtime dependencies exists
 
 **Do NOT use** when:
+
 - Image is already minimal (<100MB)
 - No compiled dependencies exist (pure Python)
 - Build tools are required at runtime (dynamic compilation use cases)
@@ -42,6 +43,7 @@ docker run --rm app:current dpkg -l | grep -E "gcc|g\+\+|build-essential|make"
 ```
 
 **Expected findings:**
+
 - Build tools present in production image
 - Larger image size (>500MB for Python apps with dependencies)
 - Attack surface includes unnecessary packages
@@ -106,6 +108,7 @@ CMD ["python", "-m", "app"]
 ```
 
 **Key decisions:**
+
 - **Global install vs user install:** Use global (`/usr/local`) for multi-user containers, user (`/root/.local`) for single-user
 - **Base image version:** Pin to specific minor version (e.g., `python:3.10.12-slim`) for reproducibility
 - **Layer order:** Put least-changing layers first for better Docker cache utilization
@@ -162,6 +165,7 @@ docker run --rm -v $(pwd):/workspace app:multi-stage pytest
 ### ❌ Attempt 1: Using `pip install --user` with wrong PATH
 
 **What we tried:**
+
 ```dockerfile
 # Builder stage
 RUN pip install --user --no-cache-dir /opt/app/
@@ -172,10 +176,12 @@ COPY --from=builder /root/.local /root/.local
 ```
 
 **Why it failed:**
+
 - Binaries installed to `/root/.local/bin` were not in PATH
 - Commands like `scylla` or `pytest` failed with "command not found"
 
 **Solution:**
+
 ```dockerfile
 # Runtime stage
 ENV PATH=/root/.local/bin:$PATH
@@ -184,16 +190,19 @@ ENV PATH=/root/.local/bin:$PATH
 ### ❌ Attempt 2: Copying only site-packages without bin/
 
 **What we tried:**
+
 ```dockerfile
 COPY --from=builder /root/.local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 # Missing: /root/.local/bin
 ```
 
 **Why it failed:**
+
 - Python packages were importable, but CLI entry points were missing
 - Commands registered in setup.py `console_scripts` were unavailable
 
 **Solution:**
+
 ```dockerfile
 COPY --from=builder /root/.local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 COPY --from=builder /root/.local/bin /usr/local/bin
@@ -202,6 +211,7 @@ COPY --from=builder /root/.local/bin /usr/local/bin
 ### ❌ Attempt 3: Wrong build context in docker-compose.yml
 
 **What we tried:**
+
 ```yaml
 build:
   context: .              # docker/ directory
@@ -209,10 +219,12 @@ build:
 ```
 
 **Why it failed:**
+
 - Dockerfile had `COPY pyproject.toml /opt/app/` which didn't exist in docker/ directory
 - Build failed with "no such file or directory"
 
 **Solution:**
+
 ```yaml
 build:
   context: ..             # Repository root
@@ -280,14 +292,15 @@ When implementing multi-stage builds, verify:
 
 ## References
 
-- Issue #601: https://github.com/HomericIntelligence/ProjectScylla/issues/601
-- PR #649: https://github.com/HomericIntelligence/ProjectScylla/pull/649
-- Docker Multi-Stage Builds: https://docs.docker.com/build/building/multi-stage/
-- Python Docker Best Practices: https://docs.docker.com/language/python/
+- Issue #601: <https://github.com/HomericIntelligence/ProjectScylla/issues/601>
+- PR #649: <https://github.com/HomericIntelligence/ProjectScylla/pull/649>
+- Docker Multi-Stage Builds: <https://docs.docker.com/build/building/multi-stage/>
+- Python Docker Best Practices: <https://docs.docker.com/language/python/>
 
 ## Team Knowledge
 
 **Key Learning:** When separating build and runtime stages, always verify that:
+
 1. Python packages are in the correct site-packages directory
 2. Binary entry points are in PATH
 3. Build context includes all files referenced in COPY statements
