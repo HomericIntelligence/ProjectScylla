@@ -11,6 +11,7 @@
 ### Phase 1: Understanding Current State (10 min)
 
 Read key files to understand implementation:
+
 - `scylla/e2e/tier_manager.py:609-617` - Resource suffix generation
 - `scylla/e2e/workspace_setup.py:142-192` - Worktree creation logic
 - `scylla/e2e/workspace_manager.py:264-296` - Workspace manager worktree
@@ -18,6 +19,7 @@ Read key files to understand implementation:
 - `tests/unit/e2e/test_workspace_manager.py:413-447` - Worktree tests
 
 **Key Observations:**
+
 - Resource suffix was only appending cleanup instructions
 - Worktree creation had explicit comments saying "Do NOT add commit to worktree command"
 - Tests expected 2 subprocess calls (worktree add + checkout)
@@ -27,6 +29,7 @@ Read key files to understand implementation:
 **Change 1:** Modified `tier_manager.py:build_resource_suffix()`
 
 Added test constraints section before cleanup instructions:
+
 ```python
 test_constraints = (
     "\n\n## Test Environment Constraints\n\n"
@@ -48,11 +51,13 @@ test_constraints = (
 **Change 2:** Modified worktree creation in 3 files
 
 **workspace_setup.py:**
+
 - Line 142-152: Added commit to worktree_cmd if task_commit exists
 - Line 172-192: Removed separate checkout subprocess call
 - Line 246-258: Removed checkout from recovery path
 
 **workspace_manager.py:**
+
 - Line 264-273: Added commit to worktree_cmd if self.commit exists
 - Line 287-296: Removed separate checkout subprocess call
 
@@ -63,11 +68,13 @@ test_constraints = (
 **Change 3:** Updated test files
 
 **test_tier_manager.py:**
+
 - Added TEST_CONSTRAINTS constant
 - Created SUFFIX_TAIL = TEST_CONSTRAINTS + CLEANUP_INSTRUCTIONS
 - Replaced all CLEANUP_INSTRUCTIONS with SUFFIX_TAIL in assertions
 
 **test_workspace_manager.py:**
+
 - Renamed test_worktree_separate_checkout → test_worktree_includes_commit
 - Changed assertion from 2 subprocess calls to 1
 - Verified commit is in worktree command (not separate checkout)
@@ -75,6 +82,7 @@ test_constraints = (
 ### Phase 5: Verification (10 min)
 
 **Tests:**
+
 ```bash
 # Unit tests - 56/56 passed
 pixi run python -m pytest tests/unit/e2e/test_tier_manager.py -v  # 37 passed
@@ -85,6 +93,7 @@ pre-commit run --all-files
 ```
 
 **Manual Verification:**
+
 ```python
 # Verified test constraints in suffix output
 python3 -c "from scylla.e2e.tier_manager import TierManager; ..."
@@ -115,12 +124,14 @@ Updated both implementation and test constant to match.
 ### Git Worktree Command Syntax
 
 **Before (2 steps):**
+
 ```bash
 git worktree add -b my-branch /path/to/workspace
 cd /path/to/workspace && git checkout abc123
 ```
 
 **After (1 step):**
+
 ```bash
 git worktree add -b my-branch /path/to/workspace abc123
 ```
@@ -153,6 +164,7 @@ The `<commit-ish>` argument is supported natively by git worktree add.
 **Branch:** `forbid-remote-ops-e2e-tests`
 
 **Commit:** `faaa6f4`
+
 ```
 feat(e2e): Forbid remote operations in tests and optimize worktree creation
 
@@ -164,6 +176,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
 **PR:** [#643](https://github.com/HomericIntelligence/ProjectScylla/pull/643)
+
 - Auto-merge enabled (rebase)
 - Will merge when CI passes
 
@@ -178,6 +191,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ## Next Steps
 
 If this pattern works well, consider:
+
 - Adding similar constraints for other risky operations (database writes, API calls to production)
 - Creating a general "test environment safety framework" skill
 - Documenting test isolation patterns in developer guide
