@@ -24,6 +24,9 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from scylla.e2e.llm_judge import BuildPipelineResult
+
 from scylla.adapters.base import AdapterConfig
 from scylla.adapters.claude_code import ClaudeCodeAdapter
 
@@ -163,6 +166,43 @@ def _stage_log(
     logger.info(f"{timestamp} [{subtest_id}] Stage: {stage.value} - {status}{elapsed_str}")
 
 
+def _save_pipeline_baseline(results_dir: Path, result: BuildPipelineResult) -> None:
+    """Save pipeline baseline result to JSON.
+
+    Args:
+        results_dir: Directory to save baseline (e.g., results/T2/01/)
+        result: BuildPipelineResult to save
+
+    """
+    baseline_path = results_dir / "pipeline_baseline.json"
+    baseline_path.write_text(json.dumps(result.model_dump(), indent=2))
+    logger.info(f"Saved pipeline baseline to {baseline_path}")
+
+
+def _load_pipeline_baseline(results_dir: Path) -> BuildPipelineResult | None:
+    """Load pipeline baseline result from JSON.
+
+    Args:
+        results_dir: Directory containing baseline (e.g., results/T2/01/)
+
+    Returns:
+        BuildPipelineResult if file exists, None otherwise
+
+    """
+    from scylla.e2e.llm_judge import BuildPipelineResult
+
+    baseline_path = results_dir / "pipeline_baseline.json"
+    if not baseline_path.exists():
+        return None
+
+    try:
+        data = json.loads(baseline_path.read_text())
+        return BuildPipelineResult(**data)
+    except Exception as e:
+        logger.warning(f"Failed to load pipeline baseline from {baseline_path}: {e}")
+        return None
+
+
 class SubTestExecutor:
     """Executes sub-tests and aggregates results.
 
@@ -253,6 +293,9 @@ class SubTestExecutor:
         # Track last workspace for resource manifest
         last_workspace = None
 
+        # Pipeline baseline (captured once before first run)
+        pipeline_baseline: BuildPipelineResult | None = None
+
         for run_num in range(1, self.config.runs_per_subtest + 1):
             # Check for shutdown before starting run
             if coordinator and coordinator.is_shutdown_requested():
@@ -315,6 +358,7 @@ class SubTestExecutor:
                                 else None
                             ),
                             criteria_scores=report_data.get("criteria_scores", {}),
+                            baseline_pipeline_summary=report_data.get("baseline_pipeline_summary"),
                         )
                         runs.append(run_result)
                         continue
@@ -381,6 +425,30 @@ class SubTestExecutor:
             # Commit test configs so agent sees them as existing state
             _commit_test_config(workspace)
 
+            # Capture pipeline baseline once (before first run)
+            if pipeline_baseline is None:
+                # Try to load from checkpoint first
+                pipeline_baseline = _load_pipeline_baseline(results_dir)
+
+                # If not found, capture now
+                if pipeline_baseline is None:
+                    from scylla.e2e.llm_judge import _run_build_pipeline
+
+                    _phase_log("BASELINE", "Capturing pipeline baseline before agent runs")
+                    pipeline_baseline = _run_build_pipeline(
+                        workspace=workspace,
+                        language=tier_config.language,
+                    )
+
+                    # Save baseline for checkpoint resume
+                    _save_pipeline_baseline(results_dir, pipeline_baseline)
+
+                    # Log status summary
+                    baseline_status = (
+                        "ALL PASSED ✓" if pipeline_baseline.all_passed else "SOME FAILED ✗"
+                    )
+                    logger.info(f"Pipeline baseline: {baseline_status}")
+
             try:
                 run_result = self._execute_single_run(
                     tier_id=tier_id,
@@ -392,6 +460,7 @@ class SubTestExecutor:
                     workspace=workspace,
                     task_prompt=task_prompt,
                     experiment_dir=experiment_dir,
+                    pipeline_baseline=pipeline_baseline,
                 )
                 runs.append(run_result)
 
@@ -449,6 +518,7 @@ class SubTestExecutor:
         workspace: Path,
         task_prompt: str,
         experiment_dir: Path | None = None,
+        pipeline_baseline: BuildPipelineResult | None = None,
     ) -> E2ERunResult:
         """Execute a single run of the sub-test.
 
@@ -704,6 +774,7 @@ class SubTestExecutor:
                 language=self.config.language,
                 rubric_path=rubric_path,
                 judge_models=self.config.judge_models,
+                pipeline_baseline=pipeline_baseline,
             )
 
             # Save pipeline commands once per run (not per judge)
@@ -758,6 +829,16 @@ class SubTestExecutor:
             if rate_limit_info:
                 raise RateLimitError(rate_limit_info)
 
+        # Convert baseline to summary dict if available
+        baseline_summary = None
+        if pipeline_baseline:
+            baseline_summary = {
+                "all_passed": pipeline_baseline.all_passed,
+                "build_passed": pipeline_baseline.build_passed,
+                "format_passed": pipeline_baseline.format_passed,
+                "test_passed": pipeline_baseline.test_passed,
+            }
+
         run_result = E2ERunResult(
             run_number=run_number,
             exit_code=result.exit_code,
@@ -775,6 +856,7 @@ class SubTestExecutor:
             logs_path=agent_dir,  # Points to agent/ subdirectory
             command_log_path=agent_dir / "command_log.json",
             criteria_scores=judgment.get("criteria_scores", {}),
+            baseline_pipeline_summary=baseline_summary,
         )
 
         # Save full E2ERunResult for checkpoint resume

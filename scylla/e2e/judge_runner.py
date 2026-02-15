@@ -20,6 +20,7 @@ from scylla.e2e.models import JudgeResultSummary
 from scylla.e2e.paths import RESULT_FILE, get_judge_result_file
 
 if TYPE_CHECKING:
+    from scylla.e2e.llm_judge import BuildPipelineResult
     from scylla.judge.evaluator import JudgeResult
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,7 @@ def _run_judge(
     language: str = "python",
     rubric_path: Path | None = None,
     judge_models: list[str] | None = None,
+    pipeline_baseline: BuildPipelineResult | None = None,
 ) -> tuple[dict, list[JudgeResultSummary]]:
     """Run LLM judge evaluation(s) on the result.
 
@@ -150,6 +152,7 @@ def _run_judge(
         language: Programming language for build pipeline ('python' or 'mojo')
         rubric_path: Optional path to rubric YAML file
         judge_models: List of judge models to use (required)
+        pipeline_baseline: Optional baseline pipeline result from before agent execution
 
     Returns:
         Tuple of (consensus_dict, judges_list)
@@ -182,6 +185,7 @@ def _run_judge(
                 judge_run_number=judge_num,  # Creates judge_01/, judge_02/, etc.
                 language=language,
                 rubric_path=rubric_path,
+                pipeline_baseline=pipeline_baseline,
             )
 
             # Store individual judge result
