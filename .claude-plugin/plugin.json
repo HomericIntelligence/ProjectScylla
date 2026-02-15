@@ -54,21 +54,5 @@
         "extract helper methods"
       ]
     },
-      "name": "pin-npm-dockerfile",
-      "file": "skills/pin-npm-dockerfile/SKILL.md",
-      "category": "ci-cd",
-      "triggers": [
-        "npm install without version",
-        "docker build reproducibility",
-        "pin npm package version",
-        "unpinned dependencies in Dockerfile",
-        "version pinning best practices"
-      ],
-      "metadata": {
-        "issue": 650,
-        "pr": 717,
-        "outcome": "success"
-      }
-    }
   ]
 }
