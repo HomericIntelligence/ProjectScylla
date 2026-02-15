@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from scylla.e2e.checkpoint import (
     E2ECheckpoint,
@@ -260,11 +260,13 @@ class E2ERunner:
 
         return self.experiment_dir / "checkpoint.json"
 
-    def _setup_workspace_and_semaphore(self):
+    def _setup_workspace_and_semaphore(self) -> Any:
         """Set up workspace manager and global semaphore for parallel execution.
 
         Returns:
-            Global semaphore for limiting concurrent agents
+            Manager-created Semaphore for limiting concurrent agents across
+            all tiers. Type annotation is Any due to complexity of Manager
+            proxy types (returns multiprocessing.Manager().Semaphore()).
 
         """
         # Create/resume workspace manager
