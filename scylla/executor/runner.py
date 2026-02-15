@@ -346,6 +346,46 @@ class EvalRunner:
             InsufficientRunsError: If minimum runs cannot be achieved.
 
         """
+        # Validate and initialize configuration
+        config = self._initialize_test_config(
+            test_id, tiers, models, runs_per_tier, parallel, resume_from
+        )
+
+        # Create or resume summary
+        summary = self._create_test_summary(test_id, resume_from)
+
+        # Execute across all tiers and models
+        self._execute_test_matrix(summary, config)
+
+        # Finalize and return
+        return self._finalize_test_summary(summary)
+
+    def _initialize_test_config(
+        self,
+        test_id: str,
+        tiers: list[str] | None,
+        models: list[str] | None,
+        runs_per_tier: int | None,
+        parallel: bool | None,
+        resume_from: Path | None,
+    ) -> dict[str, Any]:
+        """Initialize and validate test configuration.
+
+        Args:
+            test_id: Test identifier.
+            tiers: List of tier IDs to test (default: all tiers).
+            models: List of model IDs to test.
+            runs_per_tier: Number of runs per tier (overrides config).
+            parallel: Enable parallel execution (overrides config).
+            resume_from: Path to state file for resume.
+
+        Returns:
+            Dict with validated config: tiers, models, runs, is_parallel.
+
+        Raises:
+            RunnerError: If models are not specified.
+
+        """
         # Apply overrides
         runs = runs_per_tier or self.config.runs_per_tier
         is_parallel = parallel if parallel is not None else self.config.parallel
@@ -358,6 +398,24 @@ class EvalRunner:
         if not models:
             raise RunnerError("At least one model must be specified")
 
+        return {
+            "tiers": tiers,
+            "models": models,
+            "runs": runs,
+            "is_parallel": is_parallel,
+        }
+
+    def _create_test_summary(self, test_id: str, resume_from: Path | None) -> EvalSummary:
+        """Create or resume test summary with state management.
+
+        Args:
+            test_id: Test identifier.
+            resume_from: Path to state file for resume.
+
+        Returns:
+            EvalSummary initialized with test_id and start time.
+
+        """
         # Initialize or load state
         if resume_from and resume_from.exists():
             self._state = load_state(resume_from)
@@ -371,27 +429,47 @@ class EvalRunner:
             )
 
         # Initialize summary
-        summary = EvalSummary(
+        return EvalSummary(
             test_id=test_id,
             started_at=self._state.started_at,
         )
 
-        # Execute test matrix
-        for tier_id in tiers:
+    def _execute_test_matrix(
+        self,
+        summary: EvalSummary,
+        config: dict[str, Any],
+    ) -> None:
+        """Execute test matrix across all tiers and models.
+
+        Args:
+            summary: EvalSummary to populate with results.
+            config: Test configuration dict.
+
+        """
+        for tier_id in config["tiers"]:
             tier_config = self.tier_loader.get_tier(tier_id)
             summary.tiers[tier_id] = {}
 
-            for model in models:
+            for model in config["models"]:
                 tier_summary = self._run_tier(
-                    test_id=test_id,
+                    test_id=summary.test_id,
                     tier_config=tier_config,
                     model=model,
-                    runs=runs,
-                    parallel=is_parallel,
+                    runs=config["runs"],
+                    parallel=config["is_parallel"],
                 )
                 summary.tiers[tier_id][model] = tier_summary
 
-        # Finalize summary
+    def _finalize_test_summary(self, summary: EvalSummary) -> EvalSummary:
+        """Finalize summary with end timestamp and save state.
+
+        Args:
+            summary: EvalSummary to finalize.
+
+        Returns:
+            Completed summary.
+
+        """
         summary.ended_at = datetime.now(timezone.utc).isoformat()
         summary.status = "completed"
 
@@ -542,63 +620,133 @@ class EvalRunner:
 
         for attempt in range(self.config.max_retries):
             try:
-                # Execute in container
-                start_time = datetime.now(timezone.utc)
-                execution_info = self._run_in_container(
-                    container_name=container_name,
-                    tier_config=tier_config,
-                    model=model,
+                execution_info = self._execute_in_container_with_timing(
+                    container_name, tier_config, model
                 )
-                end_time = datetime.now(timezone.utc)
-
-                execution_info.started_at = start_time.isoformat()
-                execution_info.ended_at = end_time.isoformat()
-                execution_info.duration_seconds = (end_time - start_time).total_seconds()
-
-                # Check for timeout
-                if execution_info.timed_out:
-                    return RunResult(
-                        run_number=run_number,
-                        status=RunStatus.TIMEOUT,
-                        execution_info=execution_info,
-                    )
-
-                # Check for execution error
-                if execution_info.exit_code != 0:
-                    return RunResult(
-                        run_number=run_number,
-                        status=RunStatus.ERROR,
-                        execution_info=execution_info,
-                        error_message=f"Exit code: {execution_info.exit_code}",
-                    )
-
-                # Run judge evaluation
-                judgment = self._run_judge(execution_info)
-
-                return RunResult(
-                    run_number=run_number,
-                    status=RunStatus.PASSED if judgment.passed else RunStatus.FAILED,
-                    execution_info=execution_info,
-                    judgment=judgment,
-                )
+                return self._evaluate_execution_result(execution_info, run_number)
 
             except RateLimitError:
-                # Exponential backoff
-                delay = min(
-                    self.config.initial_backoff * (2**attempt),
-                    self.config.max_backoff,
-                )
-                time.sleep(delay)
+                self._apply_backoff(attempt)
                 continue
 
             except Exception as e:
-                return RunResult(
-                    run_number=run_number,
-                    status=RunStatus.ERROR,
-                    error_message=str(e),
-                )
+                return self._create_error_result(run_number, str(e))
 
-        # Max retries exceeded
+        return self._create_rate_limit_exceeded_result(run_number)
+
+    def _execute_in_container_with_timing(
+        self,
+        container_name: str,
+        tier_config: TierConfig,
+        model: str,
+    ) -> ExecutionInfo:
+        """Execute container and add timing information.
+
+        Args:
+            container_name: Name for the container.
+            tier_config: Tier configuration with prompts.
+            model: Model identifier.
+
+        Returns:
+            ExecutionInfo with timestamps and duration.
+
+        """
+        start_time = datetime.now(timezone.utc)
+        execution_info = self._run_in_container(
+            container_name=container_name,
+            tier_config=tier_config,
+            model=model,
+        )
+        end_time = datetime.now(timezone.utc)
+
+        execution_info.started_at = start_time.isoformat()
+        execution_info.ended_at = end_time.isoformat()
+        execution_info.duration_seconds = (end_time - start_time).total_seconds()
+
+        return execution_info
+
+    def _evaluate_execution_result(
+        self,
+        execution_info: ExecutionInfo,
+        run_number: int,
+    ) -> RunResult:
+        """Evaluate execution result and run judge if successful.
+
+        Args:
+            execution_info: Execution results to evaluate.
+            run_number: Run number (1-N).
+
+        Returns:
+            RunResult with status based on execution and judgment.
+
+        """
+        # Check for timeout
+        if execution_info.timed_out:
+            return RunResult(
+                run_number=run_number,
+                status=RunStatus.TIMEOUT,
+                execution_info=execution_info,
+            )
+
+        # Check for execution error
+        if execution_info.exit_code != 0:
+            return RunResult(
+                run_number=run_number,
+                status=RunStatus.ERROR,
+                execution_info=execution_info,
+                error_message=f"Exit code: {execution_info.exit_code}",
+            )
+
+        # Run judge evaluation
+        judgment = self._run_judge(execution_info)
+
+        return RunResult(
+            run_number=run_number,
+            status=RunStatus.PASSED if judgment.passed else RunStatus.FAILED,
+            execution_info=execution_info,
+            judgment=judgment,
+        )
+
+    def _apply_backoff(self, attempt: int) -> None:
+        """Apply exponential backoff for rate limit retry.
+
+        Args:
+            attempt: Current attempt number (0-indexed).
+
+        """
+        delay = min(
+            self.config.initial_backoff * (2**attempt),
+            self.config.max_backoff,
+        )
+        time.sleep(delay)
+
+    def _create_error_result(self, run_number: int, error_message: str) -> RunResult:
+        """Create error result from exception.
+
+        Args:
+            run_number: Run number (1-N).
+            error_message: Error message.
+
+        Returns:
+            RunResult with ERROR status.
+
+        """
+        return RunResult(
+            run_number=run_number,
+            status=RunStatus.ERROR,
+            error_message=error_message,
+        )
+
+    def _create_rate_limit_exceeded_result(self, run_number: int) -> RunResult:
+        """Create error result for rate limit retry exhaustion.
+
+        Args:
+            run_number: Run number (1-N).
+
+        Returns:
+            RunResult with ERROR status.
+
+        """
         return RunResult(
             run_number=run_number,
             status=RunStatus.ERROR,
