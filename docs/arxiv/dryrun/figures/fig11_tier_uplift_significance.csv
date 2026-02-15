@@ -1,7 +1,0 @@
-agent_model,tier,transition,pvalue,significant
-Sonnet 4.5,T1,T0→T1,1.0,False
-Sonnet 4.5,T2,T1→T2,1.0,False
-Sonnet 4.5,T3,T2→T3,1.0,False
-Sonnet 4.5,T4,T3→T4,1.0,False
-Sonnet 4.5,T5,T4→T5,1.0,False
-Sonnet 4.5,T6,T5→T6,1.0,False

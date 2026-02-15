@@ -1,4 +1,0 @@
-name: "Best of All"
-description: "Best configuration from each category combined"
-extends_previous: true
-inherit_best_from: ["T0", "T1", "T2", "T3", "T4"]

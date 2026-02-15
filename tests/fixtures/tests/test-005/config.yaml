@@ -1,3 +1,0 @@
-# Test fixture: Test-specific config overrides
-timeout_seconds: 2400
-max_cost_usd: 3.0

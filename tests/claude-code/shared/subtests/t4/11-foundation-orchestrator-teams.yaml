@@ -1,8 +1,0 @@
-name: foundation-orchestrator-teams
-description: 'L1 orchestrator with agent teams: foundation-orchestrator'
-extends_previous: true
-agent_teams: true
-resources:
-  agents:
-    levels:
-    - 1

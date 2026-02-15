@@ -1,5 +1,0 @@
-# Invalid YAML file - malformed syntax for testing
-evaluation:
-  runs_per_eval: 3
-  timeout: [invalid: unclosed bracket
-  this: is: bad: yaml

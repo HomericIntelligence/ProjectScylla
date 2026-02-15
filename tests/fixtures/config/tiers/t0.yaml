@@ -1,7 +1,0 @@
-# Test fixture: Tier 0 (Vanilla)
-tier: "t0"
-name: "Vanilla"
-description: "Base LLM with zero-shot prompting"
-uses_tools: false
-uses_delegation: false
-uses_hierarchy: false

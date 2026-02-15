@@ -1,8 +1,0 @@
-agent_model,tier,pass_rate,uplift,uplift_pct,significant
-Sonnet 4.5,T0,1.0,0.0,0.0,False
-Sonnet 4.5,T1,1.0,0.0,0.0,False
-Sonnet 4.5,T2,1.0,0.0,0.0,False
-Sonnet 4.5,T3,1.0,0.0,0.0,False
-Sonnet 4.5,T4,1.0,0.0,0.0,False
-Sonnet 4.5,T5,1.0,0.0,0.0,False
-Sonnet 4.5,T6,1.0,0.0,0.0,False
