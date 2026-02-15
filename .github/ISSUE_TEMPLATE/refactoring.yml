@@ -1,0 +1,94 @@
+name: Refactoring
+description: Propose a code refactoring or quality improvement
+title: "[Refactor] "
+labels: ["refactoring"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a refactoring! Code quality improvements are always welcome.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What needs to be refactored and why?
+      placeholder: Refactor X to improve Y...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What type of refactoring is this?
+      options:
+        - Code organization/structure
+        - Naming/clarity
+        - Performance optimization
+        - Reduce complexity
+        - DRY violation
+        - Type safety
+        - Error handling
+        - Testing improvements
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current State
+      description: Describe the current code/structure
+      placeholder: Currently the code...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-state
+    attributes:
+      label: Proposed State
+      description: Describe the desired end state
+      placeholder: After refactoring, the code should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: Benefits
+      description: What improvements will this bring?
+      placeholder: |
+        - Improved readability
+        - Better performance
+        - Easier maintenance
+    validations:
+      required: true
+
+  - type: textarea
+    id: files-affected
+    attributes:
+      label: Files/Modules Affected
+      description: Which files or modules will be changed?
+      placeholder: |
+        - scylla/e2e/llm_judge.py
+        - tests/unit/e2e/test_llm_judge.py
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: breaking-changes
+    attributes:
+      label: Breaking Changes
+      description: Will this refactoring introduce breaking changes?
+      options:
+        - label: This refactoring may introduce breaking changes
+          required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context or considerations
+    validations:
+      required: false
