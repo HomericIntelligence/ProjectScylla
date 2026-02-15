@@ -43,8 +43,8 @@ from scylla.e2e.judge_runner import (
     _save_judge_result,
 )
 from scylla.e2e.models import (
+    E2ERunResult,
     ExperimentConfig,
-    RunResult,
     SubTestConfig,
     SubTestResult,
     TierBaseline,
@@ -244,7 +244,7 @@ class SubTestExecutor:
             SubTestResult with aggregated metrics.
 
         """
-        runs: list[RunResult] = []
+        runs: list[E2ERunResult] = []
         results_dir.mkdir(parents=True, exist_ok=True)
 
         # Load task prompt once
@@ -290,12 +290,12 @@ class SubTestExecutor:
                             f"Skipping completed run: "
                             f"{tier_id.value}/{subtest.id}/run_{run_num:02d}"
                         )
-                        # Load from saved RunResult
+                        # Load from saved E2ERunResult
                         with open(run_result_file) as f:
                             report_data = json.load(f)
 
-                        # Reconstruct RunResult from JSON
-                        run_result = RunResult(
+                        # Reconstruct E2ERunResult from JSON
+                        run_result = E2ERunResult(
                             run_number=report_data["run_number"],
                             exit_code=report_data["exit_code"],
                             token_stats=TokenStats.from_dict(report_data["token_stats"]),
@@ -449,7 +449,7 @@ class SubTestExecutor:
         workspace: Path,
         task_prompt: str,
         experiment_dir: Path | None = None,
-    ) -> RunResult:
+    ) -> E2ERunResult:
         """Execute a single run of the sub-test.
 
         Files are organized in agent/ and judge/ subdirectories:
@@ -473,7 +473,7 @@ class SubTestExecutor:
             experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
         Returns:
-            RunResult with execution details.
+            E2ERunResult with execution details.
 
         """
         # Track execution timing and stages
@@ -758,7 +758,7 @@ class SubTestExecutor:
             if rate_limit_info:
                 raise RateLimitError(rate_limit_info)
 
-        run_result = RunResult(
+        run_result = E2ERunResult(
             run_number=run_number,
             exit_code=result.exit_code,
             token_stats=token_stats,
@@ -777,7 +777,7 @@ class SubTestExecutor:
             criteria_scores=judgment.get("criteria_scores", {}),
         )
 
-        # Save full RunResult for checkpoint resume
+        # Save full E2ERunResult for checkpoint resume
         with open(run_dir / "run_result.json", "w") as f:
             json.dump(run_result.to_dict(), f, indent=2)
 
@@ -908,7 +908,7 @@ class SubTestExecutor:
         self,
         tier_id: TierID,
         subtest_id: str,
-        runs: list[RunResult],
+        runs: list[E2ERunResult],
     ) -> SubTestResult:
         """Aggregate results from multiple runs.
 

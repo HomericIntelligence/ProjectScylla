@@ -19,9 +19,9 @@ from pydantic import BaseModel
 from scylla.e2e.judge_selection import select_best_subtest
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import (
+    E2ERunResult,
     ExperimentConfig,
     ExperimentResult,
-    RunResult,
     SubTestResult,
     TierID,
     TierResult,
@@ -146,18 +146,18 @@ def regenerate_experiment(
 def scan_run_results(
     experiment_dir: Path,
     stats: RegenerateStats,
-) -> dict[str, dict[str, list[RunResult]]]:
-    """Scan for run_result.json files and reconstruct RunResult objects.
+) -> dict[str, dict[str, list[E2ERunResult]]]:
+    """Scan for run_result.json files and reconstruct E2ERunResult objects.
 
     Args:
         experiment_dir: Path to experiment directory
         stats: Statistics object to update
 
     Returns:
-        Dict mapping tier_id -> subtest_id -> list[RunResult].
+        Dict mapping tier_id -> subtest_id -> list[E2ERunResult].
 
     """
-    results: dict[str, dict[str, list[RunResult]]] = {}
+    results: dict[str, dict[str, list[E2ERunResult]]] = {}
 
     # Find all run_result.json files
     for run_result_file in experiment_dir.rglob("run_result.json"):
@@ -189,8 +189,8 @@ def scan_run_results(
                 with open(run_result_file) as f:
                     data = json.load(f)
 
-                # Reconstruct RunResult (same logic as subtest_executor.py:659-681)
-                run_result = RunResult(
+                # Reconstruct E2ERunResult (same logic as subtest_executor.py:659-681)
+                run_result = E2ERunResult(
                     run_number=data["run_number"],
                     exit_code=data["exit_code"],
                     token_stats=TokenStats.from_dict(data["token_stats"]),
@@ -235,7 +235,7 @@ def scan_run_results(
 def rejudge_missing_runs(
     experiment_dir: Path,
     config: ExperimentConfig,
-    run_results: dict[str, dict[str, list[RunResult]]],
+    run_results: dict[str, dict[str, list[E2ERunResult]]],
     judge_model: str,
     dry_run: bool,
     stats: RegenerateStats,
@@ -511,7 +511,7 @@ def _has_valid_judge_result(run_dir: Path) -> bool:
 
 
 def rebuild_tier_results(
-    run_results: dict[str, dict[str, list[RunResult]]],
+    run_results: dict[str, dict[str, list[E2ERunResult]]],
     config: ExperimentConfig,
     stats: RegenerateStats,
 ) -> dict[TierID, TierResult]:
@@ -579,7 +579,7 @@ def rebuild_tier_results(
 def _aggregate_results(
     tier_id: TierID,
     subtest_id: str,
-    runs: list[RunResult],
+    runs: list[E2ERunResult],
 ) -> SubTestResult:
     """Aggregate results from multiple runs (from subtest_executor.py:1519-1605)."""
     if not runs:

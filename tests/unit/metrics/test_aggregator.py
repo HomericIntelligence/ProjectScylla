@@ -5,8 +5,8 @@ import pytest
 from scylla.metrics.aggregator import (
     AggregatedStats,
     CrossTierAnalysis,
+    MetricsRunResult,
     RunAggregator,
-    RunResult,
     TierStatistics,
 )
 
@@ -17,9 +17,9 @@ def make_run(
     impl_rate: float = 0.8,
     cost_usd: float = 1.0,
     duration_seconds: float = 60.0,
-) -> RunResult:
-    """Create RunResult for testing."""
-    return RunResult(
+) -> MetricsRunResult:
+    """Create MetricsRunResult for testing."""
+    return MetricsRunResult(
         run_id=run_id,
         pass_rate=pass_rate,
         impl_rate=impl_rate,
@@ -28,12 +28,12 @@ def make_run(
     )
 
 
-class TestRunResult:
-    """Tests for RunResult dataclass."""
+class TestMetricsRunResult:
+    """Tests for MetricsRunResult dataclass."""
 
     def test_create_result(self) -> None:
         """Test Create result."""
-        result = RunResult(
+        result = MetricsRunResult(
             run_id="run-001",
             pass_rate=1.0,
             impl_rate=0.85,
