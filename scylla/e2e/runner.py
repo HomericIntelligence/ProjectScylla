@@ -170,6 +170,88 @@ class E2ERunner:
 
         return groups
 
+    def _load_checkpoint_and_config(self, checkpoint_path: Path) -> tuple[E2ECheckpoint, Path]:
+        """Load and validate checkpoint and configuration from existing checkpoint.
+
+        Args:
+            checkpoint_path: Path to checkpoint.json file
+
+        Returns:
+            Tuple of (checkpoint, experiment_dir)
+
+        Raises:
+            ValueError: If config validation fails or experiment directory doesn't exist
+            Exception: If checkpoint loading fails
+
+        """
+        self.checkpoint = load_checkpoint(checkpoint_path)
+        self.experiment_dir = Path(self.checkpoint.experiment_dir)
+
+        # Load config from checkpoint's saved experiment.json
+        # This ensures checkpoint config takes precedence over CLI args
+        saved_config_path = self.experiment_dir / "config" / "experiment.json"
+        if saved_config_path.exists():
+            logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+            logger.info(f"📋 Loading config from checkpoint: {saved_config_path}")
+            self.config = ExperimentConfig.load(saved_config_path)
+            logger.info(
+                f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
+            )
+        else:
+            # Fallback: validate CLI config matches checkpoint
+            logger.warning(
+                f"⚠️  Checkpoint config not found at {saved_config_path}, using CLI config"
+            )
+            if not validate_checkpoint_config(self.checkpoint, self.config):
+                raise ValueError(
+                    f"Config has changed since checkpoint. Use --fresh to start over.\n"
+                    f"Checkpoint: {checkpoint_path}"
+                )
+            logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+            logger.info(
+                f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
+            )
+
+        # Validate experiment directory exists
+        if not self.experiment_dir.exists():
+            raise ValueError(f"Checkpoint references non-existent directory: {self.experiment_dir}")
+
+        return self.checkpoint, self.experiment_dir
+
+    def _create_fresh_experiment(self) -> Path:
+        """Create new experiment directory and initialize checkpoint.
+
+        Returns:
+            Path to the created checkpoint file
+
+        """
+        # Fresh start - create experiment directory
+        self.experiment_dir = self._create_experiment_dir()
+
+        # Save configuration
+        self._save_config()
+
+        # Create checkpoint
+        self.checkpoint = E2ECheckpoint(
+            experiment_id=self.config.experiment_id,
+            experiment_dir=str(self.experiment_dir),
+            config_hash=compute_config_hash(self.config),
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            rate_limit_source=None,
+            rate_limit_until=None,
+            pause_count=0,
+            pid=os.getpid(),
+        )
+
+        checkpoint_path = self.experiment_dir / "checkpoint.json"
+        save_checkpoint(self.checkpoint, checkpoint_path)
+        logger.info(f"💾 Created checkpoint: {checkpoint_path}")
+
+        return checkpoint_path
+
     def _initialize_or_resume_experiment(self) -> Path:
         """Initialize fresh experiment or resume from checkpoint.
 
@@ -189,40 +271,7 @@ class E2ERunner:
         if checkpoint_path and not self._fresh:
             # Resume from checkpoint
             try:
-                self.checkpoint = load_checkpoint(checkpoint_path)
-                self.experiment_dir = Path(self.checkpoint.experiment_dir)
-
-                # Load config from checkpoint's saved experiment.json
-                # This ensures checkpoint config takes precedence over CLI args
-                saved_config_path = self.experiment_dir / "config" / "experiment.json"
-                if saved_config_path.exists():
-                    logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
-                    logger.info(f"📋 Loading config from checkpoint: {saved_config_path}")
-                    self.config = ExperimentConfig.load(saved_config_path)
-                    logger.info(
-                        f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
-                    )
-                else:
-                    # Fallback: validate CLI config matches checkpoint
-                    logger.warning(
-                        f"⚠️  Checkpoint config not found at {saved_config_path}, using CLI config"
-                    )
-                    if not validate_checkpoint_config(self.checkpoint, self.config):
-                        raise ValueError(
-                            f"Config has changed since checkpoint. Use --fresh to start over.\n"
-                            f"Checkpoint: {checkpoint_path}"
-                        )
-                    logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
-                    logger.info(
-                        f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
-                    )
-
-                # Validate experiment directory exists
-                if not self.experiment_dir.exists():
-                    raise ValueError(
-                        f"Checkpoint references non-existent directory: {self.experiment_dir}"
-                    )
-
+                self._load_checkpoint_and_config(checkpoint_path)
             except Exception as e:
                 logger.warning(f"Failed to resume from checkpoint: {e}")
                 logger.warning("Starting fresh experiment instead")
@@ -230,30 +279,7 @@ class E2ERunner:
                 self.experiment_dir = None
 
         if not self.experiment_dir:
-            # Fresh start - create experiment directory
-            self.experiment_dir = self._create_experiment_dir()
-
-            # Save configuration
-            self._save_config()
-
-            # Create checkpoint
-            self.checkpoint = E2ECheckpoint(
-                experiment_id=self.config.experiment_id,
-                experiment_dir=str(self.experiment_dir),
-                config_hash=compute_config_hash(self.config),
-                completed_runs={},
-                started_at=datetime.now(timezone.utc).isoformat(),
-                last_updated_at=datetime.now(timezone.utc).isoformat(),
-                status="running",
-                rate_limit_source=None,
-                rate_limit_until=None,
-                pause_count=0,
-                pid=os.getpid(),
-            )
-
-            checkpoint_path = self.experiment_dir / "checkpoint.json"
-            save_checkpoint(self.checkpoint, checkpoint_path)
-            logger.info(f"💾 Created checkpoint: {checkpoint_path}")
+            checkpoint_path = self._create_fresh_experiment()
 
         # Write PID file for status monitoring
         self._write_pid_file()
