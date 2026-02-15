@@ -10,7 +10,7 @@ from pathlib import Path
 from scylla.cli.progress import ProgressDisplay, RunStatus
 from scylla.config import ConfigLoader, EvalCase, Rubric
 from scylla.executor import checkout_hash, cleanup_workspace, clone_repo, create_workspace
-from scylla.reporting import ResultWriter, RunResult, create_run_result
+from scylla.reporting import ReportingRunResult, ResultWriter, create_run_result
 
 
 @dataclass
@@ -79,7 +79,7 @@ class EvalOrchestrator:
         tier_id: str = "T0",
         run_number: int = 1,
         _skip_progress_init: bool = False,
-    ) -> RunResult:
+    ) -> ReportingRunResult:
         """Run a single test execution.
 
         Args:
@@ -90,7 +90,7 @@ class EvalOrchestrator:
             _skip_progress_init: Internal flag to skip progress initialization.
 
         Returns:
-            RunResult with execution details.
+            ReportingRunResult with execution details.
 
         """
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
@@ -232,8 +232,8 @@ class EvalOrchestrator:
         execution_result: dict,
         judgment: dict,
         duration: float,
-    ) -> RunResult:
-        """Create RunResult from execution and judgment.
+    ) -> ReportingRunResult:
+        """Create ReportingRunResult from execution and judgment.
 
         Args:
             test_id: Test identifier.
@@ -245,7 +245,7 @@ class EvalOrchestrator:
             duration: Execution duration in seconds.
 
         Returns:
-            RunResult object.
+            ReportingRunResult object.
 
         """
         passed = judgment.get("passed", False)
@@ -280,7 +280,7 @@ class EvalOrchestrator:
         self,
         tier_id: str,
         run_number: int,
-        result: RunResult,
+        result: ReportingRunResult,
         skip_progress_init: bool,
     ) -> None:
         """Finalize progress tracking for run.
@@ -288,7 +288,7 @@ class EvalOrchestrator:
         Args:
             tier_id: Tier identifier.
             run_number: Run number.
-            result: RunResult with execution details.
+            result: ReportingRunResult with execution details.
             skip_progress_init: Whether to skip tier/test completion.
 
         """
@@ -465,7 +465,7 @@ class EvalOrchestrator:
         models: list[str],
         tiers: list[str] | None = None,
         runs_per_tier: int | None = None,
-    ) -> list[RunResult]:
+    ) -> list[ReportingRunResult]:
         """Run a complete test across all tiers and models.
 
         Args:
@@ -475,7 +475,7 @@ class EvalOrchestrator:
             runs_per_tier: Number of runs per tier (default: from config).
 
         Returns:
-            List of RunResult objects.
+            List of ReportingRunResult objects.
 
         """
         # Load test to get default tiers
@@ -486,7 +486,7 @@ class EvalOrchestrator:
 
         runs = runs_per_tier or self.config.runs_per_tier
 
-        results: list[RunResult] = []
+        results: list[ReportingRunResult] = []
 
         # Initialize progress for full test run
         self.progress.start_test(test_id, tiers, runs_per_tier=runs)

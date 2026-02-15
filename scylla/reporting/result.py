@@ -96,10 +96,6 @@ class ReportingRunResult(RunResultBase):
         return output_path
 
 
-# Backward-compatible type alias
-RunResult = ReportingRunResult
-
-
 class ResultWriter:
     """Writes run results to the file system."""
 
@@ -126,7 +122,7 @@ class ResultWriter:
         """
         return self.base_dir / test_id / tier_id / f"run_{run_number:02d}"
 
-    def write_result(self, result: RunResult) -> Path:
+    def write_result(self, result: ReportingRunResult) -> Path:
         """Write a run result to the appropriate directory.
 
         Args:
@@ -139,7 +135,7 @@ class ResultWriter:
         run_dir = self.get_run_dir(result.test_id, result.tier_id, result.run_number)
         return result.write(run_dir)
 
-    def read_result(self, test_id: str, tier_id: str, run_number: int) -> RunResult | None:
+    def read_result(self, test_id: str, tier_id: str, run_number: int) -> ReportingRunResult | None:
         """Read a run result from the file system.
 
         Args:
@@ -148,7 +144,7 @@ class ResultWriter:
             run_number: Run number
 
         Returns:
-            RunResult if found, None otherwise
+            ReportingRunResult if found, None otherwise
 
         """
         run_dir = self.get_run_dir(test_id, tier_id, run_number)
@@ -158,7 +154,7 @@ class ResultWriter:
             return None
 
         data = json.loads(result_path.read_text())
-        return RunResult.model_validate(data)
+        return ReportingRunResult.model_validate(data)
 
 
 def create_run_result(
@@ -180,7 +176,7 @@ def create_run_result(
     cost_of_pass: float,
     composite_score: float,
     timestamp: str | None = None,
-) -> RunResult:
+) -> ReportingRunResult:
     """Create a RunResult with all components.
 
     Args:
@@ -203,13 +199,13 @@ def create_run_result(
         composite_score: Combined quality score
 
     Returns:
-        Fully constructed RunResult
+        Fully constructed ReportingRunResult
 
     """
     if timestamp is None:
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
-    return RunResult(
+    return ReportingRunResult(
         test_id=test_id,
         tier_id=tier_id,
         model_id=model_id,

@@ -18,8 +18,8 @@ from scylla.metrics.ablation import (
 from scylla.metrics.aggregator import (
     AggregatedStats,
     CrossTierAnalysis,
+    MetricsRunResult,
     RunAggregator,
-    RunResult,
     TierStatistics,
 )
 from scylla.metrics.cross_tier import (
@@ -101,8 +101,8 @@ __all__ = [
     # Aggregator
     "AggregatedStats",
     "CrossTierAnalysis",
+    "MetricsRunResult",
     "RunAggregator",
-    "RunResult",
     "TierStatistics",
     # Cross-tier analysis
     "CrossTierAnalyzer",

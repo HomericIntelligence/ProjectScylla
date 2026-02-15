@@ -17,8 +17,8 @@ from scylla.reporting.result import (
     GradingInfo,
     JudgmentInfo,
     MetricsInfo,
+    ReportingRunResult,
     ResultWriter,
-    RunResult,
     create_run_result,
 )
 from scylla.reporting.scorecard import (
@@ -52,8 +52,8 @@ __all__ = [
     "GradingInfo",
     "JudgmentInfo",
     "MetricsInfo",
+    "ReportingRunResult",
     "ResultWriter",
-    "RunResult",
     "create_run_result",
     # Scorecard
     "EvalResult",

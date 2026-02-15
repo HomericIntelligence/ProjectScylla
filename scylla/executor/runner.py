@@ -104,10 +104,6 @@ class ExecutorRunResult(RunResultBase):
     error_message: str | None = Field(default=None, description="Error message if failed")
 
 
-# Backward-compatible type alias
-RunResult = ExecutorRunResult
-
-
 class TierSummary(BaseModel):
     """Summary of results for a single tier."""
 
@@ -121,7 +117,9 @@ class TierSummary(BaseModel):
     pass_rate: float = Field(default=0.0, description="Pass rate (0-1)")
     pass_rate_ci_low: float = Field(default=0.0, description="Pass rate 95% CI lower bound")
     pass_rate_ci_high: float = Field(default=0.0, description="Pass rate 95% CI upper bound")
-    runs: list[RunResult] = Field(default_factory=list, description="Individual run results")
+    runs: list[ExecutorRunResult] = Field(
+        default_factory=list, description="Individual run results"
+    )
 
 
 class EvalSummary(BaseModel):
@@ -500,7 +498,7 @@ class EvalRunner:
             TierSummary with results.
 
         """
-        results: list[RunResult] = []
+        results: list[ExecutorRunResult] = []
 
         if parallel:
             results = self._run_parallel(test_id, tier_config, model, runs)
@@ -516,9 +514,9 @@ class EvalRunner:
         tier_config: TierConfig,
         model: str,
         runs: int,
-    ) -> list[RunResult]:
+    ) -> list[ExecutorRunResult]:
         """Run tests sequentially."""
-        results: list[RunResult] = []
+        results: list[ExecutorRunResult] = []
 
         for run_number in range(1, runs + 1):
             # Check if already completed (resume support)
@@ -548,9 +546,9 @@ class EvalRunner:
         tier_config: TierConfig,
         model: str,
         runs: int,
-    ) -> list[RunResult]:
+    ) -> list[ExecutorRunResult]:
         """Run tests in parallel using thread pool."""
-        results: list[RunResult] = []
+        results: list[ExecutorRunResult] = []
 
         # Determine which runs need to be executed
         runs_to_execute = []
@@ -588,7 +586,7 @@ class EvalRunner:
 
                 except Exception as e:
                     results.append(
-                        RunResult(
+                        ExecutorRunResult(
                             run_number=run_number,
                             status=RunStatus.ERROR,
                             error_message=str(e),
@@ -603,7 +601,7 @@ class EvalRunner:
         tier_config: TierConfig,
         model: str,
         run_number: int,
-    ) -> RunResult:
+    ) -> ExecutorRunResult:
         """Execute a single run with retries for rate limits.
 
         Args:
@@ -613,7 +611,7 @@ class EvalRunner:
             run_number: Run number (1-N).
 
         Returns:
-            RunResult with execution outcome.
+            ExecutorRunResult with execution outcome.
 
         """
         container_name = f"scylla-{test_id}-{tier_config.tier_id}-{model}-r{run_number:02d}"
@@ -669,7 +667,7 @@ class EvalRunner:
         self,
         execution_info: ExecutionInfo,
         run_number: int,
-    ) -> RunResult:
+    ) -> ExecutorRunResult:
         """Evaluate execution result and run judge if successful.
 
         Args:
@@ -677,12 +675,12 @@ class EvalRunner:
             run_number: Run number (1-N).
 
         Returns:
-            RunResult with status based on execution and judgment.
+            ExecutorRunResult with status based on execution and judgment.
 
         """
         # Check for timeout
         if execution_info.timed_out:
-            return RunResult(
+            return ExecutorRunResult(
                 run_number=run_number,
                 status=RunStatus.TIMEOUT,
                 execution_info=execution_info,
@@ -690,7 +688,7 @@ class EvalRunner:
 
         # Check for execution error
         if execution_info.exit_code != 0:
-            return RunResult(
+            return ExecutorRunResult(
                 run_number=run_number,
                 status=RunStatus.ERROR,
                 execution_info=execution_info,
@@ -700,7 +698,7 @@ class EvalRunner:
         # Run judge evaluation
         judgment = self._run_judge(execution_info)
 
-        return RunResult(
+        return ExecutorRunResult(
             run_number=run_number,
             status=RunStatus.PASSED if judgment.passed else RunStatus.FAILED,
             execution_info=execution_info,
@@ -720,7 +718,7 @@ class EvalRunner:
         )
         time.sleep(delay)
 
-    def _create_error_result(self, run_number: int, error_message: str) -> RunResult:
+    def _create_error_result(self, run_number: int, error_message: str) -> ExecutorRunResult:
         """Create error result from exception.
 
         Args:
@@ -728,26 +726,26 @@ class EvalRunner:
             error_message: Error message.
 
         Returns:
-            RunResult with ERROR status.
+            ExecutorRunResult with ERROR status.
 
         """
-        return RunResult(
+        return ExecutorRunResult(
             run_number=run_number,
             status=RunStatus.ERROR,
             error_message=error_message,
         )
 
-    def _create_rate_limit_exceeded_result(self, run_number: int) -> RunResult:
+    def _create_rate_limit_exceeded_result(self, run_number: int) -> ExecutorRunResult:
         """Create error result for rate limit retry exhaustion.
 
         Args:
             run_number: Run number (1-N).
 
         Returns:
-            RunResult with ERROR status.
+            ExecutorRunResult with ERROR status.
 
         """
-        return RunResult(
+        return ExecutorRunResult(
             run_number=run_number,
             status=RunStatus.ERROR,
             error_message="Rate limit retries exceeded",
@@ -832,7 +830,7 @@ class EvalRunner:
         self,
         tier_id: str,
         model: str,
-        results: list[RunResult],
+        results: list[ExecutorRunResult],
     ) -> TierSummary:
         """Aggregate results for a tier.
 

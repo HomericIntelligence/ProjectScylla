@@ -345,10 +345,6 @@ class E2ERunResult(RunResultBase):
         }
 
 
-# Backward-compatible type alias
-RunResult = E2ERunResult
-
-
 class SubTestResult(BaseModel):
     """Aggregated results for a sub-test across all runs.
 

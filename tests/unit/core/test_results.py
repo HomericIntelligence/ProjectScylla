@@ -1,6 +1,6 @@
 """Tests for scylla.core.results module."""
 
-from scylla.core.results import BaseExecutionInfo, BaseRunMetrics, BaseRunResult
+from scylla.core.results import BaseExecutionInfo, BaseRunMetrics
 
 
 class TestBaseExecutionInfo:
@@ -141,134 +141,41 @@ class TestBaseRunMetrics:
         assert "tokens_output=500" in repr_str
 
 
-class TestBaseRunResult:
-    """Tests for BaseRunResult dataclass."""
-
-    def test_construction_basic(self) -> None:
-        """Basic construction with valid parameters."""
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=0.05,
-            duration_seconds=10.5,
-        )
-        assert result.run_number == 1
-        assert result.cost_usd == 0.05
-        assert result.duration_seconds == 10.5
-
-    def test_construction_multiple_runs(self) -> None:
-        """Construction with different run numbers."""
-        result1 = BaseRunResult(run_number=1, cost_usd=0.05, duration_seconds=10.0)
-        result2 = BaseRunResult(run_number=2, cost_usd=0.06, duration_seconds=11.0)
-        result3 = BaseRunResult(run_number=10, cost_usd=0.10, duration_seconds=15.0)
-
-        assert result1.run_number == 1
-        assert result2.run_number == 2
-        assert result3.run_number == 10
-
-    def test_zero_cost(self) -> None:
-        """Support zero cost (free tier, cached results, etc.)."""
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=0.0,
-            duration_seconds=10.0,
-        )
-        assert result.cost_usd == 0.0
-
-    def test_zero_duration(self) -> None:
-        """Support zero duration (cached/instant results)."""
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=0.05,
-            duration_seconds=0.0,
-        )
-        assert result.duration_seconds == 0.0
-
-    def test_high_cost(self) -> None:
-        """Support high cost values."""
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=999.99,
-            duration_seconds=1000.0,
-        )
-        assert result.cost_usd == 999.99
-
-    def test_long_duration(self) -> None:
-        """Support long duration values."""
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=1.00,
-            duration_seconds=3600.0,  # 1 hour
-        )
-        assert result.duration_seconds == 3600.0
-
-    def test_equality(self) -> None:
-        """Test dataclass equality."""
-        result1 = BaseRunResult(run_number=1, cost_usd=0.05, duration_seconds=10.0)
-        result2 = BaseRunResult(run_number=1, cost_usd=0.05, duration_seconds=10.0)
-        result3 = BaseRunResult(run_number=2, cost_usd=0.05, duration_seconds=10.0)
-
-        assert result1 == result2
-        assert result1 != result3
-
-    def test_repr(self) -> None:
-        """Test string representation."""
-        result = BaseRunResult(run_number=1, cost_usd=0.05, duration_seconds=10.5)
-        repr_str = repr(result)
-        assert "BaseRunResult" in repr_str
-        assert "run_number=1" in repr_str
-        assert "cost_usd=0.05" in repr_str
-
-
 class TestComposedTypes:
     """Tests for composed usage of base types."""
 
-    def test_result_with_execution_info_composition(self) -> None:
-        """Test composing BaseRunResult with BaseExecutionInfo."""
+    def test_execution_info_composition(self) -> None:
+        """Test composing execution info."""
         # This tests the pattern used in domain-specific types
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=0.05,
-            duration_seconds=10.5,
-        )
+        duration = 10.5
 
         execution = BaseExecutionInfo(
             exit_code=0,
-            duration_seconds=10.5,
+            duration_seconds=duration,
             timed_out=False,
         )
 
-        # Verify duration consistency
-        assert result.duration_seconds == execution.duration_seconds
+        # Verify duration is captured
+        assert execution.duration_seconds == duration
 
-    def test_result_with_metrics_composition(self) -> None:
-        """Test composing BaseRunResult with BaseRunMetrics."""
-        result = BaseRunResult(
-            run_number=1,
-            cost_usd=0.05,
-            duration_seconds=10.5,
-        )
+    def test_metrics_composition(self) -> None:
+        """Test composing metrics."""
+        cost = 0.05
 
         metrics = BaseRunMetrics(
             tokens_input=1000,
             tokens_output=500,
-            cost_usd=0.05,
+            cost_usd=cost,
         )
 
-        # Verify cost consistency
-        assert result.cost_usd == metrics.cost_usd
+        # Verify cost is captured
+        assert metrics.cost_usd == cost
 
     def test_full_composition_pattern(self) -> None:
-        """Test full composition of all three base types."""
+        """Test full composition of execution info and metrics."""
         # Simulates the pattern used in reporting.result.py
-        run_number = 1
         cost = 0.05
         duration = 10.5
-
-        result = BaseRunResult(
-            run_number=run_number,
-            cost_usd=cost,
-            duration_seconds=duration,
-        )
 
         execution = BaseExecutionInfo(
             exit_code=0,
@@ -283,6 +190,5 @@ class TestComposedTypes:
         )
 
         # Verify consistency across composed types
-        assert result.run_number == run_number
-        assert result.cost_usd == metrics.cost_usd
-        assert result.duration_seconds == execution.duration_seconds
+        assert metrics.cost_usd == cost
+        assert execution.duration_seconds == duration
