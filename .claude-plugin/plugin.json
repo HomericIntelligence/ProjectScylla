@@ -1,26 +1,29 @@
 {
-  "name": "centralize-repo-clones",
+  "name": "enable-yaml-markdown-linting",
   "version": "1.0.0",
-  "category": "optimization",
-  "description": "Centralize git repository clones across E2E experiments to achieve 37-73% disk space savings",
+  "category": "ci-cd",
+  "description": "Enable yamllint and markdownlint-cli2 pre-commit hooks with GitHub Actions compatibility",
+  "tags": ["yamllint", "markdownlint", "pre-commit", "github-actions", "linting", "code-quality"],
+  "created": "2026-02-14",
   "author": "Claude Sonnet 4.5",
-  "date": "2024-02-13",
-  "tags": ["git", "worktree", "optimization", "disk-space", "e2e-testing", "parallel-execution"],
+  "source_issue": "#603",
+  "source_pr": "#653",
+  "outcome": "success",
   "related_skills": [
-    "git-worktree-management",
-    "parallel-experiment-execution",
-    "disk-space-optimization",
-    "file-locking-patterns"
+    "quality-run-linters",
+    "run-precommit",
+    "validate-workflow"
   ],
-  "success_metrics": {
-    "disk_savings_percent": 37,
-    "time_savings_multiplier": 51,
-    "test_coverage": "100%",
-    "integration_test_savings_percent": 37.3
-  },
-  "verified_on": {
-    "repository": "https://github.com/anthropics/anthropic-sdk-python.git",
-    "test_framework": "pytest",
-    "total_tests": 2100
-  }
+  "trigger_phrases": [
+    "enable YAML linting",
+    "add yamllint to pre-commit",
+    "configure yamllint for GitHub Actions",
+    "fix yamllint errors in workflows"
+  ],
+  "key_learnings": [
+    "Use indent-sequences: whatever for flexible YAML list indentation",
+    "Add 'on'/'off' to truthy values for GitHub Actions workflows",
+    "Set braces: max-spaces-inside: 1 to allow GitHub Actions ${{ }} syntax",
+    "Exclude tests/fixtures/invalid/ for intentionally broken test files"
+  ]
 }
