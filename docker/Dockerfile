@@ -10,7 +10,8 @@
 # ============================================================================
 # Stage 1: Builder - Install Python packages with build dependencies
 # ============================================================================
-FROM python:3.14.2-slim AS builder
+# Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
+FROM python:3.14.2-slim@sha256:1a3c6dbfd2173971abba880c3cc2ec4643690901f6ad6742d0827bae6cefc925 AS builder
 
 # Set build environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -38,7 +39,8 @@ RUN pip install --user --no-cache-dir /opt/scylla/
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
-FROM python:3.14.2-slim
+# Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
+FROM python:3.14.2-slim@sha256:1a3c6dbfd2173971abba880c3cc2ec4643690901f6ad6742d0827bae6cefc925
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="scylla-runner"

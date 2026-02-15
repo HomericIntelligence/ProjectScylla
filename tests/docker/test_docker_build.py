@@ -172,3 +172,42 @@ class TestDockerComposeContent:
         # Profiles are optional but recommended for multi-environment setups
         # This is a soft check - we just verify the file is parseable
         assert len(content) > 0, "docker-compose.yml should not be empty"
+
+
+class TestDockerfileDigestPinning:
+    """Tests for base image digest pinning."""
+
+    def test_base_image_uses_sha256_digest(self, dockerfile_path):
+        """All FROM instructions use SHA256 digest for reproducibility."""
+        content = dockerfile_path.read_text()
+        from_lines = [line for line in content.split("\n") if line.strip().startswith("FROM")]
+
+        # Should have exactly 2 FROM instructions (builder + runtime)
+        assert len(from_lines) == 2, f"Expected 2 FROM instructions, found {len(from_lines)}"
+
+        # Both should have SHA256 digest
+        for line in from_lines:
+            assert "@sha256:" in line, (
+                f"FROM instruction missing SHA256 digest: {line}\n"
+                "Base images should be pinned to SHA256 digest for reproducibility"
+            )
+
+    def test_both_stages_use_same_digest(self, dockerfile_path):
+        """Builder and runtime stages use the same base image digest."""
+        content = dockerfile_path.read_text()
+        from_lines = [line for line in content.split("\n") if line.strip().startswith("FROM")]
+
+        # Extract digests from both FROM instructions
+        digests = []
+        for line in from_lines:
+            if "@sha256:" in line:
+                digest = line.split("@sha256:")[1].split()[0]
+                digests.append(digest)
+
+        assert len(digests) == 2, "Both FROM instructions should have digests"
+        assert digests[0] == digests[1], (
+            f"Builder and runtime stages use different digests:\n"
+            f"Builder: {digests[0]}\n"
+            f"Runtime: {digests[1]}\n"
+            "Both stages should use the same base image digest"
+        )
