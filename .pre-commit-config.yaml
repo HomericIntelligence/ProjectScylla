@@ -41,6 +41,15 @@ repos:
         files: ^(scripts|scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
+      - id: check-type-alias-shadowing
+        name: Check Type Alias Shadowing
+        description: Prevent type aliases that shadow more specific domain names (e.g., Result = DomainResult)
+        entry: python scripts/check_type_alias_shadowing.py
+        language: system
+        files: ^(scripts|scylla|tests)/.*\.py$
+        exclude: ^tests/test_check_type_alias_shadowing\.py$
+        types: [python]
+        pass_filenames: true
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
