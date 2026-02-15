@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field
 
-from scylla.core.results import RunResultBase
+from scylla.core.results import ExecutionInfoBase, RunResultBase
 
 if TYPE_CHECKING:
     from scylla.executor.docker import ContainerResult, DockerExecutor
@@ -57,23 +57,36 @@ class InsufficientRunsError(RunnerError):
     pass
 
 
-class ExecutionInfo(BaseModel):
+class ExecutorExecutionInfo(ExecutionInfoBase):
     """Detailed execution information for container runs.
 
-    This is the executor's detailed execution info, including container
-    and output details. For simpler execution info, see:
-    - reporting/result.py:ExecutionInfo (minimal, for persistence)
-    - core/results.py:BaseExecutionInfo (base type)
+    This is the executor's detailed execution info, including container-specific
+    and output details. Inherits common fields (exit_code, duration_seconds, timed_out)
+    from ExecutionInfoBase.
+
+    For other ExecutionInfo types in the hierarchy, see:
+    - ExecutionInfoBase (core/results.py) - Base Pydantic model
+    - ReportingExecutionInfo (reporting/result.py) - Minimal, for persistence
+    - BaseExecutionInfo (core/results.py) - Legacy dataclass (deprecated)
+
+    Attributes:
+        container_id: Docker container ID.
+        stdout: Standard output from container.
+        stderr: Standard error from container.
+        started_at: ISO timestamp of execution start.
+        ended_at: ISO timestamp of execution end.
+
     """
 
     container_id: str = Field(..., description="Docker container ID")
-    exit_code: int = Field(..., description="Container exit code")
     stdout: str = Field(default="", description="Standard output")
     stderr: str = Field(default="", description="Standard error")
-    timed_out: bool = Field(default=False, description="Whether execution timed out")
-    duration_seconds: float = Field(default=0.0, description="Execution duration")
     started_at: str = Field(default="", description="ISO timestamp of start")
     ended_at: str = Field(default="", description="ISO timestamp of end")
+
+
+# Backward-compatible type alias
+ExecutionInfo = ExecutorExecutionInfo
 
 
 class JudgmentResult(BaseModel):
@@ -657,11 +670,15 @@ class EvalRunner:
         )
         end_time = datetime.now(timezone.utc)
 
-        execution_info.started_at = start_time.isoformat()
-        execution_info.ended_at = end_time.isoformat()
-        execution_info.duration_seconds = (end_time - start_time).total_seconds()
-
-        return execution_info
+        # Create a new instance with timing information added
+        # (Pydantic models are frozen, so we use model_copy with update)
+        return execution_info.model_copy(
+            update={
+                "started_at": start_time.isoformat(),
+                "ended_at": end_time.isoformat(),
+                "duration_seconds": (end_time - start_time).total_seconds(),
+            }
+        )
 
     def _evaluate_execution_result(
         self,
