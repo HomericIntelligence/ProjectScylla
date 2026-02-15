@@ -8,10 +8,10 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from scylla.e2e.models import (
+    E2ERunResult,
     ExperimentConfig,
     ExperimentResult,
     JudgeResultSummary,
-    RunResult,
     SubTestResult,
     TierID,
     TierResult,
@@ -437,7 +437,7 @@ class TestSaveSubtestReport:
             tier_id=TierID.T0,
             subtest_id="baseline",
             runs=[
-                RunResult(
+                E2ERunResult(
                     run_number=1,
                     exit_code=0,
                     judge_score=0.85,
@@ -457,7 +457,7 @@ class TestSaveSubtestReport:
                         cache_creation_tokens=50,
                     ),
                 ),
-                RunResult(
+                E2ERunResult(
                     run_number=2,
                     exit_code=0,
                     judge_score=0.90,
@@ -509,7 +509,7 @@ class TestSaveSubtestReport:
             tier_id=TierID.T0,
             subtest_id="baseline",
             runs=[
-                RunResult(
+                E2ERunResult(
                     run_number=1,
                     exit_code=0,
                     judge_score=0.85,
@@ -531,7 +531,7 @@ class TestSaveSubtestReport:
                         output_tokens=500,
                     ),
                 ),
-                RunResult(
+                E2ERunResult(
                     run_number=2,
                     exit_code=0,
                     judge_score=0.90,
@@ -575,7 +575,7 @@ class TestGenerateTierSummaryTable:
                 tier_id=TierID.T0,
                 subtest_id="baseline",
                 runs=[
-                    RunResult(
+                    E2ERunResult(
                         run_number=1,
                         exit_code=0,
                         judge_score=0.85,
@@ -599,7 +599,7 @@ class TestGenerateTierSummaryTable:
                 tier_id=TierID.T0,
                 subtest_id="01",
                 runs=[
-                    RunResult(
+                    E2ERunResult(
                         run_number=1,
                         exit_code=0,
                         judge_score=0.90,
@@ -647,7 +647,7 @@ class TestSaveTierReport:
                     tier_id=TierID.T0,
                     subtest_id="baseline",
                     runs=[
-                        RunResult(
+                        E2ERunResult(
                             run_number=1,
                             exit_code=0,
                             judge_score=0.85,
@@ -703,7 +703,7 @@ class TestGenerateExperimentSummaryTable:
                         tier_id=TierID.T0,
                         subtest_id="baseline",
                         runs=[
-                            RunResult(
+                            E2ERunResult(
                                 run_number=1,
                                 exit_code=0,
                                 judge_score=0.85,
@@ -732,7 +732,7 @@ class TestGenerateExperimentSummaryTable:
                         tier_id=TierID.T1,
                         subtest_id="01",
                         runs=[
-                            RunResult(
+                            E2ERunResult(
                                 run_number=1,
                                 exit_code=0,
                                 judge_score=0.90,
@@ -796,7 +796,7 @@ class TestSaveExperimentReport:
                             tier_id=TierID.T0,
                             subtest_id="baseline",
                             runs=[
-                                RunResult(
+                                E2ERunResult(
                                     run_number=1,
                                     exit_code=0,
                                     judge_score=0.85,

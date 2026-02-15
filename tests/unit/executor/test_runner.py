@@ -10,10 +10,10 @@ from scylla.executor.runner import (
     EvalRunner,
     ExecutionInfo,
     ExecutionState,
+    ExecutorRunResult,
     JudgmentResult,
     RunnerConfig,
     RunnerError,
-    RunResult,
     RunStatus,
     TierSummary,
     calculate_wilson_ci,
@@ -132,12 +132,12 @@ class TestSaveLoadState:
             assert state_path.exists()
 
 
-class TestRunResult:
+class TestExecutorRunResult:
     """Tests for run result model."""
 
     def test_passed_result(self) -> None:
         """Test creating a passed result."""
-        result = RunResult(
+        result = ExecutorRunResult(
             run_number=1,
             status=RunStatus.PASSED,
             execution_info=ExecutionInfo(
@@ -152,7 +152,7 @@ class TestRunResult:
 
     def test_failed_result(self) -> None:
         """Test creating a failed result."""
-        result = RunResult(
+        result = ExecutorRunResult(
             run_number=2,
             status=RunStatus.FAILED,
             judgment=JudgmentResult(passed=False, score=0.0),
@@ -161,7 +161,7 @@ class TestRunResult:
 
     def test_error_result(self) -> None:
         """Test creating an error result."""
-        result = RunResult(
+        result = ExecutorRunResult(
             run_number=3,
             status=RunStatus.ERROR,
             error_message="Connection failed",

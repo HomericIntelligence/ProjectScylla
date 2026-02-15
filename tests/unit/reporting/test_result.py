@@ -11,8 +11,8 @@ from scylla.reporting.result import (
     GradingInfo,
     JudgmentInfo,
     MetricsInfo,
+    ReportingRunResult,
     ResultWriter,
-    RunResult,
     create_run_result,
 )
 
@@ -54,9 +54,9 @@ def make_grading() -> GradingInfo:
     )
 
 
-def make_run_result() -> RunResult:
-    """Create test RunResult."""
-    return RunResult(
+def make_run_result() -> ReportingRunResult:
+    """Create test ReportingRunResult."""
+    return ReportingRunResult(
         test_id="001-test",
         tier_id="T1",
         model_id="claude-opus-4-5-20251101",
@@ -181,8 +181,8 @@ class TestGradingInfo:
         assert info.cost_of_pass == float("inf")
 
 
-class TestRunResult:
-    """Tests for RunResult dataclass."""
+class TestReportingRunResult:
+    """Tests for ReportingRunResult dataclass."""
 
     def test_create(self) -> None:
         """Test Create."""
@@ -363,7 +363,7 @@ class TestResultWriter:
             writer = ResultWriter(Path(tmpdir))
 
             for run_num in range(1, 11):
-                result = RunResult(
+                result = ReportingRunResult(
                     test_id="001-test",
                     tier_id="T1",
                     model_id="test-model",
@@ -387,7 +387,7 @@ class TestResultWriter:
             writer = ResultWriter(Path(tmpdir))
 
             for tier in ["T0", "T1", "T2", "T3"]:
-                result = RunResult(
+                result = ReportingRunResult(
                     test_id="001-test",
                     tier_id=tier,
                     model_id="test-model",
@@ -406,7 +406,7 @@ class TestResultWriter:
             assert len(tier_dirs) == 4
 
 
-class TestCreateRunResult:
+class TestCreateReportingRunResult:
     """Tests for create_run_result factory function."""
 
     def test_create_with_all_params(self) -> None:

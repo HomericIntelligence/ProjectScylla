@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from scylla.e2e.models import ExperimentConfig, RunResult, TierID, TokenStats
+from scylla.e2e.models import E2ERunResult, ExperimentConfig, TierID, TokenStats
 from scylla.e2e.regenerate import (
     RegenerateStats,
     _aggregate_results,
@@ -103,7 +103,7 @@ def test_aggregate_results_empty() -> None:
 
 def test_aggregate_results_single_run() -> None:
     """Test _aggregate_results with a single run."""
-    run = RunResult(
+    run = E2ERunResult(
         run_number=1,
         exit_code=0,
         token_stats=TokenStats(input_tokens=100, output_tokens=50),
@@ -133,7 +133,7 @@ def test_aggregate_results_single_run() -> None:
 def test_aggregate_results_multiple_runs() -> None:
     """Test _aggregate_results with multiple runs."""
     runs = [
-        RunResult(
+        E2ERunResult(
             run_number=1,
             exit_code=0,
             token_stats=TokenStats(input_tokens=100, output_tokens=50),
@@ -148,7 +148,7 @@ def test_aggregate_results_multiple_runs() -> None:
             workspace_path=Path("/tmp/workspace1"),
             logs_path=Path("/tmp/logs1"),
         ),
-        RunResult(
+        E2ERunResult(
             run_number=2,
             exit_code=0,
             token_stats=TokenStats(input_tokens=120, output_tokens=60),

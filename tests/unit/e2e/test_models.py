@@ -6,10 +6,10 @@ import tempfile
 from pathlib import Path
 
 from scylla.e2e.models import (
+    E2ERunResult,
     ExperimentConfig,
     JudgeResultSummary,
     ResourceManifest,
-    RunResult,
     SubTestConfig,
     SubTestResult,
     TierBaseline,
@@ -181,14 +181,14 @@ class TestJudgeResultSummary:
         assert result["is_valid"] is True
 
 
-class TestRunResult:
-    """Tests for RunResult."""
+class TestE2ERunResult:
+    """Tests for E2ERunResult."""
 
     def test_to_dict(self) -> None:
         """Test conversion to dictionary."""
         from scylla.e2e.models import TokenStats
 
-        result = RunResult(
+        result = E2ERunResult(
             run_number=1,
             exit_code=0,
             token_stats=TokenStats(input_tokens=1000, output_tokens=200),
