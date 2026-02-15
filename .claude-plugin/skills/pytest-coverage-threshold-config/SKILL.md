@@ -14,6 +14,7 @@
 ## When to Use
 
 Use this skill when you need to:
+
 - Enforce minimum test coverage thresholds in CI/CD pipelines
 - Configure pytest coverage reporting with multiple output formats
 - Raise coverage requirements from a lower threshold (e.g., 70% → 80%)
@@ -22,6 +23,7 @@ Use this skill when you need to:
 - Prevent coverage regression in Python projects
 
 **Triggers**:
+
 - "Configure coverage threshold to X%"
 - "Enforce minimum test coverage in CI"
 - "Set up pytest coverage reports"
@@ -48,6 +50,7 @@ addopts = [
 ```
 
 **Key Points**:
+
 - `--cov=<package>`: Measure coverage for your package
 - `--cov-report=term-missing`: Show missing lines in CLI output
 - `--cov-report=html`: Generate interactive HTML report in `htmlcov/`
@@ -76,6 +79,7 @@ exclude_lines = [
 ```
 
 **New Exclusion Patterns**:
+
 - `class .*\\bProtocol\\):` - Excludes Protocol class definitions (typing.Protocol)
 - `@(abc\\.)?abstractmethod` - Excludes abstract method decorators from abc module
 
@@ -154,6 +158,7 @@ gh pr merge --auto --rebase
 ### ❌ Running Tests During Implementation
 
 **What was tried**: Attempted to run full test suite during configuration changes:
+
 ```bash
 pixi run pytest tests/unit -v --tb=short 2>&1 | head -100
 ```
@@ -161,6 +166,7 @@ pixi run pytest tests/unit -v --tb=short 2>&1 | head -100
 **Why it failed**: Tests took too long to complete (exceeded timeout), blocking verification of configuration syntax.
 
 **Lesson**: For configuration-only changes, validate syntax first before running full test suite:
+
 ```bash
 # GOOD: Fast syntax validation
 python3 -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"
@@ -174,6 +180,7 @@ pixi run pytest tests/unit -v
 ### ❌ Using Non-Existent GitHub Labels
 
 **What was tried**: Attempted to add labels during PR creation:
+
 ```bash
 gh pr create --label "ci,quality"
 ```
@@ -181,6 +188,7 @@ gh pr create --label "ci,quality"
 **Why it failed**: Labels `ci` and `quality` didn't exist in the repository.
 
 **Lesson**: Check available labels first or create PR without labels:
+
 ```bash
 # GOOD: Create PR without labels if unsure
 gh pr create --title "..." --body "..."
