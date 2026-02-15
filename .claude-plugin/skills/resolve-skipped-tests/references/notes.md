@@ -25,6 +25,7 @@ Only 2 skip calls found (not 4 as mentioned in issue title).
 #### Skip #1: test_config_loader.py
 
 **Error when skip removed:**
+
 ```
 pydantic_core._pydantic_core.ValidationError: 1 validation error for EvalCase
 language
@@ -38,12 +39,14 @@ language
 #### Skip #2: test_tier_config.py
 
 **Error when skip removed:**
+
 ```
 scylla.executor.tier_config.TierConfigError: Tiers file not found:
 /home/mvillmow/Scylla2/.worktrees/issue-670/tests/config/tiers/tiers.yaml
 ```
 
 **Root cause:** Incorrect path calculation
+
 - Used: `Path(__file__).parent.parent.parent / "config"`
 - From: `/home/mvillmow/.../tests/unit/executor/test_tier_config.py`
 - Resolved to: `/home/mvillmow/.../tests/config/` (wrong!)
@@ -79,10 +82,12 @@ No action needed for .orig files - already handled by .gitignore.
 ## Test Results
 
 ### Before
+
 - 2 integration tests with conditional pytest.skip guards
 - Tests would skip if config files "not available"
 
 ### After
+
 ```bash
 python3 -m pytest tests/unit/test_config_loader.py -v
 # 32 passed in 0.11s
@@ -135,6 +140,6 @@ gh pr merge 688 --auto --rebase
 
 ## Related Resources
 
-- Pydantic docs: https://docs.pydantic.dev/latest/
-- pytest skip docs: https://docs.pytest.org/en/stable/how-to/skipping.html
-- Path.parent docs: https://docs.python.org/3/library/pathlib.html
+- Pydantic docs: <https://docs.pydantic.dev/latest/>
+- pytest skip docs: <https://docs.pytest.org/en/stable/how-to/skipping.html>
+- Path.parent docs: <https://docs.python.org/3/library/pathlib.html>

@@ -19,6 +19,7 @@ Use this skill when:
 - ✅ You need to clean up test suite to achieve zero skipped tests
 
 **Don't use when:**
+
 - Tests are legitimately platform-specific (e.g., Windows-only tests on Linux)
 - Tests require external resources that may not be available (databases, APIs)
 - Tests are marked for future implementation (xfail is more appropriate)
@@ -72,6 +73,7 @@ config_dir = Path(__file__).parent.parent.parent.parent / "config"
 ```
 
 **Verification technique:**
+
 ```python
 # Add temporary debug to verify path
 print(f"Config path: {config_dir}")
@@ -119,28 +121,34 @@ grep -r "pytest.skip" tests/ || echo "No skips found ✅"
 ### ❌ Just Removing Skip Guards Without Fixing Root Cause
 
 **What was tried:**
+
 - Initially attempted to simply remove `pytest.skip()` calls without understanding why they existed
 - This caused tests to fail with ValidationError and FileNotFoundError
 
 **Why it failed:**
+
 - The skip guards were masking real issues (missing config fields, wrong paths)
 - Removing guards exposed the underlying problems
 
 **Lesson learned:**
+
 - Always investigate WHY a test is skipped before removing the skip
 - Fix the root cause, not just the symptom
 
 ### ❌ Assuming "4 Skipped Tests" Means 4 Skip Calls
 
 **What was tried:**
+
 - Issue title mentioned "4 skipped tests"
 - Initial assumption was there would be 4 `pytest.skip()` calls
 
 **Why it failed:**
+
 - Only 2 `pytest.skip()` calls existed in the codebase
 - Test runners may count skips differently (e.g., parametrized tests)
 
 **Lesson learned:**
+
 - Always verify assumptions with `grep -r "pytest.skip" tests/`
 - Don't rely on issue descriptions for exact counts
 
@@ -169,11 +177,13 @@ tests/unit/test_config_loader.py
 ### Key Fixes
 
 1. **Added missing Pydantic field:**
+
    ```yaml
    language: python  # Required by EvalCase model
    ```
 
 2. **Fixed path calculation:**
+
    ```python
    # Changed from 3 to 4 .parent calls
    config_dir = Path(__file__).parent.parent.parent.parent / "config"
@@ -191,6 +201,6 @@ tests/unit/test_config_loader.py
 
 ## References
 
-- Issue #670: https://github.com/HomericIntelligence/ProjectScylla/issues/670
-- PR #688: https://github.com/HomericIntelligence/ProjectScylla/pull/688
-- Pydantic validation docs: https://docs.pydantic.dev/latest/errors/validation_errors/
+- Issue #670: <https://github.com/HomericIntelligence/ProjectScylla/issues/670>
+- PR #688: <https://github.com/HomericIntelligence/ProjectScylla/pull/688>
+- Pydantic validation docs: <https://docs.pydantic.dev/latest/errors/validation_errors/>
