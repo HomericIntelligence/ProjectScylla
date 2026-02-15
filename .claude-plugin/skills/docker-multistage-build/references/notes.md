@@ -11,11 +11,13 @@
 ## Problem Statement
 
 The production Docker image (`scylla-runner:latest`) included build-time dependencies that were only needed during package installation:
+
 - gcc, g++, build-essential (C/C++ compilers)
 - make (build automation)
 - Total unnecessary bloat: ~246MB
 
 **Impact:**
+
 - Larger image size (818MB)
 - Increased attack surface (unnecessary tools in production)
 - Slower deployments (larger pulls from registry)
@@ -24,6 +26,7 @@ The production Docker image (`scylla-runner:latest`) included build-time depende
 ## Objective
 
 Implement multi-stage Docker build to:
+
 1. Separate build-time dependencies (builder stage) from runtime dependencies
 2. Reduce production image size by ~200MB (actual: 246MB)
 3. Improve security by removing build tools from production
@@ -59,6 +62,7 @@ RUN pip install --user --no-cache-dir /opt/scylla/
 ```
 
 **Key decisions:**
+
 - Used `pip install --user` to install to `/root/.local` (later changed to global install)
 - Installed hatchling as build backend (required by pyproject.toml)
 - Cleaned apt cache with `rm -rf /var/lib/apt/lists/*`
@@ -95,6 +99,7 @@ RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
 ```
 
 **Key decisions:**
+
 - Copied to `/usr/local` instead of `/root/.local` for global accessibility
 - Removed all build tools from runtime apt-get install
 - Maintained non-root user (scylla) for security
@@ -185,11 +190,13 @@ $ docker compose -f docker/docker-compose.yml --profile dev run shell
 **Root cause:** When using `pip install --user`, binaries are installed to `/root/.local/bin` which wasn't in PATH.
 
 **Solution:** Add to ENV:
+
 ```dockerfile
 ENV PATH=/root/.local/bin:$PATH
 ```
 
 **Better solution (used):** Copy to global `/usr/local` instead of `/root/.local`:
+
 ```dockerfile
 COPY --from=builder /root/.local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /root/.local/bin /usr/local/bin
@@ -202,6 +209,7 @@ COPY --from=builder /root/.local/bin /usr/local/bin
 **Root cause:** Only copied `site-packages/`, forgot to copy `bin/` directory.
 
 **Solution:** Always copy both:
+
 ```dockerfile
 COPY --from=builder /root/.local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 COPY --from=builder /root/.local/bin /usr/local/bin
@@ -214,6 +222,7 @@ COPY --from=builder /root/.local/bin /usr/local/bin
 **Root cause:** docker-compose.yml had `context: .` (docker/ directory), but Dockerfile expected files from repository root.
 
 **Solution:** Change docker-compose.yml:
+
 ```yaml
 build:
   context: ..             # Repository root
@@ -234,6 +243,7 @@ build:
 ### Security Improvements
 
 **Removed from production:**
+
 - gcc (C compiler)
 - g++ (C++ compiler)
 - build-essential (meta-package with build tools)
@@ -244,6 +254,7 @@ build:
 ### Functionality Verified
 
 ✅ All existing functionality works:
+
 - Python 3.14.2 runtime
 - Scylla package imports
 - Claude CLI (v2.1.42)
@@ -273,6 +284,7 @@ Issue #601 identified three additional improvements that were kept out of scope:
 ### 1. Always measure before/after
 
 Document baseline metrics before optimization:
+
 ```bash
 docker images app:before --format "{{.Size}}"
 ```
@@ -280,6 +292,7 @@ docker images app:before --format "{{.Size}}"
 ### 2. Copy both site-packages AND bin/
 
 When copying Python packages from builder stage, always copy both:
+
 - `lib/pythonX.Y/site-packages/` (Python modules)
 - `bin/` (CLI entry points)
 
@@ -290,6 +303,7 @@ If Dockerfile has `COPY pyproject.toml /opt/app/`, then build context must conta
 ### 4. Test all docker-compose profiles
 
 Don't assume multi-stage builds work with existing docker-compose.yml. Test:
+
 - All profiles (test, dev, runner, etc.)
 - Volume mounts
 - Environment variables
@@ -298,11 +312,13 @@ Don't assume multi-stage builds work with existing docker-compose.yml. Test:
 ### 5. Global vs user install trade-offs
 
 **User install (`pip install --user`):**
+
 - Pro: Isolates packages to specific user
 - Con: Requires PATH updates
 - Con: Only accessible to one user
 
 **Global install (`pip install` to /usr/local):**
+
 - Pro: Available to all users
 - Pro: Already in PATH
 - Con: Requires root during installation
@@ -349,20 +365,22 @@ docker history app:multi-stage --no-trunc
 
 ## References
 
-- **Issue:** https://github.com/HomericIntelligence/ProjectScylla/issues/601
-- **PR:** https://github.com/HomericIntelligence/ProjectScylla/pull/649
-- **Docker Multi-Stage Builds:** https://docs.docker.com/build/building/multi-stage/
-- **Python Docker Best Practices:** https://docs.docker.com/language/python/
-- **Dockerfile Reference:** https://docs.docker.com/engine/reference/builder/
+- **Issue:** <https://github.com/HomericIntelligence/ProjectScylla/issues/601>
+- **PR:** <https://github.com/HomericIntelligence/ProjectScylla/pull/649>
+- **Docker Multi-Stage Builds:** <https://docs.docker.com/build/building/multi-stage/>
+- **Python Docker Best Practices:** <https://docs.docker.com/language/python/>
+- **Dockerfile Reference:** <https://docs.docker.com/engine/reference/builder/>
 
 ## Team Collaboration
 
 **Skills Referenced:**
+
 - containerize-e2e-experiments (evaluation) - Docker architecture patterns
 - fix-docker-platform (ci-cd) - Platform-specific considerations
 - build-run-local (ci-cd) - Build verification workflows
 
 **Knowledge Shared:**
+
 - Multi-stage build patterns for Python applications
 - Build vs runtime dependency separation
 - Docker layer optimization techniques
@@ -371,6 +389,7 @@ docker history app:multi-stage --no-trunc
 ## Next Steps
 
 This skill should be used as a reference when:
+
 1. Optimizing other Docker images in the ProjectScylla ecosystem
 2. Setting up CI/CD pipelines for containerized applications
 3. Implementing security hardening for production containers
