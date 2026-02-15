@@ -76,7 +76,7 @@ def test_get_follow_up_prompt():
     assert "labels" in prompt
     assert "enhancement" in prompt
     assert "bug" in prompt
-    assert "test" in prompt
+    assert "testing" in prompt
 
 
 def test_get_pr_description():
