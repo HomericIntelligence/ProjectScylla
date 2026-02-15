@@ -1,5 +1,6 @@
 id: "001-justfile-to-makefile"
 name: "Convert Justfile to Makefile"
+language: python
 description: |
   Convert ProjectOdyssey's justfile to an equivalent Makefile.
   The Makefile must support all existing recipes and produce
