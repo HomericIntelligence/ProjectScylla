@@ -84,7 +84,8 @@ pythonpath = ["."]
 python_version = "3.10"
 # Incremental mypy adoption - start with basic checks
 # Catches syntax errors, undefined names, and import issues
-# TODO #XXX: Gradually enable stricter checks as existing type errors are fixed (159 errors as of 2026-02-14)
+# TODO #687: Gradually enable stricter checks as existing type errors are fixed
+# See MYPY_KNOWN_ISSUES.md for current baseline (159 errors as of 2026-02-14)
 warn_unused_configs = true
 ignore_missing_imports = true
 show_error_codes = true

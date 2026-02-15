@@ -35,7 +35,7 @@ repos:
         pass_filenames: false
       - id: mypy-check-python
         name: Mypy Type Check Python
-        description: Type check Python files in scripts/, scylla/, tests/ using pixi run mypy
+        description: Type check Python files in scripts/, scylla/, tests/ using pixi run mypy. See MYPY_KNOWN_ISSUES.md for current state.
         entry: pixi run mypy scripts/ scylla/ tests/
         language: system
         files: ^(scripts|scylla|tests)/.*\.py$
