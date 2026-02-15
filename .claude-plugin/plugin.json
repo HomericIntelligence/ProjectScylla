@@ -37,6 +37,17 @@
         "Need explicit return type for multiprocessing objects",
         "Following up on type safety improvements"
       ]
+    },
+    {
+      "name": "extract-method-refactoring",
+      "file": "skills/extract-method-refactoring/SKILL.md",
+      "triggers": [
+        "method too long (>50 lines)",
+        "high cyclomatic complexity",
+        "decompose large function",
+        "refactor for readability",
+        "extract helper methods"
+      ]
     }
   ],
   "metadata": {
