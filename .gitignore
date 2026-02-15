@@ -24,6 +24,8 @@ ENV/
 .vscode/
 *.swp
 *.swo
+*.orig
+*.bak
 
 # OS
 .DS_Store
