@@ -11,6 +11,7 @@ This document tracks the baseline of known type errors in ProjectScylla as of Fe
 ## Purpose
 
 This file documents the current state of type checking to:
+
 1. Provide visibility into existing type safety gaps
 2. Track progress as errors are fixed
 3. Prevent regression (new type errors should be caught immediately)
@@ -21,6 +22,7 @@ This file documents the current state of type checking to:
 **Location**: `pyproject.toml` lines 83-130
 
 **Current Settings**:
+
 - Python version: 3.10+
 - Strict mode: **Disabled** (incremental adoption)
 - Test/script type checking: **Disabled** (focus on `scylla/` source code first)
@@ -48,7 +50,7 @@ The following error codes are temporarily disabled during initial rollout. They 
 | `misc` | 2 | Miscellaneous type issues | Various type system inconsistencies |
 | `override` | 1 | Incompatible method override | Overriding method with incompatible signature |
 | `no-redef` | 1 | Name redefinition | Redefining variable with incompatible type |
-| `exit-return` | 1 | Context manager __exit__ return type | Incorrect return type in `__exit__` method |
+| `exit-return` | 1 | Context manager **exit** return type | Incorrect return type in `__exit__` method |
 | `return-value` | 1 | Incompatible return value type | Returning wrong type from function |
 | `call-overload` | 1 | No matching overload variant | Calling overloaded function with invalid arguments |
 
