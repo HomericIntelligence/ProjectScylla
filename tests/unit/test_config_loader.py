@@ -7,8 +7,10 @@ Tests cover:
 - Loading model configurations
 - Merged configuration with priority hierarchy
 - Error handling for invalid/missing configurations
+- Filename/model_id validation
 """
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -379,3 +381,107 @@ class TestConfigLoaderIntegration:
         test = loader.load_test("001-justfile-to-makefile")
         assert test.id == "001-justfile-to-makefile"
         assert "Makefile" in test.name
+
+
+class TestFilenameModelIdValidation:
+    """Test validation of filename/model_id consistency."""
+
+    def test_filename_matches_model_id_exact(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation passes when filename matches model_id exactly."""
+        config_dir = tmp_path / "config" / "models"
+        config_dir.mkdir(parents=True)
+
+        config_path = config_dir / "test-model.yaml"
+        config_path.write_text("""
+model_id: test-model
+name: Test Model
+provider: openai
+adapter: openai_adapter
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_model("test-model")
+
+        assert config is not None
+        assert config.model_id == "test-model"
+        assert not caplog.records  # No warnings
+
+    def test_filename_matches_model_id_simplified(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation passes with simplified naming (colon to hyphen)."""
+        config_dir = tmp_path / "config" / "models"
+        config_dir.mkdir(parents=True)
+
+        # Filename uses hyphens, model_id uses colons
+        config_path = config_dir / "claude-opus-4.yaml"
+        config_path.write_text("""
+model_id: claude:opus:4
+name: Claude Opus 4
+provider: anthropic
+adapter: anthropic_adapter
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_model("claude-opus-4")
+
+        assert config is not None
+        assert config.model_id == "claude:opus:4"
+        # Simplified pattern should match
+        assert not caplog.records  # No warnings
+
+    def test_filename_mismatch_warns(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation warns when filename doesn't match model_id."""
+        config_dir = tmp_path / "config" / "models"
+        config_dir.mkdir(parents=True)
+
+        # Filename says opus-4, but model_id is sonnet-4-5
+        config_path = config_dir / "claude-opus-4.yaml"
+        config_path.write_text("""
+model_id: claude-sonnet-4-5
+name: Claude Sonnet 4.5
+provider: anthropic
+adapter: anthropic_adapter
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_model("claude-opus-4")
+
+        assert config is not None
+        assert config.model_id == "claude-sonnet-4-5"
+        # Should have warning about mismatch
+        assert len(caplog.records) == 1
+        assert "claude-opus-4.yaml" in caplog.text
+        assert "claude-sonnet-4-5" in caplog.text
+        assert "claude-sonnet-4-5.yaml" in caplog.text
+
+    def test_test_fixtures_skip_validation(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that test fixtures (prefixed with _) skip validation."""
+        config_dir = tmp_path / "config" / "models"
+        config_dir.mkdir(parents=True)
+
+        # Test fixture with underscore prefix
+        config_path = config_dir / "_test-fixture.yaml"
+        config_path.write_text("""
+model_id: different-model-id
+name: Test Fixture
+provider: openai
+adapter: openai_adapter
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_model("_test-fixture")
+
+        assert config is not None
+        assert config.model_id == "different-model-id"
+        assert not caplog.records  # No warnings for test fixtures
