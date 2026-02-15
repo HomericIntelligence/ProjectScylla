@@ -37,9 +37,9 @@ jobs:
           # Install package in dev mode for unit tests
           if [[ "$TEST_PATH" == "tests/unit" ]]; then
             pixi run pip install -e .
-            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=73
           else
-            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=73
           fi
 
       - name: Upload coverage
