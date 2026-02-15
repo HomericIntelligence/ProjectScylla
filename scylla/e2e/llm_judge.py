@@ -17,6 +17,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from scylla.e2e.filters import is_test_config_file
+from scylla.e2e.repo_detection import is_modular_repo
 from scylla.judge import extract_json_from_llm_response
 from scylla.judge.prompts import JUDGE_SYSTEM_PROMPT_FILE, build_task_prompt
 from scylla.metrics.grading import assign_letter_grade
@@ -171,23 +172,6 @@ class BuildPipelineResult(BaseModel):
         return "\n\n".join(sections)
 
 
-def _is_modular_repo(workspace: Path) -> bool:
-    """Check if workspace is the modular/mojo monorepo.
-
-    The modular repo has a specific structure:
-    - bazelw script at root
-    - mojo/ subdirectory with its own pixi.toml
-
-    Args:
-        workspace: Path to the workspace directory
-
-    Returns:
-        True if this is the modular repo, False otherwise.
-
-    """
-    return (workspace / "bazelw").exists() and (workspace / "mojo").is_dir()
-
-
 def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     """Run Mojo build/lint pipeline and capture results.
 
@@ -204,7 +188,7 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
 
     """
     results: dict[str, Any] = {"language": "mojo"}
-    is_modular = _is_modular_repo(workspace)
+    is_modular = is_modular_repo(workspace)
 
     # Mojo build
     try:
@@ -1284,7 +1268,7 @@ def _create_mojo_scripts(commands_dir: Path, workspace: Path) -> None:
         workspace: Path to the workspace directory
 
     """
-    is_modular = _is_modular_repo(workspace)
+    is_modular = is_modular_repo(workspace)
 
     build_script = commands_dir / "mojo_build.sh"
     _create_mojo_build_script(build_script, workspace, is_modular)
