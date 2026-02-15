@@ -6,21 +6,30 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from scylla.core.results import RunResultBase
+from scylla.core.results import ExecutionInfoBase, RunResultBase
 
 
-class ExecutionInfo(BaseModel):
-    """Execution metadata for a run.
+class ReportingExecutionInfo(ExecutionInfoBase):
+    """Execution metadata for result persistence.
 
-    This is the minimal execution info for result persistence.
-    For other ExecutionInfo types, see:
-    - executor/runner.py:ExecutionInfo (detailed with container info)
-    - core/results.py:BaseExecutionInfo (base type)
+    This is the minimal execution info for result persistence. Inherits common
+    fields (exit_code, duration_seconds, timed_out) from ExecutionInfoBase.
+
+    For other ExecutionInfo types in the hierarchy, see:
+    - ExecutionInfoBase (core/results.py) - Base Pydantic model
+    - ExecutorExecutionInfo (executor/runner.py) - Detailed with container info
+    - BaseExecutionInfo (core/results.py) - Legacy dataclass (deprecated)
+
+    Attributes:
+        status: Execution status (e.g., "completed", "failed", "timeout").
+
     """
 
     status: str = Field(..., description="Execution status")
-    duration_seconds: float = Field(..., description="Duration in seconds")
-    exit_code: int = Field(..., description="Process exit code")
+
+
+# Backward-compatible type alias
+ExecutionInfo = ReportingExecutionInfo
 
 
 class MetricsInfo(BaseModel):
