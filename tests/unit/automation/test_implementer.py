@@ -252,7 +252,7 @@ class TestRunRetrospective:
             # Mock successful run with stdout
             mock_run.return_value = MagicMock(stdout="Retrospective output")
 
-            implementer._run_retrospective(
+            result = implementer._run_retrospective(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
@@ -274,8 +274,8 @@ class TestRunRetrospective:
             assert "--allowedTools" in args
             assert "Read,Write,Edit,Glob,Grep,Bash" in args
 
-            # Verify cwd is repo_root, not worktree_path
-            assert kwargs["cwd"] == Path("/repo")
+            # Verify cwd is worktree_path, not repo_root
+            assert kwargs["cwd"] == Path("/tmp/worktree")
 
             # Verify log file was created and written
             log_file = tmp_path / "retrospective-123.log"
@@ -286,6 +286,9 @@ class TestRunRetrospective:
             assert mock_logger.info.call_count == 2
             assert "Retrospective completed" in str(mock_logger.info.call_args_list[0])
             assert "Retrospective log" in str(mock_logger.info.call_args_list[1])
+
+            # Should return True on success
+            assert result is True
 
     def test_graceful_failure_on_error(self, implementer, tmp_path):
         """Test graceful failure when retrospective errors."""
@@ -298,7 +301,7 @@ class TestRunRetrospective:
             mock_run.side_effect = RuntimeError("Claude error")
 
             # Should not raise - graceful degradation
-            implementer._run_retrospective(
+            result = implementer._run_retrospective(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
@@ -308,6 +311,9 @@ class TestRunRetrospective:
             # Should log warning
             mock_logger.warning.assert_called_once()
             assert "Retrospective failed" in str(mock_logger.warning.call_args)
+
+            # Should return False on failure
+            assert result is False
 
     def test_timeout_is_non_blocking(self, implementer, tmp_path):
         """Test timeout in retrospective doesn't block pipeline."""
@@ -320,7 +326,7 @@ class TestRunRetrospective:
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
 
             # Should not raise
-            implementer._run_retrospective(
+            result = implementer._run_retrospective(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
@@ -329,6 +335,9 @@ class TestRunRetrospective:
 
             # Should log warning
             mock_logger.warning.assert_called_once()
+
+            # Should return False on timeout
+            assert result is False
 
     def test_retrospective_failure_saved_to_log(self, implementer, tmp_path):
         """Test that retrospective failure output is saved to log file."""
@@ -351,7 +360,7 @@ class TestRunRetrospective:
             mock_run.side_effect = error
 
             # Should not raise (non-blocking)
-            implementer._run_retrospective(
+            result = implementer._run_retrospective(
                 session_id="test123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=789,
@@ -364,6 +373,120 @@ class TestRunRetrospective:
             assert "FAILED:" in content
             assert "Retrospective stdout" in content
             assert "Retrospective stderr" in content
+
+            # Should return False on failure
+            assert result is False
+
+    def test_retrospective_needs_rerun_failed_log(self, implementer, tmp_path):
+        """Test _retrospective_needs_rerun returns True for failed log."""
+        implementer.state_dir = tmp_path
+
+        # Create failed log file
+        log_file = tmp_path / "retrospective-123.log"
+        log_file.write_text("FAILED: Session not found")
+
+        result = implementer._retrospective_needs_rerun(123)
+        assert result is True
+
+    def test_retrospective_needs_rerun_no_log(self, implementer, tmp_path):
+        """Test _retrospective_needs_rerun returns True when no log exists."""
+        implementer.state_dir = tmp_path
+
+        result = implementer._retrospective_needs_rerun(123)
+        assert result is True
+
+    def test_retrospective_no_rerun_successful_log(self, implementer, tmp_path):
+        """Test _retrospective_needs_rerun returns False for successful log."""
+        implementer.state_dir = tmp_path
+
+        # Create successful log file
+        log_file = tmp_path / "retrospective-123.log"
+        log_file.write_text("Retrospective completed successfully")
+
+        result = implementer._retrospective_needs_rerun(123)
+        assert result is False
+
+    def test_rerun_failed_retrospectives_finds_failures(self, implementer, tmp_path):
+        """Test _rerun_failed_retrospectives re-runs failed retrospectives."""
+        implementer.state_dir = tmp_path
+
+        # Create state for completed issue with failed retrospective
+        from scylla.automation.models import ImplementationPhase, ImplementationState
+
+        state = ImplementationState(
+            issue_number=123,
+            phase=ImplementationPhase.COMPLETED,
+            retrospective_completed=False,
+            session_id="session123",
+            worktree_path=str(tmp_path / "worktree"),
+        )
+        implementer.states[123] = state
+
+        # Create worktree directory
+        worktree = tmp_path / "worktree"
+        worktree.mkdir()
+
+        # Create failed log
+        log_file = tmp_path / "retrospective-123.log"
+        log_file.write_text("FAILED: Session not found")
+
+        with (
+            patch.object(implementer, "_run_retrospective", return_value=True) as mock_retro,
+            patch.object(implementer, "_save_state") as mock_save,
+        ):
+            results = implementer._rerun_failed_retrospectives()
+
+            # Should have re-run retrospective
+            mock_retro.assert_called_once_with("session123", worktree, 123, slot_id=None)
+            assert results == {123: True}
+            assert state.retrospective_completed is True
+            mock_save.assert_called_once()
+
+    def test_rerun_skips_already_successful(self, implementer, tmp_path):
+        """Test _rerun_failed_retrospectives skips already successful retrospectives."""
+        implementer.state_dir = tmp_path
+
+        # Create state for completed issue with successful retrospective
+        from scylla.automation.models import ImplementationPhase, ImplementationState
+
+        state = ImplementationState(
+            issue_number=123,
+            phase=ImplementationPhase.COMPLETED,
+            retrospective_completed=True,  # Already completed
+            session_id="session123",
+            worktree_path=str(tmp_path / "worktree"),
+        )
+        implementer.states[123] = state
+
+        with patch.object(implementer, "_run_retrospective") as mock_retro:
+            results = implementer._rerun_failed_retrospectives()
+
+            # Should NOT re-run
+            mock_retro.assert_not_called()
+            assert results == {}
+
+    def test_old_state_without_retrospective_completed(self, implementer, tmp_path):
+        """Test backward compatibility for old JSON files without retrospective_completed."""
+        # Simulate loading old state JSON that doesn't have retrospective_completed field
+        old_state_json = """
+        {
+            "issue_number": 123,
+            "phase": "completed",
+            "worktree_path": "/tmp/worktree",
+            "session_id": "session123",
+            "started_at": "2024-01-01T00:00:00Z",
+            "attempts": 0
+        }
+        """
+
+        from scylla.automation.models import ImplementationState
+
+        # Pydantic should handle missing field with default False
+        state = ImplementationState.model_validate_json(old_state_json)
+
+        # Should default to False (correct: their retrospectives did fail)
+        assert state.retrospective_completed is False
+        assert state.issue_number == 123
 
 
 class TestImplementIssuePipeline:

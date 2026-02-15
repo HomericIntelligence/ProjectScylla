@@ -72,6 +72,7 @@ class ImplementationState(BaseModel):
     completed_at: datetime | None = None
     error: str | None = None
     attempts: int = 0
+    retrospective_completed: bool = False
 
 
 class WorkerResult(BaseModel):
