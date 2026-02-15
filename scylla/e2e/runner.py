@@ -547,17 +547,7 @@ class E2ERunner:
         frontier_tier, frontier_cop = self._find_frontier(tier_results)
 
         # Aggregate token stats from completed tiers
-        from functools import reduce
-
-        experiment_token_stats = (
-            reduce(
-                lambda a, b: a + b,
-                [t.token_stats for t in tier_results.values()],
-                TokenStats(),
-            )
-            if tier_results
-            else TokenStats()
-        )
+        experiment_token_stats = self._aggregate_token_stats(tier_results)
 
         return ExperimentResult(
             config=self.config,
@@ -599,13 +589,7 @@ class E2ERunner:
         frontier_tier, frontier_cop = self._find_frontier(tier_results)
 
         # Aggregate token stats from all tiers
-        from functools import reduce
-
-        experiment_token_stats = reduce(
-            lambda a, b: a + b,
-            [t.token_stats for t in tier_results.values()],
-            TokenStats(),
-        )
+        experiment_token_stats = self._aggregate_token_stats(tier_results)
 
         # Create final result
         return ExperimentResult(
@@ -991,6 +975,28 @@ class E2ERunner:
                 best_tier = tier_id
 
         return best_tier, best_cop
+
+    def _aggregate_token_stats(self, tier_results: dict[TierID, TierResult]) -> TokenStats:
+        """Aggregate token statistics from all tier results.
+
+        Args:
+            tier_results: Dictionary mapping tier IDs to their results
+
+        Returns:
+            Aggregated token statistics across all tiers. Returns empty
+            TokenStats if tier_results is empty.
+
+        """
+        from functools import reduce
+
+        if not tier_results:
+            return TokenStats()
+
+        return reduce(
+            lambda a, b: a + b,
+            [t.token_stats for t in tier_results.values()],
+            TokenStats(),
+        )
 
     def _save_final_results(self, result: ExperimentResult) -> None:
         """Save final experiment results.
