@@ -64,7 +64,7 @@ class ExecutorExecutionInfo(ExecutionInfoBase):
     and output details. Inherits common fields (exit_code, duration_seconds, timed_out)
     from ExecutionInfoBase.
 
-    For other ExecutionInfo types in the hierarchy, see:
+    For other ExecutorExecutionInfo types in the hierarchy, see:
     - ExecutionInfoBase (core/results.py) - Base Pydantic model
     - ReportingExecutionInfo (reporting/result.py) - Minimal, for persistence
     - BaseExecutionInfo (core/results.py) - Legacy dataclass (deprecated)
@@ -83,10 +83,6 @@ class ExecutorExecutionInfo(ExecutionInfoBase):
     stderr: str = Field(default="", description="Standard error")
     started_at: str = Field(default="", description="ISO timestamp of start")
     ended_at: str = Field(default="", description="ISO timestamp of end")
-
-
-# Backward-compatible type alias
-ExecutionInfo = ExecutorExecutionInfo
 
 
 class JudgmentResult(BaseModel):
@@ -112,7 +108,9 @@ class ExecutorRunResult(RunResultBase):
     """
 
     status: RunStatus = Field(..., description="Run status")
-    execution_info: ExecutionInfo | None = Field(default=None, description="Execution details")
+    execution_info: ExecutorExecutionInfo | None = Field(
+        default=None, description="Execution details"
+    )
     judgment: JudgmentResult | None = Field(default=None, description="Judge evaluation")
     error_message: str | None = Field(default=None, description="Error message if failed")
 
@@ -650,7 +648,7 @@ class EvalRunner:
         container_name: str,
         tier_config: TierConfig,
         model: str,
-    ) -> ExecutionInfo:
+    ) -> ExecutorExecutionInfo:
         """Execute container and add timing information.
 
         Args:
@@ -659,7 +657,7 @@ class EvalRunner:
             model: Model identifier.
 
         Returns:
-            ExecutionInfo with timestamps and duration.
+            ExecutorExecutionInfo with timestamps and duration.
 
         """
         start_time = datetime.now(timezone.utc)
@@ -682,7 +680,7 @@ class EvalRunner:
 
     def _evaluate_execution_result(
         self,
-        execution_info: ExecutionInfo,
+        execution_info: ExecutorExecutionInfo,
         run_number: int,
     ) -> ExecutorRunResult:
         """Evaluate execution result and run judge if successful.
@@ -773,7 +771,7 @@ class EvalRunner:
         container_name: str,
         tier_config: TierConfig,
         model: str,
-    ) -> ExecutionInfo:
+    ) -> ExecutorExecutionInfo:
         """Run agent adapter in a Docker container.
 
         Args:
@@ -782,7 +780,7 @@ class EvalRunner:
             model: Model identifier.
 
         Returns:
-            ExecutionInfo with container results.
+            ExecutorExecutionInfo with container results.
 
         """
         from scylla.executor.docker import ContainerConfig
@@ -814,7 +812,7 @@ class EvalRunner:
 
         result: ContainerResult = self.docker.run(config)
 
-        return ExecutionInfo(
+        return ExecutorExecutionInfo(
             container_id=result.container_id,
             exit_code=result.exit_code,
             stdout=result.stdout,
@@ -822,7 +820,7 @@ class EvalRunner:
             timed_out=result.timed_out,
         )
 
-    def _run_judge(self, execution_info: ExecutionInfo) -> JudgmentResult:
+    def _run_judge(self, execution_info: ExecutorExecutionInfo) -> JudgmentResult:
         """Run judge evaluation on execution results.
 
         Args:
