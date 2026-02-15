@@ -19,6 +19,7 @@ Use this skill when:
 - You want to optimize git worktree creation by reducing subprocess calls
 
 **Trigger Conditions:**
+
 - Agents running in test environments with `--dangerously-skip-permissions`
 - Test CLAUDE.md files contain instructions that encourage git push/PR workflows
 - Need to ensure test isolation without modifying core prompt blocks (for ablation studies)
@@ -26,16 +27,19 @@ Use this skill when:
 ## Problem Context
 
 During e2e test execution, Claude Code agents were:
+
 1. Pushing to remote branches (`git push origin <branch>`)
 2. Creating real pull requests on GitHub (`gh pr create`)
 3. Potentially modifying issues and PRs
 
 This happened because:
+
 - Test workspaces included CLAUDE.md prompt blocks (B02, B18) with "correct workflow" instructions
 - Agents with `--dangerously-skip-permissions` followed these instructions literally
 - No explicit test environment constraints existed to override workflow instructions
 
 Additionally, worktree creation used a two-step process:
+
 1. `git worktree add -b <branch> <path>`
 2. `git checkout <commit>` (separate subprocess)
 
@@ -68,6 +72,7 @@ return base_message + test_constraints + cleanup_instructions
 ```
 
 **Why This Works:**
+
 - Appended to resource suffix, not embedded in prompt blocks
 - Preserves prompt blocks for ablation testing
 - Universal application to all test workspaces
@@ -76,10 +81,12 @@ return base_message + test_constraints + cleanup_instructions
 ### 2. Optimize Worktree Creation (Single Step)
 
 **Files:**
+
 - `scylla/e2e/workspace_setup.py` (line 142-192)
 - `scylla/e2e/workspace_manager.py` (line 264-296)
 
 **Before (2 subprocess calls):**
+
 ```python
 # Step 1: Create worktree
 worktree_cmd = ["git", "-C", str(base_repo), "worktree", "add", "-b", branch_name, str(workspace_abs)]
@@ -92,6 +99,7 @@ if task_commit:
 ```
 
 **After (1 subprocess call):**
+
 ```python
 # Single step: Create worktree at specific commit
 worktree_cmd = ["git", "-C", str(base_repo), "worktree", "add", "-b", branch_name, str(workspace_abs)]
@@ -101,6 +109,7 @@ subprocess.run(worktree_cmd, ...)
 ```
 
 **Benefits:**
+
 - 50% reduction in subprocess calls per worktree
 - Simpler code (fewer conditional branches)
 - Atomic operation (less chance of partial state)
@@ -149,6 +158,7 @@ def test_worktree_includes_commit(self, tmp_path: Path) -> None:
 **What was tried:** Considered adding test constraints inside CLAUDE.md prompt blocks (B02, B18)
 
 **Why it failed:**
+
 - Would contaminate ablation study by modifying prompt content
 - Different tiers use different prompt blocks - would need tier-specific logic
 - Defeats the purpose of testing prompt effectiveness in isolation
@@ -160,6 +170,7 @@ def test_worktree_includes_commit(self, tmp_path: Path) -> None:
 **What was considered:** Configure git hooks in test workspaces to reject push attempts
 
 **Why it wasn't pursued:**
+
 - Hooks run after the command is attempted (not preventive enough)
 - Doesn't prevent `gh pr create` or GitHub API calls
 - Harder to debug when hooks silently fail
@@ -209,6 +220,7 @@ print(manager.build_resource_suffix(subtest))
 ### Configuration
 
 **Files Modified:**
+
 - `scylla/e2e/tier_manager.py` - Add test constraints to suffix
 - `scylla/e2e/workspace_setup.py` - Optimize worktree creation
 - `scylla/e2e/workspace_manager.py` - Optimize worktree creation
@@ -235,5 +247,5 @@ Append constraints to resource suffix (not prompt blocks) to preserve ablation s
 ## References
 
 - Git worktree documentation: `git worktree add --help`
-- PR: https://github.com/HomericIntelligence/ProjectScylla/pull/643
+- PR: <https://github.com/HomericIntelligence/ProjectScylla/pull/643>
 - Commit: `faaa6f4` - feat(e2e): Forbid remote operations in tests and optimize worktree creation
