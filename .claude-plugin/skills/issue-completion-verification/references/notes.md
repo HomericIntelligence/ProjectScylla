@@ -46,12 +46,14 @@ The branch was tracking `origin/main` instead of `origin/594-auto-impl`, indicat
 **Why did GitHub not auto-close the issue?**
 
 Possible reasons:
+
 1. PR was merged via rebase/squash instead of regular merge
 2. GitHub's automation service had a temporary failure
 3. The "Closes #594" was in the PR body but not in the final commit message
 4. Repository settings might have auto-close disabled (unlikely)
 
 **How to detect this in the future:**
+
 - Always check `gh issue view <number> --json state` after PR merge
 - Search for merged PRs with `gh pr list --search "<number>" --state all`
 - Check commit history with `git log origin/main --grep="<number>"`
