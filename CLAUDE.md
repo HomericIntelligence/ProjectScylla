@@ -41,6 +41,8 @@ git push origin main  # BLOCKED - Will be rejected by GitHub
 
 **CORRECT WORKFLOW (Always Use PRs):**
 
+** Never use labels **
+
 ```bash
 # 1. Create feature branch
 git checkout -b <issue-number>-description
@@ -55,8 +57,7 @@ git push -u origin <issue-number>-description
 # 4. Create pull request
 gh pr create \
   --title "Brief description" \
-  --body "Closes #<issue-number>" \
-  --label "appropriate-label"
+  --body "Closes #<issue-number>"
 
 # 5. Enable auto-merge
 gh pr merge --auto --rebase
