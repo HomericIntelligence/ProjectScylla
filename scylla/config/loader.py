@@ -6,6 +6,7 @@ configuration files with a three-level priority hierarchy:
 and complex file operations with error handling.
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,9 @@ from .models import (
     ScyllaConfig,
     TierConfig,
 )
+from .validation import validate_filename_model_id_consistency
+
+logger = logging.getLogger(__name__)
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -267,9 +271,16 @@ class ConfigLoader:
             data["model_id"] = model_id
 
         try:
-            return ModelConfig(**data)
+            config = ModelConfig(**data)
         except Exception as e:
             raise ConfigurationError(f"Invalid model configuration in {model_path}: {e}")
+
+        # Validate filename/model_id consistency
+        warnings = validate_filename_model_id_consistency(model_path, config.model_id)
+        for warning in warnings:
+            logger.warning(warning)
+
+        return config
 
     def load_all_models(self) -> dict[str, ModelConfig]:
         """Load all available model configurations.
