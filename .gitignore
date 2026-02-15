@@ -85,3 +85,6 @@ worktrees
 # Automation runtime directories
 .worktrees/
 .issue_implementer/
+
+# Root-level log files (automation scripts, debugging)
+/*.log
