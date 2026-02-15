@@ -12,6 +12,7 @@
 ## When to Use
 
 Use this skill when:
+
 - Enabling or verifying linting hooks in pre-commit configuration
 - Updating pre-commit hook versions to latest releases
 - Troubleshooting why linting hooks appear to be disabled
@@ -43,6 +44,7 @@ pre-commit autoupdate
 ```
 
 **Expected Output**:
+
 ```
 [https://github.com/adrienverge/yamllint] updating v1.35.1 -> v1.38.0
 [https://github.com/pre-commit/pre-commit-hooks] updating v4.5.0 -> v6.0.0
@@ -107,7 +109,7 @@ git push -u origin <branch-name>
 - repo: https://github.com/adrienverge/yamllint
   rev: v1.38.0  # Updated from v1.35.1
 
-# pre-commit-hooks  
+# pre-commit-hooks
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v6.0.0  # Updated from v4.5.0
 ```
