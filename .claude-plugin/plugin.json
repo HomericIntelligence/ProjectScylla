@@ -1,30 +1,35 @@
 {
-  "name": "resolve-skipped-tests",
+  "name": "projectscylla-skills",
   "version": "1.0.0",
-  "description": "Workflow for resolving pytest.skip guards by fixing underlying test configuration issues",
-  "category": "testing",
+  "description": "ProjectScylla team knowledge and reusable skills",
+  "category": "multi",
   "author": "ProjectScylla",
   "created": "2026-02-15",
-  "source": "issue-670",
   "tags": [
     "pytest",
     "testing",
-    "test-cleanup",
-    "integration-tests",
-    "pydantic",
-    "configuration"
+    "docker",
+    "ci-cd",
+    "reproducibility"
   ],
   "skills": [
     {
       "name": "resolve-skipped-tests",
       "file": "skills/resolve-skipped-tests/SKILL.md",
+      "category": "testing",
       "triggers": [
         "pytest.skip found in tests",
         "skipped tests in CI",
         "need to clean up test suite",
         "ValidationError in test configs",
         "FileNotFoundError in integration tests"
-      ]
+      ],
+      "metadata": {
+        "issue": 670,
+        "pr": 688,
+        "tests_fixed": 2,
+        "outcome": "success"
+      }
     },
     {
       "name": "manager-proxy-type-hints",
@@ -48,12 +53,22 @@
         "refactor for readability",
         "extract helper methods"
       ]
+    },
+      "name": "pin-npm-dockerfile",
+      "file": "skills/pin-npm-dockerfile/SKILL.md",
+      "category": "ci-cd",
+      "triggers": [
+        "npm install without version",
+        "docker build reproducibility",
+        "pin npm package version",
+        "unpinned dependencies in Dockerfile",
+        "version pinning best practices"
+      ],
+      "metadata": {
+        "issue": 650,
+        "pr": 717,
+        "outcome": "success"
+      }
     }
-  ],
-  "metadata": {
-    "issue": 670,
-    "pr": 688,
-    "tests_fixed": 2,
-    "outcome": "success"
-  }
+  ]
 }
