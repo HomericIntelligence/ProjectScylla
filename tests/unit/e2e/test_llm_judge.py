@@ -24,7 +24,6 @@ from scylla.e2e.llm_judge import (
     _get_patchfile,
     _get_pipeline_env,
     _get_workspace_state,
-    _is_modular_repo,
     _load_reference_patch,
     _parse_judge_response,
     _run_build_pipeline,
@@ -227,34 +226,6 @@ class TestBuildPipelineResult:
         context = result.to_context_string()
         # Should contain truncated output (2000 chars max)
         assert len(context) < len(long_output)
-
-
-class TestIsModularRepo:
-    """Tests for _is_modular_repo helper."""
-
-    def test_modular_repo_detected(self, tmp_path: Path) -> None:
-        """Test detection of modular/mojo monorepo."""
-        # Create bazelw and mojo/ directory
-        (tmp_path / "bazelw").touch()
-        (tmp_path / "mojo").mkdir()
-
-        assert _is_modular_repo(tmp_path) is True
-
-    def test_non_modular_repo(self, tmp_path: Path) -> None:
-        """Test detection of non-modular repo."""
-        assert _is_modular_repo(tmp_path) is False
-
-    def test_missing_bazelw(self, tmp_path: Path) -> None:
-        """Test repo with mojo/ but no bazelw."""
-        (tmp_path / "mojo").mkdir()
-
-        assert _is_modular_repo(tmp_path) is False
-
-    def test_missing_mojo_dir(self, tmp_path: Path) -> None:
-        """Test repo with bazelw but no mojo/."""
-        (tmp_path / "bazelw").touch()
-
-        assert _is_modular_repo(tmp_path) is False
 
 
 class TestGetPipelineEnv:
@@ -1154,10 +1125,13 @@ class TestPipelineCommandGeneration:
         assert "pixi run mojo test" in content
         assert str(workspace) in content
 
-    @patch("scylla.e2e.llm_judge._is_modular_repo")
-    def test_create_mojo_scripts(self, mock_is_modular: MagicMock, tmp_path: Path) -> None:
+    def test_create_mojo_scripts(self, tmp_path: Path) -> None:
         """Test Mojo scripts orchestrator."""
-        mock_is_modular.return_value = False
+        # Clear cache before test to ensure fresh call
+        from scylla.e2e.repo_detection import is_modular_repo
+
+        is_modular_repo.cache_clear()
+
         commands_dir = tmp_path / "commands"
         commands_dir.mkdir()
         workspace = tmp_path / "workspace"
@@ -1169,9 +1143,6 @@ class TestPipelineCommandGeneration:
         assert (commands_dir / "mojo_build.sh").exists()
         assert (commands_dir / "mojo_format.sh").exists()
         assert (commands_dir / "mojo_test.sh").exists()
-
-        # Verify _is_modular_repo was called
-        mock_is_modular.assert_called_once_with(workspace)
 
     def test_create_precommit_script(self, tmp_path: Path) -> None:
         """Test pre-commit script generation."""
@@ -1248,12 +1219,13 @@ class TestPipelineCommandGeneration:
         run_all_content = (commands_dir / "run_all.sh").read_text()
         assert "python_check.sh" in run_all_content
 
-    @patch("scylla.e2e.llm_judge._is_modular_repo")
-    def test_save_pipeline_commands_mojo_integration(
-        self, mock_is_modular: MagicMock, tmp_path: Path
-    ) -> None:
+    def test_save_pipeline_commands_mojo_integration(self, tmp_path: Path) -> None:
         """Test end-to-end pipeline command generation for Mojo."""
-        mock_is_modular.return_value = False
+        # Clear cache before test to ensure fresh call
+        from scylla.e2e.repo_detection import is_modular_repo
+
+        is_modular_repo.cache_clear()
+
         run_dir = tmp_path / "run_01"
         workspace = tmp_path / "workspace"
         workspace.mkdir()
