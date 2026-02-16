@@ -80,6 +80,7 @@ repos:
         description: Lint shell scripts and templates for best practices
         files: \.(sh|bash|sh\.template)$
         types: [text]
+        args: ['--exclude=SC1091']
 
   # Jupyter notebook output stripping
   # TODO: Re-enable after pre-commit/identify is upgraded to support 'jupyter' type tag

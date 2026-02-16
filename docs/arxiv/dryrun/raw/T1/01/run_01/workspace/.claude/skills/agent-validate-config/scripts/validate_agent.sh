@@ -58,7 +58,14 @@ fi
 PHASE=$(echo "$FRONTMATTER" | grep "^phase:" | cut -d':' -f2 | tr -d ' ')
 if [[ -n "$PHASE" ]]; then
     VALID_PHASES=("Plan" "Test" "Implementation" "Package" "Cleanup")
-    if [[ " ${VALID_PHASES[@]} " =~ " ${PHASE} " ]]; then
+    PHASE_VALID=false
+    for valid_phase in "${VALID_PHASES[@]}"; do
+        if [[ "$PHASE" == "$valid_phase" ]]; then
+            PHASE_VALID=true
+            break
+        fi
+    done
+    if [[ "$PHASE_VALID" == "true" ]]; then
         echo "✅ Valid phase: $PHASE"
     else
         echo "❌ Invalid phase: $PHASE"

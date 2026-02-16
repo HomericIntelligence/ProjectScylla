@@ -21,6 +21,7 @@
 set -euo pipefail
 
 # Source shared Docker functions
+# shellcheck source=docker_common.sh
 source "$(dirname "${BASH_SOURCE[0]}")/docker_common.sh"
 
 # Check Docker prerequisites

@@ -104,7 +104,9 @@ if [[ -n "$PAPER_NAME" ]]; then
             echo "Error: Paper '$PAPER_NAME' not found"
             echo ""
             echo "Available papers:"
-            ls -1 papers/ 2>/dev/null | grep -v "^_" || echo "  (none)"
+            for f in papers/*/; do
+                basename "$f" 2>/dev/null | grep -v "^_"
+            done || echo "  (none)"
             exit 1
         fi
 
@@ -115,7 +117,7 @@ if [[ -n "$PAPER_NAME" ]]; then
             PAPER_DIR="$MATCHES"
         else
             echo "Error: Multiple papers match '$PAPER_NAME':"
-            echo "$MATCHES" | sed 's/^/  /'
+            echo "${MATCHES//$'\n'/$'\n  '}"
             echo ""
             echo "Please be more specific."
             exit 1
