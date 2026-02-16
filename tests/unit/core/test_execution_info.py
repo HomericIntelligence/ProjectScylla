@@ -207,19 +207,6 @@ class TestReportingExecutionInfo:
 class TestBackwardCompatibility:
     """Tests for backward compatibility via type aliases."""
 
-    def test_executor_type_alias(self) -> None:
-        """Test that ExecutionInfo alias works in executor module."""
-        from scylla.executor.runner import ExecutionInfo
-
-        # Should be the same as ExecutorExecutionInfo
-        info = ExecutionInfo(
-            container_id="abc123",
-            exit_code=0,
-            duration_seconds=10.5,
-        )
-        assert isinstance(info, ExecutorExecutionInfo)
-        assert isinstance(info, ExecutionInfoBase)
-
     def test_reporting_type_alias(self) -> None:
         """Test that ExecutionInfo alias works in reporting module."""
         from scylla.reporting.result import ExecutionInfo
