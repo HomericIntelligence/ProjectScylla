@@ -82,11 +82,10 @@ pythonpath = ["."]
 addopts = [
     "-v",
     "--strict-markers",
-    # TODO: Re-enable coverage after fixing coverage calculation issues (see issue #741)
-    # "--cov=scylla",
-    # "--cov-report=term-missing",
-    # "--cov-report=html",
-    # "--cov-fail-under=72",
+    "--cov=scylla",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=73",
 ]
 
 [tool.mypy]
@@ -148,8 +147,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-# TODO: Re-enable after fixing coverage calculation issues (see issue #741)
-# fail_under = 72
+fail_under = 73
 precision = 2
 show_missing = true
 skip_covered = false
