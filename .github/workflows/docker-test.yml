@@ -42,4 +42,4 @@ jobs:
           pixi run pip install -e .
 
           # Run tests
-          pixi run pytest tests/docker/ -v
+          pixi run pytest tests/docker/ -v --no-cov

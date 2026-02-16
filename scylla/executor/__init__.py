@@ -32,8 +32,8 @@ from scylla.executor.judge_container import (
 from scylla.executor.runner import (
     EvalRunner,
     EvalSummary,
-    ExecutionInfo,
     ExecutionState,
+    ExecutorExecutionInfo,
     ExecutorRunResult,
     InsufficientRunsError,
     JudgmentResult,
@@ -86,7 +86,7 @@ __all__ = [
     # Runner
     "EvalRunner",
     "EvalSummary",
-    "ExecutionInfo",
+    "ExecutorExecutionInfo",
     "ExecutionState",
     "ExecutorRunResult",
     "InsufficientRunsError",

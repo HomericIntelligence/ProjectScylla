@@ -8,8 +8,8 @@ import pytest
 
 from scylla.executor.runner import (
     EvalRunner,
-    ExecutionInfo,
     ExecutionState,
+    ExecutorExecutionInfo,
     ExecutorRunResult,
     JudgmentResult,
     RunnerConfig,
@@ -140,7 +140,7 @@ class TestExecutorRunResult:
         result = ExecutorRunResult(
             run_number=1,
             status=RunStatus.PASSED,
-            execution_info=ExecutionInfo(
+            execution_info=ExecutorExecutionInfo(
                 container_id="container-1",
                 exit_code=0,
             ),
@@ -408,7 +408,7 @@ class TestTestRunnerAggregation:
         # Custom judge that fails some runs
         judge_count = [0]
 
-        def custom_judge(_: ExecutionInfo) -> JudgmentResult:
+        def custom_judge(_: ExecutorExecutionInfo) -> JudgmentResult:
             judge_count[0] += 1
             passed = judge_count[0] <= 3  # First 3 pass, next 2 fail
             return JudgmentResult(
