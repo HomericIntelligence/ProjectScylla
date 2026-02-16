@@ -42,7 +42,7 @@ echo "Configuration: $AGENT_FILE"
 echo ""
 
 # Show section plan
-PLAN_FILE="notes/plan/$(echo $SECTION | sed 's/-/\//g')/plan.md"
+PLAN_FILE="notes/plan/$(echo "$SECTION" | sed 's/-/\//g')/plan.md"
 if [[ -f "$PLAN_FILE" ]]; then
     echo "Section Plan: $PLAN_FILE"
     echo ""

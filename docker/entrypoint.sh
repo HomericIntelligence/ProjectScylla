@@ -157,7 +157,7 @@ validate_env() {
     # Check workspace
     if [[ -d "/workspace" ]]; then
         log_info "Workspace directory exists"
-        log_info "Workspace contents: $(ls -la /workspace 2>/dev/null | wc -l) items"
+        log_info "Workspace contents: $(find /workspace -maxdepth 1 2>/dev/null | wc -l) items"
     else
         log_warn "Workspace directory not mounted"
     fi

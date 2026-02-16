@@ -27,11 +27,9 @@ fi
 
 # Post reply
 echo "Posting reply..."
-RESPONSE=$(gh api "repos/$REPO/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" \
+if RESPONSE=$(gh api "repos/$REPO/pulls/$PR_NUMBER/comments/$COMMENT_ID/replies" \
     --method POST \
-    -f body="$REPLY_TEXT" 2>&1)
-
-if [[ $? -eq 0 ]]; then
+    -f body="$REPLY_TEXT" 2>&1); then
     echo "✅ Reply posted successfully"
     echo
     echo "Reply ID: $(echo "$RESPONSE" | jq -r '.id')"
