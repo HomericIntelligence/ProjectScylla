@@ -1,5 +1,6 @@
 """Tests for retry decorator with exponential backoff."""
 
+import os
 import time
 from unittest.mock import MagicMock
 
@@ -84,6 +85,9 @@ class TestRetryWithBackoff:
 
         assert mock_func.call_count == 3  # initial + 2 retries
 
+    @pytest.mark.skipif(
+        os.getenv("COVERAGE_RUN") == "1", reason="Skipped when running under coverage"
+    )
     def test_exponential_backoff_delay(self):
         """Test exponential backoff delays."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
