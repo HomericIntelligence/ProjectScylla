@@ -86,14 +86,16 @@ repos:
   # NOTE: Requires identify >=2.6.0 to support 'jupyter' type tag
   # If you see "Type tag 'jupyter' is not recognized", run:
   #   pixi run pip install --upgrade identify
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.9.0
-    hooks:
-      - id: nbstripout
-        name: Strip Notebook Outputs
-        description: Remove outputs from Jupyter notebooks before commit
-        files: \.ipynb$
-        args: ['--extra-keys', 'metadata.kernelspec']
+  # TODO: Re-enable after upgrading identify package to >=2.6.0 to support 'jupyter' type tag
+  # The nbstripout v0.9.0 hook uses types: [jupyter] which requires identify>=2.6.0
+  # - repo: https://github.com/kynan/nbstripout
+  #   rev: 0.9.0
+  #   hooks:
+  #     - id: nbstripout
+  #       name: Strip Notebook Outputs
+  #       description: Remove outputs from Jupyter notebooks before commit
+  #       files: \.ipynb$
+  #       args: ['--extra-keys', 'metadata.kernelspec']
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
