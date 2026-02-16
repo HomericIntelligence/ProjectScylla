@@ -12,6 +12,7 @@
 ### Initial Analysis
 
 Started with 5 RunResult type definitions:
+
 1. `RunResultBase` - Base Pydantic model (scylla/core/results.py)
 2. `MetricsRunResult` - Statistical aggregation (scylla/metrics/aggregator.py)
 3. `ExecutorRunResult` - Execution tracking (scylla/executor/runner.py)
@@ -25,6 +26,7 @@ Started with 5 RunResult type definitions:
 ### Task Breakdown
 
 Created 8 tasks:
+
 1. Remove RunResult alias from scylla/metrics/aggregator.py ✅
 2. Remove RunResult alias from scylla/executor/runner.py ✅
 3. Remove RunResult alias from scylla/e2e/models.py ✅
@@ -39,6 +41,7 @@ Created 8 tasks:
 **Phase 1: Remove Type Aliases (Tasks 1-4)**
 
 Removed type aliases from domain modules in order:
+
 - scylla/metrics/aggregator.py: `RunResult = MetricsRunResult`
 - scylla/executor/runner.py: `RunResult = ExecutorRunResult`
 - scylla/e2e/models.py: `RunResult = E2ERunResult`
@@ -49,6 +52,7 @@ Updated all internal usages in each file to use specific variant names.
 **Phase 2: Update Dependent Modules (Task 5)**
 
 Updated imports in:
+
 - scylla/e2e/rerun.py: `RunResult` → `E2ERunResult`
 - scylla/orchestrator.py: `RunResult` → `ReportingRunResult`
 - tests/unit/e2e/test_regenerate.py: `RunResult` → `E2ERunResult`
@@ -58,28 +62,32 @@ Updated imports in:
 CRITICAL ISSUE DISCOVERED: Module `__init__.py` files were still exporting old `RunResult` names!
 
 Had to update 4 module exports:
-- scylla/metrics/__init__.py
-- scylla/executor/__init__.py
-- scylla/e2e/__init__.py
-- scylla/reporting/__init__.py
+
+- scylla/metrics/**init**.py
+- scylla/executor/**init**.py
+- scylla/e2e/**init**.py
+- scylla/reporting/**init**.py
 
 Each required updating both the import statement and the `__all__` list.
 
 **Phase 4: Remove Deprecated Code (Task 7)**
 
 Removed `BaseRunResult` dataclass:
+
 - Deleted from scylla/core/results.py (lines 93-109)
-- Removed from scylla/core/__init__.py
+- Removed from scylla/core/**init**.py
 - Removed test class `TestBaseRunResult` from tests/unit/core/test_results.py
 - Simplified remaining tests in `TestComposedTypes`
 
 **Phase 5: Fix Remaining References**
 
 Second round of issues discovered during pre-commit hooks:
+
 - scylla/executor/runner.py: Missed updating return type annotations in 2 methods
 - scylla/orchestrator.py: Missed updating variable type annotations
 
 Fixed:
+
 - `_create_error_result()` return type
 - `_create_rate_limit_exceeded_result()` return type
 - `result: RunResult` → `result: ReportingRunResult`
@@ -88,6 +96,7 @@ Fixed:
 ### Verification Results
 
 **Import Verification:**
+
 ```bash
 ✅ RunResultBase imports correctly
 ✅ MetricsRunResult imports correctly
@@ -97,12 +106,14 @@ Fixed:
 ```
 
 **Test Execution:**
+
 ```bash
 ✅ 17/17 tests pass in tests/unit/core/test_results.py
 ✅ Coverage at 0.12% (expected - only running one test file)
 ```
 
 **Pre-commit Hooks:**
+
 ```bash
 ✅ Ruff Format - Passed (5 files reformatted)
 ✅ Ruff Check - Passed (after fixes)
@@ -113,6 +124,7 @@ Fixed:
 ```
 
 **Grep Verification:**
+
 ```bash
 ✅ No type aliases remain: grep -rn "^RunResult\s*=" returns 0 results
 ✅ Imports use explicit names: All imports show specific variants
@@ -124,24 +136,28 @@ Fixed:
 Total: 13 files, 70 insertions(+), 199 deletions(-)
 
 **Core Module:**
+
 - scylla/core/results.py (removed BaseRunResult dataclass)
-- scylla/core/__init__.py (removed BaseRunResult export)
+- scylla/core/**init**.py (removed BaseRunResult export)
 
 **Domain Modules:**
+
 - scylla/metrics/aggregator.py (removed alias, updated usages)
-- scylla/metrics/__init__.py (export MetricsRunResult)
+- scylla/metrics/**init**.py (export MetricsRunResult)
 - scylla/executor/runner.py (removed alias, updated usages)
-- scylla/executor/__init__.py (export ExecutorRunResult)
+- scylla/executor/**init**.py (export ExecutorRunResult)
 - scylla/e2e/models.py (removed alias)
-- scylla/e2e/__init__.py (export E2ERunResult)
+- scylla/e2e/**init**.py (export E2ERunResult)
 - scylla/reporting/result.py (removed alias, updated usages)
-- scylla/reporting/__init__.py (export ReportingRunResult)
+- scylla/reporting/**init**.py (export ReportingRunResult)
 
 **Dependent Modules:**
+
 - scylla/e2e/rerun.py (use E2ERunResult)
 - scylla/orchestrator.py (use ReportingRunResult)
 
 **Tests:**
+
 - tests/unit/core/test_results.py (removed BaseRunResult tests)
 - tests/unit/e2e/test_regenerate.py (use E2ERunResult)
 
@@ -206,6 +222,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
    - [ ] Import verification succeeds
 
 3. **Import verification pattern:**
+
    ```bash
    pixi run python -c "from module import Type; print('✓ Type')"
    ```
@@ -213,14 +230,15 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ## Team Knowledge References
 
 Used prior learnings from:
+
 - `codebase-consolidation` skill - Workflow for finding and consolidating types
 - `dry-consolidation-workflow` skill - Systematic discovery commands
 - `pydantic-model-dump` skill - Context from Pydantic v2 migration
 
 ## PR and Issue Links
 
-- **Issue:** https://github.com/HomericIntelligence/ProjectScylla/issues/679
-- **PR:** https://github.com/HomericIntelligence/ProjectScylla/pull/703
+- **Issue:** <https://github.com/HomericIntelligence/ProjectScylla/issues/679>
+- **PR:** <https://github.com/HomericIntelligence/ProjectScylla/pull/703>
 - **Branch:** `679-consolidate-runresult-types`
 - **Auto-merge:** Enabled (rebase strategy)
 
