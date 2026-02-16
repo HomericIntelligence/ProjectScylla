@@ -21,6 +21,7 @@ Use this workflow when you need to:
 - **Improve type clarity** in large codebases with similar types
 
 **Trigger Conditions:**
+
 - Multiple modules define `TypeName = DomainVariantName` aliases
 - Code uses generic type name when specific variant would be clearer
 - Type hierarchy exists but naming is confusing/shadowed
@@ -31,6 +32,7 @@ Use this workflow when you need to:
 ### Phase 1: Discovery and Planning
 
 1. **Identify all type aliases** using grep:
+
    ```bash
    grep -rn "^TypeName\s*=" scylla/ --include="*.py"
    ```
@@ -41,6 +43,7 @@ Use this workflow when you need to:
    - N type aliases (e.g., `RunResult = MetricsRunResult`)
 
 3. **Find all import usages:**
+
    ```bash
    grep -rn "from.*import.*TypeName\b" scylla/ --include="*.py"
    ```
@@ -56,6 +59,7 @@ Use this workflow when you need to:
 **CRITICAL:** Work in dependency order - remove aliases from domain modules first, then update dependent modules.
 
 1. **Remove type aliases** from each domain module:
+
    ```python
    # BEFORE
    RunResult = MetricsRunResult
@@ -65,6 +69,7 @@ Use this workflow when you need to:
    ```
 
 2. **Update all usages** within the same file:
+
    ```python
    # BEFORE
    def foo(runs: list[RunResult]) -> RunResult:
@@ -74,6 +79,7 @@ Use this workflow when you need to:
    ```
 
 3. **Update docstrings** to use specific variant names:
+
    ```python
    # BEFORE
    Returns:
@@ -89,6 +95,7 @@ Use this workflow when you need to:
 **CRITICAL:** Update `__init__.py` files to export specific variant names.
 
 1. **Update imports** in `__init__.py`:
+
    ```python
    # BEFORE
    from scylla.metrics.aggregator import (
@@ -104,6 +111,7 @@ Use this workflow when you need to:
    ```
 
 2. **Update `__all__` list**:
+
    ```python
    # BEFORE
    __all__ = [
@@ -121,6 +129,7 @@ Use this workflow when you need to:
 ### Phase 4: Update Dependent Modules
 
 1. **Update imports** in dependent files:
+
    ```python
    # BEFORE
    from scylla.e2e.models import RunResult
@@ -130,6 +139,7 @@ Use this workflow when you need to:
    ```
 
 2. **Update type annotations:**
+
    ```python
    # BEFORE
    def process(result: RunResult) -> None:
@@ -141,6 +151,7 @@ Use this workflow when you need to:
    ```
 
 3. **Update variable declarations:**
+
    ```python
    # BEFORE
    results: list[RunResult] = []
@@ -154,6 +165,7 @@ Use this workflow when you need to:
 If there's a deprecated base class that was replaced:
 
 1. **Remove deprecated class** from source:
+
    ```python
    # Delete from scylla/core/results.py
    @dataclass
@@ -162,6 +174,7 @@ If there's a deprecated base class that was replaced:
    ```
 
 2. **Remove from exports:**
+
    ```python
    # Remove from scylla/core/__init__.py
    from scylla.core.results import (
@@ -171,6 +184,7 @@ If there's a deprecated base class that was replaced:
    ```
 
 3. **Remove tests** for deprecated class:
+
    ```python
    # Delete from tests/unit/core/test_results.py
    class TestBaseRunResult:  # <-- Delete entire class
@@ -182,18 +196,21 @@ If there's a deprecated base class that was replaced:
 Run all verification checks to ensure correctness:
 
 1. **Verify no aliases remain:**
+
    ```bash
    grep -rn "^RunResult\s*=" scylla/ --include="*.py"
    # Expected: No results
    ```
 
 2. **Verify specific imports:**
+
    ```bash
    grep -rn "from.*import.*RunResult\b" scylla/ --include="*.py"
    # Expected: Should see specific variant names only
    ```
 
 3. **Test imports:**
+
    ```bash
    pixi run python -c "from scylla.metrics.aggregator import MetricsRunResult; print('✓')"
    pixi run python -c "from scylla.executor.runner import ExecutorRunResult; print('✓')"
@@ -202,11 +219,13 @@ Run all verification checks to ensure correctness:
    ```
 
 4. **Run tests:**
+
    ```bash
    pixi run pytest tests/unit/core/test_results.py -v
    ```
 
 5. **Run pre-commit hooks:**
+
    ```bash
    pre-commit run --all-files
    ```
@@ -218,6 +237,7 @@ Run all verification checks to ensure correctness:
 **What I tried:** Only updated the type alias definitions and imports in source files, forgot about `__init__.py` exports.
 
 **What happened:** Import errors when running verification:
+
 ```python
 from scylla.executor.runner import ExecutorRunResult
 # ImportError: cannot import name 'ExecutorRunResult'
@@ -240,6 +260,7 @@ from scylla.executor.runner import ExecutorRunResult
 ### ❌ Attempt 3: Incomplete Search Patterns
 
 **What I tried:** Used simple grep without word boundaries:
+
 ```bash
 grep -rn "RunResult" scylla/
 ```
@@ -249,6 +270,7 @@ grep -rn "RunResult" scylla/
 **Why it failed:** Pattern matched "RunResult" in any context, not just type alias definitions.
 
 **Fix:** Used more specific patterns:
+
 - Type aliases: `^RunResult\s*=`
 - Imports: `from.*import.*RunResult\b`
 - Class inheritance: `class.*RunResult.*RunResultBase`
@@ -256,6 +278,7 @@ grep -rn "RunResult" scylla/
 ## Results & Parameters
 
 ### Before State
+
 ```
 5 RunResult types in codebase:
 - 1 base type: RunResultBase (Pydantic model)
@@ -273,6 +296,7 @@ grep -rn "RunResult" scylla/
 ```
 
 ### After State
+
 ```
 5 RunResult types in codebase:
 - 1 base type: RunResultBase (Pydantic model)
@@ -286,6 +310,7 @@ grep -rn "RunResult" scylla/
 ```
 
 ### Files Modified
+
 ```
 Total: 13 files
 - Core: scylla/core/results.py, scylla/core/__init__.py
@@ -298,6 +323,7 @@ Total: 13 files
 ```
 
 ### Verification Results
+
 ```
 ✅ No type aliases remain
 ✅ All imports use explicit variant names
@@ -310,6 +336,7 @@ Total: 13 files
 ### Commands Used
 
 **Discovery:**
+
 ```bash
 # Find type aliases
 grep -rn "^RunResult\s*=" scylla/ --include="*.py"
@@ -322,6 +349,7 @@ grep -rn "class.*RunResult.*RunResultBase" scylla/ --include="*.py" | wc -l
 ```
 
 **Verification:**
+
 ```bash
 # Verify no aliases
 grep -rn "^RunResult\s*=" scylla/ --include="*.py" || echo "✓ No aliases found"
@@ -356,6 +384,6 @@ pre-commit run --all-files
 
 ## References
 
-- Issue: https://github.com/HomericIntelligence/ProjectScylla/issues/679
-- PR: https://github.com/HomericIntelligence/ProjectScylla/pull/703
+- Issue: <https://github.com/HomericIntelligence/ProjectScylla/issues/679>
+- PR: <https://github.com/HomericIntelligence/ProjectScylla/pull/703>
 - Related commit: 38a3df1 (Pydantic v2 migration)

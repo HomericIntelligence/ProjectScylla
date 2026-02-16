@@ -41,7 +41,7 @@ git push origin main  # BLOCKED - Will be rejected by GitHub
 
 **CORRECT WORKFLOW (Always Use PRs):**
 
-** Never use labels **
+**Never use labels**
 
 ```bash
 # 1. Create feature branch
