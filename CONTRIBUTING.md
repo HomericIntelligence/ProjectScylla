@@ -40,7 +40,7 @@ Thank you for your interest in contributing to ProjectScylla! This guide will he
 3. **Verify Installation**
 
    ```bash
-   pixi run python --version  # Should be 3.14+
+   pixi run python --version  # Should be 3.10+
    pixi run pytest tests/ -v  # Run tests
    ```
 
@@ -53,7 +53,7 @@ Thank you for your interest in contributing to ProjectScylla! This guide will he
 
 ### Prerequisites
 
-- **Python**: 3.14+ (managed via Pixi)
+- **Python**: 3.10+ (managed via Pixi)
 - **Git**: For version control
 - **Docker**: Optional, for containerized experiments
 - **API Keys**: See `.env.example` for required keys
@@ -338,7 +338,7 @@ What actually happens
 
 ## Environment
 - OS: [e.g., Ubuntu 22.04]
-- Python: [e.g., 3.14]
+- Python: [e.g., 3.10]
 - ProjectScylla version: [e.g., commit SHA]
 
 ## Additional Context

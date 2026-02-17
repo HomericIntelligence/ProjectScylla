@@ -1,6 +1,6 @@
 # ProjectScylla
 
-[![Python](https://img.shields.io/badge/python-3.14+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-2026%2B-brightgreen.svg)](#)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](#)
@@ -78,7 +78,7 @@ pixi run python scripts/generate_all_results.py \
 
 **Minimum Requirements:**
 
-- Python 3.14+
+- Python 3.10+
 - 8GB RAM for full dataset analysis
 - 2GB disk space for results
 
