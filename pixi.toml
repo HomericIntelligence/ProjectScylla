@@ -17,6 +17,8 @@ pip = "*"
 pre-commit = ">=4.5.1,<5"
 pytest = ">=9.0.2,<10"
 pytest-cov = ">=7.0.0,<8"
+types-pyyaml = ">=6.0.12.20250915,<7"
+types-jsonschema = ">=4.26.0.20260202,<5"
 
 [pypi-dependencies]
 scylla = { path = ".", editable = true }
@@ -30,8 +32,6 @@ vl-convert-python = ">=1.0"
 krippendorff = ">=0.6.0"
 statsmodels = ">=0.14"
 jsonschema = ">=4.0"
-types-PyYAML = "*"
-types-jsonschema = "*"
 
 [feature.dev.dependencies]
 pytest = ">=7.0"
