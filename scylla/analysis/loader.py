@@ -12,6 +12,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import jsonschema
 import numpy as np
@@ -27,7 +28,7 @@ with _SCHEMA_PATH.open() as _schema_file:
     _RUN_RESULT_SCHEMA = json.load(_schema_file)
 
 
-def validate_numeric(value: any, field_name: str, default: float = np.nan) -> float:
+def validate_numeric(value: Any, field_name: str, default: float = np.nan) -> float:
     """Validate and coerce numeric field from JSON.
 
     Args:
@@ -63,7 +64,7 @@ def validate_numeric(value: any, field_name: str, default: float = np.nan) -> fl
         return default
 
 
-def validate_bool(value: any, field_name: str, default: bool = False) -> bool:
+def validate_bool(value: Any, field_name: str, default: bool = False) -> bool:
     """Validate and coerce boolean field from JSON.
 
     Args:
@@ -105,7 +106,7 @@ def validate_bool(value: any, field_name: str, default: bool = False) -> bool:
         return default
 
 
-def validate_int(value: any, field_name: str, default: int = -1) -> int:
+def validate_int(value: Any, field_name: str, default: int = -1) -> int:
     """Validate and coerce integer field from JSON.
 
     Args:
