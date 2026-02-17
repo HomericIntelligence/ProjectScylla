@@ -48,9 +48,6 @@ from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
 
-if TYPE_CHECKING:
-    pass
-
 logger = logging.getLogger(__name__)
 
 # Global shutdown coordination
