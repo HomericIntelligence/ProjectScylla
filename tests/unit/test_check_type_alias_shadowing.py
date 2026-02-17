@@ -8,7 +8,7 @@ from pathlib import Path
 
 # Import the detection functions by loading the module from file path
 # This avoids mypy "module found twice" errors
-_script_path = Path(__file__).parent.parent / "scripts" / "check_type_alias_shadowing.py"
+_script_path = Path(__file__).parent.parent.parent / "scripts" / "check_type_alias_shadowing.py"
 _spec = importlib.util.spec_from_file_location("check_type_alias_shadowing", _script_path)
 assert _spec is not None and _spec.loader is not None
 _module = importlib.util.module_from_spec(_spec)
