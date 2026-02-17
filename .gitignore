@@ -5,7 +5,7 @@ worktree/
 build/
 
 # Python
-__pycache__/
+*__pycache__/
 *.py[cod]
 *$py.class
 .Python
@@ -13,6 +13,7 @@ __pycache__/
 .eggs/
 dist/
 *.egg
+*.pyc
 
 # Virtual environments
 .venv/
