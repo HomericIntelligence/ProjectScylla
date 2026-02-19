@@ -1,7 +1,7 @@
-"""Tier configuration system for loading and applying tier-specific prompts.
+"""Tier configuration system for loading tier definitions.
 
 This module provides the TierConfigLoader class for loading tier definitions
-from YAML and their associated prompt templates from markdown files.
+from YAML in the shared tests directory.
 """
 
 from pathlib import Path
@@ -14,9 +14,6 @@ class TierDefinition(BaseModel):
 
     name: str = Field(..., description="Human-readable tier name")
     description: str = Field(..., description="Description of the tier's purpose")
-    prompt_file: str | None = Field(
-        None, description="Path to prompt markdown file (relative to tiers dir)"
-    )
     tools_enabled: bool | None = Field(
         None, description="Whether tools are enabled (None = tool default)"
     )
@@ -26,13 +23,11 @@ class TierDefinition(BaseModel):
 
 
 class TierConfig(BaseModel):
-    """Complete tier configuration with loaded prompt content."""
+    """Complete tier configuration."""
 
     tier_id: str = Field(..., description="Tier identifier (e.g., 'T0', 'T1', 'T2', 'T3')")
     name: str = Field(..., description="Human-readable tier name")
     description: str = Field(..., description="Description of the tier's purpose")
-    prompt_file: Path | None = Field(None, description="Absolute path to prompt file")
-    prompt_content: str | None = Field(None, description="Loaded prompt content")
     tools_enabled: bool | None = Field(None, description="Whether tools are enabled")
     delegation_enabled: bool | None = Field(None, description="Whether delegation is enabled")
 
@@ -66,25 +61,23 @@ class TierConfigError(Exception):
 class TierConfigLoader:
     """Loads and provides access to tier configurations.
 
-    Loads tier definitions from a YAML file and associated prompt templates
-    from markdown files in the tiers directory.
+    Loads tier definitions from tiers.yaml in the specified directory.
 
     Example:
-        loader = TierConfigLoader(Path("config"))
+        loader = TierConfigLoader(Path("tests/claude-code/shared"))
         t1_config = loader.get_tier("T1")
-        print(t1_config.prompt_content)
+        print(t1_config.tools_enabled)
 
     """
 
-    def __init__(self, config_dir: Path) -> None:
-        """Initialize the loader with the config directory.
+    def __init__(self, tiers_dir: Path) -> None:
+        """Initialize the loader with the tiers directory.
 
         Args:
-            config_dir: Path to the config directory containing tiers/tiers.yaml
+            tiers_dir: Path to the directory containing tiers.yaml
 
         """
-        self.config_dir = Path(config_dir)
-        self.tiers_dir = self.config_dir / "tiers"
+        self.tiers_dir = Path(tiers_dir)
         self.tiers_file = self.tiers_dir / "tiers.yaml"
         self._tier_definitions: dict[str, TierDefinition] = {}
         self._load_tiers()
@@ -118,10 +111,10 @@ class TierConfigLoader:
             tier_id: The tier identifier (e.g., "T0", "T1", "T2", "T3")
 
         Returns:
-            TierConfig with loaded prompt content
+            TierConfig for the requested tier
 
         Raises:
-            TierConfigError: If tier_id is unknown or prompt file is missing
+            TierConfigError: If tier_id is unknown
 
         """
         if tier_id not in self._tier_definitions:
@@ -130,21 +123,11 @@ class TierConfigLoader:
             )
 
         tier_def = self._tier_definitions[tier_id]
-        prompt_file: Path | None = None
-        prompt_content: str | None = None
-
-        if tier_def.prompt_file:
-            prompt_file = self.tiers_dir / tier_def.prompt_file
-            if not prompt_file.exists():
-                raise TierConfigError(f"Prompt file not found for tier {tier_id}: {prompt_file}")
-            prompt_content = prompt_file.read_text()
 
         return TierConfig(
             tier_id=tier_id,
             name=tier_def.name,
             description=tier_def.description,
-            prompt_file=prompt_file,
-            prompt_content=prompt_content,
             tools_enabled=tier_def.tools_enabled,
             delegation_enabled=tier_def.delegation_enabled,
         )

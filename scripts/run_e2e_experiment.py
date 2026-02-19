@@ -341,8 +341,8 @@ Examples:
     parser.add_argument(
         "--tiers-dir",
         type=Path,
-        default=Path("config/tiers"),
-        help="Path to tier configurations (default: config/tiers)",
+        default=Path("tests/claude-code/shared"),
+        help="Path to tier configurations (default: tests/claude-code/shared)",
     )
     parser.add_argument(
         "--results-dir",

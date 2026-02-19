@@ -657,9 +657,9 @@ Every evaluation run follows a five-step pipeline from workspace preparation to 
 \textbf{Step 1: Workspace Prep} creates a fresh git worktree at the pinned commit and injects tier-specific configuration files via symlinks:
 
 \begin{itemize}
-\item CLAUDE.md from \texttt{config/tiers/TN/subtest-NN/CLAUDE.md}
-\item Skills from \texttt{config/tiers/TN/subtest-NN/.claude-plugin/skills}
-\item Agents from \texttt{config/tiers/TN/subtest-NN/.claude/agents}
+\item CLAUDE.md composed from blocks in \texttt{tests/claude-code/shared/blocks/}
+\item Skills symlinked from \texttt{tests/claude-code/shared/skills/}
+\item Agents symlinked from \texttt{tests/claude-code/shared/agents/}
 \item Generates a \texttt{replay.sh} script for manual reproduction
 \end{itemize}
 
@@ -1473,7 +1473,7 @@ All raw data, figures, and tables are available in the repository at \texttt{doc
 \textbf{Key Configuration Files}:
 
 \begin{itemize}
-\item Tier definitions: \texttt{config/tiers/tiers.yaml}
+\item Tier definitions: \texttt{tests/claude-code/shared/tiers.yaml}
 \item Opus Model: \texttt{config/models/claude-opus-4-5.yaml}
 \item Sonnet Model: \texttt{config/models/claude-sonnet-4-5.yaml}
 \item Haiku Model: \texttt{config/models/claude-haiku-4-5.yaml}

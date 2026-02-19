@@ -185,29 +185,19 @@ class BaseAdapter(ABC):
         task_prompt: str,
         tier_config: TierConfig | None,
     ) -> str:
-        """Inject tier-specific system prompt before task prompt.
+        """Return the task prompt unchanged.
 
-        For T0 (Vanilla), returns the task prompt unchanged.
-        For other tiers, prepends the tier-specific prompt.
+        Tier-specific prompt content is composed into CLAUDE.md at workspace
+        preparation time (see TierManager), not injected here.
 
         Args:
             task_prompt: The original task prompt.
-            tier_config: Tier configuration with prompt content.
+            tier_config: Tier configuration (unused, kept for API compatibility).
 
         Returns:
-            Combined prompt with tier injection (if applicable).
+            The task prompt unchanged.
 
         """
-        if tier_config is None:
-            return task_prompt
-
-        if tier_config.tier_id == "T0":
-            # Vanilla tier - no injection, use tool defaults
-            return task_prompt
-
-        if tier_config.prompt_content:
-            return f"{tier_config.prompt_content}\n\n---\n\n{task_prompt}"
-
         return task_prompt
 
     def get_tier_settings(

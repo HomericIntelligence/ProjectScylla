@@ -247,7 +247,6 @@ class TestTestRunner:
         mock.get_tier.return_value = MagicMock(
             tier_id="T0",
             name="Vanilla",
-            prompt_content=None,
             tools_enabled=None,
             delegation_enabled=None,
         )
@@ -351,7 +350,6 @@ class TestTestRunnerAggregation:
         mock.get_tier.return_value = MagicMock(
             tier_id="T0",
             name="Vanilla",
-            prompt_content=None,
             tools_enabled=None,
             delegation_enabled=None,
         )
@@ -455,7 +453,6 @@ class TestTestRunnerParallel:
         mock.get_tier.return_value = MagicMock(
             tier_id="T0",
             name="Vanilla",
-            prompt_content=None,
             tools_enabled=None,
             delegation_enabled=None,
         )

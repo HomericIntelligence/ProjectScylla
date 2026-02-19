@@ -94,7 +94,7 @@ class E2ERunner:
         ...     task_commit="abc123",
         ...     task_prompt_file=Path("prompt.md"),
         ... )
-        >>> runner = E2ERunner(config, Path("config/tiers"), Path("results"))
+        >>> runner = E2ERunner(config, Path("tests/fixtures/tests/test-001"), Path("results"))
         >>> result = runner.run()
 
     """

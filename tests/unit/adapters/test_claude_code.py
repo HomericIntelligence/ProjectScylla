@@ -359,7 +359,6 @@ class TestRun:
 
             tier_config = MagicMock()
             tier_config.tier_id = "T1"
-            tier_config.prompt_content = "Think step by step"
             tier_config.tools_enabled = False
             tier_config.delegation_enabled = None
 
@@ -371,14 +370,11 @@ class TestRun:
             with patch("subprocess.run", return_value=mock_result) as mock_run:
                 adapter.run(config, tier_config)
 
-            # Check that the command included the tier prompt
+            # Check that --tools "" is in the command
             call_args = mock_run.call_args
             cmd = call_args[0][0]
-            # Check that --tools "" is in the command
             tools_idx = cmd.index("--tools")
             assert cmd[tools_idx + 1] == ""
-            # Prompt should include tier content
-            assert "Think step by step" in cmd[-1]
 
     def test_run_timeout(self) -> None:
         """Test execution timeout."""

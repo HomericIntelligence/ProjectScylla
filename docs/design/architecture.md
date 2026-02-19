@@ -374,7 +374,7 @@ Test Case (YAML)
     raw_metrics/
 ```
 
-**Input**: `test.yaml`, tier prompts from `config/tiers/`
+**Input**: `test.yaml`, tier definitions from `tests/claude-code/shared/tiers.yaml`
 
 **Process**: Docker isolation, adapter invocation, metric collection
 
@@ -561,15 +561,15 @@ ProjectScylla/
 
 The framework tests across 7 tiers of increasing complexity:
 
-| Tier | Name | Sub-tests | Description | Prompt Source |
-|------|------|-----------|-------------|---------------|
-| T0 | Prompts | 24 | System prompt ablation | `config/tiers/t0-prompts.md` |
-| T1 | Skills | 10 | Domain expertise via skills | `config/tiers/t1-skills.md` |
-| T2 | Tooling | 15 | External tools and MCP | `config/tiers/t2-tooling.md` |
-| T3 | Delegation | 41 | Flat multi-agent | `config/tiers/t3-delegation.md` |
-| T4 | Hierarchy | 7 | Nested orchestration | `config/tiers/t4-hierarchy.md` |
-| T5 | Hybrid | 15 | Best combinations | `config/tiers/t5-hybrid.md` |
-| T6 | Super | 1 | Everything enabled | `config/tiers/t6-super.md` |
+| Tier | Name | Sub-tests | Description |
+|------|------|-----------|-------------|
+| T0 | Prompts | 24 | System prompt ablation |
+| T1 | Skills | 10 | Domain expertise via skills |
+| T2 | Tooling | 15 | External tools and MCP |
+| T3 | Delegation | 41 | Flat multi-agent |
+| T4 | Hierarchy | 7 | Nested orchestration |
+| T5 | Hybrid | 15 | Best combinations |
+| T6 | Super | 1 | Everything enabled |
 
 ### Tier Comparison Goals
 

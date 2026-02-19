@@ -191,7 +191,6 @@ class TierConfig(BaseModel):
     Attributes:
         tier_id: The tier identifier
         subtests: List of sub-test configurations
-        prompt_content: Tier-specific prompt content (from config/tiers/*.md)
         tools_enabled: Whether tools are enabled for this tier
         delegation_enabled: Whether delegation is enabled for this tier
 
@@ -205,7 +204,6 @@ class TierConfig(BaseModel):
 
     tier_id: TierID
     subtests: list[SubTestConfig]
-    prompt_content: str | None = None
     tools_enabled: bool | None = None
     delegation_enabled: bool | None = None
 
@@ -214,7 +212,6 @@ class TierConfig(BaseModel):
         return {
             "tier_id": self.tier_id.value,
             "subtests": [s.to_dict() for s in self.subtests],
-            "prompt_content": self.prompt_content,
             "tools_enabled": self.tools_enabled,
             "delegation_enabled": self.delegation_enabled,
         }

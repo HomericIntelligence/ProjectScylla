@@ -285,7 +285,6 @@ class TestRun:
 
             tier_config = MagicMock()
             tier_config.tier_id = "T1"
-            tier_config.prompt_content = "Be concise"
             tier_config.tools_enabled = False
             tier_config.delegation_enabled = None
 
@@ -300,7 +299,6 @@ class TestRun:
             call_args = mock_run.call_args
             cmd = call_args[0][0]
             assert "--no-tools" in cmd
-            assert "Be concise" in cmd[-1]
 
     def test_run_timeout(self) -> None:
         """Test execution timeout."""

@@ -31,7 +31,7 @@ class TierManager:
     sub-tests, and preparing workspaces with inherited configurations.
 
     Example:
-        >>> manager = TierManager(Path("config/tiers"))
+        >>> manager = TierManager(Path("tests/fixtures/tests/test-001"))
         >>> tier_config = manager.load_tier_config(TierID.T2)
         >>> manager.prepare_workspace(
         ...     workspace=Path("/tmp/workspace"),
@@ -52,7 +52,7 @@ class TierManager:
         """Initialize the tier manager.
 
         Args:
-            tiers_dir: Path to the config/tiers directory (or test-specific tiers dir)
+            tiers_dir: Path to the test-specific tiers directory
             shared_dir: Path to shared resources directory. If None, auto-detected
                        from tiers_dir (tiers_dir/../../claude-code/shared)
             config_dir: Path to config directory. If None, auto-detected
@@ -65,9 +65,9 @@ class TierManager:
 
         # Auto-detect config_dir if not provided
         if config_dir is None:
-            config_dir = Path(__file__).parent.parent.parent / "config"
+            config_dir = Path(__file__).parent.parent.parent / "tests" / "claude-code" / "shared"
 
-        # Initialize global tier config loader from config/tiers/
+        # Initialize global tier config loader from tests/claude-code/shared/
         self.tier_config_loader = TierConfigLoader(config_dir)
 
         # Auto-detect shared_dir if not provided
@@ -83,7 +83,7 @@ class TierManager:
     def load_tier_config(self, tier_id: TierID, skip_agent_teams: bool = False) -> TierConfig:
         """Load configuration for a specific tier.
 
-        Loads tier-level config from config/tiers/ and discovers sub-tests.
+        Loads tier-level config from tests/claude-code/shared/ and discovers sub-tests.
 
         Args:
             tier_id: The tier to load configuration for
@@ -93,7 +93,7 @@ class TierManager:
             TierConfig with all sub-tests for the tier.
 
         """
-        # Load global tier configuration from config/tiers/
+        # Load global tier configuration from tests/claude-code/shared/
         global_tier_config = self.tier_config_loader.get_tier(tier_id.value)
 
         # Discover sub-tests using the provider
@@ -104,7 +104,6 @@ class TierManager:
         return TierConfig(
             tier_id=tier_id,
             subtests=subtests,
-            prompt_content=global_tier_config.prompt_content,
             tools_enabled=global_tier_config.tools_enabled,
             delegation_enabled=global_tier_config.delegation_enabled,
         )

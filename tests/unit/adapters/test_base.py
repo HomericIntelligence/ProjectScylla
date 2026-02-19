@@ -171,39 +171,16 @@ class TestTierPromptInjection:
     """Tests for tier prompt injection."""
 
     def test_no_tier_config(self) -> None:
-        """Test no injection when tier_config is None."""
+        """Test returns task prompt unchanged when tier_config is None."""
         adapter = ConcreteAdapter()
         result = adapter.inject_tier_prompt("Task prompt", None)
         assert result == "Task prompt"
 
-    def test_t0_no_injection(self) -> None:
-        """Test T0 tier does not inject prompt."""
-        adapter = ConcreteAdapter()
-        tier_config = MagicMock()
-        tier_config.tier_id = "T0"
-        tier_config.prompt_content = "Should not appear"
-
-        result = adapter.inject_tier_prompt("Task prompt", tier_config)
-        assert result == "Task prompt"
-
-    def test_t1_injection(self) -> None:
-        """Test T1 tier injects prompt."""
+    def test_with_tier_config_returns_unchanged(self) -> None:
+        """Test returns task prompt unchanged regardless of tier config."""
         adapter = ConcreteAdapter()
         tier_config = MagicMock()
         tier_config.tier_id = "T1"
-        tier_config.prompt_content = "Think step by step"
-
-        result = adapter.inject_tier_prompt("Task prompt", tier_config)
-        assert "Think step by step" in result
-        assert "Task prompt" in result
-        assert result.index("Think step by step") < result.index("Task prompt")
-
-    def test_tier_no_prompt_content(self) -> None:
-        """Test tier with no prompt content."""
-        adapter = ConcreteAdapter()
-        tier_config = MagicMock()
-        tier_config.tier_id = "T2"
-        tier_config.prompt_content = None
 
         result = adapter.inject_tier_prompt("Task prompt", tier_config)
         assert result == "Task prompt"
