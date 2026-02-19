@@ -800,9 +800,6 @@ class EvalRunner:
             env_vars["TOOLS_ENABLED"] = str(tier_config.tools_enabled).lower()
         if tier_config.delegation_enabled is not None:
             env_vars["DELEGATION_ENABLED"] = str(tier_config.delegation_enabled).lower()
-        if tier_config.prompt_content:
-            env_vars["TIER_PROMPT"] = tier_config.prompt_content
-
         config = ContainerConfig(
             image=self.config.container_image,
             name=container_name,

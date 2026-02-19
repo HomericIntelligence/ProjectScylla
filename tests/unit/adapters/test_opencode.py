@@ -297,7 +297,6 @@ class TestRun:
 
             tier_config = MagicMock()
             tier_config.tier_id = "T1"
-            tier_config.prompt_content = "Be precise"
             tier_config.tools_enabled = False
             tier_config.delegation_enabled = None
 

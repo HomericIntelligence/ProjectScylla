@@ -170,7 +170,7 @@ class ModelConfig(BaseModel):
 class TierConfig(BaseModel):
     """Configuration for a testing tier.
 
-    Maps to config/tiers/t<n>.yaml (e.g., t0.yaml, t1.yaml)
+    Maps to tests/claude-code/shared/tiers.yaml tier entries
     """
 
     tier: str = Field(..., description="Tier identifier (e.g., t0, t1)")
