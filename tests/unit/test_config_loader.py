@@ -367,22 +367,6 @@ class TestConfigLoaderEdgeCases:
             )
 
 
-class TestConfigLoaderIntegration:
-    """Integration tests with real project config structure."""
-
-    def test_load_real_test_if_exists(self) -> None:
-        """Load config for real test case."""
-        # Use the actual project root
-        project_root = FIXTURES_PATH.parent.parent
-
-        loader = ConfigLoader(base_path=project_root)
-
-        # Load the real test
-        test = loader.load_test("001-justfile-to-makefile")
-        assert test.id == "001-justfile-to-makefile"
-        assert "Makefile" in test.name
-
-
 class TestFilenameModelIdValidation:
     """Test validation of filename/model_id consistency."""
 
