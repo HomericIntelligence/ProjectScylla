@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
@@ -147,3 +147,107 @@ class TestTokenStatsAggregation:
         assert result.output_tokens == 50
         assert result.cache_creation_tokens == 0
         assert result.cache_read_tokens == 0
+
+
+class TestLogCheckpointResume:
+    """Tests for _log_checkpoint_resume helper method."""
+
+    def test_logs_checkpoint_path(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """Test that _log_checkpoint_resume logs the checkpoint path."""
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        runner.checkpoint = MagicMock()
+        runner.checkpoint.get_completed_run_count.return_value = 5
+
+        checkpoint_path = Path("/tmp/checkpoint.json")
+        with patch("scylla.e2e.runner.logger") as mock_logger:
+            runner._log_checkpoint_resume(checkpoint_path)
+
+        mock_logger.info.assert_any_call(f"📂 Resuming from checkpoint: {checkpoint_path}")
+
+    def test_logs_completed_run_count(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """Test that _log_checkpoint_resume logs the completed run count."""
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        runner.checkpoint = MagicMock()
+        runner.checkpoint.get_completed_run_count.return_value = 7
+
+        checkpoint_path = Path("/tmp/checkpoint.json")
+        with patch("scylla.e2e.runner.logger") as mock_logger:
+            runner._log_checkpoint_resume(checkpoint_path)
+
+        mock_logger.info.assert_any_call("   Previously completed: 7 runs")
+
+    def test_logs_both_messages_in_order(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """Test that both log messages are emitted in order."""
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        runner.checkpoint = MagicMock()
+        runner.checkpoint.get_completed_run_count.return_value = 3
+
+        checkpoint_path = Path("/tmp/exp/checkpoint.json")
+        with patch("scylla.e2e.runner.logger") as mock_logger:
+            runner._log_checkpoint_resume(checkpoint_path)
+
+        assert mock_logger.info.call_count == 2
+        mock_logger.info.assert_has_calls(
+            [
+                call(f"📂 Resuming from checkpoint: {checkpoint_path}"),
+                call("   Previously completed: 3 runs"),
+            ]
+        )
+
+    def test_load_checkpoint_success_path_calls_helper(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """Test that _load_checkpoint_and_config calls helper in success path."""
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+
+        # Set up a valid checkpoint and config directory
+        exp_dir = tmp_path / "experiment"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+        config_file = config_dir / "experiment.json"
+        config_file.write_text(mock_config.model_dump_json())
+
+        mock_checkpoint = MagicMock()
+        mock_checkpoint.experiment_dir = str(exp_dir)
+        mock_checkpoint.get_completed_run_count.return_value = 2
+
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        with (
+            patch("scylla.e2e.runner.load_checkpoint", return_value=mock_checkpoint),
+            patch.object(runner, "_log_checkpoint_resume") as mock_log,
+        ):
+            runner._load_checkpoint_and_config(checkpoint_path)
+
+        mock_log.assert_called_once_with(checkpoint_path)
+
+    def test_load_checkpoint_fallback_path_calls_helper(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """Test that _load_checkpoint_and_config calls helper in fallback path."""
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+
+        # Experiment dir exists but config file does not
+        exp_dir = tmp_path / "experiment"
+        exp_dir.mkdir(parents=True)
+
+        mock_checkpoint = MagicMock()
+        mock_checkpoint.experiment_dir = str(exp_dir)
+        mock_checkpoint.get_completed_run_count.return_value = 4
+
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        with (
+            patch("scylla.e2e.runner.load_checkpoint", return_value=mock_checkpoint),
+            patch("scylla.e2e.runner.validate_checkpoint_config", return_value=True),
+            patch.object(runner, "_log_checkpoint_resume") as mock_log,
+        ):
+            runner._load_checkpoint_and_config(checkpoint_path)
+
+        mock_log.assert_called_once_with(checkpoint_path)

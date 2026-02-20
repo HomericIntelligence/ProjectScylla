@@ -167,6 +167,16 @@ class E2ERunner:
 
         return groups
 
+    def _log_checkpoint_resume(self, checkpoint_path: Path) -> None:
+        """Log checkpoint resume status with completed run count.
+
+        Args:
+            checkpoint_path: Path to checkpoint.json file
+
+        """
+        logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+        logger.info(f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs")
+
     def _load_checkpoint_and_config(self, checkpoint_path: Path) -> tuple[E2ECheckpoint, Path]:
         """Load and validate checkpoint and configuration from existing checkpoint.
 
@@ -188,12 +198,9 @@ class E2ERunner:
         # This ensures checkpoint config takes precedence over CLI args
         saved_config_path = self.experiment_dir / "config" / "experiment.json"
         if saved_config_path.exists():
-            logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
+            self._log_checkpoint_resume(checkpoint_path)
             logger.info(f"📋 Loading config from checkpoint: {saved_config_path}")
             self.config = ExperimentConfig.load(saved_config_path)
-            logger.info(
-                f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
-            )
         else:
             # Fallback: validate CLI config matches checkpoint
             logger.warning(
@@ -204,10 +211,7 @@ class E2ERunner:
                     f"Config has changed since checkpoint. Use --fresh to start over.\n"
                     f"Checkpoint: {checkpoint_path}"
                 )
-            logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
-            logger.info(
-                f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs"
-            )
+            self._log_checkpoint_resume(checkpoint_path)
 
         # Validate experiment directory exists
         if not self.experiment_dir.exists():
