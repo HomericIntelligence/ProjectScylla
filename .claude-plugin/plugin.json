@@ -97,6 +97,25 @@
         "tests_added": 10,
         "outcome": "success"
       }
+    },
+    {
+      "name": "wired-runner-fixture",
+      "file": "skills/wired-runner-fixture/SKILL.md",
+      "category": "testing",
+      "triggers": [
+        "repeated E2ERunner construction across test methods",
+        "extract shared pytest fixture",
+        "eliminate boilerplate in test class",
+        "mock TierManager filesystem access in tests",
+        "post-construction attribute injection in fixture",
+        "patch.object to bypass heavy __init__"
+      ],
+      "metadata": {
+        "issue": 771,
+        "pr": 815,
+        "tests_refactored": 4,
+        "outcome": "success"
+      }
     }
   ]
 }
