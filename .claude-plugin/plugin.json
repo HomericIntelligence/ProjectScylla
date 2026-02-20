@@ -77,6 +77,27 @@
         "pr": 834,
         "outcome": "success"
       }
+    },
+    {
+      "name": "backward-compat-removal",
+      "file": "skills/backward-compat-removal/SKILL.md",
+      "category": "architecture",
+      "triggers": [
+        "remove deprecated dataclass",
+        "delete deprecated symbol",
+        "clean up deprecated class",
+        "remove from __all__",
+        "last @dataclass in file",
+        "remove dataclasses import",
+        "from dataclasses import dataclass unused",
+        "deprecation cleanup",
+        "delete test class for removed symbol"
+      ],
+      "metadata": {
+        "issues": [784, 797],
+        "prs": [840, 843],
+        "outcome": "success"
+      }
     }
   ]
 }
