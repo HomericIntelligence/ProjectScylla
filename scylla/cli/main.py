@@ -476,6 +476,63 @@ def list_models() -> None:
         click.echo()
 
 
+@cli.group()
+def audit() -> None:
+    """Audit configuration files for consistency issues."""
+
+
+@audit.command("models")
+@click.option(
+    "--config-dir",
+    default=".",
+    show_default=True,
+    help="Project root directory (must contain config/models/).",
+)
+def audit_models(config_dir: str) -> None:
+    """Audit model config files for filename/model_id mismatches.
+
+    Exits non-zero if any mismatches are detected, making it suitable for
+    use in pre-commit hooks or CI pipelines.
+
+    Examples:
+        scylla audit models
+
+        scylla audit models --config-dir /path/to/project
+
+    """
+    from scylla.config import ConfigLoader
+    from scylla.config.validation import validate_filename_model_id_consistency
+
+    loader = ConfigLoader(Path(config_dir))
+    models_dir = loader.base_path / "config" / "models"
+
+    if not models_dir.exists():
+        click.echo(f"ERROR: models directory not found: {models_dir}", err=True)
+        sys.exit(1)
+
+    mismatches: list[str] = []
+    for config_path in sorted(models_dir.glob("*.yaml")):
+        if config_path.stem.startswith("_"):
+            continue
+        try:
+            model_config = loader.load_model(config_path.stem)
+        except Exception:
+            continue
+        if model_config is None:
+            continue
+        warnings = validate_filename_model_id_consistency(config_path, model_config.model_id)
+        for warning in warnings:
+            mismatch_line = f"MISMATCH: {config_path.name} → {warning}"
+            mismatches.append(mismatch_line)
+            click.echo(mismatch_line)
+
+    if mismatches:
+        click.echo(f"\n{len(mismatches)} mismatch(es) detected.", err=True)
+        sys.exit(1)
+    else:
+        click.echo("OK: all model config filenames match their model_id.")
+
+
 @cli.command()
 @click.argument("test_id")
 def status(test_id: str) -> None:
