@@ -243,10 +243,10 @@ def _run_judge(
             key=lambda j: abs(j.score - consensus_score),
         )
         primary_reasoning = closest_judge.reasoning
-        primary_criteria_scores = closest_judge.criteria_scores
+        primary_criteria_scores = closest_judge.criteria_scores or {}
     else:
         primary_reasoning = judges[0].reasoning if judges else ""
-        primary_criteria_scores = judges[0].criteria_scores if judges else None
+        primary_criteria_scores = (judges[0].criteria_scores if judges else None) or {}
     # All judges must be valid for consensus to be valid
     consensus_is_valid = all(j.is_valid for j in judges)
     consensus_dict = {

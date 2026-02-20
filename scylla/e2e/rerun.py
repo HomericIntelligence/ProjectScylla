@@ -737,7 +737,7 @@ def rerun_experiment(
                         "workspace_path": str(run_info.run_dir / "workspace"),
                         "logs_path": str(run_info.run_dir / "agent"),
                         "command_log_path": str(run_info.run_dir / "agent" / "command_log.json"),
-                        "criteria_scores": judge_result.get("criteria_scores", {}),
+                        "criteria_scores": judge_result.get("criteria_scores") or {},
                     }
 
                     # Save run_result.json
