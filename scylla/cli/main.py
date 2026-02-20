@@ -85,7 +85,7 @@ def run(
 
         scylla run 001-justfile-to-makefile --tier T0 --tier T1
 
-        scylla run 001-justfile-to-makefile --model claude-opus-4-5 --runs 1
+        scylla run 001-justfile-to-makefile --model claude-opus-4-5-20251101 --runs 1
 
     """
     if verbose and quiet:
@@ -334,7 +334,7 @@ def report(
         test_name=test_id.replace("-", " ").title(),
         timestamp=timestamp,
         runs_per_tier=runs_per_tier,
-        judge_model="claude-opus-4-5",
+        judge_model="claude-opus-4-5-20251101",
         tiers=tier_metrics,
         sensitivity=sensitivity,
         transitions=transitions,
