@@ -1,5 +1,8 @@
 """Tests for CLI commands."""
 
+from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
 
 from scylla.cli.main import cli
@@ -183,3 +186,109 @@ class TestStatusCommand:
 
         assert result.exit_code == 0
         assert "Status for: 001-test" in result.output
+
+
+class TestAuditModelsCommand:
+    """Tests for 'audit models' command."""
+
+    def test_audit_models_help(self) -> None:
+        """Test audit models help text."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--help"])
+
+        assert result.exit_code == 0
+        assert "Audit model config files" in result.output
+        assert "--config-dir" in result.output
+
+    def test_audit_models_exit_zero_on_clean(self, tmp_path: Path) -> None:
+        """Audit models exits 0 when all filenames match model_id."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / "claude-opus-4-1.yaml").write_text(
+            "model_id: claude-opus-4-1\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "OK: all model config filenames match their model_id." in result.output
+
+    def test_audit_models_exit_nonzero_on_mismatch(self, tmp_path: Path) -> None:
+        """Audit models exits 1 when a filename does not match model_id."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        # Filename is 'wrong-name.yaml' but model_id is 'claude-opus-4-1'
+        (models_dir / "wrong-name.yaml").write_text(
+            "model_id: claude-opus-4-1\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
+
+        assert result.exit_code == 1
+        assert "MISMATCH" in result.output
+
+    def test_audit_models_skips_underscore_prefixed(self, tmp_path: Path) -> None:
+        """Audit models skips files prefixed with _ even when model_id mismatches."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        # _test-fixture.yaml with mismatched model_id should be skipped
+        (models_dir / "_test-fixture.yaml").write_text(
+            "model_id: some-other-id\ncost_per_1k_input: 0.001\ncost_per_1k_output: 0.001\n"
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "OK: all model config filenames match their model_id." in result.output
+
+    def test_audit_models_missing_models_dir(self, tmp_path: Path) -> None:
+        """Audit models exits 1 with ERROR when config/models/ does not exist."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
+
+        assert result.exit_code == 1
+        assert "ERROR" in result.output
+
+    def test_audit_models_multiple_mismatches(self, tmp_path: Path) -> None:
+        """Audit models reports all mismatches and exits 1."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / "bad-name-a.yaml").write_text(
+            "model_id: claude-opus-4-1\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
+        )
+        (models_dir / "bad-name-b.yaml").write_text(
+            "model_id: claude-sonnet-4-5-20250929\n"
+            "cost_per_1k_input: 0.003\ncost_per_1k_output: 0.015\n"
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
+
+        assert result.exit_code == 1
+        assert result.output.count("MISMATCH") == 2
+
+    @pytest.mark.parametrize(
+        "model_id,filename",
+        [
+            ("claude-opus-4-1", "claude-opus-4-1.yaml"),
+            ("claude-sonnet-4-5-20250929", "claude-sonnet-4-5-20250929.yaml"),
+        ],
+    )
+    def test_audit_models_clean_parametrized(
+        self, tmp_path: Path, model_id: str, filename: str
+    ) -> None:
+        """Audit models exits 0 for each correctly-named config file."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / filename).write_text(
+            f"model_id: {model_id}\ncost_per_1k_input: 0.001\ncost_per_1k_output: 0.001\n"
+        )
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert "OK" in result.output
