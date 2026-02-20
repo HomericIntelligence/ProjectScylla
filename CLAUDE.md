@@ -8,8 +8,8 @@ ProjectScylla is an AI agent testing and optimization framework designed to meas
 the performance and cost-efficiency of agentic AI workflows. Named after the mythic trial from Homer's Odyssey,
 Scylla represents the challenge of navigating trade-offs between capability gains and operational costs.
 
-**Current Status**: Research and planning phase - establishing benchmarking methodology, metrics definitions,
-and evaluation protocols before implementation begins.
+**Current Status**: Operational - active research with full evaluation infrastructure, running T0–T6 ablation
+studies across 120+ YAML subtests with published results and 73%+ test coverage enforced in CI.
 
 **Ecosystem Context**: Part of a three-project ecosystem:
 
