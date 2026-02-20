@@ -188,6 +188,23 @@
         "pr": 804,
         "outcome": "success"
       }
+    },
+    {
+      "name": "extract-helper-method-tdd",
+      "file": "skills/extract-helper-method-tdd/SKILL.md",
+      "category": "refactoring",
+      "triggers": [
+        "duplicate code block in two methods",
+        "consider extracting helper",
+        "eliminate duplication",
+        "extract helper methods",
+        "refactor for maintainability"
+      ],
+      "metadata": {
+        "issue": 712,
+        "pr": 763,
+        "outcome": "success"
+      }
     }
   ]
 }
