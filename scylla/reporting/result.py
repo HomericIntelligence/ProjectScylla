@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from scylla.core.results import ExecutionInfoBase, GradingInfoBase, RunResultBase
+from scylla.core.results import ExecutionInfoBase, JudgmentInfoBase, MetricsInfoBase, RunResultBase
 
 
 class ReportingExecutionInfo(ExecutionInfoBase):
@@ -18,6 +18,7 @@ class ReportingExecutionInfo(ExecutionInfoBase):
     For other ExecutionInfo types in the hierarchy, see:
     - ExecutionInfoBase (core/results.py) - Base Pydantic model
     - ExecutorExecutionInfo (executor/runner.py) - Detailed with container info
+    - BaseExecutionInfo (core/results.py) - Legacy dataclass (deprecated)
 
     Attributes:
         status: Execution status (e.g., "completed", "failed", "timeout").
@@ -31,34 +32,45 @@ class ReportingExecutionInfo(ExecutionInfoBase):
 ExecutionInfo = ReportingExecutionInfo
 
 
-class MetricsInfo(BaseModel):
-    """Token and cost metrics for a run."""
+class MetricsInfo(MetricsInfoBase):
+    """Token and cost metrics for a run.
 
-    tokens_input: int = Field(..., description="Input tokens")
-    tokens_output: int = Field(..., description="Output tokens")
-    cost_usd: float = Field(..., description="Cost in USD")
+    Inherits common fields (tokens_input, tokens_output, cost_usd) from MetricsInfoBase.
+
+    For other MetricsInfo types in the hierarchy, see:
+    - MetricsInfoBase (core/results.py) - Base Pydantic model
+    - BaseRunMetrics (core/results.py) - Legacy dataclass (deprecated)
+
+    Attributes:
+        api_calls: Number of API calls made during the run.
+
+    """
+
     api_calls: int = Field(..., description="Number of API calls")
 
 
-class JudgmentInfo(BaseModel):
-    """Judge evaluation results for a run."""
+class JudgmentInfo(JudgmentInfoBase):
+    """Judge evaluation results for a run.
 
-    passed: bool = Field(..., description="Whether the run passed")
-    impl_rate: float = Field(..., description="Implementation rate (0.0-1.0)")
+    Inherits common fields (passed, impl_rate) from JudgmentInfoBase.
+
+    For other JudgmentInfo types in the hierarchy, see:
+    - JudgmentInfoBase (core/results.py) - Base Pydantic model
+
+    Attributes:
+        letter_grade: Letter grade (A, B, C, D, F) for display purposes.
+
+    """
+
     letter_grade: str = Field(..., description="Letter grade")
 
 
-class GradingInfo(GradingInfoBase):
-    """Calculated grading metrics for a run.
+class GradingInfo(BaseModel):
+    """Calculated grading metrics for a run."""
 
-    Inherits common fields (pass_rate, cost_of_pass, composite_score)
-    from GradingInfoBase.
-
-    For the GradingInfo hierarchy, see:
-    - GradingInfoBase (core/results.py) - Base Pydantic model
-    - GradingInfo (reporting/result.py) - Reporting persistence (this class)
-
-    """
+    pass_rate: float = Field(..., description="Pass rate (0.0 or 1.0)")
+    cost_of_pass: float = Field(..., description="Cost per successful pass")
+    composite_score: float = Field(..., description="Combined quality score")
 
 
 class ReportingRunResult(RunResultBase):

@@ -19,11 +19,19 @@ Architecture Notes:
       ├── ExecutorExecutionInfo (executor/runner.py) - Container execution (detailed)
       └── ReportingExecutionInfo (reporting/result.py) - Result persistence (minimal)
 
-    GradingInfo inheritance hierarchy (Issue #796):
-    - GradingInfoBase (this module) - Base Pydantic model with common fields
-      └── GradingInfo (reporting/result.py) - Reporting persistence
+    MetricsInfo inheritance hierarchy (Issue #729):
+    - MetricsInfoBase (this module) - Base Pydantic model with token/cost fields
+      └── MetricsInfo (reporting/result.py) - Result persistence with api_calls
 
-    Migration from dataclasses to Pydantic (Issues #604, #658):
+    JudgmentInfo inheritance hierarchy (Issue #729):
+    - JudgmentInfoBase (this module) - Base Pydantic model with judgment fields
+      └── JudgmentInfo (reporting/result.py) - Result persistence with letter_grade
+
+    Legacy dataclasses (deprecated):
+    - BaseExecutionInfo - Kept for backward compatibility, use ExecutionInfoBase instead
+    - BaseRunMetrics - Kept for backward compatibility, use MetricsInfoBase instead
+
+    Migration from dataclasses to Pydantic (Issues #604, #658, #729):
     - Leverages recent Pydantic migration (commit 38a3df1)
     - Enables shared validation logic via Pydantic
     - Provides consistent serialization with .model_dump()
@@ -87,28 +95,84 @@ class ExecutionInfoBase(BaseModel):
     timed_out: bool = Field(default=False, description="Whether execution timed out")
 
 
-class GradingInfoBase(BaseModel):
-    """Base grading metrics type for all grading results.
+class MetricsInfoBase(BaseModel):
+    """Base token and cost metrics shared across modules.
 
-    This is the foundational Pydantic model that domain-specific GradingInfo
-    types inherit from. It defines the minimum common fields shared across all
-    grading results.
+    This is the foundational Pydantic model that all domain-specific MetricsInfo
+    types inherit from. It defines the minimum common token and cost fields shared
+    across all evaluation results.
 
     Attributes:
-        pass_rate: Pass rate for the run (0.0 or 1.0).
-        cost_of_pass: Cost per successful pass in USD.
-        composite_score: Combined quality score (0.0-1.0).
+        tokens_input: Number of input tokens consumed.
+        tokens_output: Number of output tokens generated.
+        cost_usd: Total cost in USD (default: 0.0).
 
     """
 
-    pass_rate: float = Field(..., description="Pass rate (0.0 or 1.0)")
-    cost_of_pass: float = Field(..., description="Cost per successful pass")
-    composite_score: float = Field(..., description="Combined quality score")
+    model_config = ConfigDict(frozen=True)
+
+    tokens_input: int = Field(..., description="Input tokens")
+    tokens_output: int = Field(..., description="Output tokens")
+    cost_usd: float = Field(default=0.0, description="Cost in USD")
+
+
+class JudgmentInfoBase(BaseModel):
+    """Base judge evaluation results shared across modules.
+
+    This is the foundational Pydantic model that all domain-specific JudgmentInfo
+    types inherit from. It defines the minimum common judgment fields shared across
+    all evaluation results.
+
+    Attributes:
+        passed: Whether the run passed.
+        impl_rate: Implementation rate (0.0-1.0, default: 0.0).
+
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    passed: bool = Field(..., description="Whether the run passed")
+    impl_rate: float = Field(default=0.0, description="Implementation rate (0.0-1.0)")
+
+
+@dataclass
+class BaseExecutionInfo:
+    """Base execution information shared across all result types.
+
+    .. deprecated::
+        Use ExecutionInfoBase (Pydantic model) instead. This dataclass is kept
+        for backward compatibility only. New code should use ExecutionInfoBase
+        and its domain-specific subtypes (ExecutorExecutionInfo, ReportingExecutionInfo).
+
+    For the new Pydantic-based hierarchy, see:
+    - ExecutionInfoBase (this module) - Base Pydantic model
+    - ExecutorExecutionInfo (executor/runner.py) - Container execution
+    - ReportingExecutionInfo (reporting/result.py) - Result persistence
+
+    Attributes:
+        exit_code: Process/container exit code (0 = success).
+        duration_seconds: Total execution duration.
+        timed_out: Whether execution timed out.
+
+    """
+
+    exit_code: int
+    duration_seconds: float
+    timed_out: bool = False
 
 
 @dataclass
 class BaseRunMetrics:
     """Base metrics shared across run result types.
+
+    .. deprecated::
+        Use MetricsInfoBase (Pydantic model) instead. This dataclass is kept
+        for backward compatibility only. New code should use MetricsInfoBase
+        and its domain-specific subtypes (MetricsInfo in reporting/result.py).
+
+    For the new Pydantic-based hierarchy, see:
+    - MetricsInfoBase (this module) - Base Pydantic model
+    - MetricsInfo (reporting/result.py) - Result persistence with api_calls
 
     Attributes:
         tokens_input: Number of input tokens consumed.
