@@ -3,91 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from scylla.core.results import BaseExecutionInfo, BaseRunMetrics, ExecutionInfoBase
-
-
-class TestBaseExecutionInfo:
-    """Tests for BaseExecutionInfo dataclass."""
-
-    def test_construction_success(self) -> None:
-        """Basic construction with valid parameters."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(
-                exit_code=0,
-                duration_seconds=10.5,
-                timed_out=False,
-            )
-        assert info.exit_code == 0
-        assert info.duration_seconds == 10.5
-        assert info.timed_out is False
-
-    def test_construction_failure(self) -> None:
-        """Construction with failure exit code."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(
-                exit_code=1,
-                duration_seconds=5.0,
-                timed_out=False,
-            )
-        assert info.exit_code == 1
-        assert info.duration_seconds == 5.0
-
-    def test_construction_timeout(self) -> None:
-        """Construction with timeout flag."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(
-                exit_code=124,
-                duration_seconds=30.0,
-                timed_out=True,
-            )
-        assert info.exit_code == 124
-        assert info.duration_seconds == 30.0
-        assert info.timed_out is True
-
-    def test_timed_out_default_false(self) -> None:
-        """timed_out should default to False if not specified."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(exit_code=0, duration_seconds=1.0)
-        assert info.timed_out is False
-
-    def test_negative_exit_code(self) -> None:
-        """Support negative exit codes (e.g., killed by signal)."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(
-                exit_code=-9,
-                duration_seconds=2.5,
-            )
-        assert info.exit_code == -9
-
-    def test_zero_duration(self) -> None:
-        """Support zero duration (very fast execution)."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(
-                exit_code=0,
-                duration_seconds=0.0,
-            )
-        assert info.duration_seconds == 0.0
-
-    def test_equality(self) -> None:
-        """Test dataclass equality."""
-        with pytest.warns(DeprecationWarning):
-            info1 = BaseExecutionInfo(exit_code=0, duration_seconds=10.0, timed_out=False)
-        with pytest.warns(DeprecationWarning):
-            info2 = BaseExecutionInfo(exit_code=0, duration_seconds=10.0, timed_out=False)
-        with pytest.warns(DeprecationWarning):
-            info3 = BaseExecutionInfo(exit_code=1, duration_seconds=10.0, timed_out=False)
-
-        assert info1 == info2
-        assert info1 != info3
-
-    def test_repr(self) -> None:
-        """Test string representation."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(exit_code=0, duration_seconds=10.5, timed_out=False)
-        repr_str = repr(info)
-        assert "BaseExecutionInfo" in repr_str
-        assert "exit_code=0" in repr_str
-        assert "duration_seconds=10.5" in repr_str
+from scylla.core.results import BaseRunMetrics, ExecutionInfoBase
 
 
 class TestBaseRunMetrics:
@@ -157,21 +73,6 @@ class TestBaseRunMetrics:
 class TestComposedTypes:
     """Tests for composed usage of base types."""
 
-    def test_execution_info_composition(self) -> None:
-        """Test composing execution info."""
-        # This tests the pattern used in domain-specific types
-        duration = 10.5
-
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            execution = BaseExecutionInfo(
-                exit_code=0,
-                duration_seconds=duration,
-                timed_out=False,
-            )
-
-        # Verify duration is captured
-        assert execution.duration_seconds == duration
-
     def test_metrics_composition(self) -> None:
         """Test composing metrics."""
         cost = 0.05
@@ -184,29 +85,6 @@ class TestComposedTypes:
 
         # Verify cost is captured
         assert metrics.cost_usd == cost
-
-    def test_full_composition_pattern(self) -> None:
-        """Test full composition of execution info and metrics."""
-        # Simulates the pattern used in reporting.result.py
-        cost = 0.05
-        duration = 10.5
-
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            execution = BaseExecutionInfo(
-                exit_code=0,
-                duration_seconds=duration,
-                timed_out=False,
-            )
-
-        metrics = BaseRunMetrics(
-            tokens_input=1000,
-            tokens_output=500,
-            cost_usd=cost,
-        )
-
-        # Verify consistency across composed types
-        assert metrics.cost_usd == cost
-        assert execution.duration_seconds == duration
 
 
 class TestExecutionInfoBase:
@@ -277,46 +155,3 @@ class TestExecutionInfoBase:
 
         assert info1 == info2
         assert info1 != info3
-
-
-class TestBaseExecutionInfoBackwardCompatibility:
-    """Tests for BaseExecutionInfo dataclass (deprecated, backward compatibility)."""
-
-    def test_dataclass_still_works(self) -> None:
-        """Test that legacy BaseExecutionInfo dataclass still works."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            info = BaseExecutionInfo(
-                exit_code=0,
-                duration_seconds=10.5,
-                timed_out=False,
-            )
-        assert info.exit_code == 0
-        assert info.duration_seconds == 10.5
-        assert info.timed_out is False
-
-    def test_dataclass_and_pydantic_have_same_fields(self) -> None:
-        """Test that dataclass and Pydantic model have the same core fields."""
-        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
-            dataclass_info = BaseExecutionInfo(
-                exit_code=0,
-                duration_seconds=10.5,
-                timed_out=False,
-            )
-        pydantic_info = ExecutionInfoBase(
-            exit_code=0,
-            duration_seconds=10.5,
-            timed_out=False,
-        )
-
-        # Same values in same fields
-        assert dataclass_info.exit_code == pydantic_info.exit_code
-        assert dataclass_info.duration_seconds == pydantic_info.duration_seconds
-        assert dataclass_info.timed_out == pydantic_info.timed_out
-
-    def test_deprecation_warning_emitted(self) -> None:
-        """Test that a DeprecationWarning is emitted on instantiation."""
-        with pytest.warns(
-            DeprecationWarning,
-            match="BaseExecutionInfo is deprecated and will be removed in v2.0.0",
-        ):
-            BaseExecutionInfo(exit_code=0, duration_seconds=1.0)

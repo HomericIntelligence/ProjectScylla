@@ -67,7 +67,6 @@ class ExecutorExecutionInfo(ExecutionInfoBase):
     For other ExecutorExecutionInfo types in the hierarchy, see:
     - ExecutionInfoBase (core/results.py) - Base Pydantic model
     - ReportingExecutionInfo (reporting/result.py) - Minimal, for persistence
-    - BaseExecutionInfo (core/results.py) - Legacy dataclass (deprecated)
 
     Attributes:
         container_id: Docker container ID.
