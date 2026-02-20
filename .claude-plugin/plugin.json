@@ -41,21 +41,41 @@
       ]
     },
     {
-      "name": "validate-config-name-family",
-      "file": "skills/validate-config-name-family/SKILL.md",
-      "category": "testing",
+      "name": "model-config-naming-validation",
+      "file": "skills/model-config-naming-validation/SKILL.md",
+      "category": "ci-cd",
       "triggers": [
-        "add cross-field validation to config",
-        "name field does not match model family",
-        "human-readable label inconsistent with identifier",
-        "extend existing validator with new check",
-        "naming gap in config validation",
-        "warning when name mismatches filename"
+        "validate config file naming",
+        "filename must match model_id",
+        "pre-commit validation script",
+        "import scripts/ in pytest tests",
+        "mypy found twice under different module names",
+        "scripts/__init__.py required for mypy"
       ],
       "metadata": {
-        "issue": 775,
-        "pr": 821,
-        "tests_added": 30,
+        "issue": 682,
+        "pr": 769,
+        "tests_added": 28,
+        "outcome": "success"
+      }
+    },
+    {
+      "name": "backward-compat-removal",
+      "file": "skills/backward-compat-removal/SKILL.md",
+      "category": "testing",
+      "triggers": [
+        "remove deprecated class",
+        "DeprecationWarning cleanup",
+        "v2.0.0 removal",
+        "delete deprecated symbol",
+        "TestXxxBackwardCompatibility test class",
+        "deprecation milestone reached",
+        "remove warnings.warn deprecated code"
+      ],
+      "metadata": {
+        "issue": 784,
+        "pr": 832,
+        "lines_deleted": 209,
         "outcome": "success"
       }
     }
