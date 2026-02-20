@@ -469,3 +469,85 @@ adapter: openai_adapter
         assert config is not None
         assert config.model_id == "different-model-id"
         assert not caplog.records  # No warnings for test fixtures
+
+
+class TestFilenameTierConsistency:
+    """Test validation of filename/tier consistency."""
+
+    def test_filename_matches_tier_exact(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation passes when filename matches tier exactly."""
+        config_dir = tmp_path / "config" / "tiers"
+        config_dir.mkdir(parents=True)
+
+        config_path = config_dir / "t0.yaml"
+        config_path.write_text("""
+tier: t0
+name: Baseline
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_tier("t0")
+
+        assert config is not None
+        assert config.tier == "t0"
+        assert not caplog.records  # No warnings
+
+    def test_filename_mismatch_warns(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation warns when filename doesn't match tier."""
+        config_dir = tmp_path / "config" / "tiers"
+        config_dir.mkdir(parents=True)
+
+        # Filename says t0, but tier field says t1
+        config_path = config_dir / "t0.yaml"
+        config_path.write_text("""
+tier: t1
+name: Skills
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_tier("t0")
+
+        assert config is not None
+        assert config.tier == "t1"
+        # Should have warning about mismatch
+        assert len(caplog.records) == 1
+        assert "t0.yaml" in caplog.text
+        assert "t1" in caplog.text
+        assert "t1.yaml" in caplog.text
+
+    def test_test_fixtures_skip_validation(self, tmp_path: Path) -> None:
+        """Test that test fixtures (prefixed with _) skip validation."""
+        from scylla.config.validation import validate_filename_tier_consistency
+
+        # Test fixture with underscore prefix - tier field won't match filename
+        config_path = tmp_path / "_test-fixture.yaml"
+        warnings = validate_filename_tier_consistency(config_path, "t0")
+
+        assert not warnings  # No warnings for test fixtures
+
+    def test_warning_message_format(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+        """Test that warning message contains filename and tier field."""
+        config_dir = tmp_path / "config" / "tiers"
+        config_dir.mkdir(parents=True)
+
+        config_path = config_dir / "t2.yaml"
+        config_path.write_text("""
+tier: t3
+name: Delegation
+""")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            loader.load_tier("t2")
+
+        assert len(caplog.records) == 1
+        warning_text = caplog.records[0].message
+        assert "t2.yaml" in warning_text
+        assert "t3" in warning_text
+        assert "t3.yaml" in warning_text

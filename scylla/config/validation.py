@@ -59,3 +59,34 @@ def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> 
     )
 
     return warnings
+
+
+def validate_filename_tier_consistency(config_path: Path, tier: str) -> list[str]:
+    """Validate that config filename matches the tier field.
+
+    Args:
+        config_path: Path to config file
+        tier: tier field from config (e.g., 't0')
+
+    Returns:
+        List of warning messages (empty if valid)
+
+    """
+    warnings = []
+    filename_stem = config_path.stem
+
+    # Skip validation for test fixtures (prefixed with _)
+    if filename_stem.startswith("_"):
+        return warnings
+
+    # Check exact match
+    if filename_stem == tier:
+        return warnings
+
+    # Mismatch detected
+    warnings.append(
+        f"Config filename '{filename_stem}.yaml' does not match tier "
+        f"'{tier}'. Expected '{tier}.yaml'"
+    )
+
+    return warnings

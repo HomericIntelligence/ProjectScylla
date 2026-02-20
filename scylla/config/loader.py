@@ -21,7 +21,7 @@ from .models import (
     ScyllaConfig,
     TierConfig,
 )
-from .validation import validate_filename_model_id_consistency
+from .validation import validate_filename_model_id_consistency, validate_filename_tier_consistency
 
 logger = logging.getLogger(__name__)
 
@@ -217,9 +217,16 @@ class ConfigLoader:
             data["tier"] = tier
 
         try:
-            return TierConfig(**data)
+            config = TierConfig(**data)
         except Exception as e:
             raise ConfigurationError(f"Invalid tier configuration in {tier_path}: {e}")
+
+        # Validate filename/tier consistency
+        warnings = validate_filename_tier_consistency(tier_path, config.tier)
+        for warning in warnings:
+            logger.warning(warning)
+
+        return config
 
     def load_all_tiers(self) -> dict[str, TierConfig]:
         """Load all available tier configurations.
