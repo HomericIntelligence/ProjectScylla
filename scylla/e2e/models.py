@@ -289,7 +289,7 @@ class E2ERunResult(RunResultBase):
 
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     # E2E-specific fields (common fields inherited from RunResultBase)
     exit_code: int
