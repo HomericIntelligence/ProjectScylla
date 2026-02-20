@@ -267,6 +267,84 @@ class TestParseJudgeResponse:
         assert result.grade == "B"
 
 
+class TestCheckpointResumeWithNullCriteriaScores:
+    """Tests for checkpoint resume when criteria_scores is null in stored data."""
+
+    def _make_report_data(self, criteria_scores_value: object) -> dict:
+        """Build a minimal report_data dict with the given criteria_scores value."""
+        from scylla.e2e.models import TokenStats
+
+        token_stats = TokenStats(input_tokens=100, output_tokens=50)
+        return {
+            "run_number": 1,
+            "exit_code": 0,
+            "token_stats": token_stats.to_dict(),
+            "cost_usd": 0.05,
+            "duration_seconds": 10.0,
+            "agent_duration_seconds": 8.0,
+            "judge_duration_seconds": 2.0,
+            "judge_score": 0.8,
+            "judge_passed": True,
+            "judge_grade": "B",
+            "judge_reasoning": "Good",
+            "workspace_path": "/workspace",
+            "logs_path": "/logs",
+            "criteria_scores": criteria_scores_value,
+        }
+
+    def test_criteria_scores_null_in_report_data(self) -> None:
+        """Test that criteria_scores=null in checkpoint data does not raise ValidationError."""
+        from scylla.e2e.models import E2ERunResult, TokenStats
+
+        report_data = self._make_report_data(None)
+
+        # This is the exact pattern from subtest_executor.py line 360
+        result = E2ERunResult(
+            run_number=report_data["run_number"],
+            exit_code=report_data["exit_code"],
+            token_stats=TokenStats.from_dict(report_data["token_stats"]),
+            cost_usd=report_data["cost_usd"],
+            duration_seconds=report_data["duration_seconds"],
+            agent_duration_seconds=report_data["agent_duration_seconds"],
+            judge_duration_seconds=report_data["judge_duration_seconds"],
+            judge_score=report_data["judge_score"],
+            judge_passed=report_data["judge_passed"],
+            judge_grade=report_data["judge_grade"],
+            judge_reasoning=report_data["judge_reasoning"],
+            workspace_path=Path(report_data["workspace_path"]),
+            logs_path=Path(report_data["logs_path"]),
+            criteria_scores=report_data.get("criteria_scores") or {},
+        )
+
+        assert result.criteria_scores == {}
+
+    def test_criteria_scores_missing_key_in_report_data(self) -> None:
+        """Test that missing criteria_scores key in checkpoint data defaults to {}."""
+        from scylla.e2e.models import E2ERunResult, TokenStats
+
+        report_data = self._make_report_data(None)
+        del report_data["criteria_scores"]  # Simulate missing key
+
+        result = E2ERunResult(
+            run_number=report_data["run_number"],
+            exit_code=report_data["exit_code"],
+            token_stats=TokenStats.from_dict(report_data["token_stats"]),
+            cost_usd=report_data["cost_usd"],
+            duration_seconds=report_data["duration_seconds"],
+            agent_duration_seconds=report_data["agent_duration_seconds"],
+            judge_duration_seconds=report_data["judge_duration_seconds"],
+            judge_score=report_data["judge_score"],
+            judge_passed=report_data["judge_passed"],
+            judge_grade=report_data["judge_grade"],
+            judge_reasoning=report_data["judge_reasoning"],
+            workspace_path=Path(report_data["workspace_path"]),
+            logs_path=Path(report_data["logs_path"]),
+            criteria_scores=report_data.get("criteria_scores") or {},
+        )
+
+        assert result.criteria_scores == {}
+
+
 class TestHasValidJudgeResult:
     """Tests for _has_valid_judge_result function."""
 

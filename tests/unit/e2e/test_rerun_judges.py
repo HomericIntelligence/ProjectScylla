@@ -290,6 +290,87 @@ def test_regenerate_consensus_representative_reasoning(tmp_path: Path) -> None:
     assert consensus["criteria_scores"]["accuracy"]["score"] == 0.9
 
 
+def test_regenerate_consensus_writes_criteria_scores_to_run_result_json(
+    tmp_path: Path,
+) -> None:
+    """Test that _regenerate_consensus updates criteria_scores in run_result.json."""
+    run_dir = tmp_path / "run_01"
+    judge_dir = run_dir / "judge"
+
+    # Create a valid judge result with criteria_scores
+    judge_subdir = judge_dir / "judge_01"
+    judge_subdir.mkdir(parents=True)
+    (judge_subdir / "judgment.json").write_text(
+        json.dumps(
+            {
+                "score": 0.8,
+                "passed": True,
+                "grade": "B",
+                "reasoning": "Good work",
+                "is_valid": True,
+                "criteria_scores": {"accuracy": {"score": 0.9, "explanation": "Accurate"}},
+            }
+        )
+    )
+
+    # Create a run_result.json WITHOUT criteria_scores (simulating stale data)
+    run_result_file = run_dir / "run_result.json"
+    run_result_file.write_text(
+        json.dumps(
+            {
+                "run_number": 1,
+                "judge_score": 0.0,
+                "judge_passed": False,
+                "judge_grade": "F",
+                "judge_reasoning": "old",
+            }
+        )
+    )
+
+    models = ["claude-sonnet-4-5"]
+    assert _regenerate_consensus(run_dir, models)
+
+    # Verify run_result.json was updated with criteria_scores
+    run_data = json.loads(run_result_file.read_text())
+    assert "criteria_scores" in run_data
+    assert run_data["criteria_scores"] == {"accuracy": {"score": 0.9, "explanation": "Accurate"}}
+    assert run_data["judge_score"] == 0.8
+
+
+def test_regenerate_consensus_writes_empty_criteria_scores_when_null(
+    tmp_path: Path,
+) -> None:
+    """Test _regenerate_consensus writes {} to run_result.json when criteria_scores is null."""
+    run_dir = tmp_path / "run_01"
+    judge_dir = run_dir / "judge"
+
+    # Create a valid judge result WITHOUT criteria_scores (null)
+    judge_subdir = judge_dir / "judge_01"
+    judge_subdir.mkdir(parents=True)
+    (judge_subdir / "judgment.json").write_text(
+        json.dumps(
+            {
+                "score": 0.7,
+                "passed": True,
+                "grade": "C",
+                "reasoning": "Adequate",
+                "is_valid": True,
+                "criteria_scores": None,
+            }
+        )
+    )
+
+    run_result_file = run_dir / "run_result.json"
+    run_result_file.write_text(json.dumps({"run_number": 1, "judge_score": 0.0}))
+
+    models = ["claude-sonnet-4-5"]
+    assert _regenerate_consensus(run_dir, models)
+
+    run_data = json.loads(run_result_file.read_text())
+    # Should write {} not null
+    assert run_data["criteria_scores"] == {}
+
+
 class TestHasValidAgentResult:
     """Tests for _has_valid_agent_result()."""
 

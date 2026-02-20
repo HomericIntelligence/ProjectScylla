@@ -207,7 +207,7 @@ def scan_run_results(
                     command_log_path=(
                         Path(data["command_log_path"]) if data.get("command_log_path") else None
                     ),
-                    criteria_scores=data.get("criteria_scores", {}),
+                    criteria_scores=data.get("criteria_scores") or {},
                 )
 
                 # Add to results
@@ -397,7 +397,7 @@ def rejudge_missing_runs(
                         run.judge_passed = judge_result.passed
                         run.judge_grade = judge_result.grade
                         run.judge_reasoning = judge_result.reasoning
-                        run.criteria_scores = judge_result.criteria_scores
+                        run.criteria_scores = judge_result.criteria_scores or {}
 
                         # Save updated run_result.json
                         with open(run_result_file, "w") as f:

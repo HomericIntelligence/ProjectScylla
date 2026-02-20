@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from scylla.core.results import RunResultBase
 
@@ -306,6 +306,12 @@ class E2ERunResult(RunResultBase):
     command_log_path: Path | None = None
     criteria_scores: dict[str, dict[str, Any]] = Field(default_factory=dict)
     baseline_pipeline_summary: dict[str, Any] | None = None
+
+    @field_validator("criteria_scores", mode="before")
+    @classmethod
+    def coerce_none_criteria_scores(cls, v: Any) -> dict:
+        """Coerce None to empty dict — judges may return None for criteria_scores."""
+        return v if v is not None else {}
 
     # Legacy properties for backwards compatibility
     @property

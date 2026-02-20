@@ -604,6 +604,7 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
             run_data["judge_passed"] = passed
             run_data["judge_grade"] = grade
             run_data["judge_reasoning"] = representative_reasoning
+            run_data["criteria_scores"] = representative_criteria or {}
             with open(run_result_file, "w") as f:
                 json.dump(run_data, f, indent=2)
         except Exception as e:

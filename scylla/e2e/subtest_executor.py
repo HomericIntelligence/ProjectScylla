@@ -357,7 +357,7 @@ class SubTestExecutor:
                                 if report_data.get("command_log_path")
                                 else None
                             ),
-                            criteria_scores=report_data.get("criteria_scores", {}),
+                            criteria_scores=report_data.get("criteria_scores") or {},
                             baseline_pipeline_summary=report_data.get("baseline_pipeline_summary"),
                         )
                         runs.append(run_result)
@@ -855,7 +855,7 @@ class SubTestExecutor:
             workspace_path=workspace,
             logs_path=agent_dir,  # Points to agent/ subdirectory
             command_log_path=agent_dir / "command_log.json",
-            criteria_scores=judgment.get("criteria_scores", {}),
+            criteria_scores=judgment.get("criteria_scores") or {},
             baseline_pipeline_summary=baseline_summary,
         )
 

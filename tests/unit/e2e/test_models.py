@@ -218,6 +218,76 @@ class TestE2ERunResult:
         assert result.tokens_input == 1000
         assert result.tokens_output == 200
 
+    def test_criteria_scores_coerces_none_to_empty_dict(self) -> None:
+        """Test that criteria_scores=None is coerced to {} by the Pydantic validator."""
+        from scylla.e2e.models import TokenStats
+
+        result = E2ERunResult(
+            run_number=1,
+            exit_code=0,
+            token_stats=TokenStats(input_tokens=0, output_tokens=0),
+            cost_usd=0.0,
+            duration_seconds=0.0,
+            agent_duration_seconds=0.0,
+            judge_duration_seconds=0.0,
+            judge_score=0.0,
+            judge_passed=False,
+            judge_grade="F",
+            judge_reasoning="",
+            workspace_path=Path("/workspace"),
+            logs_path=Path("/logs"),
+            criteria_scores=None,  # type: ignore[arg-type]
+        )
+
+        assert result.criteria_scores == {}
+
+    def test_criteria_scores_accepts_empty_dict(self) -> None:
+        """Test that criteria_scores={} is accepted without modification."""
+        from scylla.e2e.models import TokenStats
+
+        result = E2ERunResult(
+            run_number=1,
+            exit_code=0,
+            token_stats=TokenStats(input_tokens=0, output_tokens=0),
+            cost_usd=0.0,
+            duration_seconds=0.0,
+            agent_duration_seconds=0.0,
+            judge_duration_seconds=0.0,
+            judge_score=0.0,
+            judge_passed=False,
+            judge_grade="F",
+            judge_reasoning="",
+            workspace_path=Path("/workspace"),
+            logs_path=Path("/logs"),
+            criteria_scores={},
+        )
+
+        assert result.criteria_scores == {}
+
+    def test_criteria_scores_accepts_populated_dict(self) -> None:
+        """Test that a populated criteria_scores dict is preserved."""
+        from scylla.e2e.models import TokenStats
+
+        scores = {"accuracy": {"score": 0.9, "explanation": "Good"}}
+        result = E2ERunResult(
+            run_number=1,
+            exit_code=0,
+            token_stats=TokenStats(input_tokens=0, output_tokens=0),
+            cost_usd=0.0,
+            duration_seconds=0.0,
+            agent_duration_seconds=0.0,
+            judge_duration_seconds=0.0,
+            judge_score=0.9,
+            judge_passed=True,
+            judge_grade="A",
+            judge_reasoning="Good work",
+            workspace_path=Path("/workspace"),
+            logs_path=Path("/logs"),
+            criteria_scores=scores,
+        )
+
+        assert result.criteria_scores == scores
+
 
 class TestSubTestResult:
     """Tests for SubTestResult."""
