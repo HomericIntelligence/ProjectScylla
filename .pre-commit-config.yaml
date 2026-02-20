@@ -50,6 +50,13 @@ repos:
         exclude: ^tests/test_check_type_alias_shadowing\.py$
         types: [python]
         pass_filenames: true
+      - id: validate-model-configs
+        name: Validate Model Config Naming
+        description: Ensure model config filenames match the model_id and required fields are present
+        entry: python scripts/validate_model_configs.py config/models/
+        language: system
+        files: ^config/models/.*\.yaml$
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
