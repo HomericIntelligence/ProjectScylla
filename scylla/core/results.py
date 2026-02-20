@@ -19,9 +19,6 @@ Architecture Notes:
       ├── ExecutorExecutionInfo (executor/runner.py) - Container execution (detailed)
       └── ReportingExecutionInfo (reporting/result.py) - Result persistence (minimal)
 
-    Legacy dataclass (deprecated):
-    - BaseExecutionInfo - Kept for backward compatibility, use ExecutionInfoBase instead
-
     Migration from dataclasses to Pydantic (Issues #604, #658):
     - Leverages recent Pydantic migration (commit 38a3df1)
     - Enables shared validation logic via Pydantic
@@ -31,7 +28,6 @@ Architecture Notes:
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -85,41 +81,6 @@ class ExecutionInfoBase(BaseModel):
     exit_code: int = Field(..., description="Process/container exit code (0 = success)")
     duration_seconds: float = Field(default=0.0, description="Total execution duration in seconds")
     timed_out: bool = Field(default=False, description="Whether execution timed out")
-
-
-@dataclass
-class BaseExecutionInfo:
-    """Base execution information shared across all result types.
-
-    .. deprecated::
-        Use ExecutionInfoBase (Pydantic model) instead. This dataclass is kept
-        for backward compatibility only. New code should use ExecutionInfoBase
-        and its domain-specific subtypes (ExecutorExecutionInfo, ReportingExecutionInfo).
-
-    For the new Pydantic-based hierarchy, see:
-    - ExecutionInfoBase (this module) - Base Pydantic model
-    - ExecutorExecutionInfo (executor/runner.py) - Container execution
-    - ReportingExecutionInfo (reporting/result.py) - Result persistence
-
-    Attributes:
-        exit_code: Process/container exit code (0 = success).
-        duration_seconds: Total execution duration.
-        timed_out: Whether execution timed out.
-
-    """
-
-    exit_code: int
-    duration_seconds: float
-    timed_out: bool = False
-
-    def __post_init__(self) -> None:
-        """Emit a DeprecationWarning on instantiation."""
-        warnings.warn(
-            "BaseExecutionInfo is deprecated and will be removed in v2.0.0. "
-            "Use ExecutionInfoBase instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
 
 
 @dataclass

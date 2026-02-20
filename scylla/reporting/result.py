@@ -18,7 +18,6 @@ class ReportingExecutionInfo(ExecutionInfoBase):
     For other ExecutionInfo types in the hierarchy, see:
     - ExecutionInfoBase (core/results.py) - Base Pydantic model
     - ExecutorExecutionInfo (executor/runner.py) - Detailed with container info
-    - BaseExecutionInfo (core/results.py) - Legacy dataclass (deprecated)
 
     Attributes:
         status: Execution status (e.g., "completed", "failed", "timeout").
