@@ -39,7 +39,7 @@ class EvalOrchestrator:
         orchestrator = EvalOrchestrator()
         result = orchestrator.run_single(
             test_id="001-justfile-to-makefile",
-            model_id="claude-opus-4-5-20251101",
+            model_id=ConfigLoader().load_defaults().default_model,
         )
 
     """

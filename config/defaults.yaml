@@ -37,3 +37,6 @@ output:
 logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Default model used when no --model flag is provided
+default_model: "claude-opus-4-5-20251101"
