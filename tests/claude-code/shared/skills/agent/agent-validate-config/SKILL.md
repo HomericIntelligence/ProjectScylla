@@ -56,6 +56,7 @@ Validation includes:
 |-------|-----|
 | No YAML frontmatter | Ensure file starts/ends with `---` |
 | Invalid phase value | Use: Plan, Test, Implementation, Package, Cleanup |
+| Unknown tool name | Use: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite, SlashCommand, AskUserQuestion, NotebookEdit, BashOutput, KillShell |
 | Delegation target not found | Verify agent name or create referenced agent |
 | Duplicate keys | Remove duplicate entries in frontmatter |
 | Wrong level type | Must be integer 0-5, not string |

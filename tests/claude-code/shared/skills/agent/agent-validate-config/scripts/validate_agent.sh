@@ -76,12 +76,34 @@ fi
 
 # Validate tools (if present)
 if echo "$FRONTMATTER" | grep -q "^tools:"; then
-    VALID_TOOLS=("Read" "Write" "Bash" "Grep" "Glob")
+    VALID_TOOLS=("Read" "Write" "Edit" "Bash" "Grep" "Glob" "Task" "WebFetch" "WebSearch" "TodoWrite" "SlashCommand" "AskUserQuestion" "NotebookEdit" "BashOutput" "KillShell")
     TOOLS_LINE=$(echo "$FRONTMATTER" | grep "^tools:" | cut -d':' -f2-)
 
-    # Simple validation (just check format)
+    # Check format: must be [tool1,tool2,...] bracketed list
     if [[ "$TOOLS_LINE" =~ \[.*\] ]]; then
         echo "✅ Tools field properly formatted"
+        # Strip brackets and split on commas
+        TOOLS_CONTENT="${TOOLS_LINE//[/}"
+        TOOLS_CONTENT="${TOOLS_CONTENT//]/}"
+        IFS=',' read -ra TOOL_LIST <<< "$TOOLS_CONTENT"
+        for tool_entry in "${TOOL_LIST[@]}"; do
+            tool_name=$(echo "$tool_entry" | tr -d ' ')
+            [[ -z "$tool_name" ]] && continue
+            TOOL_VALID=false
+            for valid_tool in "${VALID_TOOLS[@]}"; do
+                if [[ "$tool_name" == "$valid_tool" ]]; then
+                    TOOL_VALID=true
+                    break
+                fi
+            done
+            if [[ "$TOOL_VALID" == "true" ]]; then
+                echo "✅ Valid tool: $tool_name"
+            else
+                echo "❌ Invalid tool: $tool_name"
+                echo "   Valid tools: ${VALID_TOOLS[*]}"
+                ((ERRORS++))
+            fi
+        done
     else
         echo "⚠️  Tools field may be improperly formatted"
     fi
