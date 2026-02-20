@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from scylla.core.results import BaseRunMetrics, ExecutionInfoBase
+from scylla.core.results import BaseRunMetrics, ExecutionInfoBase, GradingInfoBase
 
 
 class TestBaseRunMetrics:
@@ -155,3 +155,74 @@ class TestExecutionInfoBase:
 
         assert info1 == info2
         assert info1 != info3
+
+
+class TestGradingInfoBase:
+    """Tests for GradingInfoBase Pydantic model."""
+
+    def test_construction_basic(self) -> None:
+        """Basic construction with valid parameters."""
+        info = GradingInfoBase(
+            pass_rate=1.0,
+            cost_of_pass=0.50,
+            composite_score=0.925,
+        )
+        assert info.pass_rate == 1.0
+        assert info.cost_of_pass == 0.50
+        assert info.composite_score == 0.925
+
+    def test_construction_failed_run(self) -> None:
+        """Construction representing a failed run."""
+        info = GradingInfoBase(
+            pass_rate=0.0,
+            cost_of_pass=float("inf"),
+            composite_score=0.15,
+        )
+        assert info.pass_rate == 0.0
+        assert info.cost_of_pass == float("inf")
+        assert info.composite_score == 0.15
+
+    def test_construction_zero_cost(self) -> None:
+        """Construction with zero cost."""
+        info = GradingInfoBase(
+            pass_rate=1.0,
+            cost_of_pass=0.0,
+            composite_score=1.0,
+        )
+        assert info.cost_of_pass == 0.0
+
+    def test_missing_pass_rate_raises(self) -> None:
+        """Missing required pass_rate raises ValidationError."""
+        with pytest.raises(ValidationError):
+            GradingInfoBase(cost_of_pass=0.50, composite_score=0.9)  # type: ignore
+
+    def test_missing_cost_of_pass_raises(self) -> None:
+        """Missing required cost_of_pass raises ValidationError."""
+        with pytest.raises(ValidationError):
+            GradingInfoBase(pass_rate=1.0, composite_score=0.9)  # type: ignore
+
+    def test_missing_composite_score_raises(self) -> None:
+        """Missing required composite_score raises ValidationError."""
+        with pytest.raises(ValidationError):
+            GradingInfoBase(pass_rate=1.0, cost_of_pass=0.50)  # type: ignore
+
+    def test_model_dump(self) -> None:
+        """Test Pydantic serialization with .model_dump()."""
+        info = GradingInfoBase(
+            pass_rate=1.0,
+            cost_of_pass=0.50,
+            composite_score=0.925,
+        )
+        data = info.model_dump()
+        assert data == {
+            "pass_rate": 1.0,
+            "cost_of_pass": 0.50,
+            "composite_score": 0.925,
+        }
+
+    def test_subclass_is_instance(self) -> None:
+        """GradingInfo subclass is an instance of GradingInfoBase."""
+        from scylla.reporting.result import GradingInfo
+
+        grading = GradingInfo(pass_rate=1.0, cost_of_pass=0.50, composite_score=0.9)
+        assert isinstance(grading, GradingInfoBase)

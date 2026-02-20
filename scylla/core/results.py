@@ -19,6 +19,10 @@ Architecture Notes:
       ├── ExecutorExecutionInfo (executor/runner.py) - Container execution (detailed)
       └── ReportingExecutionInfo (reporting/result.py) - Result persistence (minimal)
 
+    GradingInfo inheritance hierarchy (Issue #796):
+    - GradingInfoBase (this module) - Base Pydantic model with common fields
+      └── GradingInfo (reporting/result.py) - Reporting persistence
+
     Migration from dataclasses to Pydantic (Issues #604, #658):
     - Leverages recent Pydantic migration (commit 38a3df1)
     - Enables shared validation logic via Pydantic
@@ -81,6 +85,25 @@ class ExecutionInfoBase(BaseModel):
     exit_code: int = Field(..., description="Process/container exit code (0 = success)")
     duration_seconds: float = Field(default=0.0, description="Total execution duration in seconds")
     timed_out: bool = Field(default=False, description="Whether execution timed out")
+
+
+class GradingInfoBase(BaseModel):
+    """Base grading metrics type for all grading results.
+
+    This is the foundational Pydantic model that domain-specific GradingInfo
+    types inherit from. It defines the minimum common fields shared across all
+    grading results.
+
+    Attributes:
+        pass_rate: Pass rate for the run (0.0 or 1.0).
+        cost_of_pass: Cost per successful pass in USD.
+        composite_score: Combined quality score (0.0-1.0).
+
+    """
+
+    pass_rate: float = Field(..., description="Pass rate (0.0 or 1.0)")
+    cost_of_pass: float = Field(..., description="Cost per successful pass")
+    composite_score: float = Field(..., description="Combined quality score")
 
 
 @dataclass
