@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from scylla.e2e.models import ExperimentConfig, TierID, TierResult, TokenStats
+from scylla.e2e.models import ExperimentConfig, TierBaseline, TierID, TierResult, TokenStats
 from scylla.e2e.runner import E2ERunner
 from scylla.e2e.tier_manager import TierManager
 
@@ -252,3 +252,130 @@ class TestLogCheckpointResume:
             runner._load_checkpoint_and_config(checkpoint_path)
 
         mock_log.assert_called_once_with(checkpoint_path)
+
+@pytest.fixture
+def mock_tier_baseline() -> TierBaseline:
+    """Create a TierBaseline with known values for testing."""
+    return TierBaseline(
+        tier_id=TierID.T0,
+        subtest_id="subtest-0",
+        claude_md_path=Path("/tmp/CLAUDE.md"),
+        claude_dir_path=None,
+    )
+
+
+class TestExecuteSingleTier:
+    """Tests for _execute_single_tier baseline fallback behavior."""
+
+    def test_no_best_subtest_returns_previous_baseline(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_baseline: TierBaseline,
+    ) -> None:
+        """When best_subtest is None, previous_baseline is returned unchanged."""
+        runner = E2ERunner(mock_config, MagicMock(), Path("/tmp"))
+        mock_tier_manager = MagicMock()
+        runner.tier_manager = mock_tier_manager
+
+        tier_result = TierResult(tier_id=TierID.T1, subtest_results={})
+        assert tier_result.best_subtest is None
+
+        with (
+            patch.object(runner, "_run_tier", return_value=tier_result),
+            patch.object(runner, "_save_tier_result"),
+        ):
+            returned_tier_result, updated_baseline = runner._execute_single_tier(
+                TierID.T1, mock_tier_baseline, MagicMock()
+            )
+
+        assert updated_baseline is mock_tier_baseline
+        mock_tier_manager.get_baseline_for_subtest.assert_not_called()
+
+    def test_no_best_subtest_with_none_previous_baseline(
+        self,
+        mock_config: ExperimentConfig,
+    ) -> None:
+        """When both best_subtest and previous_baseline are None, returns (tier_result, None)."""
+        runner = E2ERunner(mock_config, MagicMock(), Path("/tmp"))
+        mock_tier_manager = MagicMock()
+        runner.tier_manager = mock_tier_manager
+
+        tier_result = TierResult(tier_id=TierID.T1, subtest_results={})
+
+        with (
+            patch.object(runner, "_run_tier", return_value=tier_result),
+            patch.object(runner, "_save_tier_result"),
+        ):
+            returned_tier_result, updated_baseline = runner._execute_single_tier(
+                TierID.T1, None, MagicMock()
+            )
+
+        assert returned_tier_result is tier_result
+        assert updated_baseline is None
+        mock_tier_manager.get_baseline_for_subtest.assert_not_called()
+
+    def test_best_subtest_returns_new_baseline(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_baseline: TierBaseline,
+    ) -> None:
+        """When best_subtest is set, updated_baseline is the value from get_baseline_for_subtest."""
+        runner = E2ERunner(mock_config, MagicMock(), Path("/tmp"))
+        mock_tier_manager = MagicMock()
+        runner.tier_manager = mock_tier_manager
+        runner.experiment_dir = Path("/results")
+
+        new_baseline = TierBaseline(
+            tier_id=TierID.T1,
+            subtest_id="subtest-1",
+            claude_md_path=None,
+            claude_dir_path=None,
+        )
+        mock_tier_manager.get_baseline_for_subtest.return_value = new_baseline
+
+        tier_result = TierResult(
+            tier_id=TierID.T1,
+            subtest_results={},
+            best_subtest="subtest-1",
+        )
+
+        with (
+            patch.object(runner, "_run_tier", return_value=tier_result),
+            patch.object(runner, "_save_tier_result"),
+        ):
+            _, updated_baseline = runner._execute_single_tier(
+                TierID.T1, mock_tier_baseline, MagicMock()
+            )
+
+        assert updated_baseline == new_baseline
+
+    def test_best_subtest_passes_correct_args_to_tier_manager(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_baseline: TierBaseline,
+    ) -> None:
+        """get_baseline_for_subtest receives correct tier_id, subtest_id, and results_dir."""
+        runner = E2ERunner(mock_config, MagicMock(), Path("/tmp"))
+        mock_tier_manager = MagicMock()
+        runner.tier_manager = mock_tier_manager
+
+        experiment_dir = Path("/results/exp")
+        runner.experiment_dir = experiment_dir
+
+        tier_result = TierResult(
+            tier_id=TierID.T1,
+            subtest_results={},
+            best_subtest="subtest-best",
+        )
+
+        with (
+            patch.object(runner, "_run_tier", return_value=tier_result),
+            patch.object(runner, "_save_tier_result"),
+        ):
+            runner._execute_single_tier(TierID.T1, mock_tier_baseline, MagicMock())
+
+        mock_tier_manager.get_baseline_for_subtest.assert_called_once_with(
+            tier_id=TierID.T1,
+            subtest_id="subtest-best",
+            results_dir=experiment_dir / TierID.T1.value / "subtest-best",
+        )
