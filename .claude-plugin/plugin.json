@@ -115,6 +115,24 @@
         "tests_added": 30,
         "outcome": "success"
       }
+    },
+    {
+      "name": "config-default-model-drift",
+      "file": "skills/config-default-model-drift/SKILL.md",
+      "category": "architecture",
+      "triggers": [
+        "hardcoded model-ID literal in CLI or orchestrator",
+        "model or \"<literal>\" fallback pattern",
+        "stale model literal silently out of sync with config",
+        "replace hardcoded default with ConfigLoader",
+        "single source of truth for default model",
+        "follow-up audit: missed literal from prior refactor"
+      ],
+      "metadata": {
+        "issue": 793,
+        "pr": 838,
+        "outcome": "success"
+      }
     }
   ]
 }
