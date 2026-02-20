@@ -233,6 +233,7 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         env = os.environ.copy()
         env.update(config.env_vars)
+        env.pop("CLAUDECODE", None)
         return env
 
     def _parse_token_stats(self, stdout: str, stderr: str) -> AdapterTokenStats:

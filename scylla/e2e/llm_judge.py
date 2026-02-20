@@ -994,7 +994,7 @@ def _call_claude_judge(
             capture_output=True,
             text=True,
             timeout=1200,  # 20 minutes - judging can take time with Opus
-            env={**os.environ},
+            env={k: v for k, v in os.environ.items() if k != "CLAUDECODE"},
         )
 
         if result.returncode != 0:

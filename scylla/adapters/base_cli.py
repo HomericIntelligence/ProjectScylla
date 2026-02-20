@@ -182,6 +182,7 @@ class BaseCliAdapter(BaseAdapter):
 
         env = os.environ.copy()
         env.update(config.env_vars)
+        env.pop("CLAUDECODE", None)
         return env
 
     @abstractmethod
