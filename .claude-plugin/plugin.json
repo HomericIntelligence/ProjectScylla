@@ -58,6 +58,25 @@
         "tests_added": 28,
         "outcome": "success"
       }
+    },
+    {
+      "name": "ci-deprecation-enforcement",
+      "file": "skills/ci-deprecation-enforcement/SKILL.md",
+      "category": "ci-cd",
+      "triggers": [
+        "promote warning to error in CI",
+        "grep warning step to exit 1",
+        "deprecation gate in CI",
+        "::warning:: to ::error:: in GitHub Actions",
+        "grep exclusion for docstring mentions",
+        "grep -v (deprecated) annotation",
+        "re-export __init__.py grep exclusion"
+      ],
+      "metadata": {
+        "issue": 786,
+        "pr": 834,
+        "outcome": "success"
+      }
     }
   ]
 }
