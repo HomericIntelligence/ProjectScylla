@@ -11,69 +11,79 @@ class TestBaseExecutionInfo:
 
     def test_construction_success(self) -> None:
         """Basic construction with valid parameters."""
-        info = BaseExecutionInfo(
-            exit_code=0,
-            duration_seconds=10.5,
-            timed_out=False,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(
+                exit_code=0,
+                duration_seconds=10.5,
+                timed_out=False,
+            )
         assert info.exit_code == 0
         assert info.duration_seconds == 10.5
         assert info.timed_out is False
 
     def test_construction_failure(self) -> None:
         """Construction with failure exit code."""
-        info = BaseExecutionInfo(
-            exit_code=1,
-            duration_seconds=5.0,
-            timed_out=False,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(
+                exit_code=1,
+                duration_seconds=5.0,
+                timed_out=False,
+            )
         assert info.exit_code == 1
         assert info.duration_seconds == 5.0
 
     def test_construction_timeout(self) -> None:
         """Construction with timeout flag."""
-        info = BaseExecutionInfo(
-            exit_code=124,
-            duration_seconds=30.0,
-            timed_out=True,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(
+                exit_code=124,
+                duration_seconds=30.0,
+                timed_out=True,
+            )
         assert info.exit_code == 124
         assert info.duration_seconds == 30.0
         assert info.timed_out is True
 
     def test_timed_out_default_false(self) -> None:
         """timed_out should default to False if not specified."""
-        info = BaseExecutionInfo(exit_code=0, duration_seconds=1.0)
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(exit_code=0, duration_seconds=1.0)
         assert info.timed_out is False
 
     def test_negative_exit_code(self) -> None:
         """Support negative exit codes (e.g., killed by signal)."""
-        info = BaseExecutionInfo(
-            exit_code=-9,
-            duration_seconds=2.5,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(
+                exit_code=-9,
+                duration_seconds=2.5,
+            )
         assert info.exit_code == -9
 
     def test_zero_duration(self) -> None:
         """Support zero duration (very fast execution)."""
-        info = BaseExecutionInfo(
-            exit_code=0,
-            duration_seconds=0.0,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(
+                exit_code=0,
+                duration_seconds=0.0,
+            )
         assert info.duration_seconds == 0.0
 
     def test_equality(self) -> None:
         """Test dataclass equality."""
-        info1 = BaseExecutionInfo(exit_code=0, duration_seconds=10.0, timed_out=False)
-        info2 = BaseExecutionInfo(exit_code=0, duration_seconds=10.0, timed_out=False)
-        info3 = BaseExecutionInfo(exit_code=1, duration_seconds=10.0, timed_out=False)
+        with pytest.warns(DeprecationWarning):
+            info1 = BaseExecutionInfo(exit_code=0, duration_seconds=10.0, timed_out=False)
+        with pytest.warns(DeprecationWarning):
+            info2 = BaseExecutionInfo(exit_code=0, duration_seconds=10.0, timed_out=False)
+        with pytest.warns(DeprecationWarning):
+            info3 = BaseExecutionInfo(exit_code=1, duration_seconds=10.0, timed_out=False)
 
         assert info1 == info2
         assert info1 != info3
 
     def test_repr(self) -> None:
         """Test string representation."""
-        info = BaseExecutionInfo(exit_code=0, duration_seconds=10.5, timed_out=False)
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(exit_code=0, duration_seconds=10.5, timed_out=False)
         repr_str = repr(info)
         assert "BaseExecutionInfo" in repr_str
         assert "exit_code=0" in repr_str
@@ -152,11 +162,12 @@ class TestComposedTypes:
         # This tests the pattern used in domain-specific types
         duration = 10.5
 
-        execution = BaseExecutionInfo(
-            exit_code=0,
-            duration_seconds=duration,
-            timed_out=False,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            execution = BaseExecutionInfo(
+                exit_code=0,
+                duration_seconds=duration,
+                timed_out=False,
+            )
 
         # Verify duration is captured
         assert execution.duration_seconds == duration
@@ -180,11 +191,12 @@ class TestComposedTypes:
         cost = 0.05
         duration = 10.5
 
-        execution = BaseExecutionInfo(
-            exit_code=0,
-            duration_seconds=duration,
-            timed_out=False,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            execution = BaseExecutionInfo(
+                exit_code=0,
+                duration_seconds=duration,
+                timed_out=False,
+            )
 
         metrics = BaseRunMetrics(
             tokens_input=1000,
@@ -272,22 +284,24 @@ class TestBaseExecutionInfoBackwardCompatibility:
 
     def test_dataclass_still_works(self) -> None:
         """Test that legacy BaseExecutionInfo dataclass still works."""
-        info = BaseExecutionInfo(
-            exit_code=0,
-            duration_seconds=10.5,
-            timed_out=False,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            info = BaseExecutionInfo(
+                exit_code=0,
+                duration_seconds=10.5,
+                timed_out=False,
+            )
         assert info.exit_code == 0
         assert info.duration_seconds == 10.5
         assert info.timed_out is False
 
     def test_dataclass_and_pydantic_have_same_fields(self) -> None:
         """Test that dataclass and Pydantic model have the same core fields."""
-        dataclass_info = BaseExecutionInfo(
-            exit_code=0,
-            duration_seconds=10.5,
-            timed_out=False,
-        )
+        with pytest.warns(DeprecationWarning, match="BaseExecutionInfo is deprecated"):
+            dataclass_info = BaseExecutionInfo(
+                exit_code=0,
+                duration_seconds=10.5,
+                timed_out=False,
+            )
         pydantic_info = ExecutionInfoBase(
             exit_code=0,
             duration_seconds=10.5,
@@ -298,3 +312,11 @@ class TestBaseExecutionInfoBackwardCompatibility:
         assert dataclass_info.exit_code == pydantic_info.exit_code
         assert dataclass_info.duration_seconds == pydantic_info.duration_seconds
         assert dataclass_info.timed_out == pydantic_info.timed_out
+
+    def test_deprecation_warning_emitted(self) -> None:
+        """Test that a DeprecationWarning is emitted on instantiation."""
+        with pytest.warns(
+            DeprecationWarning,
+            match="BaseExecutionInfo is deprecated and will be removed in v2.0.0",
+        ):
+            BaseExecutionInfo(exit_code=0, duration_seconds=1.0)
