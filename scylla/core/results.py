@@ -19,19 +19,14 @@ Architecture Notes:
       ├── ExecutorExecutionInfo (executor/runner.py) - Container execution (detailed)
       └── ReportingExecutionInfo (reporting/result.py) - Result persistence (minimal)
 
-    MetricsInfo inheritance hierarchy (Issue #729):
-    - MetricsInfoBase (this module) - Base Pydantic model with token/cost fields
-      └── MetricsInfo (reporting/result.py) - Result persistence with api_calls
-
-    JudgmentInfo inheritance hierarchy (Issue #729):
-    - JudgmentInfoBase (this module) - Base Pydantic model with judgment fields
-      └── JudgmentInfo (reporting/result.py) - Result persistence with letter_grade
+    RunMetrics inheritance hierarchy (Issue #787):
+    - RunMetricsBase (this module) - Base Pydantic model with common fields
 
     Legacy dataclasses (deprecated):
     - BaseExecutionInfo - Kept for backward compatibility, use ExecutionInfoBase instead
-    - BaseRunMetrics - Kept for backward compatibility, use MetricsInfoBase instead
+    - BaseRunMetrics - Kept for backward compatibility, use RunMetricsBase instead
 
-    Migration from dataclasses to Pydantic (Issues #604, #658, #729):
+    Migration from dataclasses to Pydantic (Issues #604, #658, #787):
     - Leverages recent Pydantic migration (commit 38a3df1)
     - Enables shared validation logic via Pydantic
     - Provides consistent serialization with .model_dump()
@@ -40,6 +35,7 @@ Architecture Notes:
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -95,44 +91,25 @@ class ExecutionInfoBase(BaseModel):
     timed_out: bool = Field(default=False, description="Whether execution timed out")
 
 
-class MetricsInfoBase(BaseModel):
-    """Base token and cost metrics shared across modules.
+class RunMetricsBase(BaseModel):
+    """Base token and cost metrics for all run result types.
 
-    This is the foundational Pydantic model that all domain-specific MetricsInfo
-    types inherit from. It defines the minimum common token and cost fields shared
-    across all evaluation results.
+    This is the foundational Pydantic model that all domain-specific RunMetrics
+    types can inherit from. It defines the minimum common fields shared across
+    all evaluation run metrics.
 
     Attributes:
         tokens_input: Number of input tokens consumed.
         tokens_output: Number of output tokens generated.
-        cost_usd: Total cost in USD (default: 0.0).
+        cost_usd: Total cost in USD.
 
     """
 
     model_config = ConfigDict(frozen=True)
 
-    tokens_input: int = Field(..., description="Input tokens")
-    tokens_output: int = Field(..., description="Output tokens")
-    cost_usd: float = Field(default=0.0, description="Cost in USD")
-
-
-class JudgmentInfoBase(BaseModel):
-    """Base judge evaluation results shared across modules.
-
-    This is the foundational Pydantic model that all domain-specific JudgmentInfo
-    types inherit from. It defines the minimum common judgment fields shared across
-    all evaluation results.
-
-    Attributes:
-        passed: Whether the run passed.
-        impl_rate: Implementation rate (0.0-1.0, default: 0.0).
-
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    passed: bool = Field(..., description="Whether the run passed")
-    impl_rate: float = Field(default=0.0, description="Implementation rate (0.0-1.0)")
+    tokens_input: int = Field(..., description="Number of input tokens consumed")
+    tokens_output: int = Field(..., description="Number of output tokens generated")
+    cost_usd: float = Field(..., description="Total cost in USD")
 
 
 @dataclass
@@ -160,19 +137,23 @@ class BaseExecutionInfo:
     duration_seconds: float
     timed_out: bool = False
 
+    def __post_init__(self) -> None:
+        """Emit a DeprecationWarning on instantiation."""
+        warnings.warn(
+            "BaseExecutionInfo is deprecated and will be removed in v2.0.0. "
+            "Use ExecutionInfoBase instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
 
 @dataclass
 class BaseRunMetrics:
     """Base metrics shared across run result types.
 
     .. deprecated::
-        Use MetricsInfoBase (Pydantic model) instead. This dataclass is kept
-        for backward compatibility only. New code should use MetricsInfoBase
-        and its domain-specific subtypes (MetricsInfo in reporting/result.py).
-
-    For the new Pydantic-based hierarchy, see:
-    - MetricsInfoBase (this module) - Base Pydantic model
-    - MetricsInfo (reporting/result.py) - Result persistence with api_calls
+        Use RunMetricsBase (Pydantic model) instead. This dataclass is kept
+        for backward compatibility only. New code should use RunMetricsBase.
 
     Attributes:
         tokens_input: Number of input tokens consumed.
@@ -184,3 +165,12 @@ class BaseRunMetrics:
     tokens_input: int
     tokens_output: int
     cost_usd: float
+
+    def __post_init__(self) -> None:
+        """Emit a DeprecationWarning on instantiation."""
+        warnings.warn(
+            "BaseRunMetrics is deprecated and will be removed in v2.0.0. "
+            "Use RunMetricsBase instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )

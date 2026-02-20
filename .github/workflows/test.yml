@@ -47,6 +47,24 @@ jobs:
             exit 1
           fi
 
+      - name: Track deprecated BaseRunMetrics usage
+        run: |
+          count=$(grep -rn "BaseRunMetrics" . \
+            --include="*.py" \
+            --exclude-dir=".pixi" \
+            | grep -v "scylla/core/results.py" \
+            | grep -v "# deprecated" \
+            | grep -v "test_results.py" \
+            | wc -l)
+          echo "BaseRunMetrics usage count (excluding definition and tests): $count"
+          if [ "$count" -gt "0" ]; then
+            echo "::warning::Found $count usages of deprecated BaseRunMetrics"
+            grep -rn "BaseRunMetrics" . --include="*.py" --exclude-dir=".pixi" \
+              | grep -v "scylla/core/results.py" \
+              | grep -v "# deprecated" \
+              | grep -v "test_results.py"
+          fi
+
       - name: Install pixi
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
