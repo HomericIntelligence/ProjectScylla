@@ -88,9 +88,7 @@ gh pr merge --auto --rebase
 
 ### Agent System
 
-- [Agent Hierarchy](/agents/hierarchy.md) - 5-level hierarchy
 - [Agent Configurations](/.claude/agents/) - Evaluation-focused agents
-- [Delegation Rules](/agents/delegation-rules.md)
 
 ## Working with Agents
 
@@ -99,7 +97,7 @@ method for completing tasks.
 
 ### Agent Hierarchy
 
-See [agents/hierarchy.md](agents/hierarchy.md) for the complete agent hierarchy including:
+Agent hierarchy is defined in `.claude/agents/` and `tests/claude-code/shared/agents/`:
 
 - 5-level hierarchy (L0 Chief Evaluator → L4 Junior Engineers)
 - Model assignments (Opus, Sonnet, Haiku)
@@ -141,7 +139,7 @@ Relevant links:
 
 - **Issue-specific outputs**: Post as comments on the GitHub issue using `gh issue comment <number>`
 - **Developer documentation**: `/docs/dev/` (architectural decisions, design docs)
-- **Team guides**: `/agents/` (quick start, hierarchy, templates)
+- **Agent guides**: `/.claude/agents/` (configurations, roles, capabilities)
 - **Never duplicate** documentation across locations - link instead
 - See `.claude/shared/github-issue-workflow.md` for GitHub issue read/write patterns
 
@@ -379,11 +377,6 @@ pre-commit run --all-files
 
 ```text
 ProjectScylla/
-+-- agents/                      # Team documentation
-|   +-- README.md                # Quick start guide
-|   +-- hierarchy.md             # Visual hierarchy diagram
-|   +-- delegation-rules.md      # Coordination patterns
-|   +-- templates/               # Agent configuration templates
 +-- config/                      # Configuration files
 |   +-- models/                  # Model configurations (YAML)
 +-- docker/                      # Docker configurations
