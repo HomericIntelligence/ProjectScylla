@@ -253,6 +253,7 @@ class TestLogCheckpointResume:
 
         mock_log.assert_called_once_with(checkpoint_path)
 
+
 @pytest.fixture
 def mock_tier_baseline() -> TierBaseline:
     """Create a TierBaseline with known values for testing."""
