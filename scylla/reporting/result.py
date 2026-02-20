@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from scylla.core.results import ExecutionInfoBase, RunResultBase
+from scylla.core.results import ExecutionInfoBase, GradingInfoBase, RunResultBase
 
 
 class ReportingExecutionInfo(ExecutionInfoBase):
@@ -48,12 +48,17 @@ class JudgmentInfo(BaseModel):
     letter_grade: str = Field(..., description="Letter grade")
 
 
-class GradingInfo(BaseModel):
-    """Calculated grading metrics for a run."""
+class GradingInfo(GradingInfoBase):
+    """Calculated grading metrics for a run.
 
-    pass_rate: float = Field(..., description="Pass rate (0.0 or 1.0)")
-    cost_of_pass: float = Field(..., description="Cost per successful pass")
-    composite_score: float = Field(..., description="Combined quality score")
+    Inherits common fields (pass_rate, cost_of_pass, composite_score)
+    from GradingInfoBase.
+
+    For the GradingInfo hierarchy, see:
+    - GradingInfoBase (core/results.py) - Base Pydantic model
+    - GradingInfo (reporting/result.py) - Reporting persistence (this class)
+
+    """
 
 
 class ReportingRunResult(RunResultBase):
