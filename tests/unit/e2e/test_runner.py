@@ -260,6 +260,7 @@ class TestLogCheckpointResume:
 
         mock_log.assert_called_once_with(checkpoint_path)
 
+
 @pytest.fixture
 def mock_config_with_t5() -> ExperimentConfig:
     """Create a mock ExperimentConfig that includes TierID.T5."""
