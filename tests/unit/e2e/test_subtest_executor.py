@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
 from scylla.e2e.llm_judge import _parse_judge_response
-from scylla.e2e.models import JudgeResultSummary
+from scylla.e2e.models import ExperimentConfig, JudgeResultSummary, SubTestConfig, TierConfig, TierID
 from scylla.e2e.subtest_executor import (
     SubTestExecutor,
     _has_valid_judge_result,
@@ -377,3 +378,90 @@ class TestHasValidJudgeResult:
         result_file.write_text('{"score": 0.9, "passed": true, "grade": "A"}')
 
         assert _has_valid_judge_result(run_dir)
+
+
+class TestPipelineBaselineUsesExperimentConfigLanguage:
+    """Regression tests for the TierConfig.language AttributeError bug.
+
+    SubTestExecutor.run_subtest must use self.config.language (ExperimentConfig)
+    when calling _run_build_pipeline. TierConfig does not have a language field,
+    so accessing tier_config.language raises AttributeError at runtime.
+
+    These tests inspect the actual source code and model structure - no mocking.
+    """
+
+    def test_tier_config_has_no_language_attribute(self) -> None:
+        """TierConfig must not have a language field.
+
+        This confirms the bug precondition: if tier_config.language were ever
+        accessed, it would raise AttributeError.
+        """
+        tier_config = TierConfig(tier_id=TierID.T0, subtests=[])
+        assert not hasattr(tier_config, "language"), (
+            "TierConfig now has a language field. Update subtest_executor.py to "
+            "use tier_config.language if intentional, then remove this assertion."
+        )
+
+    def test_experiment_config_has_language_attribute(self) -> None:
+        """ExperimentConfig has a language field - the correct source."""
+        config = ExperimentConfig(
+            experiment_id="test",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="mojo",
+            tiers_to_run=[TierID.T0],
+        )
+        assert config.language == "mojo"
+
+    def test_subtest_executor_source_uses_self_config_language(self) -> None:
+        """subtest_executor.py must use self.config.language, not tier_config.language.
+
+        Inspects the source of run_subtest to verify the correct attribute path
+        is used when calling _run_build_pipeline.
+        """
+        import ast
+        import inspect
+        import textwrap
+
+        source = textwrap.dedent(inspect.getsource(SubTestExecutor.run_subtest))
+        tree = ast.parse(source)
+
+        bad_pattern_found = False
+        correct_pattern_found = False
+
+        for node in ast.walk(tree):
+            # Look for keyword argument: language=<something>
+            if not isinstance(node, ast.keyword):
+                continue
+            if node.arg != "language":
+                continue
+            value = node.value
+            # Check for tier_config.language (the bug)
+            if (
+                isinstance(value, ast.Attribute)
+                and value.attr == "language"
+                and isinstance(value.value, ast.Name)
+                and value.value.id == "tier_config"
+            ):
+                bad_pattern_found = True
+            # Check for self.config.language (the fix)
+            if (
+                isinstance(value, ast.Attribute)
+                and value.attr == "language"
+                and isinstance(value.value, ast.Attribute)
+                and value.value.attr == "config"
+                and isinstance(value.value.value, ast.Name)
+                and value.value.value.id == "self"
+            ):
+                correct_pattern_found = True
+
+        assert not bad_pattern_found, (
+            "subtest_executor.run_subtest uses tier_config.language - "
+            "this causes AttributeError since TierConfig has no language field. "
+            "Use self.config.language instead."
+        )
+        assert correct_pattern_found, (
+            "subtest_executor.run_subtest does not use self.config.language "
+            "when calling _run_build_pipeline."
+        )

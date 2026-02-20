@@ -139,6 +139,22 @@ def _setup_workspace(
     # Log worktree creation phase
     _phase_log("WORKTREE", f"Creating worktree [{branch_name}] @ [{workspace_abs}]")
 
+    # Proactively prune stale worktree entries and delete any pre-existing branch.
+    # This prevents cross-test branch collisions when multiple tests share the same
+    # base repo and a prior test crashed without fully cleaning up.
+    subprocess.run(
+        ["git", "-C", str(base_repo), "worktree", "prune"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    subprocess.run(
+        ["git", "-C", str(base_repo), "branch", "-D", branch_name],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
     # Create worktree with named branch and commit in a single step
     worktree_cmd = [
         "git",
