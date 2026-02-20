@@ -437,7 +437,7 @@ class SubTestExecutor:
                     _phase_log("BASELINE", "Capturing pipeline baseline before agent runs")
                     pipeline_baseline = _run_build_pipeline(
                         workspace=workspace,
-                        language=tier_config.language,
+                        language=self.config.language,
                     )
 
                     # Save baseline for checkpoint resume
