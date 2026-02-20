@@ -38,7 +38,7 @@ of the incremental adoption strategy tracked in Issue #687.
 | arg-type      | 28    | Incompatible argument types                     |
 | call-arg      | 28    | Incorrect function call arguments               |
 | operator      | 17    | Incompatible operand types                      |
-| var-annotated | 16    | Missing variable type annotations               |
+| var-annotated | 17    | Missing variable type annotations               |
 | union-attr    | 18    | Accessing attributes on unions                  |
 | assignment    | 13    | Type mismatches in assignments                  |
 | index         | 10    | Invalid indexing operations                     |
@@ -50,7 +50,7 @@ of the incremental adoption strategy tracked in Issue #687.
 | no-redef      | 1     | Name redefinition                               |
 | exit-return   | 1     | Context manager `__exit__` return type          |
 | call-overload | 1     | No matching overload variant                    |
-| **Total**     | **143** |                                                |
+| **Total**     | **144** |                                                |
 
 > **Note**: `method-assign` (3 errors in `tests/`) is not in the disabled list because
 > `tests.*` has `ignore_errors = true` in mypy overrides — those errors never surface in
