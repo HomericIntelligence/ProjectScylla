@@ -77,6 +77,26 @@
         "pr": 834,
         "outcome": "success"
       }
+    },
+    {
+      "name": "pydantic-base-class-hierarchy",
+      "file": "skills/pydantic-base-class-hierarchy/SKILL.md",
+      "category": "architecture",
+      "triggers": [
+        "add base class to complete Pydantic hierarchy",
+        "class inherits BaseModel but siblings have *Base classes",
+        "completing consolidation pattern from issue #729",
+        "add *InfoBase to scylla/core/results.py",
+        "export new base class from scylla/core/__init__.py",
+        "ReportingRunResult nested info type missing base class",
+        "follow RunResultBase / ExecutionInfoBase pattern"
+      ],
+      "metadata": {
+        "issue": 796,
+        "pr": 841,
+        "tests_added": 10,
+        "outcome": "success"
+      }
     }
   ]
 }
