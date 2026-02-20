@@ -1,57 +1,116 @@
 # Mypy Known Issues
 
-> **Convention**: Every PR that fixes mypy errors MUST update the counts table below and the
-> total. Run `python scripts/check_mypy_counts.py --update` to auto-update the table, then
-> commit the updated file alongside your fix. The pre-commit hook `check-mypy-counts` will
-> fail if counts are stale.
+**Last Updated**: 2026-02-19
+**Baseline**: 63 suppressed errors across 15 disabled error codes in `scylla/`
 
-**Baseline**: 2026-02-14 | **Roadmap**: Issue #687 | **Last Updated**: 2026-02-20
+This document tracks the known mypy type errors in ProjectScylla that are temporarily suppressed
+to enable incremental adoption. See [#687](https://github.com/mvillmow/ProjectScylla/issues/687)
+for the roadmap to resolve these incrementally.
 
-## Update Instructions
+## Current Status
 
-When your PR fixes mypy errors:
+| State | Count |
+|-------|-------|
+| Active errors (CI blocks on these) | 0 |
+| Suppressed errors (disabled codes) | 63 |
+| Disabled error codes | 15 |
+| Files with errors | 21 of 114 |
 
-1. Run the validation script with `--update` to refresh counts automatically:
+Running `pixi run mypy scylla/` passes with zero errors under the current configuration.
 
-   ```bash
-   python scripts/check_mypy_counts.py --update
-   ```
+## Configuration
 
-2. Review the diff and commit the updated `MYPY_KNOWN_ISSUES.md` with your fix:
+Mypy is configured in `pyproject.toml` under `[tool.mypy]` with minimal strictness settings:
 
-   ```bash
-   git add MYPY_KNOWN_ISSUES.md
-   git commit -m "fix(types): Fix <error-code> type errors; update MYPY_KNOWN_ISSUES.md"
-   ```
+```toml
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+ignore_missing_imports = true
+show_error_codes = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_any_generics = false
+warn_return_any = false
+warn_redundant_casts = false
+warn_unused_ignores = false
+allow_redefinition = true
+implicit_reexport = true
+```
 
-3. The `check-mypy-counts` pre-commit hook validates counts automatically on every commit.
-   If it fails with a mismatch, run `--update` and re-stage the file.
+### Tests and Scripts Exclusions
 
-## Error Count Table
+Type checking is skipped for `tests/` and `scripts/` directories via `[[tool.mypy.overrides]]`
+to focus initial effort on the core `scylla/` package.
 
-The counts below reflect actual mypy errors when all disabled error codes are re-enabled.
-Error codes are disabled in `pyproject.toml` `[tool.mypy]` → `disable_error_code` as part
-of the incremental adoption strategy tracked in Issue #687.
+## Disabled Error Codes
 
-| Error Code    | Count | Description                                     |
-|---------------|-------|-------------------------------------------------|
-| arg-type      | 28    | Incompatible argument types                     |
-| call-arg      | 28    | Incorrect function call arguments               |
-| operator      | 17    | Incompatible operand types                      |
-| var-annotated | 17    | Missing variable type annotations               |
-| union-attr    | 18    | Accessing attributes on unions                  |
-| assignment    | 13    | Type mismatches in assignments                  |
-| index         | 10    | Invalid indexing operations                     |
-| misc          | 3     | Miscellaneous type issues                       |
-| attr-defined  | 4     | Attribute not defined                           |
-| valid-type    | 2     | Invalid type annotations                        |
-| return-value  | 0     | Incompatible return value type                  |
-| override      | 1     | Incompatible method override                    |
-| no-redef      | 1     | Name redefinition                               |
-| exit-return   | 1     | Context manager `__exit__` return type          |
-| call-overload | 1     | No matching overload variant                    |
-| **Total**     | **144** |                                                |
+The following error codes are temporarily disabled via `disable_error_code` in `pyproject.toml`.
+Counts reflect violations when all codes are re-enabled simultaneously.
 
-> **Note**: `method-assign` (3 errors in `tests/`) is not in the disabled list because
-> `tests.*` has `ignore_errors = true` in mypy overrides — those errors never surface in
-> the normal check. The total above covers only the 15 disabled error codes.
+| Error Code | Violations | Description | Remediation |
+|------------|-----------|-------------|-------------|
+| `arg-type` | 16 | Incompatible argument types in function calls | Add/fix type annotations on arguments |
+| `assignment` | 13 | Type mismatches in variable assignments | Narrow types or add explicit casts |
+| `operator` | 11 | Incompatible operand types for operators | Fix operand types or use Union types |
+| `var-annotated` | 8 | Variables need explicit type annotations | Add `: TypeName` annotations |
+| `attr-defined` | 4 | Attribute not defined on type | Fix type narrowing or add attributes |
+| `index` | 3 | Invalid indexing operations | Correct container types |
+| `valid-type` | 2 | Invalid type annotations (e.g., `callable` vs `Callable`) | Use proper typing module names |
+| `misc` | 2 | Miscellaneous type issues | Varies by location |
+| `union-attr` | 1 | Accessing attribute on a Union type | Narrow type before attribute access |
+| `override` | 1 | Incompatible method override | Fix method signature to match parent |
+| `no-redef` | 1 | Name redefined | Remove or rename the redefinition |
+| `exit-return` | 1 | `__exit__` return type issue | Return `bool \| None` explicitly |
+| `return-value` | 1 | Incompatible return value type | Fix return type annotation |
+| `call-overload` | 1 | No matching overload variant | Fix call arguments or overload definition |
+| `call-arg` | Multiple | Incorrect function call arguments | Fix call sites or function signatures |
+
+**Total suppressed**: ~63 errors across 21 files
+
+## Checking Locally
+
+```bash
+# Current config (zero errors expected)
+pixi run mypy scylla/
+
+# See all suppressed errors
+pixi run mypy scylla/ \
+  --enable-error-code assignment \
+  --enable-error-code operator \
+  --enable-error-code arg-type \
+  --enable-error-code valid-type \
+  --enable-error-code index \
+  --enable-error-code attr-defined \
+  --enable-error-code misc \
+  --enable-error-code override \
+  --enable-error-code no-redef \
+  --enable-error-code exit-return \
+  --enable-error-code union-attr \
+  --enable-error-code var-annotated \
+  --enable-error-code call-arg \
+  --enable-error-code return-value \
+  --enable-error-code call-overload
+
+# Full strict mode (adds no-any-return, type-arg, no-untyped-def, no-untyped-call)
+pixi run mypy scylla/ --strict
+```
+
+## Remediation Roadmap
+
+See [#687: Roadmap: Incremental mypy Strictness Improvements](https://github.com/mvillmow/ProjectScylla/issues/687)
+for the phased plan to resolve these errors and enable stricter type checking.
+
+### Quick Wins (Fewest violations)
+
+1. Fix `override` (1), `no-redef` (1), `exit-return` (1), `return-value` (1), `call-overload` (1)
+2. Fix `valid-type` (2), `misc` (2), `union-attr` (1)
+3. Fix `attr-defined` (4), `index` (3)
+
+### Larger Efforts
+
+1. Fix `var-annotated` (8) — add explicit annotations
+2. Fix `operator` (11) — fix operand types
+3. Fix `assignment` (13) — fix assignment type mismatches
+4. Fix `arg-type` (16) — fix function argument types
