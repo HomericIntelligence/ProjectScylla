@@ -54,7 +54,7 @@ class RunResultBase(BaseModel):
 
     """
 
-    model_config = ConfigDict()
+    model_config = ConfigDict(frozen=True)
 
     run_number: int = Field(
         default=0, description="Run number/identifier (1-indexed, 0 if not applicable)"
