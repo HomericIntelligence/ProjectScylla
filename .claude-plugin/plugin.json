@@ -39,6 +39,25 @@
         "refactor for readability",
         "extract helper methods"
       ]
+    },
+    {
+      "name": "model-config-naming-validation",
+      "file": "skills/model-config-naming-validation/SKILL.md",
+      "category": "ci-cd",
+      "triggers": [
+        "validate config file naming",
+        "filename must match model_id",
+        "pre-commit validation script",
+        "import scripts/ in pytest tests",
+        "mypy found twice under different module names",
+        "scripts/__init__.py required for mypy"
+      ],
+      "metadata": {
+        "issue": 682,
+        "pr": 769,
+        "tests_added": 28,
+        "outcome": "success"
+      }
     }
   ]
 }
