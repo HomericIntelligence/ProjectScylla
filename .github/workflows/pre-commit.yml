@@ -45,13 +45,7 @@ jobs:
           # Use lightweight lint environment (skips heavy scientific packages)
           pixi install --environment lint
           pixi --version
-
-          # Run pre-commit on changed files only for PRs; all files for pushes to main
-          if [ "$EVENT_NAME" = "push" ]; then
-            pixi run --environment lint pre-commit run --all-files --show-diff-on-failure
-          else
-            pixi run --environment lint pre-commit run --from-ref "origin/$BASE_REF" --to-ref HEAD --show-diff-on-failure
-          fi
+          pixi run --environment lint pre-commit run --all-files --show-diff-on-failure
 
       - name: Upload pre-commit diff
         if: failure()

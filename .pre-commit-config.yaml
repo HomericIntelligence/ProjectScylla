@@ -35,7 +35,7 @@ repos:
         pass_filenames: false
       - id: mypy-check-python
         name: Mypy Type Check Python
-        description: Type check Python files in scripts/, scylla/, tests/ using pixi run mypy. See MYPY_KNOWN_ISSUES.md for current state.
+        description: Type check Python files in scripts/, scylla/, tests/ using pixi run mypy.
         entry: pixi run mypy scripts/ scylla/ tests/
         language: system
         files: ^(scripts|scylla|tests)/.*\.py$
@@ -59,7 +59,7 @@ repos:
         pass_filenames: false
       - id: check-model-config-consistency
         name: Check Model Config Filename/model_id Consistency
-        description: Fails if any config/models/*.yaml filename does not match its model_id field (uses scylla.config.validation)
+        description: Fails if any config/models/*.yaml filename does not match its model_id field
         entry: pixi run python scripts/check_model_config_consistency.py
         language: system
         files: ^config/models/.*\.yaml$
@@ -96,7 +96,6 @@ repos:
         files: \.(sh|bash|sh\.template)$
         types: [text]
         args: ['--exclude=SC1091']
-        exclude: ^docs/arxiv/
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
