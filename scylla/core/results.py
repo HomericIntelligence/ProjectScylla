@@ -31,6 +31,7 @@ Architecture Notes:
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -110,6 +111,15 @@ class BaseExecutionInfo:
     exit_code: int
     duration_seconds: float
     timed_out: bool = False
+
+    def __post_init__(self) -> None:
+        """Emit a DeprecationWarning on instantiation."""
+        warnings.warn(
+            "BaseExecutionInfo is deprecated and will be removed in v2.0.0. "
+            "Use ExecutionInfoBase instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 @dataclass
