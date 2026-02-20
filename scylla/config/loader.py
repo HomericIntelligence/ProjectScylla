@@ -23,8 +23,7 @@ from .models import (
 )
 from .validation import (
     validate_filename_model_id_consistency,
-    validate_filename_tier_consistency,
-    validate_name_model_family_consistency,
+    validate_model_config_referenced,
 )
 
 logger = logging.getLogger(__name__)
@@ -221,16 +220,9 @@ class ConfigLoader:
             data["tier"] = tier
 
         try:
-            config = TierConfig(**data)
+            return TierConfig(**data)
         except Exception as e:
             raise ConfigurationError(f"Invalid tier configuration in {tier_path}: {e}")
-
-        # Validate filename/tier consistency
-        warnings = validate_filename_tier_consistency(tier_path, config.tier)
-        for warning in warnings:
-            logger.warning(warning)
-
-        return config
 
     def load_all_tiers(self) -> dict[str, TierConfig]:
         """Load all available tier configurations.
@@ -291,11 +283,6 @@ class ConfigLoader:
         for warning in warnings:
             logger.warning(warning)
 
-        # Validate name/model family consistency
-        warnings = validate_name_model_family_consistency(model_path, config.name)
-        for warning in warnings:
-            logger.warning(warning)
-
         return config
 
     def load_all_models(self) -> dict[str, ModelConfig]:
@@ -323,6 +310,15 @@ class ConfigLoader:
             model = self.load_model(model_key)
             if model:
                 result[model_key] = model
+
+        # Check for orphaned model configs (not referenced by config/ or tests/)
+        search_roots = [self.base_path / "config", self.base_path / "tests"]
+        for model_file in sorted(models_dir.glob("*.yaml")):
+            if model_file.name.startswith(".") or model_file.stem.startswith("_"):
+                continue
+            orphan_warnings = validate_model_config_referenced(model_file, search_roots)
+            for warning in orphan_warnings:
+                logger.warning(warning)
 
         return result
 
