@@ -8,6 +8,7 @@ from pathlib import Path
 
 import click
 
+from scylla.config import ConfigLoader
 from scylla.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
     MarkdownReportGenerator,
@@ -92,7 +93,7 @@ def run(
         raise click.UsageError("Cannot use --verbose and --quiet together.")
 
     tiers = list(tier) if tier else None  # None means use test defaults
-    model_id = model or "claude-opus-4-5-20251101"  # Default model
+    model_id = model or ConfigLoader().load_defaults().default_model
 
     # Configure orchestrator
     base_path = output_dir.parent if output_dir else Path(".")

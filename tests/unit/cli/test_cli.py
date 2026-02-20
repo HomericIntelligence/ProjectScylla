@@ -1,8 +1,7 @@
 """Tests for CLI commands."""
 
-from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-import pytest
 from click.testing import CliRunner
 
 from scylla.cli.main import cli
@@ -59,6 +58,34 @@ class TestRunCommand:
         # Should fail because test doesn't exist
         assert result.exit_code == 1
         assert "Error" in result.output
+
+    def test_run_default_model_from_config(self) -> None:
+        """Default model_id is read from ConfigLoader, not a hardcoded literal."""
+        sentinel_model = "test-model-from-config"
+
+        mock_defaults = MagicMock()
+        mock_defaults.default_model = sentinel_model
+
+        mock_loader_instance = MagicMock()
+        mock_loader_instance.load_defaults.return_value = mock_defaults
+
+        captured: dict[str, str] = {}
+
+        mock_orchestrator_instance = MagicMock()
+        mock_orchestrator_instance.run_batch.return_value = []
+
+        def capture_config(config: object) -> MagicMock:
+            captured["model"] = getattr(config, "model", None)
+            return mock_orchestrator_instance
+
+        runner = CliRunner()
+        with (
+            patch("scylla.cli.main.ConfigLoader", return_value=mock_loader_instance),
+            patch("scylla.cli.main.EvalOrchestrator", side_effect=capture_config),
+        ):
+            runner.invoke(cli, ["run", "001-test", "--tier", "T0", "--runs", "1"])
+
+        assert captured.get("model") == sentinel_model
 
 
 class TestReportCommand:

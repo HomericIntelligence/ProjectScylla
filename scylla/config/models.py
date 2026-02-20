@@ -275,6 +275,11 @@ class DefaultsConfig(BaseModel):
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
+    default_model: str = Field(
+        default="claude-opus-4-5-20251101",
+        description="Default model ID when none is specified",
+    )
+
     # Optional extended settings (for executor)
     runs_per_tier: int = Field(default=10, ge=1, le=100)
     timeout_seconds: int = Field(default=3600, ge=60, le=86400)
