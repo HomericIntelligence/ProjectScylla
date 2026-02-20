@@ -19,7 +19,6 @@ fi
 # Get repository info
 REPO_DIR=$(git rev-parse --show-toplevel)
 REPO_NAME=$(basename "$REPO_DIR")
-PARENT_DIR=$(dirname "$REPO_DIR")
 
 # Determine worktree path
 if [[ -d "$INPUT" ]]; then
