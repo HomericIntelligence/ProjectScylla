@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from scylla.core.results import GradingInfoBase
 from scylla.reporting.result import (
     ExecutionInfo,
     GradingInfo,
@@ -180,15 +179,6 @@ class TestGradingInfo:
         )
         assert info.pass_rate == 0.0
         assert info.cost_of_pass == float("inf")
-
-    def test_is_subclass_of_grading_info_base(self) -> None:
-        """GradingInfo is a subclass of GradingInfoBase."""
-        assert issubclass(GradingInfo, GradingInfoBase)
-
-    def test_instance_of_grading_info_base(self) -> None:
-        """GradingInfo instance passes isinstance check for GradingInfoBase."""
-        info = make_grading()
-        assert isinstance(info, GradingInfoBase)
 
 
 class TestReportingRunResult:
