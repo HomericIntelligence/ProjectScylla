@@ -56,8 +56,6 @@ Homepage = "https://github.com/mvillmow/ProjectScylla"
 Repository = "https://github.com/mvillmow/ProjectScylla"
 Issues = "https://github.com/mvillmow/ProjectScylla/issues"
 
-[tool.hatch.build]
-
 [tool.hatch.build.targets.wheel]
 packages = ["scylla"]
 
