@@ -7,14 +7,12 @@ from scylla.core.results import (
     BaseExecutionInfo,
     BaseRunMetrics,
     ExecutionInfoBase,
-    JudgmentInfoBase,
-    MetricsInfoBase,
+    RunMetricsBase,
 )
 
 __all__ = [
     "BaseExecutionInfo",
     "BaseRunMetrics",
     "ExecutionInfoBase",
-    "JudgmentInfoBase",
-    "MetricsInfoBase",
+    "RunMetricsBase",
 ]
