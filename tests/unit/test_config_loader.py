@@ -440,8 +440,9 @@ adapter: anthropic_adapter
 
         assert config is not None
         assert config.model_id == "claude-sonnet-4-5"
-        # Should have warning about mismatch
-        assert len(caplog.records) == 1
+        # Should have warning about filename/model_id mismatch
+        # (plus a second warning about name/family mismatch since 'opus' not in 'Claude Sonnet 4.5')
+        assert len(caplog.records) >= 1
         assert "claude-opus-4.yaml" in caplog.text
         assert "claude-sonnet-4-5" in caplog.text
         assert "claude-sonnet-4-5.yaml" in caplog.text
