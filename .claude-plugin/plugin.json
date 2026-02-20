@@ -41,6 +41,27 @@
       ]
     },
     {
+      "name": "pydantic-type-consolidation-metrics-judgment",
+      "file": "skills/pydantic-type-consolidation-metrics-judgment/SKILL.md",
+      "category": "architecture",
+      "triggers": [
+        "apply same consolidation pattern to MetricsInfo",
+        "apply same consolidation pattern to JudgmentInfo",
+        "MetricsInfo needs a base class",
+        "JudgmentInfo variants across modules",
+        "follow the pydantic-type-consolidation skill",
+        "consolidate token/cost metrics types",
+        "consolidate judgment result types"
+      ],
+      "metadata": {
+        "issue": 729,
+        "pr": 788,
+        "tests_added": 35,
+        "outcome": "success",
+        "follow_up_from": 658
+      }
+    },
+    {
       "name": "model-config-naming-validation",
       "file": "skills/model-config-naming-validation/SKILL.md",
       "category": "ci-cd",
