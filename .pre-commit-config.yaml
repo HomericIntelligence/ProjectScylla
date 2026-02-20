@@ -92,6 +92,7 @@ repos:
       - id: shellcheck
         name: ShellCheck
         description: Lint shell scripts and templates for best practices
+        exclude: ^(build/|docs/arxiv/)
         files: \.(sh|bash|sh\.template)$
         types: [text]
         args: ['--exclude=SC1091']
