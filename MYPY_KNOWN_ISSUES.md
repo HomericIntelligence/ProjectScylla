@@ -35,22 +35,22 @@ of the incremental adoption strategy tracked in Issue #687.
 
 | Error Code    | Count | Description                                     |
 |---------------|-------|-------------------------------------------------|
-| arg-type      | 30    | Incompatible argument types                     |
+| arg-type      | 28    | Incompatible argument types                     |
 | call-arg      | 28    | Incorrect function call arguments               |
-| operator      | 20    | Incompatible operand types                      |
-| var-annotated | 17    | Missing variable type annotations               |
-| union-attr    | 16    | Accessing attributes on unions                  |
-| assignment    | 14    | Type mismatches in assignments                  |
+| operator      | 17    | Incompatible operand types                      |
+| var-annotated | 16    | Missing variable type annotations               |
+| union-attr    | 18    | Accessing attributes on unions                  |
+| assignment    | 13    | Type mismatches in assignments                  |
 | index         | 10    | Invalid indexing operations                     |
-| misc          | 6     | Miscellaneous type issues                       |
+| misc          | 3     | Miscellaneous type issues                       |
 | attr-defined  | 4     | Attribute not defined                           |
 | valid-type    | 2     | Invalid type annotations                        |
-| return-value  | 1     | Incompatible return value type                  |
+| return-value  | 0     | Incompatible return value type                  |
 | override      | 1     | Incompatible method override                    |
 | no-redef      | 1     | Name redefinition                               |
 | exit-return   | 1     | Context manager `__exit__` return type          |
 | call-overload | 1     | No matching overload variant                    |
-| **Total**     | **152** |                                                |
+| **Total**     | **143** |                                                |
 
 > **Note**: `method-assign` (3 errors in `tests/`) is not in the disabled list because
 > `tests.*` has `ignore_errors = true` in mypy overrides — those errors never surface in
