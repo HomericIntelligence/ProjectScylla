@@ -402,6 +402,30 @@ class E2ERunner:
 
         return tier_results
 
+    def _create_baseline_from_tier_result(
+        self,
+        tier_id: TierID,
+        tier_result: TierResult,
+    ) -> TierBaseline | None:
+        """Create a baseline from a tier result's best subtest.
+
+        Args:
+            tier_id: The tier the result belongs to.
+            tier_result: The result from which to derive the baseline.
+
+        Returns:
+            TierBaseline for the best subtest, or None if no best subtest exists.
+
+        """
+        if not tier_result.best_subtest:
+            return None
+        subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
+        return self.tier_manager.get_baseline_for_subtest(
+            tier_id=tier_id,
+            subtest_id=tier_result.best_subtest,
+            results_dir=subtest_dir,
+        )
+
     def _execute_single_tier(
         self,
         tier_id: TierID,
@@ -422,14 +446,9 @@ class E2ERunner:
         tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
 
         # Set baseline for next tier
-        updated_baseline = previous_baseline
-        if tier_result.best_subtest:
-            subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
-            updated_baseline = self.tier_manager.get_baseline_for_subtest(
-                tier_id=tier_id,
-                subtest_id=tier_result.best_subtest,
-                results_dir=subtest_dir,
-            )
+        updated_baseline = (
+            self._create_baseline_from_tier_result(tier_id, tier_result) or previous_baseline
+        )
 
         # Save intermediate results
         self._save_tier_result(tier_id, tier_result)
@@ -509,19 +528,14 @@ class E2ERunner:
                 best_cop = tier_results[tier_id].cost_of_pass
                 best_tier = tier_id
 
-        if best_tier and tier_results[best_tier].best_subtest:
-            subtest_dir = (
-                self.experiment_dir / best_tier.value / tier_results[best_tier].best_subtest
-            )
-            baseline = self.tier_manager.get_baseline_for_subtest(
-                tier_id=best_tier,
-                subtest_id=tier_results[best_tier].best_subtest,
-                results_dir=subtest_dir,
-            )
-            logger.info(
-                f"Selected {best_tier.value} as baseline for next tier group (CoP: ${best_cop:.4f})"
-            )
-            return baseline
+        if best_tier:
+            baseline = self._create_baseline_from_tier_result(best_tier, tier_results[best_tier])
+            if baseline:
+                logger.info(
+                    f"Selected {best_tier.value} as baseline for next tier group"
+                    f" (CoP: ${best_cop:.4f})"
+                )
+                return baseline
 
         return None
 
