@@ -116,6 +116,24 @@
         "tests_refactored": 4,
         "outcome": "success"
       }
+    },
+    {
+      "name": "unit-test-instance-attr-patching",
+      "file": "skills/unit-test-instance-attr-patching/SKILL.md",
+      "category": "testing",
+      "triggers": [
+        "constructor builds collaborator internally",
+        "patch.object not working on instance attribute",
+        "MagicMock assertion never called",
+        "assert is fails for Pydantic model",
+        "need to test conditional assignment fallback",
+        "unit test with tier_manager mock"
+      ],
+      "metadata": {
+        "issue": 772,
+        "pr": 818,
+        "outcome": "success"
+      }
     }
   ]
 }
