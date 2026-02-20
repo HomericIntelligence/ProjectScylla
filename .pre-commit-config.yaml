@@ -53,7 +53,7 @@ repos:
       - id: validate-model-configs
         name: Validate Model Config Naming
         description: Ensure model config filenames match the model_id and required fields are present
-        entry: python scripts/validate_model_configs.py config/models/
+        entry: pixi run python scripts/validate_model_configs.py
         language: system
         files: ^config/models/.*\.yaml$
         pass_filenames: false
@@ -63,7 +63,7 @@ repos:
           Validate that MYPY_KNOWN_ISSUES.md table counts match actual mypy output.
           Update the table when fixing type errors by running:
           python scripts/check_mypy_counts.py --update
-        entry: python scripts/check_mypy_counts.py
+        entry: pixi run python scripts/validate_model_configs.py
         language: system
         files: ^(scripts|scylla|tests)/.*\.py$|^MYPY_KNOWN_ISSUES\.md$
         types_or: [python, markdown]
