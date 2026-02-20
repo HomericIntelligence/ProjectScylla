@@ -8,7 +8,12 @@ from unittest.mock import MagicMock
 import pytest
 
 from scylla.e2e.llm_judge import _parse_judge_response
-from scylla.e2e.models import ExperimentConfig, JudgeResultSummary, SubTestConfig, TierConfig, TierID
+from scylla.e2e.models import (
+    ExperimentConfig,
+    JudgeResultSummary,
+    TierConfig,
+    TierID,
+)
 from scylla.e2e.subtest_executor import (
     SubTestExecutor,
     _has_valid_judge_result,
@@ -93,8 +98,6 @@ class TestComputeJudgeConsensus:
 
     def test_consensus_all_valid_judges(self) -> None:
         """Test consensus computation with all valid judges."""
-        from unittest.mock import MagicMock
-
         from scylla.e2e.models import ExperimentConfig, TierID
 
         config = ExperimentConfig(
@@ -138,8 +141,6 @@ class TestComputeJudgeConsensus:
 
     def test_consensus_with_invalid_judge(self) -> None:
         """Test consensus computation excludes invalid judges."""
-        from unittest.mock import MagicMock
-
         from scylla.e2e.models import ExperimentConfig, TierID
 
         config = ExperimentConfig(
@@ -183,8 +184,6 @@ class TestComputeJudgeConsensus:
 
     def test_consensus_no_judges(self) -> None:
         """Test consensus computation with no judges."""
-        from unittest.mock import MagicMock
-
         from scylla.e2e.models import ExperimentConfig, TierID
 
         config = ExperimentConfig(

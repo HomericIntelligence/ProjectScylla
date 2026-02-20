@@ -450,6 +450,7 @@ class E2ERunner:
 
         """
         tier_results: dict[TierID, TierResult] = {}
+        errors: dict[TierID, Exception] = {}
 
         with ThreadPoolExecutor(max_workers=len(group)) as executor:
             # Submit all tiers in this group
@@ -473,7 +474,17 @@ class E2ERunner:
                     logger.info(f"Completed tier {tier_id.value} in parallel group")
                 except Exception as e:
                     logger.error(f"Tier {tier_id.value} failed: {e}")
-                    raise
+                    errors[tier_id] = e
+
+        # Only raise if ALL tiers failed — a single failure should not abort siblings
+        if errors and not tier_results:
+            first_error = next(iter(errors.values()))
+            raise RuntimeError(
+                f"All tiers in parallel group failed. First error: {first_error}"
+            ) from first_error
+        elif errors:
+            for tid, err in errors.items():
+                logger.warning(f"Tier {tid.value} failed but other tiers succeeded: {err}")
 
         return tier_results
 
