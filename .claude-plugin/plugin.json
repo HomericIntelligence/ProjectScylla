@@ -79,57 +79,21 @@
       }
     },
     {
-      "name": "pydantic-base-class-hierarchy",
-      "file": "skills/pydantic-base-class-hierarchy/SKILL.md",
-      "category": "architecture",
-      "triggers": [
-        "add base class to complete Pydantic hierarchy",
-        "class inherits BaseModel but siblings have *Base classes",
-        "completing consolidation pattern from issue #729",
-        "add *InfoBase to scylla/core/results.py",
-        "export new base class from scylla/core/__init__.py",
-        "ReportingRunResult nested info type missing base class",
-        "follow RunResultBase / ExecutionInfoBase pattern"
-      ],
-      "metadata": {
-        "issue": 796,
-        "pr": 841,
-        "tests_added": 10,
-        "outcome": "success"
-      }
-    },
-    {
-      "name": "test-internal-method-with-mocks",
-      "file": "skills/test-internal-method-with-mocks/SKILL.md",
+      "name": "pydantic-frozen-consistency",
+      "file": "skills/pydantic-frozen-consistency/SKILL.md",
       "category": "testing",
       "triggers": [
-        "no unit tests for internal runner method",
-        "add coverage for E2ERunner internal method",
-        "test method that delegates to tier_manager",
-        "test method using self.experiment_dir",
-        "unit test for _select_best_baseline_from_group"
+        "ConfigDict() with no frozen=True on result base class",
+        "inconsistent frozen=True across sibling Pydantic base types",
+        "evaluate whether model should be frozen or intentionally mutable",
+        "Pydantic subtype drops frozen=True when overriding model_config",
+        "model_config = ConfigDict(arbitrary_types_allowed=True) without frozen",
+        "audit Pydantic immutability consistency"
       ],
       "metadata": {
-        "issue": 773,
-        "pr": 819,
-        "tests_added": 3,
-        "outcome": "success"
-      }
-    },
-    {
-      "name": "wheel-only-build",
-      "file": "skills/wheel-only-build/SKILL.md",
-      "category": "tooling",
-      "triggers": [
-        "configure binary-only distribution",
-        "hatchling wheel-only build",
-        "suppress sdist generation",
-        "pyproject.toml targets = wheel",
-        "exclude source distribution from hatch build"
-      ],
-      "metadata": {
-        "issue": 746,
-        "pr": 804,
+        "issue": 799,
+        "pr": 846,
+        "tests_added": 6,
         "outcome": "success"
       }
     }
