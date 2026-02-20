@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from scylla.e2e.models import ExperimentConfig, TierID, TierResult, TokenStats
 from scylla.e2e.runner import E2ERunner
+from scylla.e2e.tier_manager import TierManager
 
 
 @pytest.fixture
@@ -29,15 +30,27 @@ def mock_tier_manager() -> MagicMock:
     return MagicMock()
 
 
+@pytest.fixture
+def wired_runner(
+    mock_config: ExperimentConfig,
+    mock_tier_manager: MagicMock,
+    tmp_path: Path,
+) -> E2ERunner:
+    """Pre-configured E2ERunner with experiment_dir and tier_manager already set."""
+    with patch.object(TierManager, "__init__", return_value=None):
+        runner = E2ERunner(mock_config, tmp_path / "tiers", tmp_path / "results")
+    runner.tier_manager = mock_tier_manager
+    runner.experiment_dir = tmp_path / "experiment"
+    runner.experiment_dir.mkdir(parents=True)
+    return runner
+
+
 class TestTokenStatsAggregation:
     """Tests for _aggregate_token_stats helper method."""
 
-    def test_empty_tier_results(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_empty_tier_results(self, wired_runner: E2ERunner) -> None:
         """Test aggregation with empty tier results."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-        result = runner._aggregate_token_stats({})
+        result = wired_runner._aggregate_token_stats({})
 
         assert isinstance(result, TokenStats)
         assert result.input_tokens == 0
@@ -45,12 +58,8 @@ class TestTokenStatsAggregation:
         assert result.cache_creation_tokens == 0
         assert result.cache_read_tokens == 0
 
-    def test_single_tier_result(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_single_tier_result(self, wired_runner: E2ERunner) -> None:
         """Test aggregation with single tier."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-
         tier_results = {
             TierID.T0: TierResult(
                 tier_id=TierID.T0,
@@ -64,19 +73,15 @@ class TestTokenStatsAggregation:
             )
         }
 
-        result = runner._aggregate_token_stats(tier_results)
+        result = wired_runner._aggregate_token_stats(tier_results)
 
         assert result.input_tokens == 100
         assert result.output_tokens == 50
         assert result.cache_creation_tokens == 20
         assert result.cache_read_tokens == 10
 
-    def test_multiple_tier_results(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_multiple_tier_results(self, wired_runner: E2ERunner) -> None:
         """Test aggregation with multiple tiers."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-
         tier_results = {
             TierID.T0: TierResult(
                 tier_id=TierID.T0,
@@ -110,19 +115,15 @@ class TestTokenStatsAggregation:
             ),
         }
 
-        result = runner._aggregate_token_stats(tier_results)
+        result = wired_runner._aggregate_token_stats(tier_results)
 
         assert result.input_tokens == 450  # 100 + 200 + 150
         assert result.output_tokens == 185  # 50 + 75 + 60
         assert result.cache_creation_tokens == 75  # 20 + 30 + 25
         assert result.cache_read_tokens == 37  # 10 + 15 + 12
 
-    def test_zero_token_stats(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_zero_token_stats(self, wired_runner: E2ERunner) -> None:
         """Test aggregation with tiers that have zero tokens."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-
         tier_results = {
             TierID.T0: TierResult(
                 tier_id=TierID.T0,
@@ -141,7 +142,7 @@ class TestTokenStatsAggregation:
             ),
         }
 
-        result = runner._aggregate_token_stats(tier_results)
+        result = wired_runner._aggregate_token_stats(tier_results)
 
         assert result.input_tokens == 100
         assert result.output_tokens == 50
