@@ -440,9 +440,8 @@ adapter: anthropic_adapter
 
         assert config is not None
         assert config.model_id == "claude-sonnet-4-5"
-        # Should have warning about filename/model_id mismatch
-        # (plus a second warning about name/family mismatch since 'opus' not in 'Claude Sonnet 4.5')
-        assert len(caplog.records) >= 1
+        # Should have warning about mismatch
+        assert len(caplog.records) == 1
         assert "claude-opus-4.yaml" in caplog.text
         assert "claude-sonnet-4-5" in caplog.text
         assert "claude-sonnet-4-5.yaml" in caplog.text
@@ -472,83 +471,64 @@ adapter: openai_adapter
         assert not caplog.records  # No warnings for test fixtures
 
 
-class TestFilenameTierConsistency:
-    """Test validation of filename/tier consistency."""
+class TestModelConfigOrphanValidation:
+    """Integration tests for orphan model config detection via load_all_models()."""
 
-    def test_filename_matches_tier_exact(
+    def _make_model_yaml(self, path: Path, model_id: str, name: str = "Test Model") -> None:
+        path.write_text(f"model_id: {model_id}\nname: {name}\nprovider: test\nadapter: test\n")
+
+    def test_load_all_models_warns_unreferenced(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
-        """Test validation passes when filename matches tier exactly."""
-        config_dir = tmp_path / "config" / "tiers"
-        config_dir.mkdir(parents=True)
+        """load_all_models() logs WARNING for model configs not referenced anywhere."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (tmp_path / "tests").mkdir()
 
-        config_path = config_dir / "t0.yaml"
-        config_path.write_text("""
-tier: t0
-name: Baseline
-""")
+        self._make_model_yaml(models_dir / "orphan-model.yaml", "orphan-model")
 
         loader = ConfigLoader(str(tmp_path))
         with caplog.at_level(logging.WARNING):
-            config = loader.load_tier("t0")
+            models = loader.load_all_models()
 
-        assert config is not None
-        assert config.tier == "t0"
-        assert not caplog.records  # No warnings
+        assert "orphan-model" in models
+        assert any("orphan-model.yaml" in r.message for r in caplog.records)
 
-    def test_filename_mismatch_warns(
+    def test_load_all_models_no_warn_referenced(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
-        """Test validation warns when filename doesn't match tier."""
-        config_dir = tmp_path / "config" / "tiers"
-        config_dir.mkdir(parents=True)
+        """load_all_models() logs no orphan warning when model is referenced."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        config_dir = tmp_path / "config"
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
 
-        # Filename says t0, but tier field says t1
-        config_path = config_dir / "t0.yaml"
-        config_path.write_text("""
-tier: t1
-name: Skills
-""")
+        self._make_model_yaml(models_dir / "referenced-model.yaml", "referenced-model")
 
-        loader = ConfigLoader(str(tmp_path))
-        with caplog.at_level(logging.WARNING):
-            config = loader.load_tier("t0")
-
-        assert config is not None
-        assert config.tier == "t1"
-        # Should have warning about mismatch
-        assert len(caplog.records) == 1
-        assert "t0.yaml" in caplog.text
-        assert "t1" in caplog.text
-        assert "t1.yaml" in caplog.text
-
-    def test_test_fixtures_skip_validation(self, tmp_path: Path) -> None:
-        """Test that test fixtures (prefixed with _) skip validation."""
-        from scylla.config.validation import validate_filename_tier_consistency
-
-        # Test fixture with underscore prefix - tier field won't match filename
-        config_path = tmp_path / "_test-fixture.yaml"
-        warnings = validate_filename_tier_consistency(config_path, "t0")
-
-        assert not warnings  # No warnings for test fixtures
-
-    def test_warning_message_format(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
-        """Test that warning message contains filename and tier field."""
-        config_dir = tmp_path / "config" / "tiers"
-        config_dir.mkdir(parents=True)
-
-        config_path = config_dir / "t2.yaml"
-        config_path.write_text("""
-tier: t3
-name: Delegation
-""")
+        # Reference the model in a config YAML
+        (config_dir / "experiment.yaml").write_text("model: referenced-model\ntier: t0\n")
 
         loader = ConfigLoader(str(tmp_path))
         with caplog.at_level(logging.WARNING):
-            loader.load_tier("t2")
+            models = loader.load_all_models()
 
-        assert len(caplog.records) == 1
-        warning_text = caplog.records[0].message
-        assert "t2.yaml" in warning_text
-        assert "t3" in warning_text
-        assert "t3.yaml" in warning_text
+        assert "referenced-model" in models
+        # No orphan warnings expected
+        assert not any("referenced-model.yaml" in r.message for r in caplog.records)
+
+    def test_load_all_models_skips_test_fixtures(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """load_all_models() never emits orphan warnings for _-prefixed fixtures."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (tmp_path / "tests").mkdir()
+
+        self._make_model_yaml(models_dir / "_my-fixture.yaml", "different-model-id")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            loader.load_all_models()
+
+        assert not any("_my-fixture.yaml" in r.message for r in caplog.records)

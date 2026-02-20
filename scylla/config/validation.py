@@ -5,7 +5,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-KNOWN_FAMILIES: frozenset[str] = frozenset({"sonnet", "haiku", "opus"})
+_REFERENCE_EXTENSIONS = ("*.yaml", "*.py")
 
 
 def get_expected_filename(model_id: str) -> str:
@@ -21,59 +21,6 @@ def get_expected_filename(model_id: str) -> str:
 
     """
     return model_id.replace(":", "-")
-
-
-def extract_model_family(filename_stem: str) -> str | None:
-    """Extract model family from filename stem.
-
-    Splits the stem on '-' and returns the first part that matches a known
-    model family (case-insensitive).
-
-    Args:
-        filename_stem: Filename without extension (e.g., 'claude-sonnet-4-5')
-
-    Returns:
-        Lowercase family name (e.g., 'sonnet'), or None if not recognized
-
-    """
-    for part in filename_stem.split("-"):
-        if part.lower() in KNOWN_FAMILIES:
-            return part.lower()
-    return None
-
-
-def validate_name_model_family_consistency(config_path: Path, name: str) -> list[str]:
-    """Validate that the name field contains the model family from the filename.
-
-    Derives the expected model family from the filename stem and checks that
-    the human-readable name contains that family (case-insensitive). Skips
-    test fixtures (stems prefixed with '_') and unknown families.
-
-    Args:
-        config_path: Path to the config file
-        name: Human-readable name field from the config
-
-    Returns:
-        List of warning messages (empty if valid)
-
-    """
-    warnings = []
-    filename_stem = config_path.stem
-
-    if filename_stem.startswith("_"):
-        return warnings
-
-    family = extract_model_family(filename_stem)
-    if family is None:
-        return warnings
-
-    if family not in name.lower():
-        warnings.append(
-            f"name '{name}' does not contain expected model family "
-            f"'{family}' (derived from filename '{filename_stem}')"
-        )
-
-    return warnings
 
 
 def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> list[str]:
@@ -116,32 +63,41 @@ def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> 
     return warnings
 
 
-def validate_filename_tier_consistency(config_path: Path, tier: str) -> list[str]:
-    """Validate that config filename matches the tier field.
+def validate_model_config_referenced(config_path: Path, search_roots: list[Path]) -> list[str]:
+    """Warn if model config file is not referenced by any file under search_roots.
+
+    Scans .yaml and .py files under each root for the config's filename stem.
+    Skips _-prefixed test fixtures. Does not count the config file itself as
+    a reference.
 
     Args:
-        config_path: Path to config file
-        tier: tier field from config (e.g., 't0')
+        config_path: Path to the model config file
+        search_roots: Directories to search for references
 
     Returns:
-        List of warning messages (empty if valid)
+        List of warning messages (empty if referenced or a test fixture)
 
     """
-    warnings = []
-    filename_stem = config_path.stem
+    stem = config_path.stem
 
-    # Skip validation for test fixtures (prefixed with _)
-    if filename_stem.startswith("_"):
-        return warnings
+    # Skip test fixtures
+    if stem.startswith("_"):
+        return []
 
-    # Check exact match
-    if filename_stem == tier:
-        return warnings
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for ext_pattern in _REFERENCE_EXTENSIONS:
+            for f in root.rglob(ext_pattern):
+                if f == config_path:
+                    continue  # don't count self as reference
+                try:
+                    if stem in f.read_text(encoding="utf-8", errors="ignore"):
+                        return []
+                except (OSError, PermissionError):
+                    continue
 
-    # Mismatch detected
-    warnings.append(
-        f"Config filename '{filename_stem}.yaml' does not match tier "
-        f"'{tier}'. Expected '{tier}.yaml'"
-    )
-
-    return warnings
+    return [
+        f"Model config '{config_path.name}' is not referenced by any file under "
+        f"{[str(r) for r in search_roots]}. It may be orphaned."
+    ]
