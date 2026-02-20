@@ -19,6 +19,10 @@ Architecture Notes:
       ├── ExecutorExecutionInfo (executor/runner.py) - Container execution (detailed)
       └── ReportingExecutionInfo (reporting/result.py) - Result persistence (minimal)
 
+    GradingInfo inheritance hierarchy (Issue #796):
+    - GradingInfoBase (this module) - Base Pydantic model with common fields
+      └── GradingInfo (reporting/result.py) - Reporting persistence
+
     RunMetrics inheritance hierarchy (Issue #787):
     - RunMetricsBase (this module) - Base Pydantic model with common fields
 
@@ -91,27 +95,6 @@ class ExecutionInfoBase(BaseModel):
     timed_out: bool = Field(default=False, description="Whether execution timed out")
 
 
-class RunMetricsBase(BaseModel):
-    """Base token and cost metrics for all run result types.
-
-    This is the foundational Pydantic model that all domain-specific RunMetrics
-    types can inherit from. It defines the minimum common fields shared across
-    all evaluation run metrics.
-
-    Attributes:
-        tokens_input: Number of input tokens consumed.
-        tokens_output: Number of output tokens generated.
-        cost_usd: Total cost in USD.
-
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    tokens_input: int = Field(..., description="Number of input tokens consumed")
-    tokens_output: int = Field(..., description="Number of output tokens generated")
-    cost_usd: float = Field(..., description="Total cost in USD")
-
-
 @dataclass
 class BaseExecutionInfo:
     """Base execution information shared across all result types.
@@ -147,13 +130,49 @@ class BaseExecutionInfo:
         )
 
 
+class GradingInfoBase(BaseModel):
+    """Base grading metrics type for all grading results.
+
+    This is the foundational Pydantic model that domain-specific GradingInfo
+    types inherit from. It defines the minimum common fields shared across all
+    grading results.
+
+    Attributes:
+        pass_rate: Pass rate for the run (0.0 or 1.0).
+        cost_of_pass: Cost per successful pass in USD.
+        composite_score: Combined quality score (0.0-1.0).
+
+    """
+
+    pass_rate: float = Field(..., description="Pass rate (0.0 or 1.0)")
+    cost_of_pass: float = Field(..., description="Cost per successful pass")
+    composite_score: float = Field(..., description="Combined quality score")
+
+
+class RunMetricsBase(BaseModel):
+    """Base token and cost metrics for all run result types.
+
+    This is the foundational Pydantic model that all domain-specific RunMetrics
+    types can inherit from. It defines the minimum common fields shared across
+    all evaluation run metrics.
+
+    Attributes:
+        tokens_input: Number of input tokens consumed.
+        tokens_output: Number of output tokens generated.
+        cost_usd: Total cost in USD.
+
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    tokens_input: int = Field(..., description="Number of input tokens consumed")
+    tokens_output: int = Field(..., description="Number of output tokens generated")
+    cost_usd: float = Field(..., description="Total cost in USD")
+
+
 @dataclass
 class BaseRunMetrics:
     """Base metrics shared across run result types.
-
-    .. deprecated::
-        Use RunMetricsBase (Pydantic model) instead. This dataclass is kept
-        for backward compatibility only. New code should use RunMetricsBase.
 
     Attributes:
         tokens_input: Number of input tokens consumed.

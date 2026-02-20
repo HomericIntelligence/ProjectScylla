@@ -226,6 +226,32 @@
         "pr": 763,
         "outcome": "success"
       }
+    },
+    {
+      "name": "deprecation-warning-migration",
+      "file": "skills/deprecation-warning-migration/SKILL.md",
+      "category": "architecture",
+      "triggers": [
+        "deprecate a dataclass",
+        "add DeprecationWarning to legacy class",
+        "migrate dataclass to Pydantic BaseModel",
+        "backward compatibility wrapper",
+        "__post_init__ warning pattern",
+        "pytest.warns on deprecated class",
+        "replace @dataclass with Pydantic",
+        "ruff D105 missing docstring in magic method"
+      ],
+      "metadata": {
+        "issues": [
+          728,
+          787
+        ],
+        "prs": [
+          779,
+          835
+        ],
+        "tests_added": 9
+      }
     }
   ]
 }
