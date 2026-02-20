@@ -39,6 +39,25 @@
         "refactor for readability",
         "extract helper methods"
       ]
+    },
+    {
+      "name": "validate-config-name-family",
+      "file": "skills/validate-config-name-family/SKILL.md",
+      "category": "testing",
+      "triggers": [
+        "add cross-field validation to config",
+        "name field does not match model family",
+        "human-readable label inconsistent with identifier",
+        "extend existing validator with new check",
+        "naming gap in config validation",
+        "warning when name mismatches filename"
+      ],
+      "metadata": {
+        "issue": 775,
+        "pr": 821,
+        "tests_added": 30,
+        "outcome": "success"
+      }
     }
   ]
 }
