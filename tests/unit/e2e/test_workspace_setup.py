@@ -7,7 +7,7 @@ under test is exercised directly.
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -35,7 +35,7 @@ class TestSetupWorkspaceProactiveCleanup:
     """Proactive prune + branch-delete before first worktree add prevents cross-test collisions."""
 
     def test_prune_and_branch_delete_before_worktree_add(self, tmp_path: Path) -> None:
-        """git worktree prune and branch -D are issued before worktree add."""
+        """Git worktree prune and branch -D are issued before worktree add."""
         workspace = tmp_path / "workspace"
         base_repo = tmp_path / "repo"
         base_repo.mkdir()

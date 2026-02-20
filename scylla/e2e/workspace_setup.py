@@ -115,6 +115,7 @@ def _setup_workspace(
     run_number: int,
     base_repo: Path,
     task_commit: str | None = None,
+    experiment_id: str = "",
 ) -> None:
     """Set up workspace using git worktree from base repo with named branch.
 
@@ -126,6 +127,7 @@ def _setup_workspace(
         run_number: Run number for branch naming
         base_repo: Base repository path
         task_commit: Optional commit hash to checkout
+        experiment_id: Experiment identifier for unique branch naming
 
     """
     start_time = datetime.now(timezone.utc)
@@ -133,8 +135,13 @@ def _setup_workspace(
     # Ensure workspace path is absolute for git worktree
     workspace_abs = workspace.resolve()
 
-    # Generate branch name with run number
-    branch_name = f"{tier_id.value}_{subtest_id}_run_{run_number:02d}"
+    # Generate branch name with experiment prefix to avoid cross-experiment collisions.
+    # Use first 8 chars of experiment_id to keep branch names at a reasonable length.
+    exp_prefix = experiment_id[:8] if experiment_id else ""
+    if exp_prefix:
+        branch_name = f"{exp_prefix}_{tier_id.value}_{subtest_id}_run_{run_number:02d}"
+    else:
+        branch_name = f"{tier_id.value}_{subtest_id}_run_{run_number:02d}"
 
     # Log worktree creation phase
     _phase_log("WORKTREE", f"Creating worktree [{branch_name}] @ [{workspace_abs}]")

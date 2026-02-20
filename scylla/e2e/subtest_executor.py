@@ -395,6 +395,7 @@ class SubTestExecutor:
                     run_number=run_num,
                     base_repo=self.workspace_manager.base_repo,
                     task_commit=self.config.task_commit,
+                    experiment_id=self.config.experiment_id,
                 )
 
             # Build merged resources for T5 subtests with inherit_best_from

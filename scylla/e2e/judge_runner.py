@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import JudgeResultSummary
 from scylla.e2e.paths import RESULT_FILE, get_judge_result_file
+from scylla.e2e.rate_limit import RateLimitError
 
 if TYPE_CHECKING:
     from scylla.e2e.llm_judge import BuildPipelineResult
@@ -201,6 +202,10 @@ def _run_judge(
             )
             judges.append(judge_summary)
 
+        except RateLimitError:
+            # Rate limit errors must propagate immediately to trigger backoff
+            raise
+
         except Exception as e:
             # Log error with full context
             logger.error(
@@ -230,11 +235,36 @@ def _run_judge(
             error_file = judge_specific_dir / "error.log"
             error_file.write_text(f"Judge failed: {e}\n")
 
-            # Re-raise to mark the run as failed
-            raise
+            # Record a zero-score failed result and continue to the next judge
+            # rather than aborting the entire run. This handles cases like Haiku
+            # returning conversational text instead of structured JSON.
+            failed_summary = JudgeResultSummary(
+                model=model,
+                score=0.0,
+                passed=False,
+                grade="F",
+                reasoning=f"Judge failed: {e}",
+                judge_number=judge_num,
+                is_valid=False,
+                criteria_scores={},
+            )
+            judges.append(failed_summary)
 
-    # Compute consensus from all judges
+    # Compute consensus from all judges (only valid ones contribute)
     consensus_score, consensus_passed, consensus_grade = _compute_judge_consensus(judges)
+
+    # If all judges failed (no valid results), return a zero-score result so the
+    # experiment can continue rather than crashing with an unhandled exception.
+    if consensus_score is None:
+        logger.warning("All judges failed to produce valid results; returning zero-score consensus")
+        return {
+            "score": 0.0,
+            "passed": False,
+            "grade": "F",
+            "reasoning": "All judges failed to produce valid results",
+            "is_valid": False,
+            "criteria_scores": {},
+        }, judges
 
     # Build consensus dict (use representative judge's reasoning - closest to consensus)
     if judges and consensus_score is not None:
