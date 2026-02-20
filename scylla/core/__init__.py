@@ -4,15 +4,13 @@ This module provides foundational types used across the codebase.
 """
 
 from scylla.core.results import (
-    BaseExecutionInfo,
-    BaseRunMetrics,
     ExecutionInfoBase,
+    GradingInfoBase,
     RunMetricsBase,
 )
 
 __all__ = [
-    "BaseExecutionInfo",
-    "BaseRunMetrics",
     "ExecutionInfoBase",
+    "GradingInfoBase",
     "RunMetricsBase",
 ]

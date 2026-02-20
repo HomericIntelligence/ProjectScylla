@@ -96,72 +96,6 @@ class ExecutionInfoBase(BaseModel):
 
 
 @dataclass
-class BaseExecutionInfo:
-    """Base execution information shared across all result types.
-
-    .. deprecated::
-        Use ExecutionInfoBase (Pydantic model) instead. This dataclass is kept
-        for backward compatibility only. New code should use ExecutionInfoBase
-        and its domain-specific subtypes (ExecutorExecutionInfo, ReportingExecutionInfo).
-
-    For the new Pydantic-based hierarchy, see:
-    - ExecutionInfoBase (this module) - Base Pydantic model
-    - ExecutorExecutionInfo (executor/runner.py) - Container execution
-    - ReportingExecutionInfo (reporting/result.py) - Result persistence
-
-    Attributes:
-        exit_code: Process/container exit code (0 = success).
-        duration_seconds: Total execution duration.
-        timed_out: Whether execution timed out.
-
-    """
-
-    exit_code: int
-    duration_seconds: float
-    timed_out: bool = False
-
-    def __post_init__(self) -> None:
-        """Emit a DeprecationWarning on instantiation."""
-        warnings.warn(
-            "BaseExecutionInfo is deprecated and will be removed in v2.0.0. "
-            "Use ExecutionInfoBase instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-
-class JudgmentInfoBase(BaseModel):
-    """Base judgment information type for all evaluation results.
-
-    Attributes:
-        passed: Whether the run passed evaluation.
-        impl_rate: Implementation rate (0.0-1.0).
-
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    passed: bool = Field(..., description="Whether the run passed evaluation")
-    impl_rate: float = Field(default=0.0, description="Implementation rate (0.0-1.0)")
-
-
-class MetricsInfoBase(BaseModel):
-    """Base token and cost metrics for result persistence.
-
-    Attributes:
-        tokens_input: Number of input tokens consumed.
-        tokens_output: Number of output tokens generated.
-        cost_usd: Total cost in USD.
-
-    """
-
-    model_config = ConfigDict(frozen=True)
-
-    tokens_input: int = Field(..., description="Number of input tokens consumed")
-    tokens_output: int = Field(..., description="Number of output tokens generated")
-    cost_usd: float = Field(default=0.0, description="Total cost in USD")
-
-
 class GradingInfoBase(BaseModel):
     """Base grading metrics type for all grading results.
 
@@ -202,8 +136,6 @@ class RunMetricsBase(BaseModel):
     cost_usd: float = Field(..., description="Total cost in USD")
 
 
-@dataclass
-class BaseRunMetrics:
     """Base metrics shared across run result types.
 
     Attributes:
