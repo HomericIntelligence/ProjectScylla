@@ -135,7 +135,6 @@ class RunMetricsBase(BaseModel):
     tokens_output: int = Field(..., description="Number of output tokens generated")
     cost_usd: float = Field(..., description="Total cost in USD")
 
-
     """Base metrics shared across run result types.
 
     Attributes:
