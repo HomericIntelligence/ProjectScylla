@@ -24,22 +24,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Track deprecated BaseExecutionInfo usage
+      - name: Enforce no new deprecated BaseExecutionInfo usage
         run: |
           count=$(grep -rn "BaseExecutionInfo" . \
             --include="*.py" \
             --exclude-dir=".pixi" \
             | grep -v "scylla/core/results.py" \
+            | grep -v "scylla/core/__init__.py" \
             | grep -v "# deprecated" \
+            | grep -v "(deprecated)" \
             | grep -v "test_results.py" \
             | wc -l)
-          echo "BaseExecutionInfo usage count (excluding definition and tests): $count"
+          echo "BaseExecutionInfo usage count (excluding definition, re-export, and tests): $count"
           if [ "$count" -gt "0" ]; then
-            echo "::warning::Found $count usages of deprecated BaseExecutionInfo"
+            echo "::error::Found $count usages of deprecated BaseExecutionInfo — remove before merging"
             grep -rn "BaseExecutionInfo" . --include="*.py" --exclude-dir=".pixi" \
               | grep -v "scylla/core/results.py" \
+              | grep -v "scylla/core/__init__.py" \
               | grep -v "# deprecated" \
+              | grep -v "(deprecated)" \
               | grep -v "test_results.py"
+            exit 1
           fi
 
       - name: Install pixi
