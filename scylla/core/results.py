@@ -28,8 +28,6 @@ Architecture Notes:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -81,19 +79,3 @@ class ExecutionInfoBase(BaseModel):
     exit_code: int = Field(..., description="Process/container exit code (0 = success)")
     duration_seconds: float = Field(default=0.0, description="Total execution duration in seconds")
     timed_out: bool = Field(default=False, description="Whether execution timed out")
-
-
-@dataclass
-class BaseRunMetrics:
-    """Base metrics shared across run result types.
-
-    Attributes:
-        tokens_input: Number of input tokens consumed.
-        tokens_output: Number of output tokens generated.
-        cost_usd: Total cost in USD.
-
-    """
-
-    tokens_input: int
-    tokens_output: int
-    cost_usd: float
