@@ -295,8 +295,6 @@ def run_single_test(
         *args.tiers,
         "--runs",
         str(args.runs),
-        "--max-subtests",
-        str(args.max_subtests),
         "--model",
         args.model,
         "--judge-model",
@@ -308,6 +306,8 @@ def run_single_test(
     ]
     if args.fresh:
         cmd.append("--fresh")
+    if args.max_subtests > 0:
+        cmd.append(f"--max-subtests {str(args.max_subtests)}")
 
     # Write command to log
     log_file.write(f"\n{'=' * 70}\n")
