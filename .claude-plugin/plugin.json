@@ -16,6 +16,13 @@
       "description": "Fix E2E batch runner where all 47 tests returned ERROR due to git worktree branch name collisions, judge crashes, and parallel tier aborts.",
       "path": "skills/git-worktree-collision-fix/SKILL.md",
       "date": "2026-02-20"
+    },
+    {
+      "name": "skill-path-resolution-fix",
+      "category": "tooling",
+      "description": "Fix skill SKILL.md Quick Reference that uses relative `bash scripts/` invocations (CWD-dependent) by replacing with `bash <skill-dir>/scripts/` placeholder pattern and adding BASH_SOURCE[0] self-location to shell scripts.",
+      "path": "skills/skill-path-resolution-fix/SKILL.md",
+      "date": "2026-02-21"
     }
   ]
 }
