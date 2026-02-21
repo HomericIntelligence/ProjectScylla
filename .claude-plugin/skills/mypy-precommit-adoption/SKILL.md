@@ -4,9 +4,9 @@
 
 | Field | Value |
 |-------|-------|
-| Date | 2026-02-19 |
+| Date | 2026-02-19 (updated 2026-02-21) |
 | Issue | #672 |
-| PR | #762 |
+| PR | #762, #886 |
 | Objective | Add mypy static type checking to pre-commit hooks |
 | Outcome | Success — all hooks pass, documentation created |
 | Category | ci-cd / tooling |
@@ -143,6 +143,18 @@ separately from the full count.
 The issue suggested `pixi run mypy scylla/ --strict` in the hook. This would block CI with
 98 errors. The correct approach is to use the `pyproject.toml` configuration without `--strict`
 so the hook inherits the incremental adoption settings.
+
+## Re-implementation Patterns (2026-02-21)
+
+When re-implementing this issue in a new worktree, the infrastructure (hook + pyproject.toml config)
+was already in place from a prior session. Only `MYPY_KNOWN_ISSUES.md` was missing.
+
+**Check before implementing**: Always inspect `.pre-commit-config.yaml` and `pyproject.toml` first
+— the hook and config may already exist even if the branch looks clean.
+
+**Worktree state**: `672-auto-impl` branch was at `main` HEAD (no commits from prior session),
+so prior work had never been committed. The `MYPY_KNOWN_ISSUES.md` reference in `pyproject.toml`
+existed because it was committed to main separately.
 
 ## Parameters Used
 
