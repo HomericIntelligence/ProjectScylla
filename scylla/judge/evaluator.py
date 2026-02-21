@@ -503,9 +503,9 @@ class JudgeEvaluator:
         for req_id, req_data in requirements.items():
             if isinstance(req_data, dict):
                 judgment.requirements[req_id] = JudgeScore(
-                    score=float(req_data.get("score", 0.0)),
-                    confidence=float(req_data.get("confidence", 0.5)),
-                    notes=str(req_data.get("notes", "")),
+                    score=float(req_data.get("score") or 0.0),
+                    confidence=float(req_data.get("confidence") or 0.5),
+                    notes=str(req_data.get("notes") or ""),
                 )
 
         # Parse categories
@@ -513,21 +513,21 @@ class JudgeEvaluator:
         for cat_name, cat_data in categories.items():
             if isinstance(cat_data, dict):
                 judgment.categories[cat_name] = JudgeScore(
-                    score=float(cat_data.get("score", 0.0)),
-                    confidence=float(cat_data.get("confidence", 0.5)),
-                    notes=str(cat_data.get("notes", "")),
+                    score=float(cat_data.get("score") or 0.0),
+                    confidence=float(cat_data.get("confidence") or 0.5),
+                    notes=str(cat_data.get("notes") or ""),
                 )
 
         # Parse summary
         summary = data.get("summary", {})
         if summary:
             judgment.summary = JudgeSummary(
-                weighted_score=float(summary.get("weighted_score", 0.0)),
-                passed=bool(summary.get("passed", False)),
-                letter_grade=str(summary.get("letter_grade", "F")),
-                overall_confidence=float(summary.get("overall_confidence", 0.5)),
-                strengths=list(summary.get("strengths", [])),
-                weaknesses=list(summary.get("weaknesses", [])),
+                weighted_score=float(summary.get("weighted_score") or 0.0),
+                passed=bool(summary.get("passed") or False),
+                letter_grade=str(summary.get("letter_grade") or "F"),
+                overall_confidence=float(summary.get("overall_confidence") or 0.5),
+                strengths=list(summary.get("strengths") or []),
+                weaknesses=list(summary.get("weaknesses") or []),
             )
 
         # Parse exploratory testing
