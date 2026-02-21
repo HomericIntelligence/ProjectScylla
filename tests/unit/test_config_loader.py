@@ -75,7 +75,7 @@ class TestConfigLoaderEvalCase:
         assert test.source.repo == "https://github.com/mvillmow/Hello-World"
         assert test.source.hash == "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d"
         assert test.task.prompt_file == "prompt.md"
-        assert test.task.timeout_seconds == 300
+        assert test.task.timeout_seconds == 180
 
     def test_load_test_missing(self) -> None:
         """Missing test raises ConfigurationError."""
@@ -304,7 +304,7 @@ class TestConfigLoaderMerged:
         config = loader.load(test_id="test-001", model_id="test-model")
 
         # Test overrides should take precedence
-        assert config.timeout_seconds == 7200  # test > defaults (300 -> 3600)
+        assert config.timeout_seconds == 7200  # test > defaults (180 -> 3600)
         assert config.max_cost_usd == 5.0  # test override
 
         # Defaults should fill in non-overridden values
