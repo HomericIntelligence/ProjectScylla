@@ -26,9 +26,13 @@ Architecture Notes:
     RunMetrics inheritance hierarchy (Issue #787):
     - RunMetricsBase (this module) - Base Pydantic model with common fields
 
-    Legacy dataclasses (deprecated):
-    - BaseExecutionInfo - Kept for backward compatibility, use ExecutionInfoBase instead
-    - BaseRunMetrics - Kept for backward compatibility, use RunMetricsBase instead
+    JudgmentInfo inheritance hierarchy (Issue #796):
+    - JudgmentInfoBase (this module) - Base Pydantic model with judgment fields
+      └── JudgmentInfo (reporting/result.py) - Reporting persistence
+
+    MetricsInfo inheritance hierarchy (Issue #796):
+    - MetricsInfoBase (this module) - Base Pydantic model with token/cost fields
+      └── MetricsInfo (reporting/result.py) - Reporting persistence
 
     Migration from dataclasses to Pydantic (Issues #604, #658, #787):
     - Leverages recent Pydantic migration (commit 38a3df1)
@@ -38,9 +42,6 @@ Architecture Notes:
 """
 
 from __future__ import annotations
-
-import warnings
-from dataclasses import dataclass
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -95,7 +96,25 @@ class ExecutionInfoBase(BaseModel):
     timed_out: bool = Field(default=False, description="Whether execution timed out")
 
 
-@dataclass
+class JudgmentInfoBase(BaseModel):
+    """Base judgment information type for all evaluation results."""
+
+    model_config = ConfigDict(frozen=True)
+
+    passed: bool = Field(..., description="Whether the run passed evaluation")
+    impl_rate: float = Field(default=0.0, description="Implementation rate (0.0-1.0)")
+
+
+class MetricsInfoBase(BaseModel):
+    """Base token and cost metrics for result persistence."""
+
+    model_config = ConfigDict(frozen=True)
+
+    tokens_input: int = Field(..., description="Number of input tokens consumed")
+    tokens_output: int = Field(..., description="Number of output tokens generated")
+    cost_usd: float = Field(default=0.0, description="Total cost in USD")
+
+
 class GradingInfoBase(BaseModel):
     """Base grading metrics type for all grading results.
 
@@ -134,25 +153,3 @@ class RunMetricsBase(BaseModel):
     tokens_input: int = Field(..., description="Number of input tokens consumed")
     tokens_output: int = Field(..., description="Number of output tokens generated")
     cost_usd: float = Field(..., description="Total cost in USD")
-
-    """Base metrics shared across run result types.
-
-    Attributes:
-        tokens_input: Number of input tokens consumed.
-        tokens_output: Number of output tokens generated.
-        cost_usd: Total cost in USD.
-
-    """
-
-    tokens_input: int
-    tokens_output: int
-    cost_usd: float
-
-    def __post_init__(self) -> None:
-        """Emit a DeprecationWarning on instantiation."""
-        warnings.warn(
-            "BaseRunMetrics is deprecated and will be removed in v2.0.0. "
-            "Use RunMetricsBase instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
