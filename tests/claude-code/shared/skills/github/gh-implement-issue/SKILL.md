@@ -66,10 +66,10 @@ gh pr create --issue <issue>
 | Result | Check | Behavior |
 |--------|-------|----------|
 | STOP (exit 1) | Issue is CLOSED | Halt immediately — work may be done |
-| STOP (exit 1) | PR is MERGED | Halt immediately — duplicate work risk |
+| STOP (exit 1) | PR is MERGED | Halt immediately — duplicate work risk (matched via `closingIssuesReferences`, not text search) |
 | STOP (exit 1) | Worktree conflict | Halt — branch already checked out |
 | WARN (exit 0) | Existing commits | Proceed with caution — may be partial work |
-| WARN (exit 0) | Open PR exists | Proceed with caution — coordinate with author |
+| WARN (exit 0) | Open PR exists | Proceed with caution — coordinate with author (matched via `closingIssuesReferences`) |
 | WARN (exit 0) | Existing branch | Proceed with caution — review before creating new branch |
 | PASS (exit 0) | All clear | Safe to proceed |
 
