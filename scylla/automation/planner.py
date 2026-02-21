@@ -276,6 +276,7 @@ class Planner:
                 check=True,
                 timeout=timeout,
                 env=env,  # Avoid nested-session guard
+                stdin=subprocess.DEVNULL,
             )
 
             response = result.stdout.strip()

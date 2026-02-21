@@ -6,6 +6,7 @@ Provides:
 - Per-thread log routing
 """
 
+import atexit
 import curses
 import logging
 import threading
@@ -125,6 +126,16 @@ class CursesUI:
         self.running = False
         self.thread: threading.Thread | None = None
 
+    def _emergency_cleanup(self) -> None:
+        """Emergency cleanup for atexit — restores terminal if stop() was not called."""
+        try:
+            curses.endwin()
+        except Exception:
+            pass
+        from scylla.utils.terminal import restore_terminal
+
+        restore_terminal()
+
     def start(self) -> None:
         """Start the curses UI in a background thread."""
         if self.running:
@@ -132,6 +143,7 @@ class CursesUI:
             return
 
         self.running = True
+        atexit.register(self._emergency_cleanup)
         self.thread = threading.Thread(target=self._run_ui, daemon=True)
         self.thread.start()
         logger.debug("Started CursesUI thread")
@@ -144,6 +156,7 @@ class CursesUI:
         self.running = False
         if self.thread:
             self.thread.join(timeout=2.0)
+        atexit.unregister(self._emergency_cleanup)
         logger.debug("Stopped CursesUI")
 
     def _run_ui(self) -> None:

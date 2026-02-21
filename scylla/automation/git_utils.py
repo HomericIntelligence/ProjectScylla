@@ -47,6 +47,7 @@ def run(
         text=True,
         check=check,
         timeout=timeout,
+        stdin=subprocess.DEVNULL,
     )
 
 
