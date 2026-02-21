@@ -11,7 +11,7 @@ source:
 
 task:
   prompt_file: "prompt.md"
-  timeout_seconds: 7200
+  timeout_seconds: 480
 
 validation:
   criteria_file: "expected/criteria.md"
