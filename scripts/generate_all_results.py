@@ -11,6 +11,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scylla.utils.terminal import terminal_guard
+
 
 def run_script(script_name: str, args: list[str], description: str) -> bool:
     """Run a script and return success status.
@@ -31,7 +33,7 @@ def run_script(script_name: str, args: list[str], description: str) -> bool:
     cmd = ["pixi", "run", "python", script_name, *args]
 
     try:
-        result = subprocess.run(cmd, check=False)  # Don't raise on error
+        result = subprocess.run(cmd, check=False, stdin=subprocess.DEVNULL)  # Don't raise on error
         if result.returncode != 0:
             print(f"\nERROR: {script_name} failed with return code {result.returncode}")
         return result.returncode == 0
@@ -88,84 +90,85 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    success = True
+    with terminal_guard():
+        success = True
 
-    # Build common exclude args
-    exclude_args = []
-    if args.exclude:
-        exclude_args.extend(["--exclude", *args.exclude])
+        # Build common exclude args
+        exclude_args = []
+        if args.exclude:
+            exclude_args.extend(["--exclude", *args.exclude])
 
-    # Step 1: Export data
-    if not args.skip_data:
-        export_args = [
-            "--data-dir",
-            str(args.data_dir),
-            "--output-dir",
-            str(args.output_dir / "data"),
-            *exclude_args,
-        ]
-        if not run_script(
-            "scripts/export_data.py",
-            export_args,
-            "Step 1/3: Exporting experiment data to CSV",
-        ):
-            success = False
+        # Step 1: Export data
+        if not args.skip_data:
+            export_args = [
+                "--data-dir",
+                str(args.data_dir),
+                "--output-dir",
+                str(args.output_dir / "data"),
+                *exclude_args,
+            ]
+            if not run_script(
+                "scripts/export_data.py",
+                export_args,
+                "Step 1/3: Exporting experiment data to CSV",
+            ):
+                success = False
 
-    # Step 2: Generate figures
-    if not args.skip_figures and success:
-        figure_args = [
-            "--data-dir",
-            str(args.data_dir),
-            "--output-dir",
-            str(args.output_dir / "figures"),
-            *exclude_args,
-        ]
-        if args.no_render:
-            figure_args.append("--no-render")
+        # Step 2: Generate figures
+        if not args.skip_figures and success:
+            figure_args = [
+                "--data-dir",
+                str(args.data_dir),
+                "--output-dir",
+                str(args.output_dir / "figures"),
+                *exclude_args,
+            ]
+            if args.no_render:
+                figure_args.append("--no-render")
 
-        if not run_script(
-            "scripts/generate_figures.py",
-            figure_args,
-            "Step 2/3: Generating figures (Vega-Lite specs + CSV)",
-        ):
-            success = False
+            if not run_script(
+                "scripts/generate_figures.py",
+                figure_args,
+                "Step 2/3: Generating figures (Vega-Lite specs + CSV)",
+            ):
+                success = False
 
-    # Step 3: Generate tables
-    if not args.skip_tables and success:
-        table_args = [
-            "--data-dir",
-            str(args.data_dir),
-            "--output-dir",
-            str(args.output_dir / "tables"),
-            *exclude_args,
-        ]
-        if not run_script(
-            "scripts/generate_tables.py",
-            table_args,
-            "Step 3/3: Generating statistical tables (Markdown + LaTeX)",
-        ):
-            success = False
+        # Step 3: Generate tables
+        if not args.skip_tables and success:
+            table_args = [
+                "--data-dir",
+                str(args.data_dir),
+                "--output-dir",
+                str(args.output_dir / "tables"),
+                *exclude_args,
+            ]
+            if not run_script(
+                "scripts/generate_tables.py",
+                table_args,
+                "Step 3/3: Generating statistical tables (Markdown + LaTeX)",
+            ):
+                success = False
 
-    # Summary
-    print(f"\n{'=' * 70}")
-    if success:
-        print("✓ All analysis outputs generated successfully!")
-        print("\nOutputs:")
-        print(f"  Data:    {args.output_dir / 'data'}/*.csv")
-        print(f"           {args.output_dir / 'data'}/summary.json")
-        print(f"           {args.output_dir / 'data'}/statistical_results.json")
-        print(f"  Figures: {args.output_dir / 'figures'}/*.{{png,pdf,vl.json,csv}}")
-        print(f"           {args.output_dir / 'figures'}/*_include.tex (LaTeX snippets)")
-        print(f"  Tables:  {args.output_dir / 'tables'}/*.{{md,tex}}")
-        print("\nNext steps:")
-        print(f"  - View figures: open {args.output_dir / 'figures'}/*.png")
-        print(f"  - Include in LaTeX: \\input{{{args.output_dir / 'figures'}/*_include.tex}}")
-        print(f"  - View tables: {args.output_dir / 'tables'}/*.md")
-        print(f"  - Use data: {args.output_dir / 'data'}/*.csv")
-        print(f"  - Statistical analysis: {args.output_dir / 'data'}/statistical_results.json")
-    else:
-        print("✗ Some steps failed. Check output above for errors.")
-        sys.exit(1)
+        # Summary
+        print(f"\n{'=' * 70}")
+        if success:
+            print("✓ All analysis outputs generated successfully!")
+            print("\nOutputs:")
+            print(f"  Data:    {args.output_dir / 'data'}/*.csv")
+            print(f"           {args.output_dir / 'data'}/summary.json")
+            print(f"           {args.output_dir / 'data'}/statistical_results.json")
+            print(f"  Figures: {args.output_dir / 'figures'}/*.{{png,pdf,vl.json,csv}}")
+            print(f"           {args.output_dir / 'figures'}/*_include.tex (LaTeX snippets)")
+            print(f"  Tables:  {args.output_dir / 'tables'}/*.{{md,tex}}")
+            print("\nNext steps:")
+            print(f"  - View figures: open {args.output_dir / 'figures'}/*.png")
+            print(f"  - Include in LaTeX: \\input{{{args.output_dir / 'figures'}/*_include.tex}}")
+            print(f"  - View tables: {args.output_dir / 'tables'}/*.md")
+            print(f"  - Use data: {args.output_dir / 'data'}/*.csv")
+            print(f"  - Statistical analysis: {args.output_dir / 'data'}/statistical_results.json")
+        else:
+            print("✗ Some steps failed. Check output above for errors.")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

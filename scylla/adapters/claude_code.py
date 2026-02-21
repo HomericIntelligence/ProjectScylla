@@ -94,6 +94,7 @@ class ClaudeCodeAdapter(BaseAdapter):
                 timeout=config.timeout,
                 cwd=config.workspace,
                 env=env,
+                stdin=subprocess.DEVNULL,
             )
 
         except subprocess.TimeoutExpired as e:

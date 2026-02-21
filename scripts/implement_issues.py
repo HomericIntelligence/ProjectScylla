@@ -18,6 +18,7 @@ from pathlib import Path
 # Project is installed via editable install, no sys.path manipulation needed
 from scylla.automation.implementer import IssueImplementer
 from scylla.automation.models import ImplementerOptions
+from scylla.utils.terminal import terminal_guard
 
 
 def setup_logging(verbose: bool = False, log_dir: Path | None = None) -> None:
@@ -211,24 +212,25 @@ def main() -> int:
     else:
         logger.info(f"Starting implementation of epic #{args.epic}")
 
-    try:
-        # Run implementer
-        implementer = IssueImplementer(options)
-        results = implementer.run()
+    with terminal_guard():
+        try:
+            # Run implementer
+            implementer = IssueImplementer(options)
+            results = implementer.run()
 
-        # Check results
-        if not args.health_check and not args.analyze:
-            failed = [num for num, result in results.items() if not result.success]
+            # Check results
+            if not args.health_check and not args.analyze:
+                failed = [num for num, result in results.items() if not result.success]
 
-            if failed:
-                logger.error(f"Failed to implement {len(failed)} issue(s): {failed}")
-                return 1
+                if failed:
+                    logger.error(f"Failed to implement {len(failed)} issue(s): {failed}")
+                    return 1
 
-        logger.info("Complete")
-        return 0
-    except KeyboardInterrupt:
-        logger.warning("Interrupted by user")
-        return 130  # Standard exit code for SIGINT
+            logger.info("Complete")
+            return 0
+        except KeyboardInterrupt:
+            logger.warning("Interrupted by user")
+            return 130  # Standard exit code for SIGINT
 
 
 if __name__ == "__main__":

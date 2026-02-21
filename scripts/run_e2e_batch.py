@@ -30,6 +30,7 @@ from common import Colors, get_repo_root
 
 from scylla.e2e.models import TestFixture
 from scylla.e2e.rate_limit import check_api_rate_limit_status
+from scylla.utils.terminal import restore_terminal
 
 # Defaults (overridable via CLI args)
 DEFAULT_RESULTS_DIR = Path.home() / "dryrun"
@@ -39,18 +40,6 @@ DEFAULT_JUDGE_MODEL = "haiku"
 DEFAULT_RUNS = 1
 DEFAULT_MAX_SUBTESTS = 2
 DEFAULT_TIERS = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
-
-
-def _restore_terminal() -> None:
-    """Restore terminal to sane state using stty.
-
-    Call this on exit to fix terminal corruption from child processes.
-    """
-    if sys.stdin.isatty():
-        try:
-            subprocess.run(["stty", "sane"], stdin=sys.stdin, check=False)
-        except Exception:
-            pass  # Best effort, don't crash on cleanup
 
 
 def format_duration(seconds: float) -> str:
@@ -1166,7 +1155,7 @@ Examples:
 
     finally:
         # Always restore terminal on exit
-        _restore_terminal()
+        restore_terminal()
 
 
 if __name__ == "__main__":

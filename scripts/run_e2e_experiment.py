@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import signal
 import subprocess
 import sys
 import time
@@ -26,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from scylla.e2e.models import ExperimentConfig, TierID
 from scylla.e2e.runner import request_shutdown, run_experiment
+from scylla.utils.terminal import terminal_guard
 
 # Configure logging
 logging.basicConfig(
@@ -628,78 +628,71 @@ def main() -> int:
     elif args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
 
-    # Register signal handlers for graceful shutdown
-    def signal_handler(signum: int, frame):
-        logger.warning(f"Received signal {signum}, initiating graceful shutdown...")
-        request_shutdown()
+    with terminal_guard(request_shutdown):
+        try:
+            # Build configuration
+            config = build_config(args)
 
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+            logger.info(f"Starting experiment: {config.experiment_id}")
+            logger.info(f"Task repo: {config.task_repo}")
+            logger.info(f"Tiers: {[t.value for t in config.tiers_to_run]}")
+            logger.info(f"Runs per sub-test: {config.runs_per_subtest}")
 
-    try:
-        # Build configuration
-        config = build_config(args)
+            # Ensure directories exist
+            args.tiers_dir.mkdir(parents=True, exist_ok=True)
+            args.results_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Starting experiment: {config.experiment_id}")
-        logger.info(f"Task repo: {config.task_repo}")
-        logger.info(f"Tiers: {[t.value for t in config.tiers_to_run]}")
-        logger.info(f"Runs per sub-test: {config.runs_per_subtest}")
+            # Run experiment
+            result = run_experiment(
+                config=config,
+                tiers_dir=args.tiers_dir,
+                results_dir=args.results_dir,
+                fresh=args.fresh,
+            )
 
-        # Ensure directories exist
-        args.tiers_dir.mkdir(parents=True, exist_ok=True)
-        args.results_dir.mkdir(parents=True, exist_ok=True)
+            # Print summary
+            print("\n" + "=" * 60)
+            print("EXPERIMENT COMPLETE")
+            print("=" * 60)
+            print(f"Duration: {result.total_duration_seconds:.1f}s")
+            print(f"Total Cost: ${result.total_cost:.4f}")
+            print()
 
-        # Run experiment
-        result = run_experiment(
-            config=config,
-            tiers_dir=args.tiers_dir,
-            results_dir=args.results_dir,
-            fresh=args.fresh,
-        )
+            if result.best_overall_tier:
+                print(f"Best Tier: {result.best_overall_tier.value}")
+                print(f"Best Sub-test: {result.best_overall_subtest}")
+                print(f"Frontier CoP: ${result.frontier_cop:.4f}")
+            else:
+                print("No passing results found")
 
-        # Print summary
-        print("\n" + "=" * 60)
-        print("EXPERIMENT COMPLETE")
-        print("=" * 60)
-        print(f"Duration: {result.total_duration_seconds:.1f}s")
-        print(f"Total Cost: ${result.total_cost:.4f}")
-        print()
+            print()
+            print("Tier Results:")
+            print("-" * 60)
+            for tier_id in config.tiers_to_run:
+                tier_result = result.tier_results.get(tier_id)
+                if tier_result:
+                    status = "PASS" if tier_result.best_subtest_score > 0.5 else "FAIL"
+                    print(
+                        f"  {tier_id.value}: {status} "
+                        f"(score: {tier_result.best_subtest_score:.3f}, "
+                        f"cost: ${tier_result.total_cost:.4f})"
+                    )
 
-        if result.best_overall_tier:
-            print(f"Best Tier: {result.best_overall_tier.value}")
-            print(f"Best Sub-test: {result.best_overall_subtest}")
-            print(f"Frontier CoP: ${result.frontier_cop:.4f}")
-        else:
-            print("No passing results found")
+            print("=" * 60)
 
-        print()
-        print("Tier Results:")
-        print("-" * 60)
-        for tier_id in config.tiers_to_run:
-            tier_result = result.tier_results.get(tier_id)
-            if tier_result:
-                status = "PASS" if tier_result.best_subtest_score > 0.5 else "FAIL"
-                print(
-                    f"  {tier_id.value}: {status} "
-                    f"(score: {tier_result.best_subtest_score:.3f}, "
-                    f"cost: ${tier_result.total_cost:.4f})"
-                )
+            return 0
 
-        print("=" * 60)
+        except KeyboardInterrupt:
+            logger.warning("Experiment interrupted by user")
+            return 130
 
-        return 0
+        except ValueError as e:
+            logger.error(f"Configuration error: {e}")
+            return 1
 
-    except KeyboardInterrupt:
-        logger.warning("Experiment interrupted by user")
-        return 130
-
-    except ValueError as e:
-        logger.error(f"Configuration error: {e}")
-        return 1
-
-    except Exception as e:
-        logger.exception(f"Experiment failed: {e}")
-        return 1
+        except Exception as e:
+            logger.exception(f"Experiment failed: {e}")
+            return 1
 
 
 if __name__ == "__main__":
