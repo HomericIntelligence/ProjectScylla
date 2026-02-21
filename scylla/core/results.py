@@ -130,6 +130,38 @@ class BaseExecutionInfo:
         )
 
 
+class JudgmentInfoBase(BaseModel):
+    """Base judgment information type for all evaluation results.
+
+    Attributes:
+        passed: Whether the run passed evaluation.
+        impl_rate: Implementation rate (0.0-1.0).
+
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    passed: bool = Field(..., description="Whether the run passed evaluation")
+    impl_rate: float = Field(default=0.0, description="Implementation rate (0.0-1.0)")
+
+
+class MetricsInfoBase(BaseModel):
+    """Base token and cost metrics for result persistence.
+
+    Attributes:
+        tokens_input: Number of input tokens consumed.
+        tokens_output: Number of output tokens generated.
+        cost_usd: Total cost in USD.
+
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    tokens_input: int = Field(..., description="Number of input tokens consumed")
+    tokens_output: int = Field(..., description="Number of output tokens generated")
+    cost_usd: float = Field(default=0.0, description="Total cost in USD")
+
+
 class GradingInfoBase(BaseModel):
     """Base grading metrics type for all grading results.
 
