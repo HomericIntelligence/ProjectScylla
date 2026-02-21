@@ -142,6 +142,12 @@ class TestAssignLetterGrade:
         assert assign_letter_grade(0.19) == "F"
         assert assign_letter_grade(0.0) == "F"
 
+    @pytest.mark.parametrize("score", [-0.1, 1.1, -1.0, 2.0])
+    def test_invalid_score_raises_value_error(self, score: float) -> None:
+        """Scores outside [0.0, 1.0] raise ValueError (not silently ignored)."""
+        with pytest.raises(ValueError, match="score must be in"):
+            assign_letter_grade(score)
+
 
 class TestCalculateTierUplift:
     """Tests for tier uplift calculation."""

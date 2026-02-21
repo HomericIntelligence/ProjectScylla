@@ -63,19 +63,19 @@ class TestGradingConsistency:
             )
 
     def test_metrics_grading_validates_range(self):
-        """Test that assign_letter_grade asserts on invalid scores."""
-        # Scores > 1.0 should raise assertion
-        with pytest.raises(AssertionError, match="outside valid range"):
+        """Test that assign_letter_grade raises ValueError on invalid scores."""
+        # Scores > 1.0 should raise ValueError
+        with pytest.raises(ValueError, match="score must be in"):
             assign_letter_grade(1.1)
 
-        with pytest.raises(AssertionError, match="outside valid range"):
+        with pytest.raises(ValueError, match="score must be in"):
             assign_letter_grade(1.01)
 
-        # Scores < 0.0 should raise assertion
-        with pytest.raises(AssertionError, match="outside valid range"):
+        # Scores < 0.0 should raise ValueError
+        with pytest.raises(ValueError, match="score must be in"):
             assign_letter_grade(-0.1)
 
-        with pytest.raises(AssertionError, match="outside valid range"):
+        with pytest.raises(ValueError, match="score must be in"):
             assign_letter_grade(-1.0)
 
     def test_grade_assignment_exhaustive(self):

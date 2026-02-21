@@ -367,7 +367,7 @@ def _get_pipeline_env() -> dict[str, str]:
 
     """
     env = os.environ.copy()
-    env["PYTHONPYCACHEPREFIX"] = "/tmp/scylla_pycache"
+    env["PYTHONPYCACHEPREFIX"] = str(Path(tempfile.gettempdir()) / "scylla_pycache")
     return env
 
 
