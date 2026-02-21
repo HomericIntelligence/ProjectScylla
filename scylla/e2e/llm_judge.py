@@ -1058,9 +1058,9 @@ def _parse_judge_response(response: str) -> JudgeResult:
             f"Keys found: {list(data.keys())}\nResponse: {response[:500]}"
         )
 
-    score = float(data.get("score", 0.0))
-    passed = bool(data.get("passed", False))
-    reasoning = str(data.get("reasoning", "No reasoning provided"))
+    score = float(data.get("score") or 0.0)
+    passed = bool(data.get("passed") or False)
+    reasoning = str(data.get("reasoning") or "No reasoning provided")
 
     # Support both old and new format
     # New format: "categories" with structured breakdown
