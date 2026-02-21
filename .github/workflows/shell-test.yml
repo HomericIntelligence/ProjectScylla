@@ -1,0 +1,37 @@
+name: Shell Tests
+
+on:
+  pull_request:
+    paths:
+      - "**/*.sh"
+      - "tests/shell/**"
+      - ".github/workflows/shell-test.yml"
+  push:
+    branches: [main]
+
+jobs:
+  bats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.62.2
+          cache: true
+
+      - name: Cache pixi environments
+        uses: actions/cache@v4
+        with:
+          path: |
+            .pixi
+            ~/.cache/rattler/cache
+          key: pixi-${{ runner.os }}-${{ hashFiles('pixi.lock') }}
+          restore-keys: |
+            pixi-${{ runner.os }}-
+
+      - name: Run shell tests
+        run: pixi run test-shell

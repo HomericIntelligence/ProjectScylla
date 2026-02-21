@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Mock for `gh` CLI.
+# Behavior is controlled by environment variables:
+#   GH_MOCK_ISSUE_STATE  - JSON for `gh issue view <N> --json state,title,closedAt`
+#   GH_MOCK_PR_JSON      - JSON for `gh pr list ...`
+#   GH_MOCK_ISSUE_COMMENTS - output for `gh issue view <N> --comments`
+
+case "$1 $2" in
+    "issue view")
+        if [[ "${*}" == *"--json"* ]]; then
+            echo "${GH_MOCK_ISSUE_STATE:-{\"state\":\"OPEN\",\"title\":\"Test Issue\",\"closedAt\":null}}"
+        else
+            # --comments path
+            echo "${GH_MOCK_ISSUE_COMMENTS:-}"
+        fi
+        ;;
+    "pr list")
+        echo "${GH_MOCK_PR_JSON:-[]}"
+        ;;
+    *)
+        echo "{}"
+        ;;
+esac

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Mock for `git`.
+# Behavior is controlled by environment variables:
+#   GIT_MOCK_LOG       - output for `git log --all --oneline --grep=...`
+#   GIT_MOCK_WORKTREE  - output for `git worktree list`
+#   GIT_MOCK_BRANCH    - output for `git branch --list ...`
+
+case "$1" in
+    log)
+        echo "${GIT_MOCK_LOG:-}"
+        ;;
+    worktree)
+        echo "${GIT_MOCK_WORKTREE:-}"
+        ;;
+    branch)
+        echo "${GIT_MOCK_BRANCH:-}"
+        ;;
+    *)
+        # All other git commands (e.g. rev-parse) succeed silently
+        exit 0
+        ;;
+esac
