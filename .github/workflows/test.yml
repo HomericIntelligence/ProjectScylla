@@ -69,7 +69,16 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.62.2
-          cache: true
+
+      - name: Cache pixi environments
+        uses: actions/cache@v4
+        with:
+          path: |
+            .pixi
+            ~/.cache/rattler/cache
+          key: pixi-${{ runner.os }}-${{ hashFiles('pixi.lock') }}
+          restore-keys: |
+            pixi-${{ runner.os }}-
 
       - name: Run ${{ matrix.test-group.name }} tests
         env:
@@ -89,3 +98,5 @@ jobs:
         with:
           files: ./coverage.xml
           flags: ${{ matrix.test-group.name }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
