@@ -10,6 +10,7 @@ test = "pytest"
 lint = "ruff check scylla scripts tests"
 format = "ruff format scylla scripts tests"
 plan-issues = "python scripts/plan_issues.py"
+mypy-regression = "python scripts/check_mypy_counts.py"
 
 [dependencies]
 python = ">=3.10"
