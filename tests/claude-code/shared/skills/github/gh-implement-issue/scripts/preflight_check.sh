@@ -7,11 +7,16 @@
 # Warnings (exit 0): existing commits, open PRs, existing branches
 #
 # Usage:
-#   ./preflight_check.sh <issue-number>
+#   bash /path/to/scripts/preflight_check.sh <issue-number>
+#   bash "$(dirname "${BASH_SOURCE[0]}")/preflight_check.sh" <issue-number>
 #
 # Exit codes:
 #   0 = all checks passed (or only warnings)
 #   1 = critical failure - do not proceed
+
+# Self-locating: works regardless of caller's CWD
+# shellcheck disable=SC2034
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 set -uo pipefail
 
