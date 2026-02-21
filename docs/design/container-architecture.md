@@ -100,6 +100,24 @@ The Docker image includes:
 docker build -t scylla-runner:latest -f docker/Dockerfile .
 ```
 
+### Health Checks
+
+The image includes a Docker health check that verifies the `scylla` package is importable:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD python -c 'import scylla; print("OK")' || exit 1
+```
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `--interval` | 30s | Time between health checks |
+| `--timeout` | 10s | Maximum time to wait for a check to complete |
+| `--start-period` | 5s | Grace period before health check failures count |
+| `--retries` | 3 | Consecutive failures before marking unhealthy |
+
+Container orchestration platforms (Kubernetes, Docker Swarm) use this to detect and replace unhealthy containers.
+
 ### Entrypoint Script
 
 The `docker/entrypoint.sh` script:
@@ -246,4 +264,3 @@ Potential enhancements:
 2. **Layer caching**: Optimize Dockerfile for faster rebuilds
 3. **Resource limits**: Add memory/CPU limits to container
 4. **Volume optimization**: Use named volumes for caching
-5. **Health checks**: Add container health checks
