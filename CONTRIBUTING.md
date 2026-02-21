@@ -187,8 +187,7 @@ How you tested the changes
 ## Checklist
 - [x] Tests pass
 - [x] Code formatted
-- [x] Documentation updated" \
-  --label "appropriate-label"
+- [x] Documentation updated"
 ```
 
 ## Code Quality Standards
