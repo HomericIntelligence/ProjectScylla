@@ -76,10 +76,26 @@ fi
 
 # ---------------------------------------------------------------------------
 # Check 3: PR Search (CRITICAL if merged, WARNING if open)
+# Uses closingIssuesReferences for precise match — avoids false positives
+# from text search matching issue numbers in unrelated PR titles/bodies.
 # ---------------------------------------------------------------------------
-PR_JSON=$(gh pr list --search "$ISSUE" --state all --json number,title,state 2>/dev/null)
-MERGED_PRS=$(echo "$PR_JSON" | jq -r '.[] | select(.state == "MERGED") | "\(.number): \(.title)"')
-OPEN_PRS=$(echo "$PR_JSON"   | jq -r '.[] | select(.state == "OPEN")   | "\(.number): \(.title)"')
+CANDIDATE_JSON=$(gh pr list --state all --json number,title,state --limit 100 2>/dev/null)
+MERGED_PRS=""
+OPEN_PRS=""
+while IFS=$'\t' read -r pr_num pr_title pr_state; do
+    [[ -z "$pr_num" ]] && continue
+    CLOSES=$(gh pr view "$pr_num" --json closingIssuesReferences \
+        --jq '.closingIssuesReferences[].number' 2>/dev/null)
+    if echo "$CLOSES" | grep -qx "$ISSUE"; then
+        if [[ "$pr_state" == "MERGED" ]]; then
+            MERGED_PRS+="${pr_num}: ${pr_title}"$'\n'
+        elif [[ "$pr_state" == "OPEN" ]]; then
+            OPEN_PRS+="${pr_num}: ${pr_title}"$'\n'
+        fi
+    fi
+done < <(echo "$CANDIDATE_JSON" | jq -r '.[] | [.number,.title,.state] | @tsv')
+MERGED_PRS="${MERGED_PRS%$'\n'}"
+OPEN_PRS="${OPEN_PRS%$'\n'}"
 
 if [[ -n "$MERGED_PRS" ]]; then
     stop "Check 3: Issue #${ISSUE} already has a MERGED PR"
