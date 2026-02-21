@@ -48,6 +48,9 @@ mypy = ">=1.8.0"
 yamllint = ">=1.35.0"
 pre-commit = ">=3.0"
 
+[feature.lint.pypi-dependencies]
+pip-audit = ">=2.7"
+
 [environments]
 default = { features = ["dev"], solve-group = "default" }
 lint = { features = ["lint"], solve-group = "lint" }
