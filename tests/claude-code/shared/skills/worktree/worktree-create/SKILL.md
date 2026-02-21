@@ -19,7 +19,10 @@ Create separate working directories on different branches without stashing chang
 ## Quick Reference
 
 ```bash
-# Create worktree for new branch
+# 0. Pre-flight check (REQUIRED - runs all 6 checks automatically)
+bash tests/claude-code/shared/skills/github/gh-implement-issue/scripts/preflight_check.sh <issue-number>
+
+# 1. Create worktree (only after pre-flight passes)
 ./scripts/create_worktree.sh <issue-number> <description>
 
 # Example
@@ -35,16 +38,21 @@ cd ../ProjectOdyssey-42-implement-tensor-ops
 
 ## Workflow
 
-1. **Create worktree** - Run create script with issue number and description
-2. **Navigate** - `cd` to new worktree directory (parallel to main)
-3. **Work normally** - Make changes, commit, push as usual
-4. **Switch back** - `cd` to different worktree or main directory
-5. **Clean up** - Remove worktree after PR merge (see `worktree-cleanup` skill)
+1. **Run pre-flight check** - `bash tests/claude-code/shared/skills/github/gh-implement-issue/scripts/preflight_check.sh <issue-number>` — automatically runs all 6 checks; stops on critical failures
+2. **Create worktree** - Run create script with issue number and description
+3. **Navigate** - `cd` to new worktree directory (parallel to main)
+4. **Work normally** - Make changes, commit, push as usual
+5. **Switch back** - `cd` to different worktree or main directory
+6. **Clean up** - Remove worktree after PR merge (see `worktree-cleanup` skill)
 
 ## Error Handling
 
 | Error | Solution |
 |-------|----------|
+| Pre-flight: issue CLOSED | Stop work; issue already resolved |
+| Pre-flight: merged PR found | Stop work; check PR for implementation |
+| Pre-flight: worktree conflict | Navigate to existing worktree or remove it |
+| Pre-flight: warns existing branch | Review branch before creating new one |
 | Branch already exists | Use different branch name or delete old branch |
 | Directory exists | Choose different location or remove directory |
 | Cannot switch away | Ensure all changes are committed |
@@ -109,3 +117,4 @@ Advantages: Logical grouping, easier review, clear milestones
 - `scripts/create_worktree.sh` implementation
 - See `worktree-cleanup` skill for removing worktrees
 - See `worktree-sync` skill for keeping worktrees up to date
+- See `issue-preflight-check` skill for full pre-flight check documentation
