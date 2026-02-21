@@ -1,0 +1,40 @@
+name: Security
+
+on:
+  pull_request:
+    paths:
+      - "pixi.toml"
+      - "pixi.lock"
+      - "pyproject.toml"
+      - "**/*.py"
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+jobs:
+  pip-audit:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.62.2
+          environments: lint
+
+      - name: Cache pixi environments
+        uses: actions/cache@v4
+        with:
+          path: |
+            .pixi
+            ~/.cache/rattler/cache
+          key: pixi-lint-${{ runner.os }}-${{ hashFiles('pixi.lock') }}
+          restore-keys: |
+            pixi-lint-${{ runner.os }}-
+
+      - name: Run pip-audit
+        run: pixi run --environment lint pip-audit
