@@ -66,13 +66,8 @@ from scylla.executor.workspace import (
 )
 
 __all__ = [
-    # Agent container
     "AgentContainerConfig",
     "AgentContainerManager",
-    # Credential mount
-    "cleanup_stale_credential_dirs",
-    "temporary_credential_mount",
-    # Docker
     "ContainerConfig",
     "ContainerError",
     "ContainerResult",
@@ -80,16 +75,13 @@ __all__ = [
     "DockerError",
     "DockerExecutor",
     "DockerNotAvailableError",
-    # Runner
     "EvalRunner",
     "EvalSummary",
-    # Capture
     "ExecutionMetrics",
     "ExecutionState",
     "ExecutorExecutionInfo",
     "ExecutorRunResult",
     "InsufficientRunsError",
-    # Judge container
     "JudgeContainerConfig",
     "JudgeContainerManager",
     "JudgeResult",
@@ -100,22 +92,22 @@ __all__ = [
     "RunnerConfig",
     "RunnerError",
     "StreamingCapture",
-    # Tier Configuration
     "TierConfig",
     "TierConfigError",
     "TierConfigLoader",
     "TierDefinition",
     "TierSummary",
     "TiersDefinitionFile",
-    # Workspace
     "WorkspaceError",
     "aggregate_metrics",
     "calculate_wilson_ci",
     "checkout_hash",
+    "cleanup_stale_credential_dirs",
     "cleanup_workspace",
     "clone_repo",
     "create_workspace",
     "load_metrics",
     "load_state",
     "save_state",
+    "temporary_credential_mount",
 ]

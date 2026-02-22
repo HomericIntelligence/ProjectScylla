@@ -555,9 +555,3 @@ class JudgeContainerManager:
 
         except subprocess.CalledProcessError as e:
             raise ContainerError(f"Container execution failed: {e}") from e
-
-        finally:
-            # Clean up temporary credential files
-            for temp_dir in temp_dirs:
-                with contextlib.suppress(Exception):
-                    shutil.rmtree(temp_dir)
