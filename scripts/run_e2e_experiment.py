@@ -278,6 +278,27 @@ Examples:
         default=4,
         help="Max parallel sub-tests (default: 4)",
     )
+
+    # Per-memory-class parallelism (state machine scheduler)
+    parser.add_argument(
+        "--parallel-high",
+        type=int,
+        default=2,
+        help="Max concurrent high-memory operations: agent/judge execution, worktree creation "
+        "(default: 2). Reduce if OOM kills occur.",
+    )
+    parser.add_argument(
+        "--parallel-med",
+        type=int,
+        default=4,
+        help="Max concurrent medium-memory operations: build pipelines, git diff (default: 4).",
+    )
+    parser.add_argument(
+        "--parallel-low",
+        type=int,
+        default=8,
+        help="Max concurrent low-memory operations: file I/O, reporting (default: 8).",
+    )
     parser.add_argument(
         "--timeout",
         type=int,

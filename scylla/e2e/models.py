@@ -83,6 +83,63 @@ class TokenStats(BaseModel):
         )
 
 
+class RunState(str, Enum):
+    """Fine-grained states for a single run within a subtest.
+
+    Each state represents a discrete, resumable checkpoint in the run lifecycle.
+    The state machine advances through these states sequentially, saving the
+    checkpoint after each transition to enable resume from any point.
+    """
+
+    PENDING = "pending"
+    WORKTREE_CREATED = "worktree_created"  # git worktree created
+    WORKSPACE_CONFIGURED = "workspace_configured"  # symlinks, CLAUDE.md, settings.json, git commit
+    BASELINE_CAPTURED = "baseline_captured"  # build pipeline baseline (first run only)
+    AGENT_READY = "agent_ready"  # prompt written, replay script generated
+    AGENT_COMPLETE = "agent_complete"  # agent executed, outputs saved
+    JUDGE_READY = "judge_ready"  # git diff captured, build pipeline run, judge prompt built
+    JUDGE_COMPLETE = "judge_complete"  # judge executed, consensus computed, results saved
+    RUN_COMPLETE = "run_complete"  # RunResult built, run_result.json saved, reports generated
+    CHECKPOINTED = "checkpointed"  # checkpoint saved with this run's state
+    WORKTREE_CLEANED = "worktree_cleaned"  # git worktree removed
+    FAILED = "failed"
+    RATE_LIMITED = "rate_limited"
+
+
+class SubtestState(str, Enum):
+    """States for a single subtest's lifecycle."""
+
+    PENDING = "pending"
+    RUNS_IN_PROGRESS = "runs_in_progress"
+    RUNS_COMPLETE = "runs_complete"
+    AGGREGATED = "aggregated"
+
+
+class TierState(str, Enum):
+    """States for a single tier's lifecycle."""
+
+    PENDING = "pending"
+    CONFIG_LOADED = "config_loaded"
+    SUBTESTS_RUNNING = "subtests_running"
+    SUBTESTS_COMPLETE = "subtests_complete"
+    BEST_SELECTED = "best_selected"
+    REPORTS_GENERATED = "reports_generated"
+    COMPLETE = "complete"
+
+
+class ExperimentState(str, Enum):
+    """States for the overall experiment lifecycle."""
+
+    INITIALIZING = "initializing"
+    REPO_CLONED = "repo_cloned"
+    TIERS_RUNNING = "tiers_running"
+    TIERS_COMPLETE = "tiers_complete"
+    REPORTS_GENERATED = "reports_generated"
+    COMPLETE = "complete"
+    INTERRUPTED = "interrupted"
+    FAILED = "failed"
+
+
 class TierID(Enum):
     """Tier identifiers for the evaluation framework.
 
