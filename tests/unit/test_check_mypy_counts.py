@@ -1,9 +1,10 @@
 """Unit tests for scripts/check_mypy_counts.py.
 
 Tests cover:
-- Parsing the MYPY_KNOWN_ISSUES.md error count table
+- Parsing the MYPY_KNOWN_ISSUES.md error count table (flat and per-directory)
 - Diffing documented vs. actual counts
-- Updating the table in-place
+- Updating the table in-place (flat and per-directory)
+- Per-directory mypy invocation
 - Edge cases: missing file, empty table, new codes, fixed codes
 """
 
@@ -25,7 +26,7 @@ import check_mypy_counts  # noqa: E402
 
 @pytest.fixture()
 def valid_md(tmp_path: Path) -> Path:
-    """Create a minimal MYPY_KNOWN_ISSUES.md with a well-formed table."""
+    """Create a minimal MYPY_KNOWN_ISSUES.md with a well-formed flat table."""
     md = tmp_path / "MYPY_KNOWN_ISSUES.md"
     md.write_text(
         "# Mypy Known Issues\n\n"
@@ -49,13 +50,41 @@ def empty_md(tmp_path: Path) -> Path:
     return md
 
 
+@pytest.fixture()
+def per_dir_md(tmp_path: Path) -> Path:
+    """Create a MYPY_KNOWN_ISSUES.md with per-directory sections."""
+    md = tmp_path / "MYPY_KNOWN_ISSUES.md"
+    md.write_text(
+        "# Mypy Known Issues\n\n"
+        "## Error Count Table — scylla/\n\n"
+        "| Error Code | Count | Description |\n"
+        "|------------|-------|-------------|\n"
+        "| arg-type   | 27    | Incompatible argument types |\n"
+        "| operator   | 21    | Incompatible operand types |\n"
+        "| **Total**  | **48** | |\n\n"
+        "## Error Count Table — tests/\n\n"
+        "| Error Code | Count | Description |\n"
+        "|------------|-------|-------------|\n"
+        "| arg-type   | 3     | Incompatible argument types |\n"
+        "| union-attr | 6     | Accessing attributes on union types |\n"
+        "| **Total**  | **9** | |\n\n"
+        "## Error Count Table — scripts/\n\n"
+        "| Error Code | Count | Description |\n"
+        "|------------|-------|-------------|\n"
+        "| arg-type   | 0     | Incompatible argument types |\n"
+        "| **Total**  | **0** | |\n",
+        encoding="utf-8",
+    )
+    return md
+
+
 # ---------------------------------------------------------------------------
-# parse_known_issues_table
+# parse_known_issues_table (flat / backward-compat)
 # ---------------------------------------------------------------------------
 
 
 def test_parse_known_issues_table_basic(valid_md: Path) -> None:
-    """Parse a well-formed table and return correct counts."""
+    """Parse a well-formed flat table and return correct counts."""
     counts = check_mypy_counts.parse_known_issues_table(valid_md)
     assert counts == {"arg-type": 30, "call-arg": 28, "operator": 20}
 
@@ -80,6 +109,53 @@ def test_parse_known_issues_table_skips_total_row(valid_md: Path) -> None:
     counts = check_mypy_counts.parse_known_issues_table(valid_md)
     assert "total" not in counts
     assert "Total" not in counts
+
+
+def test_parse_known_issues_table_merges_per_dir(per_dir_md: Path) -> None:
+    """parse_known_issues_table merges per-directory sections into a flat dict."""
+    counts = check_mypy_counts.parse_known_issues_table(per_dir_md)
+    # arg-type: 27 (scylla) + 3 (tests) + 0 (scripts) = 30
+    assert counts["arg-type"] == 30
+    # operator: 21 (scylla only)
+    assert counts["operator"] == 21
+    # union-attr: 6 (tests only)
+    assert counts["union-attr"] == 6
+
+
+# ---------------------------------------------------------------------------
+# parse_known_issues_per_dir
+# ---------------------------------------------------------------------------
+
+
+def test_parse_known_issues_per_dir_basic(per_dir_md: Path) -> None:
+    """Parses per-directory sections correctly."""
+    result = check_mypy_counts.parse_known_issues_per_dir(per_dir_md)
+    assert set(result.keys()) == {"scylla/", "tests/", "scripts/"}
+    assert result["scylla/"] == {"arg-type": 27, "operator": 21}
+    assert result["tests/"] == {"arg-type": 3, "union-attr": 6}
+    assert result["scripts/"] == {"arg-type": 0}
+
+
+def test_parse_known_issues_per_dir_no_sections(valid_md: Path) -> None:
+    """Returns empty dict when no per-directory sections are present."""
+    result = check_mypy_counts.parse_known_issues_per_dir(valid_md)
+    assert result == {}
+
+
+def test_parse_known_issues_per_dir_missing_file(tmp_path: Path) -> None:
+    """Exits with code 2 when the file does not exist."""
+    missing = tmp_path / "MYPY_KNOWN_ISSUES.md"
+    with pytest.raises(SystemExit) as exc_info:
+        check_mypy_counts.parse_known_issues_per_dir(missing)
+    assert exc_info.value.code == 2
+
+
+def test_parse_known_issues_per_dir_skips_total_rows(per_dir_md: Path) -> None:
+    """Total rows are not included in per-directory counts."""
+    result = check_mypy_counts.parse_known_issues_per_dir(per_dir_md)
+    for dir_counts in result.values():
+        assert "total" not in dir_counts
+        assert "Total" not in dir_counts
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +220,7 @@ def test_diff_counts_both_zero() -> None:
 
 
 # ---------------------------------------------------------------------------
-# update_table
+# update_table (flat format)
 # ---------------------------------------------------------------------------
 
 
@@ -184,23 +260,85 @@ def test_update_table_updates_total_row(valid_md: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
+# update_table_per_dir (per-directory format)
+# ---------------------------------------------------------------------------
+
+
+def test_update_table_per_dir_updates_each_section(per_dir_md: Path) -> None:
+    """update_table_per_dir writes counts into the correct per-directory sections."""
+    actual_per_dir = {
+        "scylla/": {"arg-type": 10, "operator": 5},
+        "tests/": {"arg-type": 2, "union-attr": 3},
+        "scripts/": {"arg-type": 0},
+    }
+    check_mypy_counts.update_table_per_dir(per_dir_md, actual_per_dir)
+
+    result = check_mypy_counts.parse_known_issues_per_dir(per_dir_md)
+    assert result["scylla/"]["arg-type"] == 10
+    assert result["scylla/"]["operator"] == 5
+    assert result["tests/"]["arg-type"] == 2
+    assert result["tests/"]["union-attr"] == 3
+    assert result["scripts/"]["arg-type"] == 0
+
+
+def test_update_table_per_dir_preserves_section_headings(per_dir_md: Path) -> None:
+    """update_table_per_dir preserves all section headings and non-table content."""
+    actual_per_dir: dict[str, dict[str, int]] = {
+        "scylla/": {},
+        "tests/": {},
+        "scripts/": {},
+    }
+    check_mypy_counts.update_table_per_dir(per_dir_md, actual_per_dir)
+
+    content = per_dir_md.read_text(encoding="utf-8")
+    assert "## Error Count Table — scylla/" in content
+    assert "## Error Count Table — tests/" in content
+    assert "## Error Count Table — scripts/" in content
+    assert "# Mypy Known Issues" in content
+
+
+def test_update_table_per_dir_updates_total_per_section(per_dir_md: Path) -> None:
+    """update_table_per_dir updates the Total row within each section independently."""
+    actual_per_dir = {
+        "scylla/": {"arg-type": 5, "operator": 3},
+        "tests/": {"union-attr": 4},
+        "scripts/": {},
+    }
+    check_mypy_counts.update_table_per_dir(per_dir_md, actual_per_dir)
+
+    content = per_dir_md.read_text(encoding="utf-8")
+    # scylla/ total = 5 + 3 = 8, tests/ total = 4, scripts/ total = 0
+    assert "**8**" in content
+    assert "**4**" in content
+    assert "**0**" in content
+
+
+# ---------------------------------------------------------------------------
 # run_mypy_and_count (unit-level, mocked subprocess)
 # ---------------------------------------------------------------------------
 
 
 def test_run_mypy_and_count_parses_output(tmp_path: Path) -> None:
-    """run_mypy_and_count correctly parses error codes from mypy output."""
-    fake_output = (
+    """run_mypy_and_count correctly parses error codes from mypy output (merged across dirs)."""
+    # run_mypy_and_count delegates to run_mypy_per_dir which calls mypy once per
+    # MYPY_PATH ("scripts/", "scylla/", "tests/"). Provide one result per call.
+    scripts_output = "Success: no issues found\n"
+    scylla_output = (
         "scylla/foo.py:10: error: Incompatible types  [arg-type]\n"
         "scylla/bar.py:20: error: Some issue  [call-arg]\n"
         "scylla/bar.py:21: error: Another  [call-arg]\n"
         "scylla/baz.py:5: note: By default  [annotation-unchecked]\n"
     )
-    mock_result = MagicMock()
-    mock_result.stdout = fake_output
-    mock_result.returncode = 1
+    tests_output = "Success: no issues found\n"
 
-    with patch("subprocess.run", return_value=mock_result):
+    side_effects = []
+    for output in [scripts_output, scylla_output, tests_output]:
+        mock_result = MagicMock()
+        mock_result.stdout = output
+        mock_result.returncode = 0 if "Success" in output else 1
+        side_effects.append(mock_result)
+
+    with patch("subprocess.run", side_effect=side_effects):
         counts = check_mypy_counts.run_mypy_and_count(tmp_path)
 
     assert counts.get("arg-type") == 1
@@ -226,4 +364,50 @@ def test_run_mypy_and_count_pixi_not_found(tmp_path: Path) -> None:
     with patch("subprocess.run", side_effect=FileNotFoundError):
         with pytest.raises(SystemExit) as exc_info:
             check_mypy_counts.run_mypy_and_count(tmp_path)
+    assert exc_info.value.code == 2
+
+
+# ---------------------------------------------------------------------------
+# run_mypy_per_dir (unit-level, mocked subprocess)
+# ---------------------------------------------------------------------------
+
+
+def test_run_mypy_per_dir_returns_per_directory_counts(tmp_path: Path) -> None:
+    """run_mypy_per_dir runs mypy once per MYPY_PATH and returns per-dir counts.
+
+    MYPY_PATHS order is ["scripts/", "scylla/", "tests/"], so side_effects must
+    match that order.
+    """
+    # MYPY_PATHS = ["scripts/", "scylla/", "tests/"]
+    outputs = [
+        # scripts/ — no errors
+        "Success: no issues found in 5 source files\n",
+        # scylla/ — one arg-type error
+        "scylla/foo.py:10: error: Something  [arg-type]\n",
+        # tests/ — two union-attr errors
+        "tests/test_bar.py:5: error: Union issue  [union-attr]\n"
+        "tests/test_bar.py:6: error: Another union  [union-attr]\n",
+    ]
+
+    side_effects = []
+    for output in outputs:
+        mock_result = MagicMock()
+        mock_result.stdout = output
+        mock_result.returncode = 0 if "Success" in output else 1
+        side_effects.append(mock_result)
+
+    with patch("subprocess.run", side_effect=side_effects):
+        result = check_mypy_counts.run_mypy_per_dir(tmp_path)
+
+    assert set(result.keys()) == set(check_mypy_counts.MYPY_PATHS)
+    assert result["scripts/"] == {}
+    assert result["scylla/"]["arg-type"] == 1
+    assert result["tests/"]["union-attr"] == 2
+
+
+def test_run_mypy_per_dir_pixi_not_found(tmp_path: Path) -> None:
+    """Exits with code 2 when pixi is not available."""
+    with patch("subprocess.run", side_effect=FileNotFoundError):
+        with pytest.raises(SystemExit) as exc_info:
+            check_mypy_counts.run_mypy_per_dir(tmp_path)
     assert exc_info.value.code == 2

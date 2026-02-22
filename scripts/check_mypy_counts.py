@@ -56,6 +56,10 @@ MYPY_PATHS = ["scripts/", "scylla/", "tests/"]
 # Matches: ... error: Some message  [error-code]
 _ERROR_LINE_RE = re.compile(r"\berror:.*\[([a-z][a-z0-9-]*)\]$")
 
+# Regex to extract the file path from the beginning of a mypy error/note line
+# Matches: path/to/file.py:123: error: ...
+_FILE_PATH_RE = re.compile(r"^([^:]+\.py):\d+")
+
 # Regex to parse table rows from MYPY_KNOWN_ISSUES.md
 # Matches: | error-code | 42 | description |
 # Skips header rows, separator rows, and the Total row
@@ -64,20 +68,38 @@ _TABLE_ROW_RE = re.compile(r"^\|\s*([a-z][a-z0-9-]+)\s*\|\s*(\d+)\s*\|")
 # Regex to match the Total row for updating
 _TOTAL_ROW_RE = re.compile(r"(\|\s*\*\*Total\*\*\s*\|\s*\*\*)\d+(\*\*\s*\|)")
 
+# Regex to match per-directory section headings
+# Matches: ## Error Count Table — scylla/
+_SECTION_HEADING_RE = re.compile(r"^##\s+Error Count Table\s+—\s+(.+?)\s*$")
+
 
 def parse_known_issues_table(md_path: Path) -> dict[str, int]:
     """Parse the error count table from MYPY_KNOWN_ISSUES.md.
+
+    Supports both the legacy flat format and the new per-directory format.
+    In per-directory format, all sections are merged into a single dict
+    (for backward compatibility with callers expecting a flat result).
 
     Args:
         md_path: Path to the MYPY_KNOWN_ISSUES.md file.
 
     Returns:
-        Dictionary mapping error code to documented count.
+        Dictionary mapping error code to documented count (summed across all sections).
 
     Raises:
         SystemExit: With code 2 if the file is missing or the table cannot be parsed.
 
     """
+    per_dir = parse_known_issues_per_dir(md_path)
+    if per_dir:
+        # Merge counts across all directories
+        merged: dict[str, int] = {}
+        for dir_counts in per_dir.values():
+            for code, count in dir_counts.items():
+                merged[code] = merged.get(code, 0) + count
+        return merged
+
+    # Fallback: legacy flat table parse
     if not md_path.exists():
         print(
             f"error: {md_path} not found. Create it or run with --update to generate.",
@@ -110,8 +132,60 @@ def parse_known_issues_table(md_path: Path) -> dict[str, int]:
     return counts
 
 
+def parse_known_issues_per_dir(md_path: Path) -> dict[str, dict[str, int]]:
+    """Parse per-directory error count sections from MYPY_KNOWN_ISSUES.md.
+
+    Looks for sections headed by '## Error Count Table — <dir>/' and parses
+    each table within that section.
+
+    Args:
+        md_path: Path to the MYPY_KNOWN_ISSUES.md file.
+
+    Returns:
+        Dict mapping directory name (e.g. "scylla/") to its error code counts.
+        Returns an empty dict if no per-directory sections are found.
+
+    Raises:
+        SystemExit: With code 2 if the file is missing or cannot be read.
+
+    """
+    if not md_path.exists():
+        print(
+            f"error: {md_path} not found. Create it or run with --update to generate.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    try:
+        content = md_path.read_text(encoding="utf-8")
+    except OSError as e:
+        print(f"error: Cannot read {md_path}: {e}", file=sys.stderr)
+        sys.exit(2)
+
+    result: dict[str, dict[str, int]] = {}
+    current_dir: str | None = None
+
+    for line in content.splitlines():
+        heading_match = _SECTION_HEADING_RE.match(line)
+        if heading_match:
+            current_dir = heading_match.group(1)
+            result[current_dir] = {}
+            continue
+
+        if current_dir is not None:
+            row_match = _TABLE_ROW_RE.match(line)
+            if row_match:
+                code = row_match.group(1)
+                count = int(row_match.group(2))
+                result[current_dir][code] = count
+
+    return result
+
+
 def run_mypy_and_count(repo_root: Path) -> dict[str, int]:
     """Run mypy with all disabled error codes re-enabled and count errors by code.
+
+    Runs mypy over all MYPY_PATHS together and returns aggregate counts.
 
     Args:
         repo_root: Repository root directory (working directory for mypy).
@@ -120,31 +194,63 @@ def run_mypy_and_count(repo_root: Path) -> dict[str, int]:
         Dictionary mapping error code to actual violation count.
 
     """
-    cmd = ["pixi", "run", "mypy"] + MYPY_PATHS
-    for code in DISABLED_ERROR_CODES:
-        cmd += ["--enable-error-code", code]
+    counts_per_dir = run_mypy_per_dir(repo_root)
+    merged: dict[str, int] = {}
+    for dir_counts in counts_per_dir.values():
+        for code, count in dir_counts.items():
+            merged[code] = merged.get(code, 0) + count
+    return merged
 
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            cwd=repo_root,
-        )
-    except FileNotFoundError:
-        print("error: 'pixi' not found. Ensure pixi is installed and in PATH.", file=sys.stderr)
-        sys.exit(2)
 
-    counts: dict[str, int] = {}
-    for line in result.stdout.splitlines():
-        match = _ERROR_LINE_RE.search(line)
-        if match:
-            code = match.group(1)
-            # Only count codes we track (ignore codes from other sources)
-            if code in DISABLED_ERROR_CODES:
-                counts[code] = counts.get(code, 0) + 1
+def run_mypy_per_dir(repo_root: Path) -> dict[str, dict[str, int]]:
+    """Run mypy per directory and return per-directory error counts.
 
-    return counts
+    Runs mypy once for each path in MYPY_PATHS with all disabled error codes
+    re-enabled, then returns a dict keyed by directory path.
+
+    Args:
+        repo_root: Repository root directory (working directory for mypy).
+
+    Returns:
+        Dict mapping directory path (e.g. "scylla/") to its error code counts.
+
+    """
+    result: dict[str, dict[str, int]] = {}
+
+    for path in MYPY_PATHS:
+        cmd = ["pixi", "run", "mypy", path]
+        for code in DISABLED_ERROR_CODES:
+            cmd += ["--enable-error-code", code]
+
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                cwd=repo_root,
+            )
+        except FileNotFoundError:
+            print("error: 'pixi' not found. Ensure pixi is installed and in PATH.", file=sys.stderr)
+            sys.exit(2)
+
+        counts: dict[str, int] = {}
+        for line in proc.stdout.splitlines():
+            # Only count errors from files within the target directory
+            file_match = _FILE_PATH_RE.match(line)
+            if not file_match:
+                continue
+            file_path = file_match.group(1)
+            if not file_path.startswith(path):
+                continue
+            error_match = _ERROR_LINE_RE.search(line)
+            if error_match:
+                code = error_match.group(1)
+                if code in DISABLED_ERROR_CODES:
+                    counts[code] = counts.get(code, 0) + 1
+
+        result[path] = counts
+
+    return result
 
 
 def diff_counts(documented: dict[str, int], actual: dict[str, int]) -> list[str]:
@@ -190,6 +296,12 @@ def diff_counts(documented: dict[str, int], actual: dict[str, int]) -> list[str]
 def update_table(md_path: Path, actual: dict[str, int]) -> None:
     """Rewrite the count column in MYPY_KNOWN_ISSUES.md to match actual mypy counts.
 
+    Supports both legacy flat format and per-directory section format. In
+    per-directory format, counts from ``actual`` are written to the section
+    that corresponds to each directory.  For per-directory updates pass
+    ``actual`` as the merged aggregate; use ``update_table_per_dir`` to write
+    per-directory breakdowns.
+
     Only updates count cells and the Total row. All other content is preserved.
 
     Args:
@@ -225,6 +337,52 @@ def update_table(md_path: Path, actual: dict[str, int]) -> None:
     print(f"Updated {md_path} with current mypy counts.")
 
 
+def update_table_per_dir(md_path: Path, actual_per_dir: dict[str, dict[str, int]]) -> None:
+    """Rewrite per-directory sections in MYPY_KNOWN_ISSUES.md.
+
+    For each '## Error Count Table — <dir>/' section, updates count cells and
+    the Total row using the counts from ``actual_per_dir[dir]``. Sections not
+    present in ``actual_per_dir`` are left unchanged.
+
+    Args:
+        md_path: Path to MYPY_KNOWN_ISSUES.md.
+        actual_per_dir: Per-directory error counts (dir → error code → count).
+
+    """
+    content = md_path.read_text(encoding="utf-8")
+    lines = content.splitlines(keepends=True)
+    new_lines: list[str] = []
+    current_dir: str | None = None
+    current_actual: dict[str, int] = {}
+
+    for line in lines:
+        heading_match = _SECTION_HEADING_RE.match(line)
+        if heading_match:
+            current_dir = heading_match.group(1)
+            current_actual = actual_per_dir.get(current_dir, {})
+            new_lines.append(line)
+            continue
+
+        row_match = _TABLE_ROW_RE.match(line)
+        if row_match and current_dir is not None:
+            code = row_match.group(1)
+            if code in current_actual or code in DISABLED_ERROR_CODES:
+                new_count = current_actual.get(code, 0)
+                line = re.sub(
+                    r"(\|\s*" + re.escape(code) + r"\s*\|\s*)\d+(\s*\|)",
+                    lambda m, c=new_count: f"{m.group(1)}{c}{m.group(2)}",
+                    line,
+                )
+        elif _TOTAL_ROW_RE.search(line) and current_dir is not None:
+            total = sum(current_actual.get(c, 0) for c in DISABLED_ERROR_CODES)
+            line = _TOTAL_ROW_RE.sub(rf"\g<1>{total}\g<2>", line)
+
+        new_lines.append(line)
+
+    md_path.write_text("".join(new_lines), encoding="utf-8")
+    print(f"Updated {md_path} with per-directory mypy counts.")
+
+
 def main() -> int:
     """CLI entry point for mypy count validation.
 
@@ -255,24 +413,71 @@ def main() -> int:
     md_path = args.md_path if args.md_path else repo_root / "MYPY_KNOWN_ISSUES.md"
 
     if args.update:
-        # In update mode: run mypy, then overwrite the table
+        # In update mode: run mypy per directory, then overwrite the table
         print("Running mypy to collect current error counts...")
-        actual = run_mypy_and_count(repo_root)
+        actual_per_dir = run_mypy_per_dir(repo_root)
         if not md_path.exists():
             print(
                 f"error: {md_path} not found. Create the file first, then re-run --update.",
                 file=sys.stderr,
             )
             return 2
-        update_table(md_path, actual)
+
+        # Use per-directory update if sections exist, otherwise flat update
+        existing_per_dir = parse_known_issues_per_dir(md_path)
+        if existing_per_dir:
+            update_table_per_dir(md_path, actual_per_dir)
+        else:
+            # Legacy flat update: merge all dirs into one dict
+            merged: dict[str, int] = {}
+            for dir_counts in actual_per_dir.values():
+                for code, count in dir_counts.items():
+                    merged[code] = merged.get(code, 0) + count
+            update_table(md_path, merged)
         return 0
 
     # Validation mode: compare documented vs. actual
-    documented = parse_known_issues_table(md_path)
-    print("Running mypy to collect current error counts...")
-    actual = run_mypy_and_count(repo_root)
+    per_dir_documented = parse_known_issues_per_dir(md_path)
 
-    mismatches = diff_counts(documented, actual)
+    print("Running mypy to collect current error counts...")
+    actual_per_dir = run_mypy_per_dir(repo_root)
+
+    if per_dir_documented:
+        # Per-directory validation
+        all_mismatches: list[str] = []
+        for directory in MYPY_PATHS:
+            documented = per_dir_documented.get(directory, {})
+            actual = actual_per_dir.get(directory, {})
+            mismatches = diff_counts(documented, actual)
+            if mismatches:
+                all_mismatches.append(f"  {directory}:")
+                all_mismatches.extend(f"  {m}" for m in mismatches)
+
+        if all_mismatches:
+            print(
+                f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
+                file=sys.stderr,
+            )
+            for msg in all_mismatches:
+                print(msg, file=sys.stderr)
+            print(
+                "\nFix: run `python scripts/check_mypy_counts.py --update` "
+                "and commit the updated MYPY_KNOWN_ISSUES.md.",
+                file=sys.stderr,
+            )
+            return 1
+
+        print(f"check-mypy-counts: OK — {md_path.name} counts match mypy output.")
+        return 0
+
+    # Legacy flat validation
+    documented_flat = parse_known_issues_table(md_path)
+    merged_actual: dict[str, int] = {}
+    for dir_counts in actual_per_dir.values():
+        for code, count in dir_counts.items():
+            merged_actual[code] = merged_actual.get(code, 0) + count
+
+    mismatches = diff_counts(documented_flat, merged_actual)
     if mismatches:
         print(
             f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
