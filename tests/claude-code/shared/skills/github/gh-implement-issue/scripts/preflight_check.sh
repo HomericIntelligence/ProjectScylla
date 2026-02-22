@@ -82,8 +82,11 @@ fi
 CANDIDATE_JSON=$(gh pr list --state all --json number,title,state --limit 100 2>/dev/null)
 MERGED_PRS=""
 OPEN_PRS=""
-while IFS=$'\t' read -r pr_num pr_title pr_state; do
-    [[ -z "$pr_num" ]] && continue
+while IFS= read -r pr_entry; do
+    pr_num=$(echo "$pr_entry" | jq -r '.number')
+    pr_title=$(echo "$pr_entry" | jq -r '.title')
+    pr_state=$(echo "$pr_entry" | jq -r '.state')
+    [[ -z "$pr_num" || "$pr_num" == "null" ]] && continue
     CLOSES=$(gh pr view "$pr_num" --json closingIssuesReferences \
         --jq '.closingIssuesReferences[].number' 2>/dev/null)
     if echo "$CLOSES" | grep -qx "$ISSUE"; then
@@ -93,7 +96,7 @@ while IFS=$'\t' read -r pr_num pr_title pr_state; do
             OPEN_PRS+="${pr_num}: ${pr_title}"$'\n'
         fi
     fi
-done < <(echo "$CANDIDATE_JSON" | jq -r '.[] | [.number,.title,.state] | @tsv')
+done < <(echo "$CANDIDATE_JSON" | jq -c '.[]')
 MERGED_PRS="${MERGED_PRS%$'\n'}"
 OPEN_PRS="${OPEN_PRS%$'\n'}"
 
