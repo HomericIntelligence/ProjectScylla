@@ -8,7 +8,7 @@ from pathlib import Path
 
 import click
 
-from scylla.config import ConfigLoader
+from scylla.config import DEFAULT_JUDGE_MODEL, ConfigLoader
 from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
     MarkdownReportGenerator,
@@ -335,7 +335,7 @@ def report(
         test_name=test_id.replace("-", " ").title(),
         timestamp=timestamp,
         runs_per_tier=runs_per_tier,
-        judge_model="claude-opus-4-5-20251101",
+        judge_model=DEFAULT_JUDGE_MODEL,
         tiers=tier_metrics,
         sensitivity=sensitivity,
         transitions=transitions,

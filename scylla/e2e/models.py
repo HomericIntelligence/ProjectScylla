@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.core.results import RunResultBase
 
 if TYPE_CHECKING:
@@ -779,10 +780,10 @@ class ExperimentConfig(BaseModel):
     task_commit: str
     task_prompt_file: Path
     language: str  # REQUIRED: Programming language for build pipeline
-    models: list[str] = Field(default_factory=lambda: ["claude-sonnet-4-5-20250929"])
+    models: list[str] = Field(default_factory=lambda: [DEFAULT_AGENT_MODEL])
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = Field(default_factory=lambda: list(TierID))
-    judge_models: list[str] = Field(default_factory=lambda: ["claude-opus-4-5-20251101"])
+    judge_models: list[str] = Field(default_factory=lambda: [DEFAULT_JUDGE_MODEL])
     parallel_subtests: int = 4
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
@@ -832,7 +833,7 @@ class ExperimentConfig(BaseModel):
         if "judge_model" in data and "judge_models" not in data:
             judge_models = [data["judge_model"]]
         else:
-            judge_models = data.get("judge_models", ["claude-opus-4-5-20251101"])
+            judge_models = data.get("judge_models", [DEFAULT_JUDGE_MODEL])
 
         return cls(
             experiment_id=data["experiment_id"],
@@ -840,7 +841,7 @@ class ExperimentConfig(BaseModel):
             task_commit=data["task_commit"],
             task_prompt_file=Path(data["task_prompt_file"]),
             language=data["language"],
-            models=data.get("models", ["claude-sonnet-4-5-20250929"]),
+            models=data.get("models", [DEFAULT_AGENT_MODEL]),
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
             judge_models=judge_models,

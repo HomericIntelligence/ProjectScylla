@@ -13,6 +13,7 @@ Example:
 
 """
 
+from .constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from .loader import ConfigLoader
 from .models import (
     AdaptersConfig,
@@ -43,6 +44,9 @@ from .pricing import (
 )
 
 __all__ = [
+    # Constants
+    "DEFAULT_AGENT_MODEL",
+    "DEFAULT_JUDGE_MODEL",
     # Loader
     "ConfigLoader",
     # Exceptions

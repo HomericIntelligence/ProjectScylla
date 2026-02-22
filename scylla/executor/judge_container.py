@@ -19,6 +19,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
+from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from scylla.executor.docker import (
     ContainerConfig,
     ContainerError,
@@ -45,7 +46,7 @@ class JudgeContainerConfig:
 
     agent_workspace: Path
     output_dir: Path
-    judge_model: str = "claude-opus-4-5-20251101"
+    judge_model: str = DEFAULT_JUDGE_MODEL
     rubric_path: Path | None = None
     criteria_path: Path | None = None
     prompt_path: Path | None = None
