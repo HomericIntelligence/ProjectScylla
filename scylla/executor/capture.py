@@ -293,7 +293,7 @@ class StreamingCapture:
         self._capture.start()
         return self
 
-    def __exit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any) -> bool:
+    def __exit__(self, exc_type: type | None, exc_val: Exception | None, exc_tb: Any) -> None:
         """Exit context and stop capture."""
         if exc_val:
             self._error = str(exc_val)
@@ -309,7 +309,7 @@ class StreamingCapture:
             cost_usd=current_metrics.cost_usd,
             api_calls=current_metrics.api_calls,
         )
-        return False  # Don't suppress exceptions
+        # Return None (False-y) to not suppress exceptions
 
     def write_stdout(self, data: str) -> None:
         """Write to stdout log."""
