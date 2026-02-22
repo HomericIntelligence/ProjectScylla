@@ -18,6 +18,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from scylla.judge.evaluator import (
     Judgment,
 )
@@ -67,7 +68,7 @@ def parse_args() -> argparse.Namespace:
         "--model",
         type=str,
         required=True,
-        help="Model ID to use for evaluation (e.g., claude-opus-4-5-20251101)",
+        help=f"Model ID to use for evaluation (default: {DEFAULT_JUDGE_MODEL})",
     )
 
     parser.add_argument(
