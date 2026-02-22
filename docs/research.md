@@ -205,6 +205,12 @@ The following metrics are **fully implemented** in both the metrics calculation 
 * **Latency**: Time from query initiation to resolution
 * **Judge Agreement**: Inter-rater reliability using Krippendorff's alpha
 
+**Statistical Analysis:**
+
+* **Power Analysis**: Post-hoc statistical power for Mann-Whitney U and Kruskal-Wallis tests
+  * Implementation: `scylla/analysis/stats.py:mann_whitney_power()`, `kruskal_wallis_power()`
+  * Status: Calculation functions complete; not yet surfaced in comparison tables
+
 ### **6.2. Metrics Defined but Not Yet Integrated**
 
 The following metrics are **implemented** in `scylla/metrics/process.py` but **not yet integrated** into the analysis pipeline (`scylla/analysis/`):
@@ -256,8 +262,8 @@ The following metrics are **implemented** in `scylla/metrics/process.py` but **n
    * Ensure sufficient sample sizes for detecting meaningful effect sizes
 
 4. **Multi-Experiment Support**:
-   * Enhance rubric conflict handling when loading multiple experiments
-   * Add multi-experiment comparison tables
+   * Multi-experiment loading is implemented (`scylla/analysis/loader.py:load_all_experiments()`)
+   * Remaining work: rubric conflict handling when the same subtest appears across experiments with differing rubrics
 
 ## **7\. Conclusion and Strategic Research Recommendations**
 
