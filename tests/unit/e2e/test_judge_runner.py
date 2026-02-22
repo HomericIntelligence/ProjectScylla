@@ -219,7 +219,7 @@ class TestComputeJudgeConsensus:
     def test_single_valid_judge_score_used(self) -> None:
         """Single valid judge's score becomes the consensus."""
         judges = [_make_summary(score=0.8, passed=True)]
-        score, passed, grade = _compute_judge_consensus(judges)
+        score, passed, _grade = _compute_judge_consensus(judges)
         assert score == pytest.approx(0.8)
         assert passed is True
 
@@ -229,7 +229,7 @@ class TestComputeJudgeConsensus:
             _make_summary(score=0.6, passed=False, judge_number=1),
             _make_summary(score=1.0, passed=True, judge_number=2),
         ]
-        score, passed, grade = _compute_judge_consensus(judges)
+        score, _passed, _grade = _compute_judge_consensus(judges)
         assert score == pytest.approx(0.8)
 
     def test_majority_vote_for_passed_true(self) -> None:
@@ -265,7 +265,7 @@ class TestComputeJudgeConsensus:
     def test_grade_is_returned(self) -> None:
         """A letter grade is returned alongside score and passed."""
         judges = [_make_summary(score=1.0, passed=True)]
-        score, passed, grade = _compute_judge_consensus(judges)
+        _score, _passed, grade = _compute_judge_consensus(judges)
         assert grade is not None
         assert isinstance(grade, str)
 
@@ -330,7 +330,7 @@ class TestRunJudge:
             "scylla.e2e.judge_runner.run_llm_judge",
             side_effect=Exception("judge error"),
         ):
-            consensus, judges = _run_judge(
+            _consensus, judges = _run_judge(
                 workspace=tmp_path,
                 task_prompt="task",
                 stdout="output",
