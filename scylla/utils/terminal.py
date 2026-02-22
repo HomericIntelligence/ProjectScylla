@@ -9,6 +9,7 @@ Provides:
 from __future__ import annotations
 
 import atexit
+import contextlib
 import signal
 import subprocess
 import sys
@@ -22,11 +23,10 @@ def restore_terminal() -> None:
     No-ops when stdin is not a TTY. Swallows all exceptions — safe to call
     in signal handlers and atexit callbacks.
     """
-    try:
+    with contextlib.suppress(Exception):
         if sys.stdin.isatty():
             subprocess.run(["stty", "sane"], stdin=sys.stdin, check=False)
-    except Exception:
-        pass  # Best effort — never raise during cleanup
+    # Best effort — never raise during cleanup
 
 
 # Register as atexit defense-in-depth so the terminal is restored even if
