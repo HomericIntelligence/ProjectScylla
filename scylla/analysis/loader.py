@@ -380,7 +380,7 @@ def parse_judge_model(model_md_path: Path) -> str:
     return match.group(1).strip()
 
 
-def load_agent_result(run_dir: Path) -> dict[str, any]:
+def load_agent_result(run_dir: Path) -> dict[str, Any]:
     """Load agent execution result from agent/result.json.
 
     Args:

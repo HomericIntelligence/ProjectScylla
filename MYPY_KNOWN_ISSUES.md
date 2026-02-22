@@ -2,7 +2,7 @@
 
 Baseline documentation of known type errors in the ProjectScylla codebase as of 2026-02-15.
 
-**Status**: 159 total type errors across `scylla/` directory (20 error codes disabled)
+**Status**: 157 total type errors across `scylla/` directory (19 error codes disabled)
 
 See [#687](https://github.com/mvillmow/ProjectScylla/issues/687) for the roadmap to incrementally re-enable stricter checks.
 
@@ -31,7 +31,6 @@ Re-enable incrementally as violations are fixed (see roadmap issue #687).
 | `assignment` | 10 | Type mismatches in assignments | Phase 4 |
 | `operator` | 8 | Incompatible operand types | Phase 3 |
 | `arg-type` | 6 | Incompatible argument types | Phase 3 |
-| `valid-type` | 5 | Invalid type annotations (e.g., `callable` vs `Callable`) | Phase 1 |
 | `index` | 3 | Invalid indexing operations | Phase 2 |
 | `attr-defined` | 3 | Attribute not defined | Phase 2 |
 | `misc` | 2 | Miscellaneous type issues | Phase 2 |
@@ -44,8 +43,8 @@ Re-enable incrementally as violations are fixed (see roadmap issue #687).
 | `return-value` | 1 | Incompatible return value type | Phase 6 |
 | `call-overload` | 1 | No matching overload variant | Phase 6 |
 
-**Total disabled codes**: 15 explicit + 5 via settings (`check_untyped_defs`, `disallow_untyped_defs`,
-`disallow_incomplete_defs`, `disallow_any_generics`, `warn_return_any`) = 20 codes disabled
+**Total disabled codes**: 14 explicit + 5 via settings (`check_untyped_defs`, `disallow_untyped_defs`,
+`disallow_incomplete_defs`, `disallow_any_generics`, `warn_return_any`) = 19 codes disabled
 
 ## Running Mypy Locally
 

@@ -93,7 +93,7 @@ python_version = "3.10"
 # Incremental mypy adoption - start with basic checks
 # Catches syntax errors, undefined names, and import issues
 # TODO #687: Gradually enable stricter checks as existing type errors are fixed
-# See MYPY_KNOWN_ISSUES.md for current baseline (159 errors as of 2026-02-14)
+# See MYPY_KNOWN_ISSUES.md for current baseline (157 errors as of 2026-02-21)
 warn_unused_configs = true
 ignore_missing_imports = true
 show_error_codes = true
@@ -114,7 +114,6 @@ disable_error_code = [
     "assignment",      # 10 violations - type mismatches in assignments
     "operator",        # 8 violations - incompatible operand types
     "arg-type",        # 6 violations - incompatible argument types
-    "valid-type",      # 5 violations - invalid type annotations (e.g., "callable" vs "Callable")
     "index",           # 3 violations - invalid indexing operations
     "attr-defined",    # 3 violations - attribute not defined
     "misc",            # 2 violations - miscellaneous type issues
