@@ -56,7 +56,7 @@ git push -u origin <issue-number>-description
 
 # 4. Create pull request
 gh pr create \
-  --title "Brief description" \
+  --title "[Type] Brief description" \
   --body "Closes #<issue-number>"
 
 # 5. Enable auto-merge
