@@ -46,6 +46,7 @@ Closes #
 - [ ] No new warnings introduced
 - [ ] Conventional commit message format used
 - [ ] Branch named following convention: `<issue-number>-<description>`
+- [ ] MYPY_KNOWN_ISSUES.md updated (if mypy error counts changed)
 
 ## Additional Notes
 
