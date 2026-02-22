@@ -9,7 +9,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from scylla.config.constants import DEFAULT_JUDGE_MODEL
+from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 
 
@@ -277,7 +277,7 @@ class DefaultsConfig(BaseModel):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
     default_model: str = Field(
-        default=DEFAULT_JUDGE_MODEL,
+        default=DEFAULT_AGENT_MODEL,
         description="Default model ID when none is specified",
     )
 
