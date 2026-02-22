@@ -9,7 +9,7 @@ Example:
     loader = ConfigLoader()
     test = loader.load_test("001-justfile-to-makefile")
     rubric = loader.load_rubric("001-justfile-to-makefile")
-    config = loader.load(test_id="001-justfile-to-makefile", model_id="claude-opus-4-5-20251101")
+    config = loader.load(test_id="001-justfile-to-makefile", model_id=DEFAULT_JUDGE_MODEL)
 
 """
 

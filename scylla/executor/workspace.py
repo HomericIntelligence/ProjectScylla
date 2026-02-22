@@ -158,7 +158,7 @@ def create_workspace(
 
     Args:
         test_id: Unique test identifier (e.g., "001-justfile-to-makefile").
-        model_id: Model identifier (e.g., "claude-opus-4-5-20251101").
+        model_id: Model identifier (e.g., DEFAULT_JUDGE_MODEL).
         run_number: Run number (1-99), will be zero-padded.
         timestamp: ISO-8601 timestamp. If None, uses current time.
         base_path: Base directory for runs (default: "runs").
