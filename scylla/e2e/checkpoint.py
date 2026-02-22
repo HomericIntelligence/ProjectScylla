@@ -400,11 +400,8 @@ class E2ECheckpoint(BaseModel):
             for subtest_id, runs in subtests.items():
                 run_states[tier_id][subtest_id] = {}
                 for run_num, status in runs.items():
-                    if status == "agent_complete":
-                        run_state = "agent_complete"
-                    else:
-                        # "passed" or "failed" -> run was fully completed
-                        run_state = "run_complete"
+                    # "passed" or "failed" -> run was fully completed; "agent_complete" stays
+                    run_state = "agent_complete" if status == "agent_complete" else "run_complete"
                     run_states[tier_id][subtest_id][str(run_num)] = run_state
                 subtest_states[tier_id][subtest_id] = "runs_in_progress"
             tier_states[tier_id] = "subtests_running"
