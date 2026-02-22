@@ -260,7 +260,53 @@ No changes needed. The wrapper script handles everything automatically.
 
 Potential enhancements:
 
-1. **Multi-platform support**: Build images for ARM64 (Apple Silicon)
-2. **Layer caching**: Optimize Dockerfile for faster rebuilds
-3. **Resource limits**: Add memory/CPU limits to container
-4. **Volume optimization**: Use named volumes for caching
+1. **Multi-platform support**: Build images for ARM64 (Apple Silicon).
+
+   - **Status**: Deferred (not implemented)
+   - **Why deferred**: The `FROM` digest in `docker/Dockerfile` is architecture-specific
+     (x86_64). A multi-arch build requires separate per-arch digests and a manifest list,
+     plus an ARM64 CI runner. GitHub Actions `ubuntu-latest` is x86_64 only, so there is
+     no ARM64 runner available to test or publish ARM images.
+   - **Acceptance criteria**: An ARM64 runner is available in CI; `docker/Dockerfile` uses
+     `--platform=$BUILDPLATFORM` with `buildx build --platform linux/amd64,linux/arm64`;
+     pinned digests are updated to multi-arch manifest SHAs.
+
+2. **Layer caching**: Optimize Dockerfile for faster rebuilds.
+
+   - **Status**: Deferred (not implemented)
+   - **Why deferred**: The builder stage copies `pyproject.toml` and `scylla/` source
+     together before running `pip install`, so any source change invalidates the pip
+     install layer. Fixing this requires installing dependencies from metadata alone first
+     (e.g. with `pip install --no-deps` + a separate editable install), which is not
+     straightforward with the current hatchling build backend. Low urgency given current
+     rebuild frequency.
+   - **Acceptance criteria**: `docker build` with no dependency changes but source-only
+     changes completes without re-running `pip install`; CI build time reduced by ≥30% for
+     source-only changes.
+
+3. **Resource limits**: Add memory/CPU limits to container.
+
+   - **Status**: Deferred (not implemented)
+   - **Why deferred**: `scripts/run_experiment_in_container.sh` passes no `--memory`,
+     `--cpus`, or `--memory-swap` flags to `docker run`. Appropriate limits depend on the
+     workload profile (number of concurrent agents, model tier), and no profiling data
+     exists yet to set safe defaults. Arbitrary limits risk OOM-killing long T4–T6 runs.
+   - **Acceptance criteria**: Baseline memory/CPU usage profiled across T0–T6; limits
+     added as configurable flags in `scripts/run_experiment_in_container.sh` (e.g.
+     `--memory`, `--cpus`) with documented safe defaults per tier.
+
+4. **Volume optimization**: Use named volumes for caching.
+
+   - **Status**: Deferred (not implemented)
+   - **Why deferred**: The wrapper script uses bind mounts (project root read-write,
+     credentials read-only). Named volumes would allow pip/npm cache persistence across
+     runs and reduce cold-start build time, but they require pre-creation and add
+     operational complexity (volume lifecycle management). Bind mounts are sufficient for
+     current use.
+   - **Acceptance criteria**: pip and npm cache directories mapped to named Docker volumes;
+     `docker volume ls` shows the named volumes; cold-start build time reduced by ≥20% on
+     rebuild.
+
+5. **Health checks**: Verify container readiness via `HEALTHCHECK`.
+
+   - **Status**: Implemented — see `docker/Dockerfile` lines 116–117.
