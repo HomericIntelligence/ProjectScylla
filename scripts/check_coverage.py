@@ -99,7 +99,7 @@ def parse_coverage_report(coverage_file: Path) -> float | None:
         return None
 
     try:
-        tree = ET.parse(coverage_file)  # noqa: S314  # trusted source: pytest-cov generated file
+        tree = ET.parse(coverage_file)  # trusted source: pytest-cov generated file
         root = tree.getroot()
 
         # Cobertura format has line-rate attribute at root
