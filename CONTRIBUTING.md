@@ -115,7 +115,7 @@ git checkout -b 123-fix-judge-timeout
 ### 3. Write Tests
 
 ```bash
-# Create tests in tests/unit/ or tests/integration/
+# Create tests in tests/unit/
 # Follow existing test patterns
 
 # Run your tests
@@ -236,7 +236,7 @@ pixi run pytest tests/ --verbose
 
 # Specific categories
 pixi run pytest tests/unit/ -v          # Unit tests only
-pixi run pytest tests/integration/ -v   # Integration tests
+pixi run pytest tests/unit/analysis/ -v # Includes integration-style tests
 
 # Specific modules
 pixi run pytest tests/unit/analysis/ -v
