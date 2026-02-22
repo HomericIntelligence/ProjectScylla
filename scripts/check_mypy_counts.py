@@ -382,7 +382,7 @@ def update_table_per_dir(md_path: Path, actual_per_dir: dict[str, dict[str, int]
     print(f"Updated {md_path} with per-directory mypy counts.")
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901  # CLI entry point with update/validate modes and per-dir/flat fallback
     """CLI entry point for mypy count validation.
 
     Returns:
