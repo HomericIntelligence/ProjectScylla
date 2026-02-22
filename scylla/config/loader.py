@@ -265,7 +265,7 @@ class ConfigLoader:
                     f"filename implies '{expected}' but config declares tier='{tier_config.tier}'"
                 )
 
-            result[tier_name] = tier_config
+            result[expected] = tier_config
 
         return result
 
