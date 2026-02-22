@@ -25,6 +25,7 @@ from scylla.config.constants import DEFAULT_AGENT_MODEL
 if TYPE_CHECKING:
     pass
 
+from scylla.executor.credential_mount import temporary_credential_mount
 from scylla.executor.docker import (
     ContainerConfig,
     ContainerResult,
@@ -101,25 +102,30 @@ class AgentContainerManager:
             ContainerTimeoutError: If agent execution exceeds timeout.
 
         """
-        volumes = self._build_volumes(config)
-        environment = self._build_environment(config)
+        with temporary_credential_mount() as creds_dir:
+            volumes = self._build_volumes(config, creds_dir=creds_dir)
+            environment = self._build_environment(config)
 
-        container_config = ContainerConfig(
-            image=config.image,
-            name=config.container_name,
-            command=["--run-agent"],
-            env_vars=environment,
-            timeout_seconds=config.timeout_seconds,
-        )
+            container_config = ContainerConfig(
+                image=config.image,
+                name=config.container_name,
+                command=["--run-agent"],
+                env_vars=environment,
+                timeout_seconds=config.timeout_seconds,
+            )
 
-        # Use docker CLI instead of SDK for volume mounts
-        return self._run_with_volumes(container_config, volumes)
+            # Use docker CLI instead of SDK for volume mounts
+            return self._run_with_volumes(container_config, volumes)
 
-    def _build_volumes(self, config: AgentContainerConfig) -> dict[str, dict[str, str]]:
+    def _build_volumes(
+        self, config: AgentContainerConfig, creds_dir: Path | None = None
+    ) -> dict[str, dict[str, str]]:
         """Build volume mount configuration.
 
         Args:
             config: Agent container configuration.
+            creds_dir: Optional path to temporary credentials directory, provided
+                by the temporary_credential_mount() context manager.
 
         Returns:
             Dictionary mapping host paths to mount configurations.
@@ -147,27 +153,11 @@ class AgentContainerManager:
                 "mode": "ro",
             }
 
-        # Mount Claude Code credentials if available
-        # Copy to temp directory with world-readable permissions for container access
-        # Use home directory instead of /tmp due to WSL2 mount visibility issues
-        credentials_path = Path.home() / ".claude" / ".credentials.json"
-        if credentials_path.exists():
-            import uuid
-
-            # Create temp directory in home (not /tmp - WSL2 mount issue)
-            temp_dir = Path.home() / f".scylla-temp-creds-{uuid.uuid4().hex[:8]}"
-            temp_dir.mkdir(exist_ok=True)
-            temp_dir.chmod(0o755)  # Make directory accessible to all users
-
-            temp_creds = temp_dir / ".credentials.json"
-            temp_creds.write_text(credentials_path.read_text())
-            temp_creds.chmod(0o644)  # Make file readable by all users
-
-            # Mount the entire temp directory to /mnt/claude-creds
-            volumes[str(temp_dir)] = {
+        # Mount Claude Code credentials if provided by context manager
+        if creds_dir is not None:
+            volumes[str(creds_dir)] = {
                 "bind": "/mnt/claude-creds",
                 "mode": "ro",
-                "temp_cleanup": str(temp_dir),  # Mark for cleanup
             }
 
         return volumes
@@ -215,14 +205,7 @@ class AgentContainerManager:
             ContainerTimeoutError: If execution exceeds timeout.
 
         """
-        import shutil
         import subprocess
-
-        # Collect temp directories to clean up after execution
-        temp_dirs = []
-        for mount_config in volumes.values():
-            if "temp_cleanup" in mount_config:
-                temp_dirs.append(mount_config["temp_cleanup"])
 
         try:
             # Build docker run command
@@ -286,14 +269,6 @@ class AgentContainerManager:
             from scylla.executor.docker import ContainerError
 
             raise ContainerError(f"Container execution failed: {e}")
-
-        finally:
-            # Clean up temporary credential files
-            for temp_dir in temp_dirs:
-                try:
-                    shutil.rmtree(temp_dir)
-                except Exception:
-                    pass  # Best effort cleanup
 
 
 __all__ = ["AgentContainerConfig", "AgentContainerManager"]

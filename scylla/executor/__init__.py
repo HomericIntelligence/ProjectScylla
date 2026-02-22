@@ -15,6 +15,10 @@ from scylla.executor.capture import (
     aggregate_metrics,
     load_metrics,
 )
+from scylla.executor.credential_mount import (
+    cleanup_stale_credential_dirs,
+    temporary_credential_mount,
+)
 from scylla.executor.docker import (
     ContainerConfig,
     ContainerError,
@@ -79,6 +83,9 @@ __all__ = [
     # Agent container
     "AgentContainerConfig",
     "AgentContainerManager",
+    # Credential mount
+    "cleanup_stale_credential_dirs",
+    "temporary_credential_mount",
     # Judge container
     "JudgeContainerConfig",
     "JudgeContainerManager",
