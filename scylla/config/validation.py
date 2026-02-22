@@ -132,7 +132,6 @@ def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> 
 
     return warnings
 
-
 def validate_defaults_filename(config_path: Path) -> list[str]:
     """Validate that the defaults config file is named 'defaults.yaml'.
 
@@ -157,6 +156,31 @@ def validate_defaults_filename(config_path: Path) -> list[str]:
             f"validation is intentionally limited to stem check only."
         )
     return warnings
+
+def validate_filename_tier_consistency(config_path: Path, tier: str) -> list[str]:
+    """Validate config filename matches tier identifier.
+
+    Args:
+        config_path: Path to tier config file
+        tier: tier field from config (normalized, e.g., "t0")
+
+    Returns:
+        List of warning messages (empty if valid)
+
+    """
+    filename_stem = config_path.stem
+
+    # Skip validation for test fixtures (prefixed with _)
+    if filename_stem.startswith("_"):
+        return []
+
+    if filename_stem == tier:
+        return []
+
+    return [
+        f"Config filename '{filename_stem}.yaml' does not match tier "
+        f"'{tier}'. Expected '{tier}.yaml'"
+    ]
 
 
 def validate_model_config_referenced(config_path: Path, search_roots: list[Path]) -> list[str]:
