@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from scylla.config.constants import DEFAULT_AGENT_MODEL
 from scylla.executor.agent_container import (
     AgentContainerConfig,
     AgentContainerManager,
@@ -53,7 +54,7 @@ def test_agent_container_config_defaults():
         task_prompt_path=Path("/tmp/task.md"),
     )
 
-    assert config.model == "claude-sonnet-4-5-20250929"
+    assert config.model == DEFAULT_AGENT_MODEL
     assert config.timeout_seconds == 600
     assert config.image == "scylla-runner:latest"
     assert config.container_name is None

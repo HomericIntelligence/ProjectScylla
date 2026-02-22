@@ -424,3 +424,33 @@ class TestExperimentConfig:
             assert loaded.experiment_id == "test-002"
             assert loaded.runs_per_subtest == 5
             assert loaded.tiers_to_run == [TierID.T0, TierID.T1, TierID.T2]
+
+
+class TestExperimentConfigDefaults:
+    """Tests verifying ExperimentConfig defaults use the published constants."""
+
+    def test_default_models_use_constant(self) -> None:
+        """ExperimentConfig().models defaults to [DEFAULT_AGENT_MODEL]."""
+        from scylla.config.constants import DEFAULT_AGENT_MODEL
+
+        config = ExperimentConfig(
+            experiment_id="test-defaults",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="python",
+        )
+        assert config.models == [DEFAULT_AGENT_MODEL]
+
+    def test_default_judge_models_use_constant(self) -> None:
+        """ExperimentConfig().judge_models defaults to [DEFAULT_JUDGE_MODEL]."""
+        from scylla.config.constants import DEFAULT_JUDGE_MODEL
+
+        config = ExperimentConfig(
+            experiment_id="test-defaults",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="python",
+        )
+        assert config.judge_models == [DEFAULT_JUDGE_MODEL]
