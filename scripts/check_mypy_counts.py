@@ -386,7 +386,7 @@ def main() -> int:  # noqa: C901  # CLI entry point with update/validate modes a
     """CLI entry point for mypy count validation.
 
     Returns:
-        Exit code: 0 (clean), 1 (mismatch), 2 (file/config error).
+        Exit code: 0 (clean or --strict with only decreases), 1 (mismatch), 2 (file/config error).
 
     """
     parser = argparse.ArgumentParser(
@@ -403,6 +403,11 @@ def main() -> int:  # noqa: C901  # CLI entry point with update/validate modes a
         type=Path,
         default=None,
         help="Path to MYPY_KNOWN_ISSUES.md (default: repo root)",
+    )
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="Only fail on count increases (regressions); treat decreases as warnings.",
     )
     args = parser.parse_args()
 
@@ -453,18 +458,42 @@ def main() -> int:  # noqa: C901  # CLI entry point with update/validate modes a
                 all_mismatches.extend(f"  {m}" for m in mismatches)
 
         if all_mismatches:
-            print(
-                f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
-                file=sys.stderr,
-            )
-            for msg in all_mismatches:
-                print(msg, file=sys.stderr)
-            print(
-                "\nFix: run `python scripts/check_mypy_counts.py --update` "
-                "and commit the updated MYPY_KNOWN_ISSUES.md.",
-                file=sys.stderr,
-            )
-            return 1
+            if args.strict:
+                regressions = [m for m in all_mismatches if "↑" in m]
+                warnings = [m for m in all_mismatches if "↓" in m]
+                if warnings:
+                    print(
+                        f"check-mypy-counts: WARNING — {md_path.name} has improved counts "
+                        "(run --update to sync):"
+                    )
+                    for msg in warnings:
+                        print(msg)
+                if regressions:
+                    print(
+                        f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
+                        file=sys.stderr,
+                    )
+                    for msg in regressions:
+                        print(msg, file=sys.stderr)
+                    print(
+                        "\nFix: run `python scripts/check_mypy_counts.py --update` "
+                        "and commit the updated MYPY_KNOWN_ISSUES.md.",
+                        file=sys.stderr,
+                    )
+                    return 1
+            else:
+                print(
+                    f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
+                    file=sys.stderr,
+                )
+                for msg in all_mismatches:
+                    print(msg, file=sys.stderr)
+                print(
+                    "\nFix: run `python scripts/check_mypy_counts.py --update` "
+                    "and commit the updated MYPY_KNOWN_ISSUES.md.",
+                    file=sys.stderr,
+                )
+                return 1
 
         print(f"check-mypy-counts: OK — {md_path.name} counts match mypy output.")
         return 0
@@ -478,18 +507,42 @@ def main() -> int:  # noqa: C901  # CLI entry point with update/validate modes a
 
     mismatches = diff_counts(documented_flat, merged_actual)
     if mismatches:
-        print(
-            f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
-            file=sys.stderr,
-        )
-        for msg in mismatches:
-            print(msg, file=sys.stderr)
-        print(
-            "\nFix: run `python scripts/check_mypy_counts.py --update` "
-            "and commit the updated MYPY_KNOWN_ISSUES.md.",
-            file=sys.stderr,
-        )
-        return 1
+        if args.strict:
+            regressions = [m for m in mismatches if "↑" in m]
+            warnings = [m for m in mismatches if "↓" in m]
+            if warnings:
+                print(
+                    f"check-mypy-counts: WARNING — {md_path.name} has improved counts "
+                    "(run --update to sync):"
+                )
+                for msg in warnings:
+                    print(msg)
+            if regressions:
+                print(
+                    f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
+                    file=sys.stderr,
+                )
+                for msg in regressions:
+                    print(msg, file=sys.stderr)
+                print(
+                    "\nFix: run `python scripts/check_mypy_counts.py --update` "
+                    "and commit the updated MYPY_KNOWN_ISSUES.md.",
+                    file=sys.stderr,
+                )
+                return 1
+        else:
+            print(
+                f"check-mypy-counts: FAIL — {md_path.name} is out of date:",
+                file=sys.stderr,
+            )
+            for msg in mismatches:
+                print(msg, file=sys.stderr)
+            print(
+                "\nFix: run `python scripts/check_mypy_counts.py --update` "
+                "and commit the updated MYPY_KNOWN_ISSUES.md.",
+                file=sys.stderr,
+            )
+            return 1
 
     print(f"check-mypy-counts: OK — {md_path.name} counts match mypy output.")
     return 0
