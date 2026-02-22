@@ -629,5 +629,3 @@ docker run \
 - **Example Test Case**: `tests/001-justfile-to-makefile/`
 
 ---
-
-*Last updated: 2025-12-30*
