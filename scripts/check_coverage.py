@@ -92,7 +92,7 @@ def parse_coverage_report(coverage_file: Path) -> float | None:
         Coverage percentage (0-100) or None if file not found/invalid
 
     """
-    import xml.etree.ElementTree as ET
+    import defusedxml.ElementTree as ET  # noqa: N817
 
     if not coverage_file.exists():
         print(f"Coverage file not found: {coverage_file}", file=sys.stderr)

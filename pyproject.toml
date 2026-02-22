@@ -39,6 +39,7 @@ dev = [
     "pytest-cov>=4.0",
     "pre-commit>=3.0",
     "ruff>=0.1.0",
+    "defusedxml>=0.7",
 ]
 analysis = [
     "matplotlib>=3.8",
