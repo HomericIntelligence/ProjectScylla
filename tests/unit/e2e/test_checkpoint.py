@@ -224,7 +224,7 @@ class TestCheckpointVersionMismatch:
 
         with pytest.raises(
             CheckpointError,
-            match="Incompatible checkpoint version 1.0",
+            match=r"Incompatible checkpoint version 1\.0",
         ):
             E2ECheckpoint.from_dict(data)
 
@@ -243,7 +243,7 @@ class TestCheckpointVersionMismatch:
 
         with pytest.raises(
             CheckpointError,
-            match="Incompatible checkpoint version 9.9",
+            match=r"Incompatible checkpoint version 9\.9",
         ):
             E2ECheckpoint.from_dict(data)
 
