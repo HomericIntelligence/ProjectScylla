@@ -1,6 +1,6 @@
 # Mypy Known Issues
 
-Tracks suppressed type errors during incremental mypy adoption (see #687).
+Tracks suppressed type errors during incremental mypy adoption (see #687). Last updated 2026-02-22.
 Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 
 ## Error Count Table — scylla/
