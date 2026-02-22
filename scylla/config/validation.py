@@ -133,6 +133,32 @@ def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> 
     return warnings
 
 
+def validate_defaults_filename(config_path: Path) -> list[str]:
+    """Validate that the defaults config file is named 'defaults.yaml'.
+
+    DefaultsConfig has no single ID field (unlike ModelConfig which has
+    model_id), so field-level filename consistency is not applicable.
+    This function checks only that the file stem is 'defaults' — catching
+    accidental misconfiguration (e.g., loading the wrong file entirely).
+
+    Args:
+        config_path: Path to the defaults YAML file.
+
+    Returns:
+        List of warning strings; empty if validation passes.
+
+    """
+    warnings: list[str] = []
+    if config_path.stem != "defaults":
+        warnings.append(
+            f"Defaults config loaded from unexpected filename "
+            f"'{config_path.name}' (expected 'defaults.yaml'). "
+            f"Note: DefaultsConfig has no ID field — filename consistency "
+            f"validation is intentionally limited to stem check only."
+        )
+    return warnings
+
+
 def validate_model_config_referenced(config_path: Path, search_roots: list[Path]) -> list[str]:
     """Warn if model config file is not referenced by any file under search_roots.
 

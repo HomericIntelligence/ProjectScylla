@@ -6,6 +6,7 @@ import pytest
 
 from scylla.config.validation import (
     extract_model_family,
+    validate_defaults_filename,
     validate_name_model_family_consistency,
 )
 
@@ -135,3 +136,46 @@ class TestValidateNameModelFamilyConsistency:
         assert len(warnings) == 1
         assert "sonnet" in warnings[0]
         assert "claude-sonnet-4-5" in warnings[0]
+
+
+class TestValidateDefaultsFilename:
+    """Tests for validate_defaults_filename()."""
+
+    @pytest.mark.parametrize(
+        "filename",
+        [
+            "defaults.yaml",
+            "defaults.yml",
+        ],
+    )
+    def test_standard_filename_no_warnings(self, tmp_path: Path, filename: str) -> None:
+        """No warnings when file stem is 'defaults'."""
+        config_path = tmp_path / filename
+        warnings = validate_defaults_filename(config_path)
+        assert warnings == []
+
+    @pytest.mark.parametrize(
+        "filename",
+        [
+            "defaults-v2.yaml",
+            "config.yaml",
+            "my_defaults.yaml",
+            "Defaults.yaml",
+            "default.yaml",
+        ],
+    )
+    def test_nonstandard_filename_warns(self, tmp_path: Path, filename: str) -> None:
+        """Warning issued when file stem is not 'defaults'."""
+        config_path = tmp_path / filename
+        warnings = validate_defaults_filename(config_path)
+        assert len(warnings) == 1
+        assert "defaults.yaml" in warnings[0]
+        assert filename in warnings[0]
+
+    def test_warning_message_explains_no_id_field(self, tmp_path: Path) -> None:
+        """Warning message explains why field-level validation is skipped."""
+        config_path = tmp_path / "wrong-name.yaml"
+        warnings = validate_defaults_filename(config_path)
+        assert len(warnings) == 1
+        assert "DefaultsConfig" in warnings[0]
+        assert "no ID field" in warnings[0]

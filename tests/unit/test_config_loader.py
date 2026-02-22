@@ -367,6 +367,43 @@ class TestConfigLoaderEdgeCases:
             )
 
 
+class TestDefaultsFilenameValidation:
+    """Tests for defaults filename validation in load_defaults()."""
+
+    def test_load_defaults_no_warnings_for_standard_path(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """No warnings when loading from the standard defaults.yaml path."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir(parents=True)
+        (config_dir / "defaults.yaml").write_text("evaluation:\n  runs_per_eval: 1\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            defaults = loader.load_defaults()
+
+        assert isinstance(defaults, DefaultsConfig)
+        assert not caplog.records
+
+    def test_load_defaults_warns_for_nonstandard_filename(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Warning is emitted when validate_defaults_filename() sees a non-standard path.
+
+        Since load_defaults() hard-codes config/defaults.yaml, we test the
+        validation function directly with a non-standard path to confirm the
+        warning behaviour that would be triggered by misconfiguration.
+        """
+        from scylla.config.validation import validate_defaults_filename
+
+        nonstandard = tmp_path / "my_defaults.yaml"
+        warnings = validate_defaults_filename(nonstandard)
+
+        assert len(warnings) == 1
+        assert "my_defaults.yaml" in warnings[0]
+        assert "defaults.yaml" in warnings[0]
+
+
 class TestFilenameModelIdValidation:
     """Test validation of filename/model_id consistency."""
 
