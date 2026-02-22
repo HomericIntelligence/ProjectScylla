@@ -4,7 +4,11 @@ This module provides a progressive optimization framework for evaluating
 AI agent capabilities across tiers T0-T6. Each tier can have multiple
 sub-tests, and the best-performing sub-test becomes the baseline for
 the next tier.
-and LLM API calls for judging.
+
+Primary class:
+    EvalOrchestrator: Coordinates end-to-end experiment execution,
+        managing tier progression, checkpoint persistence, rate limiting,
+        and LLM API calls for judging.
 """
 
 from scylla.e2e.checkpoint import (
