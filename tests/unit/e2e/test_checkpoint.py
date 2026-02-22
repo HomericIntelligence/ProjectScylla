@@ -260,7 +260,7 @@ class TestCheckpointVersionMismatch:
             "status": "running",
         }
 
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         # Should be migrated to v3.0
         assert checkpoint.version == "3.0"
         assert checkpoint.experiment_id == "test-exp"
@@ -289,7 +289,7 @@ class TestCheckpointVersionMismatch:
             "status": "running",
         }
 
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.version == "3.0"
         assert checkpoint.experiment_id == "test-exp"
         assert checkpoint.experiment_state == "tiers_running"
@@ -361,7 +361,7 @@ class TestCheckpointV3Migration:
             "last_updated_at": datetime.now(timezone.utc).isoformat(),
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
 
     def test_migration_sets_agent_complete_state(self, tmp_path: Path) -> None:
@@ -376,7 +376,7 @@ class TestCheckpointV3Migration:
             "last_updated_at": datetime.now(timezone.utc).isoformat(),
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_state("T0", "00-empty", 1) == "agent_complete"
 
     def test_migration_derives_experiment_state(self, tmp_path: Path) -> None:
@@ -391,7 +391,7 @@ class TestCheckpointV3Migration:
             "last_updated_at": datetime.now(timezone.utc).isoformat(),
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.experiment_state == "tiers_running"
 
     def test_v3_checkpoint_roundtrip(self, tmp_path: Path) -> None:
