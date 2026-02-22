@@ -46,8 +46,8 @@ repos:
         description: Validate MYPY_KNOWN_ISSUES.md counts match actual mypy output with re-enabled codes.
         entry: pixi run python scripts/check_mypy_counts.py
         language: system
-        files: ^(scripts|scylla|tests)/.*\.py$
-        types: [python]
+        files: ^(scripts|scylla|tests)/.*\.py$|^MYPY_KNOWN_ISSUES\.md$|^pyproject\.toml$
+        types_or: [python, markdown, toml]
         pass_filenames: false
       - id: check-type-alias-shadowing
         name: Check Type Alias Shadowing
