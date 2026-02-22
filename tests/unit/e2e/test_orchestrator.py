@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from scylla.orchestrator import EvalOrchestrator, OrchestratorConfig
+from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 
 
 class EvalOrchestratorConfig:

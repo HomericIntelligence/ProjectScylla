@@ -28,6 +28,7 @@ from scylla.e2e.models import (
     TierID,
     TierResult,
 )
+from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.e2e.rate_limit import (
     RateLimitError,
     RateLimitInfo,
@@ -58,6 +59,9 @@ __all__ = [
     "detect_rate_limit",
     "parse_retry_after",
     "wait_for_rate_limit",
+    # Orchestrator
+    "EvalOrchestrator",
+    "OrchestratorConfig",
     # Results
     "E2ERunResult",
     "SubTestConfig",
