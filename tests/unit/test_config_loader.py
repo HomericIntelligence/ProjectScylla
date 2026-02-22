@@ -193,6 +193,31 @@ class TestConfigLoaderTier:
         assert tiers["t0"].name == "Vanilla"
         assert tiers["t1"].name == "Prompted"
 
+    def test_load_all_tiers_mismatched_id_raises(self, tmp_path: Path) -> None:
+        """load_all_tiers() raises ConfigurationError when filename and config.tier disagree."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+
+        # File named t0.yaml but declares tier: t1
+        (tiers_dir / "t0.yaml").write_text(
+            "tier: t1\nname: Mismatch Test\ndescription: Intentionally mismatched\n"
+            "uses_tools: false\nuses_delegation: false\nuses_hierarchy: false\n"
+        )
+
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="t0") as exc_info:
+            loader.load_all_tiers()
+
+        assert "t1" in str(exc_info.value)
+
+    def test_load_all_tiers_consistent_ids(self) -> None:
+        """All dict keys returned by load_all_tiers() equal their config.tier value."""
+        loader = ConfigLoader(base_path=FIXTURES_PATH)
+        tiers = loader.load_all_tiers()
+
+        for key, config in tiers.items():
+            assert key == config.tier, f"Key {key!r} does not match config.tier {config.tier!r}"
+
 
 class TestConfigLoaderModel:
     """Tests for loading model configurations."""
