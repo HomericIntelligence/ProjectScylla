@@ -69,8 +69,8 @@ __all__ = [
     "TaskConfig",
     "TierConfig",
     "ValidationConfig",
-    # Validation
-    "validate_defaults_filename",
     "calculate_cost",
     "get_model_pricing",
+    # Validation
+    "validate_defaults_filename",
 ]
