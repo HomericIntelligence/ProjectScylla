@@ -533,6 +533,78 @@ adapter: openai_adapter
         assert not caplog.records  # No warnings for test fixtures
 
 
+class TestFilenameTierConsistency:
+    """Test validation of filename/tier consistency."""
+
+    def test_filename_matches_tier_exact(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation passes when filename matches tier exactly."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+
+        (tiers_dir / "t0.yaml").write_text("tier: t0\nname: Vanilla\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_tier("t0")
+
+        assert config.tier == "t0"
+        assert not caplog.records  # No warnings
+
+    def test_filename_mismatch_warns(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test validation warns when filename doesn't match tier field."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+
+        # Filename is t1.yaml but tier field says t0
+        (tiers_dir / "t1.yaml").write_text("tier: t0\nname: Vanilla\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_tier("t1")
+
+        assert config.tier == "t0"
+        assert len(caplog.records) == 1
+        assert "t1.yaml" in caplog.text
+        assert "t0" in caplog.text
+
+    def test_test_fixtures_skip_validation(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Test that _-prefixed fixtures skip validation (via loader, not direct call)."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+
+        # Fixture filename doesn't match tier field — validation should be skipped
+        (tiers_dir / "_test-fixture.yaml").write_text("tier: t0\nname: Fixture Tier\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            config = loader.load_tier("_test-fixture")
+
+        assert config.tier == "t0"
+        assert not caplog.records  # No warnings for test fixtures
+
+    def test_warning_message_format(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+        """Test warning message includes both filename and tier field value."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+
+        (tiers_dir / "t2.yaml").write_text("tier: t1\nname: Prompted\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            loader.load_tier("t2")
+
+        assert len(caplog.records) == 1
+        warning_msg = caplog.records[0].message
+        assert "t2.yaml" in warning_msg
+        assert "t1" in warning_msg
+
+
 class TestModelConfigOrphanValidation:
     """Integration tests for orphan model config detection via load_all_models()."""
 

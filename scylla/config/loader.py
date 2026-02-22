@@ -24,6 +24,7 @@ from .models import (
 from .validation import (
     validate_defaults_filename,
     validate_filename_model_id_consistency,
+    validate_filename_tier_consistency,
     validate_model_config_referenced,
 )
 
@@ -208,10 +209,11 @@ class ConfigLoader:
             ConfigurationError: If tier configuration is invalid or missing
 
         """
-        # Normalize tier name
-        tier = tier.lower().strip()
-        if not tier.startswith("t"):
-            tier = f"t{tier}"
+        # Skip normalization for test fixtures (prefixed with _)
+        if not tier.startswith("_"):
+            tier = tier.lower().strip()
+            if not tier.startswith("t"):
+                tier = f"t{tier}"
 
         tier_path = self.base_path / "config" / "tiers" / f"{tier}.yaml"
         data = self._load_yaml(tier_path)
@@ -221,9 +223,15 @@ class ConfigLoader:
             data["tier"] = tier
 
         try:
-            return TierConfig(**data)
+            config = TierConfig(**data)
         except Exception as e:
             raise ConfigurationError(f"Invalid tier configuration in {tier_path}: {e}")
+
+        warnings = validate_filename_tier_consistency(tier_path, config.tier)
+        for warning in warnings:
+            logger.warning(warning)
+
+        return config
 
     def load_all_tiers(self) -> dict[str, TierConfig]:
         """Load all available tier configurations.
