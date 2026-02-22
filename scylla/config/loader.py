@@ -243,7 +243,21 @@ class ConfigLoader:
 
         for tier_file in sorted(tiers_dir.glob("t*.yaml")):
             tier_name = tier_file.stem  # e.g., "t0" from "t0.yaml"
-            result[tier_name] = self.load_tier(tier_name)
+            tier_config = self.load_tier(tier_name)
+
+            # Validate that config.tier matches the filename stem.
+            # Apply the same normalization as load_tier() to avoid false positives.
+            expected = tier_name.lower().strip()
+            if not expected.startswith("t"):
+                expected = f"t{expected}"
+
+            if tier_config.tier != expected:
+                raise ConfigurationError(
+                    f"Tier ID mismatch in {tier_file}: "
+                    f"filename implies '{expected}' but config declares tier='{tier_config.tier}'"
+                )
+
+            result[tier_name] = tier_config
 
         return result
 
