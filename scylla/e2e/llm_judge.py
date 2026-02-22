@@ -16,6 +16,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from scylla.e2e.filters import is_test_config_file
 from scylla.e2e.template_loader import write_script
 from scylla.judge import extract_json_from_llm_response
@@ -765,7 +766,7 @@ def run_llm_judge(
     workspace: Path,
     task_prompt: str,
     agent_output: str,
-    model: str = "claude-opus-4-5-20251101",  # REQUIRED: Must use Opus for accurate judging
+    model: str = DEFAULT_JUDGE_MODEL,  # REQUIRED: Must use Opus for accurate judging
     judge_dir: Path | None = None,
     reference_patch_path: Path | None = None,
     rubric_path: Path | None = None,

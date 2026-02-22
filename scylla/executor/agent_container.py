@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from scylla.config.constants import DEFAULT_AGENT_MODEL
+
 if TYPE_CHECKING:
     pass
 
@@ -50,7 +52,7 @@ class AgentContainerConfig:
     output_dir: Path
     task_prompt_path: Path
     claude_md_path: Path | None = None
-    model: str = "claude-sonnet-4-5-20250929"
+    model: str = DEFAULT_AGENT_MODEL
     timeout_seconds: int = 600
     image: str = "scylla-runner:latest"
     container_name: str | None = None

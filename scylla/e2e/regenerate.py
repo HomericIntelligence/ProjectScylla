@@ -16,6 +16,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from scylla.e2e.judge_selection import select_best_subtest
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import (
@@ -89,7 +90,7 @@ def regenerate_experiment(
     if effective_judge_model is None:
         # Use first judge model from config (primary judge)
         effective_judge_model = (
-            config.judge_models[0] if config.judge_models else "claude-opus-4-5-20251101"
+            config.judge_models[0] if config.judge_models else DEFAULT_JUDGE_MODEL
         )
     logger.info(f"📊 Using judge model: {effective_judge_model}")
 
