@@ -1,0 +1,25 @@
+# Normalize line endings for all text files
+* text=auto
+
+# Python source files — explicit LF
+*.py text diff=python eol=lf
+
+# YAML, TOML, Markdown — explicit LF
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+
+# Shell scripts — LF (required for execution)
+*.sh text eol=lf
+
+# Windows batch — CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary files — no text processing
+*.png binary
+*.jpg binary
+*.pdf binary
+*.gz binary
+*.zip binary
