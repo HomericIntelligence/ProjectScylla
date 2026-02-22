@@ -9,6 +9,7 @@ __version__ = "0.1.0"
 __all__ = [
     "config",
     "executor",
+    "e2e",
     "adapters",
     "judge",
     "metrics",
