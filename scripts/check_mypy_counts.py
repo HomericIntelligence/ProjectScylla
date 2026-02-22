@@ -62,7 +62,7 @@ _FILE_PATH_RE = re.compile(r"^([^:]+\.py):\d+")
 # Regex to parse table rows from MYPY_KNOWN_ISSUES.md
 # Matches: | error-code | 42 | description |
 # Skips header rows, separator rows, and the Total row
-_TABLE_ROW_RE = re.compile(r"^\|\s*([a-z][a-z0-9-]+)\s*\|\s*(\d+)\s*\|")
+_TABLE_ROW_RE = re.compile(r"^\|\s*`?([a-z][a-z0-9-]+)`?\s*\|\s*(\d+)\s*\|")
 
 # Regex to match the Total row for updating
 _TOTAL_ROW_RE = re.compile(r"(\|\s*\*\*Total\*\*\s*\|\s*\*\*)\d+(\*\*\s*\|)")
