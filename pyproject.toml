@@ -67,7 +67,7 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "D", "UP"]
+select = ["E", "F", "W", "I", "N", "D", "UP", "S101"]
 ignore = [
     "D100",  # Missing docstring in public module
     "D104",  # Missing docstring in public package
@@ -75,6 +75,9 @@ ignore = [
     "D213",  # Multi-line summary second line (conflicts with D212)
     "D417",  # Missing argument descriptions in docstring
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # assert statements are normal in tests
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

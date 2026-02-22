@@ -34,7 +34,7 @@ class TierManager:
         >>> manager = TierManager(Path("tests/fixtures/tests/test-001"))
         >>> tier_config = manager.load_tier_config(TierID.T2)
         >>> manager.prepare_workspace(
-        ...     workspace=Path("/tmp/workspace"),
+        ...     workspace=Path(tempfile.gettempdir()) / "workspace",
         ...     tier_id=TierID.T3,
         ...     subtest_id="01",
         ...     baseline=previous_baseline,
