@@ -20,9 +20,8 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | override      | 1     | Incompatible method override             |
 | return-value  | 0     | Incompatible return value type           |
 | union-attr    | 2     | Accessing attributes on union types      |
-| valid-type    | 2     | Invalid type annotations                 |
 | var-annotated | 9     | Missing type annotations for variables   |
-| **Total**     | **61** |                                          |
+| **Total**     | **59** |                                          |
 
 ## Error Count Table — tests/
 
@@ -41,7 +40,6 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | override      | 0     | Incompatible method override             |
 | return-value  | 0     | Incompatible return value type           |
 | union-attr    | 16     | Accessing attributes on union types      |
-| valid-type    | 0     | Invalid type annotations                 |
 | var-annotated | 7     | Missing type annotations for variables   |
 | **Total**     | **85** |                                          |
 
@@ -62,6 +60,5 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | override      | 0     | Incompatible method override             |
 | return-value  | 1     | Incompatible return value type           |
 | union-attr    | 0     | Accessing attributes on union types      |
-| valid-type    | 0     | Invalid type annotations                 |
 | var-annotated | 2     | Missing type annotations for variables   |
 | **Total**     | **13** |                                          |

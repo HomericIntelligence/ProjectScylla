@@ -12,6 +12,7 @@ Each level has both JSON and markdown reports with relative links.
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -538,7 +539,7 @@ def _generate_token_stats_section(token_stats: Any) -> list[str]:
 def _generate_criteria_comparison_table(
     all_criteria: set[str],
     items: dict[str, Any],
-    column_header_fn: callable,
+    column_header_fn: Callable[[Any], str],
 ) -> list[str]:
     """Generate per-criteria comparison table markdown.
 

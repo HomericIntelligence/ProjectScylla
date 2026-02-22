@@ -35,7 +35,6 @@ DISABLED_ERROR_CODES = [
     "assignment",
     "operator",
     "arg-type",
-    "valid-type",
     "index",
     "attr-defined",
     "misc",
