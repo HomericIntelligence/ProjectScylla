@@ -51,7 +51,10 @@ yamllint = ">=1.35.0"
 pre-commit = ">=3.0"
 
 [feature.lint.pypi-dependencies]
-pip-audit = ">=2.7"
+pip-audit = ">=2.8"
+
+[feature.lint.tasks]
+pip-audit = "pip-audit --min-severity high"
 
 [environments]
 default = { features = ["dev"], solve-group = "default" }
