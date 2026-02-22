@@ -59,7 +59,7 @@ class TestCategoryWeights:
 
     def test_total_weight(self) -> None:
         """Test total weight matches expected value."""
-        assert TOTAL_CATEGORY_WEIGHT == pytest.approx(12.5)
+        assert pytest.approx(12.5) == TOTAL_CATEGORY_WEIGHT
 
     def test_specific_weights(self) -> None:
         """Test specific category weights."""

@@ -203,10 +203,7 @@ class RunAggregator:
             for tier_id, stats in tier_stats.items():
                 if tier_id != "T0":
                     tier_score = stats.composite_score.median
-                    if t0_baseline > 0:
-                        uplift = (tier_score - t0_baseline) / t0_baseline
-                    else:
-                        uplift = 0.0
+                    uplift = (tier_score - t0_baseline) / t0_baseline if t0_baseline > 0 else 0.0
                     uplifts[tier_id] = uplift
 
         return CrossTierAnalysis(

@@ -35,13 +35,12 @@ from scylla.analysis.stats import (
 
 def json_nan_handler(obj):
     """Convert NaN/inf values to None for JSON serialization."""
-    if isinstance(obj, float):
-        if math.isnan(obj) or math.isinf(obj):
-            return None
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
     return obj
 
 
-def compute_statistical_results(runs_df, tier_order):
+def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehensive stats computation pipeline
     """Compute all statistical test results for export.
 
     Pairwise comparisons use Holm-Bonferroni correction per model.
@@ -480,7 +479,7 @@ def compute_statistical_results(runs_df, tier_order):
             frontier = compute_frontier_cop(valid_cops)
             # Find which tier achieved the frontier
             frontier_tier = None
-            for i, (tier, cop) in enumerate(zip(tier_order, tier_cops)):
+            for _i, (tier, cop) in enumerate(zip(tier_order, tier_cops, strict=False)):
                 if cop == frontier:
                     frontier_tier = tier
                     break

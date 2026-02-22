@@ -13,6 +13,7 @@ Design Decisions (from plan review):
 
 from __future__ import annotations
 
+import contextlib
 import os
 import subprocess
 from dataclasses import dataclass, field
@@ -151,9 +152,11 @@ class DockerExecutor:
         except FileNotFoundError:
             raise DockerNotAvailableError(
                 "Docker is not installed. Please install Docker to run evaluations."
-            )
+            ) from None
         except subprocess.TimeoutExpired:
-            raise DockerNotAvailableError("Docker command timed out. Docker may be unresponsive.")
+            raise DockerNotAvailableError(
+                "Docker command timed out. Docker may be unresponsive."
+            ) from None
 
     def _build_run_command(self, config: ContainerConfig) -> list[str]:
         """Build the docker run command from configuration.
@@ -248,7 +251,7 @@ class DockerExecutor:
             )
 
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to run container: {e}")
+            raise ContainerError(f"Failed to run container: {e}") from e
 
     def run_detached(self, config: ContainerConfig) -> str:
         """Run a container in detached mode.
@@ -282,9 +285,9 @@ class DockerExecutor:
             return container_id
 
         except subprocess.TimeoutExpired:
-            raise ContainerError("Timed out starting container")
+            raise ContainerError("Timed out starting container") from None
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to start container: {e}")
+            raise ContainerError(f"Failed to start container: {e}") from e
 
     def stop(self, container_id: str, timeout: int = 10) -> None:
         """Stop a running container (preserves container for analysis).
@@ -305,18 +308,16 @@ class DockerExecutor:
                 timeout=timeout + 30,  # Allow extra time for graceful shutdown
             )
 
-            if result.returncode != 0:
-                # Container may have already stopped
-                if "No such container" not in result.stderr:
-                    raise ContainerError(
-                        f"Failed to stop container {container_id}: {result.stderr.strip()}"
-                    )
+            if result.returncode != 0 and "No such container" not in result.stderr:
+                raise ContainerError(
+                    f"Failed to stop container {container_id}: {result.stderr.strip()}"
+                )
 
         except subprocess.TimeoutExpired:
             # Force kill if stop times out
             self._kill(container_id)
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to stop container: {e}")
+            raise ContainerError(f"Failed to stop container: {e}") from e
 
     def _kill(self, container_id: str) -> None:
         """Force kill a container.
@@ -325,15 +326,13 @@ class DockerExecutor:
             container_id: Container ID or name.
 
         """
-        try:
+        with contextlib.suppress(subprocess.TimeoutExpired, subprocess.SubprocessError):
             subprocess.run(
                 ["docker", "kill", container_id],
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            pass  # Best effort - container may already be dead
 
     def remove(self, container_id: str, force: bool = False) -> None:
         """Remove a container.
@@ -362,16 +361,15 @@ class DockerExecutor:
                 timeout=30,
             )
 
-            if result.returncode != 0:
-                if "No such container" not in result.stderr:
-                    raise ContainerError(
-                        f"Failed to remove container {container_id}: {result.stderr.strip()}"
-                    )
+            if result.returncode != 0 and "No such container" not in result.stderr:
+                raise ContainerError(
+                    f"Failed to remove container {container_id}: {result.stderr.strip()}"
+                )
 
         except subprocess.TimeoutExpired:
-            raise ContainerError(f"Timed out removing container {container_id}")
+            raise ContainerError(f"Timed out removing container {container_id}") from None
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to remove container: {e}")
+            raise ContainerError(f"Failed to remove container: {e}") from e
 
     def logs(self, container_id: str, tail: int | None = None) -> tuple[str, str]:
         """Get logs from a container.
@@ -408,9 +406,9 @@ class DockerExecutor:
             return result.stdout, result.stderr
 
         except subprocess.TimeoutExpired:
-            raise ContainerError(f"Timed out getting logs for {container_id}")
+            raise ContainerError(f"Timed out getting logs for {container_id}") from None
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to get logs: {e}")
+            raise ContainerError(f"Failed to get logs: {e}") from e
 
     def wait(self, container_id: str, timeout: int | None = None) -> int:
         """Wait for a container to exit.
@@ -445,11 +443,11 @@ class DockerExecutor:
         except subprocess.TimeoutExpired:
             raise ContainerTimeoutError(
                 f"Container {container_id} did not exit within {timeout} seconds"
-            )
+            ) from None
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to wait for container: {e}")
+            raise ContainerError(f"Failed to wait for container: {e}") from e
         except ValueError:
-            raise ContainerError(f"Invalid exit code from container: {result.stdout}")
+            raise ContainerError(f"Invalid exit code from container: {result.stdout}") from None
 
     def is_running(self, container_id: str) -> bool:
         """Check if a container is currently running.
@@ -567,6 +565,6 @@ class DockerExecutor:
                 raise ContainerError(f"Failed to pull image {image}: {result.stderr.strip()}")
 
         except subprocess.TimeoutExpired:
-            raise ContainerError(f"Timed out pulling image {image}")
+            raise ContainerError(f"Timed out pulling image {image}") from None
         except subprocess.SubprocessError as e:
-            raise ContainerError(f"Failed to pull image: {e}")
+            raise ContainerError(f"Failed to pull image: {e}") from e

@@ -192,10 +192,7 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
             lines.append(line)
 
     # Combine all layers
-    if lines:
-        chart = alt.layer(scatter, labels, *lines)
-    else:
-        chart = alt.layer(scatter, labels)
+    chart = alt.layer(scatter, labels, *lines) if lines else alt.layer(scatter, labels)
 
     chart = chart.properties(title="Cost vs Quality Pareto Frontier").configure_view(strokeWidth=0)
 
@@ -241,7 +238,7 @@ def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     from scylla.analysis.figures import derive_tier_order
 
     tier_order = derive_tier_order(runs_df)
-    domain, range_ = get_color_scale("tiers", tier_order)
+    _domain, _range = get_color_scale("tiers", tier_order)
 
     # Get dynamic color scale for models
     models = sorted(cumulative_df["agent_model"].unique())

@@ -160,7 +160,7 @@ def validate_readme(readme_path: Path, verbose: bool = False) -> dict[str, Any]:
 
     except Exception as e:
         result["passed"] = False
-        result["issues"].append(f"Error reading file: {str(e)}")
+        result["issues"].append(f"Error reading file: {e!s}")
 
     return result
 

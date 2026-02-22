@@ -220,10 +220,9 @@ class TestStreamingCapture:
         with TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir)
 
-            with pytest.raises(ValueError):
-                with StreamingCapture(output_dir) as capture:
-                    capture.write_stdout("before error\n")
-                    raise ValueError("Test error")
+            with pytest.raises(ValueError), StreamingCapture(output_dir) as capture:
+                capture.write_stdout("before error\n")
+                raise ValueError("Test error")
 
             # Metrics should still be written with error info
             metrics = load_metrics(output_dir / "metrics.json")

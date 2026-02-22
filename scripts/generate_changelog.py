@@ -32,7 +32,7 @@ from common import get_repo_root  # noqa: E402
 def run_git_command(args: list[str]) -> str:
     """Run a git command and return output."""
     result = subprocess.run(
-        ["git"] + args,
+        ["git", *args],
         capture_output=True,
         text=True,
         cwd=get_repo_root(),
@@ -56,10 +56,7 @@ def get_previous_tag(current_tag: str) -> str | None:
 
 def get_commits_between(from_ref: str | None, to_ref: str = "HEAD") -> list[str]:
     """Get commit messages between two refs."""
-    if from_ref:
-        range_spec = f"{from_ref}..{to_ref}"
-    else:
-        range_spec = to_ref
+    range_spec = f"{from_ref}..{to_ref}" if from_ref else to_ref
 
     output = run_git_command(
         [
@@ -85,7 +82,7 @@ def parse_commit(commit_line: str) -> tuple[str, str, str, str]:
     if len(parts) != 3:
         return ("", "other", "", commit_line)
 
-    commit_hash, subject, author = parts
+    commit_hash, subject, _author = parts
 
     # Parse conventional commit format
     commit_type = "other"

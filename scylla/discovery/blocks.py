@@ -99,7 +99,7 @@ def extract_blocks(
 
     # Extract each block
     created_files = []
-    for block_id, start, end, filename in block_defs:
+    for _block_id, start, end, filename in block_defs:
         # Lines are 1-indexed in definitions, but 0-indexed in Python
         block_lines = lines[start - 1 : end]
         output_path = output_dir / filename

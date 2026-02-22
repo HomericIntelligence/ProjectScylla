@@ -7,6 +7,7 @@ file I/O (Mojo stdlib limitation - cannot capture stdout/stderr).
 
 from __future__ import annotations
 
+import contextlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -114,18 +115,16 @@ class LogCapture:
         # Open files for streaming writes with proper cleanup on partial failure
         opened_files = []
         try:
-            self._stdout_file = open(self.stdout_path, "w")
+            self._stdout_file = open(self.stdout_path, "w")  # noqa: SIM115  # kept open for streaming writes
             opened_files.append(self._stdout_file)
-            self._stderr_file = open(self.stderr_path, "w")
+            self._stderr_file = open(self.stderr_path, "w")  # noqa: SIM115  # kept open for streaming writes
             opened_files.append(self._stderr_file)
-            self._agent_log_file = open(self.agent_log_path, "w")
+            self._agent_log_file = open(self.agent_log_path, "w")  # noqa: SIM115  # kept open for streaming writes
         except Exception:
             # Close any files that were successfully opened
             for f in opened_files:
-                try:
+                with contextlib.suppress(Exception):
                     f.close()
-                except Exception:
-                    pass
             # Reset file handles
             self._stdout_file = None
             self._stderr_file = None

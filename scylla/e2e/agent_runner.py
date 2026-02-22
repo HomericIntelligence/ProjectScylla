@@ -87,10 +87,7 @@ def _create_agent_model_md(agent_dir: Path, model: str) -> None:
             text=True,
             timeout=10,
         )
-        if result.returncode == 0:
-            claude_code_version = result.stdout.strip()
-        else:
-            claude_code_version = "unknown"
+        claude_code_version = result.stdout.strip() if result.returncode == 0 else "unknown"
     except Exception:
         claude_code_version = "unknown"
 

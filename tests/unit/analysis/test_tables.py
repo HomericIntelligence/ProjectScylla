@@ -281,7 +281,7 @@ def test_table02_holm_bonferroni_correction_applied(sample_runs_df):
     # The fixture has 2 models × (3 choose 2) = 2 × 3 = 6 pairwise comparisons
     # Holm-Bonferroni should correct these p-values
 
-    markdown, latex = table02_tier_comparison(sample_runs_df)
+    markdown, _latex = table02_tier_comparison(sample_runs_df)
 
     # Verify correction method mentioned in footer
     assert "Holm-Bonferroni" in markdown
@@ -373,7 +373,7 @@ def test_table04_data_driven_criteria_weights(sample_criteria_df, sample_runs_df
     from scylla.analysis.tables import table04_criteria_performance
 
     # Call without providing criteria_weights
-    markdown, latex = table04_criteria_performance(sample_criteria_df, sample_runs_df)
+    markdown, _latex = table04_criteria_performance(sample_criteria_df, sample_runs_df)
 
     # Should derive weights from actual criteria in data
     # All 5 criteria from fixture should appear
@@ -461,7 +461,7 @@ def test_table06_handles_single_model():
         }
     )
 
-    markdown, latex = table06_model_comparison(single_model)
+    markdown, _latex = table06_model_comparison(single_model)
 
     # Should return error message
     assert "Error" in markdown or "Need at least 2 models" in markdown
@@ -486,7 +486,7 @@ def test_table06_multiple_models_pairwise():
         }
     )
 
-    markdown, latex = table06_model_comparison(data)
+    markdown, _latex = table06_model_comparison(data)
 
     # Should generate all pairwise comparisons
     assert "Model A vs Model B" in markdown
@@ -570,7 +570,7 @@ def test_table02b_impl_rate_statistical_workflow(sample_runs_df):
     """Test Table 2b follows correct statistical workflow."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
-    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
+    markdown, _latex = table02b_impl_rate_comparison(sample_runs_df)
 
     # Verify statistical components are present
     assert "Kruskal-Wallis" in markdown
@@ -598,7 +598,7 @@ def test_table02b_handles_missing_impl_rate():
         }
     )
 
-    markdown, latex = table02b_impl_rate_comparison(test_data)
+    markdown, _latex = table02b_impl_rate_comparison(test_data)
 
     # Should return error message
     assert "Error" in markdown
@@ -609,7 +609,7 @@ def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
     """Test that Holm-Bonferroni correction is applied to p-values."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
-    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
+    markdown, _latex = table02b_impl_rate_comparison(sample_runs_df)
 
     # Verify correction is documented
     assert "Holm-Bonferroni" in markdown
@@ -683,7 +683,7 @@ def test_table09_calculation_verification():
     assert "exp001" in markdown or "Experiment" in markdown
 
     # Verify model count (2 models)
-    assert "2" in markdown or "Model A" in markdown and "Model B" in markdown
+    assert "2" in markdown or ("Model A" in markdown and "Model B" in markdown)
 
     # Verify tier count (2 tiers: T0, T1)
     assert "T0" in markdown or "T1" in markdown or "2" in markdown

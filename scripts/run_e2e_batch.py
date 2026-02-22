@@ -880,7 +880,7 @@ def print_summary_table(all_results: list[dict]) -> None:
     print()
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901  # CLI main with multiple batch modes
     """Run batch E2E experiments.
 
     Returns:

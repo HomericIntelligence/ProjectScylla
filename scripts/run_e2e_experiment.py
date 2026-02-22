@@ -456,7 +456,7 @@ def load_test_config(tiers_dir: Path) -> dict | None:
         }
 
 
-def build_config(args: argparse.Namespace) -> ExperimentConfig:
+def build_config(args: argparse.Namespace) -> ExperimentConfig:  # noqa: C901  # CLI main with multiple execution paths
     """Build experiment configuration from arguments.
 
     Priority (highest to lowest):

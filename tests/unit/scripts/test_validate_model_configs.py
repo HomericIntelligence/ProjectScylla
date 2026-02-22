@@ -234,12 +234,14 @@ class TestMain:
         """Renames mismatched file and exits 0 when --fix --yes passed."""
         models_dir = self._make_models_dir(tmp_path)
         _write_yaml(models_dir / "wrong.yaml", "correct-id")
-        with mock.patch(
-            "sys.argv",
-            ["validate_model_configs.py", "--fix", "--yes", "--models-dir", str(models_dir)],
+        with (
+            mock.patch(
+                "sys.argv",
+                ["validate_model_configs.py", "--fix", "--yes", "--models-dir", str(models_dir)],
+            ),
+            pytest.raises(SystemExit) as exc_info,
         ):
-            with pytest.raises(SystemExit) as exc_info:
-                main()
+            main()
         assert exc_info.value.code == 0
         assert not (models_dir / "wrong.yaml").exists()
         assert (models_dir / "correct-id.yaml").exists()
@@ -249,23 +251,27 @@ class TestMain:
         models_dir = self._make_models_dir(tmp_path)
         _write_yaml(models_dir / "wrong.yaml", "correct-id")
         _write_yaml(models_dir / "correct-id.yaml", "correct-id")  # Collision
-        with mock.patch(
-            "sys.argv",
-            ["validate_model_configs.py", "--fix", "--yes", "--models-dir", str(models_dir)],
+        with (
+            mock.patch(
+                "sys.argv",
+                ["validate_model_configs.py", "--fix", "--yes", "--models-dir", str(models_dir)],
+            ),
+            pytest.raises(SystemExit) as exc_info,
         ):
-            with pytest.raises(SystemExit) as exc_info:
-                main()
+            main()
         assert exc_info.value.code == 2
 
     def test_missing_models_dir_exits_2(self, tmp_path: Path) -> None:
         """Exits 2 when the models directory does not exist."""
         nonexistent = tmp_path / "nonexistent"
-        with mock.patch(
-            "sys.argv",
-            ["validate_model_configs.py", "--models-dir", str(nonexistent)],
+        with (
+            mock.patch(
+                "sys.argv",
+                ["validate_model_configs.py", "--models-dir", str(nonexistent)],
+            ),
+            pytest.raises(SystemExit) as exc_info,
         ):
-            with pytest.raises(SystemExit) as exc_info:
-                main()
+            main()
         assert exc_info.value.code == 2
 
     def test_underscore_files_skipped_exits_0(self, tmp_path: Path) -> None:
@@ -281,24 +287,28 @@ class TestMain:
         """Exits 0 with --verbose when configs are valid."""
         models_dir = self._make_models_dir(tmp_path)
         _write_yaml(models_dir / "good-model.yaml", "good-model")
-        with mock.patch(
-            "sys.argv",
-            ["validate_model_configs.py", "--verbose", "--models-dir", str(models_dir)],
+        with (
+            mock.patch(
+                "sys.argv",
+                ["validate_model_configs.py", "--verbose", "--models-dir", str(models_dir)],
+            ),
+            pytest.raises(SystemExit) as exc_info,
         ):
-            with pytest.raises(SystemExit) as exc_info:
-                main()
+            main()
         assert exc_info.value.code == 0
 
     def test_fix_interactive_confirm_renames(self, tmp_path: Path) -> None:
         """Renames file and exits 0 when --fix used with interactive confirmation."""
         models_dir = self._make_models_dir(tmp_path)
         _write_yaml(models_dir / "wrong.yaml", "correct-id")
-        with mock.patch(
-            "sys.argv",
-            ["validate_model_configs.py", "--fix", "--models-dir", str(models_dir)],
+        with (
+            mock.patch(
+                "sys.argv",
+                ["validate_model_configs.py", "--fix", "--models-dir", str(models_dir)],
+            ),
+            mock.patch("builtins.input", return_value="y"),
+            pytest.raises(SystemExit) as exc_info,
         ):
-            with mock.patch("builtins.input", return_value="y"):
-                with pytest.raises(SystemExit) as exc_info:
-                    main()
+            main()
         assert exc_info.value.code == 0
         assert (models_dir / "correct-id.yaml").exists()

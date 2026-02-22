@@ -48,7 +48,7 @@ class TestBuildCommand:
             assert "claude-sonnet-4-5-20250929" in cmd
             assert "--print" in cmd
             assert "--dangerously-skip-permissions" in cmd
-            assert "Test prompt" == cmd[-1]
+            assert cmd[-1] == "Test prompt"
 
     def test_command_with_tools_disabled(self) -> None:
         """Test command with tools disabled."""

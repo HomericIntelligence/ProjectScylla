@@ -202,10 +202,7 @@ Examples:
         return 1
 
     # Determine agents directory
-    if args.agents_dir is None:
-        agents_dir = get_agents_dir()
-    else:
-        agents_dir = repo_root / args.agents_dir
+    agents_dir = get_agents_dir() if args.agents_dir is None else repo_root / args.agents_dir
 
     if not agents_dir.exists():
         print(f"Error: Agents directory not found: {agents_dir}", file=sys.stderr)

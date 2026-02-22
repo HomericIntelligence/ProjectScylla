@@ -383,10 +383,8 @@ def validate_run_result(run_dir: Path) -> tuple[bool, str | None]:
 
         # Check for rate limit indicators in judge_reasoning
         judge_reasoning = data.get("judge_reasoning", "")
-        if "Unable to evaluate agent output" in judge_reasoning:
-            # Check exit_code - if -1, this is a failed run
-            if data.get("exit_code") == -1:
-                return False, "Run failed with exit_code=-1 and invalid judge output"
+        if "Unable to evaluate agent output" in judge_reasoning and data.get("exit_code") == -1:
+            return False, "Run failed with exit_code=-1 and invalid judge output"
 
     return True, None
 

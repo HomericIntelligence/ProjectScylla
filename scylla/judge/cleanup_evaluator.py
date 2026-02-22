@@ -10,6 +10,7 @@ from __future__ import annotations
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import ClassVar
 
 
 @dataclass
@@ -46,14 +47,14 @@ class CleanupEvaluator:
     """
 
     # Known cleanup script locations in priority order
-    CLEANUP_LOCATIONS = [
+    CLEANUP_LOCATIONS: ClassVar[list[str]] = [
         "cleanup.sh",
         "scripts/cleanup.sh",
         "Makefile",
     ]
 
     # Common build artifact patterns that should be cleaned
-    BUILD_PATTERNS = [
+    BUILD_PATTERNS: ClassVar[list[str]] = [
         "build/",
         "dist/",
         "__pycache__/",

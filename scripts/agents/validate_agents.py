@@ -271,7 +271,7 @@ def validate_delegation_patterns(
     if agent_links:
         # Validate linked files exist
         agents_dir = result.file_path.parent
-        for link_text, link_target in agent_links:
+        for _link_text, link_target in agent_links:
             linked_file = agents_dir / f"{link_target}.md"
             if not linked_file.exists():
                 result.add_error(f"Broken link to agent: {link_target}.md")
@@ -326,7 +326,7 @@ def validate_file(file_path: Path, verbose: bool = False) -> ValidationResult:
         result.add_error("No valid YAML frontmatter found")
         return result
 
-    frontmatter_text, frontmatter = fm_result
+    _frontmatter_text, frontmatter = fm_result
     validate_frontmatter(frontmatter, result)
 
     # Validate file structure
@@ -358,7 +358,7 @@ def validate_file(file_path: Path, verbose: bool = False) -> ValidationResult:
     return result
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901  # CLI main with multiple command paths
     """Run the agent validation script."""
     parser = argparse.ArgumentParser(
         description="Comprehensive validation of agent configuration files",
@@ -406,10 +406,7 @@ Examples:
         return 1
 
     # Determine agents directory
-    if args.agents_dir is None:
-        agents_dir = get_agents_dir()
-    else:
-        agents_dir = repo_root / args.agents_dir
+    agents_dir = get_agents_dir() if args.agents_dir is None else repo_root / args.agents_dir
 
     if not agents_dir.exists():
         print(f"Error: Agents directory not found: {agents_dir}", file=sys.stderr)

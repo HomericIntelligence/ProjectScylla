@@ -133,9 +133,9 @@ class ConfigLinter:
                 bracket_count += stripped.count("[") - stripped.count("]")
 
                 # Check for common issues
-                if ":" in stripped and not re.match(r"^\s*[\w\-]+:", stripped):
-                    if "://" not in stripped:  # Not a URL
-                        self.warnings.append(f"{filepath}:{i + 1} - Possible malformed key")
+                is_url = "://" in stripped
+                if ":" in stripped and not re.match(r"^\s*[\w\-]+:", stripped) and not is_url:
+                    self.warnings.append(f"{filepath}:{i + 1} - Possible malformed key")
 
             if brace_count != 0:
                 self.errors.append(f"{filepath} - Unmatched braces")
@@ -321,11 +321,10 @@ class ConfigLinter:
         # Report duplicates (excluding common values)
         common_values = {"true", "false", "0", "1", ""}
         for value, keys in seen_values.items():
-            if len(keys) > 2 and value not in common_values:
-                if len(value) > 3:  # Skip short values
-                    self.suggestions.append(
-                        f"{filepath} - Value '{value}' appears in: {', '.join(keys[:3])}..."
-                    )
+            if len(keys) > 2 and value not in common_values and len(value) > 3:  # Skip short values
+                self.suggestions.append(
+                    f"{filepath} - Value '{value}' appears in: {', '.join(keys[:3])}..."
+                )
 
     def _check_performance(self, config: dict, filepath: Path):
         """Check for performance-related configuration issues.
@@ -364,9 +363,8 @@ class ConfigLinter:
 
         """
         # Known unused patterns
-        if "debug" in config and config.get("debug"):
-            if "production" in str(filepath).lower():
-                self.warnings.append(f"{filepath} - Debug mode enabled in production config")
+        if "debug" in config and config.get("debug") and "production" in str(filepath).lower():
+            self.warnings.append(f"{filepath} - Debug mode enabled in production config")
 
     def _has_nested_key(self, config: dict, key_path: str) -> bool:
         """Check if nested key exists in config.

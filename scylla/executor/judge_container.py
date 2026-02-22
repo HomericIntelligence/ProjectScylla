@@ -14,6 +14,7 @@ Design Decisions:
 
 from __future__ import annotations
 
+import contextlib
 import os
 import uuid
 from dataclasses import dataclass
@@ -303,7 +304,7 @@ class JudgeContainerManager:
         except ContainerError:
             raise
         except Exception as e:
-            raise ContainerError(f"Failed to run judge container: {e}")
+            raise ContainerError(f"Failed to run judge container: {e}") from e
 
     def run_judge_detached(self, config: JudgeContainerConfig) -> str:
         """Run judge evaluation in detached container.
@@ -381,20 +382,14 @@ class JudgeContainerManager:
 
         for line in output.split("\n"):
             if line.startswith("TOKENS_INPUT:"):
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     tokens_in = int(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
             elif line.startswith("TOKENS_OUTPUT:"):
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     tokens_out = int(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
             elif line.startswith("COST_USD:"):
-                try:
+                with contextlib.suppress(ValueError, IndexError):
                     cost = float(line.split(":")[1].strip())
-                except (ValueError, IndexError):
-                    pass
 
         return tokens_in, tokens_out, cost
 
@@ -432,10 +427,8 @@ class JudgeContainerManager:
 
         """
         for container_id in list(self._active_containers):
-            try:
+            with contextlib.suppress(ContainerError):
                 self.cleanup_judge(container_id, force=force)
-            except ContainerError:
-                pass  # Container may already be removed
 
     def get_judge_logs(
         self,
@@ -556,7 +549,15 @@ class JudgeContainerManager:
             # Container was killed due to timeout
             from scylla.executor.docker import ContainerTimeoutError
 
-            raise ContainerTimeoutError(f"Judge execution timed out after {timeout_seconds}s")
+            raise ContainerTimeoutError(
+                f"Judge execution timed out after {timeout_seconds}s"
+            ) from None
 
         except subprocess.CalledProcessError as e:
-            raise ContainerError(f"Container execution failed: {e}")
+            raise ContainerError(f"Container execution failed: {e}") from e
+
+        finally:
+            # Clean up temporary credential files
+            for temp_dir in temp_dirs:
+                with contextlib.suppress(Exception):
+                    shutil.rmtree(temp_dir)

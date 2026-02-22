@@ -148,7 +148,7 @@ class MarkdownFixer:
 
         return "\n".join(fixed_lines), fixes
 
-    def _fix_structural_issues(self, content: str) -> tuple[str, int]:
+    def _fix_structural_issues(self, content: str) -> tuple[str, int]:  # noqa: C901  # markdown repair with many fix categories
         """Fix structural markdown issues (MD022, MD031, MD032, MD029, MD036).
 
         - MD022: Headings surrounded by blank lines

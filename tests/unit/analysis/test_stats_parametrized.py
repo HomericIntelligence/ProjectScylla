@@ -108,7 +108,7 @@ class TestBootstrapCIParametrized:
         """Test bootstrap CI computes correct mean."""
         from scylla.analysis.stats import bootstrap_ci
 
-        mean, ci_low, ci_high = bootstrap_ci(data)
+        mean, _ci_low, _ci_high = bootstrap_ci(data)
         assert mean == pytest.approx(expected_mean, abs=1e-6)
 
     @pytest.mark.parametrize(
@@ -164,7 +164,7 @@ class TestMannWhitneyUParametrized:
         """Test Mann-Whitney U significance detection."""
         from scylla.analysis.stats import mann_whitney_u
 
-        u_stat, p_value = mann_whitney_u(g1, g2)
+        _u_stat, p_value = mann_whitney_u(g1, g2)
         if expect_significant:
             assert p_value < 0.05
         else:

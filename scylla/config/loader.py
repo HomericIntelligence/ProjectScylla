@@ -111,11 +111,11 @@ class ConfigLoader:
                 content = yaml.safe_load(f)
                 return content if content is not None else {}
         except FileNotFoundError:
-            raise ConfigurationError(f"Configuration file not found: {path}")
+            raise ConfigurationError(f"Configuration file not found: {path}") from None
         except yaml.YAMLError as e:
-            raise ConfigurationError(f"Invalid YAML in {path}: {e}")
+            raise ConfigurationError(f"Invalid YAML in {path}: {e}") from e
         except PermissionError:
-            raise ConfigurationError(f"Permission denied reading: {path}")
+            raise ConfigurationError(f"Permission denied reading: {path}") from None
 
     def _load_yaml_optional(self, path: Path) -> dict[str, Any] | None:
         """Load a YAML file if it exists.
@@ -138,9 +138,9 @@ class ConfigLoader:
                 content = yaml.safe_load(f)
                 return content if content is not None else {}
         except yaml.YAMLError as e:
-            raise ConfigurationError(f"Invalid YAML in {path}: {e}")
+            raise ConfigurationError(f"Invalid YAML in {path}: {e}") from e
         except PermissionError:
-            raise ConfigurationError(f"Permission denied reading: {path}")
+            raise ConfigurationError(f"Permission denied reading: {path}") from None
 
     # -------------------------------------------------------------------------
     # Test Case Loading
@@ -165,7 +165,7 @@ class ConfigLoader:
         try:
             return EvalCase(**data)
         except Exception as e:
-            raise ConfigurationError(f"Invalid test configuration in {test_path}: {e}")
+            raise ConfigurationError(f"Invalid test configuration in {test_path}: {e}") from e
 
     # -------------------------------------------------------------------------
     # Rubric Loading
@@ -190,7 +190,7 @@ class ConfigLoader:
         try:
             return Rubric(**data)
         except Exception as e:
-            raise ConfigurationError(f"Invalid rubric configuration in {rubric_path}: {e}")
+            raise ConfigurationError(f"Invalid rubric configuration in {rubric_path}: {e}") from e
 
     # -------------------------------------------------------------------------
     # Tier Loading
@@ -225,7 +225,7 @@ class ConfigLoader:
         try:
             config = TierConfig(**data)
         except Exception as e:
-            raise ConfigurationError(f"Invalid tier configuration in {tier_path}: {e}")
+            raise ConfigurationError(f"Invalid tier configuration in {tier_path}: {e}") from e
 
         warnings = validate_filename_tier_consistency(tier_path, config.tier)
         for warning in warnings:
@@ -299,7 +299,7 @@ class ConfigLoader:
         try:
             config = ModelConfig(**data)
         except Exception as e:
-            raise ConfigurationError(f"Invalid model configuration in {model_path}: {e}")
+            raise ConfigurationError(f"Invalid model configuration in {model_path}: {e}") from e
 
         # Validate filename/model_id consistency
         warnings = validate_filename_model_id_consistency(model_path, config.model_id)
@@ -375,13 +375,15 @@ class ConfigLoader:
         try:
             return DefaultsConfig(**data)
         except Exception as e:
-            raise ConfigurationError(f"Invalid defaults configuration in {defaults_path}: {e}")
+            raise ConfigurationError(
+                f"Invalid defaults configuration in {defaults_path}: {e}"
+            ) from e
 
     # -------------------------------------------------------------------------
     # Merged Configuration Loading
     # -------------------------------------------------------------------------
 
-    def load(self, test_id: str, model_id: str) -> ScyllaConfig:
+    def load(self, test_id: str, model_id: str) -> ScyllaConfig:  # noqa: C901  # config loading with many format/type branches
         """Load and merge configuration for a test run.
 
         Applies three-level priority hierarchy:
@@ -457,4 +459,4 @@ class ConfigLoader:
         try:
             return ScyllaConfig(**config_data)
         except Exception as e:
-            raise ConfigurationError(f"Failed to create merged configuration: {e}")
+            raise ConfigurationError(f"Failed to create merged configuration: {e}") from e

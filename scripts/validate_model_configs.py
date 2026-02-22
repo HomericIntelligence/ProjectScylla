@@ -43,7 +43,7 @@ def _load_model_id(path: Path) -> str | None:
         if not isinstance(data, dict):
             return None
         return data.get("model_id")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"WARNING: Could not read {path}: {exc}", file=sys.stderr)
         return None
 

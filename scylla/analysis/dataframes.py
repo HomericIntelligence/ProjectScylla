@@ -13,16 +13,16 @@ from scylla.analysis.loader import JudgeEvaluation, RunData
 from scylla.analysis.stats import compute_consistency, compute_cop, compute_impl_rate
 
 __all__ = [
-    "compute_judge_impl_rate",
-    "compute_consensus_impl_rate",
-    "build_runs_df",
-    "build_judges_df",
     "build_criteria_df",
+    "build_judges_df",
+    "build_runs_df",
     "build_subtests_df",
-    "tier_summary",
-    "judge_summary",
+    "compute_consensus_impl_rate",
+    "compute_judge_impl_rate",
     "criteria_summary",
+    "judge_summary",
     "model_comparison",
+    "tier_summary",
 ]
 
 

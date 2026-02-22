@@ -14,11 +14,11 @@ from scylla.cli.progress import (
 )
 
 __all__ = [
+    "EvalProgress",
     # Progress
     "ProgressDisplay",
     "RunProgress",
     "RunStatus",
-    "EvalProgress",
     "TierProgress",
     "format_duration",
     "format_progress_bar",

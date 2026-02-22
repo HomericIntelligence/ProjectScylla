@@ -123,7 +123,7 @@ def get_skill_by_name(skill_name: str) -> Path | None:
     return None
 
 
-def compose(
+def compose(  # noqa: C901  # skill composition with many conditional branches
     categories: list[str] | None,
     skills: list[str] | None,
     output: Path,

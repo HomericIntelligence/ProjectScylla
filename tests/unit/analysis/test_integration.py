@@ -147,5 +147,5 @@ def test_e2e_statistical_pipeline_integration(sample_runs_df):
             assert -1.0 <= delta <= 1.0 or pd.isna(delta)
 
             # Test Mann-Whitney U
-            u_stat, p_value = mann_whitney_u(tier1_data, tier2_data)
+            _u_stat, p_value = mann_whitney_u(tier1_data, tier2_data)
             assert 0.0 <= p_value <= 1.0 or pd.isna(p_value)

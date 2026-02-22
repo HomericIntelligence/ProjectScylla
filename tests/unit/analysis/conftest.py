@@ -96,7 +96,7 @@ def sample_judges_df(sample_runs_df):
         "claude-haiku-4-5-20241223",
     ]
 
-    for idx, row in sample_runs_df.iterrows():
+    for _idx, row in sample_runs_df.iterrows():
         for judge_idx, judge_model in enumerate(judge_models, start=1):
             # Generate correlated scores (± 0.1 from run score)
             judge_score = np.clip(row["score"] + np.random.uniform(-0.1, 0.1), 0.0, 1.0)
@@ -154,7 +154,7 @@ def sample_criteria_df(sample_judges_df):
         "overall_quality",
     ]
 
-    for idx, row in sample_judges_df.iterrows():
+    for _idx, row in sample_judges_df.iterrows():
         for criterion in criteria:
             # Generate correlated scores (± 0.15 from judge score)
             criterion_score = np.clip(row["judge_score"] + np.random.uniform(-0.15, 0.15), 0.0, 1.0)

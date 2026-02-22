@@ -26,22 +26,22 @@ from scylla.automation.status_tracker import StatusTracker
 from scylla.automation.worktree_manager import WorktreeManager
 
 __all__ = [
+    "DependencyGraph",
+    "DependencyResolver",
+    "ImplementationState",
+    "ImplementerOptions",
     # Main classes
     "IssueImplementer",
-    "Planner",
-    "DependencyResolver",
-    "StatusTracker",
-    "WorktreeManager",
     # Data models
     "IssueInfo",
     "IssueState",
-    "DependencyGraph",
-    "ImplementationState",
-    "PlannerOptions",
-    "ImplementerOptions",
     "PlanResult",
+    "Planner",
+    "PlannerOptions",
+    "StatusTracker",
     "WorkerResult",
+    "WorktreeManager",
+    "retry_on_network_error",
     # Retry utilities
     "retry_with_backoff",
-    "retry_on_network_error",
 ]

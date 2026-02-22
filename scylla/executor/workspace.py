@@ -7,6 +7,7 @@ and cleanup operations to create isolated test environments.
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 import subprocess
 import time
@@ -77,7 +78,7 @@ def _run_git_command(
         WorkspaceError: If command fails after all retries.
 
     """
-    command = ["git"] + args
+    command = ["git", *args]
     command_str = " ".join(command)
 
     # Patterns that indicate non-retryable errors
@@ -289,12 +290,10 @@ def checkout_hash(
     # Use --depth=1 to keep it shallow
     fetch_args = ["fetch", "--depth=1", "origin", git_hash]
 
-    try:
-        _run_git_command(fetch_args, cwd=workspace_path)
-    except WorkspaceError:
+    with contextlib.suppress(WorkspaceError):
         # If fetch fails, the hash might already be available locally
         # (e.g., if it's the HEAD commit). Try checkout anyway.
-        pass
+        _run_git_command(fetch_args, cwd=workspace_path)
 
     # Checkout the specific commit
     checkout_args = ["checkout", git_hash]

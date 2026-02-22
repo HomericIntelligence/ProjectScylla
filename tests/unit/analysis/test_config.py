@@ -15,7 +15,7 @@ def test_config_singleton():
 def test_config_alpha():
     """Test alpha parameter."""
     assert config.alpha == pytest.approx(0.05)
-    assert ALPHA == pytest.approx(0.05)
+    assert pytest.approx(0.05) == ALPHA
 
 
 def test_config_bootstrap_params():

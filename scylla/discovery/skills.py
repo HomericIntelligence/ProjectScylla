@@ -146,7 +146,7 @@ def discover_skills(source_dir: Path) -> dict[str, list[Path]]:
     all_skills = skill_dirs + skill_files
 
     # Classify by category
-    all_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+    all_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
     result: dict[str, list[Path]] = {cat: [] for cat in all_categories}
 
     for skill_path in all_skills:
@@ -179,7 +179,7 @@ def organize_skills(source_dir: Path, dest_dir: Path) -> dict[str, list[str]]:
 
     """
     # Ensure destination directories exist
-    all_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+    all_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
     for category in all_categories:
         (dest_dir / category).mkdir(parents=True, exist_ok=True)
 

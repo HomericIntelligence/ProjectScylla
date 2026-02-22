@@ -462,7 +462,7 @@ def list_models() -> None:
 
     click.echo("Configured models:\n")
 
-    for model_key, model in models.items():
+    for _model_key, model in models.items():
         # Calculate pricing display
         input_per_1m = model.cost_per_1k_input * 1000
         output_per_1m = model.cost_per_1k_output * 1000

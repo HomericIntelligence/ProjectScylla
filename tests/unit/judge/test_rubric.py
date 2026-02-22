@@ -157,7 +157,7 @@ class TestCalculateWeightedScore:
                 Requirement(id="R001", description="Test 1"),
             ]
         )
-        with pytest.raises(RubricValidationError, match="between 0.0 and 1.0"):
+        with pytest.raises(RubricValidationError, match="between 0\\.0 and 1\\.0"):
             rubric.calculate_weighted_score({"R001": 1.5})
 
     def test_zero_total_weight(self) -> None:

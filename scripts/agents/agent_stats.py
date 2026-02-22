@@ -160,7 +160,7 @@ class AgentAnalyzer:
                     {"target": target, "description": link_text}
                 )
 
-    def format_text(self) -> str:
+    def format_text(self) -> str:  # noqa: C901  # text report formatting with many conditional branches
         """Format statistics as plain text report.
 
         Returns:

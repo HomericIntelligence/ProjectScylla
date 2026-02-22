@@ -47,7 +47,7 @@ class TestBuildCommand:
             assert "--model" in cmd
             assert "gpt-4" in cmd
             assert "--quiet" in cmd
-            assert "Test prompt" == cmd[-1]
+            assert cmd[-1] == "Test prompt"
 
     def test_command_with_tools_disabled(self) -> None:
         """Test command with tools disabled."""

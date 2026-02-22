@@ -15,6 +15,7 @@ Design Decisions:
 
 from __future__ import annotations
 
+import contextlib
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -263,12 +264,19 @@ class AgentContainerManager:
 
             raise ContainerTimeoutError(
                 f"Agent execution timed out after {config.timeout_seconds}s"
-            )
+            ) from None
 
         except subprocess.CalledProcessError as e:
             from scylla.executor.docker import ContainerError
 
-            raise ContainerError(f"Container execution failed: {e}")
+            raise ContainerError(f"Container execution failed: {e}") from e
+
+
+        finally:
+            # Clean up temporary credential files
+            for temp_dir in temp_dirs:
+                with contextlib.suppress(Exception):
+                    shutil.rmtree(temp_dir)
 
 
 __all__ = ["AgentContainerConfig", "AgentContainerManager"]

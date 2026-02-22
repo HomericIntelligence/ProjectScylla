@@ -86,7 +86,7 @@ def _grade_to_points(grade: str) -> float:
     return max(0.0, min(5.0, points))
 
 
-def _points_to_grade(points: float) -> str:
+def _points_to_grade(points: float) -> str:  # noqa: C901  # grade mapping with many score thresholds
     """Convert point value back to letter grade.
 
     Uses industry-aligned scale where S is the highest grade.

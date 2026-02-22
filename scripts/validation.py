@@ -210,10 +210,10 @@ def count_markdown_issues(content: str) -> dict:
 
     # Check for long lines (> 120 characters)
     for line in lines:
-        if len(line) > 120:
-            # Skip lines that are URLs or code
-            if not (line.strip().startswith("http") or line.strip().startswith("`")):
-                issues["long_lines"] += 1
+        stripped = line.strip()
+        is_url_or_code = stripped.startswith("http") or stripped.startswith("`")
+        if len(line) > 120 and not is_url_or_code:
+            issues["long_lines"] += 1
 
     # Check for trailing whitespace
     for line in lines:
