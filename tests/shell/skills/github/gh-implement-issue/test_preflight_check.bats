@@ -80,3 +80,47 @@ setup() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"SAFE TO PROCEED"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# Test 6: Missing issue number argument exits 1 (#901)
+# ---------------------------------------------------------------------------
+@test "missing issue number argument exits 1" {
+    run bash "$SCRIPT"
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"issue number"* ]] || [[ "$output" == *"usage"* ]] || [[ "$output" == *"Usage"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# Test 7: gh CLI failure (unreachable/auth failure) exits 1 (#902)
+# ---------------------------------------------------------------------------
+@test "gh CLI failure exits 1 with STOP message" {
+    # Create a temporary gh that always fails
+    local tmpdir
+    tmpdir="$(mktemp -d)"
+    printf '#!/usr/bin/env bash\nexit 1\n' > "${tmpdir}/gh"
+    chmod +x "${tmpdir}/gh"
+    export PATH="${tmpdir}:${PATH}"
+
+    run bash "$SCRIPT" 800
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"[STOP]"* ]]
+
+    rm -rf "$tmpdir"
+}
+
+# ---------------------------------------------------------------------------
+# Test 8: Empty worktree list does not abort the script (#905)
+# ---------------------------------------------------------------------------
+@test "empty worktree list passes check 4 without aborting" {
+    export GH_MOCK_ISSUE_STATE='{"state":"OPEN","title":"Clean Issue","closedAt":null}'
+    export GH_MOCK_PR_JSON='[]'
+    # GIT_MOCK_WORKTREE is unset → git worktree list returns empty → grep exits 1 → || true rescues
+    unset GIT_MOCK_WORKTREE
+
+    run bash "$SCRIPT" 800
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"SAFE TO PROCEED"* ]]
+}
