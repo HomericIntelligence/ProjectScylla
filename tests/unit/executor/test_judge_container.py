@@ -3,6 +3,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from scylla.executor.docker import ContainerResult
 from scylla.executor.judge_container import (
     JudgeContainerConfig,
@@ -27,7 +28,7 @@ class TestJudgeContainerConfig:
 
         assert config.agent_workspace == workspace
         assert config.output_dir == output
-        assert config.judge_model == "claude-opus-4-5-20251101"
+        assert config.judge_model == DEFAULT_JUDGE_MODEL
         assert config.timeout_seconds == 600
         assert config.image == "scylla-runner:latest"
 
