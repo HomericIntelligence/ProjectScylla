@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -232,11 +234,26 @@ class TestGetPipelineEnv:
     """Tests for _get_pipeline_env helper."""
 
     def test_sets_pycache_prefix(self) -> None:
-        """Test that PYTHONPYCACHEPREFIX is set."""
+        """Test that PYTHONPYCACHEPREFIX is set under tempfile.gettempdir()."""
         env = _get_pipeline_env()
 
         assert "PYTHONPYCACHEPREFIX" in env
-        assert env["PYTHONPYCACHEPREFIX"] == "/tmp/scylla_pycache"
+        assert env["PYTHONPYCACHEPREFIX"].startswith(tempfile.gettempdir())
+
+    def test_pycache_prefix_uses_scylla_subdir(self) -> None:
+        """Test that PYTHONPYCACHEPREFIX ends with scylla_pycache subdir."""
+        env = _get_pipeline_env()
+
+        assert env["PYTHONPYCACHEPREFIX"].endswith("scylla_pycache")
+
+    def test_inherits_os_environ(self) -> None:
+        """_get_pipeline_env returns a copy of os.environ with additions."""
+        env = _get_pipeline_env()
+
+        # Should inherit PATH from os.environ
+        assert "PATH" in env or len(env) > 1
+        # Should not be the same object as os.environ
+        assert env is not os.environ
 
 
 class TestRunPythonPipeline:
