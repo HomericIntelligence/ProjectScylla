@@ -6,6 +6,7 @@ using structured prompts and rubrics for consistent scoring.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -190,7 +191,7 @@ def _is_modular_repo(workspace: Path) -> bool:
     return (workspace / "bazelw").exists() and (workspace / "mojo").is_dir()
 
 
-def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
+def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  # Mojo pipeline with many repo-type and command branches
     """Run Mojo build/lint pipeline and capture results.
 
     Detects if workspace is the modular/mojo monorepo and uses appropriate commands:
@@ -372,7 +373,7 @@ def _get_pipeline_env() -> dict[str, str]:
     return env
 
 
-def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
+def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  # Python pipeline with many lint/build outcome branches
     """Run Python build/lint pipeline and capture results.
 
     Args:
@@ -558,7 +559,7 @@ def _run_build_pipeline(workspace: Path, language: str = "python") -> BuildPipel
 # This module now imports and uses that consolidated implementation.
 
 
-def _get_workspace_state(workspace: Path) -> str:
+def _get_workspace_state(workspace: Path) -> str:  # noqa: C901  # workspace state detection with many file patterns
     """Get a description of modified/created files in the workspace.
 
     Only lists files that were modified or created by the agent (using git status),
@@ -701,7 +702,7 @@ def _get_patchfile(workspace: Path) -> str:
         lines = diff.split("\n")
         if len(lines) > max_lines:
             half = max_lines // 2
-            truncated = lines[:half] + ["", "... (truncated)", ""] + lines[-half:]
+            truncated = [*lines[:half], "", "... (truncated)", "", *lines[-half:]]
             return "\n".join(truncated)
 
         return diff
@@ -762,7 +763,7 @@ def _load_reference_patch(reference_path: Path) -> str | None:
         return None
 
 
-def run_llm_judge(
+def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
     workspace: Path,
     task_prompt: str,
     agent_output: str,
@@ -1030,10 +1031,8 @@ def _call_claude_judge(
 
     finally:
         # Clean up temp file
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(prompt_file_path)
-        except OSError:
-            pass
 
 
 def _parse_judge_response(response: str) -> JudgeResult:
