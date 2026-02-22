@@ -319,7 +319,7 @@ def run_single_test(
     # Run subprocess
     start_time = datetime.now(timezone.utc)
     try:
-        result = subprocess.run(
+        proc = subprocess.run(
             cmd,
             stdout=log_file,
             stderr=subprocess.STDOUT,
@@ -327,7 +327,7 @@ def run_single_test(
             text=True,
             check=False,  # Don't raise on error
         )
-        exit_code = result.returncode
+        exit_code = proc.returncode
         error = None if exit_code == 0 else f"Exit code: {exit_code}"
     except Exception as e:
         exit_code = -1
