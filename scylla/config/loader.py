@@ -76,7 +76,7 @@ class ConfigLoader:
         loader = ConfigLoader()
         config = loader.load(
             test_id="001-justfile-to-makefile",
-            model_id="claude-opus-4-5-20251101",
+            model_id=DEFAULT_JUDGE_MODEL,
         )
 
     """
