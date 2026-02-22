@@ -69,9 +69,9 @@ class AgentContainerManager:
         >>> executor = DockerExecutor()
         >>> manager = AgentContainerManager(executor)
         >>> config = AgentContainerConfig(
-        ...     workspace_dir=Path("/tmp/workspace"),
-        ...     output_dir=Path("/tmp/agent"),
-        ...     task_prompt_path=Path("/tmp/task.md"),
+        ...     workspace_dir=Path(tempfile.gettempdir()) / "workspace",
+        ...     output_dir=Path(tempfile.gettempdir()) / "agent",
+        ...     task_prompt_path=Path(tempfile.gettempdir()) / "task.md",
         ... )
         >>> result = manager.run(config)
         >>> print(result.exit_code)
