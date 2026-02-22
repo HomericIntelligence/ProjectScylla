@@ -7,7 +7,7 @@ import pytest
 from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 
 
-class EvalOrchestratorConfig:
+class TestEvalOrchestratorConfig:
     """Tests for OrchestratorConfig."""
 
     def test_defaults(self) -> None:
@@ -78,7 +78,7 @@ class TestEvalOrchestrator:
         assert orchestrator._judge_func is mock_judge
 
 
-class EvalOrchestratorWithFixture:
+class TestEvalOrchestratorWithFixture:
     """Tests for orchestrator with proper test fixture."""
 
     @pytest.fixture
