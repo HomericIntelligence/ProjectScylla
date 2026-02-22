@@ -443,7 +443,7 @@ class TestCheckpointOperations:
         }
 
         # Create checkpoint from raw dict (with string keys)
-        cp = E2ECheckpoint.model_validate(raw_data)
+        cp = E2ECheckpoint.from_dict(raw_data)
 
         # Verify int key lookups work (the fix ensures this)
         assert cp.is_run_completed("T0", "T0_00", 1)

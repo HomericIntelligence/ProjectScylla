@@ -776,7 +776,7 @@ class TestMergeTierResources:
         # Union of levels (sorted, deduplicated)
         assert merged["agents"]["levels"] == [0, 1, 2, 3]
         # Union of names
-        assert set(merged["agents"]["names"]) == {"agent-a.md", "agent-b.md"}
+        assert set(merged["agents"]["names"]) == {"agent-a.md", "agent-b.md"}  # type: ignore[call-overload]
 
 
 class TestBuildMergedBaseline:

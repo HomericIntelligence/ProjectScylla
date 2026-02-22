@@ -226,7 +226,7 @@ class TestCheckpointVersionMismatch:
             CheckpointError,
             match="Incompatible checkpoint version 1.0.*requires checkpoint format 2.0",
         ):
-            E2ECheckpoint.model_validate(data)
+            E2ECheckpoint.from_dict(data)
 
     def test_from_dict_raises_on_unknown_version(self, tmp_path: Path) -> None:
         """Verify from_dict raises CheckpointError for unknown version."""
@@ -245,7 +245,7 @@ class TestCheckpointVersionMismatch:
             CheckpointError,
             match="Incompatible checkpoint version 3.5.*requires checkpoint format 2.0",
         ):
-            E2ECheckpoint.model_validate(data)
+            E2ECheckpoint.from_dict(data)
 
     def test_from_dict_accepts_version_2_0(self, tmp_path: Path) -> None:
         """Verify from_dict accepts version 2.0."""
@@ -260,7 +260,7 @@ class TestCheckpointVersionMismatch:
             "status": "running",
         }
 
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.version == "2.0"
         assert checkpoint.experiment_id == "test-exp"
 

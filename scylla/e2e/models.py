@@ -310,7 +310,7 @@ class E2ERunResult(RunResultBase):
 
     @field_validator("criteria_scores", mode="before")
     @classmethod
-    def coerce_none_criteria_scores(cls, v: Any) -> dict:
+    def coerce_none_criteria_scores(cls, v: Any) -> dict[str, Any]:
         """Coerce None to empty dict — judges may return None for criteria_scores."""
         return v if v is not None else {}
 

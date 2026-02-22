@@ -330,7 +330,6 @@ def rejudge_missing_runs(
                                 _parse_judge_response,
                                 _save_judge_logs,
                             )
-                            from scylla.e2e.models import config
 
                             judge_start = time.time()
 

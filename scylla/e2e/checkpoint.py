@@ -192,7 +192,7 @@ class E2ECheckpoint(BaseModel):
         return result
 
     @classmethod
-    def model_validate(cls, data: dict[str, Any]) -> E2ECheckpoint:
+    def from_dict(cls, data: dict[str, Any]) -> E2ECheckpoint:
         """Create from dictionary with version validation.
 
         Args:
@@ -273,7 +273,7 @@ def load_checkpoint(path: Path) -> E2ECheckpoint:
     try:
         with open(path) as f:
             data = json.load(f)
-        return E2ECheckpoint.model_validate(data)
+        return E2ECheckpoint.from_dict(data)
     except (OSError, json.JSONDecodeError) as e:
         raise CheckpointError(f"Failed to load checkpoint from {path}: {e}")
 

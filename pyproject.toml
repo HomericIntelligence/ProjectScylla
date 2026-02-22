@@ -117,14 +117,9 @@ disable_error_code = [
     "index",           # 3 violations - invalid indexing operations
     "attr-defined",    # 3 violations - attribute not defined
     "misc",            # 2 violations - miscellaneous type issues
-    "override",        # 1 violation - incompatible method override
-    "no-redef",        # 1 violation - name redefinition
-    "exit-return",     # 1 violation - context manager __exit__ return type
     "union-attr",      # Multiple violations - accessing attributes on unions
     "var-annotated",   # Multiple violations - missing type annotations for variables
     "call-arg",        # Multiple violations - incorrect function call arguments
-    "return-value",    # 1 violation - incompatible return value type
-    "call-overload",   # 1 violation - no matching overload variant
 ]
 
 
