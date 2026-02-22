@@ -42,6 +42,7 @@ from .pricing import (
     calculate_cost,
     get_model_pricing,
 )
+from .validation import validate_defaults_filename
 
 __all__ = [
     # Constants
@@ -80,4 +81,6 @@ __all__ = [
     "CleanupConfig",
     # Merged Config
     "ScyllaConfig",
+    # Validation
+    "validate_defaults_filename",
 ]
