@@ -29,7 +29,7 @@ from scylla.config import (
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 
 # Path to test fixtures
-FIXTURES_PATH = Path(__file__).parent.parent / "fixtures"
+FIXTURES_PATH = Path(__file__).parent.parent.parent / "fixtures"
 
 
 class TestConfigLoaderDefaults:
