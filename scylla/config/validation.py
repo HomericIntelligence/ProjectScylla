@@ -132,6 +132,7 @@ def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> 
 
     return warnings
 
+
 def validate_defaults_filename(config_path: Path) -> list[str]:
     """Validate that the defaults config file is named 'defaults.yaml'.
 
@@ -156,6 +157,7 @@ def validate_defaults_filename(config_path: Path) -> list[str]:
             f"validation is intentionally limited to stem check only."
         )
     return warnings
+
 
 def validate_filename_tier_consistency(config_path: Path, tier: str) -> list[str]:
     """Validate config filename matches tier identifier.
