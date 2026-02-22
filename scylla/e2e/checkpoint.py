@@ -2,12 +2,19 @@
 
 This module provides checkpoint state tracking for E2E experiments,
 enabling pause/resume functionality for overnight runs with rate limit handling.
+
+Checkpoint Versions:
+    - v2.0: run-level granularity (passed/failed/agent_complete per run)
+    - v3.0: fine-grained state machine (RunState/SubtestState/TierState/ExperimentState)
+            Adds: experiment_state, tier_states, subtest_states, run_states, last_heartbeat
+            Backward compat: completed_runs preserved as derived view
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +24,8 @@ from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from scylla.e2e.models import ExperimentConfig
+
+logger = logging.getLogger(__name__)
 
 
 class CheckpointError(Exception):
@@ -36,18 +45,27 @@ class E2ECheckpoint(BaseModel):
 
     Stored at: results/{experiment}/checkpoint.json
 
-    Enables run-level resume: after each run completes, checkpoint is updated.
-    On resume, completed runs are skipped.
+    v3.0: Fine-grained state machine with hierarchical state tracking.
+    Each run has an explicit RunState enum value, enabling resume from
+    any point in the run lifecycle (not just at run completion).
+
+    Backward compatibility: completed_runs is preserved for v2.0 consumers.
+    It is derived from run_states on load and kept in sync on write.
 
     Attributes:
-        version: Checkpoint format version
+        version: Checkpoint format version (3.0)
         experiment_id: Unique experiment identifier
         experiment_dir: Absolute path to experiment directory
         config_hash: SHA256 hash of config for strict validation
+        experiment_state: Overall experiment state (ExperimentState enum value)
+        tier_states: tier_id -> TierState enum value
+        subtest_states: tier_id -> subtest_id -> SubtestState enum value
+        run_states: tier_id -> subtest_id -> run_num -> RunState enum value
         completed_runs: tier_id -> subtest_id -> {run_number: status}
-                       status can be: "passed", "failed", "agent_complete"
+                       Backward compat: "passed", "failed", "agent_complete"
         started_at: ISO timestamp of experiment start
         last_updated_at: ISO timestamp of last checkpoint update
+        last_heartbeat: ISO timestamp of last heartbeat (for zombie detection)
         status: Current status (running, paused_rate_limit, completed, failed)
         rate_limit_source: Source of rate limit (agent or judge)
         rate_limit_until: ISO timestamp when rate limit expires
@@ -56,20 +74,36 @@ class E2ECheckpoint(BaseModel):
 
     """
 
-    version: str = Field(default="2.0", description="Checkpoint format version")
+    version: str = Field(default="3.0", description="Checkpoint format version")
     experiment_id: str = Field(default="", description="Unique experiment identifier")
     experiment_dir: str = Field(default="", description="Absolute path to experiment directory")
     config_hash: str = Field(default="", description="SHA256 hash of config")
 
-    # Progress tracking: tier_id -> subtest_id -> {run_number: status}
+    # v3.0 hierarchical state tracking
+    experiment_state: str = Field(
+        default="initializing", description="Overall experiment state (ExperimentState value)"
+    )
+    tier_states: dict[str, str] = Field(
+        default_factory=dict, description="tier_id -> TierState value"
+    )
+    subtest_states: dict[str, dict[str, str]] = Field(
+        default_factory=dict, description="tier_id -> subtest_id -> SubtestState value"
+    )
+    run_states: dict[str, dict[str, dict[str, str]]] = Field(
+        default_factory=dict,
+        description="tier_id -> subtest_id -> run_num_str -> RunState value",
+    )
+
+    # v2.0 backward compat: tier_id -> subtest_id -> {run_number: status}
     # status: "passed", "failed", "agent_complete"
     completed_runs: dict[str, dict[str, dict[int, str]]] = Field(
-        default_factory=dict, description="Completed runs tracking"
+        default_factory=dict, description="Completed runs tracking (backward compat)"
     )
 
     # Timing
     started_at: str = Field(default="", description="ISO timestamp of experiment start")
     last_updated_at: str = Field(default="", description="ISO timestamp of last update")
+    last_heartbeat: str = Field(default="", description="ISO timestamp of last heartbeat")
 
     # Rate limit state
     status: str = Field(default="running", description="Current status")
@@ -81,6 +115,106 @@ class E2ECheckpoint(BaseModel):
 
     # Process info for monitoring
     pid: int | None = Field(default=None, description="Process ID of running experiment")
+
+    # -------------------------------------------------------------------------
+    # v3.0 State machine helpers
+    # -------------------------------------------------------------------------
+
+    def get_run_state(self, tier_id: str, subtest_id: str, run_num: int) -> str:
+        """Get the fine-grained RunState for a run.
+
+        Args:
+            tier_id: Tier identifier (e.g., "T0")
+            subtest_id: Subtest identifier (e.g., "00-empty")
+            run_num: Run number (1-based)
+
+        Returns:
+            RunState value string, or "pending" if not found
+
+        """
+        key = str(run_num)
+        return self.run_states.get(tier_id, {}).get(subtest_id, {}).get(key, "pending")
+
+    def set_run_state(self, tier_id: str, subtest_id: str, run_num: int, state: str) -> None:
+        """Set the fine-grained RunState for a run.
+
+        Also syncs completed_runs for backward compatibility:
+        - run_complete / checkpointed / worktree_cleaned -> "passed" or "failed"
+          (determined by existing completed_runs entry or defaulting based on state)
+        - agent_complete -> "agent_complete"
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+            run_num: Run number (1-based)
+            state: RunState value string
+
+        """
+        key = str(run_num)
+        if tier_id not in self.run_states:
+            self.run_states[tier_id] = {}
+        if subtest_id not in self.run_states[tier_id]:
+            self.run_states[tier_id][subtest_id] = {}
+        self.run_states[tier_id][subtest_id][key] = state
+        self.last_updated_at = datetime.now(timezone.utc).isoformat()
+
+    def get_tier_state(self, tier_id: str) -> str:
+        """Get the TierState for a tier.
+
+        Args:
+            tier_id: Tier identifier
+
+        Returns:
+            TierState value string, or "pending" if not found
+
+        """
+        return self.tier_states.get(tier_id, "pending")
+
+    def set_tier_state(self, tier_id: str, state: str) -> None:
+        """Set the TierState for a tier.
+
+        Args:
+            tier_id: Tier identifier
+            state: TierState value string
+
+        """
+        self.tier_states[tier_id] = state
+        self.last_updated_at = datetime.now(timezone.utc).isoformat()
+
+    def get_subtest_state(self, tier_id: str, subtest_id: str) -> str:
+        """Get the SubtestState for a subtest.
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+
+        Returns:
+            SubtestState value string, or "pending" if not found
+
+        """
+        return self.subtest_states.get(tier_id, {}).get(subtest_id, "pending")
+
+    def set_subtest_state(self, tier_id: str, subtest_id: str, state: str) -> None:
+        """Set the SubtestState for a subtest.
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+            state: SubtestState value string
+
+        """
+        if tier_id not in self.subtest_states:
+            self.subtest_states[tier_id] = {}
+        self.subtest_states[tier_id][subtest_id] = state
+        self.last_updated_at = datetime.now(timezone.utc).isoformat()
+
+    def update_heartbeat(self) -> None:
+        """Update the heartbeat timestamp to now."""
+        self.last_heartbeat = datetime.now(timezone.utc).isoformat()
+
+    # -------------------------------------------------------------------------
+    # v2.0 backward compat helpers
+    # -------------------------------------------------------------------------
 
     def mark_run_completed(
         self, tier_id: str, subtest_id: str, run_number: int, status: str = "passed"
@@ -192,8 +326,13 @@ class E2ECheckpoint(BaseModel):
         return result
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> E2ECheckpoint:
-        """Create from dictionary with version validation.
+    def model_validate(cls, data: dict[str, Any]) -> E2ECheckpoint:
+        """Create from dictionary with version validation and migration.
+
+        Supports:
+        - v2.0: migrated to v3.0 automatically (run_states derived from completed_runs)
+        - v3.0: loaded as-is
+        - v1.0 or unknown: rejected (must start fresh)
 
         Args:
             data: Dictionary representation
@@ -207,20 +346,76 @@ class E2ECheckpoint(BaseModel):
         """
         version = data.get("version", "1.0")
 
-        # Version 2.0+ uses dict[int, str] for completed_runs, v1.0 used list[int]
-        # No backward compatibility - old checkpoints must be discarded
-        if version != "2.0":
+        if version == "2.0":
+            # Migrate v2.0 -> v3.0
+            data = cls._migrate_v2_to_v3(data)
+        elif version == "3.0":
+            # Convert string keys to int keys for completed_runs (JSON serialization)
+            if "completed_runs" in data:
+                data["completed_runs"] = cls._convert_completed_runs_keys(data["completed_runs"])
+        else:
             raise CheckpointError(
                 f"Incompatible checkpoint version {version}. "
-                "This version requires checkpoint format 2.0. "
+                "This version requires checkpoint format 2.0 or 3.0. "
                 "Please delete the old checkpoint and re-run the experiment."
             )
 
-        # Convert string keys to int keys for completed_runs
-        if "completed_runs" in data:
-            data["completed_runs"] = cls._convert_completed_runs_keys(data["completed_runs"])
-
         return super().model_validate(data)
+
+    @classmethod
+    def _migrate_v2_to_v3(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Migrate v2.0 checkpoint data to v3.0 schema.
+
+        Derives run_states from completed_runs:
+        - "passed" -> RunState.RUN_COMPLETE (run fully done, passed)
+        - "failed" -> RunState.RUN_COMPLETE (run fully done, failed)
+        - "agent_complete" -> RunState.AGENT_COMPLETE
+
+        Tier/subtest states are inferred as best-effort from completed_runs.
+
+        Args:
+            data: v2.0 checkpoint dict
+
+        Returns:
+            v3.0 checkpoint dict ready for model_validate
+
+        """
+        logger.info("Migrating checkpoint from v2.0 to v3.0")
+        data = dict(data)  # shallow copy to avoid mutating caller's dict
+
+        # Convert completed_runs keys (JSON string -> int)
+        completed_runs_raw = data.get("completed_runs", {})
+        completed_runs = cls._convert_completed_runs_keys(completed_runs_raw)
+        data["completed_runs"] = completed_runs
+
+        # Derive run_states from completed_runs
+        run_states: dict[str, dict[str, dict[str, str]]] = {}
+        tier_states: dict[str, str] = {}
+        subtest_states: dict[str, dict[str, str]] = {}
+
+        for tier_id, subtests in completed_runs.items():
+            run_states[tier_id] = {}
+            subtest_states[tier_id] = {}
+            for subtest_id, runs in subtests.items():
+                run_states[tier_id][subtest_id] = {}
+                for run_num, status in runs.items():
+                    if status == "agent_complete":
+                        run_state = "agent_complete"
+                    else:
+                        # "passed" or "failed" -> run was fully completed
+                        run_state = "run_complete"
+                    run_states[tier_id][subtest_id][str(run_num)] = run_state
+                subtest_states[tier_id][subtest_id] = "runs_in_progress"
+            tier_states[tier_id] = "subtests_running"
+
+        data["run_states"] = run_states
+        data["tier_states"] = tier_states
+        data["subtest_states"] = subtest_states
+        data["experiment_state"] = "tiers_running"
+        data["last_heartbeat"] = data.get("last_updated_at", "")
+        data["version"] = "3.0"
+
+        return data
 
 
 def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
@@ -273,7 +468,7 @@ def load_checkpoint(path: Path) -> E2ECheckpoint:
     try:
         with open(path) as f:
             data = json.load(f)
-        return E2ECheckpoint.from_dict(data)
+        return E2ECheckpoint.model_validate(data)
     except (OSError, json.JSONDecodeError) as e:
         raise CheckpointError(f"Failed to load checkpoint from {path}: {e}")
 
