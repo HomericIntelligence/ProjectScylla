@@ -666,3 +666,60 @@ class TestModelConfigOrphanValidation:
             loader.load_all_models()
 
         assert not any("_my-fixture.yaml" in r.message for r in caplog.records)
+
+
+class TestLoadTierNormalizationParametrized:
+    """Parametrized tests for load_tier() normalization edge cases.
+
+    Verifies that load_tier() correctly normalizes tier identifiers by:
+    - Converting to lowercase
+    - Stripping surrounding whitespace
+    - Adding 't' prefix when missing
+    """
+
+    @pytest.mark.parametrize(
+        "input_tier,expected_normalized",
+        [
+            ("t0", "t0"),  # already normalized
+            ("T0", "t0"),  # uppercase
+            (" t0 ", "t0"),  # whitespace
+            (" T0 ", "t0"),  # uppercase + whitespace
+            ("0", "t0"),  # missing t prefix
+            ("1", "t1"),  # missing t prefix, different tier
+        ],
+    )
+    def test_load_tier_normalization_success(
+        self, input_tier: str, expected_normalized: str
+    ) -> None:
+        """load_tier() normalizes uppercase, whitespace, and missing 't' prefix.
+
+        Uses the t0 and t1 fixture tiers to confirm normalization succeeds
+        and the returned config reflects the canonical tier name.
+        """
+        loader = ConfigLoader(base_path=FIXTURES_PATH)
+        tier = loader.load_tier(input_tier)
+        assert tier.tier == expected_normalized
+
+    @pytest.mark.parametrize(
+        "input_tier,expected_normalized",
+        [
+            ("T99", "t99"),  # uppercase, no fixture → error mentions normalized name
+            (
+                " 99 ",
+                "t99",
+            ),  # whitespace + missing prefix, no fixture → error mentions normalized name
+        ],
+    )
+    def test_load_tier_normalization_error_mentions_normalized_name(
+        self, input_tier: str, expected_normalized: str
+    ) -> None:
+        """load_tier() error message references the normalized tier name, not the raw input.
+
+        When no fixture exists for the normalized name, a ConfigurationError is
+        raised whose message contains the normalized identifier so callers can
+        diagnose which path was attempted.
+        """
+        loader = ConfigLoader(base_path=FIXTURES_PATH)
+        with pytest.raises(ConfigurationError) as exc_info:
+            loader.load_tier(input_tier)
+        assert expected_normalized in str(exc_info.value)
