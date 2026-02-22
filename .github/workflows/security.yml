@@ -34,8 +34,6 @@ jobs:
             .pixi
             ~/.cache/rattler/cache
           key: pixi-lint-${{ runner.os }}-${{ hashFiles('pixi.lock') }}
-          restore-keys: |
-            pixi-lint-${{ runner.os }}-
 
       - name: Run pip-audit
         run: pixi run --environment lint pip-audit
