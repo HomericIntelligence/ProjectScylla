@@ -17,7 +17,7 @@ jobs:
           - { name: "unit", path: "tests/unit" }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Enforce no new deprecated BaseExecutionInfo usage
         run: |
