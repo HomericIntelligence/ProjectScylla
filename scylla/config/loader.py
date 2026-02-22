@@ -22,6 +22,7 @@ from .models import (
     TierConfig,
 )
 from .validation import (
+    validate_defaults_filename,
     validate_filename_model_id_consistency,
     validate_model_config_referenced,
 )
@@ -329,6 +330,11 @@ class ConfigLoader:
     def load_defaults(self) -> DefaultsConfig:
         """Load global defaults configuration.
 
+        Loads config/defaults.yaml. Note: DefaultsConfig has no model_id-style
+        field, so field-level filename consistency validation (as applied to
+        ModelConfig) is intentionally not performed. A stem-only check is
+        applied to catch gross misconfiguration (wrong file entirely).
+
         Returns:
             DefaultsConfig model
 
@@ -338,6 +344,11 @@ class ConfigLoader:
         """
         defaults_path = self.base_path / "config" / "defaults.yaml"
         data = self._load_yaml(defaults_path)
+
+        # Validate filename stem only — DefaultsConfig has no ID field,
+        # so model_id↔filename consistency checks are not applicable.
+        for warning in validate_defaults_filename(defaults_path):
+            logger.warning(warning)
 
         try:
             return DefaultsConfig(**data)
