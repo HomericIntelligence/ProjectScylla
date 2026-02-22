@@ -339,11 +339,11 @@ Schema: `scylla/analysis/schemas/run_result_schema.json`
 
 ### 🧪 Testing
 
-ProjectScylla has a comprehensive test suite with **85+ test files** covering all functionality.
+ProjectScylla has a comprehensive test suite with **115+ test files** covering all functionality.
 
 #### Test Categories
 
-- **Unit Tests** (70+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
+- **Unit Tests** (115+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
 - **E2E Tests** (1 file): Full pipeline validation
 - **Test Fixtures** (47+ scenarios): Complete test cases with expected outputs
 
