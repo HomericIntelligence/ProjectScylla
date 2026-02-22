@@ -289,26 +289,28 @@ BAD: Updated cop.py (ambiguous - which file?)
 
 ### Skills and Knowledge Sharing
 
-When using `/retrospective` to capture session learnings:
-
-1. **Create skill in ProjectScylla** first (`.claude-plugin/skills/{name}/`)
-2. **Push to ProjectMnemosyne** for team-wide sharing:
+When using `/retrospective` to capture session learnings, push directly to ProjectMnemosyne:
 
    ```bash
-   # Copy skill to knowledge base
-   cp -r .claude-plugin/skills/{name} build/ProjectMnemosyne/skills/
+   # Clone if needed
+   MNEMOSYNE_DIR="build/$$/ProjectMnemosyne"
+   if [ ! -d "$MNEMOSYNE_DIR" ]; then
+     mkdir -p "build/$$"
+     gh repo clone HomericIntelligence/ProjectMnemosyne "$MNEMOSYNE_DIR"
+   fi
 
    # Create PR in ProjectMnemosyne
-   cd build/ProjectMnemosyne
-   git checkout -b skill/{category}/{name}
-   git add skills/{name}
-   git commit -m "feat(skills): Add {name} from ProjectScylla"
+   cd "$MNEMOSYNE_DIR"
+   git checkout -b skill/{category}/{name} origin/main
+   # ... create skill files ...
    git push -u origin skill/{category}/{name}
-   gh pr create --title "feat(skills): Add {name} from ProjectScylla"
+   gh pr create --title "feat(skills): Add {name}"
    ```
 
 **Location**: `<ProjectRoot>/build/ProjectMnemosyne`
 **Purpose**: Central repository for team knowledge and reusable skills
+
+**IMPORTANT**: Do NOT create skills locally in `.claude-plugin/` — all skills go to ProjectMnemosyne only.
 
 ### Shared Reference Files
 

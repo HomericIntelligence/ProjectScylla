@@ -851,7 +851,12 @@ class IssueImplementer:
                     "claude",
                     "--resume",
                     session_id,
-                    "/skills-registry-commands:retrospective commit the results and create a PR",
+                    (
+                        "/skills-registry-commands:retrospective"
+                        " commit the results and create a PR."
+                        " IMPORTANT: Only push skills to ProjectMnemosyne."
+                        " Do NOT create files under .claude-plugin/ in this repo."
+                    ),
                     "--print",
                     "--permission-mode",
                     "dontAsk",
