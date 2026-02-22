@@ -394,7 +394,7 @@ ProjectScylla/
 |   +-- config/                  # Configuration (.py)
 |   +-- core/                    # Core types (.py)
 |   +-- discovery/               # Resource discovery (.py)
-|   +-- e2e/                     # E2E testing framework (.py)
+|   +-- e2e/                     # E2E testing framework + EvalOrchestrator (.py)
 |   +-- executor/                # Execution engine (.py)
 |   +-- judge/                   # LLM judge system (.py)
 |   +-- metrics/                 # Metrics calculation (.py)

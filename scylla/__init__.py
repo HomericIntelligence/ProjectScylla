@@ -13,7 +13,6 @@ __all__ = [
     "judge",
     "metrics",
     "reporting",
-    "orchestrator",
     "cli",
     "automation",
 ]

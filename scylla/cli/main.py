@@ -9,7 +9,7 @@ from pathlib import Path
 import click
 
 from scylla.config import ConfigLoader
-from scylla.orchestrator import EvalOrchestrator, OrchestratorConfig
+from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
     MarkdownReportGenerator,
     ReportData,
