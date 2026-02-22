@@ -14,14 +14,14 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | call-overload | 0     | No matching overload variant             |
 | exit-return   | 1     | Context manager \_\_exit\_\_ return type |
 | index         | 3     | Invalid indexing operations              |
-| misc          | 2     | Miscellaneous type issues                |
+| misc          | 1     | Miscellaneous type issues                |
 | no-redef      | 1     | Name redefinition                        |
 | operator      | 9     | Incompatible operand types               |
 | override      | 1     | Incompatible method override             |
 | return-value  | 0     | Incompatible return value type           |
 | union-attr    | 2     | Accessing attributes on union types      |
 | var-annotated | 9     | Missing type annotations for variables   |
-| **Total**     | **59** |                                          |
+| **Total**     | **58** |                                          |
 
 ## Error Count Table — tests/
 
