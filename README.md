@@ -343,8 +343,7 @@ ProjectScylla has a comprehensive test suite with **85+ test files** covering al
 
 #### Test Categories
 
-- **Unit Tests** (67+ files): Analysis, adapters, config, executors, judges, metrics, reporting
-- **Integration Tests** (2 files): End-to-end workflow testing
+- **Unit Tests** (70+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
 - **E2E Tests** (1 file): Full pipeline validation
 - **Test Fixtures** (47+ scenarios): Complete test cases with expected outputs
 
@@ -361,9 +360,6 @@ pixi run pytest tests/unit/ -v
 pixi run pytest tests/unit/analysis/ -v
 pixi run pytest tests/unit/adapters/ -v
 pixi run pytest tests/unit/config/ -v
-
-# Integration tests
-pixi run pytest tests/integration/ -v
 
 # Coverage analysis
 pixi run pytest tests/ --cov=scylla/scylla --cov-report=html
