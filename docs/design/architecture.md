@@ -127,6 +127,7 @@ Each tier runs 9 times per test case for statistical validity:
     |  | - Codex       |     |  Container    |     | - CoP         |        |
     |  | - Cline       |     |               |     | - Latency     |        |
     |  | - OpenCode    |     |               |     | - R_Prog      |        |
+    |  | - Goose       |     |               |     |               |        |
     |  +---------------+     +---------------+     +---------------+        |
     |                                                                       |
     +----------------------------------------------------------------------+
@@ -226,10 +227,11 @@ class BaseAdapter:
 
 | Adapter | Agent Tool | Status |
 |---------|------------|--------|
-| `ClaudeCodeAdapter` | Claude Code CLI | Planned |
-| `CodexAdapter` | OpenAI Codex | Planned |
-| `ClineAdapter` | Cline | Planned |
-| `OpenCodeAdapter` | OpenCode | Planned |
+| `ClaudeCodeAdapter` | Claude Code CLI | Implemented |
+| `CodexAdapter` | OpenAI Codex CLI | Implemented |
+| `ClineAdapter` | Cline | Implemented |
+| `OpenCodeAdapter` | OpenCode | Implemented |
+| `GooseAdapter` | Goose CLI | Implemented |
 
 ### 4.4 Judge
 
@@ -496,9 +498,10 @@ ProjectScylla/
         adapters/                       # Agent CLI adapters
             base.py                     # Abstract base class
             claude_code.py              # Claude Code adapter
-            codex.py                    # OpenAI Codex adapter
+            openai_codex.py             # OpenAI Codex adapter
             cline.py                    # Cline adapter
             opencode.py                 # OpenCode adapter
+            goose.py                    # Goose adapter
         judge/                          # Claude + Opus evaluation
             rubric.py                   # Rubric parser
             prompts/                    # Judge prompt templates
