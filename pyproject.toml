@@ -93,7 +93,7 @@ python_version = "3.10"
 # Incremental mypy adoption - start with basic checks
 # Catches syntax errors, undefined names, and import issues
 # TODO #687: Gradually enable stricter checks as existing type errors are fixed
-# See MYPY_KNOWN_ISSUES.md for current baseline (159 errors as of 2026-02-14)
+# See MYPY_KNOWN_ISSUES.md for current baseline (scylla/, tests/, scripts/ tracked separately)
 warn_unused_configs = true
 ignore_missing_imports = true
 show_error_codes = true
@@ -128,15 +128,6 @@ disable_error_code = [
     "call-overload",   # 1 violation - no matching overload variant
 ]
 
-[[tool.mypy.overrides]]
-module = "tests.*"
-# Skip type checking for tests - focus on source code first
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "scripts.*"
-# Skip type checking for scripts - focus on source code first
-ignore_errors = true
 
 [tool.coverage.run]
 branch = true
