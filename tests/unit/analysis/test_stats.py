@@ -111,8 +111,8 @@ def test_bootstrap_ci_deterministic():
 
     data = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0])
 
-    mean1, lower1, upper1 = bootstrap_ci(data, n_resamples=1000)
-    mean2, lower2, upper2 = bootstrap_ci(data, n_resamples=1000)
+    mean1, _lower1, _upper1 = bootstrap_ci(data, n_resamples=1000)
+    mean2, _lower2, _upper2 = bootstrap_ci(data, n_resamples=1000)
 
     # Should be identical due to random_state=42 in implementation
     assert mean1 == pytest.approx(mean2)
@@ -170,7 +170,7 @@ def test_mann_whitney_u_identical():
     g1 = [1, 2, 3, 4, 5]
     g2 = [1, 2, 3, 4, 5]
 
-    u_stat, p_value = mann_whitney_u(g1, g2)
+    _u_stat, p_value = mann_whitney_u(g1, g2)
 
     # Identical groups should have high p-value (no significant difference)
     assert p_value > 0.9
@@ -562,7 +562,7 @@ def test_benjamini_hochberg_correction():
     corrected = benjamini_hochberg_correction(p_values)
 
     # All corrected values should be >= original
-    for orig, corr in zip(p_values, corrected):
+    for orig, corr in zip(p_values, corrected, strict=False):
         assert corr >= orig
 
     # Should be clamped to [0, 1]

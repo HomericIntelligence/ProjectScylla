@@ -124,7 +124,7 @@ def validate_arguments(args: argparse.Namespace) -> None:
         try:
             args.output.mkdir(parents=True, exist_ok=True)
         except OSError as e:
-            raise RunnerValidationError(f"Failed to create output directory: {e}")
+            raise RunnerValidationError(f"Failed to create output directory: {e}") from e
 
     if not args.output.is_dir():
         raise RunnerValidationError(f"Output is not a directory: {args.output}")
@@ -150,7 +150,7 @@ def load_task_prompt(prompt_file: Path) -> str:
     try:
         return prompt_file.read_text()
     except Exception as e:
-        raise RunnerError(f"Failed to load prompt file: {e}")
+        raise RunnerError(f"Failed to load prompt file: {e}") from e
 
 
 def collect_workspace_state(workspace: Path) -> str:
@@ -284,7 +284,7 @@ def write_output(judgment: Judgment, output_dir: Path) -> None:
         logger.info(f"Judgment written to {output_file}")
 
     except Exception as e:
-        raise RunnerError(f"Failed to write output: {e}")
+        raise RunnerError(f"Failed to write output: {e}") from e
 
 
 def main() -> int:

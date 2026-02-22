@@ -152,9 +152,8 @@ class TestTerminalGuard:
     def test_restores_terminal_on_exception(self) -> None:
         """Calls restore_terminal even when body raises an exception."""
         with patch.object(terminal_module, "restore_terminal") as mock_restore:
-            with pytest.raises(ValueError):
-                with terminal_guard():
-                    raise ValueError("oops")
+            with pytest.raises(ValueError), terminal_guard():
+                raise ValueError("oops")
             mock_restore.assert_called_once()
 
     def test_installs_signal_handlers_when_shutdown_fn_provided(self) -> None:

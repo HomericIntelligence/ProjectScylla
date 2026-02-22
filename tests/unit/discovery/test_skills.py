@@ -169,7 +169,7 @@ class TestDiscoverSkills:
         skills_by_category = discover_skills(mock_skill_dirs)
 
         # Check structure includes all categories
-        expected_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+        expected_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
         assert all(cat in skills_by_category for cat in expected_categories)
 
     def test_discover_github_skills(self, mock_skill_dirs: Path) -> None:
@@ -237,7 +237,7 @@ class TestDiscoverSkills:
         skills_by_category = discover_skills(empty_skills_dir)
 
         # Should return empty lists for all categories
-        expected_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+        expected_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
         assert all(cat in skills_by_category for cat in expected_categories)
         assert all(len(skills_by_category[cat]) == 0 for cat in expected_categories)
 
@@ -280,7 +280,7 @@ class TestOrganizeSkills:
         organize_skills(mock_skill_dirs, dest_dir)
 
         # Check category directories exist
-        expected_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+        expected_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
         for category in expected_categories:
             category_dir = dest_dir / category
             assert category_dir.exists()
@@ -326,7 +326,7 @@ class TestOrganizeSkills:
         stats = organize_skills(mock_skill_dirs, dest_dir)
 
         # Check structure
-        expected_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+        expected_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
         assert all(cat in stats for cat in expected_categories)
 
         # Check GitHub stats
@@ -346,7 +346,7 @@ class TestOrganizeSkills:
         stats = organize_skills(empty_skills_dir, dest_dir)
 
         # Directories should be created
-        expected_categories = list(CATEGORY_MAPPINGS.keys()) + ["other"]
+        expected_categories = [*list(CATEGORY_MAPPINGS.keys()), "other"]
         for category in expected_categories:
             assert (dest_dir / category).exists()
 

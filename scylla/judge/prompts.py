@@ -219,7 +219,7 @@ def build_task_prompt(
         # Truncate reference patch if too long
         ref_lines = reference_patch.split("\n")
         if len(ref_lines) > 200:
-            ref_patch = "\n".join(ref_lines[:100] + ["", "... (truncated)", ""] + ref_lines[-50:])
+            ref_patch = "\n".join([*ref_lines[:100], "", "... (truncated)", "", *ref_lines[-50:]])
         else:
             ref_patch = reference_patch
         sections.append(

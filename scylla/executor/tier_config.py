@@ -139,7 +139,7 @@ class TierConfigLoader:
             List of TierConfig objects for all defined tiers
 
         """
-        return [self.get_tier(tid) for tid in self._tier_definitions.keys()]
+        return [self.get_tier(tid) for tid in self._tier_definitions]
 
     def get_tier_ids(self) -> list[str]:
         """Get list of all available tier IDs.

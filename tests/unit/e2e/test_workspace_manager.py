@@ -99,13 +99,15 @@ class TestSetupBaseRepoRetry:
         success_result.returncode = 0
         success_result.stderr = ""
 
-        with patch(
-            "subprocess.run",
-            side_effect=[fail_result, fail_result, success_result],
+        with (
+            patch(
+                "subprocess.run",
+                side_effect=[fail_result, fail_result, success_result],
+            ),
+            patch("time.sleep") as mock_sleep,
+            patch("fcntl.flock"),
         ):
-            with patch("time.sleep") as mock_sleep:
-                with patch("fcntl.flock"):
-                    manager.setup_base_repo()
+            manager.setup_base_repo()
 
         # Should have exponential backoff: 1s, 2s
         assert mock_sleep.call_count == 2

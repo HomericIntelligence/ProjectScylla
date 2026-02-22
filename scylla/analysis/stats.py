@@ -20,27 +20,27 @@ from scylla.analysis.config import config
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "bootstrap_ci",
-    "mann_whitney_u",
-    "mann_whitney_power",
-    "kruskal_wallis_power",
-    "cliffs_delta",
-    "spearman_correlation",
-    "pearson_correlation",
-    "krippendorff_alpha",
+    "benjamini_hochberg_correction",
     "bonferroni_correction",
+    "bootstrap_ci",
+    "cliffs_delta",
+    "cliffs_delta_ci",
     "compute_consistency",
     "compute_cop",
-    "compute_frontier_cop",
     "compute_delegation_overhead",
+    "compute_frontier_cop",
     "compute_impl_rate",
-    "shapiro_wilk",
-    "kruskal_wallis",
     "holm_bonferroni_correction",
-    "benjamini_hochberg_correction",
-    "cliffs_delta_ci",
+    "krippendorff_alpha",
+    "kruskal_wallis",
+    "kruskal_wallis_power",
+    "mann_whitney_power",
+    "mann_whitney_u",
     "ols_regression",
+    "pearson_correlation",
     "scheirer_ray_hare",
+    "shapiro_wilk",
+    "spearman_correlation",
 ]
 
 
@@ -241,7 +241,7 @@ def kruskal_wallis_power(
 
     for _ in range(n_simulations):
         # Generate data for each group with different shifts
-        groups = [rng.normal(shift, 1, n) for shift, n in zip(shifts, group_sizes)]
+        groups = [rng.normal(shift, 1, n) for shift, n in zip(shifts, group_sizes, strict=False)]
 
         # Run Kruskal-Wallis test
         _, p_value = kruskal_wallis(*groups)

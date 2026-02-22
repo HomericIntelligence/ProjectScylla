@@ -233,7 +233,7 @@ def scan_run_results(
     return results
 
 
-def rejudge_missing_runs(
+def rejudge_missing_runs(  # noqa: C901  # workspace state detection with many file patterns
     experiment_dir: Path,
     config: ExperimentConfig,
     run_results: dict[str, dict[str, list[E2ERunResult]]],

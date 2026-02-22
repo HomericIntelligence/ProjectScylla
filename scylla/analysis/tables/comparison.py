@@ -35,7 +35,7 @@ _FMT_RATE = f".{config.precision_rates}f"
 _FMT_COST = f".{config.precision_costs}f"
 
 
-def _generate_pairwise_comparison(
+def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with many metric types
     runs_df: pd.DataFrame,
     metric_column: str,
     metric_name: str,
@@ -356,7 +356,7 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     )
 
 
-def table04_criteria_performance(
+def table04_criteria_performance(  # noqa: C901  # table generation with many criteria branches
     criteria_df: pd.DataFrame,
     runs_df: pd.DataFrame,
     criteria_weights: dict[str, float] | None = None,
@@ -385,7 +385,7 @@ def table04_criteria_performance(
     # Aggregate by (agent_model, criterion)
     criterion_stats = []
     for model in sorted(criteria_df["agent_model"].unique()):
-        for criterion in criteria_weights.keys():
+        for criterion in criteria_weights:
             subset = criteria_df[
                 (criteria_df["agent_model"] == model) & (criteria_df["criterion"] == criterion)
             ]
@@ -423,7 +423,7 @@ def table04_criteria_performance(
         raw_p_values = []
         test_metadata = []
 
-        for criterion in criteria_weights.keys():
+        for criterion in criteria_weights:
             m1_data = criteria_df[
                 (criteria_df["agent_model"] == model1) & (criteria_df["criterion"] == criterion)
             ]["criterion_score"]
@@ -467,7 +467,7 @@ def table04_criteria_performance(
     separator = "|" + "|".join(["-" * 10 for _ in range(3 + len(models))]) + "|"
     md_lines.append(separator)
 
-    for criterion in criteria_weights.keys():
+    for criterion in criteria_weights:
         criterion_rows = df[df["Criterion"] == criterion]
         if len(criterion_rows) == 0:
             continue
@@ -523,7 +523,7 @@ def table04_criteria_performance(
     latex_lines.append(rf"Criterion & Weight & {model_headers} & p-value & Winner \\")
     latex_lines.append(r"\midrule")
 
-    for criterion in criteria_weights.keys():
+    for criterion in criteria_weights:
         criterion_rows = df[df["Criterion"] == criterion]
         if len(criterion_rows) == 0:
             continue

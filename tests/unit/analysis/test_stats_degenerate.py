@@ -121,7 +121,7 @@ class TestMannWhitneyDegenerate:
         """Test Mann-Whitney U with identical distributions."""
         from scylla.analysis.stats import mann_whitney_u
 
-        u_stat, p_value = mann_whitney_u(degenerate_all_same, degenerate_all_same)
+        _u_stat, p_value = mann_whitney_u(degenerate_all_same, degenerate_all_same)
         # Identical distributions -> not significant
         assert p_value > 0.05
 
@@ -129,7 +129,7 @@ class TestMannWhitneyDegenerate:
         """Test Mann-Whitney U with completely separated groups."""
         from scylla.analysis.stats import mann_whitney_u
 
-        u_stat, p_value = mann_whitney_u(degenerate_all_pass, degenerate_all_fail)
+        _u_stat, p_value = mann_whitney_u(degenerate_all_pass, degenerate_all_fail)
         # Completely separated -> highly significant
         assert p_value < 0.01
 
@@ -141,7 +141,7 @@ class TestMannWhitneyDegenerate:
         g2 = np.array([0.3])
 
         # n1=1, n2=1 -> should handle gracefully
-        u_stat, p_value = mann_whitney_u(g1, g2)
+        _u_stat, p_value = mann_whitney_u(g1, g2)
         # With very small samples, expect high p-value or warning
         assert isinstance(p_value, float)
 
@@ -152,7 +152,7 @@ class TestMannWhitneyDegenerate:
         small = degenerate_unbalanced_groups["small"]
         large = degenerate_unbalanced_groups["large"]
 
-        u_stat, p_value = mann_whitney_u(small, large)
+        _u_stat, p_value = mann_whitney_u(small, large)
         # Should handle n1=2, n2=50
         assert isinstance(p_value, float)
         assert 0.0 <= p_value <= 1.0
@@ -213,7 +213,7 @@ class TestKruskalWallisDegenerate:
         from scylla.analysis.stats import kruskal_wallis
 
         # Use variadic args, not list
-        h_stat, p_value = kruskal_wallis(
+        _h_stat, p_value = kruskal_wallis(
             degenerate_all_same, degenerate_all_same, degenerate_all_same
         )
 
@@ -226,7 +226,7 @@ class TestKruskalWallisDegenerate:
         from scylla.analysis.stats import kruskal_wallis
 
         # Use variadic args
-        h_stat, p_value = kruskal_wallis(degenerate_all_pass, degenerate_all_fail)
+        _h_stat, p_value = kruskal_wallis(degenerate_all_pass, degenerate_all_fail)
 
         # Completely different groups -> significant
         assert p_value < 0.05
@@ -240,7 +240,7 @@ class TestKruskalWallisDegenerate:
         medium = np.array([0.5, 0.6, 0.7, 0.8, 0.9])
 
         # Use variadic args
-        h_stat, p_value = kruskal_wallis(small, medium, large)
+        _h_stat, p_value = kruskal_wallis(small, medium, large)
 
         # Should handle n1=2, n2=5, n3=50
         assert isinstance(p_value, float)
@@ -284,7 +284,7 @@ def test_stats_pipeline_with_degenerate_data(fixture_name, request):
 
     # Test Mann-Whitney U
     try:
-        u_stat, p_value = mann_whitney_u(fixture_data, fixture_data)
+        _u_stat, p_value = mann_whitney_u(fixture_data, fixture_data)
         assert 0.0 <= p_value <= 1.0 or np.isnan(p_value)
     except Exception as e:
         pytest.fail(f"mann_whitney_u failed on {fixture_name}: {e}")

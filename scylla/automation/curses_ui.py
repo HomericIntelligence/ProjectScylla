@@ -7,6 +7,7 @@ Provides:
 """
 
 import atexit
+import contextlib
 import curses
 import logging
 import threading
@@ -128,10 +129,8 @@ class CursesUI:
 
     def _emergency_cleanup(self) -> None:
         """Emergency cleanup for atexit — restores terminal if stop() was not called."""
-        try:
+        with contextlib.suppress(Exception):
             curses.endwin()
-        except Exception:
-            pass
         from scylla.utils.terminal import restore_terminal
 
         restore_terminal()
@@ -197,7 +196,7 @@ class CursesUI:
             except KeyboardInterrupt:
                 break
 
-    def _refresh_display(self) -> None:
+    def _refresh_display(self) -> None:  # noqa: C901  # TUI rendering with many display states
         """Refresh the curses display."""
         if not self.stdscr:
             return
@@ -228,27 +227,21 @@ class CursesUI:
             if len(status_text) > width - 1:
                 status_text = status_text[: width - 4] + "..."
 
-            try:
+            with contextlib.suppress(curses.error):
                 self.stdscr.addstr(row, 0, status_text, attr)
-            except curses.error:
-                pass
 
             row += 1
 
         # Display separator
         if row < height - 1:
-            try:
+            with contextlib.suppress(curses.error):
                 self.stdscr.addstr(row, 0, "-" * min(width - 1, 80))
-            except curses.error:
-                pass
             row += 1
 
         # Display recent logs
         if row < height - 1:
-            try:
+            with contextlib.suppress(curses.error):
                 self.stdscr.addstr(row, 0, "Recent Activity:", curses.A_BOLD)
-            except curses.error:
-                pass
             row += 1
 
             # Gather recent logs from all threads
@@ -266,10 +259,8 @@ class CursesUI:
                 if len(log_msg) > width - 1:
                     log_msg = log_msg[: width - 4] + "..."
 
-                try:
+                with contextlib.suppress(curses.error):
                     self.stdscr.addstr(row, 0, log_msg)
-                except curses.error:
-                    pass
 
                 row += 1
 

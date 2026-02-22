@@ -80,7 +80,7 @@ class TestDetectRateLimit:
         """Test detecting 429 status code."""
         stderr = "Error: 429 Too Many Requests"
 
-        is_limited, reset_epoch = detect_rate_limit(stderr)
+        is_limited, _reset_epoch = detect_rate_limit(stderr)
 
         assert is_limited is True
 

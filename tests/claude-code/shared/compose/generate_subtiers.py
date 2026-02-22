@@ -456,7 +456,7 @@ def list_configurations() -> None:
     print(f"Total test cases: {total * len(MODELS)}")
 
 
-def main():
+def main():  # noqa: C901  # CLI main with multiple tier generation modes
     """Generate sub-tier configurations from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Generate sub-tier configurations for testing",

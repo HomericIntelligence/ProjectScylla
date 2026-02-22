@@ -327,14 +327,14 @@ class TestDefaultBlocks:
     def test_default_blocks_valid_ranges(self) -> None:
         """DEFAULT_BLOCKS has valid line ranges."""
         for block in DEFAULT_BLOCKS:
-            block_id, start, end, filename = block
+            block_id, start, end, _filename = block
             assert start > 0, f"{block_id}: start must be positive"
             assert end >= start, f"{block_id}: end must be >= start"
 
     def test_default_blocks_filenames(self) -> None:
         """DEFAULT_BLOCKS filenames match block IDs."""
         for block in DEFAULT_BLOCKS:
-            block_id, start, end, filename = block
+            block_id, _start, _end, filename = block
             assert filename.startswith(block_id), f"{filename} should start with {block_id}"
             assert filename.endswith(".md"), f"{filename} should end with .md"
 

@@ -84,30 +84,30 @@ logger = logging.getLogger(__name__)
 #   from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 # continue to work without modification
 __all__ = [
-    "SubTestExecutor",
     "ExecutionStage",
-    # Agent runner exports
-    "_save_agent_result",
-    "_load_agent_result",
-    "_create_agent_model_md",
-    "_has_valid_agent_result",
-    # Judge runner exports
-    "_save_judge_result",
-    "_load_judge_result",
-    "_has_valid_judge_result",
+    # Parallel executor exports (imported lazily to avoid circular imports)
+    "RateLimitCoordinator",
+    "SubTestExecutor",
+    "_commit_test_config",
     "_compute_judge_consensus",
-    "_run_judge",
+    "_create_agent_model_md",
+    "_detect_rate_limit_from_results",  # noqa: F822
+    "_has_valid_agent_result",
+    "_has_valid_judge_result",
+    "_load_agent_result",
+    "_load_judge_result",
     # Workspace setup exports
     "_move_to_failed",
-    "_commit_test_config",
-    "_setup_workspace",
-    # Parallel executor exports (imported lazily to avoid circular imports)
-    "RateLimitCoordinator",  # noqa: F822
-    "run_tier_subtests_parallel",  # noqa: F822
-    "_detect_rate_limit_from_results",  # noqa: F822
     "_retry_with_new_pool",  # noqa: F822
-    "_run_subtest_in_process_safe",  # noqa: F822
+    "_run_judge",
     "_run_subtest_in_process",  # noqa: F822
+    "_run_subtest_in_process_safe",  # noqa: F822
+    # Agent runner exports
+    "_save_agent_result",
+    # Judge runner exports
+    "_save_judge_result",
+    "_setup_workspace",
+    "run_tier_subtests_parallel",  # noqa: F822
 ]
 
 
@@ -250,7 +250,7 @@ class SubTestExecutor:
         # Individual agent/judge container orchestration is disabled
         self.docker_executor = None
 
-    def run_subtest(
+    def run_subtest(  # noqa: C901  # subtest execution orchestration with many outcome paths
         self,
         tier_id: TierID,
         tier_config: TierConfig,
@@ -508,7 +508,7 @@ class SubTestExecutor:
         # Aggregate results
         return self._aggregate_results(tier_id, subtest.id, runs)
 
-    def _execute_single_run(
+    def _execute_single_run(  # noqa: C901  # workspace setup with many config scenarios
         self,
         tier_id: TierID,
         tier_config: TierConfig,

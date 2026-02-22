@@ -75,7 +75,7 @@ def validate_field_type(field_name: str, value: Any, expected_type: type) -> str
     return None
 
 
-def validate_frontmatter(frontmatter: dict, file_path: Path, verbose: bool = False) -> list[str]:
+def validate_frontmatter(frontmatter: dict, file_path: Path, verbose: bool = False) -> list[str]:  # noqa: C901  # field validation with many rules
     """Validate the frontmatter data.
 
     Args:
@@ -129,10 +129,9 @@ def validate_frontmatter(frontmatter: dict, file_path: Path, verbose: bool = Fal
 
     # Check for unexpected fields
     all_valid_fields = set(REQUIRED_FIELDS.keys()) | set(OPTIONAL_FIELDS.keys())
-    for field in frontmatter.keys():
-        if field not in all_valid_fields:
-            if verbose:
-                errors.append(f"Warning: Unexpected field '{field}'")
+    for field in frontmatter:
+        if field not in all_valid_fields and verbose:
+            errors.append(f"Warning: Unexpected field '{field}'")
 
     return errors
 
@@ -160,7 +159,7 @@ def check_file(file_path: Path, verbose: bool = False) -> tuple[bool, list[str]]
     if result is None:
         return False, ["No YAML frontmatter found (should start with --- and end with ---)"]
 
-    frontmatter_text, start_line, end_line = result
+    frontmatter_text, _start_line, _end_line = result
 
     # Parse YAML
     try:
@@ -217,10 +216,7 @@ Examples:
         return 1
 
     # Determine agents directory
-    if args.agents_dir is None:
-        agents_dir = get_agents_dir()
-    else:
-        agents_dir = repo_root / args.agents_dir
+    agents_dir = get_agents_dir() if args.agents_dir is None else repo_root / args.agents_dir
 
     if not agents_dir.exists():
         print(f"Error: Agents directory not found: {agents_dir}", file=sys.stderr)

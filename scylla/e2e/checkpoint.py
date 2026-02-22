@@ -250,11 +250,13 @@ class E2ECheckpoint(BaseModel):
             run_number: Run number (1-based)
 
         """
-        if tier_id in self.completed_runs:
-            if subtest_id in self.completed_runs[tier_id]:
-                if run_number in self.completed_runs[tier_id][subtest_id]:
-                    del self.completed_runs[tier_id][subtest_id][run_number]
-                    self.last_updated_at = datetime.now(timezone.utc).isoformat()
+        if (
+            tier_id in self.completed_runs
+            and subtest_id in self.completed_runs[tier_id]
+            and run_number in self.completed_runs[tier_id][subtest_id]
+        ):
+            del self.completed_runs[tier_id][subtest_id][run_number]
+            self.last_updated_at = datetime.now(timezone.utc).isoformat()
 
     def get_run_status(self, tier_id: str, subtest_id: str, run_number: int) -> str | None:
         """Get the status of a run.
@@ -268,9 +270,8 @@ class E2ECheckpoint(BaseModel):
             Run status ("passed", "failed", "agent_complete") or None if not found
 
         """
-        if tier_id in self.completed_runs:
-            if subtest_id in self.completed_runs[tier_id]:
-                return self.completed_runs[tier_id][subtest_id].get(run_number)
+        if tier_id in self.completed_runs and subtest_id in self.completed_runs[tier_id]:
+            return self.completed_runs[tier_id][subtest_id].get(run_number)
         return None
 
     def is_run_completed(self, tier_id: str, subtest_id: str, run_number: int) -> bool:
@@ -446,7 +447,7 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         temp_path.replace(path)
 
     except OSError as e:
-        raise CheckpointError(f"Failed to save checkpoint to {path}: {e}")
+        raise CheckpointError(f"Failed to save checkpoint to {path}: {e}") from e
 
 
 def load_checkpoint(path: Path) -> E2ECheckpoint:
@@ -470,7 +471,7 @@ def load_checkpoint(path: Path) -> E2ECheckpoint:
             data = json.load(f)
         return E2ECheckpoint.from_dict(data)
     except (OSError, json.JSONDecodeError) as e:
-        raise CheckpointError(f"Failed to load checkpoint from {path}: {e}")
+        raise CheckpointError(f"Failed to load checkpoint from {path}: {e}") from e
 
 
 def compute_config_hash(config: ExperimentConfig) -> str:

@@ -322,10 +322,7 @@ class CrossTierAnalyzer:
         cops = [self._calculate_cost_of_pass(t) for t in self.tier_stats.values()]
         # Filter out infinity for delta calculation
         valid_cops = [c for c in cops if c != float("inf")]
-        if valid_cops:
-            cop_delta = max(valid_cops) - min(valid_cops)
-        else:
-            cop_delta = 0.0
+        cop_delta = max(valid_cops) - min(valid_cops) if valid_cops else 0.0
 
         # Find best value tier
         value_scores = {

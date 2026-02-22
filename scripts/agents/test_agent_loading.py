@@ -46,7 +46,7 @@ def load_agent(file_path: Path, verbose: bool = False) -> AgentInfo | None:
         print(f"✗ {file_path.name}: No YAML frontmatter found or invalid YAML", file=sys.stderr)
         return None
 
-    frontmatter_text, frontmatter = result
+    _frontmatter_text, frontmatter = result
 
     if not isinstance(frontmatter, dict):
         print(f"✗ {file_path.name}: Frontmatter is not a YAML mapping", file=sys.stderr)
@@ -214,10 +214,7 @@ Examples:
         return 1
 
     # Determine agents directory
-    if args.agents_dir is None:
-        agents_dir = get_agents_dir()
-    else:
-        agents_dir = repo_root / args.agents_dir
+    agents_dir = get_agents_dir() if args.agents_dir is None else repo_root / args.agents_dir
 
     if not agents_dir.exists():
         print(f"Error: Agents directory not found: {agents_dir}", file=sys.stderr)

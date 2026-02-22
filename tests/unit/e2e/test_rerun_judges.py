@@ -440,7 +440,7 @@ class TestClassifyJudgeSlots:
 
         # Create valid judge results
         judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
-        for i, model in enumerate(judge_models, start=1):
+        for i, _model in enumerate(judge_models, start=1):
             judge_dir = run_dir / "judge" / f"judge_{i:02d}"
             judge_dir.mkdir(parents=True)
             (judge_dir / "judgment.json").write_text(

@@ -130,19 +130,21 @@ class TestSetupWorkspaceResumeRecovery:
         base_repo = tmp_path / "repo"
         base_repo.mkdir()
 
-        with patch(
-            "subprocess.run",
-            side_effect=[_ok(), _ok(), _fail("fatal: some other git error")],
+        with (
+            patch(
+                "subprocess.run",
+                side_effect=[_ok(), _ok(), _fail("fatal: some other git error")],
+            ),
+            pytest.raises(RuntimeError, match="Failed to create worktree"),
         ):
-            with pytest.raises(RuntimeError, match="Failed to create worktree"):
-                _setup_workspace(
-                    workspace=workspace,
-                    command_logger=MagicMock(),
-                    tier_id=TierID.T0,
-                    subtest_id="00",
-                    run_number=1,
-                    base_repo=base_repo,
-                )
+            _setup_workspace(
+                workspace=workspace,
+                command_logger=MagicMock(),
+                tier_id=TierID.T0,
+                subtest_id="00",
+                run_number=1,
+                base_repo=base_repo,
+            )
 
     def test_branch_already_exists_after_proactive_delete_triggers_recovery(
         self, tmp_path: Path

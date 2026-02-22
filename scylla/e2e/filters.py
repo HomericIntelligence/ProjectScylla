@@ -26,7 +26,4 @@ def is_test_config_file(file_path: str) -> bool:
         return True
 
     # Ignore .claude/ directory and all its contents
-    if path == ".claude" or path.startswith(".claude/"):
-        return True
-
-    return False
+    return path == ".claude" or path.startswith(".claude/")

@@ -116,7 +116,9 @@ class ClaudeCodeAdapter(BaseAdapter):
             )
 
         except FileNotFoundError:
-            raise AdapterError(f"Claude Code CLI not found. Is '{self.CLI_EXECUTABLE}' installed?")
+            raise AdapterError(
+                f"Claude Code CLI not found. Is '{self.CLI_EXECUTABLE}' installed?"
+            ) from None
 
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute Claude Code: {e}") from e

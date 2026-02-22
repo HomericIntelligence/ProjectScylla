@@ -871,7 +871,7 @@ class TestBuildMergedBaseline:
         # Should raise because neither T0/result.json nor T0/best_subtest.json exist
         import pytest
 
-        with pytest.raises(ValueError, match="neither result.json nor best_subtest.json"):
+        with pytest.raises(ValueError, match="neither result\\.json nor best_subtest\\.json"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
 
     def test_no_best_subtest_raises(self, tmp_path: Path) -> None:
@@ -893,7 +893,7 @@ class TestBuildMergedBaseline:
 
         # Should raise because best_subtest is missing from result.json
         # and best_subtest.json doesn't exist
-        with pytest.raises(ValueError, match="neither result.json nor best_subtest.json"):
+        with pytest.raises(ValueError, match="neither result\\.json nor best_subtest\\.json"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
 
     def test_fallback_to_best_subtest_json(self, tmp_path: Path) -> None:

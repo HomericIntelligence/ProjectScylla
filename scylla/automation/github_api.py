@@ -9,6 +9,7 @@ Provides:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -51,7 +52,7 @@ def _gh_call(
     for attempt in range(max_retries):
         try:
             result = run(
-                ["gh"] + args,
+                ["gh", *args],
                 check=check,
                 capture_output=True,
                 timeout=120,  # 2 minute timeout for gh CLI calls
@@ -181,11 +182,7 @@ def gh_issue_create(title: str, body: str, labels: list[str] | None = None) -> i
         try:
             # Try to extract number from URL (e.g., https://github.com/owner/repo/issues/123)
             match = re.search(r"/issues/(\d+)", output)
-            if match:
-                issue_number = int(match.group(1))
-            else:
-                # Fallback to parsing last path component
-                issue_number = int(output.split("/")[-1])
+            issue_number = int(match.group(1)) if match else int(output.split("/")[-1])
         except (ValueError, IndexError) as e:
             raise RuntimeError(f"Failed to parse issue number from output: {output}") from e
 
@@ -237,11 +234,7 @@ def gh_pr_create(
         try:
             # Try to extract number from URL (e.g., https://github.com/owner/repo/pull/123)
             match = re.search(r"/pull/(\d+)", output)
-            if match:
-                pr_number = int(match.group(1))
-            else:
-                # Fallback to parsing last path component
-                pr_number = int(output.split("/")[-1])
+            pr_number = int(match.group(1)) if match else int(output.split("/")[-1])
         except (ValueError, IndexError) as e:
             raise RuntimeError(f"Failed to parse PR number from output: {output}") from e
 
@@ -445,8 +438,6 @@ def write_secure(path: Path, content: str) -> None:
         logger.debug(f"Wrote {len(content)} bytes to {path}")
     except Exception:
         # Clean up temp file on error
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(temp_path)
-        except OSError:
-            pass
         raise

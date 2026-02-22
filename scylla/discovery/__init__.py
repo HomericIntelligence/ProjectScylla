@@ -17,16 +17,16 @@ from scylla.discovery.skills import (
 )
 
 __all__ = [
-    # Agents
-    "parse_agent_level",
-    "discover_agents",
-    "organize_agents",
     # Skills
     "CATEGORY_MAPPINGS",
-    "get_skill_category",
-    "discover_skills",
-    "organize_skills",
+    "discover_agents",
     # Blocks
     "discover_blocks",
+    "discover_skills",
     "extract_blocks",
+    "get_skill_category",
+    "organize_agents",
+    "organize_skills",
+    # Agents
+    "parse_agent_level",
 ]

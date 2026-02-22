@@ -150,7 +150,7 @@ def _classify_run_status(run_dir: Path) -> RunStatus:
     return RunStatus.MISSING
 
 
-def scan_runs_needing_rerun(
+def scan_runs_needing_rerun(  # noqa: C901  # experiment rerun with many retry/skip conditions
     experiment_dir: Path,
     config: ExperimentConfig,
     tier_manager: TierManager,
@@ -419,7 +419,7 @@ def rerun_single_run(
         return None
 
 
-def rerun_experiment(
+def rerun_experiment(  # noqa: C901  # run scanning with many filter conditions
     experiment_dir: Path,
     dry_run: bool = False,
     verbose: bool = False,

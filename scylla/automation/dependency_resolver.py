@@ -193,7 +193,7 @@ class DependencyResolver:
                     elif dep in rec_stack:
                         # Found a cycle
                         cycle_start = path.index(dep)
-                        cycles.append(path[cycle_start:] + [dep])
+                        cycles.append([*path[cycle_start:], dep])
                         return True
 
                 return False
@@ -203,10 +203,8 @@ class DependencyResolver:
                 rec_stack.remove(node)
 
         for issue_num in self.graph.issues:
-            if issue_num not in visited:
-                # Use fresh local state for each DFS tree
-                if dfs(issue_num, set(), []):
-                    logger.error(f"Cycle detected: {cycles[-1]}")
+            if issue_num not in visited and dfs(issue_num, set(), []):
+                logger.error(f"Cycle detected: {cycles[-1]}")
 
         if cycles:
             raise CyclicDependencyError(f"Found {len(cycles)} dependency cycle(s): {cycles}")

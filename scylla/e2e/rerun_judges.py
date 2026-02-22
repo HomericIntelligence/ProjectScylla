@@ -182,7 +182,7 @@ def _classify_judge_slots(
     return results
 
 
-def scan_judges_needing_rerun(
+def scan_judges_needing_rerun(  # noqa: C901  # judge scan with many filter conditions
     experiment_dir: Path,
     config: ExperimentConfig,
     tier_manager: TierManager,
@@ -617,7 +617,7 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
     return True
 
 
-def rerun_judges_experiment(
+def rerun_judges_experiment(  # noqa: C901  # judge rerun with many retry/skip paths
     experiment_dir: Path,
     dry_run: bool = False,
     verbose: bool = False,

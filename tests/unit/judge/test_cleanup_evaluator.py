@@ -135,7 +135,7 @@ class TestCleanupEvaluatorRunCleanup:
         script = tmp_path / "cleanup.sh"
         script.write_text("#!/bin/bash\nexit 1\n")
         evaluator = CleanupEvaluator(tmp_path)
-        success, output = evaluator.run_cleanup(script)
+        success, _output = evaluator.run_cleanup(script)
         assert success is False
 
     def test_makefile_clean(self, tmp_path: Path) -> None:

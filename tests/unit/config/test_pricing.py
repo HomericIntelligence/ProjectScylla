@@ -27,7 +27,7 @@ class TestModelPricing:
 
     def test_pricing_values_positive(self) -> None:
         """All pricing values should be positive."""
-        for model_id, pricing in MODEL_PRICING.items():
+        for _model_id, pricing in MODEL_PRICING.items():
             assert pricing.input_cost_per_million >= 0
             assert pricing.output_cost_per_million >= 0
             assert pricing.cached_cost_per_million >= 0

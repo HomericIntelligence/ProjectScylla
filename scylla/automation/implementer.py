@@ -9,6 +9,7 @@ Provides:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import re
@@ -249,7 +250,7 @@ class IssueImplementer:
 
         return {}
 
-    def _implement_all(self) -> dict[int, WorkerResult]:
+    def _implement_all(self) -> dict[int, WorkerResult]:  # noqa: C901  # orchestrator with many issue states
         """Implement all issues with dependency awareness.
 
         Returns:
@@ -282,7 +283,7 @@ class IssueImplementer:
 
                 # Wait for at least one to complete
                 try:
-                    done, pending = wait(futures.keys(), timeout=1.0, return_when=FIRST_COMPLETED)
+                    done, _pending = wait(futures.keys(), timeout=1.0, return_when=FIRST_COMPLETED)
                 except Exception:
                     # Timeout or error - check if we should continue
                     if not submitted_any and not futures:
@@ -334,7 +335,7 @@ class IssueImplementer:
         self._print_summary(results)
         return results
 
-    def _implement_issue(self, issue_number: int) -> WorkerResult:
+    def _implement_issue(self, issue_number: int) -> WorkerResult:  # noqa: C901  # issue implementation with many phase transitions
         """Implement a single issue.
 
         Args:
@@ -612,9 +613,7 @@ class IssueImplementer:
                     continue
 
                 # Ensure labels is a list
-                if "labels" not in item:
-                    item["labels"] = []
-                elif not isinstance(item["labels"], list):
+                if "labels" not in item or not isinstance(item["labels"], list):
                     item["labels"] = []
 
                 valid_items.append(item)
@@ -739,10 +738,8 @@ class IssueImplementer:
             # Non-blocking: never re-raise
         finally:
             # Clean up temp file
-            try:
+            with contextlib.suppress(Exception):
                 prompt_file.unlink()
-            except Exception:
-                pass  # Best effort cleanup
 
     def _retrospective_needs_rerun(self, issue_number: int) -> bool:
         """Check if retrospective log indicates failure.
@@ -968,10 +965,8 @@ class IssueImplementer:
             raise RuntimeError("Claude Code timed out") from e
         finally:
             # Clean up temp file
-            try:
+            with contextlib.suppress(Exception):
                 prompt_file.unlink()
-            except Exception:
-                pass  # Best effort cleanup
 
     def _commit_changes(self, issue_number: int, worktree_path: Path) -> None:
         """Commit changes in worktree."""
@@ -1015,10 +1010,8 @@ class IssueImplementer:
             filename_part = line[3:]  # Don't strip - filename starts at position 3
 
             # Handle renamed files (format: "old -> new")
-            if status.startswith("R"):
-                # For renames, only stage the new name (after ->)
-                if " -> " in filename_part:
-                    filename_part = filename_part.split(" -> ", 1)[1]
+            if status.startswith("R") and " -> " in filename_part:
+                filename_part = filename_part.split(" -> ", 1)[1]
 
             # Handle quoted filenames (git quotes names with special chars)
             if filename_part.startswith('"') and filename_part.endswith('"'):
@@ -1044,7 +1037,7 @@ class IssueImplementer:
             )
 
         # Stage the files
-        run(["git", "add"] + files_to_add, cwd=worktree_path)
+        run(["git", "add", *files_to_add], cwd=worktree_path)
 
         # Generate commit message
         issue = fetch_issue_info(issue_number)

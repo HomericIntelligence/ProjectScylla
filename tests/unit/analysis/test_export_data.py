@@ -118,7 +118,7 @@ def test_enhanced_summary_json(sample_runs_df, tmp_path):
         }
 
     # Verify all expected fields exist
-    for model, stats in by_model.items():
+    for _model, stats in by_model.items():
         assert "median_score" in stats
         assert "std_score" in stats
         assert "q1_score" in stats
@@ -148,7 +148,7 @@ def test_enhanced_summary_json(sample_runs_df, tmp_path):
 
     # Verify by_tier has expected structure
     assert len(by_tier) == len(tier_order)
-    for tier, stats in by_tier.items():
+    for _tier, stats in by_tier.items():
         assert "total_runs" in stats
         assert "pass_rate" in stats
         assert "mean_score" in stats

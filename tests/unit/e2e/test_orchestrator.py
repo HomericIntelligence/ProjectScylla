@@ -304,17 +304,19 @@ output:
         orchestrator.set_judge(mock_judge)
 
         # Mock git operations to avoid network calls
-        with patch.object(
-            orchestrator.loader.__class__, "_load_yaml", wraps=orchestrator.loader._load_yaml
+        with (
+            patch.object(
+                orchestrator.loader.__class__, "_load_yaml", wraps=orchestrator.loader._load_yaml
+            ),
+            patch("scylla.executor.workspace.clone_repo"),
         ):
-            with patch("scylla.executor.workspace.clone_repo"):
-                with patch("scylla.executor.workspace.checkout_hash"):
-                    result = orchestrator.run_single(
-                        test_id="001-test",
-                        model_id="test-model",
-                        tier_id="T0",
-                        run_number=1,
-                    )
+            with patch("scylla.executor.workspace.checkout_hash"):
+                result = orchestrator.run_single(
+                    test_id="001-test",
+                    model_id="test-model",
+                    tier_id="T0",
+                    run_number=1,
+                )
 
         # Verify result structure
         assert result.judgment.passed is True

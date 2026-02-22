@@ -616,7 +616,7 @@ def _generate_criteria_comparison_table(
     return lines
 
 
-def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:
+def _get_workspace_files(workspace_path: Path) -> list[tuple[str, str]]:  # noqa: C901  # single run execution with many outcome/retry branches
     """Get files created/modified by agent, with their status.
 
     Returns both committed and uncommitted files created by the agent.

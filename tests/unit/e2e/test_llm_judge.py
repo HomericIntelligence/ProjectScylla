@@ -717,7 +717,7 @@ class TestCallClaudeJudge:
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result):
-            stdout, stderr, response = _call_claude_judge(
+            stdout, _stderr, response = _call_claude_judge(
                 "Evaluate this task", "claude-opus-4-5-20251101", tmp_path
             )
 
@@ -898,29 +898,31 @@ class TestRunLlmJudge:
             all_passed=True,
         )
 
-        with patch(
-            "scylla.e2e.llm_judge._get_workspace_state",
-            return_value="Files modified/created by agent:\n(no changes detected)",
+        with (
+            patch(
+                "scylla.e2e.llm_judge._get_workspace_state",
+                return_value="Files modified/created by agent:\n(no changes detected)",
+            ),
+            patch("scylla.e2e.llm_judge._get_patchfile", return_value="(no changes detected)"),
         ):
-            with patch("scylla.e2e.llm_judge._get_patchfile", return_value="(no changes detected)"):
-                with patch("scylla.e2e.llm_judge._get_deleted_files", return_value=[]):
-                    with patch(
-                        "scylla.e2e.llm_judge._run_build_pipeline",
-                        return_value=mock_pipeline_result,
-                    ):
-                        with patch("scylla.e2e.llm_judge._call_claude_judge") as mock_judge:
-                            mock_judge.return_value = (
-                                '{"score": 0.9, "passed": true, "reasoning": "Excellent work"}',
-                                "",
-                                '{"score": 0.9, "passed": true, "reasoning": "Excellent work"}',
-                            )
+            with patch("scylla.e2e.llm_judge._get_deleted_files", return_value=[]):
+                with patch(
+                    "scylla.e2e.llm_judge._run_build_pipeline",
+                    return_value=mock_pipeline_result,
+                ):
+                    with patch("scylla.e2e.llm_judge._call_claude_judge") as mock_judge:
+                        mock_judge.return_value = (
+                            '{"score": 0.9, "passed": true, "reasoning": "Excellent work"}',
+                            "",
+                            '{"score": 0.9, "passed": true, "reasoning": "Excellent work"}',
+                        )
 
-                            result = run_llm_judge(
-                                workspace=workspace,
-                                task_prompt="Complete the task",
-                                agent_output="Task completed",
-                                model="claude-opus-4-5-20251101",
-                            )
+                        result = run_llm_judge(
+                            workspace=workspace,
+                            task_prompt="Complete the task",
+                            agent_output="Task completed",
+                            model="claude-opus-4-5-20251101",
+                        )
 
         assert result.score == 0.9
         assert result.passed is True

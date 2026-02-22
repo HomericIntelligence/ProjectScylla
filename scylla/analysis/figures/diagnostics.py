@@ -66,7 +66,7 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
             )
 
             for theoretical_q, observed_q, original_score in zip(
-                theoretical_quantiles, observed_quantiles, observed_sorted
+                theoretical_quantiles, observed_quantiles, observed_sorted, strict=False
             ):
                 qq_data.append(
                     {
@@ -194,7 +194,7 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
                 x_range = np.linspace(0, 1, 100)
                 kde_values = kde(x_range)
 
-                for x, density in zip(x_range, kde_values):
+                for x, density in zip(x_range, kde_values, strict=False):
                     kde_data.append(
                         {"agent_model": model, "tier": tier, "score": x, "density": density}
                     )

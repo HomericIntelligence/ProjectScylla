@@ -44,7 +44,7 @@ def find_model_configs(config_dir: Path) -> list[Path]:
     return sorted(f for f in config_dir.glob("*.yaml") if not f.name.startswith("_"))
 
 
-def check_configs(config_dir: Path, verbose: bool = False) -> int:
+def check_configs(config_dir: Path, verbose: bool = False) -> int:  # noqa: C901  # config validation with many checks
     """Check all model configs in *config_dir* for filename/model_id consistency.
 
     For each YAML file the function:

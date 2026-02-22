@@ -113,7 +113,7 @@ class BaseCliAdapter(BaseAdapter):
             )
 
         except FileNotFoundError:
-            raise AdapterError(f"CLI not found. Is '{self.CLI_EXECUTABLE}' installed?")
+            raise AdapterError(f"CLI not found. Is '{self.CLI_EXECUTABLE}' installed?") from None
 
         except subprocess.SubprocessError as e:
             raise AdapterError(f"Failed to execute {self.CLI_EXECUTABLE}: {e}") from e
@@ -226,7 +226,7 @@ class BaseCliAdapter(BaseAdapter):
 
         # Try fallback pattern if defined by subclass
         if hasattr(self, "_api_call_fallback_pattern"):
-            fallback = getattr(self, "_api_call_fallback_pattern")
+            fallback = self._api_call_fallback_pattern
             if fallback:
                 fallback_matches = len(re.findall(fallback, combined, re.IGNORECASE))
                 if fallback_matches > 0:

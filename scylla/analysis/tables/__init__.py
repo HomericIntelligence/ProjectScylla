@@ -33,14 +33,14 @@ from scylla.analysis.tables.summary import (
 __all__ = [
     # Summary tables
     "table01_tier_summary",
-    "table05_cost_analysis",
     # Comparison tables
     "table02_tier_comparison",
     "table02b_impl_rate_comparison",
-    "table04_criteria_performance",
-    "table06_model_comparison",
     # Detail tables
     "table03_judge_agreement",
+    "table04_criteria_performance",
+    "table05_cost_analysis",
+    "table06_model_comparison",
     "table07_subtest_detail",
     "table08_summary_statistics",
     "table09_experiment_config",
