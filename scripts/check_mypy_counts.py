@@ -332,9 +332,9 @@ def update_table(md_path: Path, actual: dict[str, int]) -> None:
                     rf"\g<1>{new_count}\g<2>",
                     line,
                 )
-        # Update Total row
+        # Update Total row: sum all codes present in actual
         elif _TOTAL_ROW_RE.search(line):
-            total = sum(actual.get(c, 0) for c in ALL_TRACKED_CODES)
+            total = sum(actual.values())
             line = _TOTAL_ROW_RE.sub(rf"\g<1>{total}\g<2>", line)
 
         new_lines.append(line)
@@ -381,8 +381,8 @@ def update_table_per_dir(md_path: Path, actual_per_dir: dict[str, dict[str, int]
                     line,
                 )
         elif _TOTAL_ROW_RE.search(line) and current_dir is not None:
-            tracked = ALL_TRACKED_CODES if current_dir == "tests/" else DISABLED_ERROR_CODES
-            total = sum(current_actual.get(c, 0) for c in tracked)
+            # Sum all codes present in actual for this directory
+            total = sum(current_actual.values())
             line = _TOTAL_ROW_RE.sub(rf"\g<1>{total}\g<2>", line)
 
         new_lines.append(line)
