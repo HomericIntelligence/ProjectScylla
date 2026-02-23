@@ -349,6 +349,7 @@ class E2ERunner:
         if not hasattr(self, "workspace_manager") or self.workspace_manager is None:
             # Use centralized repos directory for shared clones across experiments
             repos_dir = self.results_base_dir / "repos"
+            assert self.experiment_dir is not None  # noqa: S101
             self.workspace_manager = WorkspaceManager(
                 experiment_dir=self.experiment_dir,
                 repo_url=self.config.task_repo,
@@ -767,6 +768,7 @@ class E2ERunner:
         # Start heartbeat thread to prevent zombie detection on long runs
         from scylla.e2e.health import HeartbeatThread
 
+        assert self.checkpoint is not None  # noqa: S101
         heartbeat = HeartbeatThread(self.checkpoint, checkpoint_path, interval_seconds=30)
         heartbeat.start()
 
@@ -807,6 +809,7 @@ class E2ERunner:
             start_time=start_time,
         )
 
+        assert self.checkpoint is not None  # noqa: S101
         esm = ExperimentStateMachine(self.checkpoint, checkpoint_path)
 
         try:
@@ -1266,7 +1269,7 @@ class E2ERunner:
                 continue
 
             # Get best sub-test results
-            best_subtest = result.subtest_results.get(result.best_subtest)
+            best_subtest = result.subtest_results.get(result.best_subtest or "")
             if not best_subtest or best_subtest.pass_rate == 0:
                 continue
 

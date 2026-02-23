@@ -195,6 +195,7 @@ class WorkspaceManager:
 
     def _checkout_commit(self) -> None:
         """Fetch and checkout specific commit in base repo (legacy per-experiment layout)."""
+        assert self.commit is not None  # noqa: S101
         # Try to fetch the specific commit
         fetch_cmd = [
             "git",
@@ -240,6 +241,7 @@ class WorkspaceManager:
         Only fetches the commit into the object store without checking it out.
         Base repo HEAD stays on default branch so it can be shared across experiments.
         """
+        assert self.commit is not None  # noqa: S101
         # Check if commit already exists in object store
         check_cmd = ["git", "-C", str(self.base_repo), "cat-file", "-t", self.commit]
         result = subprocess.run(check_cmd, capture_output=True, text=True)

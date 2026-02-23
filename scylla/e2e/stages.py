@@ -37,7 +37,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from scylla.e2e.models import (
     E2ERunResult,
@@ -806,6 +806,7 @@ def stage_execute_judge(ctx: RunContext) -> None:
     # Compute consensus
     consensus_score, consensus_passed, consensus_grade = _compute_judge_consensus(judges)
 
+    judgment: dict[str, Any]
     if consensus_score is None:
         logger.warning("All judges failed to produce valid results; returning zero-score consensus")
         judgment = {

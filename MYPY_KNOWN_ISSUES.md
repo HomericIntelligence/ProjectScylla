@@ -7,15 +7,13 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
-| arg-type      | 20    | Incompatible argument types              |
 | union-attr    | 5     | Accessing attributes on union types      |
-| **Total**     | **25** |                                          |
+| **Total**     | **5** |                                          |
 
 ## Error Count Table — tests/
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
-| arg-type      | 0     | Incompatible argument types              |
 | assignment    | 0     | Type mismatches in assignments           |
 | attr-defined  | 0     | Attribute not defined                    |
 | call-arg      | 0     | Incorrect function call arguments        |
@@ -30,6 +28,5 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
-| arg-type      | 1     | Incompatible argument types              |
 | union-attr    | 0     | Accessing attributes on union types      |
-| **Total**     | **1** |                                          |
+| **Total**     | **0** |                                          |

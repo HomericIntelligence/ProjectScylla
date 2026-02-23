@@ -614,7 +614,7 @@ def _find_frontier(
             continue
 
         # Get best sub-test results
-        best_subtest = result.subtest_results.get(result.best_subtest)
+        best_subtest = result.subtest_results.get(result.best_subtest or "")
         if not best_subtest or best_subtest.pass_rate == 0:
             continue
 

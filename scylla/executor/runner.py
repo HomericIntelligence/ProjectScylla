@@ -483,6 +483,7 @@ class EvalRunner:
 
         # Save final state if configured
         if self.config.state_file:
+            assert self._state is not None  # noqa: S101
             save_state(self._state, self.config.state_file)
 
         return summary

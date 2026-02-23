@@ -96,7 +96,7 @@ def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) ->
                     f"Rate limit detected for model '{model_id}'. "
                     f"Waiting {wait_time} seconds before retry..."
                 )
-                time.sleep(wait_time)
+                time.sleep(wait_time or 0)
                 continue
 
             if result.returncode == 0 and '"is_error":false' in result.stdout:

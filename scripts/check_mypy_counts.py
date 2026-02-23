@@ -32,7 +32,6 @@ from pathlib import Path
 # Error codes disabled in pyproject.toml [tool.mypy] disable_error_code (global)
 # These are the codes we re-enable when running the validation check
 DISABLED_ERROR_CODES = [
-    "arg-type",
     "union-attr",
 ]
 

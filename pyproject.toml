@@ -115,7 +115,6 @@ implicit_reexport = true
 # Temporarily disable error codes with most violations during initial rollout
 # Re-enable these incrementally as codebase type errors are fixed
 disable_error_code = [
-    "arg-type",        # 23 violations - incompatible argument types
     "union-attr",      # 4 violations - accessing attributes on unions
 ]
 
