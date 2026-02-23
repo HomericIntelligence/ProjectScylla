@@ -411,3 +411,106 @@ def test_run_mypy_per_dir_pixi_not_found(tmp_path: Path) -> None:
         with pytest.raises(SystemExit) as exc_info:
             check_mypy_counts.run_mypy_per_dir(tmp_path)
     assert exc_info.value.code == 2
+
+
+# ---------------------------------------------------------------------------
+# TestCheckMypyCountsUpdate — integration tests for --update flag and main()
+# ---------------------------------------------------------------------------
+
+
+class TestCheckMypyCountsUpdate:
+    """Integration tests for the --update flag via main()."""
+
+    def _make_flat_md(self, tmp_path: Path, arg_type: int = 99, call_arg: int = 88) -> Path:
+        """Create a flat-format MYPY_KNOWN_ISSUES.md with configurable counts."""
+        md = tmp_path / "MYPY_KNOWN_ISSUES.md"
+        md.write_text(
+            "# Mypy Known Issues\n\n"
+            "## Error Count Table\n\n"
+            "| Error Code | Count | Description |\n"
+            "|------------|-------|-------------|\n"
+            f"| arg-type   | {arg_type}    | Incompatible argument types |\n"
+            f"| call-arg   | {call_arg}    | Incorrect function call arguments |\n"
+            "| **Total**  | **187** | |\n",
+            encoding="utf-8",
+        )
+        return md
+
+    def _known_per_dir(self, arg_type: int = 5, call_arg: int = 3) -> dict[str, dict[str, int]]:
+        """Build a per-directory return value for run_mypy_per_dir mock."""
+        return {
+            "scripts/": {},
+            "scylla/": {"arg-type": arg_type},
+            "tests/": {"call-arg": call_arg},
+        }
+
+    def test_update_roundtrip(self, tmp_path: Path) -> None:
+        """--update writes correct counts; subsequent validation passes (exit 0).
+
+        Steps:
+          1. Create markdown with intentionally wrong counts.
+          2. Mock run_mypy_per_dir to return known, correct counts.
+          3. Run main() with --update → expect exit 0 and file updated.
+          4. Run main() without --update (validate) → expect exit 0.
+        """
+        md = self._make_flat_md(tmp_path, arg_type=99, call_arg=88)
+        actual_per_dir = self._known_per_dir(arg_type=5, call_arg=3)
+
+        # Step 3: run --update
+        with patch.object(check_mypy_counts, "run_mypy_per_dir", return_value=actual_per_dir):
+            with patch("sys.argv", ["check_mypy_counts.py", "--update", "--md-path", str(md)]):
+                result = check_mypy_counts.main()
+        assert result == 0
+
+        # Verify the file now has the correct counts
+        updated_counts = check_mypy_counts.parse_known_issues_table(md)
+        assert updated_counts["arg-type"] == 5
+        assert updated_counts["call-arg"] == 3
+
+        # Step 4: validate (no --update) — should pass now
+        with patch.object(check_mypy_counts, "run_mypy_per_dir", return_value=actual_per_dir):
+            with patch("sys.argv", ["check_mypy_counts.py", "--md-path", str(md)]):
+                result = check_mypy_counts.main()
+        assert result == 0
+
+    def test_validate_fails_before_update_passes_after(self, tmp_path: Path) -> None:
+        """Validation fails with wrong counts, --update fixes them, then validation passes.
+
+        Steps:
+          1. Create markdown with wrong counts.
+          2. Validate without --update → expect non-zero (1).
+          3. Run --update → expect exit 0.
+          4. Validate without --update again → expect exit 0.
+        """
+        md = self._make_flat_md(tmp_path, arg_type=99, call_arg=88)
+        actual_per_dir = self._known_per_dir(arg_type=10, call_arg=2)
+
+        # Step 2: validate without --update — should fail (counts mismatch)
+        with patch.object(check_mypy_counts, "run_mypy_per_dir", return_value=actual_per_dir):
+            with patch("sys.argv", ["check_mypy_counts.py", "--md-path", str(md)]):
+                result = check_mypy_counts.main()
+        assert result != 0
+
+        # Step 3: run --update — should succeed
+        with patch.object(check_mypy_counts, "run_mypy_per_dir", return_value=actual_per_dir):
+            with patch("sys.argv", ["check_mypy_counts.py", "--update", "--md-path", str(md)]):
+                result = check_mypy_counts.main()
+        assert result == 0
+
+        # Step 4: validate again — should now pass
+        with patch.object(check_mypy_counts, "run_mypy_per_dir", return_value=actual_per_dir):
+            with patch("sys.argv", ["check_mypy_counts.py", "--md-path", str(md)]):
+                result = check_mypy_counts.main()
+        assert result == 0
+
+    def test_update_with_missing_file(self, tmp_path: Path) -> None:
+        """--update with a non-existent markdown file exits with code 2."""
+        missing_md = tmp_path / "does_not_exist.md"
+        actual_per_dir = self._known_per_dir()
+
+        with patch.object(check_mypy_counts, "run_mypy_per_dir", return_value=actual_per_dir):
+            with patch(
+                "sys.argv", ["check_mypy_counts.py", "--update", "--md-path", str(missing_md)]
+            ):
+                result = check_mypy_counts.main()
+        assert result == 2
