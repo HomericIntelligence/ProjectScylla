@@ -257,11 +257,16 @@ def cliffs_delta(group1: pd.Series | np.ndarray, group2: pd.Series | np.ndarray)
 
     Uses vectorized numpy operations for performance (~50x faster than loops).
 
-    Interpretation (Romano et al., 2006):
+    Interpretation (Romano et al., 2006, FAIR conference thresholds):
         |δ| < 0.11: negligible
         |δ| < 0.28: small
         |δ| < 0.43: medium
         |δ| >= 0.43: large
+
+    Note: These thresholds differ from the standard Romano et al. (2006) thresholds
+    sometimes cited in the literature (0.147/0.33/0.474). The thresholds used here
+    are from the original FAIR conference paper. Effects near the 0.43 boundary
+    should be interpreted as borderline medium/large.
 
     Reference:
         Romano, J., Kromrey, J. D., Coraggio, J., & Skowronek, J. (2006).
