@@ -38,14 +38,9 @@ DISABLED_ERROR_CODES = [
     "index",
     "attr-defined",
     "misc",
-    "override",
-    "no-redef",
-    "exit-return",
     "union-attr",
     "var-annotated",
     "call-arg",
-    "return-value",
-    "call-overload",
 ]
 
 # Paths mypy checks (must match pre-commit hook file patterns)
