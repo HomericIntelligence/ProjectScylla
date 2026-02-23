@@ -573,14 +573,14 @@ def cmd_repair(args: argparse.Namespace) -> int:
                         existing = (
                             checkpoint.completed_runs.get(tier_id, {})
                             .get(subtest_id, {})
-                            .get(run_num_str)
+                            .get(run_num)
                         )
                         if existing is None:
                             if tier_id not in checkpoint.completed_runs:
                                 checkpoint.completed_runs[tier_id] = {}
                             if subtest_id not in checkpoint.completed_runs[tier_id]:
                                 checkpoint.completed_runs[tier_id][subtest_id] = {}
-                            checkpoint.completed_runs[tier_id][subtest_id][run_num_str] = status
+                            checkpoint.completed_runs[tier_id][subtest_id][run_num] = status
                             fixed_count += 1
                             logger.info(
                                 f"Repaired: {tier_id}/{subtest_id}/run_{run_num:02d} = {status}"
