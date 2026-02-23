@@ -8,12 +8,12 @@ ProjectScylla uses Docker containers to provide isolated, reproducible execution
 
 ### New Architecture (Current)
 
-The entire `run_e2e_experiment.py` script runs inside a single Docker container:
+The entire `manage_experiment.py` script runs inside a single Docker container:
 
 ```
 Host Machine
 └── Docker Container (scylla-runner:latest)
-    ├── run_e2e_experiment.py (orchestrator)
+    ├── manage_experiment.py (orchestrator)
     ├── Agent executions (Claude Code CLI, direct)
     └── Judge evaluations (direct Python execution)
 ```
@@ -32,7 +32,7 @@ Previously, the host orchestrated individual containers for each agent and judge
 
 ```
 Host Machine
-├── run_e2e_experiment.py (orchestrator)
+├── manage_experiment.py (orchestrator)
 └── For each agent/judge execution:
     └── Docker Container (scylla-runner:latest)
         └── Single agent or judge run
@@ -70,7 +70,7 @@ You can also run experiments directly on the host without containers:
 
 ```bash
 # Run directly on host
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 --runs 1 -v
 ```
@@ -130,7 +130,7 @@ The `docker/entrypoint.sh` script:
 
 ```bash
 # Run Python scripts directly
-docker run scylla-runner:latest python scripts/run_e2e_experiment.py --args
+docker run scylla-runner:latest python scripts/manage_experiment.py run --args
 
 # Run shell commands
 docker run scylla-runner:latest bash -c "ls -la"

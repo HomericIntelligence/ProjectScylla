@@ -628,7 +628,7 @@ class TestStageGenerateReplay:
         stage_create_dir_structure(stage_context)  # creates agent/ dir
         stage_write_prompt(stage_context)
         stage_generate_replay(stage_context)
-        assert hasattr(stage_context, "_adapter_config")
+        assert stage_context.adapter_config is not None
 
 
 class TestStageExecuteAgent:
@@ -657,7 +657,7 @@ class TestStageExecuteAgent:
         """stage_execute_agent runs replay.sh and saves agent result to disk."""
         from scylla.adapters.base import AdapterTokenStats
 
-        # Must first run dir structure, write_prompt, then generate_replay to set up _adapter_config
+        # Must first run dir structure, write_prompt, then generate_replay to set up adapter_config
         stage_create_dir_structure(stage_context)
         stage_write_prompt(stage_context)
         stage_generate_replay(stage_context)

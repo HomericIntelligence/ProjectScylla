@@ -134,7 +134,7 @@ pixi run python scripts/regenerate_results.py ~/fullruns/experiment/ \
 ## Related Tools
 
 - **repair_checkpoint.py**: Repairs checkpoint.json from run_result.json files
-- **run_e2e_experiment.py**: Main experiment runner
+- **manage_experiment.py**: Main experiment runner
 
 ## Implementation
 

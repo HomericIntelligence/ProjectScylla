@@ -17,7 +17,7 @@ The easiest method - your host credentials are automatically mounted and copied 
 ls -la ~/.claude/.credentials.json
 
 # Run experiments immediately:
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 --runs 1 -v
 ```
@@ -35,7 +35,7 @@ claude auth
 
 # Follow the prompts to complete OAuth flow
 # Then run experiments:
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 --runs 1 -v
 ```
@@ -96,7 +96,7 @@ Credentials: /home/scylla/.claude/.credentials.json
   ✓ Credentials found
 
 Run experiments:
-  python scripts/run_e2e_experiment.py \
+  python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 --runs 1 -v
 
@@ -322,7 +322,7 @@ claude --version
 claude "Say hello"
 
 # 4. If successful, run experiment
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 --runs 1 --max-subtests 1 -v
 ```

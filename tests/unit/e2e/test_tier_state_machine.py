@@ -100,6 +100,10 @@ class TestIsTierTerminalState:
         """COMPLETE is a terminal tier state."""
         assert is_tier_terminal_state(TierState.COMPLETE)
 
+    def test_failed_is_terminal(self) -> None:
+        """FAILED is a terminal tier state."""
+        assert is_tier_terminal_state(TierState.FAILED)
+
     def test_pending_is_not_terminal(self) -> None:
         """PENDING is not terminal."""
         assert not is_tier_terminal_state(TierState.PENDING)
@@ -340,3 +344,20 @@ class TestTierStateMachineAdvanceToCompletion:
         final = tsm.advance_to_completion("T0", {TierState.PENDING: action})
         action.assert_not_called()
         assert final == TierState.COMPLETE
+
+    def test_exception_marks_tier_as_failed(
+        self, tsm: TierStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """On exception, advance_to_completion marks tier as FAILED."""
+        action = MagicMock(side_effect=RuntimeError("boom"))
+        with pytest.raises(RuntimeError, match="boom"):
+            tsm.advance_to_completion("T0", {TierState.PENDING: action})
+
+        assert tsm.get_state("T0") == TierState.FAILED
+
+    def test_failed_tier_is_complete(
+        self, tsm: TierStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """FAILED is a terminal state — is_complete returns True."""
+        checkpoint.set_tier_state("T0", TierState.FAILED.value)
+        assert tsm.is_complete("T0")

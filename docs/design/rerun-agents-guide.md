@@ -297,7 +297,7 @@ If re-runs continue to fail:
 ## Related Commands
 
 - `scripts/regenerate_results.py` - Rebuild results without re-running agents
-- `scripts/run_e2e_experiment.py` - Run a fresh experiment
+- `scripts/manage_experiment.py` - Run a fresh experiment
 - `scripts/repair_checkpoint.py` - Fix corrupted checkpoints
 
 ## See Also

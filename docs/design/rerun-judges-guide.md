@@ -286,7 +286,7 @@ If re-judges continue to fail:
 
 - `scripts/rerun_agents.py` - Re-run agents (prerequisite for judging)
 - `scripts/regenerate_results.py` - Rebuild results from existing data
-- `scripts/run_e2e_experiment.py` - Run a fresh experiment
+- `scripts/manage_experiment.py` - Run a fresh experiment
 
 ## See Also
 

@@ -15,7 +15,7 @@
 #   ./scripts/launch_container_shell.sh my-experiment-env
 #
 # Inside the container, run experiments with:
-#   python scripts/run_e2e_experiment.py --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 -v
+#   python scripts/manage_experiment.py run --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 -v
 
 set -euo pipefail
 
@@ -54,7 +54,7 @@ prepare_env_vars
 log_info "Starting interactive container: ${CONTAINER_NAME}"
 log_info ""
 log_info "Inside the container, you can run experiments with:"
-log_info "  ${BLUE}python scripts/run_e2e_experiment.py --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 -v${NC}"
+log_info "  ${BLUE}python scripts/manage_experiment.py run --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 -v${NC}"
 log_info ""
 log_info "To exit the container: ${BLUE}exit${NC} or press ${BLUE}Ctrl+D${NC}"
 log_info "To stop the container from outside: ${BLUE}docker stop ${CONTAINER_NAME}${NC}"

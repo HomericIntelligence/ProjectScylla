@@ -1,7 +1,7 @@
 #!/bin/bash
 # Wrapper script to run E2E experiments inside Docker container
 #
-# This script launches the entire run_e2e_experiment.py inside a Docker container,
+# This script launches the entire manage_experiment.py run inside a Docker container,
 # providing complete isolation for all agent and judge executions.
 #
 # Usage:
@@ -50,7 +50,7 @@ DOCKER_CMD+=(
     "${VOLUMES[@]}"               # Volume mounts
     "${ENV_VARS[@]}"              # Environment variables
     "${IMAGE_NAME}"               # Image name
-    python scripts/run_e2e_experiment.py  # Command to run
+    python scripts/manage_experiment.py run  # Command to run
     "$@"                          # Pass all arguments to the script
 )
 
