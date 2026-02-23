@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `rerun_judges.py` script provides fine-grained control over re-running failed, partial, or incomplete judge evaluations. Unlike `rerun_agents.py` which focuses on agent execution, this script validates and re-runs **judges only**.
+The `manage_experiment.py rerun-judges` subcommand provides fine-grained control over re-running failed, partial, or incomplete judge evaluations. Unlike `manage_experiment.py rerun-agents` which focuses on agent execution, this subcommand validates and re-runs **judges only**.
 
 ## Judge Status Classification
 
@@ -21,7 +21,7 @@ The script classifies each run into one of five categories:
 ### Scan and classify all judges (dry run)
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ --dry-run
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ --dry-run
 ```
 
 This shows:
@@ -33,7 +33,7 @@ This shows:
 ### Re-run all incomplete judges
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/
 ```
 
 This will:
@@ -47,7 +47,7 @@ This will:
 ### Only run missing judges (never ran)
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --status missing
 ```
 
@@ -56,7 +56,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
 ### Only re-run failed judges
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --status failed
 ```
 
@@ -65,7 +65,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
 ### Re-run partial and missing judges
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --status partial --status missing
 ```
 
@@ -76,21 +76,21 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
 ### Re-run failed judges in T0 only
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --tier T0 --status failed
 ```
 
 ### Re-run specific runs across all tiers
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --runs 1,2,3 --status failed
 ```
 
 ### Re-run missing judges in T0/00 with opus
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --tier T0 --subtest 00 --status missing --judge-model opus
 ```
 
@@ -99,14 +99,14 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
 ### Use a specific judge model
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --judge-model opus
 ```
 
 ### Use sonnet instead of opus
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001-nothinking-haiku/ \
     --judge-model sonnet
 ```
 
@@ -122,10 +122,10 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001-nothinking-haiku/ \
 
 ```bash
 # Dry run to see what needs judging
-pixi run python scripts/rerun_judges.py ~/fullruns/test001/ --dry-run
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001/ --dry-run
 
 # Run missing and partial judges
-pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001/ \
     --status missing --status partial
 ```
 
@@ -137,7 +137,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 
 ```bash
 # Re-run only failed judges
-pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001/ \
     --status failed
 ```
 
@@ -149,7 +149,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 
 ```bash
 # Re-run failed judges with opus
-pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001/ \
     --status failed --judge-model opus
 ```
 
@@ -160,7 +160,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 **Solution**:
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001/ \
     --tier T0 --subtest 00 --runs 1,5,7
 ```
 
@@ -169,7 +169,7 @@ pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
 ### Verbose logging for debugging
 
 ```bash
-pixi run python scripts/rerun_judges.py ~/fullruns/test001/ \
+pixi run python scripts/manage_experiment.py rerun-judges ~/fullruns/test001/ \
     --status failed -v
 ```
 
@@ -241,9 +241,9 @@ The script uses `regenerate_experiment(rejudge=True)` to re-run judges, which:
 4. Rebuilds `run_result.json`
 5. Rebuilds tier and experiment results
 
-## Comparison: rerun_agents.py vs rerun_judges.py
+## Comparison: rerun-agents vs rerun-judges
 
-| Feature | rerun_agents.py | rerun_judges.py |
+| Feature | rerun-agents | rerun-judges |
 |---------|-----------------|-----------------|
 | **Focus** | Agent execution | Judge evaluation |
 | **Validates** | Agent output, result.json | Judge result.json |
@@ -263,14 +263,14 @@ The script uses `regenerate_experiment(rejudge=True)` to re-run judges, which:
 
 **Cause**: Agents didn't complete successfully.
 
-**Solution**: Use `rerun_agents.py` first to fix agent failures, then use `rerun_judges.py` to judge the successful runs.
+**Solution**: Use `manage_experiment.py rerun-agents` first to fix agent failures, then use `manage_experiment.py rerun-judges` to judge the successful runs.
 
 ```bash
 # Step 1: Fix agents
-pixi run python scripts/rerun_agents.py /path/to/experiment/ --status failed
+pixi run python scripts/manage_experiment.py rerun-agents /path/to/experiment/ --status failed
 
 # Step 2: Judge successful runs
-pixi run python scripts/rerun_judges.py /path/to/experiment/ --status missing
+pixi run python scripts/manage_experiment.py rerun-judges /path/to/experiment/ --status missing
 ```
 
 ### Re-judges still failing
@@ -284,8 +284,8 @@ If re-judges continue to fail:
 
 ## Related Commands
 
-- `scripts/rerun_agents.py` - Re-run agents (prerequisite for judging)
-- `scripts/regenerate_results.py` - Rebuild results from existing data
+- `scripts/manage_experiment.py rerun-agents` - Re-run agents (prerequisite for judging)
+- `scripts/manage_experiment.py regenerate` - Rebuild results from existing data
 - `scripts/manage_experiment.py` - Run a fresh experiment
 
 ## See Also

@@ -1501,10 +1501,10 @@ cd ProjectScylla
 pixi install
 
 # 3. Run evaluation (example for test-001, tier T0)
-pixi run python scripts/run_e2e_experiment.py \
-  --test tests/fixtures/tests/test-001 \
-  --tier T0 \
-  --runs 10
+pixi run python scripts/manage_experiment.py run \
+  --tiers-dir tests/fixtures/tests/test-001 \
+  --tiers T0 \
+  --runs-per-subtest 10
 
 # 4. Generate figures and tables
 pixi run python scripts/generate_figures.py \
