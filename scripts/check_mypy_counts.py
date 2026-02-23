@@ -29,7 +29,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Error codes disabled in pyproject.toml [tool.mypy] disable_error_code
+# Error codes disabled in pyproject.toml [tool.mypy] disable_error_code (global)
 # These are the codes we re-enable when running the validation check
 DISABLED_ERROR_CODES = [
     "assignment",
@@ -40,8 +40,16 @@ DISABLED_ERROR_CODES = [
     "misc",
     "union-attr",
     "var-annotated",
+]
+
+# Error codes suppressed only in the [[tool.mypy.overrides]] for tests.*
+# These have zero violations in scylla/ and scripts/ but non-zero in tests/
+TESTS_ONLY_ERROR_CODES = [
     "call-arg",
 ]
+
+# All codes tracked across all directories (union of global + tests-only)
+ALL_TRACKED_CODES = DISABLED_ERROR_CODES + TESTS_ONLY_ERROR_CODES
 
 # Paths mypy checks (must match pre-commit hook file patterns)
 MYPY_PATHS = ["scripts/", "scylla/", "tests/"]
@@ -212,8 +220,14 @@ def run_mypy_per_dir(repo_root: Path) -> dict[str, dict[str, int]]:
     result: dict[str, dict[str, int]] = {}
 
     for path in MYPY_PATHS:
+        # Enable global disabled codes for all paths; also enable tests-only codes for tests/
+        codes_to_enable = list(DISABLED_ERROR_CODES)
+        if path == "tests/":
+            codes_to_enable += TESTS_ONLY_ERROR_CODES
+        tracked_for_path = set(codes_to_enable)
+
         cmd = ["pixi", "run", "mypy", path]
-        for code in DISABLED_ERROR_CODES:
+        for code in codes_to_enable:
             cmd += ["--enable-error-code", code]
 
         try:
@@ -239,7 +253,7 @@ def run_mypy_per_dir(repo_root: Path) -> dict[str, dict[str, int]]:
             error_match = _ERROR_LINE_RE.search(line)
             if error_match:
                 code = error_match.group(1)
-                if code in DISABLED_ERROR_CODES:
+                if code in tracked_for_path:
                     counts[code] = counts.get(code, 0) + 1
 
         result[path] = counts
@@ -312,7 +326,7 @@ def update_table(md_path: Path, actual: dict[str, int]) -> None:
         row_match = _TABLE_ROW_RE.match(line)
         if row_match:
             code = row_match.group(1)
-            if code in actual or code in DISABLED_ERROR_CODES:
+            if code in actual or code in ALL_TRACKED_CODES:
                 new_count = actual.get(code, 0)
                 # Replace just the count cell: | code | OLD | rest |
                 line = re.sub(
@@ -322,7 +336,7 @@ def update_table(md_path: Path, actual: dict[str, int]) -> None:
                 )
         # Update Total row
         elif _TOTAL_ROW_RE.search(line):
-            total = sum(actual.get(c, 0) for c in DISABLED_ERROR_CODES)
+            total = sum(actual.get(c, 0) for c in ALL_TRACKED_CODES)
             line = _TOTAL_ROW_RE.sub(rf"\g<1>{total}\g<2>", line)
 
         new_lines.append(line)
@@ -360,7 +374,8 @@ def update_table_per_dir(md_path: Path, actual_per_dir: dict[str, dict[str, int]
         row_match = _TABLE_ROW_RE.match(line)
         if row_match and current_dir is not None:
             code = row_match.group(1)
-            if code in current_actual or code in DISABLED_ERROR_CODES:
+            tracked = ALL_TRACKED_CODES if current_dir == "tests/" else DISABLED_ERROR_CODES
+            if code in current_actual or code in tracked:
                 new_count = current_actual.get(code, 0)
                 line = re.sub(
                     r"(\|\s*" + re.escape(code) + r"\s*\|\s*)\d+(\s*\|)",
@@ -368,7 +383,8 @@ def update_table_per_dir(md_path: Path, actual_per_dir: dict[str, dict[str, int]
                     line,
                 )
         elif _TOTAL_ROW_RE.search(line) and current_dir is not None:
-            total = sum(current_actual.get(c, 0) for c in DISABLED_ERROR_CODES)
+            tracked = ALL_TRACKED_CODES if current_dir == "tests/" else DISABLED_ERROR_CODES
+            total = sum(current_actual.get(c, 0) for c in tracked)
             line = _TOTAL_ROW_RE.sub(rf"\g<1>{total}\g<2>", line)
 
         new_lines.append(line)
