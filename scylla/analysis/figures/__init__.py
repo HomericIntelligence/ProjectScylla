@@ -26,7 +26,7 @@ def derive_tier_order(df, tier_column: str = "tier") -> list[str]:
     """
     tiers = sorted(
         df[tier_column].unique(),
-        key=lambda t: int(re.search(r"\d+", t).group()) if re.search(r"\d+", t) else 0,
+        key=lambda t: int(m.group()) if (m := re.search(r"\d+", t)) else 0,
     )
     return list(tiers)
 
