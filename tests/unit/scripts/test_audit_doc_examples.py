@@ -305,6 +305,21 @@ class TestScanFilePassesCleanExamples:
         )
         assert scan_file(md, tmp_path) == []
 
+    def test_passes_push_to_main_with_inline_comment(self, tmp_path: Path) -> None:
+        """Git push origin main with an inline comment (e.g. # BLOCKED) should not be flagged."""
+        md = make_md(
+            tmp_path,
+            "good.md",
+            """\
+            # Doc
+
+            ```bash
+            git push origin main  # BLOCKED
+            ```
+            """,
+        )
+        assert scan_file(md, tmp_path) == []
+
 
 # ---------------------------------------------------------------------------
 # scan_file — finding metadata
