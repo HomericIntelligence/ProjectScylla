@@ -177,7 +177,7 @@ Lower CoP is better.
 The \textbf{Frontier CoP} is the minimum CoP across all subtests within a tier, representing
 the best achievable cost-efficiency for that tier.
 CoP is reported as a point estimate throughout this paper; bootstrapping the cost/pass ratio
-to derive confidence intervals is deferred to future work. With $N=5$ per subtest, both
+to derive confidence intervals is straightforward but deferred to future work. With $N=5$ per subtest, both
 mean cost and pass rate carry non-trivial variance, so CoP estimates should be interpreted
 with appropriate caution, particularly for tiers with pass rates near 0 or 1.
 
@@ -309,19 +309,25 @@ With $N=5$ runs per subtest, we apply the following statistical workflow:
 \item \textbf{Omnibus}: Kruskal-Wallis $H$ test across all seven tiers. Significant
   ($H(6) = 27.49$, $p = 0.0001$ for pass rate) --- proceed to pairwise.
 \item \textbf{Pairwise}: Mann-Whitney $U$ with Holm-Bonferroni step-down correction.
-  Effect size: Cliff's $\delta$ (Romano et al., 2006 FAIR conference thresholds: negligible $|{\delta}| < 0.11$, small $< 0.28$, medium $< 0.43$, large $\geq 0.43$; note these differ from the widely-cited Romano et al.\ 0.147/0.33/0.474 thresholds---effects near 0.43 are borderline medium/large).
-\item \textbf{Interaction}: Scheirer-Ray-Hare test for tier $\times$ task interaction
-  (tier effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$; interaction term not estimable with single-model data).
+  Effect size: Cliff's $\delta$ (Romano et al., 2006 thresholds: negligible $|{\delta}| < 0.147$, small $< 0.33$, medium $< 0.474$, large $\geq 0.474$).
+\item \textbf{Omnibus (score)}: Kruskal-Wallis $H$ test on score confirms tier main effect:
+  $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
+  Note: the Scheirer-Ray-Hare two-way test was planned to assess tier $\times$ task interactions,
+  but degenerates to one-way Kruskal-Wallis with a single-model dataset (agent\_model factor has df=0;
+  interaction term is not estimable). See Section~\ref{sec:further} for future multi-model extension.
 \item \textbf{Confidence intervals}: Bootstrap BCa, 10,000 resamples, seed=42.
   Note: score distribution is bimodal (12.7\% at 0.0, 51.1\% at 0.8--1.0, skew=$-1.18$);
   BCa CIs remain valid but may be wider and asymmetric than for unimodal data.
+  Pass-rate BCa CIs (Table~\ref{tab:aggregate-tiers}) are computed during table generation
+  (\texttt{scripts/export\_data.py}) and are not separately archived in
+  \texttt{statistical\_results.json}; see Appendix~\ref{app:data}.
 \end{enumerate}
 
 Post-hoc power analysis (simulation-based, 10,000 iterations, seed=42):
 For the two significant transitions, power at the observed effect size is:
 T4$\rightarrow$T5 ($\delta = -0.313$, $n_1=123$, $n_2=30$): power $= 0.77$;
 T5$\rightarrow$T6 ($\delta = +0.433$, $n_1=30$, $n_2=15$): power $= 0.68$.
-For the non-significant transitions (T0--T4), power at medium effect ($\delta = 0.3$) with
+For the non-significant transitions (T0--T3), power at medium effect ($\delta = 0.3$) with
 per-tier $N$ ranging from 83--130 is 0.73--0.98, confirming those null results reflect
 small true effects rather than insufficient power.
 However, T5$\rightarrow$T6 power at medium effect is only $0.37$ (underpowered for small T5/T6 samples),
@@ -374,8 +380,11 @@ T6 & 0.84 & 100\% & \$1.36 & \$1.36 & 1,418s \\
 
 \textbf{T0 Framework Failure}: T0 scored 0.00 with \$0.00 cost and zero tokens. This is a
 known infrastructure diagnostic: T0's empty-prompt configuration causes Claude Code to
-refuse the task without generating output on this test. This is not a Haiku model failure---T1 (with skills
-only, no tools) immediately achieves 0.84 (100\% pass rate). Note that T0 runs successfully on
+refuse the task without generating output on this test (a deliberate refusal, not a crash).
+This is distinct from the SIGABRT (exit code 134) framework crashes observed in T1/T4/T5,
+which are agent process failures rather than task refusals.
+This is not a Haiku model failure---T1 (with skills only, no tools) immediately achieves
+0.84 (100\% pass rate). Note that T0 runs successfully on
 test-007 (\$3.10 cost, 20\% pass rate) and test-017 (\$2.73 cost, 80\% pass rate); the
 \$0.00/zero-token pattern is specific to test-002.
 
@@ -469,8 +478,10 @@ complexity would predict.
 \textbf{T6 Worst Score (0.78)}: The maximum configuration achieves the \textit{lowest} quality score
 of all tiers. Despite having all skills, tools, and agents enabled, T6's single subtest scored
 0.78 (100\% pass rate, so this is not unreliability---it consistently produces lower-quality output).
-This is strong evidence of over-engineering: activating all systems simultaneously degrades
-output quality for complex implementation tasks.
+Note that T6 has only 1 subtest (vs.\ 2 for most other tiers), so it has no selection advantage;
+the 0.78 reflects the single available subtest. Even accounting for this, the consistent
+gap against T1/T2/T4 (all achieving 1.00) suggests over-engineering: activating all systems
+simultaneously may degrade output quality for complex implementation tasks.
 
 \textbf{T1/T2/T4 Achieve Perfect 1.00}: Skills-only, tools-only, and hierarchical delegation all
 achieve perfect scores of 1.00 on their best subtests. Simpler configurations outperform the maximum.
@@ -579,18 +590,16 @@ Kruskal-Wallis confirms significant tier effects:
 \begin{itemize}
 \item Pass rate: $H(6) = 27.49$, $p = 0.0001$
 \item Impl-rate: $H(6) = 18.97$, $p = 0.0042$
-\item Cost: $H(6) = 157.44$, $p < 0.0001$\footnote{Cost tier effect sourced from Scheirer-Ray-Hare test (tier effect only; single-model study has no agent\_model factor), mathematically equivalent to Kruskal-Wallis for a one-factor design.}
+\item Cost: $H(6) = 157.44$, $p < 0.0001$
 \end{itemize}
 
-The Scheirer-Ray-Hare test, which reduces to a one-way Kruskal-Wallis equivalent in this
-single-model design (agent\_model has df=0; interaction term is not estimable),
-confirms the tier main effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
-This result is mathematically equivalent to a standalone Kruskal-Wallis test on tier.
+The Kruskal-Wallis test confirms the tier main effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
+(The planned Scheirer-Ray-Hare two-way test degenerates to this result with single-model data;
+see Methods and Section~\ref{sec:further}.)
 
 Significant pairwise transitions (Holm-Bonferroni corrected, $m=7$):
 T4$\rightarrow$T5 ($p = 0.0024$, $\delta = -0.313$, medium effect),
-T5$\rightarrow$T6 ($p = 0.0243$, $\delta = +0.433$, borderline large effect---barely
-above the 0.43 threshold; classified as medium under alternative Romano et al.\ 0.474 threshold).
+T5$\rightarrow$T6 ($p = 0.0243$, $\delta = +0.433$, medium effect).
 The T0$\rightarrow$T6 overall contrast is not significant at the aggregate level
 ($p = 0.1187$, $\delta = +0.292$), reflecting that task context moderates the effect.
 
@@ -726,9 +735,11 @@ For real coding tasks (test-007, test-017), Haiku's economics are more favorable
   vs.\ a hypothetical Sonnet run.
 \end{itemize}
 
-\textit{Conclusion on RQ3}: Haiku is economically viable for real coding tasks.
-Its economics are competitive with Sonnet for tasks where Haiku can succeed,
-and the 3--5$\times$ pricing advantage translates to meaningful CoP reductions at scale.
+\textit{Conclusion on RQ3}: Haiku appears economically viable for the tasks tested here,
+pending confirmatory same-task comparison that controls for the confounds enumerated in
+Table~\ref{tab:confounds}.
+The 3--5$\times$ pricing advantage translates to meaningful CoP reductions at scale
+for tasks within Haiku's capability envelope.
 The key constraint is that Haiku may fail on tasks that require capabilities beyond its
 training (T1 = 0.00 on test-007 suggests Haiku without tools lacks sufficient context management
 for complex refactoring).
@@ -794,7 +805,7 @@ Full hypothesis testing requires more tasks across the complexity spectrum.
   cross-test analysis is based on only three complete tests.
 \item \textbf{Cross-model confounds}: Haiku vs.\ Sonnet comparison is confounded by
   task, judges, and N. Conclusions are exploratory.
-\item \textbf{Framework failures}: 16 zero-cost/zero-token runs exist across T1 (5), T4 (4),
+\item \textbf{Framework failures}: 16 zero-cost/zero-token runs exist across T1 (5), T4 (5),
   and T5 (6). These inflate failure rates for those tiers. T5's 50\% aggregate pass rate
   is partly driven by 20\% framework failure rate (6/30 runs), independent of model quality.
 \end{enumerate}
@@ -919,7 +930,7 @@ transitions plus overall T0$\rightarrow$T6 contrast; all corrected together):
 
 \begin{table}[htbp]
 \centering
-\caption{Pairwise Tier Comparisons (Pass Rate, Holm-Bonferroni Corrected, $m=7$). Bold = significant ($p < 0.05$). T5$\rightarrow$T6 $\delta = +0.433$ is borderline large/medium (threshold 0.43).}
+\caption{Pairwise Tier Comparisons (Pass Rate, Holm-Bonferroni Corrected, $m=7$). Bold = significant ($p < 0.05$). T5$\rightarrow$T6 $\delta = +0.433$ classified as medium (Romano et al.\ 0.474 threshold).}
 \label{tab:pairwise}
 \begin{tabular}{lrrrr}
 \toprule
@@ -943,7 +954,7 @@ All raw data, figures, and tables are available in \texttt{docs/arxiv/haiku/}:
 \begin{itemize}
 \item \texttt{data/runs.csv} --- Per-run data (score, cost, duration, tokens)
 \item \texttt{data/summary.json} --- Aggregated experiment summaries
-\item \texttt{data/statistical\_results.json} --- Full statistical test outputs
+\item \texttt{data/statistical\_results.json} --- Full statistical test outputs (Cliff's delta CIs, KW/MWU results, power analysis; does not include bootstrap BCa CIs for pass rate, which are generated by \texttt{scripts/export\_data.py} during table generation)
 \item \texttt{figures/*.png} --- 52 generated figures (PNG + Vega-Lite JSON); 4 key figures included in Figure~\ref{fig:key-results}
 \item \texttt{tables/*.tex} --- 9 generated tables (Markdown + LaTeX)
 \end{itemize}
