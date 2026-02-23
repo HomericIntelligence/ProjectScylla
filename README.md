@@ -256,25 +256,24 @@ pixi run python scripts/manage_experiment.py run \
 
 ```bash
 # Re-run failed agents
-pixi run python scripts/rerun_agents.py \
-  --data-dir ~/fullruns/test_experiment --tiers T0 T1
+pixi run python scripts/manage_experiment.py rerun-agents \
+  ~/fullruns/test_experiment --tier T0 T1
 
 # Re-run failed judges
-pixi run python scripts/rerun_judges.py \
-  --data-dir ~/fullruns/test_experiment
+pixi run python scripts/manage_experiment.py rerun-judges \
+  ~/fullruns/test_experiment
 ```
 
 ### 📊 Results Management
 
 ```bash
 # Regenerate all results
-pixi run python scripts/regenerate_results.py \
-  --data-dir ~/fullruns/test_experiment \
-  --output-dir results/analysis
+pixi run python scripts/manage_experiment.py regenerate \
+  ~/fullruns/test_experiment
 
-# Regenerate agent-specific results
-pixi run python scripts/regenerate_agent_results.py \
-  --data-dir ~/fullruns/test_experiment
+# Repair corrupt checkpoint
+pixi run python scripts/manage_experiment.py repair \
+  ~/fullruns/test_experiment/checkpoint.json
 ```
 
 ---

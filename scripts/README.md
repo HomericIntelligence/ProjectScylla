@@ -4,45 +4,40 @@ This directory contains utility scripts for running ProjectScylla experiments.
 
 ## Main Scripts
 
-### `run_e2e_experiment.py`
+### `manage_experiment.py`
 
-Main entry point for running E2E experiments. Can be run directly on the host or inside a Docker container.
+Unified entry point for running and managing E2E experiments. Replaces the legacy `run_e2e_experiment.py` and all recovery scripts.
 
 **Usage:**
 
 ```bash
 # Run directly on host
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
-    --tiers T0 --runs 1 -v
+    --tiers T0 --runs-per-subtest 1 -v
 
 # Run with custom settings
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 T1 T2 \
-    --runs 5 \
-    --parallel 2 \
+    --runs-per-subtest 5 \
     --model claude-sonnet-4-5-20250929
 ```
 
-**Options:**
+**Subcommands:**
 
-- `--tiers-dir PATH` - Path to tier configurations directory
-- `--tiers T0 T1 ...` - Tiers to run
-- `--runs N` - Number of runs per sub-test (default: 10)
-- `--parallel N` - Max parallel sub-tests (default: 4)
-- `--model NAME` - Model to use for task execution
-- `--judge-model NAME` - Model to use for judging
-- `--add-judge [MODEL]` - Add additional judge model (can be used multiple times)
-- `--timeout N` - Timeout per run in seconds (default: 3600)
-- `--max-subtests N` - Limit sub-tests per tier for testing
-- `--fresh` - Start fresh experiment, ignoring checkpoint
-- `-v, --verbose` - Enable verbose logging
-- `-q, --quiet` - Suppress non-error output
+- `run` - Run a single experiment (with auto-resume from checkpoint)
+- `batch` - Run all tests in parallel (batch mode)
+- `status` - Show experiment status
+- `rerun-agents` - Re-run failed/incomplete agent executions
+- `rerun-judges` - Re-run failed/incomplete judge evaluations
+- `repair` - Repair corrupt checkpoint by rebuilding from run_result.json files
+- `regenerate` - Regenerate reports from existing run data
+- `clean` - Clean up experiment artifacts
 
 ### `run_experiment_in_container.sh`
 
-Wrapper script that runs `run_e2e_experiment.py` inside a Docker container for complete isolation.
+Wrapper script that runs `manage_experiment.py run` inside a Docker container for complete isolation.
 
 **Usage:**
 
@@ -65,7 +60,7 @@ Wrapper script that runs `run_e2e_experiment.py` inside a Docker container for c
 3. Mounts project directory to `/workspace` in container
 4. Mounts Claude Code credentials (if available)
 5. Passes API keys from environment
-6. Runs `run_e2e_experiment.py` with your arguments
+6. Runs `manage_experiment.py run` with your arguments
 
 **Requirements:**
 
@@ -101,7 +96,7 @@ export ANTHROPIC_API_KEY="your-key-here"
 - You're running on different machines and want consistency
 - You want to ensure no config leakage between runs
 
-### Use `run_e2e_experiment.py` (Direct) when
+### Use `manage_experiment.py run` (Direct) when
 
 - You're developing and iterating quickly
 - You want faster execution (no container overhead)
@@ -120,14 +115,14 @@ See [docs/container-architecture.md](../docs/container-architecture.md) for deta
 
 ```bash
 # Direct (fastest)
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
-    --tiers T0 --runs 1 --max-subtests 1 -v
+    --tiers T0 --runs-per-subtest 1 --max-subtests 1 -v
 
 # In container (isolated)
 ./scripts/run_experiment_in_container.sh \
     --tiers-dir tests/fixtures/tests/test-001 \
-    --tiers T0 --runs 1 --max-subtests 1 -v
+    --tiers T0 --runs-per-subtest 1 --max-subtests 1 -v
 ```
 
 ### Full Tier Run
@@ -200,22 +195,21 @@ ls -la ~/.claude/.credentials.json
 export ANTHROPIC_API_KEY="your-key-here"
 ```
 
-## Recovery Scripts
+## Recovery Commands
 
-These scripts help recover from failures, rebuild results, or fix corrupted state.
+These `manage_experiment.py` subcommands help recover from failures, rebuild results, or fix corrupted state.
 
-### Recovery Script Quick Reference
+### Recovery Quick Reference
 
-| Goal | Use This Script |
-|------|----------------|
-| Re-run failed/missing agent executions | `rerun_agents.py` |
-| Re-run failed/missing judge evaluations | `rerun_judges.py` |
-| Regenerate consensus from existing judges | `rerun_judges.py --regenerate-only` |
-| Rebuild result.json from existing run_result.json | `regenerate_results.py` |
-| Rebuild agent result.json from logs | `regenerate_agent_results.py` |
-| Fix corrupted checkpoint | `repair_checkpoint.py` |
+| Goal | Command |
+|------|---------|
+| Re-run failed/missing agent executions | `manage_experiment.py rerun-agents <dir>` |
+| Re-run failed/missing judge evaluations | `manage_experiment.py rerun-judges <dir>` |
+| Regenerate consensus from existing judges | `manage_experiment.py rerun-judges <dir> --regenerate-only` |
+| Rebuild result.json from existing run_result.json | `manage_experiment.py regenerate <dir>` |
+| Fix corrupted checkpoint | `manage_experiment.py repair <checkpoint.json>` |
 
-### `rerun_agents.py`
+### `manage_experiment.py rerun-agents`
 
 Re-run failed or missing agent executions from an existing experiment.
 
@@ -223,21 +217,22 @@ Re-run failed or missing agent executions from an existing experiment.
 
 ```bash
 # Re-run all failed agents
-python scripts/rerun_agents.py results/experiment-001/
+python scripts/manage_experiment.py rerun-agents results/experiment-001/
 
-# Re-run with custom model
-python scripts/rerun_agents.py results/experiment-001/ --model claude-sonnet-4-5-20250929
+# Dry-run to see what would be done
+python scripts/manage_experiment.py rerun-agents results/experiment-001/ --dry-run
+
+# Filter by tier and status
+python scripts/manage_experiment.py rerun-agents results/experiment-001/ --tier T0 --status failed
 ```
 
 **When to use:**
 
 - Agent executions failed due to network errors
 - Some runs timed out
-- You want to use a different model for failed runs
+- You want to re-run specific runs
 
-**See also:** `regenerate_agent_results.py` for rebuilding from logs
-
-### `rerun_judges.py`
+### `manage_experiment.py rerun-judges`
 
 Re-run failed or missing judge evaluations, or regenerate consensus.
 
@@ -245,33 +240,33 @@ Re-run failed or missing judge evaluations, or regenerate consensus.
 
 ```bash
 # Re-run all failed judges
-python scripts/rerun_judges.py results/experiment-001/
+python scripts/manage_experiment.py rerun-judges results/experiment-001/
 
 # Regenerate consensus from existing judges (no API calls)
-python scripts/rerun_judges.py results/experiment-001/ --regenerate-only
+python scripts/manage_experiment.py rerun-judges results/experiment-001/ --regenerate-only
 
-# Add a new judge model
-python scripts/rerun_judges.py results/experiment-001/ --add-judge opus-4-5
+# Override judge model
+python scripts/manage_experiment.py rerun-judges results/experiment-001/ --judge-model claude-opus-4-6
 ```
 
 **When to use:**
 
 - Judge evaluations failed
-- You want to add a new judge model
+- You want to use a different judge model
 - Consensus needs recalculation from existing judges
 
-### `regenerate_results.py`
+### `manage_experiment.py regenerate`
 
 Rebuild result.json files from existing run_result.json files.
 
 **Usage:**
 
 ```bash
-# Regenerate results for one experiment
-python scripts/regenerate_results.py results/experiment-001/
+# Regenerate results
+python scripts/manage_experiment.py regenerate results/experiment-001/
 
-# Regenerate all experiments
-python scripts/regenerate_results.py results/
+# Re-judge missing runs, then regenerate
+python scripts/manage_experiment.py regenerate results/experiment-001/ --rejudge
 ```
 
 **When to use:**
@@ -280,28 +275,7 @@ python scripts/regenerate_results.py results/
 - You modified aggregation logic and want to recompute
 - run_result.json exists but result.json doesn't
 
-**See also:** `rerun_judges.py --regenerate-only` overlaps for consensus regeneration
-
-### `regenerate_agent_results.py`
-
-Rebuild agent result.json from execution logs.
-
-**Usage:**
-
-```bash
-# Regenerate from logs
-python scripts/regenerate_agent_results.py results/experiment-001/
-```
-
-**When to use:**
-
-- Agent result.json is missing or corrupted
-- Logs exist but result files don't
-- You need to reconstruct results from raw logs
-
-**See also:** `rerun_agents.py` for re-running executions
-
-### `repair_checkpoint.py`
+### `manage_experiment.py repair`
 
 Fix corrupted checkpoint files.
 
@@ -309,7 +283,7 @@ Fix corrupted checkpoint files.
 
 ```bash
 # Repair checkpoint
-python scripts/repair_checkpoint.py results/experiment-001/.checkpoint.json
+python scripts/manage_experiment.py repair results/experiment-001/checkpoint.json
 ```
 
 **When to use:**

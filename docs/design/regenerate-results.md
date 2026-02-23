@@ -1,6 +1,6 @@
 # Regenerate Results and Reports
 
-The `regenerate_results.py` script rebuilds `results.json` and all report files from existing `run_result.json` files without re-running agents or judges.
+The `manage_experiment.py regenerate` subcommand rebuilds `results.json` and all report files from existing `run_result.json` files without re-running agents or judges.
 
 ## Use Cases
 
@@ -16,7 +16,7 @@ The `regenerate_results.py` script rebuilds `results.json` and all report files 
 Regenerate results from existing run data (no re-judging):
 
 ```bash
-pixi run python scripts/regenerate_results.py /path/to/experiment/
+pixi run python scripts/manage_experiment.py regenerate /path/to/experiment/
 ```
 
 ### Re-judge Missing Runs
@@ -24,7 +24,7 @@ pixi run python scripts/regenerate_results.py /path/to/experiment/
 Re-run judges for runs that are missing valid judge results, then regenerate:
 
 ```bash
-pixi run python scripts/regenerate_results.py /path/to/experiment/ --rejudge
+pixi run python scripts/manage_experiment.py regenerate /path/to/experiment/ --rejudge
 ```
 
 ### Override Judge Model
@@ -32,7 +32,7 @@ pixi run python scripts/regenerate_results.py /path/to/experiment/ --rejudge
 Specify a different judge model for re-judging:
 
 ```bash
-pixi run python scripts/regenerate_results.py /path/to/experiment/ \
+pixi run python scripts/manage_experiment.py regenerate /path/to/experiment/ \
     --rejudge --judge-model claude-opus-4-5-20251101
 ```
 
@@ -41,7 +41,7 @@ pixi run python scripts/regenerate_results.py /path/to/experiment/ \
 Preview what would be done without modifying files:
 
 ```bash
-pixi run python scripts/regenerate_results.py /path/to/experiment/ \
+pixi run python scripts/manage_experiment.py regenerate /path/to/experiment/ \
     --rejudge --dry-run --verbose
 ```
 
@@ -93,7 +93,7 @@ If `--rejudge` is specified:
 ## Edge Cases
 
 - **Missing workspace**: Cannot re-judge if `run_dir/workspace/` doesn't exist
-- **Corrupted run_result.json**: Skips with warning (same as repair_checkpoint.py)
+- **Corrupted run_result.json**: Skips with warning (same as `manage_experiment.py repair`)
 - **Runs in .failed/ directories**: Automatically skipped
 - **Non-tier directories**: Skips entries that don't start with "T"
 - **Empty experiment**: Exits gracefully if no valid runs found
@@ -109,7 +109,7 @@ After manually fixing a `run_result.json` file:
 vim ~/fullruns/experiment/T0/00-test/run_01/run_result.json
 
 # Regenerate all results
-pixi run python scripts/regenerate_results.py ~/fullruns/experiment/
+pixi run python scripts/manage_experiment.py regenerate ~/fullruns/experiment/
 ```
 
 ### Example 2: Re-judge Failed Judges
@@ -118,7 +118,7 @@ After a judge timeout or failure:
 
 ```bash
 # Re-run judges and regenerate
-pixi run python scripts/regenerate_results.py ~/fullruns/experiment/ \
+pixi run python scripts/manage_experiment.py regenerate ~/fullruns/experiment/ \
     --rejudge --verbose
 ```
 
@@ -127,20 +127,20 @@ pixi run python scripts/regenerate_results.py ~/fullruns/experiment/ \
 Check what would be re-judged without making changes:
 
 ```bash
-pixi run python scripts/regenerate_results.py ~/fullruns/experiment/ \
+pixi run python scripts/manage_experiment.py regenerate ~/fullruns/experiment/ \
     --rejudge --dry-run --verbose
 ```
 
 ## Related Tools
 
-- **repair_checkpoint.py**: Repairs checkpoint.json from run_result.json files
-- **manage_experiment.py**: Main experiment runner
+- **`manage_experiment.py repair`**: Repairs checkpoint.json from run_result.json files
+- **`manage_experiment.py`**: Main experiment management CLI
 
 ## Implementation
 
 The regeneration logic is implemented in two files:
 
 - **scylla/e2e/regenerate.py**: Core regeneration logic (testable module)
-- **scripts/regenerate_results.py**: CLI wrapper (~80 lines)
+- **scripts/manage_experiment.py regenerate**: CLI wrapper (~80 lines)
 
 All aggregation logic reuses existing functions from the main pipeline to ensure consistency.
