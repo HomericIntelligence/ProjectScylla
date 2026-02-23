@@ -13,6 +13,7 @@ clean_state() {
     unset GH_MOCK_ISSUE_STATE    || true
     unset GH_MOCK_PR_JSON        || true
     unset GH_MOCK_ISSUE_COMMENTS || true
+    unset GH_MOCK_PR_CLOSES      || true
     unset GIT_MOCK_LOG           || true
     unset GIT_MOCK_WORKTREE      || true
     unset GIT_MOCK_BRANCH        || true
