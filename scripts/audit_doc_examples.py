@@ -119,6 +119,15 @@ _RAW_RULES: list[tuple[str, Severity, str, str]] = [
         # e.g. ``git push origin main  # BLOCKED``) and --delete (branch cleanup).
         r"git\s+push\b(?!.*--delete\b)(?![^#]*#).*\b(?:origin\s+main|origin\s+master|origin\s+HEAD:main|origin\s+HEAD:master)\b",
     ),
+    (
+        "wrong-branch-naming",
+        Severity.WARNING,
+        "Branch names must follow <issue-number>-<description> format (CLAUDE.md)",
+        # Flag 'git checkout -b <name>' where <name> doesn't start with digits,
+        # a placeholder (<...> or {...}), or a skill path (skill/).
+        # Excludes lines with a # comment (e.g. examples annotated as wrong).
+        r"git\s+checkout\s+-b\s+(?!\d+-)(?![<{])(?!skill/)(?![^#]*#)\S+",
+    ),
 ]
 
 RULES = [
