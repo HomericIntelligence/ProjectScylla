@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.12.15)  22 FEB 2026 19:09
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.12.15)  22 FEB 2026 19:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -997,13 +997,13 @@ Package rerunfilecheck Info: File `paper.out' has not changed.
 (rerunfilecheck)             Checksum: BE2907451C0F54994A94DB04AE8FC36A;7665.
  )
 Here is how much of TeX's memory you used:
- 27327 strings out of 474222
- 500837 string characters out of 5748732
+ 27328 strings out of 474222
+ 500848 string characters out of 5748732
  1937975 words of memory out of 5000000
  48769 multiletter control sequences out of 15000+600000
  648661 words of font info for 226 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,15n,93p,1002b,554s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,15n,93p,1002b,590s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
 pe1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></u
 sr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/pu
@@ -1013,9 +1013,9 @@ mr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr9.pfb></usr/share/texmf/font
 s/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb
 ></usr/share/texmf/fonts/type1/public/lm/lmsy7.pfb></usr/share/texmf/fonts/type
 1/public/lm/lmsy8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb>
-Output written on paper.pdf (17 pages, 332992 bytes).
+Output written on paper.pdf (17 pages, 348943 bytes).
 PDF statistics:
- 429 PDF objects out of 1000 (max. 8388607)
- 374 compressed objects within 4 object streams
- 98 named destinations out of 1000 (max. 500000)
+ 434 PDF objects out of 1000 (max. 8388607)
+ 378 compressed objects within 4 object streams
+ 99 named destinations out of 1000 (max. 500000)
  52077 words of extra memory for PDF output out of 61914 (max. 10000000)

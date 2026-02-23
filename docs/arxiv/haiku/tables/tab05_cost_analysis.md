@@ -10,3 +10,5 @@
 | haiku | T5 | 0.37 | 11.02 | 0.73 | 54 | 8309 | 1654493 | 37359 |
 | haiku | T6 | 0.55 | 8.28 | 0.59 | 62 | 13399 | 2701216 | 59523 |
 | haiku | **Total** | 0.82 | 505.98 | nan | 48316 | 7336345 | 1142367016 | 28176606 |
+
+*Note: Per-tier token columns show mean tokens per run. The Total row token columns show sum across all runs (mean × n per tier), not the mean of means.*
