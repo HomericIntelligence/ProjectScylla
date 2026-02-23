@@ -9,9 +9,8 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 |---------------|-------|------------------------------------------|
 | arg-type      | 21    | Incompatible argument types              |
 | assignment    | 10    | Type mismatches in assignments           |
-| operator      | 6     | Incompatible operand types               |
 | union-attr    | 4     | Accessing attributes on union types      |
-| **Total**     | **41** |                                          |
+| **Total**     | **35** |                                          |
 
 ## Error Count Table — tests/
 
@@ -22,16 +21,15 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | attr-defined  | 0     | Attribute not defined                    |
 | call-arg      | 0     | Incorrect function call arguments        |
 | misc          | 0     | Miscellaneous type issues                |
-| operator      | 1     | Incompatible operand types               |
+| operator      | 0     | Incompatible operand types               |
 | union-attr    | 0     | Accessing attributes on union types      |
 | var-annotated | 0     | Missing type annotations for variables   |
-| **Total**     | **2** |                                          |
+| **Total**     | **1** |                                          |
 
 ## Error Count Table — scripts/
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
 | arg-type      | 1     | Incompatible argument types              |
-| operator      | 3     | Incompatible operand types               |
 | union-attr    | 0     | Accessing attributes on union types      |
-| **Total**     | **4** |                                          |
+| **Total**     | **1** |                                          |

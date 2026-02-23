@@ -334,6 +334,7 @@ class E2ERunner:
         # Write PID file for status monitoring
         self._write_pid_file()
 
+        assert self.experiment_dir is not None  # noqa: S101
         return self.experiment_dir / "checkpoint.json"
 
     def _setup_workspace_and_scheduler(self) -> ParallelismScheduler:
@@ -498,6 +499,7 @@ class E2ERunner:
         """
         if not tier_result.best_subtest:
             return None
+        assert self.experiment_dir is not None  # noqa: S101
         subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
         return self.tier_manager.get_baseline_for_subtest(
             tier_id=tier_id,
@@ -1000,6 +1002,7 @@ class E2ERunner:
 
             logger.info(f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests")
 
+            assert self.experiment_dir is not None  # noqa: S101
             tier_dir = self.experiment_dir / tier_id.value
             tier_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1012,6 +1015,7 @@ class E2ERunner:
             """CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests in parallel."""
             assert tier_ctx.tier_config is not None  # noqa: S101
             assert tier_ctx.tier_dir is not None  # noqa: S101
+            assert self.experiment_dir is not None  # noqa: S101
             checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
             subtest_results = run_tier_subtests_parallel(
                 config=self.config,

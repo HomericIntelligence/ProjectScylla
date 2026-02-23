@@ -116,7 +116,6 @@ implicit_reexport = true
 # Re-enable these incrementally as codebase type errors are fixed
 disable_error_code = [
     "assignment",      # 12 violations - type mismatches in assignments
-    "operator",        # 13 violations - incompatible operand types
     "arg-type",        # 23 violations - incompatible argument types
     "union-attr",      # 4 violations - accessing attributes on unions
 ]

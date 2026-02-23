@@ -819,7 +819,7 @@ def stage_execute_judge(ctx: RunContext) -> None:
     else:
         closest_judge = min(
             (j for j in judges if j.score is not None),
-            key=lambda j: abs(j.score - consensus_score),
+            key=lambda j: abs((j.score if j.score is not None else 0.0) - consensus_score),
         )
         consensus_is_valid = all(j.is_valid for j in judges)
         judgment = {

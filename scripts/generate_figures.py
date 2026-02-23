@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Any
 
 from scylla.analysis import (
     build_criteria_df,
@@ -61,7 +62,7 @@ from scylla.analysis.figures.variance import (
 )
 
 # Figure registry mapping names to generator functions
-FIGURES = {
+FIGURES: dict[str, tuple[str, Any]] = {
     "fig01_score_variance_by_tier": ("variance", fig01_score_variance_by_tier),
     "fig02_judge_variance": ("judge", fig02_judge_variance),
     "fig03_failure_rate_by_tier": ("variance", fig03_failure_rate_by_tier),
