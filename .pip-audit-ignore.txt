@@ -1,0 +1,12 @@
+# pip-audit ignore list for ProjectScylla
+#
+# Format: one GHSA/CVE ID per line, with a comment explaining why it is ignored.
+# Only add entries here when:
+#   1. No fixed version is available upstream, AND
+#   2. The vulnerability is not exploitable in our threat model, AND
+#   3. The advisory has been reviewed and documented here.
+#
+# Remove entries when a fix becomes available.
+#
+# Example (uncomment and adjust when needed):
+# GHSA-xxx-yyy-zzz  # Package: example-pkg; Reason: no fix available; Reviewed: 2026-02-23

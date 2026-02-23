@@ -23,7 +23,33 @@ from __future__ import annotations
 import json
 import re
 import sys
+from pathlib import Path
 from typing import Any
+
+_IGNORE_FILE = Path(__file__).parent.parent / ".pip-audit-ignore.txt"
+
+
+def load_ignore_list(path: Path = _IGNORE_FILE) -> frozenset[str]:
+    """Load the set of ignored vulnerability IDs from .pip-audit-ignore.txt.
+
+    Lines starting with '#' or empty lines are ignored.
+
+    Args:
+        path: Path to the ignore file. Returns empty set if file does not exist.
+
+    Returns:
+        Frozenset of ignored vulnerability IDs (e.g. "GHSA-xxx-yyy-zzz").
+
+    """
+    if not path.exists():
+        return frozenset()
+    ids: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.split("#")[0].strip()
+        if stripped:
+            ids.append(stripped)
+    return frozenset(ids)
+
 
 # CVSS v3 base score thresholds
 HIGH_THRESHOLD = 7.0
@@ -72,6 +98,9 @@ def severity_label(score: float | None) -> str:
 
 def main() -> int:
     """Parse pip-audit JSON from stdin and exit non-zero on HIGH/CRITICAL findings."""
+    ignore_ids = load_ignore_list()
+    if ignore_ids:
+        print(f"pip-audit: ignoring {len(ignore_ids)} advisory ID(s) from .pip-audit-ignore.txt")
     raw = sys.stdin.read()
     # pip-audit may print a human-readable line before the JSON; find the JSON blob.
     json_start = raw.find("{")
@@ -94,6 +123,9 @@ def main() -> int:
         version = dep.get("version", "?")
         for vuln in dep.get("vulns", []):
             vuln_id = vuln.get("id", "?")
+            if vuln_id in ignore_ids:
+                print(f"pip-audit: ignoring {vuln_id} ({name}=={version}) [.pip-audit-ignore.txt]")
+                continue
             severity_list = vuln.get("severity", [])
             score = extract_cvss_score(severity_list)
             label = severity_label(score)
