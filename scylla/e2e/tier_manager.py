@@ -459,7 +459,7 @@ class TierManager:
             thinking_enabled: Whether to enable thinking mode
 
         """
-        settings = {
+        settings: dict[str, Any] = {
             "alwaysThinkingEnabled": thinking_enabled,
         }
 

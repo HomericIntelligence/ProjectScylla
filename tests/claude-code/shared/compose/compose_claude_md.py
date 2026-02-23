@@ -19,6 +19,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 # Directory containing the extracted blocks
 BLOCKS_DIR = Path(__file__).parent.parent / "blocks"
@@ -46,7 +47,7 @@ BLOCKS = {
 }
 
 # Preset configurations
-PRESETS = {
+PRESETS: dict[str, Any] = {
     "critical-only": {
         "blocks": ["B02"],
         "desc": "Just safety rules (~55 lines)",

@@ -7,13 +7,11 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
-| arg-type      | 22    | Incompatible argument types              |
-| assignment    | 12    | Type mismatches in assignments           |
-| attr-defined  | 4     | Attribute not defined                    |
-| index         | 3     | Invalid indexing operations              |
-| operator      | 10    | Incompatible operand types               |
+| arg-type      | 21    | Incompatible argument types              |
+| assignment    | 10    | Type mismatches in assignments           |
+| operator      | 6     | Incompatible operand types               |
 | union-attr    | 4     | Accessing attributes on union types      |
-| **Total**     | **55** |                                          |
+| **Total**     | **41** |                                          |
 
 ## Error Count Table — tests/
 
@@ -23,21 +21,17 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | assignment    | 1     | Type mismatches in assignments           |
 | attr-defined  | 0     | Attribute not defined                    |
 | call-arg      | 0     | Incorrect function call arguments        |
-| index         | 5     | Invalid indexing operations              |
 | misc          | 0     | Miscellaneous type issues                |
-| operator      | 3     | Incompatible operand types               |
+| operator      | 1     | Incompatible operand types               |
 | union-attr    | 0     | Accessing attributes on union types      |
 | var-annotated | 0     | Missing type annotations for variables   |
-| **Total**     | **9** |                                          |
+| **Total**     | **2** |                                          |
 
 ## Error Count Table — scripts/
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
 | arg-type      | 1     | Incompatible argument types              |
-| assignment    | 0     | Type mismatches in assignments           |
-| attr-defined  | 0     | Attribute not defined                    |
-| index         | 0     | Invalid indexing operations              |
 | operator      | 3     | Incompatible operand types               |
 | union-attr    | 0     | Accessing attributes on union types      |
 | **Total**     | **4** |                                          |
