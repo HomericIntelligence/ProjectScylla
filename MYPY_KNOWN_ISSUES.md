@@ -22,7 +22,7 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 
 | Error Code    | Count | Description                              |
 |---------------|-------|------------------------------------------|
-| arg-type      | 13    | Incompatible argument types              |
+| arg-type      | 14    | Incompatible argument types              |
 | assignment    | 1     | Type mismatches in assignments           |
 | attr-defined  | 7     | Attribute not defined                    |
 | call-arg      | 30    | Incorrect function call arguments        |
@@ -31,7 +31,7 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | operator      | 12    | Incompatible operand types               |
 | union-attr    | 16    | Accessing attributes on union types      |
 | var-annotated | 7     | Missing type annotations for variables   |
-| **Total**     | **96** |                                         |
+| **Total**     | **97** |                                         |
 
 ## Error Count Table — scripts/
 
