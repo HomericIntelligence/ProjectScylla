@@ -49,7 +49,7 @@ def validate_name_model_family_consistency(config_path: Path, name: str) -> list
         List of warning messages (empty if valid or family not recognized)
 
     """
-    warnings = []
+    warnings: list[str] = []
     filename_stem = config_path.stem
 
     # Skip validation for test fixtures
@@ -108,7 +108,7 @@ def validate_filename_model_id_consistency(config_path: Path, model_id: str) -> 
         List of warning messages (empty if valid)
 
     """
-    warnings = []
+    warnings: list[str] = []
     filename_stem = config_path.stem
 
     # Skip validation for test fixtures (prefixed with _)

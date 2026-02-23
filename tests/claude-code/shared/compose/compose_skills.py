@@ -168,7 +168,7 @@ def compose(  # noqa: C901  # skill composition with many conditional branches
     print(f"Composed {len(unique_skills)} skills into {output}")
 
     # Group by category for display
-    by_category = {}
+    by_category: dict[str, list[str]] = {}
     for skill in unique_skills:
         category = skill.parent.name
         if category not in by_category:

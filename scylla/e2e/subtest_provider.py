@@ -72,7 +72,7 @@ class FileSystemSubtestProvider:
         """
         from scylla.e2e.models import SubTestConfig
 
-        subtests = []
+        subtests: list[SubTestConfig] = []
 
         # Load from centralized shared directory
         shared_subtests_dir = self.shared_dir / "subtests" / tier_id.value.lower()

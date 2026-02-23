@@ -549,7 +549,7 @@ class TierManager:
         # Skills
         if "skills" in resources:
             skills_spec = resources["skills"]
-            skill_names = []
+            skill_names: list[str] = []
             for cat in skills_spec.get("categories", []):
                 cat_dir = self._shared_dir / "skills" / cat
                 if cat_dir.exists():

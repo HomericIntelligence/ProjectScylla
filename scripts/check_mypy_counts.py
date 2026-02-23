@@ -39,13 +39,13 @@ DISABLED_ERROR_CODES = [
     "attr-defined",
     "misc",
     "union-attr",
-    "var-annotated",
 ]
 
 # Error codes suppressed only in the [[tool.mypy.overrides]] for tests.*
 # These have zero violations in scylla/ and scripts/ but non-zero in tests/
 TESTS_ONLY_ERROR_CODES = [
     "call-arg",
+    "var-annotated",
 ]
 
 # All codes tracked across all directories (union of global + tests-only)

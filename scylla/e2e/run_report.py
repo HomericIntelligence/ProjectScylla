@@ -567,8 +567,8 @@ def _generate_criteria_comparison_table(
     # Add rows with best values bolded/italicized
     for criterion in sorted(all_criteria):
         row = f"| {criterion} |"
-        scores = []
-        score_cells = []
+        scores: list[tuple[float, int]] = []
+        score_cells: list[str] = []
 
         for item_id in sorted(items.keys()):
             item = items[item_id]
