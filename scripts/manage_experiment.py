@@ -330,7 +330,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         max_subtests=args.max_subtests,
         skip_agent_teams=args.skip_agent_teams,
         use_containers=args.use_containers,
-        thinking_mode=args.thinking if args.thinking != "None" else None,
+        thinking_mode=args.thinking or "None",
         tiers_to_run=tier_ids,
         until_run_state=until_run_state,
         until_tier_state=until_tier_state,
