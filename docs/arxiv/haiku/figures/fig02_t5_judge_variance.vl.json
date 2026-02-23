@@ -1,0 +1,153 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-2b82ce770b34ca54e3ad31550bce2d98"
+  },
+  "mark": {
+    "type": "bar"
+  },
+  "encoding": {
+    "x": {
+      "bin": {
+        "step": 0.05
+      },
+      "field": "judge_score",
+      "title": "Judge Score",
+      "type": "quantitative"
+    },
+    "y": {
+      "aggregate": "count",
+      "title": "Count",
+      "type": "quantitative"
+    }
+  },
+  "height": 300,
+  "title": "Judge Score Distribution - T5",
+  "width": 400,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-2b82ce770b34ca54e3ad31550bce2d98": [
+      {
+        "tier": "T5",
+        "judge_score": 0.84
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.0
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.74
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.58
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.98
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.48
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.52
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.44
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.73
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.31
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.0
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.83
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.77
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.83
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.67
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.83
+      },
+      {
+        "tier": "T5",
+        "judge_score": 1.0
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.83
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.61
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.17
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.0
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.67
+      },
+      {
+        "tier": "T5",
+        "judge_score": 0.83
+      }
+    ]
+  }
+}

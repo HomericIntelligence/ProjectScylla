@@ -1,0 +1,117 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-ade8dff3cc3009364a587a8658efdd0b"
+  },
+  "mark": {
+    "type": "bar"
+  },
+  "encoding": {
+    "x": {
+      "bin": {
+        "step": 0.05
+      },
+      "field": "judge_score",
+      "title": "Judge Score",
+      "type": "quantitative"
+    },
+    "y": {
+      "aggregate": "count",
+      "title": "Count",
+      "type": "quantitative"
+    }
+  },
+  "height": 300,
+  "title": "Judge Score Distribution - T6",
+  "width": 400,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-ade8dff3cc3009364a587a8658efdd0b": [
+      {
+        "tier": "T6",
+        "judge_score": 0.82
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.876
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.84
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.82
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.866
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.986
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.74
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.875
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.529
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.875
+      },
+      {
+        "tier": "T6",
+        "judge_score": 1.0
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.67
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.67
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.83
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.78
+      }
+    ]
+  }
+}

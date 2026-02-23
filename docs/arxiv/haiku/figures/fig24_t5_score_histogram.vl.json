@@ -1,0 +1,1575 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 12,
+      "titleFontSize": 14,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 12,
+      "titleFontSize": 14
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300,
+      "strokeWidth": 0
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "data-a7cce2959e872efe3cb0201c84ded3fa"
+      },
+      "mark": {
+        "type": "bar",
+        "binSpacing": 0,
+        "opacity": 0.5
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "aggregate": "count",
+            "title": "Count",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "bin": {
+            "maxbins": 20
+          },
+          "field": "score",
+          "title": "Score",
+          "type": "quantitative"
+        },
+        "y": {
+          "aggregate": "count",
+          "title": "Frequency",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-80a0edbb1251db768b968458a9da8439"
+      },
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "type": "nominal"
+        },
+        "x": {
+          "field": "score",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "scaled_density",
+          "type": "quantitative"
+        }
+      }
+    }
+  ],
+  "data": {
+    "name": "data-a7cce2959e872efe3cb0201c84ded3fa"
+  },
+  "height": 400,
+  "title": "Score Distribution - T5 (with KDE Overlay)",
+  "width": 600,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-a7cce2959e872efe3cb0201c84ded3fa": [
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 1,
+        "score": 0.84,
+        "impl_rate": 0.8228571428571428,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.27167600000000003,
+        "duration_seconds": 384.16713400000003,
+        "agent_duration_seconds": 324.629289,
+        "judge_duration_seconds": 59.537845,
+        "input_tokens": 76,
+        "output_tokens": 8499,
+        "cache_creation_tokens": 47116,
+        "cache_read_tokens": 1702100,
+        "total_tokens": 1757791,
+        "exit_code": 0,
+        "api_calls": 48.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 2,
+        "score": 0.0,
+        "impl_rate": null,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.12126369999999997,
+        "duration_seconds": 198.721866,
+        "agent_duration_seconds": 91.463425,
+        "judge_duration_seconds": 107.258441,
+        "input_tokens": 79,
+        "output_tokens": 5039,
+        "cache_creation_tokens": 15924,
+        "cache_read_tokens": 760847,
+        "total_tokens": 781889,
+        "exit_code": 0,
+        "api_calls": 27.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 3,
+        "score": 0.0,
+        "impl_rate": null,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.0,
+        "duration_seconds": 203.914464,
+        "agent_duration_seconds": 103.16424,
+        "judge_duration_seconds": 100.750224,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0,
+        "exit_code": 134,
+        "api_calls": null,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 4,
+        "score": 0.0,
+        "impl_rate": null,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.0,
+        "duration_seconds": 311.29323899999997,
+        "agent_duration_seconds": 144.801626,
+        "judge_duration_seconds": 166.491613,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0,
+        "exit_code": 134,
+        "api_calls": null,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 5,
+        "score": 0.0,
+        "impl_rate": null,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.0,
+        "duration_seconds": 329.782798,
+        "agent_duration_seconds": 156.064275,
+        "judge_duration_seconds": 173.718523,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0,
+        "exit_code": 134,
+        "api_calls": null,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 1,
+        "score": 0.0,
+        "impl_rate": null,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.0,
+        "duration_seconds": 1015.473242,
+        "agent_duration_seconds": 850.896672,
+        "judge_duration_seconds": 164.57657,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0,
+        "exit_code": 134,
+        "api_calls": null,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 2,
+        "score": 0.0,
+        "impl_rate": null,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.0,
+        "duration_seconds": 296.196738,
+        "agent_duration_seconds": 154.169164,
+        "judge_duration_seconds": 142.027574,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0,
+        "exit_code": 134,
+        "api_calls": null,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 3,
+        "score": 0.0,
+        "impl_rate": 0.0,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.0,
+        "duration_seconds": 312.26903200000004,
+        "agent_duration_seconds": 186.553817,
+        "judge_duration_seconds": 125.715215,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+        "total_tokens": 0,
+        "exit_code": 134,
+        "api_calls": null,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 4,
+        "score": 0.74,
+        "impl_rate": 0.8,
+        "passed": true,
+        "grade": "B",
+        "cost_usd": 0.20596540000000002,
+        "duration_seconds": 453.095535,
+        "agent_duration_seconds": 195.042152,
+        "judge_duration_seconds": 258.053383,
+        "input_tokens": 102,
+        "output_tokens": 8042,
+        "cache_creation_tokens": 24636,
+        "cache_read_tokens": 1348584,
+        "total_tokens": 1381364,
+        "exit_code": 0,
+        "api_calls": 43.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 5,
+        "score": 0.94,
+        "impl_rate": 0.9769230769230769,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.14666615000000005,
+        "duration_seconds": 315.93359999999996,
+        "agent_duration_seconds": 133.158968,
+        "judge_duration_seconds": 182.774632,
+        "input_tokens": 76,
+        "output_tokens": 5405,
+        "cache_creation_tokens": 22983,
+        "cache_read_tokens": 908364,
+        "total_tokens": 936828,
+        "exit_code": 0,
+        "api_calls": 29.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 1,
+        "score": 0.58,
+        "impl_rate": 0.6111111111111112,
+        "passed": false,
+        "grade": "C",
+        "cost_usd": 0.30675589999999997,
+        "duration_seconds": 403.95615,
+        "agent_duration_seconds": 218.733045,
+        "judge_duration_seconds": 185.223105,
+        "input_tokens": 53,
+        "output_tokens": 11005,
+        "cache_creation_tokens": 50160,
+        "cache_read_tokens": 1889779,
+        "total_tokens": 1950997,
+        "exit_code": 0,
+        "api_calls": 35.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 2,
+        "score": 0.98,
+        "impl_rate": 0.9833333333333334,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.3178228,
+        "duration_seconds": 403.835801,
+        "agent_duration_seconds": 220.83647,
+        "judge_duration_seconds": 182.999331,
+        "input_tokens": 135,
+        "output_tokens": 11275,
+        "cache_creation_tokens": 47198,
+        "cache_read_tokens": 2023153,
+        "total_tokens": 2081761,
+        "exit_code": 0,
+        "api_calls": 41.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 3,
+        "score": 0.48,
+        "impl_rate": 0.44166666666666665,
+        "passed": false,
+        "grade": "C",
+        "cost_usd": 0.20404449999999996,
+        "duration_seconds": 349.39745500000004,
+        "agent_duration_seconds": 215.022141,
+        "judge_duration_seconds": 134.375314,
+        "input_tokens": 35,
+        "output_tokens": 6346,
+        "cache_creation_tokens": 41258,
+        "cache_read_tokens": 1207070,
+        "total_tokens": 1254709,
+        "exit_code": 0,
+        "api_calls": 25.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 4,
+        "score": 0.52,
+        "impl_rate": 0.5599999999999999,
+        "passed": false,
+        "grade": "C",
+        "cost_usd": 0.23909080000000002,
+        "duration_seconds": 285.161113,
+        "agent_duration_seconds": 169.991201,
+        "judge_duration_seconds": 115.169912,
+        "input_tokens": 47,
+        "output_tokens": 5924,
+        "cache_creation_tokens": 40748,
+        "cache_read_tokens": 1584888,
+        "total_tokens": 1631607,
+        "exit_code": 0,
+        "api_calls": 35.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 5,
+        "score": 0.44,
+        "impl_rate": 0.4,
+        "passed": false,
+        "grade": "C",
+        "cost_usd": 0.13349160000000002,
+        "duration_seconds": 246.601229,
+        "agent_duration_seconds": 124.419153,
+        "judge_duration_seconds": 122.182076,
+        "input_tokens": 42,
+        "output_tokens": 5347,
+        "cache_creation_tokens": 19412,
+        "cache_read_tokens": 824496,
+        "total_tokens": 849297,
+        "exit_code": 0,
+        "api_calls": 25.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 1,
+        "score": 0.73,
+        "impl_rate": 0.6,
+        "passed": true,
+        "grade": "B",
+        "cost_usd": 0.16887225,
+        "duration_seconds": 298.841948,
+        "agent_duration_seconds": 171.279429,
+        "judge_duration_seconds": 127.562519,
+        "input_tokens": 37,
+        "output_tokens": 6764,
+        "cache_creation_tokens": 24557,
+        "cache_read_tokens": 1043190,
+        "total_tokens": 1074548,
+        "exit_code": 0,
+        "api_calls": 28.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 2,
+        "score": 0.31,
+        "impl_rate": 0.31666666666666665,
+        "passed": false,
+        "grade": "D",
+        "cost_usd": 0.20764160000000004,
+        "duration_seconds": 217.29494300000002,
+        "agent_duration_seconds": 156.051384,
+        "judge_duration_seconds": 61.243559,
+        "input_tokens": 80,
+        "output_tokens": 6549,
+        "cache_creation_tokens": 30712,
+        "cache_read_tokens": 1364266,
+        "total_tokens": 1401607,
+        "exit_code": 0,
+        "api_calls": 38.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 3,
+        "score": 0.0,
+        "impl_rate": 0.0,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.8783962000000001,
+        "duration_seconds": 298.578036,
+        "agent_duration_seconds": 169.991173,
+        "judge_duration_seconds": 128.586863,
+        "input_tokens": 38,
+        "output_tokens": 2898,
+        "cache_creation_tokens": 36716,
+        "cache_read_tokens": 422621,
+        "total_tokens": 462273,
+        "exit_code": 0,
+        "api_calls": 14.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 4,
+        "score": 0.83,
+        "impl_rate": 0.8999999999999999,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.27006665,
+        "duration_seconds": 363.532188,
+        "agent_duration_seconds": 204.053402,
+        "judge_duration_seconds": 159.478786,
+        "input_tokens": 74,
+        "output_tokens": 10002,
+        "cache_creation_tokens": 38033,
+        "cache_read_tokens": 1724414,
+        "total_tokens": 1772523,
+        "exit_code": 0,
+        "api_calls": 42.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 5,
+        "score": 0.77,
+        "impl_rate": 0.75,
+        "passed": true,
+        "grade": "B",
+        "cost_usd": 0.3956154000000001,
+        "duration_seconds": 340.777181,
+        "agent_duration_seconds": 240.584681,
+        "judge_duration_seconds": 100.1925,
+        "input_tokens": 61,
+        "output_tokens": 12910,
+        "cache_creation_tokens": 44224,
+        "cache_read_tokens": 2757244,
+        "total_tokens": 2814439,
+        "exit_code": 0,
+        "api_calls": 58.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 1,
+        "score": 0.83,
+        "impl_rate": 0.8333333333333334,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.48114345,
+        "duration_seconds": 350.865592,
+        "agent_duration_seconds": 250.062944,
+        "judge_duration_seconds": 100.802648,
+        "input_tokens": 70,
+        "output_tokens": 9400,
+        "cache_creation_tokens": 60949,
+        "cache_read_tokens": 3578872,
+        "total_tokens": 3649291,
+        "exit_code": 0,
+        "api_calls": 63.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 2,
+        "score": 0.67,
+        "impl_rate": 0.6666666666666666,
+        "passed": true,
+        "grade": "B",
+        "cost_usd": 0.5304530000000001,
+        "duration_seconds": 371.72452,
+        "agent_duration_seconds": 284.963116,
+        "judge_duration_seconds": 86.761404,
+        "input_tokens": 49,
+        "output_tokens": 12886,
+        "cache_creation_tokens": 51036,
+        "cache_read_tokens": 2862193,
+        "total_tokens": 2926164,
+        "exit_code": 0,
+        "api_calls": 57.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 3,
+        "score": 0.83,
+        "impl_rate": 0.8333333333333334,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.49496685000000007,
+        "duration_seconds": 426.281227,
+        "agent_duration_seconds": 261.903455,
+        "judge_duration_seconds": 164.377772,
+        "input_tokens": 57,
+        "output_tokens": 17426,
+        "cache_creation_tokens": 70725,
+        "cache_read_tokens": 3193736,
+        "total_tokens": 3281944,
+        "exit_code": 0,
+        "api_calls": 56.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 4,
+        "score": 1.0,
+        "impl_rate": 1.0,
+        "passed": true,
+        "grade": "S",
+        "cost_usd": 0.18451255,
+        "duration_seconds": 254.995289,
+        "agent_duration_seconds": 117.234249,
+        "judge_duration_seconds": 137.76104,
+        "input_tokens": 68,
+        "output_tokens": 4887,
+        "cache_creation_tokens": 36285,
+        "cache_read_tokens": 1146533,
+        "total_tokens": 1187773,
+        "exit_code": 0,
+        "api_calls": 28.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "run_number": 5,
+        "score": 0.83,
+        "impl_rate": 0.8333333333333334,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.66358265,
+        "duration_seconds": 465.677372,
+        "agent_duration_seconds": 364.676491,
+        "judge_duration_seconds": 101.000881,
+        "input_tokens": 64,
+        "output_tokens": 22859,
+        "cache_creation_tokens": 79741,
+        "cache_read_tokens": 4495474,
+        "total_tokens": 4598138,
+        "exit_code": 0,
+        "api_calls": 72.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 1,
+        "score": 0.61,
+        "impl_rate": 0.6116666666666667,
+        "passed": true,
+        "grade": "B",
+        "cost_usd": 0.7502334500000001,
+        "duration_seconds": 517.961682,
+        "agent_duration_seconds": 392.111045,
+        "judge_duration_seconds": 125.850637,
+        "input_tokens": 51,
+        "output_tokens": 23271,
+        "cache_creation_tokens": 61438,
+        "cache_read_tokens": 3839492,
+        "total_tokens": 3924252,
+        "exit_code": 0,
+        "api_calls": 66.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 2,
+        "score": 0.17,
+        "impl_rate": 0.0,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 0.5088632000000001,
+        "duration_seconds": 554.590142,
+        "agent_duration_seconds": 322.497008,
+        "judge_duration_seconds": 232.093134,
+        "input_tokens": 124,
+        "output_tokens": 9251,
+        "cache_creation_tokens": 45763,
+        "cache_read_tokens": 2630097,
+        "total_tokens": 2685235,
+        "exit_code": 0,
+        "api_calls": 62.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 3,
+        "score": 0.0,
+        "impl_rate": 0.0,
+        "passed": false,
+        "grade": "F",
+        "cost_usd": 2.6682170499999986,
+        "duration_seconds": 563.1632529999999,
+        "agent_duration_seconds": 448.766581,
+        "judge_duration_seconds": 114.396672,
+        "input_tokens": 100,
+        "output_tokens": 13271,
+        "cache_creation_tokens": 128541,
+        "cache_read_tokens": 4132757,
+        "total_tokens": 4274669,
+        "exit_code": 0,
+        "api_calls": 66.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 4,
+        "score": 0.67,
+        "impl_rate": 0.6666666666666666,
+        "passed": true,
+        "grade": "B",
+        "cost_usd": 0.52756105,
+        "duration_seconds": 428.97458300000005,
+        "agent_duration_seconds": 283.765778,
+        "judge_duration_seconds": 145.208805,
+        "input_tokens": 44,
+        "output_tokens": 16022,
+        "cache_creation_tokens": 58736,
+        "cache_read_tokens": 2024036,
+        "total_tokens": 2098838,
+        "exit_code": 0,
+        "api_calls": 37.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      },
+      {
+        "experiment": "run",
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "run_number": 5,
+        "score": 0.83,
+        "impl_rate": 0.8333333333333334,
+        "passed": true,
+        "grade": "A",
+        "cost_usd": 0.34189575,
+        "duration_seconds": 325.362641,
+        "agent_duration_seconds": 211.501669,
+        "judge_duration_seconds": 113.860972,
+        "input_tokens": 69,
+        "output_tokens": 13984,
+        "cache_creation_tokens": 43879,
+        "cache_read_tokens": 2170580,
+        "total_tokens": 2228512,
+        "exit_code": 0,
+        "api_calls": 46.0,
+        "num_turns": null,
+        "num_models": null,
+        "delegation_cost_ratio": null
+      }
+    ],
+    "data-80a0edbb1251db768b968458a9da8439": [
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.0,
+        "density": 0.7124577505616327,
+        "scaled_density": 21.039631720052753
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.010101010101010102,
+        "density": 0.7169595827041121,
+        "scaled_density": 21.17257558973288
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.020202020202020204,
+        "density": 0.7198640653087959,
+        "scaled_density": 21.25834803629785
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.030303030303030304,
+        "density": 0.7211953708562032,
+        "scaled_density": 21.297662898691073
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.04040404040404041,
+        "density": 0.7209929659847389,
+        "scaled_density": 21.291685668531674
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.05050505050505051,
+        "density": 0.71931113206167,
+        "scaled_density": 21.242019332067837
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.06060606060606061,
+        "density": 0.7162182804858348,
+        "scaled_density": 21.150684150340837
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.07070707070707072,
+        "density": 0.7117960761722455,
+        "scaled_density": 21.020091774757297
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.08080808080808081,
+        "density": 0.7061383862453106,
+        "scaled_density": 20.85301420088695
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.09090909090909091,
+        "density": 0.6993500741074821,
+        "scaled_density": 20.65254815603294
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.10101010101010102,
+        "density": 0.6915456616818795,
+        "scaled_density": 20.422075593840106
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.11111111111111112,
+        "density": 0.6828478846946416,
+        "scaled_density": 20.165221030253175
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.12121212121212122,
+        "density": 0.6733861673263445,
+        "scaled_density": 19.885806498358097
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.13131313131313133,
+        "density": 0.6632950434003698,
+        "scaled_density": 19.58780492440294
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.14141414141414144,
+        "density": 0.6527125514863149,
+        "scaled_density": 19.275292733502305
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.15151515151515152,
+        "density": 0.6417786308924177,
+        "scaled_density": 18.952402481595367
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.16161616161616163,
+        "density": 0.6306335445331872,
+        "scaled_density": 18.623276281057095
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.17171717171717174,
+        "density": 0.6194163531323102,
+        "scaled_density": 18.29202074229462
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.18181818181818182,
+        "density": 0.6082634632149959,
+        "scaled_density": 17.962664094423776
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.19191919191919193,
+        "density": 0.5973072689270921,
+        "scaled_density": 17.639116076749566
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.20202020202020204,
+        "density": 0.5866749049676948,
+        "scaled_density": 17.325131111545755
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.21212121212121213,
+        "density": 0.5764871249199119,
+        "scaled_density": 17.024275179974676
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.22222222222222224,
+        "density": 0.5668573160960417,
+        "scaled_density": 16.73989672942231
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.23232323232323235,
+        "density": 0.5578906587636155,
+        "scaled_density": 16.47510184455308
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.24242424242424243,
+        "density": 0.5496834343701563,
+        "scaled_density": 16.23273381845456
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.25252525252525254,
+        "density": 0.5423224842148374,
+        "scaled_density": 16.015357166638378
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.26262626262626265,
+        "density": 0.5358848169957162,
+        "scaled_density": 15.825246037494518
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.27272727272727276,
+        "density": 0.5304373608547401,
+        "scaled_density": 15.664376889917799
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.2828282828282829,
+        "density": 0.5260368530028482,
+        "scaled_density": 15.534425233820267
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.29292929292929293,
+        "density": 0.5227298577775706,
+        "scaled_density": 15.436766163391228
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.30303030303030304,
+        "density": 0.5205529020982569,
+        "scaled_density": 15.372478357233554
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.31313131313131315,
+        "density": 0.5195327157616428,
+        "scaled_density": 15.342351174546204
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.32323232323232326,
+        "density": 0.5196865628745945,
+        "scaled_density": 15.34689444268406
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.33333333333333337,
+        "density": 0.5210226499536122,
+        "scaled_density": 15.386350508768393
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.3434343434343435,
+        "density": 0.5235405958250586,
+        "scaled_density": 15.460708116338102
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.3535353535353536,
+        "density": 0.5272319484211506,
+        "scaled_density": 15.569717666882555
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.36363636363636365,
+        "density": 0.5320807338627062,
+        "scaled_density": 15.712907434836461
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.37373737373737376,
+        "density": 0.5380640238228502,
+        "scaled_density": 15.889600322430827
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.38383838383838387,
+        "density": 0.545152508044201,
+        "scaled_density": 16.09893076673164
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.393939393939394,
+        "density": 0.5533110599998404,
+        "scaled_density": 16.33986144420726
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.4040404040404041,
+        "density": 0.5624992850075922,
+        "scaled_density": 16.61119945712337
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.4141414141414142,
+        "density": 0.5726720415882879,
+        "scaled_density": 16.911611729804605
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.42424242424242425,
+        "density": 0.5837799284617602,
+        "scaled_density": 17.239639390141846
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.43434343434343436,
+        "density": 0.5957697312593451,
+        "scaled_density": 17.59371096148539
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.4444444444444445,
+        "density": 0.6085848247595329,
+        "scaled_density": 17.972154241089616
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.4545454545454546,
+        "density": 0.6221655281862838,
+        "scaled_density": 18.37320679244842
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.4646464646464647,
+        "density": 0.6364494128112061,
+        "scaled_density": 18.795025029113237
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.4747474747474748,
+        "density": 0.6513715627372473,
+        "scaled_density": 19.23569191591154
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.48484848484848486,
+        "density": 0.6668647912810027,
+        "scaled_density": 19.693223358945545
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.494949494949495,
+        "density": 0.6828598167840705,
+        "scaled_density": 20.165573397487634
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5050505050505051,
+        "density": 0.6992854029448089,
+        "scaled_density": 20.650638348125764
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5151515151515152,
+        "density": 0.7160684698471685,
+        "scaled_density": 21.14626008356242
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5252525252525253,
+        "density": 0.7331341827530999,
+        "scaled_density": 21.650228654748435
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5353535353535354,
+        "density": 0.7504060264030886,
+        "scaled_density": 22.16028448505645
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5454545454545455,
+        "density": 0.7678058730232098,
+        "scaled_density": 22.67412037860125
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5555555555555556,
+        "density": 0.785254052458297,
+        "scaled_density": 23.18938359134649
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5656565656565657,
+        "density": 0.8026694328354839,
+        "scaled_density": 23.703678213184485
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5757575757575758,
+        "density": 0.8199695199109698,
+        "scaled_density": 24.2145681017514
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.5858585858585859,
+        "density": 0.8370705827707832,
+        "scaled_density": 24.719580594503867
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.595959595959596,
+        "density": 0.8538878128537027,
+        "scaled_density": 25.21621120483423
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6060606060606061,
+        "density": 0.870335522356454,
+        "scaled_density": 25.70192948118606
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6161616161616162,
+        "density": 0.886327386987678,
+        "scaled_density": 26.174186175835892
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6262626262626263,
+        "density": 0.9017767367824308,
+        "scaled_density": 26.63042183295329
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6363636363636365,
+        "density": 0.9165968973018476,
+        "scaled_density": 27.06807686458821
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6464646464646465,
+        "density": 0.9307015820555111,
+        "scaled_density": 27.484603139319013
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6565656565656566,
+        "density": 0.9440053354326742,
+        "scaled_density": 27.877477062480448
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6666666666666667,
+        "density": 0.9564240238506803,
+        "scaled_density": 28.244214080296537
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.6767676767676768,
+        "density": 0.9678753712642547,
+        "scaled_density": 28.58238449403694
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.686868686868687,
+        "density": 0.9782795336677279,
+        "scaled_density": 28.889630425675882
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.696969696969697,
+        "density": 0.9875597058031519,
+        "scaled_density": 29.16368373462522
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7070707070707072,
+        "density": 0.9956427519985891,
+        "scaled_density": 29.402384647057023
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7171717171717172,
+        "density": 1.00245985193764,
+        "scaled_density": 29.603700826161482
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7272727272727273,
+        "density": 1.0079471512350362,
+        "scaled_density": 29.76574658433298
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7373737373737375,
+        "density": 1.012046405990556,
+        "scaled_density": 29.886801917529684
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7474747474747475,
+        "density": 1.0147056100357839,
+        "scaled_density": 29.96533102853446
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7575757575757577,
+        "density": 1.0158795933903062,
+        "scaled_density": 30.0
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7676767676767677,
+        "density": 1.0155305805140002,
+        "scaled_density": 29.989693280229957
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.7777777777777778,
+        "density": 1.0136286972812676,
+        "scaled_density": 29.93352865466487
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.787878787878788,
+        "density": 1.0101524162053557,
+        "scaled_density": 29.83087039382776
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.797979797979798,
+        "density": 1.0050889302932748,
+        "scaled_density": 29.68134029365568
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8080808080808082,
+        "density": 0.9984344469945523,
+        "scaled_density": 29.484826356117637
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8181818181818182,
+        "density": 0.9901943949943601,
+        "scaled_density": 29.241488896034618
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8282828282828284,
+        "density": 0.9803835380623175,
+        "scaled_density": 28.95176390315527
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8383838383838385,
+        "density": 0.9690259917669981,
+        "scaled_density": 28.616363535753
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8484848484848485,
+        "density": 0.9561551405639896,
+        "scaled_density": 28.23627367214856
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8585858585858587,
+        "density": 0.9418134545213317,
+        "scaled_density": 27.81274849841822
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8686868686868687,
+        "density": 0.9260522067182759,
+        "scaled_density": 27.347302162879902
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8787878787878789,
+        "density": 0.9089310940999153,
+        "scaled_density": 26.841697579528972
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.888888888888889,
+        "density": 0.890517766251061,
+        "scaled_density": 26.297932512231874
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.8989898989898991,
+        "density": 0.870887268130134,
+        "scaled_density": 25.718223118067925
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9090909090909092,
+        "density": 0.8501214042436498,
+        "scaled_density": 25.104985170728654
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9191919191919192,
+        "density": 0.828308033014411,
+        "scaled_density": 24.460813222463386
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9292929292929294,
+        "density": 0.805540301177161,
+        "scaled_density": 23.78845799497229
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9393939393939394,
+        "density": 0.781915828905202,
+        "scaled_density": 23.090802315332635
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9494949494949496,
+        "density": 0.757535857017191,
+        "scaled_density": 22.370835932112527
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9595959595959597,
+        "density": 0.732504368028004,
+        "scaled_density": 21.631629559072323
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9696969696969697,
+        "density": 0.7069271929898828,
+        "scaled_density": 20.87630849923799
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.9797979797979799,
+        "density": 0.6809111160247552,
+        "scaled_density": 20.108026200792448
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 0.98989898989899,
+        "density": 0.6545629881852486,
+        "scaled_density": 19.32993808845303
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "score": 1.0,
+        "density": 0.627988861815052,
+        "scaled_density": 18.545176000216458
+      }
+    ]
+  }
+}

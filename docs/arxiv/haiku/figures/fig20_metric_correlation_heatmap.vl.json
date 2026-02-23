@@ -1,0 +1,301 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300,
+      "strokeWidth": 0
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "rect"
+      },
+      "encoding": {
+        "color": {
+          "field": "rho",
+          "scale": {
+            "domain": [
+              -1,
+              1
+            ],
+            "scheme": "blueorange"
+          },
+          "title": "Spearman \u03c1",
+          "type": "quantitative"
+        },
+        "tooltip": [
+          {
+            "field": "metric1",
+            "title": "Metric 1",
+            "type": "ordinal"
+          },
+          {
+            "field": "metric2",
+            "title": "Metric 2",
+            "type": "ordinal"
+          },
+          {
+            "field": "rho",
+            "format": ".3f",
+            "title": "Spearman \u03c1",
+            "type": "quantitative"
+          },
+          {
+            "field": "p_value",
+            "format": ".4f",
+            "title": "p-value",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "metric1",
+          "sort": [
+            "Score",
+            "Cost (USD)",
+            "Total Tokens",
+            "Duration (s)"
+          ],
+          "title": "",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "metric2",
+          "sort": [
+            "Score",
+            "Cost (USD)",
+            "Total Tokens",
+            "Duration (s)"
+          ],
+          "title": "",
+          "type": "ordinal"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "baseline": "middle",
+        "fontSize": 7
+      },
+      "encoding": {
+        "color": {
+          "value": "black"
+        },
+        "text": {
+          "field": "label",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "metric1",
+          "sort": [
+            "Score",
+            "Cost (USD)",
+            "Total Tokens",
+            "Duration (s)"
+          ],
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "metric2",
+          "sort": [
+            "Score",
+            "Cost (USD)",
+            "Total Tokens",
+            "Duration (s)"
+          ],
+          "type": "ordinal"
+        }
+      }
+    }
+  ],
+  "data": {
+    "name": "data-be994eb73165345ec874db60d6accc98"
+  },
+  "title": "Metric Correlation Heatmap (Spearman \u03c1)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-be994eb73165345ec874db60d6accc98": [
+      {
+        "agent_model": "haiku",
+        "metric1": "Score",
+        "metric2": "Score",
+        "rho": 0.9999999999999999,
+        "p_value": 0.0,
+        "label": "1.00",
+        "p_value_corrected": 0.0,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Score",
+        "metric2": "Cost (USD)",
+        "rho": 0.10829146858753233,
+        "p_value": 0.006956168853067616,
+        "label": "0.11",
+        "p_value_corrected": 0.027824675412270464,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Score",
+        "metric2": "Total Tokens",
+        "rho": 0.324855945375208,
+        "p_value": 1.0530521791576292e-16,
+        "label": "0.32",
+        "p_value_corrected": 6.318313074945775e-16,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Score",
+        "metric2": "Duration (s)",
+        "rho": 0.05406874570206823,
+        "p_value": 0.17876486967148447,
+        "label": "0.05",
+        "p_value_corrected": 0.35752973934296894,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Cost (USD)",
+        "metric2": "Score",
+        "rho": 0.10829146858753232,
+        "p_value": 0.006956168853067624,
+        "label": "0.11",
+        "p_value_corrected": 0.027824675412270464,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Cost (USD)",
+        "metric2": "Cost (USD)",
+        "rho": 1.0,
+        "p_value": 0.0,
+        "label": "1.00",
+        "p_value_corrected": 0.0,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Cost (USD)",
+        "metric2": "Total Tokens",
+        "rho": 0.5711916879297997,
+        "p_value": 5.651910748434044e-55,
+        "label": "0.57",
+        "p_value_corrected": 5.651910748434044e-54,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Cost (USD)",
+        "metric2": "Duration (s)",
+        "rho": 0.7427144256103214,
+        "p_value": 9.820974257387404e-110,
+        "label": "0.74",
+        "p_value_corrected": 1.1785169108864885e-108,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Total Tokens",
+        "metric2": "Score",
+        "rho": 0.32485594537520796,
+        "p_value": 1.0530521791576512e-16,
+        "label": "0.32",
+        "p_value_corrected": 6.318313074945775e-16,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Total Tokens",
+        "metric2": "Cost (USD)",
+        "rho": 0.5711916879297997,
+        "p_value": 5.651910748434044e-55,
+        "label": "0.57",
+        "p_value_corrected": 5.651910748434044e-54,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Total Tokens",
+        "metric2": "Total Tokens",
+        "rho": 1.0,
+        "p_value": 0.0,
+        "label": "1.00",
+        "p_value_corrected": 0.0,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Total Tokens",
+        "metric2": "Duration (s)",
+        "rho": 0.46128734780794795,
+        "p_value": 5.4003218642568044e-34,
+        "label": "0.46",
+        "p_value_corrected": 4.3202574914054436e-33,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Duration (s)",
+        "metric2": "Score",
+        "rho": 0.05406874570206823,
+        "p_value": 0.17876486967148447,
+        "label": "0.05",
+        "p_value_corrected": 0.35752973934296894,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Duration (s)",
+        "metric2": "Cost (USD)",
+        "rho": 0.7427144256103214,
+        "p_value": 9.820974257387404e-110,
+        "label": "0.74",
+        "p_value_corrected": 1.1785169108864885e-108,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Duration (s)",
+        "metric2": "Total Tokens",
+        "rho": 0.46128734780794795,
+        "p_value": 5.4003218642568044e-34,
+        "label": "0.46",
+        "p_value_corrected": 4.3202574914054436e-33,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "metric1": "Duration (s)",
+        "metric2": "Duration (s)",
+        "rho": 1.0,
+        "p_value": 0.0,
+        "label": "1.00",
+        "p_value_corrected": 0.0,
+        "significant": true
+      }
+    ]
+  }
+}

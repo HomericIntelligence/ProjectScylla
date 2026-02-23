@@ -1,0 +1,325 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-0615cafc020e5e91f8dfa6efc09bf87e"
+  },
+  "facet": {
+    "column": {
+      "field": "agent_model",
+      "title": null,
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "rect"
+    },
+    "encoding": {
+      "color": {
+        "field": "score",
+        "scale": {
+          "domain": [
+            0,
+            1
+          ],
+          "scheme": "redyellowgreen"
+        },
+        "title": "Mean Score",
+        "type": "quantitative"
+      },
+      "tooltip": [
+        {
+          "field": "agent_model",
+          "title": "Model",
+          "type": "nominal"
+        },
+        {
+          "field": "tier",
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        {
+          "field": "run_number",
+          "title": "Run",
+          "type": "ordinal"
+        },
+        {
+          "field": "score",
+          "format": ".3f",
+          "title": "Mean Score",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "axis": {
+          "labelAngle": 0
+        },
+        "field": "run_number",
+        "title": "Run Number",
+        "type": "ordinal"
+      },
+      "y": {
+        "field": "tier",
+        "sort": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "title": "Tier",
+        "type": "ordinal"
+      }
+    },
+    "height": 200,
+    "width": 300
+  },
+  "resolve": {
+    "scale": {
+      "color": "shared"
+    }
+  },
+  "title": "Tier Summary (Mean Across Subtests)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-0615cafc020e5e91f8dfa6efc09bf87e": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "run_number": 1,
+        "score": 0.64532
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "run_number": 2,
+        "score": 0.51944
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "run_number": 3,
+        "score": 0.5649565217391305
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "run_number": 4,
+        "score": 0.5683181818181818
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "run_number": 5,
+        "score": 0.5022727272727273
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "run_number": 1,
+        "score": 0.6925294117647058
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "run_number": 2,
+        "score": 0.6325882352941177
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "run_number": 3,
+        "score": 0.6440588235294118
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "run_number": 4,
+        "score": 0.6799375
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "run_number": 5,
+        "score": 0.5958125
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "run_number": 1,
+        "score": 0.7239615384615384
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "run_number": 2,
+        "score": 0.7550384615384615
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "run_number": 3,
+        "score": 0.7635384615384615
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "run_number": 4,
+        "score": 0.7418461538461538
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "run_number": 5,
+        "score": 0.6213076923076923
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "run_number": 1,
+        "score": 0.7146071428571429
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "run_number": 2,
+        "score": 0.7024999999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "run_number": 3,
+        "score": 0.6281666666666667
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "run_number": 4,
+        "score": 0.6714347826086956
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "run_number": 5,
+        "score": 0.708421052631579
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "run_number": 1,
+        "score": 0.6871538461538461
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "run_number": 2,
+        "score": 0.75804
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "run_number": 3,
+        "score": 0.7566666666666667
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "run_number": 4,
+        "score": 0.7066666666666667
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "run_number": 5,
+        "score": 0.7926666666666667
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "run_number": 1,
+        "score": 0.5983333333333333
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "run_number": 2,
+        "score": 0.355
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "run_number": 3,
+        "score": 0.21833333333333335
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "run_number": 4,
+        "score": 0.6266666666666666
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "run_number": 5,
+        "score": 0.6349999999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "run_number": 1,
+        "score": 0.9353333333333333
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "run_number": 2,
+        "score": 0.762
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "run_number": 3,
+        "score": 0.7949999999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "run_number": 4,
+        "score": 0.7263333333333333
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "run_number": 5,
+        "score": 0.8403333333333333
+      }
+    ]
+  }
+}

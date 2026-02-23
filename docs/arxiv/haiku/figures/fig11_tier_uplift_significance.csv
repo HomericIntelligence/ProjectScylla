@@ -1,0 +1,7 @@
+agent_model,tier,transition,pvalue,significant
+haiku,T1,T0→T1,0.9729897282024289,False
+haiku,T2,T1→T2,0.5587443615174544,False
+haiku,T3,T2→T3,1.0,False
+haiku,T4,T3→T4,1.0,False
+haiku,T5,T4→T5,0.0023734290604762814,True
+haiku,T6,T5→T6,0.029157638827201227,True

@@ -1,0 +1,18 @@
+\begin{thebibliography}{1}
+
+\bibitem{anthropic2024claude}
+{Anthropic}.
+\newblock {Claude Code}: Agentic {CLI} tool for software development.
+\newblock \url{https://www.anthropic.com/claude/code}, 2024.
+\newblock AI-powered command-line interface for coding tasks.
+
+\bibitem{scylla2026dryrun}
+Micah Villmow.
+\newblock Taming {Scylla}: Understanding the multi-headed agentic daemon of the
+  coding seas.
+\newblock ProjectScylla Technical Report, 2026.
+\newblock Dryrun evaluation of the Scylla framework using Claude Sonnet 4.5 on
+  a Hello World task. Available at:
+  \url{https://github.com/HomericIntelligence/ProjectScylla/tree/main/docs/arxiv/dryrun}.
+
+\end{thebibliography}

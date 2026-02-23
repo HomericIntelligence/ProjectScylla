@@ -1,0 +1,223 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "nominal"
+          },
+          {
+            "field": "impl_rate",
+            "format": ".3f",
+            "title": "Impl-Rate",
+            "type": "quantitative"
+          },
+          {
+            "field": "ci_low",
+            "format": ".3f",
+            "title": "95% CI Low",
+            "type": "quantitative"
+          },
+          {
+            "field": "ci_high",
+            "format": ".3f",
+            "title": "95% CI High",
+            "type": "quantitative"
+          },
+          {
+            "field": "n",
+            "title": "N",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "axis": {
+            "labelAngle": 0
+          },
+          "field": "tier_label",
+          "sort": [
+            "T0 (n=17)",
+            "T1 (n=7)",
+            "T2 (n=14)",
+            "T3 (n=19)",
+            "T4 (n=14)",
+            "T5 (n=2)",
+            "T6 (n=1)"
+          ],
+          "title": "Tier (Subtest Count)",
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "agent_model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "impl_rate",
+          "scale": {
+            "domain": [
+              0.4,
+              0.9
+            ]
+          },
+          "title": "Implementation Rate",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "errorbar"
+      },
+      "encoding": {
+        "x": {
+          "field": "tier_label",
+          "sort": [
+            "T0 (n=17)",
+            "T1 (n=7)",
+            "T2 (n=14)",
+            "T3 (n=19)",
+            "T4 (n=14)",
+            "T5 (n=2)",
+            "T6 (n=1)"
+          ],
+          "type": "nominal"
+        },
+        "xOffset": {
+          "field": "agent_model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "ci_low",
+          "title": "Implementation Rate",
+          "type": "quantitative"
+        },
+        "y2": {
+          "field": "ci_high"
+        }
+      }
+    }
+  ],
+  "data": {
+    "name": "data-7273e822fe508087bf339ce96a5db4d7"
+  },
+  "height": 300,
+  "title": "Implementation Rate by Tier (95% Bootstrap CI)",
+  "width": 400,
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-7273e822fe508087bf339ce96a5db4d7": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "tier_label": "T0 (n=17)",
+        "impl_rate": 0.587380977733008,
+        "ci_low": 0.5123443041285157,
+        "ci_high": 0.6556551061936895,
+        "n": 113
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "tier_label": "T1 (n=7)",
+        "impl_rate": 0.6894784739749371,
+        "ci_low": 0.6113744075842488,
+        "ci_high": 0.7501417915639341,
+        "n": 79
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "tier_label": "T2 (n=14)",
+        "impl_rate": 0.7393664499479015,
+        "ci_low": 0.695694376775226,
+        "ci_high": 0.7774935193346842,
+        "n": 130
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "tier_label": "T3 (n=19)",
+        "impl_rate": 0.6994975794105851,
+        "ci_low": 0.6398893161537569,
+        "ci_high": 0.7496889923144985,
+        "n": 121
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "tier_label": "T4 (n=14)",
+        "impl_rate": 0.7766356000481002,
+        "ci_low": 0.7288460498612663,
+        "ci_high": 0.8141752006944171,
+        "n": 120
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "tier_label": "T5 (n=2)",
+        "impl_rate": 0.6017038054538055,
+        "ci_low": 0.45668906063745884,
+        "ci_high": 0.718118153000256,
+        "n": 24
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "tier_label": "T6 (n=1)",
+        "impl_rate": 0.7922931697931698,
+        "ci_low": 0.6932326351210011,
+        "ci_high": 0.8577446941237354,
+        "n": 15
+      }
+    ]
+  }
+}

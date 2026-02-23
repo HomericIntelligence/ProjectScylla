@@ -1,0 +1,187 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-8da1d840f18c839ca9553e3bc4b31717"
+  },
+  "facet": {
+    "column": {
+      "field": "agent_model",
+      "title": null,
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "bar"
+    },
+    "encoding": {
+      "color": {
+        "field": "tier",
+        "scale": {
+          "domain": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "range": [
+            "#66c2a5",
+            "#fc8d62",
+            "#8da0cb",
+            "#e78ac3",
+            "#a6d854",
+            "#ffd92f",
+            "#e5c494"
+          ]
+        },
+        "sort": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "title": "Tier",
+        "type": "nominal"
+      },
+      "tooltip": [
+        {
+          "field": "tier",
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        {
+          "field": "failure_rate",
+          "format": ".2%",
+          "title": "Failure Rate",
+          "type": "quantitative"
+        },
+        {
+          "field": "n_subtests",
+          "title": "Subtests",
+          "type": "quantitative"
+        },
+        {
+          "field": "n_runs",
+          "title": "Runs",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "field": "failure_rate",
+        "scale": {
+          "domain": [
+            0,
+            1
+          ]
+        },
+        "title": "Failure Rate",
+        "type": "quantitative"
+      },
+      "y": {
+        "field": "tier",
+        "sort": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "title": "Tier",
+        "type": "nominal"
+      }
+    }
+  },
+  "resolve": {
+    "scale": {
+      "y": "independent"
+    }
+  },
+  "title": "Aggregate Failure Rate by Tier (Summary)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-8da1d840f18c839ca9553e3bc4b31717": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "failure_rate": 0.3589743589743589,
+        "n_runs": 117,
+        "n_subtests": 17
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "failure_rate": 0.2650602409638554,
+        "n_runs": 83,
+        "n_subtests": 7
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "failure_rate": 0.16923076923076918,
+        "n_runs": 130,
+        "n_subtests": 14
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "failure_rate": 0.23770491803278693,
+        "n_runs": 122,
+        "n_subtests": 19
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "failure_rate": 0.1869918699186992,
+        "n_runs": 123,
+        "n_subtests": 14
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "failure_rate": 0.5,
+        "n_runs": 30,
+        "n_subtests": 2
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "failure_rate": 0.06666666666666665,
+        "n_runs": 15,
+        "n_subtests": 1
+      }
+    ]
+  }
+}

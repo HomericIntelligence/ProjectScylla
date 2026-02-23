@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Table 2: Tier Pairwise Comparison}
+\label{tab:tier_comparison}
+\begin{tabular}{llrrrrl}
+\toprule
+Model & Transition & N (T1, T2) & Pass Rate $\Delta$ & p-value & Cliff's $\delta$ & Significant? \\
+\midrule
+haiku & T0→T1 & (117, 83) & +0.0939 & 0.4865 & +0.094 &  \\
+haiku & T1→T2 & (83, 130) & +0.0958 & 0.3725 & +0.096 &  \\
+haiku & T2→T3 & (130, 122) & -0.0685 & 0.4865 & -0.068 &  \\
+haiku & T3→T4 & (122, 123) & +0.0507 & 0.4865 & +0.051 &  \\
+haiku & T4→T5 & (123, 30) & -0.3130 & 0.0028 & -0.313 & \checkmark \\
+haiku & T5→T6 & (30, 15) & +0.4333 & 0.0292 & +0.433 & \checkmark \\
+haiku & T0→T6 & (117, 15) & +0.2923 & 0.1187 & +0.292 &  \\
+\midrule
+\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
+\multicolumn{7}{l}{haiku: $H(6)=27.49$, $p=0.0001$ $p < 0.05$} \\
+\multicolumn{7}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
+\bottomrule
+\end{tabular}
+\end{table}

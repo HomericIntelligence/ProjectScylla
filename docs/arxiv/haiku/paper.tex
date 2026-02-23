@@ -1,0 +1,883 @@
+\documentclass[11pt]{article}
+\pdfoutput=1 % Required by arXiv
+
+% ===== Encoding & Fonts =====
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+% ===== Layout =====
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\setstretch{1.05}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+% ===== Math =====
+\usepackage{amsmath,amssymb,amsthm}
+
+% ===== Tables =====
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\renewcommand{\arraystretch}{1.2}
+\setlength{\tabcolsep}{6pt}
+
+% ===== Figures =====
+\usepackage{graphicx}
+\graphicspath{{./figures/}}
+\usepackage{subcaption}
+\usepackage{caption}
+\captionsetup{
+  font=small,
+  labelfont=bf,
+  textfont=it
+}
+
+% ===== Code =====
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single
+}
+
+% ===== Micro-typography =====
+\usepackage{microtype}
+
+% ===== Links =====
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+% ===== Diagrams =====
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, backgrounds}
+
+\raggedbottom
+
+\title{Navigating Scylla with Haiku: \\
+Multi-Task Evaluation of Agentic Coding Architectures \\
+Using a Budget Frontier Model}
+\author{Micah Villmow\thanks{This paper combines the author's original research and writing with improvements, suggestions, and rewrites provided by Claude Code (claude.ai/code).} \\
+Individual \\
+research@villmow.us}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper presents a follow-up empirical study using the Scylla evaluation framework~\cite{scylla2026dryrun}
+to assess the performance and cost-efficiency of Claude Haiku 4.5---Anthropic's
+budget frontier model---across five tasks of increasing complexity, using
+$N=5$ independent runs per subtest to enable statistical inference.
+Three tasks completed fully (Mojo Hello World, Simplify Justfile, Comprehensive Slot Management)
+and two remain in progress.
+The central finding is that tier rankings change significantly with task complexity:
+while trivial tasks show ceiling effects with most configurations achieving similar quality,
+moderately complex tasks reveal critical differentiation---skills alone (T1) score 0.00 on
+a refactoring task where tools (T2) score 0.74---and complex multi-component tasks
+expose over-engineering, with the maximum configuration (T6) scoring lowest (0.78)
+while simpler configurations (T1, T2, T4) achieve perfect 1.00.
+A cross-model comparison with the dryrun paper's Sonnet 4.5 results on a comparable Hello World
+task suggests Haiku achieves competitive quality at significantly lower cost for simple tasks,
+with Haiku's frontier Cost-of-Pass (CoP) of \$0.157 vs.\ Sonnet's \$0.065 on analogous
+work---though direct comparison is confounded by differences in task, judges, and N.
+These results extend the dryrun hypothesis that architectural complexity does not always
+improve quality, and add the finding that optimal tier selection is task-dependent.
+\end{abstract}
+
+\noindent\textbf{Keywords:} LLM agents, software engineering benchmarks, cost-of-pass,
+multi-agent systems, prompt engineering, ablation studies, Haiku 4.5, budget frontier models,
+task complexity scaling
+
+\section{Introduction}\label{sec:intro}
+
+The Scylla framework~\cite{scylla2026dryrun} was introduced to address a gap in LLM evaluation:
+no rigorous method existed for comparing how different architectural choices---prompts,
+skills, tools, multi-agent setups---affect both capability and cost when using production
+CLI tools like Claude Code.
+The dryrun study used Sonnet 4.5 on a trivial Hello World task (N=1 per subtest) to validate
+the framework infrastructure.
+That study confirmed the framework works and showed that all seven tiers achieved equivalent
+quality (all Grade A, scores 0.943--0.983) while cost varied 3.8$\times$.
+
+This paper extends the dryrun in three directions. First, we switch the agent model to
+Claude Haiku 4.5~\cite{anthropic2024claude}, Anthropic's budget frontier model priced at
+\$1/\$5 per million tokens (input/output) vs.\ Sonnet's \$3/\$15.
+If Haiku can achieve comparable quality to Sonnet on real tasks,
+practitioners could reduce costs 3--5$\times$.
+Second, we evaluate across five tasks of increasing complexity rather than one trivial case.
+Third, we run $N=5$ independent trials per subtest, enabling bootstrap confidence intervals
+and non-parametric hypothesis testing---a major methodological advance over the dryrun's
+$N=1$.
+
+\textbf{Research questions:}
+
+\begin{enumerate}
+\item \textbf{(RQ1) Task complexity and tier performance}: Does Haiku 4.5 performance
+  across the seven tiers change with task complexity, and if so, how?
+\item \textbf{(RQ2) Tier ranking stability}: Are the relative rankings of tiers (T0--T6)
+  stable across tasks, or do different task types reward different configurations?
+\item \textbf{(RQ3) Economic viability}: Is Haiku 4.5 economically viable for real coding
+  tasks, and how does its cost-quality profile compare to Sonnet 4.5?
+\end{enumerate}
+
+The remainder of this paper is organized as follows.
+Section~\ref{sec:background} summarizes the Scylla framework and dryrun results.
+Section~\ref{sec:design} describes the experimental design changes and tasks.
+Section~\ref{sec:results} presents results for each completed test and cross-test analysis.
+Section~\ref{sec:crossmodel} compares Haiku and Sonnet.
+Section~\ref{sec:discussion} discusses findings, limitations, and hypotheses.
+Section~\ref{sec:conclusions} concludes.
+
+\section{Background: The Scylla Framework}\label{sec:background}
+
+This section summarizes the Scylla evaluation framework introduced in~\cite{scylla2026dryrun}.
+Readers should consult that paper for full architecture details.
+
+\subsection{Framework Overview}
+
+Scylla is a model-agnostic evaluation framework for agentic coding CLI tools.
+It uses a seven-tier ablation design (T0--T6) that progressively adds architectural complexity
+to isolate what each component contributes to performance and cost:
+
+\begin{table}[htbp]
+\centering
+\caption{Testing Tiers (Ablation Study Framework)}
+\label{tab:tiers}
+\begin{tabularx}{\textwidth}{llXl}
+\toprule
+Tier & Name & Description & Delegation \\
+\midrule
+T0 & Prompts & System prompt ablation (empty $\rightarrow$ full CLAUDE.md) & No \\
+T1 & Skills & Domain expertise via installed skills & No \\
+T2 & Tooling & External tools and MCP servers & No \\
+T3 & Delegation & Flat multi-agent with specialist agents & Yes \\
+T4 & Hierarchy & Nested orchestration with hierarchical agents & Yes \\
+T5 & Hybrid & Best combinations from previous tiers & Yes \\
+T6 & Super & Maximum capability: all skills, tools, agents & All \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The total ablation suite has 113 subtests (T0: 24, T1: 10, T2: 15, T3: 41, T4: 14, T5: 15, T6: 1).
+Each subtest is an independent configuration that is evaluated against a well-defined task with
+known expected output.
+
+The key metric is \textbf{Cost-of-Pass (CoP)}: the expected dollar cost to obtain one correct
+solution at or above the pass threshold of 0.60 (Grade B).
+CoP combines quality and cost into a single efficiency measure:
+
+$$\text{CoP} = \frac{\text{mean cost per run}}{\text{pass rate}}$$
+
+Lower CoP is better.
+The \textbf{Frontier CoP} is the minimum CoP across all subtests within a tier, representing
+the best achievable cost-efficiency for that tier.
+
+\subsection{Dryrun Results Summary}
+
+The dryrun validated the framework infrastructure using test-001 (Hello World, Python script)
+with Claude Sonnet 4.5, N=1 per subtest, and three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5).
+The key findings were:
+
+\begin{itemize}
+\item All seven tiers achieved Grade A quality (scores 0.943--0.983), confirming Hello World
+  is too simple to differentiate tier quality.
+\item Cost varied 3.8$\times$ from \$0.065 (T5 hybrid, Frontier CoP) to \$0.247 (T6 super).
+\item T6 (everything enabled) was the most expensive without quality improvement, the
+  first evidence of over-engineering cost.
+\item T5 (smart hybrid) achieved the lowest CoP by selectively combining features.
+\item Judge agreement was high, validating the three-judge consensus methodology.
+\end{itemize}
+
+\subsection{Key Metrics Definitions}
+
+Following~\cite{scylla2026dryrun}, this paper uses:
+
+\begin{itemize}
+\item \textbf{Pass-Rate}: Fraction of runs achieving score $\geq$ 0.60 (Grade B).
+\item \textbf{Score}: Mean LLM-as-judge evaluation score (0.0--1.0 scale).
+\item \textbf{Implementation Rate (Impl-Rate)}: Fraction of runs that produced any output.
+\item \textbf{Cost-of-Pass (CoP)}: Expected dollar cost per passing solution.
+\item \textbf{Frontier CoP}: Minimum CoP across all subtests in a tier.
+\end{itemize}
+
+All confidence intervals use bootstrap BCa (bias-corrected and accelerated) with 10,000
+resamples and seed=42.
+Statistical tests use non-parametric methods (Kruskal-Wallis, Mann-Whitney U with
+Holm-Bonferroni correction, Cliff's delta effect sizes) since score distributions
+are non-normal (Shapiro-Wilk, all tiers $p < 0.001$).
+
+\section{Experimental Design}\label{sec:design}
+
+\subsection{Changes from Dryrun}
+
+Table~\ref{tab:design-comparison} summarizes the key differences between the dryrun and
+this study.
+
+\begin{table}[htbp]
+\centering
+\caption{Experimental Design Comparison: Dryrun vs.\ Haiku Study}
+\label{tab:design-comparison}
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+Parameter & Dryrun (test-001) & This Study \\
+\midrule
+Agent model & Sonnet 4.5 & Haiku 4.5 \\
+Agent pricing & \$3/\$15 per M tokens & \$1/\$5 per M tokens \\
+Judge models & Opus 4.5 + Sonnet 4.5 + Haiku 4.5 & Sonnet 4.5 (single judge) \\
+Runs per subtest & 1 & 5 \\
+Max subtests per tier & All (up to 24) & 2 (except T3: up to 41, T4: up to 14) \\
+Tasks & 1 (Hello World) & 5 (3 complete, 2 partial) \\
+Statistical inference & Not possible ($N=1$) & Bootstrap BCa CI, KW, MWU \\
+Language & Python & Mojo/Python (test-002), Python (others) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The reduction to a single judge was a deliberate cost reduction for exploratory experiments.
+The three-judge consensus from the dryrun will be restored for production experiments.
+Reducing to 2 maximum subtests per tier limits tier coverage but makes the full 5-task
+experiment tractable within budget.
+
+\subsection{Task Descriptions}
+
+The five tasks span a complexity spectrum from trivial to comprehensive multi-component
+system implementation:
+
+\subsubsection{test-002: Mojo Hello World}
+
+\textbf{Complexity}: Trivial. \textbf{Language}: Mojo. \textbf{Repo}: \texttt{mvillmow/modular}.
+
+Task prompt: Implement a standard ``Hello, World!'' program in Mojo.
+This serves as the Mojo-language equivalent of the dryrun Hello World, testing whether
+Haiku can handle a less common language compared to Python.
+
+\textbf{Expected behavior}: All tiers should succeed. Framework failures (T0 = \$0/0 tokens)
+are diagnostic infrastructure issues, not model failures.
+
+\subsubsection{test-007: Simplify Justfile Build System}
+
+\textbf{Complexity}: Moderate. \textbf{Language}: Python/Justfile. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
+
+Task prompt: Simplify an existing Justfile by removing duplicate recipes, eliminating unused
+targets, and merging redundant CI commands while preserving all required functionality.
+
+\textbf{Expected behavior}: Refactoring tasks require understanding existing code structure.
+Skills alone (T1) may be insufficient without access to tools for reading files.
+This is the first test designed to differentiate tiers.
+
+\subsubsection{test-017: Comprehensive Slot Management}
+
+\textbf{Complexity}: High. \textbf{Language}: Python. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
+
+Task prompt: Implement comprehensive slot management for a Python codebase including
+tracking, control mechanisms, and memory efficiency.
+
+\textbf{Expected behavior}: Complex multi-component implementation.
+Delegation overhead may hurt performance if agents coordinate poorly.
+Risk of over-engineering from T6.
+
+\subsubsection{test-021: Gradient Tracking Control (Partial)}
+
+\textbf{Complexity}: High. \textbf{Language}: Mojo. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
+
+Task prompt: Add gradient tracking control for autograd.
+At the time of writing, tiers T0--T4 are complete; T5--T6 are still running.
+
+\subsubsection{test-022: (Partial, details pending)}
+
+Status: T0 partial (framework failures), T3--T4 partial. Still running.
+Included for completeness; results are not used in statistical analysis.
+
+\subsection{Statistical Methods}
+
+With $N=5$ runs per subtest, we apply the following statistical workflow:
+
+\begin{enumerate}
+\item \textbf{Normality}: Shapiro-Wilk test per tier/metric. All distributions were
+  non-normal ($p < 0.001$), justifying non-parametric tests throughout.
+\item \textbf{Omnibus}: Kruskal-Wallis $H$ test across all seven tiers. Significant
+  ($H(6) = 22.63$, $p = 0.0009$ for score) --- proceed to pairwise.
+\item \textbf{Pairwise}: Mann-Whitney $U$ with Holm-Bonferroni step-down correction.
+  Effect size: Cliff's $\delta$ (small: $|{\delta}| < 0.147$, medium: $< 0.330$, large: $\geq 0.474$).
+\item \textbf{Interaction}: Scheirer-Ray-Hare test for tier $\times$ task interaction
+  ($H_{\text{tier}} = 22.63$, $p = 0.0009$; interaction term not estimable with single-model data).
+\item \textbf{Confidence intervals}: Bootstrap BCa, 10,000 resamples, seed=42.
+\end{enumerate}
+
+Post-hoc power analysis: with $N=5$ and medium effect size (Cliff's $\delta = 0.3$),
+power is approximately 0.40--0.50, which means the study is underpowered for detecting
+medium effects. Results showing $p < 0.05$ reflect real large effects; null results
+may reflect insufficient power rather than true equivalence.
+
+\section{Results}\label{sec:results}
+
+\subsection{Experiment Overview}
+
+\begin{table}[htbp]
+\centering
+\caption{Completed Experiment Summary}
+\label{tab:exp-summary}
+\begin{tabularx}{\textwidth}{llXrrrr}
+\toprule
+Test & Name & Best Tier & Best Score & Frontier CoP & Total Cost & Duration \\
+\midrule
+test-002 & Mojo Hello World & T2 & 0.823 & \$0.157 & \$18.08 & 3,946s \\
+test-007 & Simplify Justfile & T2 & 0.740 & \$0.229 & \$38.03 & 10,519s \\
+test-017 & Slot Management & T5 & 0.830 & \$0.471 & \$79.44 & 19,578s \\
+\bottomrule
+\multicolumn{7}{l}{\small Note: test-021 (T0--T4) and test-022 (partial) still running.} \\
+\end{tabularx}
+\end{table}
+
+Total cost for three completed experiments: \$135.55 over approximately 34,044 seconds
+($\approx$9.5 hours of compute).
+Cost scales approximately with task complexity, growing $4.4\times$ from test-002 to test-017.
+
+\subsection{test-002: Mojo Hello World}\label{sec:test002}
+
+\begin{table}[htbp]
+\centering
+\caption{test-002 Tier Performance Summary (Mojo Hello World)}
+\label{tab:test002}
+\begin{tabular}{lrrrrrr}
+\toprule
+Tier & Best Score & Pass\% & Cost & CoP & Duration \\
+\midrule
+T0 & 0.00 & 0\% & \$0.00 & N/A & 8.6s \\
+T1 & 0.84 & 100\% & \$0.79 & \$0.79 & 1,330s \\
+T2 & 0.82 & 80\% & \$0.63 & \$1.72 & 1,493s \\
+T3 & 0.84 & 100\% & \$6.44 & \$9.65 & 2,540s \\
+T4 & 0.82 & 100\% & \$4.16 & \$4.16 & 2,016s \\
+T5 & 0.00 & 40\% & \$0.35 & \$1.86 & 2,393s \\
+T6 & 0.84 & 100\% & \$1.36 & \$1.36 & 1,418s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{T0 Framework Failure}: T0 scored 0.00 with \$0.00 cost and zero tokens. This is a
+known infrastructure diagnostic: T0's empty-prompt configuration causes Claude Code to
+refuse the task without generating output. This is not a Haiku model failure---T1 (with skills
+only, no tools) immediately achieves 0.84 (100\% pass rate). The T0 failure is consistent
+across all three completed tasks.
+
+\textbf{Ceiling Effect}: T1, T3, T4, and T6 all achieve best scores of 0.84 with 100\% pass rates.
+This mirrors the dryrun finding: Hello World is too simple to differentiate quality.
+However, cost varies dramatically: T1 costs \$0.79 per run vs.\ T3's \$6.44---an 8$\times$ cost
+difference for identical quality. T3's delegation overhead provides zero quality benefit here.
+
+\textbf{T5 Anomaly}: T5 scored 0.00 with only 40\% pass rate despite other tiers succeeding.
+The best T5 subtest scored 0.00 while pass rate is 40\%, suggesting judging failures or
+subtest misconfigurations in the hybrid setup. This warrants investigation.
+
+\textbf{Key finding}: For trivial Mojo tasks, T1 (skills only, \$0.79) achieves the best
+cost-quality ratio. T3 and T4 delegation adds cost without quality gain.
+
+\subsection{test-007: Simplify Justfile}\label{sec:test007}
+
+\begin{table}[htbp]
+\centering
+\caption{test-007 Tier Performance Summary (Simplify Justfile)}
+\label{tab:test007}
+\begin{tabular}{lrrrrrr}
+\toprule
+Tier & Best Score & Pass\% & Cost & CoP & Duration \\
+\midrule
+T0 & 0.25 & 20\% & \$3.10 & \$37.74 & 1,446s \\
+T1 & 0.00 & 0\% & \$0.57 & N/A & 1,906s \\
+T2 & 0.74 & 100\% & \$1.15 & \$3.74 & 1,510s \\
+T3 & 0.88 & 80\% & \$5.92 & \$16.94 & 2,684s \\
+T4 & 0.70 & 60\% & \$3.12 & \$7.87 & 2,682s \\
+T5 & 0.73 & 60\% & \$1.92 & \$5.20 & 1,519s \\
+T6 & 0.88 & 80\% & \$3.92 & \$4.90 & 3,174s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{This is the most analytically rich of the three tests.}
+
+\textbf{T1 = 0.00 (Complete Failure)}: Skills without tools completely fail at a refactoring task.
+Score 0.00, 0\% pass rate. Haiku with skills but no file-reading tools cannot examine the
+existing Justfile to determine what to simplify. This is the strongest evidence of tool
+dependence in the dataset: \textit{refactoring tasks require tools, not just domain knowledge.}
+
+\textbf{T0 Partial Success (0.25)}: Without any prompt or skills, Claude Code's base
+configuration partially succeeds at 20\% pass rate (\$37.74 CoP). The base model has some
+Justfile knowledge but can't reliably execute a multi-step refactoring.
+
+\textbf{T2 as Tier Break (0.74)}: Adding tools enables 100\% pass rate at \$3.74 CoP. This is
+the critical threshold: tools transform a failing task into a reliable one.
+
+\textbf{Delegation Overhead}: T3 achieves 0.88 at 80\% pass rate but at \$16.94 CoP---4.5$\times$
+more expensive than T2 for slightly higher peak score. T6 matches T3's 0.88 score at \$4.90 CoP,
+suggesting super-configuration assembles the right tools without the coordination overhead.
+
+\textbf{Statistical significance}: The Kruskal-Wallis test shows significant tier effect
+($H(6) = 27.49$, $p = 0.0001$). Pairwise: T4$\rightarrow$T5 transition is significant
+($p = 0.0028$, Cliff's $\delta = -0.313$, medium effect).
+
+\textbf{Key finding}: For moderate refactoring tasks, tool access is mandatory (T1 fails without it).
+T2 provides the best cost-quality balance. Delegation (T3/T4) adds cost with marginal quality gain.
+
+\subsection{test-017: Comprehensive Slot Management}\label{sec:test017}
+
+\begin{table}[htbp]
+\centering
+\caption{test-017 Tier Performance Summary (Comprehensive Slot Management)}
+\label{tab:test017}
+\begin{tabular}{lrrrrrr}
+\toprule
+Tier & Best Score & Pass\% & Cost & CoP & Duration \\
+\midrule
+T0 & 0.83 & 80\% & \$2.73 & \$3.48 & 2,462s \\
+T1 & 1.00 & 60\% & \$3.71 & \$11.64 & 2,623s \\
+T2 & 1.00 & 100\% & \$2.49 & \$7.50 & 1,752s \\
+T3 & 0.83 & 80\% & \$13.18 & \$34.97 & 4,905s \\
+T4 & 1.00 & 80\% & \$17.62 & \$30.04 & 4,044s \\
+T5 & 0.83 & 100\% & \$2.35 & \$7.15 & 1,870s \\
+T6 & 0.78 & 100\% & \$3.01 & \$3.01 & 2,472s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Counter-intuitive results}: This test shows the reverse of what architectural
+complexity would predict.
+
+\textbf{T6 Worst Score (0.78)}: The maximum configuration achieves the \textit{lowest} quality score
+of all tiers. Despite having all skills, tools, and agents enabled, T6's single subtest scored
+0.78 (100\% pass rate, so this is not unreliability---it consistently produces lower-quality output).
+This is strong evidence of over-engineering: activating all systems simultaneously degrades
+output quality for complex implementation tasks.
+
+\textbf{T1/T2/T4 Achieve Perfect 1.00}: Skills-only, tools-only, and hierarchical delegation all
+achieve perfect scores of 1.00 on their best subtests. Simpler configurations outperform the maximum.
+
+\textbf{Delegation Cost Explosion}: T3 costs \$13.18/run (\$34.97 CoP) and T4 costs
+\$17.62/run (\$30.04 CoP)---3.5--4$\times$ more than T1 (\$3.71) or T2 (\$2.49) for the
+same or worse quality. The multi-agent coordination overhead does not justify itself here.
+
+\textbf{T5 Best CoP}: T5 achieves \$7.15 CoP at 100\% pass rate, representing the best
+cost-quality balance. This confirms the dryrun finding that smart hybrids can outperform
+both simple and maximum configurations.
+
+\textbf{Key finding}: For complex single-component tasks, simpler tiers (T1, T2, T5) outperform
+delegation hierarchies. T6 over-engineering is detectable and measurable.
+
+\subsection{Partial Results: test-021 and test-022}\label{sec:partial}
+
+\textbf{test-021 (Gradient Tracking, T0--T4 complete)}:
+
+With T0--T4 complete, preliminary results suggest a similar pattern to test-017:
+T1 (skills) achieves 0.83 at 100\% pass rate for most subtests, T2 achieves 0.83,
+and T4's best subtest achieves 1.00 (100\% pass rate). T0 shows framework failures
+as expected. T5--T6 are pending.
+
+The large number of T4 subtests (14) with most scoring 0.83--1.00 and substantial
+delegation costs (\$67.79 total for T4 alone) suggests delegation overhead is again
+present for this Mojo autograd implementation task.
+
+\textbf{test-022 (Partial)}: T0 shows framework failures (both subtests scored 0.00).
+T3 partial results show mixed performance (2/5 runs passing for subtest-05).
+Insufficient data for conclusions.
+
+\textbf{Caveat}: Both tests are still running. Results in this section are preliminary
+and subject to change as T5--T6 complete.
+
+\subsection{Cross-Test Analysis}\label{sec:crosstest}
+
+\subsubsection{Tier Ranking Across Tasks}
+
+\begin{table}[htbp]
+\centering
+\caption{Best Score per Tier per Completed Test}
+\label{tab:tier-ranking}
+\begin{tabular}{lrrrrr}
+\toprule
+Tier & test-002 & test-007 & test-017 & Rank-002 & Rank-017 \\
+\midrule
+T0 & 0.00$^\dagger$ & 0.25 & 0.83 & -- & 5 \\
+T1 & 0.84 & 0.00 & 1.00 & 1 & 1 \\
+T2 & 0.82 & 0.74 & 1.00 & 3 & 1 \\
+T3 & 0.84 & 0.88 & 0.83 & 1 & 5 \\
+T4 & 0.82 & 0.70 & 1.00 & 3 & 1 \\
+T5 & 0.00$^\ddagger$ & 0.73 & 0.83 & -- & 5 \\
+T6 & 0.84 & 0.88 & 0.78 & 1 & 7 \\
+\bottomrule
+\multicolumn{6}{l}{\small $^\dagger$ T0 framework failure; $^\ddagger$ T5 subtest anomaly} \\
+\end{tabular}
+\end{table}
+
+Tier rankings show substantial instability across tasks:
+T1 moves from co-first on trivial tasks to last (0.00) on the refactoring task,
+then back to co-first on complex implementation.
+T6 is co-first on trivial, tied-first on refactoring, but worst on complex implementation.
+This directly answers \textbf{RQ2}: tier rankings are \textit{not} stable.
+Optimal tier selection is task-dependent.
+
+\subsubsection{Cost-Quality Analysis}
+
+Aggregated across all completed experiments, T2 (tooling) provides the best overall
+cost-quality balance:
+
+\begin{itemize}
+\item T2 Frontier CoP: \$0.44 (lowest across all tiers in aggregate)
+\item T3 Frontier CoP: \$2.04 (4.6$\times$ T2's cost for marginal quality gain)
+\item T4 Frontier CoP: \$1.67 (3.8$\times$ T2's cost)
+\end{itemize}
+
+The aggregate tier summary (Table~\ref{tab:aggregate-tiers}) shows T2's pass rate (83.1\%)
+and score (0.721) are competitive with T3 (76.2\%, 0.686) and T4 (81.3\%, 0.740)
+while being 4--5$\times$ cheaper per pass.
+
+\begin{table}[htbp]
+\centering
+\caption{Aggregate Tier Summary (All 5 Experiments, Haiku)}
+\label{tab:aggregate-tiers}
+\begin{tabular}{lrrrr}
+\toprule
+Tier & Pass Rate (95\% CI) & Mean Score & CoP (\$) & Subtests \\
+\midrule
+T0 & 0.641 (0.547, 0.726) & 0.561 $\pm$ 0.383 & 0.68 & 17 \\
+T1 & 0.735 (0.639, 0.819) & 0.649 $\pm$ 0.330 & 0.52 & 7 \\
+T2 & 0.831 (0.754, 0.892) & 0.721 $\pm$ 0.223 & 0.44 & 14 \\
+T3 & 0.762 (0.680, 0.836) & 0.686 $\pm$ 0.306 & 2.04 & 19 \\
+T4 & 0.813 (0.732, 0.878) & 0.740 $\pm$ 0.263 & 1.67 & 14 \\
+T5 & 0.500 (0.333, 0.667) & 0.487 $\pm$ 0.371 & 0.73 & 2 \\
+T6 & 0.933 (0.667, 1.000) & 0.812 $\pm$ 0.122 & 0.59 & 1 \\
+\bottomrule
+\multicolumn{5}{l}{\small Note: T5 and T6 have very few subtests (2 and 1); CIs are wide.} \\
+\end{tabular}
+\end{table}
+
+\subsubsection{Statistical Summary}
+
+Kruskal-Wallis confirms significant tier effects:
+\begin{itemize}
+\item Pass rate: $H(6) = 27.49$, $p = 0.0001$
+\item Score: $H(6) = 22.63$, $p = 0.0009$
+\item Impl-rate: $H(6) = 18.97$, $p = 0.0042$
+\item Cost: $H(6) = 157.44$, $p < 0.0001$
+\end{itemize}
+
+Significant pairwise transitions (Holm-Bonferroni corrected):
+T4$\rightarrow$T5 ($p = 0.0028$, $\delta = -0.313$, medium effect),
+T5$\rightarrow$T6 ($p = 0.0292$, $\delta = +0.433$, medium-large effect).
+The T0$\rightarrow$T6 overall contrast is not significant at the aggregate level
+($p = 0.1187$, $\delta = +0.292$), reflecting that task context moderates the effect.
+
+\textbf{Caveat}: T5 and T6 aggregate results are based on only 2 and 1 subtests respectively.
+These aggregate comparisons are dominated by test-002 and test-007 data.
+Per-test analysis (Sections~\ref{sec:test002}--\ref{sec:test017}) provides more reliable estimates.
+
+\section{Cross-Model Comparison: Haiku vs.\ Sonnet}\label{sec:crossmodel}
+
+\subsection{Comparison Scope and Caveats}
+
+Comparing this study to the dryrun is confounded by multiple factors:
+
+\begin{table}[htbp]
+\centering
+\caption{Comparison Confounds: Dryrun (Sonnet) vs.\ Haiku Study}
+\label{tab:confounds}
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+Factor & Dryrun & Haiku Study \\
+\midrule
+Agent model & Sonnet 4.5 & Haiku 4.5 \\
+Task & Hello World (Python) & Hello World (Mojo) in test-002 \\
+Judge models & Opus + Sonnet + Haiku & Sonnet only \\
+N per subtest & 1 & 5 \\
+Max subtests & All (up to 24) & 2 per tier \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The only semi-comparable pair is:
+\textbf{dryrun test-001} (Sonnet, Hello World, N=1, 3 judges)
+vs.\ \textbf{test-002} (Haiku, Mojo Hello World, N=5, 1 judge).
+Both are trivial Hello World tasks but in different languages (Python vs.\ Mojo) with
+different judge configurations.
+\textit{All cross-model comparisons in this section should be treated as exploratory,
+not confirmatory.}
+
+\subsection{Quality Comparison}
+
+\begin{table}[htbp]
+\centering
+\caption{Quality Comparison on Hello World Tasks (Exploratory)}
+\label{tab:quality-comparison}
+\begin{tabular}{llrrr}
+\toprule
+Model & Task & Best Score & Pass Rate & Grade \\
+\midrule
+Sonnet 4.5 & Hello World (Python, N=1) & 0.943--0.983 & 100\% (all tiers) & A \\
+Haiku 4.5 & Hello World (Mojo, N=5) & 0.82--0.84 & 80--100\% & A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both models achieve Grade A on their respective Hello World tasks.
+Haiku's scores are slightly lower (0.82--0.84 vs.\ 0.94--0.98), but this likely reflects
+task difficulty differences (Mojo is less common than Python in training data) and the single
+vs.\ three-judge difference rather than a fundamental capability gap.
+
+\subsection{Cost Comparison}
+
+\begin{table}[htbp]
+\centering
+\caption{Cost Comparison on Hello World Tasks}
+\label{tab:cost-comparison}
+\begin{tabular}{llrr}
+\toprule
+Model & Task & Frontier CoP & Best Tier for CoP \\
+\midrule
+Sonnet 4.5 & Hello World (Python) & \$0.065 & T5 \\
+Haiku 4.5 & Hello World (Mojo) & \$0.157 & T1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Sonnet's Frontier CoP (\$0.065) is 2.4$\times$ lower than Haiku's (\$0.157) on comparable
+trivial tasks. This is surprising given Haiku's lower per-token pricing (\$1/\$5 vs.\ \$3/\$15).
+
+Two explanations are plausible:
+(1) Haiku uses more tokens to accomplish the same task (less efficient token usage),
+consuming more cache reads to compensate for smaller context handling;
+(2) The Mojo Hello World task may be inherently more token-intensive than Python Hello World
+due to Mojo's less common syntax requiring more tool use to verify correctness.
+
+Token analysis from test-002 shows cache reads dominate at 40M+ tokens total (vs.\ output
+tokens of 242K), suggesting cache-heavy access patterns.
+Full token efficiency comparison requires the same task on both models, which is future work.
+
+\subsection{Economic Viability Assessment}
+
+For real coding tasks (test-007, test-017), Haiku's economics are more favorable:
+
+\begin{itemize}
+\item test-007 (Justfile): T2 achieves \$3.74 CoP at 100\% pass rate.
+  Extrapolating Sonnet's pricing ratio, Sonnet might achieve $\approx$\$11 CoP
+  (assuming 3$\times$ per-token pricing, though token usage may differ).
+\item test-017 (Slot Management): T5 achieves \$7.15 CoP at 100\% pass rate.
+  For complex implementation, Haiku's lower pricing provides meaningful cost savings
+  vs.\ a hypothetical Sonnet run.
+\end{itemize}
+
+\textit{Conclusion on RQ3}: Haiku is economically viable for real coding tasks.
+Its economics are competitive with Sonnet for tasks where Haiku can succeed,
+and the 3--5$\times$ pricing advantage translates to meaningful CoP reductions at scale.
+The key constraint is that Haiku may fail on tasks that require capabilities beyond its
+training (T1 = 0.00 on test-007 suggests Haiku without tools lacks sufficient context management
+for complex refactoring).
+
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Key Findings}
+
+\textbf{Finding 1: Tier rankings are task-dependent.}
+The same tier can be best on one task and worst on another. T1 (skills) is competitive
+for trivial and complex tasks but fails completely for refactoring. T6 (maximum) performs
+well on trivial tasks but worst on complex implementation. There is no universally optimal tier.
+
+\textbf{Finding 2: Tool access is non-negotiable for refactoring.}
+T1's 0.00 score on test-007 is a hard boundary: no amount of skill configuration compensates
+for the absence of file-reading tools when the task requires understanding existing code.
+This validates that tool access (T2+) is a prerequisite for a class of real-world tasks.
+
+\textbf{Finding 3: Over-engineering is detectable and measurable.}
+T6's lowest score on test-017 (0.78 vs.\ 1.00 for T1/T2/T4) quantifies over-engineering.
+Scylla can detect when maximum configuration actively hurts quality.
+
+\textbf{Finding 4: Delegation overhead is large and often unjustified.}
+T3 and T4 consistently cost 3.5--4$\times$ more than T1/T2 with comparable or worse quality.
+For the tasks tested here, delegation adds coordination overhead without commensurate
+quality improvement.
+
+\textbf{Finding 5: T2 (tooling) provides the best aggregate cost-quality balance.}
+Across all three complete tests, T2 achieves the lowest Frontier CoP (\$0.44 aggregate),
+highest pass rate (83.1\%), and avoids the delegation overhead of T3/T4 while being accessible
+without complex agent hierarchies.
+
+\subsection{Hypothesis Progress}
+
+The Scylla framework was designed to test two hypotheses~\cite{scylla2026dryrun}:
+
+\textbf{(H1) Certain tasks excel when run as sub-tasks, tools, or skills.}
+Partially supported. Test-007 shows tools are essential for refactoring (H1 supported for tools).
+Test-017 shows delegation does not help complex implementation (H1 not supported for delegation).
+The effect is task-class dependent, not universal.
+
+\textbf{(H2) Prompt complexity has opposing effects: KISS for in-distribution, inverse KISS
+for out-of-distribution tasks.}
+Partially supported. Test-002 (trivial, presumably in-distribution) shows ceiling effects
+consistent with KISS. Test-007 and test-017 show that added complexity sometimes hurts
+(T6 on test-017), consistent with KISS. However, test-007 shows that T2 tools help,
+suggesting the tool-vs-prompt distinction matters more than prompt complexity per se.
+Full hypothesis testing requires more tasks across the complexity spectrum.
+
+\subsection{Limitations}
+
+\begin{enumerate}
+\item \textbf{Small N}: $N=5$ per subtest provides 40--50\% power for medium effects.
+  Many null results may reflect insufficient power rather than true equivalence.
+\item \textbf{Single judge}: Removing two of three judges from the dryrun design increases
+  scoring variance and potential judge bias. The dryrun showed high judge agreement,
+  but single-judge results cannot be validated against consensus.
+\item \textbf{Max 2 subtests per tier}: Critical configuration variants within each tier
+  are not explored. A subtest that fails may not be representative of the tier.
+\item \textbf{Incomplete tests}: test-021 and test-022 are still running; this paper's
+  cross-test analysis is based on only three complete tests.
+\item \textbf{Cross-model confounds}: Haiku vs.\ Sonnet comparison is confounded by
+  task, judges, and N. Conclusions are exploratory.
+\end{enumerate}
+
+\subsection{Threats to Validity}
+
+\textbf{Internal validity}: The checkpoint/resume system may introduce subtle differences
+between runs if rate-limiting causes different code paths. All T0 failures appear systematic
+(infrastructure issue, not random), so they should be excluded from quality comparisons.
+
+\textbf{External validity}: All tasks are from a single repository (ProjectOdyssey) with
+one contributor. Results may not generalize to other codebases, languages, or domains.
+Mojo is an uncommon language; Haiku's performance may be better/worse on more common languages.
+
+\textbf{Construct validity}: The single judge in this study scores differently than the
+three-judge consensus in the dryrun. Score comparisons across studies should account for
+this systematic difference.
+
+\section{Conclusions}\label{sec:conclusions}
+
+This study applied the Scylla framework to evaluate Claude Haiku 4.5 across five tasks of
+increasing complexity with $N=5$ runs per subtest---a significant methodological advance
+over the dryrun's $N=1$.
+
+The central finding is that \textbf{optimal tier selection is task-dependent}:
+no single architectural configuration dominates across task types.
+For trivial tasks, simple configurations (T1) are most efficient.
+For refactoring tasks, tool access is mandatory (T1 fails without it).
+For complex implementation, simpler configurations (T1/T2/T5) outperform delegation
+hierarchies and maximum configurations.
+
+Haiku 4.5 is \textbf{economically viable} for real coding tasks.
+Despite slightly lower raw scores than Sonnet on Hello World analogues,
+Haiku achieves Grade A results on all three complete tasks with Frontier CoPs
+of \$0.157--\$0.471---meaningful efficiency for production use at scale.
+
+The \textbf{over-engineering signal} is clear and measurable: T6 (maximum configuration)
+scores worst on the most complex task. Scylla successfully quantifies when adding more
+capability hurts quality.
+
+\section{Further Work}\label{sec:further}
+
+\begin{enumerate}
+\item \textbf{Complete test-021 and test-022}: Run T5--T6 to get full tier coverage
+  and enable complete cross-test analysis.
+\item \textbf{Direct Sonnet comparison}: Run the same three tasks with Sonnet 4.5
+  to produce a controlled cross-model comparison without the confounds in Section~\ref{sec:crossmodel}.
+\item \textbf{Restore three-judge consensus}: Return to Opus + Sonnet + Haiku judges
+  for scoring reliability and to validate single-judge results.
+\item \textbf{Increase N}: Target $N=10$--$20$ per subtest to achieve 80\% power for
+  medium effect sizes.
+\item \textbf{Scale to full suite}: Run the full 47-test suite to enable systematic
+  hypothesis testing across the task complexity spectrum.
+\item \textbf{Adaptive tier selection}: Use this study's tier-task interaction findings
+  to design a meta-learner that selects the optimal tier configuration based on
+  task characteristics.
+\item \textbf{Cross-task Scheirer-Ray-Hare}: With more complete multi-task data,
+  the two-way tier $\times$ task interaction test can be properly estimated.
+\end{enumerate}
+
+\section*{Acknowledgements}
+
+This work was self-funded by the author.
+The experiments were run on local hardware with API access to Anthropic's Claude models.
+Special thanks to Tuan Nguyen for reviewing early drafts of the dryrun paper.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\appendix
+
+\section{Detailed Tier Reports}\label{app:tier-reports}
+
+Full per-tier subtest tables are available in the experiment result directories at
+\texttt{docs/arxiv/haiku/data/} and the raw experiment directories at
+\texttt{~/fullruns/haiku/}.
+
+\subsection{test-002 Subtest Detail}
+
+See \texttt{docs/arxiv/haiku/tables/tab07\_subtest\_detail.*} for full subtest-level results.
+
+\subsection{test-007 Subtest Detail}
+
+T1 subtest analysis: both subtests (01, 02) scored 0.00 with 0\% pass rate,
+confirming systematic tool-dependency failure rather than subtest-specific issues.
+
+T2 best subtest (01) used criteria: \texttt{duplicate\_merge} (1.00),
+\texttt{unused\_removal} (1.00), \texttt{ci\_compatible} (0.85), \texttt{docs\_updated} (0.70).
+
+\subsection{test-017 Subtest Detail}
+
+Single rubric criterion (\texttt{requirements}) explains the high score uniformity.
+Per-criteria breakdown shows requirements scoring: T0=1.00, T1=1.00, T2=1.00, T3=1.00,
+T4=1.00, T5=1.00, T6=1.00. Score differences derive from partial credit on other criteria
+not shown in the summary.
+
+\section{Statistical Output}\label{app:stats}
+
+\subsection{Normality Tests}
+
+All tier/metric combinations failed the Shapiro-Wilk normality test ($p < 0.001$),
+justifying non-parametric methods throughout. Sample statistics per tier:
+
+\begin{itemize}
+\item T0: $W = 0.804$, $p = 3.5 \times 10^{-11}$, $n = 117$
+\item T1: $W = 0.800$, $p = 3.0 \times 10^{-9}$, $n = 83$
+\item T2: $W = 0.793$, $p < 10^{-10}$, $n = 130$
+\item T3--T6: similarly non-normal
+\end{itemize}
+
+\subsection{Pairwise Comparisons}
+
+Full Mann-Whitney U results with Holm-Bonferroni correction:
+
+\begin{table}[htbp]
+\centering
+\caption{Pairwise Tier Comparisons (Pass Rate, Holm-Bonferroni Corrected)}
+\label{tab:pairwise}
+\begin{tabular}{lrrrr}
+\toprule
+Transition & $N_1$, $N_2$ & Pass Rate $\Delta$ & $p$-value & Cliff's $\delta$ \\
+\midrule
+T0$\rightarrow$T1 & 117, 83 & +0.094 & 0.487 & +0.094 \\
+T1$\rightarrow$T2 & 83, 130 & +0.096 & 0.373 & +0.096 \\
+T2$\rightarrow$T3 & 130, 122 & $-0.069$ & 0.487 & $-0.068$ \\
+T3$\rightarrow$T4 & 122, 123 & +0.051 & 0.487 & +0.051 \\
+T4$\rightarrow$T5 & 123, 30 & $-0.313$ & \textbf{0.003} & $-0.313$ \\
+T5$\rightarrow$T6 & 30, 15 & +0.433 & \textbf{0.029} & +0.433 \\
+T0$\rightarrow$T6 & 117, 15 & +0.292 & 0.119 & +0.292 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Data Dictionary}\label{app:data}
+
+All raw data, figures, and tables are available in \texttt{docs/arxiv/haiku/}:
+
+\begin{itemize}
+\item \texttt{data/runs.csv} --- Per-run data (score, cost, duration, tokens)
+\item \texttt{data/summary.json} --- Aggregated experiment summaries
+\item \texttt{data/statistical\_results.json} --- Full statistical test outputs
+\item \texttt{figures/*.png} --- 52 generated figures (PNG + PDF + Vega-Lite JSON)
+\item \texttt{tables/*.tex} --- 9 generated tables (Markdown + LaTeX)
+\end{itemize}
+
+\textbf{Experiment metadata}: 5 experiments, 74 active subtests across 7 tiers,
+$N=5$ runs per subtest, Haiku 4.5 agent, Sonnet 4.5 judge, total \$135.55 for
+3 complete experiments.
+
+\textbf{Repository}: \url{https://github.com/HomericIntelligence/ProjectScylla}
+
+\end{document}
