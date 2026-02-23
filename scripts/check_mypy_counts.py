@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Validate that MYPY_KNOWN_ISSUES.md counts match actual mypy output.
 
-This script runs mypy with all disabled error codes re-enabled, counts violations
-per error code, and compares against the documented table in MYPY_KNOWN_ISSUES.md.
+This script runs mypy in a single invocation over all tracked paths, re-enabling
+tests-only suppressed error codes, counts violations per error code, and compares
+against the documented table in MYPY_KNOWN_ISSUES.md.
 
-Every PR that fixes mypy errors must update MYPY_KNOWN_ISSUES.md. This script
-enforces that requirement as a pre-commit hook.
+scylla/ and scripts/ are fully compliant (#687) — only tests/ has suppressed codes
+(tracked in TESTS_ONLY_ERROR_CODES, suppressed via [[tool.mypy.overrides]], see #940).
+
+Every PR that changes suppressed error counts must update MYPY_KNOWN_ISSUES.md.
+This script enforces that requirement as a pre-commit hook.
 
 Usage:
     # Validate counts (exits 1 if mismatch)
@@ -29,7 +33,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# All error codes fixed in scylla/ and scripts/ — no globally-disabled codes remain (#687)
+# scylla/ and scripts/ are fully compliant — no globally-disabled error codes remain (#687)
 DISABLED_ERROR_CODES: list[str] = []
 
 # Error codes suppressed only in the [[tool.mypy.overrides]] for tests.*
@@ -42,7 +46,7 @@ TESTS_ONLY_ERROR_CODES = [
     "union-attr",
 ]
 
-# All codes tracked across all directories (union of global + tests-only)
+# All tracked codes (global disabled + tests-only); currently only tests-only remain
 ALL_TRACKED_CODES = DISABLED_ERROR_CODES + TESTS_ONLY_ERROR_CODES
 
 # Paths mypy checks (must match pre-commit hook file patterns)
@@ -179,9 +183,9 @@ def parse_known_issues_per_dir(md_path: Path) -> dict[str, dict[str, int]]:
 
 
 def run_mypy_and_count(repo_root: Path) -> dict[str, int]:
-    """Run mypy with all disabled error codes re-enabled and count errors by code.
+    """Run mypy with tracked error codes re-enabled and count errors by code.
 
-    Runs mypy over all MYPY_PATHS together and returns aggregate counts.
+    Runs mypy in a single invocation and returns aggregate counts across all paths.
 
     Args:
         repo_root: Repository root directory (working directory for mypy).
@@ -199,58 +203,58 @@ def run_mypy_and_count(repo_root: Path) -> dict[str, int]:
 
 
 def run_mypy_per_dir(repo_root: Path) -> dict[str, dict[str, int]]:
-    """Run mypy per directory and return per-directory error counts.
+    """Run mypy in a single invocation and partition error counts by directory.
 
-    Runs mypy once for each path in MYPY_PATHS with all disabled error codes
-    re-enabled, then returns a dict keyed by directory path.
+    Runs mypy once over all MYPY_PATHS with TESTS_ONLY_ERROR_CODES re-enabled,
+    then partitions output lines by directory prefix. This replaces the previous
+    3-invocation approach to cut CI time by ~2/3 (closes #1005).
 
     Args:
         repo_root: Repository root directory (working directory for mypy).
 
     Returns:
-        Dict mapping directory path (e.g. "scylla/") to its error code counts.
+        Dict mapping directory path (e.g. "tests/") to its error code counts.
 
     """
-    result: dict[str, dict[str, int]] = {}
+    # Build single command covering all paths
+    # Enable tests-only codes so they are counted when they appear in tests/
+    # (DISABLED_ERROR_CODES is empty — scylla/ and scripts/ are fully compliant)
+    all_tracked = set(TESTS_ONLY_ERROR_CODES)
 
-    for path in MYPY_PATHS:
-        # Enable global disabled codes for all paths; also enable tests-only codes for tests/
-        codes_to_enable = list(DISABLED_ERROR_CODES)
-        if path == "tests/":
-            codes_to_enable += TESTS_ONLY_ERROR_CODES
-        tracked_for_path = set(codes_to_enable)
+    cmd = ["pixi", "run", "mypy"] + list(MYPY_PATHS)
+    for code in TESTS_ONLY_ERROR_CODES:
+        cmd += ["--enable-error-code", code]
 
-        cmd = ["pixi", "run", "mypy", path]
-        for code in codes_to_enable:
-            cmd += ["--enable-error-code", code]
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=repo_root,
+        )
+    except FileNotFoundError:
+        print("error: 'pixi' not found. Ensure pixi is installed and in PATH.", file=sys.stderr)
+        sys.exit(2)
 
-        try:
-            proc = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=repo_root,
-            )
-        except FileNotFoundError:
-            print("error: 'pixi' not found. Ensure pixi is installed and in PATH.", file=sys.stderr)
-            sys.exit(2)
+    # Initialize result with empty counts for each directory
+    result: dict[str, dict[str, int]] = {path: {} for path in MYPY_PATHS}
 
-        counts: dict[str, int] = {}
-        for line in proc.stdout.splitlines():
-            # Only count errors from files within the target directory
-            file_match = _FILE_PATH_RE.match(line)
-            if not file_match:
-                continue
-            file_path = file_match.group(1)
-            if not file_path.startswith(path):
-                continue
-            error_match = _ERROR_LINE_RE.search(line)
-            if error_match:
-                code = error_match.group(1)
-                if code in tracked_for_path:
-                    counts[code] = counts.get(code, 0) + 1
+    for line in proc.stdout.splitlines():
+        file_match = _FILE_PATH_RE.match(line)
+        if not file_match:
+            continue
+        file_path = file_match.group(1)
 
-        result[path] = counts
+        # Find which directory this file belongs to
+        owning_dir = next((p for p in MYPY_PATHS if file_path.startswith(p)), None)
+        if owning_dir is None:
+            continue
+
+        error_match = _ERROR_LINE_RE.search(line)
+        if error_match:
+            code = error_match.group(1)
+            if code in all_tracked:
+                result[owning_dir][code] = result[owning_dir].get(code, 0) + 1
 
     return result
 
