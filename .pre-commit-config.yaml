@@ -72,6 +72,28 @@ repos:
         language: system
         files: ^config/models/.*\.yaml$
         pass_filenames: false
+      - id: check-defaults-filename
+        name: Check Defaults Config Filename
+        description: Fails if config/defaults.yaml is renamed or replaced with a non-standard filename
+        entry: pixi run python scripts/check_defaults_filename.py
+        language: system
+        files: ^config/defaults\.yaml$
+        pass_filenames: false
+      - id: check-tier-config-consistency
+        name: Check Tier Config Filename/tier Consistency
+        description: Fails if any config/tiers/*.yaml filename does not match its tier field
+        entry: pixi run python scripts/check_tier_config_consistency.py
+        language: system
+        files: ^config/tiers/.*\.yaml$
+        pass_filenames: false
+      - id: audit-doc-policy
+        name: Audit Doc Policy Violations
+        description: Fails if any markdown file contains command examples that violate CLAUDE.md policies
+        entry: pixi run python scripts/audit_doc_examples.py
+        language: system
+        files: \.md$
+        types: [markdown]
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
