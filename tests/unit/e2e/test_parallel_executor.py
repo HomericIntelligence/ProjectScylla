@@ -6,6 +6,7 @@ Tests cover:
 - Manager() cleanup via finally block
 - run_tier_subtests_parallel: single-subtest path (no coordinator)
 - WorkspaceManager.from_existing() usage in child process
+- _run_subtest_in_process_safe: safe wrapper for worker exceptions
 """
 
 from __future__ import annotations
@@ -51,8 +52,8 @@ def _make_info(
     )
 
 
-class TestRateLimitCoordinatorInitial:
-    """Tests for RateLimitCoordinator initial state."""
+class TestRateLimitCoordinatorInitialState:
+    """Tests for initial state of RateLimitCoordinator."""
 
     def test_not_paused_initially(self) -> None:
         """check_if_paused() returns False before any signal."""
@@ -529,7 +530,12 @@ class TestRunSubtestInProcessSafe:
         assert result.pass_rate == 0.0
 
     def test_never_raises(self, tmp_path) -> None:
-        """Safe wrapper never raises for any Exception subclass from inner function."""
+        """Safe wrapper never raises for any Exception subclass from inner function.
+
+        The wrapper catches Exception (and RateLimitError), converting them to
+        structured SubTestResult objects.  BaseException subclasses like SystemExit
+        are intentionally NOT suppressed (they signal process termination).
+        """
         from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
 
         call_args = self._make_call_args(tmp_path)
