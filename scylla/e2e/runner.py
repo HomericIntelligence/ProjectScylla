@@ -14,7 +14,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from scylla.e2e.scheduler import ParallelismScheduler
 
 from scylla.e2e.checkpoint import (
     E2ECheckpoint,
@@ -273,6 +276,15 @@ class E2ERunner:
             # Resume from checkpoint
             try:
                 self._load_checkpoint_and_config(checkpoint_path)
+
+                # Check for zombie (crashed) experiment and reset if needed
+                if self.checkpoint and self.experiment_dir:
+                    from scylla.e2e.health import is_zombie, reset_zombie_checkpoint
+
+                    if is_zombie(self.checkpoint, self.experiment_dir):
+                        logger.warning("Zombie experiment detected — resetting to 'interrupted'")
+                        self.checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
+
             except Exception as e:
                 logger.warning(f"Failed to resume from checkpoint: {e}")
                 logger.warning("Starting fresh experiment instead")
@@ -287,13 +299,12 @@ class E2ERunner:
 
         return self.experiment_dir / "checkpoint.json"
 
-    def _setup_workspace_and_semaphore(self) -> Any:
-        """Set up workspace manager and global semaphore for parallel execution.
+    def _setup_workspace_and_scheduler(self) -> Any:
+        """Set up workspace manager and parallelism scheduler for parallel execution.
 
         Returns:
-            Manager-created Semaphore for limiting concurrent agents across
-            all tiers. Type annotation is Any due to complexity of Manager
-            proxy types (returns multiprocessing.Manager().Semaphore()).
+            ParallelismScheduler for limiting concurrent operations by memory class
+            across all tiers.
 
         """
         # Create/resume workspace manager
@@ -309,16 +320,20 @@ class E2ERunner:
             # Setup base repo (idempotent - checks for existing clone internally)
             self.workspace_manager.setup_base_repo()
 
-        # Create global semaphore for limiting concurrent agents across ALL tiers
+        # Create per-memory-class scheduler for fine-grained parallelism control
         from multiprocessing import Manager
 
+        from scylla.e2e.scheduler import ParallelismScheduler
+
         manager = Manager()
-        global_semaphore = manager.Semaphore(self.config.parallel_subtests)
-        logger.info(
-            f"Created global semaphore with {self.config.parallel_subtests} concurrent agent limit"
+        scheduler = ParallelismScheduler(
+            manager=manager,
+            parallel_high=self.config.parallel_high,
+            parallel_med=self.config.parallel_med,
+            parallel_low=self.config.parallel_low,
         )
 
-        return global_semaphore
+        return scheduler
 
     def _handle_experiment_interrupt(self, checkpoint_path: Path) -> None:
         """Handle graceful shutdown on interrupt.
@@ -353,17 +368,44 @@ class E2ERunner:
                     save_checkpoint(self.checkpoint, checkpoint_path)
                     logger.warning("💾 Checkpoint saved after interrupt")
 
+    def _validate_filesystem_on_resume(self, current_state: Any) -> None:
+        """Cross-validate filesystem against checkpoint state on resume.
+
+        Logs warnings when checkpoint says we're mid-execution but expected
+        directories or files are missing. Never fails — warnings only.
+
+        Args:
+            current_state: Current ExperimentState being resumed from
+
+        """
+        from scylla.e2e.models import ExperimentState
+
+        if not self.experiment_dir:
+            return
+
+        if current_state == ExperimentState.TIERS_RUNNING:
+            repos_dir = self.results_base_dir / "repos"
+            if not self.experiment_dir.exists():
+                logger.warning(
+                    f"⚠️  Resuming from TIERS_RUNNING but experiment_dir missing: "
+                    f"{self.experiment_dir}"
+                )
+            if not repos_dir.exists():
+                logger.warning(
+                    f"⚠️  Resuming from TIERS_RUNNING but repos/ dir missing: {repos_dir}"
+                )
+
     def _execute_tier_groups(
         self,
         tier_groups: list[list[TierID]],
-        global_semaphore,
+        scheduler: ParallelismScheduler | None,
         previous_baseline: TierBaseline | None = None,
     ) -> dict[TierID, TierResult]:
         """Execute all tier groups with parallel/sequential orchestration.
 
         Args:
             tier_groups: List of tier groups for parallel execution
-            global_semaphore: Semaphore for limiting concurrent agents
+            scheduler: ParallelismScheduler for limiting concurrent operations
             previous_baseline: Optional baseline from previous tier
 
         Returns:
@@ -384,7 +426,7 @@ class E2ERunner:
                 logger.info(f"Starting tier {tier_id.value}")
 
                 tier_result, previous_baseline = self._execute_single_tier(
-                    tier_id, previous_baseline, global_semaphore
+                    tier_id, previous_baseline, scheduler
                 )
                 tier_results[tier_id] = tier_result
 
@@ -393,7 +435,7 @@ class E2ERunner:
                 logger.info(f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}")
 
                 group_results = self._execute_parallel_tier_group(
-                    group, previous_baseline, global_semaphore
+                    group, previous_baseline, scheduler
                 )
                 tier_results.update(group_results)
 
@@ -430,20 +472,20 @@ class E2ERunner:
         self,
         tier_id: TierID,
         previous_baseline: TierBaseline | None,
-        global_semaphore,
+        scheduler: ParallelismScheduler | None,
     ) -> tuple[TierResult, TierBaseline | None]:
         """Execute a single tier sequentially and update baseline.
 
         Args:
             tier_id: The tier to execute
             previous_baseline: Baseline from previous tier (if any)
-            global_semaphore: Semaphore for limiting concurrent agents
+            scheduler: ParallelismScheduler for limiting concurrent operations
 
         Returns:
             Tuple of (tier_result, updated_baseline)
 
         """
-        tier_result = self._run_tier(tier_id, previous_baseline, global_semaphore)
+        tier_result = self._run_tier(tier_id, previous_baseline, scheduler)
 
         # Set baseline for next tier
         updated_baseline = (
@@ -459,14 +501,14 @@ class E2ERunner:
         self,
         group: list[TierID],
         previous_baseline: TierBaseline | None,
-        global_semaphore,
+        scheduler: ParallelismScheduler | None,
     ) -> dict[TierID, TierResult]:
         """Execute multiple tiers in parallel using ThreadPoolExecutor.
 
         Args:
             group: List of tier IDs to execute in parallel
             previous_baseline: Shared baseline for all tiers
-            global_semaphore: Semaphore for limiting concurrent agents
+            scheduler: ParallelismScheduler for limiting concurrent operations
 
         Returns:
             Dictionary mapping tier IDs to their results
@@ -478,9 +520,7 @@ class E2ERunner:
         with ThreadPoolExecutor(max_workers=len(group)) as executor:
             # Submit all tiers in this group
             futures = {
-                executor.submit(
-                    self._run_tier, tier_id, previous_baseline, global_semaphore
-                ): tier_id
+                executor.submit(self._run_tier, tier_id, previous_baseline, scheduler): tier_id
                 for tier_id in group
             }
 
@@ -646,20 +686,91 @@ class E2ERunner:
             - Marks checkpoint as completed
             - Logs completion message
 
+        Note:
+            This method is retained for backward compatibility. In the state machine
+            flow, _save_final_results(), _generate_report(), and _mark_checkpoint_completed()
+            are called individually from _build_experiment_actions().
+
         """
-        # Save final results
         self._save_final_results(result)
-
-        # Generate report
         self._generate_report(result)
-
-        # Mark checkpoint as completed
         self._mark_checkpoint_completed()
 
         logger.info(
             f"✅ Experiment completed in {result.total_duration_seconds:.1f}s, "
             f"total cost: ${result.total_cost:.2f}"
         )
+
+    def _build_experiment_actions(
+        self,
+        tier_groups: list[list[TierID]],
+        scheduler: Any,
+        tier_results: dict[TierID, TierResult],
+        start_time: datetime,
+    ) -> dict:
+        """Build the ExperimentState -> Callable action map for ExperimentStateMachine.
+
+        Each action corresponds to the work done when transitioning OUT of that state.
+        Results are accumulated into the shared tier_results dict via closures.
+
+        Args:
+            tier_groups: Tier dependency groups computed before SM starts
+            scheduler: ParallelismScheduler for concurrent operation limits
+            tier_results: Mutable dict accumulated by TIERS_RUNNING action
+            start_time: Experiment start time for duration calculation
+
+        Returns:
+            Dict mapping ExperimentState to callable
+
+        """
+        from scylla.e2e.models import ExperimentState
+
+        def action_initializing() -> None:
+            # INITIALIZING -> DIR_CREATED: Already done in _initialize_or_resume_experiment.
+            # experiment_dir and checkpoint were created/loaded in _initialize_or_resume_experiment
+            pass
+
+        def action_dir_created() -> None:
+            """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler."""
+            nonlocal scheduler
+            scheduler = self._setup_workspace_and_scheduler()
+
+        def action_repo_cloned() -> None:
+            """REPO_CLONED -> TIERS_RUNNING: Group tiers and log them."""
+            logger.info(f"Tier groups for parallel execution: {tier_groups}")
+
+        def action_tiers_running() -> None:
+            """TIERS_RUNNING -> TIERS_COMPLETE: Execute all tier groups."""
+            results = self._execute_tier_groups(tier_groups, scheduler)
+            tier_results.update(results)
+
+        def action_tiers_complete() -> None:
+            """TIERS_COMPLETE -> REPORTS_GENERATED: Aggregate results and finalize."""
+            assert self.experiment_dir is not None
+            result = self._aggregate_final_results(tier_results, start_time)
+            self._save_final_results(result)
+            self._generate_report(result)
+            # Store result for the final return
+            self._last_experiment_result = result  # type: ignore[attr-defined]
+
+        def action_reports_generated() -> None:
+            """REPORTS_GENERATED -> COMPLETE: Mark checkpoint completed."""
+            self._mark_checkpoint_completed()
+            if hasattr(self, "_last_experiment_result"):
+                logger.info(
+                    f"✅ Experiment completed in "
+                    f"{self._last_experiment_result.total_duration_seconds:.1f}s, "  # type: ignore[attr-defined]
+                    f"total cost: ${self._last_experiment_result.total_cost:.2f}"  # type: ignore[attr-defined]
+                )
+
+        return {
+            ExperimentState.INITIALIZING: action_initializing,
+            ExperimentState.DIR_CREATED: action_dir_created,
+            ExperimentState.REPO_CLONED: action_repo_cloned,
+            ExperimentState.TIERS_RUNNING: action_tiers_running,
+            ExperimentState.TIERS_COMPLETE: action_tiers_complete,
+            ExperimentState.REPORTS_GENERATED: action_reports_generated,
+        }
 
     def run(self) -> ExperimentResult:
         """Run the complete E2E experiment with auto-resume support.
@@ -672,53 +783,105 @@ class E2ERunner:
             ExperimentResult with all tier results and analysis.
 
         """
+        from scylla.e2e.experiment_state_machine import ExperimentStateMachine
+        from scylla.e2e.models import ExperimentState
+
         start_time = datetime.now(timezone.utc)
 
         # Initialize or resume from checkpoint
         checkpoint_path = self._initialize_or_resume_experiment()
 
-        # Setup workspace and global semaphore
-        global_semaphore = self._setup_workspace_and_semaphore()
+        # Update PID in checkpoint (important for zombie detection on resume)
+        if self.checkpoint:
+            self.checkpoint.pid = os.getpid()
 
-        # Group tiers by dependencies
+        # Start heartbeat thread to prevent zombie detection on long runs
+        from scylla.e2e.health import HeartbeatThread
+
+        heartbeat = HeartbeatThread(self.checkpoint, checkpoint_path, interval_seconds=30)
+        heartbeat.start()
+
+        # Compute tier groups up front (needed by action_repo_cloned and action_tiers_running)
         tier_groups = self._get_tier_groups(self.config.tiers_to_run)
-        logger.info(f"Tier groups for parallel execution: {tier_groups}")
 
-        # Execute tier groups with error handling
+        # Shared mutable state accumulated by the TIERS_RUNNING action
         tier_results: dict[TierID, TierResult] = {}
-        try:
-            tier_results = self._execute_tier_groups(tier_groups, global_semaphore)
 
+        # Pre-seed scheduler: on resume from TIERS_RUNNING or later states,
+        # action_dir_created will be skipped so we must set up workspace now.
+
+        _current_exp_state = ExperimentState.INITIALIZING
+        if self.checkpoint:
+            try:
+                _current_exp_state = ExperimentState(self.checkpoint.experiment_state)
+            except ValueError:
+                pass
+
+        _resume_states = {
+            ExperimentState.TIERS_RUNNING,
+            ExperimentState.TIERS_COMPLETE,
+            ExperimentState.REPORTS_GENERATED,
+        }
+        scheduler: Any
+        if _current_exp_state in _resume_states:
+            # Filesystem cross-validation: verify expected dirs exist before resuming
+            self._validate_filesystem_on_resume(_current_exp_state)
+            scheduler = self._setup_workspace_and_scheduler()
+        else:
+            scheduler = None
+
+        # Build ExperimentStateMachine actions
+        actions = self._build_experiment_actions(
+            tier_groups=tier_groups,
+            scheduler=scheduler,
+            tier_results=tier_results,
+            start_time=start_time,
+        )
+
+        esm = ExperimentStateMachine(self.checkpoint, checkpoint_path)
+
+        try:
+            esm.advance_to_completion(
+                actions,
+                until_state=self.config.until_experiment_state,
+            )
         except (KeyboardInterrupt, BrokenProcessPool) as e:
-            # Clean exit for Ctrl+C or process pool failure
             if isinstance(e, KeyboardInterrupt):
                 logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
             else:
                 logger.warning("Process pool interrupted, cleaning up...")
-
         except Exception as e:
-            # Other errors should propagate
             logger.error(f"Experiment failed: {e}")
             raise
-
         finally:
-            # Save checkpoint on interrupt
+            heartbeat.stop()
+            heartbeat.join(timeout=5)
+
             if is_shutdown_requested():
                 self._handle_experiment_interrupt(checkpoint_path)
             self._cleanup_pid_file()
 
-        # Check for shutdown request
+        # Handle interrupt / partial results
         if is_shutdown_requested():
             logger.warning("Experiment interrupted - returning partial results")
             return self._aggregate_partial_results(tier_results, start_time)
 
-        # Aggregate final results
-        result = self._aggregate_final_results(tier_results, start_time)
+        # Handle early stop (--until-experiment)
+        final_state = esm.get_state()
+        if final_state not in (ExperimentState.COMPLETE, ExperimentState.FAILED):
+            if (
+                self.config.until_experiment_state
+                and final_state == self.config.until_experiment_state
+            ):
+                logger.info(f"Stopped at --until-experiment {final_state.value}")
+                return self._aggregate_partial_results(tier_results, start_time)
 
-        # Finalize experiment
-        self._finalize_experiment(result)
+        # Return result (populated by action_tiers_complete)
+        if hasattr(self, "_last_experiment_result"):
+            return self._last_experiment_result  # type: ignore[attr-defined]
 
-        return result
+        # Fallback: aggregate from tier_results (e.g. resumed past TIERS_COMPLETE)
+        return self._aggregate_final_results(tier_results, start_time)
 
     def _create_experiment_dir(self) -> Path:
         """Create the experiment results directory.
@@ -833,99 +996,244 @@ class E2ERunner:
                     checkpoint_path,
                 )
 
+    def _build_tier_actions(
+        self,
+        tier_id: TierID,
+        baseline: TierBaseline | None,
+        scheduler: ParallelismScheduler | None,
+        tier_results: dict,
+    ) -> dict:
+        """Build the TierState -> Callable action map for TierStateMachine.
+
+        Results are accumulated into the shared tier_results namespace dict
+        via closures, allowing later actions to consume results from earlier ones.
+
+        Args:
+            tier_id: The tier to run
+            baseline: Previous tier's winning baseline
+            scheduler: ParallelismScheduler for concurrent operation limits
+            tier_results: Mutable namespace dict for inter-action state
+
+        Returns:
+            Dict mapping TierState to callable
+
+        """
+        from scylla.e2e.models import TierState
+
+        def action_pending() -> None:
+            """PENDING -> CONFIG_LOADED: Load config, limit subtests, create tier dir."""
+            tier_config = self.tier_manager.load_tier_config(tier_id, self.config.skip_agent_teams)
+
+            if self.config.max_subtests is not None:
+                original_count = len(tier_config.subtests)
+                tier_config.subtests = tier_config.subtests[: self.config.max_subtests]
+                if len(tier_config.subtests) < original_count:
+                    logger.info(
+                        f"Limiting sub-tests from {original_count} to {len(tier_config.subtests)}"
+                    )
+
+            logger.info(f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests")
+
+            tier_dir = self.experiment_dir / tier_id.value
+            tier_dir.mkdir(parents=True, exist_ok=True)
+
+            self._check_rate_limit_before_tier(tier_id)
+
+            tier_results["tier_config"] = tier_config
+            tier_results["tier_dir"] = tier_dir
+
+        def action_config_loaded() -> None:
+            """CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests in parallel."""
+            tier_config = tier_results["tier_config"]
+            tier_dir = tier_results["tier_dir"]
+            checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
+            subtest_results = run_tier_subtests_parallel(
+                config=self.config,
+                tier_id=tier_id,
+                tier_config=tier_config,
+                tier_manager=self.tier_manager,
+                workspace_manager=self.workspace_manager,
+                baseline=baseline,
+                results_dir=tier_dir,
+                checkpoint=self.checkpoint,
+                checkpoint_path=checkpoint_path,
+                scheduler=scheduler,
+                experiment_dir=self.experiment_dir,
+            )
+            tier_results["subtest_results"] = subtest_results
+
+        def action_subtests_running() -> None:
+            """SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest."""
+            subtest_results = tier_results["subtest_results"]
+            tier_dir = tier_results["tier_dir"]
+
+            selection = select_best_subtest(
+                subtest_results,
+                judge_models=self.config.judge_models,
+            )
+
+            if selection.winning_subtest in subtest_results:
+                subtest_results[selection.winning_subtest].selected_as_best = True
+                subtest_results[selection.winning_subtest].selection_reason = (
+                    selection.tiebreaker_result.reasoning
+                    if selection.tiebreaker_result
+                    else f"Highest median score ({selection.winning_score:.3f})"
+                )
+
+            save_selection(selection, str(tier_dir / "best_subtest.json"))
+            tier_results["selection"] = selection
+
+        def action_subtests_complete() -> None:
+            """SUBTESTS_COMPLETE -> BEST_SELECTED: Aggregate token stats, build TierResult."""
+            from functools import reduce
+
+            subtest_results = tier_results["subtest_results"]
+            selection = tier_results["selection"]
+            start_time = tier_results["start_time"]
+
+            end_time = datetime.now(timezone.utc)
+            duration = (end_time - start_time).total_seconds()
+
+            token_stats = reduce(
+                lambda a, b: a + b,
+                [s.token_stats for s in subtest_results.values()],
+                TokenStats(),
+            )
+
+            tier_result = TierResult(
+                tier_id=tier_id,
+                subtest_results=subtest_results,
+                best_subtest=selection.winning_subtest,
+                best_subtest_score=selection.winning_score,
+                inherited_from=baseline,
+                tiebreaker_needed=selection.tiebreaker_needed,
+                total_cost=sum(s.total_cost for s in subtest_results.values()),
+                total_duration=duration,
+                token_stats=token_stats,
+            )
+            tier_results["tier_result"] = tier_result
+
+        def action_best_selected() -> None:
+            """BEST_SELECTED -> REPORTS_GENERATED: Save tier result and generate reports."""
+            tier_result = tier_results["tier_result"]
+            self._save_tier_result(tier_id, tier_result)
+
+        def action_reports_generated() -> None:
+            """REPORTS_GENERATED -> COMPLETE: No-op (state machine marks complete)."""
+            pass
+
+        return {
+            TierState.PENDING: action_pending,
+            TierState.CONFIG_LOADED: action_config_loaded,
+            TierState.SUBTESTS_RUNNING: action_subtests_running,
+            TierState.SUBTESTS_COMPLETE: action_subtests_complete,
+            TierState.BEST_SELECTED: action_best_selected,
+            TierState.REPORTS_GENERATED: action_reports_generated,
+        }
+
     def _run_tier(
         self,
         tier_id: TierID,
         baseline: TierBaseline | None,
-        global_semaphore=None,
+        scheduler: ParallelismScheduler | None = None,
     ) -> TierResult:
         """Run a single tier's evaluation.
 
         Args:
             tier_id: The tier to run
             baseline: Previous tier's winning baseline
-            global_semaphore: Optional global semaphore to limit concurrent agents
+            scheduler: Optional ParallelismScheduler for concurrent operation limits
 
         Returns:
             TierResult with all sub-test results.
 
         """
-        start_time = datetime.now(timezone.utc)
+        from scylla.e2e.tier_state_machine import TierStateMachine
 
-        # Load tier configuration
-        tier_config = self.tier_manager.load_tier_config(tier_id, self.config.skip_agent_teams)
+        # Mutable namespace passed to closures in _build_tier_actions()
+        tier_ns: dict = {"start_time": datetime.now(timezone.utc)}
 
-        # Limit sub-tests if max_subtests is set
-        if self.config.max_subtests is not None:
-            original_count = len(tier_config.subtests)
-            tier_config.subtests = tier_config.subtests[: self.config.max_subtests]
-            if len(tier_config.subtests) < original_count:
-                logger.info(
-                    f"Limiting sub-tests from {original_count} to {len(tier_config.subtests)}"
-                )
-
-        logger.info(f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests")
-
-        # Prepare results directory (flat structure: experiment/T0/, not experiment/tiers/T0/)
-        tier_dir = self.experiment_dir / tier_id.value
-        tier_dir.mkdir(parents=True, exist_ok=True)
-
-        # Pre-flight rate limit check to avoid wasted work
-        self._check_rate_limit_before_tier(tier_id)
-
-        # Run all sub-tests in parallel (with checkpoint support)
-        checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
-        subtest_results = run_tier_subtests_parallel(
-            config=self.config,
-            tier_id=tier_id,
-            tier_config=tier_config,
-            tier_manager=self.tier_manager,
-            workspace_manager=self.workspace_manager,
-            baseline=baseline,
-            results_dir=tier_dir,
-            checkpoint=self.checkpoint,
-            checkpoint_path=checkpoint_path,
-            global_semaphore=global_semaphore,
-            experiment_dir=self.experiment_dir,
+        checkpoint_path = (
+            self.experiment_dir / "checkpoint.json"
+            if self.checkpoint and self.experiment_dir
+            else Path("/dev/null")
         )
 
-        # Select best sub-test
-        selection = select_best_subtest(
-            subtest_results,
-            judge_models=self.config.judge_models,
-        )
-
-        # Mark winning sub-test
-        if selection.winning_subtest in subtest_results:
-            subtest_results[selection.winning_subtest].selected_as_best = True
-            subtest_results[selection.winning_subtest].selection_reason = (
-                selection.tiebreaker_result.reasoning
-                if selection.tiebreaker_result
-                else f"Highest median score ({selection.winning_score:.3f})"
+        # If no checkpoint, build a minimal one for the state machine
+        checkpoint = self.checkpoint
+        if checkpoint is None:
+            checkpoint = E2ECheckpoint(
+                experiment_id=self.config.experiment_id,
+                experiment_dir=str(self.experiment_dir or "/tmp"),
+                config_hash="",
+                completed_runs={},
+                started_at=datetime.now(timezone.utc).isoformat(),
+                last_updated_at=datetime.now(timezone.utc).isoformat(),
+                status="running",
+                rate_limit_source=None,
+                rate_limit_until=None,
+                pause_count=0,
+                pid=os.getpid(),
             )
 
-        # Save selection
-        save_selection(selection, str(tier_dir / "best_subtest.json"))
+        tsm = TierStateMachine(checkpoint, checkpoint_path)
+        actions = self._build_tier_actions(
+            tier_id=tier_id,
+            baseline=baseline,
+            scheduler=scheduler,
+            tier_results=tier_ns,
+        )
 
+        # Filesystem cross-validation on resume
+        from scylla.e2e.models import TierState
+
+        _tier_current = tsm.get_state(tier_id.value)
+        if _tier_current == TierState.SUBTESTS_COMPLETE and self.experiment_dir:
+            tier_dir = self.experiment_dir / tier_id.value
+            run_results = list(tier_dir.rglob("run_result.json")) if tier_dir.exists() else []
+            if not run_results:
+                logger.warning(
+                    f"⚠️  Resuming {tier_id.value} from SUBTESTS_COMPLETE but no "
+                    f"run_result.json found under {tier_dir}"
+                )
+
+        tsm.advance_to_completion(
+            tier_id.value,
+            actions,
+            until_state=self.config.until_tier_state,
+        )
+
+        # Return result if available (may be absent if stopped early via until_tier_state)
+        tier_result = tier_ns.get("tier_result")
+        if tier_result is not None:
+            return tier_result
+
+        # If stopped early, build a minimal partial TierResult from whatever was accumulated
+        subtest_results = tier_ns.get("subtest_results", {})
+        selection = tier_ns.get("selection")
+        start_time = tier_ns.get("start_time", datetime.now(timezone.utc))
         end_time = datetime.now(timezone.utc)
         duration = (end_time - start_time).total_seconds()
 
-        # Aggregate token stats from all subtests
         from functools import reduce
 
-        token_stats = reduce(
-            lambda a, b: a + b,
-            [s.token_stats for s in subtest_results.values()],
-            TokenStats(),
+        token_stats = (
+            reduce(
+                lambda a, b: a + b,
+                [s.token_stats for s in subtest_results.values()],
+                TokenStats(),
+            )
+            if subtest_results
+            else TokenStats()
         )
 
         return TierResult(
             tier_id=tier_id,
             subtest_results=subtest_results,
-            best_subtest=selection.winning_subtest,
-            best_subtest_score=selection.winning_score,
+            best_subtest=selection.winning_subtest if selection else None,
+            best_subtest_score=selection.winning_score if selection else 0.0,
             inherited_from=baseline,
-            tiebreaker_needed=selection.tiebreaker_needed,
+            tiebreaker_needed=selection.tiebreaker_needed if selection else False,
             total_cost=sum(s.total_cost for s in subtest_results.values()),
             total_duration=duration,
             token_stats=token_stats,

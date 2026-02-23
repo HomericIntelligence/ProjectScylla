@@ -206,13 +206,20 @@ class HeartbeatThread(threading.Thread):
         self._stop_event.set()
 
     def _write_heartbeat(self) -> None:
-        """Update checkpoint heartbeat and save atomically."""
-        from scylla.e2e.checkpoint import CheckpointError, save_checkpoint
+        """Update only the heartbeat timestamp on disk, preserving all other state.
+
+        Reads the current checkpoint from disk, updates only last_heartbeat,
+        and writes it back atomically. This prevents overwriting run_states and
+        other fields written by worker processes.
+        """
+        from scylla.e2e.checkpoint import CheckpointError, load_checkpoint, save_checkpoint
 
         try:
-            self._checkpoint.update_heartbeat()
-            save_checkpoint(self._checkpoint, self._checkpoint_path)
-            logger.debug(f"Heartbeat updated: {self._checkpoint.last_heartbeat}")
+            # Read from disk to get the latest state written by worker processes
+            current = load_checkpoint(self._checkpoint_path)
+            current.update_heartbeat()
+            save_checkpoint(current, self._checkpoint_path)
+            logger.debug(f"Heartbeat updated: {current.last_heartbeat}")
         except CheckpointError as e:
             logger.warning(f"Failed to write heartbeat: {e}")
         except Exception as e:

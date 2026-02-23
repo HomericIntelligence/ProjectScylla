@@ -247,8 +247,152 @@ class TestCheckpointVersionMismatch:
         ):
             E2ECheckpoint.from_dict(data)
 
-    def test_from_dict_accepts_version_2_0_and_migrates_to_v3(self, tmp_path: Path) -> None:
-        """Verify from_dict migrates v2.0 to v3.0 automatically."""
+
+class TestCheckpointV31Migration:
+    """Tests for v3.0 -> v3.1 migration."""
+
+    def test_workspace_configured_maps_to_config_committed(self, tmp_path: Path) -> None:
+        """workspace_configured maps to config_committed in v3.1."""
+        data = {
+            "version": "3.0",
+            "experiment_id": "test",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "abc",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {"T0": {"00": {"1": "workspace_configured"}}},
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.get_run_state("T0", "00", 1) == "config_committed"
+
+    def test_agent_ready_maps_to_replay_generated(self, tmp_path: Path) -> None:
+        """agent_ready maps to replay_generated in v3.1."""
+        data = {
+            "version": "3.0",
+            "experiment_id": "test",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "abc",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {"T0": {"00": {"1": "agent_ready"}}},
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.get_run_state("T0", "00", 1) == "replay_generated"
+
+    def test_judge_ready_maps_to_judge_prompt_built(self, tmp_path: Path) -> None:
+        """judge_ready maps to judge_prompt_built in v3.1."""
+        data = {
+            "version": "3.0",
+            "experiment_id": "test",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "abc",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {"T0": {"00": {"1": "judge_ready"}}},
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.get_run_state("T0", "00", 1) == "judge_prompt_built"
+
+    def test_run_complete_maps_to_report_written(self, tmp_path: Path) -> None:
+        """run_complete maps to report_written in v3.1 (included report generation)."""
+        data = {
+            "version": "3.0",
+            "experiment_id": "test",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "abc",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {"T0": {"00": {"1": "run_complete"}}},
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.get_run_state("T0", "00", 1) == "report_written"
+
+    def test_unchanged_states_pass_through(self, tmp_path: Path) -> None:
+        """States not in the mapping are preserved unchanged."""
+        data = {
+            "version": "3.0",
+            "experiment_id": "test",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "abc",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {
+                "T0": {
+                    "00": {
+                        "1": "pending",
+                        "2": "worktree_created",
+                        "3": "baseline_captured",
+                        "4": "agent_complete",
+                        "5": "judge_complete",
+                        "6": "checkpointed",
+                        "7": "worktree_cleaned",
+                        "8": "failed",
+                    }
+                }
+            },
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.get_run_state("T0", "00", 1) == "pending"
+        assert checkpoint.get_run_state("T0", "00", 2) == "worktree_created"
+        assert checkpoint.get_run_state("T0", "00", 3) == "baseline_captured"
+        assert checkpoint.get_run_state("T0", "00", 4) == "agent_complete"
+        assert checkpoint.get_run_state("T0", "00", 5) == "judge_complete"
+        assert checkpoint.get_run_state("T0", "00", 6) == "checkpointed"
+        assert checkpoint.get_run_state("T0", "00", 7) == "worktree_cleaned"
+        assert checkpoint.get_run_state("T0", "00", 8) == "failed"
+
+    def test_version_bumped_to_3_1(self, tmp_path: Path) -> None:
+        """After migration, checkpoint version is 3.1."""
+        data = {
+            "version": "3.0",
+            "experiment_id": "test",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "abc",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {},
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.version == "3.1"
+
+    def test_from_dict_accepts_version_2_0_and_migrates_to_v3_1(self, tmp_path: Path) -> None:
+        """Verify from_dict migrates v2.0 to v3.1 automatically (via v3.0 → v3.1)."""
         data = {
             "version": "2.0",
             "experiment_id": "test-exp",
@@ -261,20 +405,58 @@ class TestCheckpointVersionMismatch:
         }
 
         checkpoint = E2ECheckpoint.from_dict(data)
-        # Should be migrated to v3.0
-        assert checkpoint.version == "3.0"
+        # Should be migrated to v3.1
+        assert checkpoint.version == "3.1"
         assert checkpoint.experiment_id == "test-exp"
         # completed_runs should be preserved with int keys
         assert 1 in checkpoint.completed_runs["T0"]["00-empty"]
         assert 2 in checkpoint.completed_runs["T0"]["00-empty"]
-        # run_states should be derived
-        assert checkpoint.get_run_state("T0", "00-empty", 1) == "run_complete"
-        assert checkpoint.get_run_state("T0", "00-empty", 2) == "run_complete"
+        # run_states should be derived — v3.0 migration maps "passed"/"failed" -> "run_complete"
+        # then v3.1 migration maps "run_complete" -> "report_written"
+        assert checkpoint.get_run_state("T0", "00-empty", 1) == "report_written"
+        assert checkpoint.get_run_state("T0", "00-empty", 2) == "report_written"
 
-    def test_from_dict_accepts_version_3_0(self, tmp_path: Path) -> None:
-        """Verify from_dict accepts version 3.0 directly."""
+    def test_from_dict_accepts_version_3_0_and_migrates_to_v3_1(self, tmp_path: Path) -> None:
+        """Verify from_dict migrates v3.0 to v3.1 automatically."""
         data = {
             "version": "3.0",
+            "experiment_id": "test-exp",
+            "experiment_dir": str(tmp_path),
+            "config_hash": "test-hash",
+            "completed_runs": {},
+            "experiment_state": "tiers_running",
+            "tier_states": {},
+            "subtest_states": {},
+            "run_states": {
+                "T0": {
+                    "00-empty": {
+                        "1": "workspace_configured",
+                        "2": "agent_ready",
+                        "3": "judge_ready",
+                        "4": "run_complete",
+                    }
+                }
+            },
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_updated_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "",
+            "status": "running",
+        }
+
+        checkpoint = E2ECheckpoint.model_validate(data)
+        assert checkpoint.version == "3.1"
+        assert checkpoint.experiment_id == "test-exp"
+        assert checkpoint.experiment_state == "tiers_running"
+        # Old states should be remapped
+        assert checkpoint.get_run_state("T0", "00-empty", 1) == "config_committed"
+        assert checkpoint.get_run_state("T0", "00-empty", 2) == "replay_generated"
+        assert checkpoint.get_run_state("T0", "00-empty", 3) == "judge_prompt_built"
+        assert checkpoint.get_run_state("T0", "00-empty", 4) == "report_written"
+
+    def test_from_dict_accepts_version_3_1(self, tmp_path: Path) -> None:
+        """Verify from_dict accepts version 3.1 directly."""
+        data = {
+            "version": "3.1",
             "experiment_id": "test-exp",
             "experiment_dir": str(tmp_path),
             "config_hash": "test-hash",
@@ -290,7 +472,7 @@ class TestCheckpointVersionMismatch:
         }
 
         checkpoint = E2ECheckpoint.from_dict(data)
-        assert checkpoint.version == "3.0"
+        assert checkpoint.version == "3.1"
         assert checkpoint.experiment_id == "test-exp"
         assert checkpoint.experiment_state == "tiers_running"
 
@@ -365,7 +547,7 @@ class TestCheckpointV3Migration:
         assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
 
     def test_migration_sets_agent_complete_state(self, tmp_path: Path) -> None:
-        """agent_complete status maps to agent_complete run state."""
+        """agent_complete status maps to agent_complete run state (unchanged in v3.1)."""
         data = {
             "version": "2.0",
             "experiment_id": "test",
@@ -394,8 +576,8 @@ class TestCheckpointV3Migration:
         checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.experiment_state == "tiers_running"
 
-    def test_v3_checkpoint_roundtrip(self, tmp_path: Path) -> None:
-        """Save and load v3.0 checkpoint preserves all state fields."""
+    def test_v3_1_checkpoint_roundtrip(self, tmp_path: Path) -> None:
+        """Save and load v3.1 checkpoint preserves all state fields."""
         checkpoint = E2ECheckpoint(
             experiment_id="test",
             experiment_dir=str(tmp_path),
@@ -412,7 +594,7 @@ class TestCheckpointV3Migration:
         save_checkpoint(checkpoint, path)
 
         reloaded = load_checkpoint(path)
-        assert reloaded.version == "3.0"
+        assert reloaded.version == "3.1"
         assert reloaded.experiment_state == "tiers_running"
         assert reloaded.get_run_state("T0", "00", 1) == "agent_complete"
         assert reloaded.get_tier_state("T0") == "subtests_running"
@@ -489,3 +671,106 @@ class TestLoadCheckpointErrors:
         with patch("scylla.e2e.checkpoint.open", side_effect=PermissionError("No access")):
             with pytest.raises(CheckpointError, match="Failed to load checkpoint"):
                 load_checkpoint(checkpoint_path)
+
+
+class TestSetRunStateBackwardCompat:
+    """Tests for set_run_state() backward compat sync to completed_runs."""
+
+    @pytest.fixture
+    def checkpoint(self) -> E2ECheckpoint:
+        """Create a fresh checkpoint for testing."""
+        return E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir="/tmp/test",
+            config_hash="abc123",
+        )
+
+    def test_set_run_state_run_finalized_syncs_passed(self, checkpoint: E2ECheckpoint) -> None:
+        """run_finalized state (v3.1) syncs to completed_runs as 'passed' by default."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "run_finalized")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+        assert checkpoint.is_run_completed("T0", "00-empty", 1)
+
+    def test_set_run_state_report_written_syncs_passed(self, checkpoint: E2ECheckpoint) -> None:
+        """report_written state (v3.1) syncs to completed_runs as 'passed' by default."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "report_written")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+
+    def test_set_run_state_run_complete_syncs_passed(self, checkpoint: E2ECheckpoint) -> None:
+        """run_complete state (v3.0 compat) syncs to completed_runs as 'passed' by default."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "run_complete")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+        assert checkpoint.is_run_completed("T0", "00-empty", 1)
+
+    def test_set_run_state_checkpointed_syncs_passed(self, checkpoint: E2ECheckpoint) -> None:
+        """Checkpointed state syncs to completed_runs as 'passed' by default."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "checkpointed")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+
+    def test_set_run_state_worktree_cleaned_syncs_passed(self, checkpoint: E2ECheckpoint) -> None:
+        """worktree_cleaned state syncs to completed_runs as 'passed' by default."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "worktree_cleaned")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+
+    def test_set_run_state_preserves_existing_failed_status(
+        self, checkpoint: E2ECheckpoint
+    ) -> None:
+        """run_finalized state preserves existing 'failed' status in completed_runs."""
+        # Pre-mark as failed
+        checkpoint.mark_run_completed("T0", "00-empty", 1, status="failed")
+
+        # Advance to run_finalized — should preserve "failed"
+        checkpoint.set_run_state("T0", "00-empty", 1, "run_finalized")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "failed"
+
+    def test_set_run_state_preserves_existing_passed_status(
+        self, checkpoint: E2ECheckpoint
+    ) -> None:
+        """run_finalized state preserves existing 'passed' status in completed_runs."""
+        checkpoint.mark_run_completed("T0", "00-empty", 1, status="passed")
+        checkpoint.set_run_state("T0", "00-empty", 1, "run_finalized")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+
+    def test_set_run_state_agent_complete_syncs_agent_complete(
+        self, checkpoint: E2ECheckpoint
+    ) -> None:
+        """agent_complete state syncs to completed_runs as 'agent_complete'."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "agent_complete")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "agent_complete"
+
+    def test_set_run_state_failed_syncs_failed(self, checkpoint: E2ECheckpoint) -> None:
+        """Failed state syncs to completed_runs as 'failed'."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "failed")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "failed"
+
+    def test_set_run_state_pending_does_not_sync(self, checkpoint: E2ECheckpoint) -> None:
+        """Pending state does not create a completed_runs entry."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "pending")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) is None
+
+    def test_set_run_state_worktree_created_does_not_sync(self, checkpoint: E2ECheckpoint) -> None:
+        """Intermediate states do not create completed_runs entries."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "worktree_created")
+
+        assert checkpoint.get_run_status("T0", "00-empty", 1) is None
+
+    def test_set_run_state_syncs_run_states_and_completed_runs_together(
+        self, checkpoint: E2ECheckpoint
+    ) -> None:
+        """set_run_state updates both run_states and completed_runs."""
+        checkpoint.set_run_state("T0", "00-empty", 1, "run_finalized")
+
+        # Both views are consistent
+        assert checkpoint.get_run_state("T0", "00-empty", 1) == "run_finalized"
+        assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
+        assert checkpoint.is_run_completed("T0", "00-empty", 1)

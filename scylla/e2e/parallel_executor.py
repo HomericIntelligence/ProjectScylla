@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
     from scylla.e2e.checkpoint import E2ECheckpoint
     from scylla.e2e.models import SubTestConfig, TierBaseline
+    from scylla.e2e.scheduler import ParallelismScheduler
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
 
@@ -167,7 +168,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
     results_dir: Path,
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
-    global_semaphore=None,
+    scheduler: ParallelismScheduler | None = None,
     experiment_dir: Path | None = None,
 ) -> dict[str, SubTestResult]:
     """Run all sub-tests for a tier in parallel with rate limit handling.
@@ -185,7 +186,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
         results_dir: Base directory for tier results
         checkpoint: Optional checkpoint for resume capability
         checkpoint_path: Path to checkpoint file for saving
-        global_semaphore: Optional global semaphore to limit total concurrent agents
+        scheduler: Optional ParallelismScheduler for per-memory-class concurrency limits
         experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
     Returns:
@@ -216,6 +217,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
                     checkpoint=checkpoint,
                     checkpoint_path=checkpoint_path,
                     coordinator=None,  # No parallel workers
+                    scheduler=scheduler,
                     experiment_dir=experiment_dir,
                 )
             except RateLimitError as e:
@@ -233,6 +235,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
                         checkpoint=checkpoint,
                         checkpoint_path=checkpoint_path,
                         coordinator=None,
+                        scheduler=scheduler,
                         experiment_dir=experiment_dir,
                     )
                 else:
@@ -264,7 +267,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
                     checkpoint=checkpoint,
                     checkpoint_path=checkpoint_path,
                     coordinator=coordinator,
-                    global_semaphore=global_semaphore,
+                    scheduler=scheduler,
                     experiment_dir=experiment_dir,
                 )
                 futures[future] = subtest.id
@@ -378,7 +381,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
                         results_dir=results_dir,
                         checkpoint=checkpoint,
                         checkpoint_path=checkpoint_path,
-                        global_semaphore=global_semaphore,
+                        scheduler=scheduler,
                     )
                     results.update(retry_results)
                     return results
@@ -461,7 +464,7 @@ def _retry_with_new_pool(
     results_dir: Path,
     checkpoint: E2ECheckpoint | None,
     checkpoint_path: Path | None,
-    global_semaphore,
+    scheduler: ParallelismScheduler | None = None,
     max_retries: int = 3,
 ) -> dict[str, SubTestResult]:
     """Create new ProcessPoolExecutor and retry remaining subtests.
@@ -479,7 +482,7 @@ def _retry_with_new_pool(
         results_dir: Base directory for tier results
         checkpoint: Optional checkpoint for resume
         checkpoint_path: Path to checkpoint file
-        global_semaphore: Global semaphore for limiting concurrent agents
+        scheduler: Optional ParallelismScheduler for per-memory-class concurrency limits
         max_retries: Maximum retry attempts for rate limits
 
     Returns:
@@ -518,7 +521,7 @@ def _retry_with_new_pool(
                         checkpoint=checkpoint,
                         checkpoint_path=checkpoint_path,
                         coordinator=coordinator,
-                        global_semaphore=global_semaphore,
+                        scheduler=scheduler,
                     )
                     futures[future] = subtest.id
 
@@ -609,7 +612,7 @@ def _run_subtest_in_process_safe(
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
-    global_semaphore=None,
+    scheduler: ParallelismScheduler | None = None,
     experiment_dir: Path | None = None,
 ) -> SubTestResult:
     """Safe wrapper that catches ALL exceptions and returns structured error.
@@ -640,7 +643,7 @@ def _run_subtest_in_process_safe(
             checkpoint=checkpoint,
             checkpoint_path=checkpoint_path,
             coordinator=coordinator,
-            global_semaphore=global_semaphore,
+            scheduler=scheduler,
             experiment_dir=experiment_dir,
         )
     except RateLimitError as e:
@@ -700,12 +703,14 @@ def _run_subtest_in_process(
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
-    global_semaphore=None,
+    scheduler: ParallelismScheduler | None = None,
     experiment_dir: Path | None = None,
 ) -> SubTestResult:
     """Run a sub-test in a separate process.
 
     This is a helper for parallel execution with checkpoint and rate limit support.
+    Per-stage semaphore acquire/release is handled inside build_actions_dict()
+    via the scheduler; there is no subtest-level global lock here.
 
     Args:
         config: Experiment configuration
@@ -721,7 +726,7 @@ def _run_subtest_in_process(
         checkpoint: Optional checkpoint for resume
         checkpoint_path: Path to checkpoint file
         coordinator: Optional rate limit coordinator
-        global_semaphore: Optional global semaphore to limit concurrent agents across all tiers
+        scheduler: Optional ParallelismScheduler for per-stage concurrency limits
         experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
     Returns:
@@ -733,34 +738,26 @@ def _run_subtest_in_process(
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
 
-    # Acquire global semaphore to limit concurrent agents across all tiers
-    if global_semaphore:
-        global_semaphore.acquire()
+    tier_manager = TierManager(tiers_dir)
+    # Recreate workspace manager in child process
+    workspace_manager = WorkspaceManager(
+        experiment_dir=base_repo.parent,
+        repo_url=repo_url,
+        commit=commit,
+    )
+    workspace_manager._is_setup = True  # Base repo already exists
+    workspace_manager.base_repo = base_repo
 
-    try:
-        tier_manager = TierManager(tiers_dir)
-        # Recreate workspace manager in child process
-        workspace_manager = WorkspaceManager(
-            experiment_dir=base_repo.parent,
-            repo_url=repo_url,
-            commit=commit,
-        )
-        workspace_manager._is_setup = True  # Base repo already exists
-        workspace_manager.base_repo = base_repo
-
-        executor = SubTestExecutor(config, tier_manager, workspace_manager)
-        return executor.run_subtest(
-            tier_id=tier_id,
-            tier_config=tier_config,
-            subtest=subtest,
-            baseline=baseline,
-            results_dir=results_dir,
-            checkpoint=checkpoint,
-            checkpoint_path=checkpoint_path,
-            coordinator=coordinator,
-            experiment_dir=experiment_dir,
-        )
-    finally:
-        # Always release semaphore, even if exception occurred
-        if global_semaphore:
-            global_semaphore.release()
+    executor = SubTestExecutor(config, tier_manager, workspace_manager)
+    return executor.run_subtest(
+        tier_id=tier_id,
+        tier_config=tier_config,
+        subtest=subtest,
+        baseline=baseline,
+        results_dir=results_dir,
+        checkpoint=checkpoint,
+        checkpoint_path=checkpoint_path,
+        coordinator=coordinator,
+        scheduler=scheduler,
+        experiment_dir=experiment_dir,
+    )

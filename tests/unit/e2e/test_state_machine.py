@@ -105,9 +105,9 @@ class TestTransitionRegistry:
     def test_high_memory_transitions(self) -> None:
         """Agent and judge execution and worktree creation use 'high' memory class."""
         high_transitions = {t.from_state for t in TRANSITION_REGISTRY if t.memory_class == "high"}
-        assert RunState.PENDING in high_transitions  # worktree creation
-        assert RunState.AGENT_READY in high_transitions  # agent execution
-        assert RunState.JUDGE_READY in high_transitions  # judge execution
+        assert RunState.DIR_STRUCTURE_CREATED in high_transitions  # worktree creation
+        assert RunState.REPLAY_GENERATED in high_transitions  # agent execution
+        assert RunState.JUDGE_PROMPT_BUILT in high_transitions  # judge execution
 
 
 # ---------------------------------------------------------------------------
@@ -138,9 +138,9 @@ class TestIsTerminalState:
         """Verify AGENT_COMPLETE is not a terminal state."""
         assert not is_terminal_state(RunState.AGENT_COMPLETE)
 
-    def test_run_complete_is_not_terminal(self) -> None:
-        """Verify RUN_COMPLETE is not a terminal state."""
-        assert not is_terminal_state(RunState.RUN_COMPLETE)
+    def test_run_finalized_is_not_terminal(self) -> None:
+        """Verify RUN_FINALIZED is not a terminal state."""
+        assert not is_terminal_state(RunState.RUN_FINALIZED)
 
 
 # ---------------------------------------------------------------------------
@@ -151,18 +151,18 @@ class TestIsTerminalState:
 class TestValidateTransition:
     """Tests for validate_transition() function."""
 
-    def test_valid_transition_pending_to_worktree(self) -> None:
-        """Verify PENDING to WORKTREE_CREATED is a valid transition."""
-        assert validate_transition(RunState.PENDING, RunState.WORKTREE_CREATED)
+    def test_valid_transition_pending_to_dir_structure(self) -> None:
+        """Verify PENDING to DIR_STRUCTURE_CREATED is a valid transition."""
+        assert validate_transition(RunState.PENDING, RunState.DIR_STRUCTURE_CREATED)
 
-    def test_valid_transition_agent_ready_to_agent_complete(self) -> None:
-        """Verify AGENT_READY to AGENT_COMPLETE is a valid transition."""
-        assert validate_transition(RunState.AGENT_READY, RunState.AGENT_COMPLETE)
+    def test_valid_transition_replay_generated_to_agent_complete(self) -> None:
+        """Verify REPLAY_GENERATED to AGENT_COMPLETE is a valid transition."""
+        assert validate_transition(RunState.REPLAY_GENERATED, RunState.AGENT_COMPLETE)
 
     def test_invalid_transition_skips_state(self) -> None:
         """Verify skipping states is an invalid transition."""
-        # Cannot skip from PENDING directly to WORKSPACE_CONFIGURED
-        assert not validate_transition(RunState.PENDING, RunState.WORKSPACE_CONFIGURED)
+        # Cannot skip from PENDING directly to SYMLINKS_APPLIED
+        assert not validate_transition(RunState.PENDING, RunState.SYMLINKS_APPLIED)
 
     def test_invalid_transition_from_terminal(self) -> None:
         """Verify transitioning from a terminal state is invalid."""
@@ -170,7 +170,7 @@ class TestValidateTransition:
 
     def test_invalid_transition_backwards(self) -> None:
         """Verify backwards transitions are invalid."""
-        assert not validate_transition(RunState.AGENT_COMPLETE, RunState.AGENT_READY)
+        assert not validate_transition(RunState.AGENT_COMPLETE, RunState.REPLAY_GENERATED)
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +185,7 @@ class TestGetNextTransition:
         """Verify get_next_transition returns the correct next transition for PENDING."""
         t = get_next_transition(RunState.PENDING)
         assert t is not None
-        assert t.to_state == RunState.WORKTREE_CREATED
+        assert t.to_state == RunState.DIR_STRUCTURE_CREATED
 
     def test_returns_none_for_terminal_state(self) -> None:
         """Verify get_next_transition returns None for terminal states."""
@@ -271,13 +271,13 @@ class TestStateMachineAdvance:
         action = MagicMock()
         new_state = sm.advance("T0", "00-empty", 1, {RunState.PENDING: action})
         action.assert_called_once()
-        assert new_state == RunState.WORKTREE_CREATED
+        assert new_state == RunState.DIR_STRUCTURE_CREATED
 
     def test_advance_without_action_is_noop(self, sm: StateMachine, checkpoint_path: Path) -> None:
         """Verify advance() without an action still transitions state."""
         # No action for PENDING -> still transitions
         new_state = sm.advance("T0", "00-empty", 1, {})
-        assert new_state == RunState.WORKTREE_CREATED
+        assert new_state == RunState.DIR_STRUCTURE_CREATED
 
     def test_advance_updates_checkpoint_state(
         self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
@@ -285,28 +285,28 @@ class TestStateMachineAdvance:
         """Verify advance() persists the new state to the checkpoint."""
         sm.advance("T0", "00-empty", 1, {})
         # State should be updated in checkpoint
-        assert sm.get_state("T0", "00-empty", 1) == RunState.WORKTREE_CREATED
+        assert sm.get_state("T0", "00-empty", 1) == RunState.DIR_STRUCTURE_CREATED
         # And persisted in the file
         from scylla.e2e.checkpoint import load_checkpoint
 
         loaded = load_checkpoint(checkpoint_path)
-        assert loaded.get_run_state("T0", "00-empty", 1) == RunState.WORKTREE_CREATED.value
+        assert loaded.get_run_state("T0", "00-empty", 1) == RunState.DIR_STRUCTURE_CREATED.value
 
     def test_advance_saves_checkpoint_after_each_step(
         self, sm: StateMachine, checkpoint_path: Path
     ) -> None:
         """Verify advance() saves the checkpoint file after each state transition."""
         # After each advance, checkpoint file should be updated
-        sm.advance("T0", "00-empty", 1, {})  # PENDING -> WORKTREE_CREATED
+        sm.advance("T0", "00-empty", 1, {})  # PENDING -> DIR_STRUCTURE_CREATED
 
         from scylla.e2e.checkpoint import load_checkpoint
 
         loaded = load_checkpoint(checkpoint_path)
-        assert loaded.get_run_state("T0", "00-empty", 1) == RunState.WORKTREE_CREATED.value
+        assert loaded.get_run_state("T0", "00-empty", 1) == RunState.DIR_STRUCTURE_CREATED.value
 
-        sm.advance("T0", "00-empty", 1, {})  # WORKTREE_CREATED -> WORKSPACE_CONFIGURED
+        sm.advance("T0", "00-empty", 1, {})  # DIR_STRUCTURE_CREATED -> WORKTREE_CREATED
         loaded2 = load_checkpoint(checkpoint_path)
-        assert loaded2.get_run_state("T0", "00-empty", 1) == RunState.WORKSPACE_CONFIGURED.value
+        assert loaded2.get_run_state("T0", "00-empty", 1) == RunState.WORKTREE_CREATED.value
 
     def test_advance_from_terminal_raises(
         self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
@@ -425,10 +425,13 @@ class TestStateMachineAdvanceToCompletion:
         # Only states AFTER AGENT_COMPLETE should have been called
         early_states = [
             RunState.PENDING,
+            RunState.DIR_STRUCTURE_CREATED,
             RunState.WORKTREE_CREATED,
-            RunState.WORKSPACE_CONFIGURED,
+            RunState.SYMLINKS_APPLIED,
+            RunState.CONFIG_COMMITTED,
             RunState.BASELINE_CAPTURED,
-            RunState.AGENT_READY,
+            RunState.PROMPT_WRITTEN,
+            RunState.REPLAY_GENERATED,
         ]
         for state in early_states:
             assert state not in actions_called, f"{state.value} should not have been called"
