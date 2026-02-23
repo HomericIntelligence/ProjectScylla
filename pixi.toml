@@ -54,10 +54,10 @@ yamllint = ">=1.35.0"
 pre-commit = ">=3.0"
 
 [feature.lint.pypi-dependencies]
-pip-audit = ">=2.8"
+pip-audit = ">=2.7"
 
 [feature.lint.tasks]
-pip-audit = "pip-audit"
+pip-audit = "pip-audit --format json | python scripts/filter_audit.py"
 
 [environments]
 default = { features = ["dev"], solve-group = "default" }
