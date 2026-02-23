@@ -226,3 +226,158 @@ class TestCursesUIRunUI:
             ui._run_ui()
 
         assert ui.running is False
+
+
+class TestCursesUIRefreshDisplay:
+    """Tests for CursesUI._refresh_display."""
+
+    def _make_ui(self, num_slots: int = 2) -> CursesUI:
+        """Create a CursesUI with mocked dependencies."""
+        tracker = StatusTracker(num_slots)
+        log_manager = ThreadLogManager()
+        return CursesUI(status_tracker=tracker, log_manager=log_manager)
+
+    def test_early_return_when_stdscr_none(self) -> None:
+        """When stdscr is None, _refresh_display returns without calling curses methods."""
+        ui = self._make_ui()
+        ui.stdscr = None
+
+        # Patch curses to detect any spurious calls
+        with patch("curses.A_BOLD", 0), patch("curses.has_colors", return_value=False):
+            ui._refresh_display()  # Should return immediately without raising
+
+        # stdscr is None so no curses methods should have been called
+        assert ui.stdscr is None
+
+    def test_title_display_with_bold(self) -> None:
+        """Title 'ProjectScylla Issue Implementer' is written to row 0 with curses.A_BOLD."""
+        import curses as _curses
+        from unittest.mock import MagicMock
+
+        stdscr = MagicMock()
+        stdscr.getmaxyx.return_value = (24, 80)
+
+        ui = self._make_ui()
+        ui.stdscr = stdscr
+
+        with (
+            patch("curses.A_BOLD", _curses.A_BOLD),
+            patch("curses.has_colors", return_value=False),
+            patch("curses.A_DIM", _curses.A_DIM),
+            patch("curses.A_NORMAL", _curses.A_NORMAL),
+        ):
+            ui._refresh_display()
+
+        # Find the addstr call for the title at row 0, col 0
+        title_calls = [
+            c
+            for c in stdscr.addstr.call_args_list
+            if c.args[0] == 0 and c.args[1] == 0 and "ProjectScylla" in c.args[2]
+        ]
+        assert len(title_calls) == 1, (
+            f"Expected one title addstr call, got: {stdscr.addstr.call_args_list}"
+        )
+        assert title_calls[0].args[3] == _curses.A_BOLD
+
+    def test_worker_idle_status_rendering(self) -> None:
+        """When a worker slot is idle (status is None), the correct idle text is displayed."""
+        import curses as _curses
+        from unittest.mock import MagicMock
+
+        stdscr = MagicMock()
+        stdscr.getmaxyx.return_value = (24, 80)
+
+        # status_tracker with 1 slot, no status set => idle
+        ui = self._make_ui(num_slots=1)
+        ui.stdscr = stdscr
+
+        with (
+            patch("curses.A_BOLD", _curses.A_BOLD),
+            patch("curses.has_colors", return_value=False),
+            patch("curses.A_DIM", _curses.A_DIM),
+            patch("curses.A_NORMAL", _curses.A_NORMAL),
+        ):
+            ui._refresh_display()
+
+        # Check that an addstr call contains the idle text for worker 0
+        all_addstr_texts = [c.args[2] for c in stdscr.addstr.call_args_list if len(c.args) >= 3]
+        idle_texts = [t for t in all_addstr_texts if "Worker 0" in t and "[idle]" in t]
+        assert idle_texts, f"Expected idle text, got addstr texts: {all_addstr_texts}"
+
+    def test_worker_active_status_rendering(self) -> None:
+        """When a worker slot has an active status, that status text is displayed."""
+        import curses as _curses
+        from unittest.mock import MagicMock
+
+        stdscr = MagicMock()
+        stdscr.getmaxyx.return_value = (24, 80)
+
+        ui = self._make_ui(num_slots=1)
+        ui.status_tracker.update_slot(0, "processing issue #42")
+        ui.stdscr = stdscr
+
+        with (
+            patch("curses.A_BOLD", _curses.A_BOLD),
+            patch("curses.has_colors", return_value=False),
+            patch("curses.A_DIM", _curses.A_DIM),
+            patch("curses.A_NORMAL", _curses.A_NORMAL),
+        ):
+            ui._refresh_display()
+
+        all_addstr_texts = [c.args[2] for c in stdscr.addstr.call_args_list if len(c.args) >= 3]
+        active_texts = [
+            t for t in all_addstr_texts if "Worker 0" in t and "processing issue #42" in t
+        ]
+        assert active_texts, f"Expected active status text, got addstr texts: {all_addstr_texts}"
+
+    def test_text_truncation_when_width_small(self) -> None:
+        """When terminal width is small, worker status text is truncated to fit."""
+        import curses as _curses
+        from unittest.mock import MagicMock
+
+        stdscr = MagicMock()
+        # Very narrow terminal: 20 columns
+        stdscr.getmaxyx.return_value = (24, 20)
+
+        ui = self._make_ui(num_slots=1)
+        # Set a long status that exceeds the terminal width
+        long_status = "A" * 50
+        ui.status_tracker.update_slot(0, long_status)
+        ui.stdscr = stdscr
+
+        with (
+            patch("curses.A_BOLD", _curses.A_BOLD),
+            patch("curses.has_colors", return_value=False),
+            patch("curses.A_DIM", _curses.A_DIM),
+            patch("curses.A_NORMAL", _curses.A_NORMAL),
+        ):
+            ui._refresh_display()
+
+        # All addstr text arguments (3rd arg) must fit within width - 1 characters
+        width = 20
+        for call in stdscr.addstr.call_args_list:
+            if len(call.args) >= 3 and isinstance(call.args[2], str):
+                assert len(call.args[2]) <= width - 1, (
+                    f"Text too long ({len(call.args[2])} chars) for width {width}: {call.args[2]!r}"
+                )
+
+    def test_stdscr_refresh_called_at_end(self) -> None:
+        """stdscr.refresh() is called at the end of _refresh_display."""
+        import curses as _curses
+        from unittest.mock import MagicMock
+
+        stdscr = MagicMock()
+        stdscr.getmaxyx.return_value = (24, 80)
+
+        ui = self._make_ui()
+        ui.stdscr = stdscr
+
+        with (
+            patch("curses.A_BOLD", _curses.A_BOLD),
+            patch("curses.has_colors", return_value=False),
+            patch("curses.A_DIM", _curses.A_DIM),
+            patch("curses.A_NORMAL", _curses.A_NORMAL),
+        ):
+            ui._refresh_display()
+
+        stdscr.refresh.assert_called_once()
