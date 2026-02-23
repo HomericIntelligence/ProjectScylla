@@ -26,6 +26,8 @@ from scylla.analysis.stats import (
     compute_frontier_cop,
     holm_bonferroni_correction,
     kruskal_wallis,
+    kruskal_wallis_power,
+    mann_whitney_power,
     mann_whitney_u,
     scheirer_ray_hare,
     shapiro_wilk,
@@ -61,6 +63,7 @@ def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehen
         "omnibus_tests": [],
         "pairwise_comparisons": [],
         "effect_sizes": [],
+        "power_analysis": [],  # Post-hoc power estimates for pairwise transitions
         "correlations": [],
         "tier_descriptives": [],  # Tier-level descriptive statistics (CoP, etc.)
         "interaction_tests": [],  # Model x Tier interaction analysis
@@ -203,7 +206,8 @@ def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehen
             )
 
     # Pairwise comparisons (Mann-Whitney U) between consecutive tiers
-    # Collect raw p-values per model, then apply Holm-Bonferroni correction
+    # plus overall first->last contrast. Holm-Bonferroni is applied to all 7
+    # comparisons together so the family size matches the pairwise table in the paper.
     for model in models:
         model_runs = runs_df[runs_df["agent_model"] == model]
         raw_p_values = []
@@ -230,6 +234,28 @@ def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehen
                     "n1": len(tier1_data),
                     "n2": len(tier2_data),
                     "u_statistic": float(u_stat),
+                }
+            )
+
+        # Add overall first->last tier contrast (T0->T6) to the correction family
+        first_tier = tier_order[0]
+        last_tier = tier_order[-1]
+        first_data = model_runs[model_runs["tier"] == first_tier]
+        last_data = model_runs[model_runs["tier"] == last_tier]
+        if len(first_data) > 0 and len(last_data) > 0:
+            u_stat_fl, p_value_fl = mann_whitney_u(
+                first_data["passed"].astype(int), last_data["passed"].astype(int)
+            )
+            raw_p_values.append(p_value_fl)
+            test_metadata.append(
+                {
+                    "model": model,
+                    "tier1": first_tier,
+                    "tier2": last_tier,
+                    "n1": len(first_data),
+                    "n2": len(last_data),
+                    "u_statistic": float(u_stat_fl),
+                    "overall_contrast": True,
                 }
             )
 
@@ -403,6 +429,78 @@ def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehen
                         "is_significant": bool(not (ci_low <= 0 <= ci_high)),
                     }
                 )
+
+    # Post-hoc power analysis for pairwise Mann-Whitney transitions (pass_rate)
+    # Uses simulation-based power estimation (10,000 iterations, seed=42).
+    # Also includes a representative medium-effect scenario (delta=0.3) for context.
+    for model in models:
+        model_runs = runs_df[runs_df["agent_model"] == model]
+
+        for i in range(len(tier_order) - 1):
+            tier1, tier2 = tier_order[i], tier_order[i + 1]
+            tier1_data = model_runs[model_runs["tier"] == tier1]
+            tier2_data = model_runs[model_runs["tier"] == tier2]
+
+            n1, n2 = len(tier1_data), len(tier2_data)
+            if n1 < 2 or n2 < 2:
+                continue
+
+            # Observed effect size from effect_sizes (pass_rate)
+            observed_delta = None
+            for es in results["effect_sizes"]:
+                if (
+                    es["model"] == model
+                    and es["metric"] == "pass_rate"
+                    and es["tier1"] == tier1
+                    and es["tier2"] == tier2
+                ):
+                    observed_delta = es["cliffs_delta"]
+                    break
+
+            if observed_delta is None:
+                continue
+
+            # Power at observed effect size
+            power_observed = mann_whitney_power(n1, n2, abs(observed_delta))
+
+            # Power at medium effect size (delta=0.3) for reference
+            power_medium = mann_whitney_power(n1, n2, 0.3)
+
+            results["power_analysis"].append(
+                {
+                    "model": model,
+                    "metric": "pass_rate",
+                    "tier1": tier1,
+                    "tier2": tier2,
+                    "n1": n1,
+                    "n2": n2,
+                    "observed_delta": float(observed_delta),
+                    "power_at_observed": float(power_observed),
+                    "power_at_medium_0_3": float(power_medium),
+                }
+            )
+
+        # Overall KW power for pass_rate across all tiers
+        tier_groups = [
+            model_runs[model_runs["tier"] == tier]["passed"].astype(int) for tier in tier_order
+        ]
+        tier_groups = [g for g in tier_groups if len(g) > 0]
+        if len(tier_groups) >= 2:
+            # Use medium effect (eta^2 = 0.06) as reference
+            kw_power = kruskal_wallis_power([len(g) for g in tier_groups], effect_size=0.06)
+            results["power_analysis"].append(
+                {
+                    "model": model,
+                    "metric": "pass_rate_omnibus",
+                    "tier1": tier_order[0],
+                    "tier2": tier_order[-1],
+                    "n1": sum(len(g) for g in tier_groups),
+                    "n2": None,
+                    "observed_delta": None,
+                    "power_at_observed": None,
+                    "power_at_medium_0_3": float(kw_power),
+                }
+            )
 
     # Correlations between key metrics
     metrics = [

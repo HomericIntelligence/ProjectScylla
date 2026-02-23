@@ -80,9 +80,11 @@ a refactoring task where tools (T2) score 0.74---and complex multi-component tas
 expose over-engineering, with the maximum configuration (T6) scoring lowest (0.78)
 while simpler configurations (T1, T2, T4) achieve perfect 1.00.
 A cross-model comparison with the dryrun paper's Sonnet 4.5 results on a comparable Hello World
-task suggests Haiku achieves competitive quality at significantly lower cost for simple tasks,
-with Haiku's frontier Cost-of-Pass (CoP) of \$0.157 vs.\ Sonnet's \$0.065 on analogous
-work---though direct comparison is confounded by differences in task, judges, and N.
+task finds Sonnet's Frontier CoP (\$0.065) is 2.4$\times$ lower than Haiku's (\$0.157)
+on the trivially comparable task---an unexpected result given Haiku's lower per-token pricing,
+likely explained by token efficiency differences. For real coding tasks,
+Haiku's economics are more favorable given its 3--5$\times$ pricing advantage.
+All cross-model comparisons are confounded by differences in task, judges, and N.
 These results extend the dryrun hypothesis that architectural complexity does not always
 improve quality, and add the finding that optimal tier selection is task-dependent.
 \end{abstract}
@@ -174,6 +176,10 @@ $$\text{CoP} = \frac{\text{mean cost per run}}{\text{pass rate}}$$
 Lower CoP is better.
 The \textbf{Frontier CoP} is the minimum CoP across all subtests within a tier, representing
 the best achievable cost-efficiency for that tier.
+CoP is reported as a point estimate throughout this paper; bootstrapping the cost/pass ratio
+to derive confidence intervals is deferred to future work. With $N=5$ per subtest, both
+mean cost and pass rate carry non-trivial variance, so CoP estimates should be interpreted
+with appropriate caution, particularly for tiers with pass rates near 0 or 1.
 
 \subsection{Dryrun Results Summary}
 
@@ -303,16 +309,23 @@ With $N=5$ runs per subtest, we apply the following statistical workflow:
 \item \textbf{Omnibus}: Kruskal-Wallis $H$ test across all seven tiers. Significant
   ($H(6) = 27.49$, $p = 0.0001$ for pass rate) --- proceed to pairwise.
 \item \textbf{Pairwise}: Mann-Whitney $U$ with Holm-Bonferroni step-down correction.
-  Effect size: Cliff's $\delta$ (Romano et al., 2006: negligible $|{\delta}| < 0.11$, small $< 0.28$, medium $< 0.43$, large $\geq 0.43$).
+  Effect size: Cliff's $\delta$ (Romano et al., 2006 FAIR conference thresholds: negligible $|{\delta}| < 0.11$, small $< 0.28$, medium $< 0.43$, large $\geq 0.43$; note these differ from the widely-cited Romano et al.\ 0.147/0.33/0.474 thresholds---effects near 0.43 are borderline medium/large).
 \item \textbf{Interaction}: Scheirer-Ray-Hare test for tier $\times$ task interaction
   (tier effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$; interaction term not estimable with single-model data).
 \item \textbf{Confidence intervals}: Bootstrap BCa, 10,000 resamples, seed=42.
+  Note: score distribution is bimodal (12.7\% at 0.0, 51.1\% at 0.8--1.0, skew=$-1.18$);
+  BCa CIs remain valid but may be wider and asymmetric than for unimodal data.
 \end{enumerate}
 
-Post-hoc power analysis: with $N=5$ and medium effect size (Cliff's $\delta = 0.3$),
-power is approximately 0.40--0.50, which means the study is underpowered for detecting
-medium effects. Results showing $p < 0.05$ reflect real large effects; null results
-may reflect insufficient power rather than true equivalence.
+Post-hoc power analysis (simulation-based, 10,000 iterations, seed=42):
+For the two significant transitions, power at the observed effect size is:
+T4$\rightarrow$T5 ($\delta = -0.313$, $n_1=123$, $n_2=30$): power $= 0.77$;
+T5$\rightarrow$T6 ($\delta = +0.433$, $n_1=30$, $n_2=15$): power $= 0.68$.
+For the non-significant transitions (T0--T4), power at medium effect ($\delta = 0.3$) with
+per-tier $N$ ranging from 83--130 is 0.73--0.98, confirming those null results reflect
+small true effects rather than insufficient power.
+However, T5$\rightarrow$T6 power at medium effect is only $0.37$ (underpowered for small T5/T6 samples),
+so null results involving T5 or T6 individually require cautious interpretation.
 
 \section{Results}\label{sec:results}
 
@@ -342,7 +355,7 @@ Cost scales approximately with task complexity, growing $4.4\times$ from test-00
 
 \begin{table}[htbp]
 \centering
-\caption{test-002 Tier Performance Summary (Mojo Hello World). Cost = mean cost per run for best subtest.}
+\caption{test-002 Tier Performance Summary (Mojo Hello World). Cost = mean cost per run for best subtest. ``Best Score'' = mean score of the subtest with highest pass rate; ``Pass\%'' = pass rate of that subtest; CoP = Cost / Pass Rate.}
 \label{tab:test002}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -372,9 +385,11 @@ However, cost varies dramatically: T1 costs \$0.79 per run vs.\ T3's \$6.44---an
 difference for identical quality. T3's delegation overhead provides zero quality benefit here.
 
 \textbf{T5 Anomaly}: T5 scored 0.00 with only 40\% pass rate despite other tiers succeeding.
-The best T5 subtest scored 0.00 while pass rate is 40\%, suggesting judging failures or
-subtest misconfigurations in the hybrid setup. This warrants investigation.
-Best Score reflects the mean score of the selected best subtest, which can be 0.00 when the subtest whose overall metric is optimized averages to zero despite individual runs passing.
+Six of T5's 30 runs are framework failures (cost=\$0, tokens=0), contributing 20\% of
+all T5 runs as structural zeroes. Additionally, ``Best Score'' is the mean score of the
+subtest selected by \textit{highest pass rate}---not highest mean score---which can
+show 0.00 when the selected subtest's mean score averages to zero despite some individual
+runs passing. This metric-selection artifact explains the paradox and warrants investigation.
 
 \textbf{Key finding}: For trivial Mojo tasks, T1 (skills only, \$0.79) achieves the best
 cost-quality ratio. T3 and T4 delegation adds cost without quality gain.
@@ -540,7 +555,7 @@ while being 4--5$\times$ cheaper per pass.
 
 \begin{table}[htbp]
 \centering
-\caption{Aggregate Tier Summary (All 5 Experiments, Haiku)}
+\caption{Aggregate Tier Summary (All 5 Experiments including partial, Haiku). Partial experiments (test-021, test-022) contribute to tier counts where completed. CoP is a point estimate (no CI; see Section~\ref{sec:background}).}
 \label{tab:aggregate-tiers}
 \begin{tabular}{lrrrr}
 \toprule
@@ -567,18 +582,53 @@ Kruskal-Wallis confirms significant tier effects:
 \item Cost: $H(6) = 157.44$, $p < 0.0001$\footnote{Cost tier effect sourced from Scheirer-Ray-Hare test (tier effect only; single-model study has no agent\_model factor), mathematically equivalent to Kruskal-Wallis for a one-factor design.}
 \end{itemize}
 
-The Scheirer-Ray-Hare two-way test (tier $\times$ task) confirms the tier effect on score:
-$H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
+The Scheirer-Ray-Hare test, which reduces to a one-way Kruskal-Wallis equivalent in this
+single-model design (agent\_model has df=0; interaction term is not estimable),
+confirms the tier main effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
+This result is mathematically equivalent to a standalone Kruskal-Wallis test on tier.
 
-Significant pairwise transitions (Holm-Bonferroni corrected):
+Significant pairwise transitions (Holm-Bonferroni corrected, $m=7$):
 T4$\rightarrow$T5 ($p = 0.0024$, $\delta = -0.313$, medium effect),
-T5$\rightarrow$T6 ($p = 0.0243$, $\delta = +0.433$, large effect).
+T5$\rightarrow$T6 ($p = 0.0243$, $\delta = +0.433$, borderline large effect---barely
+above the 0.43 threshold; classified as medium under alternative Romano et al.\ 0.474 threshold).
 The T0$\rightarrow$T6 overall contrast is not significant at the aggregate level
 ($p = 0.1187$, $\delta = +0.292$), reflecting that task context moderates the effect.
 
 \textbf{Caveat}: T5 and T6 aggregate results are based on only 2 and 1 subtests respectively.
 These aggregate comparisons are dominated by test-002 and test-007 data.
 Per-test analysis (Sections~\ref{sec:test002}--\ref{sec:test017}) provides more reliable estimates.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{fig04_pass_rate_by_tier}
+  \caption{Pass rate by tier (aggregate, 95\% CI). T2 and T4 lead among well-sampled tiers.}
+  \label{fig:pass-rate-tier}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{fig08_cost_quality_pareto}
+  \caption{Cost-quality Pareto front. T2 sits on the frontier: highest quality per dollar.}
+  \label{fig:pareto}
+\end{subfigure}
+
+\medskip
+\begin{subfigure}[b]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{fig01_score_variance_by_tier}
+  \caption{Score distribution by tier. Bimodal pattern (0.0 and 0.8--1.0 modes) throughout.}
+  \label{fig:score-dist}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \includegraphics[width=\textwidth]{fig19_effect_size_forest}
+  \caption{Effect size forest plot (Cliff's $\delta$ with 95\% CI). Only T4$\rightarrow$T5 and T5$\rightarrow$T6 are significant.}
+  \label{fig:forest}
+\end{subfigure}
+\caption{Key aggregate results. (a) Pass rate by tier. (b) Cost-quality Pareto front.
+(c) Score variance by tier. (d) Pairwise effect sizes. All 52 generated figures are
+available in \texttt{docs/arxiv/haiku/figures/}.}
+\label{fig:key-results}
+\end{figure}
 
 \section{Cross-Model Comparison: Haiku vs.\ Sonnet}\label{sec:crossmodel}
 
@@ -667,8 +717,10 @@ For real coding tasks (test-007, test-017), Haiku's economics are more favorable
 
 \begin{itemize}
 \item test-007 (Justfile): T2 achieves \$3.74 CoP at 100\% pass rate.
-  Extrapolating Sonnet's pricing ratio, Sonnet might achieve $\approx$\$11 CoP
-  (assuming 3$\times$ per-token pricing, though token usage may differ).
+  As a lower-bound estimate only (assuming identical token usage), Sonnet's 3$\times$
+  per-token pricing might yield $\approx$\$11 CoP---but the earlier token analysis
+  (Section~\ref{sec:crossmodel}) shows token usage differs significantly between models,
+  so this extrapolation is speculative.
 \item test-017 (Slot Management): T5 achieves \$7.15 CoP at 100\% pass rate.
   For complex implementation, Haiku's lower pricing provides meaningful cost savings
   vs.\ a hypothetical Sonnet run.
@@ -706,8 +758,9 @@ quality improvement.
 
 \textbf{Finding 5: T2 (tooling) provides the best aggregate cost-quality balance.}
 Across all three complete tests, T2 achieves the lowest Frontier CoP (\$0.44 aggregate),
-highest pass rate (83.1\%), and avoids the delegation overhead of T3/T4 while being accessible
-without complex agent hierarchies.
+the highest pass rate among tiers with representative coverage (T0--T4: 83.1\%,
+compared to T6's 93.3\% from a single subtest with wide CI [0.667, 1.000]),
+and avoids the delegation overhead of T3/T4 while being accessible without complex agent hierarchies.
 
 \subsection{Hypothesis Progress}
 
@@ -729,8 +782,9 @@ Full hypothesis testing requires more tasks across the complexity spectrum.
 \subsection{Limitations}
 
 \begin{enumerate}
-\item \textbf{Small N}: $N=5$ per subtest provides 40--50\% power for medium effects.
-  Many null results may reflect insufficient power rather than true equivalence.
+\item \textbf{Small N}: $N=5$ per subtest; simulation-based power analysis shows 40--80\%
+  power at observed effects for significant transitions, and 36\% at medium effect for T5/T6.
+  Null results for T5 and T6 individually should be interpreted with particular caution.
 \item \textbf{Single judge}: Removing two of three judges from the dryrun design increases
   scoring variance and potential judge bias. The dryrun showed high judge agreement,
   but single-judge results cannot be validated against consensus.
@@ -740,6 +794,9 @@ Full hypothesis testing requires more tasks across the complexity spectrum.
   cross-test analysis is based on only three complete tests.
 \item \textbf{Cross-model confounds}: Haiku vs.\ Sonnet comparison is confounded by
   task, judges, and N. Conclusions are exploratory.
+\item \textbf{Framework failures}: 16 zero-cost/zero-token runs exist across T1 (5), T4 (4),
+  and T5 (6). These inflate failure rates for those tiers. T5's 50\% aggregate pass rate
+  is partly driven by 20\% framework failure rate (6/30 runs), independent of model quality.
 \end{enumerate}
 
 \subsection{Threats to Validity}
@@ -857,11 +914,12 @@ Sample statistics per tier (score metric):
 
 \subsection{Pairwise Comparisons}
 
-Full Mann-Whitney U results with Holm-Bonferroni correction:
+Full Mann-Whitney U results with Holm-Bonferroni correction (family size = 7: six adjacent
+transitions plus overall T0$\rightarrow$T6 contrast; all corrected together):
 
 \begin{table}[htbp]
 \centering
-\caption{Pairwise Tier Comparisons (Pass Rate, Holm-Bonferroni Corrected)}
+\caption{Pairwise Tier Comparisons (Pass Rate, Holm-Bonferroni Corrected, $m=7$). Bold = significant ($p < 0.05$). T5$\rightarrow$T6 $\delta = +0.433$ is borderline large/medium (threshold 0.43).}
 \label{tab:pairwise}
 \begin{tabular}{lrrrr}
 \toprule
@@ -886,7 +944,7 @@ All raw data, figures, and tables are available in \texttt{docs/arxiv/haiku/}:
 \item \texttt{data/runs.csv} --- Per-run data (score, cost, duration, tokens)
 \item \texttt{data/summary.json} --- Aggregated experiment summaries
 \item \texttt{data/statistical\_results.json} --- Full statistical test outputs
-\item \texttt{figures/*.png} --- 52 generated figures (PNG + PDF + Vega-Lite JSON)
+\item \texttt{figures/*.png} --- 52 generated figures (PNG + Vega-Lite JSON); 4 key figures included in Figure~\ref{fig:key-results}
 \item \texttt{tables/*.tex} --- 9 generated tables (Markdown + LaTeX)
 \end{itemize}
 
