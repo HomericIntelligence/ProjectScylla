@@ -871,8 +871,8 @@ def stage_finalize_run(ctx: RunContext) -> None:
     """
     from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
 
-    assert ctx.agent_result is not None, "agent_result must be set before finalize_run"
-    assert ctx.judgment is not None, "judgment must be set before finalize_run"
+    assert ctx.agent_result is not None, "agent_result must be set before finalize_run"  # noqa: S101
+    assert ctx.judgment is not None, "judgment must be set before finalize_run"  # noqa: S101
 
     agent_dir = get_agent_dir(ctx.run_dir)
 
@@ -952,9 +952,9 @@ def stage_write_report(ctx: RunContext) -> None:
     """
     from scylla.e2e.run_report import save_run_report, save_run_report_json
 
-    assert ctx.run_result is not None, "run_result must be set before write_report"
-    assert ctx.agent_result is not None, "agent_result must be set before write_report"
-    assert ctx.judgment is not None, "judgment must be set before write_report"
+    assert ctx.run_result is not None, "run_result must be set before write_report"  # noqa: S101
+    assert ctx.agent_result is not None, "agent_result must be set before write_report"  # noqa: S101
+    assert ctx.judgment is not None, "judgment must be set before write_report"  # noqa: S101
 
     token_stats = ctx.run_result.token_stats
 
