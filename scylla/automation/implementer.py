@@ -460,13 +460,13 @@ class IssueImplementer:
             # Show failure in UI before releasing slot
             self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
 
-            state = self._get_state(issue_number)
-            if state:
+            err_state = self._get_state(issue_number)
+            if err_state:
                 with self.state_lock:
-                    state.phase = ImplementationPhase.FAILED
-                    state.error = error_msg
-                    state.attempts += 1
-                self._save_state(state)
+                    err_state.phase = ImplementationPhase.FAILED
+                    err_state.error = error_msg
+                    err_state.attempts += 1
+                self._save_state(err_state)
 
             return WorkerResult(
                 issue_number=issue_number,
@@ -483,13 +483,13 @@ class IssueImplementer:
             # Show failure in UI before releasing slot
             self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
 
-            state = self._get_state(issue_number)
-            if state:
+            err_state = self._get_state(issue_number)
+            if err_state:
                 with self.state_lock:
-                    state.phase = ImplementationPhase.FAILED
-                    state.error = str(e)
-                    state.attempts += 1
-                self._save_state(state)
+                    err_state.phase = ImplementationPhase.FAILED
+                    err_state.error = str(e)
+                    err_state.attempts += 1
+                self._save_state(err_state)
 
             return WorkerResult(
                 issue_number=issue_number,
@@ -504,13 +504,13 @@ class IssueImplementer:
             error_msg = str(e)[:80]
             self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
 
-            state = self._get_state(issue_number)
-            if state:
+            err_state = self._get_state(issue_number)
+            if err_state:
                 with self.state_lock:
-                    state.phase = ImplementationPhase.FAILED
-                    state.error = str(e)
-                    state.attempts += 1
-                self._save_state(state)
+                    err_state.phase = ImplementationPhase.FAILED
+                    err_state.error = str(e)
+                    err_state.attempts += 1
+                self._save_state(err_state)
 
             return WorkerResult(
                 issue_number=issue_number,
@@ -525,13 +525,13 @@ class IssueImplementer:
             error_msg = str(e)[:80]
             self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
 
-            state = self._get_state(issue_number)
-            if state:
+            err_state = self._get_state(issue_number)
+            if err_state:
                 with self.state_lock:
-                    state.phase = ImplementationPhase.FAILED
-                    state.error = str(e)
-                    state.attempts += 1
-                self._save_state(state)
+                    err_state.phase = ImplementationPhase.FAILED
+                    err_state.error = str(e)
+                    err_state.attempts += 1
+                self._save_state(err_state)
 
             return WorkerResult(
                 issue_number=issue_number,

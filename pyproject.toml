@@ -115,7 +115,6 @@ implicit_reexport = true
 # Temporarily disable error codes with most violations during initial rollout
 # Re-enable these incrementally as codebase type errors are fixed
 disable_error_code = [
-    "assignment",      # 12 violations - type mismatches in assignments
     "arg-type",        # 23 violations - incompatible argument types
     "union-attr",      # 4 violations - accessing attributes on unions
 ]
@@ -125,15 +124,15 @@ disable_error_code = [
 [[tool.mypy.overrides]]
 module = "tests.*"
 disable_error_code = [
-    "assignment",      # 1 violation
-    "operator",        # 12 violations
-    "arg-type",        # 13 violations
-    "index",           # 7 violations
-    "attr-defined",    # 7 violations
-    "union-attr",      # 16 violations
+    "operator",        # violations in tests/unit/
+    "arg-type",        # violations in tests/unit/
+    "index",           # violations in tests/unit/
+    "attr-defined",    # violations in tests/unit/
+    "union-attr",      # violations in tests/unit/
     "var-annotated",   # violations in tests/unit/ (not matched by hyphenated tests/claude-code/)
-    "call-arg",        # 30 violations - tests-only, zero in scylla/ and scripts/
-    "misc",            # 3 violations in tests/unit/
+    "call-arg",        # tests-only, zero in scylla/ and scripts/
+    "misc",            # violations in tests/unit/
+    "method-assign",   # violations in tests/unit/ (method monkey-patching in test mocks)
 ]
 
 

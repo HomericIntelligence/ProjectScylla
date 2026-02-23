@@ -433,7 +433,7 @@ def _rerun_single_judge_slot(
         task_prompt = task_prompt_file.read_text()
 
         # Find rubric
-        rubric_path = experiment_dir / "rubric.yaml"
+        rubric_path: Path | None = experiment_dir / "rubric.yaml"
         if not rubric_path.exists():
             rubric_path = None
 

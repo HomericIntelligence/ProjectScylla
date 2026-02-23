@@ -177,8 +177,8 @@ def compose(  # noqa: C901  # skill composition with many conditional branches
 
     for category in sorted(by_category.keys()):
         print(f"\n  {category}:")
-        for skill in sorted(by_category[category]):
-            print(f"    - {skill}")
+        for skill_name in sorted(by_category[category]):
+            print(f"    - {skill_name}")
 
 
 def list_skills_and_presets() -> None:
