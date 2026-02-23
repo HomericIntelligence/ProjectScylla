@@ -250,12 +250,11 @@ def test_update_table_preserves_non_table_content(valid_md: Path) -> None:
 
 def test_update_table_updates_total_row(valid_md: Path) -> None:
     """update_table updates the **Total** row to reflect new sum."""
-    # Only codes in DISABLED_ERROR_CODES are summed; our fixture has 3 of them
+    # Total is the sum of all values in the actual dict: 10 + 5 + 3 = 18
     actual = {"arg-type": 10, "call-arg": 5, "operator": 3}
     check_mypy_counts.update_table(valid_md, actual)
 
     content = valid_md.read_text(encoding="utf-8")
-    # The total for just these 3 codes = 18 (only DISABLED_ERROR_CODES are summed)
     assert "18" in content
 
 
@@ -319,32 +318,34 @@ def test_update_table_per_dir_updates_total_per_section(per_dir_md: Path) -> Non
 
 
 def test_run_mypy_and_count_parses_output(tmp_path: Path) -> None:
-    """run_mypy_and_count correctly parses error codes from mypy output (merged across dirs)."""
-    # run_mypy_and_count delegates to run_mypy_per_dir which calls mypy once per
-    # MYPY_PATH ("scripts/", "scylla/", "tests/"). Provide one result per call.
-    scripts_output = "Success: no issues found\n"
-    scylla_output = (
+    """run_mypy_and_count correctly parses error codes from mypy output (merged across dirs).
+
+    run_mypy_and_count delegates to run_mypy_per_dir which now makes a SINGLE mypy
+    invocation over all MYPY_PATHS at once. Provide one combined mock result.
+    """
+    combined_output = (
         "scylla/foo.py:10: error: Incompatible types  [arg-type]\n"
         "scylla/bar.py:20: error: Some issue  [call-arg]\n"
         "scylla/bar.py:21: error: Another  [call-arg]\n"
         "scylla/baz.py:5: note: By default  [annotation-unchecked]\n"
+        "tests/test_foo.py:5: error: Union issue  [union-attr]\n"
+        "Success: no issues found\n"
     )
-    tests_output = "Success: no issues found\n"
 
-    side_effects = []
-    for output in [scripts_output, scylla_output, tests_output]:
-        mock_result = MagicMock()
-        mock_result.stdout = output
-        mock_result.returncode = 0 if "Success" in output else 1
-        side_effects.append(mock_result)
+    mock_result = MagicMock()
+    mock_result.stdout = combined_output
+    mock_result.returncode = 0
 
-    with patch("subprocess.run", side_effect=side_effects):
+    with patch("subprocess.run", return_value=mock_result):
         counts = check_mypy_counts.run_mypy_and_count(tmp_path)
 
-    assert counts.get("arg-type") == 1
+    # union-attr and call-arg are in TESTS_ONLY_ERROR_CODES → counted
+    assert counts.get("union-attr") == 1
     assert counts.get("call-arg") == 2
-    # annotation-unchecked is not in DISABLED_ERROR_CODES → not counted
+    # annotation-unchecked is not tracked → not counted
     assert "annotation-unchecked" not in counts
+    # arg-type is not in DISABLED_ERROR_CODES or TESTS_ONLY_ERROR_CODES → not counted
+    assert "arg-type" not in counts
 
 
 def test_run_mypy_and_count_empty_output(tmp_path: Path) -> None:
@@ -373,35 +374,31 @@ def test_run_mypy_and_count_pixi_not_found(tmp_path: Path) -> None:
 
 
 def test_run_mypy_per_dir_returns_per_directory_counts(tmp_path: Path) -> None:
-    """run_mypy_per_dir runs mypy once per MYPY_PATH and returns per-dir counts.
+    """run_mypy_per_dir makes a SINGLE mypy call over all paths and partitions by dir prefix.
 
-    MYPY_PATHS order is ["scripts/", "scylla/", "tests/"], so side_effects must
-    match that order.
+    The single combined output is partitioned by file path prefix into per-directory
+    counts. Only codes in TESTS_ONLY_ERROR_CODES are tracked (DISABLED_ERROR_CODES is empty).
     """
-    # MYPY_PATHS = ["scripts/", "scylla/", "tests/"]
-    outputs = [
-        # scripts/ — no errors
-        "Success: no issues found in 5 source files\n",
-        # scylla/ — one arg-type error
-        "scylla/foo.py:10: error: Something  [arg-type]\n",
-        # tests/ — two union-attr errors
+    # Single combined output covering all directories
+    combined_output = (
+        "Success: no issues found in 5 source files\n"
+        "scylla/foo.py:10: error: Something  [arg-type]\n"
         "tests/test_bar.py:5: error: Union issue  [union-attr]\n"
-        "tests/test_bar.py:6: error: Another union  [union-attr]\n",
-    ]
+        "tests/test_bar.py:6: error: Another union  [union-attr]\n"
+    )
 
-    side_effects = []
-    for output in outputs:
-        mock_result = MagicMock()
-        mock_result.stdout = output
-        mock_result.returncode = 0 if "Success" in output else 1
-        side_effects.append(mock_result)
+    mock_result = MagicMock()
+    mock_result.stdout = combined_output
+    mock_result.returncode = 1
 
-    with patch("subprocess.run", side_effect=side_effects):
+    with patch("subprocess.run", return_value=mock_result):
         result = check_mypy_counts.run_mypy_per_dir(tmp_path)
 
     assert set(result.keys()) == set(check_mypy_counts.MYPY_PATHS)
+    # arg-type is not in TESTS_ONLY_ERROR_CODES → not counted for scylla/
+    assert result["scylla/"] == {}
     assert result["scripts/"] == {}
-    assert result["scylla/"]["arg-type"] == 1
+    # union-attr is in TESTS_ONLY_ERROR_CODES → counted for tests/
     assert result["tests/"]["union-attr"] == 2
 
 
