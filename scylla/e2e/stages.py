@@ -9,7 +9,7 @@ earlier stages to later ones without complex argument threading.
 build_actions_dict() assembles the {RunState -> Callable} map expected by
 StateMachine.advance_to_completion().
 
-16-stage pipeline:
+16-stage pipeline (15 explicit stage functions + 1 implicit auto-transition):
   PENDING              -> stage_create_dir_structure()
   DIR_STRUCTURE_CREATED -> stage_create_worktree()
   WORKTREE_CREATED     -> stage_apply_symlinks()
@@ -24,7 +24,8 @@ StateMachine.advance_to_completion().
   JUDGE_PROMPT_BUILT   -> stage_execute_judge()
   JUDGE_COMPLETE       -> stage_finalize_run()
   RUN_FINALIZED        -> stage_write_report()
-  REPORT_WRITTEN       -> (no-op, StateMachine auto-saves checkpoint)
+  REPORT_WRITTEN       -> (no-op: StateMachine auto-saves checkpoint after every transition,
+                           so no explicit stage_save_checkpoint function is needed here)
   CHECKPOINTED         -> stage_cleanup_worktree()
 """
 

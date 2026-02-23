@@ -494,3 +494,102 @@ class TestSubtestStateMachineAdvanceToCompletion:
         # Subtest B should still be PENDING
         assert ssm.get_state(TIER_ID, subtest_b) == SubtestState.PENDING
         assert not ssm.is_complete(TIER_ID, subtest_b)
+
+
+# ---------------------------------------------------------------------------
+# SubtestStateMachine.advance_to_completion until_state tests
+# ---------------------------------------------------------------------------
+
+
+class TestSubtestStateMachineUntilState:
+    """Tests for advance_to_completion() until_state early-stop behavior.
+
+    Although until_state is not CLI-exposed at the subtest level, the
+    SubtestStateMachine.advance_to_completion() accepts an until_state
+    parameter for completeness and potential future use.
+    """
+
+    def test_stops_at_until_state_before_executing_action(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """advance_to_completion stops AT until_state without executing its action."""
+        action_runs_in_progress = MagicMock()
+        action_runs_complete = MagicMock()
+
+        actions = {
+            SubtestState.PENDING: MagicMock(),
+            SubtestState.RUNS_IN_PROGRESS: action_runs_in_progress,
+            SubtestState.RUNS_COMPLETE: action_runs_complete,
+        }
+        final = ssm.advance_to_completion(
+            TIER_ID, SUBTEST_ID, actions, until_state=SubtestState.RUNS_IN_PROGRESS
+        )
+
+        # Stopped at RUNS_IN_PROGRESS — its action should NOT have been called
+        assert final == SubtestState.RUNS_IN_PROGRESS
+        action_runs_in_progress.assert_not_called()
+        action_runs_complete.assert_not_called()
+
+    def test_stops_at_until_state_preserves_state_for_resume(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """State after until_state stop is preserved in checkpoint (no FAILED set)."""
+        ssm.advance_to_completion(
+            TIER_ID, SUBTEST_ID, {}, until_state=SubtestState.RUNS_IN_PROGRESS
+        )
+
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS
+        assert not ssm.is_complete(TIER_ID, SUBTEST_ID)
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        on_disk = load_checkpoint(checkpoint_path)
+        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS.value
+
+    def test_resume_after_until_state_stop_continues_from_saved_state(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """After an until_state stop, resuming without until_state completes the subtest."""
+        # First pass: stop at RUNS_IN_PROGRESS
+        ssm.advance_to_completion(
+            TIER_ID, SUBTEST_ID, {}, until_state=SubtestState.RUNS_IN_PROGRESS
+        )
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS
+
+        # Second pass: resume to completion
+        final = ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {})
+        assert final == SubtestState.AGGREGATED
+
+    def test_until_state_at_current_state_stops_immediately(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """If until_state equals the current state, no transitions are executed."""
+        action = MagicMock()
+        final = ssm.advance_to_completion(
+            TIER_ID, SUBTEST_ID, {SubtestState.PENDING: action}, until_state=SubtestState.PENDING
+        )
+
+        assert final == SubtestState.PENDING
+        action.assert_not_called()
+
+    def test_until_state_does_not_mark_failed(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """Stopping at until_state does not mark the subtest as FAILED."""
+        ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {}, until_state=SubtestState.RUNS_COMPLETE)
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) != SubtestState.FAILED
