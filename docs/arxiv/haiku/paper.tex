@@ -161,7 +161,7 @@ T6 & Super & Maximum capability: all skills, tools, agents & All \\
 \end{tabularx}
 \end{table}
 
-The total ablation suite has 113 subtests (T0: 24, T1: 10, T2: 15, T3: 41, T4: 14, T5: 15, T6: 1).
+The total ablation suite has 120 subtests (T0: 24, T1: 10, T2: 15, T3: 41, T4: 14, T5: 15, T6: 1).
 Each subtest is an independent configuration that is evaluated against a well-defined task with
 known expected output.
 
@@ -207,7 +207,8 @@ All confidence intervals use bootstrap BCa (bias-corrected and accelerated) with
 resamples and seed=42.
 Statistical tests use non-parametric methods (Kruskal-Wallis, Mann-Whitney U with
 Holm-Bonferroni correction, Cliff's delta effect sizes) since score distributions
-are non-normal (Shapiro-Wilk, all tiers $p < 0.001$).
+are non-normal for nearly all tiers (Shapiro-Wilk $p < 0.001$; T6 passes normality
+but non-parametric tests are applied throughout for consistency).
 
 \section{Experimental Design}\label{sec:design}
 
@@ -284,7 +285,7 @@ Risk of over-engineering from T6.
 \textbf{Complexity}: High. \textbf{Language}: Mojo. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
 
 Task prompt: Add gradient tracking control for autograd.
-At the time of writing, tiers T0--T4 are complete; T5--T6 are still running.
+At the time of writing, this experiment is still in very early stages with minimal completed runs.
 
 \subsubsection{test-022: (Partial, details pending)}
 
@@ -296,14 +297,15 @@ Included for completeness; results are not used in statistical analysis.
 With $N=5$ runs per subtest, we apply the following statistical workflow:
 
 \begin{enumerate}
-\item \textbf{Normality}: Shapiro-Wilk test per tier/metric. All distributions were
-  non-normal ($p < 0.001$), justifying non-parametric tests throughout.
+\item \textbf{Normality}: Shapiro-Wilk test per tier/metric. Nearly all distributions were
+  non-normal ($p < 0.001$); T6 score/cost passed normality ($p > 0.10$, $n = 15$).
+  Non-parametric tests applied throughout for consistency.
 \item \textbf{Omnibus}: Kruskal-Wallis $H$ test across all seven tiers. Significant
-  ($H(6) = 22.63$, $p = 0.0009$ for score) --- proceed to pairwise.
+  ($H(6) = 27.49$, $p = 0.0001$ for pass rate) --- proceed to pairwise.
 \item \textbf{Pairwise}: Mann-Whitney $U$ with Holm-Bonferroni step-down correction.
-  Effect size: Cliff's $\delta$ (small: $|{\delta}| < 0.147$, medium: $< 0.330$, large: $\geq 0.474$).
+  Effect size: Cliff's $\delta$ (Romano et al., 2006: negligible $|{\delta}| < 0.11$, small $< 0.28$, medium $< 0.43$, large $\geq 0.43$).
 \item \textbf{Interaction}: Scheirer-Ray-Hare test for tier $\times$ task interaction
-  ($H_{\text{tier}} = 22.63$, $p = 0.0009$; interaction term not estimable with single-model data).
+  (tier effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$; interaction term not estimable with single-model data).
 \item \textbf{Confidence intervals}: Bootstrap BCa, 10,000 resamples, seed=42.
 \end{enumerate}
 
@@ -359,9 +361,10 @@ T6 & 0.84 & 100\% & \$1.36 & \$1.36 & 1,418s \\
 
 \textbf{T0 Framework Failure}: T0 scored 0.00 with \$0.00 cost and zero tokens. This is a
 known infrastructure diagnostic: T0's empty-prompt configuration causes Claude Code to
-refuse the task without generating output. This is not a Haiku model failure---T1 (with skills
-only, no tools) immediately achieves 0.84 (100\% pass rate). The T0 failure is consistent
-across all three completed tasks.
+refuse the task without generating output on this test. This is not a Haiku model failure---T1 (with skills
+only, no tools) immediately achieves 0.84 (100\% pass rate). Note that T0 runs successfully on
+test-007 (\$7.55 cost, 20\% pass rate) and test-017 (\$2.78 cost, 80\% pass rate); the
+\$0.00/zero-token pattern is specific to test-002.
 
 \textbf{Ceiling Effect}: T1, T3, T4, and T6 all achieve best scores of 0.84 with 100\% pass rates.
 This mirrors the dryrun finding: Hello World is too simple to differentiate quality.
@@ -398,9 +401,11 @@ T6 & 0.88 & 80\% & \$3.92 & \$4.90 & 3,174s \\
 
 \textbf{This is the most analytically rich of the three tests.}
 
-\textbf{T1 = 0.00 (Complete Failure)}: Skills without tools completely fail at a refactoring task.
-Score 0.00, 0\% pass rate. Haiku with skills but no file-reading tools cannot examine the
-existing Justfile to determine what to simplify. This is the strongest evidence of tool
+\textbf{T1 = 0.00 (Near-Complete Failure)}: Skills without tools largely fail at a refactoring task.
+T1's tier-level best score is 0.00, with the selected best subtest (02) achieving 0\% pass rate.
+Subtest 01 achieved a 40\% pass rate (mean score 0.30) but remained below acceptable quality.
+Haiku with skills but no file-reading tools cannot reliably examine the
+existing Justfile to determine what to simplify. This is strong evidence of tool
 dependence in the dataset: \textit{refactoring tasks require tools, not just domain knowledge.}
 
 \textbf{T0 Partial Success (0.25)}: Without any prompt or skills, Claude Code's base
@@ -455,8 +460,9 @@ output quality for complex implementation tasks.
 achieve perfect scores of 1.00 on their best subtests. Simpler configurations outperform the maximum.
 
 \textbf{Delegation Cost Explosion}: T3 costs \$13.18/run (\$34.97 CoP) and T4 costs
-\$17.62/run (\$30.04 CoP)---3.5--4$\times$ more than T1 (\$3.71) or T2 (\$2.49) for the
-same or worse quality. The multi-agent coordination overhead does not justify itself here.
+\$17.62/run (\$30.04 CoP)---T3 costs 3.5$\times$ T1 and 5.3$\times$ T2; T4 costs 4.8$\times$ T1
+and 7.1$\times$ T2---for the same or worse quality. The multi-agent coordination overhead
+does not justify itself here.
 
 \textbf{T5 Best CoP}: T5 achieves \$7.15 CoP at 100\% pass rate, representing the best
 cost-quality balance. This confirms the dryrun finding that smart hybrids can outperform
@@ -467,20 +473,17 @@ delegation hierarchies. T6 over-engineering is detectable and measurable.
 
 \subsection{Partial Results: test-021 and test-022}\label{sec:partial}
 
-\textbf{test-021 (Gradient Tracking, T0--T4 complete)}:
+\textbf{test-021 (Gradient Tracking, still running)}:
 
-With T0--T4 complete, preliminary results suggest a similar pattern to test-017:
-T1 (skills) achieves 0.83 at 100\% pass rate for most subtests, T2 achieves 0.83,
-and T4's best subtest achieves 1.00 (100\% pass rate). T0 shows framework failures
-as expected. T5--T6 are pending.
+At the time of writing, test-021 is in very early stages: only T0 subtest-19 run-1
+has completed (status: passed). T1--T4 are not yet complete and T5--T6 have not started.
+No tier-level conclusions can be drawn from this checkpoint. Results for this test will
+be reported in a follow-up paper once all tiers complete.
 
-The large number of T4 subtests (14) with most scoring 0.83--1.00 and substantial
-delegation costs (\$67.79 total for T4 alone) suggests delegation overhead is again
-present for this Mojo autograd implementation task.
-
-\textbf{test-022 (Partial)}: T0 shows framework failures (both subtests scored 0.00).
-T3 partial results show mixed performance (2/5 runs passing for subtest-05).
-Insufficient data for conclusions.
+\textbf{test-022 (Partial)}: T0 subtest-00 has 2 completed runs, both failed (scores pending
+full evaluation). T3 partial results show mixed performance (2 of 5 runs passing for subtest-05).
+Only one T0 subtest has data; broader T0 conclusions cannot be drawn.
+Insufficient data for tier-level conclusions.
 
 \textbf{Caveat}: Both tests are still running. Results in this section are preliminary
 and subject to change as T5--T6 complete.
@@ -556,10 +559,12 @@ T6 & 0.933 (0.667, 1.000) & 0.812 $\pm$ 0.122 & 0.59 & 1 \\
 Kruskal-Wallis confirms significant tier effects:
 \begin{itemize}
 \item Pass rate: $H(6) = 27.49$, $p = 0.0001$
-\item Score: $H(6) = 22.63$, $p = 0.0009$
 \item Impl-rate: $H(6) = 18.97$, $p = 0.0042$
 \item Cost: $H(6) = 157.44$, $p < 0.0001$
 \end{itemize}
+
+The Scheirer-Ray-Hare two-way test (tier $\times$ task) confirms the tier effect on score:
+$H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
 
 Significant pairwise transitions (Holm-Bonferroni corrected):
 T4$\rightarrow$T5 ($p = 0.0028$, $\delta = -0.313$, medium effect),
@@ -648,8 +653,8 @@ consuming more cache reads to compensate for smaller context handling;
 (2) The Mojo Hello World task may be inherently more token-intensive than Python Hello World
 due to Mojo's less common syntax requiring more tool use to verify correctness.
 
-Token analysis from test-002 shows cache reads dominate at 40M+ tokens total (vs.\ output
-tokens of 242K), suggesting cache-heavy access patterns.
+Token analysis from test-002 shows cache reads dominate: 41.7M total tokens with 40.4M (97\%)
+from cache reads vs.\ 242K output tokens, suggesting cache-heavy access patterns.
 Full token efficiency comparison requires the same task on both models, which is future work.
 
 \subsection{Economic Viability Assessment}
@@ -691,7 +696,7 @@ T6's lowest score on test-017 (0.78 vs.\ 1.00 for T1/T2/T4) quantifies over-engi
 Scylla can detect when maximum configuration actively hurts quality.
 
 \textbf{Finding 4: Delegation overhead is large and often unjustified.}
-T3 and T4 consistently cost 3.5--4$\times$ more than T1/T2 with comparable or worse quality.
+T3 and T4 consistently cost 3.5--7$\times$ more than T1/T2 (depending on comparison) with comparable or worse quality.
 For the tasks tested here, delegation adds coordination overhead without commensurate
 quality improvement.
 
@@ -812,8 +817,12 @@ See \texttt{docs/arxiv/haiku/tables/tab07\_subtest\_detail.*} for full subtest-l
 
 \subsection{test-007 Subtest Detail}
 
-T1 subtest analysis: both subtests (01, 02) scored 0.00 with 0\% pass rate,
-confirming systematic tool-dependency failure rather than subtest-specific issues.
+T1 subtest analysis: subtest-01 achieved 40\% pass rate (mean score 0.304; 2 of 5 runs passed
+with scores 0.85 and 0.67) but below the quality threshold for tier selection.
+Subtest-02 scored 0.00 with 0\% pass rate.
+The tier-level best score is 0.00 (subtest-02 selected as tiebreaker);
+both subtests show insufficient quality for a refactoring task,
+confirming systematic tool-dependency failure rather than a subtest-specific fluke.
 
 T2 best subtest (01) used criteria: \texttt{duplicate\_merge} (1.00),
 \texttt{unused\_removal} (1.00), \texttt{ci\_compatible} (0.85), \texttt{docs\_updated} (0.70).
@@ -829,14 +838,17 @@ not shown in the summary.
 
 \subsection{Normality Tests}
 
-All tier/metric combinations failed the Shapiro-Wilk normality test ($p < 0.001$),
-justifying non-parametric methods throughout. Sample statistics per tier:
+Nearly all tier/metric combinations failed the Shapiro-Wilk normality test ($p < 0.001$),
+justifying non-parametric methods throughout. T6 score ($W = 0.935$, $p = 0.329$) and
+T6 cost ($W = 0.918$, $p = 0.177$) passed normality, likely due to small sample size ($n = 15$).
+Sample statistics per tier (score metric):
 
 \begin{itemize}
 \item T0: $W = 0.804$, $p = 3.5 \times 10^{-11}$, $n = 117$
 \item T1: $W = 0.800$, $p = 3.0 \times 10^{-9}$, $n = 83$
 \item T2: $W = 0.793$, $p < 10^{-10}$, $n = 130$
-\item T3--T6: similarly non-normal
+\item T3--T5: similarly non-normal
+\item T6: $W = 0.935$, $p = 0.329$, $n = 15$ (normal; non-parametric applied for consistency)
 \end{itemize}
 
 \subsection{Pairwise Comparisons}
