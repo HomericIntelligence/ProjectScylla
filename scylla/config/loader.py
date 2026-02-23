@@ -249,7 +249,10 @@ class ConfigLoader:
         if not tiers_dir.exists():
             return result
 
-        for tier_file in sorted(tiers_dir.glob("t*.yaml")):
+        for tier_file in sorted(tiers_dir.glob("*.yaml")):
+            # Skip test fixtures (prefixed with _), matching load_all_models() behaviour
+            if tier_file.name.startswith("_"):
+                continue
             tier_name = tier_file.stem  # e.g., "t0" from "t0.yaml"
             tier_config = self.load_tier(tier_name)
 
@@ -335,6 +338,12 @@ class ConfigLoader:
                 result[model_key] = model
 
         # Check for orphaned model configs (not referenced by config/ or tests/)
+        # Note: filename/model_id mismatches here are warnings (not errors) because
+        # load_model() already logs them individually, and model configs may be loaded
+        # by key (filename stem) rather than by the model_id field. Raising here
+        # would prevent loading any models when a mismatch exists, which is too strict
+        # for an aggregation function. load_all_tiers() raises because tier IDs are
+        # always the canonical lookup key and mismatches indicate broken configs.
         search_roots = [self.base_path / "config", self.base_path / "tests"]
         for model_file in sorted(models_dir.glob("*.yaml")):
             if model_file.name.startswith(".") or model_file.stem.startswith("_"):
