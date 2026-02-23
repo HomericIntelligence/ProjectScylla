@@ -896,20 +896,22 @@ class E2ERunner:
 
         # Symlink criteria if exists (look for it relative to prompt file)
         prompt_dir = self.config.task_prompt_file.parent
-        criteria_path = experiment_dir / "criteria.md"
+        criteria_dest = experiment_dir / "criteria.md"
         criteria_file = prompt_dir / "expected" / "criteria.md"
         if criteria_file.exists():
-            criteria_path.symlink_to(criteria_file.resolve())
-            logger.debug(f"Symlinked criteria to {criteria_path}")
+            criteria_dest.symlink_to(criteria_file.resolve())
+            logger.debug(f"Symlinked criteria to {criteria_dest}")
+            criteria_path: Path | None = criteria_dest
         else:
             criteria_path = None
 
         # Symlink rubric if exists
-        rubric_path = experiment_dir / "rubric.yaml"
+        rubric_dest = experiment_dir / "rubric.yaml"
         rubric_file = prompt_dir / "expected" / "rubric.yaml"
         if rubric_file.exists():
-            rubric_path.symlink_to(rubric_file.resolve())
-            logger.debug(f"Symlinked rubric to {rubric_path}")
+            rubric_dest.symlink_to(rubric_file.resolve())
+            logger.debug(f"Symlinked rubric to {rubric_dest}")
+            rubric_path: Path | None = rubric_dest
         else:
             rubric_path = None
 

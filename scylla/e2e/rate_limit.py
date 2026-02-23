@@ -99,7 +99,7 @@ def parse_retry_after(stderr: str) -> float | None:
     match = re.search(r"resets\s+(\d{1,2}):?(\d{2})?\s*(am|pm)", stderr, re.IGNORECASE)
     if match:
         import zoneinfo
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         hour = int(match.group(1))
         minute = int(match.group(2)) if match.group(2) else 0
@@ -119,7 +119,7 @@ def parse_retry_after(stderr: str) -> float | None:
             tz = zoneinfo.ZoneInfo(tz_str)
         except Exception:
             # Fallback to UTC if timezone parsing fails
-            tz = timezone.utc
+            tz = zoneinfo.ZoneInfo("UTC")
 
         # Get current time and target reset time
         now = datetime.now(tz)

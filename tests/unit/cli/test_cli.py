@@ -1,6 +1,7 @@
 """Tests for CLI commands."""
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -71,7 +72,7 @@ class TestRunCommand:
         mock_loader_instance = MagicMock()
         mock_loader_instance.load_defaults.return_value = mock_defaults
 
-        captured: dict[str, str] = {}
+        captured: dict[str, Any] = {}
 
         mock_orchestrator_instance = MagicMock()
         mock_orchestrator_instance.run_batch.return_value = []

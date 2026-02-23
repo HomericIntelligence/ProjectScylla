@@ -585,12 +585,12 @@ def rerun_experiment(  # noqa: C901  # run scanning with many filter conditions
             stats.runs_rerun_success += 1
 
             # Update checkpoint with pass/fail status based on judge result
-            status = "passed" if run_result.judge_passed else "failed"
+            run_status = "passed" if run_result.judge_passed else "failed"
             checkpoint.mark_run_completed(
                 tier_id=run_info.tier_id,
                 subtest_id=run_info.subtest_id,
                 run_number=run_info.run_number,
-                status=status,
+                status=run_status,
             )
             checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
             save_checkpoint(checkpoint, checkpoint_path)
@@ -725,7 +725,7 @@ def rerun_experiment(  # noqa: C901  # run scanning with many filter conditions
 
                     # Build run_result.json
                     token_stats = agent_result.get("token_stats", {})
-                    run_result = {
+                    run_result_data = {
                         "run_number": run_info.run_number,
                         "exit_code": agent_result.get("exit_code", 1),
                         "token_stats": token_stats,
@@ -751,7 +751,7 @@ def rerun_experiment(  # noqa: C901  # run scanning with many filter conditions
 
                     # Save run_result.json
                     with open(run_info.run_dir / "run_result.json", "w") as f:
-                        json.dump(run_result, f, indent=2)
+                        json.dump(run_result_data, f, indent=2)
 
                     stats.runs_regenerated += 1
                     logger.debug(f"Regenerated {run_info.run_dir / 'run_result.json'}")

@@ -32,7 +32,6 @@ from pathlib import Path
 # Error codes disabled in pyproject.toml [tool.mypy] disable_error_code (global)
 # These are the codes we re-enable when running the validation check
 DISABLED_ERROR_CODES = [
-    "assignment",
     "arg-type",
     "union-attr",
 ]
@@ -43,6 +42,7 @@ TESTS_ONLY_ERROR_CODES = [
     "call-arg",
     "var-annotated",
     "misc",
+    "method-assign",
 ]
 
 # All codes tracked across all directories (union of global + tests-only)
