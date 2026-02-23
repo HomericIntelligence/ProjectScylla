@@ -515,6 +515,8 @@ class SubTestExecutor:
                     baseline=baseline,
                 )
 
+        result: SubTestResult | None = None
+
         def _aggregate() -> None:
             nonlocal result
             result = self._aggregate_results(tier_id, subtest.id, runs)
@@ -522,8 +524,6 @@ class SubTestExecutor:
         def _run_loop_and_save_manifest() -> None:
             _run_loop()
             _save_resource_manifest()
-
-        result: SubTestResult | None = None
 
         subtest_actions = {
             SubtestState.PENDING: _run_loop_and_save_manifest,

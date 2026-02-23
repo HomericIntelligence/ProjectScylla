@@ -37,7 +37,6 @@ DISABLED_ERROR_CODES = [
     "arg-type",
     "index",
     "attr-defined",
-    "misc",
     "union-attr",
 ]
 
@@ -46,6 +45,7 @@ DISABLED_ERROR_CODES = [
 TESTS_ONLY_ERROR_CODES = [
     "call-arg",
     "var-annotated",
+    "misc",
 ]
 
 # All codes tracked across all directories (union of global + tests-only)
@@ -331,7 +331,7 @@ def update_table(md_path: Path, actual: dict[str, int]) -> None:
                 # Replace just the count cell: | code | OLD | rest |
                 line = re.sub(
                     r"(\|\s*" + re.escape(code) + r"\s*\|\s*)\d+(\s*\|)",
-                    lambda m, c=new_count: f"{m.group(1)}{c}{m.group(2)}",
+                    rf"\g<1>{new_count}\g<2>",
                     line,
                 )
         # Update Total row
@@ -379,7 +379,7 @@ def update_table_per_dir(md_path: Path, actual_per_dir: dict[str, dict[str, int]
                 new_count = current_actual.get(code, 0)
                 line = re.sub(
                     r"(\|\s*" + re.escape(code) + r"\s*\|\s*)\d+(\s*\|)",
-                    lambda m, c=new_count: f"{m.group(1)}{c}{m.group(2)}",
+                    rf"\g<1>{new_count}\g<2>",
                     line,
                 )
         elif _TOTAL_ROW_RE.search(line) and current_dir is not None:

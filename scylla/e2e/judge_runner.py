@@ -115,8 +115,8 @@ def _compute_judge_consensus(
     if not valid:
         return (None, None, None)
 
-    # Simple average across judges
-    consensus_score = sum(j.score for j in valid) / len(valid)
+    # Simple average across judges (score is guaranteed non-None by the valid filter above)
+    consensus_score = sum(j.score for j in valid if j.score is not None) / len(valid)
 
     # Majority vote for passed
     passed_votes = sum(1 for j in valid if j.passed)

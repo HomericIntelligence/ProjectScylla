@@ -120,7 +120,6 @@ disable_error_code = [
     "arg-type",        # 23 violations - incompatible argument types
     "index",           # 3 violations - invalid indexing operations
     "attr-defined",    # 4 violations - attribute not defined
-    "misc",            # 4 violations - miscellaneous type issues
     "union-attr",      # 4 violations - accessing attributes on unions
 ]
 
@@ -134,10 +133,10 @@ disable_error_code = [
     "arg-type",        # 13 violations
     "index",           # 7 violations
     "attr-defined",    # 7 violations
-    "misc",            # 3 violations
     "union-attr",      # 16 violations
     "var-annotated",   # violations in tests/unit/ (not matched by hyphenated tests/claude-code/)
     "call-arg",        # 30 violations - tests-only, zero in scylla/ and scripts/
+    "misc",            # 3 violations in tests/unit/
 ]
 
 

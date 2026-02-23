@@ -11,10 +11,9 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | assignment    | 12    | Type mismatches in assignments           |
 | attr-defined  | 4     | Attribute not defined                    |
 | index         | 3     | Invalid indexing operations              |
-| misc          | 2     | Miscellaneous type issues                |
 | operator      | 10    | Incompatible operand types               |
 | union-attr    | 4     | Accessing attributes on union types      |
-| **Total**     | **57** |                                          |
+| **Total**     | **55** |                                          |
 
 ## Error Count Table — tests/
 
@@ -39,7 +38,6 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | assignment    | 0     | Type mismatches in assignments           |
 | attr-defined  | 0     | Attribute not defined                    |
 | index         | 0     | Invalid indexing operations              |
-| misc          | 2     | Miscellaneous type issues                |
 | operator      | 3     | Incompatible operand types               |
 | union-attr    | 0     | Accessing attributes on union types      |
-| **Total**     | **6** |                                          |
+| **Total**     | **4** |                                          |
