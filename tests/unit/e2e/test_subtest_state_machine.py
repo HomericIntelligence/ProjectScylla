@@ -115,6 +115,10 @@ class TestIsSubtestTerminalState:
         """AGGREGATED is a terminal subtest state."""
         assert is_subtest_terminal_state(SubtestState.AGGREGATED)
 
+    def test_failed_is_terminal(self) -> None:
+        """FAILED is a terminal subtest state."""
+        assert is_subtest_terminal_state(SubtestState.FAILED)
+
     def test_pending_is_not_terminal(self) -> None:
         """PENDING is not terminal."""
         assert not is_subtest_terminal_state(SubtestState.PENDING)
@@ -240,6 +244,11 @@ class TestSubtestStateMachineIsComplete:
         """RUNS_COMPLETE is not the terminal state."""
         checkpoint.set_subtest_state(TIER_ID, SUBTEST_ID, SubtestState.RUNS_COMPLETE.value)
         assert not ssm.is_complete(TIER_ID, SUBTEST_ID)
+
+    def test_failed_is_complete(self, ssm: SubtestStateMachine, checkpoint: E2ECheckpoint) -> None:
+        """FAILED is a terminal state (complete)."""
+        checkpoint.set_subtest_state(TIER_ID, SUBTEST_ID, SubtestState.FAILED.value)
+        assert ssm.is_complete(TIER_ID, SUBTEST_ID)
 
 
 # ---------------------------------------------------------------------------
@@ -420,6 +429,53 @@ class TestSubtestStateMachineAdvanceToCompletion:
         final = ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {SubtestState.PENDING: action})
         action.assert_not_called()
         assert final == SubtestState.AGGREGATED
+
+    def test_already_failed_is_noop(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """If already FAILED, advance_to_completion is a no-op."""
+        checkpoint.set_subtest_state(TIER_ID, SUBTEST_ID, SubtestState.FAILED.value)
+        action = MagicMock()
+        final = ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {SubtestState.PENDING: action})
+        action.assert_not_called()
+        assert final == SubtestState.FAILED
+
+    def test_action_exception_marks_subtest_failed(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """advance_to_completion marks FAILED in checkpoint when action raises."""
+        action = MagicMock(side_effect=RuntimeError("run error"))
+        with pytest.raises(RuntimeError, match="run error"):
+            ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {SubtestState.PENDING: action})
+
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.FAILED
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        loaded = load_checkpoint(checkpoint_path)
+        assert loaded.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.FAILED.value
+
+    def test_failed_state_persisted_to_disk(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """FAILED state is atomically saved to checkpoint on disk."""
+        action = MagicMock(side_effect=ValueError("disk write test"))
+        with pytest.raises(ValueError):
+            ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {SubtestState.PENDING: action})
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        on_disk = load_checkpoint(checkpoint_path)
+        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.FAILED.value
 
     def test_independent_subtests_do_not_interfere(
         self,

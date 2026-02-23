@@ -280,8 +280,20 @@ class ExperimentStateMachine:
                     break
                 self.advance(actions)
         except Exception as e:
-            logger.error(f"Experiment failed in state {self.get_state().value}: {e}")
-            self.checkpoint.experiment_state = ExperimentState.FAILED.value
+            try:
+                from scylla.e2e.rate_limit import RateLimitError
+
+                is_rate_limit = isinstance(e, RateLimitError)
+            except ImportError:
+                is_rate_limit = False
+
+            if is_rate_limit:
+                logger.warning(f"Experiment rate-limited in state {self.get_state().value}: {e}")
+                self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
+            else:
+                logger.error(f"Experiment failed in state {self.get_state().value}: {e}")
+                self.checkpoint.experiment_state = ExperimentState.FAILED.value
+
             save_checkpoint(self.checkpoint, self.checkpoint_path)
             raise
 
