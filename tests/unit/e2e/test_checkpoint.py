@@ -268,7 +268,7 @@ class TestCheckpointV31Migration:
             "last_heartbeat": "",
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_state("T0", "00", 1) == "config_committed"
 
     def test_agent_ready_maps_to_replay_generated(self, tmp_path: Path) -> None:
@@ -288,7 +288,7 @@ class TestCheckpointV31Migration:
             "last_heartbeat": "",
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_state("T0", "00", 1) == "replay_generated"
 
     def test_judge_ready_maps_to_judge_prompt_built(self, tmp_path: Path) -> None:
@@ -308,7 +308,7 @@ class TestCheckpointV31Migration:
             "last_heartbeat": "",
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_state("T0", "00", 1) == "judge_prompt_built"
 
     def test_run_complete_maps_to_report_written(self, tmp_path: Path) -> None:
@@ -328,7 +328,7 @@ class TestCheckpointV31Migration:
             "last_heartbeat": "",
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_state("T0", "00", 1) == "report_written"
 
     def test_unchanged_states_pass_through(self, tmp_path: Path) -> None:
@@ -361,7 +361,7 @@ class TestCheckpointV31Migration:
             "last_heartbeat": "",
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.get_run_state("T0", "00", 1) == "pending"
         assert checkpoint.get_run_state("T0", "00", 2) == "worktree_created"
         assert checkpoint.get_run_state("T0", "00", 3) == "baseline_captured"
@@ -388,7 +388,7 @@ class TestCheckpointV31Migration:
             "last_heartbeat": "",
             "status": "running",
         }
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.version == "3.1"
 
     def test_from_dict_accepts_version_2_0_and_migrates_to_v3_1(self, tmp_path: Path) -> None:
@@ -443,7 +443,7 @@ class TestCheckpointV31Migration:
             "status": "running",
         }
 
-        checkpoint = E2ECheckpoint.model_validate(data)
+        checkpoint = E2ECheckpoint.from_dict(data)
         assert checkpoint.version == "3.1"
         assert checkpoint.experiment_id == "test-exp"
         assert checkpoint.experiment_state == "tiers_running"
