@@ -226,7 +226,7 @@ this study.
 Parameter & Dryrun (test-001) & This Study \\
 \midrule
 Agent model & Sonnet 4.5 & Haiku 4.5 \\
-Agent pricing & \$3/\$15 per M tokens & \$1/\$5 per M tokens \\
+Agent pricing & \$3/\$15 per M tokens & \$1/\$5 per M tokens\footnote{Cache read tokens are priced at \$0.10/M for Haiku (10\% of input price). Since 97\% of tokens in our experiments are cache reads, the effective per-token cost is significantly lower than the base input rate.} \\
 Judge models & Opus 4.5 + Sonnet 4.5 + Haiku 4.5 & Sonnet 4.5 (single judge) \\
 Runs per subtest & 1 & 5 \\
 Max subtests per tier & All (up to 24) & 2 (except T3: up to 41, T4: up to 14) \\
@@ -285,7 +285,7 @@ Risk of over-engineering from T6.
 \textbf{Complexity}: High. \textbf{Language}: Mojo. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
 
 Task prompt: Add gradient tracking control for autograd.
-At the time of writing, this experiment is still in very early stages with minimal completed runs.
+At the time of writing, this experiment is partially complete with 3 of 7 tiers finished (see Section~\ref{sec:partial}).
 
 \subsubsection{test-022: (Partial, details pending)}
 
@@ -342,7 +342,7 @@ Cost scales approximately with task complexity, growing $4.4\times$ from test-00
 
 \begin{table}[htbp]
 \centering
-\caption{test-002 Tier Performance Summary (Mojo Hello World)}
+\caption{test-002 Tier Performance Summary (Mojo Hello World). Cost = mean cost per run for best subtest.}
 \label{tab:test002}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -363,7 +363,7 @@ T6 & 0.84 & 100\% & \$1.36 & \$1.36 & 1,418s \\
 known infrastructure diagnostic: T0's empty-prompt configuration causes Claude Code to
 refuse the task without generating output on this test. This is not a Haiku model failure---T1 (with skills
 only, no tools) immediately achieves 0.84 (100\% pass rate). Note that T0 runs successfully on
-test-007 (\$7.55 cost, 20\% pass rate) and test-017 (\$2.78 cost, 80\% pass rate); the
+test-007 (\$3.10 cost, 20\% pass rate) and test-017 (\$2.73 cost, 80\% pass rate); the
 \$0.00/zero-token pattern is specific to test-002.
 
 \textbf{Ceiling Effect}: T1, T3, T4, and T6 all achieve best scores of 0.84 with 100\% pass rates.
@@ -374,6 +374,7 @@ difference for identical quality. T3's delegation overhead provides zero quality
 \textbf{T5 Anomaly}: T5 scored 0.00 with only 40\% pass rate despite other tiers succeeding.
 The best T5 subtest scored 0.00 while pass rate is 40\%, suggesting judging failures or
 subtest misconfigurations in the hybrid setup. This warrants investigation.
+Best Score reflects the mean score of the selected best subtest, which can be 0.00 when the subtest whose overall metric is optimized averages to zero despite individual runs passing.
 
 \textbf{Key finding}: For trivial Mojo tasks, T1 (skills only, \$0.79) achieves the best
 cost-quality ratio. T3 and T4 delegation adds cost without quality gain.
@@ -382,7 +383,7 @@ cost-quality ratio. T3 and T4 delegation adds cost without quality gain.
 
 \begin{table}[htbp]
 \centering
-\caption{test-007 Tier Performance Summary (Simplify Justfile)}
+\caption{test-007 Tier Performance Summary (Simplify Justfile). Cost = mean cost per run for best subtest.}
 \label{tab:test007}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -421,7 +422,7 @@ suggesting super-configuration assembles the right tools without the coordinatio
 
 \textbf{Statistical significance}: The Kruskal-Wallis test shows significant tier effect
 ($H(6) = 27.49$, $p = 0.0001$). Pairwise: T4$\rightarrow$T5 transition is significant
-($p = 0.0028$, Cliff's $\delta = -0.313$, medium effect).
+($p = 0.0024$, Cliff's $\delta = -0.313$, medium effect).
 
 \textbf{Key finding}: For moderate refactoring tasks, tool access is mandatory (T1 fails without it).
 T2 provides the best cost-quality balance. Delegation (T3/T4) adds cost with marginal quality gain.
@@ -430,7 +431,7 @@ T2 provides the best cost-quality balance. Delegation (T3/T4) adds cost with mar
 
 \begin{table}[htbp]
 \centering
-\caption{test-017 Tier Performance Summary (Comprehensive Slot Management)}
+\caption{test-017 Tier Performance Summary (Comprehensive Slot Management). Cost = mean cost per run for best subtest.}
 \label{tab:test017}
 \begin{tabular}{lrrrrrr}
 \toprule
@@ -460,7 +461,7 @@ output quality for complex implementation tasks.
 achieve perfect scores of 1.00 on their best subtests. Simpler configurations outperform the maximum.
 
 \textbf{Delegation Cost Explosion}: T3 costs \$13.18/run (\$34.97 CoP) and T4 costs
-\$17.62/run (\$30.04 CoP)---T3 costs 3.5$\times$ T1 and 5.3$\times$ T2; T4 costs 4.8$\times$ T1
+\$17.62/run (\$30.04 CoP)---T3 costs 3.6$\times$ T1 and 5.3$\times$ T2; T4 costs 4.8$\times$ T1
 and 7.1$\times$ T2---for the same or worse quality. The multi-agent coordination overhead
 does not justify itself here.
 
@@ -475,15 +476,18 @@ delegation hierarchies. T6 over-engineering is detectable and measurable.
 
 \textbf{test-021 (Gradient Tracking, still running)}:
 
-At the time of writing, test-021 is in very early stages: only T0 subtest-19 run-1
-has completed (status: passed). T1--T4 are not yet complete and T5--T6 have not started.
-No tier-level conclusions can be drawn from this checkpoint. Results for this test will
-be reported in a follow-up paper once all tiers complete.
+At the time of writing, test-021 is partially complete: T1, T2, and T4 have completed
+tier reports, while T0 is partial (subtest-19 run-1 tracked as passed), T3 is in progress,
+and T5--T6 have not started. Completed tiers show promising scores (T1 best: 0.833,
+T2 best: 0.830, T4 best: 1.000), but tier-level conclusions require all tiers to complete.
+Results will be reported in a follow-up paper once the full evaluation finishes.
 
-\textbf{test-022 (Partial)}: T0 subtest-00 has 2 completed runs, both failed (scores pending
-full evaluation). T3 partial results show mixed performance (2 of 5 runs passing for subtest-05).
-Only one T0 subtest has data; broader T0 conclusions cannot be drawn.
-Insufficient data for tier-level conclusions.
+\textbf{test-022 (Partial)}: T0 has 2 subtests both scoring 0.00 (\$0.00 cost, zero tokens)
+indicating framework failures on this task---consistent with the empty-prompt infrastructure
+diagnostic seen in test-002 T0. T5 similarly shows 2 subtests with 0.00 scores, \$0.00 cost,
+and zero tokens, suggesting hybrid configuration also fails on this task. T3 partial results
+show mixed performance (2 of 5 runs passing for subtest-05). T1--T4 and T6 are in various
+stages of completion. Insufficient data for tier-level conclusions.
 
 \textbf{Caveat}: Both tests are still running. Results in this section are preliminary
 and subject to change as T5--T6 complete.
@@ -567,8 +571,8 @@ The Scheirer-Ray-Hare two-way test (tier $\times$ task) confirms the tier effect
 $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
 
 Significant pairwise transitions (Holm-Bonferroni corrected):
-T4$\rightarrow$T5 ($p = 0.0028$, $\delta = -0.313$, medium effect),
-T5$\rightarrow$T6 ($p = 0.0292$, $\delta = +0.433$, medium-large effect).
+T4$\rightarrow$T5 ($p = 0.0024$, $\delta = -0.313$, medium effect),
+T5$\rightarrow$T6 ($p = 0.0243$, $\delta = +0.433$, large effect).
 The T0$\rightarrow$T6 overall contrast is not significant at the aggregate level
 ($p = 0.1187$, $\delta = +0.292$), reflecting that task context moderates the effect.
 
@@ -846,7 +850,7 @@ Sample statistics per tier (score metric):
 \begin{itemize}
 \item T0: $W = 0.804$, $p = 3.5 \times 10^{-11}$, $n = 117$
 \item T1: $W = 0.800$, $p = 3.0 \times 10^{-9}$, $n = 83$
-\item T2: $W = 0.793$, $p < 10^{-10}$, $n = 130$
+\item T2: $W = 0.835$, $p = 9.3 \times 10^{-11}$, $n = 130$
 \item T3--T5: similarly non-normal
 \item T6: $W = 0.935$, $p = 0.329$, $n = 15$ (normal; non-parametric applied for consistency)
 \end{itemize}
@@ -867,8 +871,8 @@ T0$\rightarrow$T1 & 117, 83 & +0.094 & 0.487 & +0.094 \\
 T1$\rightarrow$T2 & 83, 130 & +0.096 & 0.373 & +0.096 \\
 T2$\rightarrow$T3 & 130, 122 & $-0.069$ & 0.487 & $-0.068$ \\
 T3$\rightarrow$T4 & 122, 123 & +0.051 & 0.487 & +0.051 \\
-T4$\rightarrow$T5 & 123, 30 & $-0.313$ & \textbf{0.003} & $-0.313$ \\
-T5$\rightarrow$T6 & 30, 15 & +0.433 & \textbf{0.029} & +0.433 \\
+T4$\rightarrow$T5 & 123, 30 & $-0.313$ & \textbf{0.0024} & $-0.313$ \\
+T5$\rightarrow$T6 & 30, 15 & +0.433 & \textbf{0.0243} & +0.433 \\
 T0$\rightarrow$T6 & 117, 15 & +0.292 & 0.119 & +0.292 \\
 \bottomrule
 \end{tabular}
@@ -886,7 +890,8 @@ All raw data, figures, and tables are available in \texttt{docs/arxiv/haiku/}:
 \item \texttt{tables/*.tex} --- 9 generated tables (Markdown + LaTeX)
 \end{itemize}
 
-\textbf{Experiment metadata}: 5 experiments, 74 active subtests across 7 tiers,
+\textbf{Experiment metadata}: 5 experiments, 74 active subtests across 7 tiers (out of 120 total
+in the full suite; evaluated up to 2 subtests per tier per test),
 $N=5$ runs per subtest, Haiku 4.5 agent, Sonnet 4.5 judge, total \$135.55 for
 3 complete experiments.
 
