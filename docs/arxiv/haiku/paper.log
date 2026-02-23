@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.12.15)  22 FEB 2026 19:29
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2025.12.15)  23 FEB 2026 06:33
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -957,15 +957,15 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <7> on input line 73.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 103.
+(Font)              <10.95> on input line 105.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/
 dvips/lm/lm-ec.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}{/usr/share/
 texmf/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-
-rm.enc}] [2{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}] [3]
+rm.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}] [2] [3]
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 2
-52.
+58.
  (/usr/share/texmf/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -974,21 +974,55 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
-[4] [5] [6] [7] [8] [9] [10] [11] [12] [13] [14] (./paper.bbl)
-Overfull \hbox (13.88168pt too wide) in paragraph at lines 814--817
+[4] [5] [6] [7] [8] [9] [10]
+<./figures/fig04_pass_rate_by_tier.png, id=284, 8961.48pt x 1252.68pt>
+File: ./figures/fig04_pass_rate_by_tier.png Graphic file (type png)
+<use ./figures/fig04_pass_rate_by_tier.png>
+Package pdftex.def Info: ./figures/fig04_pass_rate_by_tier.png  used on input l
+ine 613.
+(pdftex.def)             Requested size: 225.4804pt x 31.50041pt.
+<./figures/fig08_cost_quality_pareto.png, id=286, 1695.33376pt x 1111.15125pt>
+File: ./figures/fig08_cost_quality_pareto.png Graphic file (type png)
+<use ./figures/fig08_cost_quality_pareto.png>
+Package pdftex.def Info: ./figures/fig08_cost_quality_pareto.png  used on input
+ line 619.
+(pdftex.def)             Requested size: 225.4804pt x 147.77786pt.
+<./figures/fig01_score_variance_by_tier.png, id=287, 8940.40125pt x 1246.6575pt
+>
+File: ./figures/fig01_score_variance_by_tier.png Graphic file (type png)
+<use ./figures/fig01_score_variance_by_tier.png>
+Package pdftex.def Info: ./figures/fig01_score_variance_by_tier.png  used on in
+put line 626.
+(pdftex.def)             Requested size: 225.4804pt x 31.42506pt.
+<./figures/fig19_effect_size_forest.png, id=288, 1719.42375pt x 554.07pt>
+File: ./figures/fig19_effect_size_forest.png Graphic file (type png)
+<use ./figures/fig19_effect_size_forest.png>
+Package pdftex.def Info: ./figures/fig19_effect_size_forest.png  used on input
+line 632.
+(pdftex.def)             Requested size: 225.4804pt x 72.65724pt.
+ [11] [12 <./figures/fig04_pass_rate_by_tier.png> <./figures/fig08_cost_quality
+_pareto.png> <./figures/fig01_score_variance_by_tier.png> <./figures/fig19_effe
+ct_size_forest.png>] [13] [14] [15] (./paper.bbl)
+Overfull \hbox (13.88168pt too wide) in paragraph at lines 882--885
 \T1/lmr/m/n/10.95 (-20) Full per-tier sub-test ta-bles are avail-able in the ex
 -per-i-ment re-sult di-rec-to-ries at \T1/lmtt/m/n/10.95 docs/arxiv/haiku/data/
 
  []
 
-
-Overfull \hbox (1.24226pt too wide) in paragraph at lines 831--833
+[16]
+Overfull \hbox (1.24226pt too wide) in paragraph at lines 899--901
 []\T1/lmr/m/n/10.95 (-20) T2 best sub-test (01) used cri-te-ria: \T1/lmtt/m/n/1
 0.95 duplicate_merge \T1/lmr/m/n/10.95 (-20) (1.00), \T1/lmtt/m/n/10.95 unused_
 removal \T1/lmr/m/n/10.95 (-20) (1.00), \T1/lmtt/m/n/10.95 ci_compatible
  []
 
-[15] [16] [17] (./paper.aux)
+[17]
+Overfull \hbox (1.23737pt too wide) in paragraph at lines 957--958
+[]\T1/lmtt/m/n/10.95 data/statistical_results.json \T1/lmr/m/n/10.95 (-20) ---
+Full sta-tis-ti-cal test out-puts (Cliff's delta CIs, KW/MWU
+ []
+
+[18] (./paper.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -997,25 +1031,29 @@ Package rerunfilecheck Info: File `paper.out' has not changed.
 (rerunfilecheck)             Checksum: BE2907451C0F54994A94DB04AE8FC36A;7665.
  )
 Here is how much of TeX's memory you used:
- 27328 strings out of 474222
- 500848 string characters out of 5748732
- 1937975 words of memory out of 5000000
- 48769 multiletter control sequences out of 15000+600000
- 648661 words of font info for 226 fonts, out of 8000000 for 9000
+ 27440 strings out of 474222
+ 503773 string characters out of 5748732
+ 1939975 words of memory out of 5000000
+ 48846 multiletter control sequences out of 15000+600000
+ 657847 words of font info for 244 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,15n,93p,1002b,590s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,15n,93p,1002b,632s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
-pe1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></u
-sr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/pu
-blic/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share
-/texmf/fonts/type1/public/lm/lmr6.pfb></usr/share/texmf/fonts/type1/public/lm/l
-mr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr9.pfb></usr/share/texmf/font
-s/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb
-></usr/share/texmf/fonts/type1/public/lm/lmsy7.pfb></usr/share/texmf/fonts/type
-1/public/lm/lmsy8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb>
-Output written on paper.pdf (17 pages, 348943 bytes).
+pe1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx9.pfb></us
+r/share/texmf/fonts/type1/public/lm/lmmi10.pfb></usr/share/texmf/fonts/type1/pu
+blic/lm/lmmi9.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share
+/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/
+lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr6.pfb></usr/share/texmf/fo
+nts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr9.pfb><
+/usr/share/texmf/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1
+/public/lm/lmri9.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy10.pfb></usr/s
+hare/texmf/fonts/type1/public/lm/lmsy7.pfb></usr/share/texmf/fonts/type1/public
+/lm/lmsy8.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy9.pfb></usr/share/tex
+mf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmt
+ti10.pfb>
+Output written on paper.pdf (18 pages, 727610 bytes).
 PDF statistics:
- 434 PDF objects out of 1000 (max. 8388607)
- 378 compressed objects within 4 object streams
- 99 named destinations out of 1000 (max. 500000)
- 52077 words of extra memory for PDF output out of 61914 (max. 10000000)
+ 479 PDF objects out of 1000 (max. 8388607)
+ 403 compressed objects within 5 object streams
+ 101 named destinations out of 1000 (max. 500000)
+ 56705 words of extra memory for PDF output out of 61914 (max. 10000000)
