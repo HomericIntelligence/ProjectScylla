@@ -203,3 +203,120 @@ class TestSetupWorkspaceResumeRecovery:
                     run_number=1,
                     base_repo=base_repo,
                 )
+
+
+class TestMoveToFailed:
+    """Tests for _move_to_failed function."""
+
+    def test_creates_failed_dir_and_moves_run_dir(self, tmp_path: Path) -> None:
+        """Verifies .failed/ dir is created and run_dir is moved into it."""
+        from scylla.e2e.workspace_setup import _move_to_failed
+
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        _move_to_failed(run_dir)
+
+        failed_dir = tmp_path / ".failed"
+        assert failed_dir.is_dir()
+        assert not run_dir.exists()
+        assert any(failed_dir.iterdir())
+
+    def test_returns_correct_path(self, tmp_path: Path) -> None:
+        """Verifies the returned path is the new location inside .failed/."""
+        from scylla.e2e.workspace_setup import _move_to_failed
+
+        run_dir = tmp_path / "run_03"
+        run_dir.mkdir()
+
+        new_path = _move_to_failed(run_dir, attempt=1)
+
+        assert new_path == tmp_path / ".failed" / "run_03_attempt_01"
+        assert new_path.exists()
+
+    def test_increments_attempt_number(self, tmp_path: Path) -> None:
+        """If .failed/run_dir_attempt_01 exists, creates .failed/run_dir_attempt_02."""
+        from scylla.e2e.workspace_setup import _move_to_failed
+
+        failed_dir = tmp_path / ".failed"
+        failed_dir.mkdir()
+        # Pre-create attempt_01 to force increment
+        (failed_dir / "run_01_attempt_01").mkdir()
+
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        new_path = _move_to_failed(run_dir, attempt=1)
+
+        assert new_path == failed_dir / "run_01_attempt_02"
+        assert new_path.exists()
+
+    def test_handles_first_attempt(self, tmp_path: Path) -> None:
+        """Normal case: no existing failed dirs; attempt_01 is created directly."""
+        from scylla.e2e.workspace_setup import _move_to_failed
+
+        run_dir = tmp_path / "run_05"
+        run_dir.mkdir()
+
+        new_path = _move_to_failed(run_dir)
+
+        assert new_path.name == "run_05_attempt_01"
+        assert new_path.exists()
+        assert not run_dir.exists()
+
+
+class TestCommitTestConfig:
+    """Tests for _commit_test_config function."""
+
+    def test_stages_claude_md_when_exists(self, tmp_path: Path) -> None:
+        """When CLAUDE.md exists, subprocess.run is called with git add CLAUDE.md."""
+        from scylla.e2e.workspace_setup import _commit_test_config
+
+        (tmp_path / "CLAUDE.md").write_text("# test")
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = _ok()
+            _commit_test_config(tmp_path)
+
+        staged_cmds = [c[0][0] for c in mock_run.call_args_list]
+        assert ["git", "add", "CLAUDE.md"] in staged_cmds
+
+    def test_stages_dot_claude_when_exists(self, tmp_path: Path) -> None:
+        """When .claude/ exists, subprocess.run is called with git add .claude/."""
+        from scylla.e2e.workspace_setup import _commit_test_config
+
+        (tmp_path / ".claude").mkdir()
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = _ok()
+            _commit_test_config(tmp_path)
+
+        staged_cmds = [c[0][0] for c in mock_run.call_args_list]
+        assert ["git", "add", ".claude/"] in staged_cmds
+
+    def test_skips_absent_files(self, tmp_path: Path) -> None:
+        """When neither CLAUDE.md nor .claude/ exist, git add is NOT called."""
+        from scylla.e2e.workspace_setup import _commit_test_config
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = _ok()
+            _commit_test_config(tmp_path)
+
+        all_cmds = [c[0][0] for c in mock_run.call_args_list]
+        assert ["git", "add", "CLAUDE.md"] not in all_cmds
+        assert ["git", "add", ".claude/"] not in all_cmds
+
+    def test_commits_only_if_staged_changes(self, tmp_path: Path) -> None:
+        """Only commits when there are staged changes (git diff --cached returns non-zero)."""
+        from scylla.e2e.workspace_setup import _commit_test_config
+
+        # Simulate no staged changes: diff --cached returns 0
+        no_staged = _ok()
+        no_staged.returncode = 0
+
+        with patch("subprocess.run", return_value=no_staged) as mock_run:
+            _commit_test_config(tmp_path)
+
+        all_cmds = [c[0][0] for c in mock_run.call_args_list]
+        commit_cmds = [c for c in all_cmds if "commit" in c]
+        assert commit_cmds == [], "Should not commit when there are no staged changes"
