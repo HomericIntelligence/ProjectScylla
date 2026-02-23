@@ -51,9 +51,9 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | assignment    | 0     | Type mismatches in assignments           |
 | attr-defined  | 0     | Attribute not defined                    |
 | call-arg      | 0     | Incorrect function call arguments        |
-| call-overload | 1     | No matching overload variant             |
+| call-overload | 0     | No matching overload variant             |
 | exit-return   | 0     | Context manager \_\_exit\_\_ return type |
-| index         | 1     | Invalid indexing operations              |
+| index         | 0     | Invalid indexing operations              |
 | misc          | 2     | Miscellaneous type issues                |
 | no-redef      | 0     | Name redefinition                        |
 | operator      | 3     | Incompatible operand types               |
@@ -61,4 +61,4 @@ Run `python scripts/check_mypy_counts.py --update` to refresh counts.
 | return-value  | 0     | Incompatible return value type           |
 | union-attr    | 0     | Accessing attributes on union types      |
 | var-annotated | 1     | Missing type annotations for variables   |
-| **Total**     | **9** |                                          |
+| **Total**     | **7** |                                          |

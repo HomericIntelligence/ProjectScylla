@@ -714,7 +714,7 @@ class E2ERunner:
 
         def action_tiers_complete() -> None:
             """TIERS_COMPLETE -> REPORTS_GENERATED: Aggregate results and finalize."""
-            assert self.experiment_dir is not None
+            assert self.experiment_dir is not None  # noqa: S101
             result = self._aggregate_results(tier_results, start_time)
             self._save_final_results(result)
             self._generate_report(result)
@@ -1010,8 +1010,8 @@ class E2ERunner:
 
         def action_config_loaded() -> None:
             """CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests in parallel."""
-            assert tier_ctx.tier_config is not None
-            assert tier_ctx.tier_dir is not None
+            assert tier_ctx.tier_config is not None  # noqa: S101
+            assert tier_ctx.tier_dir is not None  # noqa: S101
             checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
             subtest_results = run_tier_subtests_parallel(
                 config=self.config,
@@ -1030,7 +1030,7 @@ class E2ERunner:
 
         def action_subtests_running() -> None:
             """SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest."""
-            assert tier_ctx.tier_dir is not None
+            assert tier_ctx.tier_dir is not None  # noqa: S101
             subtest_results = tier_ctx.subtest_results
 
             selection = select_best_subtest(
@@ -1053,7 +1053,7 @@ class E2ERunner:
             """SUBTESTS_COMPLETE -> BEST_SELECTED: Aggregate token stats, build TierResult."""
             from functools import reduce
 
-            assert tier_ctx.selection is not None
+            assert tier_ctx.selection is not None  # noqa: S101
             subtest_results = tier_ctx.subtest_results
             selection = tier_ctx.selection
             start_time = tier_ctx.start_time
@@ -1082,7 +1082,7 @@ class E2ERunner:
 
         def action_best_selected() -> None:
             """BEST_SELECTED -> REPORTS_GENERATED: Save tier result and generate reports."""
-            assert tier_ctx.tier_result is not None
+            assert tier_ctx.tier_result is not None  # noqa: S101
             self._save_tier_result(tier_id, tier_ctx.tier_result)
 
         def action_reports_generated() -> None:
