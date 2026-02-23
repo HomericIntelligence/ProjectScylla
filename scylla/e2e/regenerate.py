@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import logging
 import shutil
-import statistics
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -35,6 +34,7 @@ from scylla.e2e.run_report import (
     save_subtest_report,
     save_tier_report,
 )
+from scylla.e2e.subtest_executor import aggregate_run_results
 
 logger = logging.getLogger(__name__)
 
@@ -545,8 +545,8 @@ def rebuild_tier_results(
             # Sort runs by run_number
             runs.sort(key=lambda r: r.run_number)
 
-            # Aggregate results (same logic as subtest_executor.py:1519-1605)
-            subtest_result = _aggregate_results(tier_id, subtest_id, runs)
+            # Aggregate results (shared implementation from subtest_executor.py)
+            subtest_result = aggregate_run_results(tier_id, subtest_id, runs)
             subtest_results[subtest_id] = subtest_result
 
         # Select best subtest
@@ -574,84 +574,6 @@ def rebuild_tier_results(
             tier_results[tier_id] = tier_result
 
     return tier_results
-
-
-def _aggregate_results(
-    tier_id: TierID,
-    subtest_id: str,
-    runs: list[E2ERunResult],
-) -> SubTestResult:
-    """Aggregate results from multiple runs (from subtest_executor.py:1519-1605)."""
-    if not runs:
-        return SubTestResult(
-            subtest_id=subtest_id,
-            tier_id=tier_id,
-            runs=[],
-        )
-
-    scores = [r.judge_score for r in runs]
-    costs = [r.cost_usd for r in runs]
-
-    pass_count = sum(1 for r in runs if r.judge_passed)
-    pass_rate = pass_count / len(runs)
-
-    mean_score = statistics.mean(scores)
-    median_score = statistics.median(scores)
-    std_dev = statistics.stdev(scores) if len(scores) > 1 else 0.0
-
-    # Consistency: 1 - coefficient of variation
-    cv = std_dev / mean_score if mean_score > 0 else 1.0
-    consistency = max(0.0, 1.0 - cv)
-
-    # Aggregate token stats
-    from functools import reduce
-
-    token_stats = reduce(
-        lambda a, b: a + b,
-        [r.token_stats for r in runs],
-        TokenStats(),
-    )
-
-    # Aggregate grades
-    grades = [r.judge_grade for r in runs if r.judge_grade]
-    grade_distribution: dict[str, int] | None = None
-    modal_grade: str | None = None
-    min_grade: str | None = None
-    max_grade: str | None = None
-
-    if grades:
-        # Build distribution
-        grade_distribution = {}
-        for g in grades:
-            grade_distribution[g] = grade_distribution.get(g, 0) + 1
-
-        # Modal grade (most common)
-        modal_grade = max(grade_distribution, key=grade_distribution.get)
-
-        # Grade ordering for min/max (F=worst, S=best)
-        grade_order = ["F", "D", "C", "B", "A", "S"]
-        grade_indices = [grade_order.index(g) for g in grades if g in grade_order]
-        if grade_indices:
-            min_grade = grade_order[min(grade_indices)]
-            max_grade = grade_order[max(grade_indices)]
-
-    return SubTestResult(
-        subtest_id=subtest_id,
-        tier_id=tier_id,
-        runs=runs,
-        pass_rate=pass_rate,
-        mean_score=mean_score,
-        median_score=median_score,
-        std_dev_score=std_dev,
-        mean_cost=statistics.mean(costs),
-        total_cost=sum(costs),
-        consistency=consistency,
-        token_stats=token_stats,
-        grade_distribution=grade_distribution,
-        modal_grade=modal_grade,
-        min_grade=min_grade,
-        max_grade=max_grade,
-    )
 
 
 def rebuild_experiment_result(

@@ -194,7 +194,7 @@ class TierStateMachine:
     def advance(
         self,
         tier_id: str,
-        actions: dict[TierState, Callable],
+        actions: dict[TierState, Callable[[], None]],
     ) -> TierState:
         """Advance the tier by one state transition.
 
@@ -257,7 +257,7 @@ class TierStateMachine:
     def advance_to_completion(
         self,
         tier_id: str,
-        actions: dict[TierState, Callable],
+        actions: dict[TierState, Callable[[], None]],
         until_state: TierState | None = None,
     ) -> TierState:
         """Advance the tier through all states until COMPLETE is reached.
@@ -288,9 +288,17 @@ class TierStateMachine:
                     )
                     break
                 self.advance(tier_id, actions)
-        except Exception:
+        except Exception as e:
             from scylla.e2e.checkpoint import save_checkpoint
+            from scylla.e2e.rate_limit import RateLimitError
 
+            if isinstance(e, RateLimitError):
+                # Rate limits propagate to experiment level by design;
+                # TierState has no INTERRUPTED state.
+                logger.warning(
+                    f"[{tier_id}] Rate limit encountered in tier state machine: {e}. "
+                    "Marking tier as FAILED — rate limit handling occurs at experiment level."
+                )
             self.checkpoint.set_tier_state(tier_id, TierState.FAILED.value)
             save_checkpoint(self.checkpoint, self.checkpoint_path)
             raise

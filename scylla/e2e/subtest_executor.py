@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 import logging
 import statistics
-from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -73,30 +72,30 @@ logger = logging.getLogger(__name__)
 #   from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 # continue to work without modification
 __all__ = [
-    "ExecutionStage",
-    # Parallel executor exports (imported lazily to avoid circular imports)
-    "RateLimitCoordinator",
     "SubTestExecutor",
-    "_commit_test_config",
-    "_compute_judge_consensus",
-    "_create_agent_model_md",
-    "_detect_rate_limit_from_results",  # noqa: F822
-    "_has_valid_agent_result",
-    "_has_valid_judge_result",
-    "_load_agent_result",
-    "_load_judge_result",
-    # Workspace setup exports
-    "_move_to_failed",
-    "_retry_with_new_pool",  # noqa: F822
-    "_run_judge",
-    "_run_subtest_in_process",  # noqa: F822
-    "_run_subtest_in_process_safe",  # noqa: F822
+    "aggregate_run_results",
     # Agent runner exports
     "_save_agent_result",
+    "_load_agent_result",
+    "_create_agent_model_md",
+    "_has_valid_agent_result",
     # Judge runner exports
     "_save_judge_result",
+    "_load_judge_result",
+    "_has_valid_judge_result",
+    "_compute_judge_consensus",
+    "_run_judge",
+    # Workspace setup exports
+    "_move_to_failed",
+    "_commit_test_config",
     "_setup_workspace",
+    # Parallel executor exports (imported lazily to avoid circular imports)
+    "RateLimitCoordinator",  # noqa: F822
     "run_tier_subtests_parallel",  # noqa: F822
+    "_detect_rate_limit_from_results",  # noqa: F822
+    "_retry_with_new_pool",  # noqa: F822
+    "_run_subtest_in_process_safe",  # noqa: F822
+    "_run_subtest_in_process",  # noqa: F822
 ]
 
 
@@ -114,16 +113,6 @@ def __getattr__(name: str):
 
         return getattr(parallel_executor, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-class ExecutionStage(str, Enum):
-    """Execution stages for worker thread reporting."""
-
-    WORKTREE = "WORKTREE"
-    AGENT = "AGENT"
-    JUDGE = "JUDGE"
-    CLEANUP = "CLEANUP"
-    COMPLETE = "COMPLETE"
 
 
 def _save_pipeline_baseline(results_dir: Path, result: BuildPipelineResult) -> None:
@@ -161,6 +150,97 @@ def _load_pipeline_baseline(results_dir: Path) -> BuildPipelineResult | None:
     except Exception as e:
         logger.warning(f"Failed to load pipeline baseline from {baseline_path}: {e}")
         return None
+
+
+def aggregate_run_results(
+    tier_id: TierID,
+    subtest_id: str,
+    runs: list[E2ERunResult],
+) -> SubTestResult:
+    """Aggregate results from multiple runs into a SubTestResult.
+
+    Shared implementation used by both SubTestExecutor and regenerate.
+
+    Args:
+        tier_id: The tier identifier
+        subtest_id: The sub-test identifier
+        runs: List of run results
+
+    Returns:
+        SubTestResult with aggregated statistics.
+
+    """
+    from functools import reduce
+
+    from scylla.e2e.models import GRADE_ORDER
+
+    if not runs:
+        return SubTestResult(
+            subtest_id=subtest_id,
+            tier_id=tier_id,
+            runs=[],
+        )
+
+    scores = [r.judge_score for r in runs]
+    costs = [r.cost_usd for r in runs]
+
+    pass_count = sum(1 for r in runs if r.judge_passed)
+    pass_rate = pass_count / len(runs)
+
+    mean_score = statistics.mean(scores)
+    median_score = statistics.median(scores)
+    std_dev = statistics.stdev(scores) if len(scores) > 1 else 0.0
+
+    # Consistency: 1 - coefficient of variation
+    cv = std_dev / mean_score if mean_score > 0 else 1.0
+    consistency = max(0.0, 1.0 - cv)
+
+    # Aggregate token stats from all runs
+    token_stats = reduce(
+        lambda a, b: a + b,
+        [r.token_stats for r in runs],
+        TokenStats(),
+    )
+
+    # Aggregate grades
+    grades = [r.judge_grade for r in runs if r.judge_grade]
+    grade_distribution: dict[str, int] | None = None
+    modal_grade: str | None = None
+    min_grade: str | None = None
+    max_grade: str | None = None
+
+    if grades:
+        # Build distribution
+        grade_distribution = {}
+        for g in grades:
+            grade_distribution[g] = grade_distribution.get(g, 0) + 1
+
+        # Modal grade (most common)
+        modal_grade = max(grade_distribution, key=grade_distribution.get)
+
+        # Grade ordering for min/max (F=worst, S=best)
+        grade_indices = [GRADE_ORDER.index(g) for g in grades if g in GRADE_ORDER]
+        if grade_indices:
+            min_grade = GRADE_ORDER[min(grade_indices)]
+            max_grade = GRADE_ORDER[max(grade_indices)]
+
+    return SubTestResult(
+        subtest_id=subtest_id,
+        tier_id=tier_id,
+        runs=runs,
+        pass_rate=pass_rate,
+        mean_score=mean_score,
+        median_score=median_score,
+        std_dev_score=std_dev,
+        mean_cost=statistics.mean(costs),
+        total_cost=sum(costs),
+        consistency=consistency,
+        token_stats=token_stats,
+        grade_distribution=grade_distribution,
+        modal_grade=modal_grade,
+        min_grade=min_grade,
+        max_grade=max_grade,
+    )
 
 
 class SubTestExecutor:
@@ -205,12 +285,7 @@ class SubTestExecutor:
         self.workspace_manager = workspace_manager
         self.adapter = adapter or ClaudeCodeAdapter()
 
-        # Container execution is now handled at the experiment level
-        # (entire script runs in container).
-        # Individual agent/judge container orchestration is disabled
-        self.docker_executor = None
-
-    def run_subtest(  # noqa: C901  # subtest execution orchestration with many outcome paths
+    def run_subtest(
         self,
         tier_id: TierID,
         tier_config: TierConfig,
@@ -498,73 +573,4 @@ class SubTestExecutor:
             SubTestResult with aggregated statistics.
 
         """
-        if not runs:
-            return SubTestResult(
-                subtest_id=subtest_id,
-                tier_id=tier_id,
-                runs=[],
-            )
-
-        scores = [r.judge_score for r in runs]
-        costs = [r.cost_usd for r in runs]
-
-        pass_count = sum(1 for r in runs if r.judge_passed)
-        pass_rate = pass_count / len(runs)
-
-        mean_score = statistics.mean(scores)
-        median_score = statistics.median(scores)
-        std_dev = statistics.stdev(scores) if len(scores) > 1 else 0.0
-
-        # Consistency: 1 - coefficient of variation
-        cv = std_dev / mean_score if mean_score > 0 else 1.0
-        consistency = max(0.0, 1.0 - cv)
-
-        # Aggregate token stats from all runs
-        from functools import reduce
-
-        token_stats = reduce(
-            lambda a, b: a + b,
-            [r.token_stats for r in runs],
-            TokenStats(),
-        )
-
-        # Aggregate grades
-        grades = [r.judge_grade for r in runs if r.judge_grade]
-        grade_distribution: dict[str, int] | None = None
-        modal_grade: str | None = None
-        min_grade: str | None = None
-        max_grade: str | None = None
-
-        if grades:
-            # Build distribution
-            grade_distribution = {}
-            for g in grades:
-                grade_distribution[g] = grade_distribution.get(g, 0) + 1
-
-            # Modal grade (most common)
-            modal_grade = max(grade_distribution, key=grade_distribution.get)
-
-            # Grade ordering for min/max (F=worst, S=best)
-            grade_order = ["F", "D", "C", "B", "A", "S"]
-            grade_indices = [grade_order.index(g) for g in grades if g in grade_order]
-            if grade_indices:
-                min_grade = grade_order[min(grade_indices)]
-                max_grade = grade_order[max(grade_indices)]
-
-        return SubTestResult(
-            subtest_id=subtest_id,
-            tier_id=tier_id,
-            runs=runs,
-            pass_rate=pass_rate,
-            mean_score=mean_score,
-            median_score=median_score,
-            std_dev_score=std_dev,
-            mean_cost=statistics.mean(costs),
-            total_cost=sum(costs),
-            consistency=consistency,
-            token_stats=token_stats,
-            grade_distribution=grade_distribution,
-            modal_grade=modal_grade,
-            min_grade=min_grade,
-            max_grade=max_grade,
-        )
+        return aggregate_run_results(tier_id, subtest_id, runs)

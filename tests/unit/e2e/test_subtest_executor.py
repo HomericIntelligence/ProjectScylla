@@ -9,16 +9,46 @@ import pytest
 
 from scylla.e2e.llm_judge import _parse_judge_response
 from scylla.e2e.models import (
+    E2ERunResult,
     ExperimentConfig,
     JudgeResultSummary,
     TierConfig,
     TierID,
+    TokenStats,
 )
 from scylla.e2e.subtest_executor import (
     SubTestExecutor,
     _has_valid_judge_result,
     _move_to_failed,
+    aggregate_run_results,
 )
+
+
+def _make_run_result(
+    run_number: int = 1,
+    judge_score: float = 0.8,
+    judge_passed: bool = True,
+    judge_grade: str = "B",
+    cost_usd: float = 0.10,
+    input_tokens: int = 1000,
+    output_tokens: int = 500,
+) -> E2ERunResult:
+    """Build a minimal E2ERunResult for testing aggregate_run_results."""
+    return E2ERunResult(
+        run_number=run_number,
+        exit_code=0,
+        token_stats=TokenStats(input_tokens=input_tokens, output_tokens=output_tokens),
+        agent_duration_seconds=10.0,
+        judge_duration_seconds=5.0,
+        judge_score=judge_score,
+        judge_passed=judge_passed,
+        judge_grade=judge_grade,
+        judge_reasoning="Test reasoning",
+        workspace_path=Path("/tmp/workspace"),
+        logs_path=Path("/tmp/logs"),
+        cost_usd=cost_usd,
+        duration_seconds=15.0,
+    )
 
 
 class TestMoveToFailed:
@@ -467,3 +497,151 @@ class TestPipelineBaselineUsesExperimentConfigLanguage:
             "stages.stage_capture_baseline does not use ctx.config.language "
             "when calling _run_build_pipeline."
         )
+
+
+# ---------------------------------------------------------------------------
+# aggregate_run_results tests (Phase 5C)
+# ---------------------------------------------------------------------------
+
+
+class TestAggregateRunResults:
+    """Tests for the module-level aggregate_run_results() function.
+
+    This function is shared between SubTestExecutor and regenerate.py to
+    eliminate code duplication (Phase 3E DRY cleanup).
+    """
+
+    def test_empty_runs_returns_zero_pass_rate(self) -> None:
+        """Empty run list returns a SubTestResult with zero-value stats."""
+        result = aggregate_run_results(TierID.T0, "00-empty", [])
+
+        assert result.pass_rate == 0.0
+        assert result.runs == []
+        assert result.subtest_id == "00-empty"
+        assert result.tier_id == TierID.T0
+
+    def test_single_passing_run(self) -> None:
+        """Single passing run yields pass_rate=1.0."""
+        runs = [_make_run_result(judge_passed=True, judge_score=0.9)]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert result.pass_rate == 1.0
+        assert abs(result.mean_score - 0.9) < 0.001
+
+    def test_single_failing_run(self) -> None:
+        """Single failing run yields pass_rate=0.0."""
+        runs = [_make_run_result(judge_passed=False, judge_score=0.3)]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert result.pass_rate == 0.0
+        assert abs(result.mean_score - 0.3) < 0.001
+
+    def test_mixed_runs_pass_rate(self) -> None:
+        """3 passing out of 5 runs yields pass_rate=0.6."""
+        runs = [
+            _make_run_result(run_number=1, judge_passed=True, judge_score=0.9),
+            _make_run_result(run_number=2, judge_passed=True, judge_score=0.8),
+            _make_run_result(run_number=3, judge_passed=True, judge_score=0.7),
+            _make_run_result(run_number=4, judge_passed=False, judge_score=0.4),
+            _make_run_result(run_number=5, judge_passed=False, judge_score=0.3),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert abs(result.pass_rate - 0.6) < 0.001
+
+    def test_mean_score_calculation(self) -> None:
+        """mean_score is the arithmetic mean of all judge scores."""
+        runs = [
+            _make_run_result(run_number=1, judge_score=0.6),
+            _make_run_result(run_number=2, judge_score=0.8),
+            _make_run_result(run_number=3, judge_score=1.0),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert abs(result.mean_score - 0.8) < 0.001
+
+    def test_total_cost_aggregation(self) -> None:
+        """total_cost is the sum of all run costs."""
+        runs = [
+            _make_run_result(run_number=1, cost_usd=0.10),
+            _make_run_result(run_number=2, cost_usd=0.20),
+            _make_run_result(run_number=3, cost_usd=0.15),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert abs(result.total_cost - 0.45) < 0.001
+
+    def test_token_stats_aggregation(self) -> None:
+        """token_stats are summed across all runs."""
+        runs = [
+            _make_run_result(run_number=1, input_tokens=1000, output_tokens=500),
+            _make_run_result(run_number=2, input_tokens=2000, output_tokens=800),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert result.token_stats is not None
+        assert result.token_stats.input_tokens == 3000
+        assert result.token_stats.output_tokens == 1300
+
+    def test_grade_distribution(self) -> None:
+        """grade_distribution counts each grade letter."""
+        runs = [
+            _make_run_result(run_number=1, judge_grade="A"),
+            _make_run_result(run_number=2, judge_grade="A"),
+            _make_run_result(run_number=3, judge_grade="B"),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert result.grade_distribution is not None
+        assert result.grade_distribution["A"] == 2
+        assert result.grade_distribution["B"] == 1
+
+    def test_min_max_grade(self) -> None:
+        """min_grade and max_grade reflect worst/best grades across runs."""
+        runs = [
+            _make_run_result(run_number=1, judge_grade="S"),
+            _make_run_result(run_number=2, judge_grade="B"),
+            _make_run_result(run_number=3, judge_grade="D"),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert result.min_grade == "D"  # Worst
+        assert result.max_grade == "S"  # Best
+
+    def test_consistency_perfect_scores(self) -> None:
+        """Identical scores yield consistency=1.0 (zero std dev)."""
+        runs = [_make_run_result(run_number=i, judge_score=0.8) for i in range(1, 5)]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert abs(result.consistency - 1.0) < 0.001
+
+    def test_consistency_variable_scores(self) -> None:
+        """Variable scores yield consistency < 1.0."""
+        runs = [
+            _make_run_result(run_number=1, judge_score=0.1),
+            _make_run_result(run_number=2, judge_score=0.9),
+        ]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert result.consistency < 1.0
+
+    def test_runs_list_preserved(self) -> None:
+        """The runs field contains all input run results."""
+        runs = [_make_run_result(run_number=i) for i in range(1, 4)]
+        result = aggregate_run_results(TierID.T0, "00-empty", runs)
+
+        assert len(result.runs) == 3
+
+    def test_subtest_id_and_tier_id_set(self) -> None:
+        """subtest_id and tier_id are set correctly from parameters."""
+        runs = [_make_run_result(run_number=1)]
+        result = aggregate_run_results(TierID.T1, "my-subtest", runs)
+
+        assert result.subtest_id == "my-subtest"
+        assert result.tier_id == TierID.T1
+
+    def test_exported_from_subtest_executor(self) -> None:
+        """aggregate_run_results is in __all__ of subtest_executor."""
+        import scylla.e2e.subtest_executor as module
+
+        assert "aggregate_run_results" in module.__all__

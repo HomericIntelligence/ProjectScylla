@@ -1,4 +1,4 @@
-"""Unit tests for E2E runner token aggregation logic."""
+"""Unit tests for E2E runner token aggregation logic and state machine methods."""
 
 from __future__ import annotations
 
@@ -359,3 +359,191 @@ class TestSelectBestBaselineFromGroup:
 
         assert result is None
         mock_tier_manager.get_baseline_for_subtest.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _handle_experiment_interrupt tests (Phase 5B)
+# ---------------------------------------------------------------------------
+
+
+class TestHandleExperimentInterrupt:
+    """Tests for _handle_experiment_interrupt() — verifies both status and experiment_state."""
+
+    def test_sets_status_to_interrupted(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """After interrupt, checkpoint.status is set to 'interrupted'."""
+        from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+
+        # Write a checkpoint file to disk
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(tmp_path),
+            config_hash="abc123",
+            started_at="2024-01-01T00:00:00+00:00",
+            last_updated_at="2024-01-01T00:00:00+00:00",
+            status="running",
+        )
+        checkpoint_path = tmp_path / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        runner._handle_experiment_interrupt(checkpoint_path)
+
+        updated = load_checkpoint(checkpoint_path)
+        assert updated.status == "interrupted"
+
+    def test_sets_experiment_state_to_interrupted(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """After interrupt, checkpoint.experiment_state is also set to 'INTERRUPTED'.
+
+        Regression: previously only status was set, leaving experiment_state stale.
+        """
+        from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(tmp_path),
+            config_hash="abc123",
+            started_at="2024-01-01T00:00:00+00:00",
+            last_updated_at="2024-01-01T00:00:00+00:00",
+            status="running",
+            experiment_state="TIERS_RUNNING",  # Previously would remain stale
+        )
+        checkpoint_path = tmp_path / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        runner._handle_experiment_interrupt(checkpoint_path)
+
+        updated = load_checkpoint(checkpoint_path)
+        assert updated.experiment_state == "INTERRUPTED", (
+            "experiment_state must be set to 'INTERRUPTED' alongside status. "
+            "Without this, the state machine and checkpoint status field diverge."
+        )
+
+    def test_does_nothing_when_checkpoint_missing(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """_handle_experiment_interrupt is a no-op when checkpoint file doesn't exist."""
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+        # Should not raise even when checkpoint file is absent
+        runner._handle_experiment_interrupt(tmp_path / "nonexistent.json")
+
+    def test_does_nothing_when_checkpoint_path_is_none(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """_handle_experiment_interrupt is a no-op when checkpoint_path is None."""
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+        # Should not raise with None checkpoint_path
+        runner._handle_experiment_interrupt(None)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# _validate_filesystem_on_resume tests (Phase 5B)
+# ---------------------------------------------------------------------------
+
+
+class TestValidateFilesystemOnResume:
+    """Tests for _validate_filesystem_on_resume() — warnings-only validation."""
+
+    def test_no_warning_when_dirs_exist(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """No warning logged when experiment_dir and repos/ both exist."""
+        from scylla.e2e.models import ExperimentState
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+        runner.experiment_dir = tmp_path / "experiment"
+        runner.experiment_dir.mkdir()
+        (tmp_path / "repos").mkdir()
+
+        with patch("scylla.e2e.runner.logger") as mock_logger:
+            runner._validate_filesystem_on_resume(ExperimentState.TIERS_RUNNING)
+
+        # No warnings should have been emitted
+        for warning_call in mock_logger.warning.call_args_list:
+            assert "Resuming from TIERS_RUNNING" not in str(warning_call)
+
+    def test_warns_when_experiment_dir_missing(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """Warning is logged when experiment_dir doesn't exist during TIERS_RUNNING."""
+        from scylla.e2e.models import ExperimentState
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+        runner.experiment_dir = tmp_path / "nonexistent_experiment"
+        # Don't create it — should trigger warning
+
+        with patch("scylla.e2e.runner.logger") as mock_logger:
+            runner._validate_filesystem_on_resume(ExperimentState.TIERS_RUNNING)
+
+        warning_messages = [str(c) for c in mock_logger.warning.call_args_list]
+        assert any("experiment_dir missing" in msg for msg in warning_messages)
+
+    def test_noop_for_non_tiers_running_state(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """No validation is performed for states other than TIERS_RUNNING."""
+        from scylla.e2e.models import ExperimentState
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+        runner.experiment_dir = tmp_path / "nonexistent"  # Would cause warning in TIERS_RUNNING
+
+        with patch("scylla.e2e.runner.logger") as mock_logger:
+            runner._validate_filesystem_on_resume(ExperimentState.INITIALIZING)
+
+        # No filesystem warnings for INITIALIZING state
+        for warning_call in mock_logger.warning.call_args_list:
+            assert "experiment_dir missing" not in str(warning_call)
+
+    def test_noop_when_experiment_dir_is_none(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
+    ) -> None:
+        """No validation when experiment_dir is None/falsy."""
+        from scylla.e2e.models import ExperimentState
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+        runner.experiment_dir = None  # type: ignore[assignment]
+
+        # Should not raise
+        runner._validate_filesystem_on_resume(ExperimentState.TIERS_RUNNING)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# _last_experiment_result initialization tests (Phase 5B)
+# ---------------------------------------------------------------------------
+
+
+class TestLastExperimentResultInit:
+    """Tests for _last_experiment_result field — declared in __init__."""
+
+    def test_last_experiment_result_initialized_to_none(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """E2ERunner initializes _last_experiment_result to None in __init__."""
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        assert hasattr(runner, "_last_experiment_result")
+        assert runner._last_experiment_result is None
+
+    def test_no_type_ignore_comment_needed(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """_last_experiment_result declared in __init__ — no attr-defined needed.
+
+        This is a code quality regression guard to ensure the attribute is properly
+        declared in __init__ rather than dynamically set (which would require
+        # type: ignore[attr-defined] suppression).
+        """
+        import inspect
+
+        from scylla.e2e.runner import E2ERunner
+
+        source = inspect.getsource(E2ERunner.__init__)
+        assert "_last_experiment_result" in source, (
+            "_last_experiment_result must be declared in E2ERunner.__init__() "
+            "to avoid attr-defined type errors"
+        )

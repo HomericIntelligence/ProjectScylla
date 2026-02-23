@@ -179,7 +179,7 @@ class SubtestStateMachine:
         self,
         tier_id: str,
         subtest_id: str,
-        actions: dict[SubtestState, Callable],
+        actions: dict[SubtestState, Callable[[], None]],
     ) -> SubtestState:
         """Advance the subtest by one state transition.
 
@@ -248,26 +248,39 @@ class SubtestStateMachine:
         self,
         tier_id: str,
         subtest_id: str,
-        actions: dict[SubtestState, Callable],
+        actions: dict[SubtestState, Callable[[], None]],
+        until_state: SubtestState | None = None,
     ) -> SubtestState:
         """Advance the subtest through all states until AGGREGATED is reached.
 
         Useful for running a complete subtest from start or resuming from any state.
         On exception, marks the subtest as FAILED in the checkpoint and re-raises.
 
+        If until_state is specified, the subtest stops cleanly when that state is
+        reached, enabling incremental validation via --until <state>.
+
         Args:
             tier_id: Tier identifier
             subtest_id: Subtest identifier
             actions: Map of from_state -> callable
+            until_state: Optional state at which to stop early. The machine
+                stops without marking FAILED, preserving state for future resume.
 
         Returns:
-            Final SubtestState (AGGREGATED or FAILED)
+            Final SubtestState (AGGREGATED, FAILED, or until_state)
 
         """
         from scylla.e2e.checkpoint import save_checkpoint
 
         try:
             while not self.is_complete(tier_id, subtest_id):
+                current = self.get_state(tier_id, subtest_id)
+                if until_state is not None and current == until_state:
+                    logger.info(
+                        f"[{tier_id}/{subtest_id}] Reached --until target state: "
+                        f"{until_state.value}"
+                    )
+                    break
                 self.advance(tier_id, subtest_id, actions)
         except Exception:
             self.checkpoint.set_subtest_state(tier_id, subtest_id, SubtestState.FAILED.value)

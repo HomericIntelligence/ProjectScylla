@@ -190,7 +190,7 @@ class ExperimentStateMachine:
 
     def advance(
         self,
-        actions: dict[ExperimentState, Callable],
+        actions: dict[ExperimentState, Callable[[], None]],
     ) -> ExperimentState:
         """Advance the experiment by one state transition.
 
@@ -249,7 +249,7 @@ class ExperimentStateMachine:
 
     def advance_to_completion(
         self,
-        actions: dict[ExperimentState, Callable],
+        actions: dict[ExperimentState, Callable[[], None]],
         until_state: ExperimentState | None = None,
     ) -> ExperimentState:
         """Advance the experiment through all states until COMPLETE is reached.
@@ -280,14 +280,9 @@ class ExperimentStateMachine:
                     break
                 self.advance(actions)
         except Exception as e:
-            try:
-                from scylla.e2e.rate_limit import RateLimitError
+            from scylla.e2e.rate_limit import RateLimitError
 
-                is_rate_limit = isinstance(e, RateLimitError)
-            except ImportError:
-                is_rate_limit = False
-
-            if is_rate_limit:
+            if isinstance(e, RateLimitError):
                 logger.warning(f"Experiment rate-limited in state {self.get_state().value}: {e}")
                 self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
             else:

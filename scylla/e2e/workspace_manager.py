@@ -61,6 +61,37 @@ class WorkspaceManager:
             # Legacy per-experiment clone
             self.base_repo = experiment_dir / "repo"
 
+    @classmethod
+    def from_existing(
+        cls,
+        base_repo: Path,
+        repo_url: str,
+        commit: str | None,
+    ) -> WorkspaceManager:
+        """Create a WorkspaceManager for an already-cloned base repository.
+
+        Used in child processes (parallel_executor._run_subtest_in_process) where
+        the repository was cloned by the parent process and the child just needs
+        a WorkspaceManager instance that points at the existing clone.
+
+        Args:
+            base_repo: Path to the already-cloned repository root
+            repo_url: Git repository URL (for metadata)
+            commit: Commit hash (for metadata)
+
+        Returns:
+            WorkspaceManager with _is_setup=True pointing at base_repo
+
+        """
+        instance = cls(
+            experiment_dir=base_repo.parent,
+            repo_url=repo_url,
+            commit=commit,
+        )
+        instance._is_setup = True
+        instance.base_repo = base_repo
+        return instance
+
     def setup_base_repo(self) -> None:
         """Clone repository once at experiment start.
 

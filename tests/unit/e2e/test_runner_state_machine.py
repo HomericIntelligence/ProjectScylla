@@ -107,19 +107,21 @@ class TestBuildTierActions:
 
     def test_returns_dict_with_all_tier_states(self, runner: E2ERunner) -> None:
         """All non-terminal TierStates should have actions."""
+        from scylla.e2e.runner import TierContext
+
         runner.experiment_dir = Path("/tmp/exp")
         runner.checkpoint = MagicMock()
         runner.workspace_manager = MagicMock()
         tier_id = TierID.T0
         baseline = None
         scheduler = MagicMock()
-        tier_results: dict = {}
+        tier_ctx = TierContext()
 
         actions = runner._build_tier_actions(
             tier_id=tier_id,
             baseline=baseline,
             scheduler=scheduler,
-            tier_results=tier_results,
+            tier_ctx=tier_ctx,
         )
 
         expected_states = {
@@ -134,19 +136,21 @@ class TestBuildTierActions:
 
     def test_all_actions_are_callable(self, runner: E2ERunner) -> None:
         """All returned actions should be callable."""
+        from scylla.e2e.runner import TierContext
+
         runner.experiment_dir = Path("/tmp/exp")
         runner.checkpoint = MagicMock()
         runner.workspace_manager = MagicMock()
         tier_id = TierID.T0
         baseline = None
         scheduler = MagicMock()
-        tier_results: dict = {}
+        tier_ctx = TierContext()
 
         actions = runner._build_tier_actions(
             tier_id=tier_id,
             baseline=baseline,
             scheduler=scheduler,
-            tier_results=tier_results,
+            tier_ctx=tier_ctx,
         )
 
         for state, action in actions.items():

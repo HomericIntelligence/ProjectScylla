@@ -7,13 +7,13 @@ from unittest.mock import MagicMock
 from scylla.e2e.models import E2ERunResult, ExperimentConfig, TierID, TokenStats
 from scylla.e2e.regenerate import (
     RegenerateStats,
-    _aggregate_results,
     _find_frontier,
     _has_valid_agent_result,
     _has_valid_judge_result,
     rebuild_tier_results,
     scan_run_results,
 )
+from scylla.e2e.subtest_executor import aggregate_run_results as _aggregate_results
 
 
 def test_has_valid_agent_result_missing_file(tmp_path: Path) -> None:
