@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Mock for `gh` CLI.
 # Behavior is controlled by environment variables:
-#   GH_MOCK_ISSUE_STATE  - JSON for `gh issue view <N> --json state,title,closedAt`
-#   GH_MOCK_PR_JSON      - JSON for `gh pr list ...`
+#   GH_MOCK_ISSUE_STATE    - JSON for `gh issue view <N> --json state,title,closedAt`
+#   GH_MOCK_PR_JSON        - JSON for `gh pr list ...`
+#   GH_MOCK_PR_CLOSES      - issue number a PR closes (default: 800)
 #   GH_MOCK_ISSUE_COMMENTS - output for `gh issue view <N> --comments`
+
+_DEFAULT_ISSUE_STATE='{"state":"OPEN","title":"Test Issue","closedAt":null}'
+_DEFAULT_PR_CLOSES=800
 
 case "$1 $2" in
     "issue view")
         if [[ "${*}" == *"--json"* ]]; then
-            echo "${GH_MOCK_ISSUE_STATE:-{\"state\":\"OPEN\",\"title\":\"Test Issue\",\"closedAt\":null}}"
+            echo "${GH_MOCK_ISSUE_STATE:-$_DEFAULT_ISSUE_STATE}"
         else
             # --comments path
             echo "${GH_MOCK_ISSUE_COMMENTS:-}"
@@ -19,8 +23,28 @@ case "$1 $2" in
         ;;
     "pr view")
         # Return closing issue references for the PR.
-        # GH_MOCK_PR_CLOSES: issue number this PR closes (default: 800)
-        echo "{\"closingIssuesReferences\":[{\"number\":${GH_MOCK_PR_CLOSES:-800}}]}"
+        # When --jq flag is present, extract and return just the issue number(s).
+        _closes="${GH_MOCK_PR_CLOSES:-$_DEFAULT_PR_CLOSES}"
+        _full_json="{\"closingIssuesReferences\":[{\"number\":${_closes}}]}"
+        if [[ "${*}" == *"--jq"* ]]; then
+            # Extract the jq filter from args and apply it
+            _jq_filter=""
+            _found_jq=0
+            for _arg in "$@"; do
+                if [[ "$_found_jq" -eq 1 ]]; then
+                    _jq_filter="$_arg"
+                    break
+                fi
+                [[ "$_arg" == "--jq" ]] && _found_jq=1
+            done
+            if [[ -n "$_jq_filter" ]]; then
+                echo "$_full_json" | jq -r "$_jq_filter"
+            else
+                echo "$_full_json"
+            fi
+        else
+            echo "$_full_json"
+        fi
         ;;
     *)
         echo "{}"
