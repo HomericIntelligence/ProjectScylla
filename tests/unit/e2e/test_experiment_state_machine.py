@@ -377,3 +377,52 @@ class TestExperimentStateMachineAdvanceToCompletion:
         final = esm.advance_to_completion({ExperimentState.INITIALIZING: action})
         action.assert_not_called()
         assert final == ExperimentState.COMPLETE
+
+    def test_rate_limit_error_marks_interrupted_not_failed(
+        self, esm: ExperimentStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """RateLimitError marks experiment as INTERRUPTED (retryable), not FAILED."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
+
+        rate_limit_info = RateLimitInfo(
+            retry_after_seconds=60,
+            error_message="rate limit exceeded",
+            source="agent",
+            detected_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+        def rate_limit_action():
+            raise RateLimitError(rate_limit_info)
+
+        with pytest.raises(RateLimitError):
+            esm.advance_to_completion({ExperimentState.INITIALIZING: rate_limit_action})
+
+        assert esm.get_state() == ExperimentState.INTERRUPTED
+
+    def test_rate_limit_error_persisted_to_disk(
+        self, esm: ExperimentStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """INTERRUPTED state from RateLimitError is atomically saved to checkpoint."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
+
+        rate_limit_info = RateLimitInfo(
+            retry_after_seconds=60,
+            error_message="rate limit exceeded",
+            source="agent",
+            detected_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+        def rate_limit_action():
+            raise RateLimitError(rate_limit_info)
+
+        with pytest.raises(RateLimitError):
+            esm.advance_to_completion({ExperimentState.INITIALIZING: rate_limit_action})
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        on_disk = load_checkpoint(checkpoint_path)
+        assert on_disk.experiment_state == ExperimentState.INTERRUPTED.value

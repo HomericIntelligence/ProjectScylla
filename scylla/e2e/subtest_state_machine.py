@@ -8,7 +8,7 @@ State flow for a single subtest (3 sequential states):
   PENDING
     -> RUNS_IN_PROGRESS  (start subtest runs)
     -> RUNS_COMPLETE     (all runs finished)
-  Terminal: AGGREGATED
+  Terminal: AGGREGATED | FAILED
 
 """
 
@@ -38,7 +38,9 @@ _SUBTEST_STATE_SEQUENCE: list[SubtestState] = [
 ]
 
 # Terminal states — do not advance further
-_SUBTEST_TERMINAL_STATES: frozenset[SubtestState] = frozenset([SubtestState.AGGREGATED])
+_SUBTEST_TERMINAL_STATES: frozenset[SubtestState] = frozenset(
+    [SubtestState.AGGREGATED, SubtestState.FAILED]
+)
 
 
 @dataclass
@@ -251,7 +253,7 @@ class SubtestStateMachine:
         """Advance the subtest through all states until AGGREGATED is reached.
 
         Useful for running a complete subtest from start or resuming from any state.
-        On exception, the exception propagates without marking the subtest as failed.
+        On exception, marks the subtest as FAILED in the checkpoint and re-raises.
 
         Args:
             tier_id: Tier identifier
@@ -259,10 +261,17 @@ class SubtestStateMachine:
             actions: Map of from_state -> callable
 
         Returns:
-            Final SubtestState (AGGREGATED)
+            Final SubtestState (AGGREGATED or FAILED)
 
         """
-        while not self.is_complete(tier_id, subtest_id):
-            self.advance(tier_id, subtest_id, actions)
+        from scylla.e2e.checkpoint import save_checkpoint
+
+        try:
+            while not self.is_complete(tier_id, subtest_id):
+                self.advance(tier_id, subtest_id, actions)
+        except Exception:
+            self.checkpoint.set_subtest_state(tier_id, subtest_id, SubtestState.FAILED.value)
+            save_checkpoint(self.checkpoint, self.checkpoint_path)
+            raise
 
         return self.get_state(tier_id, subtest_id)

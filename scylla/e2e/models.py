@@ -127,6 +127,7 @@ class SubtestState(str, Enum):
     RUNS_IN_PROGRESS = "runs_in_progress"
     RUNS_COMPLETE = "runs_complete"
     AGGREGATED = "aggregated"
+    FAILED = "failed"
 
 
 class TierState(str, Enum):
