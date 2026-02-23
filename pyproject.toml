@@ -123,7 +123,22 @@ disable_error_code = [
     "misc",            # 4 violations - miscellaneous type issues
     "union-attr",      # 4 violations - accessing attributes on unions
     "var-annotated",   # 9 violations - missing type annotations for variables
-    "call-arg",        # Multiple violations - incorrect function call arguments
+]
+
+# tests/ has additional suppressed errors beyond scylla/ and scripts/
+# Decoupled so scylla/+scripts/ codes can be removed independently as they are fixed
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = [
+    "assignment",      # 1 violation
+    "operator",        # 12 violations
+    "arg-type",        # 13 violations
+    "index",           # 7 violations
+    "attr-defined",    # 7 violations
+    "misc",            # 3 violations
+    "union-attr",      # 16 violations
+    "var-annotated",   # 7 violations
+    "call-arg",        # 30 violations - tests-only, zero in scylla/ and scripts/
 ]
 
 
