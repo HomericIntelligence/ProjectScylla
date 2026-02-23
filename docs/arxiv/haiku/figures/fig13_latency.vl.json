@@ -1,0 +1,208 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-0593a242ea6f955da475a9950705c521"
+  },
+  "facet": {
+    "column": {
+      "field": "agent_model",
+      "title": null,
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "bar"
+    },
+    "encoding": {
+      "color": {
+        "field": "phase_label",
+        "scale": {
+          "domain": [
+            "Agent Execution",
+            "Judge Evaluation"
+          ],
+          "range": [
+            "#4C78A8",
+            "#E45756"
+          ]
+        },
+        "title": "Phase",
+        "type": "nominal"
+      },
+      "order": {
+        "field": "phase",
+        "sort": "ascending",
+        "type": "nominal"
+      },
+      "tooltip": [
+        {
+          "field": "tier",
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        {
+          "field": "phase_label",
+          "title": "Phase",
+          "type": "nominal"
+        },
+        {
+          "field": "duration",
+          "format": ".2f",
+          "title": "Duration (s)",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "field": "tier",
+        "sort": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "title": "Tier",
+        "type": "ordinal"
+      },
+      "y": {
+        "field": "duration",
+        "title": "Mean Duration (seconds)",
+        "type": "quantitative"
+      }
+    },
+    "height": 250,
+    "width": 350
+  },
+  "title": "Latency Breakdown by Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-0593a242ea6f955da475a9950705c521": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "phase": "agent_duration_seconds",
+        "duration": 217.80293191452992,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "phase": "agent_duration_seconds",
+        "duration": 246.81496303614458,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "phase": "agent_duration_seconds",
+        "duration": 232.9076797769231,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "phase": "agent_duration_seconds",
+        "duration": 470.11794296721314,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "phase": "agent_duration_seconds",
+        "duration": 413.15361091869914,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "phase": "agent_duration_seconds",
+        "duration": 238.9462681,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "phase": "agent_duration_seconds",
+        "duration": 282.9650124666667,
+        "phase_label": "Agent Execution"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "phase": "judge_duration_seconds",
+        "duration": 124.94167111965811,
+        "phase_label": "Judge Evaluation"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "phase": "judge_duration_seconds",
+        "duration": 132.65667481927713,
+        "phase_label": "Judge Evaluation"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "phase": "judge_duration_seconds",
+        "duration": 123.03441246153847,
+        "phase_label": "Judge Evaluation"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "phase": "judge_duration_seconds",
+        "duration": 118.0097535,
+        "phase_label": "Judge Evaluation"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "phase": "judge_duration_seconds",
+        "duration": 145.02245190243903,
+        "phase_label": "Judge Evaluation"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "phase": "judge_duration_seconds",
+        "duration": 137.33439833333335,
+        "phase_label": "Judge Evaluation"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "phase": "judge_duration_seconds",
+        "duration": 187.97204713333335,
+        "phase_label": "Judge Evaluation"
+      }
+    ]
+  }
+}

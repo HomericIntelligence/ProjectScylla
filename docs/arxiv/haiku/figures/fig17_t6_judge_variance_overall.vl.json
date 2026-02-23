@@ -1,0 +1,235 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "hconcat": [
+    {
+      "data": {
+        "name": "data-e034434474f30a544563558c04f491be"
+      },
+      "mark": {
+        "type": "boxplot",
+        "size": 40
+      },
+      "encoding": {
+        "color": {
+          "field": "judge_display",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "sonnet"
+            ],
+            "range": [
+              "#72B7B2"
+            ]
+          },
+          "title": "Judge",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "judge_display",
+          "sort": [
+            "sonnet"
+          ],
+          "title": "Judge Model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "judge_score",
+          "scale": {
+            "domain": [
+              0.45,
+              1.0
+            ]
+          },
+          "title": "Judge Score",
+          "type": "quantitative"
+        }
+      },
+      "title": "Panel A: Score Distribution per Judge",
+      "width": 300
+    },
+    {
+      "data": {
+        "name": "data-bbf6c27578dc9e40ecb578bf8e2c114e"
+      },
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "color": {
+          "field": "judge_display",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "sonnet"
+            ],
+            "range": [
+              "#72B7B2"
+            ]
+          },
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "judge_display",
+            "title": "Judge",
+            "type": "nominal"
+          },
+          {
+            "field": "score_std",
+            "format": ".3f",
+            "title": "Std Dev",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "judge_display",
+          "sort": [
+            "sonnet"
+          ],
+          "title": "Judge Model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "score_std",
+          "scale": {
+            "domain": [
+              0,
+              0.30000000000000004
+            ]
+          },
+          "title": "Score Std Dev",
+          "type": "quantitative"
+        }
+      },
+      "title": "Panel B: Scoring Standard Deviation",
+      "width": 300
+    }
+  ],
+  "title": "Judge Variance - T6",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-e034434474f30a544563558c04f491be": [
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.876,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.84,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.866,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.986,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.74,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.875,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.529,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.875,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T6",
+        "judge_model": "sonnet",
+        "judge_score": 0.78,
+        "judge_display": "sonnet"
+      }
+    ],
+    "data-bbf6c27578dc9e40ecb578bf8e2c114e": [
+      {
+        "judge_display": "sonnet",
+        "score_std": 0.12201592401930868
+      }
+    ]
+  }
+}

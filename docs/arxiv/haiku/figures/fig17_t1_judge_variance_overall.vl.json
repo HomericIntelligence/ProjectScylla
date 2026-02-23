@@ -1,0 +1,619 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "hconcat": [
+    {
+      "data": {
+        "name": "data-9ec2fbcc8c2cf2a7bc54d585af77e37e"
+      },
+      "mark": {
+        "type": "boxplot",
+        "size": 40
+      },
+      "encoding": {
+        "color": {
+          "field": "judge_display",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "sonnet"
+            ],
+            "range": [
+              "#72B7B2"
+            ]
+          },
+          "title": "Judge",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "judge_display",
+          "sort": [
+            "sonnet"
+          ],
+          "title": "Judge Model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "judge_score",
+          "scale": {
+            "domain": [
+              0.0,
+              1.0
+            ]
+          },
+          "title": "Judge Score",
+          "type": "quantitative"
+        }
+      },
+      "title": "Panel A: Score Distribution per Judge",
+      "width": 300
+    },
+    {
+      "data": {
+        "name": "data-43d885c3aaa5f2105eb3661eefac71cf"
+      },
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "color": {
+          "field": "judge_display",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "sonnet"
+            ],
+            "range": [
+              "#72B7B2"
+            ]
+          },
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "judge_display",
+            "title": "Judge",
+            "type": "nominal"
+          },
+          {
+            "field": "score_std",
+            "format": ".3f",
+            "title": "Std Dev",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "judge_display",
+          "sort": [
+            "sonnet"
+          ],
+          "title": "Judge Model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "score_std",
+          "scale": {
+            "domain": [
+              0,
+              0.35000000000000003
+            ]
+          },
+          "title": "Score Std Dev",
+          "type": "quantitative"
+        }
+      },
+      "title": "Panel B: Scoring Standard Deviation",
+      "width": 300
+    }
+  ],
+  "title": "Judge Variance - T1",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-9ec2fbcc8c2cf2a7bc54d585af77e37e": [
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.79,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.84,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.875,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.839,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.737,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.84,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.858,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.878,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.826,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.85,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.13,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.33,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.667,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.85,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.52,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.52,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.62,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.85,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.52,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.55,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.05,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.55,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.38,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.62,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.1,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T1",
+        "judge_model": "sonnet",
+        "judge_score": 0.62,
+        "judge_display": "sonnet"
+      }
+    ],
+    "data-43d885c3aaa5f2105eb3661eefac71cf": [
+      {
+        "judge_display": "sonnet",
+        "score_std": 0.3026194346585182
+      }
+    ]
+  }
+}

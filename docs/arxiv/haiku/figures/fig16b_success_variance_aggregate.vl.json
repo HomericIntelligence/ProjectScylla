@@ -1,0 +1,230 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "vconcat": [
+    {
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          {
+            "field": "pass_variance",
+            "format": ".3f",
+            "title": "Pass Variance",
+            "type": "quantitative"
+          },
+          {
+            "field": "n_runs",
+            "title": "Total Runs",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "tier",
+          "sort": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "pass_variance",
+          "scale": {
+            "domain": [
+              0,
+              0.25
+            ]
+          },
+          "title": "Pass Variance",
+          "type": "quantitative"
+        }
+      },
+      "height": 300,
+      "title": "Panel A: Pass/Fail Variance (Aggregated)",
+      "width": 400
+    },
+    {
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          {
+            "field": "score_std",
+            "format": ".3f",
+            "title": "Score Std Dev",
+            "type": "quantitative"
+          },
+          {
+            "field": "n_runs",
+            "title": "Total Runs",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "tier",
+          "sort": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "score_std",
+          "scale": {
+            "domain": [
+              0,
+              0.4
+            ]
+          },
+          "title": "Score Std Dev",
+          "type": "quantitative"
+        }
+      },
+      "height": 300,
+      "title": "Panel B: Score Standard Deviation (Aggregated)",
+      "width": 400
+    }
+  ],
+  "data": {
+    "name": "data-3e88c3e3837088be551f56e8159fa002"
+  },
+  "title": "Success Variance Aggregate (All Subtests Combined Per Tier)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-3e88c3e3837088be551f56e8159fa002": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "pass_variance": 0.230111768573307,
+        "score_std": 0.3834351967453608,
+        "n_runs": 117
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "pass_variance": 0.1948033096240383,
+        "score_std": 0.32971931312577674,
+        "n_runs": 83
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "pass_variance": 0.14059171597633133,
+        "score_std": 0.2234372691336986,
+        "n_runs": 130
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "pass_variance": 0.18120128997581297,
+        "score_std": 0.306074972242058,
+        "n_runs": 122
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "pass_variance": 0.15202591050300748,
+        "score_std": 0.26273571304900445,
+        "n_runs": 123
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "pass_variance": 0.25,
+        "score_std": 0.3708269726950305,
+        "n_runs": 30
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "pass_variance": 0.06222222222222221,
+        "score_std": 0.12201592401930869,
+        "n_runs": 15
+      }
+    ]
+  }
+}

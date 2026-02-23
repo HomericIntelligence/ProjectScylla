@@ -1,0 +1,22 @@
+\begin{table}[htbp]
+\centering
+\caption{Table 2b: Impl-Rate Tier Pairwise Comparison}
+\label{tab:impl_rate_tier_comparison}
+\begin{tabular}{llrrrrl}
+\toprule
+Model & Transition & N (T1, T2) & Impl-Rate $\Delta$ & p-value & Cliff's $\delta$ & Significant? \\
+\midrule
+haiku & T0→T1 & (117, 83) & +0.1021 & 0.5205 & +0.120 &  \\
+haiku & T1→T2 & (83, 130) & +0.0499 & 1.0000 & +0.010 &  \\
+haiku & T2→T3 & (130, 122) & -0.0399 & 1.0000 & +0.015 &  \\
+haiku & T3→T4 & (122, 123) & +0.0771 & 0.3491 & +0.134 &  \\
+haiku & T4→T5 & (123, 30) & -0.1749 & 0.0221 & -0.380 & \checkmark \\
+haiku & T5→T6 & (30, 15) & +0.1906 & 0.3491 & +0.367 &  \\
+haiku & T0→T6 & (117, 15) & +0.2049 & 0.5205 & +0.240 &  \\
+\midrule
+\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
+\multicolumn{7}{l}{haiku: $H(6)=18.97$, $p=0.0042$ $p < 0.05$} \\
+\multicolumn{7}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
+\bottomrule
+\end{tabular}
+\end{table}

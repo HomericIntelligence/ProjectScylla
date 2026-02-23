@@ -1,0 +1,495 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-20f38a06f6c726291ca3d52cdd6d0e51"
+  },
+  "facet": {
+    "column": {
+      "field": "agent_model",
+      "title": null,
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "bar"
+    },
+    "encoding": {
+      "color": {
+        "field": "grade",
+        "scale": {
+          "domain": [
+            "F",
+            "D",
+            "C",
+            "B",
+            "A",
+            "S"
+          ],
+          "range": [
+            "#e74c3c",
+            "#e67e22",
+            "#f39c12",
+            "#3498db",
+            "#2ecc71",
+            "#FFD700"
+          ]
+        },
+        "sort": [
+          "F",
+          "D",
+          "C",
+          "B",
+          "A",
+          "S"
+        ],
+        "title": "Grade",
+        "type": "ordinal"
+      },
+      "order": {
+        "field": "grade",
+        "sort": "ascending",
+        "type": "ordinal"
+      },
+      "tooltip": [
+        {
+          "field": "tier",
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        {
+          "field": "grade",
+          "title": "Grade",
+          "type": "ordinal"
+        },
+        {
+          "field": "count",
+          "title": "Count",
+          "type": "quantitative"
+        },
+        {
+          "field": "total",
+          "title": "Total Runs",
+          "type": "quantitative"
+        },
+        {
+          "field": "proportion",
+          "format": ".2%",
+          "title": "Proportion",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "field": "tier_label",
+        "sort": {
+          "field": "tier",
+          "order": "ascending"
+        },
+        "title": "Tier",
+        "type": "nominal"
+      },
+      "y": {
+        "field": "proportion",
+        "stack": "normalize",
+        "title": "Proportion",
+        "type": "quantitative"
+      }
+    }
+  },
+  "resolve": {
+    "scale": {
+      "x": "independent"
+    }
+  },
+  "title": "Grade Distribution by Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-20f38a06f6c726291ca3d52cdd6d0e51": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "grade": "A",
+        "count": 30,
+        "total": 117,
+        "proportion": 0.2564102564102564,
+        "tier_label": "T0 (n=117)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "grade": "B",
+        "count": 27,
+        "total": 117,
+        "proportion": 0.23076923076923078,
+        "tier_label": "T0 (n=117)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "grade": "C",
+        "count": 4,
+        "total": 117,
+        "proportion": 0.03418803418803419,
+        "tier_label": "T0 (n=117)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "grade": "D",
+        "count": 4,
+        "total": 117,
+        "proportion": 0.03418803418803419,
+        "tier_label": "T0 (n=117)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "grade": "F",
+        "count": 34,
+        "total": 117,
+        "proportion": 0.2905982905982906,
+        "tier_label": "T0 (n=117)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "grade": "S",
+        "count": 18,
+        "total": 117,
+        "proportion": 0.15384615384615385,
+        "tier_label": "T0 (n=117)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "grade": "A",
+        "count": 29,
+        "total": 83,
+        "proportion": 0.3493975903614458,
+        "tier_label": "T1 (n=83)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "grade": "B",
+        "count": 19,
+        "total": 83,
+        "proportion": 0.2289156626506024,
+        "tier_label": "T1 (n=83)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "grade": "C",
+        "count": 5,
+        "total": 83,
+        "proportion": 0.060240963855421686,
+        "tier_label": "T1 (n=83)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "grade": "D",
+        "count": 2,
+        "total": 83,
+        "proportion": 0.024096385542168676,
+        "tier_label": "T1 (n=83)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "grade": "F",
+        "count": 15,
+        "total": 83,
+        "proportion": 0.18072289156626506,
+        "tier_label": "T1 (n=83)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "grade": "S",
+        "count": 13,
+        "total": 83,
+        "proportion": 0.1566265060240964,
+        "tier_label": "T1 (n=83)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "grade": "A",
+        "count": 51,
+        "total": 130,
+        "proportion": 0.3923076923076923,
+        "tier_label": "T2 (n=130)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "grade": "B",
+        "count": 42,
+        "total": 130,
+        "proportion": 0.3230769230769231,
+        "tier_label": "T2 (n=130)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "grade": "C",
+        "count": 10,
+        "total": 130,
+        "proportion": 0.07692307692307693,
+        "tier_label": "T2 (n=130)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "grade": "D",
+        "count": 6,
+        "total": 130,
+        "proportion": 0.046153846153846156,
+        "tier_label": "T2 (n=130)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "grade": "F",
+        "count": 6,
+        "total": 130,
+        "proportion": 0.046153846153846156,
+        "tier_label": "T2 (n=130)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "grade": "S",
+        "count": 15,
+        "total": 130,
+        "proportion": 0.11538461538461539,
+        "tier_label": "T2 (n=130)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "grade": "A",
+        "count": 44,
+        "total": 122,
+        "proportion": 0.36065573770491804,
+        "tier_label": "T3 (n=122)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "grade": "B",
+        "count": 28,
+        "total": 122,
+        "proportion": 0.22950819672131148,
+        "tier_label": "T3 (n=122)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "grade": "C",
+        "count": 7,
+        "total": 122,
+        "proportion": 0.05737704918032787,
+        "tier_label": "T3 (n=122)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "grade": "D",
+        "count": 5,
+        "total": 122,
+        "proportion": 0.040983606557377046,
+        "tier_label": "T3 (n=122)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "grade": "F",
+        "count": 16,
+        "total": 122,
+        "proportion": 0.13114754098360656,
+        "tier_label": "T3 (n=122)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "grade": "S",
+        "count": 22,
+        "total": 122,
+        "proportion": 0.18032786885245902,
+        "tier_label": "T3 (n=122)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "grade": "A",
+        "count": 50,
+        "total": 123,
+        "proportion": 0.4065040650406504,
+        "tier_label": "T4 (n=123)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "grade": "B",
+        "count": 24,
+        "total": 123,
+        "proportion": 0.1951219512195122,
+        "tier_label": "T4 (n=123)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "grade": "C",
+        "count": 10,
+        "total": 123,
+        "proportion": 0.08130081300813008,
+        "tier_label": "T4 (n=123)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "grade": "D",
+        "count": 4,
+        "total": 123,
+        "proportion": 0.032520325203252036,
+        "tier_label": "T4 (n=123)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "grade": "F",
+        "count": 9,
+        "total": 123,
+        "proportion": 0.07317073170731707,
+        "tier_label": "T4 (n=123)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "grade": "S",
+        "count": 26,
+        "total": 123,
+        "proportion": 0.21138211382113822,
+        "tier_label": "T4 (n=123)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "grade": "A",
+        "count": 8,
+        "total": 30,
+        "proportion": 0.26666666666666666,
+        "tier_label": "T5 (n=30)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "grade": "B",
+        "count": 6,
+        "total": 30,
+        "proportion": 0.2,
+        "tier_label": "T5 (n=30)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "grade": "C",
+        "count": 4,
+        "total": 30,
+        "proportion": 0.13333333333333333,
+        "tier_label": "T5 (n=30)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "grade": "D",
+        "count": 1,
+        "total": 30,
+        "proportion": 0.03333333333333333,
+        "tier_label": "T5 (n=30)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "grade": "F",
+        "count": 10,
+        "total": 30,
+        "proportion": 0.3333333333333333,
+        "tier_label": "T5 (n=30)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "grade": "S",
+        "count": 1,
+        "total": 30,
+        "proportion": 0.03333333333333333,
+        "tier_label": "T5 (n=30)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "grade": "A",
+        "count": 9,
+        "total": 15,
+        "proportion": 0.6,
+        "tier_label": "T6 (n=15)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "grade": "B",
+        "count": 4,
+        "total": 15,
+        "proportion": 0.26666666666666666,
+        "tier_label": "T6 (n=15)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "grade": "C",
+        "count": 1,
+        "total": 15,
+        "proportion": 0.06666666666666667,
+        "tier_label": "T6 (n=15)"
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "grade": "S",
+        "count": 1,
+        "total": 15,
+        "proportion": 0.06666666666666667,
+        "tier_label": "T6 (n=15)"
+      }
+    ]
+  }
+}

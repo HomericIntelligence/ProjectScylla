@@ -1,0 +1,207 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-faa87eb6c7e4e6ceda882cc393e63eec"
+  },
+  "facet": {
+    "column": {
+      "field": "tier",
+      "sort": [
+        "T0",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "title": "Tier",
+      "type": "ordinal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "bar"
+    },
+    "encoding": {
+      "color": {
+        "field": "metric",
+        "scale": {
+          "domain": [
+            "Impl-Rate",
+            "Pass-Rate"
+          ],
+          "range": [
+            "#1f77b4",
+            "#ff7f0e"
+          ]
+        },
+        "title": "Metric",
+        "type": "nominal"
+      },
+      "tooltip": [
+        {
+          "field": "agent_model",
+          "title": "Model",
+          "type": "nominal"
+        },
+        {
+          "field": "tier",
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        {
+          "field": "metric",
+          "title": "Metric",
+          "type": "nominal"
+        },
+        {
+          "field": "value",
+          "format": ".3f",
+          "title": "Rate",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "field": "agent_model",
+        "title": "Agent Model",
+        "type": "nominal"
+      },
+      "xOffset": {
+        "field": "metric",
+        "type": "nominal"
+      },
+      "y": {
+        "field": "value",
+        "scale": {
+          "domain": [
+            0,
+            1
+          ]
+        },
+        "title": "Rate",
+        "type": "quantitative"
+      }
+    }
+  },
+  "resolve": {
+    "scale": {
+      "x": "independent"
+    }
+  },
+  "title": "Implementation Rate vs Pass-Rate per Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-faa87eb6c7e4e6ceda882cc393e63eec": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "metric": "Impl-Rate",
+        "value": 0.5873809777330081
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "metric": "Pass-Rate",
+        "value": 0.6410256410256411
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "metric": "Impl-Rate",
+        "value": 0.6894784739749371
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "metric": "Pass-Rate",
+        "value": 0.7349397590361446
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "metric": "Impl-Rate",
+        "value": 0.7393664499479015
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "metric": "Pass-Rate",
+        "value": 0.8307692307692308
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "metric": "Impl-Rate",
+        "value": 0.6994975794105851
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "metric": "Pass-Rate",
+        "value": 0.7622950819672131
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "metric": "Impl-Rate",
+        "value": 0.7766356000481003
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "metric": "Pass-Rate",
+        "value": 0.8130081300813008
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "metric": "Impl-Rate",
+        "value": 0.6017038054538054
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "metric": "Pass-Rate",
+        "value": 0.5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "metric": "Impl-Rate",
+        "value": 0.7922931697931698
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "metric": "Pass-Rate",
+        "value": 0.9333333333333333
+      }
+    ]
+  }
+}

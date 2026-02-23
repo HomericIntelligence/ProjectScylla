@@ -1,0 +1,922 @@
+{
+  "pipeline_version": "1.0.0",
+  "config_version": "1.0.0",
+  "normality_tests": [
+    {
+      "model": "haiku",
+      "tier": "T0",
+      "metric": "score",
+      "n": 117,
+      "w_statistic": 0.8042554328399001,
+      "p_value": 3.502561395563848e-11,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T0",
+      "metric": "impl_rate",
+      "n": 113,
+      "w_statistic": 0.7942240190735832,
+      "p_value": 2.7920113805327673e-11,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T0",
+      "metric": "cost_usd",
+      "n": 117,
+      "w_statistic": 0.6915709223490258,
+      "p_value": 2.389199575838811e-14,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T0",
+      "metric": "duration_seconds",
+      "n": 117,
+      "w_statistic": 0.8438770489159753,
+      "p_value": 9.020439277752255e-10,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T1",
+      "metric": "score",
+      "n": 83,
+      "w_statistic": 0.8001750013243172,
+      "p_value": 3.0174296263494404e-09,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T1",
+      "metric": "impl_rate",
+      "n": 79,
+      "w_statistic": 0.7621149431756657,
+      "p_value": 5.554078727808928e-10,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T1",
+      "metric": "cost_usd",
+      "n": 83,
+      "w_statistic": 0.7563900614687848,
+      "p_value": 2.0417928472122323e-10,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T1",
+      "metric": "duration_seconds",
+      "n": 83,
+      "w_statistic": 0.8688889230592043,
+      "p_value": 5.027436913050079e-07,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T2",
+      "metric": "score",
+      "n": 130,
+      "w_statistic": 0.8351420329298462,
+      "p_value": 9.345471029786547e-11,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T2",
+      "metric": "impl_rate",
+      "n": 130,
+      "w_statistic": 0.8513888180812221,
+      "p_value": 4.170773153012333e-10,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T2",
+      "metric": "cost_usd",
+      "n": 130,
+      "w_statistic": 0.5526173661962174,
+      "p_value": 3.407289813972082e-18,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T2",
+      "metric": "duration_seconds",
+      "n": 130,
+      "w_statistic": 0.8377534669182607,
+      "p_value": 1.180549046888334e-10,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T3",
+      "metric": "score",
+      "n": 122,
+      "w_statistic": 0.8099587382669373,
+      "p_value": 2.911896305828627e-11,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T3",
+      "metric": "impl_rate",
+      "n": 121,
+      "w_statistic": 0.7929800609361759,
+      "p_value": 8.992783659066037e-12,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T3",
+      "metric": "cost_usd",
+      "n": 122,
+      "w_statistic": 0.7941741373382717,
+      "p_value": 8.65325010028927e-12,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T3",
+      "metric": "duration_seconds",
+      "n": 122,
+      "w_statistic": 0.866580226997673,
+      "p_value": 4.3329867917718464e-09,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T4",
+      "metric": "score",
+      "n": 123,
+      "w_statistic": 0.7893933892944462,
+      "p_value": 5.338736031923529e-12,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T4",
+      "metric": "impl_rate",
+      "n": 120,
+      "w_statistic": 0.7827674796636492,
+      "p_value": 4.856933375120583e-12,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T4",
+      "metric": "cost_usd",
+      "n": 123,
+      "w_statistic": 0.8008337893775804,
+      "p_value": 1.2637372250807801e-11,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T4",
+      "metric": "duration_seconds",
+      "n": 123,
+      "w_statistic": 0.9168727030486363,
+      "p_value": 1.229033043988991e-06,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T5",
+      "metric": "score",
+      "n": 30,
+      "w_statistic": 0.8469779432436262,
+      "p_value": 0.0005363213512361837,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T5",
+      "metric": "impl_rate",
+      "n": 24,
+      "w_statistic": 0.8692586199193262,
+      "p_value": 0.005087825267893874,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T5",
+      "metric": "cost_usd",
+      "n": 30,
+      "w_statistic": 0.6078303877279145,
+      "p_value": 9.107095136914826e-08,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T5",
+      "metric": "duration_seconds",
+      "n": 30,
+      "w_statistic": 0.7673961896512483,
+      "p_value": 1.762368805172351e-05,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T6",
+      "metric": "score",
+      "n": 15,
+      "w_statistic": 0.9354742062248763,
+      "p_value": 0.3288518262648291,
+      "is_normal": true
+    },
+    {
+      "model": "haiku",
+      "tier": "T6",
+      "metric": "impl_rate",
+      "n": 15,
+      "w_statistic": 0.8334530898275665,
+      "p_value": 0.010213018792187738,
+      "is_normal": false
+    },
+    {
+      "model": "haiku",
+      "tier": "T6",
+      "metric": "cost_usd",
+      "n": 15,
+      "w_statistic": 0.9175604841298729,
+      "p_value": 0.176797548739269,
+      "is_normal": true
+    },
+    {
+      "model": "haiku",
+      "tier": "T6",
+      "metric": "duration_seconds",
+      "n": 15,
+      "w_statistic": 0.8596454656968051,
+      "p_value": 0.023850532475420533,
+      "is_normal": false
+    }
+  ],
+  "omnibus_tests": [
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "n_groups": 7,
+      "h_statistic": 27.491120666712295,
+      "p_value": 0.00011712898167927043,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "n_groups": 7,
+      "h_statistic": 18.96732501956485,
+      "p_value": 0.004219173351026442,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "n_groups": 7,
+      "h_statistic": 115.27230604220995,
+      "p_value": 1.6008993356495667e-22,
+      "is_significant": true
+    }
+  ],
+  "pairwise_comparisons": [
+    {
+      "model": "haiku",
+      "tier1": "T0",
+      "tier2": "T1",
+      "n1": 117,
+      "n2": 83,
+      "u_statistic": 4399.5,
+      "metric": "pass_rate",
+      "p_value_raw": 0.16216495470040482,
+      "p_value": 0.48649486410121445,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T1",
+      "tier2": "T2",
+      "n1": 83,
+      "n2": 130,
+      "u_statistic": 4878.0,
+      "metric": "pass_rate",
+      "p_value_raw": 0.09312406025290908,
+      "p_value": 0.3724962410116363,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T2",
+      "tier2": "T3",
+      "n1": 130,
+      "n2": 122,
+      "u_statistic": 8473.0,
+      "metric": "pass_rate",
+      "p_value_raw": 0.17761645665767356,
+      "p_value": 0.48649486410121445,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T3",
+      "tier2": "T4",
+      "n1": 122,
+      "n2": 123,
+      "u_statistic": 7122.5,
+      "metric": "pass_rate",
+      "p_value_raw": 0.3333556586524491,
+      "p_value": 0.48649486410121445,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T4",
+      "tier2": "T5",
+      "n1": 123,
+      "n2": 30,
+      "u_statistic": 2422.5,
+      "metric": "pass_rate",
+      "p_value_raw": 0.0003955715100793802,
+      "p_value": 0.0023734290604762814,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "tier1": "T5",
+      "tier2": "T6",
+      "n1": 30,
+      "n2": 15,
+      "u_statistic": 127.5,
+      "metric": "pass_rate",
+      "p_value_raw": 0.0048596064712002045,
+      "p_value": 0.024298032356001024,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "tier1": "T0",
+      "tier2": "T1",
+      "n1": 113,
+      "n2": 79,
+      "u_statistic": 3926.5,
+      "metric": "impl_rate",
+      "p_value_raw": 0.1531623879473734,
+      "p_value": 0.45948716384212024,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T1",
+      "tier2": "T2",
+      "n1": 79,
+      "n2": 130,
+      "u_statistic": 5082.0,
+      "metric": "impl_rate",
+      "p_value_raw": 0.9007813412267722,
+      "p_value": 1.0,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T2",
+      "tier2": "T3",
+      "n1": 130,
+      "n2": 121,
+      "u_statistic": 7750.5,
+      "metric": "impl_rate",
+      "p_value_raw": 0.8415937708872443,
+      "p_value": 1.0,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T3",
+      "tier2": "T4",
+      "n1": 121,
+      "n2": 120,
+      "u_statistic": 6284.0,
+      "metric": "impl_rate",
+      "p_value_raw": 0.06886922351848426,
+      "p_value": 0.2909416645649062,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T4",
+      "tier2": "T5",
+      "n1": 120,
+      "n2": 24,
+      "u_statistic": 1987.0,
+      "metric": "impl_rate",
+      "p_value_raw": 0.003153325312612021,
+      "p_value": 0.018919951875672126,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "tier1": "T5",
+      "tier2": "T6",
+      "n1": 24,
+      "n2": 15,
+      "u_statistic": 114.0,
+      "metric": "impl_rate",
+      "p_value_raw": 0.05818833291298124,
+      "p_value": 0.2909416645649062,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T0",
+      "tier2": "T1",
+      "n1": 117,
+      "n2": 83,
+      "u_statistic": 3910.0,
+      "metric": "duration_seconds",
+      "p_value_raw": 0.01912381355998324,
+      "p_value": 0.07649525423993296,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T1",
+      "tier2": "T2",
+      "n1": 83,
+      "n2": 130,
+      "u_statistic": 6022.0,
+      "metric": "duration_seconds",
+      "p_value_raw": 0.1532295119404594,
+      "p_value": 0.37886746020273787,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T2",
+      "tier2": "T3",
+      "n1": 130,
+      "n2": 122,
+      "u_statistic": 3734.0,
+      "metric": "duration_seconds",
+      "p_value_raw": 4.0042042339247234e-13,
+      "p_value": 2.402522540354834e-12,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "tier1": "T3",
+      "tier2": "T4",
+      "n1": 122,
+      "n2": 123,
+      "u_statistic": 7690.0,
+      "metric": "duration_seconds",
+      "p_value_raw": 0.7366781818102892,
+      "p_value": 0.7366781818102892,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "tier1": "T4",
+      "tier2": "T5",
+      "n1": 123,
+      "n2": 30,
+      "u_statistic": 2666.0,
+      "metric": "duration_seconds",
+      "p_value_raw": 0.00016293939630042644,
+      "p_value": 0.0008146969815021322,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "tier1": "T5",
+      "tier2": "T6",
+      "n1": 30,
+      "n2": 15,
+      "u_statistic": 161.0,
+      "metric": "duration_seconds",
+      "p_value_raw": 0.12628915340091262,
+      "p_value": 0.37886746020273787,
+      "is_significant": false
+    }
+  ],
+  "effect_sizes": [
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "tier1": "T0",
+      "tier2": "T1",
+      "cliffs_delta": 0.09391411801050355,
+      "ci_low": -0.038207097318514745,
+      "ci_high": 0.21902996601791783,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "tier1": "T0",
+      "tier2": "T1",
+      "cliffs_delta": 0.12030917441469699,
+      "ci_low": -0.04738433964377731,
+      "ci_high": 0.27374274275335525,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "tier1": "T0",
+      "tier2": "T1",
+      "cliffs_delta": 0.19472762846256822,
+      "ci_low": 0.03052294373847557,
+      "ci_high": 0.3461023581505509,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "tier1": "T1",
+      "tier2": "T2",
+      "cliffs_delta": 0.09582947173308619,
+      "ci_low": -0.014921223354958294,
+      "ci_high": 0.2142724745134384,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "tier1": "T1",
+      "tier2": "T2",
+      "cliffs_delta": 0.010321324245374878,
+      "ci_low": -0.15828968044487687,
+      "ci_high": 0.1708011250776282,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "tier1": "T1",
+      "tier2": "T2",
+      "cliffs_delta": -0.11621872103799814,
+      "ci_low": -0.2730049499359271,
+      "ci_high": 0.04819277108433735,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "tier1": "T2",
+      "tier2": "T3",
+      "cliffs_delta": -0.06847414880201766,
+      "ci_low": -0.16683480453972258,
+      "ci_high": 0.02887767969735183,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "tier1": "T2",
+      "tier2": "T3",
+      "cliffs_delta": 0.014558169103623649,
+      "ci_low": -0.12903216603073162,
+      "ci_high": 0.15834120997987525,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "tier1": "T2",
+      "tier2": "T3",
+      "cliffs_delta": 0.5291298865069357,
+      "ci_low": 0.4013137767074139,
+      "ci_high": 0.6394703656998739,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "tier1": "T3",
+      "tier2": "T4",
+      "cliffs_delta": 0.0507130481140877,
+      "ci_low": -0.055280886965158454,
+      "ci_high": 0.15648519731788274,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "tier1": "T3",
+      "tier2": "T4",
+      "cliffs_delta": 0.13443526170798897,
+      "ci_low": -0.0120375090290557,
+      "ci_high": 0.27722259570307195,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "tier1": "T3",
+      "tier2": "T4",
+      "cliffs_delta": -0.02492336398773824,
+      "ci_low": -0.16593362654938024,
+      "ci_high": 0.12242269345592026,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "tier1": "T4",
+      "tier2": "T5",
+      "cliffs_delta": -0.3130081300813008,
+      "ci_low": -0.5024390243902439,
+      "ci_high": -0.12113821138211382,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "tier1": "T4",
+      "tier2": "T5",
+      "cliffs_delta": -0.3798611111111111,
+      "ci_low": -0.5885653864016676,
+      "ci_high": -0.12355102992773812,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "tier1": "T4",
+      "tier2": "T5",
+      "cliffs_delta": -0.44498644986449865,
+      "ci_low": -0.6085418195916381,
+      "ci_high": -0.24878048780487805,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "pass_rate",
+      "tier1": "T5",
+      "tier2": "T6",
+      "cliffs_delta": 0.43333333333333335,
+      "ci_low": 0.2,
+      "ci_high": 0.6333333333333333,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric": "impl_rate",
+      "tier1": "T5",
+      "tier2": "T6",
+      "cliffs_delta": 0.36666666666666664,
+      "ci_low": -0.008333333333333333,
+      "ci_high": 0.6638888888888889,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric": "duration_seconds",
+      "tier1": "T5",
+      "tier2": "T6",
+      "cliffs_delta": 0.28444444444444444,
+      "ci_low": -0.12444444444444444,
+      "ci_high": 0.6222222222222222,
+      "is_significant": false
+    }
+  ],
+  "correlations": [
+    {
+      "model": "haiku",
+      "metric1": "score",
+      "metric2": "cost_usd",
+      "n": 620,
+      "spearman_rho": 0.10829146858753233,
+      "p_value": 0.006956168853067616,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric1": "score",
+      "metric2": "total_tokens",
+      "n": 620,
+      "spearman_rho": 0.324855945375208,
+      "p_value": 1.0530521791576292e-16,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric1": "score",
+      "metric2": "duration_seconds",
+      "n": 620,
+      "spearman_rho": 0.05406874570206823,
+      "p_value": 0.17876486967148447,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric1": "score",
+      "metric2": "impl_rate",
+      "n": 602,
+      "spearman_rho": 0.938844364694213,
+      "p_value": 5.417789592234576e-280,
+      "is_significant": true
+    },
+    {
+      "model": "haiku",
+      "metric1": "impl_rate",
+      "metric2": "cost_usd",
+      "n": 602,
+      "spearman_rho": 0.06860853600169826,
+      "p_value": 0.09259965142623726,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric1": "impl_rate",
+      "metric2": "duration_seconds",
+      "n": 602,
+      "spearman_rho": 0.0661361754864097,
+      "p_value": 0.10499637432459995,
+      "is_significant": false
+    },
+    {
+      "model": "haiku",
+      "metric1": "cost_usd",
+      "metric2": "total_tokens",
+      "n": 620,
+      "spearman_rho": 0.5711916879297997,
+      "p_value": 5.651910748434044e-55,
+      "is_significant": true
+    }
+  ],
+  "tier_descriptives": [
+    {
+      "model": "haiku",
+      "tier": "T0",
+      "n": 117,
+      "pass_rate": 0.6410256410256411,
+      "mean_cost": 0.433706826923077,
+      "median_cost": 0.32514655000000003,
+      "cop": 0.6765826500000001
+    },
+    {
+      "model": "haiku",
+      "tier": "T1",
+      "n": 83,
+      "pass_rate": 0.7349397590361446,
+      "mean_cost": 0.38318131144578316,
+      "median_cost": 0.2938845,
+      "cop": 0.52137785
+    },
+    {
+      "model": "haiku",
+      "tier": "T2",
+      "n": 130,
+      "pass_rate": 0.8307692307692308,
+      "mean_cost": 0.3679591380769231,
+      "median_cost": 0.29726595,
+      "cop": 0.4429137773148148
+    },
+    {
+      "model": "haiku",
+      "tier": "T3",
+      "n": 122,
+      "pass_rate": 0.7622950819672131,
+      "mean_cost": 1.5517542114754095,
+      "median_cost": 1.06812725,
+      "cop": 2.035634556989247
+    },
+    {
+      "model": "haiku",
+      "tier": "T4",
+      "n": 123,
+      "pass_rate": 0.8130081300813008,
+      "mean_cost": 1.3575706231707318,
+      "median_cost": 0.7696957999999999,
+      "cop": 1.6698118665000001
+    },
+    {
+      "model": "haiku",
+      "tier": "T5",
+      "n": 30,
+      "pass_rate": 0.5,
+      "mean_cost": 0.367293265,
+      "median_cost": 0.254578725,
+      "cop": 0.73458653
+    },
+    {
+      "model": "haiku",
+      "tier": "T6",
+      "n": 15,
+      "pass_rate": 0.9333333333333333,
+      "mean_cost": 0.55216963,
+      "median_cost": 0.5063637999999999,
+      "cop": 0.5916103178571428
+    },
+    {
+      "model": "haiku",
+      "tier": "frontier",
+      "n": 620,
+      "pass_rate": null,
+      "mean_cost": null,
+      "median_cost": null,
+      "cop": 0.4429137773148148,
+      "frontier_tier": "T2"
+    }
+  ],
+  "interaction_tests": [
+    {
+      "metric": "score",
+      "effect": "agent_model",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "score",
+      "effect": "tier",
+      "h_statistic": 22.628327509075767,
+      "df": 6,
+      "p_value": 0.0009310126348335279,
+      "is_significant": true
+    },
+    {
+      "metric": "score",
+      "effect": "interaction",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "impl_rate",
+      "effect": "agent_model",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "impl_rate",
+      "effect": "tier",
+      "h_statistic": 18.967325019564978,
+      "df": 6,
+      "p_value": 0.004219173351026173,
+      "is_significant": true
+    },
+    {
+      "metric": "impl_rate",
+      "effect": "interaction",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "cost_usd",
+      "effect": "agent_model",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "cost_usd",
+      "effect": "tier",
+      "h_statistic": 157.44217162639868,
+      "df": 6,
+      "p_value": 0.0,
+      "is_significant": true
+    },
+    {
+      "metric": "cost_usd",
+      "effect": "interaction",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "duration_seconds",
+      "effect": "agent_model",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    },
+    {
+      "metric": "duration_seconds",
+      "effect": "tier",
+      "h_statistic": 115.27230604221019,
+      "df": 6,
+      "p_value": 0.0,
+      "is_significant": true
+    },
+    {
+      "metric": "duration_seconds",
+      "effect": "interaction",
+      "h_statistic": 0.0,
+      "df": 0,
+      "p_value": NaN,
+      "is_significant": false
+    }
+  ]
+}

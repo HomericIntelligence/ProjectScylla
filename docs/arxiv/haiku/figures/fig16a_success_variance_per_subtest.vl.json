@@ -1,0 +1,789 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "hconcat": [
+    {
+      "facet": {
+        "row": {
+          "field": "agent_model",
+          "title": null,
+          "type": "nominal"
+        }
+      },
+      "spec": {
+        "mark": {
+          "type": "rect"
+        },
+        "encoding": {
+          "color": {
+            "field": "pass_variance",
+            "scale": {
+              "domain": [
+                0,
+                0.25
+              ],
+              "scheme": "viridis"
+            },
+            "title": "Pass Variance",
+            "type": "quantitative"
+          },
+          "tooltip": [
+            {
+              "field": "tier",
+              "title": "Tier",
+              "type": "ordinal"
+            },
+            {
+              "field": "subtest",
+              "title": "Subtest",
+              "type": "ordinal"
+            },
+            {
+              "field": "pass_variance",
+              "format": ".3f",
+              "title": "Pass Variance",
+              "type": "quantitative"
+            },
+            {
+              "field": "n_runs",
+              "title": "Runs",
+              "type": "quantitative"
+            }
+          ],
+          "x": {
+            "field": "tier",
+            "sort": [
+              "T0",
+              "T1",
+              "T2",
+              "T3",
+              "T4",
+              "T5",
+              "T6"
+            ],
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          "y": {
+            "field": "subtest",
+            "sort": "ascending",
+            "title": "Subtest",
+            "type": "ordinal"
+          }
+        },
+        "height": 600,
+        "title": "Panel A: Pass/Fail Variance (Bernoulli)",
+        "width": 400
+      },
+      "resolve": {
+        "scale": {
+          "y": "independent"
+        }
+      }
+    },
+    {
+      "facet": {
+        "row": {
+          "field": "agent_model",
+          "title": null,
+          "type": "nominal"
+        }
+      },
+      "spec": {
+        "mark": {
+          "type": "rect"
+        },
+        "encoding": {
+          "color": {
+            "field": "score_std",
+            "scale": {
+              "domain": [
+                0,
+                0.55
+              ],
+              "scheme": "plasma"
+            },
+            "title": "Score Std Dev",
+            "type": "quantitative"
+          },
+          "tooltip": [
+            {
+              "field": "tier",
+              "title": "Tier",
+              "type": "ordinal"
+            },
+            {
+              "field": "subtest",
+              "title": "Subtest",
+              "type": "ordinal"
+            },
+            {
+              "field": "score_std",
+              "format": ".3f",
+              "title": "Score Std Dev",
+              "type": "quantitative"
+            },
+            {
+              "field": "n_runs",
+              "title": "Runs",
+              "type": "quantitative"
+            }
+          ],
+          "x": {
+            "field": "tier",
+            "sort": [
+              "T0",
+              "T1",
+              "T2",
+              "T3",
+              "T4",
+              "T5",
+              "T6"
+            ],
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          "y": {
+            "field": "subtest",
+            "sort": "ascending",
+            "title": "Subtest",
+            "type": "ordinal"
+          }
+        },
+        "height": 600,
+        "title": "Panel B: Score Standard Deviation",
+        "width": 400
+      },
+      "resolve": {
+        "scale": {
+          "y": "independent"
+        }
+      }
+    }
+  ],
+  "data": {
+    "name": "data-629980ffdcbe19cda0f58d6ba9ea4af3"
+  },
+  "title": "Success Variance Per Subtest (Per-Tier View)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-629980ffdcbe19cda0f58d6ba9ea4af3": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "00",
+        "pass_variance": 0.1275,
+        "score_std": 0.29768376014259085,
+        "n_runs": 20
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "01",
+        "pass_variance": 0.25,
+        "score_std": 0.3913172760386587,
+        "n_runs": 20
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "02",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.33692729185983133,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "03",
+        "pass_variance": 0.24,
+        "score_std": 0.4352585438564073,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "04",
+        "pass_variance": 0.08999999999999998,
+        "score_std": 0.24348581980157372,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "05",
+        "pass_variance": 0.20408163265306123,
+        "score_std": 0.31536826545666075,
+        "n_runs": 7
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "07",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.32559914004800444,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "08",
+        "pass_variance": 0.0,
+        "score_std": 0.1668232597691341,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "09",
+        "pass_variance": 0.0,
+        "score_std": 0.09257321426849131,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "10",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.18352111595127138,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "11",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.4179354017070102,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "12",
+        "pass_variance": 0.0,
+        "score_std": 0.12074767078498864,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "13",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.18239709427510076,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "14",
+        "pass_variance": 0.0,
+        "score_std": 0.12150226335340426,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "15",
+        "pass_variance": 0.1875,
+        "score_std": 0.335,
+        "n_runs": 4
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "18",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.41559595763192886,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "19",
+        "pass_variance": 0.0,
+        "score_std": null,
+        "n_runs": 1
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "01",
+        "pass_variance": 0.2016,
+        "score_std": 0.3379493403850149,
+        "n_runs": 25
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "02",
+        "pass_variance": 0.2304,
+        "score_std": 0.37473138379377835,
+        "n_runs": 25
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "03",
+        "pass_variance": 0.21000000000000002,
+        "score_std": 0.28425536250194317,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "04",
+        "pass_variance": 0.109375,
+        "score_std": 0.2855090378854682,
+        "n_runs": 8
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "06",
+        "pass_variance": 0.0,
+        "score_std": 0.0016431676725155,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "07",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.39707681876432926,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "08",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.38016549028021995,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "01",
+        "pass_variance": 0.07359999999999997,
+        "score_std": 0.2037966715462579,
+        "n_runs": 25
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "02",
+        "pass_variance": 0.2016,
+        "score_std": 0.2873621002614413,
+        "n_runs": 25
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "03",
+        "pass_variance": 0.24,
+        "score_std": 0.15835613870850307,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "04",
+        "pass_variance": 0.08999999999999998,
+        "score_std": 0.14758801517136214,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "05",
+        "pass_variance": 0.0,
+        "score_std": 0.13867227552759057,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "06",
+        "pass_variance": 0.0,
+        "score_std": 0.137814005093822,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "07",
+        "pass_variance": 0.25,
+        "score_std": 0.2684189097495016,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "08",
+        "pass_variance": 0.0,
+        "score_std": 0.11815437171580047,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "10",
+        "pass_variance": 0.0,
+        "score_std": 0.07155417527999323,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "11",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.36044250581750203,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "12",
+        "pass_variance": 0.0,
+        "score_std": 0.1376473755652464,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "13",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.2041568024827975,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "14",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.2382855429941145,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "15",
+        "pass_variance": 0.0,
+        "score_std": 0.07602631123499287,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "01",
+        "pass_variance": 0.1799307958477509,
+        "score_std": 0.3095373326339129,
+        "n_runs": 17
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "02",
+        "pass_variance": 0.19281663516068057,
+        "score_std": 0.29263421298388137,
+        "n_runs": 23
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "03",
+        "pass_variance": 0.24489795918367346,
+        "score_std": 0.31979159880563884,
+        "n_runs": 7
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "04",
+        "pass_variance": 0.24,
+        "score_std": 0.4822551192055923,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "05",
+        "pass_variance": 0.24,
+        "score_std": 0.3657416210022224,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "06",
+        "pass_variance": 0.25,
+        "score_std": 0.34480670913812955,
+        "n_runs": 4
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "07",
+        "pass_variance": 0.0,
+        "score_std": 0.11669961439524981,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "08",
+        "pass_variance": 0.0,
+        "score_std": 0.14053398165568354,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "09",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.37977624991565756,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "10",
+        "pass_variance": 0.0,
+        "score_std": 0.1194185915174015,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "11",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.37977624991565756,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "12",
+        "pass_variance": 0.0,
+        "score_std": 0.07468467044849299,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "13",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.37977624991565756,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "14",
+        "pass_variance": 0.0,
+        "score_std": 0.09325413306300866,
+        "n_runs": 3
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "15",
+        "pass_variance": 0.25,
+        "score_std": 0.23334523779156066,
+        "n_runs": 2
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "17",
+        "pass_variance": 0.24,
+        "score_std": 0.20342074623793907,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "18",
+        "pass_variance": 0.0,
+        "score_std": 0.14815532390029051,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "19",
+        "pass_variance": 0.1875,
+        "score_std": 0.4383821582439991,
+        "n_runs": 4
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "20",
+        "pass_variance": 0.25,
+        "score_std": 0.4737615433949869,
+        "n_runs": 2
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "01",
+        "pass_variance": 0.13440000000000002,
+        "score_std": 0.3349443336834744,
+        "n_runs": 25
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "02",
+        "pass_variance": 0.1824,
+        "score_std": 0.20431000138678151,
+        "n_runs": 25
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "03",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.20892319162792816,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "04",
+        "pass_variance": 0.22222222222222224,
+        "score_std": 0.3811779986655403,
+        "n_runs": 6
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "05",
+        "pass_variance": 0.0,
+        "score_std": 0.13867227552759057,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "06",
+        "pass_variance": 0.24,
+        "score_std": 0.39416088085957995,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "07",
+        "pass_variance": 0.21000000000000002,
+        "score_std": 0.16488716680741947,
+        "n_runs": 10
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "08",
+        "pass_variance": 0.12244897959183677,
+        "score_std": 0.13031098334734637,
+        "n_runs": 7
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "09",
+        "pass_variance": 0.24,
+        "score_std": 0.4546647116282503,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "10",
+        "pass_variance": 0.15999999999999998,
+        "score_std": 0.22880122377295098,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "11",
+        "pass_variance": 0.0,
+        "score_std": 0.13848393408623255,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "12",
+        "pass_variance": 0.0,
+        "score_std": 0.09311283477587826,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "13",
+        "pass_variance": 0.0,
+        "score_std": 0.09311283477587826,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "14",
+        "pass_variance": 0.0,
+        "score_std": 0.0,
+        "n_runs": 5
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "pass_variance": 0.24888888888888888,
+        "score_std": 0.3728014919242577,
+        "n_runs": 15
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "pass_variance": 0.24888888888888888,
+        "score_std": 0.37576588456111865,
+        "n_runs": 15
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "subtest": "01",
+        "pass_variance": 0.06222222222222221,
+        "score_std": 0.12201592401930869,
+        "n_runs": 15
+      }
+    ]
+  }
+}

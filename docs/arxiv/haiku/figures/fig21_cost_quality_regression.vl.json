@@ -1,0 +1,714 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300,
+      "strokeWidth": 0
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "data-82e1a0c4df5a836545a8317bcf4b6dfe"
+      },
+      "mark": {
+        "type": "circle",
+        "opacity": 0.6,
+        "size": 60
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          {
+            "field": "subtest",
+            "title": "Subtest",
+            "type": "ordinal"
+          },
+          {
+            "field": "mean_cost",
+            "format": "$.4f",
+            "title": "Mean Cost",
+            "type": "quantitative"
+          },
+          {
+            "field": "mean_score",
+            "format": ".3f",
+            "title": "Mean Score",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "mean_cost",
+          "title": "Mean Cost per Subtest (USD)",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "mean_score",
+          "scale": {
+            "domain": [
+              0.05,
+              1.0
+            ]
+          },
+          "title": "Mean Score per Subtest",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-34e5d4067b67630b98abd9a161e79b16"
+      },
+      "mark": {
+        "type": "line",
+        "strokeWidth": 2
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "type": "nominal"
+        },
+        "x": {
+          "field": "x",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "y",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-640659920c2e0cf85bb963b26b46d021"
+      },
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 10,
+        "dy": 10,
+        "fontSize": 11
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "type": "nominal"
+        },
+        "text": {
+          "field": "annotation",
+          "type": "nominal"
+        },
+        "x": {
+          "value": 10
+        },
+        "y": {
+          "value": 10
+        }
+      }
+    }
+  ],
+  "title": "Cost vs Quality Regression (Subtest Level)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-82e1a0c4df5a836545a8317bcf4b6dfe": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "00",
+        "mean_cost": 0.5226823549999999,
+        "mean_score": 0.12940000000000002
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "01",
+        "mean_cost": 0.37010782750000004,
+        "mean_score": 0.5135
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "02",
+        "mean_cost": 0.17984058000000003,
+        "mean_score": 0.598
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "03",
+        "mean_cost": 0.46875015,
+        "mean_score": 0.4
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "04",
+        "mean_cost": 0.26140504000000003,
+        "mean_score": 0.6702999999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "05",
+        "mean_cost": 0.2549884,
+        "mean_score": 0.6828571428571429
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "07",
+        "mean_cost": 0.4532027,
+        "mean_score": 0.5686
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "08",
+        "mean_cost": 0.22294342,
+        "mean_score": 0.8460000000000001
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "09",
+        "mean_cost": 0.9283990299999999,
+        "mean_score": 0.8986000000000001
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "10",
+        "mean_cost": 0.30125506,
+        "mean_score": 0.634
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "11",
+        "mean_cost": 0.49910063000000005,
+        "mean_score": 0.732
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "12",
+        "mean_cost": 0.37092391999999996,
+        "mean_score": 0.8560000000000001
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "13",
+        "mean_cost": 0.30720048,
+        "mean_score": 0.7992
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "14",
+        "mean_cost": 0.7939119,
+        "mean_score": 0.8766
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "15",
+        "mean_cost": 0.5553240374999999,
+        "mean_score": 0.1675
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "18",
+        "mean_cost": 0.70345071,
+        "mean_score": 0.722
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "subtest": "19",
+        "mean_cost": 0.12273685000000001,
+        "mean_score": 1.0
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "01",
+        "mean_cost": 0.396129876,
+        "mean_score": 0.6584399999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "02",
+        "mean_cost": 0.352739802,
+        "mean_score": 0.58512
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "03",
+        "mean_cost": 0.38954237999999997,
+        "mean_score": 0.647
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "04",
+        "mean_cost": 0.21792701875000003,
+        "mean_score": 0.688375
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "06",
+        "mean_cost": 0.30462140000000004,
+        "mean_score": 0.8318
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "07",
+        "mean_cost": 0.47459167,
+        "mean_score": 0.6980000000000001
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "subtest": "08",
+        "mean_cost": 0.7094803199999999,
+        "mean_score": 0.6346
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "01",
+        "mean_cost": 0.298439602,
+        "mean_score": 0.7974
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "02",
+        "mean_cost": 0.47798809000000003,
+        "mean_score": 0.6636799999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "03",
+        "mean_cost": 0.22837963000000006,
+        "mean_score": 0.599
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "04",
+        "mean_cost": 0.5407941950000001,
+        "mean_score": 0.806
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "05",
+        "mean_cost": 0.38147829,
+        "mean_score": 0.866
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "06",
+        "mean_cost": 0.35348473999999996,
+        "mean_score": 0.8012
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "07",
+        "mean_cost": 0.28127807000000005,
+        "mean_score": 0.5586
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "08",
+        "mean_cost": 0.24100770000000002,
+        "mean_score": 0.7643
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "10",
+        "mean_cost": 0.41281984000000005,
+        "mean_score": 0.7020000000000001
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "11",
+        "mean_cost": 0.45069374,
+        "mean_score": 0.6325999999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "12",
+        "mean_cost": 0.37391648,
+        "mean_score": 0.8006
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "13",
+        "mean_cost": 0.50467084,
+        "mean_score": 0.666
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "14",
+        "mean_cost": 0.33806116999999997,
+        "mean_score": 0.656
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "subtest": "15",
+        "mean_cost": 0.28675484000000007,
+        "mean_score": 0.8640000000000001
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "01",
+        "mean_cost": 1.6353624647058824,
+        "mean_score": 0.6961176470588235
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "02",
+        "mean_cost": 2.232043756521739,
+        "mean_score": 0.7043478260869565
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "03",
+        "mean_cost": 1.612756064285714,
+        "mean_score": 0.51
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "04",
+        "mean_cost": 3.07484137,
+        "mean_score": 0.512
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "05",
+        "mean_cost": 1.892642275,
+        "mean_score": 0.5766
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "06",
+        "mean_cost": 0.3573468875,
+        "mean_score": 0.6225
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "07",
+        "mean_cost": 0.7719940399999998,
+        "mean_score": 0.8326
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "08",
+        "mean_cost": 0.61687158,
+        "mean_score": 0.7786
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "09",
+        "mean_cost": 1.1721939,
+        "mean_score": 0.634
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "10",
+        "mean_cost": 0.70277234,
+        "mean_score": 0.8446
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "11",
+        "mean_cost": 0.9859182800000003,
+        "mean_score": 0.634
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "12",
+        "mean_cost": 0.6070959300000001,
+        "mean_score": 0.9666
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "13",
+        "mean_cost": 0.6819806,
+        "mean_score": 0.634
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "14",
+        "mean_cost": 1.941220633333333,
+        "mean_score": 0.7776666666666667
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "15",
+        "mean_cost": 1.836687025,
+        "mean_score": 0.665
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "17",
+        "mean_cost": 1.44104363,
+        "mean_score": 0.656
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "18",
+        "mean_cost": 1.38547443,
+        "mean_score": 0.9
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "19",
+        "mean_cost": 2.8254047249999994,
+        "mean_score": 0.62575
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "subtest": "20",
+        "mean_cost": 0.2655787,
+        "mean_score": 0.335
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "01",
+        "mean_cost": 2.079683526,
+        "mean_score": 0.7199599999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "02",
+        "mean_cost": 0.8870950000000001,
+        "mean_score": 0.70092
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "03",
+        "mean_cost": 1.11413565,
+        "mean_score": 0.7182999999999999
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "04",
+        "mean_cost": 1.783227575,
+        "mean_score": 0.5183333333333333
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "05",
+        "mean_cost": 0.6668814300000001,
+        "mean_score": 0.866
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "06",
+        "mean_cost": 0.5727002500000001,
+        "mean_score": 0.5766
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "07",
+        "mean_cost": 0.892779655,
+        "mean_score": 0.649
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "08",
+        "mean_cost": 2.946852514285715,
+        "mean_score": 0.7985714285714286
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "09",
+        "mean_cost": 2.24046651,
+        "mean_score": 0.688
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "10",
+        "mean_cost": 0.5891551899999999,
+        "mean_score": 0.82
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "11",
+        "mean_cost": 1.5324321900000002,
+        "mean_score": 0.8666
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "12",
+        "mean_cost": 1.28151931,
+        "mean_score": 0.898
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "13",
+        "mean_cost": 0.5466428899999999,
+        "mean_score": 0.898
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "subtest": "14",
+        "mean_cost": 0.8532497100000004,
+        "mean_score": 1.0
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "01",
+        "mean_cost": 0.2632535866666667,
+        "mean_score": 0.5333333333333333
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "subtest": "02",
+        "mean_cost": 0.4713329433333333,
+        "mean_score": 0.44
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "subtest": "01",
+        "mean_cost": 0.55216963,
+        "mean_score": 0.8118
+      }
+    ],
+    "data-34e5d4067b67630b98abd9a161e79b16": [
+      {
+        "agent_model": "haiku",
+        "x": 0.12273685000000001,
+        "y": 0.6972910667904594
+      },
+      {
+        "agent_model": "haiku",
+        "x": 3.07484137,
+        "y": 0.6872448573742052
+      }
+    ],
+    "data-640659920c2e0cf85bb963b26b46d021": [
+      {
+        "agent_model": "haiku",
+        "slope": -0.003403066980925948,
+        "intercept": 0.6977087485120372,
+        "r_squared": 0.0002084365368111296,
+        "p_value": 0.9028304532984354,
+        "annotation": "R\u00b2 = 0.000, p = 0.9028"
+      }
+    ]
+  }
+}

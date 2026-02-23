@@ -1,0 +1,221 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "data-c34fd8d7bb449b15f404bc0b195da180"
+      },
+      "mark": {
+        "type": "line",
+        "point": true
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "pass_rate",
+            "format": ".2%",
+            "title": "Pass Rate",
+            "type": "quantitative"
+          },
+          {
+            "field": "uplift",
+            "format": ".2%",
+            "title": "Uplift",
+            "type": "quantitative"
+          },
+          {
+            "field": "uplift_pct",
+            "format": ".1f",
+            "title": "Uplift %",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "tier",
+          "sort": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "uplift",
+          "scale": {
+            "domain": [
+              0.30000000000000004,
+              0.8500000000000001
+            ]
+          },
+          "title": "Pass Rate Uplift vs T0-Subtest0",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-5ed6cc53de49ef9c65a791812b386d57"
+      },
+      "mark": {
+        "type": "text",
+        "color": "black",
+        "dy": -15,
+        "fontSize": 12,
+        "fontWeight": "bold",
+        "text": "*"
+      },
+      "encoding": {
+        "x": {
+          "field": "tier",
+          "sort": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "uplift",
+          "type": "quantitative"
+        }
+      }
+    }
+  ],
+  "title": "Tier Transition Uplift (vs T0-Subtest0, * = p < 0.05)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-c34fd8d7bb449b15f404bc0b195da180": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "pass_rate": 0.6410256410256411,
+        "uplift": 0.49102564102564106,
+        "uplift_pct": 327.35042735042737,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "pass_rate": 0.7349397590361446,
+        "uplift": 0.5849397590361446,
+        "uplift_pct": 389.9598393574297,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "pass_rate": 0.8307692307692308,
+        "uplift": 0.6807692307692308,
+        "uplift_pct": 453.8461538461539,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "pass_rate": 0.7622950819672131,
+        "uplift": 0.612295081967213,
+        "uplift_pct": 408.1967213114754,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "pass_rate": 0.8130081300813008,
+        "uplift": 0.6630081300813008,
+        "uplift_pct": 442.00542005420056,
+        "significant": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "pass_rate": 0.5,
+        "uplift": 0.35,
+        "uplift_pct": 233.33333333333334,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "pass_rate": 0.9333333333333333,
+        "uplift": 0.7833333333333333,
+        "uplift_pct": 522.2222222222223,
+        "significant": true
+      }
+    ],
+    "data-5ed6cc53de49ef9c65a791812b386d57": [
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "pass_rate": 0.5,
+        "uplift": 0.35,
+        "uplift_pct": 233.33333333333334,
+        "significant": true
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "pass_rate": 0.9333333333333333,
+        "uplift": 0.7833333333333333,
+        "uplift_pct": 522.2222222222223,
+        "significant": true
+      }
+    ]
+  }
+}

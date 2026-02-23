@@ -1,0 +1,254 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300,
+      "strokeWidth": 0
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "data-7b632ac069dd63a67f1e973f9715de4e"
+      },
+      "mark": {
+        "type": "circle",
+        "size": 100
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "shape": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "circle"
+            ]
+          },
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "mean_cost",
+            "format": "$.4f",
+            "title": "Mean Cost",
+            "type": "quantitative"
+          },
+          {
+            "field": "mean_score",
+            "format": ".3f",
+            "title": "Mean Score",
+            "type": "quantitative"
+          },
+          {
+            "field": "is_pareto",
+            "title": "Pareto Efficient",
+            "type": "nominal"
+          }
+        ],
+        "x": {
+          "field": "mean_cost",
+          "scale": {
+            "type": "log"
+          },
+          "title": "Mean Cost per Run (USD)",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "mean_score",
+          "scale": {
+            "domain": [
+              0.45,
+              0.8500000000000001
+            ]
+          },
+          "title": "Mean Score",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-7b632ac069dd63a67f1e973f9715de4e"
+      },
+      "mark": {
+        "type": "text",
+        "dy": -15,
+        "fontSize": 10
+      },
+      "encoding": {
+        "color": {
+          "value": "black"
+        },
+        "text": {
+          "field": "tier",
+          "type": "ordinal"
+        },
+        "x": {
+          "field": "mean_cost",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "mean_score",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-3ba1006fa8a9534c884534f025863679"
+      },
+      "mark": {
+        "type": "line",
+        "strokeDash": [
+          5,
+          5
+        ]
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "type": "nominal"
+        },
+        "x": {
+          "field": "mean_cost",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "mean_score",
+          "type": "quantitative"
+        }
+      }
+    }
+  ],
+  "title": "Cost vs Quality Pareto Frontier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-7b632ac069dd63a67f1e973f9715de4e": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "mean_cost": 0.43370682692307694,
+        "mean_score": 0.5612478632478632,
+        "is_pareto": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "mean_cost": 0.38318131144578316,
+        "mean_score": 0.6492530120481927,
+        "is_pareto": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "mean_cost": 0.3679591380769231,
+        "mean_score": 0.7211384615384616,
+        "is_pareto": true
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "mean_cost": 1.55175421147541,
+        "mean_score": 0.6857213114754098,
+        "is_pareto": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "mean_cost": 1.3575706231707318,
+        "mean_score": 0.7395203252032521,
+        "is_pareto": false
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "mean_cost": 0.367293265,
+        "mean_score": 0.48666666666666664,
+        "is_pareto": true
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "mean_cost": 0.55216963,
+        "mean_score": 0.8118,
+        "is_pareto": true
+      }
+    ],
+    "data-3ba1006fa8a9534c884534f025863679": [
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "mean_cost": 0.367293265,
+        "mean_score": 0.48666666666666664,
+        "is_pareto": true
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "mean_cost": 0.3679591380769231,
+        "mean_score": 0.7211384615384616,
+        "is_pareto": true
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "mean_cost": 0.55216963,
+        "mean_score": 0.8118,
+        "is_pareto": true
+      }
+    ]
+  }
+}

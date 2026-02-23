@@ -1,0 +1,204 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "area",
+        "opacity": 0.2
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "type": "nominal"
+        },
+        "x": {
+          "field": "tier",
+          "sort": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "ci_low",
+          "type": "quantitative"
+        },
+        "y2": {
+          "field": "ci_high"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "line",
+        "point": true
+      },
+      "encoding": {
+        "color": {
+          "field": "agent_model",
+          "scale": {
+            "domain": [
+              "haiku"
+            ],
+            "range": [
+              "#F58518"
+            ]
+          },
+          "title": "Agent Model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "tier",
+            "title": "Tier",
+            "type": "ordinal"
+          },
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "mean_consistency",
+            "format": ".3f",
+            "title": "Consistency",
+            "type": "quantitative"
+          },
+          {
+            "field": "ci_low",
+            "format": ".3f",
+            "title": "CI Low",
+            "type": "quantitative"
+          },
+          {
+            "field": "ci_high",
+            "format": ".3f",
+            "title": "CI High",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "tier",
+          "sort": [
+            "T0",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5",
+            "T6"
+          ],
+          "title": "Tier",
+          "type": "ordinal"
+        },
+        "y": {
+          "field": "mean_consistency",
+          "scale": {
+            "domain": [
+              0.1,
+              0.9
+            ]
+          },
+          "title": "Consistency Score (1 - CV)",
+          "type": "quantitative"
+        }
+      }
+    }
+  ],
+  "data": {
+    "name": "data-3e4f66e5b44bfd8d95531ac62752874f"
+  },
+  "title": "Consistency Score by Tier (Higher = More Deterministic)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-3e4f66e5b44bfd8d95531ac62752874f": [
+      {
+        "agent_model": "haiku",
+        "tier": "T0",
+        "mean_consistency": 0.5020415418568092,
+        "ci_low": 0.3360694891954898,
+        "ci_high": 0.6393951058577119
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T1",
+        "mean_consistency": 0.5460412911424147,
+        "ci_low": 0.4427968855737624,
+        "ci_high": 0.7853659253410815
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T2",
+        "mean_consistency": 0.7353782704635349,
+        "ci_low": 0.6489564732951395,
+        "ci_high": 0.7998709972707511
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T3",
+        "mean_consistency": 0.5473818284864186,
+        "ci_low": 0.419002245999911,
+        "ci_high": 0.6607542806368133
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T4",
+        "mean_consistency": 0.6892151581110603,
+        "ci_low": 0.5565372794158594,
+        "ci_high": 0.7929169405088554
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T5",
+        "mean_consistency": 0.22349191431973725,
+        "ci_low": 0.1459866259974577,
+        "ci_high": 0.3009972026420168
+      },
+      {
+        "agent_model": "haiku",
+        "tier": "T6",
+        "mean_consistency": 0.8496970632923027,
+        "ci_low": 0.8496970632923027,
+        "ci_high": 0.8496970632923027
+      }
+    ]
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300,
+      "strokeWidth": 0
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "layer": [
+    {
+      "data": {
+        "name": "data-d285a7403ed98ae579761d64a864032b"
+      },
+      "mark": {
+        "type": "rule",
+        "color": "black",
+        "strokeDash": [
+          5,
+          5
+        ]
+      },
+      "encoding": {
+        "x": {
+          "field": "x",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-8ccb7eedf34e13c425e11b8ec4f8ee89"
+      },
+      "mark": {
+        "type": "errorbar"
+      },
+      "encoding": {
+        "color": {
+          "field": "significant",
+          "scale": {
+            "domain": [
+              "No",
+              "Yes"
+            ],
+            "range": [
+              "#999999",
+              "#d62728"
+            ]
+          },
+          "type": "nominal"
+        },
+        "detail": {
+          "field": "agent_model",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "ci_low",
+          "type": "quantitative"
+        },
+        "x2": {
+          "field": "ci_high"
+        },
+        "y": {
+          "field": "transition",
+          "sort": null,
+          "type": "ordinal"
+        }
+      }
+    },
+    {
+      "data": {
+        "name": "data-8ccb7eedf34e13c425e11b8ec4f8ee89"
+      },
+      "mark": {
+        "type": "circle",
+        "size": 100
+      },
+      "encoding": {
+        "color": {
+          "field": "significant",
+          "scale": {
+            "domain": [
+              "No",
+              "Yes"
+            ],
+            "range": [
+              "#999999",
+              "#d62728"
+            ]
+          },
+          "title": "Significant?",
+          "type": "nominal"
+        },
+        "detail": {
+          "field": "agent_model",
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "agent_model",
+            "title": "Model",
+            "type": "nominal"
+          },
+          {
+            "field": "transition",
+            "title": "Transition",
+            "type": "ordinal"
+          },
+          {
+            "field": "delta",
+            "format": ".3f",
+            "title": "Cliff's \u03b4",
+            "type": "quantitative"
+          },
+          {
+            "field": "ci_low",
+            "format": ".3f",
+            "title": "95% CI Low",
+            "type": "quantitative"
+          },
+          {
+            "field": "ci_high",
+            "format": ".3f",
+            "title": "95% CI High",
+            "type": "quantitative"
+          },
+          {
+            "field": "significant",
+            "title": "Significant",
+            "type": "nominal"
+          }
+        ],
+        "x": {
+          "field": "delta",
+          "scale": {
+            "domain": [
+              -1,
+              1
+            ]
+          },
+          "title": "Cliff's Delta (Effect Size)",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "transition",
+          "sort": null,
+          "title": "Tier Transition",
+          "type": "ordinal"
+        }
+      }
+    }
+  ],
+  "title": "Effect Size Forest Plot (Cliff's Delta with 95% CI)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-d285a7403ed98ae579761d64a864032b": [
+      {
+        "x": 0
+      }
+    ],
+    "data-8ccb7eedf34e13c425e11b8ec4f8ee89": [
+      {
+        "agent_model": "haiku",
+        "transition": "T0\u2192T1",
+        "tier1": "T0",
+        "tier2": "T1",
+        "delta": 0.09391411801050355,
+        "ci_low": -0.038207097318514745,
+        "ci_high": 0.21902996601791783,
+        "significant": "No"
+      },
+      {
+        "agent_model": "haiku",
+        "transition": "T1\u2192T2",
+        "tier1": "T1",
+        "tier2": "T2",
+        "delta": 0.09582947173308619,
+        "ci_low": -0.014921223354958294,
+        "ci_high": 0.2142724745134384,
+        "significant": "No"
+      },
+      {
+        "agent_model": "haiku",
+        "transition": "T2\u2192T3",
+        "tier1": "T2",
+        "tier2": "T3",
+        "delta": -0.06847414880201766,
+        "ci_low": -0.16683480453972258,
+        "ci_high": 0.02887767969735183,
+        "significant": "No"
+      },
+      {
+        "agent_model": "haiku",
+        "transition": "T3\u2192T4",
+        "tier1": "T3",
+        "tier2": "T4",
+        "delta": 0.0507130481140877,
+        "ci_low": -0.055280886965158454,
+        "ci_high": 0.15648519731788274,
+        "significant": "No"
+      },
+      {
+        "agent_model": "haiku",
+        "transition": "T4\u2192T5",
+        "tier1": "T4",
+        "tier2": "T5",
+        "delta": -0.3130081300813008,
+        "ci_low": -0.5024390243902439,
+        "ci_high": -0.12113821138211382,
+        "significant": "Yes"
+      },
+      {
+        "agent_model": "haiku",
+        "transition": "T5\u2192T6",
+        "tier1": "T5",
+        "tier2": "T6",
+        "delta": 0.43333333333333335,
+        "ci_low": 0.2,
+        "ci_high": 0.6333333333333333,
+        "significant": "Yes"
+      }
+    ]
+  }
+}

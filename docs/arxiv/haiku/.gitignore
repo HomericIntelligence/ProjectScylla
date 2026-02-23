@@ -1,0 +1,13 @@
+# LaTeX auxiliary files
+*.aux
+*.log
+*.blg
+*.bbl
+*.out
+*.toc
+*.lof
+*.lot
+arxiv-submission.tar.gz
+
+# Large generated figures (>5MB) - excluded from git due to size limits
+figures/fig09_criteria_by_tier.png

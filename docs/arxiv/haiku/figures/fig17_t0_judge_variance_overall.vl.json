@@ -1,0 +1,823 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "hconcat": [
+    {
+      "data": {
+        "name": "data-3314fc3c974b5bbaa88cf0babe391ce2"
+      },
+      "mark": {
+        "type": "boxplot",
+        "size": 40
+      },
+      "encoding": {
+        "color": {
+          "field": "judge_display",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "sonnet"
+            ],
+            "range": [
+              "#72B7B2"
+            ]
+          },
+          "title": "Judge",
+          "type": "nominal"
+        },
+        "x": {
+          "field": "judge_display",
+          "sort": [
+            "sonnet"
+          ],
+          "title": "Judge Model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "judge_score",
+          "scale": {
+            "domain": [
+              0.0,
+              1.0
+            ]
+          },
+          "title": "Judge Score",
+          "type": "quantitative"
+        }
+      },
+      "title": "Panel A: Score Distribution per Judge",
+      "width": 300
+    },
+    {
+      "data": {
+        "name": "data-1ffd04176efdf8ceb95051067ba8ae37"
+      },
+      "mark": {
+        "type": "bar"
+      },
+      "encoding": {
+        "color": {
+          "field": "judge_display",
+          "legend": null,
+          "scale": {
+            "domain": [
+              "sonnet"
+            ],
+            "range": [
+              "#72B7B2"
+            ]
+          },
+          "type": "nominal"
+        },
+        "tooltip": [
+          {
+            "field": "judge_display",
+            "title": "Judge",
+            "type": "nominal"
+          },
+          {
+            "field": "score_std",
+            "format": ".3f",
+            "title": "Std Dev",
+            "type": "quantitative"
+          }
+        ],
+        "x": {
+          "field": "judge_display",
+          "sort": [
+            "sonnet"
+          ],
+          "title": "Judge Model",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "score_std",
+          "scale": {
+            "domain": [
+              0,
+              0.4
+            ]
+          },
+          "title": "Score Std Dev",
+          "type": "quantitative"
+        }
+      },
+      "title": "Panel B: Scoring Standard Deviation",
+      "width": 300
+    }
+  ],
+  "title": "Judge Variance - T0",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-3314fc3c974b5bbaa88cf0babe391ce2": [
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.89,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.828,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.89,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.27,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.25,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.77,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.33,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.89,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.33,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.89,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.89,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.5,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.833,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.67,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.83,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.78,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 1.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.15,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.52,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.78,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.12,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.52,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.0,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.73,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.72,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.85,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.05,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.71,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.52,
+        "judge_display": "sonnet"
+      },
+      {
+        "tier": "T0",
+        "judge_model": "sonnet",
+        "judge_score": 0.82,
+        "judge_display": "sonnet"
+      }
+    ],
+    "data-1ffd04176efdf8ceb95051067ba8ae37": [
+      {
+        "judge_display": "sonnet",
+        "score_std": 0.3750002083859514
+      }
+    ]
+  }
+}
