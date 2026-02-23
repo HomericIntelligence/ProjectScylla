@@ -112,11 +112,7 @@ warn_unused_ignores = false
 # Allow flexible typing while codebase type coverage improves
 allow_redefinition = true
 implicit_reexport = true
-# Temporarily disable error codes with most violations during initial rollout
-# Re-enable these incrementally as codebase type errors are fixed
-disable_error_code = [
-    "union-attr",      # 4 violations - accessing attributes on unions
-]
+# All error codes fixed in scylla/ and scripts/ — disable_error_code removed (see #687)
 
 # tests/ has additional suppressed errors beyond scylla/ and scripts/
 # Decoupled so scylla/+scripts/ codes can be removed independently as they are fixed

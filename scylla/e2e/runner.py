@@ -214,6 +214,7 @@ class E2ERunner:
             checkpoint_path: Path to checkpoint.json file
 
         """
+        assert self.checkpoint is not None  # noqa: S101
         logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
         logger.info(f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs")
 

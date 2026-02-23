@@ -447,6 +447,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
 
     agent_dir = get_agent_dir(ctx.run_dir)
     adapter_config = ctx.adapter_config
+    assert adapter_config is not None  # noqa: S101
     replay_script = agent_dir / "replay.sh"
 
     logger.info(f"[AGENT] Running agent with model[{ctx.config.models[0]}]")

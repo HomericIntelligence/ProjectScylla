@@ -29,11 +29,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Error codes disabled in pyproject.toml [tool.mypy] disable_error_code (global)
-# These are the codes we re-enable when running the validation check
-DISABLED_ERROR_CODES = [
-    "union-attr",
-]
+# All error codes fixed in scylla/ and scripts/ — no globally-disabled codes remain (#687)
+DISABLED_ERROR_CODES: list[str] = []
 
 # Error codes suppressed only in the [[tool.mypy.overrides]] for tests.*
 # These have zero violations in scylla/ and scripts/ but non-zero in tests/
@@ -42,6 +39,7 @@ TESTS_ONLY_ERROR_CODES = [
     "var-annotated",
     "misc",
     "method-assign",
+    "union-attr",
 ]
 
 # All codes tracked across all directories (union of global + tests-only)
