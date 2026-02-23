@@ -266,9 +266,11 @@ class TestHeartbeatThread:
         thread.stop()
         thread.join(timeout=5)
 
-        # Heartbeat should have been updated
-        assert checkpoint.last_heartbeat != ""
-        assert not _heartbeat_is_stale(checkpoint.last_heartbeat, timeout_seconds=30)
+        # Heartbeat is now written to disk (not to the in-memory checkpoint object)
+        # Verify by reading the checkpoint file from disk
+        reloaded = load_checkpoint(path)
+        assert reloaded.last_heartbeat != ""
+        assert not _heartbeat_is_stale(reloaded.last_heartbeat, timeout_seconds=30)
 
     def test_heartbeat_thread_stops_cleanly(self, tmp_path: Path) -> None:
         """stop() causes the thread to exit cleanly."""

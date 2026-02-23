@@ -49,11 +49,17 @@ class E2ECheckpoint(BaseModel):
     Each run has an explicit RunState enum value, enabling resume from
     any point in the run lifecycle (not just at run completion).
 
+    v3.1: Expanded to 16-state run lifecycle. Added states:
+    dir_structure_created, symlinks_applied, config_committed,
+    prompt_written, replay_generated, diff_captured, judge_pipeline_run,
+    judge_prompt_built, run_finalized, report_written.
+    Removed: workspace_configured, agent_ready, judge_ready, run_complete.
+
     Backward compatibility: completed_runs is preserved for v2.0 consumers.
     It is derived from run_states on load and kept in sync on write.
 
     Attributes:
-        version: Checkpoint format version (3.0)
+        version: Checkpoint format version (3.1)
         experiment_id: Unique experiment identifier
         experiment_dir: Absolute path to experiment directory
         config_hash: SHA256 hash of config for strict validation
@@ -74,7 +80,7 @@ class E2ECheckpoint(BaseModel):
 
     """
 
-    version: str = Field(default="3.0", description="Checkpoint format version")
+    version: str = Field(default="3.1", description="Checkpoint format version")
     experiment_id: str = Field(default="", description="Unique experiment identifier")
     experiment_dir: str = Field(default="", description="Absolute path to experiment directory")
     config_hash: str = Field(default="", description="SHA256 hash of config")
@@ -139,9 +145,9 @@ class E2ECheckpoint(BaseModel):
         """Set the fine-grained RunState for a run.
 
         Also syncs completed_runs for backward compatibility:
-        - run_complete / checkpointed / worktree_cleaned -> "passed" or "failed"
-          (determined by existing completed_runs entry or defaulting based on state)
+        - run_complete / checkpointed / worktree_cleaned -> preserve existing status or "passed"
         - agent_complete -> "agent_complete"
+        - failed -> "failed"
 
         Args:
             tier_id: Tier identifier
@@ -157,6 +163,25 @@ class E2ECheckpoint(BaseModel):
             self.run_states[tier_id][subtest_id] = {}
         self.run_states[tier_id][subtest_id][key] = state
         self.last_updated_at = datetime.now(timezone.utc).isoformat()
+
+        # Sync to completed_runs for v2.0 backward compat consumers
+        # Includes both v3.0 (run_complete) and v3.1 (run_finalized, report_written) names
+        terminal_complete = {
+            "run_complete",  # v3.0 name (kept for migration compat)
+            "run_finalized",  # v3.1 name
+            "report_written",  # v3.1 name
+            "checkpointed",
+            "worktree_cleaned",
+        }
+        if state in terminal_complete:
+            # Preserve existing status (passed/failed), default to "passed"
+            existing = self.get_run_status(tier_id, subtest_id, run_num)
+            compat_status = existing if existing in ("passed", "failed") else "passed"
+            self.mark_run_completed(tier_id, subtest_id, run_num, status=compat_status)
+        elif state == "agent_complete":
+            self.mark_run_completed(tier_id, subtest_id, run_num, status="agent_complete")
+        elif state == "failed":
+            self.mark_run_completed(tier_id, subtest_id, run_num, status="failed")
 
     def get_tier_state(self, tier_id: str) -> str:
         """Get the TierState for a tier.
@@ -331,8 +356,9 @@ class E2ECheckpoint(BaseModel):
         """Create from dictionary with version validation and migration.
 
         Supports:
-        - v2.0: migrated to v3.0 automatically (run_states derived from completed_runs)
-        - v3.0: loaded as-is
+        - v2.0: migrated to v3.0 then v3.1 automatically
+        - v3.0: migrated to v3.1 automatically (state name remapping)
+        - v3.1: loaded as-is
         - v1.0 or unknown: rejected (must start fresh)
 
         Args:
@@ -348,16 +374,22 @@ class E2ECheckpoint(BaseModel):
         version = data.get("version", "1.0")
 
         if version == "2.0":
-            # Migrate v2.0 -> v3.0
+            # Migrate v2.0 -> v3.0 -> v3.1
             data = cls._migrate_v2_to_v3(data)
+            data = cls._migrate_v3_to_v3_1(data)
         elif version == "3.0":
+            # Convert string keys to int keys for completed_runs (JSON serialization)
+            if "completed_runs" in data:
+                data["completed_runs"] = cls._convert_completed_runs_keys(data["completed_runs"])
+            data = cls._migrate_v3_to_v3_1(data)
+        elif version == "3.1":
             # Convert string keys to int keys for completed_runs (JSON serialization)
             if "completed_runs" in data:
                 data["completed_runs"] = cls._convert_completed_runs_keys(data["completed_runs"])
         else:
             raise CheckpointError(
                 f"Incompatible checkpoint version {version}. "
-                "This version requires checkpoint format 2.0 or 3.0. "
+                "This version requires checkpoint format 2.0, 3.0, or 3.1. "
                 "Please delete the old checkpoint and re-run the experiment."
             )
 
@@ -412,6 +444,56 @@ class E2ECheckpoint(BaseModel):
         data["experiment_state"] = "tiers_running"
         data["last_heartbeat"] = data.get("last_updated_at", "")
         data["version"] = "3.0"
+
+        return data
+
+    @classmethod
+    def _migrate_v3_to_v3_1(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Migrate v3.0 checkpoint data to v3.1 schema.
+
+        Maps old state names (10-state pipeline) to new state names
+        (16-state pipeline). States that were split map to the final
+        sub-state of the split group (meaning the full original work
+        was done, so we advance to the most complete equivalent).
+
+        State mapping (old v3.0 -> new v3.1):
+          workspace_configured -> config_committed  (split: symlinks_applied + config_committed)
+          agent_ready          -> replay_generated  (split: prompt_written + replay_generated)
+          judge_ready          -> judge_prompt_built (split: diff_captured + judge_pipeline_run
+                                                      + judge_prompt_built)
+          run_complete         -> report_written    (split: included report generation)
+
+        Args:
+            data: v3.0 checkpoint dict (already has int keys in completed_runs)
+
+        Returns:
+            v3.1 checkpoint dict ready for model_validate
+
+        """
+        logger.info("Migrating checkpoint from v3.0 to v3.1")
+        data = dict(data)  # shallow copy
+
+        # State name mapping: old v3.0 name -> new v3.1 name
+        state_map = {
+            "workspace_configured": "config_committed",
+            "agent_ready": "replay_generated",
+            "judge_ready": "judge_prompt_built",
+            "run_complete": "report_written",  # run_complete included reports
+        }
+
+        run_states = data.get("run_states", {})
+        migrated_run_states: dict[str, dict[str, dict[str, str]]] = {}
+
+        for tier_id, subtests in run_states.items():
+            migrated_run_states[tier_id] = {}
+            for subtest_id, runs in subtests.items():
+                migrated_run_states[tier_id][subtest_id] = {}
+                for run_num_str, state_str in runs.items():
+                    new_state = state_map.get(state_str, state_str)
+                    migrated_run_states[tier_id][subtest_id][run_num_str] = new_state
+
+        data["run_states"] = migrated_run_states
+        data["version"] = "3.1"
 
         return data
 

@@ -4,18 +4,24 @@ This module provides a state machine that advances a single run through
 discrete, resumable states. Each transition saves a checkpoint, enabling
 resume from any point after a crash or kill signal.
 
-State flow for a single run:
+State flow for a single run (16 sequential states):
   PENDING
-    -> WORKTREE_CREATED    (git worktree add)
-    -> WORKSPACE_CONFIGURED (symlinks, CLAUDE.md, settings.json, git commit)
-    -> BASELINE_CAPTURED   (build pipeline baseline, first run only)
-    -> AGENT_READY         (prompt written, replay script generated)
-    -> AGENT_COMPLETE      (agent executed, outputs saved)
-    -> JUDGE_READY         (git diff, build pipeline, judge prompt built)
-    -> JUDGE_COMPLETE      (judge executed, consensus, results saved)
-    -> RUN_COMPLETE        (RunResult built, run_result.json, reports)
-    -> CHECKPOINTED        (checkpoint saved)
-    -> WORKTREE_CLEANED    (worktree removed)
+    -> DIR_STRUCTURE_CREATED  (create run_NN/, agent/, judge/ dirs)
+    -> WORKTREE_CREATED        (git worktree add)
+    -> SYMLINKS_APPLIED        (tier resources symlinked to workspace)
+    -> CONFIG_COMMITTED        (CLAUDE.md, settings.json, git commit)
+    -> BASELINE_CAPTURED       (build pipeline baseline, first run only)
+    -> PROMPT_WRITTEN          (task_prompt.md written, thinking keyword injected)
+    -> REPLAY_GENERATED        (adapter command built, replay.sh generated)
+    -> AGENT_COMPLETE          (agent executed, outputs saved)
+    -> DIFF_CAPTURED           (git diff captured, workspace state saved)
+    -> JUDGE_PIPELINE_RUN      (build pipeline run on agent-modified workspace)
+    -> JUDGE_PROMPT_BUILT      (full judge prompt assembled)
+    -> JUDGE_COMPLETE          (judge executed, consensus, results saved)
+    -> RUN_FINALIZED           (RunResult built, run_result.json saved)
+    -> REPORT_WRITTEN          (report.md and report.json generated)
+    -> CHECKPOINTED            (checkpoint saved)
+    -> WORKTREE_CLEANED        (worktree removed)
   Terminal: FAILED | RATE_LIMITED
 """
 
@@ -38,14 +44,20 @@ logger = logging.getLogger(__name__)
 # Ordered sequence of states for a normal (non-failed) run
 _RUN_STATE_SEQUENCE: list[RunState] = [
     RunState.PENDING,
+    RunState.DIR_STRUCTURE_CREATED,
     RunState.WORKTREE_CREATED,
-    RunState.WORKSPACE_CONFIGURED,
+    RunState.SYMLINKS_APPLIED,
+    RunState.CONFIG_COMMITTED,
     RunState.BASELINE_CAPTURED,
-    RunState.AGENT_READY,
+    RunState.PROMPT_WRITTEN,
+    RunState.REPLAY_GENERATED,
     RunState.AGENT_COMPLETE,
-    RunState.JUDGE_READY,
+    RunState.DIFF_CAPTURED,
+    RunState.JUDGE_PIPELINE_RUN,
+    RunState.JUDGE_PROMPT_BUILT,
     RunState.JUDGE_COMPLETE,
-    RunState.RUN_COMPLETE,
+    RunState.RUN_FINALIZED,
+    RunState.REPORT_WRITTEN,
     RunState.CHECKPOINTED,
     RunState.WORKTREE_CLEANED,
 ]
@@ -81,63 +93,99 @@ class StateTransition:
 TRANSITION_REGISTRY: list[StateTransition] = [
     StateTransition(
         from_state=RunState.PENDING,
+        to_state=RunState.DIR_STRUCTURE_CREATED,
+        memory_class="low",
+        description="Create run_NN/, agent/, judge/ directories",
+    ),
+    StateTransition(
+        from_state=RunState.DIR_STRUCTURE_CREATED,
         to_state=RunState.WORKTREE_CREATED,
         memory_class="high",
         description="Create git worktree",
     ),
     StateTransition(
         from_state=RunState.WORKTREE_CREATED,
-        to_state=RunState.WORKSPACE_CONFIGURED,
+        to_state=RunState.SYMLINKS_APPLIED,
         memory_class="low",
-        description="Configure workspace (symlinks, CLAUDE.md, settings.json, git commit)",
+        description="Symlink tier resources to workspace",
     ),
     StateTransition(
-        from_state=RunState.WORKSPACE_CONFIGURED,
+        from_state=RunState.SYMLINKS_APPLIED,
+        to_state=RunState.CONFIG_COMMITTED,
+        memory_class="low",
+        description="Write CLAUDE.md and settings.json, git commit",
+    ),
+    StateTransition(
+        from_state=RunState.CONFIG_COMMITTED,
         to_state=RunState.BASELINE_CAPTURED,
         memory_class="med",
         description="Capture pipeline baseline (compileall, ruff, pytest, pre-commit)",
     ),
     StateTransition(
         from_state=RunState.BASELINE_CAPTURED,
-        to_state=RunState.AGENT_READY,
+        to_state=RunState.PROMPT_WRITTEN,
         memory_class="low",
-        description="Prepare agent (write prompt, generate replay script)",
+        description="Write task_prompt.md, inject thinking keyword if configured",
     ),
     StateTransition(
-        from_state=RunState.AGENT_READY,
+        from_state=RunState.PROMPT_WRITTEN,
+        to_state=RunState.REPLAY_GENERATED,
+        memory_class="low",
+        description="Build adapter command, generate replay.sh",
+    ),
+    StateTransition(
+        from_state=RunState.REPLAY_GENERATED,
         to_state=RunState.AGENT_COMPLETE,
         memory_class="high",
-        description="Execute agent (Claude CLI subprocess)",
+        description="Execute Claude CLI agent via replay.sh",
     ),
     StateTransition(
         from_state=RunState.AGENT_COMPLETE,
-        to_state=RunState.JUDGE_READY,
-        memory_class="med",
-        description="Prepare judge (git diff, build pipeline, build judge prompt)",
+        to_state=RunState.DIFF_CAPTURED,
+        memory_class="low",
+        description="Capture git diff and workspace state",
     ),
     StateTransition(
-        from_state=RunState.JUDGE_READY,
+        from_state=RunState.DIFF_CAPTURED,
+        to_state=RunState.JUDGE_PIPELINE_RUN,
+        memory_class="med",
+        description="Run build pipeline on agent-modified workspace",
+    ),
+    StateTransition(
+        from_state=RunState.JUDGE_PIPELINE_RUN,
+        to_state=RunState.JUDGE_PROMPT_BUILT,
+        memory_class="low",
+        description="Assemble judge prompt with all context",
+    ),
+    StateTransition(
+        from_state=RunState.JUDGE_PROMPT_BUILT,
         to_state=RunState.JUDGE_COMPLETE,
         memory_class="high",
-        description="Execute judge (Claude CLI subprocess, consensus)",
+        description="Execute Claude CLI judge(s), compute consensus",
     ),
     StateTransition(
         from_state=RunState.JUDGE_COMPLETE,
-        to_state=RunState.RUN_COMPLETE,
+        to_state=RunState.RUN_FINALIZED,
         memory_class="low",
-        description="Finalize run (build RunResult, save run_result.json, reports)",
+        description="Build E2ERunResult, save run_result.json",
     ),
     StateTransition(
-        from_state=RunState.RUN_COMPLETE,
+        from_state=RunState.RUN_FINALIZED,
+        to_state=RunState.REPORT_WRITTEN,
+        memory_class="low",
+        description="Generate report.md and report.json",
+    ),
+    StateTransition(
+        from_state=RunState.REPORT_WRITTEN,
         to_state=RunState.CHECKPOINTED,
         memory_class="low",
-        description="Save checkpoint",
+        description="Save checkpoint (no-op — auto-saved after each transition)",
     ),
     StateTransition(
         from_state=RunState.CHECKPOINTED,
         to_state=RunState.WORKTREE_CLEANED,
         memory_class="low",
-        description="Cleanup worktree",
+        description="Remove worktree for passed runs",
     ),
 ]
 
@@ -194,7 +242,7 @@ class StateMachine:
         while not sm.is_complete(tier_id, subtest_id, run_num):
             new_state = sm.advance(
                 tier_id, subtest_id, run_num,
-                actions={RunState.PENDING: create_worktree_fn, ...}
+                actions={RunState.PENDING: create_dir_structure_fn, ...}
             )
 
     Attributes:
@@ -311,20 +359,27 @@ class StateMachine:
         subtest_id: str,
         run_num: int,
         actions: dict[RunState, Callable],
+        until_state: RunState | None = None,
     ) -> RunState:
         """Advance the run through all states until a terminal state is reached.
 
         Useful for running a complete run from start or resuming from any state.
         On exception, the run is marked as FAILED in the checkpoint.
 
+        If until_state is specified, the run stops cleanly when that state is
+        reached (without marking as FAILED), enabling incremental validation
+        via --until <state>.
+
         Args:
             tier_id: Tier identifier
             subtest_id: Subtest identifier
             run_num: Run number (1-based)
             actions: Map of from_state -> callable
+            until_state: Optional state at which to stop early. The machine
+                stops without marking FAILED, preserving state for future resume.
 
         Returns:
-            Final RunState (WORKTREE_CLEANED, FAILED, or RATE_LIMITED)
+            Final RunState (WORKTREE_CLEANED, FAILED, RATE_LIMITED, or until_state)
 
         """
         from scylla.e2e.checkpoint import save_checkpoint
@@ -332,6 +387,13 @@ class StateMachine:
 
         try:
             while not self.is_complete(tier_id, subtest_id, run_num):
+                current = self.get_state(tier_id, subtest_id, run_num)
+                if until_state is not None and current == until_state:
+                    logger.info(
+                        f"[{tier_id}/{subtest_id}/run_{run_num:02d}] "
+                        f"Reached --until target state: {until_state.value}"
+                    )
+                    break
                 self.advance(tier_id, subtest_id, run_num, actions)
         except RateLimitError:
             self.checkpoint.set_run_state(tier_id, subtest_id, run_num, RunState.RATE_LIMITED.value)

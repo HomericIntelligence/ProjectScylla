@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """CLI entry point for E2E experiments.
 
-This script provides a command-line interface for running E2E experiments
-with the ProjectScylla evaluation framework.
+.. deprecated::
+    Use ``python scripts/manage_experiment.py run`` instead.
+    This script is retained for backward compatibility but will be removed in a future release.
 
 Usage:
     python scripts/run_e2e_experiment.py --config experiment.yaml
@@ -15,7 +16,7 @@ import argparse
 import logging
 import subprocess
 import sys
-import time
+import warnings
 from pathlib import Path
 
 import yaml
@@ -23,9 +24,16 @@ import yaml
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from scylla.e2e.model_validation import is_rate_limit_error, validate_model  # noqa: F401
 from scylla.e2e.models import ExperimentConfig, TierID
 from scylla.e2e.runner import request_shutdown, run_experiment
 from scylla.utils.terminal import terminal_guard
+
+warnings.warn(
+    "run_e2e_experiment.py is deprecated. Use 'manage_experiment.py run' instead.",
+    DeprecationWarning,
+    stacklevel=1,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -34,145 +42,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
-
-
-def is_rate_limit_error(output: str) -> tuple[bool, int | None]:
-    """Check if the output indicates a rate limit error.
-
-    Args:
-        output: The stdout or stderr content to check
-
-    Returns:
-        Tuple of (is_rate_limit, time_to_wait_seconds)
-
-    """
-    # Look for rate limit indicators
-    if "hit your limit" in output.lower() or "rate limit" in output.lower():
-        # Try to extract reset time
-        import re
-
-        # Look for time patterns like "6am", "5 minutes", "30 seconds"
-        time_patterns = [
-            r"resets?\s+(\d{1,2})(am|pm)",  # "resets 6am"
-            r"(\d+)\s*minutes?",  # "5 minutes"
-            r"(\d+)\s*seconds?",  # "30 seconds"
-            r"in\s+(\d+)\s*minutes?",  # "in 5 minutes"
-            r"in\s+(\d+)\s*hours?",  # "in 2 hours"
-        ]
-
-        output_lower = output.lower()
-
-        # Try to find time information
-        for pattern in time_patterns:
-            match = re.search(pattern, output_lower)
-            if match:
-                if "am" in match.group(0) or "pm" in match.group(0):
-                    # Handle time like "6am" - we'll estimate 12 hours for now
-                    return True, 12 * 3600  # 12 hours
-                else:
-                    time_unit = match.group(1)
-                    if "minute" in match.group(0):
-                        return True, int(time_unit) * 60
-                    elif "second" in match.group(0):
-                        return True, int(time_unit)
-                    elif "hour" in match.group(0):
-                        return True, int(time_unit) * 3600
-
-        # If we can't parse the time, assume 1 hour
-        return True, 3600
-
-    return False, None
-
-
-def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) -> bool:
-    """Validate that a model is available by running a test prompt.
-
-    This function intelligently handles rate limits by waiting for them to reset
-    rather than failing immediately.
-
-    Args:
-        model_id: Full model ID to test
-        max_retries: Maximum number of retry attempts for rate limits
-        base_delay: Base delay in seconds between retries
-
-    Returns:
-        True if model appears available, False otherwise
-
-    """
-    for attempt in range(max_retries + 1):
-        try:
-            logger.info(f"Validating model '{model_id}' (attempt {attempt + 1}/{max_retries + 1})")
-
-            result = subprocess.run(
-                [
-                    "claude",
-                    "--model",
-                    model_id,
-                    "--output-format",
-                    "json",
-                    "Say 'OK'",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30,  # Increased timeout for rate limit scenarios
-            )
-
-            # Check for rate limits first
-            combined_output = result.stdout + result.stderr
-
-            is_rate_limit, wait_time = is_rate_limit_error(combined_output)
-
-            if is_rate_limit and attempt < max_retries:
-                logger.warning(
-                    f"Rate limit detected for model '{model_id}'. "
-                    f"Waiting {wait_time} seconds before retry..."
-                )
-                time.sleep(wait_time)
-                continue  # Retry the validation
-
-            # Check if we got a successful response
-            if result.returncode == 0 and '"is_error":false' in result.stdout:
-                logger.info(f"✓ Model '{model_id}' validated successfully")
-                return True
-            else:
-                # Check for other specific errors
-                if "not_found_error" in combined_output:
-                    logger.warning(f"Model '{model_id}' not found on server")
-                    return False
-                elif attempt < max_retries:
-                    logger.warning(
-                        f"Validation attempt {attempt + 1} failed for model "
-                        f"'{model_id}', retrying..."
-                    )
-                    time.sleep(base_delay * (2**attempt))  # Exponential backoff
-                    continue
-                else:
-                    logger.warning(f"All validation attempts failed for model '{model_id}'")
-                    return False
-
-        except subprocess.TimeoutExpired:
-            if attempt < max_retries:
-                logger.warning(f"Validation timed out for model '{model_id}', retrying...")
-                time.sleep(base_delay)
-                continue
-            else:
-                logger.warning(
-                    f"Validation timed out for model '{model_id}' after {max_retries + 1} attempts"
-                )
-                return False
-        except FileNotFoundError:
-            logger.error("Claude CLI not found. Is it installed?")
-            return False
-        except Exception as e:
-            if attempt < max_retries:
-                logger.warning(f"Validation error for model '{model_id}': {e}, retrying...")
-                time.sleep(base_delay)
-                continue
-            else:
-                logger.error(f"Validation failed for model '{model_id}': {e}")
-                return False
-
-    return False
 
 
 def parse_args() -> argparse.Namespace:
@@ -572,6 +441,9 @@ def build_config(args: argparse.Namespace) -> ExperimentConfig:  # noqa: C901  #
         tiers_to_run=config_dict["tiers_to_run"],
         judge_models=config_dict["judge_models"],
         parallel_subtests=config_dict["parallel_subtests"],
+        parallel_high=args.parallel_high,
+        parallel_med=args.parallel_med,
+        parallel_low=args.parallel_low,
         timeout_seconds=config_dict["timeout_seconds"],
         max_subtests=args.max_subtests,
         skip_agent_teams=args.skip_agent_teams,

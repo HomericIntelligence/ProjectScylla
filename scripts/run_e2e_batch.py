@@ -880,8 +880,11 @@ def print_summary_table(all_results: list[dict]) -> None:
     print()
 
 
-def main() -> int:  # noqa: C901  # CLI main with multiple batch modes
+def main(argv: list[str] | None = None) -> int:  # noqa: C901  # CLI main with multiple batch modes
     """Run batch E2E experiments.
+
+    Args:
+        argv: Optional argument list (defaults to sys.argv[1:] if None)
 
     Returns:
         Exit code (0 for success, 1 for error)
@@ -977,7 +980,7 @@ Examples:
         help="Enable verbose logging",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # Configure logging
     if args.verbose:

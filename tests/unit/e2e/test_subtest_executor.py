@@ -382,9 +382,10 @@ class TestHasValidJudgeResult:
 class TestPipelineBaselineUsesExperimentConfigLanguage:
     """Regression tests for the TierConfig.language AttributeError bug.
 
-    SubTestExecutor.run_subtest must use self.config.language (ExperimentConfig)
-    when calling _run_build_pipeline. TierConfig does not have a language field,
-    so accessing tier_config.language raises AttributeError at runtime.
+    stage_capture_baseline in stages.py must use ctx.config.language
+    (ExperimentConfig) when calling _run_build_pipeline. TierConfig does not
+    have a language field, so accessing tier_config.language raises
+    AttributeError at runtime.
 
     These tests inspect the actual source code and model structure - no mocking.
     """
@@ -397,7 +398,7 @@ class TestPipelineBaselineUsesExperimentConfigLanguage:
         """
         tier_config = TierConfig(tier_id=TierID.T0, subtests=[])
         assert not hasattr(tier_config, "language"), (
-            "TierConfig now has a language field. Update subtest_executor.py to "
+            "TierConfig now has a language field. Update stages.py to "
             "use tier_config.language if intentional, then remove this assertion."
         )
 
@@ -413,17 +414,19 @@ class TestPipelineBaselineUsesExperimentConfigLanguage:
         )
         assert config.language == "mojo"
 
-    def test_subtest_executor_source_uses_self_config_language(self) -> None:
-        """subtest_executor.py must use self.config.language, not tier_config.language.
+    def test_stage_capture_baseline_uses_ctx_config_language(self) -> None:
+        """stages.py stage_capture_baseline must use ctx.config.language, not tier_config.language.
 
-        Inspects the source of run_subtest to verify the correct attribute path
-        is used when calling _run_build_pipeline.
+        Inspects the source of stage_capture_baseline to verify the correct
+        attribute path is used when calling _run_build_pipeline.
         """
         import ast
         import inspect
         import textwrap
 
-        source = textwrap.dedent(inspect.getsource(SubTestExecutor.run_subtest))
+        from scylla.e2e.stages import stage_capture_baseline
+
+        source = textwrap.dedent(inspect.getsource(stage_capture_baseline))
         tree = ast.parse(source)
 
         bad_pattern_found = False
@@ -444,23 +447,23 @@ class TestPipelineBaselineUsesExperimentConfigLanguage:
                 and value.value.id == "tier_config"
             ):
                 bad_pattern_found = True
-            # Check for self.config.language (the fix)
+            # Check for ctx.config.language (the correct pattern in stages.py)
             if (
                 isinstance(value, ast.Attribute)
                 and value.attr == "language"
                 and isinstance(value.value, ast.Attribute)
                 and value.value.attr == "config"
                 and isinstance(value.value.value, ast.Name)
-                and value.value.value.id == "self"
+                and value.value.value.id == "ctx"
             ):
                 correct_pattern_found = True
 
         assert not bad_pattern_found, (
-            "subtest_executor.run_subtest uses tier_config.language - "
+            "stages.stage_capture_baseline uses tier_config.language - "
             "this causes AttributeError since TierConfig has no language field. "
-            "Use self.config.language instead."
+            "Use ctx.config.language instead."
         )
         assert correct_pattern_found, (
-            "subtest_executor.run_subtest does not use self.config.language "
+            "stages.stage_capture_baseline does not use ctx.config.language "
             "when calling _run_build_pipeline."
         )

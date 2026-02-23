@@ -89,17 +89,31 @@ class RunState(str, Enum):
     Each state represents a discrete, resumable checkpoint in the run lifecycle.
     The state machine advances through these states sequentially, saving the
     checkpoint after each transition to enable resume from any point.
+
+    Sequential states (16):
+      PENDING -> DIR_STRUCTURE_CREATED -> WORKTREE_CREATED -> SYMLINKS_APPLIED
+      -> CONFIG_COMMITTED -> BASELINE_CAPTURED -> PROMPT_WRITTEN -> REPLAY_GENERATED
+      -> AGENT_COMPLETE -> DIFF_CAPTURED -> JUDGE_PIPELINE_RUN -> JUDGE_PROMPT_BUILT
+      -> JUDGE_COMPLETE -> RUN_FINALIZED -> REPORT_WRITTEN -> CHECKPOINTED
+      -> WORKTREE_CLEANED
+    Terminal (2): FAILED | RATE_LIMITED
     """
 
     PENDING = "pending"
+    DIR_STRUCTURE_CREATED = "dir_structure_created"  # run_dir, agent/, judge/ created
     WORKTREE_CREATED = "worktree_created"  # git worktree created
-    WORKSPACE_CONFIGURED = "workspace_configured"  # symlinks, CLAUDE.md, settings.json, git commit
+    SYMLINKS_APPLIED = "symlinks_applied"  # tier resources symlinked to workspace
+    CONFIG_COMMITTED = "config_committed"  # CLAUDE.md, settings.json, git commit
     BASELINE_CAPTURED = "baseline_captured"  # build pipeline baseline (first run only)
-    AGENT_READY = "agent_ready"  # prompt written, replay script generated
+    PROMPT_WRITTEN = "prompt_written"  # task_prompt.md written, thinking keyword injected
+    REPLAY_GENERATED = "replay_generated"  # adapter command built, replay.sh generated
     AGENT_COMPLETE = "agent_complete"  # agent executed, outputs saved
-    JUDGE_READY = "judge_ready"  # git diff captured, build pipeline run, judge prompt built
+    DIFF_CAPTURED = "diff_captured"  # git diff captured, workspace state saved
+    JUDGE_PIPELINE_RUN = "judge_pipeline_run"  # build pipeline run on agent-modified workspace
+    JUDGE_PROMPT_BUILT = "judge_prompt_built"  # full judge prompt assembled
     JUDGE_COMPLETE = "judge_complete"  # judge executed, consensus computed, results saved
-    RUN_COMPLETE = "run_complete"  # RunResult built, run_result.json saved, reports generated
+    RUN_FINALIZED = "run_finalized"  # E2ERunResult built, run_result.json saved
+    REPORT_WRITTEN = "report_written"  # report.md and report.json generated
     CHECKPOINTED = "checkpointed"  # checkpoint saved with this run's state
     WORKTREE_CLEANED = "worktree_cleaned"  # git worktree removed
     FAILED = "failed"
@@ -131,6 +145,7 @@ class ExperimentState(str, Enum):
     """States for the overall experiment lifecycle."""
 
     INITIALIZING = "initializing"
+    DIR_CREATED = "dir_created"  # Experiment directory tree created
     REPO_CLONED = "repo_cloned"
     TIERS_RUNNING = "tiers_running"
     TIERS_COMPLETE = "tiers_complete"
@@ -842,6 +857,9 @@ class ExperimentConfig(BaseModel):
     tiers_to_run: list[TierID] = Field(default_factory=lambda: list(TierID))
     judge_models: list[str] = Field(default_factory=lambda: [DEFAULT_JUDGE_MODEL])
     parallel_subtests: int = 4
+    parallel_high: int = 2  # Max concurrent high-memory ops (agent, judge, worktree)
+    parallel_med: int = 4  # Max concurrent medium-memory ops (build pipeline, git diff)
+    parallel_low: int = 8  # Max concurrent low-memory ops (file I/O, reporting)
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
     max_subtests: int | None = None  # Max sub-tests per tier (None = all)
@@ -852,6 +870,10 @@ class ExperimentConfig(BaseModel):
     )
     criteria_file: Path | None = None  # Optional explicit path to criteria.md
     rubric_file: Path | None = None  # Optional explicit path to rubric.yaml
+    # Ephemeral --until controls (not saved to experiment.json / not in config_hash)
+    until_run_state: RunState | None = None
+    until_tier_state: TierState | None = None
+    until_experiment_state: ExperimentState | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -866,6 +888,9 @@ class ExperimentConfig(BaseModel):
             "tiers_to_run": [t.value for t in self.tiers_to_run],
             "judge_models": self.judge_models,
             "parallel_subtests": self.parallel_subtests,
+            "parallel_high": self.parallel_high,
+            "parallel_med": self.parallel_med,
+            "parallel_low": self.parallel_low,
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
             "max_subtests": self.max_subtests,
@@ -903,6 +928,9 @@ class ExperimentConfig(BaseModel):
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
             judge_models=judge_models,
             parallel_subtests=data.get("parallel_subtests", 4),
+            parallel_high=data.get("parallel_high", 2),
+            parallel_med=data.get("parallel_med", 4),
+            parallel_low=data.get("parallel_low", 8),
             timeout_seconds=data.get("timeout_seconds", 3600),
             max_turns=data.get("max_turns"),
             max_subtests=data.get("max_subtests"),
