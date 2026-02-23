@@ -229,7 +229,7 @@ Agent model & Sonnet 4.5 & Haiku 4.5 \\
 Agent pricing & \$3/\$15 per M tokens & \$1/\$5 per M tokens\footnote{Cache read tokens are priced at \$0.10/M for Haiku (10\% of input price). Since 97\% of tokens in our experiments are cache reads, the effective per-token cost is significantly lower than the base input rate.} \\
 Judge models & Opus 4.5 + Sonnet 4.5 + Haiku 4.5 & Sonnet 4.5 (single judge) \\
 Runs per subtest & 1 & 5 \\
-Max subtests per tier & All (up to 24) & 2 (except T3: up to 41, T4: up to 14) \\
+Max subtests per tier & All (up to 24) & 2 per tier per test (suite has 41 T3 subtests, 14 T4 subtests) \\
 Tasks & 1 (Hello World) & 5 (3 complete, 2 partial) \\
 Statistical inference & Not possible ($N=1$) & Bootstrap BCa CI, KW, MWU \\
 Language & Python & Mojo/Python (test-002), Python (others) \\
@@ -564,7 +564,7 @@ Kruskal-Wallis confirms significant tier effects:
 \begin{itemize}
 \item Pass rate: $H(6) = 27.49$, $p = 0.0001$
 \item Impl-rate: $H(6) = 18.97$, $p = 0.0042$
-\item Cost: $H(6) = 157.44$, $p < 0.0001$
+\item Cost: $H(6) = 157.44$, $p < 0.0001$\footnote{Cost tier effect sourced from Scheirer-Ray-Hare test (tier effect only; single-model study has no agent\_model factor), mathematically equivalent to Kruskal-Wallis for a one-factor design.}
 \end{itemize}
 
 The Scheirer-Ray-Hare two-way test (tier $\times$ task) confirms the tier effect on score:
@@ -873,7 +873,7 @@ T2$\rightarrow$T3 & 130, 122 & $-0.069$ & 0.487 & $-0.068$ \\
 T3$\rightarrow$T4 & 122, 123 & +0.051 & 0.487 & +0.051 \\
 T4$\rightarrow$T5 & 123, 30 & $-0.313$ & \textbf{0.0024} & $-0.313$ \\
 T5$\rightarrow$T6 & 30, 15 & +0.433 & \textbf{0.0243} & +0.433 \\
-T0$\rightarrow$T6 & 117, 15 & +0.292 & 0.119 & +0.292 \\
+T0$\rightarrow$T6 & 117, 15 & +0.292 & 0.1187 & +0.292 \\
 \bottomrule
 \end{tabular}
 \end{table}
