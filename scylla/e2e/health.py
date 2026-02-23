@@ -30,6 +30,10 @@ import os
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from scylla.e2e.checkpoint import E2ECheckpoint
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +86,7 @@ def _heartbeat_is_stale(last_heartbeat: str, timeout_seconds: int) -> bool:
 
 
 def is_zombie(
-    checkpoint,
+    checkpoint: E2ECheckpoint,
     experiment_dir: Path,
     heartbeat_timeout_seconds: int = DEFAULT_HEARTBEAT_TIMEOUT_SECONDS,
 ) -> bool:
@@ -131,7 +135,7 @@ def is_zombie(
     return False
 
 
-def reset_zombie_checkpoint(checkpoint, checkpoint_path: Path):
+def reset_zombie_checkpoint(checkpoint: E2ECheckpoint, checkpoint_path: Path) -> E2ECheckpoint:
     """Reset a zombie checkpoint to 'interrupted' status.
 
     Preserves all run state data so the experiment can be resumed
@@ -176,7 +180,7 @@ class HeartbeatThread(threading.Thread):
 
     def __init__(
         self,
-        checkpoint,
+        checkpoint: E2ECheckpoint,
         checkpoint_path: Path,
         interval_seconds: int = 30,
     ) -> None:

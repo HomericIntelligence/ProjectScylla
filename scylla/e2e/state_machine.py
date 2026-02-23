@@ -28,10 +28,11 @@ State flow for a single run (16 sequential states):
 from __future__ import annotations
 
 import logging
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from scylla.e2e.models import RunState
 
@@ -75,15 +76,15 @@ class StateTransition:
     Attributes:
         from_state: State before this transition
         to_state: State after this transition completes successfully
-        memory_class: Resource class — "low", "med", or "high".
-            Controls which semaphore is acquired from ParallelismScheduler.
+        memory_class: Resource class controlling which semaphore is acquired
+            from ParallelismScheduler. One of "low", "med", or "high".
         description: Human-readable description for logging
 
     """
 
     from_state: RunState
     to_state: RunState
-    memory_class: str  # "low", "med", "high"
+    memory_class: Literal["low", "med", "high"]
     description: str
 
 
@@ -292,7 +293,7 @@ class StateMachine:
         tier_id: str,
         subtest_id: str,
         run_num: int,
-        actions: dict[RunState, Callable],
+        actions: dict[RunState, Callable[[], None]],
     ) -> RunState:
         """Advance the run by one state transition.
 
@@ -343,7 +344,14 @@ class StateMachine:
         # Execute the action if provided
         action = actions.get(current)
         if action is not None:
+            _t0 = time.monotonic()
             action()
+            _elapsed = time.monotonic() - _t0
+            logger.info(
+                f"[{tier_id}/{subtest_id}/run_{run_num:02d}] "
+                f"{current.value} -> {transition.to_state.value}: "
+                f"{transition.description} ({_elapsed:.1f}s)"
+            )
 
         # Update state in checkpoint
         self.checkpoint.set_run_state(tier_id, subtest_id, run_num, transition.to_state.value)
@@ -358,7 +366,7 @@ class StateMachine:
         tier_id: str,
         subtest_id: str,
         run_num: int,
-        actions: dict[RunState, Callable],
+        actions: dict[RunState, Callable[[], None]],
         until_state: RunState | None = None,
     ) -> RunState:
         """Advance the run through all states until a terminal state is reached.

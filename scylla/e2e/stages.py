@@ -24,7 +24,7 @@ StateMachine.advance_to_completion().
   JUDGE_PROMPT_BUILT   -> stage_execute_judge()
   JUDGE_COMPLETE       -> stage_finalize_run()
   RUN_FINALIZED        -> stage_write_report()
-  REPORT_WRITTEN       -> stage_save_checkpoint()
+  REPORT_WRITTEN       -> (no-op, StateMachine auto-saves checkpoint)
   CHECKPOINTED         -> stage_cleanup_worktree()
 """
 
@@ -36,7 +36,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from scylla.e2e.models import (
     E2ERunResult,
@@ -51,7 +51,7 @@ from scylla.e2e.paths import get_agent_dir, get_judge_dir
 from scylla.e2e.state_machine import TRANSITION_REGISTRY
 
 if TYPE_CHECKING:
-    from scylla.adapters.base import AdapterResult
+    from scylla.adapters.base import AdapterConfig, AdapterResult
     from scylla.adapters.claude_code import ClaudeCodeAdapter
     from scylla.e2e.checkpoint import E2ECheckpoint
     from scylla.e2e.llm_judge import BuildPipelineResult
@@ -143,7 +143,7 @@ class RunContext:
     run_result: E2ERunResult | None = None
 
     # Adapter config passed between stage_generate_replay and stage_execute_agent
-    adapter_config: Any = None
+    adapter_config: AdapterConfig | None = None
 
     # Cross-process coordination
     coordinator: RateLimitCoordinator | None = None
@@ -993,21 +993,6 @@ def stage_write_report(ctx: RunContext) -> None:
     )
 
 
-def stage_save_checkpoint(ctx: RunContext) -> None:
-    """REPORT_WRITTEN -> CHECKPOINTED: No-op.
-
-    StateMachine.advance() already saves the checkpoint after each state
-    transition. This stage exists for explicitness in the state sequence.
-
-    Args:
-        ctx: Run context
-
-    """
-    # StateMachine already saved checkpoint after the REPORT_WRITTEN transition.
-    # Nothing to do here.
-    pass
-
-
 def stage_cleanup_worktree(ctx: RunContext) -> None:
     """CHECKPOINTED -> WORKTREE_CLEANED: Remove git worktree for passed runs.
 
@@ -1111,7 +1096,6 @@ def build_actions_dict(
         RunState.JUDGE_PROMPT_BUILT: lambda: stage_execute_judge(ctx),
         RunState.JUDGE_COMPLETE: lambda: stage_finalize_run(ctx),
         RunState.RUN_FINALIZED: lambda: stage_write_report(ctx),
-        RunState.REPORT_WRITTEN: lambda: stage_save_checkpoint(ctx),
         RunState.CHECKPOINTED: lambda: stage_cleanup_worktree(ctx),
     }
 

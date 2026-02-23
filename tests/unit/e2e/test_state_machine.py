@@ -445,3 +445,48 @@ class TestStateMachineAdvanceToCompletion:
         final = sm.advance_to_completion("T0", "00-empty", 1, {RunState.PENDING: action})
         action.assert_not_called()
         assert final == RunState.WORKTREE_CLEANED
+
+    def test_advance_to_completion_stops_at_until_state(
+        self, sm: StateMachine, checkpoint_path: Path
+    ) -> None:
+        """advance_to_completion stops cleanly at until_state without marking FAILED."""
+        actions_called: list[RunState] = []
+
+        def make_action(state: RunState):
+            def action():
+                actions_called.append(state)
+
+            return action
+
+        actions = {state: make_action(state) for state in RunState if not is_terminal_state(state)}
+        final = sm.advance_to_completion(
+            "T0", "00-empty", 1, actions, until_state=RunState.AGENT_COMPLETE
+        )
+
+        # Should stop at AGENT_COMPLETE, not advance past it
+        assert final == RunState.AGENT_COMPLETE
+        # AGENT_COMPLETE action itself should NOT be called (we stop before executing it)
+        assert RunState.AGENT_COMPLETE not in actions_called
+        # States before should have been executed
+        assert RunState.PENDING in actions_called
+        assert RunState.REPLAY_GENERATED in actions_called
+
+    def test_advance_to_completion_until_state_not_failed(
+        self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """When stopped by until_state, the run is NOT marked as FAILED."""
+        sm.advance_to_completion("T0", "00-empty", 1, {}, until_state=RunState.AGENT_COMPLETE)
+        state = sm.get_state("T0", "00-empty", 1)
+        assert state not in (RunState.FAILED, RunState.RATE_LIMITED)
+        assert state == RunState.AGENT_COMPLETE
+
+    def test_advance_to_completion_until_state_at_start(
+        self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """until_state=PENDING stops immediately — nothing is executed."""
+        action = MagicMock()
+        final = sm.advance_to_completion(
+            "T0", "00-empty", 1, {RunState.PENDING: action}, until_state=RunState.PENDING
+        )
+        action.assert_not_called()
+        assert final == RunState.PENDING

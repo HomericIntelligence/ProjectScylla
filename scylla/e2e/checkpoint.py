@@ -571,6 +571,10 @@ def compute_config_hash(config: ExperimentConfig) -> str:
     # Remove fields that don't affect results
     config_dict.pop("parallel_subtests", None)  # Just parallelization setting
     config_dict.pop("max_subtests", None)  # Development/testing only
+    # Remove ephemeral --until flags (changing these between runs must not break resume)
+    config_dict.pop("until_run_state", None)
+    config_dict.pop("until_tier_state", None)
+    config_dict.pop("until_experiment_state", None)
 
     # Stable JSON serialization (sorted keys)
     config_json = json.dumps(config_dict, sort_keys=True)

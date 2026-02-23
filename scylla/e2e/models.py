@@ -10,7 +10,7 @@ import json
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -18,8 +18,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.core.results import RunResultBase
 
-if TYPE_CHECKING:
-    pass
+# Grade ordering for min/max calculations (F=worst, S=best)
+GRADE_ORDER: list[str] = ["F", "D", "C", "B", "A", "S"]
 
 # Import after models are defined to avoid circular import at module level
 # This is safe because RateLimitInfo is only used in type hints within SubTestResult

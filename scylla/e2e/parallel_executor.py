@@ -108,7 +108,9 @@ class RateLimitCoordinator:
         if self._pause_event.is_set():
             logger.debug("Worker blocked on pause event, waiting for resume...")
             self._resume_event.wait()  # Block until resume
-            self._resume_event.clear()
+            # Do NOT clear _resume_event here — only the producer (main thread via
+            # resume_all_workers()) should manage Event state to avoid a race where
+            # one worker clears the event before other workers have woken up.
             logger.debug("Worker resumed after rate limit wait")
             return True
         return False
@@ -199,10 +201,6 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
     results: dict[str, SubTestResult] = {}
     executor = SubTestExecutor(config, tier_manager, workspace_manager)
 
-    # Create rate limit coordinator for parallel execution
-    manager = Manager()
-    coordinator = RateLimitCoordinator(manager)
-
     # For single sub-test (T0, T1), run directly (no need for coordinator)
     if len(tier_config.subtests) <= 1:
         for subtest in tier_config.subtests:
@@ -245,6 +243,14 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
     # For multiple sub-tests, run in parallel with coordinator
     total_subtests = len(tier_config.subtests)
     start_time = time.time()
+
+    # Create rate limit coordinator for parallel execution
+    manager = Manager()
+    try:
+        coordinator = RateLimitCoordinator(manager)
+    except Exception:
+        manager.shutdown()
+        raise
 
     try:
         with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
@@ -382,6 +388,7 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
                         checkpoint=checkpoint,
                         checkpoint_path=checkpoint_path,
                         scheduler=scheduler,
+                        experiment_dir=experiment_dir,
                     )
                     results.update(retry_results)
                     return results
@@ -395,6 +402,9 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
         for future in futures:
             if not future.done():
                 future.cancel()
+
+    finally:
+        manager.shutdown()
 
     return results
 
@@ -465,6 +475,7 @@ def _retry_with_new_pool(
     checkpoint: E2ECheckpoint | None,
     checkpoint_path: Path | None,
     scheduler: ParallelismScheduler | None = None,
+    experiment_dir: Path | None = None,
     max_retries: int = 3,
 ) -> dict[str, SubTestResult]:
     """Create new ProcessPoolExecutor and retry remaining subtests.
@@ -483,6 +494,7 @@ def _retry_with_new_pool(
         checkpoint: Optional checkpoint for resume
         checkpoint_path: Path to checkpoint file
         scheduler: Optional ParallelismScheduler for per-memory-class concurrency limits
+        experiment_dir: Path to experiment directory (needed for T5 inheritance)
         max_retries: Maximum retry attempts for rate limits
 
     Returns:
@@ -500,7 +512,11 @@ def _retry_with_new_pool(
         try:
             # Fresh coordinator for new pool
             manager = Manager()
-            coordinator = RateLimitCoordinator(manager)
+            try:
+                coordinator = RateLimitCoordinator(manager)
+            except Exception:
+                manager.shutdown()
+                raise
 
             with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
                 futures = {}
@@ -522,6 +538,7 @@ def _retry_with_new_pool(
                         checkpoint_path=checkpoint_path,
                         coordinator=coordinator,
                         scheduler=scheduler,
+                        experiment_dir=experiment_dir,
                     )
                     futures[future] = subtest.id
 
@@ -739,14 +756,12 @@ def _run_subtest_in_process(
     from scylla.e2e.workspace_manager import WorkspaceManager
 
     tier_manager = TierManager(tiers_dir)
-    # Recreate workspace manager in child process
-    workspace_manager = WorkspaceManager(
-        experiment_dir=base_repo.parent,
+    # Recreate workspace manager in child process (base repo already cloned by parent)
+    workspace_manager = WorkspaceManager.from_existing(
+        base_repo=base_repo,
         repo_url=repo_url,
         commit=commit,
     )
-    workspace_manager._is_setup = True  # Base repo already exists
-    workspace_manager.base_repo = base_repo
 
     executor = SubTestExecutor(config, tier_manager, workspace_manager)
     return executor.run_subtest(

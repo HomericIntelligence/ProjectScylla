@@ -40,7 +40,6 @@ from scylla.e2e.stages import (
     stage_finalize_run,
     stage_generate_replay,
     stage_run_judge_pipeline,
-    stage_save_checkpoint,
     stage_write_prompt,
     stage_write_report,
 )
@@ -161,10 +160,17 @@ class TestBuildActionsDict:
     """Tests for build_actions_dict() factory function."""
 
     def test_returns_all_non_terminal_states(self, run_context: RunContext) -> None:
-        """build_actions_dict contains entries for all non-terminal from_states."""
+        """build_actions_dict contains entries for all non-terminal from_states.
+
+        REPORT_WRITTEN is intentionally omitted — the StateMachine auto-saves
+        the checkpoint after each transition, so no explicit action is needed.
+        """
+        from scylla.e2e.models import RunState
+
         actions = build_actions_dict(run_context)
-        # Every transition in the registry should have a corresponding action
-        expected_states = {t.from_state for t in TRANSITION_REGISTRY}
+        # Every transition in the registry should have a corresponding action,
+        # except REPORT_WRITTEN which is handled by the StateMachine itself.
+        expected_states = {t.from_state for t in TRANSITION_REGISTRY} - {RunState.REPORT_WRITTEN}
         assert set(actions.keys()) == expected_states
 
     def test_all_values_are_callable(self, run_context: RunContext) -> None:
@@ -178,8 +184,14 @@ class TestBuildActionsDict:
         actions = build_actions_dict(run_context)
         assert RunState.PENDING in actions
 
-    def test_all_16_sequential_states_present(self, run_context: RunContext) -> None:
-        """All 16 sequential RunStates have action entries."""
+    def test_all_sequential_states_except_report_written_present(
+        self, run_context: RunContext
+    ) -> None:
+        """Sequential RunStates have action entries; REPORT_WRITTEN is intentionally omitted.
+
+        REPORT_WRITTEN is a no-op — the StateMachine auto-saves the checkpoint
+        after each transition, so no explicit stage function is needed.
+        """
         actions = build_actions_dict(run_context)
         sequential_states = [
             RunState.PENDING,
@@ -196,11 +208,12 @@ class TestBuildActionsDict:
             RunState.JUDGE_PROMPT_BUILT,
             RunState.JUDGE_COMPLETE,
             RunState.RUN_FINALIZED,
-            RunState.REPORT_WRITTEN,
             RunState.CHECKPOINTED,
         ]
         for state in sequential_states:
             assert state in actions, f"Missing action for state {state}"
+        # REPORT_WRITTEN is intentionally not in the actions dict
+        assert RunState.REPORT_WRITTEN not in actions
 
     def test_without_scheduler_no_wrapping(self, run_context: RunContext) -> None:
         """Without scheduler, actions are plain lambdas (not wrapped)."""
@@ -224,9 +237,13 @@ class TestBuildActionsDict:
         assert all(callable(a) for a in actions.values())
 
     def test_action_count_matches_transition_registry(self, run_context: RunContext) -> None:
-        """Number of actions matches number of TRANSITION_REGISTRY entries."""
+        """Number of actions matches number of TRANSITION_REGISTRY entries minus REPORT_WRITTEN.
+
+        REPORT_WRITTEN is intentionally omitted from the actions dict since
+        the StateMachine auto-saves the checkpoint after each transition.
+        """
         actions = build_actions_dict(run_context)
-        assert len(actions) == len(TRANSITION_REGISTRY)
+        assert len(actions) == len(TRANSITION_REGISTRY) - 1
 
 
 class TestMakeScheduledAction:
@@ -269,16 +286,6 @@ class TestMakeScheduledAction:
 
         # __exit__ still called (context manager handles cleanup)
         acquire_ctx.__exit__.assert_called_once()
-
-
-class TestStageSaveCheckpoint:
-    """Tests for stage_save_checkpoint() — should be a no-op."""
-
-    def test_is_noop(self, run_context: RunContext) -> None:
-        """stage_save_checkpoint is a no-op; StateMachine handles checkpoint saving."""
-        # Should not raise and not mutate ctx
-        stage_save_checkpoint(run_context)
-        assert run_context.run_result is None  # Not mutated
 
 
 class TestStageCleanupWorktree:
