@@ -110,7 +110,7 @@ def _generate_tier_summary_table(result: ExperimentResult) -> list[str]:
             ts = tier_result.token_stats
             # Calculate cost-of-pass for this tier
             best_subtest = result.tier_results[tier_id].subtest_results.get(
-                tier_result.best_subtest
+                tier_result.best_subtest or ""
             )
             if best_subtest and best_subtest.pass_rate > 0:
                 cop = tier_result.total_cost / best_subtest.pass_rate
@@ -538,7 +538,7 @@ def _generate_token_stats_section(token_stats: Any) -> list[str]:
 
 def _generate_criteria_comparison_table(
     all_criteria: set[str],
-    items: dict[str, Any],
+    items: dict[Any, Any],
     column_header_fn: Callable[[Any], str],
 ) -> list[str]:
     """Generate per-criteria comparison table markdown.

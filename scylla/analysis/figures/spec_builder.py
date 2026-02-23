@@ -158,7 +158,7 @@ def model_color_scale(models: list[str]) -> alt.Scale:
 
 
 def save_figure(
-    chart: alt.Chart,
+    chart: alt.TopLevelMixin,
     name: str,
     output_dir: Path,
     render: bool = True,
@@ -207,7 +207,7 @@ def save_figure(
 
 
 def _generate_latex_snippet(
-    name: str, output_dir: Path, chart: alt.Chart, custom_caption: str | None = None
+    name: str, output_dir: Path, chart: alt.TopLevelMixin, custom_caption: str | None = None
 ) -> None:
     """Generate LaTeX figure inclusion snippet.
 

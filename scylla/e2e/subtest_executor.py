@@ -216,7 +216,7 @@ def aggregate_run_results(
             grade_distribution[g] = grade_distribution.get(g, 0) + 1
 
         # Modal grade (most common)
-        modal_grade = max(grade_distribution, key=grade_distribution.get)
+        modal_grade = max(grade_distribution, key=lambda g: grade_distribution.get(g, 0))
 
         # Grade ordering for min/max (F=worst, S=best)
         grade_indices = [GRADE_ORDER.index(g) for g in grades if g in GRADE_ORDER]
