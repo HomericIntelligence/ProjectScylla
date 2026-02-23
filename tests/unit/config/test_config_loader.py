@@ -223,7 +223,10 @@ class TestConfigLoaderTier:
         tiers_dir = tmp_path / "config" / "tiers"
         tiers_dir.mkdir(parents=True)
 
-        tier_yaml = "tier: {tier}\nname: {name}\ndescription: Test\nuses_tools: false\nuses_delegation: false\nuses_hierarchy: false\n"
+        tier_yaml = (
+            "tier: {tier}\nname: {name}\ndescription: Test\n"
+            "uses_tools: false\nuses_delegation: false\nuses_hierarchy: false\n"
+        )
         (tiers_dir / "t0.yaml").write_text(tier_yaml.format(tier="t0", name="Real"))
         (tiers_dir / "_fixture.yaml").write_text(tier_yaml.format(tier="_fixture", name="Fixture"))
 
