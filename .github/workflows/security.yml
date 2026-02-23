@@ -36,4 +36,20 @@ jobs:
           key: pixi-lint-${{ runner.os }}-${{ hashFiles('pixi.lock') }}
 
       - name: Run pip-audit
+        id: pip-audit
         run: pixi run --environment lint pip-audit
+
+      - name: Post pip-audit summary
+        if: always()
+        env:
+          AUDIT_OUTCOME: ${{ steps.pip-audit.outcome }}
+        run: |
+          {
+            echo "## pip-audit Security Scan"
+            echo ""
+            if [ "$AUDIT_OUTCOME" = "success" ]; then
+              echo "No HIGH/CRITICAL vulnerabilities found."
+            else
+              echo "Vulnerabilities detected — see job logs for details."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
