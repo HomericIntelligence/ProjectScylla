@@ -134,7 +134,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 **Success Criteria:**
 
 - `pixi.toml` defines reproducible environments with pinned versions
-- `docker/Dockerfile` + `docker-compose.yml` support containerized agent execution
+- `docker/Dockerfile` + `docker/docker-compose.yml` support containerized agent execution
 - `.github/` CI workflows gate on tests and lint
 - `.pre-commit-config.yaml` enforces ruff, mypy, yamllint, markdownlint on commit
 - `.env.example` documents all required environment variables
@@ -142,7 +142,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 **Tasks to Evaluate:**
 
 1. Check `.github/` for CI workflow files and what they gate on
-2. Verify `docker/Dockerfile` and `docker-compose.yml` are complete and match `docs/design/container-architecture.md`
+2. Verify `docker/Dockerfile` and `docker/docker-compose.yml` are complete and match `docs/design/container-architecture.md`
 3. Check `pixi.toml` for version pinning strategy
 4. Verify `.pre-commit-config.yaml` hooks cover all configured linters
 5. Check `.env.example` lists all API keys needed (Anthropic, GitHub, etc.)

@@ -10,7 +10,7 @@ The conversion from `docs/research_paper.tex` to arXiv-ready submission package 
 
 ✅ Python converter script (`scripts/build_arxiv_paper.py`)
 ✅ Build pipeline script (`scripts/build_arxiv_submission.sh`)
-✅ Bibliography updates (`docs/references.bib`) - Added 4 missing @misc entries
+✅ Bibliography updates (`docs/arxiv/dryrun/references.bib`) - Added 4 missing @misc entries
 ✅ Figure handling (25 PDF figures + captions)
 ✅ Table handling (10 generated .tex files)
 ✅ Citation mapping ([1]-[10] → BibTeX keys)
