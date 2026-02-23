@@ -17,6 +17,11 @@ case "$1 $2" in
     "pr list")
         echo "${GH_MOCK_PR_JSON:-[]}"
         ;;
+    "pr view")
+        # Return closing issue references for the PR.
+        # GH_MOCK_PR_CLOSES: issue number this PR closes (default: 800)
+        echo "{\"closingIssuesReferences\":[{\"number\":${GH_MOCK_PR_CLOSES:-800}}]}"
+        ;;
     *)
         echo "{}"
         ;;
