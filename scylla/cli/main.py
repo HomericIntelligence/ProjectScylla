@@ -5,6 +5,7 @@ import statistics
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -150,7 +151,7 @@ def _load_results(test_id: str, base_path: Path = Path(".")) -> list[dict]:
 
     """
     runs_dir = base_path / "runs" / test_id
-    results = []
+    results: list[dict[str, Any]] = []
 
     if not runs_dir.exists():
         return results

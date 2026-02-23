@@ -176,10 +176,10 @@ def check_files(file_paths: list[Path]) -> int:
         Exit code (0 if clean, 1 if violations found)
 
     """
-    all_violations = []
+    all_violations: list[str] = []
 
     # Expand directories to Python files
-    files_to_check = []
+    files_to_check: list[Path] = []
     for path in file_paths:
         if path.is_dir():
             files_to_check.extend(path.rglob("*.py"))

@@ -574,7 +574,7 @@ class JudgeEvaluator:
 
         # Calculate requirement consensus
         requirement_consensus: dict[str, float] = {}
-        all_req_ids = set()
+        all_req_ids: set[str] = set()
         for j in valid_judgments:
             all_req_ids.update(j.requirements.keys())
 
@@ -585,7 +585,7 @@ class JudgeEvaluator:
 
         # Calculate category consensus
         category_consensus: dict[str, float] = {}
-        all_categories = set()
+        all_categories: set[str] = set()
         for j in valid_judgments:
             all_categories.update(j.categories.keys())
 

@@ -122,7 +122,6 @@ disable_error_code = [
     "attr-defined",    # 4 violations - attribute not defined
     "misc",            # 4 violations - miscellaneous type issues
     "union-attr",      # 4 violations - accessing attributes on unions
-    "var-annotated",   # 9 violations - missing type annotations for variables
 ]
 
 # tests/ has additional suppressed errors beyond scylla/ and scripts/
@@ -137,7 +136,7 @@ disable_error_code = [
     "attr-defined",    # 7 violations
     "misc",            # 3 violations
     "union-attr",      # 16 violations
-    "var-annotated",   # 7 violations
+    "var-annotated",   # violations in tests/unit/ (not matched by hyphenated tests/claude-code/)
     "call-arg",        # 30 violations - tests-only, zero in scylla/ and scripts/
 ]
 
