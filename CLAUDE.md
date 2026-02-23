@@ -165,6 +165,16 @@ Each tier is evaluated against:
 2. **Economic Metrics**: Cost-of-Pass (CoP), token distribution, component-level costs
 3. **Process Metrics**: Latency, consistency, strategic drift
 
+### Partial-Failure Semantics
+
+When multiple tiers run in parallel, a tier failure does **not** abort the experiment. The experiment
+continues with remaining tiers and can reach `experiment_state=COMPLETE` even if some tiers are in
+`FAILED` state. This is intentional — partial results are preserved and reported.
+
+**Operators must check `tier_states` in the checkpoint, not just `experiment_state`, to determine
+whether all tiers succeeded.** A complete experiment may contain a mix of `complete` and `failed`
+tier states.
+
 ## Core Metrics
 
 ProjectScylla evaluates agent performance across three metric categories:
