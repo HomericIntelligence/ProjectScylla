@@ -37,8 +37,8 @@ DEFAULT_RESULTS_DIR = Path.home() / "dryrun"
 DEFAULT_NUM_THREADS = 4
 DEFAULT_MODEL = "haiku"
 DEFAULT_JUDGE_MODEL = "haiku"
-DEFAULT_RUNS = 1
-DEFAULT_MAX_SUBTESTS = 2
+DEFAULT_RUNS = 3
+DEFAULT_MAX_SUBTESTS = 0  # 0 = no limit (all subtests)
 DEFAULT_TIERS = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
 
 
@@ -945,7 +945,7 @@ Examples:
         "--max-subtests",
         type=int,
         default=DEFAULT_MAX_SUBTESTS,
-        help=f"Max subtests per tier (default: {DEFAULT_MAX_SUBTESTS})",
+        help="Max subtests per tier (default: 0 = no limit, run all)",
     )
     parser.add_argument(
         "--tiers",
