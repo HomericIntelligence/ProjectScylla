@@ -218,6 +218,20 @@ class TestConfigLoaderTier:
         for key, config in tiers.items():
             assert key == config.tier, f"Key {key!r} does not match config.tier {config.tier!r}"
 
+    def test_load_all_tiers_skips_underscore_prefixed_fixtures(self, tmp_path: Path) -> None:
+        """load_all_tiers() silently skips _-prefixed fixture files."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+
+        tier_yaml = "tier: {tier}\nname: {name}\ndescription: Test\nuses_tools: false\nuses_delegation: false\nuses_hierarchy: false\n"
+        (tiers_dir / "t0.yaml").write_text(tier_yaml.format(tier="t0", name="Real"))
+        (tiers_dir / "_fixture.yaml").write_text(tier_yaml.format(tier="_fixture", name="Fixture"))
+
+        loader = ConfigLoader(base_path=tmp_path)
+        tiers = loader.load_all_tiers()
+
+        assert list(tiers.keys()) == ["t0"], "_-prefixed fixture must not appear in results"
+
 
 class TestConfigLoaderModel:
     """Tests for loading model configurations."""
