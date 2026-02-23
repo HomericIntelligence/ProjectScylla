@@ -23,12 +23,13 @@ import re
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 # Directory containing the organized agents
 AGENTS_DIR = Path(__file__).parent.parent / "agents"
 
 # Preset configurations
-PRESETS = {
+PRESETS: dict[str, Any] = {
     "junior-only": {
         "levels": [5],
         "desc": "L5 Junior Engineers (3 agents)",

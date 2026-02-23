@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from scylla.e2e.judge_selection import SubtestSelection
+    from scylla.e2e.judge_selection import JudgeSelection
     from scylla.e2e.models import SubTestResult, TierConfig
     from scylla.e2e.scheduler import ParallelismScheduler
 
@@ -109,7 +109,7 @@ class TierContext:
     tier_config: TierConfig | None = None
     tier_dir: Path | None = None
     subtest_results: dict[str, SubTestResult] = field(default_factory=dict)
-    selection: SubtestSelection | None = None
+    selection: JudgeSelection | None = None
     tier_result: TierResult | None = None
 
 

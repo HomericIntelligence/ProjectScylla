@@ -21,8 +21,7 @@ from scylla.e2e.paths import RESULT_FILE, get_judge_result_file
 from scylla.e2e.rate_limit import RateLimitError
 
 if TYPE_CHECKING:
-    from scylla.e2e.llm_judge import BuildPipelineResult
-    from scylla.judge.evaluator import JudgeResult
+    from scylla.e2e.llm_judge import BuildPipelineResult, JudgeResult
 
 logger = logging.getLogger(__name__)
 

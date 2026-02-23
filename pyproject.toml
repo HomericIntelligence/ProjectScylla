@@ -118,8 +118,6 @@ disable_error_code = [
     "assignment",      # 12 violations - type mismatches in assignments
     "operator",        # 13 violations - incompatible operand types
     "arg-type",        # 23 violations - incompatible argument types
-    "index",           # 3 violations - invalid indexing operations
-    "attr-defined",    # 4 violations - attribute not defined
     "union-attr",      # 4 violations - accessing attributes on unions
 ]
 

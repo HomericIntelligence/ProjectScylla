@@ -569,7 +569,7 @@ def status(test_id: str) -> None:
         return
 
     # Display summary by tier
-    tiers = {}
+    tiers: dict[str, dict[str, Any]] = {}
     for result in results:
         tier_id = result.get("tier_id", "unknown")
         if tier_id not in tiers:

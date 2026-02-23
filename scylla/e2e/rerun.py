@@ -400,9 +400,12 @@ def rerun_single_run(
     # Load task prompt
     task_prompt = config.task_prompt_file.read_text()
 
-    # Execute the run using SubTestExecutor
+    # Execute the run using RunContext + build_actions_dict
+    from scylla.e2e.stages import RunContext, build_actions_dict
+
     try:
-        run_result = executor._execute_single_run(
+        ctx = RunContext(
+            config=config,
             tier_id=tier_id,
             tier_config=tier_config,
             subtest=subtest_config,
@@ -412,8 +415,14 @@ def rerun_single_run(
             workspace=workspace,
             task_prompt=task_prompt,
             experiment_dir=experiment_dir,
+            tier_manager=tier_manager,
+            workspace_manager=workspace_manager,
+            adapter=executor.adapter,
         )
-        return run_result
+        actions = build_actions_dict(ctx)
+        for action in actions.values():
+            action()
+        return ctx.run_result
     except Exception as e:
         logger.error(f"Failed to re-run: {e}")
         return None
