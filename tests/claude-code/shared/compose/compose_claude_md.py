@@ -25,7 +25,7 @@ from typing import Any
 BLOCKS_DIR = Path(__file__).parent.parent / "blocks"
 
 # Block metadata
-BLOCKS = {
+BLOCKS: dict[str, Any] = {
     "B01": {"file": "B01-project-overview.md", "desc": "Project Overview", "lines": 11},
     "B02": {"file": "B02-critical-rules.md", "desc": "Critical Rules (Safety)", "lines": 55},
     "B03": {"file": "B03-quick-links.md", "desc": "Quick Links", "lines": 17},

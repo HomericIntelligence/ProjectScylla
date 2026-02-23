@@ -33,7 +33,6 @@ from pathlib import Path
 # These are the codes we re-enable when running the validation check
 DISABLED_ERROR_CODES = [
     "assignment",
-    "operator",
     "arg-type",
     "union-attr",
 ]

@@ -269,7 +269,7 @@ def _run_judge(
     if judges and consensus_score is not None:
         closest_judge = min(
             (j for j in judges if j.score is not None),
-            key=lambda j: abs(j.score - consensus_score),
+            key=lambda j: abs((j.score if j.score is not None else 0.0) - consensus_score),
         )
         primary_reasoning = closest_judge.reasoning
         primary_criteria_scores = closest_judge.criteria_scores or {}
