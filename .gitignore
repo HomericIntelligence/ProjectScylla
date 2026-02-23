@@ -1,5 +1,5 @@
 # Worktrees for parallel development
-worktree/
+/worktree/
 
 # Build artifacts
 build/
