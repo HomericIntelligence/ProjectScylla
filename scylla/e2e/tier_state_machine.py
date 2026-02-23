@@ -44,7 +44,7 @@ _TIER_STATE_SEQUENCE: list[TierState] = [
 ]
 
 # Terminal states — do not advance further
-_TIER_TERMINAL_STATES: frozenset[TierState] = frozenset([TierState.COMPLETE])
+_TIER_TERMINAL_STATES: frozenset[TierState] = frozenset([TierState.COMPLETE, TierState.FAILED])
 
 
 @dataclass
@@ -279,11 +279,20 @@ class TierStateMachine:
             Final TierState (COMPLETE or until_state)
 
         """
-        while not self.is_complete(tier_id):
-            current = self.get_state(tier_id)
-            if until_state is not None and current == until_state:
-                logger.info(f"[{tier_id}] Reached --until-tier target state: {until_state.value}")
-                break
-            self.advance(tier_id, actions)
+        try:
+            while not self.is_complete(tier_id):
+                current = self.get_state(tier_id)
+                if until_state is not None and current == until_state:
+                    logger.info(
+                        f"[{tier_id}] Reached --until-tier target state: {until_state.value}"
+                    )
+                    break
+                self.advance(tier_id, actions)
+        except Exception:
+            from scylla.e2e.checkpoint import save_checkpoint
+
+            self.checkpoint.set_tier_state(tier_id, TierState.FAILED.value)
+            save_checkpoint(self.checkpoint, self.checkpoint_path)
+            raise
 
         return self.get_state(tier_id)

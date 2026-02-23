@@ -430,7 +430,7 @@ main() {
                 fi
                 echo ""
                 echo "Run experiments:"
-                echo "  python scripts/run_e2e_experiment.py \\"
+                echo "  python scripts/manage_experiment.py run \\"
                 echo "    --tiers-dir tests/fixtures/tests/test-001 \\"
                 echo "    --tiers T0 --runs 1 -v"
                 echo ""
@@ -446,7 +446,7 @@ main() {
         *)
             # If unknown command, treat as a shell command
             # This allows running arbitrary commands like:
-            # docker run scylla-runner:latest python scripts/run_e2e_experiment.py --args
+            # docker run scylla-runner:latest python scripts/manage_experiment.py run --args
             ensure_clean_claude_environment
             exec "$@"
             ;;

@@ -36,7 +36,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from scylla.e2e.models import (
     E2ERunResult,
@@ -141,6 +141,9 @@ class RunContext:
     judges: list[JudgeResultSummary] = field(default_factory=list)
     judge_duration: float = 0.0
     run_result: E2ERunResult | None = None
+
+    # Adapter config passed between stage_generate_replay and stage_execute_agent
+    adapter_config: Any = None
 
     # Cross-process coordination
     coordinator: RateLimitCoordinator | None = None
@@ -414,7 +417,7 @@ def stage_generate_replay(ctx: RunContext) -> None:
     command_logger.save()
     command_logger.save_replay_script()
     # Store adapter_config for use in stage_execute_agent
-    ctx._adapter_config = adapter_config  # type: ignore[attr-defined]
+    ctx.adapter_config = adapter_config
 
 
 def stage_execute_agent(ctx: RunContext) -> None:
@@ -442,7 +445,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
     from scylla.e2e.command_logger import CommandLogger
 
     agent_dir = get_agent_dir(ctx.run_dir)
-    adapter_config = ctx._adapter_config  # type: ignore[attr-defined]
+    adapter_config = ctx.adapter_config
     replay_script = agent_dir / "replay.sh"
 
     logger.info(f"[AGENT] Running agent with model[{ctx.config.models[0]}]")

@@ -1,0 +1,268 @@
+"""State machine for subtest-level execution in E2E testing.
+
+This module provides a state machine that advances a single subtest through
+discrete, resumable states. Each transition saves a checkpoint, enabling
+resume from any point after a crash or kill signal.
+
+State flow for a single subtest (3 sequential states):
+  PENDING
+    -> RUNS_IN_PROGRESS  (start subtest runs)
+    -> RUNS_COMPLETE     (all runs finished)
+  Terminal: AGGREGATED
+
+"""
+
+from __future__ import annotations
+
+import logging
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from scylla.e2e.models import SubtestState
+
+if TYPE_CHECKING:
+    from scylla.e2e.checkpoint import E2ECheckpoint
+
+logger = logging.getLogger(__name__)
+
+
+# Ordered sequence of states for a normal subtest run
+_SUBTEST_STATE_SEQUENCE: list[SubtestState] = [
+    SubtestState.PENDING,
+    SubtestState.RUNS_IN_PROGRESS,
+    SubtestState.RUNS_COMPLETE,
+    SubtestState.AGGREGATED,
+]
+
+# Terminal states — do not advance further
+_SUBTEST_TERMINAL_STATES: frozenset[SubtestState] = frozenset([SubtestState.AGGREGATED])
+
+
+@dataclass
+class SubtestTransition:
+    """Describes a single state transition in the subtest state machine.
+
+    Attributes:
+        from_state: State before this transition
+        to_state: State after this transition completes successfully
+        description: Human-readable description for logging
+
+    """
+
+    from_state: SubtestState
+    to_state: SubtestState
+    description: str
+
+
+# Registry of all valid subtest transitions
+SUBTEST_TRANSITION_REGISTRY: list[SubtestTransition] = [
+    SubtestTransition(
+        from_state=SubtestState.PENDING,
+        to_state=SubtestState.RUNS_IN_PROGRESS,
+        description="Start subtest runs",
+    ),
+    SubtestTransition(
+        from_state=SubtestState.RUNS_IN_PROGRESS,
+        to_state=SubtestState.RUNS_COMPLETE,
+        description="All runs finished",
+    ),
+    SubtestTransition(
+        from_state=SubtestState.RUNS_COMPLETE,
+        to_state=SubtestState.AGGREGATED,
+        description="Aggregate run results",
+    ),
+]
+
+# Build lookup: from_state -> transition
+_SUBTEST_TRANSITION_BY_FROM: dict[SubtestState, SubtestTransition] = {
+    t.from_state: t for t in SUBTEST_TRANSITION_REGISTRY
+}
+
+
+def get_next_subtest_transition(current_state: SubtestState) -> SubtestTransition | None:
+    """Get the next transition from the current subtest state.
+
+    Args:
+        current_state: The current SubtestState
+
+    Returns:
+        SubtestTransition to execute next, or None if in a terminal/complete state.
+
+    """
+    return _SUBTEST_TRANSITION_BY_FROM.get(current_state)
+
+
+def is_subtest_terminal_state(state: SubtestState) -> bool:
+    """Return True if this subtest state requires no further transitions."""
+    return state in _SUBTEST_TERMINAL_STATES
+
+
+def validate_subtest_transition(from_state: SubtestState, to_state: SubtestState) -> bool:
+    """Validate that a subtest state transition is legal.
+
+    Args:
+        from_state: Current state
+        to_state: Proposed next state
+
+    Returns:
+        True if transition is valid
+
+    """
+    transition = _SUBTEST_TRANSITION_BY_FROM.get(from_state)
+    if transition is None:
+        return False
+    return transition.to_state == to_state
+
+
+@dataclass
+class SubtestStateMachine:
+    """Manages state transitions for a single subtest with checkpoint persistence.
+
+    Each call to advance() executes the next action, updates the subtest state
+    in the checkpoint, and saves the checkpoint atomically.
+
+    Usage:
+        ssm = SubtestStateMachine(checkpoint, checkpoint_path)
+        while not ssm.is_complete(tier_id, subtest_id):
+            new_state = ssm.advance(
+                tier_id,
+                subtest_id,
+                actions={SubtestState.PENDING: start_runs_fn, ...}
+            )
+
+    Attributes:
+        checkpoint: The experiment checkpoint (mutated in place)
+        checkpoint_path: Path to checkpoint file for atomic saves
+
+    """
+
+    checkpoint: E2ECheckpoint
+    checkpoint_path: Path
+
+    def get_state(self, tier_id: str, subtest_id: str) -> SubtestState:
+        """Get the current SubtestState for a subtest.
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+
+        Returns:
+            Current SubtestState enum value
+
+        """
+        state_str = self.checkpoint.get_subtest_state(tier_id, subtest_id)
+        try:
+            return SubtestState(state_str)
+        except ValueError:
+            logger.warning(f"Unknown subtest state '{state_str}', treating as PENDING")
+            return SubtestState.PENDING
+
+    def is_complete(self, tier_id: str, subtest_id: str) -> bool:
+        """Return True if the subtest is in a terminal state.
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+
+        Returns:
+            True if no further transitions are needed
+
+        """
+        return is_subtest_terminal_state(self.get_state(tier_id, subtest_id))
+
+    def advance(
+        self,
+        tier_id: str,
+        subtest_id: str,
+        actions: dict[SubtestState, Callable],
+    ) -> SubtestState:
+        """Advance the subtest by one state transition.
+
+        1. Reads the current state from the checkpoint.
+        2. Looks up the next transition in the registry.
+        3. Executes the transition action (if provided).
+        4. Updates the checkpoint state.
+        5. Saves the checkpoint atomically.
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+            actions: Map of from_state -> callable to execute for that transition.
+                     If a state is not in the map, the transition is a no-op
+                     (state is advanced without side effects).
+
+        Returns:
+            The new SubtestState after the transition.
+
+        Raises:
+            RuntimeError: If already in a terminal state
+            ValueError: If no transition is defined for the current state
+
+        """
+        from scylla.e2e.checkpoint import save_checkpoint
+
+        current = self.get_state(tier_id, subtest_id)
+
+        if is_subtest_terminal_state(current):
+            raise RuntimeError(
+                f"Cannot advance subtest {tier_id}/{subtest_id} from terminal state {current.value}"
+            )
+
+        transition = get_next_subtest_transition(current)
+        if transition is None:
+            raise ValueError(
+                f"No transition defined from subtest state {current.value} "
+                f"for {tier_id}/{subtest_id}"
+            )
+
+        logger.debug(
+            f"[{tier_id}/{subtest_id}] {current.value} -> "
+            f"{transition.to_state.value}: {transition.description}"
+        )
+
+        # Execute the action if provided
+        action = actions.get(current)
+        if action is not None:
+            _t0 = time.monotonic()
+            action()
+            _elapsed = time.monotonic() - _t0
+            logger.info(
+                f"[{tier_id}/{subtest_id}] {current.value} -> {transition.to_state.value}: "
+                f"{transition.description} ({_elapsed:.1f}s)"
+            )
+
+        # Update state in checkpoint
+        self.checkpoint.set_subtest_state(tier_id, subtest_id, transition.to_state.value)
+
+        # Save checkpoint atomically
+        save_checkpoint(self.checkpoint, self.checkpoint_path)
+
+        return transition.to_state
+
+    def advance_to_completion(
+        self,
+        tier_id: str,
+        subtest_id: str,
+        actions: dict[SubtestState, Callable],
+    ) -> SubtestState:
+        """Advance the subtest through all states until AGGREGATED is reached.
+
+        Useful for running a complete subtest from start or resuming from any state.
+        On exception, the exception propagates without marking the subtest as failed.
+
+        Args:
+            tier_id: Tier identifier
+            subtest_id: Subtest identifier
+            actions: Map of from_state -> callable
+
+        Returns:
+            Final SubtestState (AGGREGATED)
+
+        """
+        while not self.is_complete(tier_id, subtest_id):
+            self.advance(tier_id, subtest_id, actions)
+
+        return self.get_state(tier_id, subtest_id)

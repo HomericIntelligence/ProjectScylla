@@ -235,10 +235,10 @@ ProjectScylla provides comprehensive scripts for running, managing, and analyzin
 
 ```bash
 # Run full experiment
-pixi run python scripts/run_e2e_experiment.py --config config/test.yaml
+pixi run python scripts/manage_experiment.py run --config config/test.yaml
 
 # Run specific tiers
-pixi run python scripts/run_e2e_experiment.py \
+pixi run python scripts/manage_experiment.py run \
   --tiers-dir tests/fixtures/tests/test-001 \
   --tiers T0 T1 --runs 10 -v
 ```

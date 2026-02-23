@@ -249,6 +249,7 @@ class SubTestExecutor:
         from scylla.e2e.models import SubtestState
         from scylla.e2e.stages import RunContext, build_actions_dict
         from scylla.e2e.state_machine import StateMachine
+        from scylla.e2e.subtest_state_machine import SubtestStateMachine
 
         runs: list[E2ERunResult] = []
         results_dir.mkdir(parents=True, exist_ok=True)
@@ -263,173 +264,205 @@ class SubTestExecutor:
         # propagated back to subsequent RunContext instances below.
         pipeline_baseline: BuildPipelineResult | None = None
 
-        if checkpoint:
-            checkpoint.set_subtest_state(
-                tier_id.value, subtest.id, SubtestState.RUNS_IN_PROGRESS.value
-            )
-
-        for run_num in range(1, self.config.runs_per_subtest + 1):
-            # Check for shutdown before starting run
-            if coordinator and coordinator.is_shutdown_requested():
-                logger.warning(
-                    f"Shutdown requested before run {run_num} of "
-                    f"{tier_id.value}/{subtest.id}, stopping..."
-                )
-                break
-
-            # Check coordinator for pause signal before each run
-            if coordinator:
-                coordinator.check_if_paused()
-
-            run_dir = results_dir / f"run_{run_num:02d}"
-            workspace = run_dir / "workspace"
-
-            # Build checkpoint/state-machine objects for this run
-            sm = (
-                StateMachine(
-                    checkpoint=checkpoint,
-                    checkpoint_path=checkpoint_path,
-                )
-                if checkpoint and checkpoint_path
-                else None
-            )
-
-            # Check if already in a terminal state (fully complete or previously failed)
-            if sm and sm.is_complete(tier_id.value, subtest.id, run_num):
-                run_result_file = run_dir / "run_result.json"
-                if run_dir.exists() and run_result_file.exists():
-                    from scylla.e2e.rate_limit import validate_run_result
-
-                    is_valid, failure_reason = validate_run_result(run_dir)
-                    if not is_valid:
-                        logger.warning(
-                            f"Previously completed run is invalid ({failure_reason}), re-running..."
-                        )
-                        _move_to_failed(run_dir)
-                        if checkpoint and checkpoint_path:
-                            checkpoint.unmark_run_completed(tier_id.value, subtest.id, run_num)
-                            from scylla.e2e.checkpoint import save_checkpoint
-
-                            save_checkpoint(checkpoint, checkpoint_path)
-                        # Fall through to re-run
-                    else:
-                        logger.info(
-                            f"Skipping completed run: "
-                            f"{tier_id.value}/{subtest.id}/run_{run_num:02d}"
-                        )
-                        with open(run_result_file) as f:
-                            report_data = json.load(f)
-
-                        run_result = E2ERunResult(
-                            run_number=report_data["run_number"],
-                            exit_code=report_data["exit_code"],
-                            token_stats=TokenStats.from_dict(report_data["token_stats"]),
-                            cost_usd=report_data["cost_usd"],
-                            duration_seconds=report_data["duration_seconds"],
-                            agent_duration_seconds=report_data.get("agent_duration_seconds", 0.0),
-                            judge_duration_seconds=report_data.get("judge_duration_seconds", 0.0),
-                            judge_score=report_data["judge_score"],
-                            judge_passed=report_data["judge_passed"],
-                            judge_grade=report_data["judge_grade"],
-                            judge_reasoning=report_data["judge_reasoning"],
-                            workspace_path=Path(report_data["workspace_path"]),
-                            logs_path=Path(report_data["logs_path"]),
-                            command_log_path=(
-                                Path(report_data["command_log_path"])
-                                if report_data.get("command_log_path")
-                                else None
-                            ),
-                            criteria_scores=report_data.get("criteria_scores") or {},
-                            baseline_pipeline_summary=report_data.get("baseline_pipeline_summary"),
-                        )
-                        runs.append(run_result)
-                        last_workspace = workspace
-                        continue
-
-            run_dir.mkdir(parents=True, exist_ok=True)
-            workspace.mkdir(parents=True, exist_ok=True)
-            last_workspace = workspace
-
-            # Build RunContext for this run
-            ctx = RunContext(
-                config=self.config,
-                tier_id=tier_id,
-                tier_config=tier_config,
-                subtest=subtest,
-                baseline=baseline,
-                run_number=run_num,
-                run_dir=run_dir,
-                workspace=workspace,
-                experiment_dir=experiment_dir,
-                tier_manager=self.tier_manager,
-                workspace_manager=self.workspace_manager,
-                adapter=self.adapter,
-                pipeline_baseline=pipeline_baseline,
-                task_prompt=task_prompt,
-                coordinator=coordinator,
+        # Build subtest state machine if checkpoint is available
+        ssm = (
+            SubtestStateMachine(
                 checkpoint=checkpoint,
                 checkpoint_path=checkpoint_path,
             )
+            if checkpoint and checkpoint_path
+            else None
+        )
 
-            actions = build_actions_dict(ctx, scheduler=scheduler)
+        def _run_loop() -> None:
+            nonlocal last_workspace, pipeline_baseline
 
-            try:
-                if sm:
-                    sm.advance_to_completion(
-                        tier_id.value,
-                        subtest.id,
-                        run_num,
-                        actions,
-                        until_state=self.config.until_run_state,
+            for run_num in range(1, self.config.runs_per_subtest + 1):
+                # Check for shutdown before starting run
+                if coordinator and coordinator.is_shutdown_requested():
+                    logger.warning(
+                        f"Shutdown requested before run {run_num} of "
+                        f"{tier_id.value}/{subtest.id}, stopping..."
                     )
-                else:
-                    # No checkpoint — run all stages directly without state machine
-                    for action in actions.values():
-                        action()
+                    break
 
-                if ctx.run_result:
-                    runs.append(ctx.run_result)
-
-                # Propagate pipeline_baseline to subsequent runs
-                if ctx.pipeline_baseline is not None and pipeline_baseline is None:
-                    pipeline_baseline = ctx.pipeline_baseline
-
-            except RateLimitError as e:
-                # Move the run directory to .failed/ so run number can be reused
-                if run_dir.exists():
-                    _move_to_failed(run_dir)
-
-                # Signal coordinator if available
+                # Check coordinator for pause signal before each run
                 if coordinator:
-                    coordinator.signal_rate_limit(e.info)
-                # Re-raise to be handled at higher level
-                raise
+                    coordinator.check_if_paused()
 
-        if checkpoint:
-            checkpoint.set_subtest_state(
-                tier_id.value, subtest.id, SubtestState.RUNS_COMPLETE.value
-            )
+                run_dir = results_dir / f"run_{run_num:02d}"
+                workspace = run_dir / "workspace"
 
-        # Save resource manifest for inheritance (no file copying)
-        # Use last workspace if available, otherwise use the final run's workspace path
-        if last_workspace is None and self.config.runs_per_subtest > 0:
-            # No runs were executed (all completed via checkpoint), use last run's workspace
-            last_run_num = self.config.runs_per_subtest
-            last_workspace = results_dir / f"run_{last_run_num:02d}" / "workspace"
+                # Build checkpoint/state-machine objects for this run
+                sm = (
+                    StateMachine(
+                        checkpoint=checkpoint,
+                        checkpoint_path=checkpoint_path,
+                    )
+                    if checkpoint and checkpoint_path
+                    else None
+                )
 
-        if last_workspace is not None:
-            self.tier_manager.save_resource_manifest(
-                results_dir=results_dir,
-                tier_id=tier_id,
-                subtest=subtest,
-                workspace=last_workspace,
-                baseline=baseline,
-            )
+                # Check if already in a terminal state (fully complete or previously failed)
+                if sm and sm.is_complete(tier_id.value, subtest.id, run_num):
+                    run_result_file = run_dir / "run_result.json"
+                    if run_dir.exists() and run_result_file.exists():
+                        from scylla.e2e.rate_limit import validate_run_result
 
-        # Aggregate results
-        result = self._aggregate_results(tier_id, subtest.id, runs)
+                        is_valid, failure_reason = validate_run_result(run_dir)
+                        if not is_valid:
+                            logger.warning(
+                                f"Previously completed run is invalid"
+                                f" ({failure_reason}), re-running..."
+                            )
+                            _move_to_failed(run_dir)
+                            if checkpoint and checkpoint_path:
+                                checkpoint.unmark_run_completed(tier_id.value, subtest.id, run_num)
+                                from scylla.e2e.checkpoint import save_checkpoint
 
-        return result
+                                save_checkpoint(checkpoint, checkpoint_path)
+                            # Fall through to re-run
+                        else:
+                            logger.info(
+                                f"Skipping completed run: "
+                                f"{tier_id.value}/{subtest.id}/run_{run_num:02d}"
+                            )
+                            with open(run_result_file) as f:
+                                report_data = json.load(f)
+
+                            run_result = E2ERunResult(
+                                run_number=report_data["run_number"],
+                                exit_code=report_data["exit_code"],
+                                token_stats=TokenStats.from_dict(report_data["token_stats"]),
+                                cost_usd=report_data["cost_usd"],
+                                duration_seconds=report_data["duration_seconds"],
+                                agent_duration_seconds=report_data.get(
+                                    "agent_duration_seconds", 0.0
+                                ),
+                                judge_duration_seconds=report_data.get(
+                                    "judge_duration_seconds", 0.0
+                                ),
+                                judge_score=report_data["judge_score"],
+                                judge_passed=report_data["judge_passed"],
+                                judge_grade=report_data["judge_grade"],
+                                judge_reasoning=report_data["judge_reasoning"],
+                                workspace_path=Path(report_data["workspace_path"]),
+                                logs_path=Path(report_data["logs_path"]),
+                                command_log_path=(
+                                    Path(report_data["command_log_path"])
+                                    if report_data.get("command_log_path")
+                                    else None
+                                ),
+                                criteria_scores=report_data.get("criteria_scores") or {},
+                                baseline_pipeline_summary=report_data.get(
+                                    "baseline_pipeline_summary"
+                                ),
+                            )
+                            runs.append(run_result)
+                            last_workspace = workspace
+                            continue
+
+                run_dir.mkdir(parents=True, exist_ok=True)
+                workspace.mkdir(parents=True, exist_ok=True)
+                last_workspace = workspace
+
+                # Build RunContext for this run
+                ctx = RunContext(
+                    config=self.config,
+                    tier_id=tier_id,
+                    tier_config=tier_config,
+                    subtest=subtest,
+                    baseline=baseline,
+                    run_number=run_num,
+                    run_dir=run_dir,
+                    workspace=workspace,
+                    experiment_dir=experiment_dir,
+                    tier_manager=self.tier_manager,
+                    workspace_manager=self.workspace_manager,
+                    adapter=self.adapter,
+                    pipeline_baseline=pipeline_baseline,
+                    task_prompt=task_prompt,
+                    coordinator=coordinator,
+                    checkpoint=checkpoint,
+                    checkpoint_path=checkpoint_path,
+                )
+
+                actions = build_actions_dict(ctx, scheduler=scheduler)
+
+                try:
+                    if sm:
+                        sm.advance_to_completion(
+                            tier_id.value,
+                            subtest.id,
+                            run_num,
+                            actions,
+                            until_state=self.config.until_run_state,
+                        )
+                    else:
+                        # No checkpoint — run all stages directly without state machine
+                        for action in actions.values():
+                            action()
+
+                    if ctx.run_result:
+                        runs.append(ctx.run_result)
+
+                    # Propagate pipeline_baseline to subsequent runs
+                    if ctx.pipeline_baseline is not None and pipeline_baseline is None:
+                        pipeline_baseline = ctx.pipeline_baseline
+
+                except RateLimitError as e:
+                    # Move the run directory to .failed/ so run number can be reused
+                    if run_dir.exists():
+                        _move_to_failed(run_dir)
+
+                    # Signal coordinator if available
+                    if coordinator:
+                        coordinator.signal_rate_limit(e.info)
+                    # Re-raise to be handled at higher level
+                    raise
+
+        def _save_resource_manifest() -> None:
+            nonlocal last_workspace
+
+            # Save resource manifest for inheritance (no file copying)
+            # Use last workspace if available, otherwise use the final run's workspace path
+            if last_workspace is None and self.config.runs_per_subtest > 0:
+                # No runs were executed (all completed via checkpoint), use last run's workspace
+                last_run_num = self.config.runs_per_subtest
+                last_workspace = results_dir / f"run_{last_run_num:02d}" / "workspace"
+
+            if last_workspace is not None:
+                self.tier_manager.save_resource_manifest(
+                    results_dir=results_dir,
+                    tier_id=tier_id,
+                    subtest=subtest,
+                    workspace=last_workspace,
+                    baseline=baseline,
+                )
+
+        def _aggregate() -> None:
+            nonlocal result
+            result = self._aggregate_results(tier_id, subtest.id, runs)
+
+        def _run_loop_and_save_manifest() -> None:
+            _run_loop()
+            _save_resource_manifest()
+
+        result: SubTestResult | None = None
+
+        subtest_actions = {
+            SubtestState.PENDING: _run_loop_and_save_manifest,
+            SubtestState.RUNS_IN_PROGRESS: _run_loop_and_save_manifest,
+            SubtestState.RUNS_COMPLETE: _aggregate,
+        }
+
+        if ssm:
+            ssm.advance_to_completion(tier_id.value, subtest.id, subtest_actions)
+        else:
+            _run_loop_and_save_manifest()
+            _aggregate()
+
+        return result if result is not None else self._aggregate_results(tier_id, subtest.id, runs)
 
     def _compute_judge_consensus(
         self, judges: list

@@ -139,6 +139,7 @@ class TierState(str, Enum):
     BEST_SELECTED = "best_selected"
     REPORTS_GENERATED = "reports_generated"
     COMPLETE = "complete"
+    FAILED = "failed"
 
 
 class ExperimentState(str, Enum):

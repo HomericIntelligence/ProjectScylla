@@ -41,12 +41,12 @@ Start an interactive container where you can run multiple experiments:
 ./scripts/launch_container_shell.sh
 
 # Inside the container, run experiments:
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-001 \
     --tiers T0 --runs 1 -v
 
 # Run another experiment
-python scripts/run_e2e_experiment.py \
+python scripts/manage_experiment.py run \
     --tiers-dir tests/fixtures/tests/test-002 \
     --tiers T1 T2 --runs 5
 
@@ -101,7 +101,7 @@ Results are written to the mounted `results/` directory and persist on the host.
 
 - Auto-builds image if missing
 - Mounts credentials and project directory
-- Runs `python scripts/run_e2e_experiment.py` with your arguments
+- Runs `python scripts/manage_experiment.py run` with your arguments
 - Container auto-removes after completion (`--rm`)
 - Passes through all experiment arguments
 
@@ -174,10 +174,10 @@ docker exec -it my-experiment-session bash
 ./scripts/launch_container_shell.sh dev-session
 
 # Inside container: run experiments iteratively
-python scripts/run_e2e_experiment.py --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 -v
+python scripts/manage_experiment.py run --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 -v
 # ... review results ...
 
-python scripts/run_e2e_experiment.py --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 --fresh -v
+python scripts/manage_experiment.py run --tiers-dir tests/fixtures/tests/test-001 --tiers T0 --runs 1 --fresh -v
 # ... review results ...
 
 # Exit when done
@@ -317,7 +317,7 @@ VOLUMES+=(
    - Sets up Claude Code environment
    - Executes experiment script or opens shell
 
-3. **Experiment** (`run_e2e_experiment.py`):
+3. **Experiment** (`manage_experiment.py`):
    - Runs entirely inside single container
    - Agents execute directly (no nested containers)
    - Judges evaluate directly (no nested containers)

@@ -102,23 +102,3 @@ class TestValidateModel:
         ):
             with patch("scylla.e2e.model_validation.time.sleep"):
                 assert validate_model("claude-model", max_retries=1, base_delay=0) is False
-
-    def test_is_importable_from_run_e2e_experiment(self) -> None:
-        """validate_model should still be importable from run_e2e_experiment for compat."""
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            from scripts.run_e2e_experiment import validate_model as compat_fn
-
-        assert callable(compat_fn)
-
-    def test_is_rate_limit_error_importable_from_run_e2e_experiment(self) -> None:
-        """is_rate_limit_error should still be importable from run_e2e_experiment for compat."""
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            from scripts.run_e2e_experiment import is_rate_limit_error as compat_fn
-
-        assert callable(compat_fn)
