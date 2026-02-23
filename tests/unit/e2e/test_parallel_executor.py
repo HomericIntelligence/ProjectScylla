@@ -179,3 +179,217 @@ class TestRateLimitCoordinatorCheckIfPaused:
             assert result is True
             # resume event should be cleared
             assert not coordinator._resume_event.is_set()
+
+
+class TestRunSubtestInProcessSafe:
+    """Tests for _run_subtest_in_process_safe — the safe wrapper function.
+
+    This wrapper prevents worker crashes from poisoning ProcessPoolExecutor
+    by catching all exceptions and returning structured SubTestResult objects.
+    """
+
+    # ------------------------------------------------------------------
+    # Fixtures / helpers
+    # ------------------------------------------------------------------
+
+    def _make_subtest_config(self):
+        """Create a minimal SubTestConfig for testing."""
+        from scylla.e2e.models import SubTestConfig
+
+        return SubTestConfig(
+            id="test-01",
+            name="Test Sub-test",
+            description="A sub-test used in unit tests",
+        )
+
+    def _make_call_args(self, tmp_path) -> dict:
+        """Build the keyword arguments for _run_subtest_in_process_safe.
+
+        Uses MagicMock for complex objects since _run_subtest_in_process is mocked.
+        """
+        from unittest.mock import MagicMock
+
+        from scylla.e2e.models import TierID
+
+        subtest = self._make_subtest_config()
+
+        # Config and tier_config are passed through to the mocked inner function,
+        # so MagicMock objects work fine here.
+        config = MagicMock()
+        tier_config = MagicMock()
+
+        return dict(
+            config=config,
+            tier_id=TierID.T0,
+            tier_config=tier_config,
+            subtest=subtest,
+            baseline=None,
+            results_dir=tmp_path / "results",
+            tiers_dir=tmp_path / "tiers",
+            base_repo=tmp_path / "repo",
+            repo_url="https://github.com/example/repo.git",
+            commit=None,
+            checkpoint=None,
+            checkpoint_path=None,
+            coordinator=None,
+            global_semaphore=None,
+            experiment_dir=None,
+        )
+
+    # ------------------------------------------------------------------
+    # Tests
+    # ------------------------------------------------------------------
+
+    def test_success_passthrough(self, tmp_path) -> None:
+        """When _run_subtest_in_process succeeds, result is passed through unchanged."""
+        from unittest.mock import patch
+
+        from scylla.e2e.models import SubTestResult, TierID
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
+
+        expected_result = SubTestResult(
+            subtest_id="test-01",
+            tier_id=TierID.T0,
+            runs=[],
+            pass_rate=1.0,
+            mean_score=1.0,
+            median_score=1.0,
+            std_dev_score=0.0,
+            mean_cost=0.01,
+            total_cost=0.01,
+            consistency=1.0,
+            selection_reason="Success",
+        )
+
+        call_args = self._make_call_args(tmp_path)
+
+        with patch(
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
+            return_value=expected_result,
+        ) as mock_inner:
+            result = _run_subtest_in_process_safe(**call_args)
+
+        mock_inner.assert_called_once()
+        assert result is expected_result
+
+    def test_rate_limit_error_handling(self, tmp_path) -> None:
+        """RateLimitError is caught; SubTestResult has rate_limit_info set."""
+        from unittest.mock import patch
+
+        from scylla.e2e.models import SubTestResult, TierID
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
+        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
+
+        rate_info = RateLimitInfo(
+            source="agent",
+            retry_after_seconds=60.0,
+            error_message="Too Many Requests",
+            detected_at="2026-01-01T00:00:00Z",
+        )
+
+        call_args = self._make_call_args(tmp_path)
+
+        with patch(
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
+            side_effect=RateLimitError(rate_info),
+        ):
+            result = _run_subtest_in_process_safe(**call_args)
+
+        assert isinstance(result, SubTestResult)
+        assert result.rate_limit_info is not None
+        assert result.rate_limit_info.source == "agent"
+        assert result.rate_limit_info.retry_after_seconds == 60.0
+        assert result.rate_limit_info.error_message == "Too Many Requests"
+        assert result.selection_reason.startswith("RateLimitError:")
+        assert result.subtest_id == "test-01"
+        assert result.tier_id == TierID.T0
+        assert result.pass_rate == 0.0
+
+    def test_generic_exception_handling(self, tmp_path) -> None:
+        """Generic Exception is caught; SubTestResult carries error info."""
+        from unittest.mock import patch
+
+        from scylla.e2e.models import SubTestResult, TierID
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
+
+        call_args = self._make_call_args(tmp_path)
+
+        with patch(
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
+            side_effect=RuntimeError("something went very wrong"),
+        ):
+            result = _run_subtest_in_process_safe(**call_args)
+
+        assert isinstance(result, SubTestResult)
+        assert result.rate_limit_info is None
+        assert "RuntimeError" in result.selection_reason
+        assert "something went very wrong" in result.selection_reason
+        assert result.selection_reason.startswith("WorkerError:")
+        assert result.subtest_id == "test-01"
+        assert result.tier_id == TierID.T0
+        assert result.pass_rate == 0.0
+
+    def test_never_raises(self, tmp_path) -> None:
+        """Safe wrapper never raises for any Exception subclass from inner function.
+
+        The wrapper catches Exception (and RateLimitError), converting them to
+        structured SubTestResult objects.  BaseException subclasses like SystemExit
+        are intentionally NOT suppressed (they signal process termination).
+        """
+        from unittest.mock import patch
+
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
+
+        call_args = self._make_call_args(tmp_path)
+
+        for exc in [
+            ValueError("bad value"),
+            KeyError("missing key"),
+            MemoryError("out of memory"),
+            OSError("disk full"),
+        ]:
+            with patch(
+                "scylla.e2e.parallel_executor._run_subtest_in_process",
+                side_effect=exc,
+            ):
+                try:
+                    _run_subtest_in_process_safe(**call_args)
+                except Exception as raised:  # noqa: BLE001
+                    raise AssertionError(
+                        f"_run_subtest_in_process_safe raised {type(raised).__name__} "
+                        f"when it should never raise"
+                    ) from raised
+
+    def test_returns_subtest_result_type(self, tmp_path) -> None:
+        """Return type is always SubTestResult regardless of inner outcome."""
+        from unittest.mock import patch
+
+        from scylla.e2e.models import SubTestResult
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
+        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
+
+        call_args = self._make_call_args(tmp_path)
+
+        scenarios = [
+            RuntimeError("worker blew up"),
+            ValueError("unexpected value"),
+            RateLimitError(
+                RateLimitInfo(
+                    source="judge",
+                    retry_after_seconds=30.0,
+                    error_message="judge rate limited",
+                    detected_at="2026-01-01T00:00:00Z",
+                )
+            ),
+        ]
+
+        for exc in scenarios:
+            with patch(
+                "scylla.e2e.parallel_executor._run_subtest_in_process",
+                side_effect=exc,
+            ):
+                result = _run_subtest_in_process_safe(**call_args)
+                assert isinstance(result, SubTestResult), (
+                    f"Expected SubTestResult but got {type(result).__name__} "
+                    f"when inner raised {type(exc).__name__}"
+                )
