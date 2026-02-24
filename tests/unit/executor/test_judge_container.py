@@ -226,6 +226,7 @@ class TestJudgeContainerManagerCreateContainerConfig:
         container_config = manager.create_container_config(config)
 
         assert container_config.image == "scylla-runner:latest"
+        assert container_config.name is not None
         assert container_config.name.startswith("scylla-judge-")
         assert container_config.network == "none"
         assert output.exists()  # Output dir should be created

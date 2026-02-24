@@ -58,7 +58,7 @@ class TestHeartbeatIsStale:
 
     def test_none_is_stale(self) -> None:
         """Verify a None heartbeat is considered stale."""
-        assert _heartbeat_is_stale(None, timeout_seconds=120) is True
+        assert _heartbeat_is_stale(None, timeout_seconds=120) is True  # type: ignore[arg-type]
 
     def test_fresh_heartbeat_is_not_stale(self) -> None:
         """Verify a recent heartbeat timestamp is not stale."""

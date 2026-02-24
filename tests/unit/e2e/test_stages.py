@@ -308,7 +308,7 @@ class TestStageCleanupWorktree:
 
         stage_cleanup_worktree(run_context)
 
-        run_context.workspace_manager.cleanup_worktree.assert_called_once_with(
+        run_context.workspace_manager.cleanup_worktree.assert_called_once_with(  # type: ignore[attr-defined]
             run_context.workspace
         )
 
@@ -322,7 +322,7 @@ class TestStageCleanupWorktree:
 
         stage_cleanup_worktree(run_context)
 
-        run_context.workspace_manager.cleanup_worktree.assert_not_called()
+        run_context.workspace_manager.cleanup_worktree.assert_not_called()  # type: ignore[attr-defined]
 
 
 # ---------------------------------------------------------------------------
@@ -466,7 +466,7 @@ class TestStageApplySymlinks:
         """stage_apply_symlinks calls prepare_workspace with correct args."""
         stage_apply_symlinks(stage_context)
 
-        stage_context.tier_manager.prepare_workspace.assert_called_once_with(
+        stage_context.tier_manager.prepare_workspace.assert_called_once_with(  # type: ignore[attr-defined]
             workspace=stage_context.workspace,
             tier_id=TierID.T0,
             subtest_id="00-empty",
@@ -479,7 +479,7 @@ class TestStageApplySymlinks:
         """For non-T5 tiers, merged_resources is None."""
         stage_apply_symlinks(stage_context)
 
-        call_kwargs = stage_context.tier_manager.prepare_workspace.call_args[1]
+        call_kwargs = stage_context.tier_manager.prepare_workspace.call_args[1]  # type: ignore[attr-defined]
         assert call_kwargs["merged_resources"] is None
 
 
@@ -674,11 +674,11 @@ class TestStageExecuteAgent:
         mock_proc.stderr = ""
         mock_proc.returncode = 0
 
-        stage_context.adapter._parse_token_stats.return_value = AdapterTokenStats(
+        stage_context.adapter._parse_token_stats.return_value = AdapterTokenStats(  # type: ignore[attr-defined]
             input_tokens=100, output_tokens=50
         )
-        stage_context.adapter._parse_api_calls.return_value = 1
-        stage_context.adapter._parse_cost.return_value = 0.05
+        stage_context.adapter._parse_api_calls.return_value = 1  # type: ignore[attr-defined]
+        stage_context.adapter._parse_cost.return_value = 0.05  # type: ignore[attr-defined]
 
         with patch("subprocess.run", return_value=mock_proc):
             stage_execute_agent(stage_context)
@@ -865,7 +865,7 @@ class TestStageFinalizeRun:
                 input_tokens=100,
                 output_tokens=50,
                 cache_read_tokens=0,
-                cache_write_tokens=0,
+                cache_creation_tokens=0,
             ),
             cost_usd=0.05,
             api_calls=1,
@@ -964,7 +964,7 @@ class TestStageWriteReport:
                 input_tokens=100,
                 output_tokens=50,
                 cache_read_tokens=0,
-                cache_write_tokens=0,
+                cache_creation_tokens=0,
             ),
             cost_usd=0.05,
             api_calls=1,

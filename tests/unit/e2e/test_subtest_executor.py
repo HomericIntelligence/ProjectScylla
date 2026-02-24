@@ -165,6 +165,7 @@ class TestComputeJudgeConsensus:
 
         score, passed, grade = executor._compute_judge_consensus(judges)
 
+        assert score is not None
         assert abs(score - 0.85) < 0.001  # Average of 0.8 and 0.9
         assert passed is True
         assert grade == "A"  # Grade for 0.85 (>= 0.80)
@@ -208,6 +209,7 @@ class TestComputeJudgeConsensus:
         score, passed, grade = executor._compute_judge_consensus(judges)
 
         # Invalid judge is excluded from consensus
+        assert score is not None
         assert abs(score - 0.9) < 0.001  # Only valid judge (0.9)
         assert passed is True
         assert grade == "A"  # Grade for 0.9

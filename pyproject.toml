@@ -95,7 +95,6 @@ addopts = [
 [tool.mypy]
 python_version = "3.10"
 # Incremental mypy adoption — Phases 1-6 of #687 complete (scylla/ + scripts/ clean).
-# tests/ override tracks real errors; see #940 for cleanup.
 # Remaining strict settings: Phase 7a-c (#1083-#1085), Phase 9 (#1086).
 warn_unused_configs = true
 ignore_missing_imports = true
@@ -111,22 +110,6 @@ warn_unused_ignores = true
 # Allow flexible typing while codebase type coverage improves
 allow_redefinition = true
 implicit_reexport = true
-
-# tests/ has real errors suppressed while they are fixed incrementally (see #940)
-[[tool.mypy.overrides]]
-module = "tests.*"
-disable_error_code = [
-    "operator",        # violations in tests/unit/
-    "arg-type",        # violations in tests/unit/
-    "index",           # violations in tests/unit/
-    "attr-defined",    # violations in tests/unit/
-    "union-attr",      # violations in tests/unit/
-    "var-annotated",   # violations in tests/unit/ (not matched by hyphenated tests/claude-code/)
-    "call-arg",        # tests-only, zero in scylla/ and scripts/
-    "misc",            # violations in tests/unit/
-    "method-assign",   # violations in tests/unit/ (method monkey-patching in test mocks)
-    "unused-ignore",   # type: ignore comments in tests/ suppress the above codes
-]
 
 
 [tool.coverage.run]

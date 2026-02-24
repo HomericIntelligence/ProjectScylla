@@ -39,13 +39,10 @@ def experiment_config() -> ExperimentConfig:
 def tier_config() -> TierConfig:
     """Create a minimal tier configuration for testing."""
     return TierConfig(
-        id="T0",
-        name="Baseline",
-        description="Test tier",
-        system_prompt_mode="empty",
+        tier_id=TierID.T0,
         subtests=[
-            SubTestConfig(id="T0_00", description="Test 1"),
-            SubTestConfig(id="T0_01", description="Test 2"),
+            SubTestConfig(id="T0_00", name="Test 1", description="Test 1"),
+            SubTestConfig(id="T0_01", name="Test 2", description="Test 2"),
         ],
     )
 

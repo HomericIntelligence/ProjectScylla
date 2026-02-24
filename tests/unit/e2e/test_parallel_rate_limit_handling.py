@@ -116,6 +116,7 @@ class TestRateLimitCoordinator:
 
         # Check that agent info is stored
         stored_info = coordinator.get_rate_limit_info()
+        assert stored_info is not None
         assert stored_info.source == "agent"
         assert "Agent rate limit" in stored_info.error_message
 
@@ -130,6 +131,7 @@ class TestRateLimitCoordinator:
 
         # Check that judge info is now stored (latest signal)
         stored_info = coordinator.get_rate_limit_info()
+        assert stored_info is not None
         assert stored_info.source == "judge"
         assert "Judge rate limit" in stored_info.error_message
 
@@ -266,7 +268,9 @@ class TestParallelRateLimitHandling:
 
         # Should have rate limit info
         assert coordinator.get_rate_limit_info() == info
-        assert coordinator.get_rate_limit_info().source == "agent"
+        stored = coordinator.get_rate_limit_info()
+        assert stored is not None
+        assert stored.source == "agent"
 
         # Resume workers
         coordinator.resume_all_workers()

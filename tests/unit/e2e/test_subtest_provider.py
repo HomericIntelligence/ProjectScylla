@@ -370,7 +370,7 @@ class TestFileSystemSubtestProvider:
         subtests_dir.mkdir(parents=True)
 
         config_file = subtests_dir / "05-minimal.yaml"
-        config_data = {}  # Empty config
+        config_data: dict[str, object] = {}  # Empty config
         config_file.write_text(yaml.dump(config_data))
 
         provider = FileSystemSubtestProvider(shared_dir)

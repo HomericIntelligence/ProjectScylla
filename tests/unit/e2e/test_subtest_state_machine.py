@@ -525,7 +525,10 @@ class TestSubtestStateMachineUntilState:
             SubtestState.RUNS_COMPLETE: action_runs_complete,
         }
         final = ssm.advance_to_completion(
-            TIER_ID, SUBTEST_ID, actions, until_state=SubtestState.RUNS_IN_PROGRESS
+            TIER_ID,
+            SUBTEST_ID,
+            actions,  # type: ignore[arg-type]
+            until_state=SubtestState.RUNS_IN_PROGRESS,
         )
 
         # Stopped at RUNS_IN_PROGRESS — its action should NOT have been called

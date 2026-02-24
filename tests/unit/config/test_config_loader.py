@@ -26,6 +26,7 @@ from scylla.config import (
     ScyllaConfig,
     TierConfig,
 )
+from scylla.config.models import SourceConfig, TaskConfig
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 
 # Path to test fixtures
@@ -360,7 +361,7 @@ class TestConfigLoaderMerged:
 
         # Attempting to modify should raise an error
         with pytest.raises(Exception):  # Pydantic ValidationError
-            config.timeout_seconds = 9999  # type: ignore
+            config.timeout_seconds = 9999
 
 
 class TestConfigLoaderEdgeCases:
@@ -404,8 +405,9 @@ class TestConfigLoaderEdgeCases:
                 id="",
                 name="Test",
                 description="Test",
-                source={"repo": "https://example.com", "hash": "abc123"},
-                task={"prompt_file": "prompt.md"},
+                language="python",
+                source=SourceConfig(repo="https://example.com", hash="abc123"),
+                task=TaskConfig(prompt_file="prompt.md"),
             )
 
 

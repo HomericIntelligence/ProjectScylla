@@ -600,6 +600,7 @@ class TestValidateRunResult:
         is_valid, reason = validate_run_result(run_dir)
 
         assert is_valid is False
+        assert reason is not None
         assert "rate limit" in reason.lower()
 
     def test_rate_limited_run_in_stdout_json(self, tmp_path: Path) -> None:
@@ -629,6 +630,7 @@ class TestValidateRunResult:
         is_valid, reason = validate_run_result(run_dir)
 
         assert is_valid is False
+        assert reason is not None
         assert "rate limit" in reason.lower()
 
     def test_exit_code_minus_one_with_invalid_judge(self, tmp_path: Path) -> None:
@@ -649,6 +651,7 @@ class TestValidateRunResult:
         is_valid, reason = validate_run_result(run_dir)
 
         assert is_valid is False
+        assert reason is not None
         assert "exit_code=-1" in reason
 
     def test_missing_files_returns_valid(self, tmp_path: Path) -> None:

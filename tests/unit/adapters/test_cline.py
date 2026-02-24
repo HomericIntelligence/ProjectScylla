@@ -331,6 +331,7 @@ class TestRun:
 
             assert result.exit_code == -1
             assert result.timed_out is True
+            assert result.error_message is not None
             assert "timed out" in result.error_message.lower()
 
     def test_run_cli_not_found(self) -> None:
