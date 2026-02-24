@@ -729,9 +729,11 @@ def reset_runs_for_from_state(
                     if run_status not in status_filter:
                         continue
 
-                # Check if current state is at or past from_state
+                # Check if current state is at or past from_state.
+                # Terminal states (failed, rate_limited) are not in the normal
+                # sequence (index == -1). If they passed status_filter, reset them.
                 current_index = state_index.get(run_state_str, -1)
-                if current_index >= from_index:
+                if current_index >= from_index or (current_index == -1 and status_filter):
                     checkpoint.run_states[tier_id][subtest_id][run_num_str] = "pending"
                     checkpoint.unmark_run_completed(tier_id, subtest_id, run_num)
                     affected_tiers.add(tier_id)

@@ -12,15 +12,34 @@ Tests cover:
 - --from with existing checkpoint: reset functions called + run_experiment invoked
 - --from in batch mode: reset logic called per-test
 - --add-judge dedup: duplicate judge models are not added twice
+- --add-judge bare flag (no value) uses const="sonnet"
 - YAML config file mode: single .yaml file as --config
+- YAML config file overrides values from test.yaml
 - --filter-judge-slot: accepted but has no effect (not-yet-implemented)
 - Non-existent --config path in single mode returns exit code 1
 - cmd_repair with a mock checkpoint rebuilds completed_runs entries
+- --verbose / --quiet set root logger level
+- --fresh forwarded to run_experiment
+- --until* valid values flow to ExperimentConfig
+- --from-tier with --filter-tier passes tier_filter kwarg
+- --from-experiment calls reset_experiment_for_from_state
+- batch --from without checkpoint warns and runs fresh
+- --tests filter limits batch execution
+- --retry-errors reruns only failed tests
+- --add-judge in batch mode appends extra judge to judge_models
+- --from + --filter-status failed resets failed runs (checkpoint.py fix)
+- --parallel-high/med/low flow to ExperimentConfig
+- model alias (opus/haiku) resolves to full model ID
+- unknown tier name returns exit code 1
+- --skip-judge-validation skips validate_model call
+- --timeout overrides test.yaml value
+- --thinking High flows to ExperimentConfig
 """
 
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -319,6 +338,90 @@ class TestBuildParser:
         parser = build_parser()
         with pytest.raises(SystemExit):
             parser.parse_args([])
+
+
+# ---------------------------------------------------------------------------
+# --verbose / --quiet logging level
+# ---------------------------------------------------------------------------
+
+
+class TestVerboseQuietLogging:
+    """Tests that --verbose/--quiet adjust the root logger level."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_verbose_sets_root_logger_to_debug(self, tmp_path: Path) -> None:
+        """--verbose causes cmd_run to set root logger level to DEBUG."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--verbose",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        root_logger = logging.getLogger()
+        original_level = root_logger.level
+        try:
+            with (
+                patch("scylla.e2e.model_validation.validate_model", return_value=True),
+                patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+            ):
+                cmd_run(args)
+            assert root_logger.level == logging.DEBUG
+        finally:
+            root_logger.setLevel(original_level)
+
+    def test_quiet_sets_root_logger_to_error(self, tmp_path: Path) -> None:
+        """--quiet causes cmd_run to set root logger level to ERROR."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--quiet",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        root_logger = logging.getLogger()
+        original_level = root_logger.level
+        try:
+            with (
+                patch("scylla.e2e.model_validation.validate_model", return_value=True),
+                patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+            ):
+                cmd_run(args)
+            assert root_logger.level == logging.ERROR
+        finally:
+            root_logger.setLevel(original_level)
 
 
 # ---------------------------------------------------------------------------
@@ -944,6 +1047,114 @@ class TestCmdRunFromWithCheckpoint:
         assert len(tier_reset_calls) == 1
         assert tier_reset_calls[0] == "subtests_running"
 
+    def test_from_tier_with_filter_tier_passes_filter(self, tmp_path: Path) -> None:
+        """--from-tier with --filter-tier passes tier_filter kwarg to reset_tiers_for_from_state."""
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+        self._make_minimal_checkpoint(results_dir, experiment_id)
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--repo",
+                "https://github.com/test/repo",
+                "--commit",
+                "abc123",
+                "--experiment-id",
+                experiment_id,
+                "--results-dir",
+                str(results_dir),
+                "--from-tier",
+                "subtests_running",
+                "--filter-tier",
+                "T0",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        tier_reset_kwargs: list[dict] = []
+
+        def mock_reset_tiers(checkpoint, from_state, **kwargs):
+            tier_reset_kwargs.append(kwargs)
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.checkpoint.reset_runs_for_from_state", return_value=0),
+            patch(
+                "scylla.e2e.checkpoint.reset_tiers_for_from_state",
+                side_effect=mock_reset_tiers,
+            ),
+            patch("scylla.e2e.checkpoint.reset_experiment_for_from_state", return_value=0),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(tier_reset_kwargs) == 1
+        assert tier_reset_kwargs[0]["tier_filter"] == ["T0"]
+
+    def test_from_experiment_with_checkpoint_calls_experiment_reset(self, tmp_path: Path) -> None:
+        """--from-experiment calls reset_experiment_for_from_state with the correct state."""
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+        self._make_minimal_checkpoint(results_dir, experiment_id)
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--repo",
+                "https://github.com/test/repo",
+                "--commit",
+                "abc123",
+                "--experiment-id",
+                experiment_id,
+                "--results-dir",
+                str(results_dir),
+                "--from-experiment",
+                "tiers_running",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        experiment_reset_calls: list[str] = []
+
+        def mock_reset_experiment(checkpoint, from_state):
+            experiment_reset_calls.append(from_state)
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.checkpoint.reset_runs_for_from_state", return_value=0),
+            patch("scylla.e2e.checkpoint.reset_tiers_for_from_state", return_value=0),
+            patch(
+                "scylla.e2e.checkpoint.reset_experiment_for_from_state",
+                side_effect=mock_reset_experiment,
+            ),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(experiment_reset_calls) == 1
+        assert experiment_reset_calls[0] == "tiers_running"
+
 
 # ---------------------------------------------------------------------------
 # --from in batch mode
@@ -1039,6 +1250,58 @@ class TestCmdRunFromInBatchMode:
         # reset was called once per test that has a checkpoint
         assert len(reset_calls) == 2
         assert all(s == "replay_generated" for s in reset_calls)
+
+    def test_invalid_from_in_batch_returns_error_result(self, tmp_path: Path) -> None:
+        """Invalid --from value in batch mode produces a per-test error dict, not a stack trace."""
+        import yaml
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Two configs required to trigger batch mode (multiple --config paths)
+        for test_name in ["test-001", "test-002"]:
+            test_dir = tmp_path / test_name
+            test_dir.mkdir()
+            test_yaml = {
+                "task_repo": "https://github.com/test/repo",
+                "task_commit": "abc123",
+                "experiment_id": test_name,
+                "timeout_seconds": 3600,
+                "language": "python",
+            }
+            (test_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+            (test_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--from",
+                "not_a_valid_state",
+                "--results-dir",
+                str(results_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
+            result = cmd_run(args)
+
+        assert result == 1
+        summary_path = results_dir / "batch_summary.json"
+        assert summary_path.exists()
+        summary = json.loads(summary_path.read_text())
+        assert len(summary["results"]) == 2
+        for test_result in summary["results"]:
+            assert test_result["status"] == "error"
+            assert "not_a_valid_state" in test_result["error"]
+            assert "--from" in test_result["error"]
 
 
 # ---------------------------------------------------------------------------
@@ -1141,6 +1404,42 @@ class TestAddJudgeDedup:
         opus_id = "claude-opus-4-5-20251101"
         assert captured_configs[0].judge_models == [sonnet_id, opus_id]
 
+    def test_add_judge_bare_flag_defaults_to_sonnet(self, tmp_path: Path) -> None:
+        """--add-judge with no value uses const='sonnet'; deduped against default judge-model."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        # --add-judge with no value: argparse uses const="sonnet"
+        # --judge-model defaults to "sonnet", so the result deduplicates to one sonnet entry
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--add-judge",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        assert len(captured_configs) == 1
+        sonnet_id = "claude-sonnet-4-5-20250929"
+        assert captured_configs[0].judge_models == [sonnet_id]
+
 
 # ---------------------------------------------------------------------------
 # YAML config file mode
@@ -1198,6 +1497,65 @@ class TestYamlConfigFileMode:
         assert captured_configs[0].task_repo == "https://github.com/yaml/repo"
         assert captured_configs[0].task_commit == "yaml_commit"
         assert captured_configs[0].experiment_id == "yaml-exp"
+
+    def test_yaml_config_overrides_test_yaml_values(self, tmp_path: Path) -> None:
+        """A --config .yaml file's values override those from test.yaml in the same dir."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+        # test.yaml has experiment_id="from-test"
+        (config_dir / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/test/repo",
+                    "task_commit": "abc123",
+                    "experiment_id": "from-test",
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                }
+            )
+        )
+        (config_dir / "prompt.md").write_text("test prompt")
+        # override.yaml has experiment_id="from-override"
+        override_yaml = config_dir / "override.yaml"
+        override_yaml.write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/override/repo",
+                    "task_commit": "override_commit",
+                    "experiment_id": "from-override",
+                }
+            )
+        )
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(override_yaml),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].experiment_id == "from-override"
 
 
 # ---------------------------------------------------------------------------
@@ -1380,3 +1738,1038 @@ class TestNonExistentConfigPath:
             result = cmd_run(args)
 
         assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# --fresh flag forwarding
+# ---------------------------------------------------------------------------
+
+
+class TestFreshFlag:
+    """Tests that --fresh is forwarded to run_experiment."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_fresh_flag_forwarded_to_run_experiment(self, tmp_path: Path) -> None:
+        """--fresh is passed as fresh=True to run_experiment."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--fresh",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_fresh: list[bool] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_fresh.append(fresh)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_fresh) == 1
+        assert captured_fresh[0] is True
+
+    def test_no_fresh_flag_passes_false(self, tmp_path: Path) -> None:
+        """Omitting --fresh passes fresh=False to run_experiment."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_fresh: list[bool] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_fresh.append(fresh)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_fresh) == 1
+        assert captured_fresh[0] is False
+
+
+# ---------------------------------------------------------------------------
+# --until* valid values flow to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
+class TestUntilStateFlowsToConfig:
+    """Tests that valid --until* values are converted and stored in ExperimentConfig."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_until_run_state_flows_to_config(self, tmp_path: Path) -> None:
+        """--until agent_complete sets config.until_run_state == RunState.AGENT_COMPLETE."""
+        from scylla.e2e.models import RunState
+
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--until",
+                "agent_complete",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].until_run_state == RunState.AGENT_COMPLETE
+
+    def test_until_tier_state_flows_to_config(self, tmp_path: Path) -> None:
+        """--until-tier subtests_complete sets config.until_tier_state to SUBTESTS_COMPLETE."""
+        from scylla.e2e.models import TierState
+
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--until-tier",
+                "subtests_complete",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].until_tier_state == TierState.SUBTESTS_COMPLETE
+
+    def test_until_experiment_state_flows_to_config(self, tmp_path: Path) -> None:
+        """--until-experiment tiers_running sets config.until_experiment_state to TIERS_RUNNING."""
+        from scylla.e2e.models import ExperimentState
+
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--until-experiment",
+                "tiers_running",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].until_experiment_state == ExperimentState.TIERS_RUNNING
+
+
+# ---------------------------------------------------------------------------
+# batch --from without checkpoint: warns and runs fresh
+# ---------------------------------------------------------------------------
+
+
+class TestBatchFromMissingCheckpoint:
+    """Tests batch --from behavior when no checkpoint exists for a test."""
+
+    def test_from_without_checkpoint_warns_and_runs_fresh(self, tmp_path: Path) -> None:
+        """--from in batch mode with no checkpoint logs warning and still calls run_experiment."""
+        import yaml
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Two test dirs with test.yaml but NO checkpoints
+        for test_name in ["test-001", "test-002"]:
+            test_dir = tmp_path / test_name
+            test_dir.mkdir()
+            test_yaml = {
+                "task_repo": "https://github.com/test/repo",
+                "task_commit": "abc123",
+                "experiment_id": test_name,
+                "timeout_seconds": 3600,
+                "language": "python",
+            }
+            (test_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+            (test_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--from",
+                "replay_generated",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        run_experiment_calls: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            run_experiment_calls.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        # Returns 0 (not 1) because run_experiment succeeded for both
+        assert result == 0
+        # run_experiment was called for both tests despite missing checkpoints
+        assert len(run_experiment_calls) == 2
+
+
+# ---------------------------------------------------------------------------
+# --tests filter limits batch execution
+# ---------------------------------------------------------------------------
+
+
+class TestBatchTestsFilter:
+    """Tests that --tests filters which tests are run in batch mode."""
+
+    def test_tests_filter_limits_batch_to_specified_ids(self, tmp_path: Path) -> None:
+        """--tests test-001 test-003 runs only those two, skipping test-002."""
+        import yaml
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Three test dirs
+        for test_name in ["test-001", "test-002", "test-003"]:
+            test_dir = tmp_path / test_name
+            test_dir.mkdir()
+            test_yaml = {
+                "task_repo": "https://github.com/test/repo",
+                "task_commit": "abc123",
+                "experiment_id": test_name,
+                "timeout_seconds": 3600,
+                "language": "python",
+            }
+            (test_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+            (test_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--config",
+                str(tmp_path / "test-003"),
+                "--tests",
+                "test-001",
+                "test-003",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        executed_ids: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            executed_ids.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(executed_ids) == 2
+        assert "test-001" in executed_ids
+        assert "test-003" in executed_ids
+        assert "test-002" not in executed_ids
+
+
+# ---------------------------------------------------------------------------
+# --retry-errors behavioral logic
+# ---------------------------------------------------------------------------
+
+
+class TestRetryErrorsInBatch:
+    """Tests that --retry-errors reruns only failed tests."""
+
+    def _make_test_dir_with_yaml(self, path: Path, test_name: str) -> None:
+        """Create a test dir with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": test_name,
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_retry_errors_reruns_failed_tests(self, tmp_path: Path) -> None:
+        """--retry-errors reruns test-001 (error) but skips test-002 (success)."""
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Pre-populate batch_summary.json: test-001=error, test-002=success
+        summary = {
+            "results": [
+                {"test_id": "test-001", "status": "error", "error": "some error"},
+                {"test_id": "test-002", "status": "success"},
+            ]
+        }
+        (results_dir / "batch_summary.json").write_text(json.dumps(summary))
+
+        for test_name in ["test-001", "test-002"]:
+            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--retry-errors",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        executed_ids: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            executed_ids.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # Only test-001 (the errored one) was re-run
+        assert executed_ids == ["test-001"]
+
+    def test_without_retry_errors_skips_all_completed(self, tmp_path: Path) -> None:
+        """Without --retry-errors, both success and error tests are skipped."""
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Pre-populate batch_summary.json: test-001=error, test-002=success
+        summary = {
+            "results": [
+                {"test_id": "test-001", "status": "error", "error": "some error"},
+                {"test_id": "test-002", "status": "success"},
+            ]
+        }
+        (results_dir / "batch_summary.json").write_text(json.dumps(summary))
+
+        for test_name in ["test-001", "test-002"]:
+            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        executed_ids: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            executed_ids.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # No tests were re-run (all previously completed)
+        assert executed_ids == []
+
+
+# ---------------------------------------------------------------------------
+# --add-judge in batch mode (bug fix validation)
+# ---------------------------------------------------------------------------
+
+
+class TestAddJudgeBatchMode:
+    """Tests that --add-judge is applied correctly in batch mode."""
+
+    def _make_test_dir_with_yaml(self, path: Path, test_name: str) -> None:
+        """Create a test dir with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": test_name,
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_add_judge_in_batch_mode_appends_to_judge_models(self, tmp_path: Path) -> None:
+        """In batch mode, --add-judge opus with --judge-model sonnet yields both in judge_models."""
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+        for test_name in ["test-001", "test-002"]:
+            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--judge-model",
+                "sonnet",
+                "--add-judge",
+                "opus",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 2
+        sonnet_id = "claude-sonnet-4-5-20250929"
+        opus_id = "claude-opus-4-5-20251101"
+        # Both batch configs should have both judge models
+        for config in captured_configs:
+            assert config.judge_models == [sonnet_id, opus_id]
+
+
+# ---------------------------------------------------------------------------
+# --from + --filter-status failed (bug fix validation)
+# ---------------------------------------------------------------------------
+
+
+class TestFromWithFilterStatusFailed:
+    """Tests that --from + --filter-status failed resets failed runs."""
+
+    def test_from_with_filter_status_failed_resets_failed_runs(self) -> None:
+        """--from replay_generated + --filter-status failed resets a run in 'failed' state."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, reset_runs_for_from_state
+
+        cp = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir="/tmp/test-exp",
+            config_hash="abc123",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "failed"}}},
+            completed_runs={"T0": {"00": {1: "failed"}}},
+        )
+
+        count = reset_runs_for_from_state(cp, "replay_generated", status_filter=["failed"])
+
+        assert count == 1
+        assert cp.run_states["T0"]["00"]["1"] == "pending"
+
+    def test_from_without_filter_status_leaves_failed_run_alone(self) -> None:
+        """Without --filter-status, a 'failed' run is NOT reset (preserves existing behavior)."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, reset_runs_for_from_state
+
+        cp = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir="/tmp/test-exp",
+            config_hash="abc123",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "failed"}}},
+            completed_runs={"T0": {"00": {1: "failed"}}},
+        )
+
+        count = reset_runs_for_from_state(cp, "replay_generated")
+
+        assert count == 0
+        assert cp.run_states["T0"]["00"]["1"] == "failed"
+
+
+# ---------------------------------------------------------------------------
+# --parallel-high / --parallel-med / --parallel-low flow to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
+class TestParallelSemaphoreFlowsToConfig:
+    """Tests that parallel semaphore args flow through to ExperimentConfig."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def _run_and_capture(self, args) -> Any:
+        """Run cmd_run with args and return captured ExperimentConfig."""
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        return captured[0]
+
+    def test_parallel_high_flows_to_config(self, tmp_path: Path) -> None:
+        """--parallel-high 3 is stored in ExperimentConfig.parallel_high."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--parallel-high",
+                "3",
+                "--skip-judge-validation",
+            ]
+        )
+        config = self._run_and_capture(args)
+        assert config.parallel_high == 3
+
+    def test_parallel_med_flows_to_config(self, tmp_path: Path) -> None:
+        """--parallel-med 5 is stored in ExperimentConfig.parallel_med."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--parallel-med",
+                "5",
+                "--skip-judge-validation",
+            ]
+        )
+        config = self._run_and_capture(args)
+        assert config.parallel_med == 5
+
+    def test_parallel_low_flows_to_config(self, tmp_path: Path) -> None:
+        """--parallel-low 10 is stored in ExperimentConfig.parallel_low."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--parallel-low",
+                "10",
+                "--skip-judge-validation",
+            ]
+        )
+        config = self._run_and_capture(args)
+        assert config.parallel_low == 10
+
+
+# ---------------------------------------------------------------------------
+# Model alias resolution
+# ---------------------------------------------------------------------------
+
+
+class TestModelAliasResolution:
+    """Tests that model/judge alias names resolve to full model IDs."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_model_opus_resolves_to_full_id(self, tmp_path: Path) -> None:
+        """--model opus resolves to full opus model ID in ExperimentConfig.models."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--model",
+                "opus",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        opus_id = "claude-opus-4-5-20251101"
+        assert captured[0].models == [opus_id]
+
+    def test_judge_model_haiku_resolves_to_full_id(self, tmp_path: Path) -> None:
+        """--judge-model haiku resolves to full haiku ID in ExperimentConfig.judge_models."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--judge-model",
+                "haiku",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        haiku_id = "claude-haiku-4-5-20251001"
+        assert haiku_id in captured[0].judge_models
+
+
+# ---------------------------------------------------------------------------
+# Unknown tier name
+# ---------------------------------------------------------------------------
+
+
+class TestUnknownTierReturnsError:
+    """Tests that an unknown tier name in --tiers returns exit code 1."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_unknown_tier_returns_1(self, tmp_path: Path) -> None:
+        """--tiers TX (unknown tier) returns exit code 1."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--tiers",
+                "TX",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
+            result = cmd_run(args)
+
+        assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# Judge validation behavior
+# ---------------------------------------------------------------------------
+
+
+class TestJudgeValidationBehavior:
+    """Tests for --skip-judge-validation flag behavior."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_skip_judge_validation_skips_validate_model(self, tmp_path: Path) -> None:
+        """With --skip-judge-validation, validate_model is never called."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True) as mock_validate,
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            cmd_run(args)
+
+        mock_validate.assert_not_called()
+
+    def test_without_skip_validation_calls_validate_model(self, tmp_path: Path) -> None:
+        """Without --skip-judge-validation, validate_model is called for each judge model."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True) as mock_validate,
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            cmd_run(args)
+
+        mock_validate.assert_called()
+
+
+# ---------------------------------------------------------------------------
+# --timeout override
+# ---------------------------------------------------------------------------
+
+
+class TestTimeoutOverride:
+    """Tests that --timeout overrides the test.yaml timeout_seconds value."""
+
+    def test_timeout_overrides_test_yaml(self, tmp_path: Path) -> None:
+        """--timeout 7200 overrides test.yaml timeout_seconds=1800 in ExperimentConfig."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 1800,
+            "language": "python",
+        }
+        (config_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+        (config_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--timeout",
+                "7200",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        assert captured[0].timeout_seconds == 7200
+
+
+# ---------------------------------------------------------------------------
+# --thinking mode flow to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
+class TestThinkingModeFlowsToConfig:
+    """Tests that --thinking mode value flows to ExperimentConfig."""
+
+    def test_thinking_high_flows_to_config(self, tmp_path: Path) -> None:
+        """--thinking High sets ExperimentConfig.thinking_mode to 'High'."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (config_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+        (config_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--thinking",
+                "High",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        assert captured[0].thinking_mode == "High"
