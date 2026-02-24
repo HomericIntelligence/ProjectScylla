@@ -35,7 +35,7 @@ Usage:
     # Re-run judges (from judge_pipeline_run forward)
     python scripts/manage_experiment.py run \\
         --config tests/fixtures/tests/test-001 --from judge_pipeline_run \\
-        --filter-tier T0 --filter-judge-slot 1 2
+        --filter-tier T0
 
     # Regenerate reports from existing data
     python scripts/manage_experiment.py run \\
@@ -247,7 +247,9 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         action="append",
         type=int,
         default=None,
-        help="Only apply --from to these judge slot numbers (1-indexed)",
+        help="Only apply --from to these judge slot numbers (1-indexed). "
+        "NOTE: judge-slot-level filtering is not yet implemented in the reset logic; "
+        "this argument is accepted but has no effect.",
     )
     # Batch mode arguments
     parser.add_argument(
@@ -378,6 +380,18 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
             if args.until_experiment:
                 until_experiment_state = ExperimentState(args.until_experiment)
 
+            from_run_state: RunState | None = None
+            if args.from_run:
+                from_run_state = RunState(args.from_run)
+
+            from_tier_state: TierState | None = None
+            if args.from_tier:
+                from_tier_state = TierState(args.from_tier)
+
+            from_experiment_state: ExperimentState | None = None
+            if args.from_experiment:
+                from_experiment_state = ExperimentState(args.from_experiment)
+
             timeout_seconds = args.timeout or int(test_config.get("timeout_seconds", 3600))
 
             config = ExperimentConfig(
@@ -402,7 +416,57 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 until_run_state=until_run_state,
                 until_tier_state=until_tier_state,
                 until_experiment_state=until_experiment_state,
+                from_run_state=from_run_state,
+                from_tier_state=from_tier_state,
+                from_experiment_state=from_experiment_state,
+                filter_tiers=args.filter_tier,
+                filter_subtests=args.filter_subtest,
+                filter_runs=args.filter_run,
+                filter_statuses=args.filter_status,
+                filter_judge_slots=args.filter_judge_slot,
             )
+
+            # If --from specified, load existing checkpoint and reset states
+            if from_run_state or from_tier_state or from_experiment_state:
+                from scylla.e2e.checkpoint import (
+                    load_checkpoint,
+                    reset_experiment_for_from_state,
+                    reset_runs_for_from_state,
+                    reset_tiers_for_from_state,
+                    save_checkpoint,
+                )
+
+                checkpoint_path = args.results_dir / experiment_id / "checkpoint.json"
+                if checkpoint_path.exists():
+                    checkpoint = load_checkpoint(checkpoint_path)
+                    reset_count = 0
+                    if from_run_state:
+                        reset_count += reset_runs_for_from_state(
+                            checkpoint,
+                            from_run_state.value,
+                            tier_filter=args.filter_tier,
+                            subtest_filter=args.filter_subtest,
+                            run_filter=args.filter_run,
+                            status_filter=args.filter_status,
+                        )
+                    if from_tier_state:
+                        reset_count += reset_tiers_for_from_state(
+                            checkpoint,
+                            from_tier_state.value,
+                            tier_filter=args.filter_tier,
+                        )
+                    if from_experiment_state:
+                        reset_count += reset_experiment_for_from_state(
+                            checkpoint,
+                            from_experiment_state.value,
+                        )
+                    save_checkpoint(checkpoint, checkpoint_path)
+                    logger.info(f"[{test_id}] Reset {reset_count} items for --from. Resuming...")
+                else:
+                    logger.warning(
+                        f"[{test_id}] --from specified but no checkpoint at {checkpoint_path}; "
+                        "starting fresh"
+                    )
 
             with terminal_guard():
                 results = run_experiment(
