@@ -668,11 +668,11 @@ def cliffs_delta_ci(
         return delta, delta, delta
 
     # Bootstrap the delta calculation
-    def delta_statistic(g1_sample, g2_sample):
+    def delta_statistic(g1_sample: np.ndarray, g2_sample: np.ndarray) -> float:
         n1, n2 = len(g1_sample), len(g2_sample)
         if n1 == 0 or n2 == 0:
             return 0.0
-        return np.sign(g1_sample[:, None] - g2_sample[None, :]).sum() / (n1 * n2)
+        return float(np.sign(g1_sample[:, None] - g2_sample[None, :]).sum() / (n1 * n2))
 
     # Use scipy's bootstrap
     res = stats.bootstrap(

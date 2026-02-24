@@ -210,7 +210,7 @@ def list_skills_and_presets() -> None:
             print(f"    Skills: {skills_str}")
 
 
-def main():
+def main() -> None:
     """Compose skill configuration from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Compose skill configuration from selected categories",

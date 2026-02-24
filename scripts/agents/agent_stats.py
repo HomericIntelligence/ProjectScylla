@@ -359,7 +359,7 @@ class AgentAnalyzer:
         return json.dumps(output, indent=2)
 
 
-def main():
+def main() -> int:
     """Run the agent statistics script."""
     parser = argparse.ArgumentParser(
         description="Generate usage statistics for the agent system",

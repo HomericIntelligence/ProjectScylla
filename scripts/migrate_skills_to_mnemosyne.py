@@ -86,7 +86,7 @@ CATEGORY_ASSIGNMENTS = {
 }
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Migrate skills to ProjectMnemosyne")
     parser.add_argument(
@@ -136,7 +136,7 @@ def resolve_category(skill_name: str, plugin_data: dict) -> str:
     return "tooling"
 
 
-def normalize_author(author_field) -> dict:
+def normalize_author(author_field: Any) -> dict:
     """Normalize author field to dict format."""
     if isinstance(author_field, str):
         return {"name": author_field}
@@ -386,7 +386,7 @@ def migrate_skill(
     return True, f"{action} {category}/{skill_name}"
 
 
-def cleanup_flat_skills(mnemosyne_dir: Path, dry_run: bool = False):
+def cleanup_flat_skills(mnemosyne_dir: Path, dry_run: bool = False) -> None:
     """Clean up flat skills/ directory in ProjectMnemosyne."""
     flat_skills_dir = mnemosyne_dir / "skills"
     if not flat_skills_dir.exists():
@@ -414,7 +414,7 @@ def cleanup_flat_skills(mnemosyne_dir: Path, dry_run: bool = False):
                 print(f"Removed flat skills/{skill_name}/")
 
 
-def main():  # noqa: C901  # CLI main with multiple phases
+def main() -> int:  # noqa: C901  # CLI main with multiple phases
     """Execute the migration workflow."""
     args = parse_args()
 

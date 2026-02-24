@@ -151,7 +151,7 @@ class ConfigLinter:
             self.errors.append(f"{filepath} - Syntax check failed: {e}")
             return False
 
-    def _check_formatting(self, content: str, filepath: Path):
+    def _check_formatting(self, content: str, filepath: Path) -> None:
         """Check formatting standards.
 
         Args:
@@ -227,7 +227,7 @@ class ConfigLinter:
             self.errors.append(f"Failed to parse YAML: {e}")
             return None
 
-    def _parse_value(self, value: str):
+    def _parse_value(self, value: str) -> Any:
         """Parse a YAML value string.
 
         Args:
@@ -266,7 +266,7 @@ class ConfigLinter:
 
         return value
 
-    def _check_deprecated_keys(self, config: dict, filepath: Path):
+    def _check_deprecated_keys(self, config: dict, filepath: Path) -> None:
         """Check for deprecated configuration keys.
 
         Args:
@@ -280,7 +280,7 @@ class ConfigLinter:
                     f"{filepath} - Deprecated key '{old_key}' (use '{new_key}' instead)"
                 )
 
-    def _check_required_keys(self, config: dict, filepath: Path):
+    def _check_required_keys(self, config: dict, filepath: Path) -> None:
         """Check for required keys based on config type.
 
         Args:
@@ -295,7 +295,7 @@ class ConfigLinter:
                     if key not in config.get(section, {}):
                         self.warnings.append(f"{filepath} - Missing required key '{section}.{key}'")
 
-    def _check_duplicate_values(self, config: dict, filepath: Path):
+    def _check_duplicate_values(self, config: dict, filepath: Path) -> None:
         """Check for duplicate values that might be errors.
 
         Args:
@@ -305,7 +305,7 @@ class ConfigLinter:
         """
         seen_values: dict[str, list[str]] = {}
 
-        def collect_values(obj, prefix=""):
+        def collect_values(obj: Any, prefix: str = "") -> None:
             if isinstance(obj, dict):
                 for key, value in obj.items():
                     new_prefix = f"{prefix}.{key}" if prefix else key
@@ -326,7 +326,7 @@ class ConfigLinter:
                     f"{filepath} - Value '{value}' appears in: {', '.join(keys[:3])}..."
                 )
 
-    def _check_performance(self, config: dict, filepath: Path):
+    def _check_performance(self, config: dict, filepath: Path) -> None:
         """Check for performance-related configuration issues.
 
         Args:
@@ -354,7 +354,7 @@ class ConfigLinter:
             elif lr > max_lr:
                 self.warnings.append(f"{filepath} - Very large learning_rate ({lr})")
 
-    def _check_unused_parameters(self, config: dict, filepath: Path):
+    def _check_unused_parameters(self, config: dict, filepath: Path) -> None:
         """Check for potentially unused parameters.
 
         Args:
@@ -386,7 +386,7 @@ class ConfigLinter:
                 return False
         return True
 
-    def _get_nested_value(self, config: dict, key_path: str):
+    def _get_nested_value(self, config: dict, key_path: str) -> Any:
         """Get value of nested key.
 
         Args:
@@ -406,7 +406,7 @@ class ConfigLinter:
                 return None
         return current
 
-    def print_results(self):
+    def print_results(self) -> None:
         """Print linting results."""
         if self.errors:
             print("\n❌ ERRORS:")
@@ -427,7 +427,7 @@ class ConfigLinter:
             print("✅ All checks passed!")
 
 
-def main():
+def main() -> int:
     """Run the config linting script."""
     parser = argparse.ArgumentParser(description="Lint configuration files for ML Odyssey")
     parser.add_argument("paths", nargs="+", help="Configuration files or directories to lint")

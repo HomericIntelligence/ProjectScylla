@@ -167,7 +167,7 @@ def check_coverage(threshold: float, path: str, coverage_file: Path) -> bool:
         return False
 
 
-def main():
+def main() -> None:
     """Run the coverage check script."""
     parser = argparse.ArgumentParser(description="Check test coverage against threshold")
     parser.add_argument(

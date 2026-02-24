@@ -78,7 +78,7 @@ def fig08_cost_quality_pareto(runs_df: pd.DataFrame, output_dir: Path, render: b
 
     # Identify Pareto frontier (higher score, lower cost is better)
     # A point is on the frontier if no other point dominates it
-    def is_pareto_efficient(costs, scores):
+    def is_pareto_efficient(costs: np.ndarray, scores: np.ndarray) -> np.ndarray:
         """Return boolean array of Pareto efficient points.
 
         A point (c1, s1) dominates (c2, s2) if c1 <= c2 AND s1 >= s2

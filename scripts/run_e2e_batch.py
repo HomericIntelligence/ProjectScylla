@@ -265,7 +265,12 @@ def partition_tests(tests: list[dict], num_threads: int) -> list[list[dict]]:
 
 
 def run_single_test(
-    test: dict, thread_id: int, log_file, args, config: dict, pixi_path: str
+    test: dict,
+    thread_id: int,
+    log_file: Any,
+    args: argparse.Namespace,
+    config: dict,
+    pixi_path: str,
 ) -> dict:
     """Run one test via subprocess, capture output to log file.
 
@@ -382,7 +387,12 @@ def run_single_test(
 
 
 def run_thread(
-    thread_id: int, tests: list[dict], log_dir: Path, args, config: dict, pixi_path: str
+    thread_id: int,
+    tests: list[dict],
+    log_dir: Path,
+    args: argparse.Namespace,
+    config: dict,
+    pixi_path: str,
 ) -> list[dict]:
     """Run all assigned tests sequentially within one thread.
 

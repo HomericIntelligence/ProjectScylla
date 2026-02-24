@@ -179,7 +179,7 @@ def check_file(file_path: Path, verbose: bool = False) -> tuple[bool, list[str]]
     return len(errors) == 0, errors
 
 
-def main():
+def main() -> int:
     """Run the frontmatter validation script."""
     parser = argparse.ArgumentParser(
         description="Check YAML frontmatter in agent configuration files",

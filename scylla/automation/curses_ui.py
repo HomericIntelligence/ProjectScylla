@@ -68,7 +68,7 @@ class ThreadLogManager:
     Routes log messages to thread-specific buffers for organized display.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize thread log manager."""
         self.buffers: dict[int, LogBuffer] = {}
         self.lock = threading.Lock()
