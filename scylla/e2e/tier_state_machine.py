@@ -283,12 +283,13 @@ class TierStateMachine:
         try:
             while not self.is_complete(tier_id):
                 current = self.get_state(tier_id)
+                self.advance(tier_id, actions)
                 if until_state is not None and current == until_state:
                     logger.info(
                         f"[{tier_id}] Reached --until-tier target state: {until_state.value}"
+                        " (inclusive)"
                     )
                     break
-                self.advance(tier_id, actions)
         except Exception as e:
             from scylla.e2e.checkpoint import save_checkpoint
             from scylla.e2e.rate_limit import RateLimitError

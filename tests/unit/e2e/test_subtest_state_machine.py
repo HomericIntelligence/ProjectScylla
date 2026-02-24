@@ -509,13 +509,13 @@ class TestSubtestStateMachineUntilState:
     parameter for completeness and potential future use.
     """
 
-    def test_stops_at_until_state_before_executing_action(
+    def test_stops_at_until_state_after_executing_action(
         self,
         ssm: SubtestStateMachine,
         checkpoint: E2ECheckpoint,
         checkpoint_path: Path,
     ) -> None:
-        """advance_to_completion stops AT until_state without executing its action."""
+        """advance_to_completion stops AFTER executing until_state action (inclusive)."""
         action_runs_in_progress = MagicMock()
         action_runs_complete = MagicMock()
 
@@ -531,9 +531,10 @@ class TestSubtestStateMachineUntilState:
             until_state=SubtestState.RUNS_IN_PROGRESS,
         )
 
-        # Stopped at RUNS_IN_PROGRESS — its action should NOT have been called
-        assert final == SubtestState.RUNS_IN_PROGRESS
-        action_runs_in_progress.assert_not_called()
+        # Inclusive: RUNS_IN_PROGRESS action IS called, state advances to RUNS_COMPLETE
+        assert final == SubtestState.RUNS_COMPLETE
+        action_runs_in_progress.assert_called_once()
+        # State after until_state is NOT called
         action_runs_complete.assert_not_called()
 
     def test_stops_at_until_state_preserves_state_for_resume(
@@ -547,13 +548,14 @@ class TestSubtestStateMachineUntilState:
             TIER_ID, SUBTEST_ID, {}, until_state=SubtestState.RUNS_IN_PROGRESS
         )
 
-        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS
+        # Inclusive: state is RUNS_COMPLETE (after RUNS_IN_PROGRESS)
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_COMPLETE
         assert not ssm.is_complete(TIER_ID, SUBTEST_ID)
 
         from scylla.e2e.checkpoint import load_checkpoint
 
         on_disk = load_checkpoint(checkpoint_path)
-        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS.value
+        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_COMPLETE.value
 
     def test_resume_after_until_state_stop_continues_from_saved_state(
         self,
@@ -562,30 +564,31 @@ class TestSubtestStateMachineUntilState:
         checkpoint_path: Path,
     ) -> None:
         """After an until_state stop, resuming without until_state completes the subtest."""
-        # First pass: stop at RUNS_IN_PROGRESS
+        # First pass: stop at RUNS_IN_PROGRESS (inclusive → ends at RUNS_COMPLETE)
         ssm.advance_to_completion(
             TIER_ID, SUBTEST_ID, {}, until_state=SubtestState.RUNS_IN_PROGRESS
         )
-        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_COMPLETE
 
         # Second pass: resume to completion
         final = ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {})
         assert final == SubtestState.AGGREGATED
 
-    def test_until_state_at_current_state_stops_immediately(
+    def test_until_state_at_current_state_executes_action_then_stops(
         self,
         ssm: SubtestStateMachine,
         checkpoint: E2ECheckpoint,
         checkpoint_path: Path,
     ) -> None:
-        """If until_state equals the current state, no transitions are executed."""
+        """If until_state equals the current state, action IS executed (inclusive)."""
         action = MagicMock()
         final = ssm.advance_to_completion(
             TIER_ID, SUBTEST_ID, {SubtestState.PENDING: action}, until_state=SubtestState.PENDING
         )
 
-        assert final == SubtestState.PENDING
-        action.assert_not_called()
+        # Inclusive: PENDING action is called, state is now RUNS_IN_PROGRESS
+        assert final == SubtestState.RUNS_IN_PROGRESS
+        action.assert_called_once()
 
     def test_until_state_does_not_mark_failed(
         self,

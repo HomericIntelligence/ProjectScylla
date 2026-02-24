@@ -275,13 +275,13 @@ class SubtestStateMachine:
         try:
             while not self.is_complete(tier_id, subtest_id):
                 current = self.get_state(tier_id, subtest_id)
+                self.advance(tier_id, subtest_id, actions)
                 if until_state is not None and current == until_state:
                     logger.info(
                         f"[{tier_id}/{subtest_id}] Reached --until target state: "
-                        f"{until_state.value}"
+                        f"{until_state.value} (inclusive)"
                     )
                     break
-                self.advance(tier_id, subtest_id, actions)
         except Exception:
             self.checkpoint.set_subtest_state(tier_id, subtest_id, SubtestState.FAILED.value)
             save_checkpoint(self.checkpoint, self.checkpoint_path)
