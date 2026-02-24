@@ -11,7 +11,6 @@ test-shell = "bats tests/shell/ --recursive --timing"
 lint = "ruff check scylla scripts tests"
 format = "ruff format scylla scripts tests"
 plan-issues = "python scripts/plan_issues.py"
-mypy-regression = "python scripts/check_mypy_counts.py"
 audit = "pixi run --environment lint pip-audit"
 
 [dependencies]
