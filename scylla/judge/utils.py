@@ -2,7 +2,7 @@
 
 import json
 import re
-from typing import Any
+from typing import Any, cast
 
 
 def extract_json_from_llm_response(output: str) -> dict[str, Any] | None:
@@ -41,7 +41,7 @@ def extract_json_from_llm_response(output: str) -> dict[str, Any] | None:
     json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", output)
     if json_block:
         try:
-            return json.loads(json_block.group(1))
+            return cast(dict[str, Any], json.loads(json_block.group(1)))
         except json.JSONDecodeError:
             pass
 
@@ -66,6 +66,6 @@ def extract_json_from_llm_response(output: str) -> dict[str, Any] | None:
         return None
 
     try:
-        return json.loads(output[start:end])
+        return cast(dict[str, Any], json.loads(output[start:end]))
     except json.JSONDecodeError:
         return None

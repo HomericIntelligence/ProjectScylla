@@ -12,6 +12,7 @@ Usage:
 import argparse
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 # Enable importing from repository root and scripts directory
 _SCRIPT_DIR = Path(__file__).parent
@@ -44,7 +45,7 @@ def load_coverage_config(config_file: Path | None = None) -> dict:
     try:
         with open(config_file, "rb") as f:
             config = tomllib.load(f)
-        return config
+        return cast(dict[Any, Any], config)
     except Exception as e:
         print(f"⚠️  Warning: Failed to load config from {config_file}: {e}", file=sys.stderr)
         return {"coverage": {"target": 90.0, "minimum": 80.0}}
@@ -65,15 +66,15 @@ def get_module_threshold(path: str, config: dict) -> float:
 
     # Try exact match first
     if path in modules:
-        return modules[path].get("minimum", 90.0)
+        return cast(float, modules[path].get("minimum", 90.0))
 
     # Try prefix match
     for module_path in sorted(modules.keys(), key=len, reverse=True):
         if path.startswith(module_path):
-            return modules[module_path].get("minimum", 90.0)
+            return cast(float, modules[module_path].get("minimum", 90.0))
 
     # Default to overall minimum
-    return config.get("coverage", {}).get("minimum", 80.0)
+    return cast(float, config.get("coverage", {}).get("minimum", 80.0))
 
 
 def parse_coverage_report(coverage_file: Path) -> float | None:

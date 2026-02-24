@@ -104,7 +104,7 @@ check_untyped_defs = true
 disallow_untyped_defs = false     # TODO #1084: 32 missing annotations
 disallow_incomplete_defs = false  # TODO #1086: 16 errors
 disallow_any_generics = false     # TODO #1086: 78 errors
-warn_return_any = false           # TODO #1085: 58 errors
+warn_return_any = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 # Allow flexible typing while codebase type coverage improves

@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, cast
 
 from scylla.cli.progress import ProgressDisplay, RunStatus
 from scylla.config import ConfigLoader, EvalCase, Rubric
@@ -323,11 +324,14 @@ class EvalOrchestrator:
 
         """
         if self._adapter_func:
-            return self._adapter_func(
-                workspace=workspace,
-                test_case=test_case,
-                model_id=model_id,
-                tier_id=tier_id,
+            return cast(
+                dict[Any, Any],
+                self._adapter_func(
+                    workspace=workspace,
+                    test_case=test_case,
+                    model_id=model_id,
+                    tier_id=tier_id,
+                ),
             )
 
         # Default: return mock execution
@@ -360,11 +364,14 @@ class EvalOrchestrator:
 
         """
         if self._judge_func:
-            return self._judge_func(
-                workspace=workspace,
-                test_case=test_case,
-                rubric=rubric,
-                execution_result=execution_result,
+            return cast(
+                dict[Any, Any],
+                self._judge_func(
+                    workspace=workspace,
+                    test_case=test_case,
+                    rubric=rubric,
+                    execution_result=execution_result,
+                ),
             )
 
         # Default: return mock judgment

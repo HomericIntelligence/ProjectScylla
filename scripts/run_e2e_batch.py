@@ -21,6 +21,7 @@ import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, cast
 
 # Add scripts/ to path for common utilities
 sys.path.insert(0, str(Path(__file__).parent))
@@ -98,7 +99,7 @@ def load_existing_results(results_dir: Path) -> list[dict]:
             data = json.load(f)
         results = data.get("results", [])
         logger.info(f"Loaded {len(results)} existing results from {summary_path}")
-        return results
+        return cast(list[dict[Any, Any]], results)
     except Exception as e:
         logger.warning(f"Failed to load existing results from {summary_path}: {e}")
         return []

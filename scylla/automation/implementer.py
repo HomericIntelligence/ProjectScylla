@@ -19,6 +19,7 @@ import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import cast
 
 from .curses_ui import CursesUI, ThreadLogManager
 from .dependency_resolver import DependencyResolver
@@ -931,7 +932,7 @@ class IssueImplementer:
                 log_file = self.state_dir / f"claude-{issue_number}.log"
                 log_file.write_text(result.stdout or "")
 
-                return session_id
+                return cast(str | None, session_id)
             except (json.JSONDecodeError, AttributeError):
                 logger.warning(f"Could not parse session_id for issue #{issue_number}")
                 logger.debug(f"Claude stdout: {result.stdout[:500]}")
@@ -1123,7 +1124,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
             )
             pr_data = json.loads(result.stdout)
             if pr_data and len(pr_data) > 0:
-                pr_number = pr_data[0]["number"]
+                pr_number = cast(int, pr_data[0]["number"])
                 logger.info(f"✓ PR #{pr_number} already exists")
                 return pr_number
         except Exception as e:
