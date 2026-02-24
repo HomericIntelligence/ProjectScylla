@@ -5,9 +5,16 @@ Tests cover:
 - run subcommand accepts its documented required/optional arguments
 - Multi-path --config triggers batch mode detection
 - Auto-expansion of parent dir to batch mode
+- test-config-loader exclusion in batch auto-discovery
 - Invalid --until / --until-tier / --until-experiment values return exit code 1
 - Valid --until values are accepted without error
 - --from / --from-tier / --from-experiment argument parsing
+- --from with existing checkpoint: reset functions called + run_experiment invoked
+- --from in batch mode: reset logic called per-test
+- --add-judge dedup: duplicate judge models are not added twice
+- YAML config file mode: single .yaml file as --config
+- --filter-judge-slot: accepted but has no effect (not-yet-implemented)
+- Non-existent --config path in single mode returns exit code 1
 - cmd_repair with a mock checkpoint rebuilds completed_runs entries
 """
 
@@ -775,3 +782,601 @@ class TestCmdRepair:
         updated = load_checkpoint(checkpoint_path)
         assert updated.completed_runs["T0"]["00-empty"][1] == "passed"
         assert updated.completed_runs["T0"]["00-empty"][2] == "failed"
+
+
+# ---------------------------------------------------------------------------
+# --from with existing checkpoint (reset + resume)
+# ---------------------------------------------------------------------------
+
+
+class TestCmdRunFromWithCheckpoint:
+    """Tests for cmd_run() --from with an existing checkpoint."""
+
+    def _make_minimal_checkpoint(self, results_dir: Path, experiment_id: str) -> Path:
+        """Create a minimal checkpoint file at the expected path."""
+        checkpoint_data = {
+            "version": "3.1",
+            "experiment_id": experiment_id,
+            "experiment_dir": str(results_dir / experiment_id),
+            "config_hash": "abc123",
+            "started_at": "2024-01-01T00:00:00+00:00",
+            "last_updated_at": "2024-01-01T00:00:00+00:00",
+            "status": "interrupted",
+            "run_states": {"T0": {"00": {"1": "replay_generated"}}},
+            "completed_runs": {},
+        }
+        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        checkpoint_path = checkpoint_dir / "checkpoint.json"
+        checkpoint_path.write_text(json.dumps(checkpoint_data))
+        return checkpoint_path
+
+    def test_from_with_checkpoint_calls_reset_and_run(self, tmp_path: Path) -> None:
+        """--from with existing checkpoint calls reset function and then run_experiment."""
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+        self._make_minimal_checkpoint(results_dir, experiment_id)
+
+        # Create a minimal test dir (no test.yaml, so we need --repo/--commit)
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--repo",
+                "https://github.com/test/repo",
+                "--commit",
+                "abc123",
+                "--experiment-id",
+                experiment_id,
+                "--results-dir",
+                str(results_dir),
+                "--from",
+                "replay_generated",
+                "--filter-tier",
+                "T0",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        reset_calls = []
+        run_calls = []
+
+        def mock_reset_runs(checkpoint, from_state, **kwargs):
+            reset_calls.append(("runs", from_state, kwargs))
+            return 1
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            run_calls.append((config, fresh))
+            return {"T0": {}}  # truthy result
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch(
+                "scylla.e2e.checkpoint.reset_runs_for_from_state",
+                side_effect=mock_reset_runs,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_tiers_for_from_state",
+                return_value=0,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_experiment_for_from_state",
+                return_value=0,
+            ),
+            patch(
+                "scylla.e2e.runner.run_experiment",
+                side_effect=mock_run_experiment,
+            ),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # reset_runs_for_from_state was called with correct state and filters
+        assert len(reset_calls) == 1
+        assert reset_calls[0][1] == "replay_generated"
+        assert reset_calls[0][2]["tier_filter"] == ["T0"]
+        # run_experiment was called
+        assert len(run_calls) == 1
+
+    def test_from_tier_with_checkpoint_calls_tier_reset(self, tmp_path: Path) -> None:
+        """--from-tier with existing checkpoint calls reset_tiers_for_from_state."""
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+        self._make_minimal_checkpoint(results_dir, experiment_id)
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--repo",
+                "https://github.com/test/repo",
+                "--commit",
+                "abc123",
+                "--experiment-id",
+                experiment_id,
+                "--results-dir",
+                str(results_dir),
+                "--from-tier",
+                "subtests_running",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        tier_reset_calls = []
+
+        def mock_reset_tiers(checkpoint, from_state, **kwargs):
+            tier_reset_calls.append(from_state)
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch(
+                "scylla.e2e.checkpoint.reset_runs_for_from_state",
+                return_value=0,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_tiers_for_from_state",
+                side_effect=mock_reset_tiers,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_experiment_for_from_state",
+                return_value=0,
+            ),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(tier_reset_calls) == 1
+        assert tier_reset_calls[0] == "subtests_running"
+
+
+# ---------------------------------------------------------------------------
+# --from in batch mode
+# ---------------------------------------------------------------------------
+
+
+class TestCmdRunFromInBatchMode:
+    """Tests that --from reset logic is applied per-test in batch mode."""
+
+    def _make_checkpoint(self, results_dir: Path, experiment_id: str) -> Path:
+        """Create a minimal checkpoint at the expected path."""
+        checkpoint_data = {
+            "version": "3.1",
+            "experiment_id": experiment_id,
+            "experiment_dir": str(results_dir / experiment_id),
+            "config_hash": "abc123",
+            "started_at": "2024-01-01T00:00:00+00:00",
+            "last_updated_at": "2024-01-01T00:00:00+00:00",
+            "status": "interrupted",
+            "run_states": {"T0": {"00": {"1": "replay_generated"}}},
+            "completed_runs": {},
+        }
+        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        checkpoint_path = checkpoint_dir / "checkpoint.json"
+        checkpoint_path.write_text(json.dumps(checkpoint_data))
+        return checkpoint_path
+
+    def test_from_in_batch_calls_reset_for_each_test(self, tmp_path: Path) -> None:
+        """--from in batch mode calls checkpoint reset for each test that has a checkpoint."""
+        import yaml
+
+        # Create two test dirs with test.yaml and checkpoints
+        results_dir = tmp_path / "results"
+        for test_name in ["test-001", "test-002"]:
+            test_dir = tmp_path / test_name
+            test_dir.mkdir()
+            # Use keys that run_one_test expects (task_repo/task_commit)
+            test_yaml = {
+                "task_repo": "https://github.com/test/repo",
+                "task_commit": "abc123",
+                "experiment_id": test_name,
+                "timeout_seconds": 3600,
+                "language": "python",
+            }
+            (test_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+            (test_dir / "prompt.md").write_text("test prompt")
+            self._make_checkpoint(results_dir, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--from",
+                "replay_generated",
+                "--results-dir",
+                str(results_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        reset_calls: list[str] = []
+
+        def mock_reset_runs(checkpoint, from_state, **kwargs):
+            reset_calls.append(from_state)
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch(
+                "scylla.e2e.checkpoint.reset_runs_for_from_state",
+                side_effect=mock_reset_runs,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_tiers_for_from_state",
+                return_value=0,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_experiment_for_from_state",
+                return_value=0,
+            ),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # reset was called once per test that has a checkpoint
+        assert len(reset_calls) == 2
+        assert all(s == "replay_generated" for s in reset_calls)
+
+
+# ---------------------------------------------------------------------------
+# --add-judge dedup logic
+# ---------------------------------------------------------------------------
+
+
+class TestAddJudgeDedup:
+    """Tests for --add-judge deduplication."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_add_judge_duplicate_not_added_twice(self, tmp_path: Path) -> None:
+        """--add-judge with a duplicate model ID does not add it twice."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        # --judge-model sonnet + --add-judge sonnet → should dedup to a single sonnet entry
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--judge-model",
+                "sonnet",
+                "--add-judge",
+                "sonnet",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        assert len(captured_configs) == 1
+        # judge_models should contain exactly one entry (deduped)
+        sonnet_id = "claude-sonnet-4-5-20250929"
+        assert captured_configs[0].judge_models == [sonnet_id]
+
+    def test_add_judge_different_model_appended(self, tmp_path: Path) -> None:
+        """--add-judge with a different model is appended to judge_models."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--judge-model",
+                "sonnet",
+                "--add-judge",
+                "opus",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            cmd_run(args)
+
+        assert len(captured_configs) == 1
+        sonnet_id = "claude-sonnet-4-5-20250929"
+        opus_id = "claude-opus-4-5-20251101"
+        assert captured_configs[0].judge_models == [sonnet_id, opus_id]
+
+
+# ---------------------------------------------------------------------------
+# YAML config file mode
+# ---------------------------------------------------------------------------
+
+
+class TestYamlConfigFileMode:
+    """Tests for single .yaml file as --config argument."""
+
+    def test_yaml_file_config_is_loaded_and_merged(self, tmp_path: Path) -> None:
+        """A single .yaml file as --config is loaded and merged into config."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+        # Create a prompt.md so single-test path doesn't fail early
+        (config_dir / "prompt.md").write_text("test prompt")
+        yaml_path = config_dir / "override.yaml"
+        yaml_path.write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/yaml/repo",
+                    "task_commit": "yaml_commit",
+                    "experiment_id": "yaml-exp",
+                }
+            )
+        )
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(yaml_path),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured_configs: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].task_repo == "https://github.com/yaml/repo"
+        assert captured_configs[0].task_commit == "yaml_commit"
+        assert captured_configs[0].experiment_id == "yaml-exp"
+
+
+# ---------------------------------------------------------------------------
+# test-config-loader exclusion in batch discovery
+# ---------------------------------------------------------------------------
+
+
+class TestTestConfigLoaderExclusion:
+    """Tests that test-config-loader is excluded from batch auto-discovery."""
+
+    def test_test_config_loader_excluded_from_batch(self, tmp_path: Path) -> None:
+        """test-config-loader dir is excluded from batch auto-discovery."""
+        # Create test-* dirs including test-config-loader
+        (tmp_path / "test-001").mkdir()
+        (tmp_path / "test-002").mkdir()
+        (tmp_path / "test-config-loader").mkdir()
+
+        from manage_experiment import cmd_run
+
+        call_args = []
+
+        def mock_run_batch(test_dirs, passed_args):
+            call_args.append(list(test_dirs))
+            return 0
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path),
+                "--skip-judge-validation",
+            ]
+        )
+
+        with patch("manage_experiment._run_batch", side_effect=mock_run_batch):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(call_args) == 1
+        discovered_names = {d.name for d in call_args[0]}
+        assert "test-config-loader" not in discovered_names
+        assert "test-001" in discovered_names
+        assert "test-002" in discovered_names
+
+
+# ---------------------------------------------------------------------------
+# --filter-judge-slot has no effect (not-yet-implemented)
+# ---------------------------------------------------------------------------
+
+
+class TestFilterJudgeSlotNoEffect:
+    """Tests that --filter-judge-slot is accepted but does not affect behavior."""
+
+    def test_filter_judge_slot_stored_on_config_but_not_passed_to_reset(
+        self, tmp_path: Path
+    ) -> None:
+        """--filter-judge-slot is stored on ExperimentConfig but not passed to reset functions."""
+        import yaml
+
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+
+        # Create checkpoint
+        checkpoint_data = {
+            "version": "3.1",
+            "experiment_id": experiment_id,
+            "experiment_dir": str(results_dir / experiment_id),
+            "config_hash": "abc123",
+            "started_at": "2024-01-01T00:00:00+00:00",
+            "last_updated_at": "2024-01-01T00:00:00+00:00",
+            "status": "interrupted",
+            "run_states": {"T0": {"00": {"1": "judge_pipeline_run"}}},
+            "completed_runs": {},
+        }
+        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        (checkpoint_dir / "checkpoint.json").write_text(json.dumps(checkpoint_data))
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir()
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": experiment_id,
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (config_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+        (config_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--from",
+                "judge_pipeline_run",
+                "--filter-judge-slot",
+                "1",
+                "--filter-judge-slot",
+                "2",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        reset_kwargs_captured: list[dict] = []
+
+        def mock_reset_runs(checkpoint, from_state, **kwargs):
+            reset_kwargs_captured.append(kwargs)
+            return 0
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch(
+                "scylla.e2e.checkpoint.reset_runs_for_from_state",
+                side_effect=mock_reset_runs,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_tiers_for_from_state",
+                return_value=0,
+            ),
+            patch(
+                "scylla.e2e.checkpoint.reset_experiment_for_from_state",
+                return_value=0,
+            ),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # --filter-judge-slot is NOT passed to reset_runs_for_from_state
+        assert len(reset_kwargs_captured) == 1
+        assert "judge_slot_filter" not in reset_kwargs_captured[0]
+
+
+# ---------------------------------------------------------------------------
+# Non-existent --config path in single mode
+# ---------------------------------------------------------------------------
+
+
+class TestNonExistentConfigPath:
+    """Tests for error behavior when --config path doesn't exist in single mode."""
+
+    def test_nonexistent_config_single_mode_returns_1(self, tmp_path: Path) -> None:
+        """cmd_run returns 1 when run_experiment returns falsy for a non-existent config.
+
+        A non-existent path is not a parent dir with test-* subdirs, so it falls
+        through to single-test mode. run_experiment is called with the non-existent
+        tiers_dir. When run_experiment returns falsy (None), cmd_run returns 1.
+        """
+        nonexistent = tmp_path / "does-not-exist"
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(nonexistent),
+                "--repo",
+                "https://github.com/test/repo",
+                "--commit",
+                "abc123",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            # run_experiment returns None (falsy) → cmd_run returns 1
+            patch("scylla.e2e.runner.run_experiment", return_value=None),
+        ):
+            result = cmd_run(args)
+
+        assert result == 1
