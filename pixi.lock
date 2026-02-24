@@ -3764,7 +3764,7 @@ packages:
 - pypi: ./
   name: scylla
   version: 0.1.0
-  sha256: 211c4f8c265c962ce4888cb1d5ef35e2a78bc9b06b01ac2c2593fc9a9b3d8661
+  sha256: ad718104a873ec8a4996a815cdeaeed66ed64a81d9ea040ded8c7568b1678f3a
   requires_dist:
   - click>=8.0
   - pydantic>=2.0

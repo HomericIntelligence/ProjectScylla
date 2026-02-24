@@ -94,27 +94,25 @@ addopts = [
 
 [tool.mypy]
 python_version = "3.10"
-# Incremental mypy adoption - start with basic checks
-# Catches syntax errors, undefined names, and import issues
-# Phases 1-6 of #687 complete. See #940 for tests/ and #687 for strict settings.
+# Incremental mypy adoption — Phases 1-6 of #687 complete (scylla/ + scripts/ clean).
+# tests/ override tracks real errors; see #940 for cleanup.
+# Remaining strict settings: Phase 7a-c (#1083-#1085), Phase 9 (#1086).
 warn_unused_configs = true
 ignore_missing_imports = true
 show_error_codes = true
-# Minimal strictness for now - prevents new egregious errors
-check_untyped_defs = false
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-disallow_any_generics = false
-warn_return_any = false
-warn_redundant_casts = false
-warn_unused_ignores = false
+# Strict settings — enabled as errors are fixed per #687 roadmap
+check_untyped_defs = false        # TODO #1083: 26 errors in scripts/export_data.py
+disallow_untyped_defs = false     # TODO #1084: 32 missing annotations
+disallow_incomplete_defs = false  # TODO #1086: 16 errors
+disallow_any_generics = false     # TODO #1086: 78 errors
+warn_return_any = false           # TODO #1085: 58 errors
+warn_redundant_casts = true
+warn_unused_ignores = true
 # Allow flexible typing while codebase type coverage improves
 allow_redefinition = true
 implicit_reexport = true
-# All error codes fixed in scylla/ and scripts/ — disable_error_code removed (see #687)
 
-# tests/ has additional suppressed errors beyond scylla/ and scripts/
-# Decoupled so scylla/+scripts/ codes can be removed independently as they are fixed
+# tests/ has real errors suppressed while they are fixed incrementally (see #940)
 [[tool.mypy.overrides]]
 module = "tests.*"
 disable_error_code = [
@@ -127,6 +125,7 @@ disable_error_code = [
     "call-arg",        # tests-only, zero in scylla/ and scripts/
     "misc",            # violations in tests/unit/
     "method-assign",   # violations in tests/unit/ (method monkey-patching in test mocks)
+    "unused-ignore",   # type: ignore comments in tests/ suppress the above codes
 ]
 
 
