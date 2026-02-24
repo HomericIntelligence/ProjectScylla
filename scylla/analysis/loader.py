@@ -12,7 +12,7 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import jsonschema
 import numpy as np
@@ -396,7 +396,7 @@ def load_agent_result(run_dir: Path) -> dict[str, Any]:
 
     try:
         with agent_result_path.open() as f:
-            return json.load(f)
+            return cast(dict[str, Any], json.load(f))
     except (json.JSONDecodeError, OSError) as e:
         logger.warning("Failed to load agent result %s: %s", agent_result_path, e)
         return {}

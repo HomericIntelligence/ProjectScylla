@@ -23,6 +23,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 # Category normalization map
 CATEGORY_NORMALIZATION = {
@@ -124,7 +125,7 @@ def resolve_category(skill_name: str, plugin_data: dict) -> str:
         category = plugin_data["category"]
         if category in CATEGORY_NORMALIZATION:
             return CATEGORY_NORMALIZATION[category]
-        return category
+        return cast(str, category)
 
     # 3. Heuristic
     for prefix, category in CATEGORY_HEURISTICS.items():
@@ -139,15 +140,15 @@ def normalize_author(author_field) -> dict:
     """Normalize author field to dict format."""
     if isinstance(author_field, str):
         return {"name": author_field}
-    return author_field
+    return cast(dict[Any, Any], author_field)
 
 
 def normalize_date(plugin_data: dict) -> str | None:
     """Normalize date field (created -> date)."""
     if "date" in plugin_data:
-        return plugin_data["date"]
+        return cast(str, plugin_data["date"])
     if "created" in plugin_data:
-        return plugin_data["created"]
+        return cast(str, plugin_data["created"])
     return None
 
 

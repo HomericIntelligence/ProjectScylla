@@ -13,7 +13,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import JudgeResultSummary
@@ -64,7 +64,7 @@ def _load_judge_result(judge_dir: Path) -> dict:
     with open(result_file) as f:
         data = json.load(f)
 
-    return data
+    return cast(dict[Any, Any], data)
 
 
 def _has_valid_judge_result(run_dir: Path) -> bool:

@@ -18,7 +18,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from .git_utils import get_repo_info, run
 from .models import IssueInfo, IssueState
@@ -128,7 +128,7 @@ def gh_issue_json(issue_number: int) -> dict[str, Any]:
         result = _gh_call(
             ["issue", "view", str(issue_number), "--json", "number,title,state,labels,body"],
         )
-        return json.loads(result.stdout)
+        return cast(dict[str, Any], json.loads(result.stdout))
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Failed to fetch issue #{issue_number}: {e}") from e
 
@@ -343,7 +343,7 @@ def is_issue_closed(issue_number: int, cached_states: dict[int, IssueState] | No
 
     try:
         issue_data = gh_issue_json(issue_number)
-        return issue_data["state"] == "CLOSED"
+        return cast(bool, issue_data["state"] == "CLOSED")
     except Exception as e:
         logger.warning(f"Failed to check if issue #{issue_number} is closed: {e}")
         return False

@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 import subprocess
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from scylla.adapters.base import (
     AdapterConfig,
@@ -331,7 +331,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             # num_turns represents the number of API turn exchanges
             num_turns = data.get("num_turns", 0)
             if num_turns > 0:
-                return num_turns
+                return cast(int, num_turns)
         except (json.JSONDecodeError, AttributeError):
             pass
 
@@ -371,6 +371,6 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         try:
             data = json.loads(stdout.strip())
-            return data.get("total_cost_usd", 0.0)
+            return cast(float, data.get("total_cost_usd", 0.0))
         except (json.JSONDecodeError, AttributeError):
             return 0.0

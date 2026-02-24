@@ -20,7 +20,7 @@ Classes:
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -159,7 +159,7 @@ class AgentInfo:
         """
         # Check if level is explicitly specified
         if "level" in frontmatter:
-            return frontmatter["level"]
+            return cast(int, frontmatter["level"])
 
         # Infer from name
         name = self.name.lower()

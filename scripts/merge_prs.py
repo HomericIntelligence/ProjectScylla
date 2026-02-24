@@ -21,6 +21,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 # Enable importing from repository root and scripts directory
 _SCRIPT_DIR = Path(__file__).parent
@@ -76,7 +77,7 @@ def get_open_prs() -> list[dict]:
         print(f"Error: Failed to list PRs: {result.stderr}", file=sys.stderr)
         sys.exit(1)
 
-    return json.loads(result.stdout)
+    return cast(list[dict[Any, Any]], json.loads(result.stdout))
 
 
 def check_pr_status(pr_number: int) -> dict[str, bool]:

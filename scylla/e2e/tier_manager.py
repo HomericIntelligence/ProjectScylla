@@ -12,7 +12,7 @@ import os
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import yaml
 
@@ -314,7 +314,7 @@ class TierManager:
         with open(config_path) as f:
             config = yaml.safe_load(f) or {}
 
-        return config.get("resources", {})
+        return cast(dict[str, Any], config.get("resources", {}))
 
     def _create_symlinks(  # noqa: C901  # symlink creation with many source/target patterns
         self,
