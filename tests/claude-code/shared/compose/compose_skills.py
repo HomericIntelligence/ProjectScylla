@@ -248,8 +248,10 @@ def main():
 
     if args.preset:
         preset_config = PRESETS[args.preset]
-        categories = preset_config.get("categories")
-        skills = preset_config.get("skills")
+        _cats = preset_config.get("categories")
+        categories = list(_cats) if _cats is not None else None
+        _skills = preset_config.get("skills")
+        skills = list(_skills) if _skills is not None else None
     else:
         if args.categories:
             categories = [c.strip() for c in args.categories.split(",")]
