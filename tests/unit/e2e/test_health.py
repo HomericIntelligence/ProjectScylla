@@ -262,13 +262,18 @@ class TestHeartbeatThread:
 
         thread = HeartbeatThread(checkpoint, path, interval_seconds=1)
         thread.start()
-        time.sleep(2)  # Wait for at least one heartbeat
+
+        # Poll until heartbeat appears (up to 10s to tolerate WSL2 load)
+        deadline = time.monotonic() + 10
+        reloaded = load_checkpoint(path)
+        while reloaded.last_heartbeat == "" and time.monotonic() < deadline:
+            time.sleep(0.1)
+            reloaded = load_checkpoint(path)
+
         thread.stop()
         thread.join(timeout=5)
 
         # Heartbeat is now written to disk (not to the in-memory checkpoint object)
-        # Verify by reading the checkpoint file from disk
-        reloaded = load_checkpoint(path)
         assert reloaded.last_heartbeat != ""
         assert not _heartbeat_is_stale(reloaded.last_heartbeat, timeout_seconds=30)
 
@@ -323,11 +328,17 @@ class TestHeartbeatThread:
 
         thread = HeartbeatThread(checkpoint, path, interval_seconds=1)
         thread.start()
-        time.sleep(2)
+
+        # Poll until heartbeat appears (up to 10s to tolerate WSL2 load)
+        deadline = time.monotonic() + 10
+        reloaded = load_checkpoint(path)
+        while reloaded.last_heartbeat == "" and time.monotonic() < deadline:
+            time.sleep(0.1)
+            reloaded = load_checkpoint(path)
+
         thread.stop()
         thread.join(timeout=5)
 
         # Verify heartbeat was written to disk
-        reloaded = load_checkpoint(path)
         assert reloaded.last_heartbeat != ""
         assert not _heartbeat_is_stale(reloaded.last_heartbeat, timeout_seconds=30)
