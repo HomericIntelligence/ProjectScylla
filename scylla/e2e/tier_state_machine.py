@@ -263,8 +263,9 @@ class TierStateMachine:
         """Advance the tier through all states until COMPLETE is reached.
 
         Useful for running a complete tier from start or resuming from any state.
-        On exception, the exception propagates without marking the tier as failed
-        (tier failure is handled at the experiment level).
+        On exception, the tier is marked as FAILED in the checkpoint before the
+        exception re-raises, enabling the experiment level to detect and continue
+        with remaining tiers (partial-failure semantics).
 
         If until_state is specified, the tier stops cleanly when that state is
         reached, enabling incremental validation via --until-tier <state>.
