@@ -147,7 +147,7 @@ def test_agent_discovery(
     return loaded_agents, errors
 
 
-def display_agents(agents: list[AgentInfo]):
+def display_agents(agents: list[AgentInfo]) -> None:
     """Display loaded agents in a formatted table.
 
     Args:
@@ -179,7 +179,7 @@ def display_agents(agents: list[AgentInfo]):
         print(f"{name_col}  {file_col}  {model_col}  {tools_display}")
 
 
-def main():
+def main() -> int:
     """Run the agent loading test script."""
     parser = argparse.ArgumentParser(
         description="Test agent discovery and loading",

@@ -9,14 +9,14 @@ class TestComponentNameIntegration:
     """
 
     @pytest.fixture
-    def setup_environment(self):
+    def setup_environment(self):  # type: ignore[no-untyped-def]
         """Set up test environment."""
         # TODO: Initialize test environment
         # Setup dependencies, test data, etc.
         yield
         # Cleanup after tests
 
-    def test_component_integration_basic(self, setup_environment):
+    def test_component_integration_basic(self, setup_environment):  # type: ignore[no-untyped-def]
         """Test basic integration with dependencies."""
         # Arrange
         # TODO: Setup integrated components
@@ -28,17 +28,17 @@ class TestComponentNameIntegration:
         # TODO: Verify integration results
         pass
 
-    def test_component_integration_data_flow(self, setup_environment):
+    def test_component_integration_data_flow(self, setup_environment):  # type: ignore[no-untyped-def]
         """Test data flow through integrated components."""
         # TODO: Test data flowing through multiple components
         pass
 
-    def test_component_integration_error_propagation(self, setup_environment):
+    def test_component_integration_error_propagation(self, setup_environment):  # type: ignore[no-untyped-def]
         """Test error handling across component boundaries."""
         # TODO: Test error propagation
         pass
 
-    def test_component_integration_performance(self, setup_environment):
+    def test_component_integration_performance(self, setup_environment):  # type: ignore[no-untyped-def]
         """Test performance of integrated system."""
         # TODO: Test end-to-end performance
         pass

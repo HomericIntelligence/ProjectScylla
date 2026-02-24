@@ -80,7 +80,7 @@ def compute_dynamic_domain(
 
 
 def compute_dynamic_domain_with_ci(
-    means: pd.Series, ci_lows: pd.Series, ci_highs: pd.Series, **kwargs
+    means: pd.Series, ci_lows: pd.Series, ci_highs: pd.Series, **kwargs: float
 ) -> list[float]:
     """Compute tight axis domain from data including CI bounds.
 

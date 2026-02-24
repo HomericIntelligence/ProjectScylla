@@ -131,7 +131,7 @@ def list_blocks_and_presets() -> None:
         print(f"    Blocks: {blocks_str}")
 
 
-def main():
+def main() -> None:
     """Compose CLAUDE.md from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Compose CLAUDE.md from selected blocks",

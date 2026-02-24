@@ -6,6 +6,8 @@ JSON specifications and CSV data files.
 
 import re
 
+import pandas as pd
+
 from scylla.analysis.config import config
 
 # Tier ordering (consistent across all figures and tables)
@@ -13,7 +15,7 @@ from scylla.analysis.config import config
 TIER_ORDER = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
 
 
-def derive_tier_order(df, tier_column: str = "tier") -> list[str]:
+def derive_tier_order(df: pd.DataFrame, tier_column: str = "tier") -> list[str]:
     """Derive tier order from data, sorted naturally (T0 < T1 < ... < T99).
 
     Args:

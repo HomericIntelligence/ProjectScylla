@@ -101,7 +101,7 @@ ignore_missing_imports = true
 show_error_codes = true
 # Strict settings — enabled as errors are fixed per #687 roadmap
 check_untyped_defs = true
-disallow_untyped_defs = false     # TODO #1084: 32 missing annotations
+disallow_untyped_defs = true
 disallow_incomplete_defs = false  # TODO #1086: 16 errors
 disallow_any_generics = false     # TODO #1086: 78 errors
 warn_return_any = true
@@ -110,6 +110,12 @@ warn_unused_ignores = true
 # Allow flexible typing while codebase type coverage improves
 allow_redefinition = true
 implicit_reexport = true
+
+# tests/unit/ has 635 unannotated test functions — suppress no-untyped-def
+# until they are annotated in a follow-up issue
+[[tool.mypy.overrides]]
+module = "tests.unit.*"
+disable_error_code = ["no-untyped-def"]
 
 
 [tool.coverage.run]

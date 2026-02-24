@@ -332,7 +332,7 @@ class MarkdownFixer:
         return files_modified, total_fixes
 
 
-def main():
+def main() -> int:
     """Run the markdown fixer script."""
     parser = argparse.ArgumentParser(
         description="Fix common markdown linting errors automatically",

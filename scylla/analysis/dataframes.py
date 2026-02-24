@@ -6,6 +6,8 @@ Provides aggregation functions for computing tier, subtest, and judge statistics
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -70,7 +72,7 @@ def compute_judge_impl_rate(judge: JudgeEvaluation) -> float:
 
     # Defensive data loading: coerce to float, treating invalid values as 0.0
     # This handles cases where judgment data has string values like "N/A" or numeric strings
-    def safe_float(value, default=0.0):
+    def safe_float(value: Any, default: float = 0.0) -> float:
         """Convert value to float, returning default for invalid inputs."""
         try:
             return float(value)

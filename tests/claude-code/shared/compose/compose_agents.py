@@ -168,7 +168,7 @@ def list_agents_and_presets() -> None:
             print(f"    Pattern: {config['pattern']}")
 
 
-def main():
+def main() -> None:
     """Compose agent configuration from command line arguments."""
     parser = argparse.ArgumentParser(
         description="Compose agent configuration from selected levels/categories",

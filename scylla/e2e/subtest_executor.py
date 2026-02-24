@@ -99,7 +99,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str):  # type: ignore[no-untyped-def]
     """Lazy import for parallel executor functions to avoid circular dependency."""
     if name in [
         "RateLimitCoordinator",
