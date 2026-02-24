@@ -66,6 +66,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+MODEL_ALIASES: dict[str, str] = {
+    "sonnet": "claude-sonnet-4-5-20250929",
+    "opus": "claude-opus-4-5-20251101",
+    "haiku": "claude-haiku-4-5-20251001",
+}
 
 # ---------------------------------------------------------------------------
 # Subcommand: run
@@ -119,7 +124,7 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         help="Max concurrent low-memory operations (default: 8)",
     )
     parser.add_argument(
-        "--timeout", type=int, default=3600, help="Timeout per run in seconds (default: 3600)"
+        "--timeout", type=int, default=None, help="Timeout per run in seconds (default: 3600)"
     )
     parser.add_argument("--max-subtests", type=int, default=None, help="Limit sub-tests per tier")
     parser.add_argument(
@@ -293,6 +298,82 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
     from scylla.e2e.runner import run_experiment
     from scylla.utils.terminal import terminal_guard
 
+    # --- Early validation of global args (before spawning threads) ---
+    _batch_tier_ids = []
+    for _tier_str in args.tiers:
+        try:
+            _batch_tier_ids.append(TierID[_tier_str])
+        except KeyError:
+            logger.error(f"Unknown tier: {_tier_str!r}")
+            return 1
+
+    _batch_until_run: RunState | None = None
+    if args.until:
+        try:
+            _batch_until_run = RunState(args.until)
+        except ValueError:
+            logger.error(
+                f"Unknown --until state: {args.until!r}. "
+                f"Valid values: {[s.value for s in RunState]}"
+            )
+            return 1
+
+    _batch_until_tier: TierState | None = None
+    if args.until_tier:
+        try:
+            _batch_until_tier = TierState(args.until_tier)
+        except ValueError:
+            logger.error(
+                f"Unknown --until-tier state: {args.until_tier!r}. "
+                f"Valid values: {[s.value for s in TierState]}"
+            )
+            return 1
+
+    _batch_until_experiment: ExperimentState | None = None
+    if args.until_experiment:
+        try:
+            _batch_until_experiment = ExperimentState(args.until_experiment)
+        except ValueError:
+            logger.error(
+                f"Unknown --until-experiment state: {args.until_experiment!r}. "
+                f"Valid values: {[s.value for s in ExperimentState]}"
+            )
+            return 1
+
+    _batch_from_run: RunState | None = None
+    if args.from_run:
+        try:
+            _batch_from_run = RunState(args.from_run)
+        except ValueError:
+            logger.error(
+                f"Unknown --from state: {args.from_run!r}. "
+                f"Valid values: {[s.value for s in RunState]}"
+            )
+            return 1
+
+    _batch_from_tier: TierState | None = None
+    if args.from_tier:
+        try:
+            _batch_from_tier = TierState(args.from_tier)
+        except ValueError:
+            logger.error(
+                f"Unknown --from-tier state: {args.from_tier!r}. "
+                f"Valid values: {[s.value for s in TierState]}"
+            )
+            return 1
+
+    _batch_from_experiment: ExperimentState | None = None
+    if args.from_experiment:
+        try:
+            _batch_from_experiment = ExperimentState(args.from_experiment)
+        except ValueError:
+            logger.error(
+                f"Unknown --from-experiment state: {args.from_experiment!r}. "
+                f"Valid values: {[s.value for s in ExperimentState]}"
+            )
+            return 1
+    # --- End early validation ---
+
     _save_lock = threading.Lock()
 
     def save_result(result: dict) -> None:
@@ -356,68 +437,29 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                     "error": "Missing task_repo or task_commit",
                 }
 
-            model_map = {
-                "sonnet": "claude-sonnet-4-5-20250929",
-                "opus": "claude-opus-4-5-20251101",
-                "haiku": "claude-haiku-4-5-20251001",
-            }
-            model_id = model_map.get(args.model, args.model)
-            judge_model_id = model_map.get(args.judge_model, args.judge_model)
+            model_id = MODEL_ALIASES.get(args.model, args.model)
+            judge_model_id = MODEL_ALIASES.get(args.judge_model, args.judge_model)
             judge_models = [judge_model_id]
             if args.add_judge:
                 for extra_judge in args.add_judge:
                     if extra_judge:
-                        extra_id = model_map.get(extra_judge, extra_judge)
+                        extra_id = MODEL_ALIASES.get(extra_judge, extra_judge)
                         if extra_id not in judge_models:
                             judge_models.append(extra_id)
 
-            tier_ids = []
-            for tier_str in args.tiers:
-                tier_ids.append(TierID[tier_str])
+            tier_ids = _batch_tier_ids
+            until_run_state = _batch_until_run
+            until_tier_state = _batch_until_tier
+            until_experiment_state = _batch_until_experiment
+            from_run_state = _batch_from_run
+            from_tier_state = _batch_from_tier
+            from_experiment_state = _batch_from_experiment
 
-            until_run_state: RunState | None = None
-            if args.until:
-                try:
-                    until_run_state = RunState(args.until)
-                except ValueError:
-                    raise ValueError(f"Unknown --until state: {args.until!r}")
-
-            until_tier_state: TierState | None = None
-            if args.until_tier:
-                try:
-                    until_tier_state = TierState(args.until_tier)
-                except ValueError:
-                    raise ValueError(f"Unknown --until-tier state: {args.until_tier!r}")
-
-            until_experiment_state: ExperimentState | None = None
-            if args.until_experiment:
-                try:
-                    until_experiment_state = ExperimentState(args.until_experiment)
-                except ValueError:
-                    raise ValueError(f"Unknown --until-experiment state: {args.until_experiment!r}")
-
-            from_run_state: RunState | None = None
-            if args.from_run:
-                try:
-                    from_run_state = RunState(args.from_run)
-                except ValueError:
-                    raise ValueError(f"Unknown --from state: {args.from_run!r}")
-
-            from_tier_state: TierState | None = None
-            if args.from_tier:
-                try:
-                    from_tier_state = TierState(args.from_tier)
-                except ValueError:
-                    raise ValueError(f"Unknown --from-tier state: {args.from_tier!r}")
-
-            from_experiment_state: ExperimentState | None = None
-            if args.from_experiment:
-                try:
-                    from_experiment_state = ExperimentState(args.from_experiment)
-                except ValueError:
-                    raise ValueError(f"Unknown --from-experiment state: {args.from_experiment!r}")
-
-            timeout_seconds = args.timeout or int(test_config.get("timeout_seconds", 3600))
+            timeout_seconds = (
+                args.timeout
+                if args.timeout is not None
+                else int(test_config.get("timeout_seconds", 3600))
+            )
 
             config = ExperimentConfig(
                 experiment_id=experiment_id,
@@ -546,7 +588,6 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
     logger.info(f"Batch mode: running {len(to_run)} tests with {args.threads} threads")
 
-    all_results: list[dict] = []
     failed_count = 0
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
@@ -555,7 +596,6 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
             test_dir = futures[future]
             try:
                 result = future.result()
-                all_results.append(result)
                 if result.get("status") != "success":
                     failed_count += 1
                     logger.warning(
@@ -606,6 +646,11 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
 
     # Single config → existing single-test behavior
     tiers_dir = configs[0]
+
+    # Check that the config path exists before proceeding
+    if not tiers_dir.exists():
+        logger.error(f"Config path does not exist: {tiers_dir}")
+        return 1
 
     # Load test.yaml defaults if present
     test_config: dict[str, Any] = {}
@@ -658,18 +703,13 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
     # Resolve model IDs
     from scylla.e2e.model_validation import validate_model
 
-    model_map = {
-        "sonnet": "claude-sonnet-4-5-20250929",
-        "opus": "claude-opus-4-5-20251101",
-        "haiku": "claude-haiku-4-5-20251001",
-    }
-    model_id = model_map.get(args.model, args.model)
-    judge_model_id = model_map.get(args.judge_model, args.judge_model)
+    model_id = MODEL_ALIASES.get(args.model, args.model)
+    judge_model_id = MODEL_ALIASES.get(args.judge_model, args.judge_model)
     judge_models = [judge_model_id]
     if args.add_judge:
         for extra_judge in args.add_judge:
             if extra_judge:
-                extra_id = model_map.get(extra_judge, extra_judge)
+                extra_id = MODEL_ALIASES.get(extra_judge, extra_judge)
                 if extra_id not in judge_models:
                     judge_models.append(extra_id)
 
@@ -758,7 +798,9 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
             )
             return 1
 
-    timeout_seconds = args.timeout or int(merged.get("timeout_seconds", 3600))
+    timeout_seconds = (
+        args.timeout if args.timeout is not None else int(merged.get("timeout_seconds", 3600))
+    )
 
     config = ExperimentConfig(
         experiment_id=experiment_id,
@@ -836,13 +878,17 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
         save_checkpoint(checkpoint, checkpoint_path)
         logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
 
-    with terminal_guard():
-        results = run_experiment(
-            config=config,
-            tiers_dir=tiers_dir,
-            results_dir=args.results_dir,
-            fresh=args.fresh,
-        )
+    try:
+        with terminal_guard():
+            results = run_experiment(
+                config=config,
+                tiers_dir=tiers_dir,
+                results_dir=args.results_dir,
+                fresh=args.fresh,
+            )
+    except Exception as e:
+        logger.error(f"Experiment failed with exception: {e}")
+        return 1
 
     if results:
         logger.info("Experiment complete")
