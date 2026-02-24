@@ -19,12 +19,8 @@ _REPO_ROOT = _SCRIPT_DIR.parent
 sys.path.insert(0, str(_REPO_ROOT))
 sys.path.insert(0, str(_SCRIPT_DIR))
 
+import tomllib  # noqa: E402
 from common import get_repo_root  # noqa: E402
-
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib  # type: ignore
 
 
 def load_coverage_config(config_file: Path | None = None) -> dict:
