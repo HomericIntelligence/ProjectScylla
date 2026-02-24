@@ -273,12 +273,13 @@ class ExperimentStateMachine:
         try:
             while not self.is_complete():
                 current = self.get_state()
+                self.advance(actions)
                 if until_state is not None and current == until_state:
                     logger.info(
                         f"[experiment] Reached --until-experiment target state: {until_state.value}"
+                        " (inclusive)"
                     )
                     break
-                self.advance(actions)
         except Exception as e:
             from scylla.e2e.rate_limit import RateLimitError
 

@@ -587,6 +587,16 @@ def compute_config_hash(config: ExperimentConfig) -> str:
     config_dict.pop("until_run_state", None)
     config_dict.pop("until_tier_state", None)
     config_dict.pop("until_experiment_state", None)
+    # Remove ephemeral --from flags
+    config_dict.pop("from_run_state", None)
+    config_dict.pop("from_tier_state", None)
+    config_dict.pop("from_experiment_state", None)
+    # Remove ephemeral filters
+    config_dict.pop("filter_tiers", None)
+    config_dict.pop("filter_subtests", None)
+    config_dict.pop("filter_runs", None)
+    config_dict.pop("filter_statuses", None)
+    config_dict.pop("filter_judge_slots", None)
 
     # Stable JSON serialization (sorted keys)
     config_json = json.dumps(config_dict, sort_keys=True)
@@ -658,3 +668,159 @@ def get_experiment_status(experiment_dir: Path) -> dict[str, Any]:
             result["pid"] = None
 
     return result
+
+
+def reset_runs_for_from_state(
+    checkpoint: E2ECheckpoint,
+    from_state: str,
+    tier_filter: list[str] | None = None,
+    subtest_filter: list[str] | None = None,
+    run_filter: list[int] | None = None,
+    status_filter: list[str] | None = None,
+) -> int:
+    """Reset qualifying runs to PENDING for re-execution from the given state.
+
+    Resets runs whose current state is AT or PAST from_state (in the normal
+    run sequence). Also resets corresponding subtest_states to pending and
+    tier_states to pending. Removes reset runs from completed_runs.
+
+    Per design: always resets to PENDING (full workspace recreation).
+
+    Args:
+        checkpoint: The experiment checkpoint (mutated in place)
+        from_state: RunState value string (e.g. "replay_generated")
+        tier_filter: If set, only reset runs in these tiers
+        subtest_filter: If set, only reset runs in these subtests
+        run_filter: If set, only reset these run numbers (1-based)
+        status_filter: If set, only reset runs with these statuses
+            (from completed_runs: "passed"/"failed"/"agent_complete")
+
+    Returns:
+        Count of runs reset to PENDING
+
+    """
+    from scylla.e2e.state_machine import _RUN_STATE_SEQUENCE
+
+    # Build index map for ordering
+    state_index = {state.value: idx for idx, state in enumerate(_RUN_STATE_SEQUENCE)}
+    from_index = state_index.get(from_state)
+    if from_index is None:
+        logger.warning(f"Unknown from_state {from_state!r}, no runs reset")
+        return 0
+
+    reset_count = 0
+    affected_tiers: set[str] = set()
+    affected_subtests: set[tuple[str, str]] = set()
+
+    for tier_id, subtests in checkpoint.run_states.items():
+        if tier_filter and tier_id not in tier_filter:
+            continue
+        for subtest_id, runs in subtests.items():
+            if subtest_filter and subtest_id not in subtest_filter:
+                continue
+            for run_num_str, run_state_str in runs.items():
+                run_num = int(run_num_str)
+                if run_filter and run_num not in run_filter:
+                    continue
+
+                # Check status filter (from completed_runs)
+                if status_filter:
+                    run_status = checkpoint.get_run_status(tier_id, subtest_id, run_num)
+                    if run_status not in status_filter:
+                        continue
+
+                # Check if current state is at or past from_state
+                current_index = state_index.get(run_state_str, -1)
+                if current_index >= from_index:
+                    checkpoint.run_states[tier_id][subtest_id][run_num_str] = "pending"
+                    checkpoint.unmark_run_completed(tier_id, subtest_id, run_num)
+                    affected_tiers.add(tier_id)
+                    affected_subtests.add((tier_id, subtest_id))
+                    reset_count += 1
+
+    # Cascade: reset affected subtest states to pending
+    for tier_id, subtest_id in affected_subtests:
+        checkpoint.set_subtest_state(tier_id, subtest_id, "pending")
+
+    # Cascade: reset affected tier states to pending
+    for tier_id in affected_tiers:
+        checkpoint.set_tier_state(tier_id, "pending")
+
+    # Reset experiment state if any tiers were affected
+    if affected_tiers:
+        checkpoint.experiment_state = "tiers_running"
+
+    return reset_count
+
+
+def reset_tiers_for_from_state(
+    checkpoint: E2ECheckpoint,
+    from_state: str,
+    tier_filter: list[str] | None = None,
+) -> int:
+    """Reset qualifying tiers to PENDING for re-execution from the given state.
+
+    Args:
+        checkpoint: The experiment checkpoint (mutated in place)
+        from_state: TierState value string (e.g. "subtests_running")
+        tier_filter: If set, only reset these tiers
+
+    Returns:
+        Count of tiers reset
+
+    """
+    from scylla.e2e.tier_state_machine import _TIER_STATE_SEQUENCE
+
+    state_index = {state.value: idx for idx, state in enumerate(_TIER_STATE_SEQUENCE)}
+    from_index = state_index.get(from_state)
+    if from_index is None:
+        logger.warning(f"Unknown from_state (tier) {from_state!r}, no tiers reset")
+        return 0
+
+    reset_count = 0
+    affected_tiers: list[str] = []
+
+    for tier_id, tier_state_str in checkpoint.tier_states.items():
+        if tier_filter and tier_id not in tier_filter:
+            continue
+        current_index = state_index.get(tier_state_str, -1)
+        if current_index >= from_index:
+            checkpoint.set_tier_state(tier_id, "pending")
+            affected_tiers.append(tier_id)
+            reset_count += 1
+
+    # Reset experiment state if any tiers were affected
+    if affected_tiers:
+        checkpoint.experiment_state = "tiers_running"
+
+    return reset_count
+
+
+def reset_experiment_for_from_state(
+    checkpoint: E2ECheckpoint,
+    from_state: str,
+) -> int:
+    """Reset experiment state for re-execution from the given state.
+
+    Args:
+        checkpoint: The experiment checkpoint (mutated in place)
+        from_state: ExperimentState value string (e.g. "tiers_running")
+
+    Returns:
+        1 if experiment state was reset, 0 otherwise
+
+    """
+    from scylla.e2e.experiment_state_machine import _EXPERIMENT_STATE_SEQUENCE
+
+    state_index = {state.value: idx for idx, state in enumerate(_EXPERIMENT_STATE_SEQUENCE)}
+    from_index = state_index.get(from_state)
+    if from_index is None:
+        logger.warning(f"Unknown from_state (experiment) {from_state!r}, not reset")
+        return 0
+
+    current_index = state_index.get(checkpoint.experiment_state, -1)
+    if current_index >= from_index:
+        checkpoint.experiment_state = from_state
+        return 1
+
+    return 0

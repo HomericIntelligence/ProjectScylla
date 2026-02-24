@@ -449,7 +449,7 @@ class TestStateMachineAdvanceToCompletion:
     def test_advance_to_completion_stops_at_until_state(
         self, sm: StateMachine, checkpoint_path: Path
     ) -> None:
-        """advance_to_completion stops cleanly at until_state without marking FAILED."""
+        """advance_to_completion stops cleanly AFTER executing until_state (inclusive)."""
         actions_called: list[RunState] = []
 
         def make_action(state: RunState):
@@ -463,13 +463,15 @@ class TestStateMachineAdvanceToCompletion:
             "T0", "00-empty", 1, actions, until_state=RunState.AGENT_COMPLETE
         )
 
-        # Should stop at AGENT_COMPLETE, not advance past it
-        assert final == RunState.AGENT_COMPLETE
-        # AGENT_COMPLETE action itself should NOT be called (we stop before executing it)
-        assert RunState.AGENT_COMPLETE not in actions_called
+        # Inclusive: state advances past AGENT_COMPLETE to DIFF_CAPTURED
+        assert final == RunState.DIFF_CAPTURED
+        # AGENT_COMPLETE action IS called (inclusive semantics)
+        assert RunState.AGENT_COMPLETE in actions_called
         # States before should have been executed
         assert RunState.PENDING in actions_called
         assert RunState.REPLAY_GENERATED in actions_called
+        # States AFTER until_state should NOT have been called
+        assert RunState.DIFF_CAPTURED not in actions_called
 
     def test_advance_to_completion_until_state_not_failed(
         self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
@@ -478,15 +480,17 @@ class TestStateMachineAdvanceToCompletion:
         sm.advance_to_completion("T0", "00-empty", 1, {}, until_state=RunState.AGENT_COMPLETE)
         state = sm.get_state("T0", "00-empty", 1)
         assert state not in (RunState.FAILED, RunState.RATE_LIMITED)
-        assert state == RunState.AGENT_COMPLETE
+        # Inclusive: state is now DIFF_CAPTURED (the state AFTER AGENT_COMPLETE)
+        assert state == RunState.DIFF_CAPTURED
 
     def test_advance_to_completion_until_state_at_start(
         self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
     ) -> None:
-        """until_state=PENDING stops immediately — nothing is executed."""
+        """until_state=PENDING: PENDING action IS executed (inclusive), stops after."""
         action = MagicMock()
         final = sm.advance_to_completion(
             "T0", "00-empty", 1, {RunState.PENDING: action}, until_state=RunState.PENDING
         )
-        action.assert_not_called()
-        assert final == RunState.PENDING
+        # Inclusive: PENDING action is called, state advances to DIR_STRUCTURE_CREATED
+        action.assert_called_once()
+        assert final == RunState.DIR_STRUCTURE_CREATED

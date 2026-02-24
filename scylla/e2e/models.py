@@ -876,6 +876,16 @@ class ExperimentConfig(BaseModel):
     until_run_state: RunState | None = None
     until_tier_state: TierState | None = None
     until_experiment_state: ExperimentState | None = None
+    # Ephemeral --from controls (not saved to experiment.json / not in config_hash)
+    from_run_state: RunState | None = None
+    from_tier_state: TierState | None = None
+    from_experiment_state: ExperimentState | None = None
+    # Ephemeral filters for --from (not saved to experiment.json / not in config_hash)
+    filter_tiers: list[str] | None = None
+    filter_subtests: list[str] | None = None
+    filter_runs: list[int] | None = None
+    filter_statuses: list[str] | None = None
+    filter_judge_slots: list[int] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""

@@ -396,13 +396,13 @@ class StateMachine:
         try:
             while not self.is_complete(tier_id, subtest_id, run_num):
                 current = self.get_state(tier_id, subtest_id, run_num)
+                self.advance(tier_id, subtest_id, run_num, actions)
                 if until_state is not None and current == until_state:
                     logger.info(
                         f"[{tier_id}/{subtest_id}/run_{run_num:02d}] "
-                        f"Reached --until target state: {until_state.value}"
+                        f"Reached --until target state: {until_state.value} (inclusive)"
                     )
                     break
-                self.advance(tier_id, subtest_id, run_num, actions)
         except RateLimitError:
             self.checkpoint.set_run_state(tier_id, subtest_id, run_num, RunState.RATE_LIMITED.value)
             save_checkpoint(self.checkpoint, self.checkpoint_path)

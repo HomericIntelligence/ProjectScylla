@@ -3,41 +3,50 @@ r"""Unified experiment management CLI.
 
 Replaces the following individual scripts:
   - run_e2e_experiment.py  (use: manage_experiment.py run)
-  - run_e2e_batch.py       (use: manage_experiment.py batch)
-  - rerun_agents.py        (use: manage_experiment.py rerun-agents)
-  - rerun_judges.py        (use: manage_experiment.py rerun-judges)
+  - run_e2e_batch.py       (use: manage_experiment.py run --config <dir>/)
+  - rerun_agents.py        (use: manage_experiment.py run --from replay_generated)
+  - rerun_judges.py        (use: manage_experiment.py run --from judge_pipeline_run)
+  - regenerate_results.py  (use: manage_experiment.py run --from run_finalized)
   - repair_checkpoint.py   (use: manage_experiment.py repair)
-  - regenerate_results.py  (use: manage_experiment.py regenerate)
 
 All subcommands support --until / --until-tier / --until-experiment for
-incremental validation: stop execution at a specific state without marking
-the run as failed, enabling resume from that point.
+incremental validation: stop execution at a specific state (inclusive) without
+marking the run as failed, enabling resume from that point.
 
 Usage:
     # Run experiment (single test)
     python scripts/manage_experiment.py run \\
-        --tiers-dir tests/fixtures/tests/test-001 \\
+        --config tests/fixtures/tests/test-001 \\
         --tiers T0 --runs 1
 
-    # Batch run all tests
-    python scripts/manage_experiment.py batch \\
-        --results-dir results/ --threads 4
+    # Batch run all tests in a parent dir
+    python scripts/manage_experiment.py run \\
+        --config tests/fixtures/tests/ --threads 4
 
-    # Re-run failed agents
-    python scripts/manage_experiment.py rerun-agents /path/to/experiment/
+    # Batch run specific tests
+    python scripts/manage_experiment.py run \\
+        --config tests/fixtures/tests/ --tests test-001 test-005
 
-    # Re-run failed judges
-    python scripts/manage_experiment.py rerun-judges /path/to/experiment/
+    # Re-run agents (from replay_generated forward)
+    python scripts/manage_experiment.py run \\
+        --config tests/fixtures/tests/test-001 --from replay_generated \\
+        --filter-tier T0 --filter-status failed
+
+    # Re-run judges (from judge_pipeline_run forward)
+    python scripts/manage_experiment.py run \\
+        --config tests/fixtures/tests/test-001 --from judge_pipeline_run \\
+        --filter-tier T0 --filter-judge-slot 1 2
+
+    # Regenerate reports from existing data
+    python scripts/manage_experiment.py run \\
+        --config tests/fixtures/tests/test-001 --from run_finalized
 
     # Repair corrupt checkpoint
     python scripts/manage_experiment.py repair /path/to/checkpoint.json
 
-    # Regenerate reports from existing data
-    python scripts/manage_experiment.py regenerate /path/to/experiment/
-
-    # Stop all runs at agent_complete for incremental validation
+    # Stop all runs after agent_complete for incremental validation (inclusive)
     python scripts/manage_experiment.py run \\
-        --tiers-dir tests/fixtures/tests/test-001 \\
+        --config tests/fixtures/tests/test-001 \\
         --tiers T0 --runs 1 --until agent_complete
 """
 
@@ -67,8 +76,12 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
     """Add arguments for the 'run' subcommand."""
     parser.add_argument(
         "--config",
+        action="append",
         type=Path,
-        help="Path to experiment configuration YAML file",
+        default=None,
+        help="Path to test config directory or YAML file (repeatable for batch mode). "
+        "When a single directory containing test-* subdirs is given, auto-expands "
+        "to batch mode. When specified multiple times, runs all tests in parallel.",
     )
     parser.add_argument("--repo", type=str, help="Task repository URL (default: from test.yaml)")
     parser.add_argument("--commit", type=str, help="Task commit hash (default: from test.yaml)")
@@ -139,12 +152,6 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         help="Thinking mode (default: None)",
     )
     parser.add_argument(
-        "--tiers-dir",
-        type=Path,
-        default=Path("tests/claude-code/shared"),
-        help="Path to tier configurations (default: tests/claude-code/shared)",
-    )
-    parser.add_argument(
         "--results-dir",
         type=Path,
         default=Path("results"),
@@ -160,7 +167,8 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         type=str,
         default=None,
         metavar="STATE",
-        help="Stop all runs at this RunState (e.g. agent_complete). "
+        help="Stop all runs AFTER reaching this RunState (inclusive). "
+        "E.g., --until agent_complete executes the agent and stops. "
         "Preserves state for future resume.",
     )
     parser.add_argument(
@@ -168,7 +176,7 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         type=str,
         default=None,
         metavar="STATE",
-        help="Stop each tier at this TierState (e.g. subtests_running). "
+        help="Stop each tier AFTER reaching this TierState (inclusive). "
         "Preserves state for future resume.",
     )
     parser.add_argument(
@@ -176,15 +184,309 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         type=str,
         default=None,
         metavar="STATE",
-        help="Stop the experiment at this ExperimentState (e.g. tiers_running). "
+        help="Stop the experiment AFTER reaching this ExperimentState (inclusive). "
         "Preserves state for future resume.",
+    )
+    # --from arguments for re-execution
+    parser.add_argument(
+        "--from",
+        "--from-run",
+        dest="from_run",
+        type=str,
+        default=None,
+        metavar="STATE",
+        help="Reset runs to PENDING and re-execute from this RunState forward. "
+        "E.g., --from replay_generated to re-run agents. "
+        "Requires an existing experiment with a checkpoint.",
+    )
+    parser.add_argument(
+        "--from-tier",
+        type=str,
+        default=None,
+        metavar="STATE",
+        help="Reset tiers to before this TierState and re-execute.",
+    )
+    parser.add_argument(
+        "--from-experiment",
+        type=str,
+        default=None,
+        metavar="STATE",
+        help="Reset experiment to this ExperimentState and re-execute.",
+    )
+    # Filter arguments for --from
+    parser.add_argument(
+        "--filter-tier",
+        action="append",
+        type=str,
+        default=None,
+        help="Only apply --from to these tiers (repeatable)",
+    )
+    parser.add_argument(
+        "--filter-subtest",
+        action="append",
+        type=str,
+        default=None,
+        help="Only apply --from to these subtests (repeatable)",
+    )
+    parser.add_argument(
+        "--filter-run",
+        action="append",
+        type=int,
+        default=None,
+        help="Only apply --from to these run numbers (repeatable)",
+    )
+    parser.add_argument(
+        "--filter-status",
+        action="append",
+        type=str,
+        default=None,
+        help="Only apply --from to runs with these statuses: passed/failed/agent_complete",
+    )
+    parser.add_argument(
+        "--filter-judge-slot",
+        action="append",
+        type=int,
+        default=None,
+        help="Only apply --from to these judge slot numbers (1-indexed)",
+    )
+    # Batch mode arguments
+    parser.add_argument(
+        "--threads", type=int, default=4, help="Parallel threads for batch mode (default: 4)"
+    )
+    parser.add_argument(
+        "--tests",
+        nargs="+",
+        type=str,
+        default=None,
+        help="Filter to specific test IDs (batch mode)",
+    )
+    parser.add_argument(
+        "--retry-errors", action="store_true", help="Re-run failed tests (batch mode)"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
 
 
-def cmd_run(args: argparse.Namespace) -> int:
-    """Execute the 'run' subcommand."""
+def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
+    """Run multiple tests using in-process ThreadPoolExecutor.
+
+    Each test runs run_experiment() directly in its own thread.
+    Results are saved incrementally to batch_summary.json.
+
+    Args:
+        test_dirs: List of test directories to run
+        args: Parsed CLI arguments
+
+    Returns:
+        0 on success, 1 on failure
+
+    """
+    import threading
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from datetime import datetime, timezone
+
+    import yaml
+
+    from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
+    from scylla.e2e.runner import run_experiment
+    from scylla.utils.terminal import terminal_guard
+
+    _save_lock = threading.Lock()
+
+    def save_result(result: dict) -> None:
+        """Save a single result to batch_summary.json (thread-safe)."""
+        import json
+
+        summary_path = args.results_dir / "batch_summary.json"
+        tmp_path = args.results_dir / f"batch_summary.json.tmp.{threading.get_ident()}"
+        with _save_lock:
+            if summary_path.exists():
+                try:
+                    with open(summary_path) as f:
+                        summary = json.load(f)
+                except Exception:
+                    summary = {"results": []}
+            else:
+                summary = {"results": []}
+            summary["results"].append(result)
+            with open(tmp_path, "w") as f:
+                json.dump(summary, f, indent=2)
+            tmp_path.rename(summary_path)
+
+    def run_one_test(test_dir: Path) -> dict:
+        """Run a single test and return result dict."""
+        test_id = test_dir.name
+        started_at = datetime.now(timezone.utc).isoformat()
+        try:
+            # Load test.yaml
+            test_config: dict = {}
+            if (test_dir / "test.yaml").exists():
+                try:
+                    from scylla.e2e.models import TestFixture
+
+                    fixture = TestFixture.from_directory(test_dir)
+                    test_config = {
+                        "experiment_id": fixture.id,
+                        "task_repo": fixture.source_repo,
+                        "task_commit": fixture.source_hash,
+                        "task_prompt_file": "prompt.md",
+                        "timeout_seconds": fixture.timeout_seconds,
+                        "language": fixture.language,
+                    }
+                except Exception:
+                    with open(test_dir / "test.yaml") as f:
+                        test_config = yaml.safe_load(f) or {}
+
+            task_repo = args.repo or test_config.get("task_repo") or test_config.get("repo")
+            task_commit = args.commit or test_config.get("task_commit") or test_config.get("commit")
+            experiment_id = args.experiment_id or test_config.get("experiment_id") or test_id
+            language = test_config.get("language", "python")
+
+            prompt_file = args.prompt
+            if prompt_file is None:
+                prompt_name = test_config.get("task_prompt_file", "prompt.md")
+                prompt_file = test_dir / prompt_name
+
+            if not task_repo or not task_commit:
+                return {
+                    "test_id": test_id,
+                    "status": "error",
+                    "error": "Missing task_repo or task_commit",
+                }
+
+            model_map = {
+                "sonnet": "claude-sonnet-4-5-20250929",
+                "opus": "claude-opus-4-5-20251101",
+                "haiku": "claude-haiku-4-5-20251001",
+            }
+            model_id = model_map.get(args.model, args.model)
+            judge_model_id = model_map.get(args.judge_model, args.judge_model)
+
+            tier_ids = []
+            for tier_str in args.tiers:
+                tier_ids.append(TierID[tier_str])
+
+            until_run_state: RunState | None = None
+            if args.until:
+                until_run_state = RunState(args.until)
+
+            until_tier_state: TierState | None = None
+            if args.until_tier:
+                until_tier_state = TierState(args.until_tier)
+
+            until_experiment_state: ExperimentState | None = None
+            if args.until_experiment:
+                until_experiment_state = ExperimentState(args.until_experiment)
+
+            timeout_seconds = args.timeout or int(test_config.get("timeout_seconds", 3600))
+
+            config = ExperimentConfig(
+                experiment_id=experiment_id,
+                task_repo=task_repo,
+                task_commit=task_commit,
+                task_prompt_file=prompt_file,
+                language=language,
+                models=[model_id],
+                runs_per_subtest=args.runs,
+                judge_models=[judge_model_id],
+                parallel_subtests=args.parallel,
+                parallel_high=args.parallel_high,
+                parallel_med=args.parallel_med,
+                parallel_low=args.parallel_low,
+                timeout_seconds=timeout_seconds,
+                max_subtests=args.max_subtests,
+                skip_agent_teams=args.skip_agent_teams,
+                use_containers=args.use_containers,
+                thinking_mode=args.thinking or "None",
+                tiers_to_run=tier_ids,
+                until_run_state=until_run_state,
+                until_tier_state=until_tier_state,
+                until_experiment_state=until_experiment_state,
+            )
+
+            with terminal_guard():
+                results = run_experiment(
+                    config=config,
+                    tiers_dir=test_dir,
+                    results_dir=args.results_dir,
+                    fresh=args.fresh,
+                )
+
+            status = "success" if results else "error"
+            result = {"test_id": test_id, "status": status, "started_at": started_at}
+        except Exception as e:
+            logger.error(f"Test {test_id} failed with exception: {e}")
+            result = {
+                "test_id": test_id,
+                "status": "error",
+                "error": str(e),
+                "started_at": started_at,
+            }
+
+        save_result(result)
+        return result
+
+    args.results_dir.mkdir(parents=True, exist_ok=True)
+
+    # Handle retry-errors: load existing batch_summary and skip completed tests
+    completed_ids: set[str] = set()
+    if not args.fresh:
+        import json
+
+        summary_path = args.results_dir / "batch_summary.json"
+        if summary_path.exists():
+            try:
+                with open(summary_path) as f:
+                    summary = json.load(f)
+                for r in summary.get("results", []):
+                    if r.get("status") != "error" or not args.retry_errors:
+                        completed_ids.add(r["test_id"])
+            except Exception:
+                pass
+
+    # Apply --tests filter
+    if args.tests:
+        test_dirs = [d for d in test_dirs if d.name in args.tests]
+
+    # Skip already-completed tests
+    to_run = [d for d in test_dirs if d.name not in completed_ids]
+
+    if not to_run:
+        logger.info("All tests already completed in batch. Nothing to run.")
+        return 0
+
+    logger.info(f"Batch mode: running {len(to_run)} tests with {args.threads} threads")
+
+    all_results: list[dict] = []
+    failed_count = 0
+
+    with ThreadPoolExecutor(max_workers=args.threads) as executor:
+        futures = {executor.submit(run_one_test, d): d for d in to_run}
+        for future in as_completed(futures):
+            test_dir = futures[future]
+            try:
+                result = future.result()
+                all_results.append(result)
+                if result.get("status") != "success":
+                    failed_count += 1
+                    logger.warning(
+                        f"Test {test_dir.name} completed with status: {result['status']}"
+                    )
+                else:
+                    logger.info(f"Test {test_dir.name} completed successfully")
+            except Exception as e:
+                logger.error(f"Test {test_dir.name} raised exception: {e}")
+                failed_count += 1
+
+    total = len(to_run)
+    passed = total - failed_count
+    logger.info(f"Batch complete: {passed}/{total} tests succeeded")
+
+    return 0 if failed_count == 0 else 1
+
+
+def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run command
+    """Execute the 'run' subcommand (single test or batch mode)."""
     import yaml
 
     from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
@@ -196,13 +498,33 @@ def cmd_run(args: argparse.Namespace) -> int:
     elif args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
 
+    # Resolve configs list
+    configs: list[Path] = args.config or [Path("tests/claude-code/shared")]
+
+    # Auto-expand: if a single path is a parent of test-* dirs, discover batch
+    if len(configs) == 1 and configs[0].is_dir():
+        parent = configs[0]
+        test_dirs = sorted(
+            d for d in parent.glob("test-*") if d.is_dir() and d.name != "test-config-loader"
+        )
+        if test_dirs:
+            # This is a parent dir containing test-* subdirs → batch mode
+            return _run_batch(test_dirs, args)
+
+    # Multiple configs → batch mode
+    if len(configs) > 1:
+        return _run_batch(configs, args)
+
+    # Single config → existing single-test behavior
+    tiers_dir = configs[0]
+
     # Load test.yaml defaults if present
     test_config: dict[str, Any] = {}
-    if args.tiers_dir and (args.tiers_dir / "test.yaml").exists():
+    if tiers_dir and (tiers_dir / "test.yaml").exists():
         try:
             from scylla.e2e.models import TestFixture
 
-            fixture = TestFixture.from_directory(args.tiers_dir)
+            fixture = TestFixture.from_directory(tiers_dir)
             test_config = {
                 "experiment_id": fixture.id,
                 "task_repo": fixture.source_repo,
@@ -212,15 +534,16 @@ def cmd_run(args: argparse.Namespace) -> int:
                 "language": fixture.language,
             }
         except Exception:
-            with open(args.tiers_dir / "test.yaml") as f:
+            with open(tiers_dir / "test.yaml") as f:
                 raw = yaml.safe_load(f) or {}
             test_config = raw
 
-    # Load YAML config file if provided
+    # Load YAML config file if provided (single file path)
     yaml_config: dict[str, Any] = {}
-    if args.config and args.config.exists():
-        with open(args.config) as f:
+    if tiers_dir and tiers_dir.is_file() and tiers_dir.suffix in (".yaml", ".yml"):
+        with open(tiers_dir) as f:
             yaml_config = yaml.safe_load(f) or {}
+        tiers_dir = tiers_dir.parent
 
     # Merge: CLI overrides yaml_config overrides test_config
     merged = {**test_config, **yaml_config}
@@ -234,7 +557,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     prompt_file = args.prompt
     if prompt_file is None:
         prompt_name = merged.get("task_prompt_file", "prompt.md")
-        prompt_file = args.tiers_dir / prompt_name
+        prompt_file = tiers_dir / prompt_name
 
     if not task_repo:
         logger.error("--repo is required (or set in test.yaml)")
@@ -312,6 +635,40 @@ def cmd_run(args: argparse.Namespace) -> int:
             )
             return 1
 
+    # Parse --from state
+    from_run_state: RunState | None = None
+    if args.from_run:
+        try:
+            from_run_state = RunState(args.from_run)
+        except ValueError:
+            logger.error(
+                f"Unknown --from state: {args.from_run!r}. "
+                f"Valid values: {[s.value for s in RunState]}"
+            )
+            return 1
+
+    from_tier_state: TierState | None = None
+    if args.from_tier:
+        try:
+            from_tier_state = TierState(args.from_tier)
+        except ValueError:
+            logger.error(
+                f"Unknown --from-tier state: {args.from_tier!r}. "
+                f"Valid values: {[s.value for s in TierState]}"
+            )
+            return 1
+
+    from_experiment_state: ExperimentState | None = None
+    if args.from_experiment:
+        try:
+            from_experiment_state = ExperimentState(args.from_experiment)
+        except ValueError:
+            logger.error(
+                f"Unknown --from-experiment state: {args.from_experiment!r}. "
+                f"Valid values: {[s.value for s in ExperimentState]}"
+            )
+            return 1
+
     timeout_seconds = args.timeout or int(merged.get("timeout_seconds", 3600))
 
     config = ExperimentConfig(
@@ -336,12 +693,64 @@ def cmd_run(args: argparse.Namespace) -> int:
         until_run_state=until_run_state,
         until_tier_state=until_tier_state,
         until_experiment_state=until_experiment_state,
+        from_run_state=from_run_state,
+        from_tier_state=from_tier_state,
+        from_experiment_state=from_experiment_state,
+        filter_tiers=args.filter_tier,
+        filter_subtests=args.filter_subtest,
+        filter_runs=args.filter_run,
+        filter_statuses=args.filter_status,
+        filter_judge_slots=args.filter_judge_slot,
     )
+
+    # If --from specified, load existing checkpoint and reset states
+    if from_run_state or from_tier_state or from_experiment_state:
+        from scylla.e2e.checkpoint import (
+            load_checkpoint,
+            reset_experiment_for_from_state,
+            reset_runs_for_from_state,
+            reset_tiers_for_from_state,
+            save_checkpoint,
+        )
+
+        checkpoint_path = args.results_dir / experiment_id / "checkpoint.json"
+        if not checkpoint_path.exists():
+            logger.error(
+                f"--from requires existing experiment with checkpoint at {checkpoint_path}"
+            )
+            return 1
+
+        checkpoint = load_checkpoint(checkpoint_path)
+        reset_count = 0
+
+        if from_run_state:
+            reset_count += reset_runs_for_from_state(
+                checkpoint,
+                from_run_state.value,
+                tier_filter=args.filter_tier,
+                subtest_filter=args.filter_subtest,
+                run_filter=args.filter_run,
+                status_filter=args.filter_status,
+            )
+        if from_tier_state:
+            reset_count += reset_tiers_for_from_state(
+                checkpoint,
+                from_tier_state.value,
+                tier_filter=args.filter_tier,
+            )
+        if from_experiment_state:
+            reset_count += reset_experiment_for_from_state(
+                checkpoint,
+                from_experiment_state.value,
+            )
+
+        save_checkpoint(checkpoint, checkpoint_path)
+        logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
 
     with terminal_guard():
         results = run_experiment(
             config=config,
-            tiers_dir=args.tiers_dir,
+            tiers_dir=tiers_dir,
             results_dir=args.results_dir,
             fresh=args.fresh,
         )
@@ -352,184 +761,6 @@ def cmd_run(args: argparse.Namespace) -> int:
     else:
         logger.error("Experiment failed or returned no results")
         return 1
-
-
-# ---------------------------------------------------------------------------
-# Subcommand: batch
-# ---------------------------------------------------------------------------
-
-
-def _add_batch_args(parser: argparse.ArgumentParser) -> None:
-    """Add arguments for the 'batch' subcommand."""
-    parser.add_argument(
-        "--results-dir", type=Path, default=Path("results"), help="Output directory"
-    )
-    parser.add_argument("--threads", type=int, default=4, help="Parallel threads (default: 4)")
-    parser.add_argument("--model", type=str, default="sonnet", help="Primary model")
-    parser.add_argument("--judge-model", type=str, default="sonnet", help="Judge model")
-    parser.add_argument(
-        "--tiers", nargs="+", type=str, default=None, help="Filter to specific tiers"
-    )
-    parser.add_argument(
-        "--tests", nargs="+", type=str, default=None, help="Filter to specific test IDs"
-    )
-    parser.add_argument("--runs", type=int, default=10, help="Runs per sub-test (default: 10)")
-    parser.add_argument("--max-subtests", type=int, default=None, help="Limit sub-tests per tier")
-    parser.add_argument(
-        "--thinking",
-        choices=["None", "Low", "High", "UltraThink"],
-        default="None",
-        help="Thinking mode",
-    )
-    parser.add_argument("--fresh", action="store_true", help="Clear batch summary and restart")
-    parser.add_argument("--retry-errors", action="store_true", help="Re-run failed tests")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
-
-
-def cmd_batch(args: argparse.Namespace) -> int:
-    """Execute the 'batch' subcommand — delegates to run_e2e_batch logic."""
-    import scripts.run_e2e_batch as batch_module
-
-    # Build argv list and pass it directly to the parser to avoid mutating sys.argv
-    argv: list[str] = []
-    if args.results_dir:
-        argv += ["--results-dir", str(args.results_dir)]
-    if args.threads:
-        argv += ["--threads", str(args.threads)]
-    if args.model:
-        argv += ["--model", args.model]
-    if args.judge_model:
-        argv += ["--judge-model", args.judge_model]
-    if args.tiers:
-        argv += ["--tiers"] + args.tiers
-    if args.tests:
-        argv += ["--tests"] + args.tests
-    if args.runs:
-        argv += ["--runs", str(args.runs)]
-    if args.max_subtests:
-        argv += ["--max-subtests", str(args.max_subtests)]
-    if args.thinking and args.thinking != "None":
-        argv += ["--thinking", args.thinking]
-    if args.fresh:
-        argv.append("--fresh")
-    if args.retry_errors:
-        argv.append("--retry-errors")
-    if args.verbose:
-        argv.append("-v")
-
-    return batch_module.main(argv=argv)
-
-
-# ---------------------------------------------------------------------------
-# Subcommand: rerun-agents
-# ---------------------------------------------------------------------------
-
-
-def _add_rerun_agents_args(parser: argparse.ArgumentParser) -> None:
-    """Add arguments for the 'rerun-agents' subcommand."""
-    parser.add_argument("experiment_dir", type=Path, help="Path to experiment directory")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
-    parser.add_argument(
-        "--status",
-        action="append",
-        default=None,
-        metavar="STATUS",
-        help="Filter by run status (may repeat). Choices: completed/results/failed/partial/missing",
-    )
-    parser.add_argument("--tier", type=str, default=None, help="Filter to specific tier")
-    parser.add_argument("--subtest", type=str, default=None, help="Filter to specific subtest")
-    parser.add_argument(
-        "--runs", nargs="+", type=int, default=None, help="Filter to specific run numbers"
-    )
-    parser.add_argument(
-        "--skip-regenerate",
-        action="store_true",
-        help="Skip final regenerate step after re-running",
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
-
-
-def cmd_rerun_agents(args: argparse.Namespace) -> int:
-    """Execute the 'rerun-agents' subcommand."""
-    from scylla.e2e.rerun import rerun_experiment
-
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    rerun_experiment(
-        experiment_dir=args.experiment_dir,
-        dry_run=args.dry_run,
-        verbose=args.verbose,
-        tier_filter=args.tier,
-        subtest_filter=args.subtest,
-        run_filter=args.runs,
-        status_filter=args.status,
-        skip_regenerate=args.skip_regenerate,
-    )
-    return 0
-
-
-# ---------------------------------------------------------------------------
-# Subcommand: rerun-judges
-# ---------------------------------------------------------------------------
-
-
-def _add_rerun_judges_args(parser: argparse.ArgumentParser) -> None:
-    """Add arguments for the 'rerun-judges' subcommand."""
-    parser.add_argument("experiment_dir", type=Path, help="Path to experiment directory")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
-    parser.add_argument(
-        "--status",
-        action="append",
-        default=None,
-        metavar="STATUS",
-        help="Filter by status (complete/missing/failed/agent_failed)",
-    )
-    parser.add_argument("--tier", type=str, default=None, help="Filter to specific tier")
-    parser.add_argument("--subtest", type=str, default=None, help="Filter to specific subtest")
-    parser.add_argument(
-        "--runs", nargs="+", type=int, default=None, help="Filter to specific run numbers"
-    )
-    parser.add_argument(
-        "--judge-slot",
-        nargs="+",
-        type=int,
-        default=None,
-        help="Filter to specific judge slot numbers (1-indexed)",
-    )
-    parser.add_argument(
-        "--regenerate-only",
-        action="store_true",
-        help="Only regenerate consensus (no re-run)",
-    )
-    parser.add_argument(
-        "--parallel", type=int, default=1, help="Number of parallel judge slots (default: 1)"
-    )
-    parser.add_argument("--judge-model", type=str, default=None, help="Override judge model")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
-
-
-def cmd_rerun_judges(args: argparse.Namespace) -> int:
-    """Execute the 'rerun-judges' subcommand."""
-    from scylla.e2e.rerun_judges import rerun_judges_experiment
-
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    rerun_judges_experiment(
-        experiment_dir=args.experiment_dir,
-        dry_run=args.dry_run,
-        verbose=args.verbose,
-        tier_filter=args.tier,
-        subtest_filter=args.subtest,
-        run_filter=args.runs,
-        judge_slot_filter=args.judge_slot,
-        status_filter=args.status,
-        judge_model=args.judge_model,
-        regenerate_only=args.regenerate_only,
-        parallel=args.parallel,
-    )
-    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -600,39 +831,6 @@ def cmd_repair(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
-# Subcommand: regenerate
-# ---------------------------------------------------------------------------
-
-
-def _add_regenerate_args(parser: argparse.ArgumentParser) -> None:
-    """Add arguments for the 'regenerate' subcommand."""
-    parser.add_argument("experiment_dir", type=Path, help="Path to experiment directory")
-    parser.add_argument(
-        "--rejudge", action="store_true", help="Re-run judges for runs missing judge results"
-    )
-    parser.add_argument("--judge-model", type=str, default=None, help="Override judge model")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be done")
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
-
-
-def cmd_regenerate(args: argparse.Namespace) -> int:
-    """Execute the 'regenerate' subcommand."""
-    from scylla.e2e.regenerate import regenerate_experiment
-
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    regenerate_experiment(
-        experiment_dir=args.experiment_dir,
-        rejudge=args.rejudge,
-        judge_model=args.judge_model,
-        dry_run=args.dry_run,
-        verbose=args.verbose,
-    )
-    return 0
-
-
-# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -645,14 +843,22 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Subcommands:
-  run           Run a single experiment (replaces run_e2e_experiment.py)
-  batch         Run all tests in parallel (replaces run_e2e_batch.py)
-  rerun-agents  Re-run failed agent executions (replaces rerun_agents.py)
-  rerun-judges  Re-run failed judge evaluations (replaces rerun_judges.py)
-  repair        Repair corrupt checkpoint (replaces repair_checkpoint.py)
-  regenerate    Rebuild reports from existing data (replaces regenerate_results.py)
+  run     Run single or batch experiments with optional --from re-execution
+  repair  Repair corrupt checkpoint (rebuilds from run_result.json files)
 
 Use 'manage_experiment.py <subcommand> --help' for subcommand-specific options.
+
+Equivalence mapping (old → new):
+  batch --results-dir X --threads 4
+    → run --config tests/fixtures/tests/ --threads 4 --results-dir X
+  rerun-agents /exp/ --tier T0 --status failed
+    → run --config <test-dir> --results-dir /exp/ --from replay_generated
+          --filter-tier T0 --filter-status failed
+  rerun-judges /exp/ --tier T0 --judge-slot 1 2
+    → run --config <test-dir> --results-dir /exp/ --from judge_pipeline_run
+          --filter-tier T0 --filter-judge-slot 1 2
+  regenerate /exp/
+    → run --config <test-dir> --results-dir /exp/ --from run_finalized
         """,
     )
 
@@ -662,50 +868,19 @@ Use 'manage_experiment.py <subcommand> --help' for subcommand-specific options.
     # run subcommand
     run_parser = subparsers.add_parser(
         "run",
-        help="Run a single E2E experiment",
-        description="Run a single E2E experiment with specified tiers and configuration.",
+        help="Run single or batch E2E experiments (with optional --from re-execution)",
+        description="Run E2E experiments. Supports single test, batch mode (multi-config or "
+        "parent dir), and re-execution via --from.",
     )
     _add_run_args(run_parser)
 
-    # batch subcommand
-    batch_parser = subparsers.add_parser(
-        "batch",
-        help="Run all tests in parallel (batch mode)",
-        description="Run all E2E tests across multiple threads with load balancing.",
-    )
-    _add_batch_args(batch_parser)
-
-    # rerun-agents subcommand
-    rerun_agents_parser = subparsers.add_parser(
-        "rerun-agents",
-        help="Re-run failed/incomplete agent executions",
-        description="Scan experiment, identify incomplete runs, and re-execute agents.",
-    )
-    _add_rerun_agents_args(rerun_agents_parser)
-
-    # rerun-judges subcommand
-    rerun_judges_parser = subparsers.add_parser(
-        "rerun-judges",
-        help="Re-run failed/incomplete judge evaluations",
-        description="Scan experiment, identify incomplete judge slots, and re-run them.",
-    )
-    _add_rerun_judges_args(rerun_judges_parser)
-
-    # repair subcommand
+    # repair subcommand (kept as-is)
     repair_parser = subparsers.add_parser(
         "repair",
         help="Repair corrupt checkpoint by rebuilding from run_result.json files",
         description="Fix checkpoints where completed_runs is empty despite having completed runs.",
     )
     _add_repair_args(repair_parser)
-
-    # regenerate subcommand
-    regenerate_parser = subparsers.add_parser(
-        "regenerate",
-        help="Regenerate reports from existing run data",
-        description="Rebuild results.json and reports from existing run_result.json files.",
-    )
-    _add_regenerate_args(regenerate_parser)
 
     return parser
 
@@ -717,11 +892,7 @@ def main() -> int:
 
     subcommand_map = {
         "run": cmd_run,
-        "batch": cmd_batch,
-        "rerun-agents": cmd_rerun_agents,
-        "rerun-judges": cmd_rerun_judges,
         "repair": cmd_repair,
-        "regenerate": cmd_regenerate,
     }
 
     handler = subcommand_map.get(args.subcommand)
