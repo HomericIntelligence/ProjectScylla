@@ -34,6 +34,16 @@ Tests cover:
 - --skip-judge-validation skips validate_model call
 - --timeout overrides test.yaml value
 - --thinking High flows to ExperimentConfig
+- --timeout defaults to test.yaml when not specified on CLI
+- MODEL_ALIASES module-level constant exists with expected keys
+- invalid --tiers in batch mode returns 1 before running tests
+- invalid --from in batch mode returns 1 before running tests
+- non-existent --config reports clear error about path (not --repo)
+- run_experiment() exception in single mode returns 1
+- batch test missing task_repo returns error result dict
+- --filter-subtest passed to reset_runs_for_from_state
+- --filter-run passed to reset_runs_for_from_state
+- --prompt override flows to ExperimentConfig
 """
 
 from __future__ import annotations
@@ -50,7 +60,7 @@ import pytest
 # Ensure scripts/ is importable
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
 
-from manage_experiment import build_parser, cmd_repair
+from manage_experiment import MODEL_ALIASES, build_parser, cmd_repair
 
 # ---------------------------------------------------------------------------
 # Parser construction
@@ -1251,8 +1261,12 @@ class TestCmdRunFromInBatchMode:
         assert len(reset_calls) == 2
         assert all(s == "replay_generated" for s in reset_calls)
 
-    def test_invalid_from_in_batch_returns_error_result(self, tmp_path: Path) -> None:
-        """Invalid --from value in batch mode produces a per-test error dict, not a stack trace."""
+    def test_invalid_from_in_batch_returns_1_early(self, tmp_path: Path) -> None:
+        """Invalid --from value in batch mode returns 1 before spawning any threads.
+
+        Early validation catches the invalid state and returns 1 immediately. No
+        batch_summary.json is written because no tests are executed.
+        """
         import yaml
 
         results_dir = tmp_path / "results"
@@ -1290,18 +1304,14 @@ class TestCmdRunFromInBatchMode:
 
         from manage_experiment import cmd_run
 
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
+        with patch("scylla.e2e.runner.run_experiment") as mock_run:
             result = cmd_run(args)
 
         assert result == 1
-        summary_path = results_dir / "batch_summary.json"
-        assert summary_path.exists()
-        summary = json.loads(summary_path.read_text())
-        assert len(summary["results"]) == 2
-        for test_result in summary["results"]:
-            assert test_result["status"] == "error"
-            assert "not_a_valid_state" in test_result["error"]
-            assert "--from" in test_result["error"]
+        # Early validation returns before spawning threads — no tests run
+        mock_run.assert_not_called()
+        # No batch_summary.json is written
+        assert not (results_dir / "batch_summary.json").exists()
 
 
 # ---------------------------------------------------------------------------
@@ -2773,3 +2783,538 @@ class TestThinkingModeFlowsToConfig:
             cmd_run(args)
 
         assert captured[0].thinking_mode == "High"
+
+
+# ---------------------------------------------------------------------------
+# --timeout defaults to test.yaml when not specified on CLI (bug fix)
+# ---------------------------------------------------------------------------
+
+
+class TestTimeoutFallbackToTestYaml:
+    """Tests that --timeout defaults to test.yaml timeout_seconds when not given on CLI."""
+
+    def test_timeout_defaults_to_test_yaml_when_not_specified(self, tmp_path: Path) -> None:
+        """No --timeout on CLI: ExperimentConfig.timeout_seconds comes from test.yaml."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 7200,
+            "language": "python",
+        }
+        (config_dir / "test.yaml").write_text(yaml.dump(test_yaml))
+        (config_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        # No --timeout on CLI
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--skip-judge-validation",
+            ]
+        )
+        assert args.timeout is None  # verify default is None
+
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert captured[0].timeout_seconds == 7200
+
+
+# ---------------------------------------------------------------------------
+# MODEL_ALIASES module-level constant
+# ---------------------------------------------------------------------------
+
+
+class TestModelAliasConstant:
+    """Tests for MODEL_ALIASES module-level constant."""
+
+    def test_model_aliases_has_expected_keys(self) -> None:
+        """MODEL_ALIASES is a module-level dict with sonnet, opus, and haiku keys."""
+        assert isinstance(MODEL_ALIASES, dict)
+        assert "sonnet" in MODEL_ALIASES
+        assert "opus" in MODEL_ALIASES
+        assert "haiku" in MODEL_ALIASES
+
+    def test_model_aliases_values_are_full_model_ids(self) -> None:
+        """MODEL_ALIASES values contain full versioned model IDs."""
+        assert MODEL_ALIASES["sonnet"] == "claude-sonnet-4-5-20250929"
+        assert MODEL_ALIASES["opus"] == "claude-opus-4-5-20251101"
+        assert MODEL_ALIASES["haiku"] == "claude-haiku-4-5-20251001"
+
+
+# ---------------------------------------------------------------------------
+# Batch early validation (--tiers / --from before spawning threads)
+# ---------------------------------------------------------------------------
+
+
+class TestBatchEarlyValidation:
+    """Tests that invalid global args in batch mode fail fast before any tests run."""
+
+    def _make_test_dir_with_yaml(self, path: Path, test_name: str) -> None:
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/test/repo",
+                    "task_commit": "abc123",
+                    "experiment_id": test_name,
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                }
+            )
+        )
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_invalid_tiers_in_batch_returns_1_before_running(self, tmp_path: Path) -> None:
+        """--tiers TX in batch mode returns 1 before run_experiment is called."""
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+        for test_name in ["test-001", "test-002"]:
+            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--tiers",
+                "TX",
+                "--results-dir",
+                str(results_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with patch("scylla.e2e.runner.run_experiment") as mock_run:
+            result = cmd_run(args)
+
+        assert result == 1
+        mock_run.assert_not_called()
+
+    def test_invalid_from_in_batch_returns_1_before_running(self, tmp_path: Path) -> None:
+        """--from bogus_state in batch mode returns 1 before run_experiment is called."""
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+        for test_name in ["test-001", "test-002"]:
+            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--from",
+                "bogus_state_xyz",
+                "--results-dir",
+                str(results_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with patch("scylla.e2e.runner.run_experiment") as mock_run:
+            result = cmd_run(args)
+
+        assert result == 1
+        mock_run.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# --config existence check
+# ---------------------------------------------------------------------------
+
+
+class TestConfigPathExistence:
+    """Tests that a non-existent --config path gives a clear error message."""
+
+    def test_nonexistent_config_reports_clear_error(self, tmp_path: Path, caplog) -> None:
+        """--config /nonexistent/path returns 1 and error message mentions the path."""
+        import logging
+
+        nonexistent = tmp_path / "does-not-exist-at-all"
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(nonexistent),
+                "--repo",
+                "https://github.com/test/repo",
+                "--commit",
+                "abc123",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            caplog.at_level(logging.ERROR),
+        ):
+            result = cmd_run(args)
+
+        assert result == 1
+        # Error message should reference the path, not "--repo is required"
+        error_messages = [r.message for r in caplog.records if r.levelno == logging.ERROR]
+        assert any(str(nonexistent) in msg for msg in error_messages), (
+            f"Expected path in error messages, got: {error_messages}"
+        )
+        assert not any("--repo is required" in msg for msg in error_messages), (
+            f"Got misleading --repo error: {error_messages}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Single-mode run_experiment() exception handling
+# ---------------------------------------------------------------------------
+
+
+class TestSingleModeExceptionHandling:
+    """Tests that exceptions from run_experiment() in single mode return 1 cleanly."""
+
+    def test_run_experiment_exception_returns_1(self, tmp_path: Path) -> None:
+        """run_experiment() raising RuntimeError returns 1 without propagating exception."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        (config_dir / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/test/repo",
+                    "task_commit": "abc123",
+                    "experiment_id": "test-exp",
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                }
+            )
+        )
+        (config_dir / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch(
+                "scylla.e2e.runner.run_experiment",
+                side_effect=RuntimeError("simulated failure"),
+            ),
+        ):
+            result = cmd_run(args)
+
+        assert result == 1  # exception converted to exit code 1
+
+
+# ---------------------------------------------------------------------------
+# Batch test missing task_repo returns error result
+# ---------------------------------------------------------------------------
+
+
+class TestBatchMissingTaskRepo:
+    """Tests that a batch test with no task_repo and no --repo returns an error result."""
+
+    def test_batch_test_missing_repo_returns_error_result(self, tmp_path: Path) -> None:
+        """test.yaml with no task_repo and no CLI --repo causes batch to return exit code 1.
+
+        The missing-repo check returns early from run_one_test() before save_result() is called,
+        so the result dict is not persisted to batch_summary.json. The thread pool receives the
+        dict and increments failed_count, causing the batch to return 1.
+        """
+        import yaml
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # test.yaml with task_repo intentionally missing
+        test_dir = tmp_path / "test-001"
+        test_dir.mkdir()
+        (test_dir / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_commit": "abc123",
+                    "experiment_id": "test-001",
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                    # task_repo intentionally absent
+                }
+            )
+        )
+        (test_dir / "prompt.md").write_text("test prompt")
+
+        # Need a second config to trigger batch mode (multiple --config)
+        test_dir2 = tmp_path / "test-002"
+        test_dir2.mkdir()
+        (test_dir2 / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/test/repo",
+                    "task_commit": "abc123",
+                    "experiment_id": "test-002",
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                }
+            )
+        )
+        (test_dir2 / "prompt.md").write_text("test prompt")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(test_dir),
+                "--config",
+                str(test_dir2),
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        # test-001 fails (missing repo), test-002 succeeds → batch returns 1
+        assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# --filter-subtest and --filter-run wiring to reset functions
+# ---------------------------------------------------------------------------
+
+
+class TestFilterSubtestAndRunWiring:
+    """Tests that --filter-subtest and --filter-run are passed to reset_runs_for_from_state."""
+
+    def _make_minimal_checkpoint(self, results_dir: Path, experiment_id: str) -> None:
+        checkpoint_data = {
+            "version": "3.1",
+            "experiment_id": experiment_id,
+            "experiment_dir": str(results_dir / experiment_id),
+            "config_hash": "abc123",
+            "started_at": "2024-01-01T00:00:00+00:00",
+            "last_updated_at": "2024-01-01T00:00:00+00:00",
+            "status": "interrupted",
+            "run_states": {"T0": {"00": {"1": "replay_generated"}}},
+            "completed_runs": {},
+        }
+        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        (checkpoint_dir / "checkpoint.json").write_text(json.dumps(checkpoint_data))
+
+    def _make_test_dir(self, path: Path, experiment_id: str) -> None:
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        (path / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/test/repo",
+                    "task_commit": "abc123",
+                    "experiment_id": experiment_id,
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                }
+            )
+        )
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_filter_subtest_passed_to_reset_function(self, tmp_path: Path) -> None:
+        """--from replay_generated --filter-subtest 00 calls reset with subtest_filter=['00']."""
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+        self._make_minimal_checkpoint(results_dir, experiment_id)
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir, experiment_id)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--from",
+                "replay_generated",
+                "--filter-subtest",
+                "00",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        reset_kwargs: list[dict] = []
+
+        def mock_reset_runs(checkpoint, from_state, **kwargs):
+            reset_kwargs.append(kwargs)
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.checkpoint.reset_runs_for_from_state", side_effect=mock_reset_runs),
+            patch("scylla.e2e.checkpoint.reset_tiers_for_from_state", return_value=0),
+            patch("scylla.e2e.checkpoint.reset_experiment_for_from_state", return_value=0),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(reset_kwargs) == 1
+        assert reset_kwargs[0]["subtest_filter"] == ["00"]
+
+    def test_filter_run_passed_to_reset_function(self, tmp_path: Path) -> None:
+        """--from replay_generated --filter-run 1 calls reset with run_filter=[1]."""
+        results_dir = tmp_path / "results"
+        experiment_id = "test-exp"
+        self._make_minimal_checkpoint(results_dir, experiment_id)
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir, experiment_id)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--from",
+                "replay_generated",
+                "--filter-run",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        reset_kwargs: list[dict] = []
+
+        def mock_reset_runs(checkpoint, from_state, **kwargs):
+            reset_kwargs.append(kwargs)
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.checkpoint.reset_runs_for_from_state", side_effect=mock_reset_runs),
+            patch("scylla.e2e.checkpoint.reset_tiers_for_from_state", return_value=0),
+            patch("scylla.e2e.checkpoint.reset_experiment_for_from_state", return_value=0),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(reset_kwargs) == 1
+        assert reset_kwargs[0]["run_filter"] == [1]
+
+
+# ---------------------------------------------------------------------------
+# --prompt override flows to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
+class TestPromptOverride:
+    """Tests that --prompt overrides the test.yaml task_prompt_file value."""
+
+    def test_prompt_flag_overrides_test_yaml(self, tmp_path: Path) -> None:
+        """--prompt /custom/prompt.md sets config.task_prompt_file to that path."""
+        import yaml
+
+        config_dir = tmp_path / "test-dir"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        (config_dir / "test.yaml").write_text(
+            yaml.dump(
+                {
+                    "task_repo": "https://github.com/test/repo",
+                    "task_commit": "abc123",
+                    "experiment_id": "test-exp",
+                    "task_prompt_file": "prompt.md",
+                    "timeout_seconds": 3600,
+                    "language": "python",
+                }
+            )
+        )
+        (config_dir / "prompt.md").write_text("default prompt")
+
+        custom_prompt = tmp_path / "custom_prompt.md"
+        custom_prompt.write_text("custom prompt content")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--prompt",
+                str(custom_prompt),
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        captured: list = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert captured[0].task_prompt_file == custom_prompt
