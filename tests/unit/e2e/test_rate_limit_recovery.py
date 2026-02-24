@@ -77,7 +77,7 @@ class TestDetectRateLimitFromResults:
         }
         (failed_dir / "result.json").write_text(json.dumps(result_data))
 
-        results = {}
+        results: dict[str, SubTestResult] = {}
 
         detected = _detect_rate_limit_from_results(results, tmp_path)
 
@@ -109,7 +109,7 @@ class TestDetectRateLimitFromResults:
         # Write invalid JSON
         (failed_dir / "result.json").write_text("not json {{{")
 
-        results = {}
+        results: dict[str, SubTestResult] = {}
 
         detected = _detect_rate_limit_from_results(results, tmp_path)
 

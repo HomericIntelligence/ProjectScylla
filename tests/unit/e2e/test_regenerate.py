@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from scylla.e2e.models import E2ERunResult, ExperimentConfig, TierID, TokenStats
+from scylla.e2e.models import E2ERunResult, ExperimentConfig, TierID, TierResult, TokenStats
 from scylla.e2e.regenerate import (
     RegenerateStats,
     _find_frontier,
@@ -178,7 +178,7 @@ def test_aggregate_results_multiple_runs() -> None:
 
 def test_find_frontier_empty() -> None:
     """Test _find_frontier with empty tier results."""
-    tier_results = {}
+    tier_results: dict[TierID, TierResult] = {}
     best_tier, best_cop = _find_frontier(tier_results)
 
     assert best_tier is None

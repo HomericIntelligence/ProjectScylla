@@ -216,7 +216,7 @@ class TestGenerateRunReport:
             exit_code=0,
             task_prompt="Test task",
             workspace_path=workspace,
-            criteria_scores=criteria_scores,
+            criteria_scores=criteria_scores,  # type: ignore[arg-type]
         )
 
         assert "correctness | 0.90 | -" in report

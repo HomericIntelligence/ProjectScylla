@@ -245,7 +245,7 @@ class TestRunUsesExperimentStateMachine:
             # Check that until_state=ExperimentState.TIERS_RUNNING was passed
             kwargs = call_kwargs[1] if call_kwargs[1] else {}
             args = call_kwargs[0] if call_kwargs[0] else ()
-            until_passed = kwargs.get("until_state") or (args[1] if len(args) > 1 else None)
+            until_passed = kwargs.get("until_state") or (args[1] if len(args) > 1 else None)  # type: ignore[misc]
             assert until_passed == ExperimentState.TIERS_RUNNING
 
 
@@ -331,5 +331,5 @@ class TestRunTierUsesTierStateMachine:
                 call_kwargs = mock_advance.call_args
                 kwargs = call_kwargs[1] if call_kwargs[1] else {}
                 args = call_kwargs[0] if call_kwargs[0] else ()
-                until_passed = kwargs.get("until_state") or (args[2] if len(args) > 2 else None)
+                until_passed = kwargs.get("until_state") or (args[2] if len(args) > 2 else None)  # type: ignore[misc]
                 assert until_passed == TierState.SUBTESTS_RUNNING

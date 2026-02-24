@@ -136,8 +136,8 @@ class TestCreateWorkspace:
             "base_path": tmp_path,
         }
 
-        workspace1 = create_workspace(**args)
-        workspace2 = create_workspace(**args)
+        workspace1 = create_workspace(**args)  # type: ignore[arg-type]
+        workspace2 = create_workspace(**args)  # type: ignore[arg-type]
 
         assert workspace1 == workspace2
         assert workspace1.exists()

@@ -79,7 +79,7 @@ class TestInstallSignalHandlers:
         assert callable(handler)
 
         # Simulate first Ctrl+C
-        handler(signal.SIGINT, None)  # type: ignore[call-arg]
+        handler(signal.SIGINT, None)
         shutdown_fn.assert_called_once()
 
     def test_second_sigint_raises_systemexit(self) -> None:
@@ -90,14 +90,14 @@ class TestInstallSignalHandlers:
         handler = self._get_handler(signal.SIGINT)
 
         # First signal — sets the flag
-        handler(signal.SIGINT, None)  # type: ignore[call-arg]
+        handler(signal.SIGINT, None)  # type: ignore[operator]
 
         # Second signal — must force-exit
         with (
             patch.object(terminal_module, "restore_terminal"),
             pytest.raises(SystemExit) as exc_info,
         ):
-            handler(signal.SIGINT, None)  # type: ignore[call-arg]
+            handler(signal.SIGINT, None)  # type: ignore[operator]
 
         assert exc_info.value.code == 128 + signal.SIGINT
 
@@ -107,13 +107,13 @@ class TestInstallSignalHandlers:
         install_signal_handlers(shutdown_fn)
 
         handler = self._get_handler(signal.SIGINT)
-        handler(signal.SIGINT, None)  # type: ignore[call-arg]
+        handler(signal.SIGINT, None)  # type: ignore[operator]
 
         with (
             patch.object(terminal_module, "restore_terminal") as mock_restore,
             pytest.raises(SystemExit),
         ):
-            handler(signal.SIGINT, None)  # type: ignore[call-arg]
+            handler(signal.SIGINT, None)  # type: ignore[operator]
 
         mock_restore.assert_called_once()
 
@@ -123,14 +123,14 @@ class TestInstallSignalHandlers:
         install_signal_handlers(shutdown_fn)
 
         handler = self._get_handler(signal.SIGINT)
-        handler(signal.SIGINT, None)  # type: ignore[call-arg]
+        handler(signal.SIGINT, None)  # type: ignore[operator]
 
         # Re-install — flag should be reset
         install_signal_handlers(shutdown_fn)
         handler = self._get_handler(signal.SIGINT)
 
         # First signal again — should NOT raise SystemExit
-        handler(signal.SIGINT, None)  # type: ignore[call-arg]
+        handler(signal.SIGINT, None)  # type: ignore[operator]
         assert shutdown_fn.call_count == 2  # called twice total, not force-exited
 
 

@@ -257,7 +257,7 @@ class TestRubric:
     def test_weighted_score_zero_weight(self) -> None:
         """weighted_score should return 0.0 for zero total weight."""
         rubric = Rubric(requirements=[])
-        scores = {}
+        scores: dict[str, float] = {}
         assert rubric.weighted_score(scores) == 0.0
 
 
@@ -420,7 +420,7 @@ class TestEvaluationConfig:
     def test_runs_bounds(self, invalid_runs: int) -> None:
         """runs_per_tier outside [1, 100] should raise ValidationError."""
         with pytest.raises(ValidationError):
-            EvaluationConfig(runs_per_tier=invalid_runs)
+            EvaluationConfig(runs_per_eval=invalid_runs)
 
 
 class TestMetricsConfig:
@@ -513,7 +513,7 @@ class TestScyllaConfig:
         """ScyllaConfig should be frozen (immutable)."""
         config = ScyllaConfig()
         with pytest.raises(ValidationError):
-            config.runs_per_tier = 20  # type: ignore
+            config.runs_per_tier = 20
 
     def test_scylla_config_validation(self) -> None:
         """ScyllaConfig should validate via Pydantic."""

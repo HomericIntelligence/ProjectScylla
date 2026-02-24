@@ -68,7 +68,7 @@ class TestExecutionInfoBase:
         """Test that instances are frozen (immutable)."""
         info = ExecutionInfoBase(exit_code=0, duration_seconds=10.0)
         with pytest.raises(ValidationError):
-            info.exit_code = 1  # type: ignore
+            info.exit_code = 1
 
     def test_model_dump(self) -> None:
         """Test Pydantic serialization."""

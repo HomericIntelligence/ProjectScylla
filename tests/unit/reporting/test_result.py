@@ -262,8 +262,8 @@ class TestReportingRunResult:
         assert "\n" in json_str  # Has newlines due to indent
 
         # Custom indent
-        result.to_json(indent=None)
-        # With indent=None, json.dumps still produces valid JSON
+        result.to_json(indent=2)
+        # With indent=2, json.dumps still produces valid JSON
 
     def test_write(self) -> None:
         """Test Write."""

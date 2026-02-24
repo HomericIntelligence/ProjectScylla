@@ -1,5 +1,6 @@
 """Tests for tier configuration loading."""
 
+from collections.abc import Generator
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -35,6 +36,8 @@ class TestTierDefinition:
         tier = TierDefinition(
             name="Vanilla",
             description="Base tier",
+            tools_enabled=None,
+            delegation_enabled=None,
         )
         assert tier.name == "Vanilla"
         assert tier.description == "Base tier"
@@ -49,13 +52,48 @@ class TestTiersDefinitionFile:
         """Test validating a complete tiers definition."""
         tiers_def = TiersDefinitionFile(
             tiers={
-                "T0": TierDefinition(name="Prompts", description="System prompt ablation"),
-                "T1": TierDefinition(name="Skills", description="Domain expertise"),
-                "T2": TierDefinition(name="Tooling", description="External tools and MCP"),
-                "T3": TierDefinition(name="Delegation", description="Flat multi-agent"),
-                "T4": TierDefinition(name="Hierarchy", description="Nested orchestration"),
-                "T5": TierDefinition(name="Hybrid", description="Best combinations"),
-                "T6": TierDefinition(name="Super", description="Everything enabled"),
+                "T0": TierDefinition(
+                    name="Prompts",
+                    description="System prompt ablation",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
+                "T1": TierDefinition(
+                    name="Skills",
+                    description="Domain expertise",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
+                "T2": TierDefinition(
+                    name="Tooling",
+                    description="External tools and MCP",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
+                "T3": TierDefinition(
+                    name="Delegation",
+                    description="Flat multi-agent",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
+                "T4": TierDefinition(
+                    name="Hierarchy",
+                    description="Nested orchestration",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
+                "T5": TierDefinition(
+                    name="Hybrid",
+                    description="Best combinations",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
+                "T6": TierDefinition(
+                    name="Super",
+                    description="Everything enabled",
+                    tools_enabled=None,
+                    delegation_enabled=None,
+                ),
             }
         )
         assert len(tiers_def.tiers) == 7
@@ -65,8 +103,18 @@ class TestTiersDefinitionFile:
         with pytest.raises(ValueError, match="Missing required tier definitions"):
             TiersDefinitionFile(
                 tiers={
-                    "T0": TierDefinition(name="Vanilla", description="Base"),
-                    "T1": TierDefinition(name="Prompted", description="With prompts"),
+                    "T0": TierDefinition(
+                        name="Vanilla",
+                        description="Base",
+                        tools_enabled=None,
+                        delegation_enabled=None,
+                    ),
+                    "T1": TierDefinition(
+                        name="Prompted",
+                        description="With prompts",
+                        tools_enabled=None,
+                        delegation_enabled=None,
+                    ),
                 }
             )
 
@@ -104,7 +152,7 @@ class TestTierConfigLoader:
     """Tests for the TierConfigLoader class."""
 
     @pytest.fixture
-    def tiers_dir(self) -> Path:
+    def tiers_dir(self) -> Generator[Path, None, None]:
         """Create a temporary directory with tiers.yaml."""
         with TemporaryDirectory() as tmpdir:
             tiers_dir = Path(tmpdir)

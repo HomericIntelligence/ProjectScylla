@@ -162,6 +162,7 @@ class TestJudgmentParser:
         judgment = parser.parse(output, judge_model="test-model")
         assert judgment.requirements["R001"].score == 0.9
         assert judgment.categories["code_quality"].score == 0.85
+        assert judgment.summary is not None
         assert judgment.summary.passed is True
         assert judgment.judge_model == "test-model"
 
@@ -181,6 +182,7 @@ More text"""
         parser = JudgmentParser()
         output = '{"outer": {"inner": {"score": 0.5}}}'
         result = parser._extract_json(output)
+        assert result is not None
         assert result["outer"]["inner"]["score"] == 0.5
 
     def test_parse_no_json(self) -> None:

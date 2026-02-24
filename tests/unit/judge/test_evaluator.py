@@ -215,6 +215,7 @@ class TestExtractJson:
         evaluator = JudgeEvaluator()
         output = '{"outer": {"inner": 123}}'
         result = evaluator._extract_json(output)
+        assert result is not None
         assert result["outer"]["inner"] == 123
 
     def test_extract_no_json(self) -> None:
@@ -241,6 +242,7 @@ class TestParseJudgment:
         }"""
         judgment = evaluator._parse_judgment(output)
         assert judgment.requirements["R001"].score == 0.9
+        assert judgment.summary is not None
         assert judgment.summary.passed is True
 
     def test_parse_empty_output(self) -> None:
@@ -327,7 +329,7 @@ class TestRunConsensus:
                 ),
             )
 
-        evaluator._single_evaluation = mock_eval
+        evaluator._single_evaluation = mock_eval  # type: ignore[method-assign]
         with TemporaryDirectory() as tmpdir:
             evaluator.evaluate_with_consensus(
                 workspace=Path(tmpdir),
@@ -506,7 +508,7 @@ class TestEvaluatorWithConsensusConfig:
                 ),
             )
 
-        evaluator._single_evaluation = fake_single_run
+        evaluator._single_evaluation = fake_single_run  # type: ignore[method-assign]
         with TemporaryDirectory() as tmpdir:
             consensus = evaluator.evaluate_with_consensus(
                 workspace=Path(tmpdir),
@@ -541,7 +543,7 @@ class TestEvaluatorWithConsensusConfig:
                 ),
             )
 
-        evaluator._single_evaluation = fake_single_run
+        evaluator._single_evaluation = fake_single_run  # type: ignore[method-assign]
         with TemporaryDirectory() as tmpdir:
             consensus = evaluator.evaluate_with_consensus(
                 workspace=Path(tmpdir),

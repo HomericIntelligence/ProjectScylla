@@ -43,7 +43,7 @@ class TestMetricsInfoBase:
         """Test that instances are frozen (immutable)."""
         m = MetricsInfoBase(tokens_input=100, tokens_output=50)
         with pytest.raises(ValidationError):
-            m.tokens_input = 200  # type: ignore
+            m.tokens_input = 200
 
     def test_model_dump(self) -> None:
         """Test Pydantic serialization with .model_dump()."""
@@ -111,7 +111,7 @@ class TestJudgmentInfoBase:
         """Test that instances are frozen (immutable)."""
         j = JudgmentInfoBase(passed=True, impl_rate=0.9)
         with pytest.raises(ValidationError):
-            j.passed = False  # type: ignore
+            j.passed = False
 
     def test_model_dump(self) -> None:
         """Test Pydantic serialization with .model_dump()."""
@@ -178,7 +178,7 @@ class TestMetricsInfoInheritance:
         """Frozen immutability is enforced in MetricsInfo."""
         m = MetricsInfo(tokens_input=100, tokens_output=50, cost_usd=0.01, api_calls=3)
         with pytest.raises(ValidationError):
-            m.tokens_input = 200  # type: ignore
+            m.tokens_input = 200
 
 
 class TestJudgmentInfoInheritance:
@@ -219,7 +219,7 @@ class TestJudgmentInfoInheritance:
         """Frozen immutability is enforced in JudgmentInfo."""
         j = JudgmentInfo(passed=True, impl_rate=0.9, letter_grade="A")
         with pytest.raises(ValidationError):
-            j.passed = False  # type: ignore
+            j.passed = False
 
     @pytest.mark.parametrize("grade", ["A", "B", "C", "D", "F"])
     def test_all_letter_grades(self, grade: str) -> None:

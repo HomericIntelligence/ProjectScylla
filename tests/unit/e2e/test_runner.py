@@ -507,10 +507,10 @@ class TestValidateFilesystemOnResume:
         from scylla.e2e.models import ExperimentState
 
         runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
-        runner.experiment_dir = None  # type: ignore[assignment]
+        runner.experiment_dir = None
 
         # Should not raise
-        runner._validate_filesystem_on_resume(ExperimentState.TIERS_RUNNING)  # type: ignore[arg-type]
+        runner._validate_filesystem_on_resume(ExperimentState.TIERS_RUNNING)
 
 
 # ---------------------------------------------------------------------------
