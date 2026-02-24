@@ -100,7 +100,7 @@ warn_unused_configs = true
 ignore_missing_imports = true
 show_error_codes = true
 # Strict settings — enabled as errors are fixed per #687 roadmap
-check_untyped_defs = false        # TODO #1083: 26 errors in scripts/export_data.py
+check_untyped_defs = true
 disallow_untyped_defs = false     # TODO #1084: 32 missing annotations
 disallow_incomplete_defs = false  # TODO #1086: 16 errors
 disallow_any_generics = false     # TODO #1086: 78 errors

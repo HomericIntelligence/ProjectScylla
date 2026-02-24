@@ -195,7 +195,7 @@ def test_build_runs_df_multiple_runs(mock_run_data):
 def test_build_runs_df_empty_experiments():
     """Test build_runs_df with empty experiments dict."""
     # Arrange
-    experiments = {}
+    experiments: dict[str, list[RunData]] = {}
 
     # Act
     df = build_runs_df(experiments)
@@ -382,7 +382,7 @@ def test_build_criteria_df_multiple_judges(mock_run_data):
 def test_build_criteria_df_empty_experiments():
     """Test build_criteria_df with empty experiments."""
     # Arrange
-    experiments = {}
+    experiments: dict[str, list[RunData]] = {}
 
     # Act
     df = build_criteria_df(experiments)

@@ -215,7 +215,7 @@ def test_print_dry_run_summary_truncation(capsys):
 
 def test_print_dry_run_summary_empty(capsys):
     """Test dry-run summary with no items."""
-    items_by_status = {
+    items_by_status: dict[_TestStatus, list[_TestRunItem]] = {
         _TestStatus.FAILED: [],
         _TestStatus.MISSING: [],
         _TestStatus.COMPLETE: [],

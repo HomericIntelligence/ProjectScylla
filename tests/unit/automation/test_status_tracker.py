@@ -76,6 +76,7 @@ class TestStatusTracker:
         tracker = StatusTracker(num_slots=2)
 
         slot_id = tracker.acquire_slot()
+        assert slot_id is not None
         tracker.update_slot(slot_id, "Processing issue #123")
 
         assert tracker.slots[slot_id] == "Processing issue #123"
@@ -93,6 +94,7 @@ class TestStatusTracker:
         tracker = StatusTracker(num_slots=3)
 
         slot1 = tracker.acquire_slot()
+        assert slot1 is not None
         tracker.update_slot(slot1, "Working")
 
         status = tracker.get_status()
@@ -110,6 +112,7 @@ class TestStatusTracker:
         assert tracker.get_active_count() == 0
 
         slot1 = tracker.acquire_slot()
+        assert slot1 is not None
         assert tracker.get_active_count() == 1
 
         _ = tracker.acquire_slot()
@@ -124,6 +127,7 @@ class TestStatusTracker:
 
         # Acquire the only slot
         slot_id = tracker.acquire_slot()
+        assert slot_id is not None
 
         # Start thread that releases slot after delay
         def release_after_delay():
@@ -156,6 +160,8 @@ class TestStatusTracker:
 
         slot1 = tracker.acquire_slot()
         slot2 = tracker.acquire_slot()
+        assert slot1 is not None
+        assert slot2 is not None
 
         # Start thread that releases slots after delay
         def release_after_delay():
@@ -190,6 +196,8 @@ class TestStatusTracker:
 
         slot1 = tracker.acquire_slot()
         slot2 = tracker.acquire_slot()
+        assert slot1 is not None
+        assert slot2 is not None
         tracker.update_slot(slot1, "Working")
         tracker.update_slot(slot2, "Working")
 
@@ -230,6 +238,7 @@ class TestStatusTracker:
 
         # Acquire the only slot
         slot_id = tracker.acquire_slot()
+        assert slot_id is not None
 
         results = []
 

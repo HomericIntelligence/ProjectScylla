@@ -207,7 +207,7 @@ def test_compute_statistical_results_empty_df(tmp_path):
         ]
     )
 
-    tier_order = []
+    tier_order: list[str] = []
     results = compute_statistical_results(empty_df, tier_order)
 
     # Should return empty lists for all categories

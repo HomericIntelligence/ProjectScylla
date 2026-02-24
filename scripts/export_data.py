@@ -10,6 +10,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+from typing import Any
 
 from scylla.analysis import (
     build_criteria_df,
@@ -35,14 +36,14 @@ from scylla.analysis.stats import (
 )
 
 
-def json_nan_handler(obj):
+def json_nan_handler(obj: Any) -> Any:
     """Convert NaN/inf values to None for JSON serialization."""
     if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
         return None
     return obj
 
 
-def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehensive stats computation pipeline
+def compute_statistical_results(runs_df: Any, tier_order: list[str]) -> dict[str, Any]:  # noqa: C901  # comprehensive stats computation pipeline
     """Compute all statistical test results for export.
 
     Pairwise comparisons use Holm-Bonferroni correction per model.
@@ -56,7 +57,7 @@ def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehen
         Dictionary of statistical test results with corrected p-values
 
     """
-    results = {
+    results: dict[str, Any] = {
         "pipeline_version": config.pipeline_version,
         "config_version": config.config_version,
         "normality_tests": [],
@@ -577,8 +578,8 @@ def compute_statistical_results(runs_df, tier_order):  # noqa: C901  # comprehen
             frontier = compute_frontier_cop(valid_cops)
             # Find which tier achieved the frontier
             frontier_tier = None
-            for _i, (tier, cop) in enumerate(zip(tier_order, tier_cops, strict=False)):
-                if cop == frontier:
+            for _i, (tier, tier_cop) in enumerate(zip(tier_order, tier_cops, strict=False)):
+                if tier_cop == frontier:
                     frontier_tier = tier
                     break
 

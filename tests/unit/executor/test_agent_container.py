@@ -111,6 +111,7 @@ def test_build_volumes_with_claude_md(mock_docker_executor, temp_directories):
     assert len(volumes) <= 5  # Allow for optional credentials volume
 
     # CLAUDE.md should be read-only
+    assert config.claude_md_path is not None
     claude_md_key = str(config.claude_md_path.resolve())
     assert volumes[claude_md_key]["bind"] == "/workspace/CLAUDE.md"
     assert volumes[claude_md_key]["mode"] == "ro"
