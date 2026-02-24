@@ -1154,6 +1154,28 @@ class E2ERunner:
             )
 
         tsm = TierStateMachine(checkpoint, checkpoint_path)
+
+        # On resume, action_pending() is skipped for tiers that are already past
+        # PENDING in the checkpoint. Pre-populate tier_ctx so that later actions
+        # (action_config_loaded, action_subtests_complete, etc.) which assert
+        # tier_ctx.tier_config is not None do not fail with AssertionError.
+        _tier_resume_state = tsm.get_state(tier_id.value)
+        if _tier_resume_state not in (TierState.PENDING, TierState.COMPLETE, TierState.FAILED):
+            logger.info(
+                f"Resuming {tier_id.value} from {_tier_resume_state.value} — "
+                "pre-loading tier config for resume"
+            )
+            _resume_tier_config = self.tier_manager.load_tier_config(
+                tier_id, self.config.skip_agent_teams
+            )
+            if self.config.max_subtests is not None:
+                _resume_tier_config.subtests = _resume_tier_config.subtests[
+                    : self.config.max_subtests
+                ]
+            tier_ctx.tier_config = _resume_tier_config
+            if self.experiment_dir:
+                tier_ctx.tier_dir = self.experiment_dir / tier_id.value
+
         actions = self._build_tier_actions(
             tier_id=tier_id,
             baseline=baseline,

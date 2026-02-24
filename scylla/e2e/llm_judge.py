@@ -902,11 +902,33 @@ def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
         if not judge_prompt_path.exists():
             judge_prompt_path.write_text(judge_prompt)
 
-    # Call Claude CLI for judgment with workspace access
-    stdout, stderr, result = _call_claude_judge(judge_prompt, model, workspace)
-
-    # Parse the response
-    judge_result = _parse_judge_response(result)
+    # Call Claude CLI for judgment with workspace access.
+    # Retry up to 2 times on JSON parse failure — Haiku occasionally returns
+    # conversational text instead of structured JSON. Each retry appends an
+    # explicit JSON-only reminder to the prompt.
+    _max_judge_attempts = 3
+    _json_reminder = (
+        "\n\n**IMPORTANT**: Your response MUST be a valid JSON object only. "
+        "Do not include any text, explanation, or markdown before or after the JSON. "
+        "Start your response with `{` and end with `}`."
+    )
+    last_parse_error: Exception | None = None
+    for _attempt in range(_max_judge_attempts):
+        _prompt = judge_prompt if _attempt == 0 else judge_prompt + _json_reminder
+        if _attempt > 0:
+            logger.warning(
+                f"Judge parse failure on attempt {_attempt}/{_max_judge_attempts - 1}, retrying "
+                f"with JSON reminder (model={model})"
+            )
+        stdout, stderr, result = _call_claude_judge(_prompt, model, workspace)
+        try:
+            judge_result = _parse_judge_response(result)
+            break
+        except ValueError as e:
+            last_parse_error = e
+    else:
+        assert last_parse_error is not None  # noqa: S101
+        raise last_parse_error
 
     # Save judge logs if directory provided
     if actual_judge_dir:
