@@ -56,8 +56,8 @@ class AgentAnalyzer:
         """
         self.agents_dir = agents_dir
         self.verbose = verbose
-        self.agents: list[dict] = []
-        self.stats: dict = {}
+        self.agents: list[dict[str, Any]] = []
+        self.stats: dict[str, Any] = {}
 
     def load_agents(self) -> None:
         """Load and parse all agent configuration files."""

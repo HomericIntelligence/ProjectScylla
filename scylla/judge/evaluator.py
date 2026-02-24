@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from scylla.judge.utils import extract_json_from_llm_response
-from scylla.metrics.grading import assign_letter_grade
+from scylla.metrics.grading import assign_letter_grade as assign_letter_grade
 
 logger = logging.getLogger(__name__)
 

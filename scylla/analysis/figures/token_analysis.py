@@ -70,8 +70,8 @@ def fig07_token_distribution(runs_df: pd.DataFrame, output_dir: Path, render: bo
     token_long["token_type_order"] = token_long["token_type"].map(token_type_sort_order)
 
     # Get colors for token types from centralized palette
-    token_type_labels = ["Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"]
-    domain, range_ = get_color_scale("token_types", token_type_labels)
+    token_type_color_keys = ["Input (Fresh)", "Input (Cached)", "Output", "Cache Creation"]
+    domain, range_ = get_color_scale("token_types", token_type_color_keys)
 
     # Create stacked bar chart with normalized percentages
     # NOTE: stack="normalize" causes very small token counts to become invisible.

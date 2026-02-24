@@ -25,6 +25,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # Enable importing from repository root and scripts directory
 _SCRIPT_DIR = Path(__file__).parent
@@ -54,7 +55,9 @@ def get_repo_name() -> str:
     return result.stdout.strip()
 
 
-def get_issues_stats(start_date: str, end_date: str, author: str | None, repo: str) -> dict:
+def get_issues_stats(
+    start_date: str, end_date: str, author: str | None, repo: str
+) -> dict[str, Any]:
     """Get issue statistics using gh CLI.
 
     Args:
@@ -105,7 +108,7 @@ def get_issues_stats(start_date: str, end_date: str, author: str | None, repo: s
     }
 
 
-def get_prs_stats(start_date: str, end_date: str, author: str | None, repo: str) -> dict:
+def get_prs_stats(start_date: str, end_date: str, author: str | None, repo: str) -> dict[str, Any]:
     """Get pull request statistics using gh CLI.
 
     Args:
@@ -166,7 +169,9 @@ def get_prs_stats(start_date: str, end_date: str, author: str | None, repo: str)
     }
 
 
-def get_commits_stats(start_date: str, end_date: str, author: str | None, repo: str) -> dict:
+def get_commits_stats(
+    start_date: str, end_date: str, author: str | None, repo: str
+) -> dict[str, Any]:
     """Get commit statistics using gh CLI.
 
     Args:
@@ -214,7 +219,7 @@ def get_commits_stats(start_date: str, end_date: str, author: str | None, repo: 
     return {"total": total}
 
 
-def format_table(stats: dict) -> None:
+def format_table(stats: dict[str, Any]) -> None:
     """Format and print statistics table.
 
     Args:

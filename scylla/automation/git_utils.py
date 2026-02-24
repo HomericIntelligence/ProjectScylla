@@ -11,7 +11,6 @@ import logging
 import subprocess
 import time
 from pathlib import Path
-from typing import cast
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +21,7 @@ def run(
     capture_output: bool = True,
     check: bool = True,
     timeout: int | None = None,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command with consistent error handling.
 
     Args:
@@ -215,7 +214,7 @@ def get_current_branch(repo_root: Path | None = None) -> str:
             capture_output=True,
             check=True,
         )
-        return cast(str, result.stdout.strip())
+        return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Failed to get current branch: {e}") from e
 

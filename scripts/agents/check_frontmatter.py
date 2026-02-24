@@ -75,7 +75,9 @@ def validate_field_type(field_name: str, value: Any, expected_type: type) -> str
     return None
 
 
-def validate_frontmatter(frontmatter: dict, file_path: Path, verbose: bool = False) -> list[str]:  # noqa: C901  # field validation with many rules
+def validate_frontmatter(
+    frontmatter: dict[str, Any], file_path: Path, verbose: bool = False
+) -> list[str]:  # noqa: C901  # field validation with many rules
     """Validate the frontmatter data.
 
     Args:

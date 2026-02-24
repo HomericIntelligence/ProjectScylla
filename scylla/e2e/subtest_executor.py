@@ -19,7 +19,7 @@ import json
 import logging
 import statistics
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from scylla.e2e.llm_judge import BuildPipelineResult
@@ -540,7 +540,7 @@ class SubTestExecutor:
         return result if result is not None else self._aggregate_results(tier_id, subtest.id, runs)
 
     def _compute_judge_consensus(
-        self, judges: list
+        self, judges: list[Any]
     ) -> tuple[float | None, bool | None, str | None]:
         """Compute consensus score from multiple judges using simple average.
 

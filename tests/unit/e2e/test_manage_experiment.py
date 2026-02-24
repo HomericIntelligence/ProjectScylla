@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -290,7 +291,9 @@ class TestCmdRunUntilValidation:
 class TestCmdRepair:
     """Tests for cmd_repair() — checkpoint repair logic."""
 
-    def _make_checkpoint_file(self, path: Path, run_states: dict, completed_runs: dict) -> Path:
+    def _make_checkpoint_file(
+        self, path: Path, run_states: dict[str, Any], completed_runs: dict[str, Any]
+    ) -> Path:
         """Write a minimal checkpoint JSON file.
 
         Args:

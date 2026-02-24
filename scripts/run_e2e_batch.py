@@ -80,7 +80,7 @@ logger = logging.getLogger(__name__)
 _save_lock = threading.Lock()
 
 
-def load_existing_results(results_dir: Path) -> list[dict]:
+def load_existing_results(results_dir: Path) -> list[dict[str, Any]]:
     """Load existing results from batch_summary.json if it exists.
 
     Args:
@@ -105,7 +105,9 @@ def load_existing_results(results_dir: Path) -> list[dict]:
         return []
 
 
-def save_incremental_result(results_dir: Path, result: dict, config: dict) -> None:
+def save_incremental_result(
+    results_dir: Path, result: dict[str, Any], config: dict[str, Any]
+) -> None:
     """Save a single result incrementally to batch_summary.json.
 
     Loads existing summary, appends the new result, and writes atomically.
@@ -177,7 +179,7 @@ def check_rate_limit() -> tuple[bool, str]:
     return False, ""
 
 
-def discover_tests(tests_dir: Path, test_filter: list[str] | None = None) -> list[dict]:
+def discover_tests(tests_dir: Path, test_filter: list[str] | None = None) -> list[dict[str, Any]]:
     """Find all test-XXX dirs using TestFixture.from_directory() for metadata.
 
     Args:
@@ -224,7 +226,7 @@ def discover_tests(tests_dir: Path, test_filter: list[str] | None = None) -> lis
     return tests
 
 
-def partition_tests(tests: list[dict], num_threads: int) -> list[list[dict]]:
+def partition_tests(tests: list[dict[str, Any]], num_threads: int) -> list[list[dict[str, Any]]]:
     """LPT scheduling: sort by timeout desc, assign to thread with lowest load.
 
     Uses Longest Processing Time First (LPT) algorithm to balance workload
@@ -242,7 +244,7 @@ def partition_tests(tests: list[dict], num_threads: int) -> list[list[dict]]:
     sorted_tests = sorted(tests, key=lambda t: t["timeout_seconds"], reverse=True)
 
     # Initialize thread assignments and load tracking
-    threads: list[list[dict]] = [[] for _ in range(num_threads)]
+    threads: list[list[dict[str, Any]]] = [[] for _ in range(num_threads)]
     thread_loads: list[int] = [0] * num_threads
 
     # Assign each test to the thread with the lowest current load
@@ -265,13 +267,13 @@ def partition_tests(tests: list[dict], num_threads: int) -> list[list[dict]]:
 
 
 def run_single_test(
-    test: dict,
+    test: dict[str, Any],
     thread_id: int,
     log_file: Any,
     args: argparse.Namespace,
-    config: dict,
+    config: dict[str, Any],
     pixi_path: str,
-) -> dict:
+) -> dict[str, Any]:
     """Run one test via subprocess, capture output to log file.
 
     Args:
@@ -388,12 +390,12 @@ def run_single_test(
 
 def run_thread(
     thread_id: int,
-    tests: list[dict],
+    tests: list[dict[str, Any]],
     log_dir: Path,
     args: argparse.Namespace,
-    config: dict,
+    config: dict[str, Any],
     pixi_path: str,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Run all assigned tests sequentially within one thread.
 
     Args:
@@ -462,7 +464,7 @@ def find_result_dir(results_dir: Path, test_id: str) -> Path | None:
     return sorted(matches)[-1]
 
 
-def extract_metrics(result_dir: Path) -> dict | None:
+def extract_metrics(result_dir: Path) -> dict[str, Any] | None:
     """Read report.json and extract summary metrics.
 
     Args:
@@ -503,7 +505,10 @@ def extract_metrics(result_dir: Path) -> dict | None:
 
 
 def write_batch_summary(
-    results_dir: Path, all_results: list[dict], config: dict, threads: list[list[dict]]
+    results_dir: Path,
+    all_results: list[dict[str, Any]],
+    config: dict[str, Any],
+    threads: list[list[dict[str, Any]]],
 ) -> None:
     """Write batch_summary.json with all results.
 
@@ -550,7 +555,7 @@ def write_batch_summary(
     logger.info(f"Wrote batch summary to {summary_path}")
 
 
-def write_analysis_prompt(results_dir: Path, config: dict) -> None:
+def write_analysis_prompt(results_dir: Path, config: dict[str, Any]) -> None:
     """Write ANALYZE_RESULTS.md prompt for post-run analysis.
 
     Args:
@@ -815,7 +820,7 @@ docs/runs/{run_name}/
     logger.info(f"Wrote analysis prompt to {prompt_path}")
 
 
-def print_summary_table(all_results: list[dict]) -> None:
+def print_summary_table(all_results: list[dict[str, Any]]) -> None:
     """Print colored summary table to stdout.
 
     Args:

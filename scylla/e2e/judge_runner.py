@@ -48,7 +48,7 @@ def _save_judge_result(judge_dir: Path, result: JudgeResult) -> None:
         json.dump(result_data, f, indent=2)
 
 
-def _load_judge_result(judge_dir: Path) -> dict:
+def _load_judge_result(judge_dir: Path) -> dict[str, Any]:
     """Load judge evaluation result from judge/result.json.
 
     Args:
@@ -138,7 +138,7 @@ def _run_judge(
     rubric_path: Path | None = None,
     judge_models: list[str] | None = None,
     pipeline_baseline: BuildPipelineResult | None = None,
-) -> tuple[dict, list[JudgeResultSummary]]:
+) -> tuple[dict[str, Any], list[JudgeResultSummary]]:
     """Run LLM judge evaluation(s) on the result.
 
     Runs multiple judges if configured, computes consensus.

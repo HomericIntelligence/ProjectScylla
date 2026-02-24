@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -41,7 +42,7 @@ def _make_result(
     )
 
 
-def _write_result_json(agent_dir: Path, data: dict) -> None:
+def _write_result_json(agent_dir: Path, data: dict[str, Any]) -> None:
     """Write result.json to agent_dir."""
     agent_dir.mkdir(parents=True, exist_ok=True)
     (agent_dir / RESULT_FILE).write_text(json.dumps(data))

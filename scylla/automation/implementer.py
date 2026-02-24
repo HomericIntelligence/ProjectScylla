@@ -19,7 +19,7 @@ import time
 from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from .curses_ui import CursesUI, ThreadLogManager
 from .dependency_resolver import DependencyResolver
@@ -261,7 +261,7 @@ class IssueImplementer:
         results: dict[int, WorkerResult] = {}
 
         with ThreadPoolExecutor(max_workers=self.options.max_workers) as executor:
-            futures: dict[Future, int] = {}
+            futures: dict[Future[Any], int] = {}
             active_issues: set[int] = set()
 
             while True:
@@ -575,7 +575,7 @@ class IssueImplementer:
             timeout=600,  # 10 minutes
         )
 
-    def _parse_follow_up_items(self, text: str) -> list[dict]:
+    def _parse_follow_up_items(self, text: str) -> list[dict[str, Any]]:
         """Parse follow-up items from Claude's JSON response.
 
         Args:

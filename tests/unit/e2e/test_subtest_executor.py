@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -302,7 +303,7 @@ class TestParseJudgeResponse:
 class TestCheckpointResumeWithNullCriteriaScores:
     """Tests for checkpoint resume when criteria_scores is null in stored data."""
 
-    def _make_report_data(self, criteria_scores_value: object) -> dict:
+    def _make_report_data(self, criteria_scores_value: object) -> dict[str, Any]:
         """Build a minimal report_data dict with the given criteria_scores value."""
         from scylla.e2e.models import TokenStats
 

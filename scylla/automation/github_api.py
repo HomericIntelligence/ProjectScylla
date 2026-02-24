@@ -32,7 +32,7 @@ def _gh_call(
     check: bool = True,
     retry_on_rate_limit: bool = True,
     max_retries: int = 3,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Call gh CLI with rate limit handling.
 
     Args:

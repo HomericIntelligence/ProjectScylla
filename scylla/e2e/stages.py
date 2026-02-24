@@ -135,10 +135,10 @@ class RunContext:
     agent_result: AdapterResult | None = None
     agent_duration: float = 0.0
     agent_ran: bool = False
-    diff_result: dict | None = None  # {workspace_state, patchfile, deleted_files}
+    diff_result: dict[str, Any] | None = None  # {workspace_state, patchfile, deleted_files}
     judge_pipeline_result: BuildPipelineResult | None = None
     judge_prompt: str = ""
-    judgment: dict | None = None
+    judgment: dict[str, Any] | None = None
     judges: list[JudgeResultSummary] = field(default_factory=list)
     judge_duration: float = 0.0
     run_result: E2ERunResult | None = None
@@ -1042,8 +1042,8 @@ def stage_cleanup_worktree(ctx: RunContext) -> None:
 def _make_scheduled_action(
     scheduler: ParallelismScheduler,
     memory_class: str,
-    action: Callable,
-) -> Callable:
+    action: Callable[..., Any],
+) -> Callable[..., Any]:
     """Wrap a stage action with semaphore acquire/release for the given memory class.
 
     Args:
@@ -1066,7 +1066,7 @@ def _make_scheduled_action(
 def build_actions_dict(
     ctx: RunContext,
     scheduler: ParallelismScheduler | None = None,
-) -> dict[RunState, Callable]:
+) -> dict[RunState, Callable[..., Any]]:
     """Build the {RunState -> Callable} map for StateMachine.advance_to_completion().
 
     Each entry maps from_state -> callable that performs the work for the
@@ -1084,7 +1084,7 @@ def build_actions_dict(
     # Build lookup: from_state -> memory_class from the global registry
     memory_class_by_state = {t.from_state: t.memory_class for t in TRANSITION_REGISTRY}
 
-    raw_actions: dict[RunState, Callable] = {
+    raw_actions: dict[RunState, Callable[..., Any]] = {
         RunState.PENDING: lambda: stage_create_dir_structure(ctx),
         RunState.DIR_STRUCTURE_CREATED: lambda: stage_create_worktree(ctx),
         RunState.WORKTREE_CREATED: lambda: stage_apply_symlinks(ctx),
@@ -1106,7 +1106,7 @@ def build_actions_dict(
         return raw_actions
 
     # Wrap each action with its memory-class semaphore
-    scheduled_actions: dict[RunState, Callable] = {}
+    scheduled_actions: dict[RunState, Callable[..., Any]] = {}
     for state, action in raw_actions.items():
         memory_class = memory_class_by_state.get(state, "low")
         scheduled_actions[state] = _make_scheduled_action(scheduler, memory_class, action)

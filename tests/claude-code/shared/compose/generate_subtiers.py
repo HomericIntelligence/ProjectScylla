@@ -230,7 +230,7 @@ def run_compose_claude_md(preset: str, output: Path, dry_run: bool = False) -> N
         subprocess.run(cmd, check=True, capture_output=True)
 
 
-def run_compose_agents(config: str | dict, output: Path, dry_run: bool = False) -> None:
+def run_compose_agents(config: str | dict[str, Any], output: Path, dry_run: bool = False) -> None:
     """Run compose_agents.py with the given configuration."""
     cmd = [sys.executable, str(COMPOSE_DIR / "compose_agents.py")]
 
@@ -251,7 +251,7 @@ def run_compose_agents(config: str | dict, output: Path, dry_run: bool = False) 
         subprocess.run(cmd, check=True, capture_output=True)
 
 
-def run_compose_skills(config: str | dict, output: Path, dry_run: bool = False) -> None:
+def run_compose_skills(config: str | dict[str, Any], output: Path, dry_run: bool = False) -> None:
     """Run compose_skills.py with the given configuration."""
     cmd = [sys.executable, str(COMPOSE_DIR / "compose_skills.py")]
 
@@ -273,7 +273,7 @@ def run_compose_skills(config: str | dict, output: Path, dry_run: bool = False) 
         subprocess.run(cmd, check=True, capture_output=True)
 
 
-def create_test_yaml(subtier_path: Path, tier: str, subtier: str, config: dict) -> None:
+def create_test_yaml(subtier_path: Path, tier: str, subtier: str, config: dict[str, Any]) -> None:
     """Create test.yaml file for the subtier."""
     test_id = f"{tier}-{subtier}".lower().replace("_", "-")
     content = f"""# Test configuration for {tier}/{subtier}
@@ -391,7 +391,7 @@ thresholds:
 
 
 def generate_subtier(
-    model: str, tier: str, subtier: str, config: dict, dry_run: bool = False
+    model: str, tier: str, subtier: str, config: dict[str, Any], dry_run: bool = False
 ) -> None:
     """Generate a single subtier configuration."""
     subtier_path = TESTS_DIR / model / tier / subtier

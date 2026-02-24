@@ -11,6 +11,7 @@ Covers:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,6 +20,7 @@ from scylla.e2e.models import (
     ExperimentConfig,
     ExperimentState,
     TierID,
+    TierResult,
     TierState,
 )
 from scylla.e2e.runner import E2ERunner
@@ -55,9 +57,9 @@ class TestBuildExperimentActions:
         """All non-terminal ExperimentStates should have actions."""
         runner.experiment_dir = Path("/tmp/exp")
         runner.checkpoint = MagicMock()
-        tier_groups: list = [[TierID.T0]]
+        tier_groups: list[Any] = [[TierID.T0]]
         scheduler = MagicMock()
-        tier_results: dict = {}
+        tier_results: dict[TierID, TierResult] = {}
         start_time = MagicMock()
 
         actions = runner._build_experiment_actions(
@@ -81,9 +83,9 @@ class TestBuildExperimentActions:
         """All returned actions should be callable."""
         runner.experiment_dir = Path("/tmp/exp")
         runner.checkpoint = MagicMock()
-        tier_groups: list = [[TierID.T0]]
+        tier_groups: list[Any] = [[TierID.T0]]
         scheduler = MagicMock()
-        tier_results: dict = {}
+        tier_results: dict[TierID, TierResult] = {}
         start_time = MagicMock()
 
         actions = runner._build_experiment_actions(

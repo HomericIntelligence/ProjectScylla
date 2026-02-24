@@ -24,7 +24,7 @@ import tomllib  # noqa: E402
 from common import get_repo_root  # noqa: E402
 
 
-def load_coverage_config(config_file: Path | None = None) -> dict:
+def load_coverage_config(config_file: Path | None = None) -> dict[str, Any]:
     """Load coverage configuration from coverage.toml.
 
     Args:
@@ -51,7 +51,7 @@ def load_coverage_config(config_file: Path | None = None) -> dict:
         return {"coverage": {"target": 90.0, "minimum": 80.0}}
 
 
-def get_module_threshold(path: str, config: dict) -> float:
+def get_module_threshold(path: str, config: dict[str, Any]) -> float:
     """Get coverage threshold for a specific module.
 
     Args:

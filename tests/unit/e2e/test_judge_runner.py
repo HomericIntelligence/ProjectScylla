@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -25,7 +26,7 @@ def _make_judge_result(
     grade: str = "B",
     reasoning: str = "Good work",
     is_valid: bool = True,
-    criteria_scores: dict | None = None,
+    criteria_scores: dict[str, Any] | None = None,
 ) -> MagicMock:
     """Create a mock JudgeResult."""
     result = MagicMock()
@@ -58,7 +59,7 @@ def _make_summary(
     )
 
 
-def _write_judge_result(judge_dir: Path, data: dict) -> None:
+def _write_judge_result(judge_dir: Path, data: dict[str, Any]) -> None:
     """Write result.json to judge_dir."""
     judge_dir.mkdir(parents=True, exist_ok=True)
     (judge_dir / RESULT_FILE).write_text(json.dumps(data))
