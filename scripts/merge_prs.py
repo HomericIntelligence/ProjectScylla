@@ -51,7 +51,7 @@ def get_repo_name() -> str:
     return result.stdout.strip()
 
 
-def get_open_prs() -> list[dict]:
+def get_open_prs() -> list[dict[str, Any]]:
     """Get list of open pull requests using gh CLI.
 
     Returns:

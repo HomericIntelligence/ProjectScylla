@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, call, patch
 
 import pytest
@@ -602,7 +603,7 @@ class TestResumeTierConfigPreload:
         )
         runner.checkpoint = checkpoint
 
-        def noop_complete(tier_id_str: str, actions: dict, until_state: object) -> None:
+        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: object) -> None:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
@@ -644,7 +645,7 @@ class TestResumeTierConfigPreload:
         )
         runner.checkpoint = checkpoint
 
-        def noop_complete(tier_id_str: str, actions: dict, until_state: object) -> None:
+        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: object) -> None:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
@@ -685,7 +686,7 @@ class TestResumeTierConfigPreload:
         )
         runner.checkpoint = checkpoint
 
-        def noop_complete(tier_id_str: str, actions: dict, until_state: object) -> None:
+        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: object) -> None:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):

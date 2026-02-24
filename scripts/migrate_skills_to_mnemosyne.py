@@ -107,7 +107,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def resolve_category(skill_name: str, plugin_data: dict) -> str:
+def resolve_category(skill_name: str, plugin_data: dict[str, Any]) -> str:
     """Resolve category for a skill using multiple strategies.
 
     Priority:
@@ -136,14 +136,14 @@ def resolve_category(skill_name: str, plugin_data: dict) -> str:
     return "tooling"
 
 
-def normalize_author(author_field: Any) -> dict:
+def normalize_author(author_field: Any) -> dict[str, Any]:
     """Normalize author field to dict format."""
     if isinstance(author_field, str):
         return {"name": author_field}
     return cast(dict[Any, Any], author_field)
 
 
-def normalize_date(plugin_data: dict) -> str | None:
+def normalize_date(plugin_data: dict[str, Any]) -> str | None:
     """Normalize date field (created -> date)."""
     if "date" in plugin_data:
         return cast(str, plugin_data["date"])
@@ -152,7 +152,9 @@ def normalize_date(plugin_data: dict) -> str | None:
     return None
 
 
-def inject_yaml_frontmatter(skill_md_content: str, skill_name: str, plugin_data: dict) -> str:
+def inject_yaml_frontmatter(
+    skill_md_content: str, skill_name: str, plugin_data: dict[str, Any]
+) -> str:
     """Inject YAML frontmatter to SKILL.md if missing.
 
     If frontmatter exists, return content as-is.
@@ -186,7 +188,7 @@ def inject_yaml_frontmatter(skill_md_content: str, skill_name: str, plugin_data:
     return "\n".join(frontmatter) + skill_md_content
 
 
-def restructure_plugin_json(plugin_data: dict, skill_name: str) -> dict:
+def restructure_plugin_json(plugin_data: dict[str, Any], skill_name: str) -> dict[str, Any]:
     """Restructure plugin.json to target format.
 
     Target format:
@@ -239,7 +241,7 @@ def should_skip_migration(
     return False, ""
 
 
-def extract_metadata_from_skill_md(skill_md_path: Path, skill_name: str) -> dict:
+def extract_metadata_from_skill_md(skill_md_path: Path, skill_name: str) -> dict[str, Any]:
     """Extract metadata from SKILL.md for skills without plugin.json.
 
     Extracts:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -103,8 +103,8 @@ def load_rerun_context(experiment_dir: Path) -> RerunContext:
 
 
 def print_dry_run_summary(
-    items_by_status: dict,
-    status_names: dict,
+    items_by_status: dict[Any, Any],
+    status_names: dict[Any, str],
     max_preview: int = 10,
 ) -> None:
     """Print dry-run summary for runs or judge slots.

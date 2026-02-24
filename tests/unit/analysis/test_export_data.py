@@ -3,6 +3,7 @@
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 # Add scripts directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
@@ -129,7 +130,7 @@ def test_enhanced_summary_json(sample_runs_df, tmp_path):
         assert "tiers" in stats
 
     # Build by_tier section
-    by_tier = {}
+    by_tier: dict[str, dict[str, Any]] = {}
     for tier in tier_order:
         tier_df = sample_runs_df[sample_runs_df["tier"] == tier]
         scores = tier_df["score"].dropna()

@@ -8,6 +8,7 @@ validation scripts to avoid duplication and ensure consistency.
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ def validate_relative_link(
     return True, None
 
 
-def count_markdown_issues(content: str) -> dict:
+def count_markdown_issues(content: str) -> dict[str, Any]:
     """Count common markdown issues in content.
 
     Args:

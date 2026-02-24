@@ -94,22 +94,20 @@ addopts = [
 
 [tool.mypy]
 python_version = "3.10"
-# Incremental mypy adoption — Phases 1-6 of #687 complete (scylla/ + scripts/ clean).
-# Remaining strict settings: Phase 7a-c (#1083-#1085), Phase 9 (#1086).
+# Incremental mypy adoption — Phases 1-8 of #687 complete (all strict settings enabled).
 warn_unused_configs = true
 ignore_missing_imports = true
 show_error_codes = true
-# Strict settings — enabled as errors are fixed per #687 roadmap
+# Strict settings — all enabled (#687 roadmap complete)
 check_untyped_defs = true
 disallow_untyped_defs = true
-disallow_incomplete_defs = false  # TODO #1086: 16 errors
-disallow_any_generics = false     # TODO #1086: 78 errors
+disallow_incomplete_defs = true
+disallow_any_generics = true
 warn_return_any = true
 warn_redundant_casts = true
 warn_unused_ignores = true
-# Allow flexible typing while codebase type coverage improves
-allow_redefinition = true
-implicit_reexport = true
+allow_redefinition = false
+implicit_reexport = false
 
 # tests/unit/ has 635 unannotated test functions — suppress no-untyped-def
 # until they are annotated in a follow-up issue

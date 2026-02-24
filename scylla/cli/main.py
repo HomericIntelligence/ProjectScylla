@@ -139,7 +139,7 @@ def run(
         sys.exit(1)
 
 
-def _load_results(test_id: str, base_path: Path = Path(".")) -> list[dict]:
+def _load_results(test_id: str, base_path: Path = Path(".")) -> list[dict[str, Any]]:
     """Load all result.json files for a test.
 
     Args:
@@ -164,7 +164,7 @@ def _load_results(test_id: str, base_path: Path = Path(".")) -> list[dict]:
 
 
 def _calculate_tier_metrics(
-    tier_id: str, results: list[dict], t0_pass_rate: float | None = None
+    tier_id: str, results: list[dict[str, Any]], t0_pass_rate: float | None = None
 ) -> TierMetrics:
     """Calculate metrics for a tier from results.
 
@@ -261,7 +261,7 @@ def report(
     click.echo(f"  Found {len(results)} run results")
 
     # Group results by tier
-    by_tier: dict[str, list[dict]] = {}
+    by_tier: dict[str, list[dict[str, Any]]] = {}
     for r in results:
         tier_id = r["tier_id"]
         if tier_id not in by_tier:

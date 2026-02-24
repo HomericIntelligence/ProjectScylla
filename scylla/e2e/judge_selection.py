@@ -8,7 +8,7 @@ with an alternate LLM.
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
@@ -32,7 +32,7 @@ class JudgeVote(BaseModel):
     confidence: float
     reasoning: str
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "subtest_id": self.subtest_id,
@@ -62,7 +62,7 @@ class JudgeSelection(BaseModel):
     tiebreaker_needed: bool = False
     tiebreaker_result: JudgeVote | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "winning_subtest": self.winning_subtest,

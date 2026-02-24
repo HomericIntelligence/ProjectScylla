@@ -199,9 +199,9 @@ def test_mann_whitney_u_degenerate_input():
     assert p_value == pytest.approx(1.0)
 
     # Empty group
-    g1: list[int] = []
+    g1_empty: list[int] = []
     g2 = [1, 2, 3]
-    u_stat, p_value = mann_whitney_u(g1, g2)
+    u_stat, p_value = mann_whitney_u(g1_empty, g2)
     assert u_stat == pytest.approx(0.0)
     assert p_value == pytest.approx(1.0)
 

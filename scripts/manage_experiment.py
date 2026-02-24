@@ -47,6 +47,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 # Configure logging
 logging.basicConfig(
@@ -196,7 +197,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         logging.getLogger().setLevel(logging.ERROR)
 
     # Load test.yaml defaults if present
-    test_config: dict = {}
+    test_config: dict[str, Any] = {}
     if args.tiers_dir and (args.tiers_dir / "test.yaml").exists():
         try:
             from scylla.e2e.models import TestFixture
@@ -216,7 +217,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             test_config = raw
 
     # Load YAML config file if provided
-    yaml_config: dict = {}
+    yaml_config: dict[str, Any] = {}
     if args.config and args.config.exists():
         with open(args.config) as f:
             yaml_config = yaml.safe_load(f) or {}

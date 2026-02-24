@@ -62,14 +62,14 @@ class EvalOrchestrator:
             verbose=self.config.verbose,
         )
         self.result_writer = ResultWriter(self.config.base_path / "runs")
-        self._adapter_func: Callable | None = None
-        self._judge_func: Callable | None = None
+        self._adapter_func: Callable[..., Any] | None = None
+        self._judge_func: Callable[..., Any] | None = None
 
-    def set_adapter(self, adapter_func: Callable) -> None:
+    def set_adapter(self, adapter_func: Callable[..., Any]) -> None:
         """Set the adapter function for running agents."""
         self._adapter_func = adapter_func
 
-    def set_judge(self, judge_func: Callable) -> None:
+    def set_judge(self, judge_func: Callable[..., Any]) -> None:
         """Set the judge function for evaluation."""
         self._judge_func = judge_func
 
@@ -200,7 +200,7 @@ class EvalOrchestrator:
         test_case: EvalCase,
         model_id: str,
         tier_id: str,
-    ) -> tuple[dict, float]:
+    ) -> tuple[dict[str, Any], float]:
         """Execute agent and measure duration.
 
         Args:
@@ -230,8 +230,8 @@ class EvalOrchestrator:
         tier_id: str,
         model_id: str,
         run_number: int,
-        execution_result: dict,
-        judgment: dict,
+        execution_result: dict[str, Any],
+        judgment: dict[str, Any],
         duration: float,
     ) -> ReportingRunResult:
         """Create ReportingRunResult from execution and judgment.
@@ -310,7 +310,7 @@ class EvalOrchestrator:
         test_case: EvalCase,
         model_id: str,
         tier_id: str,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Run the adapter to execute the agent.
 
         Args:
@@ -349,8 +349,8 @@ class EvalOrchestrator:
         workspace: Path,
         test_case: EvalCase,
         rubric: Rubric,
-        execution_result: dict,
-    ) -> dict:
+        execution_result: dict[str, Any],
+    ) -> dict[str, Any]:
         """Run the judge to evaluate results.
 
         Args:
@@ -385,8 +385,8 @@ class EvalOrchestrator:
     def _write_run_logs(
         self,
         result_dir: Path,
-        execution_result: dict,
-        judgment: dict,
+        execution_result: dict[str, Any],
+        judgment: dict[str, Any],
         test_case: EvalCase,
         tier_id: str,
     ) -> None:

@@ -291,7 +291,7 @@ def _generate_criteria_scores_section(criteria_scores: dict[str, dict[str, Any]]
 
 
 def _generate_judge_section(
-    judges: list | None,
+    judges: list[Any] | None,
     score: float,
     grade: str,
     passed: bool,
@@ -384,7 +384,7 @@ def generate_run_report(
     exit_code: int,
     task_prompt: str,
     workspace_path: Path,
-    judges: list | None = None,
+    judges: list[Any] | None = None,
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
     token_stats: dict[str, int] | None = None,
@@ -708,7 +708,7 @@ def save_run_report(
     exit_code: int,
     task_prompt: str,
     workspace_path: Path,
-    judges: list | None = None,
+    judges: list[Any] | None = None,
     criteria_scores: dict[str, dict[str, Any]] | None = None,
     agent_output: str | None = None,
     token_stats: dict[str, int] | None = None,

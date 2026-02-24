@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1281,7 +1282,9 @@ class TestRunLlmJudgeRetry:
         ("scylla.e2e.llm_judge._get_deleted_files", []),
     ]
 
-    def _run_with_call_side_effects(self, tmp_path: Path, call_side_effects: list) -> tuple:
+    def _run_with_call_side_effects(
+        self, tmp_path: Path, call_side_effects: list[Any]
+    ) -> tuple[Any, ...]:
         """Call run_llm_judge with mocked _call_claude_judge return values/exceptions."""
         workspace = tmp_path / "ws"
         workspace.mkdir()

@@ -194,7 +194,7 @@ def validate_all_readmes(directory: Path, verbose: bool = False) -> dict[str, An
     return results
 
 
-def print_summary(results: dict[str, list]) -> None:
+def print_summary(results: dict[str, list[Any]]) -> None:
     """Print validation summary."""
     total = len(results["passed"]) + len(results["failed"])
     passed = len(results["passed"])

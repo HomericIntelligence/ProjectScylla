@@ -15,6 +15,7 @@ import os
 import subprocess
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from typing import Any
 
 from .git_utils import get_repo_root
 from .github_api import (
@@ -71,7 +72,7 @@ class Planner:
 
         # Plan issues in parallel
         with ThreadPoolExecutor(max_workers=self.options.parallel) as executor:
-            futures: dict[Future, int] = {}
+            futures: dict[Future[Any], int] = {}
 
             for issue_num in issues_to_plan:
                 future = executor.submit(self._plan_issue, issue_num)

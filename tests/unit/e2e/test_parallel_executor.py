@@ -14,6 +14,7 @@ from __future__ import annotations
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from scylla.e2e.parallel_executor import RateLimitCoordinator
@@ -232,7 +233,7 @@ class TestRunTierSubtestsParallelSingleSubtest:
         subtest.id = subtest_id
         return subtest
 
-    def _make_tier_config(self, subtests: list) -> MagicMock:
+    def _make_tier_config(self, subtests: list[Any]) -> MagicMock:
         """Create a mock TierConfig with given subtests."""
         tier_config = MagicMock()
         tier_config.subtests = subtests
@@ -417,7 +418,7 @@ class TestRunSubtestInProcessSafe:
             description="A sub-test used in unit tests",
         )
 
-    def _make_call_args(self, tmp_path) -> dict:
+    def _make_call_args(self, tmp_path: Path) -> dict[str, Any]:
         """Build the keyword arguments for _run_subtest_in_process_safe.
 
         Uses MagicMock for complex objects since _run_subtest_in_process is mocked.

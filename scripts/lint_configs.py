@@ -179,7 +179,7 @@ class ConfigLinter:
             if line.rstrip() != line:
                 self.warnings.append(f"{filepath}:{i + 1} - Trailing whitespace")
 
-    def _parse_yaml(self, content: str) -> dict | None:
+    def _parse_yaml(self, content: str) -> dict[str, Any] | None:
         """Parse YAML content into dictionary.
 
         Args:
@@ -266,7 +266,7 @@ class ConfigLinter:
 
         return value
 
-    def _check_deprecated_keys(self, config: dict, filepath: Path) -> None:
+    def _check_deprecated_keys(self, config: dict[str, Any], filepath: Path) -> None:
         """Check for deprecated configuration keys.
 
         Args:
@@ -280,7 +280,7 @@ class ConfigLinter:
                     f"{filepath} - Deprecated key '{old_key}' (use '{new_key}' instead)"
                 )
 
-    def _check_required_keys(self, config: dict, filepath: Path) -> None:
+    def _check_required_keys(self, config: dict[str, Any], filepath: Path) -> None:
         """Check for required keys based on config type.
 
         Args:
@@ -295,7 +295,7 @@ class ConfigLinter:
                     if key not in config.get(section, {}):
                         self.warnings.append(f"{filepath} - Missing required key '{section}.{key}'")
 
-    def _check_duplicate_values(self, config: dict, filepath: Path) -> None:
+    def _check_duplicate_values(self, config: dict[str, Any], filepath: Path) -> None:
         """Check for duplicate values that might be errors.
 
         Args:
@@ -326,7 +326,7 @@ class ConfigLinter:
                     f"{filepath} - Value '{value}' appears in: {', '.join(keys[:3])}..."
                 )
 
-    def _check_performance(self, config: dict, filepath: Path) -> None:
+    def _check_performance(self, config: dict[str, Any], filepath: Path) -> None:
         """Check for performance-related configuration issues.
 
         Args:
@@ -354,7 +354,7 @@ class ConfigLinter:
             elif lr > max_lr:
                 self.warnings.append(f"{filepath} - Very large learning_rate ({lr})")
 
-    def _check_unused_parameters(self, config: dict, filepath: Path) -> None:
+    def _check_unused_parameters(self, config: dict[str, Any], filepath: Path) -> None:
         """Check for potentially unused parameters.
 
         Args:
@@ -366,7 +366,7 @@ class ConfigLinter:
         if "debug" in config and config.get("debug") and "production" in str(filepath).lower():
             self.warnings.append(f"{filepath} - Debug mode enabled in production config")
 
-    def _has_nested_key(self, config: dict, key_path: str) -> bool:
+    def _has_nested_key(self, config: dict[str, Any], key_path: str) -> bool:
         """Check if nested key exists in config.
 
         Args:
@@ -386,7 +386,7 @@ class ConfigLinter:
                 return False
         return True
 
-    def _get_nested_value(self, config: dict, key_path: str) -> Any:
+    def _get_nested_value(self, config: dict[str, Any], key_path: str) -> Any:
         """Get value of nested key.
 
         Args:
