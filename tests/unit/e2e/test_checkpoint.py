@@ -6,6 +6,7 @@ Tests coverage for functions and exception handling not covered by test_resume.p
 from __future__ import annotations
 
 import os
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -774,3 +775,77 @@ class TestSetRunStateBackwardCompat:
         assert checkpoint.get_run_state("T0", "00-empty", 1) == "run_finalized"
         assert checkpoint.get_run_status("T0", "00-empty", 1) == "passed"
         assert checkpoint.is_run_completed("T0", "00-empty", 1)
+
+
+class TestSaveCheckpointThreadSafety:
+    """Tests for save_checkpoint() thread-safety fix (dryrun3 Bug 1).
+
+    Multiple threads calling save_checkpoint() concurrently must not produce
+    ENOENT errors from simultaneous temp-file renames.
+    """
+
+    def _make_checkpoint(self, tmp_path: Path) -> E2ECheckpoint:
+        """Return a minimal valid checkpoint."""
+        return E2ECheckpoint(
+            experiment_id="thread-test",
+            experiment_dir=str(tmp_path),
+            config_hash="abc",
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+        )
+
+    def test_concurrent_saves_do_not_raise(self, tmp_path: Path) -> None:
+        """N concurrent threads calling save_checkpoint() must all succeed."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+        checkpoint = self._make_checkpoint(tmp_path)
+        errors: list[Exception] = []
+
+        def save_worker() -> None:
+            try:
+                save_checkpoint(checkpoint, checkpoint_path)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        threads = [threading.Thread(target=save_worker) for _ in range(20)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == [], f"Concurrent saves raised: {errors}"
+        # Final file must be valid JSON
+        assert checkpoint_path.exists()
+        import json
+
+        data = json.loads(checkpoint_path.read_text())
+        assert data["experiment_id"] == "thread-test"
+
+    def test_no_stale_tmp_files_after_concurrent_saves(self, tmp_path: Path) -> None:
+        """After concurrent saves, no .tmp.* files should remain."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+        checkpoint = self._make_checkpoint(tmp_path)
+
+        threads = [
+            threading.Thread(target=save_checkpoint, args=(checkpoint, checkpoint_path))
+            for _ in range(10)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        tmp_files = list(tmp_path.glob("checkpoint.tmp.*.json"))
+        assert tmp_files == [], f"Leftover tmp files: {tmp_files}"
+
+    def test_sequential_saves_still_work(self, tmp_path: Path) -> None:
+        """Regression: single-threaded save_checkpoint() still produces valid output."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+        checkpoint = self._make_checkpoint(tmp_path)
+
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        assert checkpoint_path.exists()
+        loaded = load_checkpoint(checkpoint_path)
+        assert loaded.experiment_id == "thread-test"

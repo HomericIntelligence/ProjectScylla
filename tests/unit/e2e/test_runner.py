@@ -547,3 +547,152 @@ class TestLastExperimentResultInit:
             "_last_experiment_result must be declared in E2ERunner.__init__() "
             "to avoid attr-defined type errors"
         )
+
+
+class TestResumeTierConfigPreload:
+    """Tests for the resume tier-config pre-load fix (dryrun3 Bug 2).
+
+    When a tier resumes from a checkpoint at CONFIG_LOADED or later state,
+    action_pending() is skipped.  _run_tier() must pre-populate tier_ctx with
+    the loaded config/dir so that subsequent action_config_loaded() and
+    action_subtests_complete() assertions do not fail.
+    """
+
+    def _make_runner(
+        self,
+        mock_config: ExperimentConfig,
+        experiment_dir: Path,
+    ) -> tuple[E2ERunner, MagicMock]:
+        """Return (runner, mock_tier_manager) with runner.tier_manager already patched."""
+        runner = E2ERunner(mock_config, experiment_dir, experiment_dir)
+        runner.experiment_dir = experiment_dir
+        mock_tm = MagicMock()
+        mock_tier_config = MagicMock()
+        mock_tier_config.subtests = []
+        mock_tm.load_tier_config.return_value = mock_tier_config
+        runner.tier_manager = mock_tm  # Replace real TierManager with mock
+        return runner, mock_tm
+
+    def test_tier_ctx_populated_when_resuming_from_config_loaded(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """tier_ctx.tier_config is set before actions run when resuming from CONFIG_LOADED."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+        from scylla.e2e.tier_state_machine import TierStateMachine
+
+        experiment_dir = tmp_path / "exp"
+        experiment_dir.mkdir()
+        runner, mock_tm = self._make_runner(mock_config, experiment_dir)
+
+        # Build a checkpoint that says T0 is at CONFIG_LOADED
+        checkpoint = E2ECheckpoint(
+            experiment_id="resume-test",
+            experiment_dir=str(experiment_dir),
+            config_hash="abc",
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            tier_states={"T0": "config_loaded"},
+        )
+        runner.checkpoint = checkpoint
+
+        def noop_complete(tier_id_str: str, actions: dict, until_state: object) -> None:
+            pass
+
+        with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
+            with patch("scylla.e2e.runner.run_tier_subtests_parallel", return_value={}):
+                try:
+                    runner._run_tier(TierID.T0, baseline=None, scheduler=None)
+                except Exception:  # noqa: BLE001
+                    pass  # We only care that tier_manager.load_tier_config was called
+
+        # load_tier_config must be called once for the pre-load (resume path)
+        mock_tm.load_tier_config.assert_called_once_with(TierID.T0, mock_config.skip_agent_teams)
+
+    def test_tier_ctx_not_preloaded_for_pending_state(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """When tier is at PENDING, pre-load is skipped (action_pending handles it)."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+        from scylla.e2e.tier_state_machine import TierStateMachine
+
+        experiment_dir = tmp_path / "exp"
+        experiment_dir.mkdir()
+        runner, mock_tm = self._make_runner(mock_config, experiment_dir)
+
+        # Checkpoint at PENDING state
+        checkpoint = E2ECheckpoint(
+            experiment_id="pending-test",
+            experiment_dir=str(experiment_dir),
+            config_hash="abc",
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            tier_states={"T0": "pending"},
+        )
+        runner.checkpoint = checkpoint
+
+        def noop_complete(tier_id_str: str, actions: dict, until_state: object) -> None:
+            pass
+
+        with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
+            with patch("scylla.e2e.runner.run_tier_subtests_parallel", return_value={}):
+                try:
+                    runner._run_tier(TierID.T0, baseline=None, scheduler=None)
+                except Exception:  # noqa: BLE001
+                    pass
+
+        # load_tier_config should NOT have been called (pre-load skipped for PENDING)
+        mock_tm.load_tier_config.assert_not_called()
+
+    def test_tier_ctx_not_preloaded_for_complete_state(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """When tier is COMPLETE, pre-load is skipped (tier is already done)."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+        from scylla.e2e.tier_state_machine import TierStateMachine
+
+        experiment_dir = tmp_path / "exp"
+        experiment_dir.mkdir()
+        runner, mock_tm = self._make_runner(mock_config, experiment_dir)
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="complete-test",
+            experiment_dir=str(experiment_dir),
+            config_hash="abc",
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            tier_states={"T0": "complete"},
+        )
+        runner.checkpoint = checkpoint
+
+        def noop_complete(tier_id_str: str, actions: dict, until_state: object) -> None:
+            pass
+
+        with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
+            with patch("scylla.e2e.runner.run_tier_subtests_parallel", return_value={}):
+                try:
+                    runner._run_tier(TierID.T0, baseline=None, scheduler=None)
+                except Exception:  # noqa: BLE001
+                    pass
+
+        mock_tm.load_tier_config.assert_not_called()

@@ -16,6 +16,7 @@ import hashlib
 import json
 import logging
 import os
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -26,6 +27,13 @@ if TYPE_CHECKING:
     from scylla.e2e.models import ExperimentConfig
 
 logger = logging.getLogger(__name__)
+
+# Module-level lock to serialize checkpoint writes across all threads.
+# PID-based temp filenames prevent cross-process races but not cross-thread races:
+# two threads in the same process share the same PID, so both write to the same
+# temp path. Without a lock, Thread B's rename can ENOENT after Thread A already
+# moved the file. See: dryrun3 analysis — 21 ENOENT errors across the batch.
+_checkpoint_write_lock = threading.Lock()
 
 
 class CheckpointError(Exception):
@@ -516,14 +524,18 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         # Update timestamp
         checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
 
-        # Atomic write: write to temp file, then rename
-        # Use process ID to avoid race conditions in parallel execution
-        temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}{path.suffix}"
-        with open(temp_path, "w") as f:
-            json.dump(checkpoint.model_dump(), f, indent=2)
+        # Atomic write: write to temp file, then rename.
+        # Include both PID and thread ID in the temp filename so concurrent threads
+        # in the same process each get a unique file, preventing ENOENT when one
+        # thread renames the file before another can.
+        tid = threading.get_ident()
+        temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}.{tid}{path.suffix}"
+        with _checkpoint_write_lock:
+            with open(temp_path, "w") as f:
+                json.dump(checkpoint.model_dump(), f, indent=2)
 
-        # Atomic rename
-        temp_path.replace(path)
+            # Atomic rename (held under lock so only one rename is in-flight)
+            temp_path.replace(path)
 
     except OSError as e:
         raise CheckpointError(f"Failed to save checkpoint to {path}: {e}") from e

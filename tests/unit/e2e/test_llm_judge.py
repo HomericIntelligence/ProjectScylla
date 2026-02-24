@@ -1264,3 +1264,112 @@ class TestPipelineCommandGeneration:
         # Verify run_all.sh references Mojo scripts
         run_all_content = (commands_dir / "run_all.sh").read_text()
         assert "mojo_build.sh" in run_all_content
+
+
+class TestRunLlmJudgeRetry:
+    """Tests for the Haiku JSON retry fix (dryrun3 Bug 3).
+
+    run_llm_judge() retries up to 2 extra times when _call_claude_judge returns
+    text that _parse_judge_response cannot parse as JSON.  On each retry the
+    prompt is extended with a JSON-only reminder.
+    """
+
+    # Minimal patch context shared by most tests
+    _COMMON_PATCHES = [
+        ("scylla.e2e.llm_judge._get_workspace_state", "(no changes)"),
+        ("scylla.e2e.llm_judge._get_patchfile", "(no changes)"),
+        ("scylla.e2e.llm_judge._get_deleted_files", []),
+    ]
+
+    def _run_with_call_side_effects(self, tmp_path: Path, call_side_effects: list) -> tuple:
+        """Call run_llm_judge with mocked _call_claude_judge return values/exceptions."""
+        workspace = tmp_path / "ws"
+        workspace.mkdir()
+
+        call_mock = MagicMock(side_effect=call_side_effects)
+
+        with (
+            patch("scylla.e2e.llm_judge._get_workspace_state", return_value="(no changes)"),
+            patch("scylla.e2e.llm_judge._get_patchfile", return_value="(no changes)"),
+            patch("scylla.e2e.llm_judge._get_deleted_files", return_value=[]),
+            patch("scylla.e2e.llm_judge._call_claude_judge", call_mock),
+        ):
+            result = run_llm_judge(
+                workspace=workspace,
+                task_prompt="Task",
+                agent_output="Output",
+                run_build_pipeline=False,
+            )
+        return result, call_mock
+
+    def test_first_attempt_success_no_retry(self, tmp_path: Path) -> None:
+        """When first call returns valid JSON, _call_claude_judge is called exactly once."""
+        valid_json = '{"score": 0.9, "passed": true, "reasoning": "Good"}'
+        result, call_mock = self._run_with_call_side_effects(
+            tmp_path,
+            [(valid_json, "", valid_json)],
+        )
+
+        assert result.score == pytest.approx(0.9)
+        assert call_mock.call_count == 1
+
+    def test_retry_on_conversational_response(self, tmp_path: Path) -> None:
+        """When first response is non-JSON, retries with JSON reminder appended."""
+        conversational = "I appreciate you sharing the context, but I need more info."
+        valid_json = '{"score": 0.8, "passed": true, "reasoning": "OK"}'
+        result, call_mock = self._run_with_call_side_effects(
+            tmp_path,
+            [
+                (conversational, "", conversational),  # attempt 1 — bad
+                (valid_json, "", valid_json),  # attempt 2 — good
+            ],
+        )
+
+        assert result.score == pytest.approx(0.8)
+        assert call_mock.call_count == 2
+        # Second call must have the JSON reminder appended
+        second_prompt = call_mock.call_args_list[1][0][0]
+        assert "IMPORTANT" in second_prompt
+        assert "JSON" in second_prompt
+
+    def test_succeeds_on_third_attempt(self, tmp_path: Path) -> None:
+        """Succeeds on third attempt after two bad responses."""
+        bad = "I'm ready to help with the evaluation task. However..."
+        valid_json = '{"score": 0.7, "passed": true, "reasoning": "Fine"}'
+        result, call_mock = self._run_with_call_side_effects(
+            tmp_path,
+            [
+                (bad, "", bad),  # attempt 1
+                (bad, "", bad),  # attempt 2
+                (valid_json, "", valid_json),  # attempt 3
+            ],
+        )
+
+        assert result.score == pytest.approx(0.7)
+        assert call_mock.call_count == 3
+
+    def test_raises_after_all_attempts_exhausted(self, tmp_path: Path) -> None:
+        """If all 3 attempts return bad JSON, ValueError is re-raised."""
+        bad = "I'm sorry, I don't understand what you're asking."
+
+        with pytest.raises(ValueError, match="does not contain valid JSON"):
+            self._run_with_call_side_effects(
+                tmp_path,
+                [
+                    (bad, "", bad),
+                    (bad, "", bad),
+                    (bad, "", bad),
+                ],
+            )
+
+    def test_first_attempt_prompt_has_no_reminder(self, tmp_path: Path) -> None:
+        """First attempt uses the original prompt without a JSON reminder suffix."""
+        valid_json = '{"score": 1.0, "passed": true, "reasoning": "Perfect"}'
+        _result, call_mock = self._run_with_call_side_effects(
+            tmp_path,
+            [(valid_json, "", valid_json)],
+        )
+
+        first_prompt = call_mock.call_args_list[0][0][0]
+        # Reminder is only added on retries — first call must NOT contain it
+        assert "IMPORTANT" not in first_prompt or "JSON" not in first_prompt
