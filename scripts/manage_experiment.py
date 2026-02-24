@@ -363,6 +363,13 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
             }
             model_id = model_map.get(args.model, args.model)
             judge_model_id = model_map.get(args.judge_model, args.judge_model)
+            judge_models = [judge_model_id]
+            if args.add_judge:
+                for extra_judge in args.add_judge:
+                    if extra_judge:
+                        extra_id = model_map.get(extra_judge, extra_judge)
+                        if extra_id not in judge_models:
+                            judge_models.append(extra_id)
 
             tier_ids = []
             for tier_str in args.tiers:
@@ -370,27 +377,45 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
             until_run_state: RunState | None = None
             if args.until:
-                until_run_state = RunState(args.until)
+                try:
+                    until_run_state = RunState(args.until)
+                except ValueError:
+                    raise ValueError(f"Unknown --until state: {args.until!r}")
 
             until_tier_state: TierState | None = None
             if args.until_tier:
-                until_tier_state = TierState(args.until_tier)
+                try:
+                    until_tier_state = TierState(args.until_tier)
+                except ValueError:
+                    raise ValueError(f"Unknown --until-tier state: {args.until_tier!r}")
 
             until_experiment_state: ExperimentState | None = None
             if args.until_experiment:
-                until_experiment_state = ExperimentState(args.until_experiment)
+                try:
+                    until_experiment_state = ExperimentState(args.until_experiment)
+                except ValueError:
+                    raise ValueError(f"Unknown --until-experiment state: {args.until_experiment!r}")
 
             from_run_state: RunState | None = None
             if args.from_run:
-                from_run_state = RunState(args.from_run)
+                try:
+                    from_run_state = RunState(args.from_run)
+                except ValueError:
+                    raise ValueError(f"Unknown --from state: {args.from_run!r}")
 
             from_tier_state: TierState | None = None
             if args.from_tier:
-                from_tier_state = TierState(args.from_tier)
+                try:
+                    from_tier_state = TierState(args.from_tier)
+                except ValueError:
+                    raise ValueError(f"Unknown --from-tier state: {args.from_tier!r}")
 
             from_experiment_state: ExperimentState | None = None
             if args.from_experiment:
-                from_experiment_state = ExperimentState(args.from_experiment)
+                try:
+                    from_experiment_state = ExperimentState(args.from_experiment)
+                except ValueError:
+                    raise ValueError(f"Unknown --from-experiment state: {args.from_experiment!r}")
 
             timeout_seconds = args.timeout or int(test_config.get("timeout_seconds", 3600))
 
@@ -402,7 +427,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 language=language,
                 models=[model_id],
                 runs_per_subtest=args.runs,
-                judge_models=[judge_model_id],
+                judge_models=judge_models,
                 parallel_subtests=args.parallel,
                 parallel_high=args.parallel_high,
                 parallel_med=args.parallel_med,
