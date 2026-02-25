@@ -1090,7 +1090,7 @@ class TestCmdRunFromWithCheckpoint:
 
         from manage_experiment import cmd_run
 
-        tier_reset_kwargs: list[dict] = []
+        tier_reset_kwargs: list[dict[str, Any]] = []
 
         def mock_reset_tiers(checkpoint, from_state, **kwargs):
             tier_reset_kwargs.append(kwargs)
@@ -1359,7 +1359,7 @@ class TestAddJudgeDedup:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1397,7 +1397,7 @@ class TestAddJudgeDedup:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1434,7 +1434,7 @@ class TestAddJudgeDedup:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1490,7 +1490,7 @@ class TestYamlConfigFileMode:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1551,7 +1551,7 @@ class TestYamlConfigFileMode:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1677,7 +1677,7 @@ class TestFilterJudgeSlotNoEffect:
 
         from manage_experiment import cmd_run
 
-        reset_kwargs_captured: list[dict] = []
+        reset_kwargs_captured: list[dict[str, Any]] = []
 
         def mock_reset_runs(checkpoint, from_state, **kwargs):
             reset_kwargs_captured.append(kwargs)
@@ -1885,7 +1885,7 @@ class TestUntilStateFlowsToConfig:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1922,7 +1922,7 @@ class TestUntilStateFlowsToConfig:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -1959,7 +1959,7 @@ class TestUntilStateFlowsToConfig:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -2293,7 +2293,7 @@ class TestAddJudgeBatchMode:
 
         from manage_experiment import cmd_run
 
-        captured_configs: list = []
+        captured_configs: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured_configs.append(config)
@@ -2394,7 +2394,7 @@ class TestParallelSemaphoreFlowsToConfig:
         """Run cmd_run with args and return captured ExperimentConfig."""
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)
@@ -2508,7 +2508,7 @@ class TestModelAliasResolution:
 
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)
@@ -2542,7 +2542,7 @@ class TestModelAliasResolution:
 
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)
@@ -2717,7 +2717,7 @@ class TestTimeoutOverride:
 
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)
@@ -2770,7 +2770,7 @@ class TestThinkingModeFlowsToConfig:
 
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)
@@ -2823,7 +2823,7 @@ class TestTimeoutFallbackToTestYaml:
 
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)
@@ -3194,7 +3194,7 @@ class TestFilterSubtestAndRunWiring:
 
         from manage_experiment import cmd_run
 
-        reset_kwargs: list[dict] = []
+        reset_kwargs: list[dict[str, Any]] = []
 
         def mock_reset_runs(checkpoint, from_state, **kwargs):
             reset_kwargs.append(kwargs)
@@ -3239,7 +3239,7 @@ class TestFilterSubtestAndRunWiring:
 
         from manage_experiment import cmd_run
 
-        reset_kwargs: list[dict] = []
+        reset_kwargs: list[dict[str, Any]] = []
 
         def mock_reset_runs(checkpoint, from_state, **kwargs):
             reset_kwargs.append(kwargs)
@@ -3304,7 +3304,7 @@ class TestPromptOverride:
 
         from manage_experiment import cmd_run
 
-        captured: list = []
+        captured: list[Any] = []
 
         def mock_run_experiment(config, tiers_dir, results_dir, fresh):
             captured.append(config)

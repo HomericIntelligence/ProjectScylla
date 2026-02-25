@@ -14,6 +14,7 @@ Tests cover:
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Any
 
 from scylla.e2e.checkpoint import (
     E2ECheckpoint,
@@ -23,9 +24,9 @@ from scylla.e2e.checkpoint import (
 )
 
 
-def make_checkpoint(**kwargs) -> E2ECheckpoint:
+def make_checkpoint(**kwargs: Any) -> E2ECheckpoint:
     """Create a minimal checkpoint for testing."""
-    defaults = {
+    defaults: dict[str, Any] = {
         "experiment_id": "test-exp",
         "experiment_dir": "/tmp/test-exp",
         "config_hash": "abc123",

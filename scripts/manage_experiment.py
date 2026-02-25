@@ -376,7 +376,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
     _save_lock = threading.Lock()
 
-    def save_result(result: dict) -> None:
+    def save_result(result: dict[str, Any]) -> None:
         """Save a single result to batch_summary.json (thread-safe)."""
         import json
 
@@ -396,13 +396,13 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 json.dump(summary, f, indent=2)
             tmp_path.rename(summary_path)
 
-    def run_one_test(test_dir: Path) -> dict:
+    def run_one_test(test_dir: Path) -> dict[str, Any]:
         """Run a single test and return result dict."""
         test_id = test_dir.name
         started_at = datetime.now(timezone.utc).isoformat()
         try:
             # Load test.yaml
-            test_config: dict = {}
+            test_config: dict[str, Any] = {}
             if (test_dir / "test.yaml").exists():
                 try:
                     from scylla.e2e.models import TestFixture
