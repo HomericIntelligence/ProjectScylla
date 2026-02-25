@@ -836,17 +836,27 @@ class TestInitializeOrResumeExperimentFailedReset:
         assert runner.checkpoint is not None
         assert runner.checkpoint.experiment_state == "tiers_running"
 
-    def test_resume_complete_experiment_does_not_reset_state(
+    def test_resume_complete_experiment_same_tiers_stays_complete(
         self,
         mock_config: ExperimentConfig,
         mock_tier_manager: MagicMock,
         tmp_path: Path,
     ) -> None:
-        """experiment_state='complete' is NOT reset — only failed/interrupted are reset."""
-        runner = self._run_resume(mock_config, tmp_path, checkpoint_state="complete")
+        """experiment_state='complete' stays 'complete' when no new/incomplete tiers are requested.
+
+        mock_config has tiers_to_run=[T0, T1]. The checkpoint already has T0 and T1 in
+        tier_states (complete) and no run_states → _check_tiers_need_execution returns an
+        empty set, so the experiment state is left untouched.
+        """
+        runner = self._run_resume(
+            mock_config,
+            tmp_path,
+            checkpoint_state="complete",
+            tier_states={"T0": "complete", "T1": "complete"},
+        )
 
         assert runner.checkpoint is not None
-        # complete state is preserved — no reset
+        # complete state is preserved — no new/incomplete tiers detected
         assert runner.checkpoint.experiment_state == "complete"
 
     def test_resume_failed_merges_cli_tiers_into_saved_config(
@@ -917,3 +927,211 @@ class TestInitializeOrResumeExperimentFailedReset:
         tier_ids = {t.value for t in runner.config.tiers_to_run}
         assert "T0" in tier_ids
         assert "T1" in tier_ids
+
+    def test_resume_complete_experiment_with_new_tiers_resets_to_tiers_running(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """experiment_state='complete' is reset to 'tiers_running' when new CLI tiers are added.
+
+        Scenario: saved experiment.json has T0 only (complete). CLI requests T0+T1.
+        T1 is new so _check_tiers_need_execution returns {"T1"}, which triggers a
+        reset to 'tiers_running' and T1 is added to tiers_to_run.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig
+
+        # CLI config requests T0 + T1
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0, TierID.T1],
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        # Saved experiment.json has ONLY T0
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="completed",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.health.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        assert runner.checkpoint is not None
+        # Experiment must be reset so T1 can execute
+        assert runner.checkpoint.experiment_state == "tiers_running"
+        tier_ids = {t.value for t in runner.config.tiers_to_run}
+        assert "T0" in tier_ids
+        assert "T1" in tier_ids
+
+    def test_resume_preserves_ephemeral_cli_args(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """CLI --until and --max-subtests survive the config reload from checkpoint.
+
+        Scenario: saved experiment.json has no until_run_state. CLI passes
+        until_run_state='replay_generated' and max_subtests=2.  After resume, the
+        loaded config must reflect the CLI values, not the saved (None) values.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig, RunState
+
+        # CLI config with ephemeral overrides
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+            until_run_state=RunState.REPLAY_GENERATED,
+            max_subtests=2,
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        # Saved config has no until_run_state or max_subtests
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.health.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        # CLI ephemeral values must survive the reload
+        assert runner.config.until_run_state == RunState.REPLAY_GENERATED
+        assert runner.config.max_subtests == 2
+
+    def test_resume_complete_with_incomplete_runs_resets_for_reentry(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Tier/subtest/experiment states reset when runs are not in terminal state.
+
+        Scenario: experiment is 'complete', T0 is 'complete', subtest 00 is
+        'aggregated' — but run 1 is in 'replay_generated' (not terminal).
+        Re-running with --tiers T0 must reset experiment→tiers_running,
+        T0→subtests_running, subtest 00→runs_in_progress.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig
+
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        # Run 1 is mid-sequence (replay_generated is not a terminal state)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "replay_generated"}}},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="completed",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.health.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        assert runner.checkpoint is not None
+        assert runner.checkpoint.experiment_state == "tiers_running"
+        assert runner.checkpoint.tier_states["T0"] == "subtests_running"
+        assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"

@@ -907,11 +907,12 @@ class TestCmdRunFromWithCheckpoint:
     """Tests for cmd_run() --from with an existing checkpoint."""
 
     def _make_minimal_checkpoint(self, results_dir: Path, experiment_id: str) -> Path:
-        """Create a minimal checkpoint file at the expected path."""
+        """Create a minimal checkpoint using the timestamp-prefixed directory format."""
+        exp_dir_name = f"2024-01-01T00-00-00-{experiment_id}"
         checkpoint_data = {
             "version": "3.1",
             "experiment_id": experiment_id,
-            "experiment_dir": str(results_dir / experiment_id),
+            "experiment_dir": str(results_dir / exp_dir_name),
             "config_hash": "abc123",
             "started_at": "2024-01-01T00:00:00+00:00",
             "last_updated_at": "2024-01-01T00:00:00+00:00",
@@ -919,7 +920,7 @@ class TestCmdRunFromWithCheckpoint:
             "run_states": {"T0": {"00": {"1": "replay_generated"}}},
             "completed_runs": {},
         }
-        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir = results_dir / exp_dir_name
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         checkpoint_path = checkpoint_dir / "checkpoint.json"
         checkpoint_path.write_text(json.dumps(checkpoint_data))
@@ -1630,11 +1631,12 @@ class TestFilterJudgeSlotNoEffect:
         results_dir = tmp_path / "results"
         experiment_id = "test-exp"
 
-        # Create checkpoint
+        # Create checkpoint using timestamp-prefixed directory format
+        exp_dir_name = f"2024-01-01T00-00-00-{experiment_id}"
         checkpoint_data = {
             "version": "3.1",
             "experiment_id": experiment_id,
-            "experiment_dir": str(results_dir / experiment_id),
+            "experiment_dir": str(results_dir / exp_dir_name),
             "config_hash": "abc123",
             "started_at": "2024-01-01T00:00:00+00:00",
             "last_updated_at": "2024-01-01T00:00:00+00:00",
@@ -1642,7 +1644,7 @@ class TestFilterJudgeSlotNoEffect:
             "run_states": {"T0": {"00": {"1": "judge_pipeline_run"}}},
             "completed_runs": {},
         }
-        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir = results_dir / exp_dir_name
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         (checkpoint_dir / "checkpoint.json").write_text(json.dumps(checkpoint_data))
 
@@ -3137,10 +3139,11 @@ class TestFilterSubtestAndRunWiring:
     """Tests that --filter-subtest and --filter-run are passed to reset_runs_for_from_state."""
 
     def _make_minimal_checkpoint(self, results_dir: Path, experiment_id: str) -> None:
+        exp_dir_name = f"2024-01-01T00-00-00-{experiment_id}"
         checkpoint_data = {
             "version": "3.1",
             "experiment_id": experiment_id,
-            "experiment_dir": str(results_dir / experiment_id),
+            "experiment_dir": str(results_dir / exp_dir_name),
             "config_hash": "abc123",
             "started_at": "2024-01-01T00:00:00+00:00",
             "last_updated_at": "2024-01-01T00:00:00+00:00",
@@ -3148,7 +3151,7 @@ class TestFilterSubtestAndRunWiring:
             "run_states": {"T0": {"00": {"1": "replay_generated"}}},
             "completed_runs": {},
         }
-        checkpoint_dir = results_dir / experiment_id
+        checkpoint_dir = results_dir / exp_dir_name
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         (checkpoint_dir / "checkpoint.json").write_text(json.dumps(checkpoint_data))
 
@@ -3680,8 +3683,8 @@ class TestRetryErrorsInSingleMode:
         results_dir = tmp_path / "results"
         results_dir.mkdir()
 
-        # Create an existing checkpoint with a failed run
-        exp_dir = results_dir / "test-exp"
+        # Create an existing checkpoint with a failed run (timestamp-prefixed dir)
+        exp_dir = results_dir / "2024-01-01T00-00-00-test-exp"
         exp_dir.mkdir(parents=True)
         checkpoint = E2ECheckpoint(
             experiment_id="test-exp",
@@ -3763,3 +3766,127 @@ class TestRetryErrorsInSingleMode:
 
         assert result == 0
         mock_run.assert_called_once()
+
+    def test_retry_errors_scoped_to_cli_tiers(self, tmp_path: Path) -> None:
+        """--retry-errors --tiers T0 scopes reset to T0 only via tier_filter."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import cmd_run
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        config_dir = tmp_path / "test-exp"
+        self._make_test_dir(config_dir)
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Checkpoint has failed runs in both T0 and T1
+        exp_dir = results_dir / "2024-01-01T00-00-00-test-exp"
+        exp_dir.mkdir(parents=True)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="failed",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
+            run_states={
+                "T0": {"00": {"1": "failed"}},
+                "T1": {"00": {"1": "failed"}},
+            },
+            completed_runs={
+                "T0": {"00": {1: "failed"}},
+                "T1": {"00": {1: "failed"}},
+            },
+        )
+        save_checkpoint(checkpoint, exp_dir / "checkpoint.json")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--retry-errors",
+                "--tiers",
+                "T0",
+                "--skip-judge-validation",
+            ]
+        )
+
+        reset_calls: list[Any] = []
+
+        def mock_reset(cp, from_state, **kwargs):
+            reset_calls.append({"from_state": from_state, "kwargs": kwargs})
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+            patch(
+                "scylla.e2e.checkpoint.reset_runs_for_from_state",
+                side_effect=mock_reset,
+            ),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(reset_calls) == 1
+        assert reset_calls[0]["kwargs"].get("tier_filter") == ["T0"]
+        assert reset_calls[0]["kwargs"].get("status_filter") == ["failed"]
+
+
+# ---------------------------------------------------------------------------
+# _find_checkpoint_path helper
+# ---------------------------------------------------------------------------
+
+
+class TestFindCheckpointPath:
+    """Tests for the _find_checkpoint_path helper in manage_experiment.py."""
+
+    def test_find_checkpoint_path_with_timestamp_prefix(self, tmp_path: Path) -> None:
+        """Finds checkpoint in a timestamp-prefixed directory matching *-{experiment_id}."""
+        from manage_experiment import _find_checkpoint_path
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        exp_dir = results_dir / "2026-02-25T06-12-39-test-001"
+        exp_dir.mkdir()
+        cp = exp_dir / "checkpoint.json"
+        cp.write_text('{"experiment_id": "test-001"}')
+
+        result = _find_checkpoint_path(results_dir, "test-001")
+        assert result == cp
+
+    def test_find_checkpoint_path_returns_none_when_no_match(self, tmp_path: Path) -> None:
+        """Returns None when no matching directory exists."""
+        from manage_experiment import _find_checkpoint_path
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        result = _find_checkpoint_path(results_dir, "nonexistent-exp")
+        assert result is None
+
+    def test_find_checkpoint_path_returns_most_recent(self, tmp_path: Path) -> None:
+        """When multiple timestamp-prefixed dirs match, returns the most recent one."""
+        from manage_experiment import _find_checkpoint_path
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        older = results_dir / "2026-02-24T10-00-00-test-001"
+        older.mkdir()
+        (older / "checkpoint.json").write_text('{"version": "3.1"}')
+
+        newer = results_dir / "2026-02-25T06-12-39-test-001"
+        newer.mkdir()
+        (newer / "checkpoint.json").write_text('{"version": "3.1"}')
+
+        result = _find_checkpoint_path(results_dir, "test-001")
+        assert result == newer / "checkpoint.json"

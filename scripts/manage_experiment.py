@@ -276,6 +276,34 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
 
 
+def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
+    """Find the most recent checkpoint for an experiment using timestamp-prefixed glob.
+
+    Experiments are stored as ``<results_dir>/<timestamp>-<experiment_id>/``.
+    When the caller only knows the experiment_id (no timestamp), we glob for
+    ``*-<experiment_id>`` and return the checkpoint from the most-recent match.
+
+    Args:
+        results_dir: Base directory that contains experiment subdirectories.
+        experiment_id: Bare experiment ID without timestamp prefix.
+
+    Returns:
+        Path to checkpoint.json if found, else None.
+
+    """
+    pattern = f"*-{experiment_id}"
+    matching_dirs = sorted(
+        [d for d in results_dir.glob(pattern) if d.is_dir()],
+        key=lambda d: d.name,
+        reverse=True,
+    )
+    for exp_dir in matching_dirs:
+        cp = exp_dir / "checkpoint.json"
+        if cp.exists():
+            return cp
+    return None
+
+
 def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
     """Run multiple tests using in-process ThreadPoolExecutor.
 
@@ -851,10 +879,10 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
             save_checkpoint,
         )
 
-        checkpoint_path = args.results_dir / experiment_id / "checkpoint.json"
-        if not checkpoint_path.exists():
+        checkpoint_path = _find_checkpoint_path(args.results_dir, experiment_id)
+        if checkpoint_path is None:
             logger.error(
-                f"--from requires existing experiment with checkpoint at {checkpoint_path}"
+                f"--from requires existing experiment with checkpoint for '{experiment_id}'"
             )
             return 1
 
@@ -893,12 +921,14 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
             save_checkpoint,
         )
 
-        checkpoint_path = args.results_dir / experiment_id / "checkpoint.json"
-        if checkpoint_path.exists():
+        checkpoint_path = _find_checkpoint_path(args.results_dir, experiment_id)
+        if checkpoint_path is not None:
+            cli_tier_filter = [t.upper() for t in args.tiers] if args.tiers else None
             checkpoint = load_checkpoint(checkpoint_path)
             reset_count = reset_runs_for_from_state(
                 checkpoint,
                 from_state="pending",
+                tier_filter=cli_tier_filter,
                 status_filter=["failed"],
             )
             if reset_count > 0:
