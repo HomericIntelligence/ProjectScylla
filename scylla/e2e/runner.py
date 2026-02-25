@@ -406,7 +406,7 @@ class E2ERunner:
                                 for sub_id, sub_state in self.checkpoint.subtest_states.get(
                                     tier_id_str, {}
                                 ).items():
-                                    if sub_state == "aggregated":
+                                    if sub_state in ("aggregated", "runs_complete"):
                                         if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
                                             self.checkpoint.subtest_states[tier_id_str][sub_id] = (
                                                 "runs_in_progress"

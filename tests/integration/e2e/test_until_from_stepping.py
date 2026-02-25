@@ -411,6 +411,72 @@ class TestSubtestLevelStepping:
         cp2 = load_checkpoint(cp_path)
         assert cp2.get_subtest_state("T0", "00") == "failed"
 
+    def test_repeated_until_halt_stays_in_runs_in_progress(self, tmp_path: Path) -> None:
+        """Sequential --until invocations both leave subtest at RUNS_IN_PROGRESS.
+
+        Regression test for the bug where the 2nd --until invocation (fired from
+        RUNS_IN_PROGRESS) incorrectly saved RUNS_COMPLETE in the checkpoint, causing
+        the 3rd invocation to call _aggregate() and fail with 'No sub-test results'.
+
+        Sequence:
+          1st advance: UntilHaltError from PENDING -> checkpoint shows runs_in_progress
+          2nd advance: UntilHaltError from RUNS_IN_PROGRESS -> still shows runs_in_progress
+          3rd advance: no UntilHaltError -> subtest advances to RUNS_COMPLETE -> AGGREGATED
+        """
+        cp = make_checkpoint()
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        # Step 1: first --until fires from PENDING, stops before RUNS_IN_PROGRESS action
+        ssm1 = _build_subtest_sm(cp, cp_path)
+        actions1: SubtestActions = cast(
+            SubtestActions,
+            {
+                SubtestState.PENDING: MagicMock(side_effect=UntilHaltError("step1")),
+                SubtestState.RUNS_IN_PROGRESS: MagicMock(),
+                SubtestState.RUNS_COMPLETE: MagicMock(),
+            },
+        )
+        final1 = ssm1.advance_to_completion("T0", "00", actions1)
+        assert final1 == SubtestState.RUNS_IN_PROGRESS
+        validate_checkpoint_states(
+            cp_path,
+            expected_subtest_states={"T0": {"00": "runs_in_progress"}},
+            no_failed_states=True,
+        )
+
+        # Step 2: second --until fires from RUNS_IN_PROGRESS
+        cp2 = load_checkpoint(cp_path)
+        ssm2 = _build_subtest_sm(cp2, cp_path)
+        actions2: SubtestActions = cast(
+            SubtestActions,
+            {
+                SubtestState.PENDING: MagicMock(),  # skipped — state is RUNS_IN_PROGRESS
+                SubtestState.RUNS_IN_PROGRESS: MagicMock(side_effect=UntilHaltError("step2")),
+                SubtestState.RUNS_COMPLETE: MagicMock(),
+            },
+        )
+        final2 = ssm2.advance_to_completion("T0", "00", actions2)
+        # Must still be RUNS_IN_PROGRESS, not RUNS_COMPLETE (the bug was saving RUNS_COMPLETE here)
+        assert final2 == SubtestState.RUNS_IN_PROGRESS
+        validate_checkpoint_states(
+            cp_path,
+            expected_subtest_states={"T0": {"00": "runs_in_progress"}},
+            no_failed_states=True,
+        )
+
+        # Step 3: third invocation runs to completion with no UntilHaltError
+        cp3 = load_checkpoint(cp_path)
+        ssm3 = _build_subtest_sm(cp3, cp_path)
+        actions3 = make_noop_subtest_actions()
+        final3 = ssm3.advance_to_completion("T0", "00", actions3)
+        assert final3 == SubtestState.AGGREGATED
+        validate_checkpoint_states(
+            cp_path,
+            expected_subtest_states={"T0": {"00": "aggregated"}},
+            no_failed_states=True,
+        )
+
 
 # ---------------------------------------------------------------------------
 # Class 3: TestTierLevelStepping
