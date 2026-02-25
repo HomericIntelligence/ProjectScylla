@@ -13,6 +13,7 @@
 - [📊 System Requirements](#-system-requirements)
 - [Analysis Pipeline Architecture](#analysis-pipeline-architecture)
 - [Development](#development)
+  - [Git Hooks](#git-hooks)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [Publication Readiness](#publication-readiness)
 - [🤝 Contributing](#-contributing)
@@ -375,6 +376,24 @@ pixi run ruff check scylla/
 pixi run ruff format scylla/ --check
 ```
 
+### Git Hooks
+
+Git hooks enforce quality checks locally before code reaches CI.
+Install them once after cloning:
+
+```bash
+bash scripts/install_hooks.sh
+```
+
+| Hook | Trigger | What it does |
+|------|---------|--------------|
+| `pre-push` | Every `git push` | Runs the full test suite with coverage; aborts the push if tests fail or coverage drops below the threshold in `pyproject.toml` |
+
+The coverage threshold is read directly from `pyproject.toml` — update it there and the hook stays in sync automatically.
+
+> Hook source files live in `scripts/hooks/` and are version-controlled.
+> See [`scripts/README.md`](scripts/README.md) for details.
+
 ### Adding Components
 
 **New Figures:**
@@ -510,8 +529,9 @@ We welcome contributions! Please see **[CONTRIBUTING.md](CONTRIBUTING.md)** for 
 1. Fork the repository and clone locally
 2. Copy `.env.example` to `.env` and configure API keys
 3. Install dependencies: `curl -fsSL https://pixi.sh/install.sh | bash`
-4. Run tests: `pixi run pytest tests/ -v`
-5. Check [CONTRIBUTING.md](CONTRIBUTING.md) for detailed workflow
+4. Install git hooks: `bash scripts/install_hooks.sh`
+5. Run tests: `pixi run pytest tests/ -v`
+6. Check [CONTRIBUTING.md](CONTRIBUTING.md) for detailed workflow
 
 **Areas for contribution:**
 
