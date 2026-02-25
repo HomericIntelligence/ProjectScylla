@@ -966,6 +966,306 @@ def cmd_repair(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Subcommand: visualize
+# ---------------------------------------------------------------------------
+
+
+def _color(text: str, code: str, enabled: bool) -> str:
+    """Wrap text in ANSI escape codes if color is enabled."""
+    if not enabled:
+        return text
+    return f"\033[{code}m{text}\033[0m"
+
+
+def _state_color(state: str, enabled: bool) -> str:
+    """Color a state string based on semantic meaning."""
+    # ANSI color codes
+    green = "32"
+    red = "31"
+    yellow = "33"
+    dim = "2"
+    terminal_states = {"complete", "passed", "worktree_cleaned", "aggregated"}
+    failed_states = {"failed", "interrupted", "rate_limited"}
+    pending_states = {"pending", "initializing"}
+    if state in terminal_states:
+        return _color(state, green, enabled)
+    if state in failed_states:
+        return _color(state, red, enabled)
+    if state in pending_states:
+        return _color(state, dim, enabled)
+    # in-progress / transitional states
+    return _color(state, yellow, enabled)
+
+
+def _tier_sort_key(tier_id: str) -> tuple[int, str]:
+    """Sort tiers numerically (T0 < T1 < ... < T6)."""
+    if len(tier_id) >= 2 and tier_id[0] == "T" and tier_id[1:].isdigit():
+        return (int(tier_id[1:]), tier_id)
+    return (999, tier_id)
+
+
+def _format_duration(started: str, ended: str) -> str:
+    """Calculate duration between two ISO timestamps, return e.g. '24m23s'."""
+    from datetime import datetime, timezone
+
+    try:
+        fmt_start = datetime.fromisoformat(started)
+        fmt_end = datetime.fromisoformat(ended)
+        # Normalize to UTC if no tz
+        if fmt_start.tzinfo is None:
+            fmt_start = fmt_start.replace(tzinfo=timezone.utc)
+        if fmt_end.tzinfo is None:
+            fmt_end = fmt_end.replace(tzinfo=timezone.utc)
+        delta = int((fmt_end - fmt_start).total_seconds())
+        if delta < 0:
+            delta = 0
+        minutes, seconds = divmod(delta, 60)
+        hours, minutes = divmod(minutes, 60)
+        if hours > 0:
+            return f"{hours}h{minutes}m{seconds}s"
+        if minutes > 0:
+            return f"{minutes}m{seconds}s"
+        return f"{seconds}s"
+    except Exception:
+        return "?"
+
+
+def _add_visualize_args(parser: argparse.ArgumentParser) -> None:
+    """Add arguments for the 'visualize' subcommand."""
+    parser.add_argument(
+        "path",
+        type=Path,
+        help="Path to checkpoint.json or experiment directory",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["tree", "table", "json"],
+        default="tree",
+        dest="output_format",
+        help="Output format (default: tree)",
+    )
+    parser.add_argument(
+        "--tier",
+        action="append",
+        default=None,
+        dest="tier",
+        help="Filter to specific tier(s) (repeatable, e.g. --tier T0 --tier T1)",
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Show additional details (timestamps, PID, heartbeat)",
+    )
+
+
+def _visualize_tree(
+    checkpoint: E2ECheckpoint,  # type: ignore[name-defined]  # noqa: F821
+    tier_filter: list[str] | None,
+    verbose: bool,
+    use_color: bool,
+) -> None:
+    """Print experiment state as an ASCII tree."""
+    exp_state = _state_color(checkpoint.experiment_state, use_color)
+    print(f"Experiment: {checkpoint.experiment_id} [{exp_state}]")
+
+    if verbose:
+        if checkpoint.started_at:
+            duration = ""
+            if checkpoint.last_updated_at:
+                dur = _format_duration(checkpoint.started_at, checkpoint.last_updated_at)
+                duration = f"  Duration: {dur}"
+            print(f"  Started: {checkpoint.started_at}{duration}")
+        if checkpoint.pid:
+            print(f"  PID: {checkpoint.pid}")
+        if checkpoint.last_heartbeat:
+            print(f"  Heartbeat: {checkpoint.last_heartbeat}")
+
+    tier_ids = sorted(checkpoint.tier_states.keys(), key=_tier_sort_key)
+    if tier_filter:
+        tier_ids = [t for t in tier_ids if t in tier_filter]
+
+    if not tier_ids:
+        print("  (no tiers)")
+        return
+
+    for tier_idx, tier_id in enumerate(tier_ids):
+        is_last_tier = tier_idx == len(tier_ids) - 1
+        tier_prefix = "  +--" if is_last_tier else "  +--"
+        tier_state = _state_color(checkpoint.tier_states.get(tier_id, "pending"), use_color)
+        print(f"{tier_prefix} {tier_id} [{tier_state}]")
+
+        subtest_map = checkpoint.subtest_states.get(tier_id, {})
+        subtest_ids = sorted(subtest_map.keys())
+        subtests_in_run_states = sorted(checkpoint.run_states.get(tier_id, {}).keys())
+        all_subtests = sorted(set(subtest_ids) | set(subtests_in_run_states))
+
+        if not all_subtests:
+            continue
+
+        tree_cont = "  |   " if not is_last_tier else "      "
+        for sub_idx, subtest_id in enumerate(all_subtests):
+            is_last_sub = sub_idx == len(all_subtests) - 1
+            sub_connector = "+--" if is_last_sub else "+--"
+            sub_state_raw = subtest_map.get(subtest_id, "pending")
+            sub_state = _state_color(sub_state_raw, use_color)
+            print(f"{tree_cont} {sub_connector} {subtest_id} [{sub_state}]")
+
+            run_map = checkpoint.run_states.get(tier_id, {}).get(subtest_id, {})
+            run_nums = sorted(run_map.keys(), key=lambda r: int(r) if r.isdigit() else 0)
+
+            run_cont = f"{tree_cont} |   " if not is_last_sub else f"{tree_cont}     "
+            for run_idx, run_num_str in enumerate(run_nums):
+                is_last_run = run_idx == len(run_nums) - 1
+                run_connector = "+--" if is_last_run else "+--"
+                run_state_raw = run_map[run_num_str]
+                run_state = _state_color(run_state_raw, use_color)
+                run_num_int = int(run_num_str) if run_num_str.isdigit() else 0
+                result = checkpoint.get_run_status(tier_id, subtest_id, run_num_int)
+                result_str = f" -> {result}" if result else ""
+                run_label = f"run_{int(run_num_str):02d}"
+                print(f"{run_cont} {run_connector} {run_label} [{run_state}]{result_str}")
+
+
+def _visualize_table(
+    checkpoint: E2ECheckpoint,  # type: ignore[name-defined]  # noqa: F821
+    tier_filter: list[str] | None,
+    use_color: bool,
+) -> None:
+    """Print experiment state as a compact table."""
+    print(f"{'TIER':<6}{'SUBTEST':<12}{'RUN':<5}{'STATE':<20}{'RESULT'}")
+    print("-" * 53)
+
+    tier_ids = sorted(checkpoint.run_states.keys(), key=_tier_sort_key)
+    if tier_filter:
+        tier_ids = [t for t in tier_ids if t in tier_filter]
+
+    if not tier_ids:
+        # Also check tier_states in case there are tiers with no runs yet
+        tier_ids_ts = sorted(checkpoint.tier_states.keys(), key=_tier_sort_key)
+        if tier_filter:
+            tier_ids_ts = [t for t in tier_ids_ts if t in tier_filter]
+        for tier_id in tier_ids_ts:
+            tier_state = _state_color(checkpoint.tier_states.get(tier_id, "pending"), use_color)
+            print(f"{tier_id:<6}{'':<12}{'':<5}{tier_state:<20}{''}")
+        return
+
+    for tier_id in tier_ids:
+        subtest_map = checkpoint.run_states.get(tier_id, {})
+        for subtest_id in sorted(subtest_map.keys()):
+            run_map = subtest_map[subtest_id]
+            for run_num_str in sorted(run_map.keys(), key=lambda r: int(r) if r.isdigit() else 0):
+                run_state_raw = run_map[run_num_str]
+                run_state = _state_color(run_state_raw, use_color)
+                run_num_int = int(run_num_str) if run_num_str.isdigit() else 0
+                result = checkpoint.get_run_status(tier_id, subtest_id, run_num_int) or ""
+                print(f"{tier_id:<6}{subtest_id:<12}{run_num_str:<5}{run_state:<20}{result}")
+
+
+def _visualize_json(
+    checkpoint: E2ECheckpoint,  # type: ignore[name-defined]  # noqa: F821
+    tier_filter: list[str] | None,
+) -> None:
+    """Print filtered JSON dump of state fields."""
+    import json as _json
+
+    data: dict[str, object] = {
+        "experiment_id": checkpoint.experiment_id,
+        "experiment_state": checkpoint.experiment_state,
+        "started_at": checkpoint.started_at,
+        "last_updated_at": checkpoint.last_updated_at,
+        "status": checkpoint.status,
+    }
+
+    if tier_filter:
+        data["tier_states"] = {k: v for k, v in checkpoint.tier_states.items() if k in tier_filter}
+        data["subtest_states"] = {
+            k: v for k, v in checkpoint.subtest_states.items() if k in tier_filter
+        }
+        data["run_states"] = {k: v for k, v in checkpoint.run_states.items() if k in tier_filter}
+    else:
+        data["tier_states"] = checkpoint.tier_states
+        data["subtest_states"] = checkpoint.subtest_states
+        data["run_states"] = checkpoint.run_states
+
+    print(_json.dumps(data, indent=2))
+
+
+def _find_checkpoint_paths(path: Path) -> list[Path]:
+    """Resolve path to one or more checkpoint.json files.
+
+    Rules:
+    - If path is a .json file: use it directly.
+    - If path is a directory containing checkpoint.json: single experiment.
+    - If path is a directory without checkpoint.json but with subdirectories
+      that each contain checkpoint.json: batch/results directory mode.
+
+    Returns:
+        Sorted list of checkpoint.json paths found.
+
+    """
+    if path.is_file():
+        return [path]
+
+    if path.is_dir():
+        direct = path / "checkpoint.json"
+        if direct.exists():
+            return [direct]
+        # Batch mode: look for subdirectory checkpoints
+        found = sorted(path.glob("*/checkpoint.json"))
+        return found
+
+    return []
+
+
+def cmd_visualize(args: argparse.Namespace) -> int:
+    """Execute the 'visualize' subcommand."""
+    import sys
+
+    from scylla.e2e.checkpoint import load_checkpoint
+
+    path: Path = args.path
+
+    if not path.exists():
+        logger.error(f"Path not found: {path}")
+        return 1
+
+    checkpoint_paths = _find_checkpoint_paths(path)
+
+    if not checkpoint_paths:
+        logger.error(f"No checkpoint.json found at or under: {path}")
+        return 1
+
+    use_color = sys.stdout.isatty()
+    tier_filter: list[str] | None = args.tier
+
+    fmt = args.output_format
+    any_error = False
+
+    for cp_path in checkpoint_paths:
+        try:
+            checkpoint = load_checkpoint(cp_path)
+        except Exception as e:
+            logger.error(f"Failed to load checkpoint {cp_path}: {e}")
+            any_error = True
+            continue
+
+        if fmt == "tree":
+            _visualize_tree(checkpoint, tier_filter, args.verbose, use_color)
+        elif fmt == "table":
+            _visualize_table(checkpoint, tier_filter, use_color)
+        elif fmt == "json":
+            _visualize_json(checkpoint, tier_filter)
+
+        # Separator between multiple experiments
+        if len(checkpoint_paths) > 1:
+            print()
+
+    return 1 if any_error else 0
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -978,8 +1278,9 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Subcommands:
-  run     Run single or batch experiments with optional --from re-execution
-  repair  Repair corrupt checkpoint (rebuilds from run_result.json files)
+  run        Run single or batch experiments with optional --from re-execution
+  repair     Repair corrupt checkpoint (rebuilds from run_result.json files)
+  visualize  Show experiment state from checkpoint
 
 Use 'manage_experiment.py <subcommand> --help' for subcommand-specific options.
 
@@ -1017,6 +1318,18 @@ Equivalence mapping (old → new):
     )
     _add_repair_args(repair_parser)
 
+    # visualize subcommand
+    visualize_parser = subparsers.add_parser(
+        "visualize",
+        help="Show experiment state from checkpoint",
+        description=(
+            "Read checkpoint.json and display experiment state hierarchy. "
+            "Accepts a checkpoint.json file, an experiment directory, "
+            "or a results directory containing multiple experiment subdirectories."
+        ),
+    )
+    _add_visualize_args(visualize_parser)
+
     return parser
 
 
@@ -1028,6 +1341,7 @@ def main() -> int:
     subcommand_map = {
         "run": cmd_run,
         "repair": cmd_repair,
+        "visualize": cmd_visualize,
     }
 
     handler = subcommand_map.get(args.subcommand)
