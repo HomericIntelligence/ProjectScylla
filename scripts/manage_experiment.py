@@ -1054,6 +1054,33 @@ def _state_color(state: str, enabled: bool) -> str:
     return _color(state, yellow, enabled)
 
 
+_RUN_TERMINAL_STATES = frozenset({"worktree_cleaned", "failed", "rate_limited"})
+
+
+def _derive_run_result(
+    checkpoint: E2ECheckpoint,  # type: ignore[name-defined]  # noqa: F821
+    tier_id: str,
+    subtest_id: str,
+    run_num_int: int,
+    run_state_raw: str,
+) -> str:
+    """Derive a human-readable run result from state and completed_runs.
+
+    Returns one of: "passed", "failed", "agent_complete", "in_progress", or "".
+    """
+    stored: str | None = checkpoint.get_run_status(tier_id, subtest_id, run_num_int)
+    if stored is not None:
+        return stored
+    # Not in completed_runs — infer from run_state
+    if run_state_raw in ("pending", ""):
+        return ""
+    if run_state_raw in _RUN_TERMINAL_STATES:
+        # Terminal but not in completed_runs (shouldn't normally happen)
+        return run_state_raw
+    # Any non-pending, non-terminal state means the run is in progress
+    return "in_progress"
+
+
 def _tier_sort_key(tier_id: str) -> tuple[int, str]:
     """Sort tiers numerically (T0 < T1 < ... < T6)."""
     if len(tier_id) >= 2 and tier_id[0] == "T" and tier_id[1:].isdigit():
@@ -1185,8 +1212,10 @@ def _visualize_tree(
                 run_state_raw = run_map[run_num_str]
                 run_state = _state_color(run_state_raw, use_color)
                 run_num_int = int(run_num_str) if run_num_str.isdigit() else 0
-                result = checkpoint.get_run_status(tier_id, subtest_id, run_num_int)
-                result_str = f" -> {result}" if result else ""
+                result = _derive_run_result(
+                    checkpoint, tier_id, subtest_id, run_num_int, run_state_raw
+                )
+                result_str = f" -> {_state_color(result, use_color)}" if result else ""
                 run_label = f"run_{int(run_num_str):02d}"
                 print(f"{run_cont} {run_connector} {run_label} [{run_state}]{result_str}")
 
@@ -1222,7 +1251,9 @@ def _visualize_table(
                 run_state_raw = run_map[run_num_str]
                 run_state = _state_color(run_state_raw, use_color)
                 run_num_int = int(run_num_str) if run_num_str.isdigit() else 0
-                result = checkpoint.get_run_status(tier_id, subtest_id, run_num_int) or ""
+                result = _derive_run_result(
+                    checkpoint, tier_id, subtest_id, run_num_int, run_state_raw
+                )
                 print(f"{tier_id:<6}{subtest_id:<12}{run_num_str:<5}{run_state:<20}{result}")
 
 

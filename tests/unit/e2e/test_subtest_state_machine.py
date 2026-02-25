@@ -589,3 +589,63 @@ class TestSubtestStateMachineUntilState:
         """Stopping at until_state does not mark the subtest as FAILED."""
         ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {}, until_state=SubtestState.RUNS_COMPLETE)
         assert ssm.get_state(TIER_ID, SUBTEST_ID) != SubtestState.FAILED
+
+
+class TestUntilHaltError:
+    """Tests for UntilHaltError sentinel raised by --until run-level stopping."""
+
+    def test_until_halt_error_leaves_subtest_in_runs_in_progress(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """UntilHaltError from an action leaves subtest in RUNS_IN_PROGRESS without FAILED."""
+        from scylla.e2e.subtest_state_machine import UntilHaltError
+
+        def action_that_raises_until_halt() -> None:
+            raise UntilHaltError("--until stopped runs at replay_generated")
+
+        actions = {SubtestState.PENDING: action_that_raises_until_halt}
+        # advance_to_completion should NOT propagate UntilHaltError
+        result = ssm.advance_to_completion(TIER_ID, SUBTEST_ID, actions)
+
+        # SubtestSM stays in RUNS_IN_PROGRESS (where PENDING action fired), not FAILED
+        assert result == SubtestState.RUNS_IN_PROGRESS
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS
+        assert not ssm.is_complete(TIER_ID, SUBTEST_ID)
+
+    def test_until_halt_error_checkpoint_state_is_runs_in_progress(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """Checkpoint on disk reflects RUNS_IN_PROGRESS after UntilHaltError."""
+        from scylla.e2e.checkpoint import load_checkpoint
+        from scylla.e2e.subtest_state_machine import UntilHaltError
+
+        def raise_until_halt() -> None:
+            raise UntilHaltError("stopped")
+
+        ssm.advance_to_completion(TIER_ID, SUBTEST_ID, {SubtestState.PENDING: raise_until_halt})
+
+        on_disk = load_checkpoint(checkpoint_path)
+        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS.value
+
+    def test_non_until_halt_exception_still_marks_failed(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """Regular exceptions (non-UntilHaltError) still mark subtest as FAILED."""
+
+        def action_that_crashes() -> None:
+            raise RuntimeError("unexpected failure")
+
+        actions = {SubtestState.PENDING: action_that_crashes}
+        with pytest.raises(RuntimeError):
+            ssm.advance_to_completion(TIER_ID, SUBTEST_ID, actions)
+
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.FAILED

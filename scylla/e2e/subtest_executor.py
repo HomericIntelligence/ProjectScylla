@@ -378,6 +378,17 @@ class SubTestExecutor:
                     else None
                 )
 
+                # Skip runs already stopped at --until target state (they are not
+                # terminal but have completed their allowed work for this invocation).
+                if sm and self.config.until_run_state is not None:
+                    current_run_state = sm.get_state(tier_id.value, subtest.id, run_num)
+                    if current_run_state == self.config.until_run_state:
+                        logger.debug(
+                            f"Skipping run {tier_id.value}/{subtest.id}/run_{run_num:02d} "
+                            f"— already at --until state: {self.config.until_run_state.value}"
+                        )
+                        continue
+
                 # Check if already in a terminal state (fully complete or previously failed)
                 if sm and sm.is_complete(tier_id.value, subtest.id, run_num):
                     run_result_file = run_dir / "run_result.json"
@@ -524,6 +535,25 @@ class SubTestExecutor:
         def _run_loop_and_save_manifest() -> None:
             _run_loop()
             _save_resource_manifest()
+            # If --until stopped every run before reaching a terminal state, signal
+            # SubtestSM to stay in RUNS_IN_PROGRESS (not advance to RUNS_COMPLETE).
+            if self.config.until_run_state is not None and ssm is not None:
+                from scylla.e2e.models import RunState
+                from scylla.e2e.state_machine import is_terminal_state
+                from scylla.e2e.subtest_state_machine import UntilHaltError
+
+                run_map = ssm.checkpoint.run_states.get(tier_id.value, {}).get(subtest.id, {})
+                any_non_terminal = any(
+                    not is_terminal_state(RunState(s))
+                    for s in run_map.values()
+                    if s in {e.value for e in RunState}
+                )
+                if any_non_terminal:
+                    raise UntilHaltError(
+                        f"Runs for {tier_id.value}/{subtest.id} stopped at "
+                        f"--until={self.config.until_run_state.value}; "
+                        "leaving subtest in RUNS_IN_PROGRESS for future resume."
+                    )
 
         subtest_actions = {
             SubtestState.PENDING: _run_loop_and_save_manifest,
