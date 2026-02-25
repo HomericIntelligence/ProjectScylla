@@ -3573,3 +3573,70 @@ class TestCmdVisualize:
         out = capsys.readouterr().out
         assert "exp-01" in out
         assert "exp-02" in out
+
+    def test_visualize_states_only_single(self, tmp_path: Path, capsys) -> None:
+        """--states-only with single experiment: shows TIER/SUBTEST/RUN/STATE, no EXP or RESULT."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-exp",
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--states-only"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "TIER" in out
+        assert "STATE" in out
+        assert "RESULT" not in out
+        assert "EXP" not in out
+        assert "T0" in out
+        assert "worktree_cleaned" in out
+
+    def test_visualize_states_only_batch(self, tmp_path: Path, capsys) -> None:
+        """--states-only with multiple experiments shows EXP column in unified table."""
+        for exp_id in ["exp-01", "exp-02"]:
+            exp_dir = tmp_path / exp_id
+            exp_dir.mkdir()
+            self._make_checkpoint_file(
+                exp_dir,
+                experiment_id=exp_id,
+                tier_states={"T0": "complete"},
+                subtest_states={"T0": {"00": "aggregated"}},
+                run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+                completed_runs={"T0": {"00": {1: "passed"}}},
+            )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--states-only"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "EXP" in out
+        assert "TIER" in out
+        assert "STATE" in out
+        assert "RESULT" not in out
+        assert "exp-01" in out
+        assert "exp-02" in out
+        assert "worktree_cleaned" in out
+
+    def test_visualize_states_only_tier_filter(self, tmp_path: Path, capsys) -> None:
+        """--states-only with --tier T0 limits output to T0 only."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete", "T1": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--states-only", "--tier", "T0"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "T0" in out
+        assert "T1" not in out

@@ -1063,6 +1063,12 @@ def _add_visualize_args(parser: argparse.ArgumentParser) -> None:
         default=False,
         help="Show additional details (timestamps, PID, heartbeat)",
     )
+    parser.add_argument(
+        "--states-only",
+        action="store_true",
+        default=False,
+        help="Show states-only table: EXP / TIER / SUBTEST / RUN / STATE (no result column)",
+    )
 
 
 def _visualize_tree(
@@ -1224,6 +1230,58 @@ def _find_checkpoint_paths(path: Path) -> list[Path]:
     return []
 
 
+def _visualize_states_table(
+    checkpoints: list[E2ECheckpoint],  # type: ignore[name-defined]  # noqa: F821
+    tier_filter: list[str] | None,
+    use_color: bool,
+) -> None:
+    """Print a unified states-only table across one or more checkpoints.
+
+    Columns: EXP | TIER | SUBTEST | RUN | STATE (no RESULT column).
+    When a single checkpoint is provided, the EXP column is omitted.
+    """
+    multi = len(checkpoints) > 1
+    if multi:
+        print(f"{'EXP':<16}{'TIER':<6}{'SUBTEST':<12}{'RUN':<5}{'STATE'}")
+        print("-" * 55)
+    else:
+        print(f"{'TIER':<6}{'SUBTEST':<12}{'RUN':<5}{'STATE'}")
+        print("-" * 33)
+
+    for checkpoint in checkpoints:
+        tier_ids = sorted(checkpoint.run_states.keys(), key=_tier_sort_key)
+        if tier_filter:
+            tier_ids = [t for t in tier_ids if t in tier_filter]
+
+        if not tier_ids:
+            # Tiers exist but no runs yet — show tier-level state
+            tier_ids_ts = sorted(checkpoint.tier_states.keys(), key=_tier_sort_key)
+            if tier_filter:
+                tier_ids_ts = [t for t in tier_ids_ts if t in tier_filter]
+            for tier_id in tier_ids_ts:
+                tier_state = _state_color(checkpoint.tier_states.get(tier_id, "pending"), use_color)
+                if multi:
+                    exp = checkpoint.experiment_id
+                    print(f"{exp:<16}{tier_id:<6}{'':<12}{'':<5}{tier_state}")
+                else:
+                    print(f"{tier_id:<6}{'':<12}{'':<5}{tier_state}")
+            continue
+
+        for tier_id in tier_ids:
+            subtest_map = checkpoint.run_states.get(tier_id, {})
+            for subtest_id in sorted(subtest_map.keys()):
+                run_map = subtest_map[subtest_id]
+                for run_num_str in sorted(
+                    run_map.keys(), key=lambda r: int(r) if r.isdigit() else 0
+                ):
+                    run_state = _state_color(run_map[run_num_str], use_color)
+                    if multi:
+                        exp = checkpoint.experiment_id
+                        print(f"{exp:<16}{tier_id:<6}{subtest_id:<12}{run_num_str:<5}{run_state}")
+                    else:
+                        print(f"{tier_id:<6}{subtest_id:<12}{run_num_str:<5}{run_state}")
+
+
 def cmd_visualize(args: argparse.Namespace) -> int:
     """Execute the 'visualize' subcommand."""
     import sys
@@ -1244,9 +1302,22 @@ def cmd_visualize(args: argparse.Namespace) -> int:
 
     use_color = sys.stdout.isatty()
     tier_filter: list[str] | None = args.tier
+    any_error = False
+
+    # --states-only: load all checkpoints then render a single unified table
+    if args.states_only:
+        loaded = []
+        for cp_path in checkpoint_paths:
+            try:
+                loaded.append(load_checkpoint(cp_path))
+            except Exception as e:
+                logger.error(f"Failed to load checkpoint {cp_path}: {e}")
+                any_error = True
+        if loaded:
+            _visualize_states_table(loaded, tier_filter, use_color)
+        return 1 if any_error else 0
 
     fmt = args.output_format
-    any_error = False
 
     for cp_path in checkpoint_paths:
         try:
