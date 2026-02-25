@@ -1097,7 +1097,7 @@ def _visualize_tree(
 
     for tier_idx, tier_id in enumerate(tier_ids):
         is_last_tier = tier_idx == len(tier_ids) - 1
-        tier_prefix = "  +--" if is_last_tier else "  +--"
+        tier_prefix = r"  \--" if is_last_tier else "  +--"
         tier_state = _state_color(checkpoint.tier_states.get(tier_id, "pending"), use_color)
         print(f"{tier_prefix} {tier_id} [{tier_state}]")
 
@@ -1112,7 +1112,7 @@ def _visualize_tree(
         tree_cont = "  |   " if not is_last_tier else "      "
         for sub_idx, subtest_id in enumerate(all_subtests):
             is_last_sub = sub_idx == len(all_subtests) - 1
-            sub_connector = "+--" if is_last_sub else "+--"
+            sub_connector = r"\--" if is_last_sub else "+--"
             sub_state_raw = subtest_map.get(subtest_id, "pending")
             sub_state = _state_color(sub_state_raw, use_color)
             print(f"{tree_cont} {sub_connector} {subtest_id} [{sub_state}]")
@@ -1123,7 +1123,7 @@ def _visualize_tree(
             run_cont = f"{tree_cont} |   " if not is_last_sub else f"{tree_cont}     "
             for run_idx, run_num_str in enumerate(run_nums):
                 is_last_run = run_idx == len(run_nums) - 1
-                run_connector = "+--" if is_last_run else "+--"
+                run_connector = r"\--" if is_last_run else "+--"
                 run_state_raw = run_map[run_num_str]
                 run_state = _state_color(run_state_raw, use_color)
                 run_num_int = int(run_num_str) if run_num_str.isdigit() else 0
