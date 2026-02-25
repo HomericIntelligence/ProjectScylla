@@ -250,8 +250,16 @@ class SubtestStateMachine:
                 f"{transition.description} ({_elapsed:.1f}s)"
             )
 
-        # Update state in checkpoint (even if UntilHaltError was raised)
-        self.checkpoint.set_subtest_state(tier_id, subtest_id, transition.to_state.value)
+        # Update state in checkpoint.
+        # If UntilHaltError was raised, runs are incomplete — always save RUNS_IN_PROGRESS
+        # regardless of which transition was in progress (PENDING->RUNS_IN_PROGRESS or
+        # RUNS_IN_PROGRESS->RUNS_COMPLETE).  This ensures the next invocation resumes
+        # from RUNS_IN_PROGRESS and re-executes the run loop, not _aggregate().
+        if halt_error is not None:
+            saved_state = SubtestState.RUNS_IN_PROGRESS
+        else:
+            saved_state = transition.to_state
+        self.checkpoint.set_subtest_state(tier_id, subtest_id, saved_state.value)
 
         # Save checkpoint atomically
         save_checkpoint(self.checkpoint, self.checkpoint_path)

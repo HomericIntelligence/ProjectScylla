@@ -649,3 +649,74 @@ class TestUntilHaltError:
             ssm.advance_to_completion(TIER_ID, SUBTEST_ID, actions)
 
         assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.FAILED
+
+    def test_until_halt_error_from_runs_in_progress_stays_in_runs_in_progress(
+        self,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """UntilHaltError raised from RUNS_IN_PROGRESS action saves RUNS_IN_PROGRESS.
+
+        Regression test: before the fix, the RUNS_IN_PROGRESS->RUNS_COMPLETE
+        transition saved RUNS_COMPLETE even though runs were not complete.
+        """
+        from scylla.e2e.checkpoint import load_checkpoint
+        from scylla.e2e.subtest_state_machine import UntilHaltError
+
+        # Start the subtest already in RUNS_IN_PROGRESS (as if first --until ran)
+        checkpoint.set_subtest_state(TIER_ID, SUBTEST_ID, SubtestState.RUNS_IN_PROGRESS.value)
+        from scylla.e2e.checkpoint import save_checkpoint as _save
+
+        _save(checkpoint, checkpoint_path)
+
+        ssm = SubtestStateMachine(checkpoint=checkpoint, checkpoint_path=checkpoint_path)
+
+        def action_raises_halt() -> None:
+            raise UntilHaltError("--until stopped again")
+
+        actions = {SubtestState.RUNS_IN_PROGRESS: action_raises_halt}
+        result = ssm.advance_to_completion(TIER_ID, SUBTEST_ID, actions)
+
+        # Must stay in RUNS_IN_PROGRESS, not advance to RUNS_COMPLETE
+        assert result == SubtestState.RUNS_IN_PROGRESS
+        assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS
+
+        on_disk = load_checkpoint(checkpoint_path)
+        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS.value
+
+    def test_until_halt_error_repeated_invocations_stay_in_runs_in_progress(
+        self,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """Sequential --until invocations both leave subtest in RUNS_IN_PROGRESS.
+
+        Simulates the 3-step --until sequence that revealed the bug:
+          1st call: PENDING action raises UntilHaltError -> saves RUNS_IN_PROGRESS
+          2nd call: RUNS_IN_PROGRESS action raises UntilHaltError -> still RUNS_IN_PROGRESS
+        """
+        from scylla.e2e.checkpoint import load_checkpoint
+        from scylla.e2e.subtest_state_machine import UntilHaltError
+
+        # Step 1: first --until fires from PENDING
+        ssm1 = SubtestStateMachine(checkpoint=checkpoint, checkpoint_path=checkpoint_path)
+        result1 = ssm1.advance_to_completion(
+            TIER_ID,
+            SUBTEST_ID,
+            {SubtestState.PENDING: lambda: (_ for _ in ()).throw(UntilHaltError("step1"))},
+        )
+        assert result1 == SubtestState.RUNS_IN_PROGRESS
+
+        # Step 2: reload checkpoint, advance again — RUNS_IN_PROGRESS action raises UntilHaltError
+        cp2 = load_checkpoint(checkpoint_path)
+        ssm2 = SubtestStateMachine(checkpoint=cp2, checkpoint_path=checkpoint_path)
+        result2 = ssm2.advance_to_completion(
+            TIER_ID,
+            SUBTEST_ID,
+            {SubtestState.RUNS_IN_PROGRESS: lambda: (_ for _ in ()).throw(UntilHaltError("step2"))},
+        )
+        assert result2 == SubtestState.RUNS_IN_PROGRESS
+
+        # Checkpoint must still show RUNS_IN_PROGRESS, not RUNS_COMPLETE
+        on_disk = load_checkpoint(checkpoint_path)
+        assert on_disk.get_subtest_state(TIER_ID, SUBTEST_ID) == SubtestState.RUNS_IN_PROGRESS.value

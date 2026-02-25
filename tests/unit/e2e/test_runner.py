@@ -1135,3 +1135,77 @@ class TestInitializeOrResumeExperimentFailedReset:
         assert runner.checkpoint.experiment_state == "tiers_running"
         assert runner.checkpoint.tier_states["T0"] == "subtests_running"
         assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"
+
+    def test_resume_complete_with_runs_complete_subtest_resets_to_runs_in_progress(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """A 'runs_complete' subtest with incomplete runs is reset to 'runs_in_progress'.
+
+        Defense-in-depth for the --until UntilHaltError bug: if a checkpoint somehow
+        reaches 'runs_complete' while runs are still incomplete (pre-fix checkpoint),
+        the runner must reset it to 'runs_in_progress' when re-entering from a terminal
+        experiment state — just like it does for 'aggregated' subtests.
+
+        Scenario: experiment is 'complete', T0 is 'complete', subtest 00 is
+        'runs_complete' (incorrectly saved pre-fix) — but run 1 is in 'replay_generated'
+        (not terminal). Re-running must reset subtest 00 to 'runs_in_progress'.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig
+
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        # Experiment is 'complete', T0 is 'complete', but subtest 00 is 'runs_complete'
+        # with run 1 still at 'replay_generated' (not terminal) — the pre-fix bug state.
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "runs_complete"}},
+            run_states={"T0": {"00": {"1": "replay_generated"}}},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="completed",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.health.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        assert runner.checkpoint is not None
+        # 'runs_complete' with incomplete runs must be reset to 'runs_in_progress'
+        assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"
