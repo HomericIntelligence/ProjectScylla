@@ -44,6 +44,7 @@ Tests cover:
 - --filter-subtest passed to reset_runs_for_from_state
 - --filter-run passed to reset_runs_for_from_state
 - --prompt override flows to ExperimentConfig
+- --retry-errors in single mode resets failed runs via reset_runs_for_from_state
 """
 
 from __future__ import annotations
@@ -3640,3 +3641,125 @@ class TestCmdVisualize:
         out = capsys.readouterr().out
         assert "T0" in out
         assert "T1" not in out
+
+
+# ---------------------------------------------------------------------------
+# --retry-errors in single mode
+# ---------------------------------------------------------------------------
+
+
+class TestRetryErrorsInSingleMode:
+    """Tests that --retry-errors in single mode resets failed runs via reset_runs_for_from_state."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_retry_errors_single_mode_calls_reset_for_failed_runs(self, tmp_path: Path) -> None:
+        """--retry-errors single mode calls reset_runs_for_from_state with status_filter=failed."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import cmd_run
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        config_dir = tmp_path / "test-exp"
+        self._make_test_dir(config_dir)
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Create an existing checkpoint with a failed run
+        exp_dir = results_dir / "test-exp"
+        exp_dir.mkdir(parents=True)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="failed",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
+            run_states={"T0": {"00": {"1": "failed"}}},
+            completed_runs={"T0": {"00": {1: "failed"}}},
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--retry-errors",
+                "--skip-judge-validation",
+            ]
+        )
+
+        reset_calls: list[Any] = []
+
+        def mock_reset(cp, from_state, **kwargs):
+            reset_calls.append({"from_state": from_state, "kwargs": kwargs})
+            return 1
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+            patch(
+                "scylla.e2e.checkpoint.reset_runs_for_from_state",
+                side_effect=mock_reset,
+            ),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # Verify reset_runs_for_from_state was called with status_filter=["failed"]
+        assert len(reset_calls) == 1
+        assert reset_calls[0]["kwargs"].get("status_filter") == ["failed"]
+
+    def test_retry_errors_single_mode_no_existing_checkpoint_is_noop(self, tmp_path: Path) -> None:
+        """--retry-errors with no existing checkpoint is a no-op (fresh run starts normally)."""
+        from manage_experiment import cmd_run
+
+        config_dir = tmp_path / "test-exp"
+        self._make_test_dir(config_dir)
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+        # No checkpoint.json created — fresh run
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--retry-errors",
+                "--skip-judge-validation",
+            ]
+        )
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}) as mock_run,
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        mock_run.assert_called_once()

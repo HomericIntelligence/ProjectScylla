@@ -268,7 +268,9 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         help="Filter to specific test IDs (batch mode)",
     )
     parser.add_argument(
-        "--retry-errors", action="store_true", help="Re-run failed tests (batch mode)"
+        "--retry-errors",
+        action="store_true",
+        help="Re-run failed tests (single mode: reset failed runs; batch mode: retry failed)",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
@@ -882,6 +884,26 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
 
         save_checkpoint(checkpoint, checkpoint_path)
         logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
+
+    # Handle --retry-errors in single mode: reset failed runs to pending
+    if args.retry_errors and not (from_run_state or from_tier_state or from_experiment_state):
+        from scylla.e2e.checkpoint import (
+            load_checkpoint,
+            reset_runs_for_from_state,
+            save_checkpoint,
+        )
+
+        checkpoint_path = args.results_dir / experiment_id / "checkpoint.json"
+        if checkpoint_path.exists():
+            checkpoint = load_checkpoint(checkpoint_path)
+            reset_count = reset_runs_for_from_state(
+                checkpoint,
+                from_state="pending",
+                status_filter=["failed"],
+            )
+            if reset_count > 0:
+                save_checkpoint(checkpoint, checkpoint_path)
+                logger.info(f"--retry-errors: reset {reset_count} failed run(s) for retry")
 
     try:
         with terminal_guard(request_shutdown):
