@@ -60,7 +60,7 @@ import pytest
 # Ensure scripts/ is importable
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
 
-from manage_experiment import MODEL_ALIASES, build_parser, cmd_repair
+from manage_experiment import MODEL_ALIASES, build_parser, cmd_repair, cmd_visualize
 
 # ---------------------------------------------------------------------------
 # Parser construction
@@ -3318,3 +3318,258 @@ class TestPromptOverride:
 
         assert result == 0
         assert captured[0].task_prompt_file == custom_prompt
+
+
+# ---------------------------------------------------------------------------
+# cmd_visualize
+# ---------------------------------------------------------------------------
+
+
+class TestCmdVisualize:
+    """Tests for cmd_visualize() — experiment state visualization."""
+
+    def _make_checkpoint_file(
+        self,
+        path: Path,
+        experiment_id: str = "test-exp",
+        experiment_state: str = "complete",
+        tier_states: dict[str, str] | None = None,
+        subtest_states: dict[str, dict[str, str]] | None = None,
+        run_states: dict[str, dict[str, dict[str, str]]] | None = None,
+        completed_runs: dict[str, Any] | None = None,
+        started_at: str = "2026-02-23T18:56:10+00:00",
+        last_updated_at: str = "2026-02-23T19:20:33+00:00",
+        pid: int | None = None,
+    ) -> Path:
+        """Write a minimal checkpoint JSON file."""
+        checkpoint_data: dict[str, Any] = {
+            "version": "3.1",
+            "experiment_id": experiment_id,
+            "experiment_dir": str(path),
+            "config_hash": "abc123",
+            "started_at": started_at,
+            "last_updated_at": last_updated_at,
+            "status": "completed" if experiment_state == "complete" else "running",
+            "experiment_state": experiment_state,
+            "tier_states": tier_states or {},
+            "subtest_states": subtest_states or {},
+            "run_states": run_states or {},
+            "completed_runs": completed_runs or {},
+        }
+        if pid is not None:
+            checkpoint_data["pid"] = pid
+        checkpoint_path = path / "checkpoint.json"
+        checkpoint_path.write_text(json.dumps(checkpoint_data))
+        return checkpoint_path
+
+    def test_visualize_subcommand_registered(self) -> None:
+        """'visualize' subcommand is registered in build_parser()."""
+        parser = build_parser()
+        subparsers_action = next(
+            action for action in parser._actions if hasattr(action, "choices") and action.choices
+        )
+        assert "visualize" in subparsers_action.choices
+
+    def test_visualize_default_format_is_tree(self) -> None:
+        """'visualize' subcommand defaults output_format to 'tree'."""
+        parser = build_parser()
+        args = parser.parse_args(["visualize", "/some/path"])
+        assert args.output_format == "tree"
+
+    def test_visualize_missing_path_returns_1(self, tmp_path: Path) -> None:
+        """cmd_visualize returns 1 when the path does not exist."""
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path / "nonexistent")])
+        result = cmd_visualize(args)
+        assert result == 1
+
+    def test_visualize_directory_resolves_checkpoint(self, tmp_path: Path) -> None:
+        """cmd_visualize accepts a directory and reads checkpoint.json from it."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+
+    def test_visualize_tree_complete_experiment(self, tmp_path: Path, capsys) -> None:
+        """Tree format renders experiment name and tier states for a complete experiment."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-017",
+            experiment_state="complete",
+            tier_states={"T0": "complete", "T1": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "failed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "test-017" in out
+        assert "complete" in out
+        assert "T0" in out
+        assert "T1" in out
+        assert "passed" in out
+        assert "failed" in out
+
+    def test_visualize_tree_failed_experiment(self, tmp_path: Path, capsys) -> None:
+        """Tree format renders 'failed' state for a failed experiment."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-fail",
+            experiment_state="failed",
+            tier_states={"T0": "failed"},
+            subtest_states={"T0": {"00": "failed"}},
+            run_states={"T0": {"00": {"1": "failed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "test-fail" in out
+        assert "failed" in out
+
+    def test_visualize_tree_partial_experiment(self, tmp_path: Path, capsys) -> None:
+        """Tree format renders mixed states (partial / in-progress) correctly."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-partial",
+            experiment_state="tiers_running",
+            tier_states={"T0": "complete", "T1": "running"},
+            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "runs_in_progress"}},
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "agent_complete"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "T0" in out
+        assert "T1" in out
+        assert "complete" in out
+
+    def test_visualize_table_format(self, tmp_path: Path, capsys) -> None:
+        """Table format includes a header row and a data row per run."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "TIER" in out
+        assert "STATE" in out
+        assert "T0" in out
+        assert "worktree_cleaned" in out
+        assert "passed" in out
+
+    def test_visualize_json_format(self, tmp_path: Path, capsys) -> None:
+        """JSON format outputs valid JSON containing expected keys."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-json",
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "json"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["experiment_id"] == "test-json"
+        assert data["experiment_state"] == "complete"
+        assert "tier_states" in data
+        assert "run_states" in data
+
+    def test_visualize_tier_filter(self, tmp_path: Path, capsys) -> None:
+        """--tier T0 limits output to T0 only, omitting T1."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete", "T1": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--tier", "T0"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "T0" in out
+        assert "T1" not in out
+
+    def test_visualize_verbose_timestamps(self, tmp_path: Path, capsys) -> None:
+        """--verbose shows Started line and PID."""
+        self._make_checkpoint_file(
+            tmp_path,
+            started_at="2026-02-23T18:56:10+00:00",
+            last_updated_at="2026-02-23T19:20:33+00:00",
+            pid=12345,
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--verbose"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "Started:" in out
+        assert "PID: 12345" in out
+
+    def test_visualize_empty_tiers(self, tmp_path: Path, capsys) -> None:
+        """Checkpoint with no tier_states renders '(no tiers)' message."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-empty",
+            experiment_state="initializing",
+            tier_states={},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "(no tiers)" in out
+
+    def test_visualize_batch_directory(self, tmp_path: Path, capsys) -> None:
+        """Batch mode: results dir with multiple experiment subdirs shows all experiments."""
+        for exp_id in ["exp-01", "exp-02"]:
+            exp_dir = tmp_path / exp_id
+            exp_dir.mkdir()
+            self._make_checkpoint_file(
+                exp_dir,
+                experiment_id=exp_id,
+                experiment_state="complete",
+                tier_states={"T0": "complete"},
+            )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "exp-01" in out
+        assert "exp-02" in out
