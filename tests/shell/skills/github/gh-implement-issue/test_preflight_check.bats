@@ -4,7 +4,7 @@
 
 load helpers/common
 
-SCRIPT="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)/../../../../claude-code/shared/skills/github/gh-implement-issue/scripts/preflight_check.sh"
+SCRIPT="$(git -C "$(dirname "$BATS_TEST_FILENAME")" rev-parse --show-toplevel)/scripts/preflight_check.sh"
 
 setup() {
     setup_mocks

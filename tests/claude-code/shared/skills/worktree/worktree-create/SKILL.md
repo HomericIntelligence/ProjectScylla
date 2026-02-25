@@ -20,7 +20,7 @@ Create separate working directories on different branches without stashing chang
 
 ```bash
 # 0. Pre-flight check (REQUIRED - runs all 6 checks automatically)
-bash tests/claude-code/shared/skills/github/gh-implement-issue/scripts/preflight_check.sh <issue-number>
+bash scripts/preflight_check.sh <issue-number>
 
 # 1. Create worktree (only after pre-flight passes)
 ./scripts/create_worktree.sh <issue-number> <description>
@@ -38,7 +38,7 @@ cd ../ProjectOdyssey-42-implement-tensor-ops
 
 ## Workflow
 
-1. **Run pre-flight check** - `bash tests/claude-code/shared/skills/github/gh-implement-issue/scripts/preflight_check.sh <issue-number>` — automatically runs all 6 checks; stops on critical failures
+1. **Run pre-flight check** - `bash scripts/preflight_check.sh <issue-number>` — automatically runs all 6 checks; stops on critical failures
 2. **Create worktree** - Run create script with issue number and description
 3. **Navigate** - `cd` to new worktree directory (parallel to main)
 4. **Work normally** - Make changes, commit, push as usual
