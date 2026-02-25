@@ -13,6 +13,12 @@ repos:
         language: pygrep
         files: \.py$
         types: [python]
+      - id: pip-audit
+        name: pip-audit CVE Scan
+        entry: pixi run audit
+        language: system
+        files: ^(pyproject\.toml|pixi\.toml|pixi\.lock)$
+        pass_filenames: false
 
   # Python formatting and linting
   - repo: local
