@@ -3890,3 +3890,113 @@ class TestFindCheckpointPath:
 
         result = _find_checkpoint_path(results_dir, "test-001")
         assert result == newer / "checkpoint.json"
+
+
+# ---------------------------------------------------------------------------
+# _derive_run_result and in_progress display
+# ---------------------------------------------------------------------------
+
+
+class TestDeriveRunResult:
+    """Tests for _derive_run_result helper and in_progress display in visualize."""
+
+    def _make_checkpoint_file(
+        self,
+        path: Path,
+        run_states: dict[str, dict[str, dict[str, str]]],
+        completed_runs: dict[str, Any] | None = None,
+    ) -> Path:
+        data: dict[str, Any] = {
+            "version": "3.1",
+            "experiment_id": "test-exp",
+            "experiment_dir": str(path),
+            "config_hash": "abc123",
+            "started_at": "2026-01-01T00:00:00+00:00",
+            "last_updated_at": "2026-01-01T00:00:01+00:00",
+            "status": "running",
+            "experiment_state": "tiers_running",
+            "tier_states": {"T0": "subtests_running"},
+            "subtest_states": {"T0": {"00": "runs_in_progress"}},
+            "run_states": run_states,
+            "completed_runs": completed_runs or {},
+        }
+        cp = path / "checkpoint.json"
+        cp.write_text(json.dumps(data))
+        return cp
+
+    def test_derive_run_result_returns_in_progress_for_mid_sequence_state(
+        self, tmp_path: Path
+    ) -> None:
+        """_derive_run_result returns 'in_progress' when run_state is mid-sequence."""
+        from manage_experiment import _derive_run_result
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "replay_generated"}}},
+        )
+        cp = load_checkpoint(tmp_path / "checkpoint.json")
+        result = _derive_run_result(cp, "T0", "00", 1, "replay_generated")
+        assert result == "in_progress"
+
+    def test_derive_run_result_returns_stored_status_for_completed_run(
+        self, tmp_path: Path
+    ) -> None:
+        """_derive_run_result returns stored status ('passed') for completed runs."""
+        from manage_experiment import _derive_run_result
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        cp = load_checkpoint(tmp_path / "checkpoint.json")
+        result = _derive_run_result(cp, "T0", "00", 1, "worktree_cleaned")
+        assert result == "passed"
+
+    def test_derive_run_result_returns_empty_for_pending(self, tmp_path: Path) -> None:
+        """_derive_run_result returns '' for pending runs."""
+        from manage_experiment import _derive_run_result
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "pending"}}},
+        )
+        cp = load_checkpoint(tmp_path / "checkpoint.json")
+        result = _derive_run_result(cp, "T0", "00", 1, "pending")
+        assert result == ""
+
+    def test_visualize_tree_shows_in_progress_for_mid_sequence_run(
+        self, tmp_path: Path, capsys: Any
+    ) -> None:
+        """Tree view shows '-> in_progress' for a run stopped mid-sequence by --until."""
+        self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "replay_generated"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path)])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "in_progress" in out
+
+    def test_visualize_table_shows_in_progress_for_mid_sequence_run(
+        self, tmp_path: Path, capsys: Any
+    ) -> None:
+        """Table view shows 'in_progress' in the RESULT column for mid-sequence runs."""
+        self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "replay_generated"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "in_progress" in out

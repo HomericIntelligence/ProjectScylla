@@ -29,6 +29,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class UntilHaltError(Exception):
+    """Sentinel raised when --until stops run execution before runs reach a terminal state.
+
+    SubtestStateMachine.advance_to_completion catches this and leaves the subtest
+    in RUNS_IN_PROGRESS (preserving state for future resume) without marking FAILED.
+    """
+
+
 # Ordered sequence of states for a normal subtest run
 _SUBTEST_STATE_SEQUENCE: list[SubtestState] = [
     SubtestState.PENDING,
@@ -226,21 +234,30 @@ class SubtestStateMachine:
         )
 
         # Execute the action if provided
+        halt_error: UntilHaltError | None = None
         action = actions.get(current)
         if action is not None:
             _t0 = time.monotonic()
-            action()
+            try:
+                action()
+            except UntilHaltError as _e:
+                # --until stopped runs mid-action; still transition the state so
+                # we land in RUNS_IN_PROGRESS (resumable) rather than staying at PENDING.
+                halt_error = _e
             _elapsed = time.monotonic() - _t0
             logger.info(
                 f"[{tier_id}/{subtest_id}] {current.value} -> {transition.to_state.value}: "
                 f"{transition.description} ({_elapsed:.1f}s)"
             )
 
-        # Update state in checkpoint
+        # Update state in checkpoint (even if UntilHaltError was raised)
         self.checkpoint.set_subtest_state(tier_id, subtest_id, transition.to_state.value)
 
         # Save checkpoint atomically
         save_checkpoint(self.checkpoint, self.checkpoint_path)
+
+        if halt_error is not None:
+            raise halt_error
 
         return transition.to_state
 
@@ -283,6 +300,11 @@ class SubtestStateMachine:
                         f"{until_state.value}"
                     )
                     break
+        except UntilHaltError as e:
+            # --until stopped runs before they reached a terminal state.
+            # Leave the subtest in RUNS_IN_PROGRESS so it can be resumed later.
+            # Do NOT mark as FAILED — this is intentional early termination.
+            logger.info(f"[{tier_id}/{subtest_id}] {e}")
         except Exception:
             self.checkpoint.set_subtest_state(tier_id, subtest_id, SubtestState.FAILED.value)
             save_checkpoint(self.checkpoint, self.checkpoint_path)
