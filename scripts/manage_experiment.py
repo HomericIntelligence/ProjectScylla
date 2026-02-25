@@ -296,7 +296,12 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
     from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
     from scylla.e2e.runner import request_shutdown, run_experiment
-    from scylla.utils.terminal import terminal_guard
+    from scylla.utils.terminal import install_signal_handlers, terminal_guard
+
+    # Install signal handlers on the main thread before spawning worker threads.
+    # terminal_guard() inside run_one_test runs in a worker thread and cannot
+    # install signal handlers (signal.signal() only works on the main thread).
+    install_signal_handlers(request_shutdown)
 
     # --- Early validation of global args (before spawning threads) ---
     _batch_tier_ids = []
@@ -535,7 +540,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                         "starting fresh"
                     )
 
-            with terminal_guard(request_shutdown):
+            with terminal_guard():
                 results = run_experiment(
                     config=config,
                     tiers_dir=test_dir,
