@@ -2,6 +2,28 @@
 
 This directory contains utility scripts for running ProjectScylla experiments.
 
+## Git Hooks
+
+### `install_hooks.sh`
+
+Installs tracked git hooks from `scripts/hooks/` into `.git/hooks/`.
+
+Run once after cloning or whenever hook files change:
+
+```bash
+bash scripts/install_hooks.sh
+```
+
+Hooks installed:
+
+| Hook | Trigger | What it does |
+|------|---------|--------------|
+| `pre-push` | Every `git push` | Runs `pytest` with coverage; aborts push if tests fail or coverage drops below the threshold in `pyproject.toml` |
+
+The coverage threshold is read directly from `pyproject.toml` (`[tool.coverage.report] fail_under`) so there is a single source of truth — update the threshold there and the hook message updates automatically.
+
+---
+
 ## Main Scripts
 
 ### `manage_experiment.py`

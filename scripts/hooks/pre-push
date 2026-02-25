@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Pre-push hook: validates test coverage before pushing to remote.
+#
+# Coverage threshold is read from pyproject.toml so there is a single
+# source of truth. The hook delegates all coverage flags to pytest via
+# pyproject.toml [tool.pytest.ini_options] addopts — no duplication.
+#
+# Install:
+#   bash scripts/install_hooks.sh
+#
+# Exit codes:
+#   0 = all checks passed
+#   1 = tests or coverage failed — push aborted
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+# Read threshold from pyproject.toml for the status message
+THRESHOLD=$(grep -m1 'fail_under' "${REPO_ROOT}/pyproject.toml" 2>/dev/null \
+    | grep -o '[0-9]*' | head -1)
+THRESHOLD=${THRESHOLD:-"??"}
+
+echo "Running pytest coverage validation before push (threshold: ${THRESHOLD}%)..."
+
+# Coverage flags come from pyproject.toml addopts — no duplication here
+if pixi run pytest -x; then
+    echo "✅ Coverage validation passed (threshold: ${THRESHOLD}%). Proceeding with push."
+    exit 0
+else
+    echo "❌ Coverage validation failed (threshold: ${THRESHOLD}%). Push aborted."
+    echo "   Fix failing tests or coverage gaps, then push again."
+    exit 1
+fi
