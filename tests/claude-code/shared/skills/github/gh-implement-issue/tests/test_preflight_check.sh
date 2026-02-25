@@ -16,7 +16,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PREFLIGHT="${SCRIPT_DIR}/../scripts/preflight_check.sh"
+PREFLIGHT="$(git -C "${SCRIPT_DIR}" rev-parse --show-toplevel)/scripts/preflight_check.sh"
 
 PASS_COUNT=0
 FAIL_COUNT=0

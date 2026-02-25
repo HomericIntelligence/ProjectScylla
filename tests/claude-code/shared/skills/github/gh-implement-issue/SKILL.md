@@ -17,15 +17,9 @@ Complete workflow for implementing a GitHub issue from start to finish.
 
 ## Quick Reference
 
-> **Note:** `<skill-dir>` is the absolute path to this skill's directory.
-> Resolve it with: `SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`
-> or use the skill's installed path directly, e.g.:
-> `tests/claude-code/shared/skills/github/gh-implement-issue` (ProjectScylla)
-
 ```bash
 # 0. Pre-flight check (REQUIRED - runs all 6 checks automatically)
-# Replace <skill-dir> with the absolute path to this skill directory
-bash <skill-dir>/scripts/preflight_check.sh <issue>
+bash scripts/preflight_check.sh <issue>
 
 # 1. Fetch issue and create branch (only after pre-flight passes)
 gh issue view <issue>
@@ -49,7 +43,7 @@ gh pr create --issue <issue>
 
 ## Workflow
 
-1. **Run pre-flight check**: `bash <skill-dir>/scripts/preflight_check.sh <issue>` — automatically runs all 6 checks; stops on critical failures
+1. **Run pre-flight check**: `bash scripts/preflight_check.sh <issue>` — automatically runs all 6 checks; stops on critical failures
 2. **Read issue context**: `gh issue view <issue> --comments` - understand requirements, prior context
 3. **Create branch**: `git checkout -b <issue>-<description>`
 4. **Post start comment**: Document approach on the issue
