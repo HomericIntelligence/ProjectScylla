@@ -89,7 +89,7 @@ addopts = [
     "--cov=scylla",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=74",
+    "--cov-fail-under=75",
 ]
 
 [tool.mypy]
@@ -125,7 +125,7 @@ omit = [
 ]
 
 [tool.coverage.report]
-fail_under = 74
+fail_under = 75
 precision = 2
 show_missing = true
 skip_covered = false
