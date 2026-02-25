@@ -5,9 +5,11 @@
 #   GH_MOCK_PR_JSON        - JSON for `gh pr list ...`
 #   GH_MOCK_PR_CLOSES      - issue number a PR closes (default: 800); empty string → no closing ref
 #   GH_MOCK_ISSUE_COMMENTS - output for `gh issue view <N> --comments`
+#   GH_MOCK_REPO           - repo nameWithOwner (default: owner/repo)
 
 _DEFAULT_ISSUE_STATE='{"state":"OPEN","title":"Test Issue","closedAt":null}'
 _DEFAULT_PR_CLOSES=800
+_DEFAULT_REPO="owner/repo"
 
 case "$1 $2" in
     "issue view")
@@ -17,6 +19,26 @@ case "$1 $2" in
             # --comments path
             echo "${GH_MOCK_ISSUE_COMMENTS:-}"
         fi
+        ;;
+    "repo view")
+        echo "${GH_MOCK_REPO:-$_DEFAULT_REPO}"
+        ;;
+    "api graphql")
+        # Build a GraphQL search response from GH_MOCK_PR_JSON.
+        # Each PR node includes a closingIssuesReferences block derived from GH_MOCK_PR_CLOSES.
+        # Use ${var-default} (not :-) so explicit empty string is honoured.
+        _closes="${GH_MOCK_PR_CLOSES-$_DEFAULT_PR_CLOSES}"
+        _pr_json="${GH_MOCK_PR_JSON:-[]}"
+        if [[ -n "$_closes" ]]; then
+            _closing_nodes="[{\"number\":${_closes}}]"
+        else
+            _closing_nodes="[]"
+        fi
+        _nodes=$(echo "$_pr_json" | jq -c \
+            --argjson refs "{\"nodes\":${_closing_nodes}}" \
+            '[.[] | . + {"closingIssuesReferences": $refs}]' \
+        2>/dev/null) || _nodes="[]"
+        echo "{\"data\":{\"search\":{\"nodes\":${_nodes}}}}"
         ;;
     "pr list")
         echo "${GH_MOCK_PR_JSON:-[]}"

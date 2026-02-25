@@ -76,29 +76,69 @@ fi
 
 # ---------------------------------------------------------------------------
 # Check 3: PR Search (CRITICAL if merged, WARNING if open)
-# Uses closingIssuesReferences for precise match — avoids false positives
-# from text search matching issue numbers in unrelated PR titles/bodies.
+# Uses a single GraphQL search query with closingIssuesReferences for precise
+# match — searches ALL PRs (not just the 100 most recent) in one API call.
+# Falls back to the REST N+1 approach if GraphQL fails.
 # ---------------------------------------------------------------------------
-CANDIDATE_JSON=$(gh pr list --state all --json number,title,state --limit 100 2>/dev/null)
 MERGED_PRS=""
 OPEN_PRS=""
-while IFS= read -r pr_entry; do
-    pr_num=$(echo "$pr_entry" | jq -r '.number')
-    pr_title=$(echo "$pr_entry" | jq -r '.title')
-    pr_state=$(echo "$pr_entry" | jq -r '.state')
-    [[ -z "$pr_num" || "$pr_num" == "null" ]] && continue
-    CLOSES=$(gh pr view "$pr_num" --json closingIssuesReferences \
-        --jq '.closingIssuesReferences[].number' 2>/dev/null)
-    if echo "$CLOSES" | grep -qx "$ISSUE"; then
-        if [[ "$pr_state" == "MERGED" ]]; then
-            MERGED_PRS+="${pr_num}: ${pr_title}"$'\n'
-        elif [[ "$pr_state" == "OPEN" ]]; then
-            OPEN_PRS+="${pr_num}: ${pr_title}"$'\n'
+
+# Fetch repo owner/name for the GraphQL query
+REPO_FULL=$(gh repo view --json nameWithOwner --jq '.nameWithOwner' 2>/dev/null) || REPO_FULL=""
+
+_graphql_check3() {
+    local repo="$1" issue="$2"
+    local query merged="" open="" pr_num pr_title pr_state
+    # shellcheck disable=SC2016  # $q is a GraphQL variable, not a shell variable
+    query='query($q:String!){search(query:$q,type:ISSUE,first:100){nodes{...on PullRequest{number,title,state,closingIssuesReferences(first:25){nodes{number}}}}}}'
+    local result
+    result=$(gh api graphql -f "query=${query}" -f "q=repo:${repo} is:pr ${issue}" 2>/dev/null) || return 1
+    while IFS= read -r pr_entry; do
+        pr_num=$(echo "$pr_entry" | jq -r '.number')
+        pr_title=$(echo "$pr_entry" | jq -r '.title')
+        pr_state=$(echo "$pr_entry" | jq -r '.state')
+        [[ -z "$pr_num" || "$pr_num" == "null" ]] && continue
+        if echo "$pr_entry" | jq -e ".closingIssuesReferences.nodes[] | select(.number == ${issue})" >/dev/null 2>&1; then
+            if [[ "$pr_state" == "MERGED" ]]; then
+                merged+="${pr_num}: ${pr_title}"$'\n'
+            elif [[ "$pr_state" == "OPEN" ]]; then
+                open+="${pr_num}: ${pr_title}"$'\n'
+            fi
         fi
-    fi
-done < <(echo "$CANDIDATE_JSON" | jq -c '.[]')
-MERGED_PRS="${MERGED_PRS%$'\n'}"
-OPEN_PRS="${OPEN_PRS%$'\n'}"
+    done < <(echo "$result" | jq -c '.data.search.nodes[]' 2>/dev/null)
+    MERGED_PRS="${merged%$'\n'}"
+    OPEN_PRS="${open%$'\n'}"
+}
+
+_rest_check3() {
+    local issue="$1"
+    local candidate_json merged="" open=""
+    candidate_json=$(gh pr list --state all --json number,title,state --limit 100 2>/dev/null) || return 1
+    while IFS= read -r pr_entry; do
+        local pr_num pr_title pr_state closes
+        pr_num=$(echo "$pr_entry" | jq -r '.number')
+        pr_title=$(echo "$pr_entry" | jq -r '.title')
+        pr_state=$(echo "$pr_entry" | jq -r '.state')
+        [[ -z "$pr_num" || "$pr_num" == "null" ]] && continue
+        closes=$(gh pr view "$pr_num" --json closingIssuesReferences \
+            --jq '.closingIssuesReferences[].number' 2>/dev/null)
+        if echo "$closes" | grep -qx "$issue"; then
+            if [[ "$pr_state" == "MERGED" ]]; then
+                merged+="${pr_num}: ${pr_title}"$'\n'
+            elif [[ "$pr_state" == "OPEN" ]]; then
+                open+="${pr_num}: ${pr_title}"$'\n'
+            fi
+        fi
+    done < <(echo "$candidate_json" | jq -c '.[]')
+    MERGED_PRS="${merged%$'\n'}"
+    OPEN_PRS="${open%$'\n'}"
+}
+
+if [[ -n "$REPO_FULL" ]] && _graphql_check3 "$REPO_FULL" "$ISSUE"; then
+    : # GraphQL succeeded
+else
+    _rest_check3 "$ISSUE"
+fi
 
 if [[ -n "$MERGED_PRS" ]]; then
     stop "Check 3: Issue #${ISSUE} already has a MERGED PR"
