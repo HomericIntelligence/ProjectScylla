@@ -311,6 +311,9 @@ class E2ERunner:
         checkpoint_path = self._find_existing_checkpoint()
 
         if checkpoint_path and not self._fresh:
+            # Capture CLI tiers before _load_checkpoint_and_config overwrites self.config
+            _cli_tiers = list(self.config.tiers_to_run)
+
             # Resume from checkpoint
             try:
                 self._load_checkpoint_and_config(checkpoint_path)
@@ -344,6 +347,23 @@ class E2ERunner:
                         ].items():
                             if sub_state == "failed":
                                 self.checkpoint.subtest_states[tier_id][subtest_id] = "pending"
+
+                    # Merge CLI tiers into the loaded config so new tiers run.
+                    # The saved experiment.json may only have a subset of tiers
+                    # (e.g. T0 only from a previous partial run). Add any CLI-
+                    # specified tiers that are not already in the loaded config.
+                    existing_tier_ids = {t.value for t in self.config.tiers_to_run}
+                    new_tiers = [t for t in _cli_tiers if t.value not in existing_tier_ids]
+                    if new_tiers:
+                        tier_names = [t.value for t in new_tiers]
+                        logger.info(f"Adding CLI-specified tiers to retry run: {tier_names}")
+                        self.config = self.config.model_copy(
+                            update={"tiers_to_run": self.config.tiers_to_run + new_tiers}
+                        )
+                        # Persist updated config and config_hash so resume stays consistent
+                        self._save_config()
+                        self.checkpoint.config_hash = compute_config_hash(self.config)
+
                     save_checkpoint(self.checkpoint, checkpoint_path)
 
             except Exception as e:
