@@ -363,10 +363,10 @@ class TestExperimentStateMachineAdvanceToCompletion:
             assert state not in actions_called, f"{state.value} should not have been called"
 
     def test_stops_at_until_state(self, esm: ExperimentStateMachine, checkpoint_path: Path) -> None:
-        """advance_to_completion stops after executing until_state action (inclusive)."""
+        """advance_to_completion stops after transitioning into until_state (inclusive)."""
         final = esm.advance_to_completion({}, until_state=ExperimentState.REPO_CLONED)
-        # Inclusive: REPO_CLONED action runs, state advances to TIERS_RUNNING, then stops
-        assert final == ExperimentState.TIERS_RUNNING
+        # Inclusive: state is REPO_CLONED (the action that produced it ran)
+        assert final == ExperimentState.REPO_CLONED
         assert not is_experiment_terminal_state(final)
 
     def test_already_complete_is_noop(

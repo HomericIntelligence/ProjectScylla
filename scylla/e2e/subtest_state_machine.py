@@ -256,15 +256,17 @@ class SubtestStateMachine:
         Useful for running a complete subtest from start or resuming from any state.
         On exception, marks the subtest as FAILED in the checkpoint and re-raises.
 
-        If until_state is specified, the subtest stops cleanly when that state is
-        reached, enabling incremental validation via --until <state>.
+        If until_state is specified, the subtest stops cleanly once that state is
+        reached (inclusive): the action that transitions INTO until_state IS
+        executed, but no further transitions run.
 
         Args:
             tier_id: Tier identifier
             subtest_id: Subtest identifier
             actions: Map of from_state -> callable
-            until_state: Optional state at which to stop early. The machine
-                stops without marking FAILED, preserving state for future resume.
+            until_state: Optional state at which to stop early (inclusive).
+                The machine stops after transitioning into this state, without
+                marking FAILED, preserving state for future resume.
 
         Returns:
             Final SubtestState (AGGREGATED, FAILED, or until_state)
@@ -274,12 +276,11 @@ class SubtestStateMachine:
 
         try:
             while not self.is_complete(tier_id, subtest_id):
-                current = self.get_state(tier_id, subtest_id)
-                self.advance(tier_id, subtest_id, actions)
-                if until_state is not None and current == until_state:
+                new_state = self.advance(tier_id, subtest_id, actions)
+                if until_state is not None and new_state == until_state:
                     logger.info(
                         f"[{tier_id}/{subtest_id}] Reached --until target state: "
-                        f"{until_state.value} (inclusive)"
+                        f"{until_state.value}"
                     )
                     break
         except Exception:
