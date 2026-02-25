@@ -35,3 +35,5 @@ jobs:
 
       - name: Run shell tests
         run: pixi run test-shell
+        env:
+          PREFLIGHT_INTEGRATION: "0"
