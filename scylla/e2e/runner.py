@@ -311,12 +311,26 @@ class E2ERunner:
         checkpoint_path = self._find_existing_checkpoint()
 
         if checkpoint_path and not self._fresh:
-            # Capture CLI tiers before _load_checkpoint_and_config overwrites self.config
+            # STEP 1: Capture CLI fields before _load_checkpoint_and_config overwrites self.config
             _cli_tiers = list(self.config.tiers_to_run)
+            _cli_ephemeral = {
+                "until_run_state": self.config.until_run_state,
+                "until_tier_state": self.config.until_tier_state,
+                "until_experiment_state": self.config.until_experiment_state,
+                "max_subtests": self.config.max_subtests,
+            }
 
             # Resume from checkpoint
             try:
+                # STEP 1 (continued): Load checkpoint — overwrites self.config from saved JSON
                 self._load_checkpoint_and_config(checkpoint_path)
+
+                # STEP 2: Restore ephemeral CLI args (--until, --max-subtests) that were
+                # overwritten by the saved config.  Only non-None CLI values are restored so
+                # that omitting a flag on the CLI keeps the saved value.
+                non_none_ephemeral = {k: v for k, v in _cli_ephemeral.items() if v is not None}
+                if non_none_ephemeral:
+                    self.config = self.config.model_copy(update=non_none_ephemeral)
 
                 # Check for zombie (crashed) experiment and reset if needed
                 if self.checkpoint and self.experiment_dir:
@@ -326,7 +340,7 @@ class E2ERunner:
                         logger.warning("Zombie experiment detected — resetting to 'interrupted'")
                         self.checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
 
-                # Reset terminal experiment states for re-execution
+                # STEP 3: Reset failed/interrupted states for re-execution (unchanged)
                 if self.checkpoint and self.checkpoint.experiment_state in (
                     "failed",
                     "interrupted",
@@ -348,21 +362,55 @@ class E2ERunner:
                             if sub_state == "failed":
                                 self.checkpoint.subtest_states[tier_id][subtest_id] = "pending"
 
-                    # Merge CLI tiers into the loaded config so new tiers run.
-                    # The saved experiment.json may only have a subset of tiers
-                    # (e.g. T0 only from a previous partial run). Add any CLI-
-                    # specified tiers that are not already in the loaded config.
+                # STEP 4: Merge CLI tiers (runs for ALL checkpoint states) and detect
+                # incomplete runs so we can re-enter terminal experiment/tier/subtest states.
+                if self.checkpoint:
                     existing_tier_ids = {t.value for t in self.config.tiers_to_run}
                     new_tiers = [t for t in _cli_tiers if t.value not in existing_tier_ids]
                     if new_tiers:
                         tier_names = [t.value for t in new_tiers]
-                        logger.info(f"Adding CLI-specified tiers to retry run: {tier_names}")
+                        logger.info(f"Adding CLI-specified tiers to run: {tier_names}")
                         self.config = self.config.model_copy(
                             update={"tiers_to_run": self.config.tiers_to_run + new_tiers}
                         )
                         # Persist updated config and config_hash so resume stays consistent
                         self._save_config()
                         self.checkpoint.config_hash = compute_config_hash(self.config)
+
+                    # Determine if any CLI-requested tiers need (re-)execution.
+                    # A tier needs execution if it is new or has runs not in a terminal state.
+                    needs_execution = self._check_tiers_need_execution(_cli_tiers)
+
+                    if needs_execution and self.checkpoint.experiment_state in (
+                        "complete",
+                        "tiers_complete",
+                        "reports_generated",
+                    ):
+                        logger.info(
+                            f"Resetting experiment from '{self.checkpoint.experiment_state}' "
+                            "to 'tiers_running' — CLI-requested tiers need execution"
+                        )
+                        self.checkpoint.experiment_state = "tiers_running"
+
+                        # Reset completed tier/subtest states for tiers with incomplete runs
+                        for tier_id_str in needs_execution:
+                            existing_tier_state = self.checkpoint.tier_states.get(tier_id_str)
+                            if existing_tier_state in (
+                                "complete",
+                                "subtests_complete",
+                                "best_selected",
+                                "reports_generated",
+                            ):
+                                self.checkpoint.tier_states[tier_id_str] = "subtests_running"
+                                # Reset subtest states that have incomplete runs
+                                for sub_id, sub_state in self.checkpoint.subtest_states.get(
+                                    tier_id_str, {}
+                                ).items():
+                                    if sub_state == "aggregated":
+                                        if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
+                                            self.checkpoint.subtest_states[tier_id_str][sub_id] = (
+                                                "runs_in_progress"
+                                            )
 
                     save_checkpoint(self.checkpoint, checkpoint_path)
 
@@ -380,6 +428,68 @@ class E2ERunner:
 
         assert self.experiment_dir is not None  # noqa: S101
         return self.experiment_dir / "checkpoint.json"
+
+    def _check_tiers_need_execution(self, cli_tiers: list[TierID]) -> set[str]:
+        """Return tier IDs that need execution: new tiers or tiers with incomplete runs.
+
+        Args:
+            cli_tiers: Tiers requested on the CLI for this invocation.
+
+        Returns:
+            Set of tier ID strings that require execution.
+
+        """
+        from scylla.e2e.models import RunState
+        from scylla.e2e.state_machine import is_terminal_state
+
+        needs_work: set[str] = set()
+        if self.checkpoint is None:
+            return needs_work
+        for tier_id in cli_tiers:
+            tid = tier_id.value
+            # New tier (not yet in checkpoint)
+            if tid not in self.checkpoint.tier_states:
+                needs_work.add(tid)
+                continue
+            # Tier with runs that have not yet reached a terminal state
+            for _sub_id, runs in self.checkpoint.run_states.get(tid, {}).items():
+                for state_str in runs.values():
+                    try:
+                        state = RunState(state_str)
+                    except ValueError:
+                        continue
+                    if not is_terminal_state(state):
+                        needs_work.add(tid)
+                        break
+                if tid in needs_work:
+                    break
+        return needs_work
+
+    def _subtest_has_incomplete_runs(self, tier_id: str, subtest_id: str) -> bool:
+        """Return True if any run in this subtest is not in a terminal state.
+
+        Args:
+            tier_id: Tier identifier string (e.g. "T0").
+            subtest_id: Subtest identifier string (e.g. "00").
+
+        Returns:
+            True if at least one run is not in a terminal state.
+
+        """
+        from scylla.e2e.models import RunState
+        from scylla.e2e.state_machine import is_terminal_state
+
+        if self.checkpoint is None:
+            return False
+        runs = self.checkpoint.run_states.get(tier_id, {}).get(subtest_id, {})
+        for state_str in runs.values():
+            try:
+                state = RunState(state_str)
+            except ValueError:
+                continue
+            if not is_terminal_state(state):
+                return True
+        return False
 
     def _setup_workspace_and_scheduler(self) -> ParallelismScheduler:
         """Set up workspace manager and parallelism scheduler for parallel execution.

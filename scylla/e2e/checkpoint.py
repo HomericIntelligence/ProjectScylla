@@ -583,6 +583,7 @@ def compute_config_hash(config: ExperimentConfig) -> str:
     # Remove fields that don't affect results
     config_dict.pop("parallel_subtests", None)  # Just parallelization setting
     config_dict.pop("max_subtests", None)  # Development/testing only
+    config_dict.pop("tiers_to_run", None)  # Tiers are additive across resumes
     # Remove ephemeral --until flags (changing these between runs must not break resume)
     config_dict.pop("until_run_state", None)
     config_dict.pop("until_tier_state", None)
