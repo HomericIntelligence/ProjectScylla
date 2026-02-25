@@ -295,7 +295,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
     import yaml
 
     from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
-    from scylla.e2e.runner import run_experiment
+    from scylla.e2e.runner import request_shutdown, run_experiment
     from scylla.utils.terminal import terminal_guard
 
     # --- Early validation of global args (before spawning threads) ---
@@ -535,7 +535,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                         "starting fresh"
                     )
 
-            with terminal_guard():
+            with terminal_guard(request_shutdown):
                 results = run_experiment(
                     config=config,
                     tiers_dir=test_dir,
@@ -619,7 +619,7 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
     import yaml
 
     from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
-    from scylla.e2e.runner import run_experiment
+    from scylla.e2e.runner import request_shutdown, run_experiment
     from scylla.utils.terminal import terminal_guard
 
     if args.verbose:
@@ -879,7 +879,7 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run comm
         logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
 
     try:
-        with terminal_guard():
+        with terminal_guard(request_shutdown):
             results = run_experiment(
                 config=config,
                 tiers_dir=tiers_dir,

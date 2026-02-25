@@ -267,14 +267,16 @@ class TierStateMachine:
         exception re-raises, enabling the experiment level to detect and continue
         with remaining tiers (partial-failure semantics).
 
-        If until_state is specified, the tier stops cleanly when that state is
-        reached, enabling incremental validation via --until-tier <state>.
+        If until_state is specified, the tier stops cleanly once that state is
+        reached (inclusive): the action that transitions INTO until_state IS
+        executed, but no further transitions run.
 
         Args:
             tier_id: Tier identifier
             actions: Map of from_state -> callable
-            until_state: Optional state at which to stop early. The machine
-                stops without error, preserving state for future resume.
+            until_state: Optional state at which to stop early (inclusive).
+                The machine stops after transitioning into this state, without
+                error, preserving state for future resume.
 
         Returns:
             Final TierState (COMPLETE or until_state)
@@ -282,12 +284,10 @@ class TierStateMachine:
         """
         try:
             while not self.is_complete(tier_id):
-                current = self.get_state(tier_id)
-                self.advance(tier_id, actions)
-                if until_state is not None and current == until_state:
+                new_state = self.advance(tier_id, actions)
+                if until_state is not None and new_state == until_state:
                     logger.info(
                         f"[{tier_id}] Reached --until-tier target state: {until_state.value}"
-                        " (inclusive)"
                     )
                     break
         except Exception as e:

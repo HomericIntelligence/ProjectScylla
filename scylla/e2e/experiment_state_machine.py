@@ -256,13 +256,15 @@ class ExperimentStateMachine:
 
         On exception, marks experiment as FAILED in the checkpoint.
 
-        If until_state is specified, the experiment stops cleanly when that state
-        is reached, enabling incremental validation via --until-experiment <state>.
+        If until_state is specified, the experiment stops cleanly once that state
+        is reached (inclusive): the action that transitions INTO until_state IS
+        executed, but no further transitions run.
 
         Args:
             actions: Map of from_state -> callable
-            until_state: Optional state at which to stop early. The machine
-                stops without error, preserving state for future resume.
+            until_state: Optional state at which to stop early (inclusive).
+                The machine stops after transitioning into this state, without
+                error, preserving state for future resume.
 
         Returns:
             Final ExperimentState (COMPLETE, FAILED, INTERRUPTED, or until_state)
@@ -272,12 +274,10 @@ class ExperimentStateMachine:
 
         try:
             while not self.is_complete():
-                current = self.get_state()
-                self.advance(actions)
-                if until_state is not None and current == until_state:
+                new_state = self.advance(actions)
+                if until_state is not None and new_state == until_state:
                     logger.info(
                         f"[experiment] Reached --until-experiment target state: {until_state.value}"
-                        " (inclusive)"
                     )
                     break
         except Exception as e:

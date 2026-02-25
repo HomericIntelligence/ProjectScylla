@@ -330,10 +330,10 @@ class TestTierStateMachineAdvanceToCompletion:
             assert state not in actions_called, f"{state.value} should not have been called"
 
     def test_stops_at_until_state(self, tsm: TierStateMachine, checkpoint_path: Path) -> None:
-        """advance_to_completion stops after executing until_state action (inclusive)."""
+        """advance_to_completion stops after transitioning into until_state (inclusive)."""
         final = tsm.advance_to_completion("T0", {}, until_state=TierState.SUBTESTS_RUNNING)
-        # Inclusive: SUBTESTS_RUNNING action runs, state advances to SUBTESTS_COMPLETE, then stops
-        assert final == TierState.SUBTESTS_COMPLETE
+        # Inclusive: state is SUBTESTS_RUNNING (the action that produced it ran)
+        assert final == TierState.SUBTESTS_RUNNING
         assert not is_tier_terminal_state(final)
 
     def test_already_complete_is_noop(
