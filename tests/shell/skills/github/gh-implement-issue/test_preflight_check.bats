@@ -124,3 +124,31 @@ setup() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"SAFE TO PROCEED"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# Test 9: Merged PR mentions issue in title but has no closingRef → PASS (#909)
+# ---------------------------------------------------------------------------
+@test "merged PR with title mention but no closingRef passes check 3" {
+    export GH_MOCK_ISSUE_STATE='{"state":"OPEN","title":"My Issue","closedAt":null}'
+    export GH_MOCK_PR_JSON='[{"number":55,"title":"Fix issue 800 typo","state":"MERGED"}]'
+    export GH_MOCK_PR_CLOSES=""   # explicit empty → closingIssuesReferences:[]
+
+    run bash "$SCRIPT" 800
+
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"[PASS]"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# Test 10: Merged PR with formal closingRef triggers STOP for check 3 (#909)
+# ---------------------------------------------------------------------------
+@test "merged PR with formal closingRef triggers STOP for check 3" {
+    export GH_MOCK_ISSUE_STATE='{"state":"OPEN","title":"My Issue","closedAt":null}'
+    export GH_MOCK_PR_JSON='[{"number":42,"title":"Fix it","state":"MERGED"}]'
+    export GH_MOCK_PR_CLOSES=800  # formal close reference
+
+    run bash "$SCRIPT" 800
+
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"[STOP]"* ]]
+}

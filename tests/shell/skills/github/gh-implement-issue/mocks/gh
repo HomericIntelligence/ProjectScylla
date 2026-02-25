@@ -3,7 +3,7 @@
 # Behavior is controlled by environment variables:
 #   GH_MOCK_ISSUE_STATE    - JSON for `gh issue view <N> --json state,title,closedAt`
 #   GH_MOCK_PR_JSON        - JSON for `gh pr list ...`
-#   GH_MOCK_PR_CLOSES      - issue number a PR closes (default: 800)
+#   GH_MOCK_PR_CLOSES      - issue number a PR closes (default: 800); empty string → no closing ref
 #   GH_MOCK_ISSUE_COMMENTS - output for `gh issue view <N> --comments`
 
 _DEFAULT_ISSUE_STATE='{"state":"OPEN","title":"Test Issue","closedAt":null}'
@@ -24,8 +24,13 @@ case "$1 $2" in
     "pr view")
         # Return closing issue references for the PR.
         # When --jq flag is present, extract and return just the issue number(s).
-        _closes="${GH_MOCK_PR_CLOSES:-$_DEFAULT_PR_CLOSES}"
-        _full_json="{\"closingIssuesReferences\":[{\"number\":${_closes}}]}"
+        # Use ${GH_MOCK_PR_CLOSES-$_DEFAULT_PR_CLOSES} (not :-) so explicit empty string is honoured.
+        _closes="${GH_MOCK_PR_CLOSES-$_DEFAULT_PR_CLOSES}"
+        if [[ -n "$_closes" ]]; then
+            _full_json="{\"closingIssuesReferences\":[{\"number\":${_closes}}]}"
+        else
+            _full_json="{\"closingIssuesReferences\":[]}"
+        fi
         if [[ "${*}" == *"--jq"* ]]; then
             # Extract the jq filter from args and apply it
             _jq_filter=""
