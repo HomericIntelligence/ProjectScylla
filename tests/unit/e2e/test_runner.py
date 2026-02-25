@@ -697,3 +697,154 @@ class TestResumeTierConfigPreload:
                     pass
 
         mock_tm.load_tier_config.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# _initialize_or_resume_experiment: FAILED/INTERRUPTED state reset tests
+# ---------------------------------------------------------------------------
+
+
+class TestInitializeOrResumeExperimentFailedReset:
+    """Tests that _initialize_or_resume_experiment resets FAILED/INTERRUPTED experiments.
+
+    When resuming a checkpoint with experiment_state='failed' or 'interrupted',
+    the state machine would immediately exit because these are terminal states.
+    The runner must reset them to 'tiers_running' before handing off to the ESM.
+    """
+
+    def _make_runner(
+        self,
+        mock_config: ExperimentConfig,
+        tmp_path: Path,
+    ) -> E2ERunner:
+        """Return a fresh E2ERunner with no workspace manager."""
+        return E2ERunner(mock_config, Path("/tmp/tiers"), tmp_path)
+
+    def _run_resume(
+        self,
+        mock_config: ExperimentConfig,
+        tmp_path: Path,
+        checkpoint_state: str,
+        tier_states: dict[str, str] | None = None,
+        subtest_states: dict[str, dict[str, str]] | None = None,
+    ) -> E2ERunner:
+        """Create runner and run _initialize_or_resume_experiment with a pre-set checkpoint.
+
+        Mocks _load_checkpoint_and_config to directly inject the checkpoint,
+        bypassing config-hash validation and filesystem requirements.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        runner = self._make_runner(mock_config, tmp_path)
+
+        exp_dir = tmp_path / mock_config.experiment_id
+        exp_dir.mkdir(parents=True)
+
+        checkpoint = E2ECheckpoint(
+            experiment_id=mock_config.experiment_id,
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state=checkpoint_state,
+            tier_states=tier_states or {},
+            subtest_states=subtest_states or {},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status=checkpoint_state,
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        def fake_load(path: Path) -> tuple[Any, Path]:
+            runner.checkpoint = checkpoint
+            runner.experiment_dir = exp_dir
+            return checkpoint, exp_dir
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_load_checkpoint_and_config", side_effect=fake_load),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.health.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        return runner
+
+    def test_resume_failed_experiment_resets_to_tiers_running(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """experiment_state='failed' is reset to 'tiers_running' on resume."""
+        runner = self._run_resume(mock_config, tmp_path, checkpoint_state="failed")
+
+        assert runner.checkpoint is not None
+        assert runner.checkpoint.experiment_state == "tiers_running"
+
+    def test_resume_failed_experiment_resets_failed_tier_states_to_pending(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Failed tier states are reset to 'pending' when experiment resumes from 'failed'."""
+        runner = self._run_resume(
+            mock_config,
+            tmp_path,
+            checkpoint_state="failed",
+            tier_states={"T0": "failed", "T1": "complete", "T2": "failed"},
+        )
+
+        assert runner.checkpoint is not None
+        # Failed tiers reset to pending
+        assert runner.checkpoint.tier_states["T0"] == "pending"
+        assert runner.checkpoint.tier_states["T2"] == "pending"
+        # Complete tier is untouched
+        assert runner.checkpoint.tier_states["T1"] == "complete"
+
+    def test_resume_failed_experiment_resets_failed_subtest_states_to_pending(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Failed subtest states are reset to 'pending' when experiment resumes from 'failed'."""
+        runner = self._run_resume(
+            mock_config,
+            tmp_path,
+            checkpoint_state="failed",
+            subtest_states={"T0": {"00": "failed", "01": "aggregated"}},
+        )
+
+        assert runner.checkpoint is not None
+        # Failed subtest reset to pending
+        assert runner.checkpoint.subtest_states["T0"]["00"] == "pending"
+        # Aggregated subtest is untouched
+        assert runner.checkpoint.subtest_states["T0"]["01"] == "aggregated"
+
+    def test_resume_interrupted_experiment_resets_to_tiers_running(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """experiment_state='interrupted' is also reset to 'tiers_running' on resume."""
+        runner = self._run_resume(mock_config, tmp_path, checkpoint_state="interrupted")
+
+        assert runner.checkpoint is not None
+        assert runner.checkpoint.experiment_state == "tiers_running"
+
+    def test_resume_complete_experiment_does_not_reset_state(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """experiment_state='complete' is NOT reset — only failed/interrupted are reset."""
+        runner = self._run_resume(mock_config, tmp_path, checkpoint_state="complete")
+
+        assert runner.checkpoint is not None
+        # complete state is preserved — no reset
+        assert runner.checkpoint.experiment_state == "complete"

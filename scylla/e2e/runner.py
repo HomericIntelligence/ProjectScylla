@@ -323,6 +323,29 @@ class E2ERunner:
                         logger.warning("Zombie experiment detected — resetting to 'interrupted'")
                         self.checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
 
+                # Reset terminal experiment states for re-execution
+                if self.checkpoint and self.checkpoint.experiment_state in (
+                    "failed",
+                    "interrupted",
+                ):
+                    logger.info(
+                        f"Resetting experiment state from '{self.checkpoint.experiment_state}'"
+                        " to 'tiers_running' for re-execution"
+                    )
+                    self.checkpoint.experiment_state = "tiers_running"
+                    # Reset failed tier states so they can be retried
+                    for tier_id, tier_state in self.checkpoint.tier_states.items():
+                        if tier_state == "failed":
+                            self.checkpoint.tier_states[tier_id] = "pending"
+                    # Reset failed subtest states
+                    for tier_id in self.checkpoint.subtest_states:
+                        for subtest_id, sub_state in self.checkpoint.subtest_states[
+                            tier_id
+                        ].items():
+                            if sub_state == "failed":
+                                self.checkpoint.subtest_states[tier_id][subtest_id] = "pending"
+                    save_checkpoint(self.checkpoint, checkpoint_path)
+
             except Exception as e:
                 logger.warning(f"Failed to resume from checkpoint: {e}")
                 logger.warning("Starting fresh experiment instead")
