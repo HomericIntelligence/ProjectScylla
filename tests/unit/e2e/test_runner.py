@@ -848,3 +848,72 @@ class TestInitializeOrResumeExperimentFailedReset:
         assert runner.checkpoint is not None
         # complete state is preserved — no reset
         assert runner.checkpoint.experiment_state == "complete"
+
+    def test_resume_failed_merges_cli_tiers_into_saved_config(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """CLI tiers not in the saved experiment.json are merged in when resuming from 'failed'.
+
+        Scenario: original run had tiers_to_run=[T0] (saved in experiment.json).
+        New CLI command requests tiers_to_run=[T0, T1]. On resume, T1 must be
+        added to self.config.tiers_to_run so it will execute in this run.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig
+
+        # Build a CLI config with T0 + T1
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0, TierID.T1],
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        # Saved experiment.json has ONLY T0
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="failed",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.health.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        assert runner.checkpoint is not None
+        assert runner.checkpoint.experiment_state == "tiers_running"
+        # T1 must have been added to tiers_to_run
+        tier_ids = {t.value for t in runner.config.tiers_to_run}
+        assert "T0" in tier_ids
+        assert "T1" in tier_ids
