@@ -216,6 +216,46 @@ class TestRunLevelStepping:
             no_failed_states=True,
         )
 
+    def test_until_skips_run_already_past_target(self, tmp_path: Path) -> None:
+        """Run already past --until target state is skipped without re-executing transitions.
+
+        Regression test for the bug where a run at DIFF_CAPTURED resumed with
+        --until replay_generated would re-enter advance_to_completion() and crash
+        because context like agent_result was not restored from disk.
+        """
+        cp = make_checkpoint(
+            run_states={"T0": {"00": {"1": RunState.DIFF_CAPTURED.value}}},
+        )
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        sm = _build_run_sm(cp, cp_path)
+        actions_called: list[RunState] = []
+
+        def tracking_action(state: RunState) -> Callable[[], None]:
+            def _action() -> None:
+                actions_called.append(state)
+
+            return _action
+
+        actions = {s: tracking_action(s) for s in RunState if not is_terminal_state(s)}
+
+        # Resume with --until replay_generated on a run already at diff_captured (past the target)
+        final = sm.advance_to_completion(
+            "T0", "00", 1, actions, until_state=RunState.REPLAY_GENERATED
+        )
+
+        # Run should be unchanged: still at DIFF_CAPTURED
+        assert final == RunState.DIFF_CAPTURED
+        # No actions should have been called (run was skipped entirely)
+        assert actions_called == []
+        # Checkpoint should be unmodified
+        validate_checkpoint_states(
+            cp_path,
+            expected_run_states={"T0": {"00": {"1": RunState.DIFF_CAPTURED.value}}},
+            no_failed_states=True,
+        )
+
     def test_rerun_same_until_is_idempotent(self, tmp_path: Path) -> None:
         """A run already at until_state does not re-execute transitions before it.
 

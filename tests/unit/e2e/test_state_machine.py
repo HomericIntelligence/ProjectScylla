@@ -21,11 +21,13 @@ import pytest
 from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
 from scylla.e2e.models import RunState
 from scylla.e2e.state_machine import (
+    _RUN_STATE_INDEX,
     _RUN_STATE_SEQUENCE,
     _TERMINAL_STATES,
     TRANSITION_REGISTRY,
     StateMachine,
     get_next_transition,
+    is_at_or_past_state,
     is_terminal_state,
     validate_transition,
 )
@@ -501,3 +503,73 @@ class TestStateMachineAdvanceToCompletion:
         # DIR_STRUCTURE_CREATED action did NOT run (stopped before executing further)
         action_worktree.assert_not_called()
         assert final == RunState.DIR_STRUCTURE_CREATED
+
+
+# ---------------------------------------------------------------------------
+# is_at_or_past_state tests
+# ---------------------------------------------------------------------------
+
+
+class TestIsAtOrPastState:
+    """Tests for is_at_or_past_state() function."""
+
+    def test_at_target_returns_true(self) -> None:
+        """Exact match returns True."""
+        assert is_at_or_past_state(RunState.REPLAY_GENERATED, RunState.REPLAY_GENERATED)
+
+    def test_past_target_returns_true(self) -> None:
+        """A later state in the sequence returns True."""
+        # DIFF_CAPTURED is past REPLAY_GENERATED in the sequence
+        assert is_at_or_past_state(RunState.DIFF_CAPTURED, RunState.REPLAY_GENERATED)
+
+    def test_before_target_returns_false(self) -> None:
+        """An earlier state in the sequence returns False."""
+        # PROMPT_WRITTEN is before REPLAY_GENERATED
+        assert not is_at_or_past_state(RunState.PROMPT_WRITTEN, RunState.REPLAY_GENERATED)
+
+    def test_failed_returns_false(self) -> None:
+        """FAILED is not in the normal sequence, returns False."""
+        assert not is_at_or_past_state(RunState.FAILED, RunState.REPLAY_GENERATED)
+
+    def test_rate_limited_returns_false(self) -> None:
+        """RATE_LIMITED is not in the normal sequence, returns False."""
+        assert not is_at_or_past_state(RunState.RATE_LIMITED, RunState.REPLAY_GENERATED)
+
+    def test_index_map_covers_all_sequence_states(self) -> None:
+        """Every state in _RUN_STATE_SEQUENCE has an entry in _RUN_STATE_INDEX."""
+        for state in _RUN_STATE_SEQUENCE:
+            assert state in _RUN_STATE_INDEX, f"{state.value} missing from _RUN_STATE_INDEX"
+
+
+# ---------------------------------------------------------------------------
+# advance_to_completion early-return guard tests
+# ---------------------------------------------------------------------------
+
+
+class TestAdvanceToCompletionEarlyReturn:
+    """Tests for the early-return guard in advance_to_completion()."""
+
+    def test_already_past_until_state_returns_immediately(
+        self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """Run at AGENT_COMPLETE with until_state=REPLAY_GENERATED returns without advancing."""
+        # Pre-set run past the until_state
+        checkpoint.set_run_state("T0", "00-empty", 1, RunState.AGENT_COMPLETE.value)
+
+        from unittest.mock import MagicMock
+
+        action = MagicMock()
+        result = sm.advance_to_completion(
+            "T0",
+            "00-empty",
+            1,
+            {RunState.AGENT_COMPLETE: action},
+            until_state=RunState.REPLAY_GENERATED,
+        )
+
+        # Should return immediately with the current state
+        assert result == RunState.AGENT_COMPLETE
+        # No actions should have been called
+        action.assert_not_called()
+        # State should be unchanged
+        assert sm.get_state("T0", "00-empty", 1) == RunState.AGENT_COMPLETE
