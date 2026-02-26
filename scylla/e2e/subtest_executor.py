@@ -378,14 +378,18 @@ class SubTestExecutor:
                     else None
                 )
 
-                # Skip runs already stopped at --until target state (they are not
+                # Skip runs already at or past the --until target state (they are not
                 # terminal but have completed their allowed work for this invocation).
                 if sm and self.config.until_run_state is not None:
+                    from scylla.e2e.state_machine import is_at_or_past_state
+
                     current_run_state = sm.get_state(tier_id.value, subtest.id, run_num)
-                    if current_run_state == self.config.until_run_state:
+                    if is_at_or_past_state(current_run_state, self.config.until_run_state):
                         logger.debug(
                             f"Skipping run {tier_id.value}/{subtest.id}/run_{run_num:02d} "
-                            f"— already at --until state: {self.config.until_run_state.value}"
+                            f"— already at or past --until state: "
+                            f"{self.config.until_run_state.value} "
+                            f"(current: {current_run_state.value})"
                         )
                         continue
 

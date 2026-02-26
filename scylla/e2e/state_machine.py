@@ -68,6 +68,23 @@ _TERMINAL_STATES: frozenset[RunState] = frozenset(
     [RunState.WORKTREE_CLEANED, RunState.FAILED, RunState.RATE_LIMITED]
 )
 
+# Precompute index map for O(1) ordering lookups
+_RUN_STATE_INDEX: dict[RunState, int] = {
+    state: idx for idx, state in enumerate(_RUN_STATE_SEQUENCE)
+}
+
+
+def is_at_or_past_state(current: RunState, target: RunState) -> bool:
+    """Return True if current is at or past target in the run sequence.
+
+    States not in the normal sequence (FAILED, RATE_LIMITED) return False.
+    """
+    cur_idx = _RUN_STATE_INDEX.get(current)
+    tgt_idx = _RUN_STATE_INDEX.get(target)
+    if cur_idx is None or tgt_idx is None:
+        return False
+    return cur_idx >= tgt_idx
+
 
 @dataclass
 class StateTransition:
@@ -393,6 +410,17 @@ class StateMachine:
         """
         from scylla.e2e.checkpoint import save_checkpoint
         from scylla.e2e.rate_limit import RateLimitError
+
+        # Early return if already at or past the --until target state
+        if until_state is not None:
+            current = self.get_state(tier_id, subtest_id, run_num)
+            if is_at_or_past_state(current, until_state):
+                logger.info(
+                    f"[{tier_id}/{subtest_id}/run_{run_num:02d}] "
+                    f"Already at or past --until target state: {until_state.value} "
+                    f"(current: {current.value})"
+                )
+                return current
 
         try:
             while not self.is_complete(tier_id, subtest_id, run_num):
