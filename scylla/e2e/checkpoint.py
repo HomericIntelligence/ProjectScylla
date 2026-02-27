@@ -507,10 +507,18 @@ class E2ECheckpoint(BaseModel):
 
 
 def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
-    """Save checkpoint to file with atomic write.
+    """Save checkpoint to file with atomic read-modify-write.
 
-    Uses temporary file + rename for atomic write to prevent
-    corruption from interrupted writes.
+    Uses a read-modify-write pattern to safely merge state written by concurrent
+    subprocess workers (ProcessPoolExecutor): each worker holds a forked copy of
+    the checkpoint that only knows about its own tier's subtests. A plain overwrite
+    would cause the last writer to silently drop other workers' run_states and
+    subtest_states updates.
+
+    The merge strategy: for run_states and subtest_states, the on-disk value
+    is used as the base and the in-memory checkpoint's entries are overlaid
+    (the caller's view is always authoritative for its own tier/subtest/run keys).
+    All other fields are taken directly from the in-memory checkpoint.
 
     Args:
         checkpoint: Checkpoint to save
@@ -531,8 +539,39 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         tid = threading.get_ident()
         temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}.{tid}{path.suffix}"
         with _checkpoint_write_lock:
+            # Read-modify-write: merge in-memory state on top of on-disk state so
+            # concurrent subprocess writes don't overwrite each other's new entries.
+            data = checkpoint.model_dump()
+            if path.exists():
+                try:
+                    with open(path) as f:
+                        disk_data = json.load(f)
+                    # Merge run_states: deep-merge tier -> subtest -> run entries
+                    disk_run = disk_data.get("run_states", {})
+                    for tier_id, subtests in data.get("run_states", {}).items():
+                        if tier_id not in disk_run:
+                            disk_run[tier_id] = {}
+                        for sub_id, runs in subtests.items():
+                            if sub_id not in disk_run[tier_id]:
+                                disk_run[tier_id][sub_id] = {}
+                            disk_run[tier_id][sub_id].update(runs)
+                    data["run_states"] = disk_run
+                    # Merge subtest_states: tier -> subtest entries
+                    disk_sub = disk_data.get("subtest_states", {})
+                    for tier_id, subtests in data.get("subtest_states", {}).items():
+                        if tier_id not in disk_sub:
+                            disk_sub[tier_id] = {}
+                        disk_sub[tier_id].update(subtests)
+                    data["subtest_states"] = disk_sub
+                    # Merge tier_states: take the more-advanced state
+                    disk_tier = disk_data.get("tier_states", {})
+                    disk_tier.update(data.get("tier_states", {}))
+                    data["tier_states"] = disk_tier
+                except (OSError, json.JSONDecodeError, KeyError):
+                    pass  # Disk read failed — fall through and save as-is
+
             with open(temp_path, "w") as f:
-                json.dump(checkpoint.model_dump(), f, indent=2)
+                json.dump(data, f, indent=2)
 
             # Atomic rename (held under lock so only one rename is in-flight)
             temp_path.replace(path)

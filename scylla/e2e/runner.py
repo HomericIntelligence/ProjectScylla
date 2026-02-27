@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
@@ -162,6 +163,11 @@ class E2ERunner:
         self.checkpoint: E2ECheckpoint | None = None
         self._fresh = fresh
         self._last_experiment_result: ExperimentResult | None = None
+        # Lock for merging subprocess-written checkpoint state back into self.checkpoint.
+        # ProcessPoolExecutor workers write run_states/subtest_states directly to disk;
+        # after each parallel subtest batch finishes, the main process must merge those
+        # disk writes into the shared self.checkpoint object before the next save.
+        self._checkpoint_merge_lock = threading.Lock()
 
     @staticmethod
     def _get_tier_groups(tiers_to_run: list[TierID]) -> list[list[TierID]]:
@@ -1291,6 +1297,19 @@ class E2ERunner:
             )
             tier_ctx.subtest_results = subtest_results
 
+            # ProcessPoolExecutor workers write run_states/subtest_states directly to disk.
+            # Merge those disk-written states back into self.checkpoint so subsequent
+            # TierStateMachine saves don't overwrite them with the stale in-memory copy.
+            if self.checkpoint and checkpoint_path:
+                try:
+                    disk_cp = load_checkpoint(checkpoint_path)
+                    with self._checkpoint_merge_lock:
+                        self.checkpoint.run_states = disk_cp.run_states
+                        self.checkpoint.subtest_states = disk_cp.subtest_states
+                        self.checkpoint.tier_states = disk_cp.tier_states
+                except Exception:
+                    pass  # Non-fatal: stale in-memory state is better than crashing
+
         def action_subtests_running() -> None:
             """SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest."""
             assert tier_ctx.tier_dir is not None  # noqa: S101
@@ -1679,11 +1698,26 @@ class E2ERunner:
                 logger.debug(f"PID file removed: {pid_file}")
 
     def _mark_checkpoint_completed(self) -> None:
-        """Mark checkpoint as completed."""
+        """Mark checkpoint as completed.
+
+        Reloads run_states/subtest_states/tier_states from disk before marking
+        complete to preserve state written by parallel subprocess workers.
+        ProcessPoolExecutor workers write directly to disk; the main-process
+        self.checkpoint has stale (pre-fork) copies of these dicts.
+        """
         if self.checkpoint and self.experiment_dir:
-            self.checkpoint.status = _STATUS_COMPLETED
             checkpoint_path = self.experiment_dir / "checkpoint.json"
-            save_checkpoint(self.checkpoint, checkpoint_path)
+            # Merge worker-written state into the shared in-memory checkpoint object.
+            # We update in-place so the ExperimentStateMachine (which holds a reference
+            # to self.checkpoint) also sees the merged data when it calls save_checkpoint.
+            try:
+                disk_cp = load_checkpoint(checkpoint_path)
+                self.checkpoint.run_states = disk_cp.run_states
+                self.checkpoint.subtest_states = disk_cp.subtest_states
+                self.checkpoint.tier_states = disk_cp.tier_states
+            except Exception:
+                pass  # Fallback: keep stale in-memory copy (better than crashing)
+            self.checkpoint.status = _STATUS_COMPLETED
             logger.debug("Checkpoint marked as completed")
 
 
