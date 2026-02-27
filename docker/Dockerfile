@@ -25,16 +25,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python build dependencies
+# Layer 1: Build backend (invalidated only when hatchling version changes)
 RUN pip install --no-cache-dir hatchling
 
-# Copy project files for building scylla package
+# Layer 2: Dependencies (invalidated only when pyproject.toml changes)
+# Copy only pyproject.toml first so dependency installs are cached separately
+# from source changes. Uses tomllib (stdlib since Python 3.11) to extract deps.
 COPY pyproject.toml /opt/scylla/
+RUN pip install --user --no-cache-dir \
+    $(python3 -c "import tomllib; data=tomllib.load(open('/opt/scylla/pyproject.toml','rb')); print(' '.join(data['project']['dependencies']))")
+
+# Layer 3: Package install (invalidated when scylla/ source changes)
+# Source-only changes hit cached layer 2 and only re-run this install step.
 COPY README.md /opt/scylla/
 COPY scylla/ /opt/scylla/scylla/
-
-# Install scylla package to user directory (will be copied to runtime stage)
-RUN pip install --user --no-cache-dir /opt/scylla/
+RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
