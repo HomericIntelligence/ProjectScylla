@@ -293,6 +293,19 @@ class TierStateMachine:
         except Exception as e:
             from scylla.e2e.checkpoint import save_checkpoint
             from scylla.e2e.rate_limit import RateLimitError
+            from scylla.e2e.runner import ShutdownInterruptedError
+
+            if isinstance(e, ShutdownInterruptedError):
+                # Ctrl+C interrupted this tier — leave it at CONFIG_LOADED (resumable)
+                # rather than FAILED so the next invocation can continue where we left off.
+                current = self.get_state(tier_id)
+                logger.warning(
+                    f"[{tier_id}] Shutdown interrupted at {current.value} "
+                    "— tier left at config_loaded (not FAILED)"
+                )
+                self.checkpoint.set_tier_state(tier_id, TierState.CONFIG_LOADED.value)
+                save_checkpoint(self.checkpoint, self.checkpoint_path)
+                raise
 
             if isinstance(e, RateLimitError):
                 # Rate limits propagate to experiment level by design;

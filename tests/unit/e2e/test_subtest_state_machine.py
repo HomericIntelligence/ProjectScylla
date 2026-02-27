@@ -650,6 +650,33 @@ class TestUntilHaltError:
 
         assert ssm.get_state(TIER_ID, SUBTEST_ID) == SubtestState.FAILED
 
+    def test_shutdown_interrupted_does_not_mark_failed(
+        self,
+        ssm: SubtestStateMachine,
+        checkpoint: E2ECheckpoint,
+        checkpoint_path: Path,
+    ) -> None:
+        """ShutdownInterruptedError leaves subtest in RUNS_IN_PROGRESS, not FAILED.
+
+        When Ctrl+C fires mid-run, the subtest must be left resumable so the
+        next invocation can continue where it left off.
+        """
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        def action_that_gets_interrupted() -> None:
+            raise ShutdownInterruptedError("simulated ctrl+c")
+
+        actions = {SubtestState.PENDING: action_that_gets_interrupted}
+        with pytest.raises(ShutdownInterruptedError):
+            ssm.advance_to_completion(TIER_ID, SUBTEST_ID, actions)
+
+        # Subtest must NOT be FAILED — it should stay at its last good state (PENDING
+        # here, since the action fired from PENDING but never completed its work, so
+        # the state machine never advanced to RUNS_IN_PROGRESS).
+        state = ssm.get_state(TIER_ID, SUBTEST_ID)
+        assert state != SubtestState.FAILED
+        assert state == SubtestState.PENDING
+
     def test_until_halt_error_from_runs_in_progress_stays_in_runs_in_progress(
         self,
         checkpoint: E2ECheckpoint,

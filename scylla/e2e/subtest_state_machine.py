@@ -298,6 +298,7 @@ class SubtestStateMachine:
 
         """
         from scylla.e2e.checkpoint import save_checkpoint
+        from scylla.e2e.runner import ShutdownInterruptedError
 
         try:
             while not self.is_complete(tier_id, subtest_id):
@@ -313,6 +314,15 @@ class SubtestStateMachine:
             # Leave the subtest in RUNS_IN_PROGRESS so it can be resumed later.
             # Do NOT mark as FAILED — this is intentional early termination.
             logger.info(f"[{tier_id}/{subtest_id}] {e}")
+        except ShutdownInterruptedError:
+            # Ctrl+C interrupted this subtest — leave it in RUNS_IN_PROGRESS so it
+            # can be cleanly resumed on the next invocation.  Do NOT mark as FAILED.
+            current = self.get_state(tier_id, subtest_id)
+            logger.warning(
+                f"[{tier_id}/{subtest_id}] Shutdown interrupted at {current.value} "
+                "— subtest left resumable (not FAILED)"
+            )
+            raise
         except Exception:
             self.checkpoint.set_subtest_state(tier_id, subtest_id, SubtestState.FAILED.value)
             save_checkpoint(self.checkpoint, self.checkpoint_path)

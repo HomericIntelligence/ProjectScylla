@@ -324,6 +324,13 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
                     raise
 
                 except Exception as e:
+                    from scylla.e2e.runner import ShutdownInterruptedError
+
+                    if isinstance(e, ShutdownInterruptedError):
+                        # Runs left at last good state — propagate so the tier can
+                        # shut down cleanly without marking anything FAILED.
+                        raise
+
                     # Other errors
                     results[subtest_id] = SubTestResult(
                         subtest_id=subtest_id,
@@ -685,7 +692,13 @@ def _run_subtest_in_process_safe(
             rate_limit_info=e.info,
         )
     except Exception as e:
-        # ANY exception becomes structured error
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        if isinstance(e, ShutdownInterruptedError):
+            # Re-raise so the pool manager can handle shutdown gracefully
+            raise
+
+        # ANY other exception becomes structured error
         logger.error(
             f"Worker exception for {tier_id.value}/{subtest.id}: {type(e).__name__}: {e}",
             exc_info=True,
