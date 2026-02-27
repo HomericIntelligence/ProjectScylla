@@ -1079,7 +1079,13 @@ class TestInitializeOrResumeExperimentFailedReset:
         Scenario: experiment is 'complete', T0 is 'complete', subtest 00 is
         'aggregated' — but run 1 is in 'replay_generated' (not terminal).
         Re-running with --tiers T0 must reset experiment→tiers_running,
-        T0→subtests_running, subtest 00→runs_in_progress.
+        T0→config_loaded (so action_config_loaded re-runs the subtests),
+        subtest 00→runs_in_progress.
+
+        NOTE: tier resets to 'config_loaded', NOT 'subtests_running'.
+        'subtests_running' is the "select best subtest" phase and expects
+        run_tier_subtests_parallel() to have already produced results.
+        Skipping config_loaded causes "No sub-test results to select from".
         """
         from datetime import datetime, timezone
 
@@ -1135,7 +1141,8 @@ class TestInitializeOrResumeExperimentFailedReset:
 
         assert runner.checkpoint is not None
         assert runner.checkpoint.experiment_state == "tiers_running"
-        assert runner.checkpoint.tier_states["T0"] == "subtests_running"
+        # config_loaded so action_config_loaded() re-runs subtests before selection
+        assert runner.checkpoint.tier_states["T0"] == "config_loaded"
         assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"
 
     def test_resume_complete_with_runs_complete_subtest_resets_to_runs_in_progress(
