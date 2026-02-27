@@ -11,7 +11,8 @@
 # Stage 1: Builder - Install Python packages with build dependencies
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
-FROM python:3.14.2-slim@sha256:1a3c6dbfd2173971abba880c3cc2ec4643690901f6ad6742d0827bae6cefc925 AS builder
+# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.12); requires-python = ">=3.10"
+FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder
 
 # Set build environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -45,7 +46,8 @@ RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
-FROM python:3.14.2-slim@sha256:1a3c6dbfd2173971abba880c3cc2ec4643690901f6ad6742d0827bae6cefc925
+# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.12); requires-python = ">=3.10"
+FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="scylla-runner"
@@ -54,7 +56,7 @@ LABEL org.opencontainers.image.vendor="ProjectScylla"
 LABEL org.opencontainers.image.version="latest"
 
 # Copy Python packages from builder stage to global location
-COPY --from=builder /root/.local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+COPY --from=builder /root/.local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /root/.local/bin /usr/local/bin
 
 # Set environment variables
