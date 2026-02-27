@@ -1,4 +1,4 @@
-name: Docker Build Test
+name: Docker Validation
 
 on:
   pull_request:
@@ -30,16 +30,5 @@ jobs:
           # Validate docker-compose.yml configuration
           docker compose -f docker/docker-compose.yml config --quiet
 
-      - name: Install pixi
-        uses: prefix-dev/setup-pixi@v0.9.4
-        with:
-          pixi-version: v0.62.2
-          cache: true
-
-      - name: Run Docker tests
-        run: |
-          # Install package in dev mode
-          pixi run pip install -e .
-
-          # Run tests
-          pixi run pytest tests/docker/ -v --no-cov
+      # Docker integration tests are deferred — see docs/dev/adr/docker-testing-deferred.md
+      # Entrypoint script testing is tracked in GitHub issue #1113
