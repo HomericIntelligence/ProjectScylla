@@ -339,11 +339,11 @@ Schema: `scylla/analysis/schemas/run_result_schema.json`
 
 ### 🧪 Testing
 
-ProjectScylla has a comprehensive test suite with **115+ test files** covering all functionality.
+ProjectScylla has a comprehensive test suite with **127+ test files** covering all functionality.
 
 #### Test Categories
 
-- **Unit Tests** (115+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
+- **Unit Tests** (127+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
 - **E2E Tests** (1 file): Full pipeline validation
 - **Test Fixtures** (47+ scenarios): Complete test cases with expected outputs
 
@@ -362,7 +362,7 @@ pixi run pytest tests/unit/adapters/ -v
 pixi run pytest tests/unit/config/ -v
 
 # Coverage analysis
-pixi run pytest tests/ --cov=scylla/scylla --cov-report=html
+pixi run pytest tests/ --cov=scylla --cov-report=html
 
 # Specific test file
 pixi run pytest tests/unit/analysis/test_stats.py -v
@@ -489,7 +489,7 @@ TypeError: unsupported operand type(s) for +: 'float' and 'str'
 
 ✅ **Reproducible configuration** (all parameters in config.yaml)
 
-✅ **Comprehensive test suite** (2026+ tests, all passing)
+✅ **Comprehensive test suite** (3,000+ tests, all passing)
 
 ✅ **Documented methodology** with citations
 
