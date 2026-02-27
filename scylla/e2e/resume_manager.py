@@ -234,15 +234,28 @@ class ResumeManager:
                         # Reset to pending so action_pending() reloads full subtest list
                         self.checkpoint.tier_states[tier_id_str] = "pending"
                     else:
-                        self.checkpoint.tier_states[tier_id_str] = "subtests_running"
-                        for sub_id, sub_state in self.checkpoint.subtest_states.get(
-                            tier_id_str, {}
-                        ).items():
-                            if sub_state in ("aggregated", "runs_complete"):
-                                if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
-                                    self.checkpoint.subtest_states[tier_id_str][sub_id] = (
-                                        "runs_in_progress"
-                                    )
+                        # Check if any subtest has runs that are not yet terminal.
+                        # If so, reset tier to config_loaded so action_config_loaded()
+                        # re-runs the subtests. subtests_running is the "select best"
+                        # phase and requires completed subtest results — it must NOT
+                        # be used when runs are still mid-execution (e.g. replay_generated).
+                        _any_incomplete = any(
+                            self._subtest_has_incomplete_runs(tier_id_str, sub_id)
+                            for sub_id in self.checkpoint.subtest_states.get(tier_id_str, {})
+                        )
+                        if _any_incomplete:
+                            self.checkpoint.tier_states[tier_id_str] = "config_loaded"
+                            # Reset subtest states that have incomplete runs
+                            for sub_id, sub_state in self.checkpoint.subtest_states.get(
+                                tier_id_str, {}
+                            ).items():
+                                if sub_state in ("aggregated", "runs_complete"):
+                                    if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
+                                        self.checkpoint.subtest_states[tier_id_str][sub_id] = (
+                                            "runs_in_progress"
+                                        )
+                        else:
+                            self.checkpoint.tier_states[tier_id_str] = "subtests_running"
 
         save_checkpoint(self.checkpoint, checkpoint_path)
         return self.config, self.checkpoint
