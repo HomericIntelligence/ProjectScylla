@@ -140,6 +140,69 @@
       "type": "object",
       "description": "Per-criterion scores from judge",
       "additionalProperties": true
+    },
+    "process_metrics": {
+      "type": "object",
+      "description": "Pre-computed process metrics for this run",
+      "properties": {
+        "r_prog": {
+          "type": "number",
+          "description": "Fine-Grained Progress Rate (0.0 - 1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "strategic_drift": {
+          "type": "number",
+          "description": "Strategic Drift score (0 = no drift, 1 = complete drift)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "cfp": {
+          "type": "number",
+          "description": "Change Fail Percentage (0.0 - 1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "pr_revert_rate": {
+          "type": "number",
+          "description": "PR Revert Rate (0.0 - 1.0)",
+          "minimum": 0.0,
+          "maximum": 1.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "progress_tracking": {
+      "type": "array",
+      "description": "Progress step tracking data for computing R_Prog and strategic drift",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_id": {"type": "string"},
+          "description": {"type": "string"},
+          "weight": {"type": "number", "minimum": 0},
+          "completed": {"type": "boolean"},
+          "goal_alignment": {"type": "number", "minimum": 0, "maximum": 1}
+        },
+        "required": ["step_id", "description"],
+        "additionalProperties": false
+      }
+    },
+    "changes": {
+      "type": "array",
+      "description": "Change result data for computing CFP and PR revert rate",
+      "items": {
+        "type": "object",
+        "properties": {
+          "change_id": {"type": "string"},
+          "description": {"type": "string"},
+          "succeeded": {"type": "boolean"},
+          "caused_failure": {"type": "boolean"},
+          "reverted": {"type": "boolean"}
+        },
+        "required": ["change_id", "description"],
+        "additionalProperties": false
+      }
     }
   },
   "additionalProperties": true

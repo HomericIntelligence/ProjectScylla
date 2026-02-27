@@ -248,6 +248,10 @@ class RunData:
         api_calls: Number of API calls (optional, for delegation tiers)
         num_turns: Number of agentic turns (optional, for delegation tiers)
         model_usage: Per-model token usage (optional, for delegation tiers)
+        r_prog: Fine-Grained Progress Rate, 0.0-1.0 (optional, from process_metrics)
+        strategic_drift: Strategic Drift score, 0.0-1.0 (optional, from process_metrics)
+        cfp: Change Fail Percentage, 0.0-1.0 (optional, from process_metrics)
+        pr_revert_rate: PR Revert Rate, 0.0-1.0 (optional, from process_metrics)
 
     """
 
@@ -270,6 +274,11 @@ class RunData:
     api_calls: int | None = None
     num_turns: int | None = None
     model_usage: list[ModelUsage] | None = None
+    # Optional process metrics (from run_result.json process_metrics block)
+    r_prog: float | None = None
+    strategic_drift: float | None = None
+    cfp: float | None = None
+    pr_revert_rate: float | None = None
 
 
 def model_id_to_display(model_id: str) -> str:
@@ -564,6 +573,73 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
                         )
                     )
 
+    # Extract process metrics from run_result.json
+    r_prog_val: float | None = None
+    strategic_drift_val: float | None = None
+    cfp_val: float | None = None
+    pr_revert_rate_val: float | None = None
+
+    process_metrics_data = result.get("process_metrics")
+    if process_metrics_data and isinstance(process_metrics_data, dict):
+        # Use pre-computed process_metrics block if available
+        def _extract_process_float(key: str) -> float | None:
+            raw = validate_numeric(process_metrics_data.get(key), key, np.nan)
+            return None if (raw is None or np.isnan(raw)) else raw
+
+        r_prog_val = _extract_process_float("r_prog")
+        strategic_drift_val = _extract_process_float("strategic_drift")
+        cfp_val = _extract_process_float("cfp")
+        pr_revert_rate_val = _extract_process_float("pr_revert_rate")
+    else:
+        # Fallback: compute from raw tracking data if present
+        progress_tracking = result.get("progress_tracking")
+        changes = result.get("changes")
+        if progress_tracking or changes:
+            from scylla.metrics.process import (  # noqa: PLC0415
+                ChangeResult,
+                ProgressStep,
+                ProgressTracker,
+                calculate_cfp,
+                calculate_pr_revert_rate,
+                calculate_r_prog,
+                calculate_strategic_drift,
+            )
+
+            if progress_tracking and isinstance(progress_tracking, list):
+                steps = []
+                achieved = []
+                for s in progress_tracking:
+                    if isinstance(s, dict):
+                        step = ProgressStep(
+                            step_id=s.get("step_id", ""),
+                            description=s.get("description", ""),
+                            weight=float(s.get("weight", 1.0)),
+                            completed=bool(s.get("completed", False)),
+                            goal_alignment=float(s.get("goal_alignment", 1.0)),
+                        )
+                        steps.append(step)
+                        if step.completed:
+                            achieved.append(step)
+                tracker = ProgressTracker(expected_steps=steps, achieved_steps=achieved)
+                r_prog_val = calculate_r_prog(tracker)
+                strategic_drift_val = calculate_strategic_drift(tracker)
+
+            if changes and isinstance(changes, list):
+                change_results = []
+                for c in changes:
+                    if isinstance(c, dict):
+                        change_results.append(
+                            ChangeResult(
+                                change_id=c.get("change_id", ""),
+                                description=c.get("description", ""),
+                                succeeded=bool(c.get("succeeded", True)),
+                                caused_failure=bool(c.get("caused_failure", False)),
+                                reverted=bool(c.get("reverted", False)),
+                            )
+                        )
+                cfp_val = calculate_cfp(change_results)
+                pr_revert_rate_val = calculate_pr_revert_rate(change_results)
+
     # Validate and coerce all numeric/boolean fields with type checking
     return RunData(
         experiment=experiment,
@@ -590,6 +666,10 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
         api_calls=api_calls_val,
         num_turns=num_turns_val,
         model_usage=model_usage_val,
+        r_prog=r_prog_val,
+        strategic_drift=strategic_drift_val,
+        cfp=cfp_val,
+        pr_revert_rate=pr_revert_rate_val,
     )
 
 
