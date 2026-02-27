@@ -83,7 +83,7 @@ Table 2.1: Incremental Agent Capability Testing Matrix (Ablation Study Framework
 | T1 | Skills | 10 | Domain expertise via installed skills by category | Context Bloat (Mitigated) | Excellent CoP, High Efficacy |
 | T2 | Tooling | 15 | External tools and MCP servers | Schema Token Overhead | High Efficacy, Poor CoP |
 | T3 | Delegation | 41 | Flat multi-agent with specialist agents (L2-L5) | Orchestration Latency | High Efficacy, Moderate CoP |
-| T4 | Hierarchy | 7 | Nested orchestration with orchestrator agents (L0-L1) | Iterative Verification Cost | Very High Efficacy, High CoP |
+| T4 | Hierarchy | 14 | Nested orchestration with orchestrator agents (L0-L1) | Iterative Verification Cost | Very High Efficacy, High CoP |
 | T5 | Hybrid | 15 | Best combinations and permutations from all tiers | Synergistic Overhead | Maximized CoP/Efficacy Ratio |
 | T6 | Super | 1 | Everything enabled at maximum capability | Maximum Overhead | Theoretical Upper Bound |
 
