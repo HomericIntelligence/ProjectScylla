@@ -69,6 +69,15 @@ _STATUS_COMPLETED = "completed"
 _shutdown_requested = False
 
 
+class ShutdownInterruptedError(Exception):
+    """Raised when an in-progress stage is interrupted by a shutdown signal (Ctrl+C).
+
+    Unlike a generic Exception, this is caught separately by StateMachine.advance_to_completion()
+    so the run is NOT marked as FAILED.  The run state stays at its last successfully
+    checkpointed value, allowing clean resume on the next invocation.
+    """
+
+
 def request_shutdown() -> None:
     """Request graceful shutdown of the experiment.
 

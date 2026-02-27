@@ -356,6 +356,24 @@ class TestTierStateMachineAdvanceToCompletion:
 
         assert tsm.get_state("T0") == TierState.FAILED
 
+    def test_shutdown_interrupted_resets_tier_to_config_loaded(
+        self, tsm: TierStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """ShutdownInterruptedError resets tier to CONFIG_LOADED, not FAILED.
+
+        When Ctrl+C fires while subtests are running, the tier must be left at
+        CONFIG_LOADED (resumable) so the next invocation continues from there.
+        """
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        action = MagicMock(side_effect=ShutdownInterruptedError("simulated ctrl+c"))
+        with pytest.raises(ShutdownInterruptedError):
+            tsm.advance_to_completion("T0", {TierState.PENDING: action})
+
+        # Tier must NOT be FAILED — reset to CONFIG_LOADED for clean resume
+        assert tsm.get_state("T0") == TierState.CONFIG_LOADED
+        assert tsm.get_state("T0") != TierState.FAILED
+
     def test_failed_tier_is_complete(
         self, tsm: TierStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
     ) -> None:
