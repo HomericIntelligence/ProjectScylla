@@ -326,11 +326,20 @@ class E2ERunner:
                 self._load_checkpoint_and_config(checkpoint_path)
 
                 # STEP 2: Restore ephemeral CLI args (--until, --max-subtests) that were
-                # overwritten by the saved config.  Only non-None CLI values are restored so
-                # that omitting a flag on the CLI keeps the saved value.
-                non_none_ephemeral = {k: v for k, v in _cli_ephemeral.items() if v is not None}
-                if non_none_ephemeral:
-                    self.config = self.config.model_copy(update=non_none_ephemeral)
+                # overwritten by the saved config.
+                # max_subtests is always restored from CLI: None means "no limit" (clear saved
+                # value), a positive value caps subtests.  All other ephemeral fields are only
+                # restored when explicitly provided on the CLI (non-None).
+                self.config = self.config.model_copy(
+                    update={"max_subtests": _cli_ephemeral["max_subtests"]}
+                )
+                non_none_rest = {
+                    k: v
+                    for k, v in _cli_ephemeral.items()
+                    if k != "max_subtests" and v is not None
+                }
+                if non_none_rest:
+                    self.config = self.config.model_copy(update=non_none_rest)
 
                 # Check for zombie (crashed) experiment and reset if needed
                 if self.checkpoint and self.experiment_dir:
@@ -393,6 +402,7 @@ class E2ERunner:
                         self.checkpoint.experiment_state = "tiers_running"
 
                         # Reset completed tier/subtest states for tiers with incomplete runs
+                        # or missing subtests (max_subtests expansion).
                         for tier_id_str in needs_execution:
                             existing_tier_state = self.checkpoint.tier_states.get(tier_id_str)
                             if existing_tier_state in (
@@ -401,16 +411,43 @@ class E2ERunner:
                                 "best_selected",
                                 "reports_generated",
                             ):
-                                self.checkpoint.tier_states[tier_id_str] = "subtests_running"
-                                # Reset subtest states that have incomplete runs
-                                for sub_id, sub_state in self.checkpoint.subtest_states.get(
-                                    tier_id_str, {}
-                                ).items():
-                                    if sub_state in ("aggregated", "runs_complete"):
-                                        if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
-                                            self.checkpoint.subtest_states[tier_id_str][sub_id] = (
-                                                "runs_in_progress"
-                                            )
+                                # Detect if this tier has subtests missing from the checkpoint.
+                                # If so, reset to 'pending' so action_pending() re-runs and
+                                # reloads the full subtest list with the new max_subtests.
+                                _has_missing_subtests = False
+                                try:
+                                    _tc = self.tier_manager.load_tier_config(
+                                        TierID(tier_id_str), self.config.skip_agent_teams
+                                    )
+                                    _config_subs = {s.id for s in _tc.subtests}
+                                    if self.config.max_subtests is not None:
+                                        _config_subs = {
+                                            s.id
+                                            for s in _tc.subtests[: self.config.max_subtests]
+                                        }
+                                    _ckpt_subs = set(
+                                        self.checkpoint.subtest_states.get(tier_id_str, {}).keys()
+                                    )
+                                    _has_missing_subtests = bool(_config_subs - _ckpt_subs)
+                                except Exception:
+                                    pass
+
+                                if _has_missing_subtests:
+                                    # Reset to pending so action_pending() reloads full subtest list
+                                    self.checkpoint.tier_states[tier_id_str] = "pending"
+                                else:
+                                    self.checkpoint.tier_states[tier_id_str] = "subtests_running"
+                                    # Reset subtest states that have incomplete runs
+                                    for sub_id, sub_state in self.checkpoint.subtest_states.get(
+                                        tier_id_str, {}
+                                    ).items():
+                                        if sub_state in ("aggregated", "runs_complete"):
+                                            if self._subtest_has_incomplete_runs(
+                                                tier_id_str, sub_id
+                                            ):
+                                                self.checkpoint.subtest_states[tier_id_str][
+                                                    sub_id
+                                                ] = "runs_in_progress"
 
                     save_checkpoint(self.checkpoint, checkpoint_path)
 
@@ -430,7 +467,8 @@ class E2ERunner:
         return self.experiment_dir / "checkpoint.json"
 
     def _check_tiers_need_execution(self, cli_tiers: list[TierID]) -> set[str]:
-        """Return tier IDs that need execution: new tiers or tiers with incomplete runs.
+        """Return tier IDs that need execution: new tiers, tiers with incomplete runs,
+        or tiers with subtests missing from the checkpoint (e.g. max_subtests expanded).
 
         Args:
             cli_tiers: Tiers requested on the CLI for this invocation.
@@ -463,6 +501,26 @@ class E2ERunner:
                         break
                 if tid in needs_work:
                     break
+            if tid in needs_work:
+                continue
+            # Subtests present in tier config but absent from checkpoint — this
+            # happens when max_subtests is expanded (or removed) on resume.
+            try:
+                tier_config = self.tier_manager.load_tier_config(
+                    tier_id, self.config.skip_agent_teams
+                )
+                config_subtests = {s.id for s in tier_config.subtests}
+                if self.config.max_subtests is not None:
+                    config_subtests = {
+                        s.id
+                        for s in tier_config.subtests[: self.config.max_subtests]
+                    }
+                checkpoint_subtests = set(self.checkpoint.subtest_states.get(tid, {}).keys())
+                if config_subtests - checkpoint_subtests:
+                    needs_work.add(tid)
+            except Exception:
+                # If we can't load tier config, skip this check (don't block execution)
+                pass
         return needs_work
 
     def _subtest_has_incomplete_runs(self, tier_id: str, subtest_id: str) -> bool:
@@ -528,6 +586,47 @@ class E2ERunner:
 
         return scheduler
 
+    def _capture_experiment_baseline(self) -> None:
+        """Capture pipeline baseline once at experiment level from a clean repo state.
+
+        Creates a temporary worktree from the base repo, runs the build pipeline on it,
+        and saves the result to <experiment_dir>/pipeline_baseline.json.
+
+        This is idempotent: if the file already exists (e.g. on resume) it is not
+        re-captured.
+
+        """
+        assert self.experiment_dir is not None  # noqa: S101
+
+        baseline_path = self.experiment_dir / "pipeline_baseline.json"
+        if baseline_path.exists():
+            logger.info("Experiment-level pipeline baseline already captured — skipping")
+            return
+
+        from scylla.e2e.llm_judge import _run_build_pipeline
+        from scylla.e2e.subtest_executor import _save_pipeline_baseline
+
+        # Create a temporary worktree so the baseline runs on a clean repo state
+        worktree_path = self.experiment_dir / "_baseline_worktree"
+        branch_name = f"baseline_{self.config.experiment_id[:8]}"
+        try:
+            self.workspace_manager.create_worktree(worktree_path)
+            logger.info(f"Capturing experiment-level pipeline baseline at {worktree_path}")
+            result = _run_build_pipeline(
+                workspace=worktree_path,
+                language=self.config.language,
+            )
+            _save_pipeline_baseline(self.experiment_dir, result)
+            baseline_status = "ALL PASSED ✓" if result.all_passed else "SOME FAILED ✗"
+            logger.info(f"Experiment pipeline baseline: {baseline_status}")
+        except Exception as e:
+            logger.warning(f"Failed to capture experiment-level baseline: {e}")
+        finally:
+            try:
+                self.workspace_manager.remove_worktree(worktree_path, branch_name)
+            except Exception as cleanup_err:
+                logger.debug(f"Baseline worktree cleanup warning: {cleanup_err}")
+
     def _handle_experiment_interrupt(self, checkpoint_path: Path) -> None:
         """Handle graceful shutdown on interrupt.
 
@@ -548,7 +647,7 @@ class E2ERunner:
                 logger.info("🔄 Reloading checkpoint from disk to preserve worker progress...")
                 current_checkpoint = load_checkpoint(checkpoint_path)
                 current_checkpoint.status = _STATUS_INTERRUPTED
-                current_checkpoint.experiment_state = "INTERRUPTED"
+                current_checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
                 current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
                 save_checkpoint(current_checkpoint, checkpoint_path)
                 logger.warning("💾 Checkpoint saved after interrupt")
@@ -558,7 +657,7 @@ class E2ERunner:
                 logger.warning("Saving checkpoint from memory (may lose some worker progress)")
                 if self.checkpoint:
                     self.checkpoint.status = _STATUS_INTERRUPTED
-                    self.checkpoint.experiment_state = "INTERRUPTED"
+                    self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
                     self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
                     save_checkpoint(self.checkpoint, checkpoint_path)
                     logger.warning("💾 Checkpoint saved after interrupt")
@@ -856,9 +955,10 @@ class E2ERunner:
             pass
 
         def action_dir_created() -> None:
-            """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler."""
+            """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler, capture baseline."""
             nonlocal scheduler
             scheduler = self._setup_workspace_and_scheduler()
+            self._capture_experiment_baseline()
 
         def action_repo_cloned() -> None:
             """REPO_CLONED -> TIERS_RUNNING: Group tiers and log them."""

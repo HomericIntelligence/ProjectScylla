@@ -508,13 +508,15 @@ class TestStageCaptureBaseline:
         mock_pipeline.assert_not_called()
         assert stage_context.pipeline_baseline is existing
 
-    def test_loads_from_disk_if_available(self, stage_context: RunContext, tmp_path: Path) -> None:
-        """If pipeline_baseline.json exists in results_dir, loads it without running pipeline."""
+    def test_loads_from_experiment_dir_if_available(
+        self, stage_context: RunContext
+    ) -> None:
+        """If pipeline_baseline.json exists at experiment level, loads it without running pipeline."""
         from scylla.e2e.llm_judge import BuildPipelineResult
 
-        # results_dir = run_dir.parent (subtest dir)
-        results_dir = stage_context.run_dir.parent
-        results_dir.mkdir(parents=True, exist_ok=True)
+        # experiment_dir is the preferred location for the baseline
+        assert stage_context.experiment_dir is not None
+        stage_context.experiment_dir.mkdir(parents=True, exist_ok=True)
 
         baseline_data = BuildPipelineResult(
             language="python",
@@ -524,7 +526,39 @@ class TestStageCaptureBaseline:
             test_passed=True,
             all_passed=True,
         )
-        (results_dir / "pipeline_baseline.json").write_text(json.dumps(baseline_data.model_dump()))
+        (stage_context.experiment_dir / "pipeline_baseline.json").write_text(
+            json.dumps(baseline_data.model_dump())
+        )
+
+        with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
+            stage_capture_baseline(stage_context)
+
+        mock_pipeline.assert_not_called()
+        assert stage_context.pipeline_baseline is not None
+        assert stage_context.pipeline_baseline.all_passed is True
+
+    def test_loads_from_subtest_dir_as_backward_compat(
+        self, stage_context: RunContext
+    ) -> None:
+        """If no experiment-level baseline but subtest-level exists, loads it (backward compat)."""
+        from scylla.e2e.llm_judge import BuildPipelineResult
+
+        # Ensure experiment_dir has NO baseline (simulate old checkpoint)
+        assert stage_context.experiment_dir is not None
+        stage_context.experiment_dir.mkdir(parents=True, exist_ok=True)
+
+        subtest_dir = stage_context.run_dir.parent
+        subtest_dir.mkdir(parents=True, exist_ok=True)
+
+        baseline_data = BuildPipelineResult(
+            language="python",
+            build_passed=True,
+            build_output="",
+            format_passed=True,
+            test_passed=True,
+            all_passed=True,
+        )
+        (subtest_dir / "pipeline_baseline.json").write_text(json.dumps(baseline_data.model_dump()))
 
         with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
             stage_capture_baseline(stage_context)
@@ -534,7 +568,7 @@ class TestStageCaptureBaseline:
         assert stage_context.pipeline_baseline.all_passed is True
 
     def test_runs_pipeline_and_saves_if_not_cached(self, stage_context: RunContext) -> None:
-        """If no cached baseline, runs pipeline and saves to disk."""
+        """If no cached baseline anywhere, runs pipeline and saves to subtest dir."""
         from scylla.e2e.llm_judge import BuildPipelineResult
 
         mock_result = BuildPipelineResult(
@@ -545,14 +579,18 @@ class TestStageCaptureBaseline:
             test_passed=False,
             all_passed=False,
         )
-        results_dir = stage_context.run_dir.parent
-        results_dir.mkdir(parents=True, exist_ok=True)
+        # Ensure both experiment_dir and subtest_dir exist but have no baseline
+        assert stage_context.experiment_dir is not None
+        stage_context.experiment_dir.mkdir(parents=True, exist_ok=True)
+        subtest_dir = stage_context.run_dir.parent
+        subtest_dir.mkdir(parents=True, exist_ok=True)
 
         with patch("scylla.e2e.llm_judge._run_build_pipeline", return_value=mock_result):
             stage_capture_baseline(stage_context)
 
         assert stage_context.pipeline_baseline is mock_result
-        saved_path = results_dir / "pipeline_baseline.json"
+        # Saved to subtest dir when running inline
+        saved_path = subtest_dir / "pipeline_baseline.json"
         assert saved_path.exists()
         saved_data = json.loads(saved_path.read_text())
         assert saved_data["all_passed"] is False

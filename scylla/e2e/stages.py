@@ -269,9 +269,11 @@ def stage_commit_config(ctx: RunContext) -> None:
 def stage_capture_baseline(ctx: RunContext) -> None:
     """CONFIG_COMMITTED -> BASELINE_CAPTURED: Capture pipeline baseline.
 
-    Loads from checkpoint if already captured, otherwise runs build pipeline.
-    Only meaningful for the first run; subsequent runs reuse ctx.pipeline_baseline
-    which is shared across runs in SubTestExecutor.
+    Load order (first match wins):
+    1. ctx.pipeline_baseline already set — skip (shared by runs in SubTestExecutor)
+    2. <experiment_dir>/pipeline_baseline.json — experiment-level baseline (preferred)
+    3. <subtest_dir>/pipeline_baseline.json — backward-compat for old checkpoints
+    4. Run inline (should not happen when _capture_experiment_baseline ran first)
 
     Args:
         ctx: Run context (mutates ctx.pipeline_baseline)
@@ -283,21 +285,25 @@ def stage_capture_baseline(ctx: RunContext) -> None:
         # Already captured by a previous run in this subtest — skip
         return
 
-    # results_dir is run_dir.parent (subtest dir)
-    results_dir = ctx.run_dir.parent
+    # Try experiment-level baseline first (written by _capture_experiment_baseline)
+    if ctx.experiment_dir is not None:
+        ctx.pipeline_baseline = _load_pipeline_baseline(ctx.experiment_dir)
 
-    # Try to load from checkpoint first
-    ctx.pipeline_baseline = _load_pipeline_baseline(results_dir)
+    if ctx.pipeline_baseline is None:
+        # Backward compat: check subtest-level baseline from older checkpoints
+        subtest_dir = ctx.run_dir.parent
+        ctx.pipeline_baseline = _load_pipeline_baseline(subtest_dir)
 
     if ctx.pipeline_baseline is None:
         from scylla.e2e.llm_judge import _run_build_pipeline
 
-        logger.info("Capturing pipeline baseline before agent runs")
+        logger.info("Capturing pipeline baseline inline (experiment-level baseline unavailable)")
         ctx.pipeline_baseline = _run_build_pipeline(
             workspace=ctx.workspace,
             language=ctx.config.language,
         )
-        _save_pipeline_baseline(results_dir, ctx.pipeline_baseline)
+        # Save at subtest level for this run's use
+        _save_pipeline_baseline(ctx.run_dir.parent, ctx.pipeline_baseline)
 
         baseline_status = "ALL PASSED ✓" if ctx.pipeline_baseline.all_passed else "SOME FAILED ✗"
         logger.info(f"Pipeline baseline: {baseline_status}")
