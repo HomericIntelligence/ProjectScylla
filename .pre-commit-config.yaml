@@ -84,6 +84,13 @@ repos:
         language: system
         files: ^config/tiers/.*\.yaml$
         pass_filenames: false
+      - id: check-unit-test-structure
+        name: Check Unit Test Structure
+        description: Fails if any test_*.py file exists directly under tests/unit/ (enforces sub-package mirroring convention)
+        entry: pixi run python scripts/check_unit_test_structure.py
+        language: system
+        files: ^tests/unit/.*\.py$
+        pass_filenames: false
       - id: audit-doc-policy
         name: Audit Doc Policy Violations
         description: Fails if any markdown file contains command examples that violate CLAUDE.md policies
