@@ -687,6 +687,69 @@ class TestModelConfigOrphanValidation:
         assert not any("_my-fixture.yaml" in r.message for r in caplog.records)
 
 
+class TestTierConfigOrphanValidation:
+    """Integration tests for orphan tier config detection via load_all_tiers()."""
+
+    def _make_tier_yaml(self, path: Path, tier: str, name: str = "Test Tier") -> None:
+        path.write_text(f"tier: {tier}\nname: {name}\n")
+
+    def test_load_all_tiers_warns_unreferenced(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """load_all_tiers() logs WARNING for tier configs not referenced anywhere."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tmp_path / "tests").mkdir()
+
+        self._make_tier_yaml(tiers_dir / "t5.yaml", "t5")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            tiers = loader.load_all_tiers()
+
+        assert "t5" in tiers
+        assert any("t5.yaml" in r.message for r in caplog.records)
+
+    def test_load_all_tiers_no_warn_referenced(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """load_all_tiers() logs no orphan warning when tier is referenced."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        config_dir = tmp_path / "config"
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+
+        self._make_tier_yaml(tiers_dir / "t3.yaml", "t3")
+
+        # Reference the tier in a config YAML
+        (config_dir / "experiment.yaml").write_text("tier: t3\nruns: 5\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            tiers = loader.load_all_tiers()
+
+        assert "t3" in tiers
+        # No orphan warnings expected
+        assert not any("t3.yaml" in r.message for r in caplog.records)
+
+    def test_load_all_tiers_skips_test_fixtures(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """load_all_tiers() never emits orphan warnings for _-prefixed fixtures."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tmp_path / "tests").mkdir()
+
+        self._make_tier_yaml(tiers_dir / "_my-fixture.yaml", "t0")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            loader.load_all_tiers()
+
+        assert not any("_my-fixture.yaml" in r.message for r in caplog.records)
+
+
 class TestLoadTierNormalizationParametrized:
     """Parametrized tests for load_tier() normalization edge cases.
 
