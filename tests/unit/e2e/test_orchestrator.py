@@ -308,9 +308,9 @@ output:
             patch.object(
                 orchestrator.loader.__class__, "_load_yaml", wraps=orchestrator.loader._load_yaml
             ),
-            patch("scylla.executor.workspace.clone_repo"),
+            patch("scylla.e2e.orchestrator.clone_repo"),
         ):
-            with patch("scylla.executor.workspace.checkout_hash"):
+            with patch("scylla.e2e.orchestrator.checkout_hash"):
                 result = orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
@@ -342,8 +342,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.9, "grade": "A"})
 
-        with patch("scylla.executor.workspace.clone_repo"):
-            with patch("scylla.executor.workspace.checkout_hash"):
+        with patch("scylla.e2e.orchestrator.clone_repo"):
+            with patch("scylla.e2e.orchestrator.checkout_hash"):
                 orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
@@ -381,8 +381,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.8, "grade": "B"})
 
-        with patch("scylla.executor.workspace.clone_repo"):
-            with patch("scylla.executor.workspace.checkout_hash"):
+        with patch("scylla.e2e.orchestrator.clone_repo"):
+            with patch("scylla.e2e.orchestrator.checkout_hash"):
                 results = orchestrator.run_test(
                     test_id="001-test",
                     models=["test-model"],
@@ -416,8 +416,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": False, "score": 0.3, "grade": "F"})
 
-        with patch("scylla.executor.workspace.clone_repo"):
-            with patch("scylla.executor.workspace.checkout_hash"):
+        with patch("scylla.e2e.orchestrator.clone_repo"):
+            with patch("scylla.e2e.orchestrator.checkout_hash"):
                 result = orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
@@ -448,8 +448,8 @@ output:
         )
         orchestrator.set_judge(lambda **k: {"passed": True, "score": 0.80, "grade": "B"})
 
-        with patch("scylla.executor.workspace.clone_repo"):
-            with patch("scylla.executor.workspace.checkout_hash"):
+        with patch("scylla.e2e.orchestrator.clone_repo"):
+            with patch("scylla.e2e.orchestrator.checkout_hash"):
                 result = orchestrator.run_single(
                     test_id="001-test",
                     model_id="test-model",
