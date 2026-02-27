@@ -508,10 +508,12 @@ class TestStageCaptureBaseline:
         mock_pipeline.assert_not_called()
         assert stage_context.pipeline_baseline is existing
 
-    def test_loads_from_experiment_dir_if_available(
-        self, stage_context: RunContext
-    ) -> None:
-        """If pipeline_baseline.json exists at experiment level, loads it without running pipeline."""
+    def test_loads_from_experiment_dir_if_available(self, stage_context: RunContext) -> None:
+        """Load pipeline baseline from experiment dir without re-running pipeline.
+
+        Checks that if pipeline_baseline.json exists at experiment level, it is loaded
+        instead of running the pipeline again.
+        """
         from scylla.e2e.llm_judge import BuildPipelineResult
 
         # experiment_dir is the preferred location for the baseline
@@ -537,9 +539,7 @@ class TestStageCaptureBaseline:
         assert stage_context.pipeline_baseline is not None
         assert stage_context.pipeline_baseline.all_passed is True
 
-    def test_loads_from_subtest_dir_as_backward_compat(
-        self, stage_context: RunContext
-    ) -> None:
+    def test_loads_from_subtest_dir_as_backward_compat(self, stage_context: RunContext) -> None:
         """If no experiment-level baseline but subtest-level exists, loads it (backward compat)."""
         from scylla.e2e.llm_judge import BuildPipelineResult
 

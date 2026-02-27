@@ -349,9 +349,7 @@ class E2ERunner:
                     update={"max_subtests": _cli_ephemeral["max_subtests"]}
                 )
                 non_none_rest = {
-                    k: v
-                    for k, v in _cli_ephemeral.items()
-                    if k != "max_subtests" and v is not None
+                    k: v for k, v in _cli_ephemeral.items() if k != "max_subtests" and v is not None
                 }
                 if non_none_rest:
                     self.config = self.config.model_copy(update=non_none_rest)
@@ -437,8 +435,7 @@ class E2ERunner:
                                     _config_subs = {s.id for s in _tc.subtests}
                                     if self.config.max_subtests is not None:
                                         _config_subs = {
-                                            s.id
-                                            for s in _tc.subtests[: self.config.max_subtests]
+                                            s.id for s in _tc.subtests[: self.config.max_subtests]
                                         }
                                     _ckpt_subs = set(
                                         self.checkpoint.subtest_states.get(tier_id_str, {}).keys()
@@ -455,7 +452,7 @@ class E2ERunner:
                                     # If so, reset tier to config_loaded so action_config_loaded()
                                     # re-runs the subtests. subtests_running is the "select best"
                                     # phase and requires completed subtest results — it must NOT
-                                    # be used when runs are still mid-execution (e.g. replay_generated).
+                                    # be used when runs are mid-execution (e.g. replay_generated).
                                     _any_incomplete = any(
                                         self._subtest_has_incomplete_runs(tier_id_str, sub_id)
                                         for sub_id in self.checkpoint.subtest_states.get(
@@ -473,7 +470,8 @@ class E2ERunner:
                                                     sub_id
                                                 ] = "runs_in_progress"
                                     else:
-                                        self.checkpoint.tier_states[tier_id_str] = "subtests_running"
+                                        tier_states = self.checkpoint.tier_states
+                                        tier_states[tier_id_str] = "subtests_running"
 
                     save_checkpoint(self.checkpoint, checkpoint_path)
 
@@ -493,8 +491,10 @@ class E2ERunner:
         return self.experiment_dir / "checkpoint.json"
 
     def _check_tiers_need_execution(self, cli_tiers: list[TierID]) -> set[str]:
-        """Return tier IDs that need execution: new tiers, tiers with incomplete runs,
-        or tiers with subtests missing from the checkpoint (e.g. max_subtests expanded).
+        """Return tier IDs that need execution.
+
+        New tiers, tiers with incomplete runs, or tiers with subtests missing from
+        the checkpoint (e.g. max_subtests expanded).
 
         Args:
             cli_tiers: Tiers requested on the CLI for this invocation.
@@ -538,8 +538,7 @@ class E2ERunner:
                 config_subtests = {s.id for s in tier_config.subtests}
                 if self.config.max_subtests is not None:
                     config_subtests = {
-                        s.id
-                        for s in tier_config.subtests[: self.config.max_subtests]
+                        s.id for s in tier_config.subtests[: self.config.max_subtests]
                     }
                 checkpoint_subtests = set(self.checkpoint.subtest_states.get(tid, {}).keys())
                 if config_subtests - checkpoint_subtests:
@@ -635,6 +634,7 @@ class E2ERunner:
         # Create a temporary worktree so the baseline runs on a clean repo state
         worktree_path = self.experiment_dir / "_baseline_worktree"
         branch_name = f"baseline_{self.config.experiment_id[:8]}"
+        assert self.workspace_manager is not None  # noqa: S101
         try:
             self.workspace_manager.create_worktree(worktree_path)
             logger.info(f"Capturing experiment-level pipeline baseline at {worktree_path}")
@@ -649,7 +649,7 @@ class E2ERunner:
             logger.warning(f"Failed to capture experiment-level baseline: {e}")
         finally:
             try:
-                self.workspace_manager.remove_worktree(worktree_path, branch_name)
+                self.workspace_manager.cleanup_worktree(worktree_path, branch_name)
             except Exception as cleanup_err:
                 logger.debug(f"Baseline worktree cleanup warning: {cleanup_err}")
 
