@@ -398,9 +398,11 @@ class TestHandleExperimentInterrupt:
     def test_sets_experiment_state_to_interrupted(
         self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock, tmp_path: Path
     ) -> None:
-        """After interrupt, checkpoint.experiment_state is also set to 'INTERRUPTED'.
+        """After interrupt, checkpoint.experiment_state is set to lowercase 'interrupted'.
 
-        Regression: previously only status was set, leaving experiment_state stale.
+        Regression: previously written as 'INTERRUPTED' (uppercase), which caused STEP 3
+        in _initialize_or_resume_experiment to skip the state reset on resume (it only
+        matched lowercase 'interrupted').
         """
         from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
 
@@ -421,9 +423,9 @@ class TestHandleExperimentInterrupt:
         runner._handle_experiment_interrupt(checkpoint_path)
 
         updated = load_checkpoint(checkpoint_path)
-        assert updated.experiment_state == "INTERRUPTED", (
-            "experiment_state must be set to 'INTERRUPTED' alongside status. "
-            "Without this, the state machine and checkpoint status field diverge."
+        assert updated.experiment_state == "interrupted", (
+            "experiment_state must be lowercase 'interrupted' so STEP 3 in "
+            "_initialize_or_resume_experiment matches it and resets the state on resume."
         )
 
     def test_does_nothing_when_checkpoint_missing(
@@ -1217,6 +1219,7 @@ class TestInitializeOrResumeExperimentFailedReset:
         assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"
 
 
+
 class TestLogCheckpointResumeGuard:
     """Tests for the RuntimeError guard in _log_checkpoint_resume."""
 
@@ -1250,3 +1253,167 @@ class TestInitializeOrResumeExperimentGuard:
                 with patch.object(runner, "_write_pid_file"):
                     with pytest.raises(RuntimeError, match=r"experiment_dir"):
                         runner._initialize_or_resume_experiment()
+
+
+class TestInitializeOrResumeExperimentMaxSubtests:
+    """Tests that _initialize_or_resume_experiment handles max_subtests correctly on resume."""
+
+    def test_resume_clears_max_subtests_when_cli_provides_none(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """CLI max_subtests=None clears a saved max_subtests value on resume.
+
+        Scenario: first run used --max-subtests 2 (saved to checkpoint config).
+        Second run omits --max-subtests (CLI provides None). After resume,
+        config.max_subtests must be None (no limit), not the saved 2.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig
+
+        # CLI config has no max_subtests (None)
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+            max_subtests=None,
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        # Saved config has max_subtests=2
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+            max_subtests=2,
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        # max_subtests must be None (cleared by CLI None)
+        assert runner.config.max_subtests is None, (
+            "CLI max_subtests=None must override the saved max_subtests=2 on resume. "
+            "Without this, a second run without --max-subtests would be capped at the "
+            "saved value."
+        )
+
+    def test_resume_detects_missing_subtests_and_resets_tier_to_pending(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Tier resets to 'pending' when config has subtests absent from checkpoint.
+
+        Scenario: first run used --max-subtests 2 → checkpoint has T0/00, T0/01.
+        Second run omits --max-subtests → config has T0/00..T0/N-1.
+        check_tiers_need_execution detects missing subtests, tier state resets
+        from 'complete' to 'pending' so action_pending() reloads the full list.
+        """
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+        from scylla.e2e.models import ExperimentConfig, SubTestConfig, TierConfig, TierID
+
+        # CLI config has no max_subtests (None) — wants all subtests
+        cli_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+            max_subtests=None,
+        )
+        runner = E2ERunner(cli_config, Path("/tmp/tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+
+        saved_config = ExperimentConfig(
+            experiment_id="test-exp",
+            task_repo="https://github.com/test/repo",
+            task_commit="abc123",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+        saved_config.save(config_dir / "experiment.json")
+
+        # Checkpoint has only 2 subtests (simulating --max-subtests 2 was used)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(saved_config),
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated", "01": "aggregated"}},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="completed",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        # tier_manager returns 4 subtests (more than the 2 in checkpoint)
+        full_tier_config = TierConfig(
+            tier_id=TierID.T0,
+            subtests=[
+                SubTestConfig(id="00", name="Sub 00", description=""),
+                SubTestConfig(id="01", name="Sub 01", description=""),
+                SubTestConfig(id="02", name="Sub 02", description=""),
+                SubTestConfig(id="03", name="Sub 03", description=""),
+            ],
+        )
+        runner.tier_manager = MagicMock()
+        runner.tier_manager.load_tier_config.return_value = full_tier_config
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
+
+        assert runner.checkpoint is not None
+        # Experiment must be reset so missing subtests can execute
+        assert runner.checkpoint.experiment_state == "tiers_running"
+        # T0 must be reset to 'pending' (not 'subtests_running') so action_pending()
+        # reloads the full subtest list
+        assert runner.checkpoint.tier_states.get("T0") == "pending", (
+            "T0 must be reset to 'pending' when config subtests exceed checkpoint subtests, "
+            "so that action_pending() re-runs with the full subtest list."
+        )

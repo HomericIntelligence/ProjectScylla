@@ -98,8 +98,10 @@ class ResumeManager:
     ) -> tuple[ExperimentConfig, E2ECheckpoint]:
         """Restore ephemeral CLI args over checkpoint-loaded config.
 
-        Only non-None CLI values are applied, so omitting a flag on the CLI
-        keeps the saved value from the checkpoint config.
+        max_subtests is always restored from the CLI value: None means "no limit"
+        (clears any saved value), a positive int caps subtests.  All other ephemeral
+        fields are only restored when the CLI explicitly provides a non-None value,
+        so omitting a flag keeps the saved value from the checkpoint config.
 
         Args:
             cli_ephemeral: Dict of ephemeral CLI field names to values.
@@ -110,9 +112,18 @@ class ResumeManager:
             Updated (config, checkpoint) tuple.
 
         """
-        non_none = {k: v for k, v in cli_ephemeral.items() if v is not None}
-        if non_none:
-            self.config = self.config.model_copy(update=non_none)
+        # max_subtests is always restored (None = clear saved limit)
+        self.config = self.config.model_copy(
+            update={"max_subtests": cli_ephemeral["max_subtests"]}
+        )
+        # All other ephemeral fields: only restore when explicitly set on CLI
+        non_none_rest = {
+            k: v
+            for k, v in cli_ephemeral.items()
+            if k != "max_subtests" and v is not None
+        }
+        if non_none_rest:
+            self.config = self.config.model_copy(update=non_none_rest)
         return self.config, self.checkpoint
 
     def reset_failed_states(self) -> tuple[ExperimentConfig, E2ECheckpoint]:
@@ -199,21 +210,46 @@ class ResumeManager:
                     "best_selected",
                     "reports_generated",
                 ):
-                    self.checkpoint.tier_states[tier_id_str] = "subtests_running"
-                    for sub_id, sub_state in self.checkpoint.subtest_states.get(
-                        tier_id_str, {}
-                    ).items():
-                        if sub_state in ("aggregated", "runs_complete"):
-                            if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
-                                self.checkpoint.subtest_states[tier_id_str][sub_id] = (
-                                    "runs_in_progress"
-                                )
+                    # Detect if this tier has subtests missing from the checkpoint.
+                    # If so, reset to 'pending' so action_pending() re-runs and reloads
+                    # the full subtest list with the new max_subtests value.
+                    _has_missing_subtests = False
+                    try:
+                        _tc = self.tier_manager.load_tier_config(
+                            TierID(tier_id_str), self.config.skip_agent_teams
+                        )
+                        _config_subs = {s.id for s in _tc.subtests}
+                        if self.config.max_subtests is not None:
+                            _config_subs = {
+                                s.id for s in _tc.subtests[: self.config.max_subtests]
+                            }
+                        _ckpt_subs = set(
+                            self.checkpoint.subtest_states.get(tier_id_str, {}).keys()
+                        )
+                        _has_missing_subtests = bool(_config_subs - _ckpt_subs)
+                    except Exception:
+                        pass
+
+                    if _has_missing_subtests:
+                        # Reset to pending so action_pending() reloads full subtest list
+                        self.checkpoint.tier_states[tier_id_str] = "pending"
+                    else:
+                        self.checkpoint.tier_states[tier_id_str] = "subtests_running"
+                        for sub_id, sub_state in self.checkpoint.subtest_states.get(
+                            tier_id_str, {}
+                        ).items():
+                            if sub_state in ("aggregated", "runs_complete"):
+                                if self._subtest_has_incomplete_runs(tier_id_str, sub_id):
+                                    self.checkpoint.subtest_states[tier_id_str][sub_id] = (
+                                        "runs_in_progress"
+                                    )
 
         save_checkpoint(self.checkpoint, checkpoint_path)
         return self.config, self.checkpoint
 
     def check_tiers_need_execution(self, cli_tiers: list[TierID]) -> set[str]:
-        """Return tier IDs that need execution: new tiers or tiers with incomplete runs.
+        """Return tier IDs that need execution: new tiers, tiers with incomplete runs,
+        or tiers with subtests missing from the checkpoint (e.g. max_subtests expanded).
 
         Args:
             cli_tiers: Tiers requested on the CLI for this invocation.
@@ -227,9 +263,11 @@ class ResumeManager:
         needs_work: set[str] = set()
         for tier_id in cli_tiers:
             tid = tier_id.value
+            # New tier (not yet in checkpoint)
             if tid not in self.checkpoint.tier_states:
                 needs_work.add(tid)
                 continue
+            # Tier with runs that have not yet reached a terminal state
             for _sub_id, runs in self.checkpoint.run_states.get(tid, {}).items():
                 for state_str in runs.values():
                     try:
@@ -241,6 +279,25 @@ class ResumeManager:
                         break
                 if tid in needs_work:
                     break
+            if tid in needs_work:
+                continue
+            # Subtests present in tier config but absent from checkpoint — this
+            # happens when max_subtests is expanded (or removed) on resume.
+            try:
+                tier_config = self.tier_manager.load_tier_config(
+                    tier_id, self.config.skip_agent_teams
+                )
+                config_subtests = {s.id for s in tier_config.subtests}
+                if self.config.max_subtests is not None:
+                    config_subtests = {
+                        s.id for s in tier_config.subtests[: self.config.max_subtests]
+                    }
+                checkpoint_subtests = set(self.checkpoint.subtest_states.get(tid, {}).keys())
+                if config_subtests - checkpoint_subtests:
+                    needs_work.add(tid)
+            except Exception:
+                # If we can't load tier config, skip this check (don't block execution)
+                pass
         return needs_work
 
     def _subtest_has_incomplete_runs(self, tier_id: str, subtest_id: str) -> bool:
