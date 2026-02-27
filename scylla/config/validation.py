@@ -223,3 +223,43 @@ def validate_model_config_referenced(config_path: Path, search_roots: list[Path]
         f"Model config '{config_path.name}' is not referenced by any file under "
         f"{[str(r) for r in search_roots]}. It may be orphaned."
     ]
+
+
+def validate_tier_config_referenced(config_path: Path, search_roots: list[Path]) -> list[str]:
+    """Warn if tier config file is not referenced by any file under search_roots.
+
+    Scans .yaml and .py files under each root for the config's filename stem.
+    Skips _-prefixed test fixtures. Does not count the config file itself as
+    a reference.
+
+    Args:
+        config_path: Path to the tier config file
+        search_roots: Directories to search for references
+
+    Returns:
+        List of warning messages (empty if referenced or a test fixture)
+
+    """
+    stem = config_path.stem
+
+    # Skip test fixtures
+    if stem.startswith("_"):
+        return []
+
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for ext_pattern in _REFERENCE_EXTENSIONS:
+            for f in root.rglob(ext_pattern):
+                if f == config_path:
+                    continue  # don't count self as reference
+                try:
+                    if stem in f.read_text(encoding="utf-8", errors="ignore"):
+                        return []
+                except (OSError, PermissionError):
+                    continue
+
+    return [
+        f"Tier config '{config_path.name}' is not referenced by any file under "
+        f"{[str(r) for r in search_roots]}. It may be orphaned."
+    ]

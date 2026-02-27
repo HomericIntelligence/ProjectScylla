@@ -26,6 +26,7 @@ from .validation import (
     validate_filename_model_id_consistency,
     validate_filename_tier_consistency,
     validate_model_config_referenced,
+    validate_tier_config_referenced,
 )
 
 logger = logging.getLogger(__name__)
@@ -269,6 +270,15 @@ class ConfigLoader:
                 )
 
             result[expected] = tier_config
+
+        # Check for orphaned tier configs (not referenced by config/ or tests/)
+        search_roots = [self.base_path / "config", self.base_path / "tests"]
+        for tier_file in sorted(tiers_dir.glob("*.yaml")):
+            if tier_file.name.startswith("_"):
+                continue
+            orphan_warnings = validate_tier_config_referenced(tier_file, search_roots)
+            for warning in orphan_warnings:
+                logger.warning(warning)
 
         return result
 

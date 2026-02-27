@@ -11,6 +11,7 @@ from scylla.config.validation import (
     validate_filename_model_id_consistency,
     validate_model_config_referenced,
     validate_name_model_family_consistency,
+    validate_tier_config_referenced,
 )
 
 
@@ -331,3 +332,69 @@ class TestValidateModelConfigReferenced:
         warnings = validate_model_config_referenced(config_path, [root_a, root_b])
 
         assert warnings == []
+
+
+class TestValidateTierConfigReferenced:
+    """Tests for validate_tier_config_referenced()."""
+
+    def test_returns_warning_when_not_referenced(self, tmp_path: Path) -> None:
+        """Warning returned when stem is not found in any searched file."""
+        config_path = tmp_path / "t5.yaml"
+        search_root = tmp_path / "config"
+        search_root.mkdir()
+
+        warnings = validate_tier_config_referenced(config_path, [search_root])
+
+        assert len(warnings) == 1
+        assert "t5" in warnings[0]
+
+    def test_no_warning_when_referenced_in_yaml(self, tmp_path: Path) -> None:
+        """No warning when the stem is referenced in a YAML file."""
+        config_path = tmp_path / "t3.yaml"
+        search_root = tmp_path / "config"
+        search_root.mkdir()
+        (search_root / "experiment.yaml").write_text("tier: t3\nruns: 5\n")
+
+        warnings = validate_tier_config_referenced(config_path, [search_root])
+
+        assert warnings == []
+
+    def test_no_warning_when_referenced_in_python(self, tmp_path: Path) -> None:
+        """No warning when the stem is referenced in a Python file."""
+        config_path = tmp_path / "t1.yaml"
+        search_root = tmp_path / "src"
+        search_root.mkdir()
+        (search_root / "runner.py").write_text('TIER = "t1"\n')
+
+        warnings = validate_tier_config_referenced(config_path, [search_root])
+
+        assert warnings == []
+
+    def test_test_fixture_skipped(self, tmp_path: Path) -> None:
+        """Test fixtures (prefixed with _) return empty warnings."""
+        config_path = tmp_path / "_test-tier.yaml"
+        search_root = tmp_path / "config"
+        search_root.mkdir()
+
+        warnings = validate_tier_config_referenced(config_path, [search_root])
+
+        assert warnings == []
+
+    def test_self_reference_not_counted(self, tmp_path: Path) -> None:
+        """The config file itself is not counted as a reference."""
+        config_path = tmp_path / "t2.yaml"
+        config_path.write_text("tier: t2\nname: Tooling\n")
+
+        warnings = validate_tier_config_referenced(config_path, [tmp_path])
+
+        assert len(warnings) == 1
+
+    def test_nonexistent_search_root_skipped(self, tmp_path: Path) -> None:
+        """Non-existent search root directories are silently skipped."""
+        config_path = tmp_path / "t4.yaml"
+        nonexistent = tmp_path / "does-not-exist"
+
+        # Should not raise, returns a warning since nothing found
+        warnings = validate_tier_config_referenced(config_path, [nonexistent])
+
+        assert len(warnings) == 1
