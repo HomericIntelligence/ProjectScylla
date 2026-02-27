@@ -4,6 +4,7 @@ Note: These are basic smoke tests to ensure tables can be generated.
 Full validation of table content is deferred to integration tests.
 """
 
+import numpy as np
 import pytest
 
 
@@ -693,6 +694,95 @@ def test_table09_calculation_verification():
 
     # Verify latex has same information
     assert "exp001" in latex or len(latex) > 100
+
+
+def test_table02_power_column_present(sample_runs_df):
+    """Test that Power column is present in Table 2 markdown and LaTeX output."""
+    from scylla.analysis.tables import table02_tier_comparison
+
+    markdown, latex = table02_tier_comparison(sample_runs_df)
+
+    assert "Power" in markdown
+    assert "Power" in latex
+
+
+def test_table02b_power_column_present(sample_runs_df):
+    """Test that Power column is present in Table 2b markdown and LaTeX output."""
+    from scylla.analysis.tables import table02b_impl_rate_comparison
+
+    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
+
+    assert "Power" in markdown
+    assert "Power" in latex
+
+
+def test_table02_power_is_numeric(sample_runs_df):
+    """Test that power values in Table 2 are floating-point parseable.
+
+    The mock_power_simulations autouse fixture returns 0.8 for mann_whitney_power,
+    so all rows with N >= 5 should show '0.800'.
+    """
+    from scylla.analysis.tables import table02_tier_comparison
+
+    markdown, _latex = table02_tier_comparison(sample_runs_df)
+
+    # The mocked mann_whitney_power returns 0.8, so we expect 0.800 in output
+    assert "0.800" in markdown
+
+
+def test_table02_power_nan_for_small_samples():
+    """Test that '—' sentinel appears for small-sample rows (N < 5)."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table02_tier_comparison
+
+    # 3 runs per tier per model — below the N >= 5 guard
+    np.random.seed(0)
+    data = []
+    for model in ["Model A"]:
+        for tier in ["T0", "T1"]:
+            for run in range(1, 4):
+                data.append(
+                    {
+                        "agent_model": model,
+                        "tier": tier,
+                        "subtest": "00",
+                        "run_number": run,
+                        "passed": int(np.random.choice([0, 1])),
+                        "score": float(np.random.uniform(0.3, 0.9)),
+                        "impl_rate": float(np.random.uniform(0.3, 0.9)),
+                        "grade": "B",
+                        "cost_usd": 0.05,
+                        "input_tokens": 1000,
+                        "output_tokens": 500,
+                        "cache_creation_tokens": 0,
+                        "cache_read_tokens": 0,
+                        "total_tokens": 1500,
+                        "duration_seconds": 10.0,
+                        "agent_duration_seconds": 8.0,
+                        "judge_duration_seconds": 2.0,
+                        "consistency": 0.9,
+                        "exit_code": 0,
+                        "experiment": "test-exp",
+                    }
+                )
+    small_df = pd.DataFrame(data)
+
+    markdown, _latex = table02_tier_comparison(small_df)
+
+    # All transitions have N=3 < 5, so power should be '—'
+    assert "—" in markdown
+
+
+def test_table02_omnibus_power_in_footer(sample_runs_df):
+    """Test that omnibus KW power value appears in Table 2 footer section."""
+    from scylla.analysis.tables import table02_tier_comparison
+
+    markdown, latex = table02_tier_comparison(sample_runs_df)
+
+    # The mocked kruskal_wallis_power returns 0.75
+    assert "power=0.750" in markdown
+    assert "power=0.750" in latex
 
 
 def test_table10_calculation_verification():

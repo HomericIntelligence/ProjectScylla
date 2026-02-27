@@ -18,13 +18,15 @@ def mock_power_simulations():
     Tests that call compute_statistical_results() only need to assert the *structure*
     of the output (keys, types, list membership) — the exact power values are irrelevant.
     """
-    # Patch in scripts.export_data's namespace (it uses `from scylla.analysis.stats import ...`)
-    # and also in scylla.analysis.stats for any direct callers
+    # Patch in scylla.analysis.stats for any direct callers, and in
+    # scylla.analysis.tables.comparison which imports these functions directly.
+    # Note: export_data (scripts/export_data.py) is not on the Python path for unit tests,
+    # so we do not patch its namespace here.
     with (
-        patch("scripts.export_data.mann_whitney_power", return_value=0.8),
-        patch("scripts.export_data.kruskal_wallis_power", return_value=0.75),
         patch("scylla.analysis.stats.mann_whitney_power", return_value=0.8),
         patch("scylla.analysis.stats.kruskal_wallis_power", return_value=0.75),
+        patch("scylla.analysis.tables.comparison.mann_whitney_power", return_value=0.8),
+        patch("scylla.analysis.tables.comparison.kruskal_wallis_power", return_value=0.75),
     ):
         yield
 
