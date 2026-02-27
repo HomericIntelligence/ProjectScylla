@@ -45,6 +45,10 @@ Tests cover:
 - --filter-run passed to reset_runs_for_from_state
 - --prompt override flows to ExperimentConfig
 - --retry-errors in single mode resets failed runs via reset_runs_for_from_state
+- --tiers T0 T2 flows tiers_to_run to ExperimentConfig
+- --max-subtests N flows max_subtests to ExperimentConfig
+- cmd_repair skips existing completed_runs entries (no overwrite)
+- cmd_repair continues past corrupt run_result.json without crashing
 """
 
 from __future__ import annotations
@@ -4000,3 +4004,214 @@ class TestDeriveRunResult:
         assert result == 0
         out = capsys.readouterr().out
         assert "in_progress" in out
+
+
+# ---------------------------------------------------------------------------
+# --tiers and --max-subtests flow to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
+class TestCmdRunTiersAndMaxSubtests:
+    """Tests that --tiers and --max-subtests CLI args flow through to ExperimentConfig."""
+
+    def _make_test_dir(self, path: Path) -> None:
+        """Create a minimal test directory with test.yaml and prompt.md."""
+        import yaml
+
+        path.mkdir(parents=True, exist_ok=True)
+        test_yaml = {
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "experiment_id": "test-exp",
+            "timeout_seconds": 3600,
+            "language": "python",
+        }
+        (path / "test.yaml").write_text(yaml.dump(test_yaml))
+        (path / "prompt.md").write_text("test prompt")
+
+    def test_tiers_flag_flows_to_config(self, tmp_path: Path) -> None:
+        """--tiers T0 T2 sets config.tiers_to_run to [TierID.T0, TierID.T2]."""
+        from scylla.e2e.models import TierID
+
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        from manage_experiment import cmd_run
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--tiers",
+                "T0",
+                "T2",
+                "--skip-judge-validation",
+            ]
+        )
+
+        captured_configs: list[Any] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].tiers_to_run == [TierID.T0, TierID.T2]
+
+    def test_max_subtests_flag_flows_to_config(self, tmp_path: Path) -> None:
+        """--max-subtests 3 sets config.max_subtests to 3."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        from manage_experiment import cmd_run
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--max-subtests",
+                "3",
+                "--skip-judge-validation",
+            ]
+        )
+
+        captured_configs: list[Any] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].max_subtests == 3
+
+    def test_default_tiers_flow_to_config(self, tmp_path: Path) -> None:
+        """Without --tiers, config.tiers_to_run is non-empty (default tier list)."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        from manage_experiment import cmd_run
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        captured_configs: list[Any] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert len(captured_configs[0].tiers_to_run) > 0
+
+
+# ---------------------------------------------------------------------------
+# cmd_repair() edge cases: skip existing entries and corrupt JSON handling
+# ---------------------------------------------------------------------------
+
+
+class TestCmdRepairEdgeCases:
+    """Tests for cmd_repair() edge cases not covered by TestCmdRepair."""
+
+    def _make_checkpoint_file(
+        self, path: Path, run_states: dict[str, Any], completed_runs: dict[str, Any]
+    ) -> Path:
+        """Write a minimal checkpoint JSON file."""
+        checkpoint_data = {
+            "version": "3.1",
+            "experiment_id": "test-exp",
+            "experiment_dir": str(path),
+            "config_hash": "abc123",
+            "started_at": "2024-01-01T00:00:00+00:00",
+            "last_updated_at": "2024-01-01T00:00:00+00:00",
+            "status": "interrupted",
+            "run_states": run_states,
+            "completed_runs": completed_runs,
+        }
+        checkpoint_path = path / "checkpoint.json"
+        checkpoint_path.write_text(json.dumps(checkpoint_data))
+        return checkpoint_path
+
+    def test_repair_skips_existing_completed_run(self, tmp_path: Path) -> None:
+        """cmd_repair does not overwrite an existing completed_runs entry."""
+        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # run_result.json says failed, but checkpoint already has it as passed
+        (run_dir / "run_result.json").write_text(json.dumps({"judge_passed": False}))
+
+        checkpoint_path = self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00-empty": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00-empty": {"1": "passed"}}},
+        )
+
+        parser = build_parser()
+        args = parser.parse_args(["repair", str(checkpoint_path)])
+        result = cmd_repair(args)
+
+        assert result == 0
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        updated = load_checkpoint(checkpoint_path)
+        # Existing "passed" entry must not be overwritten by run_result.json's "failed"
+        assert updated.completed_runs["T0"]["00-empty"][1] == "passed"
+
+    def test_repair_handles_corrupt_run_result_json(self, tmp_path: Path) -> None:
+        """cmd_repair continues past a corrupt run_result.json without crashing."""
+        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # Write invalid JSON
+        (run_dir / "run_result.json").write_text("{ not valid json }")
+
+        checkpoint_path = self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00-empty": {"1": "worktree_cleaned"}}},
+            completed_runs={},
+        )
+
+        parser = build_parser()
+        args = parser.parse_args(["repair", str(checkpoint_path)])
+        result = cmd_repair(args)
+
+        # Must not crash and must return 0
+        assert result == 0
+
+        from scylla.e2e.checkpoint import load_checkpoint
+
+        updated = load_checkpoint(checkpoint_path)
+        # corrupt file means no entry was added
+        assert updated.completed_runs == {}
