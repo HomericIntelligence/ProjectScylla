@@ -285,9 +285,7 @@ class ExperimentStateMachine:
             from scylla.e2e.runner import ShutdownInterruptedError
 
             if isinstance(e, (RateLimitError, ShutdownInterruptedError)):
-                logger.warning(
-                    f"Experiment interrupted in state {self.get_state().value}: {e}"
-                )
+                logger.warning(f"Experiment interrupted in state {self.get_state().value}: {e}")
                 self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
             else:
                 logger.error(f"Experiment failed in state {self.get_state().value}: {e}")
