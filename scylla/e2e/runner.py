@@ -214,7 +214,8 @@ class E2ERunner:
             checkpoint_path: Path to checkpoint.json file
 
         """
-        assert self.checkpoint is not None  # noqa: S101
+        if self.checkpoint is None:
+            raise RuntimeError("checkpoint must be set before logging resume status")
         logger.info(f"📂 Resuming from checkpoint: {checkpoint_path}")
         logger.info(f"   Previously completed: {self.checkpoint.get_completed_run_count()} runs")
 
@@ -426,7 +427,8 @@ class E2ERunner:
         # Write PID file for status monitoring
         self._write_pid_file()
 
-        assert self.experiment_dir is not None  # noqa: S101
+        if self.experiment_dir is None:
+            raise RuntimeError("experiment_dir must be set before getting checkpoint path")
         return self.experiment_dir / "checkpoint.json"
 
     def _check_tiers_need_execution(self, cli_tiers: list[TierID]) -> set[str]:
@@ -503,7 +505,10 @@ class E2ERunner:
         if not hasattr(self, "workspace_manager") or self.workspace_manager is None:
             # Use centralized repos directory for shared clones across experiments
             repos_dir = self.results_base_dir / "repos"
-            assert self.experiment_dir is not None  # noqa: S101
+            if self.experiment_dir is None:
+                raise RuntimeError(
+                    "experiment_dir must be set before initializing workspace manager"
+                )
             self.workspace_manager = WorkspaceManager(
                 experiment_dir=self.experiment_dir,
                 repo_url=self.config.task_repo,
@@ -654,7 +659,10 @@ class E2ERunner:
         """
         if not tier_result.best_subtest:
             return None
-        assert self.experiment_dir is not None  # noqa: S101
+        if self.experiment_dir is None:
+            raise RuntimeError(
+                "experiment_dir must be set before getting baseline for previous tier"
+            )
         subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
         return self.tier_manager.get_baseline_for_subtest(
             tier_id=tier_id,
@@ -871,7 +879,8 @@ class E2ERunner:
 
         def action_tiers_complete() -> None:
             """TIERS_COMPLETE -> REPORTS_GENERATED: Aggregate results and finalize."""
-            assert self.experiment_dir is not None  # noqa: S101
+            if self.experiment_dir is None:
+                raise RuntimeError("experiment_dir must be set before aggregating tier results")
             result = self._aggregate_results(tier_results, start_time)
             self._save_final_results(result)
             self._generate_report(result)
@@ -922,7 +931,8 @@ class E2ERunner:
         # Start heartbeat thread to prevent zombie detection on long runs
         from scylla.e2e.health import HeartbeatThread
 
-        assert self.checkpoint is not None  # noqa: S101
+        if self.checkpoint is None:
+            raise RuntimeError("checkpoint must be set before starting heartbeat thread")
         heartbeat = HeartbeatThread(self.checkpoint, checkpoint_path, interval_seconds=30)
         heartbeat.start()
 
@@ -963,7 +973,8 @@ class E2ERunner:
             start_time=start_time,
         )
 
-        assert self.checkpoint is not None  # noqa: S101
+        if self.checkpoint is None:
+            raise RuntimeError("checkpoint must be set before creating experiment state machine")
         esm = ExperimentStateMachine(self.checkpoint, checkpoint_path)
 
         try:
@@ -1161,7 +1172,8 @@ class E2ERunner:
 
             logger.info(f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests")
 
-            assert self.experiment_dir is not None  # noqa: S101
+            if self.experiment_dir is None:
+                raise RuntimeError("experiment_dir must be set before loading tier config")
             tier_dir = self.experiment_dir / tier_id.value
             tier_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1172,9 +1184,12 @@ class E2ERunner:
 
         def action_config_loaded() -> None:
             """CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests in parallel."""
-            assert tier_ctx.tier_config is not None  # noqa: S101
-            assert tier_ctx.tier_dir is not None  # noqa: S101
-            assert self.experiment_dir is not None  # noqa: S101
+            if tier_ctx.tier_config is None:
+                raise RuntimeError("tier_config must be set before running subtests")
+            if tier_ctx.tier_dir is None:
+                raise RuntimeError("tier_dir must be set before running subtests")
+            if self.experiment_dir is None:
+                raise RuntimeError("experiment_dir must be set before running subtests")
             checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
             subtest_results = run_tier_subtests_parallel(
                 config=self.config,
@@ -1193,7 +1208,8 @@ class E2ERunner:
 
         def action_subtests_running() -> None:
             """SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest."""
-            assert tier_ctx.tier_dir is not None  # noqa: S101
+            if tier_ctx.tier_dir is None:
+                raise RuntimeError("tier_dir must be set before selecting best subtest")
             subtest_results = tier_ctx.subtest_results
 
             selection = select_best_subtest(
@@ -1216,7 +1232,8 @@ class E2ERunner:
             """SUBTESTS_COMPLETE -> BEST_SELECTED: Aggregate token stats, build TierResult."""
             from functools import reduce
 
-            assert tier_ctx.selection is not None  # noqa: S101
+            if tier_ctx.selection is None:
+                raise RuntimeError("selection must be set before aggregating subtest results")
             subtest_results = tier_ctx.subtest_results
             selection = tier_ctx.selection
             start_time = tier_ctx.start_time
@@ -1245,7 +1262,8 @@ class E2ERunner:
 
         def action_best_selected() -> None:
             """BEST_SELECTED -> REPORTS_GENERATED: Save tier result and generate reports."""
-            assert tier_ctx.tier_result is not None  # noqa: S101
+            if tier_ctx.tier_result is None:
+                raise RuntimeError("tier_result must be set before saving reports")
             self._save_tier_result(tier_id, tier_ctx.tier_result)
 
         def action_reports_generated() -> None:

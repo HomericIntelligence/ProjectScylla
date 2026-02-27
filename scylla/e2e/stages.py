@@ -447,7 +447,8 @@ def stage_execute_agent(ctx: RunContext) -> None:
 
     agent_dir = get_agent_dir(ctx.run_dir)
     adapter_config = ctx.adapter_config
-    assert adapter_config is not None  # noqa: S101
+    if adapter_config is None:
+        raise RuntimeError("adapter_config must be set before writing replay script")
     replay_script = agent_dir / "replay.sh"
 
     logger.info(f"[AGENT] Running agent with model[{ctx.config.models[0]}]")
@@ -874,8 +875,10 @@ def stage_finalize_run(ctx: RunContext) -> None:
     """
     from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
 
-    assert ctx.agent_result is not None, "agent_result must be set before finalize_run"  # noqa: S101
-    assert ctx.judgment is not None, "judgment must be set before finalize_run"  # noqa: S101
+    if ctx.agent_result is None:
+        raise RuntimeError("agent_result must be set before finalize_run")
+    if ctx.judgment is None:
+        raise RuntimeError("judgment must be set before finalize_run")
 
     agent_dir = get_agent_dir(ctx.run_dir)
 
@@ -955,9 +958,12 @@ def stage_write_report(ctx: RunContext) -> None:
     """
     from scylla.e2e.run_report import save_run_report, save_run_report_json
 
-    assert ctx.run_result is not None, "run_result must be set before write_report"  # noqa: S101
-    assert ctx.agent_result is not None, "agent_result must be set before write_report"  # noqa: S101
-    assert ctx.judgment is not None, "judgment must be set before write_report"  # noqa: S101
+    if ctx.run_result is None:
+        raise RuntimeError("run_result must be set before write_report")
+    if ctx.agent_result is None:
+        raise RuntimeError("agent_result must be set before write_report")
+    if ctx.judgment is None:
+        raise RuntimeError("judgment must be set before write_report")
 
     token_stats = ctx.run_result.token_stats
 
