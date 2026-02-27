@@ -38,9 +38,11 @@ def test_load_all_experiments_signature():
 
     from scylla.analysis.loader import load_all_experiments
 
-    # Verify function exists
+    # Verify function exists and has expected parameters
     sig = inspect.signature(load_all_experiments)
     assert sig is not None
+    assert "rubric_conflict" in sig.parameters
+    assert sig.parameters["rubric_conflict"].default == "error"
 
 
 def test_validate_numeric_with_valid_values():
