@@ -344,11 +344,13 @@ class TestGetWorkspaceFiles:
         result = _get_workspace_files(Path("/nonexistent"))
         assert result == []
 
-    def test_git_error_returns_empty_list(self, tmp_path: Path) -> None:
+    @patch("subprocess.run")
+    def test_git_error_returns_empty_list(self, mock_run: MagicMock, tmp_path: Path) -> None:
         """Test that git errors return empty list."""
         workspace = tmp_path / "workspace"
         workspace.mkdir()
-        # Not a git repo, should handle gracefully
+        # Simulate git failure (non-zero exit code)
+        mock_run.return_value = MagicMock(returncode=128, stdout="", stderr="not a git repository")
         result = _get_workspace_files(workspace)
         assert result == []
 
