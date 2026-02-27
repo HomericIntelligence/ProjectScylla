@@ -467,7 +467,23 @@ def stage_execute_agent(ctx: RunContext) -> None:
     agent_dir = get_agent_dir(ctx.run_dir)
     adapter_config = ctx.adapter_config
     if adapter_config is None:
-        raise RuntimeError("adapter_config must be set before writing replay script")
+        # Resuming into replay_generated: stage_generate_replay was skipped, so
+        # adapter_config was never set. Reconstruct it from the run context.
+        from scylla.adapters.base import AdapterConfig
+
+        adapter_config = AdapterConfig(
+            model=ctx.config.models[0],
+            prompt_file=ctx.run_dir / "task_prompt.md",
+            workspace=ctx.workspace,
+            output_dir=agent_dir,
+            timeout=ctx.config.timeout_seconds,
+            extra_args=(
+                ["--max-turns", str(ctx.config.max_turns)]
+                if ctx.config.max_turns is not None
+                else []
+            ),
+        )
+        ctx.adapter_config = adapter_config
     replay_script = agent_dir / "replay.sh"
 
     logger.info(f"[AGENT] Running agent with model[{ctx.config.models[0]}]")
