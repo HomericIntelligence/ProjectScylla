@@ -13,6 +13,7 @@ LaTeX Dependencies:
 
 from __future__ import annotations
 
+import math
 from itertools import combinations
 
 import pandas as pd
@@ -25,6 +26,8 @@ from scylla.analysis.stats import (
     compute_cop,
     holm_bonferroni_correction,
     kruskal_wallis,
+    kruskal_wallis_power,
+    mann_whitney_power,
     mann_whitney_u,
 )
 
@@ -71,6 +74,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
     # Compute pairwise comparisons
     rows = []
     omnibus_results = []  # Store omnibus test results for table footer
+    omnibus_powers = []  # Store omnibus KW power per model
 
     for model in sorted(runs_df["agent_model"].unique()):
         model_runs = runs_df[runs_df["agent_model"] == model]
@@ -91,6 +95,14 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
         h_stat, omnibus_p = kruskal_wallis(*tier_groups)
         dof = len(tier_groups) - 1  # Degrees of freedom for Kruskal-Wallis
         omnibus_results.append((model, h_stat, omnibus_p, dof))
+
+        # Compute KW omnibus power (medium reference effect ε² = 0.06)
+        group_sizes = [len(g) for g in tier_groups]
+        if all(n >= 5 for n in group_sizes):
+            kw_power = kruskal_wallis_power(group_sizes, effect_size=0.06)
+        else:
+            kw_power = float("nan")
+        omnibus_powers.append((model, kw_power))
 
         # Step 2: Only proceed to pairwise tests if omnibus is significant
         proceed_to_pairwise = omnibus_p < ALPHA
@@ -128,6 +140,12 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
                 tier1_data[metric_column].dropna(),
             )
 
+            # Post-hoc power (Mann-Whitney) — skip for small samples
+            if n1 >= 5 and n2 >= 5:
+                power = mann_whitney_power(n1, n2, abs(delta))
+            else:
+                power = float("nan")
+
             pairwise_data.append(
                 {
                     "Model": model,
@@ -137,6 +155,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
                     f"{metric_name} Δ": metric_delta,
                     "p_raw": pvalue_raw,
                     "Cliff's δ": delta,
+                    "Power": power,
                 }
             )
 
@@ -162,6 +181,12 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
                 first_data[metric_column].dropna(),
             )
 
+            # Post-hoc power (Mann-Whitney) — skip for small samples
+            if n1 >= 5 and n2 >= 5:
+                power = mann_whitney_power(n1, n2, abs(delta))
+            else:
+                power = float("nan")
+
             pairwise_data.append(
                 {
                     "Model": model,
@@ -171,6 +196,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
                     f"{metric_name} Δ": metric_delta,
                     "p_raw": pvalue_raw,
                     "Cliff's δ": delta,
+                    "Power": power,
                 }
             )
 
@@ -202,30 +228,36 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
     ]
 
     # Add omnibus results to header
+    omnibus_power_map = dict(omnibus_powers)
     md_lines.append("**Omnibus Test Results (Kruskal-Wallis):**")
     for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = "✓ (proceed to pairwise)" if omnibus_p < ALPHA else "✗ (skip pairwise)"
+        kw_power = omnibus_power_map.get(model, float("nan"))
+        power_str = f"{kw_power:.3f}" if not math.isnan(kw_power) else "—"
         md_lines.append(
-            f"- {model}: H({dof})={h_stat:{_FMT_COST}}, p={omnibus_p:{_FMT_PVAL}} {sig_str}"
+            f"- {model}: H({dof})={h_stat:{_FMT_COST}}, p={omnibus_p:{_FMT_PVAL}} {sig_str}, "
+            f"power={power_str}"
         )
     md_lines.append("")
 
     md_lines.append(
         f"| Model | Transition | N (T1, T2) | {metric_name} Δ | p-value | "
-        f"Cliff's δ | Significant? |"
+        f"Cliff's δ | Power | Significant? |"
     )
     md_lines.append(
-        "|-------|------------|------------|-------------|---------|-----------|--------------|"
+        "|-------|------------|------------|-------------|---------|-----------|-------|--------------|"
     )
 
     for _, row in df.iterrows():
         cliffs_delta_val = row["Cliff's δ"]
         n_str = f"({row['N1']}, {row['N2']})"
         pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "—"
+        power_val = row["Power"]
+        power_str = f"{power_val:.3f}" if not math.isnan(power_val) else "—"
 
         md_lines.append(
             f"| {row['Model']} | {row['Transition']} | {n_str} | {row[f'{metric_name} Δ']:+.4f} | "
-            f"{pval_str} | {cliffs_delta_val:+.3f} | {row['Significant']} |"
+            f"{pval_str} | {cliffs_delta_val:+.3f} | {power_str} | {row['Significant']} |"
         )
 
     markdown = "\n".join(md_lines)
@@ -236,10 +268,10 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
         r"\centering",
         rf"\caption{{{table_title}}}",
         rf"\label{{tab:{table_label}}}",
-        r"\begin{tabular}{llrrrrl}",
+        r"\begin{tabular}{llrrrrrl}",
         r"\toprule",
         rf"Model & Transition & N (T1, T2) & {metric_name} $\Delta$ & p-value & "
-        r"Cliff's $\delta$ & Significant? \\",
+        r"Cliff's $\delta$ & Power & Significant? \\",
         r"\midrule",
     ]
 
@@ -248,29 +280,33 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
         cliffs_delta_val = row["Cliff's δ"]
         n_str = f"({row['N1']}, {row['N2']})"
         pval_str = f"{row['p-value']:{_FMT_PVAL}}" if row["p-value"] is not None else "---"
+        power_val = row["Power"]
+        power_str = f"{power_val:.3f}" if not math.isnan(power_val) else "---"
 
         latex_lines.append(
             f"{row['Model']} & {row['Transition']} & {n_str} & {row[f'{metric_name} Δ']:+.4f} & "
-            f"{pval_str} & {cliffs_delta_val:+.3f} & {sig_mark} \\\\"
+            f"{pval_str} & {cliffs_delta_val:+.3f} & {power_str} & {sig_mark} \\\\"
         )
 
     latex_lines.extend(
         [
             r"\midrule",
-            r"\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\",
+            r"\multicolumn{8}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\",
         ]
     )
 
     for model, h_stat, omnibus_p, dof in omnibus_results:
         sig_str = rf"$p < {ALPHA}$" if omnibus_p < ALPHA else rf"$p \geq {ALPHA}$ (n.s.)"
+        kw_power = omnibus_power_map.get(model, float("nan"))
+        power_str = f"{kw_power:.3f}" if not math.isnan(kw_power) else "---"
         latex_lines.append(
-            rf"\multicolumn{{7}}{{l}}{{{model}: $H({dof})={h_stat:{_FMT_COST}}$, "
-            rf"$p={omnibus_p:{_FMT_PVAL}}$ {sig_str}}} \\"
+            rf"\multicolumn{{8}}{{l}}{{{model}: $H({dof})={h_stat:{_FMT_COST}}$, "
+            rf"$p={omnibus_p:{_FMT_PVAL}}$ {sig_str}, power={power_str}}} \\"
         )
 
     # Add correction method footnote
     latex_lines.append(
-        r"\multicolumn{7}{l}{\footnotesize "
+        r"\multicolumn{8}{l}{\footnotesize "
         r"Pairwise p-values corrected with Holm-Bonferroni method.} \\"
     )
 
