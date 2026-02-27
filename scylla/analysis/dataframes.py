@@ -143,6 +143,11 @@ def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
                     "num_turns": run.num_turns,
                     "num_models": len(run.model_usage) if run.model_usage else None,
                     "delegation_cost_ratio": _compute_delegation_cost_ratio(run),
+                    # Optional process metrics (R_Prog, CFP, PR revert rate, strategic drift)
+                    "r_prog": run.r_prog,
+                    "strategic_drift": run.strategic_drift,
+                    "cfp": run.cfp,
+                    "pr_revert_rate": run.pr_revert_rate,
                 }
             )
 
