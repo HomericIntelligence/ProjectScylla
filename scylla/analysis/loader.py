@@ -10,9 +10,10 @@ from __future__ import annotations
 import json
 import logging
 import re
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import jsonschema
 import numpy as np
@@ -21,6 +22,48 @@ import yaml
 from scylla.e2e.models import TokenStats
 
 logger = logging.getLogger(__name__)
+
+# Rubric conflict resolution policy.
+# 'error'  – raise RubricConflictError (default; safest for research pipelines)
+# 'warn'   – emit UserWarning and keep the *first* value
+# 'first'  – silently keep the first value encountered
+# 'last'   – silently overwrite with the last value encountered
+RubricConflict = Literal["error", "warn", "first", "last"]
+
+
+class RubricConflictError(ValueError):
+    """Raised when two experiments define conflicting rubric weights for the same category.
+
+    Attributes:
+        category: Category name where the conflict was detected.
+        exp_first: Experiment name that first defined this category.
+        weight_first: Weight from the first experiment.
+        exp_second: Experiment name that introduced the conflict.
+        weight_second: Conflicting weight from the second experiment.
+
+    """
+
+    def __init__(
+        self,
+        category: str,
+        exp_first: str,
+        weight_first: float,
+        exp_second: str,
+        weight_second: float,
+    ) -> None:
+        """Initialize RubricConflictError with conflict details."""
+        self.category = category
+        self.exp_first = exp_first
+        self.weight_first = weight_first
+        self.exp_second = exp_second
+        self.weight_second = weight_second
+        super().__init__(
+            f"Rubric conflict for category '{category}': "
+            f"experiment '{exp_first}' defines weight={weight_first}, "
+            f"but experiment '{exp_second}' defines weight={weight_second}. "
+            "Use the rubric_conflict parameter to control resolution."
+        )
+
 
 # Load JSON Schema for run_result.json validation
 _SCHEMA_PATH = Path(__file__).parent / "schemas" / "run_result.schema.json"
@@ -640,13 +683,17 @@ def load_experiment(experiment_dir: Path, agent_model: str) -> list[RunData]:
 
 
 def load_all_experiments(
-    data_dir: Path, exclude: list[str] | None = None
+    data_dir: Path,
+    exclude: list[str] | None = None,
+    rubric_conflict: RubricConflict = "error",
 ) -> dict[str, list[RunData]]:
     """Load all experiments from a data directory.
 
     Args:
         data_dir: Path to fullruns directory
         exclude: List of experiment names to exclude (default: [])
+        rubric_conflict: Policy for handling conflicting rubric weights.
+            Passed through to :func:`load_rubric_weights`.
 
     Returns:
         Dictionary mapping experiment name to list of runs
@@ -691,38 +738,103 @@ def load_all_experiments(
 
 
 def load_rubric_weights(
-    data_dir: Path, exclude: list[str] | None = None
+    data_dir: Path,
+    exclude: list[str] | None = None,
+    rubric_conflict: RubricConflict = "error",
 ) -> dict[str, float] | None:
-    """Load category weights from the first experiment's rubric.yaml.
+    """Load and merge category weights from all experiments' rubric.yaml files.
 
-    Scans experiment directories for rubric.yaml and parses categories.*.weight.
-    Returns None if no rubric found.
+    Scans every experiment directory for rubric.yaml and parses
+    ``categories.*.weight``.  When the same category appears in more than one
+    experiment the ``rubric_conflict`` policy controls resolution:
+
+    * ``'error'`` (default) – raise :class:`RubricConflictError` immediately.
+    * ``'warn'``  – emit a :class:`UserWarning` and keep the *first* value.
+    * ``'first'`` – silently keep the first value encountered.
+    * ``'last'``  – silently overwrite with the most-recently-seen value.
+
+    Float comparison uses a tolerance of ``1e-6`` to avoid spurious conflicts
+    from JSON serialisation round-trips.
 
     Args:
-        data_dir: Root fullruns directory
-        exclude: List of experiment names to exclude
+        data_dir: Root fullruns directory.
+        exclude: List of experiment names to exclude.
+        rubric_conflict: Policy for handling conflicting rubric weights.
 
     Returns:
-        Dictionary mapping category names to weights, or None if no rubric found
+        Dictionary mapping category names to weights, or ``None`` if no
+        rubric.yaml was found in any experiment.
+
+    Raises:
+        RubricConflictError: If ``rubric_conflict='error'`` and a conflict is
+            detected.
 
     """
     exclude = exclude or []
+
+    # accumulated_weights maps category → (weight, source_experiment_name)
+    accumulated: dict[str, tuple[float, str]] = {}
+    found_any = False
 
     for exp_dir in sorted(data_dir.iterdir()):
         if not exp_dir.is_dir() or exp_dir.name in exclude:
             continue
 
-        # Find the timestamp directory
-        for ts_dir in sorted(exp_dir.iterdir()):
-            if not ts_dir.is_dir():
+        exp_name = exp_dir.name
+
+        # Use the latest timestamp directory (sorted alphabetically = chronologically)
+        ts_dirs = sorted(d for d in exp_dir.iterdir() if d.is_dir())
+        if not ts_dirs:
+            continue
+        ts_dir = ts_dirs[-1]
+
+        rubric_path = ts_dir / "rubric.yaml"
+        if not rubric_path.exists():
+            continue
+
+        with rubric_path.open() as f:
+            data = yaml.safe_load(f)
+
+        categories = data.get("categories", {}) if data else {}
+        found_any = True
+
+        for cat_name, cat_data in categories.items():
+            new_weight: float = cat_data.get("weight", 0.0) if cat_data else 0.0
+
+            if cat_name not in accumulated:
+                accumulated[cat_name] = (new_weight, exp_name)
                 continue
 
-            rubric_path = ts_dir / "rubric.yaml"
-            if rubric_path.exists():
-                with rubric_path.open() as f:
-                    data = yaml.safe_load(f)
+            existing_weight, existing_exp = accumulated[cat_name]
+            if abs(existing_weight - new_weight) <= 1e-6:
+                # Identical within tolerance – no conflict.
+                continue
 
-                categories = data.get("categories", {})
-                return {name: cat.get("weight", 0.0) for name, cat in categories.items()}
+            # Genuine conflict – apply policy.
+            if rubric_conflict == "error":
+                raise RubricConflictError(
+                    category=cat_name,
+                    exp_first=existing_exp,
+                    weight_first=existing_weight,
+                    exp_second=exp_name,
+                    weight_second=new_weight,
+                )
+            elif rubric_conflict == "warn":
+                warnings.warn(
+                    f"Rubric conflict for category '{cat_name}': "
+                    f"experiment '{existing_exp}' defines weight={existing_weight}, "
+                    f"but experiment '{exp_name}' defines weight={new_weight}. "
+                    "Keeping first value.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                # Keep first – no update to accumulated.
+            elif rubric_conflict == "first":
+                pass  # Keep first – no update to accumulated.
+            elif rubric_conflict == "last":
+                accumulated[cat_name] = (new_weight, exp_name)
 
-    return None
+    if not found_any:
+        return None
+
+    return {cat: weight for cat, (weight, _) in accumulated.items()}
