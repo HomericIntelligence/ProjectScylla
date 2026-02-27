@@ -192,13 +192,14 @@ class TestRetryOnNetworkError:
 
     def test_uses_longer_initial_delay(self):
         """Test retry_on_network_error uses 2.0s initial delay."""
+        from unittest.mock import patch
+
         mock_func = MagicMock(side_effect=[ConnectionError("fail"), "success"])
         decorated = retry_on_network_error(max_retries=1)(mock_func)
 
-        start = time.time()
-        result = decorated()
-        elapsed = time.time() - start
+        with patch("time.sleep") as mock_sleep:
+            result = decorated()
+            # Verify sleep was called with the 2.0s initial delay
+            mock_sleep.assert_called_once_with(2.0)
 
         assert result == "success"
-        # Should wait at least 2.0 seconds
-        assert elapsed >= 2.0
