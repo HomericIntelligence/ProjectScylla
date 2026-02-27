@@ -7,12 +7,14 @@ TierState -> Callable action map for TierStateMachine execution.
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import Callable
 from datetime import datetime, timezone
 from functools import reduce
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from scylla.e2e.checkpoint import load_checkpoint
 from scylla.e2e.judge_selection import save_selection, select_best_subtest
 from scylla.e2e.models import (
     ExperimentConfig,
@@ -58,6 +60,7 @@ class TierActionBuilder:
         checkpoint: E2ECheckpoint | None,
         experiment_dir: Path | None,
         save_tier_result_fn: Callable[[TierID, TierResult], None],
+        checkpoint_merge_lock: threading.Lock | None = None,
     ) -> None:
         """Initialize TierActionBuilder with all required collaborators.
 
@@ -72,6 +75,10 @@ class TierActionBuilder:
             checkpoint: Current E2ECheckpoint for persistence (may be None).
             experiment_dir: Root directory for this experiment's outputs (may be None).
             save_tier_result_fn: Callable injected from the runner to save tier results.
+            checkpoint_merge_lock: Optional threading.Lock for merging subprocess-written
+                checkpoint state. When provided, action_config_loaded() merges disk-written
+                run_states/subtest_states/tier_states back into the in-memory checkpoint
+                under this lock after parallel subtests complete.
 
         """
         self.tier_id = tier_id
@@ -84,6 +91,7 @@ class TierActionBuilder:
         self.checkpoint = checkpoint
         self.experiment_dir = experiment_dir
         self.save_tier_result_fn = save_tier_result_fn
+        self.checkpoint_merge_lock = checkpoint_merge_lock
 
     def build(self) -> dict[TierState, Callable[[], None]]:
         """Build and return the TierState -> Callable action map.
@@ -105,6 +113,7 @@ class TierActionBuilder:
         checkpoint = self.checkpoint
         experiment_dir = self.experiment_dir
         save_tier_result_fn = self.save_tier_result_fn
+        checkpoint_merge_lock = self.checkpoint_merge_lock
 
         def action_pending() -> None:
             # PENDING -> CONFIG_LOADED: Load config, limit subtests, create tier dir.
@@ -163,6 +172,24 @@ class TierActionBuilder:
                 experiment_dir=experiment_dir,
             )
             tier_ctx.subtest_results = subtest_results
+
+            # ProcessPoolExecutor workers write run_states/subtest_states directly to disk.
+            # Merge those disk-written states back into the shared in-memory checkpoint so
+            # subsequent TierStateMachine saves don't overwrite them with stale copies.
+            if checkpoint and checkpoint_path:
+                try:
+                    disk_cp = load_checkpoint(checkpoint_path)
+                    if checkpoint_merge_lock is not None:
+                        with checkpoint_merge_lock:
+                            checkpoint.run_states = disk_cp.run_states
+                            checkpoint.subtest_states = disk_cp.subtest_states
+                            checkpoint.tier_states = disk_cp.tier_states
+                    else:
+                        checkpoint.run_states = disk_cp.run_states
+                        checkpoint.subtest_states = disk_cp.subtest_states
+                        checkpoint.tier_states = disk_cp.tier_states
+                except Exception:
+                    pass  # Non-fatal: stale in-memory state is better than crashing
 
         def action_subtests_running() -> None:
             # SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest.
