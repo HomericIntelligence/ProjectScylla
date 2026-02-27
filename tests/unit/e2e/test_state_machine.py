@@ -398,9 +398,7 @@ class TestStateMachineAdvanceToCompletion:
             raise ShutdownInterruptedError("simulated ctrl+c")
 
         with pytest.raises(ShutdownInterruptedError):
-            sm.advance_to_completion(
-                "T0", "00-empty", 1, {RunState.PENDING: interrupted_action}
-            )
+            sm.advance_to_completion("T0", "00-empty", 1, {RunState.PENDING: interrupted_action})
 
         # Run must NOT be FAILED — it stays at PENDING (pre-action state)
         state = sm.get_state("T0", "00-empty", 1)

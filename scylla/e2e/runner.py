@@ -441,6 +441,7 @@ class E2ERunner:
         # Create a temporary worktree so the baseline runs on a clean repo state
         worktree_path = self.experiment_dir / "_baseline_worktree"
         branch_name = f"baseline_{self.config.experiment_id[:8]}"
+        assert self.workspace_manager is not None  # noqa: S101
         try:
             self.workspace_manager.create_worktree(worktree_path)
             logger.info(f"Capturing experiment-level pipeline baseline at {worktree_path}")
@@ -455,7 +456,7 @@ class E2ERunner:
             logger.warning(f"Failed to capture experiment-level baseline: {e}")
         finally:
             try:
-                self.workspace_manager.remove_worktree(worktree_path, branch_name)
+                self.workspace_manager.cleanup_worktree(worktree_path, branch_name)
             except Exception as cleanup_err:
                 logger.debug(f"Baseline worktree cleanup warning: {cleanup_err}")
 
