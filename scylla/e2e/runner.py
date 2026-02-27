@@ -1,8 +1,7 @@
 """Main E2E experiment runner.
 
 This module provides the main entry point for running E2E experiments,
-coordinating tier execution, inheritance, and result aggregation.
-and report generation.
+coordinating tier execution, inheritance, result aggregation, and report generation.
 """
 
 from __future__ import annotations
@@ -10,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import tempfile
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
@@ -1294,7 +1294,7 @@ class E2ERunner:
         if checkpoint is None:
             checkpoint = E2ECheckpoint(
                 experiment_id=self.config.experiment_id,
-                experiment_dir=str(self.experiment_dir or "/tmp"),
+                experiment_dir=str(self.experiment_dir or tempfile.gettempdir()),
                 config_hash="",
                 completed_runs={},
                 started_at=datetime.now(timezone.utc).isoformat(),

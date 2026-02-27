@@ -9,7 +9,7 @@ the performance and cost-efficiency of agentic AI workflows. Named after the myt
 Scylla represents the challenge of navigating trade-offs between capability gains and operational costs.
 
 **Current Status**: Operational - active research with full evaluation infrastructure, running T0–T6 ablation
-studies across 120+ YAML subtests with published results and 73%+ test coverage enforced in CI.
+studies across 120 YAML subtests with published results and 75%+ test coverage enforced in CI.
 
 **Ecosystem Context**: Part of a three-project ecosystem:
 
@@ -145,7 +145,7 @@ Relevant links:
 
 ## Testing Tiers (Ablation Study Framework)
 
-ProjectScylla benchmarks AI agent architectures across 7 testing tiers with ~114+ sub-tests:
+ProjectScylla benchmarks AI agent architectures across 7 testing tiers with 120 sub-tests:
 
 | Tier | Name | Sub-tests | Description |
 |------|------|-----------|-------------|

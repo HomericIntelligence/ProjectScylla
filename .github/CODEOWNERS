@@ -26,8 +26,6 @@
 
 # Docker configuration
 /docker/ @HomericIntelligence/projectscylla-maintainers
-/Dockerfile @HomericIntelligence/projectscylla-maintainers
-/docker-compose.yml @HomericIntelligence/projectscylla-maintainers
 
 # Agent configurations and hierarchy
 /.claude/ @HomericIntelligence/projectscylla-maintainers
