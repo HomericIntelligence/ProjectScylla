@@ -427,3 +427,18 @@ class TestExperimentStateMachineAdvanceToCompletion:
 
         on_disk = load_checkpoint(checkpoint_path)
         assert on_disk.experiment_state == ExperimentState.INTERRUPTED.value
+
+    def test_shutdown_interrupted_marks_experiment_interrupted_not_failed(
+        self, esm: ExperimentStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """ShutdownInterruptedError marks experiment as INTERRUPTED (resumable), not FAILED."""
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        def interrupted_action():
+            raise ShutdownInterruptedError("simulated ctrl+c")
+
+        with pytest.raises(ShutdownInterruptedError):
+            esm.advance_to_completion({ExperimentState.INITIALIZING: interrupted_action})
+
+        assert esm.get_state() == ExperimentState.INTERRUPTED
+        assert esm.get_state() != ExperimentState.FAILED

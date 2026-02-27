@@ -383,6 +383,30 @@ class TestStateMachineAdvanceToCompletion:
         state = sm.get_state("T0", "00-empty", 1)
         assert state == RunState.FAILED
 
+    def test_advance_to_completion_shutdown_interrupted_does_not_mark_failed(
+        self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
+    ) -> None:
+        """If ShutdownInterruptedError is raised, run is NOT marked FAILED.
+
+        The run stays at its last successfully checkpointed state (PENDING in
+        this case — the action ran from PENDING but never completed) so it can
+        be retried cleanly on the next invocation.
+        """
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        def interrupted_action():
+            raise ShutdownInterruptedError("simulated ctrl+c")
+
+        with pytest.raises(ShutdownInterruptedError):
+            sm.advance_to_completion(
+                "T0", "00-empty", 1, {RunState.PENDING: interrupted_action}
+            )
+
+        # Run must NOT be FAILED — it stays at PENDING (pre-action state)
+        state = sm.get_state("T0", "00-empty", 1)
+        assert state == RunState.PENDING
+        assert state != RunState.FAILED
+
     def test_advance_to_completion_marks_rate_limited_on_rate_limit_error(
         self, sm: StateMachine, checkpoint_path: Path
     ) -> None:

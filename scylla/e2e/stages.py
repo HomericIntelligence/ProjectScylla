@@ -497,6 +497,19 @@ def stage_execute_agent(ctx: RunContext) -> None:
             timeout=adapter_config.timeout,
             cwd=ctx.workspace.resolve(),
         )
+
+        # If the agent was killed by a shutdown signal (Ctrl+C), do NOT advance the
+        # run state — leave it at REPLAY_GENERATED so the next invocation can retry
+        # cleanly.  The subprocess returns normally (no Python exception) but with a
+        # signal exit code, so we must check the shutdown flag explicitly here.
+        from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
+
+        if is_shutdown_requested():
+            raise ShutdownInterruptedError(
+                f"Shutdown requested during agent execution for run {ctx.run_number} "
+                f"({ctx.tier_id.value}/{ctx.subtest.id})"
+            )
+
         stdout = result.stdout
         stderr = result.stderr
 
@@ -522,6 +535,10 @@ def stage_execute_agent(ctx: RunContext) -> None:
         )
     except Exception as e:
         from scylla.adapters.base import AdapterResult, AdapterTokenStats
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        if isinstance(e, ShutdownInterruptedError):
+            raise
 
         agent_result = AdapterResult(
             exit_code=-1,

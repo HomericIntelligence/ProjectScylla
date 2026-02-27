@@ -410,6 +410,7 @@ class StateMachine:
         """
         from scylla.e2e.checkpoint import save_checkpoint
         from scylla.e2e.rate_limit import RateLimitError
+        from scylla.e2e.runner import ShutdownInterruptedError
 
         # Early return if already at or past the --until target state
         if until_state is not None:
@@ -434,6 +435,15 @@ class StateMachine:
         except RateLimitError:
             self.checkpoint.set_run_state(tier_id, subtest_id, run_num, RunState.RATE_LIMITED.value)
             save_checkpoint(self.checkpoint, self.checkpoint_path)
+            raise
+        except ShutdownInterruptedError:
+            # Ctrl+C interrupted this run mid-stage — leave it at its last successfully
+            # checkpointed state so it can be cleanly resumed on the next invocation.
+            current = self.get_state(tier_id, subtest_id, run_num)
+            logger.warning(
+                f"[{tier_id}/{subtest_id}/run_{run_num:02d}] "
+                f"Shutdown interrupted at {current.value} — run left resumable (not FAILED)"
+            )
             raise
         except Exception as e:
             logger.error(

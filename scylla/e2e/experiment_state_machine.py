@@ -282,9 +282,12 @@ class ExperimentStateMachine:
                     break
         except Exception as e:
             from scylla.e2e.rate_limit import RateLimitError
+            from scylla.e2e.runner import ShutdownInterruptedError
 
-            if isinstance(e, RateLimitError):
-                logger.warning(f"Experiment rate-limited in state {self.get_state().value}: {e}")
+            if isinstance(e, (RateLimitError, ShutdownInterruptedError)):
+                logger.warning(
+                    f"Experiment interrupted in state {self.get_state().value}: {e}"
+                )
                 self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
             else:
                 logger.error(f"Experiment failed in state {self.get_state().value}: {e}")
