@@ -403,6 +403,47 @@ class E2ERunner:
 
         return scheduler
 
+    def _capture_experiment_baseline(self) -> None:
+        """Capture pipeline baseline once at experiment level from a clean repo state.
+
+        Creates a temporary worktree from the base repo, runs the build pipeline on it,
+        and saves the result to <experiment_dir>/pipeline_baseline.json.
+
+        This is idempotent: if the file already exists (e.g. on resume) it is not
+        re-captured.
+
+        """
+        assert self.experiment_dir is not None  # noqa: S101
+
+        baseline_path = self.experiment_dir / "pipeline_baseline.json"
+        if baseline_path.exists():
+            logger.info("Experiment-level pipeline baseline already captured — skipping")
+            return
+
+        from scylla.e2e.llm_judge import _run_build_pipeline
+        from scylla.e2e.subtest_executor import _save_pipeline_baseline
+
+        # Create a temporary worktree so the baseline runs on a clean repo state
+        worktree_path = self.experiment_dir / "_baseline_worktree"
+        branch_name = f"baseline_{self.config.experiment_id[:8]}"
+        try:
+            self.workspace_manager.create_worktree(worktree_path)
+            logger.info(f"Capturing experiment-level pipeline baseline at {worktree_path}")
+            result = _run_build_pipeline(
+                workspace=worktree_path,
+                language=self.config.language,
+            )
+            _save_pipeline_baseline(self.experiment_dir, result)
+            baseline_status = "ALL PASSED ✓" if result.all_passed else "SOME FAILED ✗"
+            logger.info(f"Experiment pipeline baseline: {baseline_status}")
+        except Exception as e:
+            logger.warning(f"Failed to capture experiment-level baseline: {e}")
+        finally:
+            try:
+                self.workspace_manager.remove_worktree(worktree_path, branch_name)
+            except Exception as cleanup_err:
+                logger.debug(f"Baseline worktree cleanup warning: {cleanup_err}")
+
     def _handle_experiment_interrupt(self, checkpoint_path: Path) -> None:
         """Handle graceful shutdown on interrupt.
 
@@ -423,7 +464,7 @@ class E2ERunner:
                 logger.info("🔄 Reloading checkpoint from disk to preserve worker progress...")
                 current_checkpoint = load_checkpoint(checkpoint_path)
                 current_checkpoint.status = _STATUS_INTERRUPTED
-                current_checkpoint.experiment_state = "INTERRUPTED"
+                current_checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
                 current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
                 save_checkpoint(current_checkpoint, checkpoint_path)
                 logger.warning("💾 Checkpoint saved after interrupt")
@@ -433,7 +474,7 @@ class E2ERunner:
                 logger.warning("Saving checkpoint from memory (may lose some worker progress)")
                 if self.checkpoint:
                     self.checkpoint.status = _STATUS_INTERRUPTED
-                    self.checkpoint.experiment_state = "INTERRUPTED"
+                    self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
                     self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
                     save_checkpoint(self.checkpoint, checkpoint_path)
                     logger.warning("💾 Checkpoint saved after interrupt")
@@ -559,9 +600,10 @@ class E2ERunner:
             pass
 
         def action_dir_created() -> None:
-            """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler."""
+            """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler, capture baseline."""
             nonlocal scheduler
             scheduler = self._setup_workspace_and_scheduler()
+            self._capture_experiment_baseline()
 
         def action_repo_cloned() -> None:
             """REPO_CLONED -> TIERS_RUNNING: Group tiers and log them."""
