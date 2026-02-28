@@ -99,6 +99,13 @@ repos:
         files: \.md$
         types: [markdown]
         pass_filenames: false
+      - id: check-doc-config-consistency
+        name: Check Doc/Config Metric Consistency
+        description: Fails if coverage threshold in CLAUDE.md or README.md --cov path diverges from pyproject.toml
+        entry: pixi run python scripts/check_doc_config_consistency.py
+        language: system
+        files: ^(CLAUDE\.md|README\.md|pyproject\.toml)$
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
