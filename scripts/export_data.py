@@ -710,6 +710,15 @@ def main() -> None:
             "median_impl_rate": float(runs_df["impl_rate"].median()),
             "total_cost": float(runs_df["cost_usd"].sum()),
             "mean_cost_per_run": float(runs_df["cost_usd"].mean()),
+            "mean_r_prog": float(runs_df["r_prog"].dropna().mean())
+            if not runs_df["r_prog"].dropna().empty
+            else None,
+            "mean_cfp": float(runs_df["cfp"].dropna().mean())
+            if not runs_df["cfp"].dropna().empty
+            else None,
+            "mean_pr_revert_rate": float(runs_df["pr_revert_rate"].dropna().mean())
+            if not runs_df["pr_revert_rate"].dropna().empty
+            else None,
         },
         "by_model": {},
     }
@@ -741,6 +750,10 @@ def main() -> None:
 
         frontier_cop = compute_frontier_cop(tier_cops) if tier_cops else float("inf")
 
+        model_r_prog = model_df["r_prog"].dropna()
+        model_cfp = model_df["cfp"].dropna()
+        model_pr_revert_rate = model_df["pr_revert_rate"].dropna()
+
         summary["by_model"][model] = {
             "total_runs": len(model_df),
             "pass_rate": pass_rate,
@@ -765,6 +778,11 @@ def main() -> None:
             "mean_duration": float(durations.mean()),
             "n_subtests": int(model_df["subtest"].nunique()),
             "tiers": sorted(model_df["tier"].unique().tolist()),
+            "mean_r_prog": float(model_r_prog.mean()) if not model_r_prog.empty else None,
+            "mean_cfp": float(model_cfp.mean()) if not model_cfp.empty else None,
+            "mean_pr_revert_rate": float(model_pr_revert_rate.mean())
+            if not model_pr_revert_rate.empty
+            else None,
         }
 
     # Add by_tier statistics (aggregated across all models)
@@ -782,6 +800,10 @@ def main() -> None:
         # Compute Cost-of-Pass for this tier
         cop = compute_cop(mean_cost, pass_rate)
 
+        tier_r_prog = tier_df["r_prog"].dropna()
+        tier_cfp = tier_df["cfp"].dropna()
+        tier_pr_revert_rate = tier_df["pr_revert_rate"].dropna()
+
         summary["by_tier"][tier] = {
             "total_runs": len(tier_df),
             "pass_rate": pass_rate,
@@ -795,6 +817,11 @@ def main() -> None:
             "total_cost": float(costs.sum()),
             "cop": float(cop) if cop != float("inf") else None,
             "n_subtests": int(tier_df["subtest"].nunique()),
+            "mean_r_prog": float(tier_r_prog.mean()) if not tier_r_prog.empty else None,
+            "mean_cfp": float(tier_cfp.mean()) if not tier_cfp.empty else None,
+            "mean_pr_revert_rate": float(tier_pr_revert_rate.mean())
+            if not tier_pr_revert_rate.empty
+            else None,
         }
 
     # Verify consistency between summary count and CSV count

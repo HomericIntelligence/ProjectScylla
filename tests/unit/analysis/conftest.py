@@ -80,6 +80,13 @@ def sample_runs_df():
                     consistency = 1 - (np.random.uniform(0.05, 0.15) / score) if score > 0 else 0
                     consistency = max(0.0, min(1.0, consistency))
 
+                    # Process metrics (some NaN to exercise edge-case paths)
+                    r_prog = np.random.uniform(0.0, 1.0) if np.random.random() > 0.1 else np.nan
+                    cfp = np.random.uniform(0.0, 0.5) if np.random.random() > 0.1 else np.nan
+                    pr_revert_rate = (
+                        np.random.uniform(0.0, 0.3) if np.random.random() > 0.1 else np.nan
+                    )
+
                     data.append(
                         {
                             "experiment": f"test001-{model.lower().replace(' ', '-')}",
@@ -102,6 +109,9 @@ def sample_runs_df():
                             "judge_duration_seconds": judge_duration,
                             "consistency": consistency,
                             "exit_code": 0,
+                            "r_prog": r_prog,
+                            "cfp": cfp,
+                            "pr_revert_rate": pr_revert_rate,
                         }
                     )
 
