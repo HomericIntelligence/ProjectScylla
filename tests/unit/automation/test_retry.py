@@ -1,8 +1,6 @@
 """Tests for retry decorator with exponential backoff."""
 
-import os
-import time
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -85,23 +83,22 @@ class TestRetryWithBackoff:
 
         assert mock_func.call_count == 3  # initial + 2 retries
 
-    @pytest.mark.skipif(
-        os.getenv("COVERAGE_RUN") == "1", reason="Skipped when running under coverage"
-    )
     def test_exponential_backoff_delay(self):
-        """Test exponential backoff delays."""
+        """Test exponential backoff delays are calculated correctly."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         decorated = retry_with_backoff(max_retries=3, initial_delay=0.1, backoff_factor=2)(
             mock_func
         )
 
-        start = time.time()
-        result = decorated()
-        elapsed = time.time() - start
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            result = decorated()
 
         assert result == "success"
-        # Should wait 0.1 + 0.2 = 0.3 seconds minimum
-        assert elapsed >= 0.3
+        assert mock_func.call_count == 3
+        # Two failures → two sleep calls: 0.1*2^0=0.1, 0.1*2^1=0.2
+        assert mock_sleep.call_count == 2
+        mock_sleep.assert_any_call(0.1)
+        mock_sleep.assert_any_call(0.2)
 
     def test_respects_retry_on_parameter(self):
         """Test retry_on parameter filters exception types."""
@@ -192,12 +189,10 @@ class TestRetryOnNetworkError:
 
     def test_uses_longer_initial_delay(self):
         """Test retry_on_network_error uses 2.0s initial delay."""
-        from unittest.mock import patch
-
         mock_func = MagicMock(side_effect=[ConnectionError("fail"), "success"])
         decorated = retry_on_network_error(max_retries=1)(mock_func)
 
-        with patch("time.sleep") as mock_sleep:
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
             result = decorated()
             # Verify sleep was called with the 2.0s initial delay
             mock_sleep.assert_called_once_with(2.0)
