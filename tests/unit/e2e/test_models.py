@@ -5,6 +5,8 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scylla.e2e.models import (
     E2ERunResult,
     ExperimentConfig,
@@ -36,6 +38,13 @@ class TestTierID:
         assert TierID.T0 < TierID.T1
         assert TierID.T1 < TierID.T6
         assert not TierID.T3 < TierID.T2
+
+    @pytest.mark.parametrize("tier_str", ["T0", "T1", "T2", "T3", "T4", "T5", "T6"])
+    def test_all_valid_tier_ids_can_be_constructed(self, tier_str: str) -> None:
+        """Each valid TierID value can be constructed and resolves to the correct member."""
+        tier = TierID(tier_str)
+        assert tier == TierID[tier_str]
+        assert tier.value == tier_str
 
 
 class TestSubTestConfig:
