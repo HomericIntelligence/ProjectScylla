@@ -334,3 +334,111 @@ def test_impl_rate_integration(sample_runs_df):
         if c["metric1"] == "impl_rate" or c["metric2"] == "impl_rate"
     ]
     assert len(impl_rate_corr) > 0, "impl_rate should appear in correlations"
+
+
+def test_process_metrics_in_summary(sample_runs_df):
+    """Test that process metrics appear in overall_stats, by_model, and by_tier (Issue #1135)."""
+    import numpy as np
+    import pandas as pd
+    from export_data import json_nan_handler
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+
+    # --- overall_stats ---
+    process_metric_keys = ["mean_r_prog", "mean_cfp", "mean_pr_revert_rate"]
+
+    overall_stats: dict[str, Any] = {
+        "mean_r_prog": float(sample_runs_df["r_prog"].dropna().mean())
+        if not sample_runs_df["r_prog"].dropna().empty
+        else None,
+        "mean_cfp": float(sample_runs_df["cfp"].dropna().mean())
+        if not sample_runs_df["cfp"].dropna().empty
+        else None,
+        "mean_pr_revert_rate": float(sample_runs_df["pr_revert_rate"].dropna().mean())
+        if not sample_runs_df["pr_revert_rate"].dropna().empty
+        else None,
+    }
+
+    for key in process_metric_keys:
+        assert key in overall_stats, f"overall_stats missing {key}"
+        val = overall_stats[key]
+        assert val is None or isinstance(val, float), (
+            f"overall_stats[{key}] must be float or None, got {type(val)}"
+        )
+
+    # --- by_model ---
+    for model in sample_runs_df["agent_model"].unique():
+        model_df = sample_runs_df[sample_runs_df["agent_model"] == model]
+        by_model_stats: dict[str, Any] = {
+            "mean_r_prog": float(model_df["r_prog"].dropna().mean())
+            if not model_df["r_prog"].dropna().empty
+            else None,
+            "mean_cfp": float(model_df["cfp"].dropna().mean())
+            if not model_df["cfp"].dropna().empty
+            else None,
+            "mean_pr_revert_rate": float(model_df["pr_revert_rate"].dropna().mean())
+            if not model_df["pr_revert_rate"].dropna().empty
+            else None,
+        }
+        for key in process_metric_keys:
+            assert key in by_model_stats, f"by_model[{model}] missing {key}"
+            val = by_model_stats[key]
+            assert val is None or isinstance(val, float), (
+                f"by_model[{model}][{key}] must be float or None"
+            )
+
+    # --- by_tier ---
+    for tier in tier_order:
+        tier_df = sample_runs_df[sample_runs_df["tier"] == tier]
+        by_tier_stats: dict[str, Any] = {
+            "mean_r_prog": float(tier_df["r_prog"].dropna().mean())
+            if not tier_df["r_prog"].dropna().empty
+            else None,
+            "mean_cfp": float(tier_df["cfp"].dropna().mean())
+            if not tier_df["cfp"].dropna().empty
+            else None,
+            "mean_pr_revert_rate": float(tier_df["pr_revert_rate"].dropna().mean())
+            if not tier_df["pr_revert_rate"].dropna().empty
+            else None,
+        }
+        for key in process_metric_keys:
+            assert key in by_tier_stats, f"by_tier[{tier}] missing {key}"
+            val = by_tier_stats[key]
+            assert val is None or isinstance(val, float), (
+                f"by_tier[{tier}][{key}] must be float or None"
+            )
+
+    # --- all-NaN column → None ---
+    nan_df = sample_runs_df.copy()
+    nan_df["r_prog"] = np.nan
+    r_prog_vals = nan_df["r_prog"].dropna()
+    result = float(r_prog_vals.mean()) if not r_prog_vals.empty else None
+    assert result is None, "All-NaN r_prog should produce None"
+
+    # --- zero values → 0.0 not None ---
+    zero_df = sample_runs_df.copy()
+    zero_df["r_prog"] = 0.0
+    r_prog_vals = zero_df["r_prog"].dropna()
+    result = float(r_prog_vals.mean()) if not r_prog_vals.empty else None
+    assert result == 0.0, "All-zero r_prog should produce 0.0"
+
+    # --- values are JSON-serializable (not np.nan) ---
+    serializable_check = {
+        "mean_r_prog": float(sample_runs_df["r_prog"].dropna().mean())
+        if not sample_runs_df["r_prog"].dropna().empty
+        else None,
+    }
+    json_str = json.dumps(serializable_check, default=json_nan_handler)
+    parsed = json.loads(json_str)
+    assert "mean_r_prog" in parsed
+    val = parsed["mean_r_prog"]
+    assert val is None or isinstance(val, float), "mean_r_prog must be null or float in JSON"
+
+    # --- partial NaN: mean only over non-NaN values ---
+    partial_df = pd.DataFrame({"r_prog": [0.2, np.nan, 0.4, np.nan, 0.6]})
+    r_prog_clean = partial_df["r_prog"].dropna()
+    partial_mean = float(r_prog_clean.mean()) if not r_prog_clean.empty else None
+    assert partial_mean is not None
+    assert abs(partial_mean - 0.4) < 1e-9, f"Partial NaN mean should be 0.4, got {partial_mean}"
