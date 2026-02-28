@@ -76,6 +76,10 @@ jobs:
           restore-keys: |
             pixi-${{ runner.os }}-
 
+      - name: Check doc/config consistency
+        if: matrix.test-group.name == 'unit'
+        run: pixi run python scripts/check_doc_config_consistency.py --verbose
+
       - name: Run ${{ matrix.test-group.name }} tests
         env:
           TEST_PATH: ${{ matrix.test-group.path }}
