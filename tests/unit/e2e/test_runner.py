@@ -765,7 +765,7 @@ class TestInitializeOrResumeExperimentFailedReset:
             patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
             patch.object(runner, "_load_checkpoint_and_config", side_effect=fake_load),
             patch.object(runner, "_write_pid_file"),
-            patch("scylla.e2e.health.is_zombie", return_value=False),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
         ):
             runner._initialize_or_resume_experiment()
 
@@ -917,7 +917,7 @@ class TestInitializeOrResumeExperimentFailedReset:
         with (
             patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
             patch.object(runner, "_write_pid_file"),
-            patch("scylla.e2e.health.is_zombie", return_value=False),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
         ):
             runner._initialize_or_resume_experiment()
 
@@ -987,7 +987,7 @@ class TestInitializeOrResumeExperimentFailedReset:
         with (
             patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
             patch.object(runner, "_write_pid_file"),
-            patch("scylla.e2e.health.is_zombie", return_value=False),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
         ):
             runner._initialize_or_resume_experiment()
 
@@ -1058,7 +1058,7 @@ class TestInitializeOrResumeExperimentFailedReset:
         with (
             patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
             patch.object(runner, "_write_pid_file"),
-            patch("scylla.e2e.health.is_zombie", return_value=False),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
         ):
             runner._initialize_or_resume_experiment()
 
@@ -1127,7 +1127,7 @@ class TestInitializeOrResumeExperimentFailedReset:
         with (
             patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
             patch.object(runner, "_write_pid_file"),
-            patch("scylla.e2e.health.is_zombie", return_value=False),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
         ):
             runner._initialize_or_resume_experiment()
 
@@ -1202,7 +1202,7 @@ class TestInitializeOrResumeExperimentFailedReset:
         with (
             patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
             patch.object(runner, "_write_pid_file"),
-            patch("scylla.e2e.health.is_zombie", return_value=False),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
         ):
             runner._initialize_or_resume_experiment()
 
