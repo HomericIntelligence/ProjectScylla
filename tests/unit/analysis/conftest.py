@@ -248,6 +248,32 @@ def sample_subtests_df(sample_runs_df):
         mean_duration = group["duration_seconds"].mean()
         cop = compute_cop(mean_cost, pass_rate)
 
+        # Process metrics (nullable — NaN when data not yet collected)
+        mean_r_prog = group["r_prog"].mean() if "r_prog" in group.columns else np.nan
+        median_r_prog = group["r_prog"].median() if "r_prog" in group.columns else np.nan
+        std_r_prog = group["r_prog"].std() if "r_prog" in group.columns else np.nan
+        mean_cfp = group["cfp"].mean() if "cfp" in group.columns else np.nan
+        median_cfp = group["cfp"].median() if "cfp" in group.columns else np.nan
+        std_cfp = group["cfp"].std() if "cfp" in group.columns else np.nan
+        mean_pr_revert_rate = (
+            group["pr_revert_rate"].mean() if "pr_revert_rate" in group.columns else np.nan
+        )
+        median_pr_revert_rate = (
+            group["pr_revert_rate"].median() if "pr_revert_rate" in group.columns else np.nan
+        )
+        std_pr_revert_rate = (
+            group["pr_revert_rate"].std() if "pr_revert_rate" in group.columns else np.nan
+        )
+        mean_strategic_drift = (
+            group["strategic_drift"].mean() if "strategic_drift" in group.columns else np.nan
+        )
+        median_strategic_drift = (
+            group["strategic_drift"].median() if "strategic_drift" in group.columns else np.nan
+        )
+        std_strategic_drift = (
+            group["strategic_drift"].std() if "strategic_drift" in group.columns else np.nan
+        )
+
         # Grade distribution
         grade_counts = group["grade"].value_counts().to_dict()
         grade_s = grade_counts.get("S", 0)
@@ -282,6 +308,18 @@ def sample_subtests_df(sample_runs_df):
                 "total_cost": total_cost,
                 "mean_duration": mean_duration,
                 "cop": cop,
+                "mean_r_prog": mean_r_prog,
+                "median_r_prog": median_r_prog,
+                "std_r_prog": std_r_prog,
+                "mean_cfp": mean_cfp,
+                "median_cfp": median_cfp,
+                "std_cfp": std_cfp,
+                "mean_pr_revert_rate": mean_pr_revert_rate,
+                "median_pr_revert_rate": median_pr_revert_rate,
+                "std_pr_revert_rate": std_pr_revert_rate,
+                "mean_strategic_drift": mean_strategic_drift,
+                "median_strategic_drift": median_strategic_drift,
+                "std_strategic_drift": std_strategic_drift,
                 "grade_S": grade_s,
                 "grade_A": grade_a,
                 "grade_B": grade_b,
