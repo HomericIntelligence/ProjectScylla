@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+from scylla.e2e.health import is_zombie, reset_zombie_checkpoint
 from scylla.e2e.models import ExperimentConfig, RunState, TierID
 
 if TYPE_CHECKING:
@@ -59,6 +60,35 @@ class ResumeManager:
         self.checkpoint = checkpoint
         self.config = config
         self.tier_manager = tier_manager
+
+    def handle_zombie(
+        self,
+        checkpoint_path: Path,
+        experiment_dir: Path | None,
+    ) -> tuple[ExperimentConfig, E2ECheckpoint]:
+        """Check for zombie experiment and reset checkpoint if detected.
+
+        A zombie is a running experiment whose process has died without a clean
+        shutdown. If detected, the checkpoint status is reset to 'interrupted'
+        so the experiment can be safely resumed.
+
+        Args:
+            checkpoint_path: Path to checkpoint file for atomic save on reset.
+            experiment_dir: Path to experiment directory used for zombie detection.
+                If None, this method is a no-op (no checkpoint to inspect).
+
+        Returns:
+            Updated (config, checkpoint) tuple.
+
+        """
+        if experiment_dir is None:
+            return self.config, self.checkpoint
+
+        if is_zombie(self.checkpoint, experiment_dir):
+            logger.warning("Zombie experiment detected — resetting to 'interrupted'")
+            self.checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
+
+        return self.config, self.checkpoint
 
     def restore_cli_args(
         self, cli_ephemeral: dict[str, Any]

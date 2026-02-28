@@ -326,16 +326,13 @@ class E2ERunner:
                 # STEP 1 (continued): Load checkpoint — overwrites self.config from saved JSON
                 self._load_checkpoint_and_config(checkpoint_path)
 
-                # Check for zombie (crashed) experiment and reset if needed
-                if self.checkpoint and self.experiment_dir:
-                    from scylla.e2e.health import is_zombie, reset_zombie_checkpoint
-
-                    if is_zombie(self.checkpoint, self.experiment_dir):
-                        logger.warning("Zombie experiment detected — resetting to 'interrupted'")
-                        self.checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
-
                 if self.checkpoint:
                     rm = ResumeManager(self.checkpoint, self.config, self.tier_manager)
+
+                    # STEP 1 (continued): Check for zombie (crashed) experiment
+                    self.config, self.checkpoint = rm.handle_zombie(
+                        checkpoint_path, self.experiment_dir
+                    )
 
                     # STEP 2: Restore ephemeral CLI args
                     self.config, self.checkpoint = rm.restore_cli_args(_cli_ephemeral)

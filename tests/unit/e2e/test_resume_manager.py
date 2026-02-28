@@ -67,6 +67,90 @@ def _make_manager(
 
 
 # ---------------------------------------------------------------------------
+# handle_zombie
+# ---------------------------------------------------------------------------
+
+
+class TestHandleZombie:
+    """Tests for handle_zombie()."""
+
+    def test_zombie_detected_resets_checkpoint(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """When zombie detected, reset_zombie_checkpoint is called and checkpoint updated."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+        experiment_dir = tmp_path
+        reset_checkpoint = base_checkpoint.model_copy(update={"status": "interrupted"})
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with (
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=True) as mock_is_zombie,
+            patch(
+                "scylla.e2e.resume_manager.reset_zombie_checkpoint",
+                return_value=reset_checkpoint,
+            ) as mock_reset,
+        ):
+            config, checkpoint = rm.handle_zombie(checkpoint_path, experiment_dir)
+
+        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir)
+        mock_reset.assert_called_once_with(base_checkpoint, checkpoint_path)
+        assert checkpoint.status == "interrupted"
+        assert config is base_config
+
+    def test_no_zombie_checkpoint_unchanged(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """When no zombie detected, reset_zombie_checkpoint is NOT called."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+        experiment_dir = tmp_path
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with (
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False) as mock_is_zombie,
+            patch("scylla.e2e.resume_manager.reset_zombie_checkpoint") as mock_reset,
+        ):
+            config, checkpoint = rm.handle_zombie(checkpoint_path, experiment_dir)
+
+        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir)
+        mock_reset.assert_not_called()
+        assert checkpoint is base_checkpoint
+        assert config is base_config
+
+    def test_experiment_dir_none_is_noop(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """When experiment_dir is None, neither is_zombie nor reset is called."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with (
+            patch("scylla.e2e.resume_manager.is_zombie") as mock_is_zombie,
+            patch("scylla.e2e.resume_manager.reset_zombie_checkpoint") as mock_reset,
+        ):
+            config, checkpoint = rm.handle_zombie(checkpoint_path, experiment_dir=None)
+
+        mock_is_zombie.assert_not_called()
+        mock_reset.assert_not_called()
+        assert checkpoint is base_checkpoint
+        assert config is base_config
+
+
+# ---------------------------------------------------------------------------
 # restore_cli_args
 # ---------------------------------------------------------------------------
 
