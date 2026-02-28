@@ -5,9 +5,11 @@ Provides automatic retry logic with configurable parameters:
 - Network error detection
 - Max retries limit
 - Logging integration
+- Optional random jitter to prevent thundering herd problems
 """
 
 import functools
+import random
 import time
 from collections.abc import Callable
 from typing import Any, TypeVar, cast
@@ -52,6 +54,7 @@ def retry_with_backoff(
     backoff_factor: int = 2,
     retry_on: tuple[type[Exception], ...] = (Exception,),
     logger: Callable[[str], None] | None = None,
+    jitter: bool = False,
 ) -> Callable[[F], F]:
     """Retry function with exponential backoff.
 
@@ -61,12 +64,15 @@ def retry_with_backoff(
         backoff_factor: Multiplier for delay between retries (default: 2)
         retry_on: Tuple of exception types to retry on (default: all exceptions)
         logger: Optional logging function for retry attempts
+        jitter: If True, multiply delay by random.uniform(0.5, 1.5) to prevent
+            thundering herd problems when multiple clients retry simultaneously
+            (default: False)
 
     Returns:
         Decorated function with retry logic
 
     Example:
-        @retry_with_backoff(max_retries=3, initial_delay=2.0)
+        @retry_with_backoff(max_retries=3, initial_delay=2.0, jitter=True)
         def unstable_network_call():
             # May fail transiently
             response = requests.get("https://api.github.com")
@@ -91,6 +97,10 @@ def retry_with_backoff(
 
                     # Calculate delay with exponential backoff
                     delay = initial_delay * (backoff_factor**attempt)
+
+                    # Apply jitter to prevent thundering herd
+                    if jitter:
+                        delay = delay * random.uniform(0.5, 1.5)
 
                     # Log retry attempt
                     if logger:
