@@ -29,12 +29,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Layer 1: Build backend (invalidated only when hatchling version changes)
 RUN pip install --no-cache-dir hatchling
 
-# Layer 2: Dependencies (invalidated only when pyproject.toml changes)
+# Layer 2: Dependencies (invalidated only when pyproject.toml changes or EXTRAS changes)
 # Copy only pyproject.toml first so dependency installs are cached separately
 # from source changes. Uses tomllib (stdlib since Python 3.11) to extract deps.
+#
+# Optional-dependency groups from [project.optional-dependencies] that are built
+# into this layer when EXTRAS is set at build time:
+#   analysis  — matplotlib, numpy, pandas, scipy, seaborn, altair, vl-convert-python, krippendorff
+#   dev       — pytest, pytest-cov, pre-commit, ruff, defusedxml
+#
+# Usage:
+#   docker build .                               # runtime deps only (default)
+#   docker build --build-arg EXTRAS=analysis .   # + analysis group in cache layer
+#   docker build --build-arg EXTRAS=analysis,dev .  # + both groups
+ARG EXTRAS=""
 COPY pyproject.toml /opt/scylla/
 RUN pip install --user --no-cache-dir \
-    $(python3 -c "import tomllib; data=tomllib.load(open('/opt/scylla/pyproject.toml','rb')); print(' '.join(data['project']['dependencies']))")
+    $(python3 -c "
+import tomllib, os
+data = tomllib.load(open('/opt/scylla/pyproject.toml', 'rb'))
+deps = list(data['project']['dependencies'])
+opt = data['project'].get('optional-dependencies', {})
+for group in [g.strip() for g in os.environ.get('EXTRAS', '').split(',') if g.strip()]:
+    deps.extend(opt.get(group, []))
+print(' '.join(deps))
+" EXTRAS="$EXTRAS")
 
 # Layer 3: Package install (invalidated when scylla/ source changes)
 # Source-only changes hit cached layer 2 and only re-run this install step.

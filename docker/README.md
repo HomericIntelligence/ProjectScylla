@@ -40,6 +40,44 @@ docker run \
     scylla-runner:latest --run
 ```
 
+## Optional Dependency Groups
+
+The Dockerfile supports pre-installing optional extras into the cached Layer 2 via the `EXTRAS` build argument.
+When `EXTRAS` is not set (the default), the image is identical to the original runtime-only image.
+
+### Available Groups
+
+| Group | Packages | Use Case |
+|-------|----------|----------|
+| `analysis` | matplotlib, numpy, pandas, scipy, seaborn, altair, vl-convert-python, krippendorff | Statistical analysis and reporting |
+| `dev` | pytest, pytest-cov, pre-commit, ruff, defusedxml | Development and testing |
+
+### Caching Contract
+
+- **Layer 2** (cached): `[project].dependencies` + any groups named in `EXTRAS`
+- **Layer 3** (invalidated on source change): `pip install --no-deps /opt/scylla/`
+
+Setting `EXTRAS` moves the optional packages into Layer 2.  A subsequent source-only rebuild will hit the
+Layer 2 cache for both runtime deps and the named extras, and only re-run the fast `--no-deps` Layer 3 step.
+If `pip install /opt/scylla/[analysis]` is run *without* `EXTRAS=analysis`, the analysis packages bypass the
+cache layer and are reinstalled on every source change.
+
+### Build Commands
+
+```bash
+# Runtime dependencies only (default — identical to previous behaviour)
+docker build -t scylla-runner:latest -f docker/Dockerfile .
+
+# Include analysis group in the cached layer
+docker build --build-arg EXTRAS=analysis -t scylla-runner:analysis -f docker/Dockerfile .
+
+# Include both analysis and dev groups
+docker build --build-arg EXTRAS=analysis,dev -t scylla-runner:dev -f docker/Dockerfile .
+
+# Using Docker Compose (reads EXTRAS from the environment)
+EXTRAS=analysis docker-compose build
+```
+
 ## Build Verification
 
 After building the Docker image, verify the build completed successfully:
