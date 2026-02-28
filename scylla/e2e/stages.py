@@ -555,10 +555,10 @@ def stage_execute_agent(ctx: RunContext) -> None:
 
 
 def _get_diff_stat(workspace: Path) -> dict[str, tuple[int, int]]:
-    """Run git diff --stat and return per-file line counts.
+    """Run git diff --numstat and return per-file line counts.
 
-    Runs ``git diff --stat`` (unstaged + staged) against the workspace to
-    collect insertion/deletion counts per modified file.  Excludes
+    Runs ``git diff --numstat`` (unstaged + staged) against the workspace to
+    collect exact insertion/deletion counts per modified file.  Excludes
     CLAUDE.md and .claude/ from the stat output (test framework files).
 
     Args:
@@ -574,7 +574,7 @@ def _get_diff_stat(workspace: Path) -> dict[str, tuple[int, int]]:
             [
                 "git",
                 "diff",
-                "--stat",
+                "--numstat",
                 "HEAD",
                 "--",
                 ".",
@@ -588,47 +588,44 @@ def _get_diff_stat(workspace: Path) -> dict[str, tuple[int, int]]:
         )
         if result.returncode != 0:
             return {}
-        return _parse_diff_stat_output(result.stdout)
+        return _parse_diff_numstat_output(result.stdout)
     except (OSError, subprocess.TimeoutExpired):
         return {}
 
 
-def _parse_diff_stat_output(stat_output: str) -> dict[str, tuple[int, int]]:
-    """Parse ``git diff --stat`` output into per-file (insertions, deletions).
+def _parse_diff_numstat_output(numstat_output: str) -> dict[str, tuple[int, int]]:
+    r"""Parse ``git diff --numstat`` output into per-file (insertions, deletions).
 
-    Handles standard stat lines of the form::
+    Handles lines of the form::
 
-        path/to/file.py | 5 ++---
+        5\t3\tpath/to/file.py
 
-    The summary line (e.g. "2 files changed, …") is skipped.
+    Binary files (shown as ``-\t-\tpath``) are skipped.
 
     Args:
-        stat_output: Raw stdout from ``git diff --stat``.
+        numstat_output: Raw stdout from ``git diff --numstat``.
 
     Returns:
         Dict mapping filepath → (insertions, deletions).
 
     """
     result: dict[str, tuple[int, int]] = {}
-    for line in stat_output.splitlines():
-        if "|" not in line:
+    for line in numstat_output.splitlines():
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
             continue
-        # Skip the summary line "N files changed, …"
-        if "file" in line and "changed" in line:
+        ins_str, dels_str, filepath = parts
+        # Binary files are reported as "-" — skip them
+        if ins_str == "-" or dels_str == "-":
             continue
-        file_part, _, change_part = line.partition("|")
-        filepath = file_part.strip()
+        try:
+            insertions = int(ins_str)
+            deletions = int(dels_str)
+        except ValueError:
+            continue
+        filepath = filepath.strip()
         if not filepath:
             continue
-        change_str = change_part.strip()
-        # change_str looks like "5 ++---" or "10 +++++++---" or "3 +++"
-        tokens = change_str.split()
-        if not tokens:
-            continue
-        # Count '+' and '-' characters in the marker string
-        markers = tokens[1] if len(tokens) > 1 else ""
-        insertions = markers.count("+")
-        deletions = markers.count("-")
         result[filepath] = (insertions, deletions)
     return result
 

@@ -1,7 +1,7 @@
 """Unit tests for process metrics helpers in scylla/e2e/stages.py.
 
 Tests cover:
-- _get_diff_stat: parsing git diff --stat output
+- _get_diff_stat: parsing git diff --numstat output
 - _build_change_results: constructing ChangeResult list from diff_stat
 - _build_progress_steps: constructing ProgressStep list from workspace_state
 - _finalize_change_results: updating ChangeResult with actual judge outcome
@@ -104,10 +104,10 @@ class TestGetDiffStat:
         assert result == {}
 
     def test_parses_modified_file(self, tmp_path: Path) -> None:
-        """Parses a modified file with insertions and deletions."""
-        stat_output = " foo/bar.py | 5 ++---\n 1 file changed, 2 insertions(+), 3 deletions(-)\n"
+        """Parses a modified file with exact insertion and deletion counts."""
+        numstat_output = "2\t3\tfoo/bar.py\n"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout=stat_output, stderr="")
+            mock_run.return_value = MagicMock(returncode=0, stdout=numstat_output, stderr="")
             result = _get_diff_stat(tmp_path)
         assert "foo/bar.py" in result
         insertions, deletions = result["foo/bar.py"]
@@ -116,13 +116,9 @@ class TestGetDiffStat:
 
     def test_parses_multiple_files(self, tmp_path: Path) -> None:
         """Parses multiple changed files."""
-        stat_output = (
-            " a.py | 10 +++++++---\n"
-            " b.py |  3 +++\n"
-            " 2 files changed, 13 insertions(+), 3 deletions(-)\n"
-        )
+        numstat_output = "7\t3\ta.py\n3\t0\tb.py\n"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout=stat_output, stderr="")
+            mock_run.return_value = MagicMock(returncode=0, stdout=numstat_output, stderr="")
             result = _get_diff_stat(tmp_path)
         assert "a.py" in result
         assert "b.py" in result
@@ -152,9 +148,9 @@ class TestGetDiffStat:
 
     def test_insertions_only_file(self, tmp_path: Path) -> None:
         """Handles file with only insertions."""
-        stat_output = " new_file.py | 20 ++++++++++++++++++++\n 1 file changed, 20 insertions(+)\n"
+        numstat_output = "20\t0\tnew_file.py\n"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout=stat_output, stderr="")
+            mock_run.return_value = MagicMock(returncode=0, stdout=numstat_output, stderr="")
             result = _get_diff_stat(tmp_path)
         assert "new_file.py" in result
         insertions, deletions = result["new_file.py"]
@@ -163,30 +159,29 @@ class TestGetDiffStat:
 
     def test_deletions_only_file(self, tmp_path: Path) -> None:
         """Handles file with only deletions."""
-        stat_output = " old_file.py | 5 -----\n 1 file changed, 5 deletions(-)\n"
+        numstat_output = "0\t5\told_file.py\n"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout=stat_output, stderr="")
+            mock_run.return_value = MagicMock(returncode=0, stdout=numstat_output, stderr="")
             result = _get_diff_stat(tmp_path)
         assert "old_file.py" in result
         insertions, deletions = result["old_file.py"]
         assert insertions == 0
         assert deletions == 5
 
-    def test_skips_summary_line(self, tmp_path: Path) -> None:
-        """Summary line (N files changed) is not included in result."""
-        stat_output = " a.py | 1 +\n 1 file changed, 1 insertion(+)\n"
+    def test_skips_binary_files(self, tmp_path: Path) -> None:
+        r"""Binary files (shown as '-\t-\t<path>') are skipped."""
+        numstat_output = "1\t0\ta.py\n-\t-\timage.png\n"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout=stat_output, stderr="")
+            mock_run.return_value = MagicMock(returncode=0, stdout=numstat_output, stderr="")
             result = _get_diff_stat(tmp_path)
-        # Only the file entry, not the summary
-        assert len(result) == 1
         assert "a.py" in result
+        assert "image.png" not in result
 
     def test_strips_whitespace_from_paths(self, tmp_path: Path) -> None:
         """File paths are stripped of leading/trailing whitespace."""
-        stat_output = "  path/to/file.py | 3 +++\n 1 file changed, 3 insertions(+)\n"
+        numstat_output = "3\t0\tpath/to/file.py\n"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(returncode=0, stdout=stat_output, stderr="")
+            mock_run.return_value = MagicMock(returncode=0, stdout=numstat_output, stderr="")
             result = _get_diff_stat(tmp_path)
         assert "path/to/file.py" in result
 
