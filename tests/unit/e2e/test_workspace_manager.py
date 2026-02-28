@@ -452,6 +452,33 @@ class TestCentralizedRepos:
         ):
             manager._checkout_commit()
 
+    def test_checkout_commit_success(self, tmp_path: Path) -> None:
+        """_checkout_commit runs fetch then checkout and returns cleanly on success."""
+        commit = "deadbeef"
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            commit=commit,
+        )
+
+        success_result = MagicMock()
+        success_result.returncode = 0
+        success_result.stderr = ""
+
+        with patch("subprocess.run", return_value=success_result) as mock_run:
+            manager._checkout_commit()
+
+        # Expect exactly two subprocess calls: git fetch then git checkout
+        assert mock_run.call_count == 2
+
+        fetch_cmd = mock_run.call_args_list[0][0][0]
+        assert "fetch" in fetch_cmd
+        assert commit in fetch_cmd
+
+        checkout_cmd = mock_run.call_args_list[1][0][0]
+        assert "checkout" in checkout_cmd
+        assert commit in checkout_cmd
+
     def test_ensure_commit_available_raises_if_commit_none(self, tmp_path: Path) -> None:
         """_ensure_commit_available raises RuntimeError when commit is None."""
         manager = WorkspaceManager(
