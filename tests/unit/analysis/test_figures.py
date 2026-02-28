@@ -631,6 +631,24 @@ def test_compute_dynamic_domain():
     assert domain[1] <= 0.8
 
 
+def test_generate_figures_registry_includes_process_metrics() -> None:
+    """FIGURES registry contains the three process-metrics figures."""
+    from scripts.generate_figures import FIGURES
+
+    assert "fig_r_prog_by_tier" in FIGURES
+    assert "fig_cfp_by_tier" in FIGURES
+    assert "fig_pr_revert_by_tier" in FIGURES
+
+
+def test_generate_figures_process_metrics_use_tier_category() -> None:
+    """Process-metrics figures are registered under the 'tier' category."""
+    from scripts.generate_figures import FIGURES
+
+    assert FIGURES["fig_r_prog_by_tier"][0] == "tier"
+    assert FIGURES["fig_cfp_by_tier"][0] == "tier"
+    assert FIGURES["fig_pr_revert_by_tier"][0] == "tier"
+
+
 def test_compute_dynamic_domain_padding():
     """Test padding behavior."""
     import pandas as pd
