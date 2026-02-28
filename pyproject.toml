@@ -91,6 +91,9 @@ addopts = [
     "--cov-report=html",
     "--cov-fail-under=75",
 ]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]
 
 [tool.mypy]
 python_version = "3.10"
