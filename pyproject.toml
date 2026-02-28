@@ -68,6 +68,9 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
+# S101 is selected explicitly (not via the full "S"/bandit group) so that
+# assert statements are flagged as errors in production code.  Tests are
+# exempted below via per-file-ignores, where assert is the pytest idiom.
 select = ["E", "F", "W", "I", "N", "D", "UP", "S101"]
 ignore = [
     "D100",  # Missing docstring in public module
@@ -78,7 +81,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # assert statements are intentional in test code
+# assert is idiomatic in pytest; S101 suppressed for all test files only
+"tests/**" = ["S101"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
