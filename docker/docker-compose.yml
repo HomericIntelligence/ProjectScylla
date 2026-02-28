@@ -14,6 +14,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        EXTRAS: ${EXTRAS:-}
     image: scylla-runner:latest
     environment:
       # Required environment variables
