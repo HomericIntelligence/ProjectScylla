@@ -31,8 +31,10 @@ StateMachine.advance_to_completion().
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import logging
+import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -50,6 +52,13 @@ from scylla.e2e.models import (
 )
 from scylla.e2e.paths import get_agent_dir, get_judge_dir
 from scylla.e2e.state_machine import TRANSITION_REGISTRY
+from scylla.metrics.process import (
+    ChangeResult,
+    ProcessMetrics,
+    ProgressStep,
+    ProgressTracker,
+    calculate_process_metrics,
+)
 
 if TYPE_CHECKING:
     from scylla.adapters.base import AdapterConfig, AdapterResult
@@ -145,6 +154,10 @@ class RunContext:
 
     # Adapter config passed between stage_generate_replay and stage_execute_agent
     adapter_config: AdapterConfig | None = None
+
+    # Process metrics tracking (populated by stage_capture_diff, finalized in stage_finalize_run)
+    progress_steps: list[ProgressStep] | None = None
+    change_results: list[ChangeResult] | None = None
 
     # Cross-process coordination
     coordinator: RateLimitCoordinator | None = None
@@ -536,17 +549,264 @@ def stage_execute_agent(ctx: RunContext) -> None:
     logger.info(f"[AGENT] Complete ({ctx.agent_duration:.1f}s)")
 
 
+# ---------------------------------------------------------------------------
+# Process metrics helpers
+# ---------------------------------------------------------------------------
+
+
+def _get_diff_stat(workspace: Path) -> dict[str, tuple[int, int]]:
+    """Run git diff --stat and return per-file line counts.
+
+    Runs ``git diff --stat`` (unstaged + staged) against the workspace to
+    collect insertion/deletion counts per modified file.  Excludes
+    CLAUDE.md and .claude/ from the stat output (test framework files).
+
+    Args:
+        workspace: Path to the git workspace directory.
+
+    Returns:
+        Dict mapping filepath → (insertions, deletions).
+        Returns empty dict on any error (git not available, timeout, etc.).
+
+    """
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "diff",
+                "--stat",
+                "HEAD",
+                "--",
+                ".",
+                ":(exclude)CLAUDE.md",
+                ":(exclude).claude",
+            ],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if result.returncode != 0:
+            return {}
+        return _parse_diff_stat_output(result.stdout)
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
+
+
+def _parse_diff_stat_output(stat_output: str) -> dict[str, tuple[int, int]]:
+    """Parse ``git diff --stat`` output into per-file (insertions, deletions).
+
+    Handles standard stat lines of the form::
+
+        path/to/file.py | 5 ++---
+
+    The summary line (e.g. "2 files changed, …") is skipped.
+
+    Args:
+        stat_output: Raw stdout from ``git diff --stat``.
+
+    Returns:
+        Dict mapping filepath → (insertions, deletions).
+
+    """
+    result: dict[str, tuple[int, int]] = {}
+    for line in stat_output.splitlines():
+        if "|" not in line:
+            continue
+        # Skip the summary line "N files changed, …"
+        if "file" in line and "changed" in line:
+            continue
+        file_part, _, change_part = line.partition("|")
+        filepath = file_part.strip()
+        if not filepath:
+            continue
+        change_str = change_part.strip()
+        # change_str looks like "5 ++---" or "10 +++++++---" or "3 +++"
+        tokens = change_str.split()
+        if not tokens:
+            continue
+        # Count '+' and '-' characters in the marker string
+        markers = tokens[1] if len(tokens) > 1 else ""
+        insertions = markers.count("+")
+        deletions = markers.count("-")
+        result[filepath] = (insertions, deletions)
+    return result
+
+
+def _build_change_results(
+    diff_stat: dict[str, tuple[int, int]],
+    *,
+    judge_passed: bool,
+    pipeline_passed: bool,
+) -> list[ChangeResult]:
+    """Build a ChangeResult list from diff_stat.
+
+    One ChangeResult per file in diff_stat.  ``succeeded`` and
+    ``caused_failure`` use preliminary values that are refined later in
+    ``_finalize_change_results`` once the final judge outcome is known.
+
+    Args:
+        diff_stat: Per-file (insertions, deletions) from _get_diff_stat.
+        judge_passed: Whether the judge considered the run passing.
+        pipeline_passed: Whether the build pipeline passed.
+
+    Returns:
+        List of ChangeResult instances, one per changed file.
+
+    """
+    return [
+        ChangeResult(
+            change_id=filepath,
+            description=f"Modified {filepath}",
+            succeeded=judge_passed,
+            caused_failure=not pipeline_passed,
+            reverted=False,
+        )
+        for filepath in diff_stat
+    ]
+
+
+def _build_progress_steps(
+    workspace_state: str,
+    *,
+    judge_score: float,
+    diff_stat: dict[str, tuple[int, int]],
+) -> list[ProgressStep]:
+    """Build a ProgressStep list from workspace_state and diff_stat.
+
+    Parses lines produced by ``_get_workspace_state()`` to enumerate the
+    files changed by the agent.  Each file becomes one ProgressStep with
+    ``completed=True`` (the agent actually modified it).
+
+    Weights are normalized by line delta (insertions + deletions relative
+    to the total).  Files missing from diff_stat get a delta of 1.
+
+    Args:
+        workspace_state: String from _get_workspace_state().
+        judge_score: Judge score (0.0–1.0) used as a proxy for
+            goal_alignment; refined later in _finalize_progress_steps.
+        diff_stat: Per-file line counts used for weight calculation.
+
+    Returns:
+        List of ProgressStep instances.
+
+    """
+    # Parse file entries from workspace_state lines like:
+    #   - `path/to/file.py` (modified)
+    entries: list[tuple[str, str]] = []  # (filepath, status)
+    for line in workspace_state.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("- `"):
+            continue
+        # Format: - `filepath` (status)
+        try:
+            path_end = stripped.index("`", 3)
+            filepath = stripped[3:path_end]
+            status_start = stripped.index("(", path_end) + 1
+            status_end = stripped.index(")", status_start)
+            status = stripped[status_start:status_end]
+        except ValueError:
+            continue
+        if filepath:
+            entries.append((filepath, status))
+
+    if not entries:
+        return []
+
+    # Calculate per-file line deltas for weight normalization
+    deltas = {fp: max(1, ins + dels) for fp, (ins, dels) in diff_stat.items()}
+    file_deltas = [deltas.get(fp, 1) for fp, _ in entries]
+    total_delta = sum(file_deltas)
+
+    steps: list[ProgressStep] = []
+    for (filepath, status), delta in zip(entries, file_deltas):
+        weight = delta / total_delta if total_delta > 0 else 1.0
+        steps.append(
+            ProgressStep(
+                step_id=filepath,
+                description=f"{status} {filepath}",
+                weight=weight,
+                completed=True,
+                goal_alignment=judge_score,
+            )
+        )
+    return steps
+
+
+def _finalize_change_results(
+    change_results: list[ChangeResult],
+    *,
+    judge_passed: bool,
+    pipeline_passed: bool,
+) -> list[ChangeResult]:
+    """Return a new list of ChangeResult with updated judge outcome fields.
+
+    Does not mutate the input list.
+
+    Args:
+        change_results: Preliminary ChangeResult list from stage_capture_diff.
+        judge_passed: Final judge pass/fail decision.
+        pipeline_passed: Whether the build pipeline passed.
+
+    Returns:
+        New list of ChangeResult with succeeded and caused_failure updated.
+
+    """
+    return [
+        ChangeResult(
+            change_id=cr.change_id,
+            description=cr.description,
+            succeeded=judge_passed,
+            caused_failure=not pipeline_passed,
+            reverted=cr.reverted,
+        )
+        for cr in change_results
+    ]
+
+
+def _finalize_progress_steps(
+    progress_steps: list[ProgressStep],
+    *,
+    judge_score: float,
+) -> list[ProgressStep]:
+    """Return a new list of ProgressStep with updated goal_alignment.
+
+    Does not mutate the input list.
+
+    Args:
+        progress_steps: Preliminary ProgressStep list from stage_capture_diff.
+        judge_score: Final judge score (0.0–1.0) to use as goal_alignment.
+
+    Returns:
+        New list of ProgressStep with goal_alignment updated.
+
+    """
+    return [
+        ProgressStep(
+            step_id=ps.step_id,
+            description=ps.description,
+            weight=ps.weight,
+            completed=ps.completed,
+            goal_alignment=judge_score,
+        )
+        for ps in progress_steps
+    ]
+
+
 def stage_capture_diff(ctx: RunContext) -> None:
     """AGENT_COMPLETE -> DIFF_CAPTURED: Capture workspace diff and state.
 
     Runs git diff/status to capture changes made by the agent.
     Saves diff data to ctx.diff_result for use by later stages.
+    Also populates ctx.progress_steps and ctx.change_results for process
+    metrics emission in stage_finalize_run.
 
     If judge result can be reused (resume case), also loads existing
     judgment to make subsequent judge stages no-ops.
 
     Args:
-        ctx: Run context (mutates ctx.diff_result, optionally ctx.judgment)
+        ctx: Run context (mutates ctx.diff_result, ctx.progress_steps,
+            ctx.change_results, and optionally ctx.judgment)
 
     """
     from scylla.e2e.judge_runner import _has_valid_judge_result, _load_judge_result
@@ -568,6 +828,8 @@ def stage_capture_diff(ctx: RunContext) -> None:
             ctx.judge_duration = timing_data.get("judge_duration_seconds", 0.0)
         # diff_result not needed since judge is already done
         ctx.diff_result = {}
+        ctx.progress_steps = []
+        ctx.change_results = []
         return
 
     # Capture workspace diff
@@ -580,6 +842,13 @@ def stage_capture_diff(ctx: RunContext) -> None:
         "patchfile": patchfile,
         "deleted_files": deleted_files,
     }
+
+    # Build preliminary process metrics data (judge outcome not yet known)
+    diff_stat = _get_diff_stat(ctx.workspace)
+    ctx.progress_steps = _build_progress_steps(
+        workspace_state, judge_score=0.0, diff_stat=diff_stat
+    )
+    ctx.change_results = _build_change_results(diff_stat, judge_passed=False, pipeline_passed=True)
 
 
 def stage_run_judge_pipeline(ctx: RunContext) -> None:
@@ -931,9 +1200,40 @@ def stage_finalize_run(ctx: RunContext) -> None:
         baseline_pipeline_summary=baseline_summary,
     )
 
-    # Save full E2ERunResult for checkpoint resume
+    # Finalize process metrics with actual judge outcome
+    judge_passed = run_result.judge_passed
+    judge_score = run_result.judge_score
+    pipeline_passed = (
+        ctx.judge_pipeline_result.all_passed if ctx.judge_pipeline_result is not None else True
+    )
+    final_change_results = _finalize_change_results(
+        ctx.change_results or [],
+        judge_passed=judge_passed,
+        pipeline_passed=pipeline_passed,
+    )
+    final_progress_steps = _finalize_progress_steps(
+        ctx.progress_steps or [], judge_score=judge_score
+    )
+    tracker = ProgressTracker(
+        expected_steps=final_progress_steps,
+        achieved_steps=[s for s in final_progress_steps if s.completed],
+    )
+    pm: ProcessMetrics = calculate_process_metrics(tracker=tracker, changes=final_change_results)
+
+    # Build extended result dict with process_metrics, progress_tracking, and changes blocks
+    result_dict = run_result.to_dict()
+    result_dict["process_metrics"] = {
+        "r_prog": pm.r_prog,
+        "strategic_drift": pm.strategic_drift,
+        "cfp": pm.cfp,
+        "pr_revert_rate": pm.pr_revert_rate,
+    }
+    result_dict["progress_tracking"] = [dataclasses.asdict(s) for s in final_progress_steps]
+    result_dict["changes"] = [dataclasses.asdict(c) for c in final_change_results]
+
+    # Save full E2ERunResult (with process_metrics) for checkpoint resume
     with open(ctx.run_dir / "run_result.json", "w") as f:
-        json.dump(run_result.to_dict(), f, indent=2)
+        json.dump(result_dict, f, indent=2)
 
     # Pre-seed completed_runs with the correct pass/fail status so that the
     # backward-compat sync in set_run_state("run_finalized") picks it up.
