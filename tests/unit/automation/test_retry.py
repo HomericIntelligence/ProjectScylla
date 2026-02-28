@@ -198,3 +198,79 @@ class TestRetryOnNetworkError:
             mock_sleep.assert_called_once_with(2.0)
 
         assert result == "success"
+
+
+class TestRetryWithJitter:
+    """Tests for jitter parameter in retry_with_backoff."""
+
+    def test_jitter_false_by_default(self):
+        """Test jitter is disabled by default and delays are unmodified."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
+        decorated = retry_with_backoff(max_retries=2, initial_delay=0.1, backoff_factor=2)(
+            mock_func
+        )
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            with patch("scylla.automation.retry.random.uniform") as mock_uniform:
+                result = decorated()
+
+        assert result == "success"
+        mock_uniform.assert_not_called()
+        mock_sleep.assert_called_once_with(0.1)
+
+    def test_jitter_true_applies_random_factor(self):
+        """Test jitter=True multiplies delay by random.uniform(0.5, 1.5)."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
+        decorated = retry_with_backoff(
+            max_retries=2, initial_delay=0.1, backoff_factor=2, jitter=True
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            with patch("scylla.automation.retry.random.uniform", return_value=1.2) as mock_uniform:
+                result = decorated()
+
+        assert result == "success"
+        mock_uniform.assert_called_once_with(0.5, 1.5)
+        # delay = 0.1 * 2^0 * 1.2 = 0.12
+        mock_sleep.assert_called_once_with(0.1 * 1.2)
+
+    def test_jitter_applied_to_each_retry(self):
+        """Test jitter is applied independently to each retry delay."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
+        decorated = retry_with_backoff(
+            max_retries=3, initial_delay=0.1, backoff_factor=2, jitter=True
+        )(mock_func)
+
+        # Return different jitter factors for each retry
+        jitter_values = [0.8, 1.3]
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            with patch(
+                "scylla.automation.retry.random.uniform", side_effect=jitter_values
+            ) as mock_uniform:
+                result = decorated()
+
+        assert result == "success"
+        assert mock_uniform.call_count == 2
+        mock_uniform.assert_called_with(0.5, 1.5)
+        # First retry: 0.1 * 2^0 * 0.8 = 0.08
+        # Second retry: 0.1 * 2^1 * 1.3 = 0.26
+        sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
+        assert sleep_calls[0] == pytest.approx(0.1 * 0.8)
+        assert sleep_calls[1] == pytest.approx(0.2 * 1.3)
+
+    def test_jitter_with_logger_reports_jittered_delay(self):
+        """Test logger receives the jittered delay value."""
+        mock_logger = MagicMock()
+        mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
+        decorated = retry_with_backoff(
+            max_retries=2, initial_delay=1.0, backoff_factor=2, jitter=True, logger=mock_logger
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep"):
+            with patch("scylla.automation.retry.random.uniform", return_value=0.75):
+                result = decorated()
+
+        assert result == "success"
+        log_message = mock_logger.call_args[0][0]
+        # Jittered delay = 1.0 * 2^0 * 0.75 = 0.75
+        assert "0.75" in log_message
