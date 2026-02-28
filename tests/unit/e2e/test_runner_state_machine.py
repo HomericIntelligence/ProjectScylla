@@ -282,20 +282,11 @@ class TestRunTierUsesTierStateMachine:
             # Mock _build_tier_actions to return empty actions dict
             mock_build_actions.return_value = {}
 
-            # We need tier_results populated, so mock _execute_tier_groups
-            # Instead, test via _execute_single_tier which calls _run_tier
-            with patch.object(runner, "_run_tier") as mock_run_tier:
-                from scylla.e2e.models import TierResult
-
-                mock_tier_result = TierResult(
-                    tier_id=TierID.T0,
-                    subtest_results={},
-                    best_subtest="01",
-                    best_subtest_score=0.8,
-                )
-                mock_run_tier.return_value = mock_tier_result
-                result = runner._execute_single_tier(TierID.T0, None, None)
-                assert result[0] == mock_tier_result
+            # Test that _run_tier calls advance_to_completion via TierStateMachine
+            result = runner._run_tier(TierID.T0, None, None)
+            # advance_to_completion was called via the state machine
+            mock_advance.assert_called_once()
+            assert isinstance(result, TierResult)
 
     def test_until_tier_state_passed_to_advance(self, config: ExperimentConfig) -> None:
         """until_tier_state should be passed to TierStateMachine.advance_to_completion()."""
