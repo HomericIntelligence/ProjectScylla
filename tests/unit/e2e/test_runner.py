@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
+from scylla.e2e.experiment_result_writer import ExperimentResultWriter
 from scylla.e2e.models import (
     ExperimentConfig,
     SubTestResult,
@@ -16,6 +17,7 @@ from scylla.e2e.models import (
     TierResult,
     TokenStats,
 )
+from scylla.e2e.parallel_tier_runner import ParallelTierRunner
 from scylla.e2e.runner import E2ERunner
 
 
@@ -39,14 +41,14 @@ def mock_tier_manager() -> MagicMock:
 
 
 class TestTokenStatsAggregation:
-    """Tests for _aggregate_token_stats helper method."""
+    """Tests for aggregate_token_stats (now in ExperimentResultWriter)."""
 
-    def test_empty_tier_results(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def _writer(self) -> ExperimentResultWriter:
+        return ExperimentResultWriter(experiment_dir=None, tier_manager=MagicMock())
+
+    def test_empty_tier_results(self) -> None:
         """Test aggregation with empty tier results."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-        result = runner._aggregate_token_stats({})
+        result = self._writer().aggregate_token_stats({})
 
         assert isinstance(result, TokenStats)
         assert result.input_tokens == 0
@@ -54,12 +56,8 @@ class TestTokenStatsAggregation:
         assert result.cache_creation_tokens == 0
         assert result.cache_read_tokens == 0
 
-    def test_single_tier_result(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_single_tier_result(self) -> None:
         """Test aggregation with single tier."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-
         tier_results = {
             TierID.T0: TierResult(
                 tier_id=TierID.T0,
@@ -73,19 +71,15 @@ class TestTokenStatsAggregation:
             )
         }
 
-        result = runner._aggregate_token_stats(tier_results)
+        result = self._writer().aggregate_token_stats(tier_results)
 
         assert result.input_tokens == 100
         assert result.output_tokens == 50
         assert result.cache_creation_tokens == 20
         assert result.cache_read_tokens == 10
 
-    def test_multiple_tier_results(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_multiple_tier_results(self) -> None:
         """Test aggregation with multiple tiers."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-
         tier_results = {
             TierID.T0: TierResult(
                 tier_id=TierID.T0,
@@ -119,19 +113,15 @@ class TestTokenStatsAggregation:
             ),
         }
 
-        result = runner._aggregate_token_stats(tier_results)
+        result = self._writer().aggregate_token_stats(tier_results)
 
         assert result.input_tokens == 450  # 100 + 200 + 150
         assert result.output_tokens == 185  # 50 + 75 + 60
         assert result.cache_creation_tokens == 75  # 20 + 30 + 25
         assert result.cache_read_tokens == 37  # 10 + 15 + 12
 
-    def test_zero_token_stats(
-        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
-    ) -> None:
+    def test_zero_token_stats(self) -> None:
         """Test aggregation with tiers that have zero tokens."""
-        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
-
         tier_results = {
             TierID.T0: TierResult(
                 tier_id=TierID.T0,
@@ -150,7 +140,7 @@ class TestTokenStatsAggregation:
             ),
         }
 
-        result = runner._aggregate_token_stats(tier_results)
+        result = self._writer().aggregate_token_stats(tier_results)
 
         assert result.input_tokens == 100
         assert result.output_tokens == 50
@@ -297,21 +287,33 @@ def _make_tier_result(
 
 
 class TestSelectBestBaselineFromGroup:
-    """Tests for _select_best_baseline_from_group method."""
+    """Tests for select_best_baseline_from_group (now in ParallelTierRunner)."""
+
+    def _make_parallel_runner(
+        self,
+        config: ExperimentConfig,
+        tier_manager: MagicMock,
+        experiment_dir: Path,
+    ) -> ParallelTierRunner:
+        return ParallelTierRunner(
+            config=config,
+            tier_manager=tier_manager,
+            experiment_dir=experiment_dir,
+            run_tier_fn=MagicMock(),
+            save_tier_result_fn=MagicMock(),
+        )
 
     def test_returns_none_when_t5_not_in_config(
         self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
     ) -> None:
         """Returns None immediately when T5 is not in tiers_to_run."""
-        runner = E2ERunner(mock_config, Path("/tmp"), Path("/tmp"))
-        runner.tier_manager = mock_tier_manager
-        runner.experiment_dir = Path("/tmp/exp")
+        runner = self._make_parallel_runner(mock_config, mock_tier_manager, Path("/tmp/exp"))
         tier_results = {
             TierID.T0: _make_tier_result(TierID.T0, "sub0", mean_cost=1.0, pass_rate=0.5),
             TierID.T1: _make_tier_result(TierID.T1, "sub1", mean_cost=2.0, pass_rate=0.5),
         }
 
-        result = runner._select_best_baseline_from_group([TierID.T0, TierID.T1], tier_results)
+        result = runner.select_best_baseline_from_group([TierID.T0, TierID.T1], tier_results)
 
         assert result is None
         mock_tier_manager.get_baseline_for_subtest.assert_not_called()
@@ -321,9 +323,7 @@ class TestSelectBestBaselineFromGroup:
     ) -> None:
         """Selects the tier with the lowest cost-of-pass and returns its baseline."""
         exp_dir = Path("/tmp/exp")
-        runner = E2ERunner(mock_config_with_t5, Path("/tmp"), Path("/tmp"))
-        runner.tier_manager = mock_tier_manager
-        runner.experiment_dir = exp_dir
+        runner = self._make_parallel_runner(mock_config_with_t5, mock_tier_manager, exp_dir)
         # T0 CoP = 2.0 / 0.5 = 4.0, T1 CoP = 1.0 / 0.5 = 2.0 — T1 should win
         tier_results = {
             TierID.T0: _make_tier_result(TierID.T0, "sub0", mean_cost=2.0, pass_rate=0.5),
@@ -334,7 +334,7 @@ class TestSelectBestBaselineFromGroup:
         )
         mock_tier_manager.get_baseline_for_subtest.return_value = mock_baseline
 
-        result = runner._select_best_baseline_from_group([TierID.T0, TierID.T1], tier_results)
+        result = runner.select_best_baseline_from_group([TierID.T0, TierID.T1], tier_results)
 
         assert result is mock_baseline
         mock_tier_manager.get_baseline_for_subtest.assert_called_once_with(
@@ -347,16 +347,16 @@ class TestSelectBestBaselineFromGroup:
         self, mock_config_with_t5: ExperimentConfig, mock_tier_manager: MagicMock
     ) -> None:
         """Returns None when the best tier has no best_subtest."""
-        runner = E2ERunner(mock_config_with_t5, Path("/tmp"), Path("/tmp"))
-        runner.tier_manager = mock_tier_manager
-        runner.experiment_dir = Path("/tmp/exp")
+        runner = self._make_parallel_runner(
+            mock_config_with_t5, mock_tier_manager, Path("/tmp/exp")
+        )
         tier_result = TierResult(
             tier_id=TierID.T0,
             subtest_results={},
             best_subtest=None,
         )
 
-        result = runner._select_best_baseline_from_group([TierID.T0], {TierID.T0: tier_result})
+        result = runner.select_best_baseline_from_group([TierID.T0], {TierID.T0: tier_result})
 
         assert result is None
         mock_tier_manager.get_baseline_for_subtest.assert_not_called()
@@ -607,7 +607,9 @@ class TestResumeTierConfigPreload:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
-            with patch("scylla.e2e.runner.run_tier_subtests_parallel", return_value={}):
+            with patch(
+                "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
+            ):
                 try:
                     runner._run_tier(TierID.T0, baseline=None, scheduler=None)
                 except Exception:  # noqa: BLE001
@@ -649,7 +651,9 @@ class TestResumeTierConfigPreload:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
-            with patch("scylla.e2e.runner.run_tier_subtests_parallel", return_value={}):
+            with patch(
+                "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
+            ):
                 try:
                     runner._run_tier(TierID.T0, baseline=None, scheduler=None)
                 except Exception:  # noqa: BLE001
@@ -690,7 +694,9 @@ class TestResumeTierConfigPreload:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
-            with patch("scylla.e2e.runner.run_tier_subtests_parallel", return_value={}):
+            with patch(
+                "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
+            ):
                 try:
                     runner._run_tier(TierID.T0, baseline=None, scheduler=None)
                 except Exception:  # noqa: BLE001

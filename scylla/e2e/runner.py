@@ -6,12 +6,10 @@ coordinating tier execution, inheritance, result aggregation, and report generat
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import tempfile
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -30,7 +28,7 @@ from scylla.e2e.checkpoint import (
     save_checkpoint,
     validate_checkpoint_config,
 )
-from scylla.e2e.judge_selection import save_selection, select_best_subtest
+from scylla.e2e.experiment_result_writer import ExperimentResultWriter
 
 # Note: Judge prompts are now generated dynamically via scylla.judge.prompts.build_task_prompt()
 from scylla.e2e.models import (
@@ -44,17 +42,9 @@ from scylla.e2e.models import (
     TierState,
     TokenStats,
 )
-from scylla.e2e.paths import RESULT_FILE
-from scylla.e2e.rate_limit import wait_for_rate_limit
+from scylla.e2e.parallel_tier_runner import ParallelTierRunner
 from scylla.e2e.resume_manager import ResumeManager
-from scylla.e2e.run_report import (
-    generate_experiment_summary_table,
-    generate_tier_summary_table,
-    save_experiment_report,
-    save_subtest_report,
-    save_tier_report,
-)
-from scylla.e2e.subtest_executor import run_tier_subtests_parallel
+from scylla.e2e.tier_action_builder import TierActionBuilder
 from scylla.e2e.tier_manager import TierManager
 from scylla.e2e.workspace_manager import WorkspaceManager
 
@@ -163,6 +153,18 @@ class E2ERunner:
         self.checkpoint: E2ECheckpoint | None = None
         self._fresh = fresh
         self._last_experiment_result: ExperimentResult | None = None
+
+    def _result_writer(self) -> ExperimentResultWriter:
+        """Create an ExperimentResultWriter bound to current state.
+
+        Returns:
+            ExperimentResultWriter with current experiment_dir and tier_manager.
+
+        """
+        return ExperimentResultWriter(
+            experiment_dir=self.experiment_dir,
+            tier_manager=self.tier_manager,
+        )
 
     @staticmethod
     def _get_tier_groups(tiers_to_run: list[TierID]) -> list[list[TierID]]:
@@ -478,37 +480,13 @@ class E2ERunner:
             Dictionary mapping tier IDs to their results
 
         """
-        tier_results: dict[TierID, TierResult] = {}
-
-        for group in tier_groups:
-            # Check for shutdown before starting group
-            if is_shutdown_requested():
-                logger.warning("Shutdown requested before tier group, stopping...")
-                break
-
-            if len(group) == 1:
-                # Single tier - run sequentially
-                tier_id = group[0]
-                logger.info(f"Starting tier {tier_id.value}")
-
-                tier_result, previous_baseline = self._execute_single_tier(
-                    tier_id, previous_baseline, scheduler
-                )
-                tier_results[tier_id] = tier_result
-
-            else:
-                # Multiple tiers - run in parallel
-                logger.info(f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}")
-
-                group_results = self._execute_parallel_tier_group(
-                    group, previous_baseline, scheduler
-                )
-                tier_results.update(group_results)
-
-                # Select best baseline from group for next tier group
-                previous_baseline = self._select_best_baseline_from_group(group, tier_results)
-
-        return tier_results
+        return ParallelTierRunner(
+            config=self.config,
+            tier_manager=self.tier_manager,
+            experiment_dir=self.experiment_dir,
+            run_tier_fn=self._run_tier,
+            save_tier_result_fn=self._save_tier_result,
+        ).execute_tier_groups(tier_groups, scheduler, previous_baseline)
 
     def _create_baseline_from_tier_result(
         self,
@@ -525,140 +503,13 @@ class E2ERunner:
             TierBaseline for the best subtest, or None if no best subtest exists.
 
         """
-        if not tier_result.best_subtest:
-            return None
-        if self.experiment_dir is None:
-            raise RuntimeError(
-                "experiment_dir must be set before getting baseline for previous tier"
-            )
-        subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
-        return self.tier_manager.get_baseline_for_subtest(
-            tier_id=tier_id,
-            subtest_id=tier_result.best_subtest,
-            results_dir=subtest_dir,
-        )
-
-    def _execute_single_tier(
-        self,
-        tier_id: TierID,
-        previous_baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None,
-    ) -> tuple[TierResult, TierBaseline | None]:
-        """Execute a single tier sequentially and update baseline.
-
-        Args:
-            tier_id: The tier to execute
-            previous_baseline: Baseline from previous tier (if any)
-            scheduler: ParallelismScheduler for limiting concurrent operations
-
-        Returns:
-            Tuple of (tier_result, updated_baseline)
-
-        """
-        tier_result = self._run_tier(tier_id, previous_baseline, scheduler)
-
-        # Set baseline for next tier
-        updated_baseline = (
-            self._create_baseline_from_tier_result(tier_id, tier_result) or previous_baseline
-        )
-
-        # Save intermediate results
-        self._save_tier_result(tier_id, tier_result)
-
-        return tier_result, updated_baseline
-
-    def _execute_parallel_tier_group(
-        self,
-        group: list[TierID],
-        previous_baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None,
-    ) -> dict[TierID, TierResult]:
-        """Execute multiple tiers in parallel using ThreadPoolExecutor.
-
-        Args:
-            group: List of tier IDs to execute in parallel
-            previous_baseline: Shared baseline for all tiers
-            scheduler: ParallelismScheduler for limiting concurrent operations
-
-        Returns:
-            Dictionary mapping tier IDs to their results
-
-        """
-        tier_results: dict[TierID, TierResult] = {}
-        errors: dict[TierID, Exception] = {}
-
-        with ThreadPoolExecutor(max_workers=len(group)) as executor:
-            # Submit all tiers in this group
-            futures = {
-                executor.submit(self._run_tier, tier_id, previous_baseline, scheduler): tier_id
-                for tier_id in group
-            }
-
-            # Collect results as they complete
-            for future in as_completed(futures):
-                tier_id = futures[future]
-                try:
-                    tier_result = future.result()
-                    tier_results[tier_id] = tier_result
-
-                    # Save intermediate results
-                    self._save_tier_result(tier_id, tier_result)
-
-                    logger.info(f"Completed tier {tier_id.value} in parallel group")
-                except Exception as e:
-                    logger.error(f"Tier {tier_id.value} failed: {e}")
-                    errors[tier_id] = e
-
-        # Only raise if ALL tiers failed — a single failure should not abort siblings
-        if errors and not tier_results:
-            first_error = next(iter(errors.values()))
-            raise RuntimeError(
-                f"All tiers in parallel group failed. First error: {first_error}"
-            ) from first_error
-        elif errors:
-            for tid, err in errors.items():
-                logger.warning(f"Tier {tid.value} failed but other tiers succeeded: {err}")
-
-        return tier_results
-
-    def _select_best_baseline_from_group(
-        self,
-        group: list[TierID],
-        tier_results: dict[TierID, TierResult],
-    ) -> TierBaseline | None:
-        """Select best tier from group based on cost-of-pass for next baseline.
-
-        Only relevant when T5 is in the experiment (for T0-T4 → T5 transition).
-
-        Args:
-            group: List of tier IDs that were executed in parallel
-            tier_results: Results from all tiers in the group
-
-        Returns:
-            TierBaseline for best tier, or None if no valid baseline found
-
-        """
-        # Only select baseline if T5 is in the experiment
-        if TierID.T5 not in self.config.tiers_to_run:
-            return None
-
-        best_cop = float("inf")
-        best_tier = None
-        for tier_id in group:
-            if tier_id in tier_results and tier_results[tier_id].cost_of_pass < best_cop:
-                best_cop = tier_results[tier_id].cost_of_pass
-                best_tier = tier_id
-
-        if best_tier:
-            baseline = self._create_baseline_from_tier_result(best_tier, tier_results[best_tier])
-            if baseline:
-                logger.info(
-                    f"Selected {best_tier.value} as baseline for next tier group"
-                    f" (CoP: ${best_cop:.4f})"
-                )
-                return baseline
-
-        return None
+        return ParallelTierRunner(
+            config=self.config,
+            tier_manager=self.tier_manager,
+            experiment_dir=self.experiment_dir,
+            run_tier_fn=self._run_tier,
+            save_tier_result_fn=self._save_tier_result,
+        ).create_baseline_from_tier_result(tier_id, tier_result)
 
     def _aggregate_results(
         self,
@@ -677,31 +528,7 @@ class E2ERunner:
             ExperimentResult with completed tiers
 
         """
-        end_time = datetime.now(timezone.utc)
-        total_duration = (end_time - start_time).total_seconds()
-        total_cost = sum(t.total_cost for t in tier_results.values())
-
-        # Find frontier from completed tiers
-        frontier_tier, frontier_cop = self._find_frontier(tier_results)
-
-        # Aggregate token stats from completed tiers
-        experiment_token_stats = self._aggregate_token_stats(tier_results)
-
-        return ExperimentResult(
-            config=self.config,
-            tier_results=tier_results,
-            best_overall_tier=frontier_tier,
-            best_overall_subtest=(
-                tier_results[frontier_tier].best_subtest if frontier_tier else None
-            ),
-            frontier_cop=frontier_cop,
-            frontier_cop_tier=frontier_tier,
-            total_cost=total_cost,
-            total_duration_seconds=total_duration,
-            started_at=start_time.isoformat(),
-            completed_at=end_time.isoformat(),
-            token_stats=experiment_token_stats,
-        )
+        return self._result_writer().aggregate_results(self.config, tier_results, start_time)
 
     def _build_experiment_actions(
         self,
@@ -980,29 +807,6 @@ class E2ERunner:
         if self.experiment_dir:
             self.config.save(self.experiment_dir / "config" / "experiment.json")
 
-    def _check_rate_limit_before_tier(self, tier_id: TierID) -> None:
-        """Check for active rate limit before starting tier execution.
-
-        Makes a lightweight API call to verify we're not rate-limited.
-        If rate limited, waits until limit expires.
-
-        Args:
-            tier_id: The tier about to be executed
-
-        """
-        from scylla.e2e.rate_limit import check_api_rate_limit_status
-
-        rate_limit_info = check_api_rate_limit_status()
-        if rate_limit_info:
-            logger.warning(f"Pre-flight rate limit detected for {tier_id.value}")
-            if self.checkpoint and self.experiment_dir:
-                checkpoint_path = self.experiment_dir / "checkpoint.json"
-                wait_for_rate_limit(
-                    rate_limit_info.retry_after_seconds,
-                    self.checkpoint,
-                    checkpoint_path,
-                )
-
     def _build_tier_actions(
         self,
         tier_id: TierID,
@@ -1025,127 +829,18 @@ class E2ERunner:
             Dict mapping TierState to callable
 
         """
-
-        def action_pending() -> None:
-            """PENDING -> CONFIG_LOADED: Load config, limit subtests, create tier dir."""
-            tier_config = self.tier_manager.load_tier_config(tier_id, self.config.skip_agent_teams)
-
-            if self.config.max_subtests is not None:
-                original_count = len(tier_config.subtests)
-                tier_config.subtests = tier_config.subtests[: self.config.max_subtests]
-                if len(tier_config.subtests) < original_count:
-                    logger.info(
-                        f"Limiting sub-tests from {original_count} to {len(tier_config.subtests)}"
-                    )
-
-            logger.info(f"Tier {tier_id.value}: {len(tier_config.subtests)} sub-tests")
-
-            if self.experiment_dir is None:
-                raise RuntimeError("experiment_dir must be set before loading tier config")
-            tier_dir = self.experiment_dir / tier_id.value
-            tier_dir.mkdir(parents=True, exist_ok=True)
-
-            self._check_rate_limit_before_tier(tier_id)
-
-            tier_ctx.tier_config = tier_config
-            tier_ctx.tier_dir = tier_dir
-
-        def action_config_loaded() -> None:
-            """CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests in parallel."""
-            if tier_ctx.tier_config is None:
-                raise RuntimeError("tier_config must be set before running subtests")
-            if tier_ctx.tier_dir is None:
-                raise RuntimeError("tier_dir must be set before running subtests")
-            if self.experiment_dir is None:
-                raise RuntimeError("experiment_dir must be set before running subtests")
-            checkpoint_path = self.experiment_dir / "checkpoint.json" if self.checkpoint else None
-            subtest_results = run_tier_subtests_parallel(
-                config=self.config,
-                tier_id=tier_id,
-                tier_config=tier_ctx.tier_config,
-                tier_manager=self.tier_manager,
-                workspace_manager=self.workspace_manager,
-                baseline=baseline,
-                results_dir=tier_ctx.tier_dir,
-                checkpoint=self.checkpoint,
-                checkpoint_path=checkpoint_path,
-                scheduler=scheduler,
-                experiment_dir=self.experiment_dir,
-            )
-            tier_ctx.subtest_results = subtest_results
-
-        def action_subtests_running() -> None:
-            """SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest."""
-            if tier_ctx.tier_dir is None:
-                raise RuntimeError("tier_dir must be set before selecting best subtest")
-            subtest_results = tier_ctx.subtest_results
-
-            selection = select_best_subtest(
-                subtest_results,
-                judge_models=self.config.judge_models,
-            )
-
-            if selection.winning_subtest in subtest_results:
-                subtest_results[selection.winning_subtest].selected_as_best = True
-                subtest_results[selection.winning_subtest].selection_reason = (
-                    selection.tiebreaker_result.reasoning
-                    if selection.tiebreaker_result
-                    else f"Highest median score ({selection.winning_score:.3f})"
-                )
-
-            save_selection(selection, str(tier_ctx.tier_dir / "best_subtest.json"))
-            tier_ctx.selection = selection
-
-        def action_subtests_complete() -> None:
-            """SUBTESTS_COMPLETE -> BEST_SELECTED: Aggregate token stats, build TierResult."""
-            from functools import reduce
-
-            if tier_ctx.selection is None:
-                raise RuntimeError("selection must be set before aggregating subtest results")
-            subtest_results = tier_ctx.subtest_results
-            selection = tier_ctx.selection
-            start_time = tier_ctx.start_time
-
-            end_time = datetime.now(timezone.utc)
-            duration = (end_time - start_time).total_seconds()
-
-            token_stats = reduce(
-                lambda a, b: a + b,
-                [s.token_stats for s in subtest_results.values()],
-                TokenStats(),
-            )
-
-            tier_result = TierResult(
-                tier_id=tier_id,
-                subtest_results=subtest_results,
-                best_subtest=selection.winning_subtest,
-                best_subtest_score=selection.winning_score,
-                inherited_from=baseline,
-                tiebreaker_needed=selection.tiebreaker_needed,
-                total_cost=sum(s.total_cost for s in subtest_results.values()),
-                total_duration=duration,
-                token_stats=token_stats,
-            )
-            tier_ctx.tier_result = tier_result
-
-        def action_best_selected() -> None:
-            """BEST_SELECTED -> REPORTS_GENERATED: Save tier result and generate reports."""
-            if tier_ctx.tier_result is None:
-                raise RuntimeError("tier_result must be set before saving reports")
-            self._save_tier_result(tier_id, tier_ctx.tier_result)
-
-        def action_reports_generated() -> None:
-            """REPORTS_GENERATED -> COMPLETE: No-op (state machine marks complete)."""
-            pass
-
-        return {
-            TierState.PENDING: action_pending,
-            TierState.CONFIG_LOADED: action_config_loaded,
-            TierState.SUBTESTS_RUNNING: action_subtests_running,
-            TierState.SUBTESTS_COMPLETE: action_subtests_complete,
-            TierState.BEST_SELECTED: action_best_selected,
-            TierState.REPORTS_GENERATED: action_reports_generated,
-        }
+        return TierActionBuilder(
+            tier_id=tier_id,
+            baseline=baseline,
+            scheduler=scheduler,
+            tier_ctx=tier_ctx,
+            config=self.config,
+            tier_manager=self.tier_manager,
+            workspace_manager=self.workspace_manager,
+            checkpoint=self.checkpoint,
+            experiment_dir=self.experiment_dir,
+            save_tier_result_fn=self._save_tier_result,
+        ).build()
 
     def _run_tier(
         self,
@@ -1276,147 +971,30 @@ class E2ERunner:
     def _save_tier_result(self, tier_id: TierID, result: TierResult) -> None:
         """Save tier results to file and generate hierarchical reports.
 
-        Generates:
-        - result.json (detailed data)
-        - report.json (summary with links)
-        - report.md (human-readable)
-        - Per-subtest reports
-
         Args:
             tier_id: The tier identifier
             result: The tier result
 
         """
-        if self.experiment_dir:
-            tier_dir = self.experiment_dir / tier_id.value
-            tier_dir.mkdir(parents=True, exist_ok=True)
-
-            # Save detailed result
-            with open(tier_dir / RESULT_FILE, "w") as f:
-                json.dump(result.to_dict(), f, indent=2)
-
-            # Generate subtest reports
-            for subtest_id, subtest_result in result.subtest_results.items():
-                subtest_dir = tier_dir / subtest_id
-                save_subtest_report(subtest_dir, subtest_id, subtest_result)
-
-            # Generate tier report
-            save_tier_report(tier_dir, tier_id.value, result)
-
-            # Generate tier summary table
-            tier_summary = generate_tier_summary_table(
-                tier_id=tier_id.value,
-                subtest_results=result.subtest_results,
-            )
-            (tier_dir / "summary.md").write_text(tier_summary)
-
-    def _find_frontier(
-        self,
-        tier_results: dict[TierID, TierResult],
-    ) -> tuple[TierID | None, float]:
-        """Find the frontier tier (best cost-of-pass).
-
-        Args:
-            tier_results: All tier results
-
-        Returns:
-            Tuple of (best tier, cost-of-pass).
-
-        """
-        best_tier: TierID | None = None
-        best_cop = float("inf")
-
-        for tier_id, result in tier_results.items():
-            if not result.subtest_results:
-                continue
-
-            # Get best sub-test results
-            best_subtest = result.subtest_results.get(result.best_subtest or "")
-            if not best_subtest or best_subtest.pass_rate == 0:
-                continue
-
-            # Calculate cost-of-pass
-            cop = best_subtest.mean_cost / best_subtest.pass_rate
-
-            if cop < best_cop:
-                best_cop = cop
-                best_tier = tier_id
-
-        return best_tier, best_cop
-
-    def _aggregate_token_stats(self, tier_results: dict[TierID, TierResult]) -> TokenStats:
-        """Aggregate token statistics from all tier results.
-
-        Args:
-            tier_results: Dictionary mapping tier IDs to their results
-
-        Returns:
-            Aggregated token statistics across all tiers. Returns empty
-            TokenStats if tier_results is empty.
-
-        """
-        from functools import reduce
-
-        if not tier_results:
-            return TokenStats()
-
-        return reduce(
-            lambda a, b: a + b,
-            [t.token_stats for t in tier_results.values()],
-            TokenStats(),
-        )
+        self._result_writer().save_tier_result(tier_id, result)
 
     def _save_final_results(self, result: ExperimentResult) -> None:
         """Save final experiment results.
 
-        Saves result.json and tier_comparison.json to experiment root.
-
         Args:
             result: The complete experiment result
 
         """
-        if self.experiment_dir:
-            # Save to root (not summary/ subdir)
-            result.save(self.experiment_dir / "result.json")
-
-            # Save tier comparison
-            comparison = {
-                tier_id.value: {
-                    "best_subtest": tier_result.best_subtest,
-                    "best_score": tier_result.best_subtest_score,
-                    "total_cost": tier_result.total_cost,
-                    "tiebreaker_needed": tier_result.tiebreaker_needed,
-                }
-                for tier_id, tier_result in result.tier_results.items()
-            }
-
-            with open(self.experiment_dir / "tier_comparison.json", "w") as f:
-                json.dump(comparison, f, indent=2)
+        self._result_writer().save_final_results(result)
 
     def _generate_report(self, result: ExperimentResult) -> None:
         """Generate hierarchical experiment reports.
 
-        Generates:
-        - report.json (summary with links to tier reports)
-        - report.md (human-readable with links)
-
         Args:
             result: The complete experiment result
 
         """
-        if not self.experiment_dir:
-            return
-
-        # Use the hierarchical report generator
-        save_experiment_report(self.experiment_dir, result)
-
-        # Generate experiment summary table
-        experiment_summary = generate_experiment_summary_table(
-            tier_results=result.tier_results,
-        )
-        (self.experiment_dir / "summary.md").write_text(experiment_summary)
-
-        logger.info(f"Reports saved to {self.experiment_dir / 'report.md'}")
+        self._result_writer().generate_report(result)
 
     def _find_existing_checkpoint(self) -> Path | None:
         """Find existing checkpoint file in results directory.
