@@ -86,6 +86,9 @@ def sample_runs_df():
                     pr_revert_rate = (
                         np.random.uniform(0.0, 0.3) if np.random.random() > 0.1 else np.nan
                     )
+                    strategic_drift = (
+                        np.random.uniform(0.0, 0.3) if np.random.random() > 0.1 else np.nan
+                    )
 
                     data.append(
                         {
@@ -112,6 +115,7 @@ def sample_runs_df():
                             "r_prog": r_prog,
                             "cfp": cfp,
                             "pr_revert_rate": pr_revert_rate,
+                            "strategic_drift": strategic_drift,
                         }
                     )
 

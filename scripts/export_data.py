@@ -719,6 +719,9 @@ def main() -> None:
             "mean_pr_revert_rate": float(runs_df["pr_revert_rate"].dropna().mean())
             if not runs_df["pr_revert_rate"].dropna().empty
             else None,
+            "mean_strategic_drift": float(runs_df["strategic_drift"].dropna().mean())
+            if not runs_df["strategic_drift"].dropna().empty
+            else None,
         },
         "by_model": {},
     }
@@ -753,6 +756,7 @@ def main() -> None:
         model_r_prog = model_df["r_prog"].dropna()
         model_cfp = model_df["cfp"].dropna()
         model_pr_revert_rate = model_df["pr_revert_rate"].dropna()
+        model_strategic_drift = model_df["strategic_drift"].dropna()
 
         summary["by_model"][model] = {
             "total_runs": len(model_df),
@@ -783,6 +787,9 @@ def main() -> None:
             "mean_pr_revert_rate": float(model_pr_revert_rate.mean())
             if not model_pr_revert_rate.empty
             else None,
+            "mean_strategic_drift": float(model_strategic_drift.mean())
+            if not model_strategic_drift.empty
+            else None,
         }
 
     # Add by_tier statistics (aggregated across all models)
@@ -803,6 +810,7 @@ def main() -> None:
         tier_r_prog = tier_df["r_prog"].dropna()
         tier_cfp = tier_df["cfp"].dropna()
         tier_pr_revert_rate = tier_df["pr_revert_rate"].dropna()
+        tier_strategic_drift = tier_df["strategic_drift"].dropna()
 
         summary["by_tier"][tier] = {
             "total_runs": len(tier_df),
@@ -821,6 +829,9 @@ def main() -> None:
             "mean_cfp": float(tier_cfp.mean()) if not tier_cfp.empty else None,
             "mean_pr_revert_rate": float(tier_pr_revert_rate.mean())
             if not tier_pr_revert_rate.empty
+            else None,
+            "mean_strategic_drift": float(tier_strategic_drift.mean())
+            if not tier_strategic_drift.empty
             else None,
         }
 
