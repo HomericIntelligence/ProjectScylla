@@ -665,3 +665,58 @@ def test_compute_dynamic_domain_padding():
 
     # With padding should have wider range
     assert domain_pad[1] - domain_pad[0] >= domain_no_pad[1] - domain_no_pad[0]
+
+
+def test_fig_r_prog_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig_r_prog_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig_r_prog_by_tier
+
+    fig_r_prog_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
+
+
+def test_fig_cfp_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig_cfp_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig_cfp_by_tier
+
+    fig_cfp_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig_cfp_by_tier.vl.json").exists()
+
+
+def test_fig_pr_revert_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig_pr_revert_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig_pr_revert_by_tier
+
+    fig_pr_revert_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig_pr_revert_by_tier.vl.json").exists()
+
+
+def test_process_metrics_figures_handle_missing_columns(tmp_path):
+    """Process-metrics figures skip gracefully when their column is absent."""
+    import pandas as pd
+
+    from scylla.analysis.figures.process_metrics import (
+        fig_cfp_by_tier,
+        fig_pr_revert_by_tier,
+        fig_r_prog_by_tier,
+    )
+
+    # DataFrame without any process-metrics columns
+    df = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 5,
+            "tier": ["T0"] * 5,
+            "passed": [True] * 5,
+            "score": [0.8] * 5,
+        }
+    )
+
+    # Should not raise, just skip generation
+    fig_r_prog_by_tier(df, tmp_path, render=False)
+    fig_cfp_by_tier(df, tmp_path, render=False)
+    fig_pr_revert_by_tier(df, tmp_path, render=False)
+
+    # No files should be created since columns are missing
+    assert not (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig_cfp_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig_pr_revert_by_tier.vl.json").exists()
