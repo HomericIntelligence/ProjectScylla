@@ -8,6 +8,7 @@ import pytest
 
 from scylla.executor.runner import (
     EvalRunner,
+    EvalSummary,
     ExecutionState,
     ExecutorExecutionInfo,
     ExecutorRunResult,
@@ -472,3 +473,26 @@ class TestTestRunnerParallel:
         assert mock_docker.run.call_count == 4
         tier_summary = summary.tiers["T0"]["model-a"]
         assert tier_summary.total_runs == 4
+
+
+class TestFinalizeTestSummaryGuard:
+    """Tests for the _finalize_test_summary RuntimeError guard (issue #1143)."""
+
+    def test_raises_runtime_error_when_state_is_none_and_state_file_configured(
+        self, tmp_path: Path
+    ) -> None:
+        """_finalize_test_summary raises RuntimeError when _state is None but state_file is set."""
+        mock_docker = MagicMock()
+        mock_docker.get_api_keys_from_env.return_value = {}
+        mock_tier_loader = MagicMock()
+
+        config = RunnerConfig(state_file=tmp_path / "state.json")
+        runner = EvalRunner(mock_docker, mock_tier_loader, config)
+        # _state is None by default — do not call _create_test_summary
+        assert runner._state is None
+
+        summary = EvalSummary(test_id="test-001", started_at="2026-01-01T00:00:00+00:00")
+        with pytest.raises(
+            RuntimeError, match="_state must be initialized before finalizing test summary"
+        ):
+            runner._finalize_test_summary(summary)

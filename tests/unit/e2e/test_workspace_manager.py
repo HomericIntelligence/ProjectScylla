@@ -439,3 +439,27 @@ class TestCentralizedRepos:
         assert "worktree" in worktree_cmd
         assert "add" in worktree_cmd
         assert "abc123" in worktree_cmd
+
+    def test_checkout_commit_raises_if_commit_none(self, tmp_path: Path) -> None:
+        """_checkout_commit raises RuntimeError when commit is None."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            commit=None,
+        )
+        with pytest.raises(
+            RuntimeError, match="commit must be set before calling _checkout_commit"
+        ):
+            manager._checkout_commit()
+
+    def test_ensure_commit_available_raises_if_commit_none(self, tmp_path: Path) -> None:
+        """_ensure_commit_available raises RuntimeError when commit is None."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            commit=None,
+        )
+        with pytest.raises(
+            RuntimeError, match="commit must be set before calling _ensure_commit_available"
+        ):
+            manager._ensure_commit_available()
