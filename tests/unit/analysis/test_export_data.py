@@ -342,7 +342,12 @@ def test_process_metrics_in_summary(sample_runs_df):
     tier_order = derive_tier_order(sample_runs_df)
 
     # --- overall_stats ---
-    process_metric_keys = ["mean_r_prog", "mean_cfp", "mean_pr_revert_rate"]
+    process_metric_keys = [
+        "mean_r_prog",
+        "mean_cfp",
+        "mean_pr_revert_rate",
+        "mean_strategic_drift",
+    ]
 
     overall_stats: dict[str, Any] = {
         "mean_r_prog": float(sample_runs_df["r_prog"].dropna().mean())
@@ -353,6 +358,9 @@ def test_process_metrics_in_summary(sample_runs_df):
         else None,
         "mean_pr_revert_rate": float(sample_runs_df["pr_revert_rate"].dropna().mean())
         if not sample_runs_df["pr_revert_rate"].dropna().empty
+        else None,
+        "mean_strategic_drift": float(sample_runs_df["strategic_drift"].dropna().mean())
+        if not sample_runs_df["strategic_drift"].dropna().empty
         else None,
     }
 
@@ -376,6 +384,9 @@ def test_process_metrics_in_summary(sample_runs_df):
             "mean_pr_revert_rate": float(model_df["pr_revert_rate"].dropna().mean())
             if not model_df["pr_revert_rate"].dropna().empty
             else None,
+            "mean_strategic_drift": float(model_df["strategic_drift"].dropna().mean())
+            if not model_df["strategic_drift"].dropna().empty
+            else None,
         }
         for key in process_metric_keys:
             assert key in by_model_stats, f"by_model[{model}] missing {key}"
@@ -396,6 +407,9 @@ def test_process_metrics_in_summary(sample_runs_df):
             else None,
             "mean_pr_revert_rate": float(tier_df["pr_revert_rate"].dropna().mean())
             if not tier_df["pr_revert_rate"].dropna().empty
+            else None,
+            "mean_strategic_drift": float(tier_df["strategic_drift"].dropna().mean())
+            if not tier_df["strategic_drift"].dropna().empty
             else None,
         }
         for key in process_metric_keys:
