@@ -34,7 +34,11 @@ RUN pip install --no-cache-dir "hatchling==1.27.0"
 
 # Layer 2: Dependencies (invalidated only when pyproject.toml changes or EXTRAS changes)
 # Copy only pyproject.toml first so dependency installs are cached separately
-# from source changes. Uses tomllib (stdlib since Python 3.11) to extract deps.
+# from source changes.
+# NOTE: Uses tomllib (Python stdlib since 3.11; see issue #1138). The base image
+# MUST remain Python 3.11+. If downgrading to 3.10, replace with:
+#   pip install tomli && python3 -c "import tomli as tomllib; ..."
+# or add: try: import tomllib \n except ImportError: import tomli as tomllib
 #
 # Optional-dependency groups from [project.optional-dependencies] that are built
 # into this layer when EXTRAS is set at build time:
