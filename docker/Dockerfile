@@ -27,7 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Layer 1: Build backend (invalidated only when hatchling version changes)
-RUN pip install --no-cache-dir hatchling
+# Pinned to match pyproject.toml [build-system].requires — see #1141
+RUN pip install --no-cache-dir "hatchling==1.29.0"
 
 # Layer 2: Dependencies (invalidated only when pyproject.toml changes)
 # Copy only pyproject.toml first so dependency installs are cached separately
