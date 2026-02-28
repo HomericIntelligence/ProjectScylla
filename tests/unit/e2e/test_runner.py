@@ -1209,3 +1209,38 @@ class TestInitializeOrResumeExperimentFailedReset:
         assert runner.checkpoint is not None
         # 'runs_complete' with incomplete runs must be reset to 'runs_in_progress'
         assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"
+
+
+class TestLogCheckpointResumeGuard:
+    """Tests for the RuntimeError guard in _log_checkpoint_resume."""
+
+    def test_raises_when_checkpoint_is_none(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """_log_checkpoint_resume raises RuntimeError when self.checkpoint is None."""
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        runner.checkpoint = None
+
+        with pytest.raises(RuntimeError, match=r"checkpoint"):
+            runner._log_checkpoint_resume(Path("/tmp/checkpoint.json"))
+
+
+class TestInitializeOrResumeExperimentGuard:
+    """Tests for the RuntimeError guard in _initialize_or_resume_experiment."""
+
+    def test_raises_when_experiment_dir_is_none_after_create(
+        self, mock_config: ExperimentConfig, mock_tier_manager: MagicMock
+    ) -> None:
+        """_initialize_or_resume_experiment raises RuntimeError when experiment_dir stays None.
+
+        The guard fires when _create_fresh_experiment is a no-op (patched) so
+        self.experiment_dir remains None after the creation step.
+        """
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        # No existing checkpoint so it will try to create a fresh experiment.
+        # Patch _create_fresh_experiment to be a no-op so experiment_dir stays None.
+        with patch.object(runner, "_find_existing_checkpoint", return_value=None):
+            with patch.object(runner, "_create_fresh_experiment"):
+                with patch.object(runner, "_write_pid_file"):
+                    with pytest.raises(RuntimeError, match=r"experiment_dir"):
+                        runner._initialize_or_resume_experiment()
