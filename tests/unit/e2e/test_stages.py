@@ -949,6 +949,54 @@ class TestStageFinalizeRun:
         checkpoint.mark_run_completed.assert_called_once_with("T0", "00-empty", 1, status="failed")
 
 
+class TestStageExecuteAgentGuard:
+    """Tests for the RuntimeError guard in stage_execute_agent."""
+
+    def test_raises_when_adapter_config_is_none(self, stage_context: RunContext) -> None:
+        """stage_execute_agent raises RuntimeError when ctx.adapter_config is None."""
+        stage_context.adapter_config = None
+
+        with pytest.raises(RuntimeError, match=r"adapter_config"):
+            stage_execute_agent(stage_context)
+
+
+class TestStageFinalizeRunGuards:
+    """Tests for RuntimeError guards in stage_finalize_run."""
+
+    @pytest.mark.parametrize(
+        "field,expected_match",
+        [
+            ("agent_result", r"agent_result"),
+            ("judgment", r"judgment"),
+        ],
+    )
+    def test_raises_when_field_is_none(
+        self, stage_context: RunContext, field: str, expected_match: str
+    ) -> None:
+        """stage_finalize_run raises RuntimeError when the required field is None."""
+        from scylla.adapters.base import AdapterResult, AdapterTokenStats
+
+        stage_context.agent_result = AdapterResult(
+            exit_code=0,
+            stdout="output",
+            stderr="",
+            token_stats=AdapterTokenStats(),
+            cost_usd=0.0,
+            api_calls=0,
+        )
+        stage_context.judgment = {
+            "score": 0.9,
+            "passed": True,
+            "grade": "A",
+            "reasoning": "ok",
+            "criteria_scores": {},
+        }
+        setattr(stage_context, field, None)
+
+        with pytest.raises(RuntimeError, match=expected_match):
+            stage_finalize_run(stage_context)
+
+
 class TestStageWriteReport:
     """Tests for stage_write_report()."""
 
@@ -991,3 +1039,46 @@ class TestStageWriteReport:
 
         assert (ctx.run_dir / "report.md").exists()
         assert (ctx.run_dir / "report.json").exists()
+
+
+class TestStageWriteReportGuards:
+    """Tests for RuntimeError guards in stage_write_report."""
+
+    @pytest.mark.parametrize(
+        "field,expected_match",
+        [
+            ("run_result", r"run_result"),
+            ("agent_result", r"agent_result"),
+            ("judgment", r"judgment"),
+        ],
+    )
+    def test_raises_when_field_is_none(
+        self, stage_context: RunContext, field: str, expected_match: str
+    ) -> None:
+        """stage_write_report raises RuntimeError when the required field is None."""
+        from scylla.adapters.base import AdapterResult, AdapterTokenStats
+
+        stage_context.agent_result = AdapterResult(
+            exit_code=0,
+            stdout="output",
+            stderr="",
+            token_stats=AdapterTokenStats(),
+            cost_usd=0.0,
+            api_calls=0,
+        )
+        stage_context.judgment = {
+            "score": 0.9,
+            "passed": True,
+            "grade": "A",
+            "reasoning": "ok",
+            "criteria_scores": {},
+        }
+        # Build a valid run_result via finalize_run
+        stage_context.agent_duration = 1.0
+        stage_context.judge_duration = 1.0
+        stage_finalize_run(stage_context)
+
+        setattr(stage_context, field, None)
+
+        with pytest.raises(RuntimeError, match=expected_match):
+            stage_write_report(stage_context)
