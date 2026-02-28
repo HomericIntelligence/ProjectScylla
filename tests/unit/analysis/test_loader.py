@@ -881,8 +881,8 @@ def test_load_rubric_weights_from_rubric_yaml(tmp_path):
     assert weights["proportionality"] == pytest.approx(3.0)
 
 
-def test_load_rubric_weights_returns_none_if_missing(tmp_path):
-    """Test load_rubric_weights() returns None if no rubric.yaml found."""
+def test_load_rubric_weights_returns_empty_dict_if_missing(tmp_path):
+    """Test load_rubric_weights() returns {} if no rubric.yaml found."""
     from scylla.analysis.loader import load_rubric_weights
 
     # Create empty data directory
@@ -892,8 +892,8 @@ def test_load_rubric_weights_returns_none_if_missing(tmp_path):
     # Load weights from empty directory
     weights = load_rubric_weights(data_dir)
 
-    # Should return None
-    assert weights is None
+    # Should return empty dict (never None)
+    assert weights == {}
 
 
 def test_load_rubric_weights_excludes_experiments(tmp_path):

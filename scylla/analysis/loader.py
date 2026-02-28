@@ -821,7 +821,7 @@ def load_rubric_weights(
     data_dir: Path,
     exclude: list[str] | None = None,
     rubric_conflict: RubricConflict = "error",
-) -> dict[str, float] | None:
+) -> dict[str, float]:
     """Load and merge category weights from all experiments' rubric.yaml files.
 
     Scans every experiment directory for rubric.yaml and parses
@@ -842,7 +842,7 @@ def load_rubric_weights(
         rubric_conflict: Policy for handling conflicting rubric weights.
 
     Returns:
-        Dictionary mapping category names to weights, or ``None`` if no
+        Dictionary mapping category names to weights, or ``{}`` if no
         rubric.yaml was found in any experiment.
 
     Raises:
@@ -915,6 +915,6 @@ def load_rubric_weights(
                 accumulated[cat_name] = (new_weight, exp_name)
 
     if not found_any:
-        return None
+        return {}
 
     return {cat: weight for cat, (weight, _) in accumulated.items()}
