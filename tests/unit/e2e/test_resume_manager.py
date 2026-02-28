@@ -97,7 +97,7 @@ class TestHandleZombie:
         ):
             config, checkpoint = rm.handle_zombie(checkpoint_path, experiment_dir)
 
-        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir)
+        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir, 120)
         mock_reset.assert_called_once_with(base_checkpoint, checkpoint_path)
         assert checkpoint.status == "interrupted"
         assert config is base_config
@@ -121,10 +121,28 @@ class TestHandleZombie:
         ):
             config, checkpoint = rm.handle_zombie(checkpoint_path, experiment_dir)
 
-        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir)
+        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir, 120)
         mock_reset.assert_not_called()
         assert checkpoint is base_checkpoint
         assert config is base_config
+
+    def test_custom_heartbeat_timeout_forwarded_to_is_zombie(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Custom heartbeat_timeout_seconds is forwarded to is_zombie."""
+        checkpoint_path = tmp_path / "checkpoint.json"
+        experiment_dir = tmp_path
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.is_zombie", return_value=False) as mock_is_zombie:
+            rm.handle_zombie(checkpoint_path, experiment_dir, heartbeat_timeout_seconds=600)
+
+        mock_is_zombie.assert_called_once_with(base_checkpoint, experiment_dir, 600)
 
     def test_experiment_dir_none_is_noop(
         self,
