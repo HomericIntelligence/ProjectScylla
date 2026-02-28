@@ -259,6 +259,20 @@ def build_subtests_df(runs_df: pd.DataFrame) -> pd.DataFrame:
         # Cost-of-Pass: mean_cost / pass_rate (infinity if pass_rate == 0)
         cop = compute_cop(mean_cost, pass_rate)
 
+        # Process metrics (nullable — NaN when data not yet collected)
+        mean_r_prog = group["r_prog"].mean()
+        median_r_prog = group["r_prog"].median()
+        std_r_prog = group["r_prog"].std()
+        mean_cfp = group["cfp"].mean()
+        median_cfp = group["cfp"].median()
+        std_cfp = group["cfp"].std()
+        mean_pr_revert_rate = group["pr_revert_rate"].mean()
+        median_pr_revert_rate = group["pr_revert_rate"].median()
+        std_pr_revert_rate = group["pr_revert_rate"].std()
+        mean_strategic_drift = group["strategic_drift"].mean()
+        median_strategic_drift = group["strategic_drift"].median()
+        std_strategic_drift = group["strategic_drift"].std()
+
         # Grade distribution
         grade_counts = group["grade"].value_counts().to_dict()
         grade_s = grade_counts.get("S", 0)
@@ -286,6 +300,18 @@ def build_subtests_df(runs_df: pd.DataFrame) -> pd.DataFrame:
                 "total_cost": total_cost,
                 "mean_duration": mean_duration,
                 "cop": cop,
+                "mean_r_prog": mean_r_prog,
+                "median_r_prog": median_r_prog,
+                "std_r_prog": std_r_prog,
+                "mean_cfp": mean_cfp,
+                "median_cfp": median_cfp,
+                "std_cfp": std_cfp,
+                "mean_pr_revert_rate": mean_pr_revert_rate,
+                "median_pr_revert_rate": median_pr_revert_rate,
+                "std_pr_revert_rate": std_pr_revert_rate,
+                "mean_strategic_drift": mean_strategic_drift,
+                "median_strategic_drift": median_strategic_drift,
+                "std_strategic_drift": std_strategic_drift,
                 "grade_S": grade_s,
                 "grade_A": grade_a,
                 "grade_B": grade_b,
@@ -328,6 +354,20 @@ def tier_summary(runs_df: pd.DataFrame) -> pd.DataFrame:
         total_cost = group["cost_usd"].sum()
         cop = compute_cop(mean_cost, pass_rate)
 
+        # Process metrics (nullable — NaN when data not yet collected)
+        mean_r_prog = group["r_prog"].mean()
+        median_r_prog = group["r_prog"].median()
+        std_r_prog = group["r_prog"].std()
+        mean_cfp = group["cfp"].mean()
+        median_cfp = group["cfp"].median()
+        std_cfp = group["cfp"].std()
+        mean_pr_revert_rate = group["pr_revert_rate"].mean()
+        median_pr_revert_rate = group["pr_revert_rate"].median()
+        std_pr_revert_rate = group["pr_revert_rate"].std()
+        mean_strategic_drift = group["strategic_drift"].mean()
+        median_strategic_drift = group["strategic_drift"].median()
+        std_strategic_drift = group["strategic_drift"].std()
+
         return pd.Series(
             {
                 "num_runs": len(group),
@@ -342,6 +382,18 @@ def tier_summary(runs_df: pd.DataFrame) -> pd.DataFrame:
                 "mean_cost": mean_cost,
                 "total_cost": total_cost,
                 "cop": cop,
+                "mean_r_prog": mean_r_prog,
+                "median_r_prog": median_r_prog,
+                "std_r_prog": std_r_prog,
+                "mean_cfp": mean_cfp,
+                "median_cfp": median_cfp,
+                "std_cfp": std_cfp,
+                "mean_pr_revert_rate": mean_pr_revert_rate,
+                "median_pr_revert_rate": median_pr_revert_rate,
+                "std_pr_revert_rate": std_pr_revert_rate,
+                "mean_strategic_drift": mean_strategic_drift,
+                "median_strategic_drift": median_strategic_drift,
+                "std_strategic_drift": std_strategic_drift,
             }
         )
 
