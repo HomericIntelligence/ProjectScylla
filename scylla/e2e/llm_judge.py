@@ -927,7 +927,8 @@ def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
         except ValueError as e:
             last_parse_error = e
     else:
-        assert last_parse_error is not None  # noqa: S101
+        if last_parse_error is None:
+            raise RuntimeError("Judge retry loop exhausted but last_parse_error is None")
         raise last_parse_error
 
     # Save judge logs if directory provided

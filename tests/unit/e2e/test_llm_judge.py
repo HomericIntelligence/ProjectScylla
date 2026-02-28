@@ -1376,3 +1376,22 @@ class TestRunLlmJudgeRetry:
         first_prompt = call_mock.call_args_list[0][0][0]
         # Reminder is only added on retries — first call must NOT contain it
         assert "IMPORTANT" not in first_prompt or "JSON" not in first_prompt
+
+    def test_raises_value_error_not_runtime_error_when_parse_fails(self, tmp_path: Path) -> None:
+        """When all retry attempts fail with ValueError, ValueError is re-raised (not RuntimeError).
+
+        Confirms the last_parse_error is always set before the else clause fires, so the
+        RuntimeError guard introduced in #1143 is never triggered in normal operation.
+        """
+        bad = "Not valid JSON at all"
+
+        # All 3 attempts fail -> last_parse_error is set -> ValueError is re-raised
+        with pytest.raises(ValueError):
+            self._run_with_call_side_effects(
+                tmp_path,
+                [
+                    (bad, "", bad),
+                    (bad, "", bad),
+                    (bad, "", bad),
+                ],
+            )

@@ -483,7 +483,8 @@ class EvalRunner:
 
         # Save final state if configured
         if self.config.state_file:
-            assert self._state is not None  # noqa: S101
+            if self._state is None:
+                raise RuntimeError("_state must be initialized before finalizing test summary")
             save_state(self._state, self.config.state_file)
 
         return summary
