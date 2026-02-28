@@ -1,12 +1,7 @@
 """Tests for export_data.py script."""
 
 import json
-import sys
-from pathlib import Path
 from typing import Any
-
-# Add scripts directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
 
 
 def test_compute_statistical_results(sample_runs_df, tmp_path):
