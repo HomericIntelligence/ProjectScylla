@@ -28,6 +28,7 @@ def _parse_python_base_versions(dockerfile_content: str) -> list[tuple[int, int]
 
     Returns:
         List of (major, minor) version tuples found in FROM lines.
+
     """
     versions: list[tuple[int, int]] = []
     for line in dockerfile_content.splitlines():
@@ -104,27 +105,17 @@ class TestParsePythonBaseVersions:
 
     def test_multiple_from_lines(self) -> None:
         """Should extract all versions from multiple FROM lines."""
-        content = (
-            "FROM python:3.12-slim AS builder\n"
-            "FROM python:3.12-slim\n"
-        )
+        content = "FROM python:3.12-slim AS builder\nFROM python:3.12-slim\n"
         assert _parse_python_base_versions(content) == [(3, 12), (3, 12)]
 
     def test_ignores_non_python_from_lines(self) -> None:
         """FROM lines not referencing python images should be ignored."""
-        content = (
-            "FROM ubuntu:22.04\n"
-            "FROM python:3.11-slim\n"
-        )
+        content = "FROM ubuntu:22.04\nFROM python:3.11-slim\n"
         assert _parse_python_base_versions(content) == [(3, 11)]
 
     def test_ignores_non_from_lines(self) -> None:
         """Non-FROM lines containing 'python' should not be parsed."""
-        content = (
-            "# python:3.10 would fail here\n"
-            "FROM python:3.12-slim\n"
-            "RUN python3 --version\n"
-        )
+        content = "# python:3.10 would fail here\nFROM python:3.12-slim\nRUN python3 --version\n"
         assert _parse_python_base_versions(content) == [(3, 12)]
 
     def test_sha256_pinned_image(self) -> None:
