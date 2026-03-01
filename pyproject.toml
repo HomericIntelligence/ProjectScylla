@@ -86,6 +86,10 @@ ignore = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# "."       – repo root so scylla.* packages resolve without a package install.
+# "scripts" – allows tests to import script modules by bare name (e.g.
+#             `from export_data import …`, `from manage_experiment import …`).
+#             Audited in #1193: no collection errors; all scripts importable.
 pythonpath = [".", "scripts"]
 addopts = [
     "-v",
