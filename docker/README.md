@@ -341,6 +341,25 @@ Before deploying the Docker image to production or CI/CD pipelines, verify all c
 
 ### GitHub Actions Example
 
+The `EXTRAS` build argument selects which optional dependency groups are baked into
+the cached Layer 2 during the Docker build.  In CI you pass it as a plain
+`--build-arg`; it is **not** a secret (it contains no credentials).
+
+**When to use `EXTRAS` in CI:**
+
+- `EXTRAS=analysis` — include matplotlib, numpy, pandas, scipy, seaborn, altair,
+  vl-convert-python, and krippendorff for statistical analysis and reporting jobs.
+- `EXTRAS=dev` — include pytest, pytest-cov, pre-commit, ruff, and defusedxml for
+  development and testing jobs.
+- `EXTRAS=analysis,dev` — include both groups.
+- Omit `--build-arg EXTRAS` (or set it to an empty string) for a minimal runtime-only
+  image identical to the previous default behaviour.
+
+**Storage recommendation:** Store the `EXTRAS` value as a **build matrix variable**
+(e.g., via a `matrix` strategy or a workflow-level `env` block), not as a repository
+secret.  Secrets are for credentials; `EXTRAS` is a plain string that selects packages
+and carries no sensitive information.
+
 ```yaml
 jobs:
   build-docker:
@@ -348,8 +367,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
-        run: docker build -t scylla-runner:latest ./docker
+      - name: Build Docker image (runtime only)
+        run: docker build -t scylla-runner:latest -f docker/Dockerfile .
 
       - name: Test Docker image
         run: |
@@ -362,6 +381,56 @@ jobs:
         run: |
           docker tag scylla-runner:latest ghcr.io/${{ github.repository }}/scylla-runner:latest
           docker push ghcr.io/${{ github.repository }}/scylla-runner:latest
+```
+
+To build an analysis-capable image in CI, pass `--build-arg EXTRAS=analysis`:
+
+```yaml
+jobs:
+  build-docker-analysis:
+    runs-on: ubuntu-latest
+    env:
+      EXTRAS: analysis   # build matrix variable — not a secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image with analysis extras
+        run: |
+          docker build \
+            --build-arg EXTRAS=${{ env.EXTRAS }} \
+            -t scylla-runner:${{ env.EXTRAS }} \
+            -f docker/Dockerfile .
+
+      - name: Verify analysis packages are present
+        run: |
+          docker run --rm scylla-runner:${{ env.EXTRAS }} \
+            python -c "import numpy, pandas, matplotlib; print('analysis extras OK')"
+```
+
+To build multiple variants in a single workflow using a matrix:
+
+```yaml
+jobs:
+  build-variants:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        extras: ["", "analysis", "analysis,dev"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute image tag
+        id: tag
+        run: |
+          TAG="${{ matrix.extras }}"
+          echo "name=scylla-runner:${TAG:-latest}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg EXTRAS="${{ matrix.extras }}" \
+            -t ${{ steps.tag.outputs.name }} \
+            -f docker/Dockerfile .
 ```
 
 ## Troubleshooting
