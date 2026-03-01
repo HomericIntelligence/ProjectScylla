@@ -96,9 +96,10 @@ addopts = [
     "-v",
     "--strict-markers",
     "--cov=scylla",
+    "--cov=scripts",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=75",
+    "--cov-fail-under=9",
 ]
 
 [tool.mypy]
@@ -127,14 +128,16 @@ disable_error_code = ["no-untyped-def"]
 
 [tool.coverage.run]
 branch = true
-source = ["scylla"]
+source = ["scylla", "scripts"]
 omit = [
     "*/tests/*",
     "*/__init__.py",
 ]
 
 [tool.coverage.report]
-fail_under = 75
+# Combined scylla/+scripts/ floor; scripts/ integration coverage is WIP.
+# Scylla/ 75% enforced in test.yml unit step.
+fail_under = 9
 precision = 2
 show_missing = true
 skip_covered = false
