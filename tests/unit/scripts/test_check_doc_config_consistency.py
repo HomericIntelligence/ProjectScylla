@@ -6,8 +6,10 @@ from pathlib import Path
 import pytest
 
 from scripts.check_doc_config_consistency import (
+    check_addopts_cov_fail_under,
     check_claude_md_threshold,
     check_readme_cov_path,
+    extract_cov_fail_under_from_addopts,
     extract_cov_path_from_pyproject,
     load_pyproject_coverage_threshold,
 )
@@ -50,7 +52,7 @@ PYPROJECT_THRESHOLD_80 = """\
 
 PYPROJECT_COV_SCYLLA = """\
     [tool.pytest.ini_options]
-    addopts = ["--cov=scylla", "--cov-report=term-missing"]
+    addopts = ["--cov=scylla", "--cov-report=term-missing", "--cov-fail-under=75"]
 """
 
 PYPROJECT_FULL = """\
@@ -58,7 +60,7 @@ PYPROJECT_FULL = """\
     fail_under = 75
 
     [tool.pytest.ini_options]
-    addopts = ["--cov=scylla", "--cov-report=term-missing"]
+    addopts = ["--cov=scylla", "--cov-report=term-missing", "--cov-fail-under=75"]
 """
 
 
@@ -273,6 +275,97 @@ class TestCheckReadmeCovPath:
 
 
 # ---------------------------------------------------------------------------
+# extract_cov_fail_under_from_addopts
+# ---------------------------------------------------------------------------
+
+
+class TestExtractCovFailUnderFromAddopts:
+    """Tests for extract_cov_fail_under_from_addopts()."""
+
+    def test_extracts_threshold(self, tmp_path: Path) -> None:
+        """Should return the integer threshold from --cov-fail-under=N."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = ["--cov-fail-under=75"]\n',
+        )
+        assert extract_cov_fail_under_from_addopts(tmp_path) == 75
+
+    def test_extracts_different_threshold(self, tmp_path: Path) -> None:
+        """Should return 80 when --cov-fail-under=80 is set."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = ["--cov-fail-under=80"]\n',
+        )
+        assert extract_cov_fail_under_from_addopts(tmp_path) == 80
+
+    def test_flag_absent_returns_none(self, tmp_path: Path) -> None:
+        """Should return None when no --cov-fail-under flag is present."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = ["--cov=scylla"]\n',
+        )
+        assert extract_cov_fail_under_from_addopts(tmp_path) is None
+
+    def test_addopts_as_string(self, tmp_path: Path) -> None:
+        """Should handle addopts as a plain string."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = "--cov=scylla --cov-fail-under=75"\n',
+        )
+        assert extract_cov_fail_under_from_addopts(tmp_path) == 75
+
+    def test_no_addopts_returns_none(self, tmp_path: Path) -> None:
+        """Should return None when addopts key is absent."""
+        write_pyproject(tmp_path, "[tool.pytest.ini_options]\ntestpaths = ['tests']\n")
+        assert extract_cov_fail_under_from_addopts(tmp_path) is None
+
+    def test_invalid_toml_exits(self, tmp_path: Path) -> None:
+        """Should exit 1 on malformed TOML."""
+        (tmp_path / "pyproject.toml").write_bytes(b"not = valid [ toml }")
+        with pytest.raises(SystemExit) as exc_info:
+            extract_cov_fail_under_from_addopts(tmp_path)
+        assert exc_info.value.code == 1
+
+
+# ---------------------------------------------------------------------------
+# check_addopts_cov_fail_under
+# ---------------------------------------------------------------------------
+
+
+class TestCheckAddoptsCovFailUnder:
+    """Tests for check_addopts_cov_fail_under()."""
+
+    def test_matching_threshold_returns_no_errors(self, tmp_path: Path) -> None:
+        """Should return empty list when addopts threshold matches expected."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = ["--cov-fail-under=75"]\n',
+        )
+        assert check_addopts_cov_fail_under(tmp_path, 75) == []
+
+    def test_mismatched_threshold_returns_error(self, tmp_path: Path) -> None:
+        """Should return an error when addopts threshold differs from expected."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = ["--cov-fail-under=80"]\n',
+        )
+        errors = check_addopts_cov_fail_under(tmp_path, 75)
+        assert len(errors) == 1
+        assert "80" in errors[0]
+        assert "75" in errors[0]
+
+    def test_missing_flag_returns_error(self, tmp_path: Path) -> None:
+        """Should return an error when --cov-fail-under is absent from addopts."""
+        write_pyproject(
+            tmp_path,
+            '[tool.pytest.ini_options]\naddopts = ["--cov=scylla"]\n',
+        )
+        errors = check_addopts_cov_fail_under(tmp_path, 75)
+        assert len(errors) == 1
+        assert "--cov-fail-under" in errors[0]
+
+
+# ---------------------------------------------------------------------------
 # Integration: main() via subprocess
 # ---------------------------------------------------------------------------
 
@@ -287,12 +380,17 @@ class TestMainIntegration:
         cov_path: str = "scylla",
         claude_threshold: int = 75,
         readme_cov: str = "scylla",
+        addopts_fail_under: int | None = 75,
     ) -> Path:
         """Create a minimal fake repo with all required files."""
+        addopts_items = [f'"--cov={cov_path}"']
+        if addopts_fail_under is not None:
+            addopts_items.append(f'"--cov-fail-under={addopts_fail_under}"')
+        addopts_str = ", ".join(addopts_items)
         write_pyproject(
             tmp_path,
             f"[tool.coverage.report]\nfail_under = {threshold}\n\n"
-            f'[tool.pytest.ini_options]\naddopts = ["--cov={cov_path}"]\n',
+            f"[tool.pytest.ini_options]\naddopts = [{addopts_str}]\n",
         )
         write_claude_md(
             tmp_path,
@@ -341,6 +439,36 @@ class TestMainIntegration:
         from scripts.check_doc_config_consistency import main
 
         repo = self._make_repo(tmp_path, cov_path="scylla", readme_cov="wrong_pkg")
+        original_argv = sys.argv
+        sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
+        try:
+            result = main()
+            assert result == 1
+        finally:
+            sys.argv = original_argv
+
+    def test_addopts_fail_under_mismatch_exits_one(self, tmp_path: Path) -> None:
+        """--cov-fail-under mismatch in addopts should produce exit code 1."""
+        import sys
+
+        from scripts.check_doc_config_consistency import main
+
+        repo = self._make_repo(tmp_path, threshold=75, addopts_fail_under=80)
+        original_argv = sys.argv
+        sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
+        try:
+            result = main()
+            assert result == 1
+        finally:
+            sys.argv = original_argv
+
+    def test_addopts_fail_under_absent_exits_one(self, tmp_path: Path) -> None:
+        """Missing --cov-fail-under in addopts should produce exit code 1."""
+        import sys
+
+        from scripts.check_doc_config_consistency import main
+
+        repo = self._make_repo(tmp_path, addopts_fail_under=None)
         original_argv = sys.argv
         sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
         try:
