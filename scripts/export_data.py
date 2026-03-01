@@ -693,6 +693,10 @@ def main() -> None:
     print(f"  Exported subtests.csv ({len(subtests_df)} rows)")
 
     # Export summary statistics as JSON
+    overall_r_prog = runs_df["r_prog"].dropna()
+    overall_cfp = runs_df["cfp"].dropna()
+    overall_pr_revert_rate = runs_df["pr_revert_rate"].dropna()
+    overall_strategic_drift = runs_df["strategic_drift"].dropna()
     summary = {
         "pipeline_version": config.pipeline_version,
         "config_version": config.config_version,
@@ -710,17 +714,13 @@ def main() -> None:
             "median_impl_rate": float(runs_df["impl_rate"].median()),
             "total_cost": float(runs_df["cost_usd"].sum()),
             "mean_cost_per_run": float(runs_df["cost_usd"].mean()),
-            "mean_r_prog": float(runs_df["r_prog"].dropna().mean())
-            if not runs_df["r_prog"].dropna().empty
+            "mean_r_prog": float(overall_r_prog.mean()) if not overall_r_prog.empty else None,
+            "mean_cfp": float(overall_cfp.mean()) if not overall_cfp.empty else None,
+            "mean_pr_revert_rate": float(overall_pr_revert_rate.mean())
+            if not overall_pr_revert_rate.empty
             else None,
-            "mean_cfp": float(runs_df["cfp"].dropna().mean())
-            if not runs_df["cfp"].dropna().empty
-            else None,
-            "mean_pr_revert_rate": float(runs_df["pr_revert_rate"].dropna().mean())
-            if not runs_df["pr_revert_rate"].dropna().empty
-            else None,
-            "mean_strategic_drift": float(runs_df["strategic_drift"].dropna().mean())
-            if not runs_df["strategic_drift"].dropna().empty
+            "mean_strategic_drift": float(overall_strategic_drift.mean())
+            if not overall_strategic_drift.empty
             else None,
         },
         "by_model": {},
