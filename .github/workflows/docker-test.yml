@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - 'docker/**'
+      - 'tests/shell/**'
       - '.github/workflows/docker-test.yml'
   push:
     branches: [main]
     paths:
       - 'docker/**'
+      - 'tests/shell/**'
       - '.github/workflows/docker-test.yml'
 
 jobs:
