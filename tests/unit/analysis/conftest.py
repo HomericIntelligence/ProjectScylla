@@ -287,13 +287,6 @@ def sample_subtests_df(sample_runs_df):
         mode_result = group["grade"].mode()
         modal_grade = mode_result[0] if len(mode_result) > 0 else "F"
 
-        # Process metrics (median across runs; NaN when column absent or all-null)
-        def _median_process(col: str) -> float:
-            if col not in group.columns:
-                return np.nan
-            vals = group[col].dropna()
-            return float(vals.median()) if len(vals) > 0 else np.nan
-
         return pd.Series(
             {
                 "pass_rate": pass_rate,
@@ -327,10 +320,6 @@ def sample_subtests_df(sample_runs_df):
                 "grade_D": grade_d,
                 "grade_F": grade_f,
                 "modal_grade": modal_grade,
-                "median_r_prog": _median_process("r_prog"),
-                "median_cfp": _median_process("cfp"),
-                "median_pr_revert_rate": _median_process("pr_revert_rate"),
-                "median_strategic_drift": _median_process("strategic_drift"),
             }
         )
 
