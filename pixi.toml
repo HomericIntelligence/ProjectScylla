@@ -14,7 +14,7 @@ plan-issues = "python scripts/plan_issues.py"
 audit = "pixi run --environment lint pip-audit"
 
 [dependencies]
-python = ">=3.10"
+python = ">=3.10,<3.13"
 pip = "*"
 pre-commit = ">=4.5.1,<5"
 pytest = ">=9.0.2,<10"
