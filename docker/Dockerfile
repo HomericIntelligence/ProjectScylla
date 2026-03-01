@@ -51,17 +51,9 @@ RUN pip install --no-cache-dir "hatchling==1.27.0"
 #   docker build --build-arg EXTRAS=analysis,dev .  # + both groups
 ARG EXTRAS=""
 COPY pyproject.toml /opt/scylla/
-RUN pip install --user --no-cache-dir \
-    $(python3 -c "
-import tomllib, os
-data = tomllib.load(open('/opt/scylla/pyproject.toml', 'rb'))
-project = data.get('project', {})
-deps = list(project.get('dependencies', []))
-opt = project.get('optional-dependencies', {})
-for group in [g.strip() for g in os.environ.get('EXTRAS', '').split(',') if g.strip()]:
-    deps.extend(opt.get(group, []))
-print(' '.join(deps))
-" EXTRAS="$EXTRAS")
+RUN python3 -c "import tomllib, os; data = tomllib.load(open('/opt/scylla/pyproject.toml', 'rb')); project = data.get('project', {}); deps = list(project.get('dependencies', [])); opt = project.get('optional-dependencies', {}); [deps.extend(opt.get(g.strip(), [])) for g in os.environ.get('EXTRAS', '').split(',') if g.strip()]; open('/tmp/deps.txt', 'w').write(' '.join(deps))" EXTRAS="$EXTRAS" \
+    && pip install --user --no-cache-dir $(cat /tmp/deps.txt) \
+    && rm -f /tmp/deps.txt
 
 # Layer 3: Package install (invalidated when scylla/ source changes)
 # Source-only changes hit cached layer 2 and only re-run this install step.
