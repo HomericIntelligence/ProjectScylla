@@ -988,14 +988,42 @@ class TestStageFinalizeRun:
 
 
 class TestStageExecuteAgentGuard:
-    """Tests for the RuntimeError guard in stage_execute_agent."""
+    """Tests for stage_execute_agent resume behavior when adapter_config is None."""
 
-    def test_raises_when_adapter_config_is_none(self, stage_context: RunContext) -> None:
-        """stage_execute_agent raises RuntimeError when ctx.adapter_config is None."""
+    def test_reconstructs_adapter_config_when_none_on_resume(
+        self, stage_context: RunContext
+    ) -> None:
+        """stage_execute_agent lazily reconstructs adapter_config on resume.
+
+        When resuming a run already at replay_generated, stage_generate_replay
+        is skipped so ctx.adapter_config is never set. The stage must reconstruct
+        it from ctx.config rather than raising.
+        """
+        from unittest.mock import patch
+
         stage_context.adapter_config = None
 
-        with pytest.raises(RuntimeError, match=r"adapter_config"):
-            stage_execute_agent(stage_context)
+        # Create the agent dir and replay.sh so the stage can proceed
+        agent_dir = stage_context.run_dir / "agent"
+        agent_dir.mkdir(parents=True, exist_ok=True)
+        replay_sh = agent_dir / "replay.sh"
+        replay_sh.write_text("#!/bin/bash\necho done")
+
+        with patch("subprocess.run") as mock_run:
+            import subprocess
+
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            with patch.object(
+                stage_context.adapter, "_parse_token_stats", return_value=MagicMock()
+            ):
+                with patch.object(stage_context.adapter, "_parse_api_calls", return_value=0):
+                    with patch.object(stage_context.adapter, "_parse_cost", return_value=0.0):
+                        stage_execute_agent(stage_context)
+
+        # adapter_config must have been reconstructed (not None)
+        assert stage_context.adapter_config is not None
 
 
 class TestStageFinalizeRunGuards:
