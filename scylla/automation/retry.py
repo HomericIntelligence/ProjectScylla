@@ -5,6 +5,7 @@ Provides automatic retry logic with configurable parameters:
 - Network error detection
 - Max retries limit
 - Logging integration
+- Optional max_delay cap to bound delays
 - Optional random jitter to prevent thundering herd problems
 """
 
@@ -54,6 +55,7 @@ def retry_with_backoff(
     backoff_factor: int = 2,
     retry_on: tuple[type[Exception], ...] = (Exception,),
     logger: Callable[[str], None] | None = None,
+    max_delay: float | None = None,
     jitter: bool = False,
 ) -> Callable[[F], F]:
     """Retry function with exponential backoff.
@@ -64,6 +66,9 @@ def retry_with_backoff(
         backoff_factor: Multiplier for delay between retries (default: 2)
         retry_on: Tuple of exception types to retry on (default: all exceptions)
         logger: Optional logging function for retry attempts
+        max_delay: Optional maximum delay cap in seconds. When set, the computed
+            exponential backoff delay is capped at this value before jitter is
+            applied (default: None, meaning no cap)
         jitter: If True, multiply delay by random.uniform(0.5, 1.5) to prevent
             thundering herd problems when multiple clients retry simultaneously
             (default: False)
@@ -72,7 +77,7 @@ def retry_with_backoff(
         Decorated function with retry logic
 
     Example:
-        @retry_with_backoff(max_retries=3, initial_delay=2.0, jitter=True)
+        @retry_with_backoff(max_retries=3, initial_delay=2.0, max_delay=30.0, jitter=True)
         def unstable_network_call():
             # May fail transiently
             response = requests.get("https://api.github.com")
@@ -97,6 +102,10 @@ def retry_with_backoff(
 
                     # Calculate delay with exponential backoff
                     delay = initial_delay * (backoff_factor**attempt)
+
+                    # Cap delay at max_delay before applying jitter
+                    if max_delay is not None:
+                        delay = min(delay, max_delay)
 
                     # Apply jitter to prevent thundering herd
                     if jitter:
