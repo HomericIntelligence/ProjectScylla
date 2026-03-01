@@ -55,16 +55,11 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
 import pytest
-
-# Ensure scripts/ is importable
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
-
 from manage_experiment import MODEL_ALIASES, build_parser, cmd_repair, cmd_visualize
 
 # ---------------------------------------------------------------------------

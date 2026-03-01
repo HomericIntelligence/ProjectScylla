@@ -1,11 +1,5 @@
 """Tests for CoP and Frontier CoP integration (Issue #325)."""
 
-import sys
-from pathlib import Path
-
-# Add scripts directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
-
 
 def test_cop_frontier_cop_integration(sample_runs_df):
     """Test that CoP and Frontier CoP are integrated (Issue #325)."""
