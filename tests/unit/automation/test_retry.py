@@ -68,7 +68,8 @@ class TestRetryWithBackoff:
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         decorated = retry_with_backoff(max_retries=3, initial_delay=0.01)(mock_func)
 
-        result = decorated()
+        with patch("scylla.automation.retry.time.sleep"):
+            result = decorated()
 
         assert result == "success"
         assert mock_func.call_count == 3
@@ -78,8 +79,9 @@ class TestRetryWithBackoff:
         mock_func = MagicMock(side_effect=ValueError("fail"))
         decorated = retry_with_backoff(max_retries=2, initial_delay=0.01)(mock_func)
 
-        with pytest.raises(ValueError, match="fail"):
-            decorated()
+        with patch("scylla.automation.retry.time.sleep"):
+            with pytest.raises(ValueError, match="fail"):
+                decorated()
 
         assert mock_func.call_count == 3  # initial + 2 retries
 
@@ -108,8 +110,9 @@ class TestRetryWithBackoff:
             mock_func
         )
 
-        with pytest.raises(TypeError):
-            decorated()
+        with patch("scylla.automation.retry.time.sleep"):
+            with pytest.raises(TypeError):
+                decorated()
 
         # Should not retry since TypeError is not in retry_on
         assert mock_func.call_count == 1
@@ -122,7 +125,8 @@ class TestRetryWithBackoff:
             mock_func
         )
 
-        result = decorated()
+        with patch("scylla.automation.retry.time.sleep"):
+            result = decorated()
 
         assert result == "success"
         assert mock_logger.call_count == 1
@@ -161,7 +165,8 @@ class TestRetryOnNetworkError:
         mock_func = MagicMock(side_effect=[ConnectionError("connection refused"), "success"])
         decorated = retry_on_network_error(max_retries=2)(mock_func)
 
-        result = decorated()
+        with patch("scylla.automation.retry.time.sleep"):
+            result = decorated()
 
         assert result == "success"
         assert mock_func.call_count == 2
@@ -171,7 +176,8 @@ class TestRetryOnNetworkError:
         mock_func = MagicMock(side_effect=[TimeoutError("timed out"), "success"])
         decorated = retry_on_network_error(max_retries=2)(mock_func)
 
-        result = decorated()
+        with patch("scylla.automation.retry.time.sleep"):
+            result = decorated()
 
         assert result == "success"
         assert mock_func.call_count == 2
