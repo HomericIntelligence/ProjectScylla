@@ -1,19 +1,11 @@
 """Tests for scripts/validate_model_configs.py."""
 
-import sys
 from pathlib import Path
 from unittest import mock
 
 import pytest
 import yaml
-
-# The script lives in scripts/ which isn't on sys.path by default.
-# Insert it so we can import helper functions directly.
-_SCRIPTS_DIR = Path(__file__).parents[3] / "scripts"
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
-
-from validate_model_configs import (  # noqa: E402
+from validate_model_configs import (
     _collect_mismatches,
     _confirm_rename,
     _fix_mismatch,
