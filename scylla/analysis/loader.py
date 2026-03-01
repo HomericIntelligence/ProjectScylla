@@ -765,18 +765,20 @@ def load_experiment(experiment_dir: Path, agent_model: str) -> list[RunData]:
 def load_all_experiments(
     data_dir: Path,
     exclude: list[str] | None = None,
-    rubric_conflict: RubricConflict = "error",
 ) -> dict[str, list[RunData]]:
     """Load all experiments from a data directory.
 
     Args:
         data_dir: Path to fullruns directory
         exclude: List of experiment names to exclude (default: [])
-        rubric_conflict: Policy for handling conflicting rubric weights.
-            Passed through to :func:`load_rubric_weights`.
 
     Returns:
         Dictionary mapping experiment name to list of runs
+
+    Note:
+        To load rubric weights with conflict resolution, call
+        :func:`load_rubric_weights` separately with the desired
+        ``rubric_conflict`` policy.
 
     """
     if exclude is None:

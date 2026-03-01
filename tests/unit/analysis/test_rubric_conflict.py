@@ -222,13 +222,27 @@ def test_rubric_new_category_in_second_experiment(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_load_all_experiments_passes_rubric_conflict(tmp_path):
-    """load_all_experiments() accepts rubric_conflict parameter."""
+def test_load_all_experiments_no_rubric_conflict_param(tmp_path):
+    """load_all_experiments() does not accept rubric_conflict; callers use load_rubric_weights()."""
     import inspect
 
     from scylla.analysis.loader import load_all_experiments
 
     sig = inspect.signature(load_all_experiments)
-    assert "rubric_conflict" in sig.parameters
-    default = sig.parameters["rubric_conflict"].default
-    assert default == "error"
+    # rubric_conflict was removed; it was misleading since no call to
+    # load_rubric_weights() was made internally. Callers that need rubric
+    # conflict resolution must call load_rubric_weights() separately.
+    assert "rubric_conflict" not in sig.parameters
+
+
+def test_load_rubric_weights_is_independent_callable(tmp_path):
+    """load_rubric_weights() can be called independently with rubric_conflict policy."""
+    from scylla.analysis.loader import load_rubric_weights
+
+    data_dir = tmp_path / "fullruns"
+    exp_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
+    _write_rubric(exp_dir, {"functional": {"weight": 10.0}})
+
+    # load_rubric_weights accepts rubric_conflict directly
+    weights = load_rubric_weights(data_dir, rubric_conflict="error")
+    assert weights["functional"] == pytest.approx(10.0)
