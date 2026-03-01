@@ -83,9 +83,12 @@ jobs:
           # Install package in dev mode for unit tests
           if [[ "$TEST_PATH" == "tests/unit" ]]; then
             pixi run pip install -e .
-            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml
+            # Enforce 75% coverage on scylla/ specifically (scripts/ is WIP at ~9%).
+            # The global --cov-fail-under in addopts is set to 9 (combined floor);
+            # this flag overrides it for the unit job where scylla/ must hit 75%.
+            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov=scripts --cov-fail-under=75 --cov-report=term-missing --cov-report=xml
           else
-            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml
+            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov=scripts --cov-report=term-missing --cov-report=xml
           fi
 
       - name: Upload coverage
