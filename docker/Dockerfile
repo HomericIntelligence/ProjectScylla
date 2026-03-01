@@ -55,8 +55,9 @@ RUN pip install --user --no-cache-dir \
     $(python3 -c "
 import tomllib, os
 data = tomllib.load(open('/opt/scylla/pyproject.toml', 'rb'))
-deps = list(data['project']['dependencies'])
-opt = data['project'].get('optional-dependencies', {})
+project = data.get('project', {})
+deps = list(project.get('dependencies', []))
+opt = project.get('optional-dependencies', {})
 for group in [g.strip() for g in os.environ.get('EXTRAS', '').split(',') if g.strip()]:
     deps.extend(opt.get(group, []))
 print(' '.join(deps))
