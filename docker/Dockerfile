@@ -11,7 +11,7 @@
 # Stage 1: Builder - Install Python packages with build dependencies
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
-# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.12); requires-python = ">=3.10"
+# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.13); requires-python = ">=3.10"
 FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder
 
 # Set build environment variables
@@ -73,7 +73,7 @@ RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
-# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.12); requires-python = ">=3.10"
+# Python 3.12 aligns with pyproject.toml classifiers (3.10-3.13); requires-python = ">=3.10"
 FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c
 
 # Set labels for image metadata
