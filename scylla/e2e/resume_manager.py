@@ -113,14 +113,10 @@ class ResumeManager:
 
         """
         # max_subtests is always restored (None = clear saved limit)
-        self.config = self.config.model_copy(
-            update={"max_subtests": cli_ephemeral["max_subtests"]}
-        )
+        self.config = self.config.model_copy(update={"max_subtests": cli_ephemeral["max_subtests"]})
         # All other ephemeral fields: only restore when explicitly set on CLI
         non_none_rest = {
-            k: v
-            for k, v in cli_ephemeral.items()
-            if k != "max_subtests" and v is not None
+            k: v for k, v in cli_ephemeral.items() if k != "max_subtests" and v is not None
         }
         if non_none_rest:
             self.config = self.config.model_copy(update=non_none_rest)
@@ -220,12 +216,8 @@ class ResumeManager:
                         )
                         _config_subs = {s.id for s in _tc.subtests}
                         if self.config.max_subtests is not None:
-                            _config_subs = {
-                                s.id for s in _tc.subtests[: self.config.max_subtests]
-                            }
-                        _ckpt_subs = set(
-                            self.checkpoint.subtest_states.get(tier_id_str, {}).keys()
-                        )
+                            _config_subs = {s.id for s in _tc.subtests[: self.config.max_subtests]}
+                        _ckpt_subs = set(self.checkpoint.subtest_states.get(tier_id_str, {}).keys())
                         _has_missing_subtests = bool(_config_subs - _ckpt_subs)
                     except Exception:
                         pass
@@ -261,8 +253,10 @@ class ResumeManager:
         return self.config, self.checkpoint
 
     def check_tiers_need_execution(self, cli_tiers: list[TierID]) -> set[str]:
-        """Return tier IDs that need execution: new tiers, tiers with incomplete runs,
-        or tiers with subtests missing from the checkpoint (e.g. max_subtests expanded).
+        """Return tier IDs that need execution.
+
+        New tiers, tiers with incomplete runs, or tiers with subtests missing from
+        the checkpoint (e.g. max_subtests expanded).
 
         Args:
             cli_tiers: Tiers requested on the CLI for this invocation.
