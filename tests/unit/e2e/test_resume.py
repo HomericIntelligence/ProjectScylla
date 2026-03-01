@@ -8,7 +8,13 @@ from pathlib import Path
 
 import pytest
 
-from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
+from scylla.e2e.checkpoint import (
+    E2ECheckpoint,
+    compute_config_hash,
+    load_checkpoint,
+    save_checkpoint,
+    validate_checkpoint_config,
+)
 from scylla.e2e.models import (
     ExperimentConfig,
     SubTestConfig,
@@ -308,13 +314,78 @@ class TestResumeConfigMismatch:
         save_checkpoint(cp, cp_path)
 
         # Modified config (different hash)
-        from scylla.e2e.checkpoint import validate_checkpoint_config
-
         modified_config = experiment_config
         modified_config.runs_per_subtest = 5  # Changed from 2 to 5
 
         # Validation should fail
         assert validate_checkpoint_config(cp, modified_config) is False
+
+    def test_hash_differs_when_runs_per_subtest_changes(
+        self,
+        tmp_path: Path,
+        experiment_config: ExperimentConfig,
+    ) -> None:
+        """Hash must differ when runs_per_subtest changes (it IS included in the hash)."""
+        config_3 = experiment_config.model_copy(update={"runs_per_subtest": 3})
+        config_5 = experiment_config.model_copy(update={"runs_per_subtest": 5})
+
+        hash_3 = compute_config_hash(config_3)
+        hash_5 = compute_config_hash(config_5)
+
+        assert hash_3 != hash_5, (
+            "compute_config_hash() must produce different values when runs_per_subtest changes"
+        )
+
+        # validate_checkpoint_config must return False when the stored hash no longer matches
+        checkpoint = E2ECheckpoint(
+            experiment_id=config_3.experiment_id,
+            experiment_dir=str(tmp_path),
+            config_hash=hash_3,
+            completed_runs={},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            rate_limit_source=None,
+            rate_limit_until=None,
+            pause_count=0,
+            pid=12345,
+        )
+        assert validate_checkpoint_config(checkpoint, config_5) is False
+
+    def test_hash_stable_when_excluded_fields_change(
+        self,
+        experiment_config: ExperimentConfig,
+    ) -> None:
+        """Hash must remain the same when only excluded fields (parallel_subtests) change."""
+        config_a = experiment_config.model_copy(update={"parallel_subtests": 1})
+        config_b = experiment_config.model_copy(update={"parallel_subtests": 8})
+
+        assert compute_config_hash(config_a) == compute_config_hash(config_b), (
+            "compute_config_hash() must be stable when only parallel_subtests changes"
+        )
+
+    @pytest.mark.parametrize(
+        "field,new_value",
+        [
+            ("runs_per_subtest", 5),
+            ("task_commit", "deadbeef"),
+            ("language", "python"),
+            ("models", ["claude-haiku-4-5-20251001"]),
+        ],
+    )
+    def test_hash_differs_for_included_fields(
+        self,
+        experiment_config: ExperimentConfig,
+        field: str,
+        new_value: object,
+    ) -> None:
+        """Hash must differ for each field that is included in the config hash."""
+        config_original = experiment_config.model_copy()
+        config_modified = experiment_config.model_copy(update={field: new_value})
+
+        assert compute_config_hash(config_original) != compute_config_hash(config_modified), (
+            f"compute_config_hash() must differ when {field!r} changes"
+        )
 
 
 class TestCheckpointOperations:
