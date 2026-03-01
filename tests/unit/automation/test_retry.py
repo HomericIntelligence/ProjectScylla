@@ -200,6 +200,115 @@ class TestRetryOnNetworkError:
         assert result == "success"
 
 
+class TestRetryWithMaxDelay:
+    """Tests for max_delay parameter in retry_with_backoff."""
+
+    def test_max_delay_none_by_default(self):
+        """Test max_delay is None by default and delays are uncapped."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
+        # With initial_delay=0.1, backoff_factor=2: delays are 0.1, 0.2 (uncapped)
+        decorated = retry_with_backoff(max_retries=3, initial_delay=0.1, backoff_factor=2)(
+            mock_func
+        )
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            result = decorated()
+
+        assert result == "success"
+        sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
+        assert sleep_calls == [0.1, 0.2]
+
+    def test_max_delay_caps_large_delays(self):
+        """Test max_delay caps the computed delay when it would exceed the cap."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
+        # With initial_delay=1.0, backoff_factor=2: delays would be 1.0, 2.0 (uncapped)
+        # With max_delay=1.5: second delay should be capped at 1.5
+        decorated = retry_with_backoff(
+            max_retries=3, initial_delay=1.0, backoff_factor=2, max_delay=1.5
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            result = decorated()
+
+        assert result == "success"
+        sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
+        assert sleep_calls[0] == 1.0  # 1.0 * 2^0 = 1.0, not capped
+        assert sleep_calls[1] == 1.5  # 1.0 * 2^1 = 2.0, capped to 1.5
+
+    def test_max_delay_does_not_affect_delays_below_cap(self):
+        """Test max_delay does not modify delays that are already below the cap."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
+        # With initial_delay=0.5, backoff_factor=2, max_delay=10.0:
+        # First delay = 0.5, which is below the cap, so it stays 0.5
+        decorated = retry_with_backoff(
+            max_retries=2, initial_delay=0.5, backoff_factor=2, max_delay=10.0
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            result = decorated()
+
+        assert result == "success"
+        mock_sleep.assert_called_once_with(0.5)
+
+    def test_max_delay_applied_before_jitter(self):
+        """Test max_delay cap is applied before jitter so jitter acts on capped value."""
+        mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
+        # initial_delay=1.0, backoff_factor=4: first delay would be 4.0 without cap
+        # max_delay=2.0 caps it to 2.0, then jitter=1.5 makes it 3.0
+        decorated = retry_with_backoff(
+            max_retries=2,
+            initial_delay=4.0,
+            backoff_factor=2,
+            max_delay=2.0,
+            jitter=True,
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            with patch("scylla.automation.retry.random.uniform", return_value=1.5):
+                result = decorated()
+
+        assert result == "success"
+        # delay = min(4.0 * 2^0, 2.0) = 2.0, then * 1.5 = 3.0
+        mock_sleep.assert_called_once_with(pytest.approx(3.0))
+
+    def test_max_delay_with_many_retries_all_capped(self):
+        """Test all delays are capped when exponential backoff quickly exceeds max_delay."""
+        side_effects = [ValueError("fail")] * 4 + ["success"]
+        mock_func = MagicMock(side_effect=side_effects)
+        # initial_delay=10.0, backoff_factor=2: delays would be 10, 20, 40, 80
+        # max_delay=15.0: all but the first should be capped
+        decorated = retry_with_backoff(
+            max_retries=4, initial_delay=10.0, backoff_factor=2, max_delay=15.0
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            result = decorated()
+
+        assert result == "success"
+        sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
+        assert sleep_calls[0] == 10.0  # 10 * 2^0 = 10.0, not capped
+        assert sleep_calls[1] == 15.0  # 10 * 2^1 = 20.0, capped to 15.0
+        assert sleep_calls[2] == 15.0  # 10 * 2^2 = 40.0, capped to 15.0
+        assert sleep_calls[3] == 15.0  # 10 * 2^3 = 80.0, capped to 15.0
+
+    def test_max_delay_with_logger_reports_capped_delay(self):
+        """Test logger receives the capped delay value."""
+        mock_logger = MagicMock()
+        mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
+        # initial_delay=5.0, max_delay=3.0: delay is capped to 3.0
+        decorated = retry_with_backoff(
+            max_retries=2, initial_delay=5.0, backoff_factor=2, max_delay=3.0, logger=mock_logger
+        )(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep"):
+            result = decorated()
+
+        assert result == "success"
+        log_message = mock_logger.call_args[0][0]
+        # Capped delay = 3.0
+        assert "3.0" in log_message
+
+
 class TestRetryWithJitter:
     """Tests for jitter parameter in retry_with_backoff."""
 
