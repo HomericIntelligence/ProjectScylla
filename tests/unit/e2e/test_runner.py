@@ -1226,7 +1226,6 @@ class TestInitializeOrResumeExperimentFailedReset:
         assert runner.checkpoint.subtest_states["T0"]["00"] == "runs_in_progress"
 
 
-
 class TestLogCheckpointResumeGuard:
     """Tests for the RuntimeError guard in _log_checkpoint_resume."""
 
