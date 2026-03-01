@@ -4,6 +4,7 @@
 Checks:
 1. Coverage threshold in CLAUDE.md matches ``fail_under`` in ``pyproject.toml``.
 2. ``--cov=<path>`` in README.md matches ``addopts`` in ``pyproject.toml``.
+3. ``--cov-fail-under=N`` in ``addopts`` matches ``fail_under`` in ``[tool.coverage.report]``.
 
 Usage:
     python scripts/check_doc_config_consistency.py
@@ -176,6 +177,74 @@ def check_readme_cov_path(repo_root: Path, expected_path: str) -> list[str]:
     return errors
 
 
+def extract_cov_fail_under_from_addopts(repo_root: Path) -> int | None:
+    """Read the ``--cov-fail-under=N`` value from ``[tool.pytest.ini_options].addopts``.
+
+    Args:
+        repo_root: Path to the repository root containing ``pyproject.toml``.
+
+    Returns:
+        The integer threshold if a ``--cov-fail-under=N`` flag is present, or ``None``
+        if no such flag exists in *addopts*.
+
+    Raises:
+        SystemExit: If ``pyproject.toml`` is missing or unreadable.
+
+    """
+    pyproject = repo_root / "pyproject.toml"
+    try:
+        with open(pyproject, "rb") as f:
+            data = tomllib.load(f)
+    except Exception as exc:
+        print(f"ERROR: Failed to parse pyproject.toml: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    addopts = data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", [])
+
+    if isinstance(addopts, str):
+        addopts_items: list[str] = addopts.split()
+    else:
+        addopts_items = list(addopts)
+
+    for item in addopts_items:
+        m = re.match(r"^--cov-fail-under=(\d+)$", item)
+        if m:
+            return int(m.group(1))
+
+    return None
+
+
+def check_addopts_cov_fail_under(repo_root: Path, expected_threshold: int) -> list[str]:
+    """Check that ``--cov-fail-under`` in ``addopts`` matches ``fail_under`` in coverage report.
+
+    Reads ``--cov-fail-under=N`` from ``[tool.pytest.ini_options].addopts`` and compares it
+    to *expected_threshold* (from ``[tool.coverage.report].fail_under``).
+
+    Args:
+        repo_root: Path to the repository root.
+        expected_threshold: The authoritative threshold from ``[tool.coverage.report].fail_under``.
+
+    Returns:
+        List of error strings (empty if all checks pass).
+
+    """
+    addopts_threshold = extract_cov_fail_under_from_addopts(repo_root)
+
+    if addopts_threshold is None:
+        return [
+            "pyproject.toml: No --cov-fail-under=N flag found in [tool.pytest.ini_options].addopts"
+        ]
+
+    if addopts_threshold != expected_threshold:
+        return [
+            f"pyproject.toml: --cov-fail-under mismatch — "
+            f"[tool.pytest.ini_options].addopts has --cov-fail-under={addopts_threshold}, "
+            f"but [tool.coverage.report].fail_under={expected_threshold}"
+        ]
+
+    return []
+
+
 def main() -> int:
     """Run all doc/config consistency checks.
 
@@ -219,6 +288,16 @@ def main() -> int:
         all_errors.extend(cov_errors)
     elif args.verbose:
         print(f"PASS: README.md --cov path matches pyproject.toml (--cov={expected_cov_path})")
+
+    # --- Check 3: --cov-fail-under in addopts matches [tool.coverage.report].fail_under ---
+    addopts_errors = check_addopts_cov_fail_under(repo_root, expected_threshold)
+    if addopts_errors:
+        all_errors.extend(addopts_errors)
+    elif args.verbose:
+        print(
+            f"PASS: [tool.pytest.ini_options].addopts --cov-fail-under matches "
+            f"[tool.coverage.report].fail_under ({expected_threshold}%)"
+        )
 
     if all_errors:
         for error in all_errors:
