@@ -17,7 +17,7 @@ class TestHatchlingPinned:
         match = re.search(r"pip install.*hatchling([^\n]*)", content)
         assert match is not None, "pip install hatchling line not found in Dockerfile"
         assert "==" in match.group(0), (
-            "hatchling must be pinned with == (e.g. hatchling==1.27.0); found unpinned install"
+            "hatchling must be pinned with == (e.g. hatchling==1.29.0); found unpinned install"
         )
 
     def test_hatchling_version_format(self) -> None:
@@ -26,7 +26,7 @@ class TestHatchlingPinned:
         match = re.search(r'pip install.*["\']?hatchling==(\d+\.\d+\.\d+)["\']?', content)
         assert match is not None, (
             "hatchling must be pinned with a full X.Y.Z version "
-            "(e.g. hatchling==1.27.0) in Dockerfile"
+            "(e.g. hatchling==1.29.0) in Dockerfile"
         )
         version = match.group(1)
         parts = version.split(".")
