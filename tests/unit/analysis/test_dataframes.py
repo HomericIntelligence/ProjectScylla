@@ -144,6 +144,11 @@ def test_build_subtests_df_structure(sample_subtests_df):
         "grade_D",
         "grade_F",
         "modal_grade",
+        # Process metrics (median per subtest; NaN when not available)
+        "median_r_prog",
+        "median_cfp",
+        "median_pr_revert_rate",
+        "median_strategic_drift",
     ]
 
     for col in required_cols:
