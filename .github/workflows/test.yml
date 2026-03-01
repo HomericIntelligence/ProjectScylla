@@ -84,6 +84,15 @@ jobs:
         if: matrix.test-group.name == 'unit'
         run: pixi run python scripts/check_unit_test_structure.py
 
+      - name: Check test count documentation
+        if: matrix.test-group.name == 'unit'
+        run: |
+          pixi run python scripts/check_test_counts.py \
+            --readme README.md \
+            --test-dir tests \
+            --tolerance-tests 100 \
+            --tolerance-files 5
+
       - name: Run ${{ matrix.test-group.name }} tests
         env:
           TEST_PATH: ${{ matrix.test-group.path }}
