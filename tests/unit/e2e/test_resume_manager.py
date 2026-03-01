@@ -190,27 +190,33 @@ class TestRestoreCliArgs:
         assert config.until_run_state == RunState.AGENT_COMPLETE
         assert config.max_subtests == 5
 
-    def test_none_cli_ephemeral_keeps_saved_value(
+    def test_max_subtests_none_cli_clears_saved_value(
         self,
         base_checkpoint: E2ECheckpoint,
         base_config: ExperimentConfig,
         mock_tier_manager: MagicMock,
     ) -> None:
-        """None CLI args do not override saved config values."""
+        """CLI max_subtests=None clears the saved max_subtests value.
+
+        When the CLI explicitly provides None for max_subtests (i.e. the flag was
+        omitted on the command line), it means "no limit" and overrides any saved
+        positive value. This enables: first run with --max-subtests 2, second run
+        without --max-subtests → runs all subtests.
+        """
         config_with_saved = base_config.model_copy(update={"max_subtests": 3})
         cli_ephemeral: dict[str, None] = {"max_subtests": None}
         rm = _make_manager(base_checkpoint, config_with_saved, mock_tier_manager)
         config, _ = rm.restore_cli_args(cli_ephemeral)
-        # None CLI value should NOT override the saved value
-        assert config.max_subtests == 3
+        # None CLI value means "no limit" — clears the saved value
+        assert config.max_subtests is None
 
-    def test_max_subtests_none_cli_clears_nothing(
+    def test_missing_max_subtests_key_preserves_saved_value(
         self,
         base_checkpoint: E2ECheckpoint,
         base_config: ExperimentConfig,
         mock_tier_manager: MagicMock,
     ) -> None:
-        """Empty cli_ephemeral dict leaves config unchanged."""
+        """Empty cli_ephemeral dict (no max_subtests key) leaves config unchanged."""
         rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
         config, checkpoint = rm.restore_cli_args({})
         assert config == base_config

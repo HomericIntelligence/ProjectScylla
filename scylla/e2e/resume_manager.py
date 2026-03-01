@@ -112,9 +112,13 @@ class ResumeManager:
             Updated (config, checkpoint) tuple.
 
         """
-        # max_subtests is always restored (None = clear saved limit)
-        self.config = self.config.model_copy(update={"max_subtests": cli_ephemeral["max_subtests"]})
-        # All other ephemeral fields: only restore when explicitly set on CLI
+        # max_subtests is always restored when present in cli_ephemeral (None = clear saved limit).
+        # When the key is absent entirely, the saved value is preserved.
+        _sentinel = object()
+        max_subtests_cli = cli_ephemeral.get("max_subtests", _sentinel)
+        if max_subtests_cli is not _sentinel:
+            self.config = self.config.model_copy(update={"max_subtests": max_subtests_cli})
+        # All other ephemeral fields: only restore when explicitly set on CLI (non-None)
         non_none_rest = {
             k: v for k, v in cli_ephemeral.items() if k != "max_subtests" and v is not None
         }
