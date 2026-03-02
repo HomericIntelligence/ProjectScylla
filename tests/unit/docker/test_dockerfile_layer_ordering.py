@@ -11,6 +11,7 @@ Builder stage (Stage 1):
   1. Build-tool apt install before any pip install
   2. Hatchling (Layer 1) installed before dependencies (Layer 2)
   3. pyproject.toml copied before Layer 2 pip install (cache-key discipline)
+  3a. ARG EXTRAS declared before Layer 2 pip install (cache-key discipline for build-arg)
   4. Layer 2 pip install before source COPY (Layer 3)
   5. Layer 3 source installed (no-deps) before runtime stage FROM
 
@@ -186,6 +187,27 @@ class TestBuilderStageOrdering:
             layer2_idx,
             "COPY pyproject.toml",
             "Layer 2 dependency install (os.environ.get line)",
+        )
+
+    def test_arg_extras_before_layer2_install(self, lines: list[str]) -> None:
+        """ARG EXTRAS must appear before the Layer 2 dependency install RUN.
+
+        Docker's build cache incorporates ARG values in the cache key, but only
+        for instructions that appear *after* the ARG declaration.  If ARG EXTRAS
+        appeared after the Layer 2 RUN, changing --build-arg EXTRAS=... would NOT
+        bust the cache and the wrong dependency set would be used.
+
+        We anchor the Layer 2 RUN on ``os.environ.get`` — this string is unique
+        to the dynamic dependency-install RUN command (see
+        test_pyproject_toml_copied_before_layer2_install for the same anchor).
+        """
+        arg_extras_idx = _first_line_containing(lines, "ARG EXTRAS")
+        layer2_idx = _first_line_containing(lines, "os.environ.get")
+        _assert_before(
+            arg_extras_idx,
+            layer2_idx,
+            "ARG EXTRAS declaration",
+            "Layer 2 dependency install RUN (os.environ.get line)",
         )
 
     def test_layer2_deps_installed_before_source_copy(self, lines: list[str]) -> None:
