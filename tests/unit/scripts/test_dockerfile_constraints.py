@@ -1,8 +1,8 @@
 """Tests for Dockerfile Python version constraints.
 
-Ensures the base image satisfies the Python 3.11+ requirement imposed by
-the use of tomllib (stdlib since Python 3.11) in the dependency-extraction
-RUN layer. See issue #1138.
+Ensures the base image satisfies the Python 3.10+ minimum and that the
+dependency-extraction RUN layer uses a tomllib/tomli fallback so it works
+on both Python 3.10 and 3.11+. See issues #1138 and #1200.
 """
 
 import re
@@ -12,8 +12,8 @@ import pytest
 
 DOCKERFILE_PATH = Path(__file__).parents[3] / "docker" / "Dockerfile"
 
-# Minimum Python version required for tomllib (stdlib since 3.11)
-MIN_PYTHON_VERSION = (3, 11)
+# Minimum Python version supported by the builder stage (tomli fallback added in #1200)
+MIN_PYTHON_VERSION = (3, 10)
 
 
 def _parse_python_base_versions(dockerfile_content: str) -> list[tuple[int, int]]:
@@ -42,7 +42,7 @@ def _parse_python_base_versions(dockerfile_content: str) -> list[tuple[int, int]
 
 
 class TestDockerfileBaseImageVersion:
-    """Assert Dockerfile base image meets Python 3.11+ requirement."""
+    """Assert Dockerfile base image meets Python 3.10+ minimum requirement."""
 
     def test_dockerfile_exists(self) -> None:
         """Dockerfile must exist at docker/Dockerfile."""
@@ -52,12 +52,11 @@ class TestDockerfileBaseImageVersion:
         )
 
     def test_base_image_python_version_meets_tomllib_requirement(self) -> None:
-        """Every Python base image in the Dockerfile must be >= 3.11.
+        """Every Python base image in the Dockerfile must be >= 3.10.
 
-        tomllib is only available in the Python stdlib from 3.11 onwards. If
-        the base image is downgraded to 3.10 the dependency-extraction RUN
-        layer will fail with ModuleNotFoundError. This test acts as a
-        regression guard. See issue #1138.
+        The dependency-extraction RUN layer uses a tomllib/tomli fallback
+        (tomllib stdlib since 3.11, tomli pre-installed for 3.10). This test
+        acts as a regression guard. See issues #1138 and #1200.
         """
         content = DOCKERFILE_PATH.read_text()
         versions = _parse_python_base_versions(content)
@@ -71,27 +70,45 @@ class TestDockerfileBaseImageVersion:
             assert (major, minor) >= MIN_PYTHON_VERSION, (
                 f"Dockerfile base image python:{major}.{minor} is below the "
                 f"minimum required version {MIN_PYTHON_VERSION[0]}.{MIN_PYTHON_VERSION[1]}. "
-                "tomllib is only available in the Python stdlib from 3.11+. "
-                "Either keep the base image at 3.11+ or add a tomli fallback "
-                "(see issue #1138 and the comment in docker/Dockerfile)."
+                "The builder stage requires Python 3.10+ (tomli fallback added in #1200). "
+                "See issues #1138 and #1200 and the comment in docker/Dockerfile."
             )
 
     def test_tomllib_constraint_comment_present(self) -> None:
-        """Dockerfile must contain the tomllib constraint comment.
+        """Dockerfile must reference both tomllib and the fallback mechanism.
 
-        This is a regression guard ensuring the constraint documentation
-        added in issue #1138 is not accidentally removed.
+        This is a regression guard ensuring the tomllib/tomli fallback
+        added in issues #1138 and #1200 is not accidentally removed.
         """
         content = DOCKERFILE_PATH.read_text()
         assert "tomllib" in content, (
             "The word 'tomllib' was not found in docker/Dockerfile. "
-            "The constraint comment documenting the Python 3.11+ requirement "
-            "appears to have been removed. See issue #1138."
+            "The tomllib/tomli fallback appears to have been removed. "
+            "See issues #1138 and #1200."
         )
-        assert "#1138" in content, (
-            "Issue #1138 reference not found in docker/Dockerfile. "
-            "The constraint comment linking to issue #1138 appears to have "
-            "been removed."
+        assert "tomli" in content, (
+            "The word 'tomli' was not found in docker/Dockerfile. "
+            "The tomli fallback package for Python 3.10 appears to have been removed. "
+            "See issue #1200."
+        )
+
+    def test_tomli_fallback_present(self) -> None:
+        """Dockerfile must contain the try/except ImportError tomli fallback.
+
+        Verifies that the dependency-extraction RUN layer includes the
+        try/except pattern so Python 3.10 environments can fall back to tomli.
+        See issue #1200.
+        """
+        content = DOCKERFILE_PATH.read_text()
+        assert "except ImportError:" in content, (
+            "No 'except ImportError:' found in docker/Dockerfile. "
+            "The tomllib->tomli fallback pattern appears to have been removed. "
+            "See issue #1200."
+        )
+        assert "import tomli as tomllib" in content, (
+            "The 'import tomli as tomllib' fallback was not found in docker/Dockerfile. "
+            "The Python 3.10 fallback for tomllib appears to have been removed. "
+            "See issue #1200."
         )
 
 

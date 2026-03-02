@@ -35,10 +35,9 @@ RUN pip install --no-cache-dir "hatchling==1.29.0"
 # Layer 2: Dependencies (invalidated only when pyproject.toml changes or EXTRAS changes)
 # Copy only pyproject.toml first so dependency installs are cached separately
 # from source changes.
-# NOTE: Uses tomllib (Python stdlib since 3.11; see issue #1138). The base image
-# MUST remain Python 3.11+. If downgrading to 3.10, replace with:
-#   pip install tomli && python3 -c "import tomli as tomllib; ..."
-# or add: try: import tomllib \n except ImportError: import tomli as tomllib
+# NOTE: Uses tomllib with a tomli fallback (see issues #1138, #1200). The builder stage
+# supports Python 3.10+ — tomllib is stdlib since 3.11; tomli is pre-installed as a
+# fallback for 3.10 environments (e.g. minimal/musl variants).
 #
 # Optional-dependency groups from [project.optional-dependencies] that are built
 # into this layer when EXTRAS is set at build time:
@@ -51,7 +50,24 @@ RUN pip install --no-cache-dir "hatchling==1.29.0"
 #   docker build --build-arg EXTRAS=analysis,dev .  # + both groups
 ARG EXTRAS=""
 COPY pyproject.toml /opt/scylla/
-RUN python3 -c "import tomllib, os; data = tomllib.load(open('/opt/scylla/pyproject.toml', 'rb')); project = data.get('project', {}); deps = list(project.get('dependencies', [])); opt = project.get('optional-dependencies', {}); [deps.extend(opt.get(g.strip(), [])) for g in os.environ.get('EXTRAS', '').split(',') if g.strip()]; open('/tmp/deps.txt', 'w').write(' '.join(deps))" EXTRAS="$EXTRAS" \
+RUN pip install --no-cache-dir "tomli==2.0.2" \
+    && EXTRAS="$EXTRAS" python3 - <<'PYEOF' > /tmp/deps.txt
+import os
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib  # type: ignore[no-redef]  # Python 3.10 fallback (#1200)
+with open('/opt/scylla/pyproject.toml', 'rb') as f:
+    data = tomllib.load(f)
+project = data.get('project', {})
+deps = list(project.get('dependencies', []))
+opt = project.get('optional-dependencies', {})
+for g in os.environ.get('EXTRAS', '').split(','):
+    g = g.strip()
+    if g:
+        deps.extend(opt.get(g, []))
+print(' '.join(deps))
+PYEOF
     && pip install --user --no-cache-dir $(cat /tmp/deps.txt) \
     && rm -f /tmp/deps.txt
 
