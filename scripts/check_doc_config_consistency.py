@@ -5,6 +5,7 @@ Checks:
 1. Coverage threshold in CLAUDE.md matches ``fail_under`` in ``pyproject.toml``.
 2. ``--cov=<path>`` in README.md matches ``addopts`` in ``pyproject.toml``.
 3. ``--cov-fail-under=N`` in ``addopts`` matches ``fail_under`` in ``[tool.coverage.report]``.
+4. Test count in README.md is within 10% of actual pytest collect count.
 
 Usage:
     python scripts/check_doc_config_consistency.py
@@ -18,6 +19,7 @@ Exit codes:
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -245,6 +247,74 @@ def check_addopts_cov_fail_under(repo_root: Path, expected_threshold: int) -> li
     return []
 
 
+def collect_actual_test_count(repo_root: Path) -> int | None:
+    """Run ``pytest --collect-only -q`` and return the number of collected tests.
+
+    Args:
+        repo_root: Path to the repository root where pytest should be invoked.
+
+    Returns:
+        The integer test count if collection succeeds and is parseable, or ``None``
+        if pytest is unavailable or the output cannot be parsed.
+
+    """
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q", "tests/"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+        )
+    except (FileNotFoundError, OSError):
+        return None
+
+    output = result.stdout + result.stderr
+    # Match "N selected" or "N tests collected" or "N test collected"
+    m = re.search(r"(\d+)\s+(?:tests?\s+)?(?:selected|collected)", output)
+    if m:
+        return int(m.group(1))
+    return None
+
+
+def check_readme_test_count(
+    repo_root: Path, actual_count: int, tolerance: float = 0.10
+) -> list[str]:
+    """Check that test count claims in README.md are within *tolerance* of *actual_count*.
+
+    Searches README.md for patterns like ``3,500+ tests`` or ``3172 tests`` and flags
+    any documented count that differs from *actual_count* by more than *tolerance* (10%).
+
+    Args:
+        repo_root: Path to the repository root.
+        actual_count: The authoritative test count from ``pytest --collect-only``.
+        tolerance: Fractional tolerance (default 0.10 = 10%).
+
+    Returns:
+        List of error strings (empty if all checks pass).
+
+    """
+    readme = repo_root / "README.md"
+    if not readme.exists():
+        return [f"README.md not found at {readme}"]
+
+    text = readme.read_text(encoding="utf-8")
+    raw_matches = re.findall(r"(\d[\d,]*)\+?\s+tests?", text, re.IGNORECASE)
+
+    if not raw_matches:
+        return ["README.md: No test count mention found (expected pattern: '<N> tests')"]
+
+    errors: list[str] = []
+    for raw in raw_matches:
+        doc_count = int(raw.replace(",", ""))
+        if abs(doc_count - actual_count) / actual_count > tolerance:
+            errors.append(
+                f"README.md: Test count mismatch — "
+                f"README.md says {doc_count}, actual pytest count is {actual_count} "
+                f"(tolerance: {int(tolerance * 100)}%)"
+            )
+    return errors
+
+
 def main() -> int:
     """Run all doc/config consistency checks.
 
@@ -298,6 +368,18 @@ def main() -> int:
             f"PASS: [tool.pytest.ini_options].addopts --cov-fail-under matches "
             f"[tool.coverage.report].fail_under ({expected_threshold}%)"
         )
+
+    # --- Check 4: README.md test count ---
+    actual_count = collect_actual_test_count(repo_root)
+    if actual_count is None:
+        if args.verbose:
+            print("SKIP: Could not collect actual test count (pytest unavailable)")
+    else:
+        count_errors = check_readme_test_count(repo_root, actual_count)
+        if count_errors:
+            all_errors.extend(count_errors)
+        elif args.verbose:
+            print(f"PASS: README.md test count is within 10% of actual ({actual_count})")
 
     if all_errors:
         for error in all_errors:
