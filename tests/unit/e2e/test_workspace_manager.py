@@ -490,3 +490,52 @@ class TestCentralizedRepos:
             RuntimeError, match="commit must be set before calling _ensure_commit_available"
         ):
             manager._ensure_commit_available()
+
+
+class TestWorkspaceManagerGuards:
+    """Guard tests for WorkspaceManager RuntimeError precondition paths."""
+
+    def test_checkout_commit_raises_if_checkout_fails(self, tmp_path: Path) -> None:
+        """_checkout_commit raises RuntimeError when git checkout returns non-zero."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+            commit="abc123",
+        )
+        fetch_ok = MagicMock()
+        fetch_ok.returncode = 0
+        fetch_ok.stderr = ""
+
+        checkout_fail = MagicMock()
+        checkout_fail.returncode = 1
+        checkout_fail.stderr = "error: pathspec 'abc123' did not match any file"
+
+        with patch("subprocess.run", side_effect=[fetch_ok, checkout_fail]):
+            with pytest.raises(RuntimeError, match="Failed to checkout commit abc123"):
+                manager._checkout_commit()
+
+    def test_create_worktree_raises_if_not_setup(self, tmp_path: Path) -> None:
+        """create_worktree raises RuntimeError when _is_setup is False."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+        with pytest.raises(RuntimeError, match="Base repo not set up"):
+            manager.create_worktree(tmp_path / "workspace")
+
+    def test_create_worktree_raises_if_worktree_cmd_fails(self, tmp_path: Path) -> None:
+        """create_worktree raises RuntimeError when git worktree add returns non-zero."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+        manager._is_setup = True
+
+        worktree_fail = MagicMock()
+        worktree_fail.returncode = 1
+        worktree_fail.stderr = "fatal: 'workspace' already exists"
+
+        workspace = tmp_path / "workspace"
+        with patch("subprocess.run", return_value=worktree_fail):
+            with pytest.raises(RuntimeError, match="Failed to create worktree at"):
+                manager.create_worktree(workspace)
