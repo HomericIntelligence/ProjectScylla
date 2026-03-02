@@ -12,6 +12,7 @@ Each level has both JSON and markdown reports with relative links.
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -369,6 +370,57 @@ def _generate_judge_section(
     return lines
 
 
+def _format_process_metric_value(val: Any) -> str:
+    """Format a process metric value for display.
+
+    Args:
+        val: Metric value (float, int, or None)
+
+    Returns:
+        Formatted string: 4 decimal places for floats, 'N/A' for None/NaN.
+
+    """
+    if val is None:
+        return "N/A"
+    try:
+        f = float(val)
+        if math.isnan(f):
+            return "N/A"
+        return f"{f:.4f}"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def _generate_process_metrics_section(process_metrics: dict[str, Any]) -> list[str]:
+    """Generate process metrics section markdown.
+
+    Args:
+        process_metrics: Dict with keys r_prog, strategic_drift, cfp, pr_revert_rate
+
+    Returns:
+        List of markdown lines for process metrics section.
+
+    """
+    r_prog = _format_process_metric_value(process_metrics.get("r_prog"))
+    strategic_drift = _format_process_metric_value(process_metrics.get("strategic_drift"))
+    cfp = _format_process_metric_value(process_metrics.get("cfp"))
+    pr_revert_rate = _format_process_metric_value(process_metrics.get("pr_revert_rate"))
+
+    return [
+        "---",
+        "",
+        "## Process Metrics",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| R_Prog (Fine-Grained Progress) | {r_prog} |",
+        f"| Strategic Drift | {strategic_drift} |",
+        f"| CFP (Change Fail %) | {cfp} |",
+        f"| PR Revert Rate | {pr_revert_rate} |",
+        "",
+    ]
+
+
 def generate_run_report(
     tier_id: str,
     subtest_id: str,
@@ -390,6 +442,7 @@ def generate_run_report(
     token_stats: dict[str, int] | None = None,
     agent_duration_seconds: float | None = None,
     judge_duration_seconds: float | None = None,
+    process_metrics: dict[str, Any] | None = None,
 ) -> str:
     """Generate markdown report content for a single run.
 
@@ -414,6 +467,8 @@ def generate_run_report(
             input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens
         agent_duration_seconds: Agent execution time (optional)
         judge_duration_seconds: Judge evaluation time (optional)
+        process_metrics: Optional process metrics dict with keys:
+            r_prog, strategic_drift, cfp, pr_revert_rate
 
     Returns:
         Formatted markdown report string.
@@ -486,6 +541,10 @@ def generate_run_report(
 
     # Add workspace state
     lines.extend(_generate_workspace_state_section(workspace_path))
+
+    # Add process metrics section if available
+    if process_metrics and isinstance(process_metrics, dict):
+        lines.extend(_generate_process_metrics_section(process_metrics))
 
     # Add agent output link
     lines.extend(
@@ -714,6 +773,7 @@ def save_run_report(
     token_stats: dict[str, int] | None = None,
     agent_duration_seconds: float | None = None,
     judge_duration_seconds: float | None = None,
+    process_metrics: dict[str, Any] | None = None,
 ) -> None:
     """Generate and save markdown report for a single run.
 
@@ -743,6 +803,7 @@ def save_run_report(
         token_stats=token_stats,
         agent_duration_seconds=agent_duration_seconds,
         judge_duration_seconds=judge_duration_seconds,
+        process_metrics=process_metrics,
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -762,6 +823,7 @@ def save_run_report_json(
     passed: bool,
     cost_usd: float,
     duration_seconds: float,
+    process_metrics: dict[str, Any] | None = None,
 ) -> None:
     """Save JSON report for a single run.
 
@@ -773,9 +835,11 @@ def save_run_report_json(
         passed: Whether passed
         cost_usd: Cost in USD
         duration_seconds: Duration
+        process_metrics: Optional process metrics dict with keys:
+            r_prog, strategic_drift, cfp, pr_revert_rate
 
     """
-    report = {
+    report: dict[str, Any] = {
         "run_number": run_number,
         "score": score,
         "grade": grade,
@@ -784,6 +848,20 @@ def save_run_report_json(
         "duration_seconds": duration_seconds,
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
+
+    if process_metrics and isinstance(process_metrics, dict):
+        guarded: dict[str, float | None] = {}
+        for key in ("r_prog", "strategic_drift", "cfp", "pr_revert_rate"):
+            val = process_metrics.get(key)
+            if val is None:
+                guarded[key] = None
+            else:
+                try:
+                    f = float(val)
+                    guarded[key] = None if math.isnan(f) else f
+                except (TypeError, ValueError):
+                    guarded[key] = None
+        report["process_metrics"] = guarded
 
     (run_dir / "report.json").write_text(json.dumps(report, indent=2))
 

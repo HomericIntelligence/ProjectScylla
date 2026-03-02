@@ -1303,6 +1303,15 @@ def stage_write_report(ctx: RunContext) -> None:
 
     token_stats = ctx.run_result.token_stats
 
+    # Read process_metrics from run_result.json written by stage_finalize_run
+    process_metrics: dict[str, Any] | None = None
+    try:
+        with open(ctx.run_dir / "run_result.json") as f:
+            run_result_data = json.load(f)
+        process_metrics = run_result_data.get("process_metrics")
+    except (OSError, json.JSONDecodeError, KeyError):
+        pass
+
     save_run_report(
         output_path=ctx.run_dir / "report.md",
         tier_id=ctx.tier_id.value,
@@ -1325,6 +1334,7 @@ def stage_write_report(ctx: RunContext) -> None:
         token_stats=token_stats.to_dict(),
         agent_duration_seconds=ctx.agent_duration,
         judge_duration_seconds=ctx.judge_duration,
+        process_metrics=process_metrics,
     )
 
     save_run_report_json(
@@ -1335,6 +1345,7 @@ def stage_write_report(ctx: RunContext) -> None:
         passed=ctx.judgment["passed"],
         cost_usd=ctx.agent_result.cost_usd,
         duration_seconds=ctx.agent_duration + ctx.judge_duration,
+        process_metrics=process_metrics,
     )
 
 
