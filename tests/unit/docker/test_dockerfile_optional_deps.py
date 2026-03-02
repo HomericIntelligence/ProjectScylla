@@ -9,9 +9,17 @@ assertions on the Dockerfile text.
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 import pytest
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib  # type: ignore[import-not-found, no-redef]
+
+PYPROJECT = Path(__file__).parents[3] / "pyproject.toml"
 
 DOCKERFILE = Path(__file__).parents[3] / "docker" / "Dockerfile"
 
@@ -122,4 +130,63 @@ def test_compose_passes_extras_build_arg(compose_text: str) -> None:
     assert "EXTRAS" in compose_text, (
         "docker/docker-compose.yml must reference EXTRAS in the build args so that "
         "'EXTRAS=analysis docker-compose build' works without manual --build-arg."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Regression guards: pyproject.toml optional-dep group drift detection
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def pyproject_optional_groups() -> list[str]:
+    """Return the list of [project.optional-dependencies] group names from pyproject.toml."""
+    data = tomllib.loads(PYPROJECT.read_text())
+    return list(data.get("project", {}).get("optional-dependencies", {}).keys())
+
+
+def test_layer2_handles_comma_separated_extras(dockerfile_text: str) -> None:
+    """The python3 snippet must split EXTRAS on commas to support multi-group input.
+
+    This ensures ``--build-arg EXTRAS=analysis,dev`` correctly installs both
+    groups rather than treating the entire string as a single invalid group name.
+    """
+    assert "split(',')" in dockerfile_text or 'split(",")' in dockerfile_text, (
+        "The python3 -c snippet in Layer 2 must call .split(',') on the EXTRAS value "
+        "so that comma-separated group names (e.g. 'analysis,dev') are handled correctly."
+    )
+
+
+def test_dockerfile_documents_all_optional_dep_groups(
+    dockerfile_text: str,
+    pyproject_optional_groups: list[str],
+) -> None:
+    """Every optional-dep group defined in pyproject.toml must appear in the Dockerfile comment.
+
+    Guards against a new group being silently omitted from the Dockerfile documentation
+    after it is added to ``[project.optional-dependencies]`` in pyproject.toml.
+    """
+    missing = [g for g in pyproject_optional_groups if g not in dockerfile_text]
+    assert not missing, (
+        f"The following optional-dependency groups from pyproject.toml are not documented "
+        f"in docker/Dockerfile: {missing}. Add them to the Layer 2 comment block."
+    )
+
+
+def test_dockerfile_comment_groups_exist_in_pyproject(
+    dockerfile_text: str,
+    pyproject_optional_groups: list[str],
+) -> None:
+    """Every group name mentioned in the Dockerfile Layer 2 comment must exist in pyproject.toml.
+
+    Guards against comment drift where a group was renamed or removed from
+    ``[project.optional-dependencies]`` but the Dockerfile comment still references the old name.
+    """
+    # Extract group names from the Layer 2 comment block (lines of the form "  #   <name>  —")
+    comment_groups = re.findall(r"#\s{3,}(\w+)\s+[—-]", dockerfile_text)
+    stale = [g for g in comment_groups if g not in pyproject_optional_groups]
+    assert not stale, (
+        f"The following group names appear in the Dockerfile Layer 2 comment but are not "
+        f"defined in pyproject.toml [project.optional-dependencies]: {stale}. "
+        f"Update the comment or pyproject.toml to keep them in sync."
     )
