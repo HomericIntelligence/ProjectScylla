@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from scylla.e2e.models import (
@@ -334,6 +335,138 @@ class TestSaveRunReportJson:
         assert data["cost_usd"] == 0.0042
         assert data["duration_seconds"] == 12.5
         assert "generated_at" in data
+
+
+class TestGenerateRunReportProcessMetrics:
+    """Tests for process_metrics integration in generate_run_report."""
+
+    def _base_kwargs(self, tmp_path: Path) -> dict[str, Any]:
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        return {
+            "tier_id": "T0",
+            "subtest_id": "baseline",
+            "run_number": 1,
+            "score": 0.75,
+            "grade": "B",
+            "passed": True,
+            "reasoning": "Good",
+            "cost_usd": 0.001,
+            "duration_seconds": 5.0,
+            "tokens_input": 100,
+            "tokens_output": 50,
+            "exit_code": 0,
+            "task_prompt": "Test task",
+            "workspace_path": workspace,
+        }
+
+    def test_process_metrics_present(self, tmp_path: Path) -> None:
+        """All four process metrics render in the markdown table."""
+        pm = {"r_prog": 0.8, "strategic_drift": 0.1, "cfp": 0.05, "pr_revert_rate": 0.0}
+        report = generate_run_report(**self._base_kwargs(tmp_path), process_metrics=pm)
+        assert "## Process Metrics" in report
+        assert "R_Prog (Fine-Grained Progress)" in report
+        assert "Strategic Drift" in report
+        assert "CFP (Change Fail %)" in report
+        assert "PR Revert Rate" in report
+        assert "0.8000" in report
+        assert "0.1000" in report
+        assert "0.0500" in report
+        assert "0.0000" in report
+
+    def test_process_metrics_absent(self, tmp_path: Path) -> None:
+        """No crash and no section when process_metrics is None."""
+        report = generate_run_report(**self._base_kwargs(tmp_path), process_metrics=None)
+        assert "## Process Metrics" not in report
+
+    def test_process_metrics_empty_dict(self, tmp_path: Path) -> None:
+        """Empty dict does not render the section (falsy guard)."""
+        report = generate_run_report(**self._base_kwargs(tmp_path), process_metrics={})
+        assert "## Process Metrics" not in report
+
+    def test_process_metrics_partial_none_values(self, tmp_path: Path) -> None:
+        """Fields with None value render as N/A."""
+        pm = {"r_prog": 0.5, "strategic_drift": None, "cfp": None, "pr_revert_rate": 0.2}
+        report = generate_run_report(**self._base_kwargs(tmp_path), process_metrics=pm)
+        assert "## Process Metrics" in report
+        assert "0.5000" in report
+        assert "0.2000" in report
+        # N/A for None fields
+        assert report.count("N/A") >= 2
+
+
+class TestSaveRunReportJsonProcessMetrics:
+    """Tests for process_metrics in save_run_report_json."""
+
+    def test_json_includes_process_metrics(self, tmp_path: Path) -> None:
+        """JSON report includes process_metrics key when provided."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        pm = {"r_prog": 0.9, "strategic_drift": 0.05, "cfp": 0.0, "pr_revert_rate": 0.0}
+
+        save_run_report_json(
+            run_dir=run_dir,
+            run_number=1,
+            score=0.9,
+            grade="S",
+            passed=True,
+            cost_usd=0.001,
+            duration_seconds=3.0,
+            process_metrics=pm,
+        )
+
+        data = json.loads((run_dir / "report.json").read_text())
+        assert "process_metrics" in data
+        assert data["process_metrics"]["r_prog"] == 0.9
+        assert data["process_metrics"]["strategic_drift"] == 0.05
+        assert data["process_metrics"]["cfp"] == 0.0
+        assert data["process_metrics"]["pr_revert_rate"] == 0.0
+
+    def test_json_process_metrics_absent(self, tmp_path: Path) -> None:
+        """JSON report has no process_metrics key when not provided."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        save_run_report_json(
+            run_dir=run_dir,
+            run_number=1,
+            score=0.5,
+            grade="C",
+            passed=False,
+            cost_usd=0.002,
+            duration_seconds=6.0,
+        )
+
+        data = json.loads((run_dir / "report.json").read_text())
+        assert "process_metrics" not in data
+
+    def test_json_process_metrics_nan_guarded(self, tmp_path: Path) -> None:
+        """NaN values in process_metrics are serialized as null."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        pm = {
+            "r_prog": float("nan"),
+            "strategic_drift": 0.1,
+            "cfp": None,
+            "pr_revert_rate": 0.0,
+        }
+
+        save_run_report_json(
+            run_dir=run_dir,
+            run_number=1,
+            score=0.6,
+            grade="B",
+            passed=True,
+            cost_usd=0.001,
+            duration_seconds=4.0,
+            process_metrics=pm,
+        )
+
+        data = json.loads((run_dir / "report.json").read_text())
+        assert data["process_metrics"]["r_prog"] is None
+        assert data["process_metrics"]["cfp"] is None
+        assert data["process_metrics"]["strategic_drift"] == 0.1
+        assert data["process_metrics"]["pr_revert_rate"] == 0.0
 
 
 class TestGetWorkspaceFiles:
