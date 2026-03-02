@@ -58,7 +58,15 @@ def _compute_normality_tests(
 
     """
     normality_tests: list[dict[str, Any]] = []
-    metric_cols = ["score", "impl_rate", "cost_usd", "duration_seconds"]
+    metric_cols = [
+        "score",
+        "impl_rate",
+        "cost_usd",
+        "duration_seconds",
+        "r_prog",
+        "cfp",
+        "pr_revert_rate",
+    ]
 
     for model in models:
         for tier in tier_order:
@@ -68,6 +76,8 @@ def _compute_normality_tests(
                 continue
 
             for metric in metric_cols:
+                if metric not in tier_data.columns:
+                    continue
                 values = tier_data[metric].dropna()
                 if len(values) >= 3:
                     w_stat, p_value = shapiro_wilk(values)
@@ -122,6 +132,17 @@ def _compute_omnibus_tests(
                 ],
             ),
         ]
+        for process_metric in ("r_prog", "cfp", "pr_revert_rate"):
+            if process_metric in model_runs.columns:
+                metric_configs.append(
+                    (
+                        process_metric,
+                        [
+                            model_runs[model_runs["tier"] == t][process_metric].dropna()
+                            for t in tier_order
+                        ],
+                    )
+                )
 
         for metric_name, tier_groups_raw in metric_configs:
             tier_groups = [g for g in tier_groups_raw if len(g) > 0]
@@ -243,8 +264,10 @@ def _compute_pairwise_comparisons(
                     }
                 )
 
-        # impl_rate and duration_seconds: consecutive pairs only
-        for metric in ("impl_rate", "duration_seconds"):
+        # impl_rate, duration_seconds, and process metrics: consecutive pairs only
+        for metric in ("impl_rate", "duration_seconds", "r_prog", "cfp", "pr_revert_rate"):
+            if metric not in model_runs.columns:
+                continue
             raw_p_values = []
             test_metadata = []
 
@@ -331,8 +354,10 @@ def _compute_effect_sizes(
                 }
             )
 
-            # impl_rate and duration_seconds
-            for metric in ("impl_rate", "duration_seconds"):
+            # impl_rate, duration_seconds, and process metrics
+            for metric in ("impl_rate", "duration_seconds", "r_prog", "cfp", "pr_revert_rate"):
+                if metric not in model_runs.columns:
+                    continue
                 d1 = t1[metric].dropna()
                 d2 = t2[metric].dropna()
                 if len(d1) >= 2 and len(d2) >= 2:

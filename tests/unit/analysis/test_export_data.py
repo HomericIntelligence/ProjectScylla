@@ -3,6 +3,8 @@
 import json
 from typing import Any
 
+import pytest
+
 
 def test_compute_statistical_results(sample_runs_df, tmp_path):
     """Test compute_statistical_results generates valid JSON."""
@@ -759,6 +761,175 @@ def test_compute_interaction_tests_four_metrics(sample_runs_df):
     assert "impl_rate" in metrics_present
     assert "cost_usd" in metrics_present
     assert "duration_seconds" in metrics_present
+
+
+@pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
+def test_process_metrics_in_normality_tests(sample_runs_df, metric):
+    """Process metrics appear in normality_tests with required fields (Issue #1186)."""
+    from export_data import _compute_normality_tests
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+    models = sorted(sample_runs_df["agent_model"].unique())
+    results = _compute_normality_tests(sample_runs_df, models, tier_order)
+
+    entries = [e for e in results if e["metric"] == metric]
+    assert len(entries) > 0, f"{metric} should appear in normality_tests"
+
+    required_fields = {"model", "tier", "metric", "n", "w_statistic", "p_value", "is_normal"}
+    for entry in entries:
+        assert required_fields <= entry.keys(), f"Missing fields for {metric}: {entry.keys()}"
+        assert isinstance(entry["is_normal"], bool)
+        assert entry["n"] >= 3
+
+
+@pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
+def test_process_metrics_in_omnibus_tests(sample_runs_df, metric):
+    """Process metrics appear in omnibus_tests with required fields (Issue #1186)."""
+    from export_data import _compute_omnibus_tests
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+    models = sorted(sample_runs_df["agent_model"].unique())
+    results = _compute_omnibus_tests(sample_runs_df, models, tier_order)
+
+    entries = [e for e in results if e["metric"] == metric]
+    assert len(entries) > 0, f"{metric} should appear in omnibus_tests"
+
+    required_fields = {"model", "metric", "n_groups", "h_statistic", "p_value", "is_significant"}
+    for entry in entries:
+        assert required_fields <= entry.keys(), f"Missing fields for {metric}: {entry.keys()}"
+        assert isinstance(entry["is_significant"], bool)
+
+
+@pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
+def test_process_metrics_in_pairwise_comparisons(sample_runs_df, metric):
+    """Process metrics appear in pairwise_comparisons with required fields (Issue #1186)."""
+    from export_data import _compute_pairwise_comparisons
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+    models = sorted(sample_runs_df["agent_model"].unique())
+    results = _compute_pairwise_comparisons(sample_runs_df, models, tier_order)
+
+    entries = [e for e in results if e["metric"] == metric]
+    assert len(entries) > 0, f"{metric} should appear in pairwise_comparisons"
+
+    for entry in entries:
+        assert "p_value_raw" in entry
+        assert "p_value" in entry
+        assert "is_significant" in entry
+        # No overall_contrast for process metrics (consecutive pairs only)
+        assert entry.get("overall_contrast") is not True
+        # p_value is Holm-corrected and must be in [0, 1]
+        assert 0.0 <= entry["p_value"] <= 1.0
+        assert 0.0 <= entry["p_value_raw"] <= 1.0
+
+
+@pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
+def test_process_metrics_in_effect_sizes(sample_runs_df, metric):
+    """Process metrics appear in effect_sizes with required fields (Issue #1186)."""
+    from export_data import _compute_effect_sizes
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+    models = sorted(sample_runs_df["agent_model"].unique())
+    results = _compute_effect_sizes(sample_runs_df, models, tier_order)
+
+    entries = [e for e in results if e["metric"] == metric]
+    assert len(entries) > 0, f"{metric} should appear in effect_sizes"
+
+    required_fields = {
+        "model",
+        "metric",
+        "tier1",
+        "tier2",
+        "cliffs_delta",
+        "ci_low",
+        "ci_high",
+        "is_significant",
+    }
+    for entry in entries:
+        assert required_fields <= entry.keys(), f"Missing fields for {metric}: {entry.keys()}"
+        assert -1.0 <= entry["cliffs_delta"] <= 1.0
+        assert entry["ci_low"] <= entry["ci_high"]
+
+
+def test_normality_tests_all_metrics(sample_runs_df):
+    """normality_tests covers the full expected set of metrics (regression guard)."""
+    from export_data import _compute_normality_tests
+
+    from scylla.analysis.figures import derive_tier_order
+
+    tier_order = derive_tier_order(sample_runs_df)
+    models = sorted(sample_runs_df["agent_model"].unique())
+    results = _compute_normality_tests(sample_runs_df, models, tier_order)
+
+    metrics_present = {e["metric"] for e in results}
+    expected = {
+        "score",
+        "impl_rate",
+        "cost_usd",
+        "duration_seconds",
+        "r_prog",
+        "cfp",
+        "pr_revert_rate",
+    }
+    assert expected <= metrics_present, (
+        f"Missing metrics from normality_tests: {expected - metrics_present}"
+    )
+
+
+def test_sparse_process_metrics_graceful_degradation():
+    """When process metrics are all NaN for a tier, functions do not raise (Issue #1186)."""
+    import numpy as np
+    import pandas as pd
+    from export_data import (
+        _compute_effect_sizes,
+        _compute_normality_tests,
+        _compute_omnibus_tests,
+        _compute_pairwise_comparisons,
+    )
+
+    # Build DataFrame where process metrics are all NaN
+    rng = np.random.RandomState(0)
+    rows = []
+    for tier in ["T0", "T1"]:
+        for i in range(5):
+            rows.append(
+                {
+                    "agent_model": "model1",
+                    "tier": tier,
+                    "score": rng.uniform(0.3, 0.9),
+                    "impl_rate": rng.uniform(0.3, 0.9),
+                    "cost_usd": rng.uniform(0.01, 0.1),
+                    "duration_seconds": rng.uniform(5.0, 25.0),
+                    "passed": rng.choice([0, 1]),
+                    "r_prog": np.nan,
+                    "cfp": np.nan,
+                    "pr_revert_rate": np.nan,
+                }
+            )
+    df = pd.DataFrame(rows)
+    models = ["model1"]
+    tier_order = ["T0", "T1"]
+
+    # All four helpers must complete without raising
+    norm = _compute_normality_tests(df, models, tier_order)
+    omni = _compute_omnibus_tests(df, models, tier_order)
+    pairwise = _compute_pairwise_comparisons(df, models, tier_order)
+    effects = _compute_effect_sizes(df, models, tier_order)
+
+    # Process metrics should not appear (no non-NaN values)
+    process_metrics = {"r_prog", "cfp", "pr_revert_rate"}
+    assert not any(e["metric"] in process_metrics for e in norm)
+    assert not any(e["metric"] in process_metrics for e in omni)
+    assert not any(e["metric"] in process_metrics for e in pairwise)
+    assert not any(e["metric"] in process_metrics for e in effects)
 
 
 def test_helpers_compose_to_same_result(sample_runs_df):
