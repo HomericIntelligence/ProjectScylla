@@ -41,9 +41,9 @@ from scylla.analysis.figures.judge_analysis import (
 )
 from scylla.analysis.figures.model_comparison import fig11_tier_uplift, fig12_consistency
 from scylla.analysis.figures.process_metrics import (
-    fig_cfp_by_tier,
-    fig_pr_revert_by_tier,
-    fig_r_prog_by_tier,
+    fig28_r_prog_by_tier,
+    fig29_cfp_by_tier,
+    fig30_pr_revert_by_tier,
     fig_strategic_drift_by_tier,
 )
 from scylla.analysis.figures.spec_builder import apply_publication_theme
@@ -99,9 +99,9 @@ FIGURES: dict[str, tuple[str, Any]] = {
     "fig25_impl_rate_by_tier": ("impl_rate", fig25_impl_rate_by_tier),
     "fig26_impl_rate_vs_pass_rate": ("impl_rate", fig26_impl_rate_vs_pass_rate),
     "fig27_impl_rate_distribution": ("impl_rate", fig27_impl_rate_distribution),
-    "fig_r_prog_by_tier": ("tier", fig_r_prog_by_tier),
-    "fig_cfp_by_tier": ("tier", fig_cfp_by_tier),
-    "fig_pr_revert_by_tier": ("tier", fig_pr_revert_by_tier),
+    "fig28_r_prog_by_tier": ("tier", fig28_r_prog_by_tier),
+    "fig29_cfp_by_tier": ("tier", fig29_cfp_by_tier),
+    "fig30_pr_revert_by_tier": ("tier", fig30_pr_revert_by_tier),
     "fig_strategic_drift_by_tier": ("tier", fig_strategic_drift_by_tier),
 }
 

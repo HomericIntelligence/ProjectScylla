@@ -399,47 +399,47 @@ def sample_runs_df_with_process_metrics() -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def test_fig_r_prog_by_tier_smoke(sample_runs_df_with_process_metrics, tmp_path) -> None:
-    """fig_r_prog_by_tier executes without error and produces output file."""
-    from scylla.analysis.figures.process_metrics import fig_r_prog_by_tier
+def test_fig28_r_prog_by_tier_smoke(sample_runs_df_with_process_metrics, tmp_path) -> None:
+    """fig28_r_prog_by_tier executes without error and produces output file."""
+    from scylla.analysis.figures.process_metrics import fig28_r_prog_by_tier
 
-    fig_r_prog_by_tier(sample_runs_df_with_process_metrics, tmp_path, render=False)
+    fig28_r_prog_by_tier(sample_runs_df_with_process_metrics, tmp_path, render=False)
 
-    assert (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
-
-
-def test_fig_cfp_by_tier_smoke(sample_runs_df_with_process_metrics, tmp_path) -> None:
-    """fig_cfp_by_tier executes without error and produces output file."""
-    from scylla.analysis.figures.process_metrics import fig_cfp_by_tier
-
-    fig_cfp_by_tier(sample_runs_df_with_process_metrics, tmp_path, render=False)
-
-    assert (tmp_path / "fig_cfp_by_tier.vl.json").exists()
+    assert (tmp_path / "fig28_r_prog_by_tier.vl.json").exists()
 
 
-def test_fig_pr_revert_by_tier_smoke(sample_runs_df_with_process_metrics, tmp_path) -> None:
-    """fig_pr_revert_by_tier executes without error and produces output file."""
-    from scylla.analysis.figures.process_metrics import fig_pr_revert_by_tier
+def test_fig29_cfp_by_tier_smoke(sample_runs_df_with_process_metrics, tmp_path) -> None:
+    """fig29_cfp_by_tier executes without error and produces output file."""
+    from scylla.analysis.figures.process_metrics import fig29_cfp_by_tier
 
-    fig_pr_revert_by_tier(sample_runs_df_with_process_metrics, tmp_path, render=False)
+    fig29_cfp_by_tier(sample_runs_df_with_process_metrics, tmp_path, render=False)
 
-    assert (tmp_path / "fig_pr_revert_by_tier.vl.json").exists()
+    assert (tmp_path / "fig29_cfp_by_tier.vl.json").exists()
 
 
-def test_fig_r_prog_by_tier_skips_missing_column(tmp_path) -> None:
-    """fig_r_prog_by_tier skips gracefully when r_prog column is absent."""
-    from scylla.analysis.figures.process_metrics import fig_r_prog_by_tier
+def test_fig30_pr_revert_by_tier_smoke(sample_runs_df_with_process_metrics, tmp_path) -> None:
+    """fig30_pr_revert_by_tier executes without error and produces output file."""
+    from scylla.analysis.figures.process_metrics import fig30_pr_revert_by_tier
+
+    fig30_pr_revert_by_tier(sample_runs_df_with_process_metrics, tmp_path, render=False)
+
+    assert (tmp_path / "fig30_pr_revert_by_tier.vl.json").exists()
+
+
+def test_fig28_r_prog_by_tier_skips_missing_column(tmp_path) -> None:
+    """fig28_r_prog_by_tier skips gracefully when r_prog column is absent."""
+    from scylla.analysis.figures.process_metrics import fig28_r_prog_by_tier
 
     df = pd.DataFrame({"tier": ["T0"], "agent_model": ["Sonnet 4.5"], "score": [0.8]})
     # Should not raise
-    fig_r_prog_by_tier(df, tmp_path, render=False)
+    fig28_r_prog_by_tier(df, tmp_path, render=False)
     # No file should be produced
-    assert not (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig28_r_prog_by_tier.vl.json").exists()
 
 
-def test_fig_r_prog_by_tier_skips_all_null(tmp_path) -> None:
-    """fig_r_prog_by_tier skips gracefully when r_prog column is all-null."""
-    from scylla.analysis.figures.process_metrics import fig_r_prog_by_tier
+def test_fig28_r_prog_by_tier_skips_all_null(tmp_path) -> None:
+    """fig28_r_prog_by_tier skips gracefully when r_prog column is all-null."""
+    from scylla.analysis.figures.process_metrics import fig28_r_prog_by_tier
 
     df = pd.DataFrame(
         {
@@ -449,5 +449,5 @@ def test_fig_r_prog_by_tier_skips_all_null(tmp_path) -> None:
         }
     )
     # Should not raise
-    fig_r_prog_by_tier(df, tmp_path, render=False)
-    assert not (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
+    fig28_r_prog_by_tier(df, tmp_path, render=False)
+    assert not (tmp_path / "fig28_r_prog_by_tier.vl.json").exists()
