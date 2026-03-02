@@ -632,12 +632,13 @@ def test_compute_dynamic_domain():
 
 
 def test_generate_figures_registry_includes_process_metrics() -> None:
-    """FIGURES registry contains the three process-metrics figures."""
+    """FIGURES registry contains all four process-metrics figures."""
     from scripts.generate_figures import FIGURES
 
     assert "fig_r_prog_by_tier" in FIGURES
     assert "fig_cfp_by_tier" in FIGURES
     assert "fig_pr_revert_by_tier" in FIGURES
+    assert "fig_strategic_drift_by_tier" in FIGURES
 
 
 def test_generate_figures_process_metrics_use_tier_category() -> None:
@@ -647,6 +648,7 @@ def test_generate_figures_process_metrics_use_tier_category() -> None:
     assert FIGURES["fig_r_prog_by_tier"][0] == "tier"
     assert FIGURES["fig_cfp_by_tier"][0] == "tier"
     assert FIGURES["fig_pr_revert_by_tier"][0] == "tier"
+    assert FIGURES["fig_strategic_drift_by_tier"][0] == "tier"
 
 
 def test_compute_dynamic_domain_padding():
@@ -720,3 +722,39 @@ def test_process_metrics_figures_handle_missing_columns(tmp_path):
     assert not (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
     assert not (tmp_path / "fig_cfp_by_tier.vl.json").exists()
     assert not (tmp_path / "fig_pr_revert_by_tier.vl.json").exists()
+
+
+def test_fig_strategic_drift_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig_strategic_drift_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig_strategic_drift_by_tier
+
+    fig_strategic_drift_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
+
+
+def test_fig_strategic_drift_by_tier_missing_column(tmp_path):
+    """fig_strategic_drift_by_tier skips gracefully when column absent."""
+    import pandas as pd
+
+    from scylla.analysis.figures.process_metrics import fig_strategic_drift_by_tier
+
+    df = pd.DataFrame({"tier": ["T0"], "agent_model": ["Sonnet 4.5"], "score": [0.8]})
+    fig_strategic_drift_by_tier(df, tmp_path, render=False)
+    assert not (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
+
+
+def test_fig_strategic_drift_by_tier_all_null(tmp_path):
+    """fig_strategic_drift_by_tier skips gracefully when column all-null."""
+    import pandas as pd
+
+    from scylla.analysis.figures.process_metrics import fig_strategic_drift_by_tier
+
+    df = pd.DataFrame(
+        {
+            "tier": ["T0", "T1"],
+            "agent_model": ["Sonnet 4.5", "Sonnet 4.5"],
+            "strategic_drift": [None, None],
+        }
+    )
+    fig_strategic_drift_by_tier(df, tmp_path, render=False)
+    assert not (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
