@@ -41,6 +41,33 @@ def _parse_python_base_versions(dockerfile_content: str) -> list[tuple[int, int]
     return versions
 
 
+def _parse_python_base_digests(dockerfile_content: str) -> list[str]:
+    """Extract SHA256 digest strings from Python base image FROM lines in a Dockerfile.
+
+    Matches ``@sha256:<64 hex chars>`` on FROM lines that reference a ``python:``
+    base image.  Each matched digest is returned as a full ``sha256:...`` string.
+
+    Args:
+        dockerfile_content: Raw text content of the Dockerfile.
+
+    Returns:
+        List of digest strings (e.g. ``["sha256:abc...", "sha256:abc..."]``) found
+        on Python FROM lines, in the order they appear.
+
+    """
+    digests: list[str] = []
+    for line in dockerfile_content.splitlines():
+        stripped = line.strip()
+        if not stripped.upper().startswith("FROM"):
+            continue
+        if not re.search(r"python:", stripped, re.IGNORECASE):
+            continue
+        match = re.search(r"@(sha256:[a-f0-9]{64})", stripped, re.IGNORECASE)
+        if match:
+            digests.append(match.group(1))
+    return digests
+
+
 class TestDockerfileBaseImageVersion:
     """Assert Dockerfile base image meets Python 3.10+ minimum requirement."""
 
@@ -161,3 +188,109 @@ class TestParsePythonBaseVersions:
         """Should parse various version string formats correctly."""
         content = f"FROM {version_str}"
         assert _parse_python_base_versions(content) == [expected]
+
+
+class TestDockerfileBaseImageDigestConsistency:
+    """Assert all Python base image FROM lines share the same SHA256 digest."""
+
+    def test_all_python_from_lines_have_sha256_digest(self) -> None:
+        """Every Python FROM line must carry a SHA256 digest pin.
+
+        A missing digest on any stage means that stage can silently drift to a
+        different upstream image without triggering a build failure.  This test
+        acts as a regression guard for digest pin removal.
+        """
+        content = DOCKERFILE_PATH.read_text()
+        versions = _parse_python_base_versions(content)
+        digests = _parse_python_base_digests(content)
+
+        assert versions, (
+            "No Python base image version found in Dockerfile FROM lines. "
+            "Expected at least one 'FROM python:X.Y...' statement."
+        )
+        assert len(digests) == len(versions), (
+            f"Expected {len(versions)} SHA256 digest(s) (one per Python FROM line) "
+            f"but found {len(digests)}. "
+            "Every Python base image FROM line must include a @sha256:<64-hex> pin."
+        )
+        for digest in digests:
+            assert digest, "Empty digest string found — SHA256 pin must be non-empty."
+
+    def test_builder_and_runtime_digests_are_identical(self) -> None:
+        """All Python FROM lines must reference the same SHA256 digest.
+
+        If the builder stage is updated to a new digest without updating the
+        runtime stage (or vice versa), the two stages silently diverge.  This
+        test catches that drift.
+        """
+        content = DOCKERFILE_PATH.read_text()
+        digests = _parse_python_base_digests(content)
+
+        assert len(digests) >= 2, (
+            f"Expected at least 2 SHA256 digest pins (builder + runtime) but found {len(digests)}. "
+            "Both the builder and runtime FROM lines must include @sha256 pins."
+        )
+        assert len(set(digests)) == 1, (
+            "Python base image SHA256 digests differ between stages: "
+            + ", ".join(digests)
+            + ". All stages must reference the same digest to avoid drift."
+        )
+
+
+class TestParsePythonBaseDigests:
+    """Unit tests for _parse_python_base_digests helper."""
+
+    _DIGEST = "sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c"
+
+    def test_single_from_line_with_digest(self) -> None:
+        """Should extract digest from a single Python FROM line."""
+        content = f"FROM python:3.12-slim@{self._DIGEST} AS builder"
+        assert _parse_python_base_digests(content) == [self._DIGEST]
+
+    def test_multiple_from_lines_same_digest(self) -> None:
+        """Should extract the same digest from multiple Python FROM lines."""
+        content = (
+            f"FROM python:3.12-slim@{self._DIGEST} AS builder\n"
+            f"FROM python:3.12-slim@{self._DIGEST}\n"
+        )
+        assert _parse_python_base_digests(content) == [self._DIGEST, self._DIGEST]
+
+    def test_multiple_from_lines_different_digests(self) -> None:
+        """Should return distinct digests when stages differ."""
+        digest_b = "sha256:" + "a" * 64
+        content = (
+            f"FROM python:3.12-slim@{self._DIGEST} AS builder\n"
+            f"FROM python:3.12-slim@{digest_b}\n"
+        )
+        assert _parse_python_base_digests(content) == [self._DIGEST, digest_b]
+
+    def test_from_line_without_digest(self) -> None:
+        """Python FROM line without @sha256 should return an empty list."""
+        content = "FROM python:3.12-slim AS builder"
+        assert _parse_python_base_digests(content) == []
+
+    def test_ignores_non_python_from_lines(self) -> None:
+        """FROM lines not referencing python images should be ignored."""
+        content = (
+            f"FROM ubuntu:22.04@{self._DIGEST}\n"
+            f"FROM python:3.12-slim@{self._DIGEST}\n"
+        )
+        assert _parse_python_base_digests(content) == [self._DIGEST]
+
+    def test_ignores_comment_lines(self) -> None:
+        """Comment lines containing digest-like strings should be ignored."""
+        content = (
+            f"# FROM python:3.12-slim@{self._DIGEST}\n"
+            f"FROM python:3.12-slim@{self._DIGEST}\n"
+        )
+        assert _parse_python_base_digests(content) == [self._DIGEST]
+
+    def test_empty_dockerfile(self) -> None:
+        """Empty Dockerfile should return an empty list."""
+        assert _parse_python_base_digests("") == []
+
+    def test_short_hash_not_matched(self) -> None:
+        """A hash shorter than 64 hex chars must not be matched."""
+        short_digest = "sha256:" + "f" * 63  # 63 chars — one short
+        content = f"FROM python:3.12-slim@{short_digest} AS builder"
+        assert _parse_python_base_digests(content) == []
