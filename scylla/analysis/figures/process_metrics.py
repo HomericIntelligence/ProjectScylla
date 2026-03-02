@@ -1,7 +1,7 @@
 """Process metrics figures.
 
 Generates Fig_RProg (R_Prog by tier), Fig_CFP (CFP by tier),
-and Fig_PRRevert (PR Revert Rate by tier).
+Fig_PRRevert (PR Revert Rate by tier), and Fig_StrategicDrift (Strategic Drift by tier).
 """
 
 from __future__ import annotations
@@ -219,3 +219,55 @@ def fig_pr_revert_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     )
 
     save_figure(chart, "fig_pr_revert_by_tier", output_dir, render)
+
+
+def fig_strategic_drift_by_tier(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig_StrategicDrift: Strategic Drift by Tier.
+
+    Box plot showing strategic_drift distribution per tier, faceted by agent_model.
+    Skips gracefully if strategic_drift column is missing or all-null.
+
+    Args:
+        runs_df: Runs DataFrame (must contain 'strategic_drift', 'tier', 'agent_model' columns)
+        output_dir: Output directory for figure files
+        render: Whether to render to PNG/PDF (default: True)
+
+    """
+    if "strategic_drift" not in runs_df.columns:
+        logger.warning(
+            "strategic_drift column not found in runs_df; skipping fig_strategic_drift_by_tier"
+        )
+        return
+
+    data = _filter_process_data(
+        runs_df[["tier", "agent_model", "strategic_drift"]], "strategic_drift"
+    )
+    if data.empty:
+        logger.warning("No strategic_drift data available; skipping fig_strategic_drift_by_tier")
+        return
+
+    tier_order = derive_tier_order(data)
+    models = sorted(data["agent_model"].unique())
+    domain, range_ = get_color_scale("models", models)
+
+    chart = (
+        alt.Chart(data)
+        .mark_boxplot()
+        .encode(
+            x=alt.X("tier:N", sort=tier_order, title="Tier"),
+            y=alt.Y("strategic_drift:Q", scale=alt.Scale(domain=[0, 1]), title="Strategic Drift"),
+            color=alt.Color(
+                "agent_model:N",
+                scale=alt.Scale(domain=domain, range=range_),
+                title="Model",
+            ),
+        )
+        .facet(
+            column=alt.Column("agent_model:N", title="Model"),
+        )
+        .properties(title="Strategic Drift by Tier")
+    )
+
+    save_figure(chart, "fig_strategic_drift_by_tier", output_dir, render)

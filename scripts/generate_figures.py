@@ -44,6 +44,7 @@ from scylla.analysis.figures.process_metrics import (
     fig_cfp_by_tier,
     fig_pr_revert_by_tier,
     fig_r_prog_by_tier,
+    fig_strategic_drift_by_tier,
 )
 from scylla.analysis.figures.spec_builder import apply_publication_theme
 from scylla.analysis.figures.subtest_detail import (
@@ -101,6 +102,7 @@ FIGURES: dict[str, tuple[str, Any]] = {
     "fig_r_prog_by_tier": ("tier", fig_r_prog_by_tier),
     "fig_cfp_by_tier": ("tier", fig_cfp_by_tier),
     "fig_pr_revert_by_tier": ("tier", fig_pr_revert_by_tier),
+    "fig_strategic_drift_by_tier": ("tier", fig_strategic_drift_by_tier),
 }
 
 
