@@ -7,6 +7,8 @@ from enum import Enum
 from pathlib import Path
 
 import pytest
+from _pytest.capture import CaptureFixture
+from _pytest.monkeypatch import MonkeyPatch
 
 from scylla.e2e.rerun_base import load_rerun_context, print_dry_run_summary
 
@@ -41,7 +43,7 @@ class _TestJudgeItem:
     reason: str
 
 
-def test_load_rerun_context_success(tmp_path: Path):
+def test_load_rerun_context_success(tmp_path: Path) -> None:
     """Test successful loading of rerun context."""
     # Create experiment directory structure
     experiment_dir = tmp_path / "experiment"
@@ -87,7 +89,7 @@ def test_load_rerun_context_success(tmp_path: Path):
     assert context.tier_manager is not None
 
 
-def test_load_rerun_context_missing_config(tmp_path: Path):
+def test_load_rerun_context_missing_config(tmp_path: Path) -> None:
     """Test error when config file is missing."""
     experiment_dir = tmp_path / "experiment"
     experiment_dir.mkdir()
@@ -96,7 +98,7 @@ def test_load_rerun_context_missing_config(tmp_path: Path):
         load_rerun_context(experiment_dir)
 
 
-def test_load_rerun_context_missing_tiers_dir(tmp_path: Path, monkeypatch):
+def test_load_rerun_context_missing_tiers_dir(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
     """Test error when tiers directory cannot be found."""
     # Create experiment directory with config but no tiers
     experiment_dir = tmp_path / "experiment"
@@ -125,7 +127,7 @@ def test_load_rerun_context_missing_tiers_dir(tmp_path: Path, monkeypatch):
         load_rerun_context(experiment_dir)
 
 
-def test_print_dry_run_summary_runs(capsys):
+def test_print_dry_run_summary_runs(capsys: CaptureFixture[str]) -> None:
     """Test dry-run summary for run items."""
     # Create test items
     failed_runs = [
@@ -159,7 +161,7 @@ def test_print_dry_run_summary_runs(capsys):
     assert "T0/01/run_01: Never started" in captured.out
 
 
-def test_print_dry_run_summary_judges(capsys):
+def test_print_dry_run_summary_judges(capsys: CaptureFixture[str]) -> None:
     """Test dry-run summary for judge items."""
     # Create test items
     failed_slots = [
@@ -193,7 +195,7 @@ def test_print_dry_run_summary_judges(capsys):
     assert "T0/00/run_02 judge_01 (claude-sonnet-4-5): Never ran" in captured.out
 
 
-def test_print_dry_run_summary_truncation(capsys):
+def test_print_dry_run_summary_truncation(capsys: CaptureFixture[str]) -> None:
     """Test that dry-run summary truncates long lists."""
     # Create 15 failed runs
     failed_runs = [_TestRunItem("T0", f"{i:02d}", 1, "Failed") for i in range(15)]
@@ -213,7 +215,7 @@ def test_print_dry_run_summary_truncation(capsys):
     assert "... and 5 more" in captured.out
 
 
-def test_print_dry_run_summary_empty(capsys):
+def test_print_dry_run_summary_empty(capsys: CaptureFixture[str]) -> None:
     """Test dry-run summary with no items."""
     items_by_status: dict[_TestStatus, list[_TestRunItem]] = {
         _TestStatus.FAILED: [],

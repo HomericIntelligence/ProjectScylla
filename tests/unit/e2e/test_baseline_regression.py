@@ -13,7 +13,7 @@ from scylla.judge.prompts import build_task_prompt
 
 
 @pytest.fixture
-def mock_pipeline_result():
+def mock_pipeline_result() -> BuildPipelineResult:
     """Create a mock BuildPipelineResult."""
     return BuildPipelineResult(
         language="python",
@@ -28,7 +28,7 @@ def mock_pipeline_result():
 
 
 @pytest.fixture
-def mock_baseline_all_passed():
+def mock_baseline_all_passed() -> BuildPipelineResult:
     """Create a baseline where everything passed."""
     return BuildPipelineResult(
         language="python",
@@ -42,7 +42,9 @@ def mock_baseline_all_passed():
     )
 
 
-def test_build_task_prompt_with_baseline(mock_pipeline_result, mock_baseline_all_passed):
+def test_build_task_prompt_with_baseline(
+    mock_pipeline_result: BuildPipelineResult, mock_baseline_all_passed: BuildPipelineResult
+) -> None:
     """Test that baseline section is rendered when baseline_pipeline_str is provided."""
     baseline_str = "**Overall Status**: ALL PASSED ✓\n\nBuild: ✓\nLint: ✓\nTest: ✓"
     pipeline_str = "**Overall Status**: SOME FAILED ✗\n\nBuild: ✓\nLint: ✗\nTest: ✓"
@@ -70,7 +72,7 @@ def test_build_task_prompt_with_baseline(mock_pipeline_result, mock_baseline_all
     assert baseline_pos < post_agent_pos
 
 
-def test_build_task_prompt_without_baseline():
+def test_build_task_prompt_without_baseline() -> None:
     """Test that no baseline section is rendered when baseline_pipeline_str is None."""
     pipeline_str = "**Overall Status**: ALL PASSED ✓"
 
@@ -89,7 +91,7 @@ def test_build_task_prompt_without_baseline():
     assert "Build/Lint/Test Pipeline Results" in prompt
 
 
-def test_build_task_prompt_baseline_section_before_post_agent():
+def test_build_task_prompt_baseline_section_before_post_agent() -> None:
     """Test that baseline section appears before post-agent section in prompt."""
     baseline_str = "Baseline status"
     pipeline_str = "Post-agent status"
@@ -108,7 +110,9 @@ def test_build_task_prompt_baseline_section_before_post_agent():
     assert baseline_idx < post_agent_idx, "Baseline section must appear before post-agent section"
 
 
-def test_save_load_pipeline_baseline(tmp_path, mock_pipeline_result):
+def test_save_load_pipeline_baseline(
+    tmp_path: Path, mock_pipeline_result: BuildPipelineResult
+) -> None:
     """Test round-trip persistence of pipeline baseline to/from JSON."""
     results_dir = tmp_path / "results"
     results_dir.mkdir()
@@ -129,7 +133,7 @@ def test_save_load_pipeline_baseline(tmp_path, mock_pipeline_result):
     assert loaded.all_passed == mock_pipeline_result.all_passed
 
 
-def test_load_pipeline_baseline_missing_file(tmp_path):
+def test_load_pipeline_baseline_missing_file(tmp_path: Path) -> None:
     """Test loading baseline when file doesn't exist returns None."""
     results_dir = tmp_path / "results"
     results_dir.mkdir()
@@ -138,7 +142,7 @@ def test_load_pipeline_baseline_missing_file(tmp_path):
     assert loaded is None
 
 
-def test_load_pipeline_baseline_invalid_json(tmp_path):
+def test_load_pipeline_baseline_invalid_json(tmp_path: Path) -> None:
     """Test loading baseline with invalid JSON returns None and logs warning."""
     results_dir = tmp_path / "results"
     results_dir.mkdir()
@@ -150,7 +154,7 @@ def test_load_pipeline_baseline_invalid_json(tmp_path):
     assert loaded is None
 
 
-def test_run_result_baseline_field():
+def test_run_result_baseline_field() -> None:
     """Test that E2ERunResult includes baseline_pipeline_summary in to_dict()."""
     baseline_summary = {
         "all_passed": True,
@@ -187,7 +191,7 @@ def test_run_result_baseline_field():
     assert result_dict["baseline_pipeline_summary"] == baseline_summary
 
 
-def test_run_result_baseline_field_none():
+def test_run_result_baseline_field_none() -> None:
     """Test that baseline_pipeline_summary can be None."""
     run_result = E2ERunResult(
         run_number=1,
@@ -217,7 +221,7 @@ def test_run_result_baseline_field_none():
     assert result_dict["baseline_pipeline_summary"] is None
 
 
-def test_baseline_summary_conversion(mock_pipeline_result):
+def test_baseline_summary_conversion(mock_pipeline_result: BuildPipelineResult) -> None:
     """Test that BuildPipelineResult is correctly converted to summary dict."""
     summary = {
         "all_passed": mock_pipeline_result.all_passed,
