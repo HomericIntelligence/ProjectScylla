@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - 'docker/**'
+      - 'scylla/**'
       - 'tests/shell/**'
       - '.github/workflows/docker-test.yml'
   push:
     branches: [main]
     paths:
       - 'docker/**'
+      - 'scylla/**'
       - 'tests/shell/**'
       - '.github/workflows/docker-test.yml'
 
@@ -34,3 +36,79 @@ jobs:
 
       # Docker integration tests are deferred — see docs/dev/adr/docker-testing-deferred.md
       # Entrypoint script testing is tracked in GitHub issue #1113
+
+  docker-build-timing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOCKER_BUILDKIT: "1"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build cold (no cache)
+        id: cold_build
+        run: |
+          START=$SECONDS
+          docker build -f docker/Dockerfile . --progress=plain --no-cache \
+            2>&1 | tee /tmp/build_cold.log
+          echo "duration=$((SECONDS - START))" >> "$GITHUB_OUTPUT"
+
+      - name: Apply trivial source-only change
+        run: echo '# timing-probe' >> scylla/__init__.py
+
+      - name: Build warm (source-only change, Layer 1+2 should be cached)
+        id: warm_build
+        run: |
+          START=$SECONDS
+          docker build -f docker/Dockerfile . --progress=plain \
+            2>&1 | tee /tmp/build_warm.log
+          echo "duration=$((SECONDS - START))" >> "$GITHUB_OUTPUT"
+
+      - name: Revert source change
+        if: always()
+        run: git checkout scylla/__init__.py
+
+      - name: Report timing results
+        env:
+          COLD_DURATION: ${{ steps.cold_build.outputs.duration }}
+          WARM_DURATION: ${{ steps.warm_build.outputs.duration }}
+        run: |
+          python3 - <<'PYEOF'
+          import os
+          import sys
+
+          sys.path.insert(0, ".")
+          from scripts.docker_build_timing import (
+              build_summary_table,
+              compute_reduction,
+              count_cached_layers,
+          )
+
+          cold = int(os.environ["COLD_DURATION"])
+          warm = int(os.environ["WARM_DURATION"])
+
+          with open("/tmp/build_warm.log") as f:
+              warm_log = f.read()
+
+          cached_count = count_cached_layers(warm_log)
+          reduction = compute_reduction(cold, warm)
+          table = build_summary_table(cold, warm, cached_count, reduction)
+
+          summary_path = os.environ.get("GITHUB_STEP_SUMMARY", "/dev/stdout")
+          with open(summary_path, "a") as f:
+              f.write(table)
+          print(table)
+
+          if reduction < 30:
+              print(
+                  f"::warning::Docker source-only rebuild reduced build time by "
+                  f"{reduction}% -- below the >=30% target. "
+                  "Review layer ordering in docker/Dockerfile."
+              )
+          else:
+              print(
+                  f"::notice::Docker source-only rebuild achieved {reduction}% "
+                  "reduction -- meets >=30% acceptance criterion."
+              )
+          PYEOF
