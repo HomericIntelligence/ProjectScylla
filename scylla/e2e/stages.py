@@ -669,6 +669,63 @@ def _parse_diff_numstat_output(numstat_output: str) -> dict[str, tuple[int, int]
     return result
 
 
+def _load_process_metrics_from_run_result(
+    run_dir: Path,
+) -> tuple[list[ProgressStep] | None, list[ChangeResult] | None]:
+    """Load progress_steps and change_results from a previously-saved run_result.json.
+
+    Returns ``(None, None)`` if the file does not exist, is invalid, or lacks the
+    required keys.  Callers must guard against ``None`` before using.
+
+    Args:
+        run_dir: Directory for this run (e.g. ``<experiment>/T0/00/run_01/``).
+
+    Returns:
+        Tuple of ``(progress_steps, change_results)``, each ``None`` if unavailable.
+
+    """
+    run_result_path = run_dir / "run_result.json"
+    if not run_result_path.exists():
+        return None, None
+    try:
+        data = json.loads(run_result_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None, None
+
+    progress_steps: list[ProgressStep] | None = None
+    changes: list[ChangeResult] | None = None
+
+    raw_steps = data.get("progress_tracking")
+    if isinstance(raw_steps, list):
+        progress_steps = [
+            ProgressStep(
+                step_id=s["step_id"],
+                description=s["description"],
+                weight=s.get("weight", 1.0),
+                completed=s.get("completed", False),
+                goal_alignment=s.get("goal_alignment", 1.0),
+            )
+            for s in raw_steps
+            if isinstance(s, dict) and "step_id" in s and "description" in s
+        ]
+
+    raw_changes = data.get("changes")
+    if isinstance(raw_changes, list):
+        changes = [
+            ChangeResult(
+                change_id=c["change_id"],
+                description=c["description"],
+                succeeded=c.get("succeeded", True),
+                caused_failure=c.get("caused_failure", False),
+                reverted=c.get("reverted", False),
+            )
+            for c in raw_changes
+            if isinstance(c, dict) and "change_id" in c and "description" in c
+        ]
+
+    return progress_steps, changes
+
+
 def _build_change_results(
     diff_stat: dict[str, tuple[int, int]],
     *,
@@ -1184,6 +1241,16 @@ def stage_finalize_run(ctx: RunContext) -> None:
         raise RuntimeError("agent_result must be set before finalize_run")
     if ctx.judgment is None:
         raise RuntimeError("judgment must be set before finalize_run")
+
+    # Resume guard: if progress_steps/change_results were not populated this
+    # session (e.g., crash between DIFF_CAPTURED and JUDGE_COMPLETE skipped
+    # stage_capture_diff), try to reload from a previously-saved run_result.json.
+    if ctx.progress_steps is None or ctx.change_results is None:
+        loaded_steps, loaded_changes = _load_process_metrics_from_run_result(ctx.run_dir)
+        if ctx.progress_steps is None:
+            ctx.progress_steps = loaded_steps
+        if ctx.change_results is None:
+            ctx.change_results = loaded_changes
 
     agent_dir = get_agent_dir(ctx.run_dir)
 
