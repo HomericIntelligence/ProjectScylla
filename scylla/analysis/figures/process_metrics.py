@@ -1,7 +1,7 @@
 """Process metrics figures.
 
-Generates Fig_RProg (R_Prog by tier), Fig_CFP (CFP by tier),
-Fig_PRRevert (PR Revert Rate by tier), and Fig_StrategicDrift (Strategic Drift by tier).
+Generates Fig 28 (R_Prog by tier), Fig 29 (CFP by tier),
+Fig 30 (PR Revert Rate by tier), and Fig_StrategicDrift (Strategic Drift by tier).
 """
 
 from __future__ import annotations
@@ -43,8 +43,8 @@ def _filter_process_data(runs_df: pd.DataFrame, column: str) -> pd.DataFrame:
     return filtered
 
 
-def fig_r_prog_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
-    """Generate Fig_RProg: Fine-Grained Progress Rate by Tier.
+def fig28_r_prog_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
+    """Generate Fig 28: Fine-Grained Progress Rate by Tier.
 
     Box plot showing r_prog distribution per tier, faceted by agent_model.
     Skips gracefully if r_prog column is missing or all-null.
@@ -56,12 +56,12 @@ def fig_r_prog_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
 
     """
     if "r_prog" not in runs_df.columns:
-        logger.warning("r_prog column not found in runs_df; skipping fig_r_prog_by_tier")
+        logger.warning("r_prog column not found in runs_df; skipping fig28_r_prog_by_tier")
         return
 
     data = _filter_process_data(runs_df[["tier", "agent_model", "r_prog"]], "r_prog")
     if data.empty:
-        logger.warning("No r_prog data available; skipping fig_r_prog_by_tier")
+        logger.warning("No r_prog data available; skipping fig28_r_prog_by_tier")
         return
 
     tier_order = derive_tier_order(data)
@@ -86,11 +86,11 @@ def fig_r_prog_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = T
         .properties(title="Fine-Grained Progress Rate (R_Prog) by Tier")
     )
 
-    save_figure(chart, "fig_r_prog_by_tier", output_dir, render)
+    save_figure(chart, "fig28_r_prog_by_tier", output_dir, render)
 
 
-def fig_cfp_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
-    """Generate Fig_CFP: Change Fail Percentage by Tier.
+def fig29_cfp_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
+    """Generate Fig 29: Change Fail Percentage by Tier.
 
     Bar chart of mean CFP per tier with error bars, faceted by agent_model.
     Skips gracefully if cfp column is missing or all-null.
@@ -102,12 +102,12 @@ def fig_cfp_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True
 
     """
     if "cfp" not in runs_df.columns:
-        logger.warning("cfp column not found in runs_df; skipping fig_cfp_by_tier")
+        logger.warning("cfp column not found in runs_df; skipping fig29_cfp_by_tier")
         return
 
     data = _filter_process_data(runs_df[["tier", "agent_model", "cfp"]], "cfp")
     if data.empty:
-        logger.warning("No cfp data available; skipping fig_cfp_by_tier")
+        logger.warning("No cfp data available; skipping fig29_cfp_by_tier")
         return
 
     tier_order = derive_tier_order(data)
@@ -149,11 +149,11 @@ def fig_cfp_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True
         .properties(title="Change Fail Percentage (CFP) by Tier")
     )
 
-    save_figure(chart, "fig_cfp_by_tier", output_dir, render)
+    save_figure(chart, "fig29_cfp_by_tier", output_dir, render)
 
 
-def fig_pr_revert_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
-    """Generate Fig_PRRevert: PR Revert Rate by Tier.
+def fig30_pr_revert_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
+    """Generate Fig 30: PR Revert Rate by Tier.
 
     Bar chart of mean PR revert rate per tier with error bars, faceted by agent_model.
     Skips gracefully if pr_revert_rate column is missing or all-null.
@@ -165,14 +165,16 @@ def fig_pr_revert_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool 
 
     """
     if "pr_revert_rate" not in runs_df.columns:
-        logger.warning("pr_revert_rate column not found in runs_df; skipping fig_pr_revert_by_tier")
+        logger.warning(
+            "pr_revert_rate column not found in runs_df; skipping fig30_pr_revert_by_tier"
+        )
         return
 
     data = _filter_process_data(
         runs_df[["tier", "agent_model", "pr_revert_rate"]], "pr_revert_rate"
     )
     if data.empty:
-        logger.warning("No pr_revert_rate data available; skipping fig_pr_revert_by_tier")
+        logger.warning("No pr_revert_rate data available; skipping fig30_pr_revert_by_tier")
         return
 
     tier_order = derive_tier_order(data)
@@ -218,7 +220,7 @@ def fig_pr_revert_by_tier(runs_df: pd.DataFrame, output_dir: Path, render: bool 
         .properties(title="PR Revert Rate by Tier")
     )
 
-    save_figure(chart, "fig_pr_revert_by_tier", output_dir, render)
+    save_figure(chart, "fig30_pr_revert_by_tier", output_dir, render)
 
 
 def fig_strategic_drift_by_tier(

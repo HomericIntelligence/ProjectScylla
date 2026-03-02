@@ -635,9 +635,9 @@ def test_generate_figures_registry_includes_process_metrics() -> None:
     """FIGURES registry contains all four process-metrics figures."""
     from scripts.generate_figures import FIGURES
 
-    assert "fig_r_prog_by_tier" in FIGURES
-    assert "fig_cfp_by_tier" in FIGURES
-    assert "fig_pr_revert_by_tier" in FIGURES
+    assert "fig28_r_prog_by_tier" in FIGURES
+    assert "fig29_cfp_by_tier" in FIGURES
+    assert "fig30_pr_revert_by_tier" in FIGURES
     assert "fig_strategic_drift_by_tier" in FIGURES
 
 
@@ -645,9 +645,9 @@ def test_generate_figures_process_metrics_use_tier_category() -> None:
     """Process-metrics figures are registered under the 'tier' category."""
     from scripts.generate_figures import FIGURES
 
-    assert FIGURES["fig_r_prog_by_tier"][0] == "tier"
-    assert FIGURES["fig_cfp_by_tier"][0] == "tier"
-    assert FIGURES["fig_pr_revert_by_tier"][0] == "tier"
+    assert FIGURES["fig28_r_prog_by_tier"][0] == "tier"
+    assert FIGURES["fig29_cfp_by_tier"][0] == "tier"
+    assert FIGURES["fig30_pr_revert_by_tier"][0] == "tier"
     assert FIGURES["fig_strategic_drift_by_tier"][0] == "tier"
 
 
@@ -669,28 +669,28 @@ def test_compute_dynamic_domain_padding():
     assert domain_pad[1] - domain_pad[0] >= domain_no_pad[1] - domain_no_pad[0]
 
 
-def test_fig_r_prog_by_tier(sample_runs_df, tmp_path):
-    """Smoke test: fig_r_prog_by_tier generates output file without error."""
-    from scylla.analysis.figures.process_metrics import fig_r_prog_by_tier
+def test_fig28_r_prog_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig28_r_prog_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig28_r_prog_by_tier
 
-    fig_r_prog_by_tier(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
-
-
-def test_fig_cfp_by_tier(sample_runs_df, tmp_path):
-    """Smoke test: fig_cfp_by_tier generates output file without error."""
-    from scylla.analysis.figures.process_metrics import fig_cfp_by_tier
-
-    fig_cfp_by_tier(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig_cfp_by_tier.vl.json").exists()
+    fig28_r_prog_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig28_r_prog_by_tier.vl.json").exists()
 
 
-def test_fig_pr_revert_by_tier(sample_runs_df, tmp_path):
-    """Smoke test: fig_pr_revert_by_tier generates output file without error."""
-    from scylla.analysis.figures.process_metrics import fig_pr_revert_by_tier
+def test_fig29_cfp_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig29_cfp_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig29_cfp_by_tier
 
-    fig_pr_revert_by_tier(sample_runs_df, tmp_path, render=False)
-    assert (tmp_path / "fig_pr_revert_by_tier.vl.json").exists()
+    fig29_cfp_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig29_cfp_by_tier.vl.json").exists()
+
+
+def test_fig30_pr_revert_by_tier(sample_runs_df, tmp_path):
+    """Smoke test: fig30_pr_revert_by_tier generates output file without error."""
+    from scylla.analysis.figures.process_metrics import fig30_pr_revert_by_tier
+
+    fig30_pr_revert_by_tier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig30_pr_revert_by_tier.vl.json").exists()
 
 
 def test_process_metrics_figures_handle_missing_columns(tmp_path):
@@ -698,9 +698,9 @@ def test_process_metrics_figures_handle_missing_columns(tmp_path):
     import pandas as pd
 
     from scylla.analysis.figures.process_metrics import (
-        fig_cfp_by_tier,
-        fig_pr_revert_by_tier,
-        fig_r_prog_by_tier,
+        fig28_r_prog_by_tier,
+        fig29_cfp_by_tier,
+        fig30_pr_revert_by_tier,
     )
 
     # DataFrame without any process-metrics columns
@@ -714,14 +714,14 @@ def test_process_metrics_figures_handle_missing_columns(tmp_path):
     )
 
     # Should not raise, just skip generation
-    fig_r_prog_by_tier(df, tmp_path, render=False)
-    fig_cfp_by_tier(df, tmp_path, render=False)
-    fig_pr_revert_by_tier(df, tmp_path, render=False)
+    fig28_r_prog_by_tier(df, tmp_path, render=False)
+    fig29_cfp_by_tier(df, tmp_path, render=False)
+    fig30_pr_revert_by_tier(df, tmp_path, render=False)
 
     # No files should be created since columns are missing
-    assert not (tmp_path / "fig_r_prog_by_tier.vl.json").exists()
-    assert not (tmp_path / "fig_cfp_by_tier.vl.json").exists()
-    assert not (tmp_path / "fig_pr_revert_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig28_r_prog_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig29_cfp_by_tier.vl.json").exists()
+    assert not (tmp_path / "fig30_pr_revert_by_tier.vl.json").exists()
 
 
 def test_fig_strategic_drift_by_tier(sample_runs_df, tmp_path):
