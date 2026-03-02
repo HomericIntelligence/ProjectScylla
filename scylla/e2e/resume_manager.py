@@ -89,7 +89,8 @@ class ResumeManager:
 
         if is_zombie(self.checkpoint, experiment_dir, heartbeat_timeout_seconds):
             logger.warning("Zombie experiment detected — resetting to 'interrupted'")
-            self.checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
+            reset_checkpoint = reset_zombie_checkpoint(self.checkpoint, checkpoint_path)
+            return self.config, reset_checkpoint
 
         return self.config, self.checkpoint
 
