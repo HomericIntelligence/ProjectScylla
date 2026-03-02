@@ -892,9 +892,47 @@ def table06_model_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     return markdown, latex
 
 
+def table_cfp_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
+    """Compare Change Fail Percentage (CFP) and R_Prog across tiers.
+
+    Uses the same Kruskal-Wallis → pairwise Mann-Whitney U → Holm-Bonferroni
+    pipeline as table02_tier_comparison. Reports results for both CFP
+    and R_Prog (Fine-Grained Progress Rate) to support research.md §6.3.
+
+    Args:
+        runs_df: Runs DataFrame (requires 'cfp' and 'r_prog' columns).
+
+    Returns:
+        Tuple of (markdown_table, latex_table).
+
+    """
+    if "cfp" not in runs_df.columns:
+        return (
+            "*(CFP data not yet collected)*",
+            "% CFP data not yet collected",
+        )
+
+    cfp_md, cfp_latex = _generate_pairwise_comparison(
+        runs_df,
+        metric_column="cfp",
+        metric_name="CFP",
+        table_title="Change Fail Percentage by Tier",
+        table_label="cfp_comparison",
+    )
+    r_prog_md, r_prog_latex = _generate_pairwise_comparison(
+        runs_df,
+        metric_column="r_prog",
+        metric_name="R\\_Prog",
+        table_title="Fine-Grained Progress Rate by Tier",
+        table_label="r_prog_comparison",
+    )
+    return (cfp_md + "\n\n" + r_prog_md, cfp_latex + "\n\n" + r_prog_latex)
+
+
 __all__ = [
     "table02_tier_comparison",
     "table02b_impl_rate_comparison",
     "table04_criteria_performance",
     "table06_model_comparison",
+    "table_cfp_comparison",
 ]
