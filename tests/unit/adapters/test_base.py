@@ -19,7 +19,7 @@ from scylla.adapters.base import (
 class ConcreteAdapter(BaseAdapter):
     """Concrete implementation for testing."""
 
-    def run(self, config, tier_config=None):
+    def run(self, config: AdapterConfig, tier_config: object = None) -> AdapterResult:
         """Return success result."""
         return AdapterResult(exit_code=0, stdout="success", stderr="")
 
