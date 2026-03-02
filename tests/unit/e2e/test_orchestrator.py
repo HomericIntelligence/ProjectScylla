@@ -82,7 +82,7 @@ class TestEvalOrchestratorWithFixture:
     """Tests for orchestrator with proper test fixture."""
 
     @pytest.fixture
-    def test_env(self, tmp_path: Path):
+    def test_env(self, tmp_path: Path) -> Path:
         """Create a test environment with config files."""
         # Create directory structure
         tests_dir = tmp_path / "tests" / "001-test"
