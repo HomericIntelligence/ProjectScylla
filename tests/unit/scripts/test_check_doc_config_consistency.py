@@ -2,6 +2,7 @@
 
 import textwrap
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -9,6 +10,8 @@ from scripts.check_doc_config_consistency import (
     check_addopts_cov_fail_under,
     check_claude_md_threshold,
     check_readme_cov_path,
+    check_readme_test_count,
+    collect_actual_test_count,
     extract_cov_fail_under_from_addopts,
     extract_cov_path_from_pyproject,
     load_pyproject_coverage_threshold,
@@ -366,6 +369,142 @@ class TestCheckAddoptsCovFailUnder:
 
 
 # ---------------------------------------------------------------------------
+# collect_actual_test_count
+# ---------------------------------------------------------------------------
+
+
+class TestCollectActualTestCount:
+    """Tests for collect_actual_test_count()."""
+
+    def test_returns_none_on_subprocess_failure(self, tmp_path: Path) -> None:
+        """Should return None when subprocess raises FileNotFoundError."""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            side_effect=FileNotFoundError,
+        ):
+            assert collect_actual_test_count(tmp_path) is None
+
+    def test_returns_none_on_oserror(self, tmp_path: Path) -> None:
+        """Should return None when subprocess raises OSError."""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            side_effect=OSError,
+        ):
+            assert collect_actual_test_count(tmp_path) is None
+
+    def test_returns_none_on_bad_output(self, tmp_path: Path) -> None:
+        """Should return None when subprocess output is unparseable."""
+        mock_result = MagicMock()
+        mock_result.stdout = "no useful output here\n"
+        mock_result.stderr = ""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            return_value=mock_result,
+        ):
+            assert collect_actual_test_count(tmp_path) is None
+
+    def test_parses_n_selected_line(self, tmp_path: Path) -> None:
+        """Should parse '5 selected' from pytest output."""
+        mock_result = MagicMock()
+        mock_result.stdout = "5 selected\n"
+        mock_result.stderr = ""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            return_value=mock_result,
+        ):
+            assert collect_actual_test_count(tmp_path) == 5
+
+    def test_parses_n_tests_collected_line(self, tmp_path: Path) -> None:
+        """Should parse '100 tests collected' from pytest output."""
+        mock_result = MagicMock()
+        mock_result.stdout = "100 tests collected\n"
+        mock_result.stderr = ""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            return_value=mock_result,
+        ):
+            assert collect_actual_test_count(tmp_path) == 100
+
+    def test_parses_n_test_collected_singular(self, tmp_path: Path) -> None:
+        """Should parse '1 test collected' (singular) from pytest output."""
+        mock_result = MagicMock()
+        mock_result.stdout = "1 test collected\n"
+        mock_result.stderr = ""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            return_value=mock_result,
+        ):
+            assert collect_actual_test_count(tmp_path) == 1
+
+
+# ---------------------------------------------------------------------------
+# check_readme_test_count
+# ---------------------------------------------------------------------------
+
+
+class TestCheckReadmeTestCount:
+    """Tests for check_readme_test_count()."""
+
+    def test_matching_count_within_tolerance_no_errors(self, tmp_path: Path) -> None:
+        """Should return empty list when doc count is within 10% of actual."""
+        write_readme(tmp_path, "Comprehensive test suite with **3,500+ tests** passing.\n")
+        assert check_readme_test_count(tmp_path, 3507) == []
+
+    def test_count_too_low_returns_error(self, tmp_path: Path) -> None:
+        """Should return error when doc count is >10% below actual."""
+        write_readme(tmp_path, "Test suite with **3000 tests** passing.\n")
+        errors = check_readme_test_count(tmp_path, 3507)
+        assert len(errors) == 1
+        assert "3000" in errors[0]
+        assert "3507" in errors[0]
+
+    def test_count_too_high_returns_error(self, tmp_path: Path) -> None:
+        """Should return error when doc count is >10% above actual."""
+        write_readme(tmp_path, "Test suite with **5000 tests** passing.\n")
+        errors = check_readme_test_count(tmp_path, 3507)
+        assert len(errors) == 1
+        assert "5000" in errors[0]
+        assert "3507" in errors[0]
+
+    def test_no_test_count_in_readme_returns_error(self, tmp_path: Path) -> None:
+        """Should return error when README.md has no test count mention."""
+        write_readme(tmp_path, "Just run pytest to execute tests.\n")
+        errors = check_readme_test_count(tmp_path, 3507)
+        assert len(errors) == 1
+        assert "No test count mention" in errors[0]
+
+    def test_missing_readme_returns_error(self, tmp_path: Path) -> None:
+        """Should return error when README.md does not exist."""
+        errors = check_readme_test_count(tmp_path, 3507)
+        assert len(errors) == 1
+        assert "not found" in errors[0]
+
+    def test_strips_commas_from_count(self, tmp_path: Path) -> None:
+        """Should parse '3,500' as 3500 (stripping commas)."""
+        write_readme(tmp_path, "Runs **3,500+ tests** in CI.\n")
+        # 3500 vs 3507 is within 10%
+        assert check_readme_test_count(tmp_path, 3507) == []
+
+    def test_multiple_mentions_all_within_tolerance_no_errors(self, tmp_path: Path) -> None:
+        """Multiple mentions all within tolerance should return no errors."""
+        write_readme(
+            tmp_path,
+            "3,500+ tests passing.\nOver 3500 tests in total.\n",
+        )
+        assert check_readme_test_count(tmp_path, 3507) == []
+
+    def test_multiple_mentions_one_stale_returns_error(self, tmp_path: Path) -> None:
+        """One stale mention among multiple should return exactly one error."""
+        write_readme(
+            tmp_path,
+            "3,500+ tests passing.\nOver 1000 tests documented here.\n",
+        )
+        errors = check_readme_test_count(tmp_path, 3507)
+        assert len(errors) == 1
+        assert "1000" in errors[0]
+
+
+# ---------------------------------------------------------------------------
 # Integration: main() via subprocess
 # ---------------------------------------------------------------------------
 
@@ -381,6 +520,7 @@ class TestMainIntegration:
         claude_threshold: int = 75,
         readme_cov: str = "scylla",
         addopts_fail_under: int | None = 75,
+        readme_test_count: int | None = 3500,
     ) -> Path:
         """Create a minimal fake repo with all required files."""
         addopts_items = [f'"--cov={cov_path}"']
@@ -396,9 +536,14 @@ class TestMainIntegration:
             tmp_path,
             f"This project requires {claude_threshold}%+ test coverage enforced in CI.\n",
         )
+        test_count_line = (
+            f"Test suite: **{readme_test_count}+ tests** passing.\n"
+            if readme_test_count is not None
+            else ""
+        )
         write_readme(
             tmp_path,
-            f"Run tests: pytest --cov={readme_cov} --cov-report=html\n",
+            f"Run tests: pytest --cov={readme_cov} --cov-report=html\n{test_count_line}",
         )
         return tmp_path
 
@@ -411,11 +556,16 @@ class TestMainIntegration:
         repo = self._make_repo(tmp_path)
         original_argv = sys.argv
         sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
-        try:
-            result = main()
-            assert result == 0
-        finally:
-            sys.argv = original_argv
+        # Mock collect_actual_test_count to return a count close to readme_test_count=3500
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=3507,
+        ):
+            try:
+                result = main()
+                assert result == 0
+            finally:
+                sys.argv = original_argv
 
     def test_threshold_mismatch_exits_one(self, tmp_path: Path) -> None:
         """Coverage threshold mismatch should produce exit code 1."""
@@ -426,11 +576,15 @@ class TestMainIntegration:
         repo = self._make_repo(tmp_path, threshold=75, claude_threshold=80)
         original_argv = sys.argv
         sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
-        try:
-            result = main()
-            assert result == 1
-        finally:
-            sys.argv = original_argv
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=3507,
+        ):
+            try:
+                result = main()
+                assert result == 1
+            finally:
+                sys.argv = original_argv
 
     def test_cov_path_mismatch_exits_one(self, tmp_path: Path) -> None:
         """--cov path mismatch should produce exit code 1."""
@@ -441,11 +595,15 @@ class TestMainIntegration:
         repo = self._make_repo(tmp_path, cov_path="scylla", readme_cov="wrong_pkg")
         original_argv = sys.argv
         sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
-        try:
-            result = main()
-            assert result == 1
-        finally:
-            sys.argv = original_argv
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=3507,
+        ):
+            try:
+                result = main()
+                assert result == 1
+            finally:
+                sys.argv = original_argv
 
     def test_addopts_fail_under_mismatch_exits_one(self, tmp_path: Path) -> None:
         """--cov-fail-under mismatch in addopts should produce exit code 1."""
@@ -456,11 +614,15 @@ class TestMainIntegration:
         repo = self._make_repo(tmp_path, threshold=75, addopts_fail_under=80)
         original_argv = sys.argv
         sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
-        try:
-            result = main()
-            assert result == 1
-        finally:
-            sys.argv = original_argv
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=3507,
+        ):
+            try:
+                result = main()
+                assert result == 1
+            finally:
+                sys.argv = original_argv
 
     def test_addopts_fail_under_absent_exits_one(self, tmp_path: Path) -> None:
         """Missing --cov-fail-under in addopts should produce exit code 1."""
@@ -471,8 +633,51 @@ class TestMainIntegration:
         repo = self._make_repo(tmp_path, addopts_fail_under=None)
         original_argv = sys.argv
         sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
-        try:
-            result = main()
-            assert result == 1
-        finally:
-            sys.argv = original_argv
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=3507,
+        ):
+            try:
+                result = main()
+                assert result == 1
+            finally:
+                sys.argv = original_argv
+
+    def test_test_count_mismatch_skipped_when_collect_fails(self, tmp_path: Path) -> None:
+        """When collect_actual_test_count returns None, Check 4 is skipped (exits 0)."""
+        import sys
+
+        from scripts.check_doc_config_consistency import main
+
+        repo = self._make_repo(tmp_path)
+        original_argv = sys.argv
+        sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=None,
+        ):
+            try:
+                result = main()
+                assert result == 0
+            finally:
+                sys.argv = original_argv
+
+    def test_test_count_mismatch_exits_one(self, tmp_path: Path) -> None:
+        """Test count mismatch in README.md should produce exit code 1."""
+        import sys
+
+        from scripts.check_doc_config_consistency import main
+
+        # readme_test_count=100, actual=3507 → >10% off
+        repo = self._make_repo(tmp_path, readme_test_count=100)
+        original_argv = sys.argv
+        sys.argv = ["check_doc_config_consistency.py", "--repo-root", str(repo)]
+        with patch(
+            "scripts.check_doc_config_consistency.collect_actual_test_count",
+            return_value=3507,
+        ):
+            try:
+                result = main()
+                assert result == 1
+            finally:
+                sys.argv = original_argv
