@@ -587,6 +587,83 @@ class E2ERunner:
         """
         return self._result_writer().aggregate_results(self.config, tier_results, start_time)
 
+    def _action_exp_initializing(self) -> None:
+        """Handle INITIALIZING -> DIR_CREATED transition.
+
+        No-op: setup was already done in _initialize_or_resume_experiment.
+        """
+        # experiment_dir and checkpoint were created/loaded in _initialize_or_resume_experiment
+        pass
+
+    def _action_exp_dir_created(self, scheduler_ref: list[ParallelismScheduler | None]) -> None:
+        """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler, capture baseline.
+
+        Args:
+            scheduler_ref: Single-element list used as a mutable box so the caller
+                can observe the newly created scheduler after this method returns.
+
+        """
+        scheduler_ref[0] = self._setup_workspace_and_scheduler()
+        self._capture_experiment_baseline()
+
+    def _action_exp_repo_cloned(self, tier_groups: list[list[TierID]]) -> None:
+        """REPO_CLONED -> TIERS_RUNNING: Log tier groups for parallel execution.
+
+        Args:
+            tier_groups: Tier dependency groups for parallel execution.
+
+        """
+        logger.info(f"Tier groups for parallel execution: {tier_groups}")
+
+    def _action_exp_tiers_running(
+        self,
+        tier_groups: list[list[TierID]],
+        scheduler: ParallelismScheduler | None,
+        tier_results: dict[TierID, TierResult],
+    ) -> None:
+        """TIERS_RUNNING -> TIERS_COMPLETE: Execute all tier groups.
+
+        Args:
+            tier_groups: Tier dependency groups for parallel execution.
+            scheduler: ParallelismScheduler for concurrent operation limits.
+            tier_results: Mutable dict updated in-place with execution results.
+
+        """
+        results = self._execute_tier_groups(tier_groups, scheduler)
+        tier_results.update(results)
+
+    def _action_exp_tiers_complete(
+        self,
+        tier_results: dict[TierID, TierResult],
+        start_time: datetime,
+    ) -> None:
+        """TIERS_COMPLETE -> REPORTS_GENERATED: Aggregate results and finalize.
+
+        Args:
+            tier_results: Accumulated tier results from TIERS_RUNNING.
+            start_time: Experiment start timestamp for duration calculation.
+
+        Raises:
+            RuntimeError: If experiment_dir is not set.
+
+        """
+        if self.experiment_dir is None:
+            raise RuntimeError("experiment_dir must be set before aggregating tier results")
+        result = self._aggregate_results(tier_results, start_time)
+        self._save_final_results(result)
+        self._generate_report(result)
+        self._last_experiment_result = result
+
+    def _action_exp_reports_generated(self) -> None:
+        """REPORTS_GENERATED -> COMPLETE: Mark checkpoint completed and log summary."""
+        self._mark_checkpoint_completed()
+        if self._last_experiment_result is not None:
+            logger.info(
+                f"✅ Experiment completed in "
+                f"{self._last_experiment_result.total_duration_seconds:.1f}s, "
+                f"total cost: ${self._last_experiment_result.total_cost:.2f}"
+            )
+
     def _build_experiment_actions(
         self,
         tier_groups: list[list[TierID]],
@@ -609,54 +686,21 @@ class E2ERunner:
             Dict mapping ExperimentState to callable
 
         """
-
-        def action_initializing() -> None:
-            # INITIALIZING -> DIR_CREATED: Already done in _initialize_or_resume_experiment.
-            # experiment_dir and checkpoint were created/loaded in _initialize_or_resume_experiment
-            pass
-
-        def action_dir_created() -> None:
-            """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler, capture baseline."""
-            nonlocal scheduler
-            scheduler = self._setup_workspace_and_scheduler()
-            self._capture_experiment_baseline()
-
-        def action_repo_cloned() -> None:
-            """REPO_CLONED -> TIERS_RUNNING: Group tiers and log them."""
-            logger.info(f"Tier groups for parallel execution: {tier_groups}")
-
-        def action_tiers_running() -> None:
-            """TIERS_RUNNING -> TIERS_COMPLETE: Execute all tier groups."""
-            results = self._execute_tier_groups(tier_groups, scheduler)
-            tier_results.update(results)
-
-        def action_tiers_complete() -> None:
-            """TIERS_COMPLETE -> REPORTS_GENERATED: Aggregate results and finalize."""
-            if self.experiment_dir is None:
-                raise RuntimeError("experiment_dir must be set before aggregating tier results")
-            result = self._aggregate_results(tier_results, start_time)
-            self._save_final_results(result)
-            self._generate_report(result)
-            # Store result for the final return
-            self._last_experiment_result = result
-
-        def action_reports_generated() -> None:
-            """REPORTS_GENERATED -> COMPLETE: Mark checkpoint completed."""
-            self._mark_checkpoint_completed()
-            if self._last_experiment_result is not None:
-                logger.info(
-                    f"✅ Experiment completed in "
-                    f"{self._last_experiment_result.total_duration_seconds:.1f}s, "
-                    f"total cost: ${self._last_experiment_result.total_cost:.2f}"
-                )
+        # Mutable box so _action_exp_dir_created can update scheduler in-place.
+        # TIERS_RUNNING reads scheduler_ref[0] to pick up the value set by DIR_CREATED.
+        scheduler_ref: list[ParallelismScheduler | None] = [scheduler]
 
         return {
-            ExperimentState.INITIALIZING: action_initializing,
-            ExperimentState.DIR_CREATED: action_dir_created,
-            ExperimentState.REPO_CLONED: action_repo_cloned,
-            ExperimentState.TIERS_RUNNING: action_tiers_running,
-            ExperimentState.TIERS_COMPLETE: action_tiers_complete,
-            ExperimentState.REPORTS_GENERATED: action_reports_generated,
+            ExperimentState.INITIALIZING: self._action_exp_initializing,
+            ExperimentState.DIR_CREATED: lambda: self._action_exp_dir_created(scheduler_ref),
+            ExperimentState.REPO_CLONED: lambda: self._action_exp_repo_cloned(tier_groups),
+            ExperimentState.TIERS_RUNNING: lambda: self._action_exp_tiers_running(
+                tier_groups, scheduler_ref[0], tier_results
+            ),
+            ExperimentState.TIERS_COMPLETE: lambda: self._action_exp_tiers_complete(
+                tier_results, start_time
+            ),
+            ExperimentState.REPORTS_GENERATED: self._action_exp_reports_generated,
         }
 
     def run(self) -> ExperimentResult:
