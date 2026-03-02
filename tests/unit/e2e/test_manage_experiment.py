@@ -3644,6 +3644,127 @@ class TestCmdVisualize:
         assert "T0" in out
         assert "T1" not in out
 
+    def test_visualize_json_tier_filter(self, tmp_path: Path, capsys: Any) -> None:
+        """--format json --tier T0 with multi-tier data: JSON output only contains T0."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-json-filter",
+            experiment_state="complete",
+            tier_states={"T0": "complete", "T1": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "json", "--tier", "T0"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert "T0" in data["tier_states"]
+        assert "T1" not in data["tier_states"]
+        assert "T0" in data["run_states"]
+        assert "T1" not in data["run_states"]
+
+    def test_visualize_json_tier_filter_nonexistent(self, tmp_path: Path, capsys: Any) -> None:
+        """--format json --tier T99 with no matching data: state dicts are empty."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-json-nofilter",
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "json", "--tier", "T99"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        data = json.loads(out)
+        assert data["tier_states"] == {}
+        assert data["run_states"] == {}
+
+    def test_visualize_table_tier_filter(self, tmp_path: Path, capsys: Any) -> None:
+        """--format table --tier T0: table rows contain T0 data and no T1 data."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete", "T1": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table", "--tier", "T0"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "T0" in out
+        assert "T1" not in out
+
+    def test_visualize_table_tier_filter_nonexistent(self, tmp_path: Path, capsys: Any) -> None:
+        """--format table --tier T99: header row rendered but no data rows."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table", "--tier", "T99"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "TIER" in out
+        assert "T0" not in out
+
+    def test_visualize_states_only_overrides_format(self, tmp_path: Path, capsys: Any) -> None:
+        """--states-only --format table: states-only table is rendered without RESULT column."""
+        self._make_checkpoint_file(
+            tmp_path,
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(
+            ["visualize", str(tmp_path), "--states-only", "--format", "table"]
+        )
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "TIER" in out
+        assert "STATE" in out
+        assert "RESULT" not in out
+
+    def test_visualize_tier_filter_excludes_all_tree(self, tmp_path: Path, capsys: Any) -> None:
+        """--tier T99 with tree format: experiment renders but contains no tier data rows."""
+        self._make_checkpoint_file(
+            tmp_path,
+            experiment_id="test-nodata",
+            experiment_state="complete",
+            tier_states={"T0": "complete"},
+            subtest_states={"T0": {"00": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        parser = build_parser()
+        args = parser.parse_args(["visualize", str(tmp_path), "--tier", "T99"])
+        result = cmd_visualize(args)
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "test-nodata" in out
+        assert "T0" not in out
+
 
 # ---------------------------------------------------------------------------
 # --retry-errors in single mode
