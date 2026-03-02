@@ -1,10 +1,19 @@
 """Shared fixtures for analysis tests."""
 
+import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
 import pytest
+
+# Ensure scripts/ is importable when tests run in isolation.
+# pyproject.toml sets pythonpath=[".", "scripts"] for full-suite runs,
+# but rootdir detection may not inject it during single-file collection.
+_scripts_dir = str(Path(__file__).parents[3] / "scripts")
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
 
 
 @pytest.fixture(autouse=True)
@@ -18,15 +27,16 @@ def mock_power_simulations():
     Tests that call compute_statistical_results() only need to assert the *structure*
     of the output (keys, types, list membership) — the exact power values are irrelevant.
     """
-    # Patch in scylla.analysis.stats for any direct callers, and in
-    # scylla.analysis.tables.comparison which imports these functions directly.
-    # Note: export_data (scripts/export_data.py) is not on the Python path for unit tests,
-    # so we do not patch its namespace here.
+    # Patch in scylla.analysis.stats for any direct callers, in
+    # scylla.analysis.tables.comparison which imports these functions directly,
+    # and in export_data which also imports them directly into its namespace.
     with (
         patch("scylla.analysis.stats.mann_whitney_power", return_value=0.8),
         patch("scylla.analysis.stats.kruskal_wallis_power", return_value=0.75),
         patch("scylla.analysis.tables.comparison.mann_whitney_power", return_value=0.8),
         patch("scylla.analysis.tables.comparison.kruskal_wallis_power", return_value=0.75),
+        patch("export_data.mann_whitney_power", return_value=0.8),
+        patch("export_data.kruskal_wallis_power", return_value=0.75),
     ):
         yield
 
