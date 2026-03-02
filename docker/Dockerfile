@@ -44,6 +44,9 @@ RUN pip install --no-cache-dir "hatchling==1.29.0"
 #   analysis  — matplotlib, numpy, pandas, scipy, seaborn, altair, vl-convert-python, krippendorff
 #   dev       — pytest, pytest-cov, pre-commit, ruff, defusedxml
 #
+# EXTRAS validation: unknown group names emit an error and exit non-zero (see #1204).
+# Typos like EXTRAS=analyysis are caught immediately rather than silently omitted.
+#
 # Usage:
 #   docker build .                               # runtime deps only (default)
 #   docker build --build-arg EXTRAS=analysis .   # + analysis group in cache layer
@@ -52,7 +55,7 @@ ARG EXTRAS=""
 COPY pyproject.toml /opt/scylla/
 RUN pip install --no-cache-dir "tomli==2.0.2" \
     && EXTRAS="$EXTRAS" python3 - <<'PYEOF' > /tmp/deps.txt
-import os
+import os, sys
 try:
     import tomllib
 except ImportError:
@@ -60,12 +63,16 @@ except ImportError:
 with open('/opt/scylla/pyproject.toml', 'rb') as f:
     data = tomllib.load(f)
 project = data.get('project', {})
-deps = list(project.get('dependencies', []))
 opt = project.get('optional-dependencies', {})
-for g in os.environ.get('EXTRAS', '').split(','):
-    g = g.strip()
-    if g:
-        deps.extend(opt.get(g, []))
+valid = set(opt.keys())
+extras = {g.strip() for g in os.environ.get('EXTRAS', '').split(',') if g.strip()}
+unknown = extras - valid
+if unknown:
+    print(f'ERROR: Unknown EXTRAS group(s): {sorted(unknown)}. Valid: {sorted(valid)}', file=sys.stderr)
+    sys.exit(1)
+deps = list(project.get('dependencies', []))
+for g in extras:
+    deps.extend(opt.get(g, []))
 print(' '.join(deps))
 PYEOF
     && pip install --user --no-cache-dir $(cat /tmp/deps.txt) \
