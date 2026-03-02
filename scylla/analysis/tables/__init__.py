@@ -16,6 +16,7 @@ from scylla.analysis.tables.comparison import (
     table02b_impl_rate_comparison,
     table04_criteria_performance,
     table06_model_comparison,
+    table_cfp_comparison,
 )
 from scylla.analysis.tables.detail import (
     table03_judge_agreement,
@@ -41,6 +42,7 @@ __all__ = [
     "table04_criteria_performance",
     "table05_cost_analysis",
     "table06_model_comparison",
+    "table_cfp_comparison",
     "table07_subtest_detail",
     "table08_summary_statistics",
     "table09_experiment_config",

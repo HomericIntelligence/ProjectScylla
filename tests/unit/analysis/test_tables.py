@@ -50,6 +50,7 @@ def test_table_function_signatures():
         "table08_summary_statistics",
         "table09_experiment_config",
         "table10_normality_tests",
+        "table_cfp_comparison",
     ]
 
     for func_name in table_functions:
@@ -834,3 +835,82 @@ def test_table10_calculation_verification():
     # Verify latex has same structure
     assert "NormalModel" in latex
     assert "UniformModel" in latex
+
+
+# ============================================================================
+# Tests for table_cfp_comparison
+# ============================================================================
+
+
+def test_table_cfp_comparison_format(sample_runs_df):
+    """Test table_cfp_comparison returns valid dual-format output."""
+    from scylla.analysis.tables import table_cfp_comparison
+
+    markdown, latex = table_cfp_comparison(sample_runs_df)
+
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Both CFP and R_Prog sections should be present
+    assert "CFP" in markdown
+    assert "tabular" in latex or "table" in latex.lower()
+
+
+def test_table_cfp_comparison_missing_column():
+    """Test table_cfp_comparison returns placeholder when cfp column is absent."""
+    import pandas as pd
+
+    from scylla.analysis.tables import table_cfp_comparison
+
+    df = pd.DataFrame(
+        {
+            "agent_model": ["Sonnet 4.5"] * 5,
+            "tier": ["T0"] * 5,
+            "score": [0.5, 0.6, 0.7, 0.8, 0.9],
+            "passed": [True] * 5,
+        }
+    )
+
+    markdown, latex = table_cfp_comparison(df)
+
+    # Should return placeholder strings without raising
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+
+def test_table_cfp_comparison_all_nan(sample_runs_df):
+    """Test table_cfp_comparison handles all-NaN cfp column without error."""
+    from scylla.analysis.tables import table_cfp_comparison
+
+    df = sample_runs_df.copy()
+    df["cfp"] = float("nan")
+    df["r_prog"] = float("nan")
+
+    markdown, latex = table_cfp_comparison(df)
+
+    # Should complete without exception and return valid strings
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+
+
+def test_table_cfp_comparison_statistical_workflow(sample_runs_df):
+    """Test table_cfp_comparison uses correct statistical workflow."""
+    from scylla.analysis.tables import table_cfp_comparison
+
+    markdown, latex = table_cfp_comparison(sample_runs_df)
+
+    # Verify statistical workflow documented in CFP section
+    assert "Kruskal-Wallis" in markdown
+    assert "Mann-Whitney" in markdown
+    assert "Holm-Bonferroni" in markdown
+
+    # Verify both sections present
+    assert "Change Fail Percentage" in markdown
+    assert "Fine-Grained Progress" in markdown
+
+    # LaTeX should have two table environments
+    assert latex.count(r"\begin{table}") >= 2
