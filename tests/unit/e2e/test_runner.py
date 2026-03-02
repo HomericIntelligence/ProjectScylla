@@ -1423,3 +1423,131 @@ class TestInitializeOrResumeExperimentMaxSubtests:
             "T0 must be reset to 'pending' when config subtests exceed checkpoint subtests, "
             "so that action_pending() re-runs with the full subtest list."
         )
+
+
+# ---------------------------------------------------------------------------
+# _build_experiment_actions guards
+# ---------------------------------------------------------------------------
+
+
+class TestBuildExperimentActionsGuards:
+    """Tests for None-guard in action_tiers_complete closure inside _build_experiment_actions."""
+
+    def test_action_tiers_complete_raises_when_experiment_dir_none(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """action_tiers_complete raises RuntimeError when experiment_dir is None."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.models import ExperimentState
+
+        runner = E2ERunner(mock_config, mock_tier_manager, Path("/tmp"))
+        runner.experiment_dir = None
+
+        tier_results: dict[TierID, TierResult] = {}
+        actions = runner._build_experiment_actions(
+            tier_groups=[[TierID.T0]],
+            scheduler=None,
+            tier_results=tier_results,
+            start_time=datetime.now(timezone.utc),
+        )
+
+        with pytest.raises(
+            RuntimeError, match="experiment_dir must be set before aggregating tier results"
+        ):
+            actions[ExperimentState.TIERS_COMPLETE]()
+
+
+# ---------------------------------------------------------------------------
+# run() inline checkpoint guards
+# ---------------------------------------------------------------------------
+
+
+class TestRunCheckpointGuards:
+    """Tests for checkpoint None-guards inlined in E2ERunner.run().
+
+    Two guards fire before the ExperimentStateMachine is built:
+    1.  "checkpoint must be set before starting heartbeat thread"  (line ~688)
+    2.  "checkpoint must be set before creating experiment state machine"  (line ~730)
+
+    Guard 1 is triggered when _initialize_or_resume_experiment completes but
+    leaves self.checkpoint as None.
+
+    Guard 2 is triggered when self.checkpoint is None at the ESM-creation
+    point; for this test we reset it to None after the heartbeat guard is
+    passed by providing a real checkpoint initially and then clearing it just
+    before ESM construction, using a patched HeartbeatThread whose start()
+    side-effect nullifies the checkpoint.
+    """
+
+    def test_heartbeat_guard_raises_when_checkpoint_none(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """run() raises RuntimeError when checkpoint is None at heartbeat creation."""
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+
+        # Patch _initialize_or_resume_experiment to return a path but NOT set checkpoint
+        def fake_init() -> Path:
+            # runner.checkpoint remains None
+            return tmp_path / "checkpoint.json"
+
+        with (
+            patch.object(runner, "_initialize_or_resume_experiment", side_effect=fake_init),
+            pytest.raises(
+                RuntimeError,
+                match="checkpoint must be set before starting heartbeat thread",
+            ),
+        ):
+            runner.run()
+
+    def test_esm_guard_raises_when_checkpoint_none_at_esm_creation(
+        self,
+        mock_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """run() raises RuntimeError when checkpoint is None at ESM creation.
+
+        The heartbeat guard (earlier in run()) is bypassed by providing a
+        non-None checkpoint initially; the HeartbeatThread.start side-effect
+        then clears runner.checkpoint so the ESM guard fires.
+        """
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        runner = E2ERunner(mock_config, mock_tier_manager, tmp_path)
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(tmp_path),
+            config_hash="abc123",
+            started_at="2024-01-01T00:00:00+00:00",
+            last_updated_at="2024-01-01T00:00:00+00:00",
+            status="running",
+        )
+
+        def fake_init() -> Path:
+            runner.checkpoint = checkpoint
+            return tmp_path / "checkpoint.json"
+
+        mock_heartbeat = MagicMock()
+
+        def clear_checkpoint_on_start() -> None:
+            """Simulate checkpoint becoming None between heartbeat start and ESM creation."""
+            runner.checkpoint = None
+
+        mock_heartbeat.start.side_effect = clear_checkpoint_on_start
+
+        with (
+            patch.object(runner, "_initialize_or_resume_experiment", side_effect=fake_init),
+            patch("scylla.e2e.health.HeartbeatThread", return_value=mock_heartbeat),
+            pytest.raises(
+                RuntimeError,
+                match="checkpoint must be set before creating experiment state machine",
+            ),
+        ):
+            runner.run()
