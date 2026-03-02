@@ -87,6 +87,7 @@ class TestHandleZombie:
         reset_checkpoint = base_checkpoint.model_copy(update={"status": "interrupted"})
 
         rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        original_checkpoint = rm.checkpoint
 
         with (
             patch("scylla.e2e.resume_manager.is_zombie", return_value=True) as mock_is_zombie,
@@ -101,6 +102,8 @@ class TestHandleZombie:
         mock_reset.assert_called_once_with(base_checkpoint, checkpoint_path)
         assert checkpoint.status == "interrupted"
         assert config is base_config
+        # handle_zombie must NOT mutate self.checkpoint — purely functional
+        assert rm.checkpoint is original_checkpoint
 
     def test_no_zombie_checkpoint_unchanged(
         self,
