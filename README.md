@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-3500%2B-brightgreen.svg)](#)
+[![Tests](https://img.shields.io/badge/tests-3600%2B-brightgreen.svg)](#)
 [![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)](#)
 
 ## 📑 Table of Contents
@@ -339,11 +339,11 @@ Schema: `scylla/analysis/schemas/run_result_schema.json`
 
 ### 🧪 Testing
 
-ProjectScylla has a comprehensive test suite with **137+ test files** covering all functionality.
+ProjectScylla has a comprehensive test suite with **143+ test files** covering all functionality.
 
 #### Test Categories
 
-- **Unit Tests** (137+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
+- **Unit Tests** (143+ files): Analysis (incl. integration-style tests), adapters, config, executors, judges, metrics, reporting
 - **E2E Tests** (1 file): Full pipeline validation
 - **Test Fixtures** (47+ scenarios): Complete test cases with expected outputs
 
@@ -489,7 +489,7 @@ TypeError: unsupported operand type(s) for +: 'float' and 'str'
 
 ✅ **Reproducible configuration** (all parameters in config.yaml)
 
-✅ **Comprehensive test suite** (3,500+ tests, all passing)
+✅ **Comprehensive test suite** (3,600+ tests, all passing)
 
 ✅ **Documented methodology** with citations
 
