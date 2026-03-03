@@ -24,7 +24,7 @@ from pathlib import Path
 try:
     import tomllib
 except ImportError:
-    import tomli as tomllib  # type: ignore[no-redef]
+    import tomli as tomllib
 
 # Regex to match FROM lines like: FROM python:3.12-slim or FROM python:3.12-slim@sha256:...
 _DOCKERFILE_FROM_RE = re.compile(r"^\s*FROM\s+python:(\d+\.\d+)", re.IGNORECASE | re.MULTILINE)
@@ -69,7 +69,8 @@ def get_highest_python_classifier(pyproject_path: Path) -> str:
 
     if not versions:
         print(
-            f"ERROR: No 'Programming Language :: Python :: X.Y' classifiers found in {pyproject_path}",
+            "ERROR: No 'Programming Language :: Python :: X.Y' classifiers"
+            f" found in {pyproject_path}",
             file=sys.stderr,
         )
         sys.exit(1)

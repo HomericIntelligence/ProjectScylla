@@ -11,7 +11,6 @@ from scripts.check_python_version_consistency import (
     get_highest_python_classifier,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -153,10 +152,8 @@ class TestGetDockerfilePythonVersion:
 
     def test_digest_pinned(self, tmp_path: Path) -> None:
         """Should parse version from digest-pinned FROM line."""
-        write_dockerfile(
-            tmp_path,
-            "FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder",
-        )
+        digest = "sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c"
+        write_dockerfile(tmp_path, f"FROM python:3.12-slim@{digest} AS builder")
         assert get_dockerfile_python_version(tmp_path / "docker" / "Dockerfile") == "3.12"
 
     def test_with_build_stage_alias(self, tmp_path: Path) -> None:
@@ -190,9 +187,7 @@ class TestGetDockerfilePythonVersion:
         dockerfile_dir = tmp_path / "docker"
         dockerfile_dir.mkdir()
         path = dockerfile_dir / "Dockerfile"
-        path.write_text(
-            "FROM python:3.12-slim AS builder\nFROM python:3.10-slim AS runtime\n"
-        )
+        path.write_text("FROM python:3.12-slim AS builder\nFROM python:3.10-slim AS runtime\n")
         assert get_dockerfile_python_version(path) == "3.12"
 
     @pytest.mark.parametrize(
@@ -301,9 +296,7 @@ class TestCheckVersionConsistency:
 
     def test_digest_pinned_dockerfile_matches(self, tmp_path: Path) -> None:
         """Should correctly match when Dockerfile uses digest-pinned FROM."""
+        digest = "sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c"
         write_pyproject(tmp_path, ["Programming Language :: Python :: 3.12"])
-        write_dockerfile(
-            tmp_path,
-            "FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder",
-        )
+        write_dockerfile(tmp_path, f"FROM python:3.12-slim@{digest} AS builder")
         assert check_version_consistency(tmp_path) == 0
