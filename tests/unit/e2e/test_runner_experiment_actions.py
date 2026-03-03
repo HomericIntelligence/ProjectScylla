@@ -61,11 +61,14 @@ class TestActionExpDirCreated:
         scheduler_ref: list[object] = [None]
 
         with (
-            patch.object(runner, "_setup_workspace_and_scheduler", return_value=mock_scheduler),
+            patch.object(
+                runner, "_setup_workspace_and_scheduler", return_value=mock_scheduler
+            ) as mock_setup,
             patch.object(runner, "_capture_experiment_baseline") as mock_baseline,
         ):
             runner._action_exp_dir_created(scheduler_ref)  # type: ignore[arg-type]
 
+        mock_setup.assert_called_once()
         mock_baseline.assert_called_once()
 
     def test_scheduler_ref_updated(self, runner: E2ERunner) -> None:
