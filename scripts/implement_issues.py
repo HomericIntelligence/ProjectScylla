@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Bulk GitHub issue implementation script.
+"""Bulk GitHub issue implementation and PR review script.
 
 Implements GitHub issues in parallel using Claude Code in isolated
-git worktrees with dependency resolution.
+git worktrees with dependency resolution. Also supports reviewing
+and fixing open PRs linked to specified issues.
 
 Usage:
     python scripts/implement_issues.py --epic 123
     python scripts/implement_issues.py --epic 123 --analyze
     python scripts/implement_issues.py --health-check
+    python scripts/implement_issues.py --review --issues 595 596
 """
 
 import argparse
@@ -79,7 +81,19 @@ Examples:
 
   # Don't auto-merge PRs
   %(prog)s --issues 595 --no-auto-merge
+
+  # Review and fix open PRs for specific issues
+  %(prog)s --review --issues 595 596
+
+  # Review with dry run
+  %(prog)s --review --issues 595 --dry-run
         """,
+    )
+
+    parser.add_argument(
+        "--review",
+        action="store_true",
+        help="Review and fix open PRs linked to specified issues (requires --issues)",
     )
 
     parser.add_argument(
@@ -174,6 +188,12 @@ Examples:
     if args.epic and args.issues:
         parser.error("Cannot specify both --epic and --issues")
 
+    if args.review and not args.issues:
+        parser.error("--review requires --issues (not supported with --epic)")
+
+    if args.review and args.epic:
+        parser.error("--review cannot be used with --epic")
+
     return args
 
 
@@ -205,7 +225,9 @@ def main() -> int:
         enable_ui=not args.no_ui,
     )
 
-    if args.health_check:
+    if args.review:
+        logger.info(f"Starting PR review for issues: {args.issues}")
+    elif args.health_check:
         logger.info("Running health check")
     elif args.issues:
         logger.info(f"Starting implementation of issues: {args.issues}")
@@ -214,6 +236,28 @@ def main() -> int:
 
     with terminal_guard():
         try:
+            if args.review:
+                from scylla.automation.models import ReviewerOptions
+                from scylla.automation.reviewer import PRReviewer
+
+                reviewer_options = ReviewerOptions(
+                    issues=args.issues or [],
+                    max_workers=args.max_workers,
+                    dry_run=args.dry_run,
+                    enable_retrospective=not args.no_retrospective,
+                    enable_ui=not args.no_ui,
+                )
+                reviewer = PRReviewer(reviewer_options)
+                results = reviewer.run()
+
+                failed = [num for num, result in results.items() if not result.success]
+                if failed:
+                    logger.error(f"Failed to review {len(failed)} PR(s) for issue(s): {failed}")
+                    return 1
+
+                logger.info("PR review complete")
+                return 0
+
             # Run implementer
             implementer = IssueImplementer(options)
             results = implementer.run()

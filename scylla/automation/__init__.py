@@ -18,10 +18,14 @@ from scylla.automation.models import (
     IssueState,
     PlannerOptions,
     PlanResult,
+    ReviewerOptions,
+    ReviewPhase,
+    ReviewState,
     WorkerResult,
 )
 from scylla.automation.planner import Planner
 from scylla.automation.retry import retry_on_network_error, retry_with_backoff
+from scylla.automation.reviewer import PRReviewer
 from scylla.automation.status_tracker import StatusTracker
 from scylla.automation.worktree_manager import WorktreeManager
 
@@ -35,9 +39,13 @@ __all__ = [
     # Data models
     "IssueInfo",
     "IssueState",
+    "PRReviewer",
     "PlanResult",
     "Planner",
     "PlannerOptions",
+    "ReviewPhase",
+    "ReviewState",
+    "ReviewerOptions",
     "StatusTracker",
     "WorkerResult",
     "WorktreeManager",

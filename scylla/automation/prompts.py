@@ -247,6 +247,165 @@ def get_follow_up_prompt(issue_number: int) -> str:
     return FOLLOW_UP_PROMPT.format(issue_number=issue_number)
 
 
+REVIEW_ANALYSIS_PROMPT = """
+Analyze PR #{pr_number} (linked to issue #{issue_number}) and produce a structured fix plan.
+
+**Working Directory:** {worktree_path}
+
+**Issue Description:**
+{issue_body}
+
+**PR Description:**
+{pr_description}
+
+**CI Status:**
+{ci_status}
+
+**CI Failure Logs:**
+{ci_logs}
+
+**Review Comments:**
+{review_comments}
+
+**PR Diff (summary):**
+{pr_diff}
+
+---
+
+**Your task:**
+Read the code in the working directory, review the information above, and produce a structured
+fix plan.
+
+**Output format (required):**
+
+## Summary
+Brief description of the overall state of the PR and what needs to be fixed.
+
+## Problems Found
+For each problem:
+- **Problem:** Description of the issue
+  - **Source:** Where it comes from (CI failure / review comment / code issue)
+  - **Fix:** Specific steps to resolve it
+
+## Fix Order
+Numbered sequence of fixes to apply (in dependency order).
+
+## Verification
+How to verify each fix is correct (tests to run, commands to execute).
+
+**Guidelines:**
+- Be specific about file paths and line numbers
+- Reference the actual code in the worktree, not just the diff
+- If no problems are found, say so explicitly in Summary and leave Problems Found empty
+- Focus on actionable fixes, not general advice
+"""
+
+REVIEW_FIX_PROMPT = """
+Implement the fixes described in the plan below for PR #{pr_number} (issue #{issue_number}).
+
+**Working Directory:** {worktree_path}
+
+**Fix Plan:**
+{plan}
+
+---
+
+**Your task:**
+Implement all fixes from the plan above. After implementing:
+
+1. Run tests: `pixi run python -m pytest tests/ -v`
+2. Run pre-commit: `pre-commit run --all-files`
+3. Fix any issues found by tests or pre-commit
+4. Commit all changes (but do NOT push — the script will push)
+
+**Commit message format:**
+```
+fix: Address review feedback for PR #{pr_number}
+
+Closes #{issue_number}
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
+
+**Critical requirements:**
+- Only commit actual implementation files (no .env, .secret, credentials, etc.)
+- Do NOT push to origin — the script handles pushing
+- Ensure all tests pass before committing
+- Follow existing code patterns in scylla/
+
+**File handling:**
+- DO NOT create backup files (.orig, .bak, .swp, etc.)
+- Clean up any temporary files before committing
+"""
+
+
+def get_review_analysis_prompt(
+    pr_number: int,
+    issue_number: int,
+    pr_diff: str = "",
+    issue_body: str = "",
+    ci_status: str = "",
+    ci_logs: str = "",
+    review_comments: str = "",
+    pr_description: str = "",
+    worktree_path: str = "",
+) -> str:
+    """Get the PR review analysis prompt.
+
+    Args:
+        pr_number: GitHub PR number
+        issue_number: Linked GitHub issue number
+        pr_diff: PR diff output
+        issue_body: Issue body/description
+        ci_status: CI check status summary
+        ci_logs: CI failure log output
+        review_comments: PR review and inline comments
+        pr_description: PR description body
+        worktree_path: Working directory path
+
+    Returns:
+        Formatted analysis prompt
+
+    """
+    return REVIEW_ANALYSIS_PROMPT.format(
+        pr_number=pr_number,
+        issue_number=issue_number,
+        pr_diff=pr_diff,
+        issue_body=issue_body,
+        ci_status=ci_status,
+        ci_logs=ci_logs,
+        review_comments=review_comments,
+        pr_description=pr_description,
+        worktree_path=worktree_path,
+    )
+
+
+def get_review_fix_prompt(
+    pr_number: int,
+    issue_number: int,
+    plan: str = "",
+    worktree_path: str = "",
+) -> str:
+    """Get the PR fix implementation prompt.
+
+    Args:
+        pr_number: GitHub PR number
+        issue_number: Linked GitHub issue number
+        plan: Fix plan from analysis session
+        worktree_path: Working directory path
+
+    Returns:
+        Formatted fix prompt
+
+    """
+    return REVIEW_FIX_PROMPT.format(
+        pr_number=pr_number,
+        issue_number=issue_number,
+        plan=plan,
+        worktree_path=worktree_path,
+    )
+
+
 def get_pr_description(
     issue_number: int,
     summary: str,
