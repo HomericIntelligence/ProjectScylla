@@ -124,6 +124,42 @@ class ImplementerOptions(BaseModel):
     enable_ui: bool = True
 
 
+class ReviewPhase(str, Enum):
+    """Phase of PR review and fix workflow."""
+
+    ANALYZING = "analyzing"
+    FIXING = "fixing"
+    PUSHING = "pushing"
+    RETROSPECTIVE = "retrospective"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class ReviewState(BaseModel):
+    """State tracking for PR review and fix workflow."""
+
+    issue_number: int
+    pr_number: int
+    phase: ReviewPhase = ReviewPhase.ANALYZING
+    worktree_path: str | None = None
+    branch_name: str | None = None
+    plan_path: str | None = None
+    session_id: str | None = None
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: datetime | None = None
+    error: str | None = None
+
+
+class ReviewerOptions(BaseModel):
+    """Options for the PRReviewer."""
+
+    issues: list[int] = Field(default_factory=list)
+    max_workers: int = 3
+    dry_run: bool = False
+    enable_retrospective: bool = True
+    enable_ui: bool = True
+
+
 class DependencyGraph(BaseModel):
     """Dependency graph for issues."""
 
