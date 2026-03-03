@@ -1,5 +1,7 @@
 """Tests for the Planner automation."""
 
+import subprocess
+import threading
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -135,17 +137,42 @@ class TestRunAdvise:
 
             assert result == ""
 
-    def test_skips_when_mnemosyne_missing(self, planner):
-        """Test skips advise when ProjectMnemosyne is missing."""
+    def test_skips_when_mnemosyne_missing_and_clone_fails(self, planner):
+        """Test returns empty string when ProjectMnemosyne is missing and clone fails."""
         with (
             patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
-            patch.object(Path, "exists", return_value=False),
+            patch.object(planner, "_ensure_mnemosyne", return_value=False) as mock_ensure,
         ):
             mock_get_repo.return_value = Path("/repo")
 
-            result = planner._run_advise(123, "Test Issue", "Issue body")
+            with patch.object(Path, "exists", return_value=False):
+                result = planner._run_advise(123, "Test Issue", "Issue body")
 
             assert result == ""
+            mock_ensure.assert_called_once()
+
+    def test_clones_mnemosyne_when_missing(self, planner):
+        """Test proceeds with advise after cloning ProjectMnemosyne."""
+        call_count = [0]
+
+        def patched_exists(p: Path) -> bool:
+            call_count[0] += 1
+            if call_count[0] == 1:
+                # First call: mnemosyne_root.exists() -> False (triggers _ensure_mnemosyne)
+                return False
+            # Subsequent calls (marketplace check): True
+            return True
+
+        with (
+            patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
+            patch.object(planner, "_ensure_mnemosyne", return_value=True),
+            patch.object(Path, "exists", patched_exists),
+            patch.object(planner, "_call_claude", return_value="## Related Skills\nFound 2 skills"),
+        ):
+            mock_get_repo.return_value = Path("/repo")
+            result = planner._run_advise(123, "Test Issue", "Issue body")
+
+        assert "Related Skills" in result
 
 
 class TestGeneratePlan:
@@ -197,3 +224,84 @@ class TestGeneratePlan:
 
             # Plan should still be generated
             assert "Implementation Plan" in plan
+
+
+class TestEnsureMnemosyne:
+    """Tests for _ensure_mnemosyne method."""
+
+    def test_clone_success(self, planner, tmp_path):
+        """Test successful clone returns True and runs correct command."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = planner._ensure_mnemosyne(mnemosyne_root)
+
+        assert result is True
+        mock_run.assert_called_once()
+        cmd = mock_run.call_args[0][0]
+        assert "gh" in cmd
+        assert "repo" in cmd
+        assert "clone" in cmd
+        assert "HomericIntelligence/ProjectMnemosyne" in cmd
+        assert str(mnemosyne_root) in cmd
+
+    def test_clone_failure(self, planner, tmp_path):
+        """Test clone failure returns False and logs warning."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.side_effect = subprocess.CalledProcessError(
+                1, "gh", stderr="authentication failed"
+            )
+
+            result = planner._ensure_mnemosyne(mnemosyne_root)
+
+        assert result is False
+
+    def test_no_clone_if_exists(self, planner, tmp_path):
+        """Test does not clone when directory already exists."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+        mnemosyne_root.mkdir()
+
+        with patch("subprocess.run") as mock_run:
+            result = planner._ensure_mnemosyne(mnemosyne_root)
+
+        assert result is True
+        mock_run.assert_not_called()
+
+    def test_concurrent_clone_only_once(self, mock_options, tmp_path):
+        """Test concurrent calls only clone once (lock prevents double-clone)."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+
+        clone_calls = []
+        start_event = threading.Event()
+
+        def fake_clone(cmd: list[str], **kwargs: object) -> MagicMock:
+            clone_calls.append(1)
+            # Create the directory so subsequent checks see it
+            mnemosyne_root.mkdir(exist_ok=True)
+            return MagicMock(returncode=0)
+
+        planner1 = Planner(mock_options)
+        planner2 = Planner(mock_options)
+
+        results: list[bool] = []
+
+        def worker(p: Planner) -> None:
+            start_event.wait()
+            results.append(p._ensure_mnemosyne(mnemosyne_root))
+
+        t1 = threading.Thread(target=worker, args=(planner1,))
+        t2 = threading.Thread(target=worker, args=(planner2,))
+
+        with patch("subprocess.run", side_effect=fake_clone):
+            t1.start()
+            t2.start()
+            start_event.set()
+            t1.join()
+            t2.join()
+
+        assert all(results), "Both threads should return True"
+        assert len(clone_calls) == 1, "Clone should only happen once"

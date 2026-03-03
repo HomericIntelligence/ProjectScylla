@@ -9,12 +9,14 @@ Provides:
 
 from __future__ import annotations
 
+import fcntl
 import json
 import logging
 import os
 import subprocess
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any
 
 from .git_utils import get_repo_root
@@ -38,6 +40,8 @@ class Planner:
     Supports parallel planning with rate limit handling and
     duplicate detection.
     """
+
+    _mnemosyne_lock: threading.Lock = threading.Lock()
 
     def __init__(self, options: PlannerOptions):
         """Initialize planner.
@@ -313,6 +317,57 @@ class Planner:
         except subprocess.TimeoutExpired as e:
             raise RuntimeError(f"Claude timed out after {timeout}s") from e
 
+    def _ensure_mnemosyne(self, mnemosyne_root: Path) -> bool:
+        """Clone ProjectMnemosyne if it does not exist locally.
+
+        Uses a class-level threading lock and an fcntl file lock to prevent
+        race conditions when multiple parallel workers call this simultaneously.
+
+        Args:
+            mnemosyne_root: Expected local path for ProjectMnemosyne
+
+        Returns:
+            True if the directory exists (or was cloned successfully), False otherwise
+
+        """
+        with Planner._mnemosyne_lock:
+            # TOCTOU guard: re-check inside the lock
+            if mnemosyne_root.exists():
+                return True
+
+            lock_path = mnemosyne_root.parent / ".mnemosyne.lock"
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+            with open(lock_path, "w") as lock_file:
+                fcntl.flock(lock_file, fcntl.LOCK_EX)
+                try:
+                    # Re-check after acquiring file lock
+                    if mnemosyne_root.exists():
+                        return True
+
+                    logger.info(f"Cloning ProjectMnemosyne to {mnemosyne_root}...")
+                    subprocess.run(
+                        [
+                            "gh",
+                            "repo",
+                            "clone",
+                            "HomericIntelligence/ProjectMnemosyne",
+                            str(mnemosyne_root),
+                        ],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    logger.info("ProjectMnemosyne cloned successfully")
+                    return True
+
+                except subprocess.CalledProcessError as e:
+                    logger.warning(f"Failed to clone ProjectMnemosyne: {e.stderr or e}")
+                    return False
+
+                finally:
+                    fcntl.flock(lock_file, fcntl.LOCK_UN)
+
     def _run_advise(self, issue_number: int, issue_title: str, issue_body: str) -> str:
         """Search team knowledge base for relevant prior learnings.
 
@@ -331,10 +386,8 @@ class Planner:
             mnemosyne_root = repo_root / "build" / "ProjectMnemosyne"
 
             if not mnemosyne_root.exists():
-                logger.warning(
-                    "ProjectMnemosyne not found at build/ProjectMnemosyne, skipping advise step"
-                )
-                return ""
+                if not self._ensure_mnemosyne(mnemosyne_root):
+                    return ""
 
             marketplace_path = mnemosyne_root / ".claude-plugin" / "marketplace.json"
             if not marketplace_path.exists():
