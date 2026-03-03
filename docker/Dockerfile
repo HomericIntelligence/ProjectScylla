@@ -75,7 +75,7 @@ for g in extras:
     deps.extend(opt.get(g, []))
 print(' '.join(deps))
 PYEOF
-    && pip install --user --no-cache-dir $(cat /tmp/deps.txt) \
+RUN pip install --user --no-cache-dir $(cat /tmp/deps.txt) \
     && rm -f /tmp/deps.txt
 
 # Layer 3: Package install (invalidated when scylla/ source changes)
