@@ -3736,9 +3736,7 @@ class TestCmdVisualize:
             completed_runs={"T0": {"00": {1: "passed"}}},
         )
         parser = build_parser()
-        args = parser.parse_args(
-            ["visualize", str(tmp_path), "--states-only", "--format", "table"]
-        )
+        args = parser.parse_args(["visualize", str(tmp_path), "--states-only", "--format", "table"])
         result = cmd_visualize(args)
         assert result == 0
         out = capsys.readouterr().out
