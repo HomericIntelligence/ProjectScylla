@@ -15,6 +15,7 @@ Covers:
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -24,6 +25,7 @@ import pytest
 from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
 from scylla.e2e.models import ExperimentConfig
 from scylla.e2e.resume_manager import ResumeManager
+from scylla.e2e.runner import E2ERunner
 from tests.integration.e2e.conftest import make_checkpoint
 
 pytestmark = pytest.mark.integration
@@ -296,3 +298,67 @@ class TestExperimentDirNoneIsNoop:
         )
 
         assert not cp_path.exists()
+
+
+class TestRunnerInitializeWithZombieCheckpoint:
+    """Verify that _initialize_or_resume_experiment() resets a zombie to 'interrupted'.
+
+    This exercises the full runner path: runner discovers the checkpoint on disk,
+    passes it through ResumeManager.handle_zombie(), and stores the updated status.
+    """
+
+    def test_runner_resets_zombie_status_to_interrupted(self, tmp_path: Path) -> None:
+        """_initialize_or_resume_experiment() sets checkpoint.status='interrupted' for a zombie."""
+        experiment_id = "test-zombie-runner"
+        results_base_dir = tmp_path / "results"
+
+        # Create experiment directory matching the *-{experiment_id} discovery pattern
+        exp_dir = results_base_dir / f"20260101T000000-{experiment_id}"
+        exp_dir.mkdir(parents=True)
+        config_dir = exp_dir / "config"
+        config_dir.mkdir()
+
+        # Write a minimal experiment.json so _load_checkpoint_and_config() can restore config
+        experiment_config_data = {
+            "experiment_id": experiment_id,
+            "task_repo": "https://github.com/example/repo",
+            "task_commit": "abc1234",
+            "task_prompt_file": str(tmp_path / "prompt.md"),
+            "language": "python",
+            "tiers_to_run": [],
+        }
+        (config_dir / "experiment.json").write_text(json.dumps(experiment_config_data))
+
+        # Write a zombie checkpoint: status=running, dead PID, stale heartbeat
+        cp = make_checkpoint(
+            status="running",
+            pid=_DEAD_PID,
+            last_heartbeat=_stale_heartbeat(),
+            experiment_dir=str(exp_dir),
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(cp, checkpoint_path)
+
+        # Build a minimal ExperimentConfig matching the saved experiment.json
+        config = ExperimentConfig(
+            experiment_id=experiment_id,
+            task_repo="https://github.com/example/repo",
+            task_commit="abc1234",
+            task_prompt_file=tmp_path / "prompt.md",
+            language="python",
+            tiers_to_run=[],
+        )
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+
+        runner = E2ERunner(
+            config=config,
+            tiers_dir=tiers_dir,
+            results_base_dir=results_base_dir,
+        )
+
+        runner._initialize_or_resume_experiment()
+
+        assert runner.checkpoint is not None
+        assert runner.checkpoint.status == "interrupted"
