@@ -436,6 +436,28 @@ class TestCollectActualTestCount:
         ):
             assert collect_actual_test_count(tmp_path) == 1
 
+    def test_zero_collected_returns_none(self, tmp_path: Path) -> None:
+        """Should return None when pytest reports 0 tests (collection failure)."""
+        mock_result = MagicMock()
+        mock_result.stdout = "0 selected\n"
+        mock_result.stderr = ""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            return_value=mock_result,
+        ):
+            assert collect_actual_test_count(tmp_path) is None
+
+    def test_zero_tests_collected_returns_none(self, tmp_path: Path) -> None:
+        """Should return None when pytest reports '0 tests collected' (collection failure)."""
+        mock_result = MagicMock()
+        mock_result.stdout = "0 tests collected\n"
+        mock_result.stderr = ""
+        with patch(
+            "scripts.check_doc_config_consistency.subprocess.run",
+            return_value=mock_result,
+        ):
+            assert collect_actual_test_count(tmp_path) is None
+
 
 # ---------------------------------------------------------------------------
 # check_readme_test_count
