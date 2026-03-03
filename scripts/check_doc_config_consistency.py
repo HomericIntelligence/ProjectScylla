@@ -272,7 +272,8 @@ def collect_actual_test_count(repo_root: Path) -> int | None:
     # Match "N selected" or "N tests collected" or "N test collected"
     m = re.search(r"(\d+)\s+(?:tests?\s+)?(?:selected|collected)", output)
     if m:
-        return int(m.group(1))
+        count = int(m.group(1))
+        return count if count > 0 else None
     return None
 
 
