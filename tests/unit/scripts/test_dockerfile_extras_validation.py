@@ -17,11 +17,11 @@ PYPROJECT_PATH = Path(__file__).parents[3] / "pyproject.toml"
 
 
 def _extract_layer2_run_snippet(dockerfile_content: str) -> str:
-    """Extract the Layer 2 RUN python3 -c block from Dockerfile content.
+    """Extract the Layer 2 RUN block that contains the Python dependency resolution.
 
-    Searches for the RUN block that contains ``optional-dependencies``, which
-    identifies the Layer 2 dependency-extraction snippet. Returns the full
-    block including continuation lines.
+    Searches for a RUN block (either ``python3 -c`` inline or a heredoc-based
+    ``python3 -``) that contains ``optional-dependencies``, which identifies
+    the Layer 2 dependency-extraction snippet. Returns the full block.
 
     Args:
         dockerfile_content: Raw text content of the Dockerfile.
@@ -30,16 +30,26 @@ def _extract_layer2_run_snippet(dockerfile_content: str) -> str:
         The matched RUN block as a string, or an empty string if not found.
 
     """
-    # Match a RUN line (with possible continuations via backslash) that contains
-    # "optional-dependencies"
-    pattern = re.compile(
+    # Match inline python3 -c form (backslash continuations)
+    inline_pattern = re.compile(
         r"(RUN python3 -c .*?(?:\\\n.*?)*)\n(?!.*\\)",
         re.DOTALL,
     )
-    for match in pattern.finditer(dockerfile_content):
+    for match in inline_pattern.finditer(dockerfile_content):
         block = match.group(1)
         if "optional-dependencies" in block:
             return block
+
+    # Match heredoc form: RUN ... python3 - <<'PYEOF' ... PYEOF
+    heredoc_pattern = re.compile(
+        r"(RUN .*?python3 - <<'PYEOF'.*?^PYEOF)",
+        re.DOTALL | re.MULTILINE,
+    )
+    for match in heredoc_pattern.finditer(dockerfile_content):
+        block = match.group(1)
+        if "optional-dependencies" in block:
+            return block
+
     return ""
 
 
