@@ -259,8 +259,7 @@ class TestParsePythonBaseDigests:
         """Should return distinct digests when stages differ."""
         digest_b = "sha256:" + "a" * 64
         content = (
-            f"FROM python:3.12-slim@{self._DIGEST} AS builder\n"
-            f"FROM python:3.12-slim@{digest_b}\n"
+            f"FROM python:3.12-slim@{self._DIGEST} AS builder\nFROM python:3.12-slim@{digest_b}\n"
         )
         assert _parse_python_base_digests(content) == [self._DIGEST, digest_b]
 
@@ -271,18 +270,12 @@ class TestParsePythonBaseDigests:
 
     def test_ignores_non_python_from_lines(self) -> None:
         """FROM lines not referencing python images should be ignored."""
-        content = (
-            f"FROM ubuntu:22.04@{self._DIGEST}\n"
-            f"FROM python:3.12-slim@{self._DIGEST}\n"
-        )
+        content = f"FROM ubuntu:22.04@{self._DIGEST}\nFROM python:3.12-slim@{self._DIGEST}\n"
         assert _parse_python_base_digests(content) == [self._DIGEST]
 
     def test_ignores_comment_lines(self) -> None:
         """Comment lines containing digest-like strings should be ignored."""
-        content = (
-            f"# FROM python:3.12-slim@{self._DIGEST}\n"
-            f"FROM python:3.12-slim@{self._DIGEST}\n"
-        )
+        content = f"# FROM python:3.12-slim@{self._DIGEST}\nFROM python:3.12-slim@{self._DIGEST}\n"
         assert _parse_python_base_digests(content) == [self._DIGEST]
 
     def test_empty_dockerfile(self) -> None:
