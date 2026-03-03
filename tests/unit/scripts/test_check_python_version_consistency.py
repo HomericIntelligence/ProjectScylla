@@ -296,7 +296,7 @@ class TestCheckVersionConsistency:
 
     def test_digest_pinned_dockerfile_matches(self, tmp_path: Path) -> None:
         """Should correctly match when Dockerfile uses digest-pinned FROM."""
-        digest = "sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c"
         write_pyproject(tmp_path, ["Programming Language :: Python :: 3.12"])
+        digest = "sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c"
         write_dockerfile(tmp_path, f"FROM python:3.12-slim@{digest} AS builder")
         assert check_version_consistency(tmp_path) == 0
