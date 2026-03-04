@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
-
-import pytest
 
 from validate_links import (
     extract_links,
@@ -14,7 +11,6 @@ from validate_links import (
     validate_internal_link,
     validate_links,
 )
-
 
 # ---------------------------------------------------------------------------
 # find_markdown_files

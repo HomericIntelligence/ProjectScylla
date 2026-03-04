@@ -5,14 +5,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from check_type_alias_shadowing import (
     check_files,
     detect_shadowing,
     format_error,
     is_shadowing_pattern,
 )
-
 
 # ---------------------------------------------------------------------------
 # is_shadowing_pattern
@@ -39,7 +37,7 @@ class TestIsShadowingPattern:
         assert is_shadowing_pattern("AggregatedStats", "Statistics") is False
 
     def test_not_a_suffix_not_shadowing(self) -> None:
-        """Result does not shadow MetricsResult (Result is a suffix but MetricsResult ends differently)."""
+        """Result does not shadow MetricsResult (suffix of MetricsResult)."""
         # MetricsResult ends in "Result", so Result IS a suffix
         # This is actually True per the spec
         assert is_shadowing_pattern("Result", "MetricsResult") is True

@@ -3,17 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-
 from check_coverage import (
     check_coverage,
     get_module_threshold,
     load_coverage_config,
     parse_coverage_report,
 )
-
 
 # ---------------------------------------------------------------------------
 # load_coverage_config

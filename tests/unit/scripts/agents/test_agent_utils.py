@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from agents.agent_utils import (
     AgentInfo,
     extract_frontmatter_full,
@@ -17,7 +15,6 @@ from agents.agent_utils import (
     load_all_agents,
     validate_frontmatter_structure,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -287,7 +284,9 @@ class TestLoadAllAgents:
     def test_loads_multiple_agents(self, tmp_path: Path) -> None:
         """Loads all valid agent files from directory."""
         (tmp_path / "agent1.md").write_text(VALID_FRONTMATTER_CONTENT)
-        (tmp_path / "agent2.md").write_text(VALID_FRONTMATTER_CONTENT.replace("test-agent", "agent2"))
+        (tmp_path / "agent2.md").write_text(
+            VALID_FRONTMATTER_CONTENT.replace("test-agent", "agent2")
+        )
         result = load_all_agents(tmp_path)
         assert len(result) == 2
 

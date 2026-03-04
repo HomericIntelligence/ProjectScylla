@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from merge_prs import check_pr_status, merge_pr
-
 
 # ---------------------------------------------------------------------------
 # check_pr_status
@@ -59,7 +56,7 @@ class TestCheckPrStatus:
         assert status["ci_passing"] is False
 
     def test_not_mergeable_when_conflicts(self) -> None:
-        """mergeable is False when PR has merge conflicts."""
+        """Mergeable is False when PR has merge conflicts."""
         import json
 
         pr_data = {
@@ -77,10 +74,11 @@ class TestCheckPrStatus:
         assert status["mergeable"] is False
 
     def test_approved_when_review_decision_none(self) -> None:
-        """approved is True when reviewDecision is None (review not required)."""
+        """Approved is True when reviewDecision is None (review not required)."""
         import json
+        from typing import Any
 
-        pr_data = {
+        pr_data: dict[str, Any] = {
             "statusCheckRollup": [],
             "mergeable": "MERGEABLE",
             "reviewDecision": None,
@@ -162,7 +160,7 @@ class TestMergePr:
         assert result is False
 
     def test_uses_rebase_strategy(self) -> None:
-        """gh pr merge is called with --rebase flag."""
+        """Gh pr merge is called with --rebase flag."""
         mock_result = MagicMock()
         mock_result.returncode = 0
 

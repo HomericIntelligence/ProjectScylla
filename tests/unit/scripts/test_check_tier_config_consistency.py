@@ -7,13 +7,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from check_tier_config_consistency import (
     _load_tier_id,
     check_configs,
     find_tier_configs,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -146,7 +144,9 @@ class TestCheckConfigs:
         result = check_configs(tmp_path)
         assert result == 0
 
-    def test_verbose_mode_does_not_raise(self, tmp_path: Path, capsys: pytest.CaptureFixture) -> None:  # type: ignore[type-arg]
+    def test_verbose_mode_does_not_raise(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
         """Verbose mode prints output without raising."""
         write_yaml(tmp_path, "T0.yaml", "tier: T0\n")
         with patch(

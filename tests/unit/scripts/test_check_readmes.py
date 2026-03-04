@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from check_readmes import (
     check_markdown_formatting,
     check_required_sections,
@@ -13,7 +11,6 @@ from check_readmes import (
     find_readmes,
     validate_readme,
 )
-
 
 # ---------------------------------------------------------------------------
 # find_readmes
