@@ -174,6 +174,61 @@ class TestRunAdvise:
 
         assert "Related Skills" in result
 
+    def test_marketplace_missing_triggers_reclone_and_succeeds(self, planner):
+        """Test that missing marketplace.json triggers re-clone and succeeds on retry."""
+        # mnemosyne_root exists but marketplace.json is absent initially.
+        # After re-clone, marketplace.json becomes present.
+        exists_calls: list[Path] = []
+
+        def patched_exists(p: Path) -> bool:
+            exists_calls.append(p)
+            # mnemosyne_root itself always "exists" (corrupt clone scenario)
+            if p.name == "ProjectMnemosyne":
+                return True
+            # marketplace.json: absent on first check, present after re-clone
+            if p.name == "marketplace.json":
+                # First time called it's absent; from the second call it's present
+                return exists_calls.count(p) > 1
+            return True
+
+        with (
+            patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
+            patch.object(Path, "exists", patched_exists),
+            patch("scylla.automation.planner.shutil.rmtree") as mock_rmtree,
+            patch.object(planner, "_ensure_mnemosyne", return_value=True) as mock_ensure,
+            patch.object(planner, "_call_claude", return_value="## Found Skills\nSkill A"),
+        ):
+            mock_get_repo.return_value = Path("/repo")
+            result = planner._run_advise(123, "Test Issue", "Issue body")
+
+        mock_rmtree.assert_called_once()
+        mock_ensure.assert_called_once()
+        assert "Found Skills" in result
+
+    def test_marketplace_missing_reclone_fails_returns_empty(self, planner):
+        """Test that missing marketplace.json with failed re-clone returns empty string."""
+
+        def patched_exists(p: Path) -> bool:
+            # mnemosyne_root exists but marketplace.json is always absent
+            if p.name == "ProjectMnemosyne":
+                return True
+            if p.name == "marketplace.json":
+                return False
+            return True
+
+        with (
+            patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
+            patch.object(Path, "exists", patched_exists),
+            patch("scylla.automation.planner.shutil.rmtree") as mock_rmtree,
+            patch.object(planner, "_ensure_mnemosyne", return_value=False) as mock_ensure,
+        ):
+            mock_get_repo.return_value = Path("/repo")
+            result = planner._run_advise(123, "Test Issue", "Issue body")
+
+        mock_rmtree.assert_called_once()
+        mock_ensure.assert_called_once()
+        assert result == ""
+
 
 class TestGeneratePlan:
     """Tests for _generate_plan method."""

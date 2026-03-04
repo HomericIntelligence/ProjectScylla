@@ -13,6 +13,7 @@ import fcntl
 import json
 import logging
 import os
+import shutil
 import subprocess
 import threading
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
@@ -393,9 +394,16 @@ class Planner:
             marketplace_path = mnemosyne_root / ".claude-plugin" / "marketplace.json"
             if not marketplace_path.exists():
                 logger.warning(
-                    f"Marketplace file not found at {marketplace_path}, skipping advise step"
+                    f"Marketplace file not found at {marketplace_path}; "
+                    "attempting recovery re-clone of ProjectMnemosyne"
                 )
-                return ""
+                shutil.rmtree(mnemosyne_root, ignore_errors=True)
+                if not self._ensure_mnemosyne(mnemosyne_root) or not marketplace_path.exists():
+                    logger.error(
+                        f"Recovery failed: marketplace.json still missing at {marketplace_path}; "
+                        "skipping advise step"
+                    )
+                    return ""
 
             # Build advise prompt
             advise_prompt = get_advise_prompt(
