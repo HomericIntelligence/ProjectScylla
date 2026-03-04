@@ -143,6 +143,8 @@ EXCLUDED_PREFIXES = (
     "docs/arxiv/",
     "tests/claude-code/",
     ".pixi/",
+    ".worktrees/",
+    ".claude/worktrees/",
     "build/",
     "node_modules/",
 )
