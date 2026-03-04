@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from .curses_ui import CursesUI, ThreadLogManager
-from .dependency_resolver import DependencyResolver
+from .dependency_resolver import CyclicDependencyError, DependencyResolver
 from .git_utils import get_repo_root, run
 from .github_api import fetch_issue_info, gh_issue_comment, gh_issue_create, gh_pr_create
 from .models import (
@@ -113,7 +113,7 @@ class IssueImplementer:
         # Detect cycles
         try:
             self.resolver.detect_cycles()
-        except Exception as e:
+        except CyclicDependencyError as e:
             logger.error(f"Dependency cycle detected: {e}")
             return {}
 
@@ -173,7 +173,9 @@ class IssueImplementer:
                 # Load dependencies recursively
                 self.resolver._load_dependencies(issue, cached_states)
 
-            except Exception as e:
+            except (
+                Exception
+            ) as e:  # broad catch: network errors, API failures, JSON parsing all possible
                 logger.error(f"Failed to load issue #{issue_num}: {e}")
 
         logger.info(f"Loaded {len(self.resolver.graph.issues)} issues")
@@ -191,21 +193,21 @@ class IssueImplementer:
         try:
             run(["gh", "--version"], check=True)
             logger.info("✓ gh CLI available")
-        except Exception as e:
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
             logger.error(f"✗ gh CLI not available: {e}")
 
         # Check git
         try:
             run(["git", "--version"], check=True)
             logger.info("✓ git available")
-        except Exception as e:
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
             logger.error(f"✗ git not available: {e}")
 
         # Check Claude Code
         try:
             run(["claude", "--version"], check=True)
             logger.info("✓ Claude Code available")
-        except Exception as e:
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
             logger.error(f"✗ Claude Code not available: {e}")
 
         # Check repository
@@ -215,7 +217,7 @@ class IssueImplementer:
                 capture_output=True,
             ).stdout.strip()
             logger.info(f"✓ In git repository (branch: {branch})")
-        except Exception as e:
+        except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
             logger.error(f"✗ Not in git repository: {e}")
 
         logger.info("Health check complete")
@@ -246,7 +248,7 @@ class IssueImplementer:
                 deps = self.resolver.graph.get_dependencies(issue_num)
                 dep_str = f" (depends on: {deps})" if deps else ""
                 logger.info(f"  {i}. #{issue_num}: {issue.title}{dep_str}")
-        except Exception as e:
+        except CyclicDependencyError as e:
             logger.error(f"Failed to compute topological order: {e}")
 
         return {}
@@ -285,7 +287,7 @@ class IssueImplementer:
                 # Wait for at least one to complete
                 try:
                     done, _pending = wait(futures.keys(), timeout=1.0, return_when=FIRST_COMPLETED)
-                except Exception:
+                except Exception:  # broad catch: thread pool can raise various internal errors
                     # Timeout or error - check if we should continue
                     if not submitted_any and not futures:
                         break
@@ -309,7 +311,7 @@ class IssueImplementer:
                         else:
                             logger.error(f"Issue #{issue_num} failed: {result.error}")
 
-                    except Exception as e:
+                    except Exception as e:  # broad catch: worker threads can raise any exception
                         logger.error(f"Issue #{issue_num} raised exception: {e}")
                         results[issue_num] = WorkerResult(
                             issue_number=issue_num,
@@ -519,7 +521,7 @@ class IssueImplementer:
                 error=str(e),
             )
 
-        except Exception as e:
+        except Exception as e:  # broad catch: top-level worker boundary, must not crash thread pool
             self._log("error", f"Unexpected {type(e).__name__}: {e}", thread_id)
 
             # Show failure in UI before releasing slot
@@ -560,7 +562,7 @@ class IssueImplementer:
                     return True
 
             return False
-        except Exception:
+        except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
             return False
 
     def _generate_plan(self, issue_number: int) -> None:
@@ -705,7 +707,9 @@ class IssueImplementer:
                     # Rate limit: sleep between creates
                     time.sleep(1)
 
-                except Exception as e:
+                except (
+                    Exception
+                ) as e:  # broad catch: GitHub API can fail in many ways; continue with others
                     logger.warning(f"Failed to create follow-up issue '{item['title']}': {e}")
                     # Continue with remaining items
 
@@ -717,14 +721,16 @@ class IssueImplementer:
                 try:
                     gh_issue_comment(issue_number, summary)
                     logger.info(f"Posted follow-up summary to issue #{issue_number}")
-                except Exception as e:
+                except Exception as e:  # broad catch: GitHub API call; non-critical summary post
                     logger.warning(f"Failed to post follow-up summary: {e}")
 
             logger.info(
                 f"Follow-up issues completed for #{issue_number}: created {len(created_issues)}"
             )
 
-        except Exception as e:
+        except (
+            Exception
+        ) as e:  # broad catch: top-level follow-up boundary; non-blocking, must not propagate
             logger.warning(f"Follow-up issues failed for issue #{issue_number}: {e}")
 
             # Save failure output to log file
@@ -758,7 +764,7 @@ class IssueImplementer:
         try:
             content = log_file.read_text()
             return content.startswith("FAILED:")
-        except Exception:
+        except OSError:
             return True
 
     def _rerun_failed_retrospectives(self) -> dict[int, bool]:
@@ -869,7 +875,9 @@ class IssueImplementer:
             logger.info(f"Retrospective completed for issue #{issue_number}")
             logger.info(f"Retrospective log: {log_file}")
             return True
-        except Exception as e:
+        except (
+            Exception
+        ) as e:  # broad catch: external claude process; non-blocking, must not propagate
             logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
 
             # Save failure output to log file
@@ -1127,7 +1135,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
                 pr_number = cast(int, pr_data[0]["number"])
                 logger.info(f"✓ PR #{pr_number} already exists")
                 return pr_number
-        except Exception as e:
+        except Exception as e:  # broad catch: gh CLI + JSON parsing; fallback is to create PR
             logger.debug(f"Could not find existing PR: {e}")
 
         # PR doesn't exist, create it
@@ -1184,7 +1192,7 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
                     with self.state_lock:
                         self.states[state.issue_number] = state
                 logger.info(f"Loaded state for issue #{state.issue_number}")
-            except Exception as e:
+            except (json.JSONDecodeError, ValueError, OSError) as e:
                 logger.error(f"Failed to load state from {state_file}: {e}")
 
     def _print_summary(self, results: dict[int, WorkerResult]) -> None:
