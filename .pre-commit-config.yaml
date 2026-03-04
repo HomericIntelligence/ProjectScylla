@@ -13,6 +13,15 @@ repos:
         language: pygrep
         files: \.py$
         types: [python]
+      - id: check-mojo-artifacts
+        name: Check for Mojo Migration Artifacts
+        description: >-
+          Fail if scylla/ contains Mojo migration artifact phrases
+          ('Mojo equivalents' or 'no Mojo') left over from a prior migration attempt.
+        entry: '(Mojo equivalents|no Mojo)'
+        language: pygrep
+        files: ^scylla/.*\.py$
+        types: [python]
       - id: pip-audit
         name: pip-audit CVE Scan
         entry: pixi run audit
