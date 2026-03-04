@@ -1,8 +1,8 @@
-"""Analysis pipeline for experiment results.
+"""Statistical analysis package for ProjectScylla experiment results.
 
 This module provides data loading, statistical analysis, figure generation,
-and table generation for the ProjectScylla experiment results using Python
-libraries (numpy, scipy, matplotlib, altair).
+and table generation for evaluating agent performance across ablation study
+tiers.
 """
 
 from scylla.analysis.dataframes import (
