@@ -367,7 +367,9 @@ class TestRun:
             mock_result.stdout = "Success"
             mock_result.stderr = ""
 
-            with patch("scylla.adapters.claude_code.subprocess.run", return_value=mock_result) as mock_run:
+            with patch(
+                "scylla.adapters.claude_code.subprocess.run", return_value=mock_result
+            ) as mock_run:
                 adapter.run(config, tier_config)
 
             # Check that --tools "" is in the command
@@ -424,7 +426,9 @@ class TestRun:
                 output_dir=tmppath,
             )
 
-            with patch("scylla.adapters.claude_code.subprocess.run", side_effect=FileNotFoundError()):
+            with patch(
+                "scylla.adapters.claude_code.subprocess.run", side_effect=FileNotFoundError()
+            ):
                 with pytest.raises(AdapterError, match="CLI not found"):
                     adapter.run(config)
 
