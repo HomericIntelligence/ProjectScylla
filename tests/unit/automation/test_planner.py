@@ -261,15 +261,21 @@ class TestEnsureMnemosyne:
         assert result is False
 
     def test_no_clone_if_exists(self, planner, tmp_path):
-        """Test does not clone when directory already exists."""
+        """Test does not clone when directory already exists (runs git pull instead)."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
         mnemosyne_root.mkdir()
 
         with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
             result = planner._ensure_mnemosyne(mnemosyne_root)
 
         assert result is True
-        mock_run.assert_not_called()
+        # Should call git pull, not gh repo clone
+        mock_run.assert_called_once()
+        cmd = mock_run.call_args[0][0]
+        assert "git" in cmd
+        assert "pull" in cmd
+        assert "gh" not in cmd
 
     def test_lock_file_removed_after_successful_clone(self, planner, tmp_path):
         """Test that the lock file is removed after a successful clone."""
@@ -284,6 +290,39 @@ class TestEnsureMnemosyne:
         assert result is True
         assert not lock_path.exists(), "Lock file should be removed after successful clone"
 
+    def test_git_pull_called_when_directory_exists(self, planner, tmp_path):
+        """Test that git pull --ff-only is called when directory already exists."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+        mnemosyne_root.mkdir()
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = planner._ensure_mnemosyne(mnemosyne_root)
+
+        assert result is True
+        mock_run.assert_called_once()
+        cmd = mock_run.call_args[0][0]
+        assert "git" in cmd
+        assert "-C" in cmd
+        assert str(mnemosyne_root) in cmd
+        assert "pull" in cmd
+        assert "--ff-only" in cmd
+
+    def test_git_pull_failure_logs_warning_and_returns_true(self, planner, tmp_path):
+        """Test that a git pull failure logs a warning but still returns True."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+        mnemosyne_root.mkdir()
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.side_effect = subprocess.CalledProcessError(
+                1, "git", stderr="not a fast-forward"
+            )
+
+            result = planner._ensure_mnemosyne(mnemosyne_root)
+
+        assert result is True
+
     def test_concurrent_clone_only_once(self, mock_options, tmp_path):
         """Test concurrent calls only clone once (lock prevents double-clone)."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
@@ -291,10 +330,12 @@ class TestEnsureMnemosyne:
         clone_calls = []
         start_event = threading.Event()
 
-        def fake_clone(cmd: list[str], **kwargs: object) -> MagicMock:
-            clone_calls.append(1)
-            # Create the directory so subsequent checks see it
-            mnemosyne_root.mkdir(exist_ok=True)
+        def fake_subprocess(cmd: list[str], **kwargs: object) -> MagicMock:
+            # Only count gh repo clone calls, not git pull calls
+            if "gh" in cmd and "clone" in cmd:
+                clone_calls.append(1)
+                # Create the directory so subsequent checks see it
+                mnemosyne_root.mkdir(exist_ok=True)
             return MagicMock(returncode=0)
 
         planner1 = Planner(mock_options)
@@ -309,7 +350,7 @@ class TestEnsureMnemosyne:
         t1 = threading.Thread(target=worker, args=(planner1,))
         t2 = threading.Thread(target=worker, args=(planner2,))
 
-        with patch("subprocess.run", side_effect=fake_clone):
+        with patch("subprocess.run", side_effect=fake_subprocess):
             t1.start()
             t2.start()
             start_event.set()
