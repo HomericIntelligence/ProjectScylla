@@ -460,6 +460,7 @@ ProjectScylla/
 │   ├── automation/      # Automation utilities
 │   ├── config/          # Configuration
 │   ├── core/            # Core types
+│   ├── discovery/       # Resource discovery
 │   ├── e2e/             # E2E testing framework
 │   ├── executor/        # Execution engine
 │   ├── judge/           # LLM judge system
