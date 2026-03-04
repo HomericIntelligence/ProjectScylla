@@ -29,7 +29,6 @@
 
 # Agent configurations and hierarchy
 /.claude/ @HomericIntelligence/projectscylla-maintainers
-/agents/ @HomericIntelligence/projectscylla-maintainers
 
 # Model configurations
 /config/models/ @HomericIntelligence/projectscylla-maintainers
