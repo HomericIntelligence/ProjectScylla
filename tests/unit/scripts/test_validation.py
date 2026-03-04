@@ -107,7 +107,7 @@ class TestCheckRequiredSections:
     def test_matches_heading_at_any_level(self) -> None:
         """Matches headings at ## and ### levels."""
         content = "### Deep Section\n"
-        ok, missing = check_required_sections(content, ["Deep Section"])
+        ok, _missing = check_required_sections(content, ["Deep Section"])
         assert ok is True
 
 

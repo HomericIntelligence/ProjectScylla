@@ -252,6 +252,7 @@ def scan_file(file_path: Path, repo_root: Path) -> list[FragmentFinding]:
 
 EXCLUDED_PREFIXES = (
     ".pixi/",
+    ".worktrees/",
     "build/",
     "node_modules/",
     "tests/claude-code/",
