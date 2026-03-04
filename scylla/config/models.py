@@ -2,7 +2,6 @@
 
 This module defines the configuration schema for test cases, rubrics,
 tier configurations, and model configurations used by the evaluation framework.
-and Pydantic validation capabilities.
 """
 
 from typing import Literal
