@@ -3,9 +3,29 @@
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
+
 DOCKERFILE = Path(__file__).parents[3] / "docker" / "Dockerfile"
+PYPROJECT_TOML = Path(__file__).parents[3] / "pyproject.toml"
+
+
+def _parse_hatchling_specifier(requires: list[str]) -> str | None:
+    """Return the hatchling specifier string from build-system.requires, or None."""
+    for req in requires:
+        if req.lower().startswith("hatchling"):
+            return req
+    return None
+
+
+def _version_tuple(v: str) -> tuple[int, ...]:
+    """Convert '1.29.0' to (1, 29, 0)."""
+    return tuple(int(p) for p in v.split("."))
 
 
 class TestHatchlingPinned:
@@ -32,6 +52,45 @@ class TestHatchlingPinned:
         parts = version.split(".")
         assert len(parts) == 3, f"Expected X.Y.Z version, got: {version}"
         assert all(p.isdigit() for p in parts), f"Version parts must be numeric, got: {version}"
+
+    def test_pyproject_hatchling_requirement_parseable(self) -> None:
+        """pyproject.toml [build-system].requires must include a hatchling entry."""
+        with PYPROJECT_TOML.open("rb") as f:
+            data = tomllib.load(f)
+        requires: list[str] = data.get("build-system", {}).get("requires", [])
+        spec = _parse_hatchling_specifier(requires)
+        assert spec is not None, "hatchling not found in [build-system].requires in pyproject.toml"
+
+    def test_hatchling_version_matches_pyproject(self) -> None:
+        """Dockerfile hatchling pin must satisfy the constraint in pyproject.toml."""
+        with PYPROJECT_TOML.open("rb") as f:
+            data = tomllib.load(f)
+        requires: list[str] = data.get("build-system", {}).get("requires", [])
+        spec = _parse_hatchling_specifier(requires)
+        assert spec is not None, "hatchling not in pyproject.toml [build-system].requires"
+
+        content = DOCKERFILE.read_text()
+        match = re.search(r"pip install.*?hatchling==(\d+\.\d+\.\d+)", content)
+        assert match is not None, "Could not find hatchling==X.Y.Z in Dockerfile"
+        pinned = match.group(1)
+        pinned_t = _version_tuple(pinned)
+
+        lower_match = re.search(r">=(\d+\.\d+\.\d+)", spec)
+        assert lower_match, f"No >= lower bound found in pyproject.toml specifier: {spec!r}"
+        lower_t = _version_tuple(lower_match.group(1))
+
+        upper_match = re.search(r"<(\d+(?:\.\d+)*)", spec)
+        upper_t = _version_tuple(upper_match.group(1)) if upper_match else None
+
+        assert pinned_t >= lower_t, (
+            f"Dockerfile hatchling=={pinned} is below pyproject.toml lower bound "
+            f"{lower_match.group(1)} (from {spec!r})"
+        )
+        if upper_t is not None:
+            assert pinned_t < upper_t, (
+                f"Dockerfile hatchling=={pinned} violates pyproject.toml upper bound "
+                f"(from {spec!r})"
+            )
 
 
 class TestAllStaticPipInstallsPinned:
