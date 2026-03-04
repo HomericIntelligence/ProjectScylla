@@ -271,6 +271,19 @@ class TestEnsureMnemosyne:
         assert result is True
         mock_run.assert_not_called()
 
+    def test_lock_file_removed_after_successful_clone(self, planner, tmp_path):
+        """Test that the lock file is removed after a successful clone."""
+        mnemosyne_root = tmp_path / "ProjectMnemosyne"
+        lock_path = tmp_path / ".mnemosyne.lock"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+
+            result = planner._ensure_mnemosyne(mnemosyne_root)
+
+        assert result is True
+        assert not lock_path.exists(), "Lock file should be removed after successful clone"
+
     def test_concurrent_clone_only_once(self, mock_options, tmp_path):
         """Test concurrent calls only clone once (lock prevents double-clone)."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
