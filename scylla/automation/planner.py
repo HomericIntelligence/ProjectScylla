@@ -359,6 +359,7 @@ class Planner:
                         text=True,
                     )
                     logger.info("ProjectMnemosyne cloned successfully")
+                    lock_path.unlink(missing_ok=True)
                     return True
 
                 except subprocess.CalledProcessError as e:

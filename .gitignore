@@ -88,6 +88,7 @@ worktrees
 # Automation runtime directories
 .worktrees/
 .issue_implementer/
+.mnemosyne.lock
 
 # Root-level log files (automation scripts, debugging)
 /*.log
