@@ -330,7 +330,7 @@ Combined_SE = sqrt(sum(run_SE^2)) / n_runs
 
 The following tier-specific metrics are defined in the architecture but **cannot be computed from current data collection**. Each requires additional instrumentation before implementation.
 
-### 1. Tool Call Success Rate (T3 - Tooling)
+### 1. Tool Call Success Rate (T2 - Tooling)
 
 **Status**: Not computable
 
@@ -378,7 +378,7 @@ Tool_Success_Rate = successful_tool_calls / total_tool_calls
 
 ---
 
-### 2. Tool Utilization (T3 - Tooling)
+### 2. Tool Utilization (T2 - Tooling)
 
 **Status**: Not computable
 
@@ -422,7 +422,7 @@ Tool_Utilization = tasks_using_tools / total_tasks
 
 ---
 
-### 3. Task Distribution Efficiency (T4 - Delegation)
+### 3. Task Distribution Efficiency (T3 - Delegation)
 
 **Status**: Not computable
 
@@ -482,7 +482,7 @@ Task_Distribution_Efficiency = 1 - (idle_time / total_time)
 
 ---
 
-### 4. Correction Frequency (T5 - Hierarchy)
+### 4. Correction Frequency (T4 - Hierarchy)
 
 **Status**: Not computable (requires semantic analysis)
 
@@ -548,7 +548,7 @@ Correction_Frequency = corrections_made / total_steps
 
 ---
 
-### 5. Iterations to Success (T5 - Hierarchy)
+### 5. Iterations to Success (T4 - Hierarchy)
 
 **Status**: Partially computable (num_turns is rough proxy)
 
@@ -768,19 +768,19 @@ Frequency of agent-generated changes rejected by human reviewers.
 pr_revert_rate = reverted_changes / total_changes
 ```
 
-## Token Tracking (T2 vs T3 Analysis)
+## Token Tracking (T1 vs T2 Analysis)
 
-These metrics analyze the "Token Efficiency Chasm" between T2 (Skills) and T3 (Tooling).
+These metrics analyze the "Token Efficiency Chasm" between T1 (Skills) and T2 (Tooling).
 
 ### Schema Overhead
 
-Total tokens consumed by tool schemas (T3+).
+Total tokens consumed by tool schemas (T2+).
 
 ```
 schema_overhead = sum(tokens for component_type == TOOL_SCHEMA)
 ```
 
-**Key insight**: T3 architectures load JSON schemas that can consume 50k+ tokens upfront.
+**Key insight**: T2 architectures load JSON schemas that can consume 50k+ tokens upfront.
 
 ### Skill Efficiency
 
@@ -792,7 +792,7 @@ skill_efficiency = skill_tokens / (skill_tokens + schema_overhead)
 
 **Interpretation**:
 
-- 1.0 = no schema overhead (pure T2)
+- 1.0 = no schema overhead (pure T1)
 - 0.2 = 80% of tokens are schema overhead
 
 ### Token Efficiency Ratio
@@ -815,15 +815,15 @@ Track costs at the component level:
 | Component Type | Description |
 |----------------|-------------|
 | `SYSTEM_PROMPT` | Base system prompt |
-| `SKILL_PROMPT` | T2 skill instructions |
-| `DOMAIN_EXPERTISE` | T2 domain knowledge |
-| `TOOL_SCHEMA` | T3 JSON tool definitions |
-| `TOOL_CALL` | T3 tool invocations |
-| `TOOL_RESPONSE` | T3 tool results |
-| `ORCHESTRATOR` | T4/T5 coordination |
-| `SUB_AGENT` | T4/T5 delegated agents |
-| `MONITOR` | T5 error detection |
-| `EVALUATOR` | T5 self-reflection |
+| `SKILL_PROMPT` | T1 skill instructions |
+| `DOMAIN_EXPERTISE` | T1 domain knowledge |
+| `TOOL_SCHEMA` | T2 JSON tool definitions |
+| `TOOL_CALL` | T2 tool invocations |
+| `TOOL_RESPONSE` | T2 tool results |
+| `ORCHESTRATOR` | T3/T4 coordination |
+| `SUB_AGENT` | T3/T4 delegated agents |
+| `MONITOR` | T4 error detection |
+| `EVALUATOR` | T4 self-reflection |
 
 ```python
 # Calculate per-component costs
