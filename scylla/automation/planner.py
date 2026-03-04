@@ -334,6 +334,20 @@ class Planner:
         with Planner._mnemosyne_lock:
             # TOCTOU guard: re-check inside the lock
             if mnemosyne_root.exists():
+                # Refresh stale clone with a fast-forward pull
+                try:
+                    subprocess.run(
+                        ["git", "-C", str(mnemosyne_root), "pull", "--ff-only"],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                    )
+                    logger.debug(f"ProjectMnemosyne refreshed at {mnemosyne_root}")
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to refresh ProjectMnemosyne (using existing clone): {e}"
+                    )
                 return True
 
             lock_path = mnemosyne_root.parent / ".mnemosyne.lock"
