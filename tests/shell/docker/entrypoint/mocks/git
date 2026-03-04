@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Mock for `git`.
+# Behavior is controlled by environment variables:
+#   GIT_MOCK_CLONE_EXIT  - exit code for `git clone` (default: 0)
+
+case "$1" in
+    clone)
+        # Create the target directory so subsequent ls tests pass
+        _target="${!#}"
+        mkdir -p "$_target" 2>/dev/null || true
+        exit "${GIT_MOCK_CLONE_EXIT:-0}"
+        ;;
+    checkout)
+        exit 0
+        ;;
+    *)
+        # All other git commands succeed silently
+        exit 0
+        ;;
+esac

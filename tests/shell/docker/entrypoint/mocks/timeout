@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Mock for `timeout`.
+# Behavior is controlled by environment variables:
+#   TIMEOUT_MOCK_EXIT  - exit code to return (default: runs the command)
+#
+# Usage mirrors real timeout: timeout <seconds> <cmd> [args...]
+# Shift away the seconds argument, then execute or mock.
+
+shift  # remove timeout duration
+
+if [[ -n "${TIMEOUT_MOCK_EXIT:-}" ]]; then
+    exit "${TIMEOUT_MOCK_EXIT}"
+fi
+
+# Pass through to the actual command
+exec "$@"
