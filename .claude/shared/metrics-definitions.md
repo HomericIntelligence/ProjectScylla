@@ -236,7 +236,7 @@ Ablation_Score = performance_with_component - performance_without_component
 
 ## Tier-Specific Metrics
 
-### T3 (Tooling)
+### T2 (Tooling)
 
 **Tool Call Success Rate**:
 
@@ -250,7 +250,7 @@ Tool_Success_Rate = successful_tool_calls / total_tool_calls
 Tool_Utilization = tasks_using_tools / total_tasks
 ```
 
-### T4 (Delegation)
+### T3 (Delegation)
 
 **Delegation Overhead**:
 
@@ -264,7 +264,7 @@ Delegation_Overhead = multi_agent_cost / single_agent_equivalent_cost
 Task_Distribution_Efficiency = 1 - (idle_time / total_time)
 ```
 
-### T5 (Hierarchy)
+### T4 (Hierarchy)
 
 **Correction Frequency**:
 
@@ -854,6 +854,6 @@ schema_pct = distribution.get_type_percentage(ComponentType.TOOL_SCHEMA)
 
 ## Related Documentation
 
-- [Judge Protocol](./judge-protocol.md) - How judgments produce weighted_score
-- [Evaluation Categories](./judge-protocol.md#evaluation-categories) - 10 quality categories
+- [Judge Protocol](../../docs/design/judge-protocol.md) - How judgments produce weighted_score
+- [Evaluation Categories](../../docs/design/judge-protocol.md#evaluation-categories) - 10 quality categories
 - [Research Methodology](../research.md) - Original metrics definitions

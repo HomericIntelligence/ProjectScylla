@@ -444,7 +444,7 @@ pixi run pytest tests/unit/analysis/test_stats.py -v -k "test_bootstrap"
 export SCYLLA_LOG_LEVEL=DEBUG
 
 # Run with pdb
-pixi run python -m pdb scripts/run_experiment.py
+pixi run python -m pdb scripts/manage_experiment.py
 
 # Pytest debugging
 pixi run pytest tests/ -v --pdb  # Drop into debugger on failure
@@ -464,7 +464,8 @@ ProjectScylla/
 │   ├── executor/        # Execution engine
 │   ├── judge/           # LLM judge system
 │   ├── metrics/         # Metrics calculation
-│   └── reporting/       # Report generation
+│   ├── reporting/       # Report generation
+│   └── utils/           # Utility functions
 ├── tests/               # Test suite
 │   ├── unit/            # Unit tests
 │   ├── integration/     # Integration tests

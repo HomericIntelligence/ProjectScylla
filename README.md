@@ -331,7 +331,7 @@ fullruns/{experiment_name}/{timestamp}/
 - `exit_code` (0 = success)
 - `judges` (list with grades & criteria)
 
-Schema: `scylla/analysis/schemas/run_result_schema.json`
+Schema: `scylla/analysis/schemas/run_result.schema.json`
 
 ---
 
