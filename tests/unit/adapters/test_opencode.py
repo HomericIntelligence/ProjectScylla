@@ -305,7 +305,9 @@ class TestRun:
             mock_result.stdout = "Success"
             mock_result.stderr = ""
 
-            with patch("scylla.adapters.base_cli.subprocess.run", return_value=mock_result) as mock_run:
+            with patch(
+                "scylla.adapters.base_cli.subprocess.run", return_value=mock_result
+            ) as mock_run:
                 adapter.run(config, tier_config)
 
             call_args = mock_run.call_args
