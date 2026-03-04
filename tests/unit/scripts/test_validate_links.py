@@ -148,19 +148,19 @@ class TestValidateInternalLink:
         target.parent.mkdir()
         target.write_text("# Guide")
         source = tmp_path / "README.md"
-        is_valid, err = validate_internal_link("/docs/guide.md", source, tmp_path)
+        is_valid, _err = validate_internal_link("/docs/guide.md", source, tmp_path)
         assert is_valid is True
 
     def test_broken_absolute_link(self, tmp_path: Path) -> None:
         """Absolute link to missing file is invalid."""
         source = tmp_path / "README.md"
-        is_valid, err = validate_internal_link("/missing.md", source, tmp_path)
+        is_valid, _err = validate_internal_link("/missing.md", source, tmp_path)
         assert is_valid is False
 
     def test_pure_anchor_link_is_valid(self, tmp_path: Path) -> None:
         """Pure anchor links (no path) are considered valid (skipped)."""
         source = tmp_path / "README.md"
-        is_valid, err = validate_internal_link("#section", source, tmp_path)
+        is_valid, _err = validate_internal_link("#section", source, tmp_path)
         assert is_valid is True
 
 

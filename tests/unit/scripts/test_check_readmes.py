@@ -103,7 +103,7 @@ class TestCheckRequiredSections:
         docs.mkdir()
         readme = docs / "README.md"
         sections = ["Overview", "Structure"]
-        ok, missing = check_required_sections(readme, sections)
+        ok, _missing = check_required_sections(readme, sections)
         assert ok is True
 
     def test_case_insensitive_section_matching(self, tmp_path: Path) -> None:
@@ -111,7 +111,7 @@ class TestCheckRequiredSections:
         readme = tmp_path / "README.md"
         # "overview" lowercase should match "Overview" requirement
         sections = ["overview", "installation", "usage"]
-        ok, missing = check_required_sections(readme, sections)
+        ok, _missing = check_required_sections(readme, sections)
         assert ok is True
 
 

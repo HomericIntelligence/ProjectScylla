@@ -83,7 +83,7 @@ class TestDetectShadowing:
         f.write_text("Result = DomainResult\n")
         violations = detect_shadowing(f)
         assert len(violations) == 1
-        line_num, line, alias, target = violations[0]
+        line_num, _line, alias, target = violations[0]
         assert alias == "Result"
         assert target == "DomainResult"
         assert line_num == 1

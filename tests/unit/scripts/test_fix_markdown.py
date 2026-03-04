@@ -97,7 +97,7 @@ class TestFixMd026:
     def test_removes_trailing_period(self) -> None:
         """Trailing period is removed from heading."""
         f = fixer()
-        result, fixes = f._fix_md026_heading_punctuation("# Title.\n")
+        result, _fixes = f._fix_md026_heading_punctuation("# Title.\n")
         assert "Title." not in result
 
     def test_leaves_clean_heading_unchanged(self) -> None:
@@ -186,7 +186,7 @@ class TestFixFile:
         original = "# Heading:\n\n\ncontent\n"
         md.write_text(original)
         f = fixer(dry_run=True)
-        modified, fixes = f.fix_file(md)
+        _modified, _fixes = f.fix_file(md)
         # File should not have changed on disk
         assert md.read_text() == original
 
@@ -220,7 +220,7 @@ class TestProcessPath:
         (tmp_path / "a.md").write_text("# OK\n\ncontent\n")
         (tmp_path / "b.md").write_text("# OK\n\ncontent\n")
         f = fixer()
-        files_modified, total_fixes = f.process_path(tmp_path)
+        files_modified, _total_fixes = f.process_path(tmp_path)
         # Should have found 2 files (modified or not)
         assert isinstance(files_modified, int)
 

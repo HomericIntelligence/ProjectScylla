@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from scylla.e2e.models import SubTestResult, TierConfig
     from scylla.e2e.scheduler import ParallelismScheduler
 
+import contextlib
+
 from scylla.e2e.checkpoint import (
     E2ECheckpoint,
     compute_config_hash,
@@ -744,10 +746,8 @@ class E2ERunner:
 
         _current_exp_state = ExperimentState.INITIALIZING
         if self.checkpoint:
-            try:
+            with contextlib.suppress(ValueError):
                 _current_exp_state = ExperimentState(self.checkpoint.experiment_state)
-            except ValueError:
-                pass
 
         _resume_states = {
             ExperimentState.TIERS_RUNNING,
@@ -802,13 +802,11 @@ class E2ERunner:
 
         # Handle early stop (--until-experiment)
         final_state = esm.get_state()
-        if final_state not in (ExperimentState.COMPLETE, ExperimentState.FAILED):
-            if (
-                self.config.until_experiment_state
-                and final_state == self.config.until_experiment_state
-            ):
-                logger.info(f"Stopped at --until-experiment {final_state.value}")
-                return self._aggregate_results(tier_results, start_time)
+        if final_state not in (ExperimentState.COMPLETE, ExperimentState.FAILED) and (
+            self.config.until_experiment_state and final_state == self.config.until_experiment_state
+        ):
+            logger.info(f"Stopped at --until-experiment {final_state.value}")
+            return self._aggregate_results(tier_results, start_time)
 
         # Return result (populated by action_tiers_complete)
         if self._last_experiment_result is not None:

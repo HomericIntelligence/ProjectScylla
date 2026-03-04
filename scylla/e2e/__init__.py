@@ -43,8 +43,6 @@ from scylla.e2e.rate_limit import (
 from scylla.e2e.subtest_state_machine import SubtestStateMachine
 
 __all__ = [
-    # State machines
-    "SubtestStateMachine",
     # Checkpoint
     "CheckpointError",
     "ConfigMismatchError",
@@ -59,6 +57,8 @@ __all__ = [
     "RateLimitInfo",
     "SubTestConfig",
     "SubTestResult",
+    # State machines
+    "SubtestStateMachine",
     "TierConfig",
     "TierID",
     "TierResult",

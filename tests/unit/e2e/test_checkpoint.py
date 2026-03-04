@@ -805,7 +805,7 @@ class TestSaveCheckpointThreadSafety:
         def save_worker() -> None:
             try:
                 save_checkpoint(checkpoint, checkpoint_path)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 errors.append(exc)
 
         threads = [threading.Thread(target=save_worker) for _ in range(20)]

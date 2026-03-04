@@ -70,7 +70,7 @@ def is_shadowing_pattern(alias: str, target: str) -> bool:
     return target_lower.endswith(alias_lower)
 
 
-def detect_shadowing(file_path: Path) -> list[tuple[int, str, str, str]]:  # noqa: C901  # AST traversal with multiple node types
+def detect_shadowing(file_path: Path) -> list[tuple[int, str, str, str]]:
     """Find type alias shadowing violations in a Python file.
 
     Args:

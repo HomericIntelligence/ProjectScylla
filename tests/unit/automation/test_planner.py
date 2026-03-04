@@ -157,11 +157,9 @@ class TestRunAdvise:
 
         def patched_exists(p: Path) -> bool:
             call_count[0] += 1
-            if call_count[0] == 1:
-                # First call: mnemosyne_root.exists() -> False (triggers _ensure_mnemosyne)
-                return False
+            # First call: mnemosyne_root.exists() -> False (triggers _ensure_mnemosyne)
             # Subsequent calls (marketplace check): True
-            return True
+            return call_count[0] != 1
 
         with (
             patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
@@ -212,9 +210,7 @@ class TestRunAdvise:
             # mnemosyne_root exists but marketplace.json is always absent
             if p.name == "ProjectMnemosyne":
                 return True
-            if p.name == "marketplace.json":
-                return False
-            return True
+            return p.name != "marketplace.json"
 
         with (
             patch("scylla.automation.planner.get_repo_root") as mock_get_repo,

@@ -38,7 +38,7 @@ _FMT_RATE = f".{config.precision_rates}f"
 _FMT_COST = f".{config.precision_costs}f"
 
 
-def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with many metric types
+def _generate_pairwise_comparison(  # pairwise comparison with many metric types
     runs_df: pd.DataFrame,
     metric_column: str,
     metric_name: str,
@@ -141,10 +141,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
             )
 
             # Post-hoc power (Mann-Whitney) — skip for small samples
-            if n1 >= 5 and n2 >= 5:
-                power = mann_whitney_power(n1, n2, abs(delta))
-            else:
-                power = float("nan")
+            power = mann_whitney_power(n1, n2, abs(delta)) if n1 >= 5 and n2 >= 5 else float("nan")
 
             pairwise_data.append(
                 {
@@ -182,10 +179,7 @@ def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with man
             )
 
             # Post-hoc power (Mann-Whitney) — skip for small samples
-            if n1 >= 5 and n2 >= 5:
-                power = mann_whitney_power(n1, n2, abs(delta))
-            else:
-                power = float("nan")
+            power = mann_whitney_power(n1, n2, abs(delta)) if n1 >= 5 and n2 >= 5 else float("nan")
 
             pairwise_data.append(
                 {
@@ -392,7 +386,7 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     )
 
 
-def table04_criteria_performance(  # noqa: C901  # table generation with many criteria branches
+def table04_criteria_performance(  # table generation with many criteria branches
     criteria_df: pd.DataFrame,
     runs_df: pd.DataFrame,
     criteria_weights: dict[str, float] | None = None,
@@ -416,7 +410,7 @@ def table04_criteria_performance(  # noqa: C901  # table generation with many cr
         # Derive criteria and uniform weights from the actual data
         unique_criteria = sorted(criteria_df["criterion"].unique())
         n = len(unique_criteria)
-        criteria_weights = {c: 1.0 / n for c in unique_criteria} if n > 0 else {}
+        criteria_weights = dict.fromkeys(unique_criteria, 1.0 / n) if n > 0 else {}
 
     # Aggregate by (agent_model, criterion)
     criterion_stats = []

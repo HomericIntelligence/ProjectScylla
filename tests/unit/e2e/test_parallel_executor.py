@@ -429,23 +429,23 @@ class TestRunSubtestInProcessSafe:
         config = MagicMock()
         tier_config = MagicMock()
 
-        return dict(
-            config=config,
-            tier_id=TierID.T0,
-            tier_config=tier_config,
-            subtest=subtest,
-            baseline=None,
-            results_dir=tmp_path / "results",
-            tiers_dir=tmp_path / "tiers",
-            base_repo=tmp_path / "repo",
-            repo_url="https://github.com/example/repo.git",
-            commit=None,
-            checkpoint=None,
-            checkpoint_path=None,
-            coordinator=None,
-            scheduler=None,
-            experiment_dir=None,
-        )
+        return {
+            "config": config,
+            "tier_id": TierID.T0,
+            "tier_config": tier_config,
+            "subtest": subtest,
+            "baseline": None,
+            "results_dir": tmp_path / "results",
+            "tiers_dir": tmp_path / "tiers",
+            "base_repo": tmp_path / "repo",
+            "repo_url": "https://github.com/example/repo.git",
+            "commit": None,
+            "checkpoint": None,
+            "checkpoint_path": None,
+            "coordinator": None,
+            "scheduler": None,
+            "experiment_dir": None,
+        }
 
     def test_success_passthrough(self, tmp_path) -> None:
         """When _run_subtest_in_process succeeds, result is passed through unchanged."""
@@ -553,7 +553,7 @@ class TestRunSubtestInProcessSafe:
             ):
                 try:
                     _run_subtest_in_process_safe(**call_args)
-                except Exception as raised:  # noqa: BLE001
+                except Exception as raised:
                     raise AssertionError(
                         f"_run_subtest_in_process_safe raised {type(raised).__name__} "
                         f"when it should never raise"

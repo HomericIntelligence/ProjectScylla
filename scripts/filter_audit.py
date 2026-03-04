@@ -20,6 +20,7 @@ but do not cause a non-zero exit (printed as warnings).
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import sys
@@ -74,10 +75,8 @@ def extract_cvss_score(severity_list: list[dict[str, Any]]) -> float | None:
         # Check for a direct numeric "score" alongside the vector
         numeric = entry.get("base_score") or entry.get("cvss_score")
         if numeric is not None:
-            try:
+            with contextlib.suppress(TypeError, ValueError):
                 scores.append(float(numeric))
-            except (TypeError, ValueError):
-                pass
     return max(scores) if scores else None
 
 

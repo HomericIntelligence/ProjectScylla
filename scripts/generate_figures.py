@@ -106,7 +106,7 @@ FIGURES: dict[str, tuple[str, Any]] = {
 }
 
 
-def main() -> None:  # noqa: C901  # figure generation with many conditional paths
+def main() -> None:  # figure generation with many conditional paths
     """Run the figure generation script."""
     parser = argparse.ArgumentParser(
         description="Generate figures for the paper",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, call, patch
@@ -612,10 +613,9 @@ class TestResumeTierConfigPreload:
             with patch(
                 "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
             ):
-                try:
+                with contextlib.suppress(Exception):
                     runner._run_tier(TierID.T0, baseline=None, scheduler=None)
-                except Exception:  # noqa: BLE001
-                    pass  # We only care that tier_manager.load_tier_config was called
+                    # We only care that tier_manager.load_tier_config was called
 
         # load_tier_config must be called once for the pre-load (resume path)
         mock_tm.load_tier_config.assert_called_once_with(TierID.T0, mock_config.skip_agent_teams)
@@ -656,10 +656,8 @@ class TestResumeTierConfigPreload:
             with patch(
                 "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
             ):
-                try:
+                with contextlib.suppress(Exception):
                     runner._run_tier(TierID.T0, baseline=None, scheduler=None)
-                except Exception:  # noqa: BLE001
-                    pass
 
         # load_tier_config should NOT have been called (pre-load skipped for PENDING)
         mock_tm.load_tier_config.assert_not_called()
@@ -699,10 +697,8 @@ class TestResumeTierConfigPreload:
             with patch(
                 "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
             ):
-                try:
+                with contextlib.suppress(Exception):
                     runner._run_tier(TierID.T0, baseline=None, scheduler=None)
-                except Exception:  # noqa: BLE001
-                    pass
 
         mock_tm.load_tier_config.assert_not_called()
 
