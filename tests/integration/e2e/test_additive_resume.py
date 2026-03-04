@@ -36,6 +36,7 @@ from scylla.e2e.models import (
     RunState,
     SubtestState,
     TierID,
+    TierState,
 )
 from scylla.e2e.state_machine import StateMachine
 from scylla.e2e.subtest_state_machine import SubtestStateMachine, UntilHaltError
@@ -753,3 +754,240 @@ class TestAdditiveResumeInvariants:
         if tier_id != "T0":
             actual = cp_loaded.get_tier_state(tier_id)
             assert actual == "pending", f"New tier {tier_id!r} should start pending, got {actual!r}"
+
+
+# ---------------------------------------------------------------------------
+# Class 4: TestAdditiveResumeTierStates — TierStateMachine-level tier_states tests
+# ---------------------------------------------------------------------------
+
+
+class TestAdditiveResumeTierStates:
+    """TierStateMachine-level additive resume tests verifying tier_states population.
+
+    These tests drive tiers to TierState.COMPLETE via TierStateMachine and verify
+    that tier_states entries are additive — a completed tier's state is never
+    downgraded when new tiers are added in subsequent invocations.
+    """
+
+    def test_t0_complete_then_add_t1_preserves_t0_tier_state(self, tmp_path: Path) -> None:
+        """Completing T0 then adding T1 must not downgrade T0's tier_state.
+
+        After T0 reaches COMPLETE:
+        - tier_states["T0"] == "complete"
+        After adding T1 (partial runs):
+        - tier_states["T0"] still == "complete" (not reset or removed)
+        - "T1" absent from tier_states (never touched TierStateMachine for T1)
+        """
+        config_hash = compute_config_hash(_make_config(["T0"]))
+
+        cp = make_checkpoint(experiment_id=_EXPERIMENT_ID, config_hash=config_hash)
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        # Drive T0 all the way to COMPLETE via TierStateMachine
+        _simulate_tier_to_complete(cp, cp_path, "T0", ["00"], _RUNS)
+        cp = load_checkpoint(cp_path)
+
+        assert cp.tier_states.get("T0") == TierState.COMPLETE.value, (
+            f"Expected T0 tier_state='complete', got {cp.tier_states.get('T0')!r}"
+        )
+        assert cp.get_tier_state("T0") == TierState.COMPLETE.value
+
+        # Simulate adding T1 (partial — runs only, no TierStateMachine advance)
+        cp_before = load_checkpoint(cp_path)
+        cp = load_checkpoint(cp_path)
+        _simulate_tier_subtests_at_state(
+            cp, cp_path, "T1", ["00"], _RUNS, RunState.REPLAY_GENERATED
+        )
+        cp_after = load_checkpoint(cp_path)
+
+        # T0 tier_state must remain "complete"
+        assert cp_after.tier_states.get("T0") == TierState.COMPLETE.value, (
+            f"T0 tier_state was downgraded after adding T1: got {cp_after.tier_states.get('T0')!r}"
+        )
+        # T1 must not have been advanced through TierStateMachine (absent from tier_states)
+        assert "T1" not in cp_after.tier_states, (
+            f"T1 unexpectedly appeared in tier_states: {cp_after.tier_states.get('T1')!r}"
+        )
+
+        _assert_global_invariants(cp_after, cp_before, config_hash)
+        validate_checkpoint_states(
+            cp_path,
+            expected_tier_states={"T0": "complete"},
+            no_failed_states=True,
+        )
+
+    def test_two_tiers_complete_then_add_third_preserves_both(self, tmp_path: Path) -> None:
+        """Both T0 and T1 reaching COMPLETE must be preserved when T2 is added.
+
+        After T0 and T1 both reach COMPLETE:
+        - tier_states["T0"] == "complete"
+        - tier_states["T1"] == "complete"
+        After adding T2 (partial runs only):
+        - Both remain "complete"
+        - "T2" absent from tier_states
+        """
+        config_hash = compute_config_hash(_make_config(["T0"]))
+
+        cp = make_checkpoint(experiment_id=_EXPERIMENT_ID, config_hash=config_hash)
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        # Drive T0 to COMPLETE
+        _simulate_tier_to_complete(cp, cp_path, "T0", ["00"], _RUNS)
+
+        # Drive T1 to COMPLETE (load fresh from disk first)
+        cp = load_checkpoint(cp_path)
+        _simulate_tier_to_complete(cp, cp_path, "T1", ["00"], _RUNS)
+        cp_before = load_checkpoint(cp_path)
+
+        assert cp_before.tier_states.get("T0") == TierState.COMPLETE.value
+        assert cp_before.tier_states.get("T1") == TierState.COMPLETE.value
+
+        # Add T2 (partial — subtests only, no TierStateMachine advance)
+        cp = load_checkpoint(cp_path)
+        _simulate_tier_subtests_at_state(
+            cp, cp_path, "T2", ["00"], _RUNS, RunState.REPLAY_GENERATED
+        )
+        cp_after = load_checkpoint(cp_path)
+
+        assert cp_after.tier_states.get("T0") == TierState.COMPLETE.value, (
+            f"T0 tier_state changed after adding T2: got {cp_after.tier_states.get('T0')!r}"
+        )
+        assert cp_after.tier_states.get("T1") == TierState.COMPLETE.value, (
+            f"T1 tier_state changed after adding T2: got {cp_after.tier_states.get('T1')!r}"
+        )
+        assert "T2" not in cp_after.tier_states, (
+            "T2 should not be in tier_states until TierStateMachine is advanced"
+        )
+
+        _assert_global_invariants(cp_after, cp_before, config_hash)
+        validate_checkpoint_states(
+            cp_path,
+            expected_tier_states={"T0": "complete", "T1": "complete"},
+            no_failed_states=True,
+        )
+
+    def test_complete_tier_tier_state_additive_across_three_invocations(
+        self, tmp_path: Path
+    ) -> None:
+        """Three sequential invocations, each completing one tier, are fully additive.
+
+        Invocation 1: T0 → COMPLETE
+        Invocation 2: T1 → COMPLETE (T0 still complete)
+        Invocation 3: T2 → partial (T0 and T1 still complete)
+        """
+        config_hash = compute_config_hash(_make_config(["T0"]))
+
+        cp = make_checkpoint(experiment_id=_EXPERIMENT_ID, config_hash=config_hash)
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        # Invocation 1: T0 → COMPLETE
+        _simulate_tier_to_complete(cp, cp_path, "T0", ["00"], _RUNS)
+        cp_inv1 = load_checkpoint(cp_path)
+        assert cp_inv1.tier_states.get("T0") == TierState.COMPLETE.value
+
+        # Invocation 2: T1 → COMPLETE
+        cp = load_checkpoint(cp_path)
+        _simulate_tier_to_complete(cp, cp_path, "T1", ["00"], _RUNS)
+        cp_inv2 = load_checkpoint(cp_path)
+        assert cp_inv2.tier_states.get("T0") == TierState.COMPLETE.value, (
+            "T0 tier_state lost after invocation 2"
+        )
+        assert cp_inv2.tier_states.get("T1") == TierState.COMPLETE.value
+
+        # Invocation 3: T2 partial (runs only)
+        cp = load_checkpoint(cp_path)
+        _simulate_tier_subtests_at_state(
+            cp, cp_path, "T2", ["00"], _RUNS, RunState.REPLAY_GENERATED
+        )
+        cp_inv3 = load_checkpoint(cp_path)
+
+        assert cp_inv3.tier_states.get("T0") == TierState.COMPLETE.value, (
+            "T0 tier_state lost after invocation 3"
+        )
+        assert cp_inv3.tier_states.get("T1") == TierState.COMPLETE.value, (
+            "T1 tier_state lost after invocation 3"
+        )
+        assert "T2" not in cp_inv3.tier_states, (
+            "T2 should not be in tier_states (TierStateMachine not advanced)"
+        )
+
+        _assert_global_invariants(cp_inv3, cp_inv2, config_hash)
+        _assert_global_invariants(cp_inv2, cp_inv1, config_hash)
+        validate_checkpoint_states(
+            cp_path,
+            expected_tier_states={"T0": "complete", "T1": "complete"},
+            no_failed_states=True,
+        )
+
+    def test_until_tier_state_partial_completion_preserved(self, tmp_path: Path) -> None:
+        """A tier halted mid-way via until_state is preserved, not downgraded, when T1 is added.
+
+        Advance T0 only to SUBTESTS_RUNNING (not COMPLETE), then add T1 partial runs.
+        T0 must remain at "subtests_running" — not reset to "pending".
+        """
+        config_hash = compute_config_hash(_make_config(["T0"]))
+
+        cp = make_checkpoint(experiment_id=_EXPERIMENT_ID, config_hash=config_hash)
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        # Advance T0 to SUBTESTS_RUNNING (stop before SUBTESTS_COMPLETE)
+        tsm = TierStateMachine(checkpoint=cp, checkpoint_path=cp_path)
+        tsm.advance_to_completion(
+            "T0",
+            make_noop_tier_actions(),
+            until_state=TierState.SUBTESTS_RUNNING,
+        )
+        cp_before = load_checkpoint(cp_path)
+
+        assert cp_before.tier_states.get("T0") == TierState.SUBTESTS_RUNNING.value, (
+            f"Expected T0 at subtests_running, got {cp_before.tier_states.get('T0')!r}"
+        )
+
+        # Add T1 partial runs
+        cp = load_checkpoint(cp_path)
+        _simulate_tier_subtests_at_state(
+            cp, cp_path, "T1", ["00"], _RUNS, RunState.REPLAY_GENERATED
+        )
+        cp_after = load_checkpoint(cp_path)
+
+        # T0 must still be at subtests_running (not downgraded to pending)
+        assert cp_after.tier_states.get("T0") == TierState.SUBTESTS_RUNNING.value, (
+            f"T0 tier_state was changed after adding T1: got {cp_after.tier_states.get('T0')!r}"
+        )
+        # T1 not in tier_states (TierStateMachine not advanced for T1)
+        assert "T1" not in cp_after.tier_states
+
+        _assert_global_invariants(cp_after, cp_before, config_hash)
+
+    def test_tier_states_dict_structure_after_full_completion(self, tmp_path: Path) -> None:
+        """After completing T0, tier_states has exactly one entry: T0 == complete.
+
+        Validates the structural guarantee that only explicitly-run tiers appear
+        in tier_states (no phantom entries for un-started tiers).
+        """
+        config_hash = compute_config_hash(_make_config(["T0"]))
+
+        cp = make_checkpoint(experiment_id=_EXPERIMENT_ID, config_hash=config_hash)
+        cp_path = tmp_path / "checkpoint.json"
+        save_checkpoint(cp, cp_path)
+
+        _simulate_tier_to_complete(cp, cp_path, "T0", ["00"], _RUNS)
+        cp = load_checkpoint(cp_path)
+
+        assert "T0" in cp.tier_states, "T0 must appear in tier_states after completion"
+        assert cp.tier_states["T0"] == TierState.COMPLETE.value, (
+            f"Expected tier_states['T0']='complete', got {cp.tier_states['T0']!r}"
+        )
+        # No other tiers should appear (only explicitly run tiers get entries)
+        assert len(cp.tier_states) == 1, (
+            f"Expected exactly 1 entry in tier_states, got {len(cp.tier_states)}: {cp.tier_states}"
+        )
+        validate_checkpoint_states(
+            cp_path,
+            expected_tier_states={"T0": "complete"},
+            no_failed_states=True,
+        )
