@@ -106,6 +106,14 @@ repos:
         files: \.md$
         types: [markdown]
         pass_filenames: false
+      - id: check-docstring-fragments
+        name: Check Docstring Fragment False Positives
+        description: Validates Python docstrings as complete semantic units to prevent false positive fragment detection during audits
+        entry: pixi run python scripts/check_docstring_fragments.py
+        language: system
+        files: \.py$
+        types: [python]
+        pass_filenames: false
       - id: check-doc-config-consistency
         name: Check Doc/Config Metric Consistency
         description: Fails if coverage threshold in CLAUDE.md or README.md --cov path diverges from pyproject.toml
