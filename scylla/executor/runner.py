@@ -1,7 +1,7 @@
 """Test runner orchestration for agent evaluations.
 
-This module provides the EvalRunner class that orchestrates test execution
-across multiple tiers, models, and runs in Docker containers, with support for
+This module provides the EvalRunner class, which orchestrates test execution
+across multiple tiers, models, and Docker container runs with support for
 parallel execution and file I/O operations.
 """
 
