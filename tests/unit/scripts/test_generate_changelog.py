@@ -5,7 +5,6 @@ from __future__ import annotations
 from unittest.mock import patch
 
 import pytest
-
 from generate_changelog import (
     categorize_commits,
     generate_changelog,
@@ -15,7 +14,6 @@ from generate_changelog import (
     parse_commit,
     run_git_command,
 )
-
 
 # ---------------------------------------------------------------------------
 # parse_commit
@@ -91,12 +89,12 @@ class TestCategorizeCommits:
     """Tests for categorize_commits()."""
 
     def test_feat_maps_to_features(self) -> None:
-        """feat commits go into Features category."""
+        """Feat commits go into Features category."""
         result = categorize_commits(["abc|feat(core): Add feature|Author"])
         assert "Features" in result
 
     def test_fix_maps_to_bug_fixes(self) -> None:
-        """fix commits go into Bug Fixes category."""
+        """Fix commits go into Bug Fixes category."""
         result = categorize_commits(["abc|fix: Fix bug|Author"])
         assert "Bug Fixes" in result
 

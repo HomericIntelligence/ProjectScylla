@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import pytest
-
 from fix_table_underscores import fix_table_underscores
-
 
 # ---------------------------------------------------------------------------
 # fix_table_underscores
@@ -29,49 +27,49 @@ class TestFixTableUnderscores:
         assert r"\_" in result
 
     def test_skips_label_line(self) -> None:
-        """Lines with \\label command are not modified."""
+        r"""Lines with \\label command are not modified."""
         content = r"\label{tab:my_table}" + "\n"
         result = fix_table_underscores(content)
         assert "my_table" in result  # underscore not escaped
 
     def test_skips_caption_line(self) -> None:
-        """Lines with \\caption command are not modified."""
+        r"""Lines with \\caption command are not modified."""
         content = r"\caption{Some_Caption}" + "\n"
         result = fix_table_underscores(content)
         assert "Some_Caption" in result
 
     def test_skips_begin_line(self) -> None:
-        """Lines with \\begin command are not modified."""
+        r"""Lines with \\begin command are not modified."""
         content = r"\begin{tabular}" + "\n"
         result = fix_table_underscores(content)
         assert "tabular" in result
 
     def test_skips_end_line(self) -> None:
-        """Lines with \\end command are not modified."""
+        r"""Lines with \\end command are not modified."""
         content = r"\end{tabular}" + "\n"
         result = fix_table_underscores(content)
         assert "tabular" in result
 
     def test_skips_toprule_line(self) -> None:
-        """Lines with \\toprule are not modified."""
+        r"""Lines with \\toprule are not modified."""
         content = r"\toprule" + "\n"
         result = fix_table_underscores(content)
         assert result == content
 
     def test_skips_midrule_line(self) -> None:
-        """Lines with \\midrule are not modified."""
+        r"""Lines with \\midrule are not modified."""
         content = r"\midrule" + "\n"
         result = fix_table_underscores(content)
         assert result == content
 
     def test_skips_bottomrule_line(self) -> None:
-        """Lines with \\bottomrule are not modified."""
+        r"""Lines with \\bottomrule are not modified."""
         content = r"\bottomrule" + "\n"
         result = fix_table_underscores(content)
         assert result == content
 
     def test_skips_multicolumn_line(self) -> None:
-        """Lines with \\multicolumn are not modified."""
+        r"""Lines with \\multicolumn are not modified."""
         content = r"\multicolumn{3}{c}{col_header}" + "\n"
         result = fix_table_underscores(content)
         assert "col_header" in result  # underscore not escaped

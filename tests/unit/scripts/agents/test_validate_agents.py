@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from agents.validate_agents import (
     ValidationResult,
     extract_sections,
@@ -14,7 +12,6 @@ from agents.validate_agents import (
     validate_structure,
     validate_workflow_phases,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

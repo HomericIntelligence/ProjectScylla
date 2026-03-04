@@ -6,9 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from common import LABEL_COLORS, Colors, get_agents_dir
-
 
 # ---------------------------------------------------------------------------
 # LABEL_COLORS
