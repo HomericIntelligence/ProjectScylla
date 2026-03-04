@@ -340,6 +340,64 @@ class TestResetFailedStates:
         _, checkpoint = rm.reset_failed_states()
         assert checkpoint.experiment_state == "tiers_running"
 
+    @pytest.mark.parametrize(
+        "exp_state",
+        [
+            "dir_created",
+            "repo_cloned",
+            "tiers_running",
+            "tiers_complete",
+            "reports_generated",
+            "complete",
+        ],
+    )
+    def test_non_resetable_states_untouched(
+        self,
+        exp_state: str,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Non-failed/interrupted experiment states are not reset."""
+        base_checkpoint.experiment_state = exp_state
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.experiment_state == exp_state
+
+    def test_multiple_failed_tiers_all_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Two failed tiers are both reset to pending."""
+        base_checkpoint.experiment_state = "failed"
+        base_checkpoint.tier_states = {"T0": "failed", "T1": "failed", "T2": "complete"}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.tier_states["T0"] == "pending"
+        assert checkpoint.tier_states["T1"] == "pending"
+        assert checkpoint.tier_states["T2"] == "complete"
+
+    def test_multiple_failed_subtests_all_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Multiple failed subtests across two tiers are all reset to pending."""
+        base_checkpoint.experiment_state = "failed"
+        base_checkpoint.subtest_states = {
+            "T0": {"T0_00": "failed", "T0_01": "failed"},
+            "T1": {"T1_00": "aggregated", "T1_01": "failed"},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.subtest_states["T0"]["T0_00"] == "pending"
+        assert checkpoint.subtest_states["T0"]["T0_01"] == "pending"
+        assert checkpoint.subtest_states["T1"]["T1_00"] == "aggregated"  # untouched
+        assert checkpoint.subtest_states["T1"]["T1_01"] == "pending"
+
 
 # ---------------------------------------------------------------------------
 # check_tiers_need_execution
@@ -411,6 +469,70 @@ class TestCheckTiersNeedExecution:
         # Should not raise; invalid state skipped
         result = rm.check_tiers_need_execution([TierID.T0])
         assert isinstance(result, set)
+
+    def test_failed_terminal_run_not_counted_as_needing_work(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """FAILED run state is terminal — tier is not in the needs-work set."""
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.FAILED.value}}}
+        mock_tier_manager.load_tier_config.side_effect = Exception("no config")
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm.check_tiers_need_execution([TierID.T0])
+        assert "T0" not in result
+
+    def test_rate_limited_terminal_run_not_counted(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """RATE_LIMITED run state is terminal — tier is not in the needs-work set."""
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.RATE_LIMITED.value}}}
+        mock_tier_manager.load_tier_config.side_effect = Exception("no config")
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm.check_tiers_need_execution([TierID.T0])
+        assert "T0" not in result
+
+    def test_multiple_subtests_any_incomplete_triggers_need(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Tier with 2 subtests: one complete, one has PENDING run → tier needs work."""
+        base_checkpoint.tier_states = {"T0": "subtests_running"}
+        base_checkpoint.run_states = {
+            "T0": {
+                "T0_00": {"1": RunState.WORKTREE_CLEANED.value},
+                "T0_01": {"1": RunState.PENDING.value},
+            }
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm.check_tiers_need_execution([TierID.T0])
+        assert "T0" in result
+
+    def test_multiple_tiers_partial_need(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """T0 complete, T1 has incomplete run — only T1 in needs-work set."""
+        base_checkpoint.tier_states = {"T0": "complete", "T1": "subtests_running"}
+        base_checkpoint.run_states = {
+            "T0": {"T0_00": {"1": RunState.WORKTREE_CLEANED.value}},
+            "T1": {"T1_00": {"1": RunState.AGENT_COMPLETE.value}},
+        }
+        mock_tier_manager.load_tier_config.side_effect = Exception("no config")
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm.check_tiers_need_execution([TierID.T0, TierID.T1])
+        assert "T0" not in result
+        assert "T1" in result
 
 
 # ---------------------------------------------------------------------------
@@ -548,6 +670,179 @@ class TestMergeCliTiersAndResetIncomplete:
             rm.merge_cli_tiers_and_reset_incomplete([TierID.T0], checkpoint_path=checkpoint_path)
         mock_save.assert_called_once()
 
+    @pytest.mark.parametrize("exp_state", ["tiers_complete", "reports_generated"])
+    def test_non_complete_terminal_experiment_reset_when_tiers_need_execution(
+        self,
+        exp_state: str,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """tiers_complete and reports_generated states are reset to tiers_running."""
+        base_checkpoint.experiment_state = exp_state
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.PENDING.value}}}
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            _, checkpoint = rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0], checkpoint_path=checkpoint_path
+            )
+        assert checkpoint.experiment_state == "tiers_running"
+
+    @pytest.mark.parametrize(
+        "tier_state", ["subtests_complete", "best_selected", "reports_generated"]
+    )
+    def test_advanced_tier_state_reset_to_config_loaded_when_incomplete_runs(
+        self,
+        tier_state: str,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Tier in subtests_complete/best_selected/reports_generated with incomplete runs resets."""
+        base_checkpoint.experiment_state = "complete"
+        base_checkpoint.tier_states = {"T0": tier_state}
+        # subtest_states must exist so _any_incomplete check finds the incomplete run
+        base_checkpoint.subtest_states = {"T0": {"T0_00": "aggregated"}}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.AGENT_COMPLETE.value}}}
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        # tier_manager raises so no missing-subtest path triggered
+        mock_tier_manager.load_tier_config.side_effect = Exception("no config")
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            _, checkpoint = rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0], checkpoint_path=checkpoint_path
+            )
+        assert checkpoint.tier_states["T0"] == "config_loaded"
+
+    def test_subtest_in_runs_complete_with_incomplete_run_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Subtest in runs_complete with incomplete run is reset to runs_in_progress."""
+        base_checkpoint.experiment_state = "complete"
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.subtest_states = {"T0": {"T0_00": "runs_complete"}}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.AGENT_COMPLETE.value}}}
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        mock_tier_manager.load_tier_config.side_effect = Exception("no config")
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            _, checkpoint = rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0], checkpoint_path=checkpoint_path
+            )
+        assert checkpoint.subtest_states["T0"]["T0_00"] == "runs_in_progress"
+
+    def test_subtest_with_all_terminal_runs_not_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Subtest in aggregated with all terminal runs stays aggregated."""
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.subtest_states = {"T0": {"T0_00": "aggregated"}}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.WORKTREE_CLEANED.value}}}
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        mock_tier_manager.load_tier_config.side_effect = Exception("no config")
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            _, checkpoint = rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0], checkpoint_path=checkpoint_path
+            )
+        assert checkpoint.subtest_states["T0"]["T0_00"] == "aggregated"
+
+    def test_save_config_writes_to_filesystem(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Adding a new tier triggers _save_config, which writes config JSON to disk."""
+        # Config only has T0; experiment_dir is tmp_path
+        config = base_config.model_copy(update={"tiers_to_run": [TierID.T0]})
+        base_checkpoint.experiment_dir = str(tmp_path)
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.run_states = {}
+
+        rm = _make_manager(base_checkpoint, config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0, TierID.T2], checkpoint_path=tmp_path / "checkpoint.json"
+            )
+
+        config_path = tmp_path / "config" / "experiment.json"
+        assert config_path.exists()
+        import json
+
+        written = json.loads(config_path.read_text())
+        tiers = written.get("tiers_to_run", [])
+        assert "T2" in tiers
+
+    def test_config_hash_updated_when_new_tier_added(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Adding a new tier updates checkpoint.config_hash."""
+        config = base_config.model_copy(update={"tiers_to_run": [TierID.T0]})
+        base_checkpoint.experiment_dir = str(tmp_path)
+        base_checkpoint.config_hash = "old-hash"
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.run_states = {}
+
+        rm = _make_manager(base_checkpoint, config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            _, checkpoint = rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0, TierID.T2], checkpoint_path=tmp_path / "checkpoint.json"
+            )
+        assert checkpoint.config_hash != "old-hash"
+
+    def test_tiers_running_experiment_not_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+        tmp_path: Path,
+    ) -> None:
+        """Experiment in tiers_running stays tiers_running even with incomplete runs."""
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.tier_states = {"T0": "subtests_running"}
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.PENDING.value}}}
+        checkpoint_path = tmp_path / "checkpoint.json"
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+
+        with patch("scylla.e2e.resume_manager.save_checkpoint"):
+            _, checkpoint = rm.merge_cli_tiers_and_reset_incomplete(
+                [TierID.T0], checkpoint_path=checkpoint_path
+            )
+        # tiers_running is NOT in the reset set (complete/tiers_complete/reports_generated)
+        assert checkpoint.experiment_state == "tiers_running"
+
 
 # ---------------------------------------------------------------------------
 # _subtest_has_incomplete_runs (private helper)
@@ -602,3 +897,108 @@ class TestSubtestHasIncompleteRuns:
         # Should not raise, invalid state treated as terminal (skipped)
         result = rm._subtest_has_incomplete_runs("T0", "T0_00")
         assert isinstance(result, bool)
+
+    @pytest.mark.parametrize(
+        "run_state",
+        [
+            RunState.AGENT_COMPLETE,
+            RunState.DIFF_CAPTURED,
+            RunState.JUDGE_PIPELINE_RUN,
+            RunState.REPLAY_GENERATED,
+            RunState.PENDING,
+            RunState.DIR_STRUCTURE_CREATED,
+        ],
+    )
+    def test_mid_lifecycle_state_is_incomplete(
+        self,
+        run_state: RunState,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Non-terminal mid-lifecycle states return True (incomplete)."""
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": run_state.value}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T0", "T0_00") is True
+
+    def test_failed_run_is_terminal(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """FAILED run state is terminal — returns False."""
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.FAILED.value}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T0", "T0_00") is False
+
+    def test_rate_limited_run_is_terminal(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """RATE_LIMITED run state is terminal — returns False."""
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.RATE_LIMITED.value}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T0", "T0_00") is False
+
+    def test_multiple_runs_any_incomplete_returns_true(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """With 3 runs — 2 terminal, 1 PENDING — returns True."""
+        base_checkpoint.run_states = {
+            "T0": {
+                "T0_00": {
+                    "1": RunState.WORKTREE_CLEANED.value,
+                    "2": RunState.FAILED.value,
+                    "3": RunState.PENDING.value,
+                }
+            }
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T0", "T0_00") is True
+
+    def test_multiple_runs_all_terminal_returns_false(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """With 3 runs all in terminal states — returns False."""
+        base_checkpoint.run_states = {
+            "T0": {
+                "T0_00": {
+                    "1": RunState.WORKTREE_CLEANED.value,
+                    "2": RunState.FAILED.value,
+                    "3": RunState.RATE_LIMITED.value,
+                }
+            }
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T0", "T0_00") is False
+
+    def test_wrong_tier_returns_false(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Querying a tier not in run_states returns False."""
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.PENDING.value}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T1", "T1_00") is False
+
+    def test_wrong_subtest_returns_false(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Querying a subtest not in run_states returns False."""
+        base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.PENDING.value}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._subtest_has_incomplete_runs("T0", "T0_01") is False
