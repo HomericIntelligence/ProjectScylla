@@ -362,7 +362,7 @@ class E2ERunner:
                         _cli_tiers, checkpoint_path
                     )
 
-            except Exception as e:
+            except Exception as e:  # broad catch: resume can fail from JSON/IO/state errors
                 logger.warning(f"Failed to resume from checkpoint: {e}")
                 logger.warning("Starting fresh experiment instead")
                 self.checkpoint = None
@@ -452,12 +452,16 @@ class E2ERunner:
             _save_pipeline_baseline(self.experiment_dir, result)
             baseline_status = "ALL PASSED ✓" if result.all_passed else "SOME FAILED ✗"
             logger.info(f"Experiment pipeline baseline: {baseline_status}")
-        except Exception as e:
+        except (
+            Exception
+        ) as e:  # broad catch: pipeline baseline is non-critical; build/git/IO can all fail
             logger.warning(f"Failed to capture experiment-level baseline: {e}")
         finally:
             try:
                 self.workspace_manager.cleanup_worktree(worktree_path, branch_name)
-            except Exception as cleanup_err:
+            except (
+                Exception
+            ) as cleanup_err:  # broad catch: cleanup must not raise; any error is non-fatal
                 logger.debug(f"Baseline worktree cleanup warning: {cleanup_err}")
 
     def _handle_experiment_interrupt(self, checkpoint_path: Path) -> None:
@@ -484,7 +488,9 @@ class E2ERunner:
                 current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
                 save_checkpoint(current_checkpoint, checkpoint_path)
                 logger.warning("💾 Checkpoint saved after interrupt")
-            except Exception as reload_error:
+            except (
+                Exception
+            ) as reload_error:  # broad catch: interrupt handler; must not mask interrupt
                 # If reload fails, save what we have (better than nothing)
                 logger.error(f"⚠️  Failed to reload checkpoint: {reload_error}")
                 logger.warning("Saving checkpoint from memory (may lose some worker progress)")
@@ -784,7 +790,9 @@ class E2ERunner:
                 logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
             else:
                 logger.warning("Process pool interrupted, cleaning up...")
-        except Exception as e:
+        except (
+            Exception
+        ) as e:  # broad catch: top-level experiment boundary; re-raised after logging
             logger.error(f"Experiment failed: {e}")
             raise
         finally:
@@ -1163,7 +1171,9 @@ class E2ERunner:
                 self.checkpoint.run_states = disk_cp.run_states
                 self.checkpoint.subtest_states = disk_cp.subtest_states
                 self.checkpoint.tier_states = disk_cp.tier_states
-            except Exception:
+            except (
+                Exception
+            ):  # broad catch: checkpoint merge at completion; fallback to in-memory copy
                 pass  # Fallback: keep stale in-memory copy (better than crashing)
             self.checkpoint.status = _STATUS_COMPLETED
             logger.debug("Checkpoint marked as completed")
@@ -1190,7 +1200,9 @@ def run_experiment(
     try:
         runner = E2ERunner(config, tiers_dir, results_dir, fresh=fresh)
         return runner.run()
-    except Exception as e:
+    except (
+        Exception
+    ) as e:  # broad catch: public API boundary; provides rate-limit diagnostics before re-raising
         # Check if this is a rate limit error that needs handling
         if "rate limit" in str(e).lower() or "you've hit your limit" in str(e).lower():
             logger.error(f"Experiment failed due to rate limit: {e}")

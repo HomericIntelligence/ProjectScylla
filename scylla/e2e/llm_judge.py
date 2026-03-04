@@ -427,9 +427,9 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901 
                                 output_lines.append(f"Stderr:\n{exec_result.stderr[:500]}")
                         except subprocess.TimeoutExpired:
                             output_lines.append("Execution timed out (30s)")
-                        except Exception as e:
+                        except (OSError, subprocess.SubprocessError) as e:
                             output_lines.append(f"Execution error: {e}")
-            except Exception as e:
+            except OSError as e:
                 logger.warning(f"Error finding Python scripts: {e}")
 
         results["build_output"] = (
@@ -641,7 +641,7 @@ def _get_workspace_state(workspace: Path) -> str:  # noqa: C901  # workspace sta
 
     except subprocess.TimeoutExpired:
         return "(git status timed out)"
-    except Exception as e:
+    except (subprocess.SubprocessError, OSError) as e:
         logger.warning(f"Error getting workspace state: {e}")
         return f"(error getting workspace state: {e})"
 
@@ -709,7 +709,7 @@ def _get_patchfile(workspace: Path) -> str:
 
     except subprocess.TimeoutExpired:
         return "(git diff timed out)"
-    except Exception as e:
+    except (subprocess.SubprocessError, OSError) as e:
         logger.warning(f"Error generating patchfile: {e}")
         return f"(error generating patchfile: {e})"
 
@@ -739,7 +739,7 @@ def _get_deleted_files(workspace: Path) -> list[str]:
         deleted = result.stdout.strip().split("\n")
         return [f for f in deleted if f]
 
-    except Exception:
+    except (subprocess.SubprocessError, OSError):
         return []
 
 
@@ -758,7 +758,7 @@ def _load_reference_patch(reference_path: Path) -> str | None:
 
     try:
         return reference_path.read_text()
-    except Exception as e:
+    except OSError as e:
         logger.warning(f"Error loading reference patch: {e}")
         return None
 
@@ -832,7 +832,7 @@ def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
         try:
             rubric_content = rubric_path.read_text()
             logger.debug(f"Loaded rubric from {rubric_path}")
-        except Exception as e:
+        except OSError as e:
             logger.warning(f"Failed to load rubric from {rubric_path}: {e}")
 
     # Run build/lint/test pipeline if requested
@@ -1348,7 +1348,7 @@ def _save_judge_logs(
 **Timestamp**: {datetime.now(timezone.utc).isoformat()}
 """
         (judge_dir / "MODEL.md").write_text(model_info)
-    except Exception as e:
+    except OSError as e:
         logger.warning(f"Failed to create MODEL.md: {e}")
 
     # Generate replay script for re-running judge
