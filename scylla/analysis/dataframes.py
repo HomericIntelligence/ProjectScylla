@@ -460,5 +460,10 @@ def model_comparison(runs_df: pd.DataFrame) -> pd.DataFrame:
             "cost_usd": ["mean", "sum"],
             "duration_seconds": "mean",
             "total_tokens": ["mean", "sum"],
+            # Process metrics (nullable — NaN when data not yet collected)
+            "r_prog": ["mean", "median", "std"],
+            "cfp": ["mean", "median", "std"],
+            "pr_revert_rate": ["mean", "median", "std"],
+            "strategic_drift": ["mean", "median", "std"],
         }
     ).reset_index()

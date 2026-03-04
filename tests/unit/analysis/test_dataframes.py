@@ -214,6 +214,98 @@ def test_model_comparison_aggregation(sample_runs_df):
     assert len(comparison) == expected_rows
 
 
+def test_model_comparison_process_metric_columns(sample_runs_df):
+    """Test model_comparison() includes process metric aggregation columns."""
+    from scylla.analysis.dataframes import model_comparison
+
+    comparison = model_comparison(sample_runs_df)
+    column_tuples = list(comparison.columns)
+
+    # All 12 process metric columns must be present
+    expected_process_cols = [
+        ("r_prog", "mean"),
+        ("r_prog", "median"),
+        ("r_prog", "std"),
+        ("cfp", "mean"),
+        ("cfp", "median"),
+        ("cfp", "std"),
+        ("pr_revert_rate", "mean"),
+        ("pr_revert_rate", "median"),
+        ("pr_revert_rate", "std"),
+        ("strategic_drift", "mean"),
+        ("strategic_drift", "median"),
+        ("strategic_drift", "std"),
+    ]
+    for col in expected_process_cols:
+        assert col in column_tuples, f"Missing column: {col}"
+
+
+def test_model_comparison_process_metric_values(sample_runs_df):
+    """Test model_comparison() process metric values match manual aggregation."""
+    from scylla.analysis.dataframes import model_comparison
+
+    comparison = model_comparison(sample_runs_df)
+
+    # Verify aggregation correctness for one group
+    model = comparison["agent_model"].iloc[0]
+    tier = comparison["tier"].iloc[0]
+
+    group = sample_runs_df[
+        (sample_runs_df["agent_model"] == model) & (sample_runs_df["tier"] == tier)
+    ]
+
+    row = comparison[(comparison["agent_model"] == model) & (comparison["tier"] == tier)]
+
+    for metric in ["r_prog", "cfp", "pr_revert_rate", "strategic_drift"]:
+        expected_mean = group[metric].mean()
+        expected_median = group[metric].median()
+        actual_mean = row[(metric, "mean")].iloc[0]
+        actual_median = row[(metric, "median")].iloc[0]
+
+        if np.isnan(expected_mean):
+            assert np.isnan(actual_mean), f"Expected NaN for ({metric}, mean)"
+        else:
+            assert actual_mean == pytest.approx(expected_mean, abs=1e-6), (
+                f"Mismatch for ({metric}, mean)"
+            )
+
+        if np.isnan(expected_median):
+            assert np.isnan(actual_median), f"Expected NaN for ({metric}, median)"
+        else:
+            assert actual_median == pytest.approx(expected_median, abs=1e-6), (
+                f"Mismatch for ({metric}, median)"
+            )
+
+
+def test_model_comparison_process_metrics_all_nan():
+    """Test model_comparison() handles all-NaN process metrics without error."""
+    from scylla.analysis.dataframes import model_comparison
+
+    df = pd.DataFrame(
+        {
+            "agent_model": ["ModelA", "ModelA"],
+            "tier": ["T0", "T0"],
+            "passed": [1, 0],
+            "score": [0.8, 0.4],
+            "cost_usd": [0.05, 0.03],
+            "duration_seconds": [10.0, 12.0],
+            "total_tokens": [1000, 800],
+            "r_prog": [np.nan, np.nan],
+            "cfp": [np.nan, np.nan],
+            "pr_revert_rate": [np.nan, np.nan],
+            "strategic_drift": [np.nan, np.nan],
+        }
+    )
+
+    comparison = model_comparison(df)
+
+    assert len(comparison) == 1
+    for metric in ["r_prog", "cfp", "pr_revert_rate", "strategic_drift"]:
+        assert np.isnan(comparison[(metric, "mean")].iloc[0]), (
+            f"Expected NaN for all-NaN group: ({metric}, mean)"
+        )
+
+
 def test_consistency_calculation():
     """Test consistency metric calculation (1 - CV)."""
     from scylla.analysis.stats import compute_consistency
