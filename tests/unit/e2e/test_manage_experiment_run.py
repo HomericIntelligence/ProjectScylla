@@ -1,55 +1,4 @@
-"""Smoke tests for scripts/manage_experiment.py — parser construction and argument validation.
-
-Tests cover:
-- build_parser() produces a parser with expected subcommands (run, repair)
-- run subcommand accepts its documented required/optional arguments
-- Multi-path --config triggers batch mode detection
-- Auto-expansion of parent dir to batch mode
-- test-config-loader exclusion in batch auto-discovery
-- Invalid --until / --until-tier / --until-experiment values return exit code 1
-- Valid --until values are accepted without error
-- --from / --from-tier / --from-experiment argument parsing
-- --from with existing checkpoint: reset functions called + run_experiment invoked
-- --from in batch mode: reset logic called per-test
-- --add-judge dedup: duplicate judge models are not added twice
-- --add-judge bare flag (no value) uses const="sonnet"
-- YAML config file mode: single .yaml file as --config
-- YAML config file overrides values from test.yaml
-- --filter-judge-slot: accepted but has no effect (not-yet-implemented)
-- Non-existent --config path in single mode returns exit code 1
-- cmd_repair with a mock checkpoint rebuilds completed_runs entries
-- --verbose / --quiet set root logger level
-- --fresh forwarded to run_experiment
-- --until* valid values flow to ExperimentConfig
-- --from-tier with --filter-tier passes tier_filter kwarg
-- --from-experiment calls reset_experiment_for_from_state
-- batch --from without checkpoint warns and runs fresh
-- --tests filter limits batch execution
-- --retry-errors reruns only failed tests
-- --add-judge in batch mode appends extra judge to judge_models
-- --from + --filter-status failed resets failed runs (checkpoint.py fix)
-- --parallel-high/med/low flow to ExperimentConfig
-- model alias (opus/haiku) resolves to full model ID
-- unknown tier name returns exit code 1
-- --skip-judge-validation skips validate_model call
-- --timeout overrides test.yaml value
-- --thinking High flows to ExperimentConfig
-- --timeout defaults to test.yaml when not specified on CLI
-- MODEL_ALIASES module-level constant exists with expected keys
-- invalid --tiers in batch mode returns 1 before running tests
-- invalid --from in batch mode returns 1 before running tests
-- non-existent --config reports clear error about path (not --repo)
-- run_experiment() exception in single mode returns 1
-- batch test missing task_repo returns error result dict
-- --filter-subtest passed to reset_runs_for_from_state
-- --filter-run passed to reset_runs_for_from_state
-- --prompt override flows to ExperimentConfig
-- --retry-errors in single mode resets failed runs via reset_runs_for_from_state
-- --tiers T0 T2 flows tiers_to_run to ExperimentConfig
-- --max-subtests N flows max_subtests to ExperimentConfig
-- cmd_repair skips existing completed_runs entries (no overwrite)
-- cmd_repair continues past corrupt run_result.json without crashing
-"""
+"""cmd_run tests for scripts/manage_experiment.py."""
 
 from __future__ import annotations
 
@@ -59,842 +8,11 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-import pytest
-from manage_experiment import MODEL_ALIASES, build_parser, cmd_repair, cmd_visualize
+from manage_experiment import MODEL_ALIASES, build_parser
 
 # ---------------------------------------------------------------------------
 # Parser construction
 # ---------------------------------------------------------------------------
-
-
-class TestBuildParser:
-    """Tests for build_parser() — verifies subcommand registration."""
-
-    def test_parser_returns_argument_parser(self) -> None:
-        """build_parser() returns a non-None ArgumentParser."""
-        import argparse
-
-        parser = build_parser()
-        assert isinstance(parser, argparse.ArgumentParser)
-
-    def test_run_and_repair_subcommands_registered(self) -> None:
-        """'run' and 'repair' subcommands are registered; old ones are gone."""
-        parser = build_parser()
-        subparsers_action = next(
-            action for action in parser._actions if hasattr(action, "choices") and action.choices
-        )
-        registered = set(subparsers_action.choices.keys())
-        assert "run" in registered
-        assert "repair" in registered
-        # Old subcommands must be removed
-        assert "batch" not in registered
-        assert "rerun-agents" not in registered
-        assert "rerun-judges" not in registered
-        assert "regenerate" not in registered
-
-    def test_run_subcommand_accepts_tiers_arg(self) -> None:
-        """'run' subcommand accepts --tiers argument."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--tiers",
-                "T0",
-                "T1",
-            ]
-        )
-        assert args.tiers == ["T0", "T1"]
-        assert args.subcommand == "run"
-
-    def test_run_subcommand_defaults(self) -> None:
-        """'run' subcommand has expected default values."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-            ]
-        )
-        assert args.runs == 10
-        assert args.parallel == 4
-        assert args.model == "sonnet"
-        assert args.judge_model == "sonnet"
-        assert args.thinking == "None"
-        assert args.until is None
-        assert args.until_tier is None
-        assert args.until_experiment is None
-        assert args.from_run is None
-        assert args.from_tier is None
-        assert args.from_experiment is None
-        assert args.filter_tier is None
-        assert args.filter_subtest is None
-        assert args.filter_run is None
-        assert args.filter_status is None
-        assert args.filter_judge_slot is None
-        assert args.threads == 4
-        assert args.tests is None
-        assert not args.retry_errors
-
-    def test_repair_subcommand_requires_checkpoint_path(self) -> None:
-        """'repair' subcommand requires a positional checkpoint_path argument."""
-        parser = build_parser()
-        with pytest.raises(SystemExit):
-            parser.parse_args(["repair"])  # Missing required positional
-
-    def test_repair_subcommand_accepts_checkpoint_path(self) -> None:
-        """'repair' subcommand accepts checkpoint_path positional."""
-        parser = build_parser()
-        args = parser.parse_args(["repair", "/path/to/checkpoint.json"])
-        assert args.checkpoint_path == Path("/path/to/checkpoint.json")
-        assert args.subcommand == "repair"
-
-    def test_run_accepts_until_flag(self) -> None:
-        """'run' subcommand accepts --until state flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--until",
-                "agent_complete",
-            ]
-        )
-        assert args.until == "agent_complete"
-
-    def test_run_accepts_until_tier_flag(self) -> None:
-        """'run' subcommand accepts --until-tier state flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--until-tier",
-                "subtests_complete",
-            ]
-        )
-        assert args.until_tier == "subtests_complete"
-
-    def test_run_accepts_until_experiment_flag(self) -> None:
-        """'run' subcommand accepts --until-experiment state flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--until-experiment",
-                "tiers_running",
-            ]
-        )
-        assert args.until_experiment == "tiers_running"
-
-    def test_run_accepts_from_flag(self) -> None:
-        """'run' subcommand accepts --from state flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--from",
-                "replay_generated",
-            ]
-        )
-        assert args.from_run == "replay_generated"
-
-    def test_run_accepts_from_run_alias(self) -> None:
-        """'run' subcommand accepts --from-run as alias for --from."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--from-run",
-                "agent_complete",
-            ]
-        )
-        assert args.from_run == "agent_complete"
-
-    def test_run_accepts_from_tier_flag(self) -> None:
-        """'run' subcommand accepts --from-tier flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--from-tier",
-                "subtests_running",
-            ]
-        )
-        assert args.from_tier == "subtests_running"
-
-    def test_run_accepts_from_experiment_flag(self) -> None:
-        """'run' subcommand accepts --from-experiment flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--from-experiment",
-                "tiers_running",
-            ]
-        )
-        assert args.from_experiment == "tiers_running"
-
-    def test_run_accepts_filter_tier(self) -> None:
-        """'run' subcommand accepts --filter-tier (repeatable)."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--filter-tier",
-                "T0",
-                "--filter-tier",
-                "T1",
-            ]
-        )
-        assert args.filter_tier == ["T0", "T1"]
-
-    def test_run_accepts_filter_status(self) -> None:
-        """'run' subcommand accepts --filter-status (repeatable)."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--filter-status",
-                "failed",
-                "--filter-status",
-                "agent_complete",
-            ]
-        )
-        assert args.filter_status == ["failed", "agent_complete"]
-
-    def test_run_accepts_filter_judge_slot(self) -> None:
-        """'run' subcommand accepts --filter-judge-slot (repeatable)."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--filter-judge-slot",
-                "1",
-                "--filter-judge-slot",
-                "2",
-            ]
-        )
-        assert args.filter_judge_slot == [1, 2]
-
-    def test_run_accepts_threads(self) -> None:
-        """'run' subcommand accepts --threads argument."""
-        parser = build_parser()
-        args = parser.parse_args(["run", "--threads", "8"])
-        assert args.threads == 8
-
-    def test_run_accepts_tests_filter(self) -> None:
-        """'run' subcommand accepts --tests for batch filtering."""
-        parser = build_parser()
-        args = parser.parse_args(["run", "--tests", "test-001", "test-005"])
-        assert args.tests == ["test-001", "test-005"]
-
-    def test_run_accepts_retry_errors(self) -> None:
-        """'run' subcommand accepts --retry-errors flag."""
-        parser = build_parser()
-        args = parser.parse_args(["run", "--retry-errors"])
-        assert args.retry_errors is True
-
-    def test_run_accepts_multi_config(self) -> None:
-        """'run' subcommand accepts multiple --config arguments."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                "/path/to/test-001",
-                "--config",
-                "/path/to/test-002",
-            ]
-        )
-        assert len(args.config) == 2
-        assert args.config[0] == Path("/path/to/test-001")
-        assert args.config[1] == Path("/path/to/test-002")
-
-    def test_subcommand_required(self) -> None:
-        """Calling with no subcommand exits with error."""
-        parser = build_parser()
-        with pytest.raises(SystemExit):
-            parser.parse_args([])
-
-
-# ---------------------------------------------------------------------------
-# --verbose / --quiet logging level
-# ---------------------------------------------------------------------------
-
-
-class TestVerboseQuietLogging:
-    """Tests that --verbose/--quiet adjust the root logger level."""
-
-    def _make_test_dir(self, path: Path) -> None:
-        """Create a minimal test directory with test.yaml and prompt.md."""
-        import yaml
-
-        path.mkdir(parents=True, exist_ok=True)
-        test_yaml = {
-            "task_repo": "https://github.com/test/repo",
-            "task_commit": "abc123",
-            "experiment_id": "test-exp",
-            "timeout_seconds": 3600,
-            "language": "python",
-        }
-        (path / "test.yaml").write_text(yaml.dump(test_yaml))
-        (path / "prompt.md").write_text("test prompt")
-
-    def test_verbose_sets_root_logger_to_debug(self, tmp_path: Path) -> None:
-        """--verbose causes cmd_run to set root logger level to DEBUG."""
-        config_dir = tmp_path / "test-dir"
-        self._make_test_dir(config_dir)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--verbose",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        root_logger = logging.getLogger()
-        original_level = root_logger.level
-        try:
-            with (
-                patch("scylla.e2e.model_validation.validate_model", return_value=True),
-                patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
-            ):
-                cmd_run(args)
-            assert root_logger.level == logging.DEBUG
-        finally:
-            root_logger.setLevel(original_level)
-
-    def test_quiet_sets_root_logger_to_error(self, tmp_path: Path) -> None:
-        """--quiet causes cmd_run to set root logger level to ERROR."""
-        config_dir = tmp_path / "test-dir"
-        self._make_test_dir(config_dir)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--quiet",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        root_logger = logging.getLogger()
-        original_level = root_logger.level
-        try:
-            with (
-                patch("scylla.e2e.model_validation.validate_model", return_value=True),
-                patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
-            ):
-                cmd_run(args)
-            assert root_logger.level == logging.ERROR
-        finally:
-            root_logger.setLevel(original_level)
-
-
-# ---------------------------------------------------------------------------
-# Batch mode detection
-# ---------------------------------------------------------------------------
-
-
-class TestBatchModeDetection:
-    """Tests for batch mode detection in cmd_run()."""
-
-    def test_single_config_dir_without_test_subdirs_is_single_mode(self, tmp_path: Path) -> None:
-        """A single --config dir with no test-* subdirs stays in single-test mode."""
-        # Create a dir without test-* subdirs
-        config_dir = tmp_path / "shared"
-        config_dir.mkdir()
-
-        parser = build_parser()
-        args = parser.parse_args(["run", "--config", str(config_dir)])
-        # Should have config=[config_dir] and len=1 with no test-* subdirs
-        assert args.config == [config_dir]
-
-    def test_auto_discovery_from_parent_dir(self, tmp_path: Path) -> None:
-        """A parent dir containing test-* subdirs triggers batch mode."""
-        # Create test-* subdirs
-        for i in [1, 2, 3]:
-            (tmp_path / f"test-{i:03d}").mkdir()
-        # Also create non-test dir (should be excluded)
-        (tmp_path / "shared").mkdir()
-
-        from manage_experiment import cmd_run
-
-        call_args = []
-
-        def mock_run_batch(test_dirs, passed_args):
-            call_args.append(test_dirs)
-            return 0
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(tmp_path),
-                "--skip-judge-validation",
-            ]
-        )
-
-        with patch("manage_experiment._run_batch", side_effect=mock_run_batch):
-            result = cmd_run(args)
-
-        assert result == 0
-        assert len(call_args) == 1
-        # Should have discovered exactly the 3 test-* dirs
-        discovered = {d.name for d in call_args[0]}
-        assert discovered == {"test-001", "test-002", "test-003"}
-
-    def test_multiple_config_triggers_batch(self, tmp_path: Path) -> None:
-        """Multiple --config arguments trigger batch mode."""
-        dir1 = tmp_path / "test-001"
-        dir2 = tmp_path / "test-002"
-        dir1.mkdir()
-        dir2.mkdir()
-
-        from manage_experiment import cmd_run
-
-        call_args = []
-
-        def mock_run_batch(test_dirs, passed_args):
-            call_args.append(test_dirs)
-            return 0
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(dir1),
-                "--config",
-                str(dir2),
-            ]
-        )
-
-        with patch("manage_experiment._run_batch", side_effect=mock_run_batch):
-            result = cmd_run(args)
-
-        assert result == 0
-        assert len(call_args) == 1
-        assert len(call_args[0]) == 2
-
-
-# ---------------------------------------------------------------------------
-# cmd_run argument validation (until state parsing)
-# ---------------------------------------------------------------------------
-
-
-class TestCmdRunUntilValidation:
-    """Tests for cmd_run() --until argument validation."""
-
-    def test_invalid_until_state_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 for an unknown --until state."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--until",
-                "nonexistent_state_xyz",
-                "--skip-judge-validation",  # avoid API call
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        # Mock validate_model to avoid API call
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_invalid_until_tier_state_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 for an unknown --until-tier state."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--until-tier",
-                "invalid_tier_state",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_invalid_until_experiment_state_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 for an unknown --until-experiment state."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--until-experiment",
-                "invalid_experiment_state",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_missing_repo_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 when --repo is missing."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_missing_commit_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 when --commit is missing."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--config",
-                str(tmp_path),
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-
-# ---------------------------------------------------------------------------
-# --from argument validation
-# ---------------------------------------------------------------------------
-
-
-class TestCmdRunFromValidation:
-    """Tests for cmd_run() --from argument parsing and validation."""
-
-    def test_invalid_from_state_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 for an unknown --from state."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--from",
-                "nonexistent_state_xyz",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_from_requires_existing_checkpoint(self, tmp_path: Path) -> None:
-        """cmd_run returns 1 when --from is used but no checkpoint exists."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--from",
-                "agent_complete",
-                "--results-dir",
-                str(tmp_path / "results"),
-                "--experiment-id",
-                "test-exp",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1  # No checkpoint exists
-
-    def test_invalid_from_tier_state_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 for an unknown --from-tier state."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--from-tier",
-                "invalid_tier_xyz",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_invalid_from_experiment_state_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 for an unknown --from-experiment state."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--config",
-                str(tmp_path),
-                "--from-experiment",
-                "invalid_experiment_xyz",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-
-# ---------------------------------------------------------------------------
-# cmd_repair with mock checkpoint
-# ---------------------------------------------------------------------------
-
-
-class TestCmdRepair:
-    """Tests for cmd_repair() — checkpoint repair logic."""
-
-    def _make_checkpoint_file(
-        self, path: Path, run_states: dict[str, Any], completed_runs: dict[str, Any]
-    ) -> Path:
-        """Write a minimal checkpoint JSON file.
-
-        Args:
-            path: The experiment directory (checkpoint is written as path/checkpoint.json,
-                  and experiment_dir in the checkpoint points to this same directory).
-
-        """
-        checkpoint_data = {
-            "version": "3.1",
-            "experiment_id": "test-exp",
-            "experiment_dir": str(path),  # experiment_dir = path (not path.parent)
-            "config_hash": "abc123",
-            "started_at": "2024-01-01T00:00:00+00:00",
-            "last_updated_at": "2024-01-01T00:00:00+00:00",
-            "status": "interrupted",
-            "run_states": run_states,
-            "completed_runs": completed_runs,
-        }
-        checkpoint_path = path / "checkpoint.json"
-        checkpoint_path.write_text(json.dumps(checkpoint_data))
-        return checkpoint_path
-
-    def test_repair_missing_checkpoint_returns_1(self, tmp_path: Path) -> None:
-        """cmd_repair returns 1 when checkpoint file does not exist."""
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(tmp_path / "nonexistent.json")])
-
-        result = cmd_repair(args)
-        assert result == 1
-
-    def test_repair_fills_completed_runs_from_run_result(self, tmp_path: Path) -> None:
-        """cmd_repair rebuilds completed_runs[tier][subtest][run_num] from run_result.json."""
-        # Create directory structure
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
-        run_dir.mkdir(parents=True)
-
-        # Write a passing run_result.json
-        (run_dir / "run_result.json").write_text(json.dumps({"judge_passed": True}))
-
-        # Write checkpoint with run in run_states but empty completed_runs
-        checkpoint_path = self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00-empty": {"1": "worktree_cleaned"}}},
-            completed_runs={},
-        )
-
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(checkpoint_path)])
-        result = cmd_repair(args)
-
-        assert result == 0
-
-        # Verify checkpoint was updated
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        updated = load_checkpoint(checkpoint_path)
-        assert "T0" in updated.completed_runs
-        assert "00-empty" in updated.completed_runs["T0"]
-        # Pydantic coerces the string run_num key to int on load
-        assert updated.completed_runs["T0"]["00-empty"][1] == "passed"
-
-    def test_repair_marks_failed_run_correctly(self, tmp_path: Path) -> None:
-        """cmd_repair marks runs with judge_passed=False as 'failed'."""
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
-        run_dir.mkdir(parents=True)
-
-        # Write a failing run_result.json
-        (run_dir / "run_result.json").write_text(json.dumps({"judge_passed": False}))
-
-        checkpoint_path = self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00-empty": {"1": "worktree_cleaned"}}},
-            completed_runs={},
-        )
-
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(checkpoint_path)])
-        cmd_repair(args)
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        updated = load_checkpoint(checkpoint_path)
-        assert updated.completed_runs["T0"]["00-empty"][1] == "failed"
-
-    def test_repair_no_run_results_is_noop(self, tmp_path: Path) -> None:
-        """cmd_repair returns 0 and makes no changes when no run_result.json files exist."""
-        checkpoint_path = self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00-empty": {"1": "pending"}}},
-            completed_runs={},
-        )
-
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(checkpoint_path)])
-        result = cmd_repair(args)
-
-        assert result == 0
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        updated = load_checkpoint(checkpoint_path)
-        # No changes made since no run_result.json files exist
-        assert updated.completed_runs == {}
-
-    def test_repair_processes_multiple_runs(self, tmp_path: Path) -> None:
-        """cmd_repair processes all runs in run_states and returns 0."""
-        # Create two run directories
-        for run_num in [1, 2]:
-            run_dir = tmp_path / "T0" / "00-empty" / f"run_{run_num:02d}"
-            run_dir.mkdir(parents=True)
-            (run_dir / "run_result.json").write_text(
-                json.dumps({"judge_passed": run_num == 1})  # run 1 passes, run 2 fails
-            )
-
-        checkpoint_path = self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00-empty": {"1": "worktree_cleaned", "2": "worktree_cleaned"}}},
-            completed_runs={},
-        )
-
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(checkpoint_path)])
-        result = cmd_repair(args)
-
-        assert result == 0
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        updated = load_checkpoint(checkpoint_path)
-        assert updated.completed_runs["T0"]["00-empty"][1] == "passed"
-        assert updated.completed_runs["T0"]["00-empty"][2] == "failed"
 
 
 # ---------------------------------------------------------------------------
@@ -1172,6 +290,11 @@ class TestCmdRunFromWithCheckpoint:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --from in batch mode
+# ---------------------------------------------------------------------------
+
+
 class TestCmdRunFromInBatchMode:
     """Tests that --from reset logic is applied per-test in batch mode."""
 
@@ -1320,6 +443,11 @@ class TestCmdRunFromInBatchMode:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --add-judge dedup logic
+# ---------------------------------------------------------------------------
+
+
 class TestAddJudgeDedup:
     """Tests for --add-judge deduplication."""
 
@@ -1457,6 +585,11 @@ class TestAddJudgeDedup:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# YAML config file mode
+# ---------------------------------------------------------------------------
+
+
 class TestYamlConfigFileMode:
     """Tests for single .yaml file as --config argument."""
 
@@ -1574,6 +707,11 @@ class TestYamlConfigFileMode:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# test-config-loader exclusion in batch discovery
+# ---------------------------------------------------------------------------
+
+
 class TestTestConfigLoaderExclusion:
     """Tests that test-config-loader is excluded from batch auto-discovery."""
 
@@ -1611,6 +749,11 @@ class TestTestConfigLoaderExclusion:
         assert "test-config-loader" not in discovered_names
         assert "test-001" in discovered_names
         assert "test-002" in discovered_names
+
+
+# ---------------------------------------------------------------------------
+# --filter-judge-slot has no effect (not-yet-implemented)
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -1714,6 +857,11 @@ class TestFilterJudgeSlotNoEffect:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Non-existent --config path in single mode
+# ---------------------------------------------------------------------------
+
+
 class TestNonExistentConfigPath:
     """Tests for error behavior when --config path doesn't exist in single mode."""
 
@@ -1750,6 +898,11 @@ class TestNonExistentConfigPath:
             result = cmd_run(args)
 
         assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# --fresh flag forwarding
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -1841,6 +994,11 @@ class TestFreshFlag:
         assert result == 0
         assert len(captured_fresh) == 1
         assert captured_fresh[0] is False
+
+
+# ---------------------------------------------------------------------------
+# --until* valid values flow to ExperimentConfig
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -1983,6 +1141,11 @@ class TestUntilStateFlowsToConfig:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# batch --from without checkpoint: warns and runs fresh
+# ---------------------------------------------------------------------------
+
+
 class TestBatchFromMissingCheckpoint:
     """Tests batch --from behavior when no checkpoint exists for a test."""
 
@@ -2043,6 +1206,11 @@ class TestBatchFromMissingCheckpoint:
         assert result == 0
         # run_experiment was called for both tests despite missing checkpoints
         assert len(run_experiment_calls) == 2
+
+
+# ---------------------------------------------------------------------------
+# --tests filter limits batch execution
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -2114,6 +1282,11 @@ class TestBatchTestsFilter:
         assert "test-001" in executed_ids
         assert "test-003" in executed_ids
         assert "test-002" not in executed_ids
+
+
+# ---------------------------------------------------------------------------
+# --retry-errors behavioral logic
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -2248,6 +1421,11 @@ class TestRetryErrorsInBatch:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --add-judge in batch mode (bug fix validation)
+# ---------------------------------------------------------------------------
+
+
 class TestAddJudgeBatchMode:
     """Tests that --add-judge is applied correctly in batch mode."""
 
@@ -2321,6 +1499,11 @@ class TestAddJudgeBatchMode:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --from + --filter-status failed (bug fix validation)
+# ---------------------------------------------------------------------------
+
+
 class TestFromWithFilterStatusFailed:
     """Tests that --from + --filter-status failed resets failed runs."""
 
@@ -2367,6 +1550,11 @@ class TestFromWithFilterStatusFailed:
 
         assert count == 0
         assert cp.run_states["T0"]["00"]["1"] == "failed"
+
+
+# ---------------------------------------------------------------------------
+# --parallel-high / --parallel-med / --parallel-low flow to ExperimentConfig
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -2473,6 +1661,11 @@ class TestParallelSemaphoreFlowsToConfig:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Model alias resolution
+# ---------------------------------------------------------------------------
+
+
 class TestModelAliasResolution:
     """Tests that model/judge alias names resolve to full model IDs."""
 
@@ -2565,6 +1758,11 @@ class TestModelAliasResolution:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Unknown tier name
+# ---------------------------------------------------------------------------
+
+
 class TestUnknownTierReturnsError:
     """Tests that an unknown tier name in --tiers returns exit code 1."""
 
@@ -2606,6 +1804,11 @@ class TestUnknownTierReturnsError:
             result = cmd_run(args)
 
         assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# Judge validation behavior
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -2686,6 +1889,11 @@ class TestJudgeValidationBehavior:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --timeout override
+# ---------------------------------------------------------------------------
+
+
 class TestTimeoutOverride:
     """Tests that --timeout overrides the test.yaml timeout_seconds value."""
 
@@ -2739,6 +1947,11 @@ class TestTimeoutOverride:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --thinking mode flow to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
 class TestThinkingModeFlowsToConfig:
     """Tests that --thinking mode value flows to ExperimentConfig."""
 
@@ -2785,6 +1998,11 @@ class TestThinkingModeFlowsToConfig:
             cmd_run(args)
 
         assert captured[0].thinking_mode == "High"
+
+
+# ---------------------------------------------------------------------------
+# --timeout defaults to test.yaml when not specified on CLI (bug fix)
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -2846,6 +2064,11 @@ class TestTimeoutFallbackToTestYaml:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# MODEL_ALIASES module-level constant
+# ---------------------------------------------------------------------------
+
+
 class TestModelAliasConstant:
     """Tests for MODEL_ALIASES module-level constant."""
 
@@ -2861,6 +2084,11 @@ class TestModelAliasConstant:
         assert MODEL_ALIASES["sonnet"] == "claude-sonnet-4-5-20250929"
         assert MODEL_ALIASES["opus"] == "claude-opus-4-5-20251101"
         assert MODEL_ALIASES["haiku"] == "claude-haiku-4-5-20251001"
+
+
+# ---------------------------------------------------------------------------
+# Batch early validation (--tiers / --from before spawning threads)
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -2956,13 +2184,16 @@ class TestBatchEarlyValidation:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --config existence check
+# ---------------------------------------------------------------------------
+
+
 class TestConfigPathExistence:
     """Tests that a non-existent --config path gives a clear error message."""
 
     def test_nonexistent_config_reports_clear_error(self, tmp_path: Path, caplog) -> None:
         """--config /nonexistent/path returns 1 and error message mentions the path."""
-        import logging
-
         nonexistent = tmp_path / "does-not-exist-at-all"
 
         parser = build_parser()
@@ -2996,6 +2227,11 @@ class TestConfigPathExistence:
         assert not any("--repo is required" in msg for msg in error_messages), (
             f"Got misleading --repo error: {error_messages}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Single-mode run_experiment() exception handling
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -3047,6 +2283,11 @@ class TestSingleModeExceptionHandling:
             result = cmd_run(args)
 
         assert result == 1  # exception converted to exit code 1
+
+
+# ---------------------------------------------------------------------------
+# Batch test missing task_repo returns error result
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -3127,6 +2368,11 @@ class TestBatchMissingTaskRepo:
 
         # test-001 fails (missing repo), test-002 succeeds → batch returns 1
         assert result == 1
+
+
+# ---------------------------------------------------------------------------
+# --filter-subtest and --filter-run wiring to reset functions
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -3267,6 +2513,11 @@ class TestFilterSubtestAndRunWiring:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# --prompt override flows to ExperimentConfig
+# ---------------------------------------------------------------------------
+
+
 class TestPromptOverride:
     """Tests that --prompt overrides the test.yaml task_prompt_file value."""
 
@@ -3326,442 +2577,6 @@ class TestPromptOverride:
 # ---------------------------------------------------------------------------
 # cmd_visualize
 # ---------------------------------------------------------------------------
-
-
-class TestCmdVisualize:
-    """Tests for cmd_visualize() — experiment state visualization."""
-
-    def _make_checkpoint_file(
-        self,
-        path: Path,
-        experiment_id: str = "test-exp",
-        experiment_state: str = "complete",
-        tier_states: dict[str, str] | None = None,
-        subtest_states: dict[str, dict[str, str]] | None = None,
-        run_states: dict[str, dict[str, dict[str, str]]] | None = None,
-        completed_runs: dict[str, Any] | None = None,
-        started_at: str = "2026-02-23T18:56:10+00:00",
-        last_updated_at: str = "2026-02-23T19:20:33+00:00",
-        pid: int | None = None,
-    ) -> Path:
-        """Write a minimal checkpoint JSON file."""
-        checkpoint_data: dict[str, Any] = {
-            "version": "3.1",
-            "experiment_id": experiment_id,
-            "experiment_dir": str(path),
-            "config_hash": "abc123",
-            "started_at": started_at,
-            "last_updated_at": last_updated_at,
-            "status": "completed" if experiment_state == "complete" else "running",
-            "experiment_state": experiment_state,
-            "tier_states": tier_states or {},
-            "subtest_states": subtest_states or {},
-            "run_states": run_states or {},
-            "completed_runs": completed_runs or {},
-        }
-        if pid is not None:
-            checkpoint_data["pid"] = pid
-        checkpoint_path = path / "checkpoint.json"
-        checkpoint_path.write_text(json.dumps(checkpoint_data))
-        return checkpoint_path
-
-    def test_visualize_subcommand_registered(self) -> None:
-        """'visualize' subcommand is registered in build_parser()."""
-        parser = build_parser()
-        subparsers_action = next(
-            action for action in parser._actions if hasattr(action, "choices") and action.choices
-        )
-        assert "visualize" in subparsers_action.choices
-
-    def test_visualize_default_format_is_tree(self) -> None:
-        """'visualize' subcommand defaults output_format to 'tree'."""
-        parser = build_parser()
-        args = parser.parse_args(["visualize", "/some/path"])
-        assert args.output_format == "tree"
-
-    def test_visualize_missing_path_returns_1(self, tmp_path: Path) -> None:
-        """cmd_visualize returns 1 when the path does not exist."""
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path / "nonexistent")])
-        result = cmd_visualize(args)
-        assert result == 1
-
-    def test_visualize_directory_resolves_checkpoint(self, tmp_path: Path) -> None:
-        """cmd_visualize accepts a directory and reads checkpoint.json from it."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-
-    def test_visualize_tree_complete_experiment(self, tmp_path: Path, capsys) -> None:
-        """Tree format renders experiment name and tier states for a complete experiment."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-017",
-            experiment_state="complete",
-            tier_states={"T0": "complete", "T1": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
-            run_states={
-                "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "worktree_cleaned"}},
-            },
-            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "failed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "test-017" in out
-        assert "complete" in out
-        assert "T0" in out
-        assert "T1" in out
-        assert "passed" in out
-        assert "failed" in out
-
-    def test_visualize_tree_failed_experiment(self, tmp_path: Path, capsys) -> None:
-        """Tree format renders 'failed' state for a failed experiment."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-fail",
-            experiment_state="failed",
-            tier_states={"T0": "failed"},
-            subtest_states={"T0": {"00": "failed"}},
-            run_states={"T0": {"00": {"1": "failed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "test-fail" in out
-        assert "failed" in out
-
-    def test_visualize_tree_partial_experiment(self, tmp_path: Path, capsys) -> None:
-        """Tree format renders mixed states (partial / in-progress) correctly."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-partial",
-            experiment_state="tiers_running",
-            tier_states={"T0": "complete", "T1": "running"},
-            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "runs_in_progress"}},
-            run_states={
-                "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "agent_complete"}},
-            },
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "T0" in out
-        assert "T1" in out
-        assert "complete" in out
-
-    def test_visualize_table_format(self, tmp_path: Path, capsys) -> None:
-        """Table format includes a header row and a data row per run."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "TIER" in out
-        assert "STATE" in out
-        assert "T0" in out
-        assert "worktree_cleaned" in out
-        assert "passed" in out
-
-    def test_visualize_json_format(self, tmp_path: Path, capsys) -> None:
-        """JSON format outputs valid JSON containing expected keys."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-json",
-            experiment_state="complete",
-            tier_states={"T0": "complete"},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "json"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        data = json.loads(out)
-        assert data["experiment_id"] == "test-json"
-        assert data["experiment_state"] == "complete"
-        assert "tier_states" in data
-        assert "run_states" in data
-
-    def test_visualize_tier_filter(self, tmp_path: Path, capsys) -> None:
-        """--tier T0 limits output to T0 only, omitting T1."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete", "T1": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
-            run_states={
-                "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "worktree_cleaned"}},
-            },
-            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--tier", "T0"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "T0" in out
-        assert "T1" not in out
-
-    def test_visualize_verbose_timestamps(self, tmp_path: Path, capsys) -> None:
-        """--verbose shows Started line and PID."""
-        self._make_checkpoint_file(
-            tmp_path,
-            started_at="2026-02-23T18:56:10+00:00",
-            last_updated_at="2026-02-23T19:20:33+00:00",
-            pid=12345,
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--verbose"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "Started:" in out
-        assert "PID: 12345" in out
-
-    def test_visualize_empty_tiers(self, tmp_path: Path, capsys) -> None:
-        """Checkpoint with no tier_states renders '(no tiers)' message."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-empty",
-            experiment_state="initializing",
-            tier_states={},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "(no tiers)" in out
-
-    def test_visualize_batch_directory(self, tmp_path: Path, capsys) -> None:
-        """Batch mode: results dir with multiple experiment subdirs shows all experiments."""
-        for exp_id in ["exp-01", "exp-02"]:
-            exp_dir = tmp_path / exp_id
-            exp_dir.mkdir()
-            self._make_checkpoint_file(
-                exp_dir,
-                experiment_id=exp_id,
-                experiment_state="complete",
-                tier_states={"T0": "complete"},
-            )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "exp-01" in out
-        assert "exp-02" in out
-
-    def test_visualize_states_only_single(self, tmp_path: Path, capsys) -> None:
-        """--states-only with single experiment: shows TIER/SUBTEST/RUN/STATE, no EXP or RESULT."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-exp",
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--states-only"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "TIER" in out
-        assert "STATE" in out
-        assert "RESULT" not in out
-        assert "EXP" not in out
-        assert "T0" in out
-        assert "worktree_cleaned" in out
-
-    def test_visualize_states_only_batch(self, tmp_path: Path, capsys) -> None:
-        """--states-only with multiple experiments shows EXP column in unified table."""
-        for exp_id in ["exp-01", "exp-02"]:
-            exp_dir = tmp_path / exp_id
-            exp_dir.mkdir()
-            self._make_checkpoint_file(
-                exp_dir,
-                experiment_id=exp_id,
-                tier_states={"T0": "complete"},
-                subtest_states={"T0": {"00": "aggregated"}},
-                run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-                completed_runs={"T0": {"00": {1: "passed"}}},
-            )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--states-only"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "EXP" in out
-        assert "TIER" in out
-        assert "STATE" in out
-        assert "RESULT" not in out
-        assert "exp-01" in out
-        assert "exp-02" in out
-        assert "worktree_cleaned" in out
-
-    def test_visualize_states_only_tier_filter(self, tmp_path: Path, capsys) -> None:
-        """--states-only with --tier T0 limits output to T0 only."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete", "T1": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
-            run_states={
-                "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "worktree_cleaned"}},
-            },
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--states-only", "--tier", "T0"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "T0" in out
-        assert "T1" not in out
-
-    def test_visualize_json_tier_filter(self, tmp_path: Path, capsys: Any) -> None:
-        """--format json --tier T0 with multi-tier data: JSON output only contains T0."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-json-filter",
-            experiment_state="complete",
-            tier_states={"T0": "complete", "T1": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
-            run_states={
-                "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "worktree_cleaned"}},
-            },
-            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "json", "--tier", "T0"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        data = json.loads(out)
-        assert "T0" in data["tier_states"]
-        assert "T1" not in data["tier_states"]
-        assert "T0" in data["run_states"]
-        assert "T1" not in data["run_states"]
-
-    def test_visualize_json_tier_filter_nonexistent(self, tmp_path: Path, capsys: Any) -> None:
-        """--format json --tier T99 with no matching data: state dicts are empty."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-json-nofilter",
-            experiment_state="complete",
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "json", "--tier", "T99"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        data = json.loads(out)
-        assert data["tier_states"] == {}
-        assert data["run_states"] == {}
-
-    def test_visualize_table_tier_filter(self, tmp_path: Path, capsys: Any) -> None:
-        """--format table --tier T0: table rows contain T0 data and no T1 data."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete", "T1": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}, "T1": {"01": "aggregated"}},
-            run_states={
-                "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "worktree_cleaned"}},
-            },
-            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table", "--tier", "T0"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "T0" in out
-        assert "T1" not in out
-
-    def test_visualize_table_tier_filter_nonexistent(self, tmp_path: Path, capsys: Any) -> None:
-        """--format table --tier T99: header row rendered but no data rows."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table", "--tier", "T99"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "TIER" in out
-        assert "T0" not in out
-
-    def test_visualize_states_only_overrides_format(self, tmp_path: Path, capsys: Any) -> None:
-        """--states-only --format table: states-only table is rendered without RESULT column."""
-        self._make_checkpoint_file(
-            tmp_path,
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--states-only", "--format", "table"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "TIER" in out
-        assert "STATE" in out
-        assert "RESULT" not in out
-
-    def test_visualize_tier_filter_excludes_all_tree(self, tmp_path: Path, capsys: Any) -> None:
-        """--tier T99 with tree format: experiment renders but contains no tier data rows."""
-        self._make_checkpoint_file(
-            tmp_path,
-            experiment_id="test-nodata",
-            experiment_state="complete",
-            tier_states={"T0": "complete"},
-            subtest_states={"T0": {"00": "aggregated"}},
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--tier", "T99"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "test-nodata" in out
-        assert "T0" not in out
 
 
 # ---------------------------------------------------------------------------
@@ -3963,163 +2778,6 @@ class TestRetryErrorsInSingleMode:
 # ---------------------------------------------------------------------------
 
 
-class TestFindCheckpointPath:
-    """Tests for the _find_checkpoint_path helper in manage_experiment.py."""
-
-    def test_find_checkpoint_path_with_timestamp_prefix(self, tmp_path: Path) -> None:
-        """Finds checkpoint in a timestamp-prefixed directory matching *-{experiment_id}."""
-        from manage_experiment import _find_checkpoint_path
-
-        results_dir = tmp_path / "results"
-        results_dir.mkdir()
-
-        exp_dir = results_dir / "2026-02-25T06-12-39-test-001"
-        exp_dir.mkdir()
-        cp = exp_dir / "checkpoint.json"
-        cp.write_text('{"experiment_id": "test-001"}')
-
-        result = _find_checkpoint_path(results_dir, "test-001")
-        assert result == cp
-
-    def test_find_checkpoint_path_returns_none_when_no_match(self, tmp_path: Path) -> None:
-        """Returns None when no matching directory exists."""
-        from manage_experiment import _find_checkpoint_path
-
-        results_dir = tmp_path / "results"
-        results_dir.mkdir()
-
-        result = _find_checkpoint_path(results_dir, "nonexistent-exp")
-        assert result is None
-
-    def test_find_checkpoint_path_returns_most_recent(self, tmp_path: Path) -> None:
-        """When multiple timestamp-prefixed dirs match, returns the most recent one."""
-        from manage_experiment import _find_checkpoint_path
-
-        results_dir = tmp_path / "results"
-        results_dir.mkdir()
-
-        older = results_dir / "2026-02-24T10-00-00-test-001"
-        older.mkdir()
-        (older / "checkpoint.json").write_text('{"version": "3.1"}')
-
-        newer = results_dir / "2026-02-25T06-12-39-test-001"
-        newer.mkdir()
-        (newer / "checkpoint.json").write_text('{"version": "3.1"}')
-
-        result = _find_checkpoint_path(results_dir, "test-001")
-        assert result == newer / "checkpoint.json"
-
-
-# ---------------------------------------------------------------------------
-# _derive_run_result and in_progress display
-# ---------------------------------------------------------------------------
-
-
-class TestDeriveRunResult:
-    """Tests for _derive_run_result helper and in_progress display in visualize."""
-
-    def _make_checkpoint_file(
-        self,
-        path: Path,
-        run_states: dict[str, dict[str, dict[str, str]]],
-        completed_runs: dict[str, Any] | None = None,
-    ) -> Path:
-        data: dict[str, Any] = {
-            "version": "3.1",
-            "experiment_id": "test-exp",
-            "experiment_dir": str(path),
-            "config_hash": "abc123",
-            "started_at": "2026-01-01T00:00:00+00:00",
-            "last_updated_at": "2026-01-01T00:00:01+00:00",
-            "status": "running",
-            "experiment_state": "tiers_running",
-            "tier_states": {"T0": "subtests_running"},
-            "subtest_states": {"T0": {"00": "runs_in_progress"}},
-            "run_states": run_states,
-            "completed_runs": completed_runs or {},
-        }
-        cp = path / "checkpoint.json"
-        cp.write_text(json.dumps(data))
-        return cp
-
-    def test_derive_run_result_returns_in_progress_for_mid_sequence_state(
-        self, tmp_path: Path
-    ) -> None:
-        """_derive_run_result returns 'in_progress' when run_state is mid-sequence."""
-        from manage_experiment import _derive_run_result
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00": {"1": "replay_generated"}}},
-        )
-        cp = load_checkpoint(tmp_path / "checkpoint.json")
-        result = _derive_run_result(cp, "T0", "00", 1, "replay_generated")
-        assert result == "in_progress"
-
-    def test_derive_run_result_returns_stored_status_for_completed_run(
-        self, tmp_path: Path
-    ) -> None:
-        """_derive_run_result returns stored status ('passed') for completed runs."""
-        from manage_experiment import _derive_run_result
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00": {1: "passed"}}},
-        )
-        cp = load_checkpoint(tmp_path / "checkpoint.json")
-        result = _derive_run_result(cp, "T0", "00", 1, "worktree_cleaned")
-        assert result == "passed"
-
-    def test_derive_run_result_returns_empty_for_pending(self, tmp_path: Path) -> None:
-        """_derive_run_result returns '' for pending runs."""
-        from manage_experiment import _derive_run_result
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00": {"1": "pending"}}},
-        )
-        cp = load_checkpoint(tmp_path / "checkpoint.json")
-        result = _derive_run_result(cp, "T0", "00", 1, "pending")
-        assert result == ""
-
-    def test_visualize_tree_shows_in_progress_for_mid_sequence_run(
-        self, tmp_path: Path, capsys: Any
-    ) -> None:
-        """Tree view shows '-> in_progress' for a run stopped mid-sequence by --until."""
-        self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00": {"1": "replay_generated"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path)])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "in_progress" in out
-
-    def test_visualize_table_shows_in_progress_for_mid_sequence_run(
-        self, tmp_path: Path, capsys: Any
-    ) -> None:
-        """Table view shows 'in_progress' in the RESULT column for mid-sequence runs."""
-        self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00": {"1": "replay_generated"}}},
-        )
-        parser = build_parser()
-        args = parser.parse_args(["visualize", str(tmp_path), "--format", "table"])
-        result = cmd_visualize(args)
-        assert result == 0
-        out = capsys.readouterr().out
-        assert "in_progress" in out
-
-
 # ---------------------------------------------------------------------------
 # --tiers and --max-subtests flow to ExperimentConfig
 # ---------------------------------------------------------------------------
@@ -4253,79 +2911,3 @@ class TestCmdRunTiersAndMaxSubtests:
 # ---------------------------------------------------------------------------
 # cmd_repair() edge cases: skip existing entries and corrupt JSON handling
 # ---------------------------------------------------------------------------
-
-
-class TestCmdRepairEdgeCases:
-    """Tests for cmd_repair() edge cases not covered by TestCmdRepair."""
-
-    def _make_checkpoint_file(
-        self, path: Path, run_states: dict[str, Any], completed_runs: dict[str, Any]
-    ) -> Path:
-        """Write a minimal checkpoint JSON file."""
-        checkpoint_data = {
-            "version": "3.1",
-            "experiment_id": "test-exp",
-            "experiment_dir": str(path),
-            "config_hash": "abc123",
-            "started_at": "2024-01-01T00:00:00+00:00",
-            "last_updated_at": "2024-01-01T00:00:00+00:00",
-            "status": "interrupted",
-            "run_states": run_states,
-            "completed_runs": completed_runs,
-        }
-        checkpoint_path = path / "checkpoint.json"
-        checkpoint_path.write_text(json.dumps(checkpoint_data))
-        return checkpoint_path
-
-    def test_repair_skips_existing_completed_run(self, tmp_path: Path) -> None:
-        """cmd_repair does not overwrite an existing completed_runs entry."""
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
-        run_dir.mkdir(parents=True)
-
-        # run_result.json says failed, but checkpoint already has it as passed
-        (run_dir / "run_result.json").write_text(json.dumps({"judge_passed": False}))
-
-        checkpoint_path = self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00-empty": {"1": "worktree_cleaned"}}},
-            completed_runs={"T0": {"00-empty": {"1": "passed"}}},
-        )
-
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(checkpoint_path)])
-        result = cmd_repair(args)
-
-        assert result == 0
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        updated = load_checkpoint(checkpoint_path)
-        # Existing "passed" entry must not be overwritten by run_result.json's "failed"
-        assert updated.completed_runs["T0"]["00-empty"][1] == "passed"
-
-    def test_repair_handles_corrupt_run_result_json(self, tmp_path: Path) -> None:
-        """cmd_repair continues past a corrupt run_result.json without crashing."""
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
-        run_dir.mkdir(parents=True)
-
-        # Write invalid JSON
-        (run_dir / "run_result.json").write_text("{ not valid json }")
-
-        checkpoint_path = self._make_checkpoint_file(
-            tmp_path,
-            run_states={"T0": {"00-empty": {"1": "worktree_cleaned"}}},
-            completed_runs={},
-        )
-
-        parser = build_parser()
-        args = parser.parse_args(["repair", str(checkpoint_path)])
-        result = cmd_repair(args)
-
-        # Must not crash and must return 0
-        assert result == 0
-
-        from scylla.e2e.checkpoint import load_checkpoint
-
-        updated = load_checkpoint(checkpoint_path)
-        # corrupt file means no entry was added
-        assert updated.completed_runs == {}
