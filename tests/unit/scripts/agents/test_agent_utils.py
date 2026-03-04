@@ -118,7 +118,7 @@ class TestExtractFrontmatterParsed:
         """Returns (text, dict) tuple with parsed YAML."""
         result = extract_frontmatter_parsed(VALID_FRONTMATTER_CONTENT)
         assert result is not None
-        text, data = result
+        _text, data = result
         assert data["name"] == "test-agent"
         assert data["model"] == "sonnet"
 

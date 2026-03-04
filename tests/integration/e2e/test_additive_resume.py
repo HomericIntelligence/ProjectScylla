@@ -137,13 +137,13 @@ def _simulate_tier_subtests_at_state(
         # Advance subtest to RUNS_IN_PROGRESS (the PENDING action fires runs)
         ssm = SubtestStateMachine(checkpoint=cp, checkpoint_path=cp_path)
 
-        def _pending_runs() -> None:
+        def _pending_runs(_sid: str = subtest_id) -> None:
             """Simulate executing run_count runs up to until_run_state."""
             run_sm = StateMachine(checkpoint=cp, checkpoint_path=cp_path)
             for run_num in range(1, run_count + 1):
                 run_sm.advance_to_completion(
                     tier_id,
-                    subtest_id,
+                    _sid,
                     run_num,
                     make_noop_run_actions(),
                     until_state=until_run_state,

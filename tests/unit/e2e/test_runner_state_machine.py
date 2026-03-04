@@ -10,6 +10,7 @@ Covers:
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -314,11 +315,9 @@ class TestRunTierUsesTierStateMachine:
             mock_build_actions.return_value = {}
             mock_advance.return_value = TierState.SUBTESTS_RUNNING
 
-            # Capture the call
-            try:
+            # Capture the call — may fail due to missing TierResult; we just check the call
+            with contextlib.suppress(Exception):
                 runner._run_tier(TierID.T0, None, None)
-            except Exception:
-                pass  # May fail due to missing TierResult — we just check the call
 
             if mock_advance.called:
                 call_kwargs = mock_advance.call_args

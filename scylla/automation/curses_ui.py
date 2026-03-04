@@ -196,7 +196,7 @@ class CursesUI:
             except KeyboardInterrupt:
                 break
 
-    def _refresh_display(self) -> None:  # noqa: C901  # TUI rendering with many display states
+    def _refresh_display(self) -> None:  # TUI rendering with many display states
         """Refresh the curses display."""
         if not self.stdscr:
             return

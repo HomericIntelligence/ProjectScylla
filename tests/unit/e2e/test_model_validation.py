@@ -18,12 +18,12 @@ class TestIsRateLimitError:
 
     def test_hit_your_limit_detected(self) -> None:
         """'hit your limit' triggers rate limit detection."""
-        result, wait = is_rate_limit_error("You've hit your limit for the day.")
+        result, _wait = is_rate_limit_error("You've hit your limit for the day.")
         assert result is True
 
     def test_rate_limit_phrase_detected(self) -> None:
         """'rate limit' phrase triggers detection."""
-        result, wait = is_rate_limit_error("API rate limit exceeded.")
+        result, _wait = is_rate_limit_error("API rate limit exceeded.")
         assert result is True
 
     def test_parse_minutes(self) -> None:

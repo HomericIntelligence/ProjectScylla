@@ -401,9 +401,8 @@ class Planner:
             repo_root = get_repo_root()
             mnemosyne_root = repo_root / "build" / "ProjectMnemosyne"
 
-            if not mnemosyne_root.exists():
-                if not self._ensure_mnemosyne(mnemosyne_root):
-                    return ""
+            if not mnemosyne_root.exists() and not self._ensure_mnemosyne(mnemosyne_root):
+                return ""
 
             marketplace_path = mnemosyne_root / ".claude-plugin" / "marketplace.json"
             if not marketplace_path.exists():

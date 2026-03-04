@@ -812,7 +812,7 @@ def _build_progress_steps(
     total_delta = sum(file_deltas)
 
     steps: list[ProgressStep] = []
-    for (filepath, status), delta in zip(entries, file_deltas):
+    for (filepath, status), delta in zip(entries, file_deltas, strict=False):
         weight = delta / total_delta if total_delta > 0 else 1.0
         steps.append(
             ProgressStep(

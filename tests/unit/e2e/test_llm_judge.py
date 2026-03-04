@@ -7,7 +7,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1276,7 +1276,7 @@ class TestRunLlmJudgeRetry:
     """
 
     # Minimal patch context shared by most tests
-    _COMMON_PATCHES = [
+    _COMMON_PATCHES: ClassVar[list[tuple[str, Any]]] = [
         ("scylla.e2e.llm_judge._get_workspace_state", "(no changes)"),
         ("scylla.e2e.llm_judge._get_patchfile", "(no changes)"),
         ("scylla.e2e.llm_judge._get_deleted_files", []),

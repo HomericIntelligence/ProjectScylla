@@ -638,7 +638,7 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
         progress_tracking = result.get("progress_tracking")
         changes = result.get("changes")
         if progress_tracking or changes:
-            from scylla.metrics.process import (  # noqa: PLC0415
+            from scylla.metrics.process import (
                 ChangeResult,
                 ProgressStep,
                 ProgressTracker,

@@ -365,7 +365,7 @@ class TestFindFrontier:
         t0_result = _make_tier_result(TierID.T0, pass_rate=0.5, total_cost=2.0)
         t1_result = _make_tier_result(TierID.T1, pass_rate=0.5, total_cost=0.5)
 
-        tier_id, cop = writer.find_frontier({TierID.T0: t0_result, TierID.T1: t1_result})
+        tier_id, _cop = writer.find_frontier({TierID.T0: t0_result, TierID.T1: t1_result})
 
         # T1 has CoP = mean_cost / pass_rate = 0.5 / 0.5 = 1.0
         # T0 has CoP = 2.0 / 0.5 = 4.0

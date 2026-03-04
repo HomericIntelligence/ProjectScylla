@@ -416,7 +416,7 @@ def cleanup_flat_skills(mnemosyne_dir: Path, dry_run: bool = False) -> None:
                 print(f"Removed flat skills/{skill_name}/")
 
 
-def main() -> int:  # noqa: C901  # CLI main with multiple phases
+def main() -> int:  # CLI main with multiple phases
     """Execute the migration workflow."""
     args = parse_args()
 

@@ -71,13 +71,21 @@ target-version = "py310"
 # S101 is selected explicitly (not via the full "S"/bandit group) so that
 # assert statements are flagged as errors in production code.  Tests are
 # exempted below via per-file-ignores, where assert is the pytest idiom.
-select = ["E", "F", "W", "I", "N", "D", "UP", "S101"]
+select = ["E", "F", "W", "I", "N", "D", "UP", "S101", "B", "SIM", "C4", "RUF"]
 ignore = [
     "D100",  # Missing docstring in public module
     "D104",  # Missing docstring in public package
     "D203",  # 1 blank line before class (conflicts with D211)
     "D213",  # Multi-line summary second line (conflicts with D212)
     "D417",  # Missing argument descriptions in docstring
+    # B — flake8-bugbear
+    "B017",  # Do not assert blind exception — inline comments name the actual type
+    # SIM — flake8-simplify
+    "SIM117",  # pytest.raises() must be the innermost context manager; cannot merge
+    # RUF — ruff-specific
+    "RUF001",  # Intentional Unicode (Greek letters, math notation) in strings/docstrings
+    "RUF002",  # Intentional Unicode (en-dash, multiplication sign) in docstrings
+    "RUF003",  # Intentional Unicode (en-dash, multiplication sign) in comments
 ]
 
 [tool.ruff.lint.per-file-ignores]

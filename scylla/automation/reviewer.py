@@ -629,7 +629,7 @@ class PRReviewer:
                 )
             return self.states[issue_number]
 
-    def _review_pr(self, issue_number: int, pr_number: int) -> WorkerResult:  # noqa: C901
+    def _review_pr(self, issue_number: int, pr_number: int) -> WorkerResult:
         """Review and fix a single PR.
 
         Args:

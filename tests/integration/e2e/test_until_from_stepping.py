@@ -350,7 +350,7 @@ class TestSubtestLevelStepping:
             )
 
         # Validate: all subtests in RUNS_IN_PROGRESS, none FAILED
-        expected_substates = {sid: "runs_in_progress" for sid in subtest_ids}
+        expected_substates = dict.fromkeys(subtest_ids, "runs_in_progress")
         validate_checkpoint_states(
             cp_path,
             expected_subtest_states={"T0": expected_substates},
@@ -748,7 +748,7 @@ class TestCrossLevelPropagation:
             assert final == SubtestState.RUNS_IN_PROGRESS
 
         # All subtests should be in RUNS_IN_PROGRESS, none FAILED
-        expected_subtest_states = {sid: "runs_in_progress" for sid in subtest_ids}
+        expected_subtest_states = dict.fromkeys(subtest_ids, "runs_in_progress")
         expected_run_states = {sid: {"1": "replay_generated"} for sid in subtest_ids}
         validate_checkpoint_states(
             cp_path,

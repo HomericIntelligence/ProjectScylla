@@ -649,7 +649,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
     return 0 if failed_count == 0 else 1
 
 
-def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901 — unified run command
+def cmd_run(args: argparse.Namespace) -> int:
     """Execute the 'run' subcommand (single test or batch mode)."""
     import yaml
 

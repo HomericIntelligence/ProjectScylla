@@ -42,9 +42,9 @@ __all__ = [
     "table04_criteria_performance",
     "table05_cost_analysis",
     "table06_model_comparison",
-    "table_cfp_comparison",
     "table07_subtest_detail",
     "table08_summary_statistics",
     "table09_experiment_config",
     "table10_normality_tests",
+    "table_cfp_comparison",
 ]

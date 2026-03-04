@@ -41,14 +41,14 @@ class TestParseCommit:
 
     def test_non_conventional_commit(self) -> None:
         """Non-conventional commits default to 'other' type."""
-        h, t, s, m = parse_commit("abc1234|Some free-form message|Author")
+        _h, t, s, m = parse_commit("abc1234|Some free-form message|Author")
         assert t == "other"
         assert s == ""
         assert m == "Some free-form message"
 
     def test_malformed_line_returns_other(self) -> None:
         """Lines without proper format return empty hash and 'other' type."""
-        h, t, s, m = parse_commit("malformed-no-pipes")
+        h, t, _s, _m = parse_commit("malformed-no-pipes")
         assert h == ""
         assert t == "other"
 

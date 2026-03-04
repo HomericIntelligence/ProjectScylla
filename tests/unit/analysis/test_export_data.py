@@ -899,7 +899,7 @@ def test_sparse_process_metrics_graceful_degradation():
     rng = np.random.RandomState(0)
     rows = []
     for tier in ["T0", "T1"]:
-        for i in range(5):
+        for _i in range(5):
             rows.append(
                 {
                     "agent_model": "model1",

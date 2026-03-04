@@ -253,7 +253,7 @@ class IssueImplementer:
 
         return {}
 
-    def _implement_all(self) -> dict[int, WorkerResult]:  # noqa: C901  # orchestrator with many issue states
+    def _implement_all(self) -> dict[int, WorkerResult]:  # orchestrator with many issue states
         """Implement all issues with dependency awareness.
 
         Returns:
@@ -338,7 +338,7 @@ class IssueImplementer:
         self._print_summary(results)
         return results
 
-    def _implement_issue(self, issue_number: int) -> WorkerResult:  # noqa: C901  # issue implementation with many phase transitions
+    def _implement_issue(self, issue_number: int) -> WorkerResult:
         """Implement a single issue.
 
         Args:
