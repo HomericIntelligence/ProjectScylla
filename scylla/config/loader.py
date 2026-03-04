@@ -3,7 +3,6 @@
 This module provides the ConfigLoader class for loading and merging YAML
 configuration files with a three-level priority hierarchy:
     test-specific > model defaults > global defaults
-and complex file operations with error handling.
 """
 
 import logging

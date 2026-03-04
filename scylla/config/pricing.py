@@ -1,7 +1,6 @@
 """Centralized model pricing configuration.
 
-This module provides a single source of truth for model pricing data
-and cost calculation utilities.
+This module provides a single source of truth for model pricing data and cost calculation utilities.
 """
 
 from __future__ import annotations

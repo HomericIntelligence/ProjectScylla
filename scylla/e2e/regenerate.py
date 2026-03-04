@@ -3,7 +3,6 @@
 This module provides functionality to rebuild experiment results without re-running
 agents or judges. It can also selectively re-run judges for runs that are missing
 judge results.
-and integration with existing Python-based evaluation infrastructure.
 """
 
 from __future__ import annotations
