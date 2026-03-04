@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/mvillmow/ProjectScylla/schemas/tier.schema.json",
+  "title": "ProjectScylla Tier Configuration Schema",
+  "description": "Schema for config/tiers/*.yaml files that define testing tier configurations",
+  "type": "object",
+  "required": ["tier", "name"],
+  "additionalProperties": false,
+  "properties": {
+    "tier": {
+      "type": "string",
+      "description": "Tier identifier in format t0-t6",
+      "pattern": "^t[0-6]$",
+      "examples": ["t0", "t1", "t2", "t3", "t4", "t5", "t6"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable tier name",
+      "minLength": 1,
+      "examples": ["Vanilla", "Prompted", "Tooling", "Delegation"]
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of what this tier tests",
+      "default": "",
+      "examples": ["Base LLM with zero-shot prompting"]
+    },
+    "system_prompt": {
+      "description": "System prompt text for this tier (null to use default)",
+      "oneOf": [
+        {"type": "string"},
+        {"type": "null"}
+      ],
+      "examples": ["You are a helpful assistant.", null]
+    },
+    "skills": {
+      "type": "array",
+      "description": "Skills enabled for this tier",
+      "default": [],
+      "items": {"type": "string", "minLength": 1},
+      "examples": [["commit", "review-pr"]]
+    },
+    "tools": {
+      "type": "array",
+      "description": "Tools enabled for this tier",
+      "default": [],
+      "items": {"type": "string", "minLength": 1},
+      "examples": [["bash", "read", "write"]]
+    },
+    "uses_tools": {
+      "type": "boolean",
+      "description": "Whether this tier uses external tools",
+      "default": false
+    },
+    "uses_delegation": {
+      "type": "boolean",
+      "description": "Whether this tier uses agent delegation",
+      "default": false
+    },
+    "uses_hierarchy": {
+      "type": "boolean",
+      "description": "Whether this tier uses hierarchical orchestration",
+      "default": false
+    }
+  }
+}
