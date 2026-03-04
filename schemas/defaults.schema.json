@@ -1,0 +1,173 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/mvillmow/ProjectScylla/schemas/defaults.schema.json",
+  "title": "ProjectScylla Defaults Schema",
+  "description": "Schema for config/defaults.yaml — global evaluation framework defaults",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "evaluation": {
+      "type": "object",
+      "description": "Evaluation execution settings",
+      "additionalProperties": false,
+      "properties": {
+        "runs_per_eval": {
+          "type": "integer",
+          "description": "Number of runs per evaluation",
+          "minimum": 1,
+          "maximum": 100,
+          "examples": [10]
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Default timeout per run in seconds",
+          "minimum": 60,
+          "maximum": 86400,
+          "examples": [300, 3600]
+        },
+        "seed": {
+          "description": "Random seed for reproducibility (null for random)",
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "null"}
+          ],
+          "examples": [42, null]
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Metrics calculation settings",
+      "additionalProperties": false,
+      "properties": {
+        "quality": {
+          "type": "array",
+          "description": "Quality metrics to calculate",
+          "items": {"type": "string"},
+          "examples": [["pass_rate", "impl_rate", "progress_rate", "consistency"]]
+        },
+        "economic": {
+          "type": "array",
+          "description": "Economic metrics to calculate",
+          "items": {"type": "string"},
+          "examples": [["cost_of_pass", "token_distribution", "change_fail_percentage"]]
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "description": "Output directory configuration",
+      "additionalProperties": false,
+      "properties": {
+        "runs_dir": {
+          "type": "string",
+          "description": "Directory for run artifacts",
+          "examples": ["runs"]
+        },
+        "summaries_dir": {
+          "type": "string",
+          "description": "Directory for summary reports",
+          "examples": ["summaries"]
+        },
+        "reports_dir": {
+          "type": "string",
+          "description": "Directory for full reports",
+          "examples": ["reports"]
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "description": "Logging configuration",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "type": "string",
+          "description": "Python logging level",
+          "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+          "examples": ["INFO"]
+        },
+        "format": {
+          "type": "string",
+          "description": "Python logging format string",
+          "examples": ["%(asctime)s - %(name)s - %(levelname)s - %(message)s"]
+        }
+      }
+    },
+    "default_model": {
+      "type": "string",
+      "description": "Default model ID when no --model flag is provided",
+      "minLength": 1,
+      "examples": ["claude-sonnet-4-5-20250929"]
+    },
+    "runs_per_tier": {
+      "type": "integer",
+      "description": "Number of runs per tier (executor-level override)",
+      "minimum": 1,
+      "maximum": 100,
+      "examples": [10]
+    },
+    "timeout_seconds": {
+      "type": "integer",
+      "description": "Timeout per run in seconds (executor-level override)",
+      "minimum": 60,
+      "maximum": 86400,
+      "examples": [3600]
+    },
+    "max_cost_usd": {
+      "type": "number",
+      "description": "Maximum cost per run in USD",
+      "minimum": 0.0,
+      "examples": [10.0]
+    },
+    "judge": {
+      "type": "object",
+      "description": "Judge model configuration",
+      "additionalProperties": false,
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Judge model identifier",
+          "minLength": 1
+        },
+        "adapter": {
+          "type": "string",
+          "description": "Adapter to use for judge",
+          "minLength": 1
+        }
+      }
+    },
+    "adapters": {
+      "type": "object",
+      "description": "Adapter configuration",
+      "additionalProperties": false,
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Default adapter name",
+          "minLength": 1
+        },
+        "available": {
+          "type": "array",
+          "description": "List of available adapter names",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "cleanup": {
+      "type": "object",
+      "description": "Workspace cleanup settings",
+      "additionalProperties": false,
+      "properties": {
+        "delete_workspace": {
+          "type": "boolean",
+          "description": "Whether to delete workspace after run"
+        },
+        "keep_logs": {
+          "type": "boolean",
+          "description": "Whether to keep logs after run"
+        }
+      }
+    }
+  }
+}
