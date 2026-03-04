@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Mock for `python` / `python3`.
+# Behavior is controlled by environment variables:
+#   PYTHON_MOCK_EXIT  - exit code to return (default: 0)
+
+case "$1 $2" in
+    "-m scylla.judge.runner")
+        echo "mock judge output"
+        exit "${PYTHON_MOCK_EXIT:-0}"
+        ;;
+    "--version "*)
+        echo "Python 3.11.0-mock"
+        exit 0
+        ;;
+    *)
+        echo "Python 3.11.0-mock"
+        exit "${PYTHON_MOCK_EXIT:-0}"
+        ;;
+esac

@@ -5,6 +5,7 @@ on:
     paths:
       - "**/*.sh"
       - "tests/shell/**"
+      - "docker/entrypoint.sh"
       - ".github/workflows/shell-test.yml"
   push:
     branches: [main]

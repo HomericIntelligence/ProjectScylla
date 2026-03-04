@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Mock for `claude` CLI.
+# Behavior is controlled by environment variables:
+#   CLAUDE_MOCK_EXIT  - exit code to return (default: 0)
+
+case "$1" in
+    --version)
+        echo "claude 1.0.0-mock"
+        exit 0
+        ;;
+    --model)
+        echo "mock agent output"
+        exit "${CLAUDE_MOCK_EXIT:-0}"
+        ;;
+    *)
+        echo "mock agent output"
+        exit "${CLAUDE_MOCK_EXIT:-0}"
+        ;;
+esac
