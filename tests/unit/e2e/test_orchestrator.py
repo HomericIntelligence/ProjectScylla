@@ -1,6 +1,8 @@
 """Integration tests for test orchestrator."""
 
+from collections.abc import Generator
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -80,6 +82,17 @@ class TestEvalOrchestrator:
 
 class TestEvalOrchestratorWithFixture:
     """Tests for orchestrator with proper test fixture."""
+
+    @pytest.fixture(autouse=True)
+    def _isolate(self) -> Generator[None, None, None]:
+        """Ensure no class-level mock state bleeds into subsequent tests.
+
+        Uses unittest.mock.patch's stopall to clean up any patches that may
+        have been left active if a test fails mid-context-manager, preventing
+        class-level attribute leakage into TestEvalOrchestratorEndToEnd.
+        """
+        yield
+        patch.stopall()
 
     @pytest.fixture
     def test_env(self, tmp_path: Path) -> Path:
@@ -275,8 +288,6 @@ output:
 
     def test_run_single_with_mocks(self, test_env: Path) -> None:
         """Test complete single run flow with mock adapter/judge."""
-        from unittest.mock import patch
-
         config = OrchestratorConfig(
             base_path=test_env,
             quiet=True,
@@ -328,7 +339,6 @@ output:
     def test_run_single_result_file_written(self, test_env: Path) -> None:
         """Verify result.json is correctly written to disk."""
         import json
-        from unittest.mock import patch
 
         config = OrchestratorConfig(
             base_path=test_env,
@@ -366,8 +376,6 @@ output:
 
     def test_run_test_multi_tier(self, test_env: Path) -> None:
         """Test running same test across T0, T1, T2 tiers."""
-        from unittest.mock import patch
-
         config = OrchestratorConfig(
             base_path=test_env,
             runs_per_tier=1,
@@ -402,8 +410,6 @@ output:
 
     def test_run_single_with_failing_judge(self, test_env: Path) -> None:
         """Test when judge returns passed=False."""
-        from unittest.mock import patch
-
         config = OrchestratorConfig(
             base_path=test_env,
             quiet=True,
@@ -434,8 +440,6 @@ output:
 
     def test_result_metrics_calculation(self, test_env: Path) -> None:
         """Verify composite score and cost-of-pass calculations."""
-        from unittest.mock import patch
-
         config = OrchestratorConfig(
             base_path=test_env,
             quiet=True,
