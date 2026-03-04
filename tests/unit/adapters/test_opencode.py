@@ -272,7 +272,7 @@ class TestRun:
             mock_result.stdout = "Success\ninput_tokens: 100\noutput_tokens: 50"
             mock_result.stderr = ""
 
-            with patch("subprocess.run", return_value=mock_result):
+            with patch("scylla.adapters.base_cli.subprocess.run", return_value=mock_result):
                 result = adapter.run(config)
 
             assert result.exit_code == 0
@@ -305,7 +305,7 @@ class TestRun:
             mock_result.stdout = "Success"
             mock_result.stderr = ""
 
-            with patch("subprocess.run", return_value=mock_result) as mock_run:
+            with patch("scylla.adapters.base_cli.subprocess.run", return_value=mock_result) as mock_run:
                 adapter.run(config, tier_config)
 
             call_args = mock_run.call_args
@@ -337,7 +337,7 @@ class TestRun:
                 stderr=b"error",
             )
 
-            with patch("subprocess.run", side_effect=timeout_error):
+            with patch("scylla.adapters.base_cli.subprocess.run", side_effect=timeout_error):
                 result = adapter.run(config)
 
             assert result.exit_code == -1
@@ -360,7 +360,7 @@ class TestRun:
                 output_dir=tmppath,
             )
 
-            with patch("subprocess.run", side_effect=FileNotFoundError()):
+            with patch("scylla.adapters.base_cli.subprocess.run", side_effect=FileNotFoundError()):
                 with pytest.raises(AdapterError, match="CLI not found"):
                     adapter.run(config)
 
@@ -384,7 +384,7 @@ class TestRun:
             mock_result.stdout = "stdout content"
             mock_result.stderr = "stderr content"
 
-            with patch("subprocess.run", return_value=mock_result):
+            with patch("scylla.adapters.base_cli.subprocess.run", return_value=mock_result):
                 adapter.run(config)
 
             # Logs are written directly to output_dir (no logs/ subdirectory)
@@ -411,7 +411,7 @@ class TestRun:
             mock_result.stdout = "input_tokens: 1000\noutput_tokens: 500"
             mock_result.stderr = ""
 
-            with patch("subprocess.run", return_value=mock_result):
+            with patch("scylla.adapters.base_cli.subprocess.run", return_value=mock_result):
                 result = adapter.run(config)
 
             # GPT-4: 0.03 per 1K input, 0.06 per 1K output
