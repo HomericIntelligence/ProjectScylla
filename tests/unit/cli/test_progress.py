@@ -3,6 +3,7 @@
 import sys
 from datetime import datetime, timedelta, timezone
 from io import StringIO
+from unittest.mock import patch
 
 from scylla.cli.progress import (
     EvalProgress,
@@ -30,13 +31,17 @@ class TestRunProgress:
         assert run.elapsed == timedelta(0)
 
     def test_elapsed_running(self) -> None:
-        """Test Elapsed running."""
+        """Test Elapsed running — uses mocked datetime.now to avoid wall-clock flakiness."""
+        fixed_now = datetime(2024, 1, 1, 12, 0, 10, tzinfo=timezone.utc)
+        fixed_start = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
         run = RunProgress(
             run_number=1,
             status=RunStatus.EXECUTING,
-            start_time=datetime.now(timezone.utc) - timedelta(seconds=10),
+            start_time=fixed_start,
         )
-        assert run.elapsed >= timedelta(seconds=10)
+        with patch("scylla.cli.progress.datetime") as mock_dt:
+            mock_dt.now.return_value = fixed_now
+            assert run.elapsed == timedelta(seconds=10)
 
     def test_elapsed_complete(self) -> None:
         """Test Elapsed complete."""
