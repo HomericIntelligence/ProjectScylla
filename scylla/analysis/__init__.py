@@ -1,8 +1,8 @@
 """Analysis pipeline for experiment results.
 
 This module provides data loading, statistical analysis, figure generation,
-and table generation for the ProjectScylla experiment results.
-numpy, scipy, matplotlib, altair) which have no Mojo equivalents.
+and table generation for the ProjectScylla experiment results using Python
+libraries (numpy, scipy, matplotlib, altair).
 """
 
 from scylla.analysis.dataframes import (

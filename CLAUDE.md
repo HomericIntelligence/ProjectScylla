@@ -274,9 +274,9 @@ Is the task well-defined with predictable steps?
 **DO**: Use absolute file paths with line numbers when referencing code:
 
 ```markdown
-GOOD: Updated /home/user/ProjectScylla/scylla/metrics/cop.py:45-52
+GOOD: Updated /home/user/ProjectScylla/scylla/metrics/grading.py:45-52
 
-BAD: Updated cop.py (ambiguous - which file?)
+BAD: Updated grading.py (ambiguous - which file?)
 ```
 
 #### Benchmark Results
@@ -410,6 +410,7 @@ ProjectScylla/
 |   +-- judge/                   # LLM judge system (.py)
 |   +-- metrics/                 # Metrics calculation (.py)
 |   +-- reporting/               # Report generation (.py)
+|   +-- utils/                   # Utility functions (.py)
 +-- scripts/                     # Python automation scripts
 +-- tests/                       # Python test suite (pytest)
 +-- .claude/                     # Operational configurations

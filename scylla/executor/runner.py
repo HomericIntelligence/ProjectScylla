@@ -1,8 +1,8 @@
 """Test runner orchestration for agent evaluations.
 
 This module provides the EvalRunner class that orchestrates test execution
-across multiple tiers, models, and runs in Docker containers.
-parallel execution, and file I/O operations.
+across multiple tiers, models, and runs in Docker containers, with support for
+parallel execution and file I/O operations.
 """
 
 from __future__ import annotations
