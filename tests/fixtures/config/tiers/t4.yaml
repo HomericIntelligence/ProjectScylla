@@ -1,0 +1,7 @@
+# Test fixture: Tier 4 (Hierarchy)
+tier: "t4"
+name: "Hierarchy"
+description: "Nested orchestration with orchestrator agents"
+uses_tools: false
+uses_delegation: false
+uses_hierarchy: true

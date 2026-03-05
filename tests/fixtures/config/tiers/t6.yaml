@@ -1,0 +1,7 @@
+# Test fixture: Tier 6 (Super)
+tier: "t6"
+name: "Super"
+description: "Everything enabled at maximum capability"
+uses_tools: true
+uses_delegation: true
+uses_hierarchy: true

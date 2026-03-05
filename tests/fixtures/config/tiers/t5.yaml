@@ -1,0 +1,7 @@
+# Test fixture: Tier 5 (Hybrid)
+tier: "t5"
+name: "Hybrid"
+description: "Best combinations and permutations"
+uses_tools: true
+uses_delegation: true
+uses_hierarchy: false
