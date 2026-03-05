@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import shutil
 from datetime import datetime, timezone
@@ -22,6 +23,8 @@ from scylla.executor.tier_config import TierConfigLoader
 
 if TYPE_CHECKING:
     pass
+
+logger = logging.getLogger(__name__)
 
 
 class TierManager:
@@ -736,10 +739,26 @@ class TierManager:
                 experiment_dir / tier_id.value / best_subtest_id / "config_manifest.json"
             )
             if not manifest_file.exists():
-                raise ValueError(
-                    f"Cannot inherit from {tier_id.value}/{best_subtest_id}: "
-                    f"config_manifest.json not found."
-                )
+                # Best subtest failed before manifest was written — find an alternative
+                tier_dir = experiment_dir / tier_id.value
+                alternative = None
+                for subdir in sorted(tier_dir.iterdir()):
+                    candidate = subdir / "config_manifest.json"
+                    if subdir.is_dir() and candidate.exists():
+                        alternative = candidate
+                        logger.warning(
+                            f"Best subtest {tier_id.value}/{best_subtest_id} has no "
+                            f"config_manifest.json; falling back to "
+                            f"{tier_id.value}/{subdir.name}"
+                        )
+                        break
+                if alternative is None:
+                    logger.warning(
+                        f"No subtest in {tier_id.value} has config_manifest.json; "
+                        f"skipping inheritance from {tier_id.value}"
+                    )
+                    continue
+                manifest_file = alternative
 
             with open(manifest_file) as f:
                 manifest = json.load(f)

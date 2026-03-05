@@ -929,6 +929,90 @@ class TestBuildMergedBaseline:
         merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
         assert set(merged["tools"]["enabled"]) == {"bash", "read"}
 
+    def test_best_subtest_missing_manifest_falls_back_to_sibling(
+        self, tmp_path: Path
+    ) -> None:
+        """Test fallback when best subtest has no config_manifest.json but a sibling does."""
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+        t1_dir = experiment_dir / "T1"
+        # best subtest 02 has no manifest
+        (t1_dir / "02").mkdir(parents=True)
+        # sibling subtest 00 has a manifest
+        t1_subtest_00 = t1_dir / "00"
+        t1_subtest_00.mkdir(parents=True)
+        manifest = {"resources": {"tools": {"enabled": ["read"]}}}
+        (t1_subtest_00 / "config_manifest.json").write_text(json.dumps(manifest))
+
+        # best_subtest.json points to 02 (which has no manifest)
+        (t1_dir / "best_subtest.json").write_text(
+            json.dumps({"winning_subtest": "02", "rationale": "tiebreaker"})
+        )
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        merged = manager.build_merged_baseline([TierID.T1], experiment_dir)
+        assert set(merged["tools"]["enabled"]) == {"read"}
+
+    def test_no_subtest_has_manifest_skips_tier(self, tmp_path: Path) -> None:
+        """Test graceful skip when no subtest in a tier has config_manifest.json."""
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+        t1_dir = experiment_dir / "T1"
+        # two subtests, neither has a manifest
+        (t1_dir / "00").mkdir(parents=True)
+        (t1_dir / "01").mkdir(parents=True)
+
+        (t1_dir / "best_subtest.json").write_text(
+            json.dumps({"winning_subtest": "00", "rationale": "tiebreaker"})
+        )
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        # Should not raise — returns empty merged resources
+        merged = manager.build_merged_baseline([TierID.T1], experiment_dir)
+        assert merged == {}
+
+    def test_no_subtest_has_manifest_skips_only_failing_tier(
+        self, tmp_path: Path
+    ) -> None:
+        """Test that a tier with no manifest is skipped but other tiers still merge."""
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+
+        # T1: best subtest 00 has no manifest
+        t1_dir = experiment_dir / "T1"
+        (t1_dir / "00").mkdir(parents=True)
+        (t1_dir / "best_subtest.json").write_text(
+            json.dumps({"winning_subtest": "00", "rationale": "tiebreaker"})
+        )
+
+        # T0: best subtest 01 has a manifest
+        t0_dir = experiment_dir / "T0"
+        t0_subtest = t0_dir / "01"
+        t0_subtest.mkdir(parents=True)
+        manifest = {"resources": {"claude_md": {"blocks": ["B01"]}}}
+        (t0_subtest / "config_manifest.json").write_text(json.dumps(manifest))
+        (t0_dir / "best_subtest.json").write_text(
+            json.dumps({"winning_subtest": "01", "rationale": "best"})
+        )
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        merged = manager.build_merged_baseline([TierID.T0, TierID.T1], experiment_dir)
+        # T0 resources present, T1 skipped (no manifest)
+        assert "claude_md" in merged
+        assert merged["claude_md"]["blocks"] == ["B01"]
+
 
 class TestResourceSuffixInClaudeMd:
     """Tests that resource suffix is appended to CLAUDE.md, not task prompt."""
