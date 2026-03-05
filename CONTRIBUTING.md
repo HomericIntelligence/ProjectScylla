@@ -207,6 +207,55 @@ How you tested the changes
 4. **TDD** - Test-Driven Development
 5. **SOLID** - Single Responsibility, Open-Closed, etc.
 
+### Handling Long Lines (E501)
+
+The project enforces a **100-character line limit** (ruff rule E501). When a line exceeds this
+limit, apply the following triage rule to decide whether to break the line or suppress the warning.
+
+**Fix the line (preferred)** when the line can be broken without harming readability:
+
+- Long string concatenations → use implicit string joining or a variable
+- Long function call chains → break across multiple lines with trailing commas
+- Long import lists → use parentheses and one import per line
+- Long conditionals → extract sub-expressions into named variables
+
+```python
+# Before — too long
+result = some_function(argument_one, argument_two, argument_three, argument_four, argument_five)
+
+# After — broken across lines
+result = some_function(
+    argument_one,
+    argument_two,
+    argument_three,
+    argument_four,
+    argument_five,
+)
+```
+
+**Suppress with `# noqa: E501`** only when breaking the line would reduce readability or is
+technically impractical:
+
+- URLs in comments or docstrings (breaking a URL makes it non-clickable and hard to copy)
+- Regex patterns where splitting would obscure the pattern's meaning
+- Long string literals that must remain intact (e.g., error messages compared in tests)
+- Machine-generated or data-table lines where alignment matters
+
+```python
+# Acceptable suppression — URL that cannot be meaningfully split
+# See https://docs.anthropic.com/en/api/getting-started#very-long-path-that-exceeds-the-limit  # noqa: E501
+
+# Acceptable suppression — regex whose structure would be obscured by line breaks
+PATTERN = re.compile(r"^(?P<tier>T\d+)/(?P<subtest>\d+)/run_(?P<run>\d+)/(?P<file>.+)$")  # noqa: E501
+```
+
+**Decision checklist:**
+
+1. Can the line be reformatted without hurting readability? → **Fix it.**
+2. Is the offending content a URL, regex, or test literal? → **Suppress with `# noqa: E501`.**
+3. Would splitting create more confusion than the long line? → **Suppress with `# noqa: E501`.**
+4. None of the above? → **Fix it.**
+
 ### Pre-commit Hooks
 
 Install pre-commit hooks to automatically check code quality:
