@@ -116,8 +116,8 @@ repos:
         types: [markdown]
         pass_filenames: false
       - id: check-docstring-fragments
-        name: Check Docstring Fragment False Positives
-        description: Validates Python docstrings as complete semantic units to prevent false positive fragment detection during audits
+        name: Check Orphaned Docstring Fragments
+        description: Detects orphaned lowercase continuation lines in module-level and function docstrings (e.g., lines starting with connector words like 'across', 'and', 'or') and fails the commit
         entry: pixi run python scripts/check_docstring_fragments.py
         language: system
         files: \.py$
