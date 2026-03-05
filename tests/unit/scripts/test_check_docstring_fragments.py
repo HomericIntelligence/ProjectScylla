@@ -599,3 +599,144 @@ class TestMainDefaultBehavior:
         captured = capsys.readouterr()
         assert exit_code == 1
         assert "Found 1 genuine docstring fragment(s)" in captured.out
+
+
+# ---------------------------------------------------------------------------
+# Async function docstrings — async functions treated same as sync functions
+# ---------------------------------------------------------------------------
+
+
+class TestScanFileAsyncFunctions:
+    """scan_file handles async function docstrings the same as sync functions."""
+
+    def test_async_function_fragment_docstring_flagged(self, tmp_path: Path) -> None:
+        """Async function with a genuine fragment docstring should be flagged."""
+        py = make_py(
+            tmp_path,
+            "async_bad.py",
+            '''\
+            async def run_tiers():
+                """across multiple tiers in parallel."""
+                pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert len(findings) == 1
+        assert "run_tiers" in findings[0].context
+
+    def test_async_function_valid_docstring_not_flagged(self, tmp_path: Path) -> None:
+        """Async function with a proper docstring should not be flagged."""
+        py = make_py(
+            tmp_path,
+            "async_good.py",
+            '''\
+            async def run_tiers():
+                """Run evaluation tiers in parallel using asyncio."""
+                pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert findings == []
+
+    def test_async_function_fragment_context_label(self, tmp_path: Path) -> None:
+        """Async function finding should use 'def <name>' as context label."""
+        py = make_py(
+            tmp_path,
+            "async_ctx.py",
+            '''\
+            async def fetch_results():
+                """and returns the aggregated results."""
+                pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert len(findings) == 1
+        assert findings[0].context == "def fetch_results"
+
+    def test_async_function_treated_same_as_sync_function(self, tmp_path: Path) -> None:
+        """Async and sync functions with identical fragment docstrings produce equal findings."""
+        async_py = make_py(
+            tmp_path,
+            "async_func.py",
+            '''\
+            async def process():
+                """across multiple tiers in parallel."""
+                pass
+            ''',
+        )
+        sync_py = make_py(
+            tmp_path,
+            "sync_func.py",
+            '''\
+            def process():
+                """across multiple tiers in parallel."""
+                pass
+            ''',
+        )
+        async_findings = scan_file(async_py, tmp_path)
+        sync_findings = scan_file(sync_py, tmp_path)
+        assert len(async_findings) == 1
+        assert len(sync_findings) == 1
+        assert async_findings[0].docstring_first_line == sync_findings[0].docstring_first_line
+
+    def test_multiple_async_functions_all_flagged(self, tmp_path: Path) -> None:
+        """Multiple async functions with fragment docstrings should all be flagged."""
+        py = make_py(
+            tmp_path,
+            "multi_async.py",
+            '''\
+            async def run_a():
+                """across multiple tiers in parallel."""
+                pass
+            async def run_b():
+                """and returns the aggregated results."""
+                pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert len(findings) == 2
+
+    def test_async_function_imperative_docstring_not_flagged(self, tmp_path: Path) -> None:
+        """Async function with an imperative sentence should not be flagged."""
+        py = make_py(
+            tmp_path,
+            "async_imperative.py",
+            '''\
+            async def fetch_data():
+                """Fetch data from the evaluation pipeline."""
+                pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert findings == []
+
+    def test_async_method_in_class_fragment_flagged(self, tmp_path: Path) -> None:
+        """Async method inside a class with a fragment docstring should be flagged."""
+        py = make_py(
+            tmp_path,
+            "async_class.py",
+            '''\
+            class Evaluator:
+                async def run(self):
+                    """across multiple tiers in parallel."""
+                    pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert len(findings) == 1
+        assert "run" in findings[0].context
+
+    def test_async_method_in_class_valid_docstring_not_flagged(self, tmp_path: Path) -> None:
+        """Valid async method inside class should not be flagged."""
+        py = make_py(
+            tmp_path,
+            "async_class_good.py",
+            '''\
+            class Evaluator:
+                async def run(self):
+                    """Run the evaluation pipeline asynchronously."""
+                    pass
+            ''',
+        )
+        findings = scan_file(py, tmp_path)
+        assert findings == []
