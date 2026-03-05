@@ -929,9 +929,7 @@ class TestBuildMergedBaseline:
         merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
         assert set(merged["tools"]["enabled"]) == {"bash", "read"}
 
-    def test_best_subtest_missing_manifest_falls_back_to_sibling(
-        self, tmp_path: Path
-    ) -> None:
+    def test_best_subtest_missing_manifest_falls_back_to_sibling(self, tmp_path: Path) -> None:
         """Test fallback when best subtest has no config_manifest.json but a sibling does."""
         import json
 
@@ -979,9 +977,7 @@ class TestBuildMergedBaseline:
         merged = manager.build_merged_baseline([TierID.T1], experiment_dir)
         assert merged == {}
 
-    def test_no_subtest_has_manifest_skips_only_failing_tier(
-        self, tmp_path: Path
-    ) -> None:
+    def test_no_subtest_has_manifest_skips_only_failing_tier(self, tmp_path: Path) -> None:
         """Test that a tier with no manifest is skipped but other tiers still merge."""
         import json
 
