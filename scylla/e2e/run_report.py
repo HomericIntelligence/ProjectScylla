@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from scylla.e2e.run_report_hierarchy import (
     generate_experiment_summary_table as generate_experiment_summary_table,
@@ -76,9 +76,6 @@ from scylla.e2e.run_report_sections import (
 from scylla.e2e.run_report_sections import (
     _get_workspace_files as _get_workspace_files,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 def generate_run_report(
