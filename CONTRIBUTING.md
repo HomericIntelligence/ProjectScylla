@@ -507,6 +507,7 @@ ProjectScylla/
 │   ├── analysis/        # Statistical analysis
 │   ├── adapters/        # CLI adapters
 │   ├── automation/      # Automation utilities
+│   ├── cli/             # CLI interface
 │   ├── config/          # Configuration
 │   ├── core/            # Core types
 │   ├── discovery/       # Resource discovery
