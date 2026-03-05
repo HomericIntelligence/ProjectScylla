@@ -173,9 +173,9 @@ Related issues:
 [Brief description of evaluation methodology]
 
 ### Tiers to Evaluate
-- [ ] T0 (Vanilla)
-- [ ] T1 (Prompted)
-- [ ] T2 (Skills)
+- [ ] T0 (Prompts)
+- [ ] T1 (Skills)
+- [ ] T2 (Tooling)
 
 ### Metrics to Collect
 - [ ] Pass-Rate
