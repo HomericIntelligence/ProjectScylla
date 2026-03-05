@@ -529,7 +529,7 @@ class TestWriteSecure:
         test_file.parent.chmod(0o444)
 
         try:
-            with pytest.raises(Exception):
+            with pytest.raises(OSError):
                 write_secure(test_file, "content")
 
             # Temp files should be cleaned up

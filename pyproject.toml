@@ -78,8 +78,6 @@ ignore = [
     "D203",  # 1 blank line before class (conflicts with D211)
     "D213",  # Multi-line summary second line (conflicts with D212)
     "D417",  # Missing argument descriptions in docstring
-    # B — flake8-bugbear
-    "B017",  # Do not assert blind exception — inline comments name the actual type
     # SIM — flake8-simplify
     "SIM117",  # pytest.raises() must be the innermost context manager; cannot merge
     # RUF — ruff-specific
