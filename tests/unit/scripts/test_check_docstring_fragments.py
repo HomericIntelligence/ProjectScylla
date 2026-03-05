@@ -111,6 +111,55 @@ class TestIsGenuineFragment:
         docstring = "\n\nRun the evaluation harness."
         assert not _is_genuine_fragment(docstring)
 
+    # New domain-specific continuation words added in issue #1389
+    def test_continuation_word_using_flagged(self) -> None:
+        """Docstring starting with 'using' is a genuine fragment."""
+        assert _is_genuine_fragment("using asyncio for parallel tier execution.")
+
+    def test_continuation_word_based_flagged(self) -> None:
+        """Docstring starting with 'based' is a genuine fragment."""
+        assert _is_genuine_fragment("based on the experiment configuration settings.")
+
+    def test_continuation_word_given_flagged(self) -> None:
+        """Docstring starting with 'given' is a genuine fragment."""
+        assert _is_genuine_fragment("given the current tier state and checkpoint data.")
+
+    def test_continuation_word_per_flagged(self) -> None:
+        """Docstring starting with 'per' is a genuine fragment."""
+        assert _is_genuine_fragment("per the evaluation protocol specification.")
+
+    def test_continuation_word_following_flagged(self) -> None:
+        """Docstring starting with 'following' is a genuine fragment."""
+        assert _is_genuine_fragment("following the ablation study methodology.")
+
+    def test_continuation_word_according_flagged(self) -> None:
+        """Docstring starting with 'according' is a genuine fragment."""
+        assert _is_genuine_fragment("according to the metrics definitions document.")
+
+    def test_continuation_word_depending_flagged(self) -> None:
+        """Docstring starting with 'depending' is a genuine fragment."""
+        assert _is_genuine_fragment("depending on the tier configuration and model.")
+
+    def test_continuation_word_relative_flagged(self) -> None:
+        """Docstring starting with 'relative' is a genuine fragment."""
+        assert _is_genuine_fragment("relative to the repository root directory.")
+
+    def test_continuation_word_alongside_flagged(self) -> None:
+        """Docstring starting with 'alongside' is a genuine fragment."""
+        assert _is_genuine_fragment("alongside the primary evaluation pipeline.")
+
+    def test_continuation_word_compared_flagged(self) -> None:
+        """Docstring starting with 'compared' is a genuine fragment."""
+        assert _is_genuine_fragment("compared to the baseline performance metrics.")
+
+    def test_continuation_word_otherwise_flagged(self) -> None:
+        """Docstring starting with 'otherwise' is a genuine fragment."""
+        assert _is_genuine_fragment("otherwise raises a RuntimeError on failure.")
+
+    def test_continuation_word_per_without_punctuation_flagged(self) -> None:
+        """Docstring starting with 'per' without trailing punctuation is a fragment."""
+        assert _is_genuine_fragment("per subtest execution limits")
+
 
 # ---------------------------------------------------------------------------
 # scan_file — genuine fragment in module docstring
