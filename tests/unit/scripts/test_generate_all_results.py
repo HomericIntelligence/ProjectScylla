@@ -92,3 +92,98 @@ class TestMain:
 
         # Should only run export_data and generate_tables (2 calls)
         assert mock_run.call_count == 2
+
+    def test_skips_data_when_flag_set(self) -> None:
+        """Skips data export step when --skip-data is passed."""
+        with patch("generate_all_results.run_script", return_value=True) as mock_run:
+            with patch("generate_all_results.terminal_guard"):
+                from generate_all_results import main
+
+                with patch(
+                    "sys.argv",
+                    ["generate_all_results.py", "--skip-data"],
+                ):
+                    main()
+
+        # Should only run generate_figures and generate_tables (2 calls)
+        assert mock_run.call_count == 2
+
+    def test_skips_data_does_not_call_export_script(self) -> None:
+        """Data export script is not called when --skip-data is passed."""
+        with patch("generate_all_results.run_script", return_value=True) as mock_run:
+            with patch("generate_all_results.terminal_guard"):
+                from generate_all_results import main
+
+                with patch(
+                    "sys.argv",
+                    ["generate_all_results.py", "--skip-data"],
+                ):
+                    main()
+
+        called_scripts = [call.args[0] for call in mock_run.call_args_list]
+        assert "scripts/export_data.py" not in called_scripts
+
+    def test_skips_tables_when_flag_set(self) -> None:
+        """Skips table generation step when --skip-tables is passed."""
+        with patch("generate_all_results.run_script", return_value=True) as mock_run:
+            with patch("generate_all_results.terminal_guard"):
+                from generate_all_results import main
+
+                with patch(
+                    "sys.argv",
+                    ["generate_all_results.py", "--skip-tables"],
+                ):
+                    main()
+
+        # Should only run export_data and generate_figures (2 calls)
+        assert mock_run.call_count == 2
+
+    def test_skips_tables_does_not_call_tables_script(self) -> None:
+        """Table generation script is not called when --skip-tables is passed."""
+        with patch("generate_all_results.run_script", return_value=True) as mock_run:
+            with patch("generate_all_results.terminal_guard"):
+                from generate_all_results import main
+
+                with patch(
+                    "sys.argv",
+                    ["generate_all_results.py", "--skip-tables"],
+                ):
+                    main()
+
+        called_scripts = [call.args[0] for call in mock_run.call_args_list]
+        assert "scripts/generate_tables.py" not in called_scripts
+
+    def test_skip_data_and_tables_runs_only_figures(self) -> None:
+        """Only figure generation runs when both --skip-data and --skip-tables are passed."""
+        with patch("generate_all_results.run_script", return_value=True) as mock_run:
+            with patch("generate_all_results.terminal_guard"):
+                from generate_all_results import main
+
+                with patch(
+                    "sys.argv",
+                    ["generate_all_results.py", "--skip-data", "--skip-tables"],
+                ):
+                    main()
+
+        assert mock_run.call_count == 1
+        called_scripts = [call.args[0] for call in mock_run.call_args_list]
+        assert called_scripts == ["scripts/generate_figures.py"]
+
+    def test_skip_all_flags_runs_no_scripts(self) -> None:
+        """No scripts run when all three skip flags are passed."""
+        with patch("generate_all_results.run_script", return_value=True) as mock_run:
+            with patch("generate_all_results.terminal_guard"):
+                from generate_all_results import main
+
+                with patch(
+                    "sys.argv",
+                    [
+                        "generate_all_results.py",
+                        "--skip-data",
+                        "--skip-figures",
+                        "--skip-tables",
+                    ],
+                ):
+                    main()
+
+        assert mock_run.call_count == 0
