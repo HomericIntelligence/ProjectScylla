@@ -1,6 +1,7 @@
-"""Unit tests for process metrics helpers in scylla/e2e/stages.py.
+"""Unit tests for process metrics helpers in scylla/e2e/stage_process_metrics.py.
 
 Tests cover:
+- _parse_diff_numstat_output: direct unit tests for the numstat parser
 - _get_diff_stat: parsing git diff --numstat output
 - _build_change_results: constructing ChangeResult list from diff_stat
 - _build_progress_steps: constructing ProgressStep list from workspace_state
@@ -18,13 +19,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scylla.e2e.stages import (
-    RunContext,
+from scylla.e2e.stage_process_metrics import (
     _build_change_results,
     _build_progress_steps,
     _finalize_change_results,
     _finalize_progress_steps,
     _get_diff_stat,
+    _parse_diff_numstat_output,
+)
+from scylla.e2e.stages import (
+    RunContext,
     stage_finalize_run,
 )
 from scylla.metrics.process import ChangeResult, ProgressStep
@@ -86,6 +90,109 @@ def minimal_run_context(tmp_path: Path) -> RunContext:
         adapter=MagicMock(),
         task_prompt="Fix the bug",
     )
+
+
+# ---------------------------------------------------------------------------
+# TestParseDiffNumstatOutput
+# ---------------------------------------------------------------------------
+
+
+class TestParseDiffNumstatOutput:
+    """Direct unit tests for _parse_diff_numstat_output()."""
+
+    def test_empty_string_returns_empty_dict(self) -> None:
+        """Empty input returns empty dict."""
+        result = _parse_diff_numstat_output("")
+        assert result == {}
+
+    def test_parses_single_modified_file(self) -> None:
+        """Parses a single modified file correctly."""
+        result = _parse_diff_numstat_output("5\t3\tpath/to/file.py\n")
+        assert result == {"path/to/file.py": (5, 3)}
+
+    def test_parses_multiple_files(self) -> None:
+        """Parses multiple files in one output."""
+        output = "7\t3\ta.py\n3\t0\tb.py\n"
+        result = _parse_diff_numstat_output(output)
+        assert result == {"a.py": (7, 3), "b.py": (3, 0)}
+
+    def test_skips_binary_files_with_dash_counts(self) -> None:
+        r"""Binary files (-\t-\t<path>) are skipped."""
+        output = "1\t0\ta.py\n-\t-\timage.png\n"
+        result = _parse_diff_numstat_output(output)
+        assert "a.py" in result
+        assert "image.png" not in result
+
+    def test_skips_lines_with_fewer_than_three_parts(self) -> None:
+        """Lines that don't have 3 tab-separated parts are skipped."""
+        output = "not\ta\tvalid\tline\n5\t2\tgood.py\n"
+        result = _parse_diff_numstat_output(output)
+        # The extra-column line is skipped, good.py is parsed
+        assert "good.py" in result
+
+    def test_skips_lines_with_non_integer_counts(self) -> None:
+        """Lines with non-integer insertion/deletion counts are skipped."""
+        output = "abc\txyz\tfile.py\n5\t2\tgood.py\n"
+        result = _parse_diff_numstat_output(output)
+        assert "file.py" not in result
+        assert "good.py" in result
+
+    def test_skips_lines_with_empty_filepath(self) -> None:
+        """Lines with empty filepath after strip are skipped."""
+        output = "5\t2\t\n3\t1\tgood.py\n"
+        result = _parse_diff_numstat_output(output)
+        assert "" not in result
+        assert "good.py" in result
+
+    def test_strips_whitespace_from_filepath(self) -> None:
+        """File path trailing whitespace is stripped."""
+        output = "3\t0\tpath/to/file.py\n"
+        result = _parse_diff_numstat_output(output)
+        assert "path/to/file.py" in result
+
+    def test_insertions_only_file(self) -> None:
+        """Handles file with only insertions (0 deletions)."""
+        result = _parse_diff_numstat_output("20\t0\tnew_file.py\n")
+        assert result["new_file.py"] == (20, 0)
+
+    def test_deletions_only_file(self) -> None:
+        """Handles file with only deletions (0 insertions)."""
+        result = _parse_diff_numstat_output("0\t5\told_file.py\n")
+        assert result["old_file.py"] == (0, 5)
+
+    def test_returns_tuple_per_file(self) -> None:
+        """Each file maps to a (insertions, deletions) tuple."""
+        result = _parse_diff_numstat_output("10\t2\ta.py\n")
+        ins, dels = result["a.py"]
+        assert ins == 10
+        assert dels == 2
+
+    def test_skips_only_ins_dash(self) -> None:
+        """Skips line when only insertions field is '-'."""
+        output = "-\t5\tfile.py\n"
+        result = _parse_diff_numstat_output(output)
+        assert result == {}
+
+    def test_skips_only_dels_dash(self) -> None:
+        """Skips line when only deletions field is '-'."""
+        output = "5\t-\tfile.py\n"
+        result = _parse_diff_numstat_output(output)
+        assert result == {}
+
+    @pytest.mark.parametrize(
+        "numstat_line,expected",
+        [
+            ("1\t1\tone.py\n", {"one.py": (1, 1)}),
+            ("100\t200\ttwo.py\n", {"two.py": (100, 200)}),
+            ("0\t0\tempty.py\n", {"empty.py": (0, 0)}),
+        ],
+    )
+    def test_parametrized_valid_lines(
+        self, numstat_line: str, expected: dict[str, tuple[int, int]]
+    ) -> None:
+        """Parametrized: various valid numstat lines are parsed correctly."""
+        result = _parse_diff_numstat_output(numstat_line)
+        assert result == expected
 
 
 # ---------------------------------------------------------------------------
@@ -346,6 +453,34 @@ class TestBuildProgressSteps:
         result = _build_progress_steps(workspace_state, judge_score=0.5, diff_stat=diff_stat)
         assert len(result) == 1
         assert result[0].step_id == "old.py"
+
+    def test_multiple_files_absent_from_diff_stat_get_equal_weights(self) -> None:
+        """Multiple files all absent from diff_stat each get default delta 1, equal weights."""
+        workspace_state = (
+            "Files modified/created by agent:\n"
+            "- `a.py` (modified)\n"
+            "- `b.py` (modified)\n"
+            "- `c.py` (modified)"
+        )
+        # No diff_stat entries — all files default to delta 1
+        result = _build_progress_steps(workspace_state, judge_score=0.5, diff_stat={})
+        assert len(result) == 3
+        weights = [s.weight for s in result]
+        assert all(w == pytest.approx(weights[0]) for w in weights)
+        assert sum(weights) == pytest.approx(1.0)
+
+    def test_heavier_file_gets_larger_weight(self) -> None:
+        """File with more line changes receives proportionally larger weight."""
+        workspace_state = (
+            "Files modified/created by agent:\n- `small.py` (modified)\n- `big.py` (modified)"
+        )
+        diff_stat = {"small.py": (1, 0), "big.py": (9, 0)}
+        result = _build_progress_steps(workspace_state, judge_score=0.8, diff_stat=diff_stat)
+        small_weight = next(s.weight for s in result if s.step_id == "small.py")
+        big_weight = next(s.weight for s in result if s.step_id == "big.py")
+        assert big_weight > small_weight
+        assert big_weight == pytest.approx(0.9)
+        assert small_weight == pytest.approx(0.1)
 
 
 # ---------------------------------------------------------------------------
