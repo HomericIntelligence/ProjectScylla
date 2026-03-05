@@ -95,7 +95,7 @@ def severity_label(score: float | None) -> str:
     return "NONE"
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901  # CLI with many conditional audit paths
     """Parse pip-audit JSON from stdin and exit non-zero on HIGH/CRITICAL findings."""
     ignore_ids = load_ignore_list()
     if ignore_ids:

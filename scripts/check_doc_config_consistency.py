@@ -316,7 +316,7 @@ def check_readme_test_count(
     return errors
 
 
-def main() -> int:
+def main() -> int:  # noqa: C901  # CLI orchestration with many check paths
     """Run all doc/config consistency checks.
 
     Returns:

@@ -401,7 +401,7 @@ class ConfigLoader:
     # Merged Configuration Loading
     # -------------------------------------------------------------------------
 
-    def load(self, test_id: str, model_id: str) -> ScyllaConfig:
+    def load(self, test_id: str, model_id: str) -> ScyllaConfig:  # noqa: C901  # config loader with many format/version branches
         """Load and merge configuration for a test run.
 
         Applies three-level priority hierarchy:

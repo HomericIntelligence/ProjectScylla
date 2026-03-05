@@ -285,7 +285,7 @@ class SubTestExecutor:
         self.workspace_manager = workspace_manager
         self.adapter = adapter or ClaudeCodeAdapter()
 
-    def run_subtest(
+    def run_subtest(  # noqa: C901  # orchestration with many retry/outcome paths
         self,
         tier_id: TierID,
         tier_config: TierConfig,
@@ -349,7 +349,7 @@ class SubTestExecutor:
             else None
         )
 
-        def _run_loop() -> None:
+        def _run_loop() -> None:  # noqa: C901  # run loop with many retry/skip/state paths
             nonlocal last_workspace, pipeline_baseline
 
             for run_num in range(1, self.config.runs_per_subtest + 1):

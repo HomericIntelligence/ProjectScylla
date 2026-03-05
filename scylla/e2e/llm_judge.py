@@ -191,7 +191,7 @@ def _is_modular_repo(workspace: Path) -> bool:
     return (workspace / "bazelw").exists() and (workspace / "mojo").is_dir()
 
 
-def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
+def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  # pipeline with sequential conditional stages
     """Run Mojo build/lint pipeline and capture results.
 
     Detects if workspace is the modular/mojo monorepo and uses appropriate commands:
@@ -373,7 +373,7 @@ def _get_pipeline_env() -> dict[str, str]:
     return env
 
 
-def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
+def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  # pipeline with sequential conditional stages
     """Run Python build/lint pipeline and capture results.
 
     Args:
@@ -559,7 +559,7 @@ def _run_build_pipeline(workspace: Path, language: str = "python") -> BuildPipel
 # This module now imports and uses that consolidated implementation.
 
 
-def _get_workspace_state(workspace: Path) -> str:
+def _get_workspace_state(workspace: Path) -> str:  # noqa: C901  # workspace state detection with many file patterns
     """Get a description of modified/created files in the workspace.
 
     Only lists files that were modified or created by the agent (using git status),
@@ -763,7 +763,7 @@ def _load_reference_patch(reference_path: Path) -> str | None:
         return None
 
 
-def run_llm_judge(  # judge execution with many retry/error paths
+def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
     workspace: Path,
     task_prompt: str,
     agent_output: str,

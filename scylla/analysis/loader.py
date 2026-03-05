@@ -521,7 +521,7 @@ def load_judgment(judgment_path: Path, judge_number: int) -> JudgeEvaluation:
     )
 
 
-def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_model: str) -> RunData:
+def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_model: str) -> RunData:  # noqa: C901  # data loading with many optional field paths
     """Load data for a single run.
 
     Args:
@@ -819,7 +819,7 @@ def load_all_experiments(
     return experiments
 
 
-def load_rubric_weights(
+def load_rubric_weights(  # noqa: C901  # config loading with many format/version branches
     data_dir: Path,
     exclude: list[str] | None = None,
     rubric_conflict: RubricConflict = "error",

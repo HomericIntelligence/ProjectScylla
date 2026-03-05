@@ -38,7 +38,7 @@ _FMT_RATE = f".{config.precision_rates}f"
 _FMT_COST = f".{config.precision_costs}f"
 
 
-def _generate_pairwise_comparison(  # pairwise comparison with many metric types
+def _generate_pairwise_comparison(  # noqa: C901  # pairwise comparison with many metric types
     runs_df: pd.DataFrame,
     metric_column: str,
     metric_name: str,
@@ -386,7 +386,7 @@ def table02b_impl_rate_comparison(runs_df: pd.DataFrame) -> tuple[str, str]:
     )
 
 
-def table04_criteria_performance(  # table generation with many criteria branches
+def table04_criteria_performance(  # noqa: C901  # table generation with many criteria branches
     criteria_df: pd.DataFrame,
     runs_df: pd.DataFrame,
     criteria_weights: dict[str, float] | None = None,

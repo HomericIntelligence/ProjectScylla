@@ -111,7 +111,7 @@ class TierManager:
             delegation_enabled=global_tier_config.delegation_enabled,
         )
 
-    def prepare_workspace(  # workspace setup with many config scenarios
+    def prepare_workspace(  # noqa: C901  # workspace setup with many config scenarios
         self,
         workspace: Path,
         tier_id: TierID,
@@ -319,7 +319,7 @@ class TierManager:
 
         return cast(dict[str, Any], config.get("resources", {}))
 
-    def _create_symlinks(  # symlink creation with many source/target patterns
+    def _create_symlinks(  # noqa: C901  # symlink creation with many source/target patterns
         self,
         workspace: Path,
         resources: dict[str, Any],
@@ -510,7 +510,7 @@ class TierManager:
         with open(settings_path, "w") as f:
             json.dump(settings, f, indent=2)
 
-    def build_resource_suffix(self, subtest: SubTestConfig) -> str:
+    def build_resource_suffix(self, subtest: SubTestConfig) -> str:  # noqa: C901  # config with many conditional suffix rules
         """Build prompt suffix based on configured resources.
 
         Uses bullet list format for resources:
@@ -769,7 +769,7 @@ class TierManager:
 
         return merged_resources
 
-    def _merge_tier_resources(  # file discovery with many path patterns
+    def _merge_tier_resources(  # noqa: C901  # file discovery with many path patterns
         self,
         merged_resources: dict[str, Any],
         new_resources: dict[str, Any],
