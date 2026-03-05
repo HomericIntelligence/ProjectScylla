@@ -15,11 +15,8 @@ clearly a partial sentence continuation (e.g., starts with a lowercase
 connector word like ``"across"``, ``"and"``, ``"or"``, ``"but"``).  Normal
 noun-phrase summaries and complete sentences are always allowed.
 
-Excluded paths (archived / test-fixture content that is not authoritative):
-  - ``.pixi/``
-  - ``build/``
-  - ``node_modules/``
-  - ``tests/claude-code/``
+Scoped to ``scylla/`` only — ``scripts/``, ``tests/``, and other directories are
+excluded to keep signal-to-noise ratio manageable.
 
 Usage::
 
@@ -261,27 +258,22 @@ def scan_file(file_path: Path, repo_root: Path) -> list[FragmentFinding]:
 
 
 # ---------------------------------------------------------------------------
-# Paths to exclude from scanning
+# Scope filter
 # ---------------------------------------------------------------------------
 
-EXCLUDED_PREFIXES = (
-    ".pixi/",
-    ".worktrees/",
-    ".claude/worktrees/",
-    "build/",
-    "node_modules/",
-    "tests/claude-code/",
-)
+
+def _is_scylla_file(path: Path, root: Path) -> bool:
+    """Return True if path is a .py file under the scylla/ directory."""
+    scylla_dir = root / "scylla"
+    return path.suffix == ".py" and path.is_relative_to(scylla_dir)
 
 
 def scan_repository(repo_root: Path) -> list[FragmentFinding]:
-    """Scan all non-excluded Python files in the repository."""
+    """Scan all Python files under scylla/ in the repository."""
     all_findings: list[FragmentFinding] = []
 
     for py_file in sorted(repo_root.rglob("*.py")):
-        relative = py_file.relative_to(repo_root)
-        relative_str = str(relative).replace("\\", "/")
-        if any(relative_str.startswith(prefix) for prefix in EXCLUDED_PREFIXES):
+        if not _is_scylla_file(py_file, repo_root):
             continue
         all_findings.extend(scan_file(py_file, repo_root))
 
