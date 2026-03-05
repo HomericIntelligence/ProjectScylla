@@ -246,8 +246,8 @@ class TestRunRetrospective:
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch("scylla.automation.retrospective.run") as mock_run,
+            patch("scylla.automation.retrospective.logger") as mock_logger,
         ):
             # Mock successful run with stdout
             mock_run.return_value = MagicMock(stdout="Retrospective output")
@@ -295,8 +295,8 @@ class TestRunRetrospective:
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch("scylla.automation.retrospective.run") as mock_run,
+            patch("scylla.automation.retrospective.logger") as mock_logger,
         ):
             mock_run.side_effect = RuntimeError("Claude error")
 
@@ -320,8 +320,8 @@ class TestRunRetrospective:
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch("scylla.automation.retrospective.run") as mock_run,
+            patch("scylla.automation.retrospective.logger") as mock_logger,
         ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
 
@@ -346,8 +346,8 @@ class TestRunRetrospective:
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.logger"),
+            patch("scylla.automation.retrospective.run") as mock_run,
+            patch("scylla.automation.retrospective.logger"),
         ):
             error = subprocess.CalledProcessError(
                 returncode=1,
@@ -692,10 +692,10 @@ class TestRunFollowUpIssues:
         )
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
-            patch("scylla.automation.implementer.gh_issue_comment") as mock_comment,
-            patch("scylla.automation.implementer.time.sleep"),
+            patch("scylla.automation.follow_up.run") as mock_run,
+            patch("scylla.automation.follow_up.gh_issue_create") as mock_create,
+            patch("scylla.automation.follow_up.gh_issue_comment") as mock_comment,
+            patch("scylla.automation.follow_up.time.sleep"),
         ):
             mock_run.return_value = mock_result
             mock_create.return_value = 456
@@ -717,9 +717,9 @@ class TestRunFollowUpIssues:
         mock_result.stdout = json.dumps({"result": "[]"})
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
-            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch("scylla.automation.follow_up.run") as mock_run,
+            patch("scylla.automation.follow_up.gh_issue_create") as mock_create,
+            patch("scylla.automation.follow_up.logger") as mock_logger,
         ):
             mock_run.return_value = mock_result
 
@@ -735,8 +735,8 @@ class TestRunFollowUpIssues:
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.logger") as mock_logger,
+            patch("scylla.automation.follow_up.run") as mock_run,
+            patch("scylla.automation.follow_up.logger") as mock_logger,
         ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
 
@@ -760,10 +760,10 @@ class TestRunFollowUpIssues:
         )
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
-            patch("scylla.automation.implementer.gh_issue_comment") as mock_comment,
-            patch("scylla.automation.implementer.time.sleep"),
+            patch("scylla.automation.follow_up.run") as mock_run,
+            patch("scylla.automation.follow_up.gh_issue_create") as mock_create,
+            patch("scylla.automation.follow_up.gh_issue_comment") as mock_comment,
+            patch("scylla.automation.follow_up.time.sleep"),
         ):
             mock_run.return_value = mock_result
             # First succeeds, second fails
@@ -788,10 +788,10 @@ class TestRunFollowUpIssues:
         )
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.gh_issue_create", return_value=999),
-            patch("scylla.automation.implementer.gh_issue_comment"),
-            patch("scylla.automation.implementer.time.sleep"),
+            patch("scylla.automation.follow_up.run") as mock_run,
+            patch("scylla.automation.follow_up.gh_issue_create", return_value=999),
+            patch("scylla.automation.follow_up.gh_issue_comment"),
+            patch("scylla.automation.follow_up.time.sleep"),
         ):
             mock_run.return_value = mock_result
 
@@ -810,8 +810,8 @@ class TestRunFollowUpIssues:
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.implementer.run") as mock_run,
-            patch("scylla.automation.implementer.logger"),
+            patch("scylla.automation.follow_up.run") as mock_run,
+            patch("scylla.automation.follow_up.logger"),
         ):
             error = subprocess.CalledProcessError(
                 returncode=1,
