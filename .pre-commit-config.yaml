@@ -147,6 +147,13 @@ repos:
           ^(config/defaults\.yaml|config/models/.+\.yaml|
           tests/fixtures/config/tiers/.+\.yaml)$
         pass_filenames: true
+      - id: check-tier-label-consistency
+        name: Check Tier Label Consistency in metrics-definitions.md
+        description: Fails if metrics-definitions.md contains known-bad tier label patterns (e.g. T3/Tool, T4/Deleg)
+        entry: pixi run python scripts/check_tier_label_consistency.py
+        language: system
+        files: ^\.claude/shared/metrics-definitions\.md$
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
