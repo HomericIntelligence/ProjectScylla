@@ -605,8 +605,28 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 with open(summary_path) as f:
                     summary = json.load(f)
                 for r in summary.get("results", []):
-                    if r.get("status") != "error" or not args.retry_errors:
-                        completed_ids.add(r["test_id"])
+                    if r.get("status") == "error" and args.retry_errors:
+                        continue
+                    # If --max-subtests was specified, check whether the checkpoint
+                    # has fewer subtests than requested. If so, re-run to expand.
+                    if args.max_subtests is not None:
+                        result_dir = r.get("result_dir")
+                        if result_dir:
+                            cp_path = Path(result_dir) / "checkpoint.json"
+                            try:
+                                with open(cp_path) as cp_f:
+                                    cp = json.load(cp_f)
+                                subtest_states = cp.get("subtest_states", {})
+                                needs_expansion = False
+                                for tier_subtests in subtest_states.values():
+                                    if len(tier_subtests) < args.max_subtests:
+                                        needs_expansion = True
+                                        break
+                                if needs_expansion:
+                                    continue
+                            except Exception:
+                                pass
+                    completed_ids.add(r["test_id"])
             except Exception:
                 pass
 
