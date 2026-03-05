@@ -91,3 +91,191 @@ class TestComputeNormalityTests:
         assert len(result) > 0
         assert result[0]["model"] == "m1"
         assert result[0]["tier"] == "T0"
+
+    def test_result_dict_contains_all_expected_columns(self) -> None:
+        """Each result dict contains all seven expected column keys."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.92, 0.3)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        assert len(result) > 0
+        expected_keys = {"model", "tier", "metric", "n", "w_statistic", "p_value", "is_normal"}
+        assert set(result[0].keys()) == expected_keys
+
+    def test_result_n_matches_data_length(self) -> None:
+        """The 'n' field equals the number of non-null values for the metric."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.95, 0.4)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        score_entry = next(r for r in result if r["metric"] == "score")
+        assert score_entry["n"] == 5
+
+    def test_result_w_statistic_is_float(self) -> None:
+        """The 'w_statistic' field is a float."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.92, 0.3)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        score_entry = next(r for r in result if r["metric"] == "score")
+        assert isinstance(score_entry["w_statistic"], float)
+        assert score_entry["w_statistic"] == 0.92
+
+    def test_result_p_value_is_float(self) -> None:
+        """The 'p_value' field is a float."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.95, 0.12)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        score_entry = next(r for r in result if r["metric"] == "score")
+        assert isinstance(score_entry["p_value"], float)
+        assert score_entry["p_value"] == 0.12
+
+    def test_is_normal_true_when_p_value_above_threshold(self) -> None:
+        """Sets is_normal=True when p_value > 0.05."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.98, 0.8)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        score_entry = next(r for r in result if r["metric"] == "score")
+        assert score_entry["is_normal"] is True
+
+    def test_is_normal_false_when_p_value_at_or_below_threshold(self) -> None:
+        """Sets is_normal=False when p_value <= 0.05."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.70, 0.03)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        score_entry = next(r for r in result if r["metric"] == "score")
+        assert score_entry["is_normal"] is False
+
+    def test_skips_metric_column_not_present_in_dataframe(self) -> None:
+        """Skips metric columns that do not exist in the DataFrame."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        # Only 'score' column present; impl_rate, cost_usd, etc. are absent
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.95, 0.4)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        metrics_returned = {r["metric"] for r in result}
+        assert metrics_returned == {"score"}
+
+    def test_produces_one_entry_per_metric_per_model_and_tier(self) -> None:
+        """Produces exactly one result dict per (model, tier, metric) combination."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+                "impl_rate": [0.2, 0.4, 0.6, 0.8, 1.0],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.95, 0.4)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        assert len(result) == 2
+        metrics_returned = {r["metric"] for r in result}
+        assert metrics_returned == {"score", "impl_rate"}
+
+    def test_metric_field_matches_column_name(self) -> None:
+        """The 'metric' field in each result matches the DataFrame column name."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "cost_usd": [1.0, 2.0, 3.0, 4.0, 5.0],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.95, 0.4)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        assert len(result) == 1
+        assert result[0]["metric"] == "cost_usd"
+
+    def test_skips_metric_values_with_fewer_than_three_non_null(self) -> None:
+        """Skips metric column when fewer than 3 non-null values remain after dropna."""
+        import pandas as pd
+        from export_data import _compute_normality_tests
+
+        runs_df = pd.DataFrame(
+            {
+                "agent_model": ["m1"] * 5,
+                "tier": ["T0"] * 5,
+                "score": [0.1, 0.5, 0.9, 0.3, 0.7],
+                "impl_rate": [None, None, None, 0.8, 1.0],
+            }
+        )
+        with patch("export_data.shapiro_wilk", return_value=(0.95, 0.4)):
+            result = _compute_normality_tests(runs_df, ["m1"], ["T0"])
+
+        metrics_returned = {r["metric"] for r in result}
+        assert "impl_rate" not in metrics_returned
+        assert "score" in metrics_returned
