@@ -13,6 +13,25 @@ from typing import Any
 import jsonschema
 import yaml
 
+from .models import (
+    ConfigurationError,
+    DefaultsConfig,
+    EvalCase,
+    ModelConfig,
+    Rubric,
+    ScyllaConfig,
+    TierConfig,
+)
+from .validation import (
+    validate_defaults_filename,
+    validate_filename_model_id_consistency,
+    validate_filename_tier_consistency,
+    validate_model_config_referenced,
+    validate_tier_config_referenced,
+)
+
+logger = logging.getLogger(__name__)
+
 _SCHEMAS_DIR = Path(__file__).parent.parent.parent / "schemas"
 
 
@@ -37,25 +56,6 @@ def _validate_schema(data: dict[str, Any], schema_name: str, path: Path) -> None
         raise ConfigurationError(
             f"Invalid {schema_name} configuration in {path}: {e.message}"
         ) from e
-
-from .models import (
-    ConfigurationError,
-    DefaultsConfig,
-    EvalCase,
-    ModelConfig,
-    Rubric,
-    ScyllaConfig,
-    TierConfig,
-)
-from .validation import (
-    validate_defaults_filename,
-    validate_filename_model_id_consistency,
-    validate_filename_tier_consistency,
-    validate_model_config_referenced,
-    validate_tier_config_referenced,
-)
-
-logger = logging.getLogger(__name__)
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
