@@ -255,7 +255,7 @@ def _assert_runs_untouched(
             )
 
 
-def _assert_global_invariants(
+def _assert_global_invariants(  # noqa: C901
     cp: E2ECheckpoint,
     previous_cp: E2ECheckpoint | None,
     expected_config_hash: str,

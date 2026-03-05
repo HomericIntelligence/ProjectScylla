@@ -37,7 +37,7 @@ def make_checkpoint(**kwargs: Any) -> E2ECheckpoint:
     return E2ECheckpoint(**defaults)
 
 
-def validate_checkpoint_states(
+def validate_checkpoint_states(  # noqa: C901
     checkpoint_path: Path,
     *,
     expected_experiment_state: str | None = None,
