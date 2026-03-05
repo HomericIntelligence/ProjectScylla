@@ -304,7 +304,7 @@ def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
     return None
 
 
-def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
+def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa: C901  # orchestration with many retry/outcome paths
     """Run multiple tests using in-process ThreadPoolExecutor.
 
     Each test runs run_experiment() directly in its own thread.
@@ -431,7 +431,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 json.dump(summary, f, indent=2)
             tmp_path.rename(summary_path)
 
-    def run_one_test(test_dir: Path) -> dict[str, Any]:
+    def run_one_test(test_dir: Path) -> dict[str, Any]:  # noqa: C901  # test execution with many failure/skip paths
         """Run a single test and return result dict."""
         test_id = test_dir.name
         started_at = datetime.now(timezone.utc).isoformat()
@@ -669,7 +669,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
     return 0 if failed_count == 0 else 1
 
 
-def cmd_run(args: argparse.Namespace) -> int:
+def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901  # CLI dispatch with many command branches
     """Execute the 'run' subcommand (single test or batch mode)."""
     import yaml
 
@@ -1385,7 +1385,7 @@ def _visualize_states_table(
                         print(f"{tier_id:<6}{subtest_id:<12}{run_num_str:<5}{run_state}")
 
 
-def cmd_visualize(args: argparse.Namespace) -> int:
+def cmd_visualize(args: argparse.Namespace) -> int:  # noqa: C901  # CLI dispatch with many visualization modes
     """Execute the 'visualize' subcommand."""
     import sys
 

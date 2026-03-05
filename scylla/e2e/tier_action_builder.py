@@ -93,7 +93,7 @@ class TierActionBuilder:
         self.save_tier_result_fn = save_tier_result_fn
         self.checkpoint_merge_lock = checkpoint_merge_lock
 
-    def build(self) -> dict[TierState, Callable[[], None]]:
+    def build(self) -> dict[TierState, Callable[[], None]]:  # noqa: C901  # action map with many tier state branches
         """Build and return the TierState -> Callable action map.
 
         Each returned callable is a closure over this builder's attributes.

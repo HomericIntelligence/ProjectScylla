@@ -711,7 +711,7 @@ class E2ERunner:
             ExperimentState.REPORTS_GENERATED: self._action_exp_reports_generated,
         }
 
-    def run(self) -> ExperimentResult:
+    def run(self) -> ExperimentResult:  # noqa: C901  # orchestration with many retry/outcome paths
         """Run the complete E2E experiment with auto-resume support.
 
         Automatically resumes from checkpoint if one exists (unless --fresh flag).

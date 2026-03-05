@@ -160,7 +160,7 @@ class RateLimitCoordinator:
         return self._shutdown_event.is_set()
 
 
-def run_tier_subtests_parallel(  # parallel execution with many concurrency cases
+def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many concurrency cases
     config: ExperimentConfig,
     tier_id: TierID,
     tier_config: TierConfig,
