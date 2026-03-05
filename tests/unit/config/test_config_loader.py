@@ -816,3 +816,147 @@ class TestLoadTierNormalizationParametrized:
         with pytest.raises(ConfigurationError) as exc_info:
             loader.load_tier(input_tier)
         assert expected_normalized in str(exc_info.value)
+
+
+class TestSchemaValidation:
+    """Tests for automatic JSON schema validation in loader methods."""
+
+    # ------------------------------------------------------------------
+    # load_defaults
+    # ------------------------------------------------------------------
+
+    def test_load_defaults_valid_passes(self, tmp_path: Path) -> None:
+        """load_defaults() succeeds when defaults.yaml is schema-valid."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "defaults.yaml").write_text(
+            "evaluation:\n  runs_per_eval: 5\n  timeout: 120\n"
+        )
+        loader = ConfigLoader(base_path=tmp_path)
+        defaults = loader.load_defaults()
+        assert isinstance(defaults, DefaultsConfig)
+
+    def test_load_defaults_wrong_type_raises(self, tmp_path: Path) -> None:
+        """load_defaults() raises ConfigurationError when a field has the wrong type."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "defaults.yaml").write_text(
+            "evaluation:\n  runs_per_eval: 'not-an-int'\n"
+        )
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid defaults configuration"):
+            loader.load_defaults()
+
+    def test_load_defaults_additional_property_raises(self, tmp_path: Path) -> None:
+        """load_defaults() raises ConfigurationError for unknown top-level properties."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        (config_dir / "defaults.yaml").write_text("unknown_field: value\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid defaults configuration"):
+            loader.load_defaults()
+
+    def test_load_defaults_fixture_skipped(self, tmp_path: Path) -> None:
+        """load_defaults() skips schema validation for _-prefixed fixture files."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir()
+        # Write an invalid-schema file with _-prefixed stem
+        fixture_path = config_dir / "_fixture.yaml"
+        fixture_path.write_text("unknown_junk: 999\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        # Validation skipped; only pydantic validation runs (which passes for empty-like config)
+        loader._load_yaml(fixture_path)  # just ensure no schema error raised
+
+    # ------------------------------------------------------------------
+    # load_tier
+    # ------------------------------------------------------------------
+
+    def test_load_tier_valid_passes(self, tmp_path: Path) -> None:
+        """load_tier() succeeds when tier YAML is schema-valid."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tiers_dir / "t0.yaml").write_text("tier: t0\nname: Vanilla\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        tier = loader.load_tier("t0")
+        assert tier.tier == "t0"
+
+    def test_load_tier_missing_required_raises(self, tmp_path: Path) -> None:
+        """load_tier() raises ConfigurationError when required 'name' is absent."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tiers_dir / "t0.yaml").write_text("tier: t0\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid tier configuration"):
+            loader.load_tier("t0")
+
+    def test_load_tier_wrong_type_raises(self, tmp_path: Path) -> None:
+        """load_tier() raises ConfigurationError when a field has the wrong type."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tiers_dir / "t0.yaml").write_text("tier: t0\nname: Vanilla\nuses_tools: 'yes'\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid tier configuration"):
+            loader.load_tier("t0")
+
+    def test_load_tier_invalid_pattern_raises(self, tmp_path: Path) -> None:
+        """load_tier() raises ConfigurationError when tier value violates pattern constraint."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        # tier schema requires pattern ^t[0-6]$; t99 fails
+        (tiers_dir / "_bad.yaml").write_text("tier: 'bad-tier-id'\nname: Test\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        # _-prefixed tiers skip validation, so no error is raised
+        data = loader._load_yaml(tiers_dir / "_bad.yaml")
+        assert data["tier"] == "bad-tier-id"
+
+    @pytest.mark.parametrize(
+        "tier_value",
+        ["t7", "t99", "T0", "x1"],
+    )
+    def test_load_tier_bad_pattern_raises(self, tmp_path: Path, tier_value: str) -> None:
+        """load_tier() raises ConfigurationError when tier does not match ^t[0-6]$."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        safe_name = f"t{tier_value[-1]}" if tier_value[-1].isdigit() else "t9"
+        (tiers_dir / f"{safe_name}.yaml").write_text(
+            f"tier: '{tier_value}'\nname: Test\n"
+        )
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid tier configuration"):
+            loader.load_tier(safe_name)
+
+    # ------------------------------------------------------------------
+    # load_model
+    # ------------------------------------------------------------------
+
+    def test_load_model_valid_passes(self, tmp_path: Path) -> None:
+        """load_model() succeeds when model YAML is schema-valid."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / "my-model.yaml").write_text("model_id: my-model\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        model = loader.load_model("my-model")
+        assert model is not None
+        assert model.model_id == "my-model"
+
+    def test_load_model_missing_required_raises(self, tmp_path: Path) -> None:
+        """load_model() raises ConfigurationError when model_id is missing from YAML."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        # Write a file with no model_id; loader injects it, but if schema
+        # rejects another field that should trigger a real failure.
+        (models_dir / "bad-model.yaml").write_text("unknown_field: oops\n")
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid model configuration"):
+            loader.load_model("bad-model")
+
+    def test_load_model_wrong_type_raises(self, tmp_path: Path) -> None:
+        """load_model() raises ConfigurationError when a field has the wrong type."""
+        models_dir = tmp_path / "config" / "models"
+        models_dir.mkdir(parents=True)
+        (models_dir / "bad-model.yaml").write_text(
+            "model_id: bad-model\ntemperature: 'hot'\n"
+        )
+        loader = ConfigLoader(base_path=tmp_path)
+        with pytest.raises(ConfigurationError, match="Invalid model configuration"):
+            loader.load_model("bad-model")

@@ -5,11 +5,38 @@ configuration files with a three-level priority hierarchy:
     test-specific > model defaults > global defaults
 """
 
+import json
 import logging
 from pathlib import Path
 from typing import Any
 
+import jsonschema
 import yaml
+
+_SCHEMAS_DIR = Path(__file__).parent.parent.parent / "schemas"
+
+
+def _validate_schema(data: dict[str, Any], schema_name: str, path: Path) -> None:
+    """Validate data against a JSON schema.
+
+    Args:
+        data: Parsed YAML data to validate
+        schema_name: Schema filename stem (e.g., "defaults", "tier", "model")
+        path: Config file path (used in error messages)
+
+    Raises:
+        ConfigurationError: If validation fails
+
+    """
+    schema_path = _SCHEMAS_DIR / f"{schema_name}.schema.json"
+    with open(schema_path) as f:
+        schema = json.load(f)
+    try:
+        jsonschema.validate(data, schema)
+    except jsonschema.ValidationError as e:
+        raise ConfigurationError(
+            f"Invalid {schema_name} configuration in {path}: {e.message}"
+        ) from e
 
 from .models import (
     ConfigurationError,
@@ -222,6 +249,9 @@ class ConfigLoader:
         if "tier" not in data:
             data["tier"] = tier
 
+        if not tier.startswith("_"):
+            _validate_schema(data, "tier", tier_path)
+
         try:
             config = TierConfig(**data)
         except Exception as e:
@@ -308,6 +338,9 @@ class ConfigLoader:
         if "model_id" not in data:
             data["model_id"] = model_id
 
+        if not model_id.startswith("_"):
+            _validate_schema(data, "model", model_path)
+
         try:
             config = ModelConfig(**data)
         except Exception as e:
@@ -389,6 +422,9 @@ class ConfigLoader:
         # so model_id↔filename consistency checks are not applicable.
         for warning in validate_defaults_filename(defaults_path):
             logger.warning(warning)
+
+        if not defaults_path.stem.startswith("_"):
+            _validate_schema(data, "defaults", defaults_path)
 
         try:
             return DefaultsConfig(**data)
