@@ -12,6 +12,7 @@ import pytest
 from scripts.check_docstring_fragments import (
     FragmentFinding,
     _is_genuine_fragment,
+    _is_scylla_file,
     format_json,
     format_report,
     main,
@@ -310,37 +311,118 @@ class TestScanFilePassesValidDocstrings:
 
 
 # ---------------------------------------------------------------------------
-# scan_repository — exclusion paths
+# _is_scylla_file — unit tests
 # ---------------------------------------------------------------------------
 
 
-class TestScanRepositoryExclusions:
-    """scan_repository skips excluded directory prefixes."""
+class TestIsScyllaFile:
+    """_is_scylla_file returns True only for .py files under scylla/."""
 
-    @pytest.mark.parametrize(
-        "excluded_dir",
-        [
-            ".pixi",
-            "build",
-            "node_modules",
-            "tests/claude-code",
-        ],
-    )
-    def test_excludes_path(self, tmp_path: Path, excluded_dir: str) -> None:
-        """Files under excluded paths should not be scanned."""
-        excluded_path = tmp_path / excluded_dir
-        excluded_path.mkdir(parents=True)
-        bad_py = excluded_path / "bad.py"
+    def test_scylla_py_file_accepted(self, tmp_path: Path) -> None:
+        """A .py file under scylla/ should be accepted."""
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        py = scylla_dir / "module.py"
+        py.touch()
+        assert _is_scylla_file(py, tmp_path)
+
+    def test_scylla_nested_py_file_accepted(self, tmp_path: Path) -> None:
+        """A .py file in a scylla/ subdirectory should be accepted."""
+        nested = tmp_path / "scylla" / "subpackage"
+        nested.mkdir(parents=True)
+        py = nested / "module.py"
+        py.touch()
+        assert _is_scylla_file(py, tmp_path)
+
+    def test_scripts_py_file_rejected(self, tmp_path: Path) -> None:
+        """A .py file under scripts/ should be rejected."""
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir()
+        py = scripts_dir / "tool.py"
+        py.touch()
+        assert not _is_scylla_file(py, tmp_path)
+
+    def test_tests_py_file_rejected(self, tmp_path: Path) -> None:
+        """A .py file under tests/ should be rejected."""
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        py = tests_dir / "test_foo.py"
+        py.touch()
+        assert not _is_scylla_file(py, tmp_path)
+
+    def test_root_py_file_rejected(self, tmp_path: Path) -> None:
+        """A .py file at the repo root should be rejected."""
+        py = tmp_path / "setup.py"
+        py.touch()
+        assert not _is_scylla_file(py, tmp_path)
+
+    def test_non_py_file_in_scylla_rejected(self, tmp_path: Path) -> None:
+        """A non-.py file under scylla/ should be rejected."""
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        txt = scylla_dir / "README.md"
+        txt.touch()
+        assert not _is_scylla_file(txt, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# scan_repository — scope filter (scylla/ only)
+# ---------------------------------------------------------------------------
+
+
+class TestScanRepositoryScope:
+    """scan_repository only scans files under scylla/."""
+
+    def test_scylla_file_with_fragment_is_found(self, tmp_path: Path) -> None:
+        """Fragment in a scylla/ file should be reported."""
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        bad_py = scylla_dir / "module.py"
+        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
+        findings = scan_repository(tmp_path)
+        assert len(findings) == 1
+
+    def test_scripts_file_not_scanned(self, tmp_path: Path) -> None:
+        """Fragment in a scripts/ file should not be reported."""
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir()
+        bad_py = scripts_dir / "tool.py"
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
         findings = scan_repository(tmp_path)
         assert findings == []
 
-    def test_scans_non_excluded_path(self, tmp_path: Path) -> None:
-        """Files outside excluded paths should be scanned and violations reported."""
-        py = tmp_path / "my_module.py"
-        py.write_text('"""across multiple tiers."""\nx = 1\n')
+    def test_tests_file_not_scanned(self, tmp_path: Path) -> None:
+        """Fragment in a tests/ file should not be reported."""
+        tests_dir = tmp_path / "tests"
+        tests_dir.mkdir()
+        bad_py = tests_dir / "test_foo.py"
+        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
+        findings = scan_repository(tmp_path)
+        assert findings == []
+
+    def test_root_file_not_scanned(self, tmp_path: Path) -> None:
+        """Fragment in a repo-root .py file should not be reported."""
+        bad_py = tmp_path / "setup.py"
+        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
+        findings = scan_repository(tmp_path)
+        assert findings == []
+
+    def test_scylla_nested_file_scanned(self, tmp_path: Path) -> None:
+        """Fragment in a nested scylla/ subpackage file should be reported."""
+        nested = tmp_path / "scylla" / "executor"
+        nested.mkdir(parents=True)
+        bad_py = nested / "runner.py"
+        bad_py.write_text('"""and returns the computed result."""\nx = 1\n')
         findings = scan_repository(tmp_path)
         assert len(findings) == 1
+        assert "scylla/executor/runner.py" in findings[0].file
+
+    def test_empty_scylla_dir_returns_no_findings(self, tmp_path: Path) -> None:
+        """Empty scylla/ directory returns no findings."""
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        findings = scan_repository(tmp_path)
+        assert findings == []
 
 
 # ---------------------------------------------------------------------------
@@ -476,7 +558,9 @@ class TestMainVerboseFlag:
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """--verbose with findings should print file/line/context details."""
-        bad_py = tmp_path / "bad.py"
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        bad_py = scylla_dir / "bad.py"
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
 
         with (
@@ -521,7 +605,9 @@ class TestMainJsonFlag:
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """--json with findings should print a JSON array of findings."""
-        bad_py = tmp_path / "bad.py"
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        bad_py = scylla_dir / "bad.py"
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
 
         with (
@@ -534,14 +620,16 @@ class TestMainJsonFlag:
         assert exit_code == 1
         parsed = json.loads(captured.out)
         assert len(parsed) == 1
-        assert parsed[0]["file"] == "bad.py"
+        assert parsed[0]["file"] == "scylla/bad.py"
         assert parsed[0]["context"] == "module"
 
     def test_json_output_has_all_fields(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """--json output should include file, line, docstring_first_line, and context."""
-        bad_py = tmp_path / "bad.py"
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        bad_py = scylla_dir / "bad.py"
         bad_py.write_text('"""and returns the result."""\nx = 1\n')
 
         with (
@@ -587,7 +675,9 @@ class TestMainDefaultBehavior:
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         """Without flags, violations are printed as plain text."""
-        bad_py = tmp_path / "bad.py"
+        scylla_dir = tmp_path / "scylla"
+        scylla_dir.mkdir()
+        bad_py = scylla_dir / "bad.py"
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
 
         with (
