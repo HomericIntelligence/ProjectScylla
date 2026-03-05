@@ -151,7 +151,10 @@ class TestTierSchema:
         """Load tier schema."""
         return load_schema("tier.schema.json")
 
-    @pytest.mark.parametrize("fixture_file", ["t0.yaml", "t1.yaml", "t2.yaml", "t3.yaml", "t4.yaml", "t5.yaml", "t6.yaml"])
+    @pytest.mark.parametrize(
+        "fixture_file",
+        ["t0.yaml", "t1.yaml", "t2.yaml", "t3.yaml", "t4.yaml", "t5.yaml", "t6.yaml"],
+    )
     def test_real_tier_fixture_is_valid(self, schema: dict[str, Any], fixture_file: str) -> None:
         """Tier fixture files must conform to tier.schema.json."""
         data = load_yaml(TIER_FIXTURES_DIR / fixture_file)
