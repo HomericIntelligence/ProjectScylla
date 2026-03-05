@@ -840,9 +840,7 @@ class TestSchemaValidation:
         """load_defaults() raises ConfigurationError when a field has the wrong type."""
         config_dir = tmp_path / "config"
         config_dir.mkdir()
-        (config_dir / "defaults.yaml").write_text(
-            "evaluation:\n  runs_per_eval: 'not-an-int'\n"
-        )
+        (config_dir / "defaults.yaml").write_text("evaluation:\n  runs_per_eval: 'not-an-int'\n")
         loader = ConfigLoader(base_path=tmp_path)
         with pytest.raises(ConfigurationError, match="Invalid defaults configuration"):
             loader.load_defaults()
@@ -918,9 +916,7 @@ class TestSchemaValidation:
         tiers_dir = tmp_path / "config" / "tiers"
         tiers_dir.mkdir(parents=True)
         safe_name = f"t{tier_value[-1]}" if tier_value[-1].isdigit() else "t9"
-        (tiers_dir / f"{safe_name}.yaml").write_text(
-            f"tier: '{tier_value}'\nname: Test\n"
-        )
+        (tiers_dir / f"{safe_name}.yaml").write_text(f"tier: '{tier_value}'\nname: Test\n")
         loader = ConfigLoader(base_path=tmp_path)
         with pytest.raises(ConfigurationError, match="Invalid tier configuration"):
             loader.load_tier(safe_name)
@@ -954,9 +950,7 @@ class TestSchemaValidation:
         """load_model() raises ConfigurationError when a field has the wrong type."""
         models_dir = tmp_path / "config" / "models"
         models_dir.mkdir(parents=True)
-        (models_dir / "bad-model.yaml").write_text(
-            "model_id: bad-model\ntemperature: 'hot'\n"
-        )
+        (models_dir / "bad-model.yaml").write_text("model_id: bad-model\ntemperature: 'hot'\n")
         loader = ConfigLoader(base_path=tmp_path)
         with pytest.raises(ConfigurationError, match="Invalid model configuration"):
             loader.load_model("bad-model")
