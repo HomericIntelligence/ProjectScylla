@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import time
+from pathlib import Path
+
 from migrate_skills_to_mnemosyne import (
     inject_yaml_frontmatter,
     normalize_author,
     normalize_date,
     resolve_category,
     restructure_plugin_json,
+    should_skip_migration,
 )
 
 
@@ -127,3 +131,104 @@ class TestRestructurePluginJson:
         """Uses skill_name as name when plugin_data has no 'name' field."""
         result = restructure_plugin_json({}, "fallback-skill")
         assert result.get("name") == "fallback-skill"
+
+
+class TestShouldSkipMigration:
+    """Tests for should_skip_migration()."""
+
+    def test_no_skip_when_target_does_not_exist(self, tmp_path: Path) -> None:
+        """Returns (False, '') when target directory does not exist."""
+        source_path = tmp_path / "source" / "my-skill"
+        source_path.mkdir(parents=True)
+        (source_path / "SKILL.md").write_text("# My Skill\n")
+
+        target_path = tmp_path / "target" / "my-skill"
+        # target_path is intentionally not created
+
+        should_skip, reason = should_skip_migration("my-skill", source_path, target_path)
+
+        assert should_skip is False
+        assert reason == ""
+
+    def test_no_skip_when_source_is_newer_than_target(self, tmp_path: Path) -> None:
+        """Returns (False, '') when source is newer than target (target should be overwritten)."""
+        source_path = tmp_path / "source" / "my-skill"
+        source_path.mkdir(parents=True)
+        target_path = tmp_path / "target" / "my-skill"
+        target_path.mkdir(parents=True)
+
+        # Write target file first (older)
+        (target_path / "SKILL.md").write_text("# Old Target\n")
+        time.sleep(0.05)
+        # Write source file second (newer)
+        (source_path / "SKILL.md").write_text("# Newer Source\n")
+
+        should_skip, reason = should_skip_migration("my-skill", source_path, target_path)
+
+        assert should_skip is False
+        assert reason == ""
+
+    def test_skip_when_target_is_newer_than_source(self, tmp_path: Path) -> None:
+        """Returns (True, reason) when target is newer than source."""
+        source_path = tmp_path / "source" / "my-skill"
+        source_path.mkdir(parents=True)
+        target_path = tmp_path / "target" / "my-skill"
+        target_path.mkdir(parents=True)
+
+        # Write source file first (older)
+        (source_path / "SKILL.md").write_text("# Old Source\n")
+        time.sleep(0.05)
+        # Write target file second (newer)
+        (target_path / "SKILL.md").write_text("# Newer Target\n")
+
+        should_skip, reason = should_skip_migration("my-skill", source_path, target_path)
+
+        assert should_skip is True
+        assert reason != ""
+        assert "Target is newer" in reason
+
+    def test_skip_reason_contains_timestamps(self, tmp_path: Path) -> None:
+        """Returned reason string includes both target and source timestamps."""
+        source_path = tmp_path / "source" / "my-skill"
+        source_path.mkdir(parents=True)
+        target_path = tmp_path / "target" / "my-skill"
+        target_path.mkdir(parents=True)
+
+        (source_path / "SKILL.md").write_text("# Source\n")
+        time.sleep(0.05)
+        (target_path / "SKILL.md").write_text("# Target\n")
+
+        _, reason = should_skip_migration("my-skill", source_path, target_path)
+
+        # Reason should contain both datetime representations (>)
+        assert ">" in reason
+
+    def test_no_skip_when_target_exists_but_is_empty(self, tmp_path: Path) -> None:
+        """Returns (False, '') when target directory exists but has no files (timestamp = 0)."""
+        source_path = tmp_path / "source" / "my-skill"
+        source_path.mkdir(parents=True)
+        (source_path / "SKILL.md").write_text("# Source\n")
+
+        target_path = tmp_path / "target" / "my-skill"
+        target_path.mkdir(parents=True)
+        # target_path is empty: get_skill_timestamp returns 0
+
+        should_skip, reason = should_skip_migration("my-skill", source_path, target_path)
+
+        # Source timestamp > 0, target timestamp = 0 -> target is NOT newer -> no skip
+        assert should_skip is False
+        assert reason == ""
+
+    def test_return_type_is_tuple(self, tmp_path: Path) -> None:
+        """Return value is always a two-element tuple (bool, str)."""
+        source_path = tmp_path / "source" / "my-skill"
+        source_path.mkdir(parents=True)
+        target_path = tmp_path / "target" / "my-skill"
+
+        result = should_skip_migration("my-skill", source_path, target_path)
+
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        should_skip, reason = result
+        assert isinstance(should_skip, bool)
+        assert isinstance(reason, str)
