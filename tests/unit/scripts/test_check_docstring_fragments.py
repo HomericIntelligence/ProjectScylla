@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import json
 import textwrap
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from scripts.check_docstring_fragments import (
     FragmentFinding,
     _is_genuine_fragment,
+    format_json,
     format_report,
+    main,
     scan_file,
     scan_repository,
 )
@@ -392,3 +396,206 @@ class TestFormatReport:
         ]
         report = format_report(findings)
         assert "2" in report
+
+
+# ---------------------------------------------------------------------------
+# format_json
+# ---------------------------------------------------------------------------
+
+
+class TestFormatJson:
+    """format_json produces valid JSON output."""
+
+    def test_empty_findings_returns_empty_list(self) -> None:
+        """No findings should produce an empty JSON array."""
+        result = format_json([])
+        parsed = json.loads(result)
+        assert parsed == []
+
+    def test_single_finding_serialised_correctly(self) -> None:
+        """A single finding should appear as a JSON object with all fields."""
+        finding = FragmentFinding(
+            file="scylla/foo.py",
+            line=3,
+            docstring_first_line="across tiers.",
+            context="module",
+        )
+        result = format_json([finding])
+        parsed = json.loads(result)
+        assert len(parsed) == 1
+        assert parsed[0]["file"] == "scylla/foo.py"
+        assert parsed[0]["line"] == 3
+        assert parsed[0]["docstring_first_line"] == "across tiers."
+        assert parsed[0]["context"] == "module"
+
+    def test_multiple_findings_all_serialised(self) -> None:
+        """All findings should appear in the JSON array."""
+        findings = [
+            FragmentFinding(file="a.py", line=1, docstring_first_line="and x.", context="module"),
+            FragmentFinding(file="b.py", line=5, docstring_first_line="or y.", context="def foo"),
+        ]
+        result = format_json(findings)
+        parsed = json.loads(result)
+        assert len(parsed) == 2
+        assert parsed[0]["file"] == "a.py"
+        assert parsed[1]["file"] == "b.py"
+
+    def test_output_is_valid_json(self) -> None:
+        """format_json must always produce parseable JSON."""
+        finding = FragmentFinding(
+            file="x.py", line=1, docstring_first_line="with details.", context="class Bar"
+        )
+        result = format_json([finding])
+        # Must not raise
+        json.loads(result)
+
+
+# ---------------------------------------------------------------------------
+# main() — --verbose and --json flags
+# ---------------------------------------------------------------------------
+
+
+class TestMainVerboseFlag:
+    """main() with --verbose prints detailed output."""
+
+    def test_verbose_no_findings_prints_no_violations(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """--verbose with no findings should print the no-violations message."""
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--verbose"]),
+        ):
+            exit_code = main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 0
+        assert "No docstring fragment violations found" in captured.out
+
+    def test_verbose_with_findings_prints_details(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """--verbose with findings should print file/line/context details."""
+        bad_py = tmp_path / "bad.py"
+        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
+
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--verbose"]),
+        ):
+            exit_code = main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 1
+        assert "Found 1 genuine docstring fragment(s)" in captured.out
+        assert "bad.py" in captured.out
+
+    def test_verbose_exit_code_zero_when_clean(self, tmp_path: Path) -> None:
+        """--verbose exits with 0 when no fragments found."""
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--verbose"]),
+        ):
+            assert main() == 0
+
+
+class TestMainJsonFlag:
+    """main() with --json outputs valid JSON."""
+
+    def test_json_no_findings_returns_empty_array(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """--json with no findings should print an empty JSON array."""
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
+        ):
+            exit_code = main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 0
+        parsed = json.loads(captured.out)
+        assert parsed == []
+
+    def test_json_with_findings_returns_json_array(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """--json with findings should print a JSON array of findings."""
+        bad_py = tmp_path / "bad.py"
+        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
+
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
+        ):
+            exit_code = main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 1
+        parsed = json.loads(captured.out)
+        assert len(parsed) == 1
+        assert parsed[0]["file"] == "bad.py"
+        assert parsed[0]["context"] == "module"
+
+    def test_json_output_has_all_fields(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """--json output should include file, line, docstring_first_line, and context."""
+        bad_py = tmp_path / "bad.py"
+        bad_py.write_text('"""and returns the result."""\nx = 1\n')
+
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        parsed = json.loads(captured.out)
+        assert "file" in parsed[0]
+        assert "line" in parsed[0]
+        assert "docstring_first_line" in parsed[0]
+        assert "context" in parsed[0]
+
+    def test_json_exit_code_zero_when_clean(self, tmp_path: Path) -> None:
+        """--json exits with 0 when no fragments found."""
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
+        ):
+            assert main() == 0
+
+
+class TestMainDefaultBehavior:
+    """main() without flags uses plain text output."""
+
+    def test_default_no_findings_prints_text_report(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Without flags, plain text report is printed."""
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py"]),
+        ):
+            exit_code = main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 0
+        assert "No docstring fragment violations found" in captured.out
+
+    def test_default_with_findings_prints_text_report(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Without flags, violations are printed as plain text."""
+        bad_py = tmp_path / "bad.py"
+        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
+
+        with (
+            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("sys.argv", ["check_docstring_fragments.py"]),
+        ):
+            exit_code = main()
+
+        captured = capsys.readouterr()
+        assert exit_code == 1
+        assert "Found 1 genuine docstring fragment(s)" in captured.out

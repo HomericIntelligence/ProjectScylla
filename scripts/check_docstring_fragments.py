@@ -25,6 +25,7 @@ Usage::
 
     python scripts/check_docstring_fragments.py
     python scripts/check_docstring_fragments.py --verbose
+    python scripts/check_docstring_fragments.py --json
 
 Exit codes:
     0: No violations found
@@ -33,9 +34,11 @@ Exit codes:
 
 from __future__ import annotations
 
+import argparse
 import ast
+import json
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from scylla.automation.git_utils import get_repo_root
@@ -310,12 +313,42 @@ def format_report(findings: list[FragmentFinding]) -> str:
 # ---------------------------------------------------------------------------
 
 
+def format_json(findings: list[FragmentFinding]) -> str:
+    """Format findings as a JSON string."""
+    return json.dumps([asdict(f) for f in findings], indent=2)
+
+
 def main() -> int:
     """Run the docstring fragment check."""
+    parser = argparse.ArgumentParser(
+        description="Check Python docstrings for genuine sentence fragments."
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print additional details about each fragment found.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output results as JSON instead of plain text.",
+    )
+    args = parser.parse_args()
+
     repo_root = get_repo_root()
     findings = scan_repository(repo_root)
 
-    print(format_report(findings))
+    if args.json:
+        print(format_json(findings))
+    elif args.verbose:
+        if not findings:
+            print("No docstring fragment violations found.")
+        else:
+            print(f"Found {len(findings)} genuine docstring fragment(s):\n")
+            for f in findings:
+                print(f.format())
+    else:
+        print(format_report(findings))
 
     return 0 if not findings else 1
 
