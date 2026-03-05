@@ -61,6 +61,17 @@ jobs:
               | grep -v "test_results.py"
           fi
 
+      - name: Enforce tier label consistency in metrics-definitions.md
+        run: |
+          count=$(grep -En "T3.*Tool|T4.*Deleg|T5.*Hier|T2.*Skill" \
+            .claude/shared/metrics-definitions.md | wc -l)
+          echo "Bad tier label count: $count"
+          if [ "$count" -gt "0" ]; then
+            echo "::error::Found $count tier label mismatch(es) in metrics-definitions.md"
+            grep -En "T3.*Tool|T4.*Deleg|T5.*Hier|T2.*Skill" .claude/shared/metrics-definitions.md
+            exit 1
+          fi
+
       - name: Check Python version consistency (pyproject.toml vs Dockerfile)
         run: python3 scripts/check_python_version_consistency.py
 
