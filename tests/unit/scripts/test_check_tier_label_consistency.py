@@ -64,13 +64,7 @@ class TestFindViolations:
     def test_correct_tier_names_not_flagged(self) -> None:
         """Correct tier names adjacent to tier numbers are not flagged."""
         content = (
-            "T0 Prompts\n"
-            "T1 Skills\n"
-            "T2 Tooling\n"
-            "T3 Delegation\n"
-            "T4 Hierarchy\n"
-            "T5 Hybrid\n"
-            "T6 Super\n"
+            "T0 Prompts\nT1 Skills\nT2 Tooling\nT3 Delegation\nT4 Hierarchy\nT5 Hybrid\nT6 Super\n"
         )
         assert find_violations(content) == []
 
