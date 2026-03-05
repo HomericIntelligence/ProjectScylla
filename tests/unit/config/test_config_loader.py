@@ -189,11 +189,21 @@ class TestConfigLoaderTier:
         loader = ConfigLoader(base_path=FIXTURES_PATH)
         tiers = loader.load_all_tiers()
 
-        assert len(tiers) == 2
+        assert len(tiers) == 7
         assert "t0" in tiers
         assert "t1" in tiers
+        assert "t2" in tiers
+        assert "t3" in tiers
+        assert "t4" in tiers
+        assert "t5" in tiers
+        assert "t6" in tiers
         assert tiers["t0"].name == "Vanilla"
         assert tiers["t1"].name == "Prompted"
+        assert tiers["t2"].name == "Tooling"
+        assert tiers["t3"].name == "Delegation"
+        assert tiers["t4"].name == "Hierarchy"
+        assert tiers["t5"].name == "Hybrid"
+        assert tiers["t6"].name == "Super"
 
     def test_load_all_tiers_mismatched_id_raises(self, tmp_path: Path) -> None:
         """load_all_tiers() raises ConfigurationError when filename and config.tier disagree."""

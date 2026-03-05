@@ -1,0 +1,7 @@
+# Test fixture: Tier 2 (Tooling)
+tier: "t2"
+name: "Tooling"
+description: "External tools and MCP servers"
+uses_tools: true
+uses_delegation: false
+uses_hierarchy: false
