@@ -12,7 +12,6 @@ from __future__ import annotations
 import contextlib
 import json
 import logging
-import re
 import subprocess
 import threading
 import time
@@ -23,8 +22,9 @@ from typing import Any, cast
 
 from .curses_ui import CursesUI, ThreadLogManager
 from .dependency_resolver import CyclicDependencyError, DependencyResolver
+from .follow_up import parse_follow_up_items, run_follow_up_issues
 from .git_utils import get_repo_root, run
-from .github_api import fetch_issue_info, gh_issue_comment, gh_issue_create, gh_pr_create
+from .github_api import fetch_issue_info
 from .models import (
     ImplementationPhase,
     ImplementationState,
@@ -32,11 +32,9 @@ from .models import (
     IssueState,
     WorkerResult,
 )
-from .prompts import (
-    get_follow_up_prompt,
-    get_implementation_prompt,
-    get_pr_description,
-)
+from .pr_manager import commit_changes, create_pr, ensure_pr_created
+from .prompts import get_implementation_prompt
+from .retrospective import retrospective_needs_rerun, run_retrospective
 from .status_tracker import StatusTracker
 from .worktree_manager import WorktreeManager
 
@@ -578,54 +576,8 @@ class IssueImplementer:
         )
 
     def _parse_follow_up_items(self, text: str) -> list[dict[str, Any]]:
-        """Parse follow-up items from Claude's JSON response.
-
-        Args:
-            text: Claude's response text (may contain JSON in code blocks)
-
-        Returns:
-            List of follow-up item dictionaries with title, body, labels
-
-        """
-        # Try to extract JSON from code blocks or bare JSON
-        json_match = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.DOTALL)
-        if json_match:
-            json_str = json_match.group(1)
-        else:
-            # Try to find bare JSON array
-            json_match = re.search(r"(\[.*\])", text, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                logger.warning("No JSON array found in follow-up response")
-                return []
-
-        try:
-            items = json.loads(json_str)
-            if not isinstance(items, list):
-                logger.warning("Follow-up response is not a JSON array")
-                return []
-
-            # Validate and filter items
-            valid_items = []
-            for item in items[:5]:  # Cap at 5
-                if not isinstance(item, dict):
-                    continue
-                if "title" not in item or "body" not in item:
-                    logger.warning(f"Skipping follow-up item missing required fields: {item}")
-                    continue
-
-                # Ensure labels is a list
-                if "labels" not in item or not isinstance(item["labels"], list):
-                    item["labels"] = []
-
-                valid_items.append(item)
-
-            return valid_items
-
-        except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse follow-up JSON: {e}")
-            return []
+        """Parse follow-up items from Claude's JSON response."""
+        return parse_follow_up_items(text)
 
     def _run_follow_up_issues(
         self,
@@ -634,138 +586,19 @@ class IssueImplementer:
         issue_number: int,
         slot_id: int | None = None,
     ) -> None:
-        """Resume Claude session to identify and file follow-up issues.
-
-        Args:
-            session_id: Claude session ID to resume
-            worktree_path: Path to git worktree
-            issue_number: Parent issue number
-            slot_id: Worker slot ID for status updates
-
-        """
-        self.state_dir.mkdir(parents=True, exist_ok=True)
-
-        # Write follow-up prompt to temp file in worktree
-        prompt_file = worktree_path / f".claude-followup-{issue_number}.md"
-        prompt_file.write_text(get_follow_up_prompt(issue_number))
-
-        try:
-            # Resume session and get follow-up items
-            result = run(
-                [
-                    "claude",
-                    "--resume",
-                    session_id,
-                    str(prompt_file),
-                    "--output-format",
-                    "json",
-                ],
-                cwd=worktree_path,
-                timeout=600,  # 10 minutes
-            )
-
-            # Save successful output to log file
-            follow_up_log = self.state_dir / f"follow-up-{issue_number}.log"
-            follow_up_log.write_text(result.stdout or "")
-
-            # Parse JSON output
-            try:
-                data = json.loads(result.stdout)
-                response_text = data.get("result", "")
-            except (json.JSONDecodeError, AttributeError) as e:
-                logger.warning(f"Could not parse follow-up response for issue #{issue_number}: {e}")
-                return
-
-            # Extract follow-up items
-            items = self._parse_follow_up_items(response_text)
-
-            if not items:
-                logger.info(f"No follow-up items identified for issue #{issue_number}")
-                return
-
-            # Create follow-up issues
-            created_issues = []
-            for i, item in enumerate(items, 1):
-                try:
-                    # Update status
-                    if slot_id is not None:
-                        self.status_tracker.update_slot(
-                            slot_id, f"#{issue_number}: Creating follow-up {i}/{len(items)}"
-                        )
-
-                    # Append reference to parent issue
-                    body_with_ref = f"{item['body']}\n\n_Follow-up from #{issue_number}_"
-
-                    # Create issue with labels
-                    new_issue_num = gh_issue_create(
-                        title=item["title"],
-                        body=body_with_ref,
-                        labels=item.get("labels"),
-                    )
-                    created_issues.append(new_issue_num)
-
-                    # Rate limit: sleep between creates
-                    time.sleep(1)
-
-                except (
-                    Exception
-                ) as e:  # broad catch: GitHub API can fail in many ways; continue with others
-                    logger.warning(f"Failed to create follow-up issue '{item['title']}': {e}")
-                    # Continue with remaining items
-
-            # Post summary comment on parent issue
-            if created_issues:
-                summary = f"Created {len(created_issues)} follow-up issue(s): " + ", ".join(
-                    f"#{num}" for num in created_issues
-                )
-                try:
-                    gh_issue_comment(issue_number, summary)
-                    logger.info(f"Posted follow-up summary to issue #{issue_number}")
-                except Exception as e:  # broad catch: GitHub API call; non-critical summary post
-                    logger.warning(f"Failed to post follow-up summary: {e}")
-
-            logger.info(
-                f"Follow-up issues completed for #{issue_number}: created {len(created_issues)}"
-            )
-
-        except (
-            Exception
-        ) as e:  # broad catch: top-level follow-up boundary; non-blocking, must not propagate
-            logger.warning(f"Follow-up issues failed for issue #{issue_number}: {e}")
-
-            # Save failure output to log file
-            follow_up_log = self.state_dir / f"follow-up-{issue_number}.log"
-            error_output = f"FAILED: {e}\n"
-            if hasattr(e, "stdout"):
-                error_output += f"\nSTDOUT:\n{e.stdout or ''}"
-            if hasattr(e, "stderr"):
-                error_output += f"\nSTDERR:\n{e.stderr or ''}"
-            follow_up_log.write_text(error_output)
-
-            # Non-blocking: never re-raise
-        finally:
-            # Clean up temp file
-            with contextlib.suppress(Exception):
-                prompt_file.unlink()
+        """Resume Claude session to identify and file follow-up issues."""
+        run_follow_up_issues(
+            session_id,
+            worktree_path,
+            issue_number,
+            self.state_dir,
+            self.status_tracker,
+            slot_id,
+        )
 
     def _retrospective_needs_rerun(self, issue_number: int) -> bool:
-        """Check if retrospective log indicates failure.
-
-        Args:
-            issue_number: Issue number
-
-        Returns:
-            True if retrospective needs to be re-run (missing or failed log)
-
-        """
-        log_file = self.state_dir / f"retrospective-{issue_number}.log"
-        if not log_file.exists():
-            return True
-        try:
-            content = log_file.read_text()
-            return content.startswith("FAILED:")
-        except OSError:
-            return True
+        """Check if retrospective log indicates failure."""
+        return retrospective_needs_rerun(issue_number, self.state_dir)
 
     def _rerun_failed_retrospectives(self) -> dict[int, bool]:
         """Re-run failed retrospectives for completed issues.
@@ -832,64 +665,8 @@ class IssueImplementer:
         issue_number: int,
         slot_id: int | None = None,
     ) -> bool:
-        """Resume Claude session to run /retrospective.
-
-        Args:
-            session_id: Claude session ID
-            worktree_path: Path to worktree
-            issue_number: Issue number
-            slot_id: Worker slot ID for status updates
-
-        Returns:
-            True if retrospective completed successfully, False otherwise
-
-        Runs from worktree directory so Claude can find the session.
-        Output is logged to .issue_implementer/retrospective-{issue_number}.log.
-
-        """
-        self.state_dir.mkdir(parents=True, exist_ok=True)
-        log_file = self.state_dir / f"retrospective-{issue_number}.log"
-        try:
-            result = run(
-                [
-                    "claude",
-                    "--resume",
-                    session_id,
-                    (
-                        "/skills-registry-commands:retrospective"
-                        " commit the results and create a PR."
-                        " IMPORTANT: Only push skills to ProjectMnemosyne."
-                        " Do NOT create files under .claude-plugin/ in this repo."
-                    ),
-                    "--print",
-                    "--permission-mode",
-                    "dontAsk",
-                    "--allowedTools",
-                    "Read,Write,Edit,Glob,Grep,Bash",
-                ],
-                cwd=worktree_path,
-                timeout=600,  # 10 minutes
-            )
-            # Write output to log file
-            log_file.write_text(result.stdout or "")
-            logger.info(f"Retrospective completed for issue #{issue_number}")
-            logger.info(f"Retrospective log: {log_file}")
-            return True
-        except (
-            Exception
-        ) as e:  # broad catch: external claude process; non-blocking, must not propagate
-            logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
-
-            # Save failure output to log file
-            error_output = f"FAILED: {e}\n"
-            if hasattr(e, "stdout"):
-                error_output += f"\nSTDOUT:\n{e.stdout or ''}"
-            if hasattr(e, "stderr"):
-                error_output += f"\nSTDERR:\n{e.stderr or ''}"
-            log_file.write_text(error_output)
-
-            # Non-blocking: never re-raise
-            return False
+        """Resume Claude session to run /retrospective."""
+        return run_retrospective(session_id, worktree_path, issue_number, self.state_dir, slot_id)
 
     def _run_claude_code(
         self, issue_number: int, worktree_path: Path, prompt: str, slot_id: int | None = None
@@ -979,91 +756,7 @@ class IssueImplementer:
 
     def _commit_changes(self, issue_number: int, worktree_path: Path) -> None:
         """Commit changes in worktree."""
-        # Check if there are changes
-        result = run(
-            ["git", "status", "--porcelain"],
-            cwd=worktree_path,
-            capture_output=True,
-        )
-
-        if not result.stdout.strip():
-            raise RuntimeError(
-                f"No changes to commit for issue #{issue_number}. "
-                "Check if the implementation was successful or if the plan needs revision."
-            )
-
-        # Parse git status --porcelain output to get all changed files
-        # Format: XY filename or XY "quoted filename" for special chars
-        # X = index status, Y = worktree status
-        # Common codes: M (modified), A (added), D (deleted), R (renamed), ?? (untracked)
-        files_to_add = []
-        secret_files = {
-            ".env",
-            ".secret",
-            "credentials.json",
-            "id_rsa",
-            "id_dsa",
-            "id_ecdsa",
-            "id_ed25519",
-        }
-        secret_extensions = {".key", ".pem", ".pfx", ".p12"}
-
-        for line in result.stdout.strip().split("\n"):
-            if not line:
-                continue
-
-            # Parse status code and filename
-            # Format: "XY filename" where X and Y are status codes
-            # Position 0-1: status codes, position 2: space, position 3+: filename
-            status = line[:2]
-            filename_part = line[3:]  # Don't strip - filename starts at position 3
-
-            # Handle renamed files (format: "old -> new")
-            if status.startswith("R") and " -> " in filename_part:
-                filename_part = filename_part.split(" -> ", 1)[1]
-
-            # Handle quoted filenames (git quotes names with special chars)
-            if filename_part.startswith('"') and filename_part.endswith('"'):
-                # Remove quotes - git uses C-style escaping
-                filename_part = filename_part[1:-1]
-
-            # Check if file is a potential secret
-            from pathlib import Path
-
-            filename = Path(filename_part).name
-
-            # Skip secret files (never stage these)
-            if filename in secret_files or any(filename.endswith(ext) for ext in secret_extensions):
-                logger.warning(f"Skipping potential secret file: {filename_part}")
-                continue
-
-            files_to_add.append(filename_part)
-
-        if not files_to_add:
-            raise RuntimeError(
-                f"No non-secret files to commit for issue #{issue_number}. "
-                "All changes appear to be secret files."
-            )
-
-        # Stage the files
-        run(["git", "add", *files_to_add], cwd=worktree_path)
-
-        # Generate commit message
-        issue = fetch_issue_info(issue_number)
-        commit_msg = f"""feat: Implement #{issue_number}
-
-{issue.title}
-
-Closes #{issue_number}
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-"""
-
-        # Commit
-        run(
-            ["git", "commit", "-m", commit_msg],
-            cwd=worktree_path,
-        )
+        commit_changes(issue_number, worktree_path)
 
     def _ensure_pr_created(
         self,
@@ -1072,96 +765,19 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
         worktree_path: Path,
         slot_id: int | None = None,
     ) -> int:
-        """Ensure commit is pushed and PR is created (fallback if Claude didn't do it).
-
-        Args:
-            issue_number: Issue number
-            branch_name: Git branch name
-            worktree_path: Path to worktree
-            slot_id: Worker slot ID for status updates
-
-        Returns:
-            PR number
-
-        Raises:
-            RuntimeError: If commit doesn't exist or PR creation fails
-
-        """
-        # Check if commit exists
-        if slot_id is not None:
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Checking commit")
-        result = run(
-            ["git", "log", "-1", "--oneline"],
-            cwd=worktree_path,
-            capture_output=True,
+        """Ensure commit is pushed and PR is created (fallback if Claude didn't do it)."""
+        return ensure_pr_created(
+            issue_number,
+            branch_name,
+            worktree_path,
+            self.options.auto_merge,
+            self.status_tracker,
+            slot_id,
         )
-        if not result.stdout.strip():
-            raise RuntimeError(
-                f"No commit found for issue #{issue_number}. Claude did not create any commits."
-            )
-
-        logger.info(f"✓ Commit exists: {result.stdout.strip()[:80]}")
-
-        # Check if branch was pushed, if not push it
-        if slot_id is not None:
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Pushing branch")
-        result = run(
-            ["git", "ls-remote", "--heads", "origin", branch_name],
-            cwd=worktree_path,
-            capture_output=True,
-            check=False,
-        )
-        if not result.stdout.strip():
-            logger.warning(f"Branch {branch_name} not pushed, pushing now...")
-            run(["git", "push", "-u", "origin", branch_name], cwd=worktree_path)
-            logger.info(f"✓ Pushed branch {branch_name} to origin")
-        else:
-            logger.info(f"✓ Branch {branch_name} already on origin")
-
-        # Check if PR exists, if not create it
-        if slot_id is not None:
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: Creating PR")
-        import json
-
-        from .github_api import _gh_call
-
-        pr_number = None
-        try:
-            result = _gh_call(
-                ["pr", "list", "--head", branch_name, "--json", "number", "--limit", "1"]
-            )
-            pr_data = json.loads(result.stdout)
-            if pr_data and len(pr_data) > 0:
-                pr_number = cast(int, pr_data[0]["number"])
-                logger.info(f"✓ PR #{pr_number} already exists")
-                return pr_number
-        except Exception as e:  # broad catch: gh CLI + JSON parsing; fallback is to create PR
-            logger.debug(f"Could not find existing PR: {e}")
-
-        # PR doesn't exist, create it
-        logger.warning(f"No PR found for branch {branch_name}, creating one...")
-        pr_number = self._create_pr(issue_number, branch_name)
-        logger.info(f"✓ Created PR #{pr_number}")
-        return pr_number
 
     def _create_pr(self, issue_number: int, branch_name: str) -> int:
         """Create pull request for issue."""
-        issue = fetch_issue_info(issue_number)
-
-        pr_title = f"feat: {issue.title}"
-        pr_body = get_pr_description(
-            issue_number=issue_number,
-            summary=f"Implements #{issue_number}",
-            changes="- Automated implementation via Claude Code",
-            testing="- Automated tests included",
-        )
-
-        return gh_pr_create(
-            branch=branch_name,
-            title=pr_title,
-            body=pr_body,
-            auto_merge=self.options.auto_merge,
-        )
+        return create_pr(issue_number, branch_name, self.options.auto_merge)
 
     def _get_or_create_state(self, issue_number: int) -> ImplementationState:
         """Get or create implementation state for an issue."""
