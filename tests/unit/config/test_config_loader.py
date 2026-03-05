@@ -14,6 +14,7 @@ import logging
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from scylla.config import (
     ConfigLoader,
@@ -360,7 +361,7 @@ class TestConfigLoaderMerged:
         config = loader.load(test_id="test-001", model_id="test-model")
 
         # Attempting to modify should raise an error
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             config.timeout_seconds = 9999
 
 

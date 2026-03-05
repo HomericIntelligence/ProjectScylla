@@ -37,6 +37,7 @@ from scylla.e2e.llm_judge import (
     _save_pipeline_outputs,
     run_llm_judge,
 )
+from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
 
 
 class TestJudgeResult:
@@ -762,9 +763,14 @@ class TestCallClaudeJudge:
 
         with patch("subprocess.run", return_value=mock_result):
             with patch("scylla.e2e.rate_limit.detect_rate_limit") as mock_detect:
-                mock_detect.return_value = {"type": "rate_limit"}
+                mock_detect.return_value = RateLimitInfo(
+                    source="judge",
+                    retry_after_seconds=60.0,
+                    error_message="rate_limit_error",
+                    detected_at="2024-01-01T00:00:00Z",
+                )
 
-                with pytest.raises(Exception):  # RateLimitError
+                with pytest.raises(RateLimitError):
                     _call_claude_judge("Evaluate", "claude-opus-4-5-20251101", tmp_path)
 
 
