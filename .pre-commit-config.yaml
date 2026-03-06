@@ -28,6 +28,12 @@ repos:
         language: system
         files: ^(pyproject\.toml|pixi\.toml|pixi\.lock)$
         pass_filenames: false
+      - id: check-pixi-lock
+        name: Check pixi.lock is up-to-date
+        entry: pixi install --locked
+        language: system
+        files: ^(pyproject\.toml|pixi\.toml|pixi\.lock)$
+        pass_filenames: false
 
   # Python formatting and linting
   - repo: local
@@ -190,3 +196,5 @@ repos:
       - id: mixed-line-ending
         name: Fix Mixed Line Endings
         exclude: ^notes/(plan|review|issues)/
+      - id: check-merge-conflict
+        name: Check for Merge Conflict Markers

@@ -384,6 +384,21 @@ pre-commit run --all-files
 
 **--no-verify is ABSOLUTELY PROHIBITED**. No exceptions.
 
+**After any `pyproject.toml` or `pixi.toml` change**, regenerate the lock file before committing:
+
+```bash
+pixi install  # regenerates pixi.lock
+git add pixi.lock
+```
+
+**Before pushing from a worktree** (auto-impl agents), always run:
+
+```bash
+pre-commit run --all-files
+```
+
+Skipping this step is the primary cause of CI failures on auto-impl branches.
+
 ## Repository Architecture
 
 ### Project Structure
