@@ -611,21 +611,22 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa:
                     # has fewer subtests than requested. If so, re-run to expand.
                     if args.max_subtests is not None:
                         result_dir = r.get("result_dir")
-                        if result_dir:
-                            cp_path = Path(result_dir) / "checkpoint.json"
-                            try:
-                                with open(cp_path) as cp_f:
-                                    cp = json.load(cp_f)
-                                subtest_states = cp.get("subtest_states", {})
-                                needs_expansion = False
-                                for tier_subtests in subtest_states.values():
-                                    if len(tier_subtests) < args.max_subtests:
-                                        needs_expansion = True
-                                        break
-                                if needs_expansion:
-                                    continue
-                            except Exception:
-                                pass
+                        if not result_dir:
+                            continue  # Cannot verify subtest count; don't mark completed
+                        cp_path = Path(result_dir) / "checkpoint.json"
+                        try:
+                            with open(cp_path) as cp_f:
+                                cp = json.load(cp_f)
+                            subtest_states = cp.get("subtest_states", {})
+                            needs_expansion = False
+                            for tier_subtests in subtest_states.values():
+                                if len(tier_subtests) < args.max_subtests:
+                                    needs_expansion = True
+                                    break
+                            if needs_expansion:
+                                continue
+                        except Exception:
+                            pass
                     completed_ids.add(r["test_id"])
             except Exception:
                 pass
