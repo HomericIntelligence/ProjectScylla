@@ -230,6 +230,45 @@ class TestConfigLoaderTier:
         for key, config in tiers.items():
             assert key == config.tier, f"Key {key!r} does not match config.tier {config.tier!r}"
 
+    @pytest.mark.parametrize("tier_id", ["t0", "t1"])
+    def test_load_tier_capability_fields_explicit_false(self, tier_id: str) -> None:
+        """t0 and t1 fixture files have explicit false capability fields that load correctly."""
+        loader = ConfigLoader(base_path=FIXTURES_PATH)
+        tier = loader.load_tier(tier_id)
+
+        assert tier.uses_tools is False
+        assert tier.uses_delegation is False
+        assert tier.uses_hierarchy is False
+
+    def test_load_tier_explicit_false_fields_via_tmp_path(self, tmp_path: Path) -> None:
+        """Explicit-false capability fields in a tier YAML load as False (not absent-default)."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tiers_dir / "t0.yaml").write_text(
+            "tier: t0\nname: Vanilla\ndescription: Test\n"
+            "uses_tools: false\nuses_delegation: false\nuses_hierarchy: false\n"
+        )
+
+        loader = ConfigLoader(base_path=tmp_path)
+        tier = loader.load_tier("t0")
+
+        assert tier.uses_tools is False
+        assert tier.uses_delegation is False
+        assert tier.uses_hierarchy is False
+
+    def test_load_tier_default_false_when_absent(self, tmp_path: Path) -> None:
+        """Absent capability fields in a tier YAML default to False."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        (tiers_dir / "t0.yaml").write_text("tier: t0\nname: Vanilla\n")
+
+        loader = ConfigLoader(base_path=tmp_path)
+        tier = loader.load_tier("t0")
+
+        assert tier.uses_tools is False
+        assert tier.uses_delegation is False
+        assert tier.uses_hierarchy is False
+
     def test_load_all_tiers_skips_underscore_prefixed_fixtures(self, tmp_path: Path) -> None:
         """load_all_tiers() silently skips _-prefixed fixture files."""
         tiers_dir = tmp_path / "config" / "tiers"
