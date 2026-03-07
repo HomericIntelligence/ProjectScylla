@@ -1104,6 +1104,7 @@ class TestValidateSchema:
         assert "tier.schema.json" in loader_module._SCHEMA_CACHE
         assert "model.schema.json" in loader_module._SCHEMA_CACHE
 
+
 class TestLoadMergedConfigSchemaValidation:
     """Tests that load() applies schema validation to the defaults path."""
 
