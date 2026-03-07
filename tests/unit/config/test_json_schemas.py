@@ -200,6 +200,34 @@ class TestTierSchema:
         """Only tier and name are required."""
         check_schema({"tier": "t3", "name": "Delegation"}, schema)
 
+    @pytest.mark.parametrize("field", ["uses_tools", "uses_delegation", "uses_hierarchy"])
+    def test_capability_field_explicit_false(self, schema: dict[str, Any], field: str) -> None:
+        """Schema accepts capability fields explicitly set to false."""
+        check_schema({"tier": "t0", "name": "Vanilla", field: False}, schema)
+
+    @pytest.mark.parametrize("field", ["uses_tools", "uses_delegation", "uses_hierarchy"])
+    def test_capability_field_explicit_true(self, schema: dict[str, Any], field: str) -> None:
+        """Schema accepts capability fields explicitly set to true."""
+        check_schema({"tier": "t4", "name": "Hierarchy", field: True}, schema)
+
+    def test_capability_fields_absent(self, schema: dict[str, Any]) -> None:
+        """Schema accepts tier when all capability fields are absent (default-false path)."""
+        check_schema({"tier": "t0", "name": "Vanilla"}, schema)
+
+    def test_capability_fields_all_explicit_false(self, schema: dict[str, Any]) -> None:
+        """Schema accepts t0/t1 fixture pattern: all three capability fields explicitly false."""
+        check_schema(
+            {
+                "tier": "t0",
+                "name": "Vanilla",
+                "description": "Base LLM with zero-shot prompting",
+                "uses_tools": False,
+                "uses_delegation": False,
+                "uses_hierarchy": False,
+            },
+            schema,
+        )
+
 
 # ---------------------------------------------------------------------------
 # model.schema.json
