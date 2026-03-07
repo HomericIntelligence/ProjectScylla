@@ -62,7 +62,7 @@ def commit_changes(issue_number: int, worktree_path: Path) -> None:
     # Common codes: M (modified), A (added), D (deleted), R (renamed), ?? (untracked)
     files_to_add = []
 
-    for line in result.stdout.strip().split("\n"):
+    for line in result.stdout.splitlines():
         if not line:
             continue
 
