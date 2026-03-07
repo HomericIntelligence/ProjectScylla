@@ -63,12 +63,13 @@ jobs:
 
       - name: Enforce tier label consistency in metrics-definitions.md
         run: |
-          count=$(grep -En "T3.*Tool|T4.*Deleg|T5.*Hier|T2.*Skill" \
+          BAD_PATS="T3.{0,10}Tool|T4.{0,10}Deleg|T5.{0,10}Hier|T2.{0,10}Skill|T2.{0,10}Deleg|T3.{0,10}Hier|T4.{0,10}Hybrid|T1.{0,10}Tool|T0.{0,10}Skill|T1.{0,10}Prompt|T2.{0,10}Prompt|T3.{0,10}Skill|T4.{0,10}Tool|T5.{0,10}Deleg|T6.{0,10}Hier|T6.{0,10}Hybrid|T0.{0,10}Tool|T0.{0,10}Deleg|T5.{0,10}Skill|T6.{0,10}Deleg"
+          count=$(grep -En "$BAD_PATS" \
             .claude/shared/metrics-definitions.md | wc -l)
           echo "Bad tier label count: $count"
           if [ "$count" -gt "0" ]; then
             echo "::error::Found $count tier label mismatch(es) in metrics-definitions.md"
-            grep -En "T3.*Tool|T4.*Deleg|T5.*Hier|T2.*Skill" .claude/shared/metrics-definitions.md
+            grep -En "$BAD_PATS" .claude/shared/metrics-definitions.md
             exit 1
           fi
 
