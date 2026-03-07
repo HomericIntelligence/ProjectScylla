@@ -31,7 +31,9 @@ from scylla.e2e.checkpoint import (
     save_checkpoint,
     validate_checkpoint_config,
 )
+from scylla.e2e.checkpoint_finalizer import CheckpointFinalizer
 from scylla.e2e.experiment_result_writer import ExperimentResultWriter
+from scylla.e2e.experiment_setup_manager import ExperimentSetupManager
 
 # Note: Judge prompts are now generated dynamically via scylla.judge.prompts.build_task_prompt()
 from scylla.e2e.models import (
@@ -53,10 +55,8 @@ from scylla.e2e.workspace_manager import WorkspaceManager
 
 logger = logging.getLogger(__name__)
 
-# Checkpoint status constants (kept as strings for JSON serialization compatibility)
+# Checkpoint status constant (kept as string for JSON serialization compatibility)
 _STATUS_RUNNING = "running"
-_STATUS_INTERRUPTED = "interrupted"
-_STATUS_COMPLETED = "completed"
 
 # Global shutdown coordination
 _shutdown_requested = False
@@ -288,13 +288,10 @@ class E2ERunner:
             Path to the created checkpoint file
 
         """
-        # Fresh start - create experiment directory
-        self.experiment_dir = self._create_experiment_dir()
+        setup = self._setup_manager()
+        self.experiment_dir = setup.create_experiment_dir()
+        setup.save_config(self.experiment_dir)
 
-        # Save configuration
-        self._save_config()
-
-        # Create checkpoint
         self.checkpoint = E2ECheckpoint(
             experiment_id=self.config.experiment_id,
             experiment_dir=str(self.experiment_dir),
@@ -421,112 +418,24 @@ class E2ERunner:
         return scheduler
 
     def _capture_experiment_baseline(self) -> None:
-        """Capture pipeline baseline once at experiment level from a clean repo state.
-
-        Creates a temporary worktree from the base repo, runs the build pipeline on it,
-        and saves the result to <experiment_dir>/pipeline_baseline.json.
-
-        This is idempotent: if the file already exists (e.g. on resume) it is not
-        re-captured.
-
-        """
+        """Capture pipeline baseline once at experiment level from a clean repo state."""
         assert self.experiment_dir is not None  # noqa: S101
-
-        baseline_path = self.experiment_dir / "pipeline_baseline.json"
-        if baseline_path.exists():
-            logger.info("Experiment-level pipeline baseline already captured — skipping")
-            return
-
-        from scylla.e2e.llm_judge import _run_build_pipeline
-        from scylla.e2e.subtest_executor import _save_pipeline_baseline
-
-        # Create a temporary worktree so the baseline runs on a clean repo state
-        worktree_path = self.experiment_dir / "_baseline_worktree"
-        branch_name = f"baseline_{self.config.experiment_id[:8]}"
         assert self.workspace_manager is not None  # noqa: S101
-        try:
-            self.workspace_manager.create_worktree(worktree_path)
-            logger.info(f"Capturing experiment-level pipeline baseline at {worktree_path}")
-            result = _run_build_pipeline(
-                workspace=worktree_path,
-                language=self.config.language,
-            )
-            _save_pipeline_baseline(self.experiment_dir, result)
-            baseline_status = "ALL PASSED ✓" if result.all_passed else "SOME FAILED ✗"
-            logger.info(f"Experiment pipeline baseline: {baseline_status}")
-        except (
-            Exception
-        ) as e:  # broad catch: pipeline baseline is non-critical; build/git/IO can all fail
-            logger.warning(f"Failed to capture experiment-level baseline: {e}")
-        finally:
-            try:
-                self.workspace_manager.cleanup_worktree(worktree_path, branch_name)
-            except (
-                Exception
-            ) as cleanup_err:  # broad catch: cleanup must not raise; any error is non-fatal
-                logger.debug(f"Baseline worktree cleanup warning: {cleanup_err}")
+        self._setup_manager().capture_baseline(self.experiment_dir, self.workspace_manager)
+
+    def _finalizer(self) -> CheckpointFinalizer:
+        """Create a CheckpointFinalizer bound to current state."""
+        return CheckpointFinalizer(self.config, self.results_base_dir)
 
     def _handle_experiment_interrupt(self, checkpoint_path: Path) -> None:
-        """Handle graceful shutdown on interrupt.
-
-        Args:
-            checkpoint_path: Path to checkpoint file
-
-        Side effects:
-            - Reloads checkpoint from disk
-            - Updates status to 'interrupted'
-            - Saves checkpoint
-
-        """
-        if checkpoint_path and checkpoint_path.exists():
-            # CRITICAL: Reload checkpoint from disk to preserve worker-saved completions
-            # Workers save their progress to the checkpoint file, but the main process
-            # has a stale copy. We must reload to avoid overwriting worker progress.
-            try:
-                logger.info("🔄 Reloading checkpoint from disk to preserve worker progress...")
-                current_checkpoint = load_checkpoint(checkpoint_path)
-                current_checkpoint.status = _STATUS_INTERRUPTED
-                current_checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
-                current_checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
-                save_checkpoint(current_checkpoint, checkpoint_path)
-                logger.warning("💾 Checkpoint saved after interrupt")
-            except (
-                Exception
-            ) as reload_error:  # broad catch: interrupt handler; must not mask interrupt
-                # If reload fails, save what we have (better than nothing)
-                logger.error(f"⚠️  Failed to reload checkpoint: {reload_error}")
-                logger.warning("Saving checkpoint from memory (may lose some worker progress)")
-                if self.checkpoint:
-                    self.checkpoint.status = _STATUS_INTERRUPTED
-                    self.checkpoint.experiment_state = ExperimentState.INTERRUPTED.value
-                    self.checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
-                    save_checkpoint(self.checkpoint, checkpoint_path)
-                    logger.warning("💾 Checkpoint saved after interrupt")
+        """Handle graceful shutdown on interrupt."""
+        self._finalizer().handle_experiment_interrupt(self.checkpoint, checkpoint_path)
 
     def _validate_filesystem_on_resume(self, current_state: ExperimentState) -> None:
-        """Cross-validate filesystem against checkpoint state on resume.
-
-        Logs warnings when checkpoint says we're mid-execution but expected
-        directories or files are missing. Never fails — warnings only.
-
-        Args:
-            current_state: Current ExperimentState being resumed from
-
-        """
+        """Cross-validate filesystem against checkpoint state on resume."""
         if not self.experiment_dir:
             return
-
-        if current_state == ExperimentState.TIERS_RUNNING:
-            repos_dir = self.results_base_dir / "repos"
-            if not self.experiment_dir.exists():
-                logger.warning(
-                    f"⚠️  Resuming from TIERS_RUNNING but experiment_dir missing: "
-                    f"{self.experiment_dir}"
-                )
-            if not repos_dir.exists():
-                logger.warning(
-                    f"⚠️  Resuming from TIERS_RUNNING but repos/ dir missing: {repos_dir}"
-                )
+        self._finalizer().validate_filesystem_on_resume(self.experiment_dir, current_state)
 
     def _execute_tier_groups(
         self,
@@ -823,97 +732,9 @@ class E2ERunner:
         # Fallback: aggregate from tier_results (e.g. resumed past TIERS_COMPLETE)
         return self._aggregate_results(tier_results, start_time)
 
-    def _create_experiment_dir(self) -> Path:
-        """Create the experiment results directory.
-
-        Creates flattened structure with grading materials at root:
-        - prompt.md, criteria.md, rubric.yaml, judge_prompt.md at root
-        - Tiers directly under root (T0/, T1/, etc.)
-
-        Returns:
-            Path to the experiment directory.
-
-        """
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
-        experiment_dir = self.results_base_dir / f"{timestamp}-{self.config.experiment_id}"
-        experiment_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create config directory
-        (experiment_dir / "config").mkdir(exist_ok=True)
-
-        # Copy grading materials to root (uniform across all tiers)
-        self._copy_grading_materials(experiment_dir)
-
-        return experiment_dir
-
-    def _copy_grading_materials(self, experiment_dir: Path) -> None:
-        """Copy grading materials from test config to experiment root.
-
-        Copies prompt.md, criteria.md, rubric.yaml to experiment root since
-        they're uniform across all tiers/subtests/runs. Also creates the
-        judge_prompt.md template.
-
-        Args:
-            experiment_dir: Root experiment directory
-
-        """
-        # Copy task prompt (immutable snapshot for reproducibility)
-        prompt_path = experiment_dir / "prompt.md"
-        if self.config.task_prompt_file.exists():
-            import shutil
-
-            shutil.copy(self.config.task_prompt_file, prompt_path)
-            logger.debug(f"Copied task prompt to {prompt_path}")
-
-        # Symlink criteria if exists (look for it relative to prompt file)
-        prompt_dir = self.config.task_prompt_file.parent
-        criteria_dest = experiment_dir / "criteria.md"
-        criteria_file = prompt_dir / "expected" / "criteria.md"
-        if criteria_file.exists():
-            criteria_dest.symlink_to(criteria_file.resolve())
-            logger.debug(f"Symlinked criteria to {criteria_dest}")
-            criteria_path: Path | None = criteria_dest
-        else:
-            criteria_path = None
-
-        # Symlink rubric if exists
-        rubric_dest = experiment_dir / "rubric.yaml"
-        rubric_file = prompt_dir / "expected" / "rubric.yaml"
-        if rubric_file.exists():
-            rubric_dest.symlink_to(rubric_file.resolve())
-            logger.debug(f"Symlinked rubric to {rubric_dest}")
-            rubric_path: Path | None = rubric_dest
-        else:
-            rubric_path = None
-
-        # Create judge_prompt.md documentation (judge prompts generated dynamically per run)
-        # The actual judge evaluation uses JUDGE_SYSTEM_PROMPT_FILE + build_task_prompt()
-        judge_doc = [
-            "# Judge Evaluation Context",
-            "",
-            "Judge prompts are generated dynamically per run using:",
-            "- **System Prompt**: `config/judge/system_prompt.md` (via --system-prompt-file)",
-            "- **Task Prompt**: Generated via `scylla.judge.prompts.build_task_prompt()`",
-            "",
-            "## Task Prompt References:",
-            f"- Agent Task: `{experiment_dir / 'prompt.md'}`",
-            f"- Success Criteria: `{criteria_path if criteria_path else 'N/A'}`",
-            f"- Rubric: `{rubric_path if rubric_path else 'N/A'}`",
-            "",
-            "## Per-Run Context (Generated Dynamically):",
-            "- Agent Output: `<run_dir>/output.txt`",
-            "- Workspace: `<subtest_dir>/workspace/`",
-            "- Patchfile: Git diff of workspace changes",
-            "- Pipeline Results: Build/lint/test output",
-        ]
-        judge_prompt_path = experiment_dir / "judge_prompt.md"
-        judge_prompt_path.write_text("\n".join(judge_doc))
-        logger.debug(f"Created judge prompt documentation at {judge_prompt_path}")
-
-    def _save_config(self) -> None:
-        """Save experiment configuration."""
-        if self.experiment_dir:
-            self.config.save(self.experiment_dir / "config" / "experiment.json")
+    def _setup_manager(self) -> ExperimentSetupManager:
+        """Create an ExperimentSetupManager bound to current state."""
+        return ExperimentSetupManager(self.config, self.results_base_dir)
 
     def _build_tier_actions(
         self,
@@ -1106,75 +927,23 @@ class E2ERunner:
         self._result_writer().generate_report(result)
 
     def _find_existing_checkpoint(self) -> Path | None:
-        """Find existing checkpoint file in results directory.
-
-        Searches for most recent experiment directory with matching experiment_id
-        that has a checkpoint.json file.
-
-        Returns:
-            Path to checkpoint file if found, None otherwise
-
-        """
-        if not self.results_base_dir.exists():
-            return None
-
-        # Find directories matching: *-{experiment_id}
-        pattern = f"*-{self.config.experiment_id}"
-        matching_dirs = sorted(
-            [d for d in self.results_base_dir.glob(pattern) if d.is_dir()],
-            key=lambda d: d.name,  # Sort by timestamp prefix
-            reverse=True,  # Most recent first
-        )
-
-        for exp_dir in matching_dirs:
-            checkpoint_file = exp_dir / "checkpoint.json"
-            if checkpoint_file.exists():
-                return checkpoint_file
-
-        return None
+        """Find existing checkpoint file in results directory."""
+        return self._finalizer().find_existing_checkpoint()
 
     def _write_pid_file(self) -> None:
-        """Write PID file for status monitoring.
-
-        Location: {experiment_dir}/experiment.pid
-        """
+        """Write PID file for status monitoring."""
         if self.experiment_dir:
-            pid_file = self.experiment_dir / "experiment.pid"
-            pid_file.write_text(str(os.getpid()))
-            logger.debug(f"PID file written: {pid_file}")
+            self._setup_manager().write_pid_file(self.experiment_dir)
 
     def _cleanup_pid_file(self) -> None:
         """Remove PID file on completion."""
         if self.experiment_dir:
-            pid_file = self.experiment_dir / "experiment.pid"
-            if pid_file.exists():
-                pid_file.unlink()
-                logger.debug(f"PID file removed: {pid_file}")
+            self._setup_manager().cleanup_pid_file(self.experiment_dir)
 
     def _mark_checkpoint_completed(self) -> None:
-        """Mark checkpoint as completed.
-
-        Reloads run_states/subtest_states/tier_states from disk before marking
-        complete to preserve state written by parallel subprocess workers.
-        ProcessPoolExecutor workers write directly to disk; the main-process
-        self.checkpoint has stale (pre-fork) copies of these dicts.
-        """
+        """Mark checkpoint as completed."""
         if self.checkpoint and self.experiment_dir:
-            checkpoint_path = self.experiment_dir / "checkpoint.json"
-            # Merge worker-written state into the shared in-memory checkpoint object.
-            # We update in-place so the ExperimentStateMachine (which holds a reference
-            # to self.checkpoint) also sees the merged data when it calls save_checkpoint.
-            try:
-                disk_cp = load_checkpoint(checkpoint_path)
-                self.checkpoint.run_states = disk_cp.run_states
-                self.checkpoint.subtest_states = disk_cp.subtest_states
-                self.checkpoint.tier_states = disk_cp.tier_states
-            except (
-                Exception
-            ):  # broad catch: checkpoint merge at completion; fallback to in-memory copy
-                pass  # Fallback: keep stale in-memory copy (better than crashing)
-            self.checkpoint.status = _STATUS_COMPLETED
-            logger.debug("Checkpoint marked as completed")
+            self._finalizer().mark_checkpoint_completed(self.checkpoint, self.experiment_dir)
 
 
 def run_experiment(
