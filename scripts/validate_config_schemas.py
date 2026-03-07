@@ -8,6 +8,7 @@ if any validation error is found, blocking the commit.
 Supported file patterns:
 - ``config/defaults.yaml`` → ``schemas/defaults.schema.json``
 - ``config/models/*.yaml`` → ``schemas/model.schema.json``
+- ``config/tiers/*.yaml`` → ``schemas/tier.schema.json``
 - ``tests/fixtures/config/tiers/*.yaml`` → ``schemas/tier.schema.json``
 
 Usage:
@@ -38,6 +39,7 @@ _REPO_ROOT = Path(__file__).parent.parent
 _SCHEMA_MAP: list[tuple[re.Pattern[str], Path]] = [
     (re.compile(r"^config/defaults\.yaml$"), Path("schemas/defaults.schema.json")),
     (re.compile(r"^config/models/.+\.yaml$"), Path("schemas/model.schema.json")),
+    (re.compile(r"^config/tiers/.+\.yaml$"), Path("schemas/tier.schema.json")),
     (
         re.compile(r"^tests/fixtures/config/tiers/.+\.yaml$"),
         Path("schemas/tier.schema.json"),

@@ -80,11 +80,19 @@ class TestResolveSchema:
         path = _REPO_ROOT / "config" / "models" / "README.md"
         assert resolve_schema(path, _REPO_ROOT) is None
 
+    def test_production_tier_yaml_matches(self) -> None:
+        """config/tiers/*.yaml should match tier.schema.json."""
+        path = _REPO_ROOT / "config" / "tiers" / "t0.yaml"
+        result = resolve_schema(path, _REPO_ROOT)
+        assert result is not None
+        assert result.name == "tier.schema.json"
+
     @pytest.mark.parametrize(
         "rel_path",
         [
             "config/defaults.yaml",
             "config/models/claude-sonnet.yaml",
+            "config/tiers/t0.yaml",
             "tests/fixtures/config/tiers/t1.yaml",
         ],
     )
@@ -404,6 +412,23 @@ class TestMainIntegration:
         tier_files = list(tiers_dir.glob("*.yaml"))
         if not tier_files:
             pytest.skip("No tier fixture files found")
+        failures: list[str] = []
+        for tier_file in tier_files:
+            errors = validate_file(tier_file, schema)
+            if errors:
+                failures.append(f"{tier_file}: {errors}")
+        assert not failures, "\n".join(failures)
+
+    def test_production_tier_configs_validate(self) -> None:
+        """All production config/tiers/*.yaml files should pass schema validation."""
+        tiers_dir = _REPO_ROOT / "config" / "tiers"
+        if not tiers_dir.exists():
+            pytest.skip("config/tiers/ directory not present")
+        schema_path = _REPO_ROOT / "schemas" / "tier.schema.json"
+        schema = json.loads(schema_path.read_text())
+        tier_files = list(tiers_dir.glob("*.yaml"))
+        if not tier_files:
+            pytest.skip("No production tier config files found")
         failures: list[str] = []
         for tier_file in tier_files:
             errors = validate_file(tier_file, schema)
