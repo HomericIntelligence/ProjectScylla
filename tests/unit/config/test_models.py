@@ -364,6 +364,31 @@ class TestTierConfig:
         assert config.uses_delegation is True
         assert config.uses_hierarchy is True
 
+    def test_hierarchy_without_delegation_raises(self) -> None:
+        """uses_hierarchy=True without uses_delegation=True must raise ValidationError."""
+        with pytest.raises(ValidationError, match="uses_hierarchy"):
+            TierConfig(tier="t4", name="Invalid", uses_hierarchy=True, uses_delegation=False)
+
+    def test_hierarchy_with_delegation_is_valid(self) -> None:
+        """uses_hierarchy=True with uses_delegation=True must succeed."""
+        config = TierConfig(tier="t4", name="Hierarchy", uses_hierarchy=True, uses_delegation=True)
+        assert config.uses_hierarchy is True
+        assert config.uses_delegation is True
+
+    def test_hierarchy_false_delegation_false_is_valid(self) -> None:
+        """Both flags False (t0 pattern) must be valid."""
+        config = TierConfig(tier="t0", name="Baseline", uses_hierarchy=False, uses_delegation=False)
+        assert config.uses_hierarchy is False
+        assert config.uses_delegation is False
+
+    def test_hierarchy_false_delegation_true_is_valid(self) -> None:
+        """uses_delegation=True without uses_hierarchy (t3 pattern) must be valid."""
+        config = TierConfig(
+            tier="t3", name="Delegation", uses_hierarchy=False, uses_delegation=True
+        )
+        assert config.uses_hierarchy is False
+        assert config.uses_delegation is True
+
 
 # -----------------------------------------------------------------------------
 # Global Configuration Tests
