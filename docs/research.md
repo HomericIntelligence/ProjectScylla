@@ -103,7 +103,7 @@ Finally, the integrity of the benchmark requires the establishment of a **human 
 
 ### **3.2. The Ablation Study Blueprint**
 
-The study follows a controlled comparison methodology. For every tier $T(n)$, the key performance and economic metrics, such as the fine-grained progress rate ($\\mathbf{R\_{Prog}}$) and Cost-of-Pass (CoP), must be compared directly against $T(n-1)$. This approach precisely quantifies the marginal utility—the performance gained per unit of architectural complexity—of the newly introduced feature. For example, comparing the performance and cost of T3 (Tooling) against T2 (Skills) isolates the economic impact of heavy JSON schema loading versus internalized prompt expertise.12
+The study follows a controlled comparison methodology. For every tier $T(n)$, the key performance and economic metrics, such as the fine-grained progress rate ($\\mathbf{R\_{Prog}}$) and Cost-of-Pass (CoP), must be compared directly against $T(n-1)$. This approach precisely quantifies the marginal utility—the performance gained per unit of architectural complexity—of the newly introduced feature. For example, comparing the performance and cost of T3 (Delegation) against T2 (Tooling) isolates the economic impact of heavy JSON schema loading versus internalized prompt expertise.12
 
 The systematic analysis requires executing runs where specific architectural components are deliberately removed.2 For instance, testing the T5 architecture with and without the Monitor function (the self-verification step) allows for the isolation and quantification of the precise cost-benefit of integrating an iterative self-correction loop into the planning process.5
 

@@ -112,15 +112,15 @@ Based on the research methodology (see `/docs/research.md`), we expect:
 
 **T1 (Prompt Optimization)**: Reduced variance compared to T0, improved mean, but still sensitive to prompt engineering quality.
 
-**T2 (Skills)**: Moderate variance, multi-modal distributions if some skills are highly effective while others are not.
+**T2 (Tooling)**: Moderate variance, multi-modal distributions if some tools are highly effective while others are not.
 
-**T3 (Tooling)**: Potentially increased variance due to tool call failures and token budget explosions (see "Token Efficiency Chasm" in research.md).
+**T3 (Delegation)**: Potentially increased variance due to tool call failures and token budget explosions (see "Token Efficiency Chasm" in research.md).
 
-**T4 (Delegation)**: Reduced variance through atomic task design and specialist agents, more consistent execution.
+**T4 (Hierarchy)**: Reduced variance through atomic task design and specialist agents, more consistent execution.
 
-**T5 (Hierarchy)**: Lowest variance expected due to iterative refinement and error correction loops, but at high cost.
+**T5 (Hybrid)**: Lowest variance expected due to iterative refinement and error correction loops, but at high cost.
 
-**T6 (Hybrid/Super)**: Variance depends on synergy effects; ideally combines T5's consistency with optimized configurations.
+**T6 (Super)**: Variance depends on synergy effects; ideally combines T5's consistency with optimized configurations.
 
 ### Statistical Significance
 

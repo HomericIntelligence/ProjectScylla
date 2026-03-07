@@ -183,7 +183,7 @@ T3: Most scores < 0.60 (weak performance)
 T4: Most scores > 0.75 (strong performance)
 ```
 
-**Interpretation**: T3 (external tools) degrades performance compared to T2 (skills). Possible causes:
+**Interpretation**: T3 (Delegation) degrades performance compared to T2 (Tooling). Possible causes:
 
 - Tool selection overhead dominates benefit
 - Prompts don't effectively guide tool usage

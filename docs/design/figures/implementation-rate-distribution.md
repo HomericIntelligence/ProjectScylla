@@ -247,9 +247,9 @@ def fig27_impl_rate_distribution(
 **Progression Patterns**:
 
 - **T0 (baseline)**: High variance, bimodal (partial vs. full implementation)
-- **T1-T2 (skills/tools)**: Narrowing distribution, shifting toward higher Impl-Rate
-- **T3-T4 (delegation/hierarchy)**: Continued improvement in completeness
-- **T5-T6 (hybrid/super)**: Tight distribution near 1.0
+- **T1 (Skills) and T2 (Tooling)**: Narrowing distribution, shifting toward higher Impl-Rate
+- **T3 (Delegation) and T4 (Hierarchy)**: Continued improvement in completeness
+- **T5 (Hybrid) and T6 (Super)**: Tight distribution near 1.0
 
 **Problematic Patterns**:
 
