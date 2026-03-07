@@ -118,13 +118,13 @@ Different tier architectures produce distinct token distribution patterns:
 - Moderate output (single-shot responses)
 - Zero cache creation/reuse
 
-**T1-T3 (Skills/Tooling/Delegation)**:
+**T1 (Skills) through T3 (Delegation)**:
 
 - Increasing cache creation as context grows
 - Growing cached input as repeated operations reuse context
 - Variable output based on tool usage
 
-**T4-T6 (Hierarchy/Hybrid/Super)**:
+**T4 (Hierarchy) through T6 (Super)**:
 
 - Extreme cache efficiency (>99.98% cached input)
 - Minimal fresh input (~0.01-0.02% of total input)
