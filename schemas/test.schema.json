@@ -4,14 +4,14 @@
   "title": "ProjectScylla Test Case Schema",
   "description": "Schema for test.yaml files that define test cases for AI agent evaluation",
   "type": "object",
-  "required": ["id", "name", "source", "task", "validation"],
+  "required": ["id", "name", "language", "source", "task", "validation"],
   "additionalProperties": false,
   "properties": {
     "id": {
       "type": "string",
-      "description": "Unique test identifier (e.g., '001-justfile-to-makefile')",
-      "pattern": "^[0-9]{3}-[a-z0-9]+(-[a-z0-9]+)*$",
-      "examples": ["001-justfile-to-makefile", "042-api-integration-test"]
+      "description": "Unique test identifier (e.g., 'test-001' or '001-justfile-to-makefile')",
+      "pattern": "^[a-z0-9][a-z0-9]*(-[a-z0-9]+)*$",
+      "examples": ["test-001", "001-justfile-to-makefile", "042-api-integration-test"]
     },
     "name": {
       "type": "string",
@@ -113,6 +113,22 @@
           }
         }
       }
+    },
+    "language": {
+      "type": "string",
+      "description": "Programming language for build pipeline",
+      "enum": ["python", "mojo"],
+      "examples": ["python", "mojo"]
+    },
+    "tiers": {
+      "type": "array",
+      "description": "Tiers this test participates in",
+      "default": [],
+      "items": {
+        "type": "string",
+        "enum": ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
+      },
+      "examples": [["T0", "T1", "T2"]]
     },
     "tags": {
       "type": "array",
