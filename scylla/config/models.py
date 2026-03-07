@@ -6,7 +6,7 @@ tier configurations, and model configurations used by the evaluation framework.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
@@ -198,6 +198,15 @@ class TierConfig(BaseModel):
         if tier_num < 0 or tier_num > 6:
             raise ValueError(f"Tier number must be 0-6, got: {tier_num}")
         return v
+
+    @model_validator(mode="after")
+    def validate_hierarchy_requires_delegation(self) -> "TierConfig":
+        """Enforce that uses_hierarchy=True requires uses_delegation=True."""
+        if self.uses_hierarchy and not self.uses_delegation:
+            raise ValueError(
+                f"uses_hierarchy=true requires uses_delegation=true (tier={self.tier!r})"
+            )
+        return self
 
 
 # -----------------------------------------------------------------------------
