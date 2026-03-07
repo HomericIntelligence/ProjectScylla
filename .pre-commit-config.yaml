@@ -154,6 +154,14 @@ repos:
         language: system
         files: ^\.claude/shared/metrics-definitions\.md$
         pass_filenames: false
+      - id: ruff-check-complexity
+        name: Ruff Complexity Check (C901)
+        description: Fail if any function exceeds McCabe complexity 12 without a noqa directive
+        entry: pixi run ruff check --select C901 scripts/ scylla/
+        language: system
+        files: ^(scripts|scylla)/.*\.py$
+        types: [python]
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2

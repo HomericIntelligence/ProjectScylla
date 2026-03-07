@@ -47,6 +47,9 @@ jobs:
           pixi --version
           pixi run --environment lint pre-commit run --all-files --show-diff-on-failure
 
+      - name: Enforce complexity limit (C901)
+        run: pixi run --environment lint ruff check --select C901 scylla/ scripts/
+
       - name: Upload pre-commit diff
         if: failure()
         uses: actions/upload-artifact@v7
