@@ -304,6 +304,58 @@ def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
     return None
 
 
+def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
+    """Return True if checkpoint contains failed or rate-limited runs."""
+    import json
+
+    try:
+        with open(checkpoint_path) as f:
+            data = json.load(f)
+        for subtests in data.get("run_states", {}).values():
+            for runs in subtests.values():
+                for state in runs.values():
+                    if state in ("failed", "rate_limited"):
+                        return True
+    except Exception:
+        pass
+    return False
+
+
+def _reset_terminal_runs(checkpoint: Any) -> int:
+    """Reset all failed/rate-limited runs to pending with tier/subtest cascade.
+
+    Args:
+        checkpoint: Loaded E2ECheckpoint to mutate in-place.
+
+    Returns:
+        Number of runs reset.
+
+    """
+    terminal_states = ("failed", "rate_limited")
+    reset_count = 0
+    affected_tiers: set[str] = set()
+    affected_subtests: set[tuple[str, str]] = set()
+
+    for tier_id, subtests in checkpoint.run_states.items():
+        for subtest_id, runs in subtests.items():
+            for run_num_str, state in list(runs.items()):
+                if state in terminal_states:
+                    runs[run_num_str] = "pending"
+                    checkpoint.unmark_run_completed(tier_id, subtest_id, int(run_num_str))
+                    affected_tiers.add(tier_id)
+                    affected_subtests.add((tier_id, subtest_id))
+                    reset_count += 1
+
+    for tier_id, subtest_id in affected_subtests:
+        checkpoint.set_subtest_state(tier_id, subtest_id, "pending")
+    for tier_id in affected_tiers:
+        checkpoint.set_tier_state(tier_id, "pending")
+    if affected_tiers:
+        checkpoint.experiment_state = "tiers_running"
+
+    return reset_count
+
+
 def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa: C901  # orchestration with many retry/outcome paths
     """Run multiple tests using in-process ThreadPoolExecutor.
 
@@ -570,6 +622,26 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa:
                         "starting fresh"
                     )
 
+            # Handle --retry-errors: reset failed/rate-limited runs in checkpoint
+            if args.retry_errors:
+                from scylla.e2e.checkpoint import (
+                    load_checkpoint as _load_cp,
+                )
+                from scylla.e2e.checkpoint import (
+                    save_checkpoint as _save_cp,
+                )
+
+                _cp_path = _find_checkpoint_path(args.results_dir, experiment_id)
+                if _cp_path is not None:
+                    _cp = _load_cp(_cp_path)
+                    _reset_count = _reset_terminal_runs(_cp)
+                    if _reset_count > 0:
+                        _save_cp(_cp, _cp_path)
+                        logger.info(
+                            f"[{test_id}] --retry-errors: reset {_reset_count} "
+                            "failed/rate-limited run(s)"
+                        )
+
             with terminal_guard():
                 results = run_experiment(
                     config=config,
@@ -604,9 +676,19 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa:
             try:
                 with open(summary_path) as f:
                     summary = json.load(f)
+                # Build last-entry-per-test (last entry in list wins)
+                last_by_test: dict[str, dict[str, Any]] = {}
                 for r in summary.get("results", []):
-                    if r.get("status") == "error" and args.retry_errors:
-                        continue
+                    last_by_test[r["test_id"]] = r
+
+                for test_id, r in last_by_test.items():
+                    if args.retry_errors:
+                        if r.get("status") == "error":
+                            continue  # Error tests always re-run
+                        # Success tests: check checkpoint for internal failures
+                        cp_path = _find_checkpoint_path(args.results_dir, test_id)
+                        if cp_path is not None and _checkpoint_has_retryable_runs(cp_path):
+                            continue  # Has failed/rate-limited runs internally
                     # If --max-subtests was specified, check whether the checkpoint
                     # has fewer subtests than requested. If so, re-run to expand.
                     if args.max_subtests is not None:
@@ -627,7 +709,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa:
                                 continue
                         except Exception:
                             pass
-                    completed_ids.add(r["test_id"])
+                    completed_ids.add(test_id)
             except Exception:
                 pass
 
@@ -934,27 +1016,19 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901  # CLI dispatch with
         save_checkpoint(checkpoint, checkpoint_path)
         logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
 
-    # Handle --retry-errors in single mode: reset failed runs to pending
+    # Handle --retry-errors in single mode: reset failed/rate-limited runs to pending
     if args.retry_errors and not (from_run_state or from_tier_state or from_experiment_state):
-        from scylla.e2e.checkpoint import (
-            load_checkpoint,
-            reset_runs_for_from_state,
-            save_checkpoint,
-        )
+        from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint
 
         checkpoint_path = _find_checkpoint_path(args.results_dir, experiment_id)
         if checkpoint_path is not None:
-            cli_tier_filter = [t.upper() for t in args.tiers] if args.tiers else None
             checkpoint = load_checkpoint(checkpoint_path)
-            reset_count = reset_runs_for_from_state(
-                checkpoint,
-                from_state="pending",
-                tier_filter=cli_tier_filter,
-                status_filter=["failed"],
-            )
+            reset_count = _reset_terminal_runs(checkpoint)
             if reset_count > 0:
                 save_checkpoint(checkpoint, checkpoint_path)
-                logger.info(f"--retry-errors: reset {reset_count} failed run(s) for retry")
+                logger.info(
+                    f"--retry-errors: reset {reset_count} failed/rate-limited run(s) for retry"
+                )
 
     try:
         with terminal_guard(request_shutdown):
