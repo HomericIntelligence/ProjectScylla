@@ -12,7 +12,7 @@ from scylla.automation.models import IssueInfo
 class TestDependencyResolver:
     """Tests for DependencyResolver class."""
 
-    def test_add_issue(self):
+    def test_add_issue(self) -> None:
         """Test adding issues to resolver."""
         resolver = DependencyResolver()
 
@@ -22,7 +22,7 @@ class TestDependencyResolver:
         assert 123 in resolver.graph.issues
         assert resolver.graph.issues[123] == issue
 
-    def test_add_issue_with_dependencies(self):
+    def test_add_issue_with_dependencies(self) -> None:
         """Test adding issue with dependencies."""
         resolver = DependencyResolver()
 
@@ -35,7 +35,7 @@ class TestDependencyResolver:
 
         assert resolver.graph.get_dependencies(123) == [100, 101]
 
-    def test_detect_cycles_no_cycle(self):
+    def test_detect_cycles_no_cycle(self) -> None:
         """Test cycle detection with no cycles."""
         resolver = DependencyResolver()
 
@@ -47,7 +47,7 @@ class TestDependencyResolver:
         cycles = resolver.detect_cycles()
         assert cycles == []
 
-    def test_detect_cycles_with_cycle(self):
+    def test_detect_cycles_with_cycle(self) -> None:
         """Test cycle detection with a cycle."""
         resolver = DependencyResolver()
 
@@ -59,7 +59,7 @@ class TestDependencyResolver:
         with pytest.raises(CyclicDependencyError):
             resolver.detect_cycles()
 
-    def test_get_ready_issues_none_ready(self):
+    def test_get_ready_issues_none_ready(self) -> None:
         """Test getting ready issues when none are ready."""
         resolver = DependencyResolver()
 
@@ -70,7 +70,7 @@ class TestDependencyResolver:
         ready = resolver.get_ready_issues()
         assert len(ready) == 0
 
-    def test_get_ready_issues_some_ready(self):
+    def test_get_ready_issues_some_ready(self) -> None:
         """Test getting ready issues when some are ready."""
         resolver = DependencyResolver()
 
@@ -83,7 +83,7 @@ class TestDependencyResolver:
         assert len(ready) == 1
         assert ready[0].number == 1
 
-    def test_get_ready_issues_after_completion(self):
+    def test_get_ready_issues_after_completion(self) -> None:
         """Test getting ready issues after marking one complete."""
         resolver = DependencyResolver()
 
@@ -97,7 +97,7 @@ class TestDependencyResolver:
         assert len(ready) == 1
         assert ready[0].number == 2
 
-    def test_get_ready_issues_priority_sorting(self):
+    def test_get_ready_issues_priority_sorting(self) -> None:
         """Test that ready issues are sorted by priority."""
         resolver = DependencyResolver()
 
@@ -110,7 +110,7 @@ class TestDependencyResolver:
         # Should be sorted by priority descending
         assert [i.number for i in ready] == [2, 3, 1]
 
-    def test_topological_sort_linear(self):
+    def test_topological_sort_linear(self) -> None:
         """Test topological sort with linear dependencies."""
         resolver = DependencyResolver()
 
@@ -125,7 +125,7 @@ class TestDependencyResolver:
         assert order.index(1) < order.index(2)
         assert order.index(2) < order.index(3)
 
-    def test_topological_sort_diamond(self):
+    def test_topological_sort_diamond(self) -> None:
         """Test topological sort with diamond pattern."""
         resolver = DependencyResolver()
 
@@ -144,7 +144,7 @@ class TestDependencyResolver:
         assert order.index(2) < order.index(4)
         assert order.index(3) < order.index(4)
 
-    def test_topological_sort_with_cycle(self):
+    def test_topological_sort_with_cycle(self) -> None:
         """Test topological sort fails with cycle."""
         resolver = DependencyResolver()
 
@@ -155,7 +155,7 @@ class TestDependencyResolver:
         with pytest.raises(CyclicDependencyError):
             resolver.topological_sort()
 
-    def test_get_stats(self):
+    def test_get_stats(self) -> None:
         """Test getting resolver statistics."""
         resolver = DependencyResolver()
 
@@ -172,7 +172,7 @@ class TestDependencyResolver:
         assert stats["remaining_issues"] == 2
         assert stats["ready_issues"] == 1  # Issue 2 is now ready
 
-    def test_mark_completed(self):
+    def test_mark_completed(self) -> None:
         """Test marking issues as completed."""
         resolver = DependencyResolver()
 

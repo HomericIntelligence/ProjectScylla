@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -173,7 +174,7 @@ class TestExecuteTierGroups:
 
         call_count = [0]
 
-        def run_tier(tier_id: TierID, *args: object) -> TierResult:
+        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
             call_count[0] += 1
             return t0_result if tier_id == TierID.T0 else t1_result
 
@@ -206,7 +207,7 @@ class TestExecuteTierGroups:
         t1_result = _make_tier_result(TierID.T1)
         t2_result = _make_tier_result(TierID.T2)
 
-        def run_tier(tier_id: TierID, *args: object) -> TierResult:
+        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
             return t1_result if tier_id == TierID.T1 else t2_result
 
         config = ExperimentConfig(
@@ -237,7 +238,7 @@ class TestExecuteParallelTierGroup:
         t1_result = _make_tier_result(TierID.T1)
         t2_result = _make_tier_result(TierID.T2)
 
-        def run_tier(tier_id: TierID, *args: object) -> TierResult:
+        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
             return t1_result if tier_id == TierID.T1 else t2_result
 
         runner = _make_runner(run_tier_fn=run_tier)
@@ -252,7 +253,7 @@ class TestExecuteParallelTierGroup:
         """One failure doesn't abort sibling tiers."""
         t1_result = _make_tier_result(TierID.T1)
 
-        def run_tier(tier_id: TierID, *args: object) -> TierResult:
+        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
             if tier_id == TierID.T2:
                 raise RuntimeError("T2 failed")
             return t1_result
@@ -268,7 +269,7 @@ class TestExecuteParallelTierGroup:
     def test_all_fail_raises_runtime_error(self) -> None:
         """All tiers failing raises RuntimeError."""
 
-        def run_tier(tier_id: TierID, *args: object) -> TierResult:
+        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
             raise RuntimeError(f"{tier_id.value} failed")
 
         runner = _make_runner(run_tier_fn=run_tier)

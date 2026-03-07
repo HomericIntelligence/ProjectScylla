@@ -1,37 +1,39 @@
 """Test degenerate input fixtures for edge case testing."""
 
+from typing import Any
+
 import numpy as np
 import pytest
 
 
-def test_degenerate_single_element(degenerate_single_element):
+def test_degenerate_single_element(degenerate_single_element: Any) -> None:
     """Verify single-element fixture."""
     assert len(degenerate_single_element) == 1
     assert degenerate_single_element[0] == pytest.approx(0.5)
 
 
-def test_degenerate_all_same(degenerate_all_same):
+def test_degenerate_all_same(degenerate_all_same: Any) -> None:
     """Verify all-same-value fixture."""
     assert len(degenerate_all_same) == 5
     assert np.all(degenerate_all_same == pytest.approx(0.7))
     assert np.std(degenerate_all_same) == pytest.approx(0.0)
 
 
-def test_degenerate_all_pass(degenerate_all_pass):
+def test_degenerate_all_pass(degenerate_all_pass: Any) -> None:
     """Verify all-pass fixture."""
     assert len(degenerate_all_pass) == 5
     assert np.all(degenerate_all_pass == 1)
     assert np.mean(degenerate_all_pass) == pytest.approx(1.0)
 
 
-def test_degenerate_all_fail(degenerate_all_fail):
+def test_degenerate_all_fail(degenerate_all_fail: Any) -> None:
     """Verify all-fail fixture."""
     assert len(degenerate_all_fail) == 5
     assert np.all(degenerate_all_fail == 0)
     assert np.mean(degenerate_all_fail) == pytest.approx(0.0)
 
 
-def test_degenerate_unbalanced_groups(degenerate_unbalanced_groups):
+def test_degenerate_unbalanced_groups(degenerate_unbalanced_groups: Any) -> None:
     """Verify unbalanced groups fixture."""
     assert len(degenerate_unbalanced_groups["small"]) == 2
     assert len(degenerate_unbalanced_groups["large"]) == 50
@@ -40,20 +42,20 @@ def test_degenerate_unbalanced_groups(degenerate_unbalanced_groups):
     )
 
 
-def test_degenerate_empty_array(degenerate_empty_array):
+def test_degenerate_empty_array(degenerate_empty_array: Any) -> None:
     """Verify empty array fixture."""
     assert len(degenerate_empty_array) == 0
     assert degenerate_empty_array.size == 0
 
 
-def test_degenerate_nan_values(degenerate_nan_values):
+def test_degenerate_nan_values(degenerate_nan_values: Any) -> None:
     """Verify NaN values fixture."""
     assert len(degenerate_nan_values) == 5
     assert np.sum(np.isnan(degenerate_nan_values)) == 2
     assert np.sum(~np.isnan(degenerate_nan_values)) == 3
 
 
-def test_degenerate_inf_values(degenerate_inf_values):
+def test_degenerate_inf_values(degenerate_inf_values: Any) -> None:
     """Verify infinite values fixture."""
     assert len(degenerate_inf_values) == 5
     assert np.sum(np.isinf(degenerate_inf_values)) == 2
@@ -61,14 +63,14 @@ def test_degenerate_inf_values(degenerate_inf_values):
     assert np.sum(np.isneginf(degenerate_inf_values)) == 1
 
 
-def test_degenerate_binary_data(degenerate_binary_data):
+def test_degenerate_binary_data(degenerate_binary_data: Any) -> None:
     """Verify binary data fixture."""
     assert len(degenerate_binary_data) == 8
     assert set(degenerate_binary_data) == {0, 1}
     assert np.all((degenerate_binary_data == 0) | (degenerate_binary_data == 1))
 
 
-def test_degenerate_boundary_values(degenerate_boundary_values):
+def test_degenerate_boundary_values(degenerate_boundary_values: Any) -> None:
     """Verify boundary values fixture."""
     assert len(degenerate_boundary_values) == 5
     assert np.min(degenerate_boundary_values) == pytest.approx(0.0)
@@ -76,7 +78,7 @@ def test_degenerate_boundary_values(degenerate_boundary_values):
     assert 0.5 in degenerate_boundary_values
 
 
-def test_degenerate_near_zero(degenerate_near_zero):
+def test_degenerate_near_zero(degenerate_near_zero: Any) -> None:
     """Verify near-zero values fixture."""
     assert len(degenerate_near_zero) == 5
     assert np.all(degenerate_near_zero > 0)
@@ -84,7 +86,7 @@ def test_degenerate_near_zero(degenerate_near_zero):
     assert np.max(degenerate_near_zero) == pytest.approx(1e-6)
 
 
-def test_degenerate_high_variance(degenerate_high_variance):
+def test_degenerate_high_variance(degenerate_high_variance: Any) -> None:
     """Verify high-variance fixture."""
     assert len(degenerate_high_variance) == 5
     variance = np.var(degenerate_high_variance)

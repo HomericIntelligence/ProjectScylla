@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 from agents.agent_utils import (
     AgentInfo,
@@ -163,7 +164,7 @@ class TestExtractFrontmatterFull:
 class TestAgentInfo:
     """Tests for AgentInfo class."""
 
-    def make_agent(self, **overrides: object) -> AgentInfo:
+    def make_agent(self, **overrides: Any) -> AgentInfo:
         """Create an AgentInfo with default fields."""
         frontmatter = {
             "name": "test-agent",

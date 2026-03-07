@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -377,7 +378,7 @@ class TestResumeConfigMismatch:
         self,
         experiment_config: ExperimentConfig,
         field: str,
-        new_value: object,
+        new_value: Any,
     ) -> None:
         """Hash must differ for each field that is included in the config hash."""
         config_original = experiment_config.model_copy()

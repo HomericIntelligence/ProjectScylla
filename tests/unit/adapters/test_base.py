@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -19,7 +20,7 @@ from scylla.adapters.base import (
 class ConcreteAdapter(BaseAdapter):
     """Concrete implementation for testing."""
 
-    def run(self, config: AdapterConfig, tier_config: object = None) -> AdapterResult:
+    def run(self, config: AdapterConfig, tier_config: Any = None) -> AdapterResult:
         """Return success result."""
         return AdapterResult(exit_code=0, stdout="success", stderr="")
 

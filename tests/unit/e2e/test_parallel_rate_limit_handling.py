@@ -15,6 +15,7 @@ import tempfile
 from datetime import datetime, timezone
 from multiprocessing import Manager
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock, patch
 
 from scylla.e2e.checkpoint import E2ECheckpoint
@@ -384,7 +385,9 @@ class TestParallelCheckpointIntegration:
             pause_signaled = []
             resume_signaled = []
 
-            def mock_wait(retry_after, checkpoint, checkpoint_path, log_func=None):
+            def mock_wait(
+                retry_after: Any, checkpoint: Any, checkpoint_path: Any, log_func: Any = None
+            ) -> None:
                 pause_signaled.append(True)
                 # Simulate checkpoint update during wait
                 checkpoint.status = "paused_rate_limit"

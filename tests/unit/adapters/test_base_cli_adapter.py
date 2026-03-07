@@ -2,6 +2,7 @@
 
 import subprocess
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,7 +17,7 @@ class TestCliAdapter(BaseCliAdapter):
     CLI_EXECUTABLE = "test-cli"
     _api_call_fallback_pattern = r"test_pattern"
 
-    def _build_command(self, config: AdapterConfig, prompt: str, tier_config) -> list[str]:
+    def _build_command(self, config: AdapterConfig, prompt: str, tier_config: Any) -> list[str]:
         """Build test command."""
         return [self.CLI_EXECUTABLE, "--model", config.model, prompt]
 
@@ -248,7 +249,9 @@ class TestAbstractMethods:
         class IncompleteAdapter(BaseCliAdapter):
             CLI_EXECUTABLE = "incomplete"
 
-            def _build_command(self, config: AdapterConfig, prompt: str, tier_config) -> list[str]:
+            def _build_command(
+                self, config: AdapterConfig, prompt: str, tier_config: Any
+            ) -> list[str]:
                 return ["cmd"]
 
         with pytest.raises(TypeError):

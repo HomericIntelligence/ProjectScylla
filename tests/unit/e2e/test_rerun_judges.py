@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -700,7 +701,7 @@ class TestRerunJudgeStats:
         assert stats.agent_failed == 0
         assert stats.per_slot_stats == {}
 
-    def test_print_summary(self, capsys) -> None:
+    def test_print_summary(self, capsys: Any) -> None:
         """Test print_summary output."""
         stats = RerunJudgeStats(
             total_expected_slots=10,

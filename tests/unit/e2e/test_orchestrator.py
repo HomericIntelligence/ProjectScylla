@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -63,7 +64,7 @@ class TestEvalOrchestrator:
         """Test Set adapter."""
         orchestrator = EvalOrchestrator()
 
-        def mock_adapter(**kwargs):
+        def mock_adapter(**kwargs: Any) -> Any:
             return {"tokens_in": 100, "tokens_out": 50}
 
         orchestrator.set_adapter(mock_adapter)
@@ -73,7 +74,7 @@ class TestEvalOrchestrator:
         """Test Set judge."""
         orchestrator = EvalOrchestrator()
 
-        def mock_judge(**kwargs):
+        def mock_judge(**kwargs: Any) -> Any:
             return {"passed": True, "score": 1.0}
 
         orchestrator.set_judge(mock_judge)
@@ -295,7 +296,7 @@ output:
         orchestrator = EvalOrchestrator(config)
 
         # Set mock adapter
-        def mock_adapter(**kwargs):
+        def mock_adapter(**kwargs: Any) -> Any:
             return {
                 "tokens_in": 1000,
                 "tokens_out": 500,
@@ -304,7 +305,7 @@ output:
             }
 
         # Set mock judge
-        def mock_judge(**kwargs):
+        def mock_judge(**kwargs: Any) -> Any:
             return {
                 "passed": True,
                 "score": 0.85,

@@ -130,13 +130,6 @@ warn_unused_ignores = true
 allow_redefinition = false
 implicit_reexport = false
 
-# tests/unit/ has 635 unannotated test functions — suppress no-untyped-def
-# until they are annotated in a follow-up issue
-[[tool.mypy.overrides]]
-module = "tests.unit.*"
-disable_error_code = ["no-untyped-def"]
-
-
 [tool.coverage.run]
 branch = true
 source = ["scylla", "scripts"]

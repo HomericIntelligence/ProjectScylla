@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def test_pareto_frontier_basic():
+def test_pareto_frontier_basic() -> None:
     """Test Pareto frontier with clear domination relationships.
 
     Counterexample that exposed the bug:
@@ -58,7 +58,7 @@ def test_pareto_frontier_basic():
         assert np.isclose(pareto_points.iloc[0]["mean_score"], 0.8)
 
 
-def test_pareto_frontier_multiple_efficient():
+def test_pareto_frontier_multiple_efficient() -> None:
     """Test Pareto frontier with multiple non-dominated points.
 
     Points:
@@ -99,7 +99,7 @@ def test_pareto_frontier_multiple_efficient():
         assert pareto_tiers == {"T0", "T1", "T2"}
 
 
-def test_pareto_frontier_tied_points():
+def test_pareto_frontier_tied_points() -> None:
     """Test Pareto frontier with tied cost-score pairs.
 
     If two points have identical (cost, score), both should be Pareto efficient.
@@ -137,7 +137,7 @@ def test_pareto_frontier_tied_points():
         assert len(pareto_points) >= 2  # At least T0/T1 or T2
 
 
-def test_pareto_frontier_single_point():
+def test_pareto_frontier_single_point() -> None:
     """Test Pareto frontier with a single point (trivial case)."""
     from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
 

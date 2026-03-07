@@ -90,7 +90,7 @@ class TestCmdVisualize:
         result = cmd_visualize(args)
         assert result == 0
 
-    def test_visualize_tree_complete_experiment(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_tree_complete_experiment(self, tmp_path: Path, capsys: Any) -> None:
         """Tree format renders experiment name and tier states for a complete experiment."""
         self._make_checkpoint_file(
             tmp_path,
@@ -116,7 +116,7 @@ class TestCmdVisualize:
         assert "passed" in out
         assert "failed" in out
 
-    def test_visualize_tree_failed_experiment(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_tree_failed_experiment(self, tmp_path: Path, capsys: Any) -> None:
         """Tree format renders 'failed' state for a failed experiment."""
         self._make_checkpoint_file(
             tmp_path,
@@ -134,7 +134,7 @@ class TestCmdVisualize:
         assert "test-fail" in out
         assert "failed" in out
 
-    def test_visualize_tree_partial_experiment(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_tree_partial_experiment(self, tmp_path: Path, capsys: Any) -> None:
         """Tree format renders mixed states (partial / in-progress) correctly."""
         self._make_checkpoint_file(
             tmp_path,
@@ -157,7 +157,7 @@ class TestCmdVisualize:
         assert "T1" in out
         assert "complete" in out
 
-    def test_visualize_table_format(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_table_format(self, tmp_path: Path, capsys: Any) -> None:
         """Table format includes a header row and a data row per run."""
         self._make_checkpoint_file(
             tmp_path,
@@ -177,7 +177,7 @@ class TestCmdVisualize:
         assert "worktree_cleaned" in out
         assert "passed" in out
 
-    def test_visualize_json_format(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_json_format(self, tmp_path: Path, capsys: Any) -> None:
         """JSON format outputs valid JSON containing expected keys."""
         self._make_checkpoint_file(
             tmp_path,
@@ -197,7 +197,7 @@ class TestCmdVisualize:
         assert "tier_states" in data
         assert "run_states" in data
 
-    def test_visualize_tier_filter(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_tier_filter(self, tmp_path: Path, capsys: Any) -> None:
         """--tier T0 limits output to T0 only, omitting T1."""
         self._make_checkpoint_file(
             tmp_path,
@@ -217,7 +217,7 @@ class TestCmdVisualize:
         assert "T0" in out
         assert "T1" not in out
 
-    def test_visualize_verbose_timestamps(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_verbose_timestamps(self, tmp_path: Path, capsys: Any) -> None:
         """--verbose shows Started line and PID."""
         self._make_checkpoint_file(
             tmp_path,
@@ -233,7 +233,7 @@ class TestCmdVisualize:
         assert "Started:" in out
         assert "PID: 12345" in out
 
-    def test_visualize_empty_tiers(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_empty_tiers(self, tmp_path: Path, capsys: Any) -> None:
         """Checkpoint with no tier_states renders '(no tiers)' message."""
         self._make_checkpoint_file(
             tmp_path,
@@ -248,7 +248,7 @@ class TestCmdVisualize:
         out = capsys.readouterr().out
         assert "(no tiers)" in out
 
-    def test_visualize_batch_directory(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_batch_directory(self, tmp_path: Path, capsys: Any) -> None:
         """Batch mode: results dir with multiple experiment subdirs shows all experiments."""
         for exp_id in ["exp-01", "exp-02"]:
             exp_dir = tmp_path / exp_id
@@ -267,7 +267,7 @@ class TestCmdVisualize:
         assert "exp-01" in out
         assert "exp-02" in out
 
-    def test_visualize_states_only_single(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_states_only_single(self, tmp_path: Path, capsys: Any) -> None:
         """--states-only with single experiment: shows TIER/SUBTEST/RUN/STATE, no EXP or RESULT."""
         self._make_checkpoint_file(
             tmp_path,
@@ -289,7 +289,7 @@ class TestCmdVisualize:
         assert "T0" in out
         assert "worktree_cleaned" in out
 
-    def test_visualize_states_only_batch(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_states_only_batch(self, tmp_path: Path, capsys: Any) -> None:
         """--states-only with multiple experiments shows EXP column in unified table."""
         for exp_id in ["exp-01", "exp-02"]:
             exp_dir = tmp_path / exp_id
@@ -315,7 +315,7 @@ class TestCmdVisualize:
         assert "exp-02" in out
         assert "worktree_cleaned" in out
 
-    def test_visualize_states_only_tier_filter(self, tmp_path: Path, capsys) -> None:
+    def test_visualize_states_only_tier_filter(self, tmp_path: Path, capsys: Any) -> None:
         """--states-only with --tier T0 limits output to T0 only."""
         self._make_checkpoint_file(
             tmp_path,

@@ -1,11 +1,13 @@
 """Unit tests for DataFrame builders."""
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import pytest
 
 
-def test_build_runs_df_structure(sample_runs_df):
+def test_build_runs_df_structure(sample_runs_df: Any) -> None:
     """Test runs DataFrame has expected structure."""
     # Verify required columns exist
     required_cols = [
@@ -39,7 +41,7 @@ def test_build_runs_df_structure(sample_runs_df):
     assert sample_runs_df["run_number"].dtype == np.int64
 
 
-def test_build_runs_df_values(sample_runs_df):
+def test_build_runs_df_values(sample_runs_df: Any) -> None:
     """Test runs DataFrame has valid values."""
     # Score should be in [0, 1]
     assert sample_runs_df["score"].min() >= 0.0
@@ -58,7 +60,7 @@ def test_build_runs_df_values(sample_runs_df):
     assert (sample_runs_df["cache_read_tokens"] >= 0).all()
 
 
-def test_build_judges_df_structure(sample_judges_df):
+def test_build_judges_df_structure(sample_judges_df: Any) -> None:
     """Test judges DataFrame has expected structure."""
     required_cols = [
         "experiment",
@@ -84,7 +86,7 @@ def test_build_judges_df_structure(sample_judges_df):
     assert (judges_per_run == 3).all()
 
 
-def test_build_criteria_df_structure(sample_criteria_df):
+def test_build_criteria_df_structure(sample_criteria_df: Any) -> None:
     """Test criteria DataFrame has expected structure."""
     required_cols = [
         "experiment",
@@ -110,7 +112,7 @@ def test_build_criteria_df_structure(sample_criteria_df):
     assert (criteria_per_judge == 5).all()
 
 
-def test_build_subtests_df_structure(sample_subtests_df):
+def test_build_subtests_df_structure(sample_subtests_df: Any) -> None:
     """Test subtests DataFrame has expected structure matching production.
 
     Must match columns produced by dataframes.build_subtests_df().
@@ -163,7 +165,7 @@ def test_build_subtests_df_structure(sample_subtests_df):
     assert sample_subtests_df["consistency"].max() <= 1.0
 
 
-def test_tier_summary_aggregation(sample_runs_df):
+def test_tier_summary_aggregation(sample_runs_df: Any) -> None:
     """Test tier_summary() aggregation function."""
     from scylla.analysis.dataframes import tier_summary
 
@@ -193,7 +195,7 @@ def test_tier_summary_aggregation(sample_runs_df):
     assert first_row["pass_rate"] == pytest.approx(expected_pass_rate, abs=1e-6)
 
 
-def test_model_comparison_aggregation(sample_runs_df):
+def test_model_comparison_aggregation(sample_runs_df: Any) -> None:
     """Test model_comparison() aggregation function."""
     from scylla.analysis.dataframes import model_comparison
 
@@ -214,7 +216,7 @@ def test_model_comparison_aggregation(sample_runs_df):
     assert len(comparison) == expected_rows
 
 
-def test_model_comparison_process_metric_columns(sample_runs_df):
+def test_model_comparison_process_metric_columns(sample_runs_df: Any) -> None:
     """Test model_comparison() includes process metric aggregation columns."""
     from scylla.analysis.dataframes import model_comparison
 
@@ -240,7 +242,7 @@ def test_model_comparison_process_metric_columns(sample_runs_df):
         assert col in column_tuples, f"Missing column: {col}"
 
 
-def test_model_comparison_process_metric_values(sample_runs_df):
+def test_model_comparison_process_metric_values(sample_runs_df: Any) -> None:
     """Test model_comparison() process metric values match manual aggregation."""
     from scylla.analysis.dataframes import model_comparison
 
@@ -277,7 +279,7 @@ def test_model_comparison_process_metric_values(sample_runs_df):
             )
 
 
-def test_model_comparison_process_metrics_all_nan():
+def test_model_comparison_process_metrics_all_nan() -> None:
     """Test model_comparison() handles all-NaN process metrics without error."""
     from scylla.analysis.dataframes import model_comparison
 
@@ -306,7 +308,7 @@ def test_model_comparison_process_metrics_all_nan():
         )
 
 
-def test_consistency_calculation():
+def test_consistency_calculation() -> None:
     """Test consistency metric calculation (1 - CV)."""
     from scylla.analysis.stats import compute_consistency
 
@@ -320,7 +322,7 @@ def test_consistency_calculation():
     assert compute_consistency(5.0, 10.0) == pytest.approx(0.0)
 
 
-def test_cop_calculation():
+def test_cop_calculation() -> None:
     """Test Cost-of-Pass calculation."""
     from scylla.analysis.stats import compute_cop
 
@@ -329,7 +331,7 @@ def test_cop_calculation():
     assert compute_cop(1.0, 0.0) == float("inf")
 
 
-def test_empty_dataframe_handling():
+def test_empty_dataframe_handling() -> None:
     """Test functions handle empty DataFrames gracefully."""
     from scylla.analysis.dataframes import tier_summary
 
@@ -352,7 +354,7 @@ def test_empty_dataframe_handling():
     assert len(summary) == 0
 
 
-def test_dataframe_filtering(sample_runs_df):
+def test_dataframe_filtering(sample_runs_df: Any) -> None:
     """Test filtering DataFrames by tier/model."""
     # Filter by single tier
     t0_only = sample_runs_df[sample_runs_df["tier"] == "T0"]
@@ -373,7 +375,7 @@ def test_dataframe_filtering(sample_runs_df):
     assert (t0_sonnet["agent_model"] == "Sonnet 4.5").all()
 
 
-def test_judge_summary_aggregation(sample_judges_df):
+def test_judge_summary_aggregation(sample_judges_df: Any) -> None:
     """Test judge_summary() aggregates judge scores correctly."""
     from scylla.analysis.dataframes import judge_summary
 
@@ -406,7 +408,7 @@ def test_judge_summary_aggregation(sample_judges_df):
     assert actual_mean == pytest.approx(expected_mean, abs=1e-6)
 
 
-def test_judge_summary_empty_dataframe():
+def test_judge_summary_empty_dataframe() -> None:
     """Test judge_summary() handles empty DataFrames gracefully."""
     from scylla.analysis.dataframes import judge_summary
 
@@ -429,7 +431,7 @@ def test_judge_summary_empty_dataframe():
     assert len(summary) == 0
 
 
-def test_criteria_summary_aggregation(sample_criteria_df):
+def test_criteria_summary_aggregation(sample_criteria_df: Any) -> None:
     """Test criteria_summary() aggregates by criterion correctly."""
     from scylla.analysis.dataframes import criteria_summary
 
@@ -472,7 +474,7 @@ def test_criteria_summary_aggregation(sample_criteria_df):
     assert actual_mean == pytest.approx(expected_mean, abs=1e-6)
 
 
-def test_criteria_summary_empty_dataframe():
+def test_criteria_summary_empty_dataframe() -> None:
     """Test criteria_summary() handles empty DataFrames gracefully."""
     from scylla.analysis.dataframes import criteria_summary
 

@@ -7,6 +7,7 @@ are correctly aggregated at both the subtest and tier levels.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -285,7 +286,7 @@ def test_tier_summary_all_nan_yields_nan() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_fixture_symmetry_subtests_df(sample_runs_df, sample_subtests_df) -> None:
+def test_fixture_symmetry_subtests_df(sample_runs_df: Any, sample_subtests_df: Any) -> None:
     """sample_subtests_df fixture columns match production build_subtests_df output."""
     from scylla.analysis.dataframes import build_subtests_df
 

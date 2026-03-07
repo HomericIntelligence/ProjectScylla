@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -669,7 +670,7 @@ class TestCheckApiRateLimitStatus:
     """Tests for check_api_rate_limit_status function."""
 
     @patch("scylla.e2e.rate_limit.subprocess.run")
-    def test_no_rate_limit(self, mock_run) -> None:
+    def test_no_rate_limit(self, mock_run: Any) -> None:
         """Test when API is not rate limited."""
         mock_run.return_value.stderr = "Success"
         mock_run.return_value.returncode = 0
@@ -679,7 +680,7 @@ class TestCheckApiRateLimitStatus:
         assert result is None
 
     @patch("scylla.e2e.rate_limit.subprocess.run")
-    def test_rate_limit_detected(self, mock_run) -> None:
+    def test_rate_limit_detected(self, mock_run: Any) -> None:
         """Test when rate limit is detected in stderr."""
         from subprocess import CompletedProcess
 
@@ -698,7 +699,7 @@ class TestCheckApiRateLimitStatus:
         assert "Rate limit" in result.error_message
 
     @patch("scylla.e2e.rate_limit.subprocess.run")
-    def test_hit_your_limit_detected(self, mock_run) -> None:
+    def test_hit_your_limit_detected(self, mock_run: Any) -> None:
         """Test when 'hit your limit' message is detected."""
         from subprocess import CompletedProcess
 
@@ -716,7 +717,7 @@ class TestCheckApiRateLimitStatus:
         assert "hit your limit" in result.error_message.lower()
 
     @patch("scylla.e2e.rate_limit.subprocess.run")
-    def test_timeout_returns_none(self, mock_run) -> None:
+    def test_timeout_returns_none(self, mock_run: Any) -> None:
         """Test that subprocess timeout returns None (not treated as rate limit)."""
         from subprocess import TimeoutExpired
 
@@ -727,7 +728,7 @@ class TestCheckApiRateLimitStatus:
         assert result is None
 
     @patch("scylla.e2e.rate_limit.subprocess.run")
-    def test_other_exception_returns_none(self, mock_run) -> None:
+    def test_other_exception_returns_none(self, mock_run: Any) -> None:
         """Test that other exceptions return None."""
         mock_run.side_effect = OSError("Command not found")
 

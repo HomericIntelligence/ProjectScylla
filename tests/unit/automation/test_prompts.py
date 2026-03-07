@@ -9,7 +9,7 @@ from scylla.automation.prompts import (
 )
 
 
-def test_get_implementation_prompt():
+def test_get_implementation_prompt() -> None:
     """Test implementation prompt generation with backward compatibility."""
     # Test backward compatibility - should work with just issue_number
     prompt = get_implementation_prompt(123)
@@ -20,7 +20,7 @@ def test_get_implementation_prompt():
     assert "backup file" in prompt.lower() or ".orig" in prompt
 
 
-def test_get_implementation_prompt_with_context():
+def test_get_implementation_prompt_with_context() -> None:
     """Test implementation prompt with full context."""
     prompt = get_implementation_prompt(
         issue_number=123,
@@ -38,7 +38,7 @@ def test_get_implementation_prompt_with_context():
     assert "gh issue view" in prompt
 
 
-def test_get_plan_prompt():
+def test_get_plan_prompt() -> None:
     """Test plan prompt generation."""
     prompt = get_plan_prompt(456)
     assert "456" in prompt
@@ -48,7 +48,7 @@ def test_get_plan_prompt():
     assert "Prior Learnings" in prompt or "knowledge base" in prompt
 
 
-def test_get_advise_prompt():
+def test_get_advise_prompt() -> None:
     """Test advise prompt generation."""
     prompt = get_advise_prompt(
         issue_number=789,
@@ -66,7 +66,7 @@ def test_get_advise_prompt():
     assert "What Failed" in prompt
 
 
-def test_get_follow_up_prompt():
+def test_get_follow_up_prompt() -> None:
     """Test follow-up prompt generation."""
     prompt = get_follow_up_prompt(789)
     assert "789" in prompt
@@ -79,7 +79,7 @@ def test_get_follow_up_prompt():
     assert "testing" in prompt
 
 
-def test_get_pr_description():
+def test_get_pr_description() -> None:
     """Test PR description generation."""
     desc = get_pr_description(
         issue_number=123,

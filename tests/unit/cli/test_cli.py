@@ -77,7 +77,7 @@ class TestRunCommand:
         mock_orchestrator_instance = MagicMock()
         mock_orchestrator_instance.run_batch.return_value = []
 
-        def capture_config(config: object) -> MagicMock:
+        def capture_config(config: Any) -> MagicMock:
             captured["model"] = getattr(config, "model", None)
             return mock_orchestrator_instance
 
