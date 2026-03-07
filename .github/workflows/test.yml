@@ -103,6 +103,10 @@ jobs:
         if: matrix.test-group.name == 'unit'
         run: pixi run python scripts/validate_config_schemas.py config/defaults.yaml config/models/*.yaml tests/fixtures/config/tiers/*.yaml
 
+      - name: Check cyclomatic complexity
+        if: matrix.test-group.name == 'unit'
+        run: pixi run python scripts/check_max_complexity.py --threshold 10
+
       - name: Run ${{ matrix.test-group.name }} tests
         env:
           TEST_PATH: ${{ matrix.test-group.path }}

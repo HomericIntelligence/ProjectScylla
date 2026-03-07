@@ -358,7 +358,7 @@ def validate_file(file_path: Path, verbose: bool = False) -> ValidationResult:
     return result
 
 
-def main() -> int:  # noqa: C901  # CLI dispatch with many command branches
+def main() -> int:  # CLI dispatch with many command branches
     """Run the agent validation script."""
     parser = argparse.ArgumentParser(
         description="Comprehensive validation of agent configuration files",

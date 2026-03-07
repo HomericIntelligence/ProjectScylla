@@ -140,6 +140,43 @@ def parse_retry_after(stderr: str) -> float | None:
     return None
 
 
+_STDERR_RATE_LIMIT_PATTERNS: list[tuple[str, bool, str]] = [
+    # (substring_to_check, check_lower, error_message)
+    # Ordered to match original elif priority: service-specific first, then 429,
+    # then generic "rate limit" text, then the remaining patterns.
+    ("weekly usage limit", True, "Weekly usage limit reached"),
+    ("upgrade to continue", True, "Usage limit - upgrade required"),
+    ("failed to configure provider", True, "Provider configuration failed"),
+    # "429" is matched against raw stderr (not lowercased) to avoid false positives
+    ("429", False, "HTTP 429: Rate limit exceeded"),
+    ("rate limit", True, "Rate limit detected in stderr"),
+    ("ratelimit", True, "Rate limit detected in stderr"),
+    ("hit your limit", True, "API limit hit"),
+    ("overloaded", True, "API overloaded"),
+]
+
+
+def _detect_rate_limit_from_stderr(stderr: str) -> tuple[str, float | None]:
+    """Scan stderr for rate-limit indicator patterns.
+
+    Args:
+        stderr: Standard error text from subprocess.
+
+    Returns:
+        (error_message, retry_after) where error_message is empty string if no
+        rate limit detected.
+
+    """
+    stderr_lower = stderr.lower()
+
+    for pattern, use_lower, message in _STDERR_RATE_LIMIT_PATTERNS:
+        haystack = stderr_lower if use_lower else stderr
+        if pattern in haystack:
+            return message, parse_retry_after(stderr)
+
+    return "", None
+
+
 def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLimitInfo | None:
     """Detect rate limit from JSON output or stderr patterns.
 
@@ -156,9 +193,6 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
         RateLimitInfo if rate limit detected, None otherwise
 
     """
-    retry_after = None
-    error_msg = ""
-
     # 1. Try JSON detection first (primary method)
     try:
         data = json.loads(stdout.strip())
@@ -201,43 +235,7 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
         pass
 
     # 2. Scan stderr for rate limit patterns (fallback)
-    # Check more specific patterns first to avoid generic matches
-    stderr_lower = stderr.lower()
-
-    # Pattern 1: "weekly usage limit" (Ollama) - check before generic "rate limit"
-    if "weekly usage limit" in stderr_lower:
-        error_msg = "Weekly usage limit reached"
-        retry_after = parse_retry_after(stderr)
-
-    # Pattern 2: "upgrade to continue" (Ollama)
-    elif "upgrade to continue" in stderr_lower:
-        error_msg = "Usage limit - upgrade required"
-        retry_after = parse_retry_after(stderr)
-
-    # Pattern 3: "failed to configure provider" (Ollama/Goose) - check before "rate limit"
-    elif "failed to configure provider" in stderr_lower:
-        error_msg = "Provider configuration failed"
-        retry_after = parse_retry_after(stderr)
-
-    # Pattern 4: HTTP 429 status
-    elif "429" in stderr:
-        error_msg = "HTTP 429: Rate limit exceeded"
-        retry_after = parse_retry_after(stderr)
-
-    # Pattern 5: "rate limit" text
-    elif "rate limit" in stderr_lower or "ratelimit" in stderr_lower:
-        error_msg = "Rate limit detected in stderr"
-        retry_after = parse_retry_after(stderr)
-
-    # Pattern 6: "hit your limit" text
-    elif "hit your limit" in stderr_lower:
-        error_msg = "API limit hit"
-        retry_after = parse_retry_after(stderr)
-
-    # Pattern 7: "overloaded" text
-    elif "overloaded" in stderr_lower:
-        error_msg = "API overloaded"
-        retry_after = parse_retry_after(stderr)
+    error_msg, retry_after = _detect_rate_limit_from_stderr(stderr)
 
     if error_msg:
         return RateLimitInfo(

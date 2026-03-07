@@ -360,6 +360,34 @@ def model_id_to_display(model_id: str) -> str:
     return model_id
 
 
+def _find_model_md_in_experiment(experiment_dir: Path) -> str | None:
+    """Scan tier/subtest/run directories for the first valid agent MODEL.md.
+
+    Args:
+        experiment_dir: Path to experiment directory.
+
+    Returns:
+        Model display string, or None if no MODEL.md found.
+
+    """
+    for tier_dir in sorted(experiment_dir.iterdir()):
+        if not tier_dir.is_dir() or not tier_dir.name.startswith("T"):
+            continue
+        for subtest_dir in sorted(tier_dir.iterdir()):
+            if not subtest_dir.is_dir() or not subtest_dir.name.isdigit():
+                continue
+            for run_dir in sorted(subtest_dir.iterdir()):
+                if not run_dir.is_dir() or not run_dir.name.startswith("run_"):
+                    continue
+                model_md = run_dir / "agent" / "MODEL.md"
+                if model_md.exists():
+                    try:
+                        return model_id_to_display(parse_judge_model(model_md))
+                    except Exception as e:
+                        logger.warning("Failed to parse %s: %s", model_md, e)
+    return None
+
+
 def resolve_agent_model(experiment_dir: Path) -> str:
     """Resolve agent model from experiment configuration.
 
@@ -390,24 +418,9 @@ def resolve_agent_model(experiment_dir: Path) -> str:
             logger.warning("Failed to read %s: %s", config_path, e)
 
     # Fallback: find first agent/MODEL.md
-    for tier_dir in sorted(experiment_dir.iterdir()):
-        if not tier_dir.is_dir() or not tier_dir.name.startswith("T"):
-            continue
-
-        for subtest_dir in sorted(tier_dir.iterdir()):
-            if not subtest_dir.is_dir() or not subtest_dir.name.isdigit():
-                continue
-
-            for run_dir in sorted(subtest_dir.iterdir()):
-                if not run_dir.is_dir() or not run_dir.name.startswith("run_"):
-                    continue
-
-                model_md = run_dir / "agent" / "MODEL.md"
-                if model_md.exists():
-                    try:
-                        return model_id_to_display(parse_judge_model(model_md))
-                    except Exception as e:
-                        logger.warning("Failed to parse %s: %s", model_md, e)
+    model = _find_model_md_in_experiment(experiment_dir)
+    if model is not None:
+        return model
 
     raise ValueError(f"Could not determine agent model for {experiment_dir}")
 

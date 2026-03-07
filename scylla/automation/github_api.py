@@ -254,6 +254,48 @@ def gh_pr_create(
         raise RuntimeError(f"Failed to create PR: {e}") from e
 
 
+def _fetch_batch_states(batch: list[int], owner: str, repo: str) -> dict[int, IssueState]:
+    """Fetch issue states for a single batch via GraphQL with individual fallback.
+
+    Args:
+        batch: Issue numbers to fetch.
+        owner: Repository owner.
+        repo: Repository name.
+
+    Returns:
+        Mapping of issue number to IssueState for the batch.
+
+    """
+    fragments = [
+        f"issue{idx}: issue(number: {num}) {{ number state }}" for idx, num in enumerate(batch)
+    ]
+    query = f"""
+        query {{
+            repository(owner: "{owner}", name: "{repo}") {{
+                {" ".join(fragments)}
+            }}
+        }}
+        """
+    states: dict[int, IssueState] = {}
+    try:
+        result = _gh_call(["api", "graphql", "-f", f"query={query}"])
+        data = json.loads(result.stdout)
+        repo_data = data.get("data", {}).get("repository", {})
+        for key, issue_data in repo_data.items():
+            if key.startswith("issue") and issue_data:
+                states[issue_data["number"]] = IssueState(issue_data["state"])
+        logger.debug(f"Fetched states for {len(batch)} issues")
+    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError) as e:
+        logger.warning(f"Failed to batch fetch issue states: {e}")
+        for num in batch:
+            try:
+                issue_data = gh_issue_json(num)
+                states[num] = IssueState(issue_data["state"])
+            except Exception as e2:
+                logger.warning(f"Failed to fetch state for issue #{num}: {e2}")
+    return states
+
+
 def prefetch_issue_states(issue_numbers: list[int]) -> dict[int, IssueState]:
     """Batch fetch issue states using GraphQL.
 
@@ -279,50 +321,11 @@ def prefetch_issue_states(issue_numbers: list[int]) -> dict[int, IssueState]:
         logger.error(f"Invalid owner/repo format: {owner}/{repo}")
         return {}
 
-    # Build GraphQL query for batch fetch
-    # Query up to 100 issues at once (GitHub limit)
     batch_size = 100
     all_states: dict[int, IssueState] = {}
-
     for i in range(0, len(issue_numbers), batch_size):
         batch = issue_numbers[i : i + batch_size]
-
-        # Build query fragments
-        fragments = []
-        for idx, num in enumerate(batch):
-            fragments.append(f"issue{idx}: issue(number: {num}) {{ number state }}")
-
-        query = f"""
-        query {{
-            repository(owner: "{owner}", name: "{repo}") {{
-                {" ".join(fragments)}
-            }}
-        }}
-        """
-
-        try:
-            result = _gh_call(["api", "graphql", "-f", f"query={query}"])
-            data = json.loads(result.stdout)
-
-            # Extract states
-            repo_data = data.get("data", {}).get("repository", {})
-            for key, issue_data in repo_data.items():
-                if key.startswith("issue") and issue_data:
-                    number = issue_data["number"]
-                    state_str = issue_data["state"]
-                    all_states[number] = IssueState(state_str)
-
-            logger.debug(f"Fetched states for {len(batch)} issues")
-
-        except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError) as e:
-            logger.warning(f"Failed to batch fetch issue states: {e}")
-            # Fall back to individual fetches for this batch
-            for num in batch:
-                try:
-                    issue_data = gh_issue_json(num)
-                    all_states[num] = IssueState(issue_data["state"])
-                except Exception as e2:
-                    logger.warning(f"Failed to fetch state for issue #{num}: {e2}")
+        all_states.update(_fetch_batch_states(batch, owner, repo))
 
     return all_states
 

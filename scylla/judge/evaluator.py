@@ -545,6 +545,31 @@ class JudgeEvaluator:
 
         return judgment
 
+    @staticmethod
+    def _compute_field_consensus(
+        judgments: list[Judgment],
+        get_field: Any,
+    ) -> dict[str, float]:
+        """Compute weighted consensus for a dict-valued field across judgments.
+
+        Args:
+            judgments: List of valid judgments.
+            get_field: Callable that returns a dict[str, float] from a Judgment.
+
+        Returns:
+            Dict mapping key to consensus score.
+
+        """
+        all_keys: set[str] = set()
+        for j in judgments:
+            all_keys.update(get_field(j).keys())
+        result: dict[str, float] = {}
+        for key in all_keys:
+            scores = [get_field(j)[key] for j in judgments if key in get_field(j)]
+            if scores:
+                result[key] = weighted_consensus(scores)
+        return result
+
     def _calculate_consensus(
         self,
         judgments: list[Judgment],
@@ -572,38 +597,20 @@ class JudgeEvaluator:
                 run_count=len(judgments),
             )
 
-        # Calculate requirement consensus
-        requirement_consensus: dict[str, float] = {}
-        all_req_ids: set[str] = set()
-        for j in valid_judgments:
-            all_req_ids.update(j.requirements.keys())
-
-        for req_id in all_req_ids:
-            scores = [j.requirements[req_id] for j in valid_judgments if req_id in j.requirements]
-            if scores:
-                requirement_consensus[req_id] = weighted_consensus(scores)
-
-        # Calculate category consensus
-        category_consensus: dict[str, float] = {}
-        all_categories: set[str] = set()
-        for j in valid_judgments:
-            all_categories.update(j.categories.keys())
-
-        for cat in all_categories:
-            scores = [j.categories[cat] for j in valid_judgments if cat in j.categories]
-            if scores:
-                category_consensus[cat] = weighted_consensus(scores)
+        requirement_consensus = self._compute_field_consensus(
+            valid_judgments, lambda j: j.requirements
+        )
+        category_consensus = self._compute_field_consensus(valid_judgments, lambda j: j.categories)
 
         # Calculate overall consensus
-        overall_scores = []
-        for j in valid_judgments:
-            if j.summary:
-                overall_scores.append(
-                    JudgeScore(
-                        score=j.summary.weighted_score,
-                        confidence=j.summary.overall_confidence,
-                    )
-                )
+        overall_scores = [
+            JudgeScore(
+                score=j.summary.weighted_score,
+                confidence=j.summary.overall_confidence,
+            )
+            for j in valid_judgments
+            if j.summary
+        ]
 
         # Determine weighted score
         weighted_score = self._calculate_weighted_score(overall_scores, category_consensus)
