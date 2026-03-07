@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
@@ -21,6 +22,7 @@ from scylla.e2e.subtest_executor import (
     SubTestExecutor,
     _has_valid_judge_result,
     _move_to_failed,
+    _restore_run_context,
     aggregate_run_results,
 )
 
@@ -648,3 +650,149 @@ class TestAggregateRunResults:
         import scylla.e2e.subtest_executor as module
 
         assert "aggregate_run_results" in module.__all__
+
+
+# ---------------------------------------------------------------------------
+# Helpers for _restore_run_context tests
+# ---------------------------------------------------------------------------
+
+_AGENT_RESULT_JSON = {
+    "exit_code": 0,
+    "stdout": "agent output",
+    "stderr": "",
+    "token_stats": {
+        "input_tokens": 100,
+        "output_tokens": 50,
+        "cache_creation_tokens": 0,
+        "cache_read_tokens": 0,
+    },
+    "cost_usd": 0.01,
+    "api_calls": 1,
+}
+
+
+def _write_agent_result(run_dir: Path, timing_seconds: float = 42.0) -> None:
+    """Write a valid agent/result.json and timing.json to run_dir."""
+    agent_dir = run_dir / "agent"
+    agent_dir.mkdir(parents=True, exist_ok=True)
+    (agent_dir / "result.json").write_text(json.dumps(_AGENT_RESULT_JSON))
+    (agent_dir / "timing.json").write_text(json.dumps({"agent_duration_seconds": timing_seconds}))
+
+
+def _make_ctx(run_dir: Path) -> MagicMock:
+    """Create a minimal RunContext-like mock."""
+    ctx = MagicMock()
+    ctx.run_dir = run_dir
+    ctx.agent_result = None
+    ctx.agent_duration = 0.0
+    ctx.agent_ran = False
+    ctx.judge_prompt = ""
+    return ctx
+
+
+class TestRestoreRunContext:
+    """Tests for _restore_run_context()."""
+
+    def test_pending_state_does_nothing(self, tmp_path: Path) -> None:
+        """Resuming from PENDING state leaves all ctx fields untouched."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+        (run_dir / "judge_prompt.md").write_text("judge prompt text")
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "pending")
+
+        assert ctx.agent_result is None
+        assert ctx.judge_prompt == ""
+
+    def test_agent_complete_loads_agent_result(self, tmp_path: Path) -> None:
+        """Resuming from AGENT_COMPLETE populates ctx.agent_result from disk."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir, timing_seconds=99.5)
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "agent_complete")
+
+        assert ctx.agent_result is not None
+        assert ctx.agent_result.stdout == "agent output"
+        assert ctx.agent_duration == 99.5
+        assert ctx.agent_ran is False
+
+    def test_agent_complete_no_result_file_leaves_none(self, tmp_path: Path) -> None:
+        """If agent/result.json is missing, agent_result stays None."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "agent_complete")
+
+        assert ctx.agent_result is None
+
+    def test_judge_complete_loads_both_fields(self, tmp_path: Path) -> None:
+        """Resuming from JUDGE_COMPLETE loads agent_result and judge_prompt."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+        (run_dir / "judge_prompt.md").write_text("the judge prompt")
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "judge_complete")
+
+        assert ctx.agent_result is not None
+        assert ctx.judge_prompt == "the judge prompt"
+
+    def test_judge_complete_missing_prompt_file_leaves_empty(self, tmp_path: Path) -> None:
+        """If judge_prompt.md is missing, ctx.judge_prompt stays empty."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "judge_complete")
+
+        assert ctx.judge_prompt == ""
+
+    def test_already_set_agent_result_not_overwritten(self, tmp_path: Path) -> None:
+        """If ctx.agent_result is already set, it is not overwritten."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+
+        ctx = _make_ctx(run_dir)
+        original = MagicMock()
+        ctx.agent_result = original
+
+        _restore_run_context(ctx, "agent_complete")
+
+        assert ctx.agent_result is original
+
+    def test_already_set_judge_prompt_not_overwritten(self, tmp_path: Path) -> None:
+        """If ctx.judge_prompt is already non-empty, it is not overwritten."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+        (run_dir / "judge_prompt.md").write_text("disk prompt")
+
+        ctx = _make_ctx(run_dir)
+        ctx.judge_prompt = "in-memory prompt"
+
+        _restore_run_context(ctx, "judge_complete")
+
+        assert ctx.judge_prompt == "in-memory prompt"
+
+    def test_timing_file_missing_leaves_duration_zero(self, tmp_path: Path) -> None:
+        """If agent/timing.json is missing, agent_duration stays 0.0."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir()
+        (agent_dir / "result.json").write_text(json.dumps(_AGENT_RESULT_JSON))
+        # No timing.json
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "agent_complete")
+
+        assert ctx.agent_result is not None
+        assert ctx.agent_duration == 0.0

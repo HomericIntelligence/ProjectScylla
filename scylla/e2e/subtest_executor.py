@@ -85,6 +85,7 @@ __all__ = [
     "_load_judge_result",
     # Workspace setup exports
     "_move_to_failed",
+    "_restore_run_context",
     "_retry_with_new_pool",  # noqa: F822
     "_run_judge",
     "_run_subtest_in_process",  # noqa: F822
@@ -113,6 +114,43 @@ def __getattr__(name: str):  # type: ignore[no-untyped-def]
 
         return getattr(parallel_executor, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _restore_run_context(ctx: Any, current_state: str) -> None:
+    """Restore RunContext fields from disk for resume from intermediate states.
+
+    When resuming from a state past PENDING, earlier stages are skipped,
+    so their outputs (agent_result, judge_prompt, etc.) must be reloaded
+    from the on-disk artifacts saved during the original run.
+
+    Args:
+        ctx: RunContext instance to populate in-place
+        current_state: Current run state string from checkpoint
+
+    """
+    from scylla.e2e.models import RunState
+    from scylla.e2e.paths import get_agent_dir
+    from scylla.e2e.state_machine import is_at_or_past_state
+
+    run_state = RunState(current_state)
+
+    # If past REPLAY_GENERATED, agent_result should be available on disk
+    past_agent = is_at_or_past_state(run_state, RunState.AGENT_COMPLETE)
+    if past_agent and ctx.agent_result is None and _has_valid_agent_result(ctx.run_dir):
+        agent_dir = get_agent_dir(ctx.run_dir)
+        ctx.agent_result = _load_agent_result(agent_dir)
+        agent_timing = agent_dir / "timing.json"
+        if agent_timing.exists():
+            ctx.agent_duration = json.loads(agent_timing.read_text()).get(
+                "agent_duration_seconds", 0.0
+            )
+        ctx.agent_ran = False
+
+    # If past JUDGE_PROMPT_BUILT, the saved judge_prompt.md is the source of truth
+    if is_at_or_past_state(run_state, RunState.JUDGE_COMPLETE) and not ctx.judge_prompt:
+        saved_prompt = ctx.run_dir / "judge_prompt.md"
+        if saved_prompt.exists():
+            ctx.judge_prompt = saved_prompt.read_text()
 
 
 def _save_pipeline_baseline(results_dir: Path, result: BuildPipelineResult) -> None:
@@ -478,6 +516,14 @@ class SubTestExecutor:
                 )
 
                 actions = build_actions_dict(ctx, scheduler=scheduler)
+
+                # Restore RunContext fields from disk when resuming from an
+                # intermediate state — earlier stages were skipped, so their
+                # outputs (agent_result, judge_prompt) must be reloaded.
+                if sm:
+                    _current_run_state = sm.get_state(tier_id.value, subtest.id, run_num)
+                    if _current_run_state.value != "pending":
+                        _restore_run_context(ctx, _current_run_state.value)
 
                 try:
                     if sm:
