@@ -482,7 +482,7 @@ class TestValidateFilesystemOnResume:
         runner.experiment_dir = tmp_path / "nonexistent_experiment"
         # Don't create it — should trigger warning
 
-        with patch("scylla.e2e.runner.logger") as mock_logger:
+        with patch("scylla.e2e.checkpoint_finalizer.logger") as mock_logger:
             runner._validate_filesystem_on_resume(ExperimentState.TIERS_RUNNING)
 
         warning_messages = [str(c) for c in mock_logger.warning.call_args_list]
