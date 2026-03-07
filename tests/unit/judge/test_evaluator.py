@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 import pytest
 
@@ -319,7 +320,7 @@ class TestRunConsensus:
         evaluator = JudgeEvaluator(config=config)
         call_count = 0
 
-        def mock_eval(*args, **kwargs):
+        def mock_eval(*args: Any, **kwargs: Any) -> Any:
             nonlocal call_count
             call_count += 1
             return Judgment(
@@ -493,7 +494,7 @@ class TestEvaluatorWithConsensusConfig:
         evaluator = JudgeEvaluator(consensus_config=consensus_config)
         call_count = 0
 
-        def fake_single_run(*args, **kwargs):
+        def fake_single_run(*args: Any, **kwargs: Any) -> Any:
             nonlocal call_count
             call_count += 1
             # Alternating scores to create variance
@@ -529,7 +530,7 @@ class TestEvaluatorWithConsensusConfig:
         evaluator = JudgeEvaluator(consensus_config=consensus_config)
         call_count = 0
 
-        def fake_single_run(*args, **kwargs):
+        def fake_single_run(*args: Any, **kwargs: Any) -> Any:
             nonlocal call_count
             call_count += 1
             # Consistent scores - no variance

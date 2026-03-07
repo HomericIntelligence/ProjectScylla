@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 
-def test_compute_statistical_results(sample_runs_df, tmp_path):
+def test_compute_statistical_results(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test compute_statistical_results generates valid JSON."""
     from export_data import compute_statistical_results
 
@@ -79,7 +79,7 @@ def test_compute_statistical_results(sample_runs_df, tmp_path):
     assert len(json_str) > 0
 
 
-def test_enhanced_summary_json(sample_runs_df, tmp_path):
+def test_enhanced_summary_json(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test enhanced summary.json includes new statistics."""
     from export_data import json_nan_handler
 
@@ -160,7 +160,7 @@ def test_enhanced_summary_json(sample_runs_df, tmp_path):
     assert len(json_str) > 0
 
 
-def test_json_nan_handler():
+def test_json_nan_handler() -> None:
     """Test json_nan_handler converts NaN/inf correctly."""
     import numpy as np
     from export_data import json_nan_handler
@@ -186,7 +186,7 @@ def test_json_nan_handler():
     assert json_nan_handler({"key": "value"}) == {"key": "value"}
 
 
-def test_compute_statistical_results_empty_df(tmp_path):
+def test_compute_statistical_results_empty_df(tmp_path: Any) -> None:
     """Test compute_statistical_results handles empty DataFrame gracefully."""
     import pandas as pd
     from export_data import compute_statistical_results
@@ -216,7 +216,7 @@ def test_compute_statistical_results_empty_df(tmp_path):
     assert results["correlations"] == []
 
 
-def test_compute_statistical_results_single_tier(sample_runs_df):
+def test_compute_statistical_results_single_tier(sample_runs_df: Any) -> None:
     """Test compute_statistical_results with only one tier (no pairwise comparisons)."""
     from export_data import compute_statistical_results
 
@@ -235,7 +235,7 @@ def test_compute_statistical_results_single_tier(sample_runs_df):
     assert "effect_sizes" in results
 
 
-def test_compute_statistical_results_degenerate_data():
+def test_compute_statistical_results_degenerate_data() -> None:
     """Test compute_statistical_results with degenerate data (small samples)."""
     import pandas as pd
     from export_data import compute_statistical_results
@@ -263,7 +263,7 @@ def test_compute_statistical_results_degenerate_data():
     assert "pairwise_comparisons" in results
 
 
-def test_compute_statistical_results_correlation_correction(sample_runs_df):
+def test_compute_statistical_results_correlation_correction(sample_runs_df: Any) -> None:
     """Test that correlations include multiple comparison correction."""
     from export_data import compute_statistical_results
 
@@ -281,7 +281,7 @@ def test_compute_statistical_results_correlation_correction(sample_runs_df):
         # This is a forward-looking test
 
 
-def test_export_data_validation_warnings(sample_runs_df, tmp_path, capsys):
+def test_export_data_validation_warnings(sample_runs_df: Any, tmp_path: Any, capsys: Any) -> None:
     """Test that export_data logs warnings for data validation issues."""
     from export_data import compute_statistical_results
 
@@ -299,7 +299,7 @@ def test_export_data_validation_warnings(sample_runs_df, tmp_path, capsys):
     assert "correlations" in results
 
 
-def test_impl_rate_integration(sample_runs_df):
+def test_impl_rate_integration(sample_runs_df: Any) -> None:
     """Test that impl_rate is integrated into all statistical tests (Issue #324)."""
     from export_data import compute_statistical_results
 
@@ -333,7 +333,7 @@ def test_impl_rate_integration(sample_runs_df):
     assert len(impl_rate_corr) > 0, "impl_rate should appear in correlations"
 
 
-def test_process_metrics_in_summary(sample_runs_df):
+def test_process_metrics_in_summary(sample_runs_df: Any) -> None:
     """Test that process metrics appear in overall_stats, by_model, and by_tier (Issue #1135)."""
     import numpy as np
     import pandas as pd
@@ -460,7 +460,7 @@ def test_process_metrics_in_summary(sample_runs_df):
 # ---------------------------------------------------------------------------
 
 
-def test_compute_normality_tests_structure(sample_runs_df):
+def test_compute_normality_tests_structure(sample_runs_df: Any) -> None:
     """_compute_normality_tests returns dicts with required fields for each metric."""
     from export_data import _compute_normality_tests
 
@@ -480,7 +480,7 @@ def test_compute_normality_tests_structure(sample_runs_df):
         assert entry["n"] >= 3
 
 
-def test_compute_normality_tests_all_four_metrics(sample_runs_df):
+def test_compute_normality_tests_all_four_metrics(sample_runs_df: Any) -> None:
     """_compute_normality_tests covers score, impl_rate, cost_usd, duration_seconds."""
     from export_data import _compute_normality_tests
 
@@ -497,7 +497,7 @@ def test_compute_normality_tests_all_four_metrics(sample_runs_df):
     assert "duration_seconds" in metrics_present
 
 
-def test_compute_omnibus_tests_structure(sample_runs_df):
+def test_compute_omnibus_tests_structure(sample_runs_df: Any) -> None:
     """_compute_omnibus_tests returns dicts with required fields."""
     from export_data import _compute_omnibus_tests
 
@@ -517,7 +517,7 @@ def test_compute_omnibus_tests_structure(sample_runs_df):
         assert entry["n_groups"] >= 2
 
 
-def test_compute_omnibus_tests_three_metrics(sample_runs_df):
+def test_compute_omnibus_tests_three_metrics(sample_runs_df: Any) -> None:
     """_compute_omnibus_tests covers pass_rate, impl_rate, duration_seconds."""
     from export_data import _compute_omnibus_tests
 
@@ -533,7 +533,7 @@ def test_compute_omnibus_tests_three_metrics(sample_runs_df):
     assert "duration_seconds" in metrics_present
 
 
-def test_collect_pairwise_pass_rate_includes_overall_contrast(sample_runs_df):
+def test_collect_pairwise_pass_rate_includes_overall_contrast(sample_runs_df: Any) -> None:
     """_collect_pairwise_pass_rate adds the first->last overall contrast."""
     from export_data import _collect_pairwise_pass_rate
 
@@ -556,7 +556,7 @@ def test_collect_pairwise_pass_rate_includes_overall_contrast(sample_runs_df):
     assert last["tier2"] == tier_order[-1]
 
 
-def test_compute_pairwise_comparisons_metrics(sample_runs_df):
+def test_compute_pairwise_comparisons_metrics(sample_runs_df: Any) -> None:
     """_compute_pairwise_comparisons covers pass_rate, impl_rate, duration_seconds."""
     from export_data import _compute_pairwise_comparisons
 
@@ -581,7 +581,7 @@ def test_compute_pairwise_comparisons_metrics(sample_runs_df):
         assert "is_significant" in entry
 
 
-def test_compute_effect_sizes_structure(sample_runs_df):
+def test_compute_effect_sizes_structure(sample_runs_df: Any) -> None:
     """_compute_effect_sizes returns Cliff's delta entries with CI bounds."""
     from export_data import _compute_effect_sizes
 
@@ -610,7 +610,7 @@ def test_compute_effect_sizes_structure(sample_runs_df):
         assert entry["ci_low"] <= entry["ci_high"]
 
 
-def test_compute_effect_sizes_three_metrics(sample_runs_df):
+def test_compute_effect_sizes_three_metrics(sample_runs_df: Any) -> None:
     """_compute_effect_sizes covers pass_rate, impl_rate, and duration_seconds."""
     from export_data import _compute_effect_sizes
 
@@ -626,7 +626,7 @@ def test_compute_effect_sizes_three_metrics(sample_runs_df):
     assert "duration_seconds" in metrics_present
 
 
-def test_compute_power_analysis_structure(sample_runs_df):
+def test_compute_power_analysis_structure(sample_runs_df: Any) -> None:
     """_compute_power_analysis returns entries with required power fields."""
     from export_data import _compute_effect_sizes, _compute_power_analysis
 
@@ -645,7 +645,7 @@ def test_compute_power_analysis_structure(sample_runs_df):
         assert required_fields <= entry.keys()
 
 
-def test_compute_power_analysis_includes_omnibus(sample_runs_df):
+def test_compute_power_analysis_includes_omnibus(sample_runs_df: Any) -> None:
     """_compute_power_analysis includes pass_rate_omnibus KW power entries."""
     from export_data import _compute_effect_sizes, _compute_power_analysis
 
@@ -661,7 +661,7 @@ def test_compute_power_analysis_includes_omnibus(sample_runs_df):
     assert len(omnibus_entries) == len(models)
 
 
-def test_compute_correlations_structure(sample_runs_df):
+def test_compute_correlations_structure(sample_runs_df: Any) -> None:
     """_compute_correlations returns Spearman rho entries with required fields."""
     from export_data import _compute_correlations
 
@@ -686,7 +686,7 @@ def test_compute_correlations_structure(sample_runs_df):
         assert entry["n"] >= 3
 
 
-def test_compute_correlations_includes_impl_rate(sample_runs_df):
+def test_compute_correlations_includes_impl_rate(sample_runs_df: Any) -> None:
     """_compute_correlations includes impl_rate pairs."""
     from export_data import _compute_correlations
 
@@ -699,7 +699,7 @@ def test_compute_correlations_includes_impl_rate(sample_runs_df):
     assert len(impl_rate_entries) > 0
 
 
-def test_compute_tier_descriptives_structure(sample_runs_df):
+def test_compute_tier_descriptives_structure(sample_runs_df: Any) -> None:
     """_compute_tier_descriptives returns tier stats including frontier row."""
     from export_data import _compute_tier_descriptives
 
@@ -718,7 +718,7 @@ def test_compute_tier_descriptives_structure(sample_runs_df):
         assert required_fields <= entry.keys()
 
 
-def test_compute_tier_descriptives_frontier_row(sample_runs_df):
+def test_compute_tier_descriptives_frontier_row(sample_runs_df: Any) -> None:
     """_compute_tier_descriptives includes one frontier row per model."""
     from export_data import _compute_tier_descriptives
 
@@ -735,7 +735,7 @@ def test_compute_tier_descriptives_frontier_row(sample_runs_df):
         assert entry["cop"] is not None
 
 
-def test_compute_interaction_tests_structure(sample_runs_df):
+def test_compute_interaction_tests_structure(sample_runs_df: Any) -> None:
     """_compute_interaction_tests returns SRH results for four metrics."""
     from export_data import _compute_interaction_tests
 
@@ -750,7 +750,7 @@ def test_compute_interaction_tests_structure(sample_runs_df):
         assert isinstance(entry["is_significant"], bool)
 
 
-def test_compute_interaction_tests_four_metrics(sample_runs_df):
+def test_compute_interaction_tests_four_metrics(sample_runs_df: Any) -> None:
     """_compute_interaction_tests covers score, impl_rate, cost_usd, duration_seconds."""
     from export_data import _compute_interaction_tests
 
@@ -764,7 +764,7 @@ def test_compute_interaction_tests_four_metrics(sample_runs_df):
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_normality_tests(sample_runs_df, metric):
+def test_process_metrics_in_normality_tests(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in normality_tests with required fields (Issue #1186)."""
     from export_data import _compute_normality_tests
 
@@ -785,7 +785,7 @@ def test_process_metrics_in_normality_tests(sample_runs_df, metric):
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_omnibus_tests(sample_runs_df, metric):
+def test_process_metrics_in_omnibus_tests(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in omnibus_tests with required fields (Issue #1186)."""
     from export_data import _compute_omnibus_tests
 
@@ -805,7 +805,7 @@ def test_process_metrics_in_omnibus_tests(sample_runs_df, metric):
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_pairwise_comparisons(sample_runs_df, metric):
+def test_process_metrics_in_pairwise_comparisons(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in pairwise_comparisons with required fields (Issue #1186)."""
     from export_data import _compute_pairwise_comparisons
 
@@ -830,7 +830,7 @@ def test_process_metrics_in_pairwise_comparisons(sample_runs_df, metric):
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_effect_sizes(sample_runs_df, metric):
+def test_process_metrics_in_effect_sizes(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in effect_sizes with required fields (Issue #1186)."""
     from export_data import _compute_effect_sizes
 
@@ -859,7 +859,7 @@ def test_process_metrics_in_effect_sizes(sample_runs_df, metric):
         assert entry["ci_low"] <= entry["ci_high"]
 
 
-def test_normality_tests_all_metrics(sample_runs_df):
+def test_normality_tests_all_metrics(sample_runs_df: Any) -> None:
     """normality_tests covers the full expected set of metrics (regression guard)."""
     from export_data import _compute_normality_tests
 
@@ -884,7 +884,7 @@ def test_normality_tests_all_metrics(sample_runs_df):
     )
 
 
-def test_sparse_process_metrics_graceful_degradation():
+def test_sparse_process_metrics_graceful_degradation() -> None:
     """When process metrics are all NaN for a tier, functions do not raise (Issue #1186)."""
     import numpy as np
     import pandas as pd
@@ -932,7 +932,7 @@ def test_sparse_process_metrics_graceful_degradation():
     assert not any(e["metric"] in process_metrics for e in effects)
 
 
-def test_helpers_compose_to_same_result(sample_runs_df):
+def test_helpers_compose_to_same_result(sample_runs_df: Any) -> None:
     """compute_statistical_results output matches direct helper composition."""
     from export_data import (
         _compute_correlations,

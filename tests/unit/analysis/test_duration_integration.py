@@ -1,7 +1,9 @@
+from typing import Any
+
 """Tests for duration_seconds integration (Issue #327 partial)."""
 
 
-def test_duration_seconds_integration(sample_runs_df):
+def test_duration_seconds_integration(sample_runs_df: Any) -> None:
     """Test that duration_seconds is integrated into statistical tests (Issue #327)."""
     from export_data import compute_statistical_results
 

@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -25,7 +26,7 @@ class TestGhIssueJson:
     """Tests for gh_issue_json function."""
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_successful_fetch(self, mock_gh_call):
+    def test_successful_fetch(self, mock_gh_call: Any) -> None:
         """Test successful issue fetch."""
         mock_result = Mock()
         mock_result.stdout = json.dumps(
@@ -46,7 +47,7 @@ class TestGhIssueJson:
         assert data["state"] == "OPEN"
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_failed_fetch(self, mock_gh_call):
+    def test_failed_fetch(self, mock_gh_call: Any) -> None:
         """Test failed issue fetch."""
         mock_gh_call.side_effect = subprocess.CalledProcessError(1, "gh")
 
@@ -57,7 +58,7 @@ class TestGhIssueJson:
 class TestParseIssueDependencies:
     """Tests for parse_issue_dependencies function."""
 
-    def test_depends_on_pattern(self):
+    def test_depends_on_pattern(self) -> None:
         """Test parsing 'depends on' pattern."""
         body = "This depends on #123 and also #456"
         deps = parse_issue_dependencies(body)
@@ -65,21 +66,21 @@ class TestParseIssueDependencies:
         assert 123 in deps
         assert 456 in deps
 
-    def test_blocked_by_pattern(self):
+    def test_blocked_by_pattern(self) -> None:
         """Test parsing 'blocked by' pattern."""
         body = "Blocked by #789"
         deps = parse_issue_dependencies(body)
 
         assert 789 in deps
 
-    def test_requires_pattern(self):
+    def test_requires_pattern(self) -> None:
         """Test parsing 'requires' pattern."""
         body = "Requires #111"
         deps = parse_issue_dependencies(body)
 
         assert 111 in deps
 
-    def test_dependencies_section(self):
+    def test_dependencies_section(self) -> None:
         """Test parsing dependencies section."""
         body = """
         ## Dependencies
@@ -91,14 +92,14 @@ class TestParseIssueDependencies:
         assert 100 in deps
         assert 200 in deps
 
-    def test_no_dependencies(self):
+    def test_no_dependencies(self) -> None:
         """Test when there are no dependencies."""
         body = "This is a simple issue with no dependencies"
         deps = parse_issue_dependencies(body)
 
         assert len(deps) == 0
 
-    def test_duplicate_removal(self):
+    def test_duplicate_removal(self) -> None:
         """Test that duplicates are removed."""
         body = "Depends on #123, blocked by #123"
         deps = parse_issue_dependencies(body)
@@ -111,7 +112,7 @@ class TestFetchIssueInfo:
     """Tests for fetch_issue_info function."""
 
     @patch("scylla.automation.github_api.gh_issue_json")
-    def test_successful_fetch(self, mock_gh_json):
+    def test_successful_fetch(self, mock_gh_json: Any) -> None:
         """Test successful issue info fetch."""
         mock_gh_json.return_value = {
             "number": 123,
@@ -133,34 +134,34 @@ class TestFetchIssueInfo:
 class TestIsIssueClosed:
     """Tests for is_issue_closed function."""
 
-    def test_with_cached_state_closed(self):
+    def test_with_cached_state_closed(self) -> None:
         """Test with cached state showing closed."""
         cached = {123: IssueState.CLOSED}
 
         assert is_issue_closed(123, cached) is True
 
-    def test_with_cached_state_open(self):
+    def test_with_cached_state_open(self) -> None:
         """Test with cached state showing open."""
         cached = {123: IssueState.OPEN}
 
         assert is_issue_closed(123, cached) is False
 
     @patch("scylla.automation.github_api.gh_issue_json")
-    def test_without_cache_closed(self, mock_gh_json):
+    def test_without_cache_closed(self, mock_gh_json: Any) -> None:
         """Test without cache, issue is closed."""
         mock_gh_json.return_value = {"state": "CLOSED"}
 
         assert is_issue_closed(123) is True
 
     @patch("scylla.automation.github_api.gh_issue_json")
-    def test_without_cache_open(self, mock_gh_json):
+    def test_without_cache_open(self, mock_gh_json: Any) -> None:
         """Test without cache, issue is open."""
         mock_gh_json.return_value = {"state": "OPEN"}
 
         assert is_issue_closed(123) is False
 
     @patch("scylla.automation.github_api.gh_issue_json")
-    def test_error_returns_false(self, mock_gh_json):
+    def test_error_returns_false(self, mock_gh_json: Any) -> None:
         """Test that errors return False."""
         mock_gh_json.side_effect = Exception("API error")
 
@@ -170,14 +171,14 @@ class TestIsIssueClosed:
 class TestPrefetchIssueStates:
     """Tests for prefetch_issue_states function."""
 
-    def test_empty_list(self):
+    def test_empty_list(self) -> None:
         """Test with empty issue list."""
         states = prefetch_issue_states([])
         assert states == {}
 
     @patch("scylla.automation.github_api._gh_call")
     @patch("scylla.automation.github_api.get_repo_info")
-    def test_successful_batch_fetch(self, mock_repo_info, mock_gh_call):
+    def test_successful_batch_fetch(self, mock_repo_info: Any, mock_gh_call: Any) -> None:
         """Test successful batch fetch."""
         mock_repo_info.return_value = ("owner", "repo")
 
@@ -200,7 +201,7 @@ class TestPrefetchIssueStates:
         assert states[456] == IssueState.CLOSED
 
     @patch("scylla.automation.github_api.get_repo_info")
-    def test_repo_info_failure(self, mock_repo_info):
+    def test_repo_info_failure(self, mock_repo_info: Any) -> None:
         """Test when repo info fails."""
         mock_repo_info.side_effect = RuntimeError("Not in repo")
 
@@ -213,7 +214,7 @@ class TestGhCall:
     """Tests for _gh_call function."""
 
     @patch("scylla.automation.github_api.run")
-    def test_successful_call(self, mock_run):
+    def test_successful_call(self, mock_run: Any) -> None:
         """Test successful gh call."""
         mock_result = Mock()
         mock_result.stdout = "success"
@@ -226,7 +227,7 @@ class TestGhCall:
 
     @patch("scylla.automation.github_api.run")
     @patch("scylla.automation.github_api.wait_until")
-    def test_retry_on_rate_limit(self, mock_wait, mock_run):
+    def test_retry_on_rate_limit(self, mock_wait: Any, mock_run: Any) -> None:
         """Test retry on rate limit."""
         # First call fails with rate limit, second succeeds
         mock_run.side_effect = [
@@ -243,7 +244,7 @@ class TestGhCall:
         mock_wait.assert_called_once_with(1234567890, "GitHub API rate limit")
 
     @patch("scylla.automation.github_api.run")
-    def test_fail_fast_on_permission_error(self, mock_run):
+    def test_fail_fast_on_permission_error(self, mock_run: Any) -> None:
         """Test that permission errors fail fast without retry."""
         mock_run.side_effect = subprocess.CalledProcessError(
             1, "gh", stderr="403 Forbidden: permission denied"
@@ -256,7 +257,7 @@ class TestGhCall:
         assert mock_run.call_count == 1
 
     @patch("scylla.automation.github_api.run")
-    def test_fail_fast_on_not_found(self, mock_run):
+    def test_fail_fast_on_not_found(self, mock_run: Any) -> None:
         """Test that 404 errors fail fast without retry."""
         mock_run.side_effect = subprocess.CalledProcessError(1, "gh", stderr="404 Not Found")
 
@@ -266,7 +267,7 @@ class TestGhCall:
         assert mock_run.call_count == 1
 
     @patch("scylla.automation.github_api.run")
-    def test_fail_fast_on_bad_request(self, mock_run):
+    def test_fail_fast_on_bad_request(self, mock_run: Any) -> None:
         """Test that 400 errors fail fast without retry."""
         mock_run.side_effect = subprocess.CalledProcessError(1, "gh", stderr="400 Bad Request")
 
@@ -277,7 +278,7 @@ class TestGhCall:
 
     @patch("scylla.automation.github_api.run")
     @patch("scylla.automation.github_api.time.sleep")
-    def test_retry_on_transient_error(self, mock_sleep, mock_run):
+    def test_retry_on_transient_error(self, mock_sleep: Any, mock_run: Any) -> None:
         """Test retry on transient errors."""
         # Fail twice with transient error, then succeed
         mock_run.side_effect = [
@@ -293,7 +294,7 @@ class TestGhCall:
         assert mock_sleep.call_count == 2  # Sleep between retries
 
     @patch("scylla.automation.github_api.run")
-    def test_claude_usage_limit_detection(self, mock_run):
+    def test_claude_usage_limit_detection(self, mock_run: Any) -> None:
         """Test detection of Claude usage limit."""
         mock_run.side_effect = subprocess.CalledProcessError(
             1, "gh", stderr="Usage limit exceeded for your account"
@@ -307,7 +308,7 @@ class TestGhIssueComment:
     """Tests for gh_issue_comment function."""
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_successful_comment(self, mock_gh_call):
+    def test_successful_comment(self, mock_gh_call: Any) -> None:
         """Test successful comment posting."""
         mock_gh_call.return_value = Mock()
 
@@ -318,7 +319,7 @@ class TestGhIssueComment:
         assert call_args == ["issue", "comment", "123", "--body", "Test comment"]
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_failed_comment(self, mock_gh_call):
+    def test_failed_comment(self, mock_gh_call: Any) -> None:
         """Test failed comment posting."""
         mock_gh_call.side_effect = subprocess.CalledProcessError(1, "gh")
 
@@ -330,7 +331,7 @@ class TestGhIssueCreate:
     """Tests for gh_issue_create function."""
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_successful_creation(self, mock_gh_call):
+    def test_successful_creation(self, mock_gh_call: Any) -> None:
         """Test successful issue creation."""
         mock_result = Mock()
         mock_result.stdout = "https://github.com/owner/repo/issues/789"
@@ -347,7 +348,7 @@ class TestGhIssueCreate:
         assert call_args == ["issue", "create", "--title", "Test issue", "--body", "Test body"]
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_creation_with_labels(self, mock_gh_call):
+    def test_creation_with_labels(self, mock_gh_call: Any) -> None:
         """Test issue creation with labels."""
         mock_result = Mock()
         mock_result.stdout = "https://github.com/owner/repo/issues/790"
@@ -366,7 +367,7 @@ class TestGhIssueCreate:
         assert "enhancement" in call_args
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_creation_without_labels(self, mock_gh_call):
+    def test_creation_without_labels(self, mock_gh_call: Any) -> None:
         """Test issue creation without labels."""
         mock_result = Mock()
         mock_result.stdout = "https://github.com/owner/repo/issues/791"
@@ -383,7 +384,7 @@ class TestGhIssueCreate:
         assert "--label" not in call_args
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_failed_creation(self, mock_gh_call):
+    def test_failed_creation(self, mock_gh_call: Any) -> None:
         """Test failed issue creation."""
         mock_gh_call.side_effect = subprocess.CalledProcessError(1, "gh")
 
@@ -395,7 +396,7 @@ class TestGhPrCreate:
     """Tests for gh_pr_create function."""
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_successful_pr_creation(self, mock_gh_call):
+    def test_successful_pr_creation(self, mock_gh_call: Any) -> None:
         """Test successful PR creation."""
         # Mock PR creation response
         mock_create_result = Mock()
@@ -417,7 +418,7 @@ class TestGhPrCreate:
         assert mock_gh_call.call_count == 2  # create + auto-merge
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_pr_creation_without_auto_merge(self, mock_gh_call):
+    def test_pr_creation_without_auto_merge(self, mock_gh_call: Any) -> None:
         """Test PR creation without auto-merge."""
         mock_result = Mock()
         mock_result.stdout = "https://github.com/owner/repo/pull/789"
@@ -434,7 +435,7 @@ class TestGhPrCreate:
         assert mock_gh_call.call_count == 1  # Only create, no auto-merge
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_pr_creation_with_fallback_parsing(self, mock_gh_call):
+    def test_pr_creation_with_fallback_parsing(self, mock_gh_call: Any) -> None:
         """Test PR number extraction fallback."""
         mock_result = Mock()
         # URL without /pull/ pattern
@@ -451,7 +452,7 @@ class TestGhPrCreate:
         assert pr_number == 123
 
     @patch("scylla.automation.github_api._gh_call")
-    def test_pr_creation_auto_merge_failure(self, mock_gh_call):
+    def test_pr_creation_auto_merge_failure(self, mock_gh_call: Any) -> None:
         """Test PR creation when auto-merge fails."""
         mock_create_result = Mock()
         mock_create_result.stdout = "https://github.com/owner/repo/pull/456"
@@ -476,7 +477,7 @@ class TestGhPrCreate:
 class TestWriteSecure:
     """Tests for write_secure function."""
 
-    def test_write_new_file(self, tmp_path):
+    def test_write_new_file(self, tmp_path: Any) -> None:
         """Test writing to a new file."""
         test_file = tmp_path / "test.txt"
         content = "test content"
@@ -486,7 +487,7 @@ class TestWriteSecure:
         assert test_file.exists()
         assert test_file.read_text() == content
 
-    def test_overwrite_existing_file(self, tmp_path):
+    def test_overwrite_existing_file(self, tmp_path: Any) -> None:
         """Test overwriting an existing file."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("old content")
@@ -495,7 +496,7 @@ class TestWriteSecure:
 
         assert test_file.read_text() == "new content"
 
-    def test_create_parent_directories(self, tmp_path):
+    def test_create_parent_directories(self, tmp_path: Any) -> None:
         """Test that parent directories are created."""
         test_file = tmp_path / "subdir" / "nested" / "test.txt"
 
@@ -504,7 +505,7 @@ class TestWriteSecure:
         assert test_file.exists()
         assert test_file.read_text() == "content"
 
-    def test_atomic_write(self, tmp_path):
+    def test_atomic_write(self, tmp_path: Any) -> None:
         """Test that write is atomic (uses temp file + rename)."""
         test_file = tmp_path / "test.txt"
 
@@ -521,7 +522,7 @@ class TestWriteSecure:
         # Content should be updated
         assert test_file.read_text() == "updated"
 
-    def test_cleanup_on_error(self, tmp_path):
+    def test_cleanup_on_error(self, tmp_path: Any) -> None:
         """Test that temp files are cleaned up on error."""
         test_file = tmp_path / "test.txt"
 

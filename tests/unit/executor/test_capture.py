@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 import pytest
 
@@ -181,7 +182,7 @@ class TestLogCapture:
             mock_file2 = Mock()
             open_results = [mock_file1, mock_file2, OSError("Permission denied")]
 
-            def side_effect(*args, **kwargs):
+            def side_effect(*args: Any, **kwargs: Any) -> Any:
                 result = open_results.pop(0)
                 if isinstance(result, Exception):
                     raise result

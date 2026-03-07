@@ -9,7 +9,7 @@ from scylla.automation.status_tracker import StatusTracker
 class TestStatusTracker:
     """Tests for StatusTracker class."""
 
-    def test_initialization(self):
+    def test_initialization(self) -> None:
         """Test tracker initialization."""
         tracker = StatusTracker(num_slots=3)
 
@@ -17,7 +17,7 @@ class TestStatusTracker:
         assert len(tracker.slots) == 3
         assert all(slot is None for slot in tracker.slots)
 
-    def test_acquire_slot(self):
+    def test_acquire_slot(self) -> None:
         """Test acquiring a slot."""
         tracker = StatusTracker(num_slots=2)
 
@@ -27,7 +27,7 @@ class TestStatusTracker:
         assert 0 <= slot_id < 2
         assert tracker.slots[slot_id] == "acquired"
 
-    def test_acquire_all_slots(self):
+    def test_acquire_all_slots(self) -> None:
         """Test acquiring all available slots."""
         tracker = StatusTracker(num_slots=2)
 
@@ -39,7 +39,7 @@ class TestStatusTracker:
         assert slot1 != slot2
         assert tracker.get_active_count() == 2
 
-    def test_acquire_slot_timeout(self):
+    def test_acquire_slot_timeout(self) -> None:
         """Test slot acquisition timeout when all slots occupied."""
         tracker = StatusTracker(num_slots=1)
 
@@ -51,7 +51,7 @@ class TestStatusTracker:
         slot2 = tracker.acquire_slot(timeout=0.1)
         assert slot2 is None
 
-    def test_release_slot(self):
+    def test_release_slot(self) -> None:
         """Test releasing a slot."""
         tracker = StatusTracker(num_slots=2)
 
@@ -63,7 +63,7 @@ class TestStatusTracker:
         assert tracker.slots[slot_id] is None
         assert tracker.get_active_count() == 0
 
-    def test_release_invalid_slot(self):
+    def test_release_invalid_slot(self) -> None:
         """Test releasing invalid slot ID."""
         tracker = StatusTracker(num_slots=2)
 
@@ -71,7 +71,7 @@ class TestStatusTracker:
         tracker.release_slot(999)
         tracker.release_slot(-1)
 
-    def test_update_slot(self):
+    def test_update_slot(self) -> None:
         """Test updating slot status."""
         tracker = StatusTracker(num_slots=2)
 
@@ -81,7 +81,7 @@ class TestStatusTracker:
 
         assert tracker.slots[slot_id] == "Processing issue #123"
 
-    def test_update_invalid_slot(self):
+    def test_update_invalid_slot(self) -> None:
         """Test updating invalid slot ID."""
         tracker = StatusTracker(num_slots=2)
 
@@ -89,7 +89,7 @@ class TestStatusTracker:
         tracker.update_slot(999, "invalid")
         tracker.update_slot(-1, "invalid")
 
-    def test_get_status(self):
+    def test_get_status(self) -> None:
         """Test getting status snapshot."""
         tracker = StatusTracker(num_slots=3)
 
@@ -105,7 +105,7 @@ class TestStatusTracker:
         status[slot1] = "Modified"
         assert tracker.slots[slot1] == "Working"
 
-    def test_get_active_count(self):
+    def test_get_active_count(self) -> None:
         """Test getting active slot count."""
         tracker = StatusTracker(num_slots=3)
 
@@ -121,7 +121,7 @@ class TestStatusTracker:
         tracker.release_slot(slot1)
         assert tracker.get_active_count() == 1
 
-    def test_wait_for_available(self):
+    def test_wait_for_available(self) -> None:
         """Test waiting for slot availability."""
         tracker = StatusTracker(num_slots=1)
 
@@ -130,7 +130,7 @@ class TestStatusTracker:
         assert slot_id is not None
 
         # Start thread that releases slot after delay
-        def release_after_delay():
+        def release_after_delay() -> None:
             time.sleep(0.1)
             tracker.release_slot(slot_id)
 
@@ -143,7 +143,7 @@ class TestStatusTracker:
 
         thread.join()
 
-    def test_wait_for_available_timeout(self):
+    def test_wait_for_available_timeout(self) -> None:
         """Test wait_for_available timeout."""
         tracker = StatusTracker(num_slots=1)
 
@@ -154,7 +154,7 @@ class TestStatusTracker:
         result = tracker.wait_for_available(timeout=0.1)
         assert result is False
 
-    def test_wait_all_complete(self):
+    def test_wait_all_complete(self) -> None:
         """Test waiting for all slots to complete."""
         tracker = StatusTracker(num_slots=2)
 
@@ -164,7 +164,7 @@ class TestStatusTracker:
         assert slot2 is not None
 
         # Start thread that releases slots after delay
-        def release_after_delay():
+        def release_after_delay() -> None:
             time.sleep(0.05)
             tracker.release_slot(slot1)
             time.sleep(0.05)
@@ -179,7 +179,7 @@ class TestStatusTracker:
 
         thread.join()
 
-    def test_wait_all_complete_timeout(self):
+    def test_wait_all_complete_timeout(self) -> None:
         """Test wait_all_complete timeout."""
         tracker = StatusTracker(num_slots=1)
 
@@ -190,7 +190,7 @@ class TestStatusTracker:
         result = tracker.wait_all_complete(timeout=0.1)
         assert result is False
 
-    def test_clear(self):
+    def test_clear(self) -> None:
         """Test clearing all slots."""
         tracker = StatusTracker(num_slots=3)
 
@@ -206,13 +206,13 @@ class TestStatusTracker:
         assert all(slot is None for slot in tracker.slots)
         assert tracker.get_active_count() == 0
 
-    def test_concurrent_acquire_release(self):
+    def test_concurrent_acquire_release(self) -> None:
         """Test concurrent slot acquisition and release."""
         tracker = StatusTracker(num_slots=5)
         acquired_slots = []
         lock = threading.Lock()
 
-        def worker():
+        def worker() -> None:
             slot_id = tracker.acquire_slot(timeout=2.0)
             if slot_id is not None:
                 with lock:
@@ -232,7 +232,7 @@ class TestStatusTracker:
         # All slots should be released
         assert tracker.get_active_count() == 0
 
-    def test_notify_all_on_release(self):
+    def test_notify_all_on_release(self) -> None:
         """Test that release_slot wakes all waiting threads."""
         tracker = StatusTracker(num_slots=1)
 
@@ -242,7 +242,7 @@ class TestStatusTracker:
 
         results = []
 
-        def waiter():
+        def waiter() -> None:
             # Both wait_for_available and acquire_slot should wake
             if tracker.wait_for_available(timeout=1.0):
                 results.append("available")
@@ -264,7 +264,7 @@ class TestStatusTracker:
         # All waiters should have been notified
         assert len(results) == 3
 
-    def test_notify_all_on_clear(self):
+    def test_notify_all_on_clear(self) -> None:
         """Test that clear wakes waiting threads."""
         tracker = StatusTracker(num_slots=1)
 
@@ -273,7 +273,7 @@ class TestStatusTracker:
 
         result = []
 
-        def waiter():
+        def waiter() -> None:
             if tracker.wait_for_available(timeout=1.0):
                 result.append(True)
 

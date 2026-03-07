@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -356,8 +357,8 @@ class TestStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to WORKTREE_CLEANED."""
         actions_called = []
 
-        def make_action(state: RunState):
-            def action():
+        def make_action(state: RunState) -> Any:
+            def action() -> Any:
                 actions_called.append(state)
 
             return action
@@ -371,10 +372,10 @@ class TestStateMachineAdvanceToCompletion:
 
     def test_advance_to_completion_marks_failed_on_exception(
         self, sm: StateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
-    ) -> None:
+    ) -> Any:
         """If an action raises, run is marked FAILED and exception re-raised."""
 
-        def failing_action():
+        def failing_action() -> Any:
             raise RuntimeError("simulated failure")
 
         with pytest.raises(RuntimeError, match="simulated failure"):
@@ -394,7 +395,7 @@ class TestStateMachineAdvanceToCompletion:
         """
         from scylla.e2e.runner import ShutdownInterruptedError
 
-        def interrupted_action():
+        def interrupted_action() -> None:
             raise ShutdownInterruptedError("simulated ctrl+c")
 
         with pytest.raises(ShutdownInterruptedError):
@@ -418,7 +419,7 @@ class TestStateMachineAdvanceToCompletion:
             detected_at=datetime.now(timezone.utc).isoformat(),
         )
 
-        def rate_limited_action():
+        def rate_limited_action() -> None:
             raise RateLimitError(rate_info)
 
         with pytest.raises(RateLimitError):
@@ -436,8 +437,8 @@ class TestStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: RunState):
-            def action():
+        def make_action(state: RunState) -> Any:
+            def action() -> Any:
                 actions_called.append(state)
 
             return action
@@ -476,8 +477,8 @@ class TestStateMachineAdvanceToCompletion:
         """advance_to_completion stops cleanly AFTER transitioning into until_state (inclusive)."""
         actions_called: list[RunState] = []
 
-        def make_action(state: RunState):
-            def action():
+        def make_action(state: RunState) -> Any:
+            def action() -> Any:
                 actions_called.append(state)
 
             return action

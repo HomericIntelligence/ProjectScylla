@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -427,7 +428,7 @@ class TestBatchModeDetection:
 
         call_args = []
 
-        def mock_run_batch(test_dirs, passed_args):
+        def mock_run_batch(test_dirs: Any, passed_args: Any) -> Any:
             call_args.append(test_dirs)
             return 0
 
@@ -461,7 +462,7 @@ class TestBatchModeDetection:
 
         call_args = []
 
-        def mock_run_batch(test_dirs, passed_args):
+        def mock_run_batch(test_dirs: Any, passed_args: Any) -> Any:
             call_args.append(test_dirs)
             return 0
 

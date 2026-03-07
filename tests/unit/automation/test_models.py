@@ -18,7 +18,7 @@ from scylla.automation.models import (
 class TestIssueInfo:
     """Tests for IssueInfo model."""
 
-    def test_basic_creation(self):
+    def test_basic_creation(self) -> None:
         """Test creating a basic IssueInfo."""
         issue = IssueInfo(
             number=123,
@@ -33,7 +33,7 @@ class TestIssueInfo:
         assert issue.dependencies == []
         assert issue.priority == 0
 
-    def test_with_dependencies(self):
+    def test_with_dependencies(self) -> None:
         """Test IssueInfo with dependencies."""
         issue = IssueInfo(
             number=123,
@@ -43,7 +43,7 @@ class TestIssueInfo:
 
         assert issue.dependencies == [100, 101, 102]
 
-    def test_hashable(self):
+    def test_hashable(self) -> None:
         """Test IssueInfo is hashable."""
         issue1 = IssueInfo(number=123, title="Test")
         issue2 = IssueInfo(number=123, title="Different title")
@@ -58,7 +58,7 @@ class TestIssueInfo:
         issues = {issue1, issue2, issue3}
         assert len(issues) == 2  # issue1 and issue2 are considered equal
 
-    def test_equality(self):
+    def test_equality(self) -> None:
         """Test IssueInfo equality."""
         issue1 = IssueInfo(number=123, title="Test")
         issue2 = IssueInfo(number=123, title="Different title")
@@ -71,7 +71,7 @@ class TestIssueInfo:
 class TestImplementationState:
     """Tests for ImplementationState model."""
 
-    def test_default_values(self):
+    def test_default_values(self) -> None:
         """Test ImplementationState default values."""
         state = ImplementationState(issue_number=123)
 
@@ -86,7 +86,7 @@ class TestImplementationState:
         assert state.error is None
         assert state.attempts == 0
 
-    def test_serialization(self):
+    def test_serialization(self) -> None:
         """Test ImplementationState JSON serialization."""
         state = ImplementationState(
             issue_number=123,
@@ -109,7 +109,7 @@ class TestImplementationState:
         assert restored.worktree_path == state.worktree_path
         assert restored.session_id == state.session_id
 
-    def test_retrospective_phase(self):
+    def test_retrospective_phase(self) -> None:
         """Test RETROSPECTIVE phase in ImplementationPhase enum."""
         assert ImplementationPhase.RETROSPECTIVE == "retrospective"
 
@@ -120,7 +120,7 @@ class TestImplementationState:
         )
         assert state.phase == ImplementationPhase.RETROSPECTIVE
 
-    def test_follow_up_issues_phase(self):
+    def test_follow_up_issues_phase(self) -> None:
         """Test FOLLOW_UP_ISSUES phase in ImplementationPhase enum."""
         assert ImplementationPhase.FOLLOW_UP_ISSUES == "follow_up_issues"
 
@@ -135,7 +135,7 @@ class TestImplementationState:
 class TestDependencyGraph:
     """Tests for DependencyGraph model."""
 
-    def test_add_issue(self):
+    def test_add_issue(self) -> None:
         """Test adding issues to graph."""
         graph = DependencyGraph()
         issue = IssueInfo(number=123, title="Test")
@@ -146,7 +146,7 @@ class TestDependencyGraph:
         assert graph.issues[123] == issue
         assert 123 in graph.edges
 
-    def test_add_dependency(self):
+    def test_add_dependency(self) -> None:
         """Test adding dependency edges."""
         graph = DependencyGraph()
 
@@ -160,7 +160,7 @@ class TestDependencyGraph:
 
         assert graph.get_dependencies(123) == [100, 101]
 
-    def test_get_all_dependencies(self):
+    def test_get_all_dependencies(self) -> None:
         """Test transitive dependency resolution."""
         graph = DependencyGraph()
 
@@ -177,7 +177,7 @@ class TestDependencyGraph:
 
         assert deps == {100, 50}
 
-    def test_get_all_dependencies_diamond(self):
+    def test_get_all_dependencies_diamond(self) -> None:
         """Test transitive dependencies with diamond pattern."""
         graph = DependencyGraph()
 
@@ -201,7 +201,7 @@ class TestDependencyGraph:
 class TestPlanResult:
     """Tests for PlanResult model."""
 
-    def test_successful_plan(self):
+    def test_successful_plan(self) -> None:
         """Test successful plan result."""
         result = PlanResult(
             issue_number=123,
@@ -213,7 +213,7 @@ class TestPlanResult:
         assert result.error is None
         assert result.plan_already_exists is False
 
-    def test_failed_plan(self):
+    def test_failed_plan(self) -> None:
         """Test failed plan result."""
         result = PlanResult(
             issue_number=123,
@@ -228,7 +228,7 @@ class TestPlanResult:
 class TestWorkerResult:
     """Tests for WorkerResult model."""
 
-    def test_successful_implementation(self):
+    def test_successful_implementation(self) -> None:
         """Test successful implementation result."""
         result = WorkerResult(
             issue_number=123,
@@ -243,7 +243,7 @@ class TestWorkerResult:
         assert result.pr_number == 456
         assert result.branch_name == "123-test"
 
-    def test_failed_implementation(self):
+    def test_failed_implementation(self) -> None:
         """Test failed implementation result."""
         result = WorkerResult(
             issue_number=123,
@@ -259,7 +259,7 @@ class TestWorkerResult:
 class TestPlannerOptions:
     """Tests for PlannerOptions model."""
 
-    def test_default_values(self):
+    def test_default_values(self) -> None:
         """Test PlannerOptions default values."""
         options = PlannerOptions(issues=[123, 456])
 
@@ -271,7 +271,7 @@ class TestPlannerOptions:
         assert options.skip_closed is True
         assert options.enable_advise is True
 
-    def test_custom_values(self):
+    def test_custom_values(self) -> None:
         """Test PlannerOptions with custom values."""
         from pathlib import Path
 
@@ -295,7 +295,7 @@ class TestPlannerOptions:
 class TestImplementerOptions:
     """Tests for ImplementerOptions model."""
 
-    def test_default_values(self):
+    def test_default_values(self) -> None:
         """Test ImplementerOptions default values."""
         options = ImplementerOptions(epic_number=123)
 
@@ -310,7 +310,7 @@ class TestImplementerOptions:
         assert options.enable_retrospective is True
         assert options.enable_follow_up is True  # Enabled by default
 
-    def test_custom_values(self):
+    def test_custom_values(self) -> None:
         """Test ImplementerOptions with custom values."""
         options = ImplementerOptions(
             epic_number=456,

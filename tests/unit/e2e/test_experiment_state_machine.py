@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -303,8 +304,8 @@ class TestExperimentStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to COMPLETE."""
         actions_called = []
 
-        def make_action(state: ExperimentState):
-            def action():
+        def make_action(state: ExperimentState) -> Any:
+            def action() -> Any:
                 actions_called.append(state)
 
             return action
@@ -319,10 +320,10 @@ class TestExperimentStateMachineAdvanceToCompletion:
 
     def test_marks_failed_on_exception(
         self, esm: ExperimentStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
-    ) -> None:
+    ) -> Any:
         """If action raises, experiment is marked FAILED and exception re-raised."""
 
-        def failing_action():
+        def failing_action() -> Any:
             raise RuntimeError("simulated experiment failure")
 
         with pytest.raises(RuntimeError, match="simulated experiment failure"):
@@ -338,8 +339,8 @@ class TestExperimentStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: ExperimentState):
-            def action():
+        def make_action(state: ExperimentState) -> Any:
+            def action() -> Any:
                 actions_called.append(state)
 
             return action
@@ -394,7 +395,7 @@ class TestExperimentStateMachineAdvanceToCompletion:
             detected_at=datetime.now(timezone.utc).isoformat(),
         )
 
-        def rate_limit_action():
+        def rate_limit_action() -> None:
             raise RateLimitError(rate_limit_info)
 
         with pytest.raises(RateLimitError):
@@ -417,7 +418,7 @@ class TestExperimentStateMachineAdvanceToCompletion:
             detected_at=datetime.now(timezone.utc).isoformat(),
         )
 
-        def rate_limit_action():
+        def rate_limit_action() -> None:
             raise RateLimitError(rate_limit_info)
 
         with pytest.raises(RateLimitError):
@@ -434,7 +435,7 @@ class TestExperimentStateMachineAdvanceToCompletion:
         """ShutdownInterruptedError marks experiment as INTERRUPTED (resumable), not FAILED."""
         from scylla.e2e.runner import ShutdownInterruptedError
 
-        def interrupted_action():
+        def interrupted_action() -> None:
             raise ShutdownInterruptedError("simulated ctrl+c")
 
         with pytest.raises(ShutdownInterruptedError):

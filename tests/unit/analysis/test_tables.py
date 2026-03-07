@@ -4,11 +4,13 @@ Note: These are basic smoke tests to ensure tables can be generated.
 Full validation of table content is deferred to integration tests.
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
 
 
-def test_table01_tier_summary_format(sample_runs_df):
+def test_table01_tier_summary_format(sample_runs_df: Any) -> None:
     """Test Table 1 returns valid dual-format output."""
     from scylla.analysis.tables import table01_tier_summary
 
@@ -25,14 +27,14 @@ def test_table01_tier_summary_format(sample_runs_df):
     assert "tabular" in latex or "table" in latex.lower()
 
 
-def test_tables_module_imports():
+def test_tables_module_imports() -> None:
     """Test that tables module can be imported."""
     import scylla.analysis.tables
 
     assert scylla.analysis.tables is not None
 
 
-def test_table_function_signatures():
+def test_table_function_signatures() -> None:
     """Test that all table functions exist with expected signature."""
     import inspect
 
@@ -68,7 +70,7 @@ def test_table_function_signatures():
         assert is_valid, f"Invalid return annotation for {func_name}: {ann}"
 
 
-def test_table01_consistency_clamped():
+def test_table01_consistency_clamped() -> None:
     """Test that consistency values are clamped to [0, 1].
 
     Regression test for P0 bug where inline formula 1 - (std/mean) could produce
@@ -108,7 +110,7 @@ def test_table01_consistency_clamped():
     )
 
 
-def test_table01_uses_compute_cop():
+def test_table01_uses_compute_cop() -> None:
     """Test that table01 uses shared compute_cop function.
 
     Regression test for P1 bug where inline formula duplicated compute_cop logic.
@@ -139,7 +141,7 @@ def test_table01_uses_compute_cop():
     assert "inf" in markdown.lower() or "∞" in markdown
 
 
-def test_table08_summary_statistics():
+def test_table08_summary_statistics() -> None:
     """Test Table 8 summary statistics smoke test."""
     import pandas as pd
 
@@ -172,7 +174,7 @@ def test_table08_summary_statistics():
     assert "Kurt" in markdown
 
 
-def test_table09_experiment_config():
+def test_table09_experiment_config() -> None:
     """Test Table 9 experiment configuration smoke test."""
     import pandas as pd
 
@@ -201,7 +203,7 @@ def test_table09_experiment_config():
     assert "Total Runs" in markdown
 
 
-def test_table10_normality_tests():
+def test_table10_normality_tests() -> None:
     """Test Table 10 normality tests smoke test."""
     import pandas as pd
 
@@ -237,7 +239,7 @@ def test_table10_normality_tests():
 # ============================================================================
 
 
-def test_table02_tier_comparison_statistical_workflow(sample_runs_df):
+def test_table02_tier_comparison_statistical_workflow(sample_runs_df: Any) -> None:
     """Test Table 2 statistical workflow: Kruskal-Wallis → pairwise → Holm-Bonferroni."""
     from scylla.analysis.tables import table02_tier_comparison
 
@@ -261,7 +263,7 @@ def test_table02_tier_comparison_statistical_workflow(sample_runs_df):
     assert "p=" in markdown or "p <" in markdown
 
 
-def test_table02_handles_single_tier(sample_runs_df):
+def test_table02_handles_single_tier(sample_runs_df: Any) -> None:
     """Test Table 2 handles edge case of single tier."""
     from scylla.analysis.tables import table02_tier_comparison
 
@@ -276,7 +278,7 @@ def test_table02_handles_single_tier(sample_runs_df):
     assert len(markdown) > 0
 
 
-def test_table02_holm_bonferroni_correction_applied(sample_runs_df):
+def test_table02_holm_bonferroni_correction_applied(sample_runs_df: Any) -> None:
     """Test that Holm-Bonferroni correction is actually applied."""
     from scylla.analysis.tables import table02_tier_comparison
 
@@ -289,7 +291,7 @@ def test_table02_holm_bonferroni_correction_applied(sample_runs_df):
     assert "Holm-Bonferroni" in markdown
 
 
-def test_table03_judge_agreement(sample_judges_df):
+def test_table03_judge_agreement(sample_judges_df: Any) -> None:
     """Test Table 3 judge agreement with Krippendorff's alpha."""
     from scylla.analysis.tables import table03_judge_agreement
 
@@ -309,7 +311,7 @@ def test_table03_judge_agreement(sample_judges_df):
     assert "0." in markdown or "1." in markdown or "-" in markdown
 
 
-def test_table03_handles_single_judge(sample_runs_df):
+def test_table03_handles_single_judge(sample_runs_df: Any) -> None:
     """Test Table 3 handles edge case of single judge."""
     import pandas as pd
 
@@ -335,7 +337,9 @@ def test_table03_handles_single_judge(sample_runs_df):
         table03_judge_agreement(single_judge)
 
 
-def test_table04_criteria_performance_holm_bonferroni(sample_criteria_df, sample_runs_df):
+def test_table04_criteria_performance_holm_bonferroni(
+    sample_criteria_df: Any, sample_runs_df: Any
+) -> None:
     """Test Table 4 uses Holm-Bonferroni for criteria comparisons."""
     from scylla.analysis.tables import table04_criteria_performance
 
@@ -354,7 +358,7 @@ def test_table04_criteria_performance_holm_bonferroni(sample_criteria_df, sample
     assert "p-value" in markdown or "p =" in markdown or "Winner" in markdown
 
 
-def test_table04_handles_single_model(sample_criteria_df, sample_runs_df):
+def test_table04_handles_single_model(sample_criteria_df: Any, sample_runs_df: Any) -> None:
     """Test Table 4 handles single model gracefully."""
     from scylla.analysis.tables import table04_criteria_performance
 
@@ -370,7 +374,7 @@ def test_table04_handles_single_model(sample_criteria_df, sample_runs_df):
     assert len(markdown) > 50
 
 
-def test_table04_data_driven_criteria_weights(sample_criteria_df, sample_runs_df):
+def test_table04_data_driven_criteria_weights(sample_criteria_df: Any, sample_runs_df: Any) -> None:
     """Test Table 4 derives criteria weights from data when not provided."""
     from scylla.analysis.tables import table04_criteria_performance
 
@@ -392,7 +396,7 @@ def test_table04_data_driven_criteria_weights(sample_criteria_df, sample_runs_df
     assert present_criteria >= 3
 
 
-def test_table05_cost_analysis_token_breakdown(sample_runs_df):
+def test_table05_cost_analysis_token_breakdown(sample_runs_df: Any) -> None:
     """Test Table 5 cost analysis includes token breakdown."""
     from scylla.analysis.tables import table05_cost_analysis
 
@@ -412,7 +416,7 @@ def test_table05_cost_analysis_token_breakdown(sample_runs_df):
     assert "Input" in markdown or "Output" in markdown or "Token" in markdown
 
 
-def test_table05_handles_zero_cost_runs(sample_runs_df):
+def test_table05_handles_zero_cost_runs(sample_runs_df: Any) -> None:
     """Test Table 5 handles runs with zero cost gracefully."""
     from scylla.analysis.tables import table05_cost_analysis
 
@@ -427,7 +431,7 @@ def test_table05_handles_zero_cost_runs(sample_runs_df):
     assert isinstance(latex, str)
 
 
-def test_table06_model_comparison_holm_bonferroni(sample_runs_df):
+def test_table06_model_comparison_holm_bonferroni(sample_runs_df: Any) -> None:
     """Test Table 6 uses Holm-Bonferroni for model comparisons."""
     from scylla.analysis.tables import table06_model_comparison
 
@@ -447,7 +451,7 @@ def test_table06_model_comparison_holm_bonferroni(sample_runs_df):
     assert "p-value" in markdown or "p =" in markdown
 
 
-def test_table06_handles_single_model():
+def test_table06_handles_single_model() -> None:
     """Test Table 6 handles single model error case."""
     import pandas as pd
 
@@ -469,7 +473,7 @@ def test_table06_handles_single_model():
     assert "Error" in markdown or "Need at least 2 models" in markdown
 
 
-def test_table06_multiple_models_pairwise():
+def test_table06_multiple_models_pairwise() -> None:
     """Test Table 6 handles multiple models with pairwise comparisons."""
     import pandas as pd
 
@@ -496,7 +500,7 @@ def test_table06_multiple_models_pairwise():
     assert "Model B vs Model C" in markdown
 
 
-def test_table07_subtest_detail_appendix(sample_runs_df):
+def test_table07_subtest_detail_appendix(sample_runs_df: Any) -> None:
     """Test Table 7 subtest detail generates appendix table."""
     from scylla.analysis.dataframes import build_subtests_df
     from scylla.analysis.tables import table07_subtest_detail
@@ -523,7 +527,7 @@ def test_table07_subtest_detail_appendix(sample_runs_df):
     assert "longtable" in latex or "tabular" in latex
 
 
-def test_table07_handles_empty_subtests():
+def test_table07_handles_empty_subtests() -> None:
     """Test Table 7 handles empty subtest data gracefully."""
     import pandas as pd
 
@@ -551,7 +555,7 @@ def test_table07_handles_empty_subtests():
     assert isinstance(latex, str)
 
 
-def test_table02b_impl_rate_comparison_format(sample_runs_df):
+def test_table02b_impl_rate_comparison_format(sample_runs_df: Any) -> None:
     """Test Table 2b returns valid dual-format output."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
@@ -568,7 +572,7 @@ def test_table02b_impl_rate_comparison_format(sample_runs_df):
     assert "tabular" in latex or "table" in latex.lower()
 
 
-def test_table02b_impl_rate_statistical_workflow(sample_runs_df):
+def test_table02b_impl_rate_statistical_workflow(sample_runs_df: Any) -> None:
     """Test Table 2b follows correct statistical workflow."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
@@ -584,7 +588,7 @@ def test_table02b_impl_rate_statistical_workflow(sample_runs_df):
     assert "Omnibus Test Results" in markdown
 
 
-def test_table02b_handles_missing_impl_rate():
+def test_table02b_handles_missing_impl_rate() -> None:
     """Test Table 2b handles missing impl_rate column gracefully."""
     import pandas as pd
 
@@ -607,7 +611,7 @@ def test_table02b_handles_missing_impl_rate():
     assert "impl_rate" in markdown
 
 
-def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
+def test_table02b_holm_bonferroni_correction_applied(sample_runs_df: Any) -> None:
     """Test that Holm-Bonferroni correction is applied to p-values."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
@@ -618,7 +622,7 @@ def test_table02b_holm_bonferroni_correction_applied(sample_runs_df):
     assert "correction" in markdown.lower()
 
 
-def test_table08_calculation_verification():
+def test_table08_calculation_verification() -> None:
     """Test Table 8 calculates summary statistics correctly."""
     import pandas as pd
 
@@ -659,7 +663,7 @@ def test_table08_calculation_verification():
     assert "Score" in latex or "score" in latex.lower()
 
 
-def test_table09_calculation_verification():
+def test_table09_calculation_verification() -> None:
     """Test Table 9 correctly extracts experiment configuration."""
     import pandas as pd
 
@@ -697,7 +701,7 @@ def test_table09_calculation_verification():
     assert "exp001" in latex or len(latex) > 100
 
 
-def test_table02_power_column_present(sample_runs_df):
+def test_table02_power_column_present(sample_runs_df: Any) -> None:
     """Test that Power column is present in Table 2 markdown and LaTeX output."""
     from scylla.analysis.tables import table02_tier_comparison
 
@@ -707,7 +711,7 @@ def test_table02_power_column_present(sample_runs_df):
     assert "Power" in latex
 
 
-def test_table02b_power_column_present(sample_runs_df):
+def test_table02b_power_column_present(sample_runs_df: Any) -> None:
     """Test that Power column is present in Table 2b markdown and LaTeX output."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
@@ -717,7 +721,7 @@ def test_table02b_power_column_present(sample_runs_df):
     assert "Power" in latex
 
 
-def test_table02_power_is_numeric(sample_runs_df):
+def test_table02_power_is_numeric(sample_runs_df: Any) -> None:
     """Test that power values in Table 2 are floating-point parseable.
 
     The mock_power_simulations autouse fixture returns 0.8 for mann_whitney_power,
@@ -731,7 +735,7 @@ def test_table02_power_is_numeric(sample_runs_df):
     assert "0.800" in markdown
 
 
-def test_table02_power_nan_for_small_samples():
+def test_table02_power_nan_for_small_samples() -> None:
     """Test that '—' sentinel appears for small-sample rows (N < 5)."""
     import pandas as pd
 
@@ -775,7 +779,7 @@ def test_table02_power_nan_for_small_samples():
     assert "—" in markdown
 
 
-def test_table02_omnibus_power_in_footer(sample_runs_df):
+def test_table02_omnibus_power_in_footer(sample_runs_df: Any) -> None:
     """Test that omnibus KW power value appears in Table 2 footer section."""
     from scylla.analysis.tables import table02_tier_comparison
 
@@ -786,7 +790,7 @@ def test_table02_omnibus_power_in_footer(sample_runs_df):
     assert "power=0.750" in latex
 
 
-def test_table10_calculation_verification():
+def test_table10_calculation_verification() -> None:
     """Test Table 10 calculates Shapiro-Wilk normality tests correctly."""
     import numpy as np
     import pandas as pd
@@ -842,7 +846,7 @@ def test_table10_calculation_verification():
 # ============================================================================
 
 
-def test_table_cfp_comparison_format(sample_runs_df):
+def test_table_cfp_comparison_format(sample_runs_df: Any) -> None:
     """Test table_cfp_comparison returns valid dual-format output."""
     from scylla.analysis.tables import table_cfp_comparison
 
@@ -858,7 +862,7 @@ def test_table_cfp_comparison_format(sample_runs_df):
     assert "tabular" in latex or "table" in latex.lower()
 
 
-def test_table_cfp_comparison_missing_column():
+def test_table_cfp_comparison_missing_column() -> None:
     """Test table_cfp_comparison returns placeholder when cfp column is absent."""
     import pandas as pd
 
@@ -882,7 +886,7 @@ def test_table_cfp_comparison_missing_column():
     assert len(latex) > 0
 
 
-def test_table_cfp_comparison_all_nan(sample_runs_df):
+def test_table_cfp_comparison_all_nan(sample_runs_df: Any) -> None:
     """Test table_cfp_comparison handles all-NaN cfp column without error."""
     from scylla.analysis.tables import table_cfp_comparison
 
@@ -897,7 +901,7 @@ def test_table_cfp_comparison_all_nan(sample_runs_df):
     assert isinstance(latex, str)
 
 
-def test_table_cfp_comparison_statistical_workflow(sample_runs_df):
+def test_table_cfp_comparison_statistical_workflow(sample_runs_df: Any) -> None:
     """Test table_cfp_comparison uses correct statistical workflow."""
     from scylla.analysis.tables import table_cfp_comparison
 

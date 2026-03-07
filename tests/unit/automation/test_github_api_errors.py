@@ -11,7 +11,7 @@ from scylla.automation.github_api import _gh_call, gh_pr_create
 class TestAutoMergeErrorHandling:
     """Tests for auto-merge error handling."""
 
-    def test_auto_merge_runtime_error_caught(self):
+    def test_auto_merge_runtime_error_caught(self) -> None:
         """Test that RuntimeError from rate limit doesn't escape gh_pr_create."""
         with (
             patch("scylla.automation.github_api._gh_call") as mock_gh_call,
@@ -40,7 +40,7 @@ class TestAutoMergeErrorHandling:
             warning_msg = str(mock_logger.warning.call_args)
             assert "auto-merge" in warning_msg.lower()
 
-    def test_auto_merge_called_process_error_caught(self):
+    def test_auto_merge_called_process_error_caught(self) -> None:
         """Test that CalledProcessError is also caught."""
         with (
             patch("scylla.automation.github_api._gh_call") as mock_gh_call,
@@ -68,7 +68,7 @@ class TestAutoMergeErrorHandling:
 class TestGhCallTimeout:
     """Tests for gh CLI timeout."""
 
-    def test_gh_call_timeout(self):
+    def test_gh_call_timeout(self) -> None:
         """Test that timeout is passed to subprocess."""
         with patch("scylla.automation.github_api.run") as mock_run:
             mock_run.return_value = MagicMock(stdout="output")
@@ -81,7 +81,7 @@ class TestGhCallTimeout:
             assert "timeout" in call_kwargs
             assert call_kwargs["timeout"] == 120
 
-    def test_gh_call_timeout_expired(self):
+    def test_gh_call_timeout_expired(self) -> None:
         """Test that TimeoutExpired is propagated."""
         with patch("scylla.automation.github_api.run") as mock_run:
             mock_run.side_effect = subprocess.TimeoutExpired(["gh", "issue", "view"], 120)

@@ -274,7 +274,7 @@ class TestRunTierUsesTierStateMachine:
             patch.object(runner, "_build_tier_actions") as mock_build_actions,
         ):
             # Make advance_to_completion return COMPLETE and set up tier_results side effect
-            def advance_side_effect(tier_id, actions, until_state=None):
+            def advance_side_effect(tier_id: Any, actions: Any, until_state: Any = None) -> Any:
                 # Simulate completing the tier — populate tier_results via the action
                 return TierState.COMPLETE
 

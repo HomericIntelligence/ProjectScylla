@@ -5,6 +5,7 @@ environment variable setup, and container configuration.
 """
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -18,13 +19,13 @@ from scylla.executor.docker import DockerExecutor
 
 
 @pytest.fixture
-def mock_docker_executor():
+def mock_docker_executor() -> Any:
     """Create a mock Docker executor."""
     return Mock(spec=DockerExecutor)
 
 
 @pytest.fixture
-def temp_directories(tmp_path):
+def temp_directories(tmp_path: Any) -> Any:
     """Create temporary directories for testing."""
     workspace_dir = tmp_path / "workspace"
     workspace_dir.mkdir()
@@ -46,7 +47,7 @@ def temp_directories(tmp_path):
     }
 
 
-def test_agent_container_config_defaults():
+def test_agent_container_config_defaults() -> None:
     """Test AgentContainerConfig has correct defaults."""
     config = AgentContainerConfig(
         workspace_dir=Path("/tmp/workspace"),
@@ -61,7 +62,7 @@ def test_agent_container_config_defaults():
     assert config.claude_md_path is None
 
 
-def test_build_volumes_without_claude_md(mock_docker_executor, temp_directories):
+def test_build_volumes_without_claude_md(mock_docker_executor: Any, temp_directories: Any) -> None:
     """Test volume mount configuration without CLAUDE.md."""
     manager = AgentContainerManager(mock_docker_executor)
 
@@ -93,7 +94,7 @@ def test_build_volumes_without_claude_md(mock_docker_executor, temp_directories)
     assert volumes[prompt_key]["mode"] == "ro"
 
 
-def test_build_volumes_with_claude_md(mock_docker_executor, temp_directories):
+def test_build_volumes_with_claude_md(mock_docker_executor: Any, temp_directories: Any) -> None:
     """Test volume mount configuration with CLAUDE.md."""
     manager = AgentContainerManager(mock_docker_executor)
 
@@ -117,7 +118,7 @@ def test_build_volumes_with_claude_md(mock_docker_executor, temp_directories):
     assert volumes[claude_md_key]["mode"] == "ro"
 
 
-def test_build_environment_with_api_keys(mock_docker_executor):
+def test_build_environment_with_api_keys(mock_docker_executor: Any) -> None:
     """Test environment variable configuration with API keys."""
     manager = AgentContainerManager(mock_docker_executor)
 
@@ -145,7 +146,7 @@ def test_build_environment_with_api_keys(mock_docker_executor):
     assert env_vars["OPENAI_API_KEY"] == "test-openai-key"
 
 
-def test_build_environment_without_api_keys(mock_docker_executor):
+def test_build_environment_without_api_keys(mock_docker_executor: Any) -> None:
     """Test environment variable configuration without API keys."""
     manager = AgentContainerManager(mock_docker_executor)
 
@@ -167,7 +168,9 @@ def test_build_environment_without_api_keys(mock_docker_executor):
 
 
 @patch("subprocess.run")
-def test_run_with_volumes_success(mock_subprocess_run, mock_docker_executor, temp_directories):
+def test_run_with_volumes_success(
+    mock_subprocess_run: Any, mock_docker_executor: Any, temp_directories: Any
+) -> None:
     """Test successful container execution."""
     manager = AgentContainerManager(mock_docker_executor)
 
@@ -205,7 +208,9 @@ def test_run_with_volumes_success(mock_subprocess_run, mock_docker_executor, tem
 
 
 @patch("subprocess.run")
-def test_run_with_volumes_timeout(mock_subprocess_run, mock_docker_executor, temp_directories):
+def test_run_with_volumes_timeout(
+    mock_subprocess_run: Any, mock_docker_executor: Any, temp_directories: Any
+) -> None:
     """Test container execution timeout."""
     manager = AgentContainerManager(mock_docker_executor)
 
@@ -234,10 +239,10 @@ def test_run_with_volumes_timeout(mock_subprocess_run, mock_docker_executor, tem
 
 @patch("subprocess.run")
 def test_run_with_custom_container_name(
-    mock_subprocess_run,
-    mock_docker_executor,
-    temp_directories,
-):
+    mock_subprocess_run: Any,
+    mock_docker_executor: Any,
+    temp_directories: Any,
+) -> None:
     """Test container execution with custom container name."""
     manager = AgentContainerManager(mock_docker_executor)
 

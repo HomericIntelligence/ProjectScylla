@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 
-def test_cliffs_delta_basic():
+def test_cliffs_delta_basic() -> None:
     """Test Cliff's delta with known values."""
     # Group 1 has higher values than Group 2
     g1 = [5, 6, 7, 8, 9]
@@ -27,7 +27,7 @@ def test_cliffs_delta_basic():
     assert delta == pytest.approx(expected)
 
 
-def test_cliffs_delta_identical():
+def test_cliffs_delta_identical() -> None:
     """Test Cliff's delta with identical groups (delta should be 0)."""
     from scylla.analysis.stats import cliffs_delta
 
@@ -38,7 +38,7 @@ def test_cliffs_delta_identical():
     assert delta == pytest.approx(0.0, abs=1e-6)
 
 
-def test_cliffs_delta_negative():
+def test_cliffs_delta_negative() -> None:
     """Test Cliff's delta when group2 dominates group1."""
     from scylla.analysis.stats import cliffs_delta
 
@@ -51,7 +51,7 @@ def test_cliffs_delta_negative():
     assert delta == pytest.approx(-1.0)
 
 
-def test_cliffs_delta_empty():
+def test_cliffs_delta_empty() -> None:
     """Test Cliff's delta with empty groups."""
     import numpy as np
 
@@ -63,7 +63,7 @@ def test_cliffs_delta_empty():
     assert np.isnan(cliffs_delta([], []))
 
 
-def test_cliffs_delta_pandas_series():
+def test_cliffs_delta_pandas_series() -> None:
     """Test Cliff's delta with pandas Series input."""
     from scylla.analysis.stats import cliffs_delta
 
@@ -76,7 +76,7 @@ def test_cliffs_delta_pandas_series():
     assert delta == pytest.approx(1.0)
 
 
-def test_cliffs_delta_reference():
+def test_cliffs_delta_reference() -> None:
     """Test Cliff's delta against hand-calculated reference.
 
     Reference implementation (O(n²) loops):
@@ -105,7 +105,7 @@ def test_cliffs_delta_reference():
     assert delta == pytest.approx(expected)
 
 
-def test_bootstrap_ci_deterministic():
+def test_bootstrap_ci_deterministic() -> None:
     """Test bootstrap CI is deterministic with fixed random state."""
     from scylla.analysis.stats import bootstrap_ci
 
@@ -118,7 +118,7 @@ def test_bootstrap_ci_deterministic():
     assert mean1 == pytest.approx(mean2)
 
 
-def test_bootstrap_ci_single_element():
+def test_bootstrap_ci_single_element() -> None:
     """Test bootstrap CI handles single-element arrays gracefully.
 
     Regression test for P1 bug where scipy BCa bootstrap requires n >= 2.
@@ -134,7 +134,7 @@ def test_bootstrap_ci_single_element():
     assert upper == pytest.approx(5.0)
 
 
-def test_bootstrap_ci_empty_array():
+def test_bootstrap_ci_empty_array() -> None:
     """Test bootstrap CI handles empty arrays."""
     from scylla.analysis.stats import bootstrap_ci
 
@@ -148,7 +148,7 @@ def test_bootstrap_ci_empty_array():
     assert np.isnan(upper)
 
 
-def test_mann_whitney_u_basic():
+def test_mann_whitney_u_basic() -> None:
     """Test Mann-Whitney U returns reasonable values."""
     from scylla.analysis.stats import mann_whitney_u
 
@@ -163,7 +163,7 @@ def test_mann_whitney_u_basic():
     assert u_stat >= 0
 
 
-def test_mann_whitney_u_identical():
+def test_mann_whitney_u_identical() -> None:
     """Test Mann-Whitney U with identical groups."""
     from scylla.analysis.stats import mann_whitney_u
 
@@ -176,7 +176,7 @@ def test_mann_whitney_u_identical():
     assert p_value > 0.9
 
 
-def test_mann_whitney_u_degenerate_input():
+def test_mann_whitney_u_degenerate_input() -> None:
     """Test Mann-Whitney U with degenerate input (n < 2).
 
     Regression test for P1 bug: ensure function doesn't raise on
@@ -206,7 +206,7 @@ def test_mann_whitney_u_degenerate_input():
     assert p_value == pytest.approx(1.0)
 
 
-def test_krippendorff_alpha_perfect_agreement():
+def test_krippendorff_alpha_perfect_agreement() -> None:
     """Test Krippendorff's alpha with perfect inter-rater agreement."""
     from scylla.analysis.stats import krippendorff_alpha
 
@@ -225,7 +225,7 @@ def test_krippendorff_alpha_perfect_agreement():
     assert alpha == pytest.approx(1.0)
 
 
-def test_krippendorff_alpha_ordinal():
+def test_krippendorff_alpha_ordinal() -> None:
     """Test Krippendorff's alpha with ordinal data."""
     from scylla.analysis.stats import krippendorff_alpha
 
@@ -243,7 +243,7 @@ def test_krippendorff_alpha_ordinal():
     assert 0.7 < alpha < 1.0
 
 
-def test_krippendorff_alpha_nominal():
+def test_krippendorff_alpha_nominal() -> None:
     """Test Krippendorff's alpha with nominal data."""
     from scylla.analysis.stats import krippendorff_alpha
 
@@ -262,7 +262,7 @@ def test_krippendorff_alpha_nominal():
     assert 0.6 < alpha < 1.0
 
 
-def test_bonferroni_correction():
+def test_bonferroni_correction() -> None:
     """Test Bonferroni correction for multiple comparisons."""
     from scylla.analysis.stats import bonferroni_correction
 
@@ -275,7 +275,7 @@ def test_bonferroni_correction():
     assert bonferroni_correction(1.0, 2) == pytest.approx(1.0)
 
 
-def test_compute_consistency():
+def test_compute_consistency() -> None:
     """Test consistency metric (1 - CV)."""
     from scylla.analysis.stats import compute_consistency
 
@@ -297,7 +297,7 @@ def test_compute_consistency():
     assert consistency == pytest.approx(0.0)
 
 
-def test_compute_cop():
+def test_compute_cop() -> None:
     """Test Cost-of-Pass metric."""
     from scylla.analysis.stats import compute_cop
 
@@ -314,7 +314,7 @@ def test_compute_cop():
     assert cop == float("inf")
 
 
-def test_compute_frontier_cop():
+def test_compute_frontier_cop() -> None:
     """Test Frontier CoP metric."""
     from scylla.analysis.stats import compute_frontier_cop
 
@@ -342,7 +342,7 @@ def test_compute_frontier_cop():
     assert frontier == pytest.approx(2.50, abs=1e-6)
 
 
-def test_compute_impl_rate():
+def test_compute_impl_rate() -> None:
     """Test Implementation Rate (Impl-Rate) metric."""
     import numpy as np
 
@@ -369,7 +369,7 @@ def test_compute_impl_rate():
     assert impl_rate == pytest.approx(0.584, abs=1e-6)
 
 
-def test_spearman_correlation():
+def test_spearman_correlation() -> None:
     """Test Spearman rank correlation."""
     from scylla.analysis.stats import spearman_correlation
 
@@ -387,7 +387,7 @@ def test_spearman_correlation():
     assert corr == pytest.approx(-1.0, abs=1e-6)
 
 
-def test_pearson_correlation():
+def test_pearson_correlation() -> None:
     """Test Pearson correlation."""
     from scylla.analysis.stats import pearson_correlation
 
@@ -405,7 +405,7 @@ def test_pearson_correlation():
     assert np.isnan(corr)  # Pearson undefined for constant series
 
 
-def test_shapiro_wilk_normal_data():
+def test_shapiro_wilk_normal_data() -> None:
     """Test Shapiro-Wilk with normal distribution."""
     from scylla.analysis.stats import shapiro_wilk
 
@@ -420,7 +420,7 @@ def test_shapiro_wilk_normal_data():
     assert p_value > 0.05
 
 
-def test_shapiro_wilk_uniform_data():
+def test_shapiro_wilk_uniform_data() -> None:
     """Test Shapiro-Wilk with non-normal (uniform) distribution."""
     from scylla.analysis.stats import shapiro_wilk
 
@@ -435,7 +435,7 @@ def test_shapiro_wilk_uniform_data():
     assert p_value < 0.05
 
 
-def test_kruskal_wallis_different_groups():
+def test_kruskal_wallis_different_groups() -> None:
     """Test Kruskal-Wallis with significantly different groups."""
     from scylla.analysis.stats import kruskal_wallis
 
@@ -451,7 +451,7 @@ def test_kruskal_wallis_different_groups():
     assert p_value < 0.01
 
 
-def test_kruskal_wallis_identical_groups():
+def test_kruskal_wallis_identical_groups() -> None:
     """Test Kruskal-Wallis with identical groups."""
     from scylla.analysis.stats import kruskal_wallis
 
@@ -467,7 +467,7 @@ def test_kruskal_wallis_identical_groups():
     assert p_value > 0.9
 
 
-def test_holm_bonferroni_less_conservative_than_bonferroni():
+def test_holm_bonferroni_less_conservative_than_bonferroni() -> None:
     """Test that Holm-Bonferroni is less conservative than Bonferroni."""
     from scylla.analysis.stats import bonferroni_correction, holm_bonferroni_correction
 
@@ -486,14 +486,14 @@ def test_holm_bonferroni_less_conservative_than_bonferroni():
     assert holm_corrected[1] < bonf_corrected[1]  # Larger p-values: less conservative
 
 
-def test_holm_bonferroni_empty():
+def test_holm_bonferroni_empty() -> None:
     """Test Holm-Bonferroni with empty list."""
     from scylla.analysis.stats import holm_bonferroni_correction
 
     assert holm_bonferroni_correction([]) == []
 
 
-def test_holm_bonferroni_single():
+def test_holm_bonferroni_single() -> None:
     """Test Holm-Bonferroni with single p-value."""
     from scylla.analysis.stats import holm_bonferroni_correction
 
@@ -502,7 +502,7 @@ def test_holm_bonferroni_single():
     assert result == [0.05]
 
 
-def test_holm_bonferroni_monotonicity():
+def test_holm_bonferroni_monotonicity() -> None:
     """Test that Holm-Bonferroni produces monotonically non-decreasing corrected p-values.
 
     Regression test for P0 bug: corrected p-values must be monotonically
@@ -554,7 +554,7 @@ def test_holm_bonferroni_monotonicity():
         assert corrected_general[curr_idx] >= corrected_general[prev_idx]
 
 
-def test_benjamini_hochberg_correction():
+def test_benjamini_hochberg_correction() -> None:
     """Test Benjamini-Hochberg FDR correction."""
     from scylla.analysis.stats import benjamini_hochberg_correction
 
@@ -570,14 +570,14 @@ def test_benjamini_hochberg_correction():
         assert 0 <= corr <= 1
 
 
-def test_benjamini_hochberg_empty():
+def test_benjamini_hochberg_empty() -> None:
     """Test Benjamini-Hochberg with empty list."""
     from scylla.analysis.stats import benjamini_hochberg_correction
 
     assert benjamini_hochberg_correction([]) == []
 
 
-def test_cliffs_delta_ci_covers_point_estimate():
+def test_cliffs_delta_ci_covers_point_estimate() -> None:
     """Test that Cliff's delta CI covers the point estimate."""
     from scylla.analysis.stats import cliffs_delta_ci
 
@@ -594,7 +594,7 @@ def test_cliffs_delta_ci_covers_point_estimate():
     assert ci_low < ci_high
 
 
-def test_cliffs_delta_ci_small_sample():
+def test_cliffs_delta_ci_small_sample() -> None:
     """Test Cliff's delta CI with insufficient sample size."""
     from scylla.analysis.stats import cliffs_delta_ci
 
@@ -604,7 +604,7 @@ def test_cliffs_delta_ci_small_sample():
     assert delta == ci_low == ci_high
 
 
-def test_ols_regression_perfect_line():
+def test_ols_regression_perfect_line() -> None:
     """Test OLS regression with perfect linear relationship."""
     from scylla.analysis.stats import ols_regression
 
@@ -621,7 +621,7 @@ def test_ols_regression_perfect_line():
     assert result["std_err"] < 1e-10  # Nearly zero error
 
 
-def test_ols_regression_basic():
+def test_ols_regression_basic() -> None:
     """Test OLS regression with realistic data."""
     from scylla.analysis.stats import ols_regression
 
@@ -639,7 +639,7 @@ def test_ols_regression_basic():
     assert result["std_err"] > 0  # Non-zero error due to noise
 
 
-def test_scheirer_ray_hare_no_effects():
+def test_scheirer_ray_hare_no_effects() -> None:
     """Test Scheirer-Ray-Hare when no effects exist (null case)."""
     from scylla.analysis.stats import scheirer_ray_hare
 
@@ -666,7 +666,7 @@ def test_scheirer_ray_hare_no_effects():
     assert results["interaction"]["df"] == 2  # (2-1) * (3-1)
 
 
-def test_scheirer_ray_hare_main_effect_a():
+def test_scheirer_ray_hare_main_effect_a() -> None:
     """Test Scheirer-Ray-Hare with strong main effect in factor A."""
     from scylla.analysis.stats import scheirer_ray_hare
 
@@ -689,7 +689,7 @@ def test_scheirer_ray_hare_main_effect_a():
     # Interaction should be non-significant (parallel lines)
 
 
-def test_scheirer_ray_hare_main_effect_b():
+def test_scheirer_ray_hare_main_effect_b() -> None:
     """Test Scheirer-Ray-Hare with strong main effect in factor B."""
     from scylla.analysis.stats import scheirer_ray_hare
 
@@ -709,7 +709,7 @@ def test_scheirer_ray_hare_main_effect_b():
     assert results["tier"]["p_value"] < 0.001
 
 
-def test_scheirer_ray_hare_interaction():
+def test_scheirer_ray_hare_interaction() -> None:
     """Test Scheirer-Ray-Hare with interaction effect."""
     from scylla.analysis.stats import scheirer_ray_hare
 
@@ -736,7 +736,7 @@ def test_scheirer_ray_hare_interaction():
     assert results["interaction"]["df"] == 1  # (2-1) * (2-1)
 
 
-def test_scheirer_ray_hare_returns_correct_structure():
+def test_scheirer_ray_hare_returns_correct_structure() -> None:
     """Test that Scheirer-Ray-Hare returns correctly structured output."""
     from scylla.analysis.stats import scheirer_ray_hare
 

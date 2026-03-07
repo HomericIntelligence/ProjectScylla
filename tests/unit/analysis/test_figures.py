@@ -1,7 +1,9 @@
+from typing import Any
+
 """Unit tests for figure generation."""
 
 
-def test_fig01_score_variance_by_tier(sample_runs_df, tmp_path):
+def test_fig01_score_variance_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 1 generates files correctly."""
     from scylla.analysis.figures.variance import fig01_score_variance_by_tier
 
@@ -11,7 +13,7 @@ def test_fig01_score_variance_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig01_score_variance_by_tier.vl.json").exists()
 
 
-def test_fig04_pass_rate_by_tier(sample_runs_df, tmp_path):
+def test_fig04_pass_rate_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 4 generates files correctly."""
     from scylla.analysis.figures.tier_performance import fig04_pass_rate_by_tier
 
@@ -19,7 +21,7 @@ def test_fig04_pass_rate_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig04_pass_rate_by_tier.vl.json").exists()
 
 
-def test_fig06_cop_by_tier(sample_runs_df, tmp_path):
+def test_fig06_cop_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 6 generates files correctly."""
     from scylla.analysis.figures.cost_analysis import fig06_cop_by_tier
 
@@ -27,7 +29,7 @@ def test_fig06_cop_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig06_cop_by_tier.vl.json").exists()
 
 
-def test_fig11_tier_uplift(sample_runs_df, tmp_path):
+def test_fig11_tier_uplift(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 11 generates files correctly."""
     from scylla.analysis.figures.model_comparison import fig11_tier_uplift
 
@@ -35,7 +37,7 @@ def test_fig11_tier_uplift(sample_runs_df, tmp_path):
     assert (tmp_path / "fig11_tier_uplift.vl.json").exists()
 
 
-def test_fig02_judge_variance(sample_judges_df, tmp_path):
+def test_fig02_judge_variance(sample_judges_df: Any, tmp_path: Any) -> None:
     """Test Fig 2 generates per-tier files correctly."""
     from scylla.analysis.figures.judge_analysis import fig02_judge_variance
 
@@ -43,7 +45,7 @@ def test_fig02_judge_variance(sample_judges_df, tmp_path):
     # Note: Generates per-tier files (fig02_t0_judge_variance.vl.json, etc.)
 
 
-def test_fig03_failure_rate_by_tier(sample_runs_df, tmp_path):
+def test_fig03_failure_rate_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 3 generates files correctly."""
     from scylla.analysis.figures.variance import fig03_failure_rate_by_tier
 
@@ -51,7 +53,7 @@ def test_fig03_failure_rate_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig03_failure_rate_by_tier.vl.json").exists()
 
 
-def test_fig05_grade_heatmap(sample_runs_df, tmp_path):
+def test_fig05_grade_heatmap(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 5 generates files correctly."""
     from scylla.analysis.figures.tier_performance import fig05_grade_heatmap
 
@@ -59,7 +61,7 @@ def test_fig05_grade_heatmap(sample_runs_df, tmp_path):
     assert (tmp_path / "fig05_grade_heatmap.vl.json").exists()
 
 
-def test_fig07_token_distribution(sample_runs_df, tmp_path):
+def test_fig07_token_distribution(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 7 generates files correctly."""
     from scylla.analysis.figures.token_analysis import fig07_token_distribution
 
@@ -67,7 +69,7 @@ def test_fig07_token_distribution(sample_runs_df, tmp_path):
     assert (tmp_path / "fig07_token_distribution.vl.json").exists()
 
 
-def test_fig08_cost_quality_pareto(sample_runs_df, tmp_path):
+def test_fig08_cost_quality_pareto(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 8 generates files correctly."""
     from scylla.analysis.figures.cost_analysis import fig08_cost_quality_pareto
 
@@ -75,7 +77,7 @@ def test_fig08_cost_quality_pareto(sample_runs_df, tmp_path):
     assert (tmp_path / "fig08_cost_quality_pareto.vl.json").exists()
 
 
-def test_fig09_criteria_by_tier(sample_criteria_df, tmp_path):
+def test_fig09_criteria_by_tier(sample_criteria_df: Any, tmp_path: Any) -> None:
     """Test Fig 9 generates files correctly."""
     from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
 
@@ -83,7 +85,7 @@ def test_fig09_criteria_by_tier(sample_criteria_df, tmp_path):
     assert (tmp_path / "fig09_criteria_by_tier.vl.json").exists()
 
 
-def test_fig12_consistency(sample_runs_df, tmp_path):
+def test_fig12_consistency(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 12 generates files correctly."""
     from scylla.analysis.figures.model_comparison import fig12_consistency
 
@@ -91,7 +93,7 @@ def test_fig12_consistency(sample_runs_df, tmp_path):
     assert (tmp_path / "fig12_consistency.vl.json").exists()
 
 
-def test_fig13_latency(sample_runs_df, tmp_path):
+def test_fig13_latency(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 13 generates files correctly."""
     from scylla.analysis.figures.subtest_detail import fig13_latency
 
@@ -99,7 +101,7 @@ def test_fig13_latency(sample_runs_df, tmp_path):
     assert (tmp_path / "fig13_latency.vl.json").exists()
 
 
-def test_fig14_judge_agreement(sample_judges_df, tmp_path):
+def test_fig14_judge_agreement(sample_judges_df: Any, tmp_path: Any) -> None:
     """Test Fig 14 generates per-tier files correctly."""
     from scylla.analysis.figures.judge_analysis import fig14_judge_agreement
 
@@ -107,7 +109,7 @@ def test_fig14_judge_agreement(sample_judges_df, tmp_path):
     # Note: Generates per-tier files (fig14_t0_judge_agreement.vl.json, etc.)
 
 
-def test_fig15a_subtest_run_heatmap(sample_runs_df, tmp_path):
+def test_fig15a_subtest_run_heatmap(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 15a generates files correctly."""
     from scylla.analysis.figures.subtest_detail import fig15a_subtest_run_heatmap
 
@@ -115,7 +117,7 @@ def test_fig15a_subtest_run_heatmap(sample_runs_df, tmp_path):
     assert (tmp_path / "fig15a_subtest_run_heatmap.vl.json").exists()
 
 
-def test_fig15b_subtest_best_heatmap(sample_runs_df, tmp_path):
+def test_fig15b_subtest_best_heatmap(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 15b generates files correctly."""
     from scylla.analysis.figures.subtest_detail import fig15b_subtest_best_heatmap
 
@@ -123,7 +125,7 @@ def test_fig15b_subtest_best_heatmap(sample_runs_df, tmp_path):
     assert (tmp_path / "fig15b_subtest_best_heatmap.vl.json").exists()
 
 
-def test_fig15c_tier_summary_heatmap(sample_runs_df, tmp_path):
+def test_fig15c_tier_summary_heatmap(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 15c generates files correctly."""
     from scylla.analysis.figures.subtest_detail import fig15c_tier_summary_heatmap
 
@@ -131,7 +133,7 @@ def test_fig15c_tier_summary_heatmap(sample_runs_df, tmp_path):
     assert (tmp_path / "fig15c_tier_summary_heatmap.vl.json").exists()
 
 
-def test_fig16a_success_variance_per_subtest(sample_runs_df, tmp_path):
+def test_fig16a_success_variance_per_subtest(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 16a generates files correctly."""
     from scylla.analysis.figures.variance import fig16a_success_variance_per_subtest
 
@@ -139,7 +141,7 @@ def test_fig16a_success_variance_per_subtest(sample_runs_df, tmp_path):
     assert (tmp_path / "fig16a_success_variance_per_subtest.vl.json").exists()
 
 
-def test_fig16b_success_variance_aggregate(sample_runs_df, tmp_path):
+def test_fig16b_success_variance_aggregate(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 16b generates files correctly."""
     from scylla.analysis.figures.variance import fig16b_success_variance_aggregate
 
@@ -147,7 +149,7 @@ def test_fig16b_success_variance_aggregate(sample_runs_df, tmp_path):
     assert (tmp_path / "fig16b_success_variance_aggregate.vl.json").exists()
 
 
-def test_fig17_judge_variance_overall(sample_judges_df, tmp_path):
+def test_fig17_judge_variance_overall(sample_judges_df: Any, tmp_path: Any) -> None:
     """Test Fig 17 generates per-tier files correctly."""
     from scylla.analysis.figures.judge_analysis import fig17_judge_variance_overall
 
@@ -155,7 +157,7 @@ def test_fig17_judge_variance_overall(sample_judges_df, tmp_path):
     # Note: Generates per-tier files (fig17_t0_judge_variance_overall.vl.json, etc.)
 
 
-def test_fig18a_failure_rate_per_subtest(sample_runs_df, tmp_path):
+def test_fig18a_failure_rate_per_subtest(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 18a generates files correctly."""
     from scylla.analysis.figures.variance import fig18a_failure_rate_per_subtest
 
@@ -163,7 +165,7 @@ def test_fig18a_failure_rate_per_subtest(sample_runs_df, tmp_path):
     assert (tmp_path / "fig18a_failure_rate_per_subtest.vl.json").exists()
 
 
-def test_fig18b_failure_rate_aggregate(sample_runs_df, tmp_path):
+def test_fig18b_failure_rate_aggregate(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 18b generates files correctly."""
     from scylla.analysis.figures.variance import fig18b_failure_rate_aggregate
 
@@ -171,7 +173,7 @@ def test_fig18b_failure_rate_aggregate(sample_runs_df, tmp_path):
     assert (tmp_path / "fig18b_failure_rate_aggregate.vl.json").exists()
 
 
-def test_publication_theme():
+def test_publication_theme() -> None:
     """Test publication theme is applied correctly."""
     from scylla.analysis.figures.spec_builder import apply_publication_theme
 
@@ -186,7 +188,7 @@ def test_publication_theme():
     assert alt.themes.active is not None
 
 
-def test_model_color_scale():
+def test_model_color_scale() -> None:
     """Test model color scale helper."""
     from scylla.analysis.figures.spec_builder import model_color_scale
 
@@ -209,7 +211,7 @@ def test_model_color_scale():
     assert len(scale.range) == len(models)
 
 
-def test_tier_order_constant():
+def test_tier_order_constant() -> None:
     """Test TIER_ORDER constant is available."""
     from scylla.analysis.figures import TIER_ORDER
 
@@ -219,7 +221,7 @@ def test_tier_order_constant():
     assert TIER_ORDER[-1] == "T6"
 
 
-def test_colors_constant():
+def test_colors_constant() -> None:
     """Test COLORS constant has required palettes."""
     from scylla.analysis.figures import COLORS
 
@@ -247,7 +249,7 @@ def test_colors_constant():
     assert "Output" in COLORS["token_types"]
 
 
-def test_fig19_effect_size_forest(sample_runs_df, tmp_path):
+def test_fig19_effect_size_forest(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 19 effect size forest plot generates files correctly."""
     from scylla.analysis.figures.effect_size import fig19_effect_size_forest
 
@@ -255,7 +257,7 @@ def test_fig19_effect_size_forest(sample_runs_df, tmp_path):
     assert (tmp_path / "fig19_effect_size_forest.vl.json").exists()
 
 
-def test_fig20_metric_correlation_heatmap(sample_runs_df, tmp_path):
+def test_fig20_metric_correlation_heatmap(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 20 correlation heatmap generates files correctly."""
     from scylla.analysis.figures.correlation import fig20_metric_correlation_heatmap
 
@@ -263,7 +265,7 @@ def test_fig20_metric_correlation_heatmap(sample_runs_df, tmp_path):
     assert (tmp_path / "fig20_metric_correlation_heatmap.vl.json").exists()
 
 
-def test_fig21_cost_quality_regression(sample_runs_df, tmp_path):
+def test_fig21_cost_quality_regression(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 21 regression plot generates files correctly."""
     from scylla.analysis.figures.correlation import fig21_cost_quality_regression
 
@@ -271,7 +273,7 @@ def test_fig21_cost_quality_regression(sample_runs_df, tmp_path):
     assert (tmp_path / "fig21_cost_quality_regression.vl.json").exists()
 
 
-def test_fig22_cumulative_cost(sample_runs_df, tmp_path):
+def test_fig22_cumulative_cost(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 22 cumulative cost curve generates files correctly."""
     from scylla.analysis.figures.cost_analysis import fig22_cumulative_cost
 
@@ -279,7 +281,7 @@ def test_fig22_cumulative_cost(sample_runs_df, tmp_path):
     assert (tmp_path / "fig22_cumulative_cost.vl.json").exists()
 
 
-def test_fig23_qq_plots(sample_runs_df, tmp_path):
+def test_fig23_qq_plots(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 23 Q-Q plots generate per-tier files correctly."""
     from scylla.analysis.figures.diagnostics import fig23_qq_plots
 
@@ -287,7 +289,7 @@ def test_fig23_qq_plots(sample_runs_df, tmp_path):
     # Note: Generates per-tier files, may not create files if insufficient data
 
 
-def test_fig24_score_histograms(sample_runs_df, tmp_path):
+def test_fig24_score_histograms(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 24 histograms with KDE generate per-tier files correctly."""
     from scylla.analysis.figures.diagnostics import fig24_score_histograms
 
@@ -295,7 +297,7 @@ def test_fig24_score_histograms(sample_runs_df, tmp_path):
     # Note: Generates per-tier files, may not create files if insufficient data
 
 
-def test_register_colors():
+def test_register_colors() -> None:
     """Test dynamic color registration."""
     from scylla.analysis.figures import COLORS, register_colors
 
@@ -316,7 +318,7 @@ def test_register_colors():
     del COLORS["models"]["New Model"]
 
 
-def test_figure_module_structure():
+def test_figure_module_structure() -> None:
     """Test that all figure modules exist."""
     figure_modules = [
         "tier_performance",
@@ -337,7 +339,7 @@ def test_figure_module_structure():
         assert module is not None
 
 
-def test_latex_snippet_generation(sample_runs_df, tmp_path):
+def test_latex_snippet_generation(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test LaTeX snippet generation for figures."""
     import altair as alt
 
@@ -370,7 +372,7 @@ def test_latex_snippet_generation(sample_runs_df, tmp_path):
     assert "\\end{figure}" in content
 
 
-def test_latex_snippet_with_custom_caption(tmp_path):
+def test_latex_snippet_with_custom_caption(tmp_path: Any) -> None:
     """Test LaTeX snippet with custom caption."""
     import altair as alt
     import pandas as pd
@@ -399,7 +401,7 @@ def test_latex_snippet_with_custom_caption(tmp_path):
     assert "\\caption{Custom caption for testing}" in content
 
 
-def test_fig25_impl_rate_by_tier(sample_runs_df, tmp_path):
+def test_fig25_impl_rate_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 25 generates files correctly."""
     from scylla.analysis.figures.impl_rate_analysis import fig25_impl_rate_by_tier
 
@@ -407,7 +409,7 @@ def test_fig25_impl_rate_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig25_impl_rate_by_tier.vl.json").exists()
 
 
-def test_fig26_impl_rate_vs_pass_rate(sample_runs_df, tmp_path):
+def test_fig26_impl_rate_vs_pass_rate(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 26 generates files correctly."""
     from scylla.analysis.figures.impl_rate_analysis import fig26_impl_rate_vs_pass_rate
 
@@ -415,7 +417,7 @@ def test_fig26_impl_rate_vs_pass_rate(sample_runs_df, tmp_path):
     assert (tmp_path / "fig26_impl_rate_vs_pass_rate.vl.json").exists()
 
 
-def test_fig27_impl_rate_distribution(sample_runs_df, tmp_path):
+def test_fig27_impl_rate_distribution(sample_runs_df: Any, tmp_path: Any) -> None:
     """Test Fig 27 generates files correctly."""
     from scylla.analysis.figures.impl_rate_analysis import fig27_impl_rate_distribution
 
@@ -423,7 +425,7 @@ def test_fig27_impl_rate_distribution(sample_runs_df, tmp_path):
     assert (tmp_path / "fig27_impl_rate_distribution.vl.json").exists()
 
 
-def test_impl_rate_figures_handle_missing_column(tmp_path):
+def test_impl_rate_figures_handle_missing_column(tmp_path: Any) -> None:
     """Test Impl-Rate figures handle missing impl_rate column gracefully."""
     import pandas as pd
 
@@ -454,7 +456,7 @@ def test_impl_rate_figures_handle_missing_column(tmp_path):
     assert not (tmp_path / "fig27_impl_rate_distribution.vl.json").exists()
 
 
-def test_get_color_with_static_colors():
+def test_get_color_with_static_colors() -> None:
     """Test get_color() returns static colors from config."""
     from scylla.analysis.figures import get_color
 
@@ -474,7 +476,7 @@ def test_get_color_with_static_colors():
     assert len(a_grade_color) == 7
 
 
-def test_get_color_with_dynamic_palette():
+def test_get_color_with_dynamic_palette() -> None:
     """Test get_color() falls back to dynamic palette for unknown keys."""
     from scylla.analysis.figures import get_color
 
@@ -494,7 +496,7 @@ def test_get_color_with_dynamic_palette():
     assert color1 == color2
 
 
-def test_get_color_deterministic_hash():
+def test_get_color_deterministic_hash() -> None:
     """Test get_color() uses deterministic hash for dynamic colors."""
     from scylla.analysis.figures import get_color
 
@@ -507,7 +509,7 @@ def test_get_color_deterministic_hash():
     assert color1 == color2 == color3
 
 
-def test_get_color_scale_with_known_keys():
+def test_get_color_scale_with_known_keys() -> None:
     """Test get_color_scale() returns correct domain and range for known keys."""
     from scylla.analysis.figures import get_color_scale
 
@@ -526,7 +528,7 @@ def test_get_color_scale_with_known_keys():
         assert len(color) == 7
 
 
-def test_get_color_scale_with_unknown_keys():
+def test_get_color_scale_with_unknown_keys() -> None:
     """Test get_color_scale() handles unknown keys with dynamic palette."""
     from scylla.analysis.figures import get_color_scale
 
@@ -544,7 +546,7 @@ def test_get_color_scale_with_unknown_keys():
         assert len(color) == 7
 
 
-def test_get_color_scale_with_mixed_keys():
+def test_get_color_scale_with_mixed_keys() -> None:
     """Test get_color_scale() handles mix of known and unknown keys."""
     from scylla.analysis.figures import get_color_scale
 
@@ -562,7 +564,7 @@ def test_get_color_scale_with_mixed_keys():
         assert len(color) == 7
 
 
-def test_get_color_scale_empty_list():
+def test_get_color_scale_empty_list() -> None:
     """Test get_color_scale() handles empty list gracefully."""
     from scylla.analysis.figures import get_color_scale
 
@@ -573,7 +575,7 @@ def test_get_color_scale_empty_list():
     assert range_ == []
 
 
-def test_get_color_scale_single_key():
+def test_get_color_scale_single_key() -> None:
     """Test get_color_scale() handles single key correctly."""
     from scylla.analysis.figures import get_color_scale
 
@@ -585,7 +587,7 @@ def test_get_color_scale_single_key():
     assert range_[0].startswith("#")
 
 
-def test_compute_dynamic_domain():
+def test_compute_dynamic_domain() -> None:
     """Test compute_dynamic_domain with various data patterns."""
     import pandas as pd
 
@@ -651,7 +653,7 @@ def test_generate_figures_process_metrics_use_tier_category() -> None:
     assert FIGURES["fig_strategic_drift_by_tier"][0] == "tier"
 
 
-def test_compute_dynamic_domain_padding():
+def test_compute_dynamic_domain_padding() -> None:
     """Test padding behavior."""
     import pandas as pd
 
@@ -669,7 +671,7 @@ def test_compute_dynamic_domain_padding():
     assert domain_pad[1] - domain_pad[0] >= domain_no_pad[1] - domain_no_pad[0]
 
 
-def test_fig28_r_prog_by_tier(sample_runs_df, tmp_path):
+def test_fig28_r_prog_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Smoke test: fig28_r_prog_by_tier generates output file without error."""
     from scylla.analysis.figures.process_metrics import fig28_r_prog_by_tier
 
@@ -677,7 +679,7 @@ def test_fig28_r_prog_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig28_r_prog_by_tier.vl.json").exists()
 
 
-def test_fig29_cfp_by_tier(sample_runs_df, tmp_path):
+def test_fig29_cfp_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Smoke test: fig29_cfp_by_tier generates output file without error."""
     from scylla.analysis.figures.process_metrics import fig29_cfp_by_tier
 
@@ -685,7 +687,7 @@ def test_fig29_cfp_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig29_cfp_by_tier.vl.json").exists()
 
 
-def test_fig30_pr_revert_by_tier(sample_runs_df, tmp_path):
+def test_fig30_pr_revert_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Smoke test: fig30_pr_revert_by_tier generates output file without error."""
     from scylla.analysis.figures.process_metrics import fig30_pr_revert_by_tier
 
@@ -693,7 +695,7 @@ def test_fig30_pr_revert_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig30_pr_revert_by_tier.vl.json").exists()
 
 
-def test_process_metrics_figures_handle_missing_columns(tmp_path):
+def test_process_metrics_figures_handle_missing_columns(tmp_path: Any) -> None:
     """Process-metrics figures skip gracefully when their column is absent."""
     import pandas as pd
 
@@ -724,7 +726,7 @@ def test_process_metrics_figures_handle_missing_columns(tmp_path):
     assert not (tmp_path / "fig30_pr_revert_by_tier.vl.json").exists()
 
 
-def test_fig_strategic_drift_by_tier(sample_runs_df, tmp_path):
+def test_fig_strategic_drift_by_tier(sample_runs_df: Any, tmp_path: Any) -> None:
     """Smoke test: fig_strategic_drift_by_tier generates output file without error."""
     from scylla.analysis.figures.process_metrics import fig_strategic_drift_by_tier
 
@@ -732,7 +734,7 @@ def test_fig_strategic_drift_by_tier(sample_runs_df, tmp_path):
     assert (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
 
 
-def test_fig_strategic_drift_by_tier_missing_column(tmp_path):
+def test_fig_strategic_drift_by_tier_missing_column(tmp_path: Any) -> None:
     """fig_strategic_drift_by_tier skips gracefully when column absent."""
     import pandas as pd
 
@@ -743,7 +745,7 @@ def test_fig_strategic_drift_by_tier_missing_column(tmp_path):
     assert not (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
 
 
-def test_fig_strategic_drift_by_tier_all_null(tmp_path):
+def test_fig_strategic_drift_by_tier_all_null(tmp_path: Any) -> None:
     """fig_strategic_drift_by_tier skips gracefully when column all-null."""
     import pandas as pd
 

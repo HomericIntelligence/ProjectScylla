@@ -1,5 +1,6 @@
 """Tests for retry decorator with exponential backoff."""
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,17 +11,17 @@ from scylla.automation.retry import is_network_error, retry_on_network_error, re
 class TestIsNetworkError:
     """Tests for is_network_error function."""
 
-    def test_detects_connection_error(self):
+    def test_detects_connection_error(self) -> None:
         """Test detection of connection-related errors."""
         error = ConnectionError("Connection refused")
         assert is_network_error(error) is True
 
-    def test_detects_timeout_error(self):
+    def test_detects_timeout_error(self) -> None:
         """Test detection of timeout errors."""
         error = TimeoutError("Request timed out")
         assert is_network_error(error) is True
 
-    def test_detects_network_keywords(self):
+    def test_detects_network_keywords(self) -> None:
         """Test detection of network error keywords in error messages."""
         test_cases = [
             "network unavailable",
@@ -37,7 +38,7 @@ class TestIsNetworkError:
             error = Exception(message)
             assert is_network_error(error) is True, f"Failed to detect: {message}"
 
-    def test_does_not_detect_non_network_errors(self):
+    def test_does_not_detect_non_network_errors(self) -> None:
         """Test that non-network errors are not detected."""
         test_cases = [
             "ValueError: invalid input",
@@ -53,7 +54,7 @@ class TestIsNetworkError:
 class TestRetryWithBackoff:
     """Tests for retry_with_backoff decorator."""
 
-    def test_succeeds_on_first_attempt(self):
+    def test_succeeds_on_first_attempt(self) -> None:
         """Test function that succeeds on first attempt."""
         mock_func = MagicMock(return_value="success")
         decorated = retry_with_backoff(max_retries=3)(mock_func)
@@ -63,7 +64,7 @@ class TestRetryWithBackoff:
         assert result == "success"
         assert mock_func.call_count == 1
 
-    def test_retries_on_failure(self):
+    def test_retries_on_failure(self) -> None:
         """Test function that fails then succeeds."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         decorated = retry_with_backoff(max_retries=3, initial_delay=0.01)(mock_func)
@@ -74,7 +75,7 @@ class TestRetryWithBackoff:
         assert result == "success"
         assert mock_func.call_count == 3
 
-    def test_raises_after_max_retries(self):
+    def test_raises_after_max_retries(self) -> None:
         """Test function that exhausts all retries."""
         mock_func = MagicMock(side_effect=ValueError("fail"))
         decorated = retry_with_backoff(max_retries=2, initial_delay=0.01)(mock_func)
@@ -85,7 +86,7 @@ class TestRetryWithBackoff:
 
         assert mock_func.call_count == 3  # initial + 2 retries
 
-    def test_exponential_backoff_delay(self):
+    def test_exponential_backoff_delay(self) -> None:
         """Test exponential backoff delays are calculated correctly."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         decorated = retry_with_backoff(max_retries=3, initial_delay=0.1, backoff_factor=2)(
@@ -102,7 +103,7 @@ class TestRetryWithBackoff:
         mock_sleep.assert_any_call(0.1)
         mock_sleep.assert_any_call(0.2)
 
-    def test_respects_retry_on_parameter(self):
+    def test_respects_retry_on_parameter(self) -> None:
         """Test retry_on parameter filters exception types."""
         mock_func = MagicMock(side_effect=TypeError("wrong type"))
         # Only retry on ValueError, not TypeError
@@ -117,7 +118,7 @@ class TestRetryWithBackoff:
         # Should not retry since TypeError is not in retry_on
         assert mock_func.call_count == 1
 
-    def test_logger_called_on_retry(self):
+    def test_logger_called_on_retry(self) -> None:
         """Test logger is called with retry information."""
         mock_logger = MagicMock()
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
@@ -135,18 +136,18 @@ class TestRetryWithBackoff:
         assert "Retry 1/2" in log_message
         assert "ValueError" in log_message
 
-    def test_preserves_function_metadata(self):
+    def test_preserves_function_metadata(self) -> None:
         """Test decorator preserves function name and docstring."""
 
         @retry_with_backoff(max_retries=2)
-        def example_function():
+        def example_function() -> Any:
             """Return example result."""
             return "result"
 
         assert example_function.__name__ == "example_function"
         assert example_function.__doc__ == "Return example result."
 
-    def test_passes_arguments_correctly(self):
+    def test_passes_arguments_correctly(self) -> None:
         """Test decorated function receives correct arguments."""
         mock_func = MagicMock(return_value="success")
         decorated = retry_with_backoff(max_retries=2)(mock_func)
@@ -160,7 +161,7 @@ class TestRetryWithBackoff:
 class TestRetryOnNetworkError:
     """Tests for retry_on_network_error convenience decorator."""
 
-    def test_retries_connection_error(self):
+    def test_retries_connection_error(self) -> None:
         """Test retry on ConnectionError."""
         mock_func = MagicMock(side_effect=[ConnectionError("connection refused"), "success"])
         decorated = retry_on_network_error(max_retries=2)(mock_func)
@@ -171,7 +172,7 @@ class TestRetryOnNetworkError:
         assert result == "success"
         assert mock_func.call_count == 2
 
-    def test_retries_timeout_error(self):
+    def test_retries_timeout_error(self) -> None:
         """Test retry on TimeoutError."""
         mock_func = MagicMock(side_effect=[TimeoutError("timed out"), "success"])
         decorated = retry_on_network_error(max_retries=2)(mock_func)
@@ -182,7 +183,7 @@ class TestRetryOnNetworkError:
         assert result == "success"
         assert mock_func.call_count == 2
 
-    def test_does_not_retry_value_error(self):
+    def test_does_not_retry_value_error(self) -> None:
         """Test ValueError is not retried."""
         mock_func = MagicMock(side_effect=ValueError("invalid value"))
         decorated = retry_on_network_error(max_retries=2)(mock_func)
@@ -193,7 +194,7 @@ class TestRetryOnNetworkError:
         # Should not retry non-network errors
         assert mock_func.call_count == 1
 
-    def test_uses_longer_initial_delay(self):
+    def test_uses_longer_initial_delay(self) -> None:
         """Test retry_on_network_error uses 2.0s initial delay."""
         mock_func = MagicMock(side_effect=[ConnectionError("fail"), "success"])
         decorated = retry_on_network_error(max_retries=1)(mock_func)
@@ -209,7 +210,7 @@ class TestRetryOnNetworkError:
 class TestRetryWithMaxDelay:
     """Tests for max_delay parameter in retry_with_backoff."""
 
-    def test_max_delay_none_by_default(self):
+    def test_max_delay_none_by_default(self) -> None:
         """Test max_delay is None by default and delays are uncapped."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         # With initial_delay=0.1, backoff_factor=2: delays are 0.1, 0.2 (uncapped)
@@ -224,7 +225,7 @@ class TestRetryWithMaxDelay:
         sleep_calls = [call.args[0] for call in mock_sleep.call_args_list]
         assert sleep_calls == [0.1, 0.2]
 
-    def test_max_delay_caps_large_delays(self):
+    def test_max_delay_caps_large_delays(self) -> None:
         """Test max_delay caps the computed delay when it would exceed the cap."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         # With initial_delay=1.0, backoff_factor=2: delays would be 1.0, 2.0 (uncapped)
@@ -241,7 +242,7 @@ class TestRetryWithMaxDelay:
         assert sleep_calls[0] == 1.0  # 1.0 * 2^0 = 1.0, not capped
         assert sleep_calls[1] == 1.5  # 1.0 * 2^1 = 2.0, capped to 1.5
 
-    def test_max_delay_does_not_affect_delays_below_cap(self):
+    def test_max_delay_does_not_affect_delays_below_cap(self) -> None:
         """Test max_delay does not modify delays that are already below the cap."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
         # With initial_delay=0.5, backoff_factor=2, max_delay=10.0:
@@ -256,7 +257,7 @@ class TestRetryWithMaxDelay:
         assert result == "success"
         mock_sleep.assert_called_once_with(0.5)
 
-    def test_max_delay_applied_before_jitter(self):
+    def test_max_delay_applied_before_jitter(self) -> None:
         """Test max_delay cap is applied before jitter so jitter acts on capped value."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
         # initial_delay=1.0, backoff_factor=4: first delay would be 4.0 without cap
@@ -277,7 +278,7 @@ class TestRetryWithMaxDelay:
         # delay = min(4.0 * 2^0, 2.0) = 2.0, then * 1.5 = 3.0
         mock_sleep.assert_called_once_with(pytest.approx(3.0))
 
-    def test_max_delay_with_many_retries_all_capped(self):
+    def test_max_delay_with_many_retries_all_capped(self) -> None:
         """Test all delays are capped when exponential backoff quickly exceeds max_delay."""
         side_effects = [ValueError("fail")] * 4 + ["success"]
         mock_func = MagicMock(side_effect=side_effects)
@@ -297,7 +298,7 @@ class TestRetryWithMaxDelay:
         assert sleep_calls[2] == 15.0  # 10 * 2^2 = 40.0, capped to 15.0
         assert sleep_calls[3] == 15.0  # 10 * 2^3 = 80.0, capped to 15.0
 
-    def test_max_delay_with_logger_reports_capped_delay(self):
+    def test_max_delay_with_logger_reports_capped_delay(self) -> None:
         """Test logger receives the capped delay value."""
         mock_logger = MagicMock()
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
@@ -318,7 +319,7 @@ class TestRetryWithMaxDelay:
 class TestRetryWithJitter:
     """Tests for jitter parameter in retry_with_backoff."""
 
-    def test_jitter_false_by_default(self):
+    def test_jitter_false_by_default(self) -> None:
         """Test jitter is disabled by default and delays are unmodified."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
         decorated = retry_with_backoff(max_retries=2, initial_delay=0.1, backoff_factor=2)(
@@ -333,7 +334,7 @@ class TestRetryWithJitter:
         mock_uniform.assert_not_called()
         mock_sleep.assert_called_once_with(0.1)
 
-    def test_jitter_true_applies_random_factor(self):
+    def test_jitter_true_applies_random_factor(self) -> None:
         """Test jitter=True multiplies delay by random.uniform(0.5, 1.5)."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])
         decorated = retry_with_backoff(
@@ -349,7 +350,7 @@ class TestRetryWithJitter:
         # delay = 0.1 * 2^0 * 1.2 = 0.12
         mock_sleep.assert_called_once_with(0.1 * 1.2)
 
-    def test_jitter_applied_to_each_retry(self):
+    def test_jitter_applied_to_each_retry(self) -> None:
         """Test jitter is applied independently to each retry delay."""
         mock_func = MagicMock(side_effect=[ValueError("fail"), ValueError("fail"), "success"])
         decorated = retry_with_backoff(
@@ -373,7 +374,7 @@ class TestRetryWithJitter:
         assert sleep_calls[0] == pytest.approx(0.1 * 0.8)
         assert sleep_calls[1] == pytest.approx(0.2 * 1.3)
 
-    def test_jitter_with_logger_reports_jittered_delay(self):
+    def test_jitter_with_logger_reports_jittered_delay(self) -> None:
         """Test logger receives the jittered delay value."""
         mock_logger = MagicMock()
         mock_func = MagicMock(side_effect=[ValueError("fail"), "success"])

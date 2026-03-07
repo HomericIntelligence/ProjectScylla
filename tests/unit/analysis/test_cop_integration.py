@@ -1,7 +1,9 @@
+from typing import Any
+
 """Tests for CoP and Frontier CoP integration (Issue #325)."""
 
 
-def test_cop_frontier_cop_integration(sample_runs_df):
+def test_cop_frontier_cop_integration(sample_runs_df: Any) -> None:
     """Test that CoP and Frontier CoP are integrated (Issue #325)."""
     from export_data import compute_statistical_results
 

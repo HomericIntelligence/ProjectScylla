@@ -15,7 +15,7 @@ from scylla.metrics.grading import assign_letter_grade
 class TestGradingConsistency:
     """Test grading consistency across codebase."""
 
-    def test_grade_thresholds_match_documentation(self):
+    def test_grade_thresholds_match_documentation(self) -> None:
         """Verify grade thresholds match grading-scale.md."""
         # These values are from docs/design/grading-scale.md
         # Grade assignment logic is in scylla.metrics.grading.assign_letter_grade()
@@ -29,7 +29,7 @@ class TestGradingConsistency:
         assert assign_letter_grade(0.20) == "D"
         assert assign_letter_grade(0.00) == "F"
 
-    def test_s_grade_requires_perfect_score(self):
+    def test_s_grade_requires_perfect_score(self) -> None:
         """S grade should ONLY be assigned to exactly 1.0."""
         # Perfect score = S
         assert assign_letter_grade(1.0) == "S"
@@ -39,7 +39,7 @@ class TestGradingConsistency:
         assert assign_letter_grade(0.95) == "A"
         assert assign_letter_grade(0.999) == "A"
 
-    def test_grade_assignment_boundaries(self):
+    def test_grade_assignment_boundaries(self) -> None:
         """Test grade assignment at exact threshold boundaries."""
         test_cases = [
             # (score, expected_grade)
@@ -62,7 +62,7 @@ class TestGradingConsistency:
                 f"Score {score} should be grade {expected_grade}, got {actual_grade}"
             )
 
-    def test_metrics_grading_validates_range(self):
+    def test_metrics_grading_validates_range(self) -> None:
         """Test that assign_letter_grade raises ValueError on invalid scores."""
         # Scores > 1.0 should raise ValueError
         with pytest.raises(ValueError, match="score must be in"):
@@ -78,7 +78,7 @@ class TestGradingConsistency:
         with pytest.raises(ValueError, match="score must be in"):
             assign_letter_grade(-1.0)
 
-    def test_grade_assignment_exhaustive(self):
+    def test_grade_assignment_exhaustive(self) -> None:
         """Exhaustively test grade assignment for all integer percentages."""
         expected_grades = {
             range(0, 20): "F",
@@ -97,7 +97,7 @@ class TestGradingConsistency:
                     f"Score {score} ({percentage}%) should be {expected_grade}, got {actual_grade}"
                 )
 
-    def test_s_grade_exclusively_for_perfect(self):
+    def test_s_grade_exclusively_for_perfect(self) -> None:
         """Verify S grade is NEVER assigned to scores less than 1.0."""
         # Test many scores below 1.0
         for i in range(95, 100):  # 0.95 to 0.99

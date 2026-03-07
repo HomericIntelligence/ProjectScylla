@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 from check_defaults_filename import main
@@ -52,7 +53,7 @@ class TestMain:
 
         assert result == 1
 
-    def test_prints_errors_when_validation_fails(self, tmp_path: Path, capsys: object) -> None:
+    def test_prints_errors_when_validation_fails(self, tmp_path: Path, capsys: Any) -> None:
         """Prints each warning to stderr when validation fails."""
         config_dir = tmp_path / "config"
         config_dir.mkdir()

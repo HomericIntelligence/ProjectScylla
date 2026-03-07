@@ -606,7 +606,7 @@ class TestResumeTierConfigPreload:
         )
         runner.checkpoint = checkpoint
 
-        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: object) -> None:
+        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: Any) -> None:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
@@ -649,7 +649,7 @@ class TestResumeTierConfigPreload:
         )
         runner.checkpoint = checkpoint
 
-        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: object) -> None:
+        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: Any) -> None:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):
@@ -690,7 +690,7 @@ class TestResumeTierConfigPreload:
         )
         runner.checkpoint = checkpoint
 
-        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: object) -> None:
+        def noop_complete(tier_id_str: str, actions: dict[str, Any], until_state: Any) -> None:
             pass
 
         with patch.object(TierStateMachine, "advance_to_completion", side_effect=noop_complete):

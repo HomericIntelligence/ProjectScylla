@@ -305,7 +305,7 @@ class TestParseJudgeResponse:
 class TestCheckpointResumeWithNullCriteriaScores:
     """Tests for checkpoint resume when criteria_scores is null in stored data."""
 
-    def _make_report_data(self, criteria_scores_value: object) -> dict[str, Any]:
+    def _make_report_data(self, criteria_scores_value: Any) -> dict[str, Any]:
         """Build a minimal report_data dict with the given criteria_scores value."""
         from scylla.e2e.models import TokenStats
 

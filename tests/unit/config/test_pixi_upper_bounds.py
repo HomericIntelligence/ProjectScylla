@@ -6,6 +6,7 @@ unexpected breakage when a major version is released.
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -39,7 +40,7 @@ def _load_pypi_deps() -> dict[str, object]:
     return deps
 
 
-def _has_upper_bound(spec: object) -> bool:
+def _has_upper_bound(spec: Any) -> bool:
     """Return True if the version spec string contains a '<' upper bound."""
     if not isinstance(spec, str):
         # Table form (e.g. {path = ".", editable = true}) — not a version spec

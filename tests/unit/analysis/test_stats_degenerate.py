@@ -3,6 +3,8 @@
 Tests edge cases and boundary conditions using degenerate fixtures from conftest.py.
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
 
@@ -11,7 +13,7 @@ import pytest
 class TestCliffsDetaDegenerate:
     """Test Cliff's delta with degenerate inputs."""
 
-    def test_cliffs_delta_all_same_groups(self, degenerate_all_same):
+    def test_cliffs_delta_all_same_groups(self, degenerate_all_same: Any) -> None:
         """Test Cliff's delta with identical values in both groups."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -19,7 +21,7 @@ class TestCliffsDetaDegenerate:
         delta = cliffs_delta(degenerate_all_same, degenerate_all_same)
         assert delta == pytest.approx(0.0)
 
-    def test_cliffs_delta_single_element_groups(self, degenerate_single_element):
+    def test_cliffs_delta_single_element_groups(self, degenerate_single_element: Any) -> None:
         """Test Cliff's delta with single-element groups."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -33,7 +35,7 @@ class TestCliffsDetaDegenerate:
         delta = cliffs_delta(g1, g2)
         assert delta == pytest.approx(-1.0)  # g1 < g2
 
-    def test_cliffs_delta_unbalanced_groups(self, degenerate_unbalanced_groups):
+    def test_cliffs_delta_unbalanced_groups(self, degenerate_unbalanced_groups: Any) -> None:
         """Test Cliff's delta with severely unbalanced group sizes."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -44,7 +46,7 @@ class TestCliffsDetaDegenerate:
         delta = cliffs_delta(small, large)
         assert -1.0 <= delta <= 1.0  # Valid range
 
-    def test_cliffs_delta_nan_handling(self, degenerate_nan_values):
+    def test_cliffs_delta_nan_handling(self, degenerate_nan_values: Any) -> None:
         """Test Cliff's delta with NaN values."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -53,7 +55,7 @@ class TestCliffsDetaDegenerate:
         # If NaNs are not filtered, result should be NaN
         assert np.isnan(result) or isinstance(result, float)
 
-    def test_cliffs_delta_inf_handling(self, degenerate_inf_values):
+    def test_cliffs_delta_inf_handling(self, degenerate_inf_values: Any) -> None:
         """Test Cliff's delta with infinite values."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -67,7 +69,7 @@ class TestCliffsDetaDegenerate:
 class TestBootstrapCIDegenerate:
     """Test bootstrap confidence intervals with degenerate inputs."""
 
-    def test_bootstrap_all_same(self, degenerate_all_same):
+    def test_bootstrap_all_same(self, degenerate_all_same: Any) -> None:
         """Test bootstrap CI with zero variance data."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -77,7 +79,7 @@ class TestBootstrapCIDegenerate:
         assert ci_low == pytest.approx(0.7, abs=1e-6)
         assert ci_high == pytest.approx(0.7, abs=1e-6)
 
-    def test_bootstrap_binary(self, degenerate_binary_data):
+    def test_bootstrap_binary(self, degenerate_binary_data: Any) -> None:
         """Test bootstrap CI with binary data."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -85,7 +87,7 @@ class TestBootstrapCIDegenerate:
         # Binary data should produce valid CI
         assert 0.0 <= ci_low <= mean <= ci_high <= 1.0
 
-    def test_bootstrap_boundary_values(self, degenerate_boundary_values):
+    def test_bootstrap_boundary_values(self, degenerate_boundary_values: Any) -> None:
         """Test bootstrap CI with exact boundary values (0.0, 1.0)."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -93,7 +95,7 @@ class TestBootstrapCIDegenerate:
         # Should handle boundaries gracefully
         assert 0.0 <= ci_low <= mean <= ci_high <= 1.0
 
-    def test_bootstrap_near_zero(self, degenerate_near_zero):
+    def test_bootstrap_near_zero(self, degenerate_near_zero: Any) -> None:
         """Test bootstrap CI with very small values (numerical stability)."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -102,7 +104,7 @@ class TestBootstrapCIDegenerate:
         assert 0.0 < ci_low <= mean <= ci_high
         assert mean < 1e-5  # All values are very small
 
-    def test_bootstrap_high_variance(self, degenerate_high_variance):
+    def test_bootstrap_high_variance(self, degenerate_high_variance: Any) -> None:
         """Test bootstrap CI with extreme variance."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -117,7 +119,7 @@ class TestBootstrapCIDegenerate:
 class TestMannWhitneyDegenerate:
     """Test Mann-Whitney U with degenerate inputs."""
 
-    def test_mann_whitney_all_same(self, degenerate_all_same):
+    def test_mann_whitney_all_same(self, degenerate_all_same: Any) -> None:
         """Test Mann-Whitney U with identical distributions."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -125,7 +127,9 @@ class TestMannWhitneyDegenerate:
         # Identical distributions -> not significant
         assert p_value > 0.05
 
-    def test_mann_whitney_all_pass_vs_all_fail(self, degenerate_all_pass, degenerate_all_fail):
+    def test_mann_whitney_all_pass_vs_all_fail(
+        self, degenerate_all_pass: Any, degenerate_all_fail: Any
+    ) -> None:
         """Test Mann-Whitney U with completely separated groups."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -133,7 +137,7 @@ class TestMannWhitneyDegenerate:
         # Completely separated -> highly significant
         assert p_value < 0.01
 
-    def test_mann_whitney_single_element(self, degenerate_single_element):
+    def test_mann_whitney_single_element(self, degenerate_single_element: Any) -> None:
         """Test Mann-Whitney U with single-element groups."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -145,7 +149,7 @@ class TestMannWhitneyDegenerate:
         # With very small samples, expect high p-value or warning
         assert isinstance(p_value, float)
 
-    def test_mann_whitney_unbalanced(self, degenerate_unbalanced_groups):
+    def test_mann_whitney_unbalanced(self, degenerate_unbalanced_groups: Any) -> None:
         """Test Mann-Whitney U with unbalanced group sizes."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -162,7 +166,7 @@ class TestMannWhitneyDegenerate:
 class TestConsistencyDegenerate:
     """Test consistency (1-CV) with degenerate inputs."""
 
-    def test_consistency_all_same(self, degenerate_all_same):
+    def test_consistency_all_same(self, degenerate_all_same: Any) -> None:
         """Test consistency with zero variance."""
         from scylla.analysis.stats import compute_consistency
 
@@ -172,7 +176,7 @@ class TestConsistencyDegenerate:
         consistency = compute_consistency(mean, std)
         assert consistency == pytest.approx(1.0, abs=1e-6)
 
-    def test_consistency_single_element(self, degenerate_single_element):
+    def test_consistency_single_element(self, degenerate_single_element: Any) -> None:
         """Test consistency with single element."""
         from scylla.analysis.stats import compute_consistency
 
@@ -182,7 +186,7 @@ class TestConsistencyDegenerate:
         consistency = compute_consistency(mean, std)
         assert consistency == pytest.approx(1.0, abs=1e-6)
 
-    def test_consistency_high_variance(self, degenerate_high_variance):
+    def test_consistency_high_variance(self, degenerate_high_variance: Any) -> None:
         """Test consistency with extreme variance."""
         from scylla.analysis.stats import compute_consistency
 
@@ -192,7 +196,7 @@ class TestConsistencyDegenerate:
         # High CV -> low consistency (could be negative, clamped to 0)
         assert 0.0 <= consistency <= 1.0
 
-    def test_consistency_near_zero_mean(self, degenerate_near_zero):
+    def test_consistency_near_zero_mean(self, degenerate_near_zero: Any) -> None:
         """Test consistency when mean is near zero."""
         from scylla.analysis.stats import compute_consistency
 
@@ -208,7 +212,7 @@ class TestConsistencyDegenerate:
 class TestKruskalWallisDegenerate:
     """Test Kruskal-Wallis with degenerate inputs."""
 
-    def test_kruskal_all_same_groups(self, degenerate_all_same):
+    def test_kruskal_all_same_groups(self, degenerate_all_same: Any) -> None:
         """Test Kruskal-Wallis with identical groups."""
         from scylla.analysis.stats import kruskal_wallis
 
@@ -221,7 +225,9 @@ class TestKruskalWallisDegenerate:
         # This is expected behavior from scipy when all values are identical
         assert np.isnan(p_value) or p_value > 0.05
 
-    def test_kruskal_two_groups_only(self, degenerate_all_pass, degenerate_all_fail):
+    def test_kruskal_two_groups_only(
+        self, degenerate_all_pass: Any, degenerate_all_fail: Any
+    ) -> None:
         """Test Kruskal-Wallis with minimum 2 groups."""
         from scylla.analysis.stats import kruskal_wallis
 
@@ -231,7 +237,7 @@ class TestKruskalWallisDegenerate:
         # Completely different groups -> significant
         assert p_value < 0.05
 
-    def test_kruskal_unbalanced_groups(self, degenerate_unbalanced_groups):
+    def test_kruskal_unbalanced_groups(self, degenerate_unbalanced_groups: Any) -> None:
         """Test Kruskal-Wallis with severely unbalanced groups."""
         from scylla.analysis.stats import kruskal_wallis
 
@@ -258,7 +264,7 @@ class TestKruskalWallisDegenerate:
         "degenerate_binary_data",
     ],
 )
-def test_stats_pipeline_with_degenerate_data(fixture_name, request):
+def test_stats_pipeline_with_degenerate_data(fixture_name: Any, request: Any) -> None:
     """Integration test: ensure stats pipeline handles degenerate data gracefully.
 
     This test verifies that the core statistical pipeline (used in tables/figures)

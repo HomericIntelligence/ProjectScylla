@@ -408,7 +408,7 @@ class TestRunSubtestInProcessSafe:
     by catching all exceptions and returning structured SubTestResult objects.
     """
 
-    def _make_subtest_config(self):
+    def _make_subtest_config(self) -> Any:
         """Create a minimal SubTestConfig for testing."""
         from scylla.e2e.models import SubTestConfig
 
@@ -447,7 +447,7 @@ class TestRunSubtestInProcessSafe:
             "experiment_dir": None,
         }
 
-    def test_success_passthrough(self, tmp_path) -> None:
+    def test_success_passthrough(self, tmp_path: Any) -> None:
         """When _run_subtest_in_process succeeds, result is passed through unchanged."""
         from scylla.e2e.models import SubTestResult, TierID
         from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
@@ -477,7 +477,7 @@ class TestRunSubtestInProcessSafe:
         mock_inner.assert_called_once()
         assert result is expected_result
 
-    def test_rate_limit_error_handling(self, tmp_path) -> None:
+    def test_rate_limit_error_handling(self, tmp_path: Any) -> None:
         """RateLimitError is caught; SubTestResult has rate_limit_info set."""
         from scylla.e2e.models import SubTestResult, TierID
         from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
@@ -508,7 +508,7 @@ class TestRunSubtestInProcessSafe:
         assert result.tier_id == TierID.T0
         assert result.pass_rate == 0.0
 
-    def test_generic_exception_handling(self, tmp_path) -> None:
+    def test_generic_exception_handling(self, tmp_path: Any) -> None:
         """Generic Exception is caught; SubTestResult carries error info."""
         from scylla.e2e.models import SubTestResult, TierID
         from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
@@ -530,7 +530,7 @@ class TestRunSubtestInProcessSafe:
         assert result.tier_id == TierID.T0
         assert result.pass_rate == 0.0
 
-    def test_never_raises(self, tmp_path) -> None:
+    def test_never_raises(self, tmp_path: Any) -> None:
         """Safe wrapper never raises for any Exception subclass from inner function.
 
         The wrapper catches Exception (and RateLimitError), converting them to
@@ -559,7 +559,7 @@ class TestRunSubtestInProcessSafe:
                         f"when it should never raise"
                     ) from raised
 
-    def test_returns_subtest_result_type(self, tmp_path) -> None:
+    def test_returns_subtest_result_type(self, tmp_path: Any) -> None:
         """Return type is always SubTestResult regardless of inner outcome."""
         from scylla.e2e.models import SubTestResult
         from scylla.e2e.parallel_executor import _run_subtest_in_process_safe

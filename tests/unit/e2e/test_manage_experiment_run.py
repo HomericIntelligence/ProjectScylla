@@ -80,11 +80,11 @@ class TestCmdRunFromWithCheckpoint:
         reset_calls = []
         run_calls = []
 
-        def mock_reset_runs(checkpoint, from_state, **kwargs):
+        def mock_reset_runs(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             reset_calls.append(("runs", from_state, kwargs))
             return 1
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             run_calls.append((config, fresh))
             return {"T0": {}}  # truthy result
 
@@ -150,7 +150,7 @@ class TestCmdRunFromWithCheckpoint:
 
         tier_reset_calls = []
 
-        def mock_reset_tiers(checkpoint, from_state, **kwargs):
+        def mock_reset_tiers(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             tier_reset_calls.append(from_state)
             return 1
 
@@ -211,7 +211,7 @@ class TestCmdRunFromWithCheckpoint:
 
         tier_reset_kwargs: list[dict[str, Any]] = []
 
-        def mock_reset_tiers(checkpoint, from_state, **kwargs):
+        def mock_reset_tiers(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             tier_reset_kwargs.append(kwargs)
             return 1
 
@@ -264,7 +264,7 @@ class TestCmdRunFromWithCheckpoint:
 
         experiment_reset_calls: list[str] = []
 
-        def mock_reset_experiment(checkpoint, from_state):
+        def mock_reset_experiment(checkpoint: Any, from_state: Any) -> Any:
             experiment_reset_calls.append(from_state)
             return 1
 
@@ -358,7 +358,7 @@ class TestCmdRunFromInBatchMode:
 
         reset_calls: list[str] = []
 
-        def mock_reset_runs(checkpoint, from_state, **kwargs):
+        def mock_reset_runs(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             reset_calls.append(from_state)
             return 1
 
@@ -490,7 +490,7 @@ class TestAddJudgeDedup:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -528,7 +528,7 @@ class TestAddJudgeDedup:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -565,7 +565,7 @@ class TestAddJudgeDedup:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -626,7 +626,7 @@ class TestYamlConfigFileMode:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -687,7 +687,7 @@ class TestYamlConfigFileMode:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -726,7 +726,7 @@ class TestTestConfigLoaderExclusion:
 
         call_args = []
 
-        def mock_run_batch(test_dirs, passed_args):
+        def mock_run_batch(test_dirs: Any, passed_args: Any) -> Any:
             call_args.append(list(test_dirs))
             return 0
 
@@ -824,7 +824,7 @@ class TestFilterJudgeSlotNoEffect:
 
         reset_kwargs_captured: list[dict[str, Any]] = []
 
-        def mock_reset_runs(checkpoint, from_state, **kwargs):
+        def mock_reset_runs(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             reset_kwargs_captured.append(kwargs)
             return 0
 
@@ -948,7 +948,7 @@ class TestFreshFlag:
 
         captured_fresh: list[bool] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_fresh.append(fresh)
             return {"T0": {}}
 
@@ -981,7 +981,7 @@ class TestFreshFlag:
 
         captured_fresh: list[bool] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_fresh.append(fresh)
             return {"T0": {}}
 
@@ -1047,7 +1047,7 @@ class TestUntilStateFlowsToConfig:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -1084,7 +1084,7 @@ class TestUntilStateFlowsToConfig:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -1121,7 +1121,7 @@ class TestUntilStateFlowsToConfig:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -1192,7 +1192,7 @@ class TestBatchFromMissingCheckpoint:
 
         run_experiment_calls: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             run_experiment_calls.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1267,7 +1267,7 @@ class TestBatchTestsFilter:
 
         executed_ids: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             executed_ids.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1350,7 +1350,7 @@ class TestRetryErrorsInBatch:
 
         executed_ids: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             executed_ids.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1401,7 +1401,7 @@ class TestRetryErrorsInBatch:
 
         executed_ids: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             executed_ids.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1460,7 +1460,7 @@ class TestRetryErrorsInBatch:
 
         executed_ids: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             executed_ids.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1553,7 +1553,7 @@ class TestRetryErrorsInBatch:
 
         executed_ids: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             executed_ids.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1628,7 +1628,7 @@ class TestRetryErrorsInBatch:
 
         executed_ids: list[str] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             executed_ids.append(config.experiment_id)
             return {"T0": {}}
 
@@ -1745,7 +1745,7 @@ class TestAddJudgeBatchMode:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -1850,13 +1850,13 @@ class TestParallelSemaphoreFlowsToConfig:
         (path / "test.yaml").write_text(yaml.dump(test_yaml))
         (path / "prompt.md").write_text("test prompt")
 
-    def _run_and_capture(self, args) -> Any:
+    def _run_and_capture(self, args: Any) -> Any:
         """Run cmd_run with args and return captured ExperimentConfig."""
         from manage_experiment import cmd_run
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -1975,7 +1975,7 @@ class TestModelAliasResolution:
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -2009,7 +2009,7 @@ class TestModelAliasResolution:
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -2199,7 +2199,7 @@ class TestTimeoutOverride:
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -2257,7 +2257,7 @@ class TestThinkingModeFlowsToConfig:
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -2315,7 +2315,7 @@ class TestTimeoutFallbackToTestYaml:
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -2462,7 +2462,7 @@ class TestBatchEarlyValidation:
 class TestConfigPathExistence:
     """Tests that a non-existent --config path gives a clear error message."""
 
-    def test_nonexistent_config_reports_clear_error(self, tmp_path: Path, caplog) -> None:
+    def test_nonexistent_config_reports_clear_error(self, tmp_path: Path, caplog: Any) -> None:
         """--config /nonexistent/path returns 1 and error message mentions the path."""
         nonexistent = tmp_path / "does-not-exist-at-all"
 
@@ -2715,7 +2715,7 @@ class TestFilterSubtestAndRunWiring:
 
         reset_kwargs: list[dict[str, Any]] = []
 
-        def mock_reset_runs(checkpoint, from_state, **kwargs):
+        def mock_reset_runs(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             reset_kwargs.append(kwargs)
             return 1
 
@@ -2760,7 +2760,7 @@ class TestFilterSubtestAndRunWiring:
 
         reset_kwargs: list[dict[str, Any]] = []
 
-        def mock_reset_runs(checkpoint, from_state, **kwargs):
+        def mock_reset_runs(checkpoint: Any, from_state: Any, **kwargs: Any) -> Any:
             reset_kwargs.append(kwargs)
             return 1
 
@@ -2830,7 +2830,7 @@ class TestPromptOverride:
 
         captured: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured.append(config)
             return {"T0": {}}
 
@@ -3075,7 +3075,7 @@ class TestCmdRunTiersAndMaxSubtests:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -3110,7 +3110,7 @@ class TestCmdRunTiersAndMaxSubtests:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
@@ -3143,7 +3143,7 @@ class TestCmdRunTiersAndMaxSubtests:
 
         captured_configs: list[Any] = []
 
-        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
             captured_configs.append(config)
             return {"T0": {}}
 
