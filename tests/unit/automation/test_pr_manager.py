@@ -122,6 +122,88 @@ class TestCommitChanges:
         assert "new_name.py" in add_call[0][0]
         assert "old_name.py" not in add_call[0][0]
 
+    @pytest.mark.parametrize(
+        "porcelain_line, expected_path",
+        [
+            # Quoted filename with spaces
+            (' M "path with spaces/file.py"', "path with spaces/file.py"),
+            # Quoted filename with unicode
+            (' M "répertoire/fichier.py"', "répertoire/fichier.py"),
+            # Quoted untracked file with spaces
+            ('?? "dir with spaces/new file.py"', "dir with spaces/new file.py"),
+        ],
+    )
+    def test_quoted_filename_is_unquoted(
+        self, tmp_path: Path, porcelain_line: str, expected_path: str
+    ) -> None:
+        """Quoted filenames (special chars) are unquoted before git add."""
+        status_result = MagicMock()
+        status_result.stdout = porcelain_line + "\n"
+
+        mock_issue = MagicMock()
+        mock_issue.title = "Fix something"
+
+        with (
+            patch(
+                "scylla.automation.pr_manager.run",
+                side_effect=[status_result, MagicMock(), MagicMock()],
+            ) as mock_run,
+            patch("scylla.automation.pr_manager.fetch_issue_info", return_value=mock_issue),
+        ):
+            commit_changes(42, tmp_path)
+
+        add_call = mock_run.call_args_list[1]
+        staged_files = add_call[0][0]
+        assert expected_path in staged_files
+        # The quoted form (with surrounding double quotes) must NOT be passed to git add
+        assert f'"{expected_path}"' not in staged_files
+
+    def test_mixed_quoted_and_regular_filenames(self, tmp_path: Path) -> None:
+        """Both quoted (spaces) and regular filenames are staged correctly."""
+        status_result = MagicMock()
+        status_result.stdout = ' M "path with spaces/file.py"\nM  regular.py\n'
+
+        mock_issue = MagicMock()
+        mock_issue.title = "Fix something"
+
+        with (
+            patch(
+                "scylla.automation.pr_manager.run",
+                side_effect=[status_result, MagicMock(), MagicMock()],
+            ) as mock_run,
+            patch("scylla.automation.pr_manager.fetch_issue_info", return_value=mock_issue),
+        ):
+            commit_changes(42, tmp_path)
+
+        add_call = mock_run.call_args_list[1]
+        staged_files = add_call[0][0]
+        assert "path with spaces/file.py" in staged_files
+        assert "regular.py" in staged_files
+        assert '"path with spaces/file.py"' not in staged_files
+
+    def test_renamed_file_with_quoted_destination(self, tmp_path: Path) -> None:
+        """Renamed file where destination is quoted is unquoted before git add."""
+        status_result = MagicMock()
+        status_result.stdout = 'R  old.py -> "new path/file.py"\n'
+
+        mock_issue = MagicMock()
+        mock_issue.title = "Rename to path with spaces"
+
+        with (
+            patch(
+                "scylla.automation.pr_manager.run",
+                side_effect=[status_result, MagicMock(), MagicMock()],
+            ) as mock_run,
+            patch("scylla.automation.pr_manager.fetch_issue_info", return_value=mock_issue),
+        ):
+            commit_changes(42, tmp_path)
+
+        add_call = mock_run.call_args_list[1]
+        staged_files = add_call[0][0]
+        assert "new path/file.py" in staged_files
+        assert "old.py" not in staged_files
+        assert '"new path/file.py"' not in staged_files
+
 
 class TestEnsurePrCreated:
     """Tests for ensure_pr_created."""
