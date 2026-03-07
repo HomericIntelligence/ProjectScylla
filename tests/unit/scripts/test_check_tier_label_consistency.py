@@ -22,10 +22,28 @@ class TestFindViolations:
     @pytest.mark.parametrize(
         "bad_line, expected_pattern",
         [
+            # Original set
             ("T3 Tooling tier", r"T3.*Tool"),
             ("T4 Delegation tier", r"T4.*Deleg"),
             ("T5 Hierarchy tier", r"T5.*Hier"),
             ("T2 Skills tier", r"T2.*Skill"),
+            # Reverse/symmetric set
+            ("T2 Delegation tier", r"T2.{0,10}Deleg"),
+            ("T3 Hierarchy tier", r"T3.{0,10}Hier"),
+            ("T4 Hybrid tier", r"T4.{0,10}Hybrid"),
+            ("T1 Tooling tier", r"T1.{0,10}Tool"),
+            ("T0 Skills tier", r"T0.{0,10}Skill"),
+            ("T1 Prompts tier", r"T1.{0,10}Prompt"),
+            ("T2 Prompts tier", r"T2.{0,10}Prompt"),
+            ("T3 Skills tier", r"T3.{0,10}Skill"),
+            ("T4 Tooling tier", r"T4.{0,10}Tool"),
+            ("T5 Delegation tier", r"T5.{0,10}Deleg"),
+            ("T6 Hierarchy tier", r"T6.{0,10}Hier"),
+            ("T6 Hybrid tier", r"T6.{0,10}Hybrid"),
+            ("T0 Tooling tier", r"T0.{0,10}Tool"),
+            ("T0 Delegation tier", r"T0.{0,10}Deleg"),
+            ("T5 Skills tier", r"T5.{0,10}Skill"),
+            ("T6 Delegation tier", r"T6.{0,10}Deleg"),
         ],
     )
     def test_detects_each_bad_pattern(self, bad_line: str, expected_pattern: str) -> None:
@@ -128,10 +146,28 @@ class TestCheckTierLabelConsistency:
     @pytest.mark.parametrize(
         "bad_line",
         [
+            # Original set
             "T3 Tooling",
             "T4 Delegation",
             "T5 Hierarchy",
             "T2 Skills",
+            # Reverse/symmetric set
+            "T2 Delegation",
+            "T3 Hierarchy",
+            "T4 Hybrid",
+            "T1 Tooling",
+            "T0 Skills",
+            "T1 Prompts",
+            "T2 Prompts",
+            "T3 Skills",
+            "T4 Tooling",
+            "T5 Delegation",
+            "T6 Hierarchy",
+            "T6 Hybrid",
+            "T0 Tooling",
+            "T0 Delegation",
+            "T5 Skills",
+            "T6 Delegation",
         ],
     )
     def test_each_bad_pattern_causes_failure(self, tmp_path: Path, bad_line: str) -> None:
