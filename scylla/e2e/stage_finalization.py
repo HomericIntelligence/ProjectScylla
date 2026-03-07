@@ -260,6 +260,38 @@ def stage_execute_judge(ctx: RunContext) -> None:
     logger.info(f"[JUDGE] Complete ({ctx.judge_duration:.1f}s)")
 
 
+def _check_agent_rate_limit(ctx: RunContext) -> None:
+    """Raise RateLimitError if rate limit is detected in agent output.
+
+    Also handles the special case of invalid judge output with exit_code=-1.
+
+    Args:
+        ctx: Run context with agent_result and judgment populated.
+
+    Raises:
+        RateLimitError: If a rate limit is detected.
+
+    """
+    from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
+
+    assert ctx.agent_result is not None  # noqa: S101 — guarded by caller
+    assert ctx.judgment is not None  # noqa: S101 — guarded by caller
+
+    stderr_content = ctx.agent_result.stderr or ""
+    stdout_content = ctx.agent_result.stdout or ""
+    rate_limit_info = detect_rate_limit(stdout_content, stderr_content, source="agent")
+    if rate_limit_info:
+        raise RateLimitError(rate_limit_info)
+
+    # Also check for "invalid" judge output with exit_code=-1
+    if ctx.agent_result.exit_code == -1 and ctx.judgment.get("reasoning", "").startswith(
+        "Invalid:"
+    ):
+        rate_limit_info = detect_rate_limit(stdout_content, stderr_content, source="agent")
+        if rate_limit_info:
+            raise RateLimitError(rate_limit_info)
+
+
 def stage_finalize_run(ctx: RunContext) -> None:
     """JUDGE_COMPLETE -> RUN_FINALIZED: Build RunResult and save run_result.json.
 
@@ -271,8 +303,6 @@ def stage_finalize_run(ctx: RunContext) -> None:
         ctx: Run context (mutates ctx.run_result)
 
     """
-    from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
-
     if ctx.agent_result is None:
         raise RuntimeError("agent_result must be set before finalize_run")
     if ctx.judgment is None:
@@ -290,21 +320,7 @@ def stage_finalize_run(ctx: RunContext) -> None:
 
     agent_dir = get_agent_dir(ctx.run_dir)
 
-    # Check for rate limit in run artifacts BEFORE considering complete
-    stderr_content = ctx.agent_result.stderr or ""
-    stdout_content = ctx.agent_result.stdout or ""
-    rate_limit_info = detect_rate_limit(stdout_content, stderr_content, source="agent")
-
-    if rate_limit_info:
-        raise RateLimitError(rate_limit_info)
-
-    # Also check for "invalid" judge output with exit_code=-1
-    if ctx.agent_result.exit_code == -1 and ctx.judgment.get("reasoning", "").startswith(
-        "Invalid:"
-    ):
-        rate_limit_info = detect_rate_limit(stdout_content, stderr_content, source="agent")
-        if rate_limit_info:
-            raise RateLimitError(rate_limit_info)
+    _check_agent_rate_limit(ctx)
 
     # Convert adapter token stats to E2E token stats
     token_stats = ctx.agent_result.token_stats.to_token_stats()

@@ -470,6 +470,89 @@ def _detect_rate_limit_from_results(
     return None
 
 
+def _run_subtests_in_pool(
+    subtests: list[SubTestConfig],
+    config: ExperimentConfig,
+    tier_id: TierID,
+    tier_config: TierConfig,
+    tier_manager: TierManager,
+    workspace_manager: WorkspaceManager,
+    baseline: TierBaseline | None,
+    results_dir: Path,
+    checkpoint: E2ECheckpoint | None,
+    checkpoint_path: Path | None,
+    scheduler: ParallelismScheduler | None,
+    experiment_dir: Path | None,
+) -> dict[str, SubTestResult]:
+    """Submit subtests to a fresh ProcessPoolExecutor and collect results.
+
+    Args:
+        subtests: Subtests to run.
+        config: Experiment configuration.
+        tier_id: Tier identifier.
+        tier_config: Tier configuration.
+        tier_manager: Tier manager instance.
+        workspace_manager: Workspace manager instance.
+        baseline: Previous tier's baseline.
+        results_dir: Base directory for tier results.
+        checkpoint: Optional checkpoint for resume.
+        checkpoint_path: Path to checkpoint file.
+        scheduler: Optional ParallelismScheduler.
+        experiment_dir: Path to experiment directory.
+
+    Returns:
+        Dict mapping subtest_id to SubTestResult.
+
+    """
+    results: dict[str, SubTestResult] = {}
+    manager = Manager()
+    try:
+        coordinator = RateLimitCoordinator(manager)
+    except Exception:
+        manager.shutdown()
+        raise
+
+    with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
+        futures = {}
+        for subtest in subtests:
+            subtest_dir = results_dir / subtest.id
+            future = pool.submit(
+                _run_subtest_in_process_safe,
+                config=config,
+                tier_id=tier_id,
+                tier_config=tier_config,
+                subtest=subtest,
+                baseline=baseline,
+                results_dir=subtest_dir,
+                tiers_dir=tier_manager.tiers_dir,
+                base_repo=workspace_manager.base_repo,
+                repo_url=workspace_manager.repo_url,
+                commit=workspace_manager.commit,
+                checkpoint=checkpoint,
+                checkpoint_path=checkpoint_path,
+                coordinator=coordinator,
+                scheduler=scheduler,
+                experiment_dir=experiment_dir,
+            )
+            futures[future] = subtest.id
+
+        for future in as_completed(futures):
+            subtest_id = futures[future]
+            try:
+                results[subtest_id] = future.result()
+            except Exception as e:
+                logger.error(f"Unexpected exception from safe wrapper: {e}")
+                results[subtest_id] = SubTestResult(
+                    subtest_id=subtest_id,
+                    tier_id=tier_id,
+                    runs=[],
+                    pass_rate=0.0,
+                    selection_reason=f"UnexpectedError: {e}",
+                )
+
+    return results
+
+
 def _retry_with_new_pool(
     remaining_subtests: list[SubTestConfig],
     config: ExperimentConfig,
@@ -517,54 +600,22 @@ def _retry_with_new_pool(
         )
 
         try:
-            # Fresh coordinator for new pool
-            manager = Manager()
-            try:
-                coordinator = RateLimitCoordinator(manager)
-            except Exception:
-                manager.shutdown()
-                raise
-
-            with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
-                futures = {}
-                for subtest in remaining_subtests:
-                    subtest_dir = results_dir / subtest.id
-                    future = pool.submit(
-                        _run_subtest_in_process_safe,  # Use safe wrapper
-                        config=config,
-                        tier_id=tier_id,
-                        tier_config=tier_config,
-                        subtest=subtest,
-                        baseline=baseline,
-                        results_dir=subtest_dir,
-                        tiers_dir=tier_manager.tiers_dir,
-                        base_repo=workspace_manager.base_repo,
-                        repo_url=workspace_manager.repo_url,
-                        commit=workspace_manager.commit,
-                        checkpoint=checkpoint,
-                        checkpoint_path=checkpoint_path,
-                        coordinator=coordinator,
-                        scheduler=scheduler,
-                        experiment_dir=experiment_dir,
-                    )
-                    futures[future] = subtest.id
-
-                # Collect results
-                for future in as_completed(futures):
-                    subtest_id = futures[future]
-                    try:
-                        result = future.result()
-                        results[subtest_id] = result
-                    except Exception as e:
-                        # Should not happen with safe wrapper, but be defensive
-                        logger.error(f"Unexpected exception from safe wrapper: {e}")
-                        results[subtest_id] = SubTestResult(
-                            subtest_id=subtest_id,
-                            tier_id=tier_id,
-                            runs=[],
-                            pass_rate=0.0,
-                            selection_reason=f"UnexpectedError: {e}",
-                        )
+            results.update(
+                _run_subtests_in_pool(
+                    remaining_subtests,
+                    config,
+                    tier_id,
+                    tier_config,
+                    tier_manager,
+                    workspace_manager,
+                    baseline,
+                    results_dir,
+                    checkpoint,
+                    checkpoint_path,
+                    scheduler,
+                    experiment_dir,
+                )
+            )
 
             # Check for rate-limited results that need retry
             remaining_subtests = [
@@ -574,7 +625,6 @@ def _retry_with_new_pool(
             ]
 
             if remaining_subtests:
-                # More rate limits - wait and retry
                 rate_info = _detect_rate_limit_from_results(results, results_dir)
                 if rate_info and checkpoint and checkpoint_path:
                     logger.info(
@@ -586,20 +636,16 @@ def _retry_with_new_pool(
                         checkpoint_path,
                     )
                 else:
-                    # No rate limit info but still failing - give up
                     logger.warning(
                         f"Subtests still failing after retry {retries + 1} "
                         f"but no rate limit detected"
                     )
                     break
-
                 retries += 1
             else:
-                # All subtests completed successfully or with non-rate-limit errors
                 break
 
         except BrokenProcessPool as e:
-            # Pool crashed again - check for rate limit and retry
             logger.warning(f"BrokenProcessPool during retry attempt {retries + 1}: {e}")
             rate_info = _detect_rate_limit_from_results(results, results_dir)
             if rate_info and checkpoint and checkpoint_path:
@@ -610,7 +656,6 @@ def _retry_with_new_pool(
                 )
                 retries += 1
             else:
-                # Pool crashed but not due to rate limit - give up
                 logger.error("BrokenProcessPool without rate limit, cannot retry")
                 break
 

@@ -82,6 +82,55 @@ class OpenAICodexAdapter(BaseCliAdapter):
 
         return cmd
 
+    @staticmethod
+    def _extract_usage_from_json(text: str) -> tuple[int, int] | None:
+        """Try to parse token counts from a top-level JSON object.
+
+        Args:
+            text: Text to attempt JSON parsing on.
+
+        Returns:
+            (input_tokens, output_tokens) if found, else None.
+
+        """
+        try:
+            data = json.loads(text.strip())
+            usage = data.get("usage", {})
+            inp = usage.get("prompt_tokens", 0)
+            out = usage.get("completion_tokens", 0)
+            if inp > 0 or out > 0:
+                return inp, out
+        except (json.JSONDecodeError, KeyError, TypeError):
+            pass
+        return None
+
+    @staticmethod
+    def _extract_usage_from_embedded_json(text: str) -> tuple[int, int] | None:
+        """Scan for embedded JSON fragments and extract token usage.
+
+        Args:
+            text: Text to scan for JSON fragments.
+
+        Returns:
+            (input_tokens, output_tokens) if found, else None.
+
+        """
+        try:
+            for match in re.finditer(r"\{[^{}]*\{[^{}]*\}[^{}]*\}|\{[^{}]+\}", text):
+                try:
+                    data = json.loads(match.group())
+                    usage = data.get("usage", {})
+                    if isinstance(usage, dict):
+                        inp = usage.get("prompt_tokens", 0)
+                        out = usage.get("completion_tokens", 0)
+                        if inp > 0 or out > 0:
+                            return inp, out
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    continue
+        except Exception:
+            pass
+        return None
+
     def _parse_token_counts(self, stdout: str, stderr: str) -> tuple[int, int]:
         """Parse token counts from Codex output.
 
@@ -98,37 +147,17 @@ class OpenAICodexAdapter(BaseCliAdapter):
 
         """
         combined = stdout + "\n" + stderr
+
+        result = self._extract_usage_from_json(combined)
+        if result is not None:
+            return result
+
+        result = self._extract_usage_from_embedded_json(combined)
+        if result is not None:
+            return result
+
         input_tokens = 0
         output_tokens = 0
-
-        # Try JSON format first (common in OpenAI tools)
-        try:
-            # Look for JSON object containing usage - try to parse the whole string
-            data = json.loads(combined.strip())
-            usage = data.get("usage", {})
-            input_tokens = usage.get("prompt_tokens", 0)
-            output_tokens = usage.get("completion_tokens", 0)
-            if input_tokens > 0 or output_tokens > 0:
-                return input_tokens, output_tokens
-        except (json.JSONDecodeError, KeyError, TypeError):
-            pass
-
-        # Try to find embedded JSON with usage
-        try:
-            # Find JSON-like patterns with usage key
-            for match in re.finditer(r"\{[^{}]*\{[^{}]*\}[^{}]*\}|\{[^{}]+\}", combined):
-                try:
-                    data = json.loads(match.group())
-                    usage = data.get("usage", {})
-                    if isinstance(usage, dict):
-                        input_tokens = usage.get("prompt_tokens", 0)
-                        output_tokens = usage.get("completion_tokens", 0)
-                        if input_tokens > 0 or output_tokens > 0:
-                            return input_tokens, output_tokens
-                except (json.JSONDecodeError, KeyError, TypeError):
-                    continue
-        except Exception:
-            pass
 
         # Pattern: "prompt_tokens: N" or "completion_tokens: N"
         prompt_match = re.search(r"prompt_tokens?:?\s*(\d+)", combined, re.IGNORECASE)

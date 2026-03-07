@@ -54,6 +54,74 @@ def is_rate_limit_error(output: str) -> tuple[bool, int | None]:
     return False, None
 
 
+def _run_validation_attempt(model_id: str) -> subprocess.CompletedProcess[str]:
+    """Run a single Claude CLI validation attempt.
+
+    Args:
+        model_id: Model ID to test.
+
+    Returns:
+        Completed process result.
+
+    """
+    return subprocess.run(
+        ["claude", "--model", model_id, "--output-format", "json", "Say 'OK'"],
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+
+def _handle_validation_result(
+    model_id: str,
+    result: subprocess.CompletedProcess[str],
+    attempt: int,
+    max_retries: int,
+    base_delay: int,
+) -> bool | None:
+    """Evaluate a single validation result and decide whether to return or retry.
+
+    Args:
+        model_id: Model ID being validated.
+        result: Completed subprocess result.
+        attempt: Current attempt number (0-indexed).
+        max_retries: Maximum retries allowed.
+        base_delay: Base sleep seconds for exponential backoff.
+
+    Returns:
+        True/False if a final decision was reached, None if caller should retry.
+
+    """
+    combined_output = result.stdout + result.stderr
+    is_rate_limit, wait_time = is_rate_limit_error(combined_output)
+
+    if is_rate_limit and attempt < max_retries:
+        logger.warning(
+            f"Rate limit detected for model '{model_id}'. "
+            f"Waiting {wait_time} seconds before retry..."
+        )
+        time.sleep(wait_time or 0)
+        return None
+
+    if result.returncode == 0 and '"is_error":false' in result.stdout:
+        logger.info(f"✓ Model '{model_id}' validated successfully")
+        return True
+
+    if "not_found_error" in combined_output:
+        logger.warning(f"Model '{model_id}' not found on server")
+        return False
+
+    if attempt < max_retries:
+        logger.warning(
+            f"Validation attempt {attempt + 1} failed for model '{model_id}', retrying..."
+        )
+        time.sleep(base_delay * (2**attempt))
+        return None
+
+    logger.warning(f"All validation attempts failed for model '{model_id}'")
+    return False
+
+
 def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) -> bool:
     """Validate that a model is available by running a test prompt.
 
@@ -72,56 +140,15 @@ def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) ->
     for attempt in range(max_retries + 1):
         try:
             logger.info(f"Validating model '{model_id}' (attempt {attempt + 1}/{max_retries + 1})")
-
-            result = subprocess.run(
-                [
-                    "claude",
-                    "--model",
-                    model_id,
-                    "--output-format",
-                    "json",
-                    "Say 'OK'",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-
-            combined_output = result.stdout + result.stderr
-
-            is_rate_limit, wait_time = is_rate_limit_error(combined_output)
-
-            if is_rate_limit and attempt < max_retries:
-                logger.warning(
-                    f"Rate limit detected for model '{model_id}'. "
-                    f"Waiting {wait_time} seconds before retry..."
-                )
-                time.sleep(wait_time or 0)
-                continue
-
-            if result.returncode == 0 and '"is_error":false' in result.stdout:
-                logger.info(f"✓ Model '{model_id}' validated successfully")
-                return True
-            else:
-                if "not_found_error" in combined_output:
-                    logger.warning(f"Model '{model_id}' not found on server")
-                    return False
-                elif attempt < max_retries:
-                    logger.warning(
-                        f"Validation attempt {attempt + 1} failed for model "
-                        f"'{model_id}', retrying..."
-                    )
-                    time.sleep(base_delay * (2**attempt))
-                    continue
-                else:
-                    logger.warning(f"All validation attempts failed for model '{model_id}'")
-                    return False
+            result = _run_validation_attempt(model_id)
+            decision = _handle_validation_result(model_id, result, attempt, max_retries, base_delay)
+            if decision is not None:
+                return decision
 
         except subprocess.TimeoutExpired:
             if attempt < max_retries:
                 logger.warning(f"Validation timed out for model '{model_id}', retrying...")
                 time.sleep(base_delay)
-                continue
             else:
                 logger.warning(
                     f"Validation timed out for model '{model_id}' after {max_retries + 1} attempts"
@@ -134,7 +161,6 @@ def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) ->
             if attempt < max_retries:
                 logger.warning(f"Validation error for model '{model_id}': {e}, retrying...")
                 time.sleep(base_delay)
-                continue
             else:
                 logger.error(f"Validation failed for model '{model_id}': {e}")
                 return False

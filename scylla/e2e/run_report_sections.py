@@ -444,6 +444,52 @@ def _generate_token_stats_section(token_stats: Any) -> list[str]:
     ]
 
 
+def _build_criterion_row(criterion: str, sorted_items: list[Any]) -> str:
+    """Build a markdown table row for one criterion across all items.
+
+    Args:
+        criterion: Criterion name.
+        sorted_items: Items ordered by key (each has .criteria_scores).
+
+    Returns:
+        Markdown row string.
+
+    """
+    row = f"| {criterion} |"
+    scores: list[tuple[float, int]] = []
+    score_cells: list[str] = []
+
+    for item in sorted_items:
+        if (
+            hasattr(item, "criteria_scores")
+            and item.criteria_scores
+            and criterion in item.criteria_scores
+        ):
+            score_data = item.criteria_scores[criterion]
+            score = score_data.get("score") if isinstance(score_data, dict) else score_data
+            if isinstance(score, int | float):
+                scores.append((score, len(score_cells)))
+                score_cells.append(f"{score:.2f}")
+            else:
+                score_cells.append(f"{score}" if score else "-")
+        else:
+            score_cells.append("-")
+
+    if scores:
+        max_score = max(s[0] for s in scores)
+        best_indices = {s[1] for s in scores if s[0] == max_score}
+        should_highlight = len(score_cells) > 1
+        for idx, cell in enumerate(score_cells):
+            if should_highlight and idx in best_indices and cell != "-":
+                row += f" ***{cell}*** |"
+            else:
+                row += f" {cell} |"
+    else:
+        row += "".join(f" {cell} |" for cell in score_cells)
+
+    return row
+
+
 def _generate_criteria_comparison_table(
     all_criteria: set[str],
     items: dict[Any, Any],
@@ -463,58 +509,24 @@ def _generate_criteria_comparison_table(
 
     """
     lines = []
+    sorted_item_ids = sorted(items.keys())
+    sorted_items = [items[k] for k in sorted_item_ids]
 
     # Build header
     header = "| Criterion |"
     separator = "|-----------|"
-    for item_id in sorted(items.keys()):
+    for item_id in sorted_item_ids:
         header += f" {column_header_fn(item_id)} |"
         separator += "--------|"
     lines.extend([header, separator])
 
     # Add rows with best values bolded/italicized
     for criterion in sorted(all_criteria):
-        row = f"| {criterion} |"
-        scores: list[tuple[float, int]] = []
-        score_cells: list[str] = []
-
-        for item_id in sorted(items.keys()):
-            item = items[item_id]
-            if (
-                hasattr(item, "criteria_scores")
-                and item.criteria_scores
-                and criterion in item.criteria_scores
-            ):
-                score_data = item.criteria_scores[criterion]
-                score = score_data.get("score") if isinstance(score_data, dict) else score_data
-                if isinstance(score, int | float):
-                    scores.append((score, len(score_cells)))
-                    score_cells.append(f"{score:.2f}")
-                else:
-                    score_cells.append(f"{score}" if score else "-")
-            else:
-                score_cells.append("-")
-
-        # Bold/italicize best scores (***text*** = bold+italic)
-        # Only apply formatting if more than one result to compare
-        if scores:
-            max_score = max(s[0] for s in scores)
-            best_indices = {s[1] for s in scores if s[0] == max_score}
-            should_highlight = len(score_cells) > 1
-            for idx, cell in enumerate(score_cells):
-                if should_highlight and idx in best_indices and cell != "-":
-                    row += f" ***{cell}*** |"
-                else:
-                    row += f" {cell} |"
-        else:
-            row += "".join(f" {cell} |" for cell in score_cells)
-
-        lines.append(row)
+        lines.append(_build_criterion_row(criterion, sorted_items))
 
     # Add Total row with judge's final scores
     total_row = "| **Total** |"
-    for item_id in sorted(items.keys()):
-        item = items[item_id]
+    for item in sorted_items:
         if hasattr(item, "judge_score"):
             total_row += f" **{item.judge_score:.2f}** |"
         else:

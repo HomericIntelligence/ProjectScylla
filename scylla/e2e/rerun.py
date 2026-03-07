@@ -258,6 +258,26 @@ def scan_runs_needing_rerun(  # noqa: C901  # experiment rerun with many retry/s
     return runs_by_status
 
 
+def _archive_existing_run_dir(run_info: RunToRerun) -> None:
+    """Move an existing run directory to .failed/ before re-running.
+
+    Args:
+        run_info: Run information containing run_dir and run_number.
+
+    """
+    if not run_info.run_dir.exists():
+        return
+    failed_dir = run_info.run_dir.parent / ".failed"
+    failed_dir.mkdir(exist_ok=True)
+    failed_run_dir = failed_dir / f"run_{run_info.run_number:02d}"
+    counter = 1
+    while failed_run_dir.exists():
+        failed_run_dir = failed_dir / f"run_{run_info.run_number:02d}_failed_{counter}"
+        counter += 1
+    logger.info(f"Moving old run to {failed_run_dir}")
+    run_info.run_dir.rename(failed_run_dir)
+
+
 def rerun_single_run(
     run_info: RunToRerun,
     experiment_dir: Path,
@@ -326,21 +346,7 @@ def rerun_single_run(
         )
         return None
 
-    # If run_dir exists with old data, move it to .failed/
-    if run_info.run_dir.exists():
-        failed_dir = run_info.run_dir.parent / ".failed"
-        failed_dir.mkdir(exist_ok=True)
-
-        # Find next available failed directory name
-        failed_run_base = failed_dir / f"run_{run_info.run_number:02d}"
-        failed_run_dir = failed_run_base
-        counter = 1
-        while failed_run_dir.exists():
-            failed_run_dir = failed_dir / f"run_{run_info.run_number:02d}_failed_{counter}"
-            counter += 1
-
-        logger.info(f"Moving old run to {failed_run_dir}")
-        run_info.run_dir.rename(failed_run_dir)
+    _archive_existing_run_dir(run_info)
 
     # Setup run directory and workspace
     run_dir = run_info.run_dir
@@ -377,7 +383,6 @@ def rerun_single_run(
                 f"Failed to build merged baseline for T5/{subtest_config.id}: {e}. "
                 f"Skipping this run - parent tiers must complete first."
             )
-            # Clean up workspace and return None to skip this run
             branch_name = f"{tier_id.value}_{subtest_config.id}_run_{run_info.run_number:02d}"
             workspace_manager.cleanup_worktree(workspace, branch_name)
             return None

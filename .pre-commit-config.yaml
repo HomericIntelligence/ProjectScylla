@@ -166,6 +166,13 @@ repos:
         files: ^(scripts|scylla)/.*\.py$
         types: [python]
         pass_filenames: false
+      - id: check-max-complexity
+        name: Check Cyclomatic Complexity
+        description: Fails if any function in scylla/ exceeds max cyclomatic complexity of 10
+        entry: pixi run python scripts/check_max_complexity.py --threshold 10
+        language: system
+        files: ^scylla/.*\.py$
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
