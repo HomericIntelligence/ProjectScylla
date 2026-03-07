@@ -19,7 +19,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -492,6 +492,44 @@ def _rerun_single_judge_slot_safe(
         return _JudgeSlotResult(slot=slot, success=False, error=str(e))
 
 
+def _load_judgments_from_dir(run_dir: Path, judge_models: list[str]) -> list[dict[str, Any]]:
+    """Load all per-judge judgment.json files from a run directory.
+
+    Args:
+        run_dir: Path to run directory.
+        judge_models: List of judge model names (determines expected judge count).
+
+    Returns:
+        List of judgment dicts (valid and invalid, for tracking purposes).
+
+    """
+    judges = []
+    for judge_num, model in enumerate(judge_models, start=1):
+        judgment_file = run_dir / "judge" / f"judge_{judge_num:02d}" / "judgment.json"
+        if not judgment_file.exists():
+            continue
+        try:
+            data = json.loads(judgment_file.read_text())
+            if "score" not in data:
+                continue
+            is_valid = data.get("is_valid", True) is not False
+            judges.append(
+                {
+                    "model": model,
+                    "score": data.get("score"),
+                    "passed": data.get("passed"),
+                    "grade": data.get("grade"),
+                    "reasoning": data.get("reasoning", ""),
+                    "judge_number": judge_num,
+                    "is_valid": is_valid,
+                    "criteria_scores": data.get("criteria_scores"),
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Failed to load judgment from {judgment_file}: {e}")
+    return judges
+
+
 def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
     """Regenerate judge/result.json consensus from per-judge judgment files.
 
@@ -505,47 +543,7 @@ def _regenerate_consensus(run_dir: Path, judge_models: list[str]) -> bool:
         True if consensus was successfully regenerated
 
     """
-    # Load all judgment.json files (including invalid ones for tracking)
-    judges = []
-    for judge_num, model in enumerate(judge_models, start=1):
-        judgment_file = run_dir / "judge" / f"judge_{judge_num:02d}" / "judgment.json"
-        if judgment_file.exists():
-            try:
-                data = json.loads(judgment_file.read_text())
-                # Check if this judgment has the required fields and is_valid flag
-                has_score = "score" in data
-                is_valid = data.get("is_valid", True) is not False
-
-                # Only include judgments that have score AND pass validity check
-                if has_score and is_valid:
-                    judges.append(
-                        {
-                            "model": model,
-                            "score": data.get("score"),
-                            "passed": data.get("passed"),
-                            "grade": data.get("grade"),
-                            "reasoning": data.get("reasoning", ""),
-                            "judge_number": judge_num,
-                            "is_valid": data.get("is_valid", True),
-                            "criteria_scores": data.get("criteria_scores"),
-                        }
-                    )
-                elif has_score and not is_valid:
-                    # Invalid judgment - include it but mark as invalid for tracking
-                    judges.append(
-                        {
-                            "model": model,
-                            "score": data.get("score"),
-                            "passed": data.get("passed"),
-                            "grade": data.get("grade"),
-                            "reasoning": data.get("reasoning", ""),
-                            "judge_number": judge_num,
-                            "is_valid": False,
-                            "criteria_scores": data.get("criteria_scores"),
-                        }
-                    )
-            except Exception as e:
-                logger.warning(f"Failed to load judgment from {judgment_file}: {e}")
+    judges = _load_judgments_from_dir(run_dir, judge_models)
 
     if not judges:
         logger.warning(f"No valid judge results found for {run_dir}, skipping consensus")

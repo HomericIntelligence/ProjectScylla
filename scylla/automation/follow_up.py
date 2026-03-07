@@ -73,6 +73,46 @@ def parse_follow_up_items(text: str) -> list[dict[str, Any]]:
         return []
 
 
+def _create_follow_up_issues(
+    items: list[dict[str, Any]],
+    issue_number: int,
+    status_tracker: Any | None,
+    slot_id: int | None,
+) -> list[int]:
+    """Create GitHub issues from follow-up item list.
+
+    Args:
+        items: List of follow-up item dicts with title, body, and optional labels.
+        issue_number: Parent issue number (for cross-references and status labels).
+        status_tracker: Optional StatusTracker for slot updates.
+        slot_id: Worker slot ID for status updates.
+
+    Returns:
+        List of created issue numbers.
+
+    """
+    created_issues = []
+    for i, item in enumerate(items, 1):
+        try:
+            if slot_id is not None and status_tracker is not None:
+                status_tracker.update_slot(
+                    slot_id, f"#{issue_number}: Creating follow-up {i}/{len(items)}"
+                )
+            body_with_ref = f"{item['body']}\n\n_Follow-up from #{issue_number}_"
+            new_issue_num = gh_issue_create(
+                title=item["title"],
+                body=body_with_ref,
+                labels=item.get("labels"),
+            )
+            created_issues.append(new_issue_num)
+            time.sleep(1)
+        except (
+            Exception
+        ) as e:  # broad catch: GitHub API can fail in many ways; continue with others
+            logger.warning(f"Failed to create follow-up issue '{item['title']}': {e}")
+    return created_issues
+
+
 def run_follow_up_issues(
     session_id: str,
     worktree_path: Path,
@@ -132,35 +172,7 @@ def run_follow_up_issues(
             logger.info(f"No follow-up items identified for issue #{issue_number}")
             return
 
-        # Create follow-up issues
-        created_issues = []
-        for i, item in enumerate(items, 1):
-            try:
-                # Update status
-                if slot_id is not None and status_tracker is not None:
-                    status_tracker.update_slot(
-                        slot_id, f"#{issue_number}: Creating follow-up {i}/{len(items)}"
-                    )
-
-                # Append reference to parent issue
-                body_with_ref = f"{item['body']}\n\n_Follow-up from #{issue_number}_"
-
-                # Create issue with labels
-                new_issue_num = gh_issue_create(
-                    title=item["title"],
-                    body=body_with_ref,
-                    labels=item.get("labels"),
-                )
-                created_issues.append(new_issue_num)
-
-                # Rate limit: sleep between creates
-                time.sleep(1)
-
-            except (
-                Exception
-            ) as e:  # broad catch: GitHub API can fail in many ways; continue with others
-                logger.warning(f"Failed to create follow-up issue '{item['title']}': {e}")
-                # Continue with remaining items
+        created_issues = _create_follow_up_issues(items, issue_number, status_tracker, slot_id)
 
         # Post summary comment on parent issue
         if created_issues:

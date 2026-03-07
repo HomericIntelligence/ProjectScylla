@@ -629,6 +629,32 @@ class PRReviewer:
                 )
             return self.states[issue_number]
 
+    def _fail_review(
+        self,
+        issue_number: int,
+        error_msg: str,
+        slot_id: int,
+    ) -> WorkerResult:
+        """Record a review failure, update state and tracker, and return a failed WorkerResult.
+
+        Args:
+            issue_number: GitHub issue number.
+            error_msg: Human-readable error description.
+            slot_id: Worker slot ID for status updates.
+
+        Returns:
+            WorkerResult with success=False.
+
+        """
+        self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
+        err_state = self.states.get(issue_number)
+        if err_state:
+            with self.state_lock:
+                err_state.phase = ReviewPhase.FAILED
+                err_state.error = error_msg
+            self._save_state(err_state)
+        return WorkerResult(issue_number=issue_number, success=False, error=error_msg)
+
     def _review_pr(self, issue_number: int, pr_number: int) -> WorkerResult:
         """Review and fix a single PR.
 
@@ -742,52 +768,22 @@ class PRReviewer:
         except subprocess.TimeoutExpired as e:
             error_msg = f"Timeout: {' '.join(str(c) for c in e.cmd[:3])} exceeded {e.timeout}s"
             self._log("error", error_msg, thread_id)
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
-            err_state = self.states.get(issue_number)
-            if err_state:
-                with self.state_lock:
-                    err_state.phase = ReviewPhase.FAILED
-                    err_state.error = error_msg
-                self._save_state(err_state)
-            return WorkerResult(issue_number=issue_number, success=False, error=error_msg)
+            return self._fail_review(issue_number, error_msg, slot_id)
 
         except subprocess.CalledProcessError as e:
             error_msg = (
                 f"Command failed (exit {e.returncode}): {' '.join(str(c) for c in e.cmd[:3])}"
             )
             self._log("error", error_msg, thread_id)
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
-            err_state = self.states.get(issue_number)
-            if err_state:
-                with self.state_lock:
-                    err_state.phase = ReviewPhase.FAILED
-                    err_state.error = str(e)
-                self._save_state(err_state)
-            return WorkerResult(issue_number=issue_number, success=False, error=str(e))
+            return self._fail_review(issue_number, error_msg, slot_id)
 
         except RuntimeError as e:
             self._log("error", f"Runtime error: {e}", thread_id)
-            error_msg = str(e)[:80]
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
-            err_state = self.states.get(issue_number)
-            if err_state:
-                with self.state_lock:
-                    err_state.phase = ReviewPhase.FAILED
-                    err_state.error = str(e)
-                self._save_state(err_state)
-            return WorkerResult(issue_number=issue_number, success=False, error=str(e))
+            return self._fail_review(issue_number, str(e)[:80], slot_id)
 
         except Exception as e:
             self._log("error", f"Unexpected {type(e).__name__}: {e}", thread_id)
-            error_msg = str(e)[:80]
-            self.status_tracker.update_slot(slot_id, f"#{issue_number}: FAILED - {error_msg[:50]}")
-            err_state = self.states.get(issue_number)
-            if err_state:
-                with self.state_lock:
-                    err_state.phase = ReviewPhase.FAILED
-                    err_state.error = str(e)
-                self._save_state(err_state)
-            return WorkerResult(issue_number=issue_number, success=False, error=str(e))
+            return self._fail_review(issue_number, str(e)[:80], slot_id)
 
         finally:
             time.sleep(1)

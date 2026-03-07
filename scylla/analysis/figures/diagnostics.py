@@ -7,6 +7,7 @@ Now split into per-tier figures for better readability.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import altair as alt
 import numpy as np
@@ -158,6 +159,78 @@ def fig23_qq_plots(runs_df: pd.DataFrame, output_dir: Path, render: bool = True)
         save_figure(chart, f"fig23_{tier_suffix}_qq_plots", output_dir, render)
 
 
+def _compute_kde_data(runs_df: pd.DataFrame, tier_order: list[str]) -> pd.DataFrame:
+    """Compute KDE density values for each (model, tier) combination.
+
+    Args:
+        runs_df: Runs DataFrame with agent_model, tier, and score columns.
+        tier_order: Ordered list of tier labels.
+
+    Returns:
+        DataFrame with columns: agent_model, tier, score, density.
+
+    """
+    kde_data = []
+    for model in sorted(runs_df["agent_model"].unique()):
+        for tier in tier_order:
+            tier_data = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
+            scores = tier_data["score"].dropna().values
+            if len(scores) < 3:
+                continue
+            try:
+                kde = stats.gaussian_kde(scores)
+                x_range = np.linspace(0, 1, 100)
+                kde_values = kde(x_range)
+                for x, density in zip(x_range, kde_values, strict=False):
+                    kde_data.append(
+                        {"agent_model": model, "tier": tier, "score": x, "density": density}
+                    )
+            except Exception as e:
+                print(f"  Warning: KDE failed for {model}/{tier}: {e}")
+    return pd.DataFrame(kde_data)
+
+
+def _build_kde_overlay(
+    tier_kde_df: pd.DataFrame,
+    tier_runs_df: pd.DataFrame,
+    domain: list[str],
+    range_: list[str],
+) -> Any:
+    """Build a scaled KDE line overlay chart for a single tier.
+
+    Args:
+        tier_kde_df: KDE data for the tier.
+        tier_runs_df: Run data for the tier (used for count scaling).
+        domain: Color domain list.
+        range_: Color range list.
+
+    Returns:
+        Altair line chart with scaled density.
+
+    """
+    tier_kde_df = tier_kde_df.copy()
+    for model in tier_kde_df["agent_model"].unique():
+        model_mask = tier_kde_df["agent_model"] == model
+        model_density_max = tier_kde_df.loc[model_mask, "density"].max()
+        model_count = len(tier_runs_df[tier_runs_df["agent_model"] == model])
+        if model_density_max > 0:
+            tier_kde_df.loc[model_mask, "scaled_density"] = tier_kde_df.loc[
+                model_mask, "density"
+            ] * (model_count / model_density_max)
+    return (
+        alt.Chart(tier_kde_df)
+        .mark_line(strokeWidth=2)
+        .encode(
+            x=alt.X("score:Q"),
+            y=alt.Y("scaled_density:Q"),
+            color=alt.Color(
+                "agent_model:N",
+                scale=alt.Scale(domain=domain, range=range_),
+            ),
+        )
+    )
+
+
 def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool = True) -> None:
     """Generate Fig 24: Score Histograms with KDE Overlay.
 
@@ -172,37 +245,7 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
 
     """
     tier_order = derive_tier_order(runs_df)
-
-    # Compute KDE for each (model, tier)
-    kde_data = []
-
-    for model in sorted(runs_df["agent_model"].unique()):
-        for tier in tier_order:
-            tier_data = runs_df[(runs_df["agent_model"] == model) & (runs_df["tier"] == tier)]
-
-            if len(tier_data) < 3:
-                continue
-
-            scores = tier_data["score"].dropna().values
-
-            if len(scores) < 3:
-                continue
-
-            # Compute KDE
-            try:
-                kde = stats.gaussian_kde(scores)
-                x_range = np.linspace(0, 1, 100)
-                kde_values = kde(x_range)
-
-                for x, density in zip(x_range, kde_values, strict=False):
-                    kde_data.append(
-                        {"agent_model": model, "tier": tier, "score": x, "density": density}
-                    )
-            except Exception as e:
-                print(f"  Warning: KDE failed for {model}/{tier}: {e}")
-                continue
-
-    kde_df = pd.DataFrame(kde_data)
+    kde_df = _compute_kde_data(runs_df, tier_order)
 
     # Get dynamic color scale for models
     models = sorted(runs_df["agent_model"].unique())
@@ -237,31 +280,7 @@ def fig24_score_histograms(runs_df: pd.DataFrame, output_dir: Path, render: bool
 
         # Create KDE overlay if data exists
         if len(tier_kde_df) > 0:
-            # Scale KDE to match histogram frequency per model
-            tier_kde_df = tier_kde_df.copy()
-            for model in tier_kde_df["agent_model"].unique():
-                model_mask = tier_kde_df["agent_model"] == model
-                model_density_max = tier_kde_df.loc[model_mask, "density"].max()
-                model_count = len(tier_runs_df[tier_runs_df["agent_model"] == model])
-
-                if model_density_max > 0:
-                    tier_kde_df.loc[model_mask, "scaled_density"] = tier_kde_df.loc[
-                        model_mask, "density"
-                    ] * (model_count / model_density_max)
-
-            kde_lines = (
-                alt.Chart(tier_kde_df)
-                .mark_line(strokeWidth=2)
-                .encode(
-                    x=alt.X("score:Q"),
-                    y=alt.Y("scaled_density:Q"),
-                    color=alt.Color(
-                        "agent_model:N",
-                        scale=alt.Scale(domain=domain, range=range_),
-                    ),
-                )
-            )
-
+            kde_lines = _build_kde_overlay(tier_kde_df, tier_runs_df, domain, range_)
             chart = alt.layer(histogram, kde_lines, data=tier_runs_df)
         else:
             chart = histogram

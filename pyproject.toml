@@ -87,11 +87,14 @@ ignore = [
 ]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 12
+max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 # assert is idiomatic in pytest; S101 suppressed for all test files only
 "tests/**" = ["S101"]
+# C901 (mccabe complexity) threshold of 10 is enforced only for scylla/ production code.
+# scripts/ utilities are exempt — they are standalone tools, not production modules.
+"scripts/**" = ["C901"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
