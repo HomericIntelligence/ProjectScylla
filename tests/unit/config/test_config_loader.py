@@ -1103,3 +1103,38 @@ class TestValidateSchema:
 
         assert "tier.schema.json" in loader_module._SCHEMA_CACHE
         assert "model.schema.json" in loader_module._SCHEMA_CACHE
+
+class TestLoadMergedConfigSchemaValidation:
+    """Tests that load() applies schema validation to the defaults path."""
+
+    def test_load_no_warnings_for_standard_defaults(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """load() emits no warnings when defaults.yaml is valid and standard."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir(parents=True)
+        (config_dir / "defaults.yaml").write_text("evaluation:\n  runs_per_eval: 1\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with caplog.at_level(logging.WARNING, logger="scylla.config.loader"):
+            config = loader.load(test_id="any", model_id="any")
+
+        assert isinstance(config, ScyllaConfig)
+        assert not caplog.records
+
+    def test_load_raises_on_invalid_defaults_schema(self, tmp_path: Path) -> None:
+        """load() raises ConfigurationError when defaults.yaml fails Pydantic validation."""
+        config_dir = tmp_path / "config"
+        config_dir.mkdir(parents=True)
+        # runs_per_eval exceeds max of 100 — Pydantic should reject
+        (config_dir / "defaults.yaml").write_text("evaluation:\n  runs_per_eval: 9999\n")
+
+        loader = ConfigLoader(str(tmp_path))
+        with pytest.raises(ConfigurationError, match="Invalid defaults configuration"):
+            loader.load(test_id="any", model_id="any")
+
+    def test_load_raises_on_missing_defaults(self, tmp_path: Path) -> None:
+        """load() raises ConfigurationError when defaults.yaml is missing."""
+        loader = ConfigLoader(str(tmp_path))
+        with pytest.raises(ConfigurationError, match="not found"):
+            loader.load(test_id="any", model_id="any")
