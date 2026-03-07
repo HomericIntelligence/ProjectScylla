@@ -17,7 +17,7 @@ The primary purpose of this figure is to identify which criteria benefit most fr
 3. **Strategic Optimization**: Identify opportunities to remove unnecessary tiers for tasks that don't benefit from certain capabilities
 4. **Weakness Detection**: Spot criteria that remain poor across all tiers, indicating fundamental gaps in agent capabilities or evaluation methodology
 
-By analyzing criterion-level patterns, researchers can make informed decisions about tier configurations for different task categories. A documentation-heavy task may only need T0-T1 (prompts + skills), while a complex refactoring task may require T3+ (delegation and hierarchy) to achieve acceptable architectural scores.
+By analyzing criterion-level patterns, researchers can make informed decisions about tier configurations for different task categories. A documentation-heavy task may only need T0 (Prompts) or T1 (Skills), while a complex refactoring task may require T3+ (Delegation and Hierarchy) to achieve acceptable architectural scores.
 
 ## Data Source
 

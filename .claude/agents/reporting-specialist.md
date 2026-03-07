@@ -187,14 +187,14 @@ This evaluation compared T0-T3 architectures on 200 code review tasks
 (n=50 per tier).
 
 **Key Findings:**
-1. **Best Cost-Effectiveness**: T2 (Skills) achieved lowest CoP at $1.49,
+1. **Best Cost-Effectiveness**: T2 (Tooling) achieved lowest CoP at $1.49,
    33% lower than T1 ($2.22) and 11% lower than T3 ($1.67).
 
-2. **Quality vs. Cost Trade-off**: T3 (Tooling) showed highest Pass-Rate
+2. **Quality vs. Cost Trade-off**: T3 (Delegation) showed highest Pass-Rate
    (0.78) but at increased cost. The improvement over T2 was not
    statistically significant (p=0.08).
 
-3. **Recommendation**: For code review tasks, T2 (Skills) provides the
+3. **Recommendation**: For code review tasks, T2 (Tooling) provides the
    optimal balance of quality and cost. T3 adds complexity without
    proportional benefit.
 ```

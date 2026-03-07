@@ -119,8 +119,8 @@ $$
 **Expected Pattern**:
 
 - **T0 (Prompts Only)**: High failure rate (F/D), low success rate (S/A/B)
-- **T1-T3 (Skills/Tools/Delegation)**: Gradual improvement, shifting distribution toward passing grades
-- **T4-T5 (Hierarchy/Hybrid)**: Significant improvement, majority of grades in B/A/S range
+- **T1 (Skills) through T3 (Delegation)**: Gradual improvement, shifting distribution toward passing grades
+- **T4 (Hierarchy) and T5 (Hybrid)**: Significant improvement, majority of grades in B/A/S range
 - **T6 (Super)**: Best grade distribution, minimal F/D, high S/A concentration
 
 **Counter-Indicators** (anomalies to investigate):

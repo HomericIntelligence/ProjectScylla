@@ -196,7 +196,7 @@ Test: 001-justfile-to-makefile
         ... (9 runs)
     Tier: T1 (Prompted)
         ... (9 runs)
-    Tier: T2 (Skills)
+    Tier: T2 (Tooling)
         ... (9 runs)
     Tier: T3+ (Tooling)
         ... (9 runs)
