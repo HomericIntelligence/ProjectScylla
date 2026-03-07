@@ -33,10 +33,14 @@ from .validation import (
 logger = logging.getLogger(__name__)
 
 _SCHEMAS_DIR = Path(__file__).parent.parent.parent / "schemas"
+_SCHEMA_CACHE: dict[str, dict[str, Any]] = {}
 
 
 def _validate_schema(data: dict[str, Any], schema_name: str, path: Path) -> None:
-    """Validate data against a JSON schema.
+    """Validate data against a JSON schema, with module-level caching.
+
+    Reads the schema file from disk on first call for a given schema_name;
+    subsequent calls reuse the cached schema dict.
 
     Args:
         data: Parsed YAML data to validate
@@ -47,11 +51,13 @@ def _validate_schema(data: dict[str, Any], schema_name: str, path: Path) -> None
         ConfigurationError: If validation fails
 
     """
-    schema_path = _SCHEMAS_DIR / f"{schema_name}.schema.json"
-    with open(schema_path) as f:
-        schema = json.load(f)
+    schema_file = f"{schema_name}.schema.json"
+    if schema_file not in _SCHEMA_CACHE:
+        schema_path = _SCHEMAS_DIR / schema_file
+        with open(schema_path) as f:
+            _SCHEMA_CACHE[schema_file] = json.load(f)
     try:
-        jsonschema.validate(data, schema)
+        jsonschema.validate(data, _SCHEMA_CACHE[schema_file])
     except jsonschema.ValidationError as e:
         raise ConfigurationError(
             f"Invalid {schema_name} configuration in {path}: {e.message}"

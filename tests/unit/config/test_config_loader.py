@@ -12,6 +12,7 @@ Tests cover:
 
 import logging
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from pydantic import ValidationError
@@ -954,3 +955,112 @@ class TestSchemaValidation:
         loader = ConfigLoader(base_path=tmp_path)
         with pytest.raises(ConfigurationError, match="Invalid model configuration"):
             loader.load_model("bad-model")
+
+
+class TestValidateSchema:
+    """Tests for _validate_schema() module-level schema caching."""
+
+    def setup_method(self) -> None:
+        """Clear schema cache before each test to ensure isolation."""
+        from scylla.config import loader as loader_module
+
+        loader_module._SCHEMA_CACHE.clear()
+
+    def test_cache_miss_reads_schema_file(self) -> None:
+        """Schema file is read from disk on first call (cache miss)."""
+        from scylla.config.loader import _validate_schema
+
+        minimal_tier = {
+            "tier": "t0",
+            "name": "Prompts",
+        }
+        read_count = 0
+        original_open = open
+
+        def counting_open(path: object, *args: object, **kwargs: object) -> object:
+            nonlocal read_count
+            if "tier.schema.json" in str(path):
+                read_count += 1
+            return original_open(path, *args, **kwargs)  # type: ignore[call-overload]
+
+        with patch("builtins.open", side_effect=counting_open):
+            _validate_schema(minimal_tier, "tier", Path("t0.yaml"))
+
+        assert read_count == 1
+
+    def test_cache_hit_avoids_second_file_read(self) -> None:
+        """Schema file is read only once; second call uses the cache."""
+        from scylla.config.loader import _validate_schema
+
+        minimal_tier = {
+            "tier": "t0",
+            "name": "Prompts",
+        }
+        read_count = 0
+        original_open = open
+
+        def counting_open(path: object, *args: object, **kwargs: object) -> object:
+            nonlocal read_count
+            if "tier.schema.json" in str(path):
+                read_count += 1
+            return original_open(path, *args, **kwargs)  # type: ignore[call-overload]
+
+        with patch("builtins.open", side_effect=counting_open):
+            _validate_schema(minimal_tier, "tier", Path("t0.yaml"))
+            _validate_schema(minimal_tier, "tier", Path("t1.yaml"))
+
+        assert read_count == 1
+
+    def test_cache_populated_after_first_call(self) -> None:
+        """_SCHEMA_CACHE is populated after the first _validate_schema() call."""
+        from scylla.config import loader as loader_module
+        from scylla.config.loader import _validate_schema
+
+        minimal_tier = {
+            "tier": "t0",
+            "name": "Prompts",
+        }
+
+        assert "tier.schema.json" not in loader_module._SCHEMA_CACHE
+        _validate_schema(minimal_tier, "tier", Path("t0.yaml"))
+        assert "tier.schema.json" in loader_module._SCHEMA_CACHE
+        assert isinstance(loader_module._SCHEMA_CACHE["tier.schema.json"], dict)
+
+    def test_validation_failure_raises_configuration_error(self) -> None:
+        """ConfigurationError is raised when data does not match schema."""
+        from scylla.config.loader import _validate_schema
+
+        # tier schema requires "tier" and "name" — missing both triggers validation error
+        invalid_data: dict[str, str] = {"unknown_field": "bad"}
+        with pytest.raises(ConfigurationError, match="Invalid tier configuration"):
+            _validate_schema(invalid_data, "tier", Path("t0.yaml"))
+
+    def test_validation_success_does_not_raise(self) -> None:
+        """No exception raised for data that satisfies the schema."""
+        from scylla.config.loader import _validate_schema
+
+        valid_tier = {
+            "tier": "t0",
+            "name": "Prompts",
+        }
+        # Should not raise
+        _validate_schema(valid_tier, "tier", Path("t0.yaml"))
+
+    def test_different_schemas_cached_independently(self) -> None:
+        """Each schema_name gets its own cache entry."""
+        from scylla.config import loader as loader_module
+        from scylla.config.loader import _validate_schema
+
+        valid_tier = {
+            "tier": "t0",
+            "name": "Prompts",
+        }
+        valid_model = {
+            "model_id": "claude-3-5-haiku-20241022",
+        }
+
+        _validate_schema(valid_tier, "tier", Path("t0.yaml"))
+        _validate_schema(valid_model, "model", Path("model.yaml"))
+
+        assert "tier.schema.json" in loader_module._SCHEMA_CACHE
+        assert "model.schema.json" in loader_module._SCHEMA_CACHE
