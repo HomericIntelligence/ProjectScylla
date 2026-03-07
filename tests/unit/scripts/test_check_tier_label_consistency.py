@@ -1,18 +1,25 @@
 """Tests for scripts/check_tier_label_consistency.py."""
 
+from __future__ import annotations
+
+import json
 from pathlib import Path
 
 import pytest
-
-from scripts.check_tier_label_consistency import (
+from check_tier_label_consistency import (
     BAD_PATTERNS,
+    TierLabelFinding,
+    _collect_mismatches,
     check_tier_label_consistency,
     find_violations,
+    format_json,
+    format_report,
+    scan_repository,
 )
 
 
 class TestFindViolations:
-    """Tests for find_violations()."""
+    """Tests for find_violations() — legacy API."""
 
     def test_returns_empty_for_clean_content(self) -> None:
         """Clean content with no bad patterns returns no violations."""
@@ -76,7 +83,7 @@ class TestFindViolations:
 
 
 class TestCheckTierLabelConsistency:
-    """Tests for check_tier_label_consistency()."""
+    """Tests for check_tier_label_consistency() — legacy single-file API."""
 
     def test_clean_file_returns_zero(self, tmp_path: Path) -> None:
         """File with no bad patterns returns exit code 0."""
@@ -162,3 +169,238 @@ class TestBadPatterns:
             assert isinstance(reason, str)
             assert pattern
             assert reason
+
+
+class TestCollectMismatches:
+    """Tests for _collect_mismatches() — new per-file scan API."""
+
+    @pytest.mark.parametrize(
+        "bad_line, expected_tier, expected_found",
+        [
+            ("T3/Tooling is multi-agent", "T3", "Tooling"),
+            ("T4/Delegation results", "T4", "Delegation"),
+            ("T5/Hierarchy is nested", "T5", "Hierarchy"),
+            ("T2/Skills is domain", "T2", "Skills"),
+        ],
+    )
+    def test_detects_mismatch(
+        self,
+        tmp_path: Path,
+        bad_line: str,
+        expected_tier: str,
+        expected_found: str,
+    ) -> None:
+        """Each mismatch pattern is detected with correct tier and found name."""
+        f = tmp_path / "test.md"
+        f.write_text(bad_line + "\n", encoding="utf-8")
+        findings = _collect_mismatches(f)
+        assert len(findings) == 1
+        assert findings[0].tier == expected_tier
+        assert findings[0].found_name.lower() == expected_found.lower()
+
+    @pytest.mark.parametrize(
+        "clean_line",
+        [
+            "T3/Delegation is multi-agent",
+            "T2/Tooling has 15 sub-tests",
+            "T4/Hierarchy uses nested orchestration",
+            "T5/Hybrid combines best approaches",
+            "T0/Prompts ablation",
+            "T1/Skills domain expertise",
+            "T6/Super everything enabled",
+        ],
+    )
+    def test_clean_line_not_flagged(self, tmp_path: Path, clean_line: str) -> None:
+        """Correct tier name pairings produce no findings."""
+        f = tmp_path / "test.md"
+        f.write_text(clean_line + "\n", encoding="utf-8")
+        findings = _collect_mismatches(f)
+        assert findings == []
+
+    def test_returns_correct_line_number(self, tmp_path: Path) -> None:
+        """Finding records the correct 1-based line number."""
+        f = tmp_path / "test.md"
+        f.write_text("clean\nclean\nT3/Tooling bad\n", encoding="utf-8")
+        findings = _collect_mismatches(f)
+        assert len(findings) == 1
+        assert findings[0].line == 3
+
+    def test_finding_has_expected_name(self, tmp_path: Path) -> None:
+        """Finding records the canonical (expected) name for the tier."""
+        f = tmp_path / "test.md"
+        f.write_text("T3/Tooling\n", encoding="utf-8")
+        findings = _collect_mismatches(f)
+        assert findings[0].expected_name == "Delegation"
+
+    def test_finding_dataclass_fields(self, tmp_path: Path) -> None:
+        """TierLabelFinding has all required fields."""
+        f = tmp_path / "test.md"
+        f.write_text("T4/Delegation wrong\n", encoding="utf-8")
+        findings = _collect_mismatches(f)
+        assert len(findings) == 1
+        finding = findings[0]
+        assert isinstance(finding, TierLabelFinding)
+        assert finding.tier == "T4"
+        assert finding.expected_name == "Hierarchy"
+        assert finding.line == 1
+        assert finding.raw_text
+
+    def test_missing_file_returns_empty(self, tmp_path: Path) -> None:
+        """Non-existent file returns empty list without raising."""
+        missing = tmp_path / "nonexistent.md"
+        assert _collect_mismatches(missing) == []
+
+    def test_empty_file_returns_empty(self, tmp_path: Path) -> None:
+        """Empty file returns empty list."""
+        f = tmp_path / "empty.md"
+        f.write_text("", encoding="utf-8")
+        assert _collect_mismatches(f) == []
+
+    def test_multiple_mismatches_in_one_file(self, tmp_path: Path) -> None:
+        """Multiple mismatch lines in one file all produce findings."""
+        f = tmp_path / "multi.md"
+        f.write_text("T3/Tooling\nT4/Delegation\nT5/Hierarchy\n", encoding="utf-8")
+        findings = _collect_mismatches(f)
+        assert len(findings) == 3
+
+
+class TestScanRepository:
+    """Tests for scan_repository() — whole-repo scan API."""
+
+    def test_clean_repo_returns_empty(self, tmp_path: Path) -> None:
+        """A repository with no mismatch returns empty list."""
+        (tmp_path / "docs.md").write_text("T3/Delegation\nT2/Tooling\n", encoding="utf-8")
+        result = scan_repository(tmp_path)
+        assert result == []
+
+    def test_detects_mismatches_across_files(self, tmp_path: Path) -> None:
+        """Mismatches in multiple files are all collected."""
+        (tmp_path / "a.md").write_text("T3/Tooling bad\n", encoding="utf-8")
+        (tmp_path / "b.md").write_text("T4/Delegation bad\n", encoding="utf-8")
+        result = scan_repository(tmp_path)
+        assert len(result) == 2
+
+    def test_excludes_default_dirs(self, tmp_path: Path) -> None:
+        """Files under excluded directories are skipped."""
+        build = tmp_path / "build"
+        build.mkdir()
+        (build / "report.md").write_text("T3/Tooling bad\n", encoding="utf-8")
+        result = scan_repository(tmp_path)
+        assert result == []
+
+    def test_excludes_pixi_dir(self, tmp_path: Path) -> None:
+        """Files under .pixi/ are excluded from scanning."""
+        pixi = tmp_path / ".pixi"
+        pixi.mkdir()
+        (pixi / "readme.md").write_text("T5/Hierarchy bad\n", encoding="utf-8")
+        result = scan_repository(tmp_path)
+        assert result == []
+
+    def test_custom_excludes(self, tmp_path: Path) -> None:
+        """Custom exclude directory names are respected."""
+        custom = tmp_path / "mydir"
+        custom.mkdir()
+        (custom / "doc.md").write_text("T3/Tooling bad\n", encoding="utf-8")
+        # Without exclusion: detected
+        assert len(scan_repository(tmp_path, excludes=set())) > 0
+        # With exclusion: skipped
+        assert scan_repository(tmp_path, excludes={"mydir"}) == []
+
+    def test_relative_file_paths_in_findings(self, tmp_path: Path) -> None:
+        """Finding.file is relative to repo_root."""
+        (tmp_path / "readme.md").write_text("T2/Skills bad\n", encoding="utf-8")
+        result = scan_repository(tmp_path)
+        assert len(result) == 1
+        assert not result[0].file.startswith(str(tmp_path))
+        assert "readme.md" in result[0].file
+
+    def test_empty_directory_returns_empty(self, tmp_path: Path) -> None:
+        """Empty repository directory returns empty list."""
+        assert scan_repository(tmp_path) == []
+
+    def test_custom_glob_pattern(self, tmp_path: Path) -> None:
+        """Custom glob restricts which files are scanned."""
+        (tmp_path / "readme.md").write_text("T3/Tooling bad\n", encoding="utf-8")
+        (tmp_path / "notes.txt").write_text("T3/Tooling bad\n", encoding="utf-8")
+        # Only *.md files are matched by default.
+        result = scan_repository(tmp_path, glob="**/*.md")
+        assert len(result) == 1
+        assert "readme.md" in result[0].file
+
+    def test_nested_subdirectory_scanned(self, tmp_path: Path) -> None:
+        """Files in subdirectories are discovered by **/*.md glob."""
+        sub = tmp_path / "docs" / "api"
+        sub.mkdir(parents=True)
+        (sub / "guide.md").write_text("T4/Delegation bad\n", encoding="utf-8")
+        result = scan_repository(tmp_path)
+        assert len(result) == 1
+        assert "guide.md" in result[0].file
+
+
+class TestFormatReport:
+    """Tests for format_report()."""
+
+    def test_empty_findings_returns_clean_message(self) -> None:
+        """Empty findings list returns the all-clear message."""
+        msg = format_report([])
+        assert "No tier label mismatches found" in msg
+
+    def test_findings_included_in_report(self, tmp_path: Path) -> None:
+        """Non-empty findings produce a report with mismatch details."""
+        finding = TierLabelFinding(
+            file="docs/README.md",
+            line=5,
+            tier="T3",
+            found_name="Tooling",
+            expected_name="Delegation",
+            raw_text="T3/Tooling is used here",
+        )
+        report = format_report([finding])
+        assert "T3" in report
+        assert "Tooling" in report
+        assert "Delegation" in report
+
+    def test_finding_count_in_report(self) -> None:
+        """Report header includes the total mismatch count."""
+        findings = [
+            TierLabelFinding(
+                file="a.md",
+                line=i,
+                tier="T3",
+                found_name="Tooling",
+                expected_name="Delegation",
+                raw_text="T3/Tooling",
+            )
+            for i in range(3)
+        ]
+        report = format_report(findings)
+        assert "3" in report
+
+
+class TestFormatJson:
+    """Tests for format_json()."""
+
+    def test_empty_findings_returns_empty_array(self) -> None:
+        """Empty findings list serialises to a JSON empty array."""
+        result = json.loads(format_json([]))
+        assert result == []
+
+    def test_findings_serialised_correctly(self) -> None:
+        """Finding fields appear in the JSON output."""
+        finding = TierLabelFinding(
+            file="docs/README.md",
+            line=10,
+            tier="T4",
+            found_name="Delegation",
+            expected_name="Hierarchy",
+            raw_text="T4/Delegation is wrong",
+        )
+        result = json.loads(format_json([finding]))
+        assert len(result) == 1
+        obj = result[0]
+        assert obj["file"] == "docs/README.md"
+        assert obj["line"] == 10
+        assert obj["tier"] == "T4"
+        assert obj["found_name"] == "Delegation"
+        assert obj["expected_name"] == "Hierarchy"
+        assert obj["raw_text"] == "T4/Delegation is wrong"
