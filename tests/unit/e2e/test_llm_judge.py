@@ -23,6 +23,8 @@ from scylla.e2e.llm_judge import (
     _create_precommit_script,
     _create_python_scripts,
     _create_run_all_script,
+    _execute_python_scripts,
+    _gather_judge_context,
     _get_deleted_files,
     _get_patchfile,
     _get_pipeline_env,
@@ -30,8 +32,15 @@ from scylla.e2e.llm_judge import (
     _load_reference_patch,
     _parse_judge_response,
     _run_build_pipeline,
+    _run_mojo_build_step,
+    _run_mojo_format_step,
     _run_mojo_pipeline,
+    _run_mojo_test_step,
+    _run_precommit_step,
+    _run_python_build_step,
+    _run_python_format_step,
     _run_python_pipeline,
+    _run_python_test_step,
     _save_judge_logs,
     _save_pipeline_commands,
     _save_pipeline_outputs,
@@ -1401,3 +1410,368 @@ class TestRunLlmJudgeRetry:
                     (bad, "", bad),
                 ],
             )
+
+
+class TestRunMojoSteps:
+    """Tests for extracted Mojo pipeline step helpers."""
+
+    def test_run_mojo_build_step_standalone_success(self, tmp_path: Path) -> None:
+        """Standalone repo build succeeds when pixi run mojo build returns 0."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "Build succeeded"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, output = _run_mojo_build_step(tmp_path, is_modular=False)
+
+        assert passed is True
+        assert na is False
+        assert "Build succeeded" in output
+
+    def test_run_mojo_build_step_modular_success(self, tmp_path: Path) -> None:
+        """Modular repo build succeeds when bazelw build returns 0."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "bazel build ok"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_mojo_build_step(tmp_path, is_modular=True)
+
+        assert passed is True
+        assert na is False
+
+    def test_run_mojo_build_step_timeout(self, tmp_path: Path) -> None:
+        """Build step returns failed/non-NA on timeout."""
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 300)):
+            passed, na, output = _run_mojo_build_step(tmp_path, is_modular=False)
+
+        assert passed is False
+        assert na is False
+        assert "timed out" in output
+
+    def test_run_mojo_build_step_not_found(self, tmp_path: Path) -> None:
+        """Build step returns failed/non-NA when tool not found."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("pixi not found")):
+            passed, na, output = _run_mojo_build_step(tmp_path, is_modular=False)
+
+        assert passed is False
+        assert na is False
+        assert "Build tool not found" in output
+
+    def test_run_mojo_format_step_modular(self, tmp_path: Path) -> None:
+        """Modular repo format check uses bazelw run format."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "format ok"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result) as mock_sub:
+            passed, na, _output = _run_mojo_format_step(tmp_path, is_modular=True)
+
+        assert passed is True
+        assert na is False
+        called_cmd = mock_sub.call_args[0][0]
+        assert called_cmd[:3] == ["./bazelw", "run", "format"]
+
+    def test_run_mojo_format_step_standalone_uses_mojo_subdir(self, tmp_path: Path) -> None:
+        """Standalone format uses mojo/ subdirectory when it exists."""
+        mojo_dir = tmp_path / "mojo"
+        mojo_dir.mkdir()
+
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result) as mock_sub:
+            passed, _na, _output = _run_mojo_format_step(tmp_path, is_modular=False)
+
+        assert passed is True
+        assert mock_sub.call_args[1]["cwd"] == mojo_dir
+
+    def test_run_mojo_format_step_error(self, tmp_path: Path) -> None:
+        """Format step returns failed on FileNotFoundError."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("pixi not found")):
+            passed, na, _output = _run_mojo_format_step(tmp_path, is_modular=False)
+
+        assert passed is False
+        assert na is False
+
+    def test_run_mojo_test_step_no_tests_found(self, tmp_path: Path) -> None:
+        """Test step marks N/A when output contains 'No tests found'."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = "No tests found"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_mojo_test_step(tmp_path, is_modular=False)
+
+        assert passed is True
+        assert na is True
+
+    def test_run_mojo_test_step_returncode_5(self, tmp_path: Path) -> None:
+        """Test step marks N/A when returncode is 5."""
+        mock_result = MagicMock()
+        mock_result.returncode = 5
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_mojo_test_step(tmp_path, is_modular=False)
+
+        assert passed is True
+        assert na is True
+
+    def test_run_mojo_test_step_not_available(self, tmp_path: Path) -> None:
+        """Test step marks N/A when mojo test tool not found."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("mojo not found")):
+            passed, na, output = _run_mojo_test_step(tmp_path, is_modular=False)
+
+        assert passed is True
+        assert na is True
+        assert "not available" in output
+
+    def test_run_precommit_step_missing_config(self, tmp_path: Path) -> None:
+        """Pre-commit step marks N/A when config file is missing."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = ".pre-commit-config.yaml is not a file"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_precommit_step(tmp_path)
+
+        assert passed is True
+        assert na is True
+
+    def test_run_precommit_step_not_installed(self, tmp_path: Path) -> None:
+        """Pre-commit step marks N/A when pre-commit not installed."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("pre-commit not found")):
+            passed, na, output = _run_precommit_step(tmp_path)
+
+        assert passed is True
+        assert na is True
+        assert "not available" in output
+
+    def test_run_precommit_step_timeout(self, tmp_path: Path) -> None:
+        """Pre-commit step returns failed on timeout."""
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 300)):
+            passed, na, _output = _run_precommit_step(tmp_path)
+
+        assert passed is False
+        assert na is False
+
+    def test_run_precommit_step_passes_env(self, tmp_path: Path) -> None:
+        """Pre-commit step passes env argument to subprocess."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "passed"
+        mock_result.stderr = ""
+        custom_env = {"MY_VAR": "value"}
+
+        with patch("subprocess.run", return_value=mock_result) as mock_sub:
+            _run_precommit_step(tmp_path, env=custom_env)
+
+        assert mock_sub.call_args[1]["env"] == custom_env
+
+
+class TestRunPythonSteps:
+    """Tests for extracted Python pipeline step helpers."""
+
+    def test_execute_python_scripts_no_py_files(self, tmp_path: Path) -> None:
+        """Returns empty list when no .py files in workspace root."""
+        env: dict[str, str] = {}
+        result = _execute_python_scripts(tmp_path, env)
+        assert result == []
+
+    def test_execute_python_scripts_with_files(self, tmp_path: Path) -> None:
+        """Returns execution output for each .py file found."""
+        (tmp_path / "hello.py").write_text('print("hello")')
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = "hello\n"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            lines = _execute_python_scripts(tmp_path, {})
+
+        assert any("hello.py" in line for line in lines)
+        assert any("Exit code: 0" in line for line in lines)
+
+    def test_execute_python_scripts_timeout(self, tmp_path: Path) -> None:
+        """Records timeout message for scripts that time out."""
+        (tmp_path / "slow.py").write_text("import time; time.sleep(100)")
+
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 30)):
+            lines = _execute_python_scripts(tmp_path, {})
+
+        assert any("timed out" in line for line in lines)
+
+    def test_run_python_build_step_success(self, tmp_path: Path) -> None:
+        """Build step returns passed=True when compileall returns 0."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, output = _run_python_build_step(tmp_path, {})
+
+        assert passed is True
+        assert na is False
+        assert "syntax check passed" in output
+
+    def test_run_python_build_step_syntax_error(self, tmp_path: Path) -> None:
+        """Build step returns passed=False on syntax error."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = "SyntaxError"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_python_build_step(tmp_path, {})
+
+        assert passed is False
+        assert na is False
+
+    def test_run_python_build_step_error(self, tmp_path: Path) -> None:
+        """Build step returns failed on FileNotFoundError."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("python not found")):
+            passed, na, _output = _run_python_build_step(tmp_path, {})
+
+        assert passed is False
+        assert na is False
+
+    def test_run_python_format_step_success(self, tmp_path: Path) -> None:
+        """Format step returns passed=True when ruff returns 0."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = ""
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_python_format_step(tmp_path, {})
+
+        assert passed is True
+        assert na is False
+
+    def test_run_python_format_step_not_found(self, tmp_path: Path) -> None:
+        """Format step marks N/A when ruff not installed."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("ruff not found")):
+            passed, na, output = _run_python_format_step(tmp_path, {})
+
+        assert passed is True
+        assert na is True
+        assert "not available" in output
+
+    def test_run_python_test_step_no_tests_returncode5(self, tmp_path: Path) -> None:
+        """Test step marks N/A when pytest exits with code 5."""
+        mock_result = MagicMock()
+        mock_result.returncode = 5
+        mock_result.stdout = "no tests ran"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_python_test_step(tmp_path, {})
+
+        assert passed is True
+        assert na is True
+
+    def test_run_python_test_step_not_installed(self, tmp_path: Path) -> None:
+        """Test step marks N/A when pytest not installed."""
+        with patch("subprocess.run", side_effect=FileNotFoundError("pytest not found")):
+            passed, na, output = _run_python_test_step(tmp_path, {})
+
+        assert passed is True
+        assert na is True
+        assert "not available" in output
+
+    def test_run_python_test_step_failure(self, tmp_path: Path) -> None:
+        """Test step returns passed=False when pytest exits non-zero (not 5)."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = "1 failed"
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            passed, na, _output = _run_python_test_step(tmp_path, {})
+
+        assert passed is False
+        assert na is False
+
+
+class TestGatherJudgeContext:
+    """Tests for _gather_judge_context helper."""
+
+    def test_no_pipeline_when_disabled(self, tmp_path: Path) -> None:
+        """Returns None pipeline_result when run_build_pipeline=False."""
+        with patch("scylla.e2e.llm_judge._get_workspace_state", return_value="state"):
+            judge_prompt, pipeline_result = _gather_judge_context(
+                workspace=tmp_path,
+                task_prompt="do task",
+                agent_output="done",
+                include_patchfile=False,
+                reference_patch_path=None,
+                rubric_path=None,
+                run_build_pipeline=False,
+                language="python",
+                pipeline_baseline=None,
+                judge_dir=None,
+            )
+
+        assert pipeline_result is None
+        assert isinstance(judge_prompt, str)
+        assert len(judge_prompt) > 0
+
+    def test_includes_baseline_in_prompt(self, tmp_path: Path) -> None:
+        """Baseline pipeline result is formatted and included in the prompt."""
+        baseline = BuildPipelineResult(
+            language="python",
+            build_passed=True,
+            build_output="ok",
+            all_passed=True,
+        )
+
+        with (
+            patch("scylla.e2e.llm_judge._get_workspace_state", return_value="state"),
+            patch("scylla.e2e.llm_judge._get_patchfile", return_value="diff"),
+            patch("scylla.e2e.llm_judge._get_deleted_files", return_value=[]),
+        ):
+            judge_prompt, _pipeline_result = _gather_judge_context(
+                workspace=tmp_path,
+                task_prompt="do task",
+                agent_output="done",
+                include_patchfile=True,
+                reference_patch_path=None,
+                rubric_path=None,
+                run_build_pipeline=False,
+                language="python",
+                pipeline_baseline=baseline,
+                judge_dir=None,
+            )
+
+        assert "ALL PASSED" in judge_prompt
+
+    def test_rubric_loaded_from_path(self, tmp_path: Path) -> None:
+        """Rubric content is loaded from file and included in context."""
+        rubric_file = tmp_path / "rubric.yaml"
+        rubric_file.write_text("- check correctness")
+
+        with patch("scylla.e2e.llm_judge._get_workspace_state", return_value="state"):
+            judge_prompt, _ = _gather_judge_context(
+                workspace=tmp_path,
+                task_prompt="do task",
+                agent_output="done",
+                include_patchfile=False,
+                reference_patch_path=None,
+                rubric_path=rubric_file,
+                run_build_pipeline=False,
+                language="python",
+                pipeline_baseline=None,
+                judge_dir=None,
+            )
+
+        assert "check correctness" in judge_prompt
