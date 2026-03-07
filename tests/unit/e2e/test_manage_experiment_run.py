@@ -1415,6 +1415,276 @@ class TestRetryErrorsInBatch:
         # No tests were re-run (all previously completed)
         assert executed_ids == []
 
+    def test_retry_errors_uses_last_entry_per_test(self, tmp_path: Path) -> None:
+        """--retry-errors uses only the last entry per test_id.
+
+        test-001 has entries [error, error, success] — last is success, so skipped.
+        test-002 has entries [success, success, error] — last is error, so re-run.
+        """
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        summary = {
+            "results": [
+                {"test_id": "test-001", "status": "error", "error": "first error"},
+                {"test_id": "test-002", "status": "success"},
+                {"test_id": "test-001", "status": "error", "error": "second error"},
+                {"test_id": "test-002", "status": "success"},
+                {"test_id": "test-001", "status": "success"},
+                {"test_id": "test-002", "status": "error", "error": "final error"},
+            ]
+        }
+        (results_dir / "batch_summary.json").write_text(json.dumps(summary))
+
+        for test_name in ["test-001", "test-002"]:
+            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--retry-errors",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        executed_ids: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            executed_ids.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # Only test-002 (last entry is error) was re-run; test-001 (last entry is success) skipped
+        assert executed_ids == ["test-002"]
+
+    def test_retry_errors_reruns_success_test_with_failed_checkpoint_runs(
+        self, tmp_path: Path
+    ) -> None:
+        """--retry-errors reruns a 'success' test if its checkpoint has failed runs."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import cmd_run
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # batch_summary says test-001 succeeded at the batch level; test-002 also success (clean)
+        summary = {
+            "results": [
+                {"test_id": "test-001", "status": "success"},
+                {"test_id": "test-002", "status": "success"},
+            ]
+        }
+        (results_dir / "batch_summary.json").write_text(json.dumps(summary))
+
+        # Create checkpoint for test-001 with a failed run inside (T1/01/1=failed)
+        exp_dir = results_dir / "2024-01-01T00-00-00-test-001"
+        exp_dir.mkdir(parents=True)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "failed"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        save_checkpoint(checkpoint, exp_dir / "checkpoint.json")
+
+        # Create clean checkpoint for test-002 (no failures)
+        exp_dir2 = results_dir / "2024-01-01T00-00-00-test-002"
+        exp_dir2.mkdir(parents=True)
+        checkpoint2 = E2ECheckpoint(
+            experiment_id="test-002",
+            experiment_dir=str(exp_dir2),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        save_checkpoint(checkpoint2, exp_dir2 / "checkpoint.json")
+
+        self._make_test_dir_with_yaml(tmp_path / "test-001", "test-001")
+        self._make_test_dir_with_yaml(tmp_path / "test-002", "test-002")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--retry-errors",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        executed_ids: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            executed_ids.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # test-001 must be re-run (checkpoint has failed run); test-002 skipped (all clean)
+        assert "test-001" in executed_ids
+        assert "test-002" not in executed_ids
+
+    def test_retry_errors_skips_success_test_with_all_runs_complete(self, tmp_path: Path) -> None:
+        """--retry-errors skips a 'success' test when all checkpoint runs are complete."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import cmd_run
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        summary = {
+            "results": [
+                {"test_id": "test-001", "status": "success"},
+                {"test_id": "test-002", "status": "error"},
+            ]
+        }
+        (results_dir / "batch_summary.json").write_text(json.dumps(summary))
+
+        # Checkpoint with all runs at worktree_cleaned (no failures)
+        exp_dir = results_dir / "2024-01-01T00-00-00-test-001"
+        exp_dir.mkdir(parents=True)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
+        )
+        save_checkpoint(checkpoint, exp_dir / "checkpoint.json")
+
+        self._make_test_dir_with_yaml(tmp_path / "test-001", "test-001")
+        self._make_test_dir_with_yaml(tmp_path / "test-002", "test-002")
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(tmp_path / "test-001"),
+                "--config",
+                str(tmp_path / "test-002"),
+                "--retry-errors",
+                "--results-dir",
+                str(results_dir),
+                "--threads",
+                "1",
+                "--skip-judge-validation",
+            ]
+        )
+
+        executed_ids: list[str] = []
+
+        def mock_run_experiment(config, tiers_dir, results_dir, fresh):
+            executed_ids.append(config.experiment_id)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # test-001 skipped (success + no retryable runs); test-002 re-runs (error status)
+        assert "test-001" not in executed_ids
+        assert "test-002" in executed_ids
+
+    def test_retry_errors_resets_failed_and_rate_limited_runs(self, tmp_path: Path) -> None:
+        """_reset_terminal_runs resets both failed and rate_limited runs, cascading state."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_terminal_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="failed",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
+            run_states={
+                "T0": {"00": {"1": "failed", "2": "worktree_cleaned"}},
+                "T1": {"01": {"1": "rate_limited"}},
+            },
+            completed_runs={},
+        )
+
+        reset_count = _reset_terminal_runs(checkpoint)
+
+        assert reset_count == 2
+        # Both terminal runs are reset to pending
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+        assert checkpoint.run_states["T1"]["01"]["1"] == "pending"
+        # Non-terminal run is untouched
+        assert checkpoint.run_states["T0"]["00"]["2"] == "worktree_cleaned"
+        # Subtest states cascade to pending
+        assert checkpoint.get_subtest_state("T0", "00") == "pending"
+        assert checkpoint.get_subtest_state("T1", "01") == "pending"
+        # Tier states cascade to pending
+        assert checkpoint.get_tier_state("T0") == "pending"
+        assert checkpoint.get_tier_state("T1") == "pending"
+        # Experiment state updated
+        assert checkpoint.experiment_state == "tiers_running"
+
 
 # ---------------------------------------------------------------------------
 # --add-judge in batch mode (bug fix validation)
@@ -2585,7 +2855,7 @@ class TestPromptOverride:
 
 
 class TestRetryErrorsInSingleMode:
-    """Tests that --retry-errors in single mode resets failed runs via reset_runs_for_from_state."""
+    """Tests --retry-errors single mode resets failed/rate-limited runs via _reset_terminal_runs."""
 
     def _make_test_dir(self, path: Path) -> None:
         """Create a minimal test directory with test.yaml and prompt.md."""
@@ -2603,12 +2873,12 @@ class TestRetryErrorsInSingleMode:
         (path / "prompt.md").write_text("test prompt")
 
     def test_retry_errors_single_mode_calls_reset_for_failed_runs(self, tmp_path: Path) -> None:
-        """--retry-errors single mode calls reset_runs_for_from_state with status_filter=failed."""
+        """--retry-errors single mode resets failed runs to pending via _reset_terminal_runs."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
 
-        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+        from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
 
         config_dir = tmp_path / "test-exp"
         self._make_test_dir(config_dir)
@@ -2646,26 +2916,16 @@ class TestRetryErrorsInSingleMode:
             ]
         )
 
-        reset_calls: list[Any] = []
-
-        def mock_reset(cp, from_state, **kwargs):
-            reset_calls.append({"from_state": from_state, "kwargs": kwargs})
-            return 1
-
         with (
             patch("scylla.e2e.model_validation.validate_model", return_value=True),
             patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
-            patch(
-                "scylla.e2e.checkpoint.reset_runs_for_from_state",
-                side_effect=mock_reset,
-            ),
         ):
             result = cmd_run(args)
 
         assert result == 0
-        # Verify reset_runs_for_from_state was called with status_filter=["failed"]
-        assert len(reset_calls) == 1
-        assert reset_calls[0]["kwargs"].get("status_filter") == ["failed"]
+        # Verify the failed run was reset to pending in the checkpoint on disk
+        saved = load_checkpoint(checkpoint_path)
+        assert saved.run_states["T0"]["00"]["1"] == "pending"
 
     def test_retry_errors_single_mode_no_existing_checkpoint_is_noop(self, tmp_path: Path) -> None:
         """--retry-errors with no existing checkpoint is a no-op (fresh run starts normally)."""
@@ -2700,13 +2960,13 @@ class TestRetryErrorsInSingleMode:
         assert result == 0
         mock_run.assert_called_once()
 
-    def test_retry_errors_scoped_to_cli_tiers(self, tmp_path: Path) -> None:
-        """--retry-errors --tiers T0 scopes reset to T0 only via tier_filter."""
+    def test_retry_errors_resets_all_terminal_runs_across_tiers(self, tmp_path: Path) -> None:
+        """--retry-errors resets all terminal runs across all tiers via _reset_terminal_runs."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
 
-        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+        from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
 
         config_dir = tmp_path / "test-exp"
         self._make_test_dir(config_dir)
@@ -2734,7 +2994,8 @@ class TestRetryErrorsInSingleMode:
                 "T1": {"00": {1: "failed"}},
             },
         )
-        save_checkpoint(checkpoint, exp_dir / "checkpoint.json")
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
 
         parser = build_parser()
         args = parser.parse_args(
@@ -2745,32 +3006,21 @@ class TestRetryErrorsInSingleMode:
                 "--results-dir",
                 str(results_dir),
                 "--retry-errors",
-                "--tiers",
-                "T0",
                 "--skip-judge-validation",
             ]
         )
 
-        reset_calls: list[Any] = []
-
-        def mock_reset(cp, from_state, **kwargs):
-            reset_calls.append({"from_state": from_state, "kwargs": kwargs})
-            return 1
-
         with (
             patch("scylla.e2e.model_validation.validate_model", return_value=True),
             patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
-            patch(
-                "scylla.e2e.checkpoint.reset_runs_for_from_state",
-                side_effect=mock_reset,
-            ),
         ):
             result = cmd_run(args)
 
         assert result == 0
-        assert len(reset_calls) == 1
-        assert reset_calls[0]["kwargs"].get("tier_filter") == ["T0"]
-        assert reset_calls[0]["kwargs"].get("status_filter") == ["failed"]
+        # Both T0 and T1 failed runs are reset to pending
+        saved = load_checkpoint(checkpoint_path)
+        assert saved.run_states["T0"]["00"]["1"] == "pending"
+        assert saved.run_states["T1"]["00"]["1"] == "pending"
 
 
 # ---------------------------------------------------------------------------
