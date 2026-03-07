@@ -449,7 +449,7 @@ class ConfigLoader:
     # Merged Configuration Loading
     # -------------------------------------------------------------------------
 
-    def load(self, test_id: str, model_id: str) -> ScyllaConfig:  # noqa: C901  # config loader with many format/version branches
+    def load(self, test_id: str, model_id: str) -> ScyllaConfig:
         """Load and merge configuration for a test run.
 
         Applies three-level priority hierarchy:
@@ -468,37 +468,22 @@ class ConfigLoader:
             ConfigurationError: If configuration is invalid
 
         """
-        # Load defaults (required)
-        defaults_path = self.base_path / "config" / "defaults.yaml"
-        defaults_data = self._load_yaml(defaults_path)
+        # Load and validate defaults (required) — routes through load_defaults()
+        # for schema validation and filename consistency checks.
+        defaults = self.load_defaults()
 
-        # Build base config from defaults
-        config_data: dict[str, Any] = {}
-
-        # Map evaluation settings to top-level
-        if "evaluation" in defaults_data:
-            eval_cfg = defaults_data["evaluation"]
-            if "runs_per_eval" in eval_cfg:
-                config_data["runs_per_tier"] = eval_cfg["runs_per_eval"]
-            if "timeout" in eval_cfg:
-                config_data["timeout_seconds"] = eval_cfg["timeout"]
-
-        # Copy top-level settings
-        for key in [
-            "runs_per_tier",
-            "timeout_seconds",
-            "max_cost_usd",
-            "judge",
-            "adapters",
-            "cleanup",
-        ]:
-            if key in defaults_data:
-                config_data[key] = defaults_data[key]
-
-        # Copy other config sections
-        for key in ["output", "logging", "metrics"]:
-            if key in defaults_data:
-                config_data[key] = defaults_data[key]
+        # Build base config from validated DefaultsConfig
+        config_data: dict[str, Any] = {
+            "runs_per_tier": defaults.evaluation.runs_per_tier,
+            "timeout_seconds": defaults.evaluation.timeout,
+            "max_cost_usd": defaults.max_cost_usd,
+            "judge": defaults.judge,
+            "adapters": defaults.adapters,
+            "cleanup": defaults.cleanup,
+            "output": defaults.output,
+            "logging": defaults.logging,
+            "metrics": defaults.metrics,
+        }
 
         # Load model config (optional)
         model_config = self.load_model(model_id)
