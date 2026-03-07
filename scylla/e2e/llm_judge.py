@@ -12,6 +12,8 @@ import logging
 import os
 import subprocess
 import tempfile
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -191,7 +193,161 @@ def _is_modular_repo(workspace: Path) -> bool:
     return (workspace / "bazelw").exists() and (workspace / "mojo").is_dir()
 
 
-def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  # pipeline with sequential conditional stages
+def _run_mojo_build_step(workspace: Path, is_modular: bool) -> tuple[bool, bool, str]:
+    """Run the Mojo build step.
+
+    Args:
+        workspace: Path to the workspace directory
+        is_modular: Whether workspace is the modular/mojo monorepo
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        if is_modular:
+            build_result = subprocess.run(
+                ["./bazelw", "build", "//mojo/..."],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=1800,  # 30 minutes for large monorepo
+            )
+        else:
+            build_result = subprocess.run(
+                ["pixi", "run", "mojo", "build", "."],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=300,
+            )
+        return (
+            build_result.returncode == 0,
+            False,
+            build_result.stdout + "\n" + build_result.stderr,
+        )
+    except subprocess.TimeoutExpired as e:
+        return (
+            False,
+            False,
+            f"Build timed out after {e.args[1] if len(e.args) > 1 else 'unknown'} seconds",
+        )
+    except FileNotFoundError as e:
+        return False, False, f"Build tool not found: {e}"
+
+
+def _run_mojo_format_step(workspace: Path, is_modular: bool) -> tuple[bool, bool, str]:
+    """Run the Mojo format check step.
+
+    Args:
+        workspace: Path to the workspace directory
+        is_modular: Whether workspace is the modular/mojo monorepo
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        if is_modular:
+            format_result = subprocess.run(
+                ["./bazelw", "run", "format"],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        else:
+            # Run from mojo/ subdirectory if it exists, otherwise from workspace root
+            mojo_dir = workspace / "mojo"
+            cwd = mojo_dir if mojo_dir.is_dir() else workspace
+            format_result = subprocess.run(
+                ["pixi", "run", "mojo", "format", "."],
+                cwd=cwd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        return (
+            format_result.returncode == 0,
+            False,
+            format_result.stdout + "\n" + format_result.stderr,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        return False, False, f"Error: {e}"
+
+
+def _run_mojo_test_step(workspace: Path, is_modular: bool) -> tuple[bool, bool, str]:
+    """Run the Mojo test step.
+
+    Args:
+        workspace: Path to the workspace directory
+        is_modular: Whether workspace is the modular/mojo monorepo
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        if is_modular:
+            mojo_dir = workspace / "mojo"
+            test_result = subprocess.run(
+                ["pixi", "run", "tests"],
+                cwd=mojo_dir,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+        else:
+            test_result = subprocess.run(
+                ["pixi", "run", "mojo", "test"],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                timeout=600,
+            )
+        output = test_result.stdout + "\n" + test_result.stderr
+        if "No tests found" in output or test_result.returncode == 5:
+            return True, True, output
+        return test_result.returncode == 0, False, output
+    except FileNotFoundError:
+        return True, True, "mojo test not available, skipping"
+    except subprocess.TimeoutExpired as e:
+        return False, False, f"Error: {e}"
+
+
+def _run_precommit_step(
+    workspace: Path, env: dict[str, str] | None = None
+) -> tuple[bool, bool, str]:
+    """Run the pre-commit hooks step.
+
+    Args:
+        workspace: Path to the workspace directory
+        env: Optional environment variables for subprocess (None uses inherited env)
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        precommit_result = subprocess.run(
+            ["pre-commit", "run", "--all-files"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=env,
+        )
+        output = precommit_result.stdout + "\n" + precommit_result.stderr
+        if ".pre-commit-config.yaml is not a file" in output:
+            return True, True, output
+        return precommit_result.returncode == 0, False, output
+    except FileNotFoundError:
+        return True, True, "pre-commit not available, skipping"
+    except subprocess.TimeoutExpired as e:
+        return False, False, f"Error: {e}"
+
+
+def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:
     """Run Mojo build/lint pipeline and capture results.
 
     Detects if workspace is the modular/mojo monorepo and uses appropriate commands:
@@ -206,156 +362,29 @@ def _run_mojo_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  #
         BuildPipelineResult with all tool outputs
 
     """
-    results: dict[str, Any] = {"language": "mojo"}
     is_modular = _is_modular_repo(workspace)
 
-    # Mojo build
-    try:
-        if is_modular:
-            # Modular repo: Use bazelw to build all mojo targets
-            # Increase timeout to 30 minutes for large monorepo builds
-            build_result = subprocess.run(
-                ["./bazelw", "build", "//mojo/..."],
-                cwd=workspace,
-                capture_output=True,
-                text=True,
-                timeout=1800,  # 30 minutes for large monorepo
-            )
-        else:
-            # Standalone repo: Use pixi run mojo build
-            build_result = subprocess.run(
-                ["pixi", "run", "mojo", "build", "."],
-                cwd=workspace,
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
-        results["build_passed"] = build_result.returncode == 0
-        results["build_na"] = False
-        results["build_output"] = build_result.stdout + "\n" + build_result.stderr
-    except subprocess.TimeoutExpired as e:
-        # Timeout - mark as failed with timeout message
-        results["build_passed"] = False
-        results["build_na"] = False
-        results["build_output"] = (
-            f"Build timed out after {e.args[1] if len(e.args) > 1 else 'unknown'} seconds"
-        )
-    except FileNotFoundError as e:
-        results["build_passed"] = False
-        results["build_na"] = False
-        results["build_output"] = f"Build tool not found: {e}"
+    build_passed, build_na, build_output = _run_mojo_build_step(workspace, is_modular)
+    format_passed, format_na, format_output = _run_mojo_format_step(workspace, is_modular)
+    test_passed, test_na, test_output = _run_mojo_test_step(workspace, is_modular)
+    precommit_passed, precommit_na, precommit_output = _run_precommit_step(workspace)
 
-    # Mojo format check
-    try:
-        if is_modular:
-            # Modular repo: Use bazelw run format (runs all linters including mojo format)
-            format_result = subprocess.run(
-                ["./bazelw", "run", "format"],
-                cwd=workspace,
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-        else:
-            # Standalone repo: Use pixi run mojo format (NO --check flag - it doesn't exist)
-            # Run from mojo/ subdirectory if it exists, otherwise from workspace root
-            mojo_dir = workspace / "mojo"
-            cwd = mojo_dir if mojo_dir.is_dir() else workspace
-            format_result = subprocess.run(
-                ["pixi", "run", "mojo", "format", "."],
-                cwd=cwd,
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
-        results["format_passed"] = format_result.returncode == 0
-        results["format_na"] = False
-        results["format_output"] = format_result.stdout + "\n" + format_result.stderr
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        results["format_passed"] = False
-        results["format_na"] = False
-        results["format_output"] = f"Error: {e}"
-
-    # Mojo test
-    try:
-        if is_modular:
-            # Modular repo: Use pixi run tests from mojo/ subdirectory
-            mojo_dir = workspace / "mojo"
-            test_result = subprocess.run(
-                ["pixi", "run", "tests"],
-                cwd=mojo_dir,
-                capture_output=True,
-                text=True,
-                timeout=600,
-            )
-        else:
-            # Standalone repo: Use pixi run mojo test
-            test_result = subprocess.run(
-                ["pixi", "run", "mojo", "test"],
-                cwd=workspace,
-                capture_output=True,
-                text=True,
-                timeout=600,
-            )
-        # Check if no tests found
-        output = test_result.stdout + "\n" + test_result.stderr
-        if "No tests found" in output or test_result.returncode == 5:
-            results["test_passed"] = True
-            results["test_na"] = True
-            results["test_output"] = output
-        else:
-            results["test_passed"] = test_result.returncode == 0
-            results["test_na"] = False
-            results["test_output"] = output
-    except FileNotFoundError:
-        # mojo test not available, mark as N/A
-        results["test_passed"] = True
-        results["test_na"] = True
-        results["test_output"] = "mojo test not available, skipping"
-    except subprocess.TimeoutExpired as e:
-        results["test_passed"] = False
-        results["test_na"] = False
-        results["test_output"] = f"Error: {e}"
-
-    # Pre-commit hooks
-    try:
-        precommit_result = subprocess.run(
-            ["pre-commit", "run", "--all-files"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
-        # Check if .pre-commit-config.yaml is missing
-        output = precommit_result.stdout + "\n" + precommit_result.stderr
-        if ".pre-commit-config.yaml is not a file" in output:
-            results["precommit_passed"] = True
-            results["precommit_na"] = True
-            results["precommit_output"] = output
-        else:
-            results["precommit_passed"] = precommit_result.returncode == 0
-            results["precommit_na"] = False
-            results["precommit_output"] = output
-    except FileNotFoundError:
-        # pre-commit not installed, mark as N/A
-        results["precommit_passed"] = True
-        results["precommit_na"] = True
-        results["precommit_output"] = "pre-commit not available, skipping"
-    except subprocess.TimeoutExpired as e:
-        results["precommit_passed"] = False
-        results["precommit_na"] = False
-        results["precommit_output"] = f"Error: {e}"
-
-    results["all_passed"] = all(
-        [
-            results["build_passed"],
-            results["format_passed"],
-            results["test_passed"],
-            results["precommit_passed"],
-        ]
+    return BuildPipelineResult(
+        language="mojo",
+        build_passed=build_passed,
+        build_na=build_na,
+        build_output=build_output,
+        format_passed=format_passed,
+        format_na=format_na,
+        format_output=format_output,
+        test_passed=test_passed,
+        test_na=test_na,
+        test_output=test_output,
+        precommit_passed=precommit_passed,
+        precommit_na=precommit_na,
+        precommit_output=precommit_output,
+        all_passed=all([build_passed, format_passed, test_passed, precommit_passed]),
     )
-
-    return BuildPipelineResult(**results)
 
 
 def _get_pipeline_env() -> dict[str, str]:
@@ -373,7 +402,147 @@ def _get_pipeline_env() -> dict[str, str]:
     return env
 
 
-def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901  # pipeline with sequential conditional stages
+def _execute_python_scripts(workspace: Path, env: dict[str, str]) -> list[str]:
+    """Execute Python scripts found in the workspace root for functional verification.
+
+    Args:
+        workspace: Path to the workspace directory
+        env: Environment variables for subprocess
+
+    Returns:
+        List of output lines from script execution
+
+    """
+    output_lines: list[str] = []
+    try:
+        py_files = list(workspace.glob("*.py"))
+        if py_files:
+            output_lines.append("\n## Script Execution Results\n")
+            for py_file in sorted(py_files):
+                output_lines.append(f"\n### Running: python {py_file.name}")
+                try:
+                    exec_result = subprocess.run(
+                        ["python", py_file.name],
+                        cwd=workspace,
+                        capture_output=True,
+                        text=True,
+                        timeout=30,
+                        env=env,
+                    )
+                    output_lines.append(f"Exit code: {exec_result.returncode}")
+                    if exec_result.stdout:
+                        output_lines.append(f"Output:\n{exec_result.stdout[:500]}")
+                    if exec_result.stderr:
+                        output_lines.append(f"Stderr:\n{exec_result.stderr[:500]}")
+                except subprocess.TimeoutExpired:
+                    output_lines.append("Execution timed out (30s)")
+                except (OSError, subprocess.SubprocessError) as e:
+                    output_lines.append(f"Execution error: {e}")
+    except OSError as e:
+        logger.warning(f"Error finding Python scripts: {e}")
+    return output_lines
+
+
+def _run_python_build_step(workspace: Path, env: dict[str, str]) -> tuple[bool, bool, str]:
+    """Run the Python syntax check and script execution step.
+
+    Args:
+        workspace: Path to the workspace directory
+        env: Environment variables for subprocess
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        build_result = subprocess.run(
+            ["python", "-m", "compileall", "-q", "."],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=env,
+        )
+        build_passed = build_result.returncode == 0
+
+        output_lines: list[str] = []
+        if build_passed:
+            output_lines.append("Python syntax check passed")
+            output_lines.extend(_execute_python_scripts(workspace, env))
+
+        build_output = (
+            "\n".join(output_lines)
+            if output_lines
+            else (build_result.stdout + "\n" + build_result.stderr)
+        )
+        return build_passed, False, build_output
+    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+        return False, False, f"Error: {e}"
+
+
+def _run_python_format_step(workspace: Path, env: dict[str, str]) -> tuple[bool, bool, str]:
+    """Run the Python format check step using ruff.
+
+    Args:
+        workspace: Path to the workspace directory
+        env: Environment variables for subprocess
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        format_result = subprocess.run(
+            ["ruff", "check", "."],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            env=env,
+        )
+        return (
+            format_result.returncode == 0,
+            False,
+            format_result.stdout + "\n" + format_result.stderr,
+        )
+    except FileNotFoundError:
+        return True, True, "ruff not available, skipping format check"
+    except subprocess.TimeoutExpired as e:
+        return False, False, f"Error: {e}"
+
+
+def _run_python_test_step(workspace: Path, env: dict[str, str]) -> tuple[bool, bool, str]:
+    """Run the Python test step using pytest.
+
+    Args:
+        workspace: Path to the workspace directory
+        env: Environment variables for subprocess
+
+    Returns:
+        Tuple of (passed, na, output)
+
+    """
+    try:
+        test_result = subprocess.run(
+            ["pytest", "-v"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=600,
+            env=env,
+        )
+        output = test_result.stdout + "\n" + test_result.stderr
+        # pytest exit code 5 means no tests collected
+        if test_result.returncode == 5:
+            return True, True, output
+        return test_result.returncode == 0, False, output
+    except FileNotFoundError:
+        return True, True, "pytest not available, skipping"
+    except subprocess.TimeoutExpired as e:
+        return False, False, f"Error: {e}"
+
+
+def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:
     """Run Python build/lint pipeline and capture results.
 
     Args:
@@ -383,157 +552,31 @@ def _run_python_pipeline(workspace: Path) -> BuildPipelineResult:  # noqa: C901 
         BuildPipelineResult with all tool outputs
 
     """
-    results: dict[str, Any] = {"language": "python"}
     pipeline_env = _get_pipeline_env()
 
-    # Python syntax check (using python -m compileall)
-    try:
-        build_result = subprocess.run(
-            ["python", "-m", "compileall", "-q", "."],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            env=pipeline_env,
-        )
-        results["build_passed"] = build_result.returncode == 0
-        results["build_na"] = False
-
-        # Try to execute any Python scripts found in workspace root for functional verification
-        output_lines = []
-        if results["build_passed"]:
-            output_lines.append("Python syntax check passed")
-
-            # Find .py files in workspace root (not subdirectories)
-            try:
-                py_files = list(workspace.glob("*.py"))
-                if py_files:
-                    output_lines.append("\n## Script Execution Results\n")
-                    for py_file in sorted(py_files):
-                        output_lines.append(f"\n### Running: python {py_file.name}")
-                        try:
-                            exec_result = subprocess.run(
-                                ["python", py_file.name],
-                                cwd=workspace,
-                                capture_output=True,
-                                text=True,
-                                timeout=30,
-                                env=pipeline_env,
-                            )
-                            output_lines.append(f"Exit code: {exec_result.returncode}")
-                            if exec_result.stdout:
-                                output_lines.append(f"Output:\n{exec_result.stdout[:500]}")
-                            if exec_result.stderr:
-                                output_lines.append(f"Stderr:\n{exec_result.stderr[:500]}")
-                        except subprocess.TimeoutExpired:
-                            output_lines.append("Execution timed out (30s)")
-                        except (OSError, subprocess.SubprocessError) as e:
-                            output_lines.append(f"Execution error: {e}")
-            except OSError as e:
-                logger.warning(f"Error finding Python scripts: {e}")
-
-        results["build_output"] = (
-            "\n".join(output_lines)
-            if output_lines
-            else (build_result.stdout + "\n" + build_result.stderr)
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        results["build_passed"] = False
-        results["build_na"] = False
-        results["build_output"] = f"Error: {e}"
-
-    # Python format check (using ruff if available, otherwise skip)
-    try:
-        format_result = subprocess.run(
-            ["ruff", "check", "."],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=120,
-            env=pipeline_env,
-        )
-        results["format_passed"] = format_result.returncode == 0
-        results["format_na"] = False
-        results["format_output"] = format_result.stdout + "\n" + format_result.stderr
-    except FileNotFoundError:
-        # ruff not installed, skip format check
-        results["format_passed"] = True
-        results["format_na"] = True
-        results["format_output"] = "ruff not available, skipping format check"
-    except subprocess.TimeoutExpired as e:
-        results["format_passed"] = False
-        results["format_na"] = False
-        results["format_output"] = f"Error: {e}"
-
-    # Python tests (using pytest if available, otherwise skip)
-    try:
-        test_result = subprocess.run(
-            ["pytest", "-v"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=600,
-            env=pipeline_env,
-        )
-        # pytest exit codes: 0=all passed, 1=tests failed, 5=no tests collected
-        if test_result.returncode == 5:
-            results["test_passed"] = True
-            results["test_na"] = True
-            results["test_output"] = test_result.stdout + "\n" + test_result.stderr
-        else:
-            results["test_passed"] = test_result.returncode == 0
-            results["test_na"] = False
-            results["test_output"] = test_result.stdout + "\n" + test_result.stderr
-    except FileNotFoundError:
-        # pytest not installed, mark as N/A
-        results["test_passed"] = True
-        results["test_na"] = True
-        results["test_output"] = "pytest not available, skipping"
-    except subprocess.TimeoutExpired as e:
-        results["test_passed"] = False
-        results["test_na"] = False
-        results["test_output"] = f"Error: {e}"
-
-    # Pre-commit hooks
-    try:
-        precommit_result = subprocess.run(
-            ["pre-commit", "run", "--all-files"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=300,
-            env=pipeline_env,
-        )
-        # Check if .pre-commit-config.yaml is missing
-        output = precommit_result.stdout + "\n" + precommit_result.stderr
-        if ".pre-commit-config.yaml is not a file" in output:
-            results["precommit_passed"] = True
-            results["precommit_na"] = True
-            results["precommit_output"] = output
-        else:
-            results["precommit_passed"] = precommit_result.returncode == 0
-            results["precommit_na"] = False
-            results["precommit_output"] = output
-    except FileNotFoundError:
-        # pre-commit not installed, mark as N/A
-        results["precommit_passed"] = True
-        results["precommit_na"] = True
-        results["precommit_output"] = "pre-commit not available, skipping"
-    except subprocess.TimeoutExpired as e:
-        results["precommit_passed"] = False
-        results["precommit_na"] = False
-        results["precommit_output"] = f"Error: {e}"
-
-    results["all_passed"] = all(
-        [
-            results["build_passed"],
-            results["format_passed"],
-            results["test_passed"],
-            results["precommit_passed"],
-        ]
+    build_passed, build_na, build_output = _run_python_build_step(workspace, pipeline_env)
+    format_passed, format_na, format_output = _run_python_format_step(workspace, pipeline_env)
+    test_passed, test_na, test_output = _run_python_test_step(workspace, pipeline_env)
+    precommit_passed, precommit_na, precommit_output = _run_precommit_step(
+        workspace, env=pipeline_env
     )
 
-    return BuildPipelineResult(**results)
+    return BuildPipelineResult(
+        language="python",
+        build_passed=build_passed,
+        build_na=build_na,
+        build_output=build_output,
+        format_passed=format_passed,
+        format_na=format_na,
+        format_output=format_output,
+        test_passed=test_passed,
+        test_na=test_na,
+        test_output=test_output,
+        precommit_passed=precommit_passed,
+        precommit_na=precommit_na,
+        precommit_output=precommit_output,
+        all_passed=all([build_passed, format_passed, test_passed, precommit_passed]),
+    )
 
 
 def _run_build_pipeline(workspace: Path, language: str = "python") -> BuildPipelineResult:
@@ -763,7 +806,191 @@ def _load_reference_patch(reference_path: Path) -> str | None:
         return None
 
 
-def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
+def _gather_judge_context(
+    workspace: Path,
+    task_prompt: str,
+    agent_output: str,
+    include_patchfile: bool,
+    reference_patch_path: Path | None,
+    rubric_path: Path | None,
+    run_build_pipeline: bool,
+    language: str,
+    pipeline_baseline: BuildPipelineResult | None,
+    judge_dir: Path | None,
+) -> tuple[str, BuildPipelineResult | None]:
+    """Gather all context needed for the judge prompt.
+
+    Collects workspace state, patchfile, reference patch, rubric, and pipeline
+    results, then builds the judge prompt string.
+
+    Args:
+        workspace: Path to the workspace with agent's output
+        task_prompt: The original task prompt
+        agent_output: The agent's stdout output
+        include_patchfile: Whether to include git diff in evaluation context
+        reference_patch_path: Optional path to reference solution patch
+        rubric_path: Optional path to rubric YAML file
+        run_build_pipeline: Whether to run build/lint/test pipeline
+        language: Programming language for pipeline selection
+        pipeline_baseline: Optional baseline pipeline result
+        judge_dir: Directory for pipeline output saving
+
+    Returns:
+        Tuple of (judge_prompt, pipeline_result)
+
+    """
+    workspace_state = _get_workspace_state(workspace)
+
+    patchfile = None
+    deleted_files = None
+    if include_patchfile:
+        patchfile = _get_patchfile(workspace)
+        deleted_files = _get_deleted_files(workspace)
+
+    reference_patch = None
+    if reference_patch_path:
+        reference_patch = _load_reference_patch(reference_patch_path)
+
+    rubric_content = None
+    if rubric_path and rubric_path.exists():
+        try:
+            rubric_content = rubric_path.read_text()
+            logger.debug(f"Loaded rubric from {rubric_path}")
+        except OSError as e:
+            logger.warning(f"Failed to load rubric from {rubric_path}: {e}")
+
+    pipeline_result = None
+    if run_build_pipeline:
+        logger.info(f"Running {language} build/lint/test pipeline")
+        pipeline_result = _run_build_pipeline(workspace, language=language)
+
+        status_summary = pipeline_result.get_status_summary()
+        failed_steps = pipeline_result.get_failure_summary()
+        if failed_steps == "none":
+            if pipeline_result.has_na_items():
+                logger.warning(f"Build pipeline: ⚠️  {status_summary}")
+            else:
+                logger.info(f"Build pipeline: {status_summary}")
+        else:
+            logger.warning(f"Build pipeline: {status_summary}")
+
+        if judge_dir:
+            run_dir = judge_dir.parent if judge_dir.parent.name.startswith("run_") else judge_dir
+            _save_pipeline_outputs(run_dir, pipeline_result, language=language)
+
+    pipeline_result_str = None
+    if pipeline_result:
+        overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
+        pipeline_result_str = (
+            f"**Overall Status**: {overall_status}\n\n{pipeline_result.to_context_string()}"
+        )
+
+    baseline_pipeline_str = None
+    if pipeline_baseline:
+        baseline_status = "ALL PASSED ✓" if pipeline_baseline.all_passed else "SOME FAILED ✗"
+        baseline_pipeline_str = (
+            f"**Overall Status**: {baseline_status}\n\n{pipeline_baseline.to_context_string()}"
+        )
+
+    judge_prompt = build_task_prompt(
+        task_prompt=task_prompt,
+        agent_output=agent_output,
+        workspace_state=workspace_state,
+        patchfile=patchfile,
+        deleted_files=deleted_files,
+        reference_patch=reference_patch,
+        pipeline_result_str=pipeline_result_str,
+        rubric_content=rubric_content,
+        baseline_pipeline_str=baseline_pipeline_str,
+    )
+
+    return judge_prompt, pipeline_result
+
+
+def _execute_judge_with_retry(
+    judge_prompt: str,
+    model: str,
+    workspace: Path,
+    actual_judge_dir: Path | None,
+    judge_start: float,
+    language: str,
+) -> JudgeResult:
+    """Execute the judge with retry logic and save logs.
+
+    Retries up to 3 times on JSON parse failure, appending a JSON reminder
+    on each retry. Saves logs and timing if actual_judge_dir is provided.
+
+    Args:
+        judge_prompt: The fully constructed judge prompt
+        model: Model to use for judging
+        workspace: Path to the workspace
+        actual_judge_dir: Directory to save judge logs (or None)
+        judge_start: Start time for timing measurement
+        language: Programming language (for log saving)
+
+    Returns:
+        JudgeResult from the judge
+
+    Raises:
+        ValueError: If judge response cannot be parsed after all retries
+        RuntimeError: If retry loop exhausted without recording an error
+
+    """
+    _max_judge_attempts = 3
+    _json_reminder = (
+        "\n\n**IMPORTANT**: Your response MUST be a valid JSON object only. "
+        "Do not include any text, explanation, or markdown before or after the JSON. "
+        "Start your response with `{` and end with `}`."
+    )
+    last_parse_error: Exception | None = None
+    stdout = stderr = result = ""
+    for _attempt in range(_max_judge_attempts):
+        _prompt = judge_prompt if _attempt == 0 else judge_prompt + _json_reminder
+        if _attempt > 0:
+            logger.warning(
+                f"Judge parse failure on attempt {_attempt}/{_max_judge_attempts - 1}, retrying "
+                f"with JSON reminder (model={model})"
+            )
+        stdout, stderr, result = _call_claude_judge(_prompt, model, workspace)
+        try:
+            judge_result = _parse_judge_response(result)
+            break
+        except ValueError as e:
+            last_parse_error = e
+    else:
+        if last_parse_error is None:
+            raise RuntimeError("Judge retry loop exhausted but last_parse_error is None")
+        raise last_parse_error
+
+    if actual_judge_dir:
+        _save_judge_logs(
+            actual_judge_dir,
+            judge_prompt,
+            result,
+            judge_result,
+            model,
+            workspace,
+            raw_stdout=stdout,
+            raw_stderr=stderr,
+            language=language,
+        )
+
+        judge_duration = time.time() - judge_start
+        timing_file = actual_judge_dir / "timing.json"
+        with open(timing_file, "w") as f:
+            json.dump(
+                {
+                    "judge_duration_seconds": judge_duration,
+                    "measured_at": datetime.now(timezone.utc).isoformat(),
+                },
+                f,
+                indent=2,
+            )
+
+    return judge_result
+
+
+def run_llm_judge(
     workspace: Path,
     task_prompt: str,
     agent_output: str,
@@ -804,91 +1031,21 @@ def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
         JudgeResult with evaluation details.
 
     """
-    import json
-    import time
-    from datetime import datetime, timezone
-
-    # Track judge execution timing
     judge_start = time.time()
 
-    # Get workspace state
-    workspace_state = _get_workspace_state(workspace)
-
-    # Get patchfile and deleted files if requested
-    patchfile = None
-    deleted_files = None
-    if include_patchfile:
-        patchfile = _get_patchfile(workspace)
-        deleted_files = _get_deleted_files(workspace)
-
-    # Load reference patch if provided
-    reference_patch = None
-    if reference_patch_path:
-        reference_patch = _load_reference_patch(reference_patch_path)
-
-    # Load rubric if provided
-    rubric_content = None
-    if rubric_path and rubric_path.exists():
-        try:
-            rubric_content = rubric_path.read_text()
-            logger.debug(f"Loaded rubric from {rubric_path}")
-        except OSError as e:
-            logger.warning(f"Failed to load rubric from {rubric_path}: {e}")
-
-    # Run build/lint/test pipeline if requested
-    pipeline_result = None
-    if run_build_pipeline:
-        logger.info(f"Running {language} build/lint/test pipeline")
-        pipeline_result = _run_build_pipeline(workspace, language=language)
-
-        # Use appropriate log level and emoji based on results
-        status_summary = pipeline_result.get_status_summary()
-        failed_steps = pipeline_result.get_failure_summary()
-
-        if failed_steps == "none":
-            # All passed, but check for N/A items
-            if pipeline_result.has_na_items():
-                logger.warning(f"Build pipeline: ⚠️  {status_summary}")
-            else:
-                logger.info(f"Build pipeline: {status_summary}")
-        else:
-            # Has actual failures
-            logger.warning(f"Build pipeline: {status_summary}")
-
-        # Save pipeline outputs for debugging
-        if judge_dir:
-            run_dir = judge_dir.parent if judge_dir.parent.name.startswith("run_") else judge_dir
-            _save_pipeline_outputs(run_dir, pipeline_result, language=language)
-
-    # Build the judge prompt using consolidated function from prompts.py
-    pipeline_result_str = None
-    if pipeline_result:
-        overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
-        pipeline_result_str = (
-            f"**Overall Status**: {overall_status}\n\n{pipeline_result.to_context_string()}"
-        )
-
-    # Format baseline pipeline result if provided
-    baseline_pipeline_str = None
-    if pipeline_baseline:
-        baseline_status = "ALL PASSED ✓" if pipeline_baseline.all_passed else "SOME FAILED ✗"
-        baseline_pipeline_str = (
-            f"**Overall Status**: {baseline_status}\n\n{pipeline_baseline.to_context_string()}"
-        )
-
-    judge_prompt = build_task_prompt(
+    judge_prompt, _pipeline_result = _gather_judge_context(
+        workspace=workspace,
         task_prompt=task_prompt,
         agent_output=agent_output,
-        workspace_state=workspace_state,
-        patchfile=patchfile,
-        deleted_files=deleted_files,
-        reference_patch=reference_patch,
-        pipeline_result_str=pipeline_result_str,
-        rubric_content=rubric_content,
-        baseline_pipeline_str=baseline_pipeline_str,
+        include_patchfile=include_patchfile,
+        reference_patch_path=reference_patch_path,
+        rubric_path=rubric_path,
+        run_build_pipeline=run_build_pipeline,
+        language=language,
+        pipeline_baseline=pipeline_baseline,
+        judge_dir=judge_dir,
     )
 
-    # Create judge_{N}/ subdirectory if judge_dir provided
     actual_judge_dir = None
     if judge_dir:
         actual_judge_dir = judge_dir / f"judge_{judge_run_number:02d}"
@@ -902,63 +1059,14 @@ def run_llm_judge(  # noqa: C901  # judge execution with many retry/error paths
         if not judge_prompt_path.exists():
             judge_prompt_path.write_text(judge_prompt)
 
-    # Call Claude CLI for judgment with workspace access.
-    # Retry up to 2 times on JSON parse failure — Haiku occasionally returns
-    # conversational text instead of structured JSON. Each retry appends an
-    # explicit JSON-only reminder to the prompt.
-    _max_judge_attempts = 3
-    _json_reminder = (
-        "\n\n**IMPORTANT**: Your response MUST be a valid JSON object only. "
-        "Do not include any text, explanation, or markdown before or after the JSON. "
-        "Start your response with `{` and end with `}`."
+    return _execute_judge_with_retry(
+        judge_prompt=judge_prompt,
+        model=model,
+        workspace=workspace,
+        actual_judge_dir=actual_judge_dir,
+        judge_start=judge_start,
+        language=language,
     )
-    last_parse_error: Exception | None = None
-    for _attempt in range(_max_judge_attempts):
-        _prompt = judge_prompt if _attempt == 0 else judge_prompt + _json_reminder
-        if _attempt > 0:
-            logger.warning(
-                f"Judge parse failure on attempt {_attempt}/{_max_judge_attempts - 1}, retrying "
-                f"with JSON reminder (model={model})"
-            )
-        stdout, stderr, result = _call_claude_judge(_prompt, model, workspace)
-        try:
-            judge_result = _parse_judge_response(result)
-            break
-        except ValueError as e:
-            last_parse_error = e
-    else:
-        if last_parse_error is None:
-            raise RuntimeError("Judge retry loop exhausted but last_parse_error is None")
-        raise last_parse_error
-
-    # Save judge logs if directory provided
-    if actual_judge_dir:
-        _save_judge_logs(
-            actual_judge_dir,
-            judge_prompt,
-            result,
-            judge_result,
-            model,
-            workspace,
-            raw_stdout=stdout,
-            raw_stderr=stderr,
-            language=language,
-        )
-
-        # Write per-judge timing
-        judge_duration = time.time() - judge_start
-        timing_file = actual_judge_dir / "timing.json"
-        with open(timing_file, "w") as f:
-            json.dump(
-                {
-                    "judge_duration_seconds": judge_duration,
-                    "measured_at": datetime.now(timezone.utc).isoformat(),
-                },
-                f,
-                indent=2,
-            )
-
-    return judge_result
 
 
 def _call_claude_judge(
@@ -1326,8 +1434,6 @@ def _save_judge_logs(
 
     # Create MODEL.md with judge model information
     try:
-        from datetime import datetime, timezone
-
         # Try to get claude-code version
         claude_version_result = subprocess.run(
             ["claude", "--version"],
