@@ -149,11 +149,14 @@ repos:
           tests/fixtures/config/tiers/.+\.yaml)$
         pass_filenames: true
       - id: check-tier-label-consistency
-        name: Check Tier Label Consistency in metrics-definitions.md
-        description: Fails if metrics-definitions.md contains known-bad tier label patterns (e.g. T3/Tool, T4/Deleg)
+        name: Check Tier Label Consistency
+        description: >-
+          Fails if any markdown file pairs a tier ID (T0–T6) with the wrong
+          canonical name (e.g. T3/Tooling instead of T3/Delegation).
         entry: pixi run python scripts/check_tier_label_consistency.py
         language: system
-        files: ^\.claude/shared/metrics-definitions\.md$
+        files: \.md$
+        types: [markdown]
         pass_filenames: false
       - id: ruff-check-complexity
         name: Ruff Complexity Check (C901)
