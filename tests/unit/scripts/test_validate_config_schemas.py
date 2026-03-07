@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.validate_config_schemas import check_files, resolve_schema, validate_file
+from scripts.validate_config_schemas import check_files, main, resolve_schema, validate_file
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -260,6 +260,103 @@ class TestCheckFiles:
         good = _write_yaml(cfg_dir, "good.yaml", 'name: "ok"\n')
         bad = _write_yaml(cfg_dir, "bad.yaml", "extra: true\n")
         assert check_files([good, bad], repo_root) == 1
+
+
+# ---------------------------------------------------------------------------
+# TestDryRun
+# ---------------------------------------------------------------------------
+
+
+class TestDryRun:
+    """Tests for --dry-run behaviour in check_files() and main()."""
+
+    def _make_schema_root(self, tmp_path: Path) -> Path:
+        """Create a fake repo root with schemas/ directory."""
+        schemas_dir = tmp_path / "schemas"
+        schemas_dir.mkdir()
+        (schemas_dir / "defaults.schema.json").write_text(json.dumps(_SIMPLE_SCHEMA))
+        (schemas_dir / "model.schema.json").write_text(json.dumps(_SIMPLE_SCHEMA))
+        (schemas_dir / "tier.schema.json").write_text(json.dumps(_SIMPLE_SCHEMA))
+        return tmp_path
+
+    def test_dry_run_with_violations_returns_zero(self, tmp_path: Path) -> None:
+        """dry_run=True should return 0 even when there are violations."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        bad = _write_yaml(cfg_dir, "bad.yaml", "extra_field: true\n")
+        assert check_files([bad], repo_root, dry_run=True) == 0
+
+    def test_dry_run_false_with_violations_returns_one(self, tmp_path: Path) -> None:
+        """dry_run=False should return 1 when there are violations."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        bad = _write_yaml(cfg_dir, "bad.yaml", "extra_field: true\n")
+        assert check_files([bad], repo_root, dry_run=False) == 1
+
+    def test_dry_run_prints_errors(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """dry_run=True should still print errors to stderr."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        bad = _write_yaml(cfg_dir, "bad.yaml", "extra_field: true\n")
+        check_files([bad], repo_root, dry_run=True)
+        captured = capsys.readouterr()
+        assert "FAIL" in captured.err
+
+    def test_dry_run_no_violations_returns_zero(self, tmp_path: Path) -> None:
+        """dry_run=True with a valid file should still return 0."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        good = _write_yaml(cfg_dir, "good.yaml", 'name: "ok"\n')
+        assert check_files([good], repo_root, dry_run=True) == 0
+
+    def test_dry_run_multiple_bad_files_all_reported(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """dry_run=True should report all invalid files, not just the first."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        bad_a = _write_yaml(cfg_dir, "bad_a.yaml", "extra_a: 1\n")
+        bad_b = _write_yaml(cfg_dir, "bad_b.yaml", "extra_b: 2\n")
+        result = check_files([bad_a, bad_b], repo_root, dry_run=True)
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "bad_a.yaml" in captured.err
+        assert "bad_b.yaml" in captured.err
+
+    def test_main_dry_run_flag_with_violations_exits_zero(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main() with --dry-run should exit 0 even when violations are found."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        bad = _write_yaml(cfg_dir, "bad.yaml", "extra_field: true\n")
+        monkeypatch.setattr(
+            "sys.argv",
+            ["validate_config_schemas.py", "--dry-run", "--repo-root", str(repo_root), str(bad)],
+        )
+        assert main() == 0
+
+    def test_main_no_dry_run_with_violations_exits_one(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """main() without --dry-run should exit 1 when violations are found."""
+        repo_root = self._make_schema_root(tmp_path)
+        cfg_dir = tmp_path / "config" / "models"
+        cfg_dir.mkdir(parents=True)
+        bad = _write_yaml(cfg_dir, "bad.yaml", "extra_field: true\n")
+        monkeypatch.setattr(
+            "sys.argv",
+            ["validate_config_schemas.py", "--repo-root", str(repo_root), str(bad)],
+        )
+        assert main() == 1
 
 
 # ---------------------------------------------------------------------------

@@ -14,10 +14,12 @@ Usage:
     python scripts/validate_config_schemas.py config/defaults.yaml
     python scripts/validate_config_schemas.py config/models/claude-sonnet.yaml
     python scripts/validate_config_schemas.py --verbose config/defaults.yaml
+    python scripts/validate_config_schemas.py --dry-run config/defaults.yaml
 
 Exit codes:
     0: All files valid (or no matching schema found — warned, not failed)
-    1: One or more schema violations found
+    0: Violations found but --dry-run is set (errors printed, commit not blocked)
+    1: One or more schema violations found (without --dry-run)
 """
 
 import argparse
@@ -92,16 +94,23 @@ def validate_file(file_path: Path, schema: dict[str, object]) -> list[str]:
     return errors
 
 
-def check_files(files: list[Path], repo_root: Path, verbose: bool = False) -> int:
+def check_files(
+    files: list[Path],
+    repo_root: Path,
+    verbose: bool = False,
+    dry_run: bool = False,
+) -> int:
     """Validate each file against its matching schema.
 
     Args:
         files: List of file paths to check.
         repo_root: Repository root used for schema resolution.
         verbose: If True, print ``PASS:`` lines for valid files.
+        dry_run: If True, print all errors but return 0 (do not block commits).
 
     Returns:
-        0 if all files are valid, 1 if any violations are found.
+        0 if all files are valid or ``dry_run`` is True, 1 if any violations
+        are found and ``dry_run`` is False.
 
     """
     if not files:
@@ -139,6 +148,8 @@ def check_files(files: list[Path], repo_root: Path, verbose: bool = False) -> in
         elif verbose:
             print(f"PASS: {file_path}")
 
+    if any_failure and dry_run:
+        return 0
     return 1 if any_failure else 0
 
 
@@ -146,7 +157,7 @@ def main() -> int:
     """CLI entry point for config schema validation.
 
     Returns:
-        Exit code (0 if clean, 1 if violations found).
+        Exit code (0 if clean or --dry-run, 1 if violations found without --dry-run).
 
     """
     parser = argparse.ArgumentParser(
@@ -171,9 +182,14 @@ def main() -> int:
         default=_REPO_ROOT,
         help="Repository root for resolving schema paths (default: parent of this script)",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print all errors but exit 0 — useful for previewing violations without blocking commits",  # noqa: E501
+    )
 
     args = parser.parse_args()
-    return check_files(args.files, args.repo_root, verbose=args.verbose)
+    return check_files(args.files, args.repo_root, verbose=args.verbose, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
