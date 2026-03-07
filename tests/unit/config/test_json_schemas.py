@@ -171,11 +171,12 @@ class TestTierSchema:
 
     @pytest.mark.parametrize(
         "fixture_file",
-        ["t0.yaml", "t1.yaml", "t2.yaml", "t3.yaml", "t4.yaml", "t5.yaml", "t6.yaml"],
+        sorted(TIER_FIXTURES_DIR.glob("t*.yaml")),
+        ids=lambda p: p.name,
     )
-    def test_real_tier_fixture_is_valid(self, schema: dict[str, Any], fixture_file: str) -> None:
+    def test_real_tier_fixture_is_valid(self, schema: dict[str, Any], fixture_file: Path) -> None:
         """Tier fixture files must conform to tier.schema.json."""
-        data = load_yaml(TIER_FIXTURES_DIR / fixture_file)
+        data = load_yaml(fixture_file)
         check_schema(data, schema)
 
     def test_rejects_missing_tier(self, schema: dict[str, Any]) -> None:
