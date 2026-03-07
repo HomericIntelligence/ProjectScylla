@@ -58,7 +58,13 @@ class TestSchemaFiles:
 
     @pytest.mark.parametrize(
         "schema_name",
-        ["defaults.schema.json", "tier.schema.json", "model.schema.json"],
+        [
+            "defaults.schema.json",
+            "tier.schema.json",
+            "model.schema.json",
+            "test.schema.json",
+            "rubric.schema.json",
+        ],
     )
     def test_schema_file_exists(self, schema_name: str) -> None:
         """Schema file must exist."""
@@ -66,7 +72,13 @@ class TestSchemaFiles:
 
     @pytest.mark.parametrize(
         "schema_name",
-        ["defaults.schema.json", "tier.schema.json", "model.schema.json"],
+        [
+            "defaults.schema.json",
+            "tier.schema.json",
+            "model.schema.json",
+            "test.schema.json",
+            "rubric.schema.json",
+        ],
     )
     def test_schema_is_valid_json(self, schema_name: str) -> None:
         """Schema file must be valid JSON."""
@@ -75,7 +87,13 @@ class TestSchemaFiles:
 
     @pytest.mark.parametrize(
         "schema_name",
-        ["defaults.schema.json", "tier.schema.json", "model.schema.json"],
+        [
+            "defaults.schema.json",
+            "tier.schema.json",
+            "model.schema.json",
+            "test.schema.json",
+            "rubric.schema.json",
+        ],
     )
     def test_schema_has_required_keys(self, schema_name: str) -> None:
         """Each schema must have $schema, title, type, and additionalProperties."""
@@ -263,3 +281,183 @@ class TestModelSchema:
     def test_minimal_valid_model(self, schema: dict[str, Any]) -> None:
         """Only model_id is required."""
         check_schema({"model_id": "minimal-model"}, schema)
+
+
+# ---------------------------------------------------------------------------
+# test.schema.json
+# ---------------------------------------------------------------------------
+
+TESTS_FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures" / "tests"
+
+_MINIMAL_TEST = {
+    "id": "test-001",
+    "name": "Hello World",
+    "language": "python",
+    "source": {
+        "repo": "https://github.com/mvillmow/Hello-World",
+        "hash": "7fd1a60b01f91b314f59955a4e4d4e80d8edf11d",
+    },
+    "task": {"prompt_file": "prompt.md"},
+    "validation": {
+        "criteria_file": "expected/criteria.md",
+        "rubric_file": "expected/rubric.yaml",
+    },
+}
+
+
+class TestTestSchema:
+    """Tests for test.schema.json against fixture test cases."""
+
+    @pytest.fixture
+    def schema(self) -> dict[str, Any]:
+        """Load test schema."""
+        return load_schema("test.schema.json")
+
+    @pytest.mark.parametrize(
+        "fixture_dir",
+        ["test-001", "test-002"],
+    )
+    def test_real_test_fixture_is_valid(self, schema: dict[str, Any], fixture_dir: str) -> None:
+        """Real test fixture files must conform to test.schema.json."""
+        data = load_yaml(TESTS_FIXTURES_DIR / fixture_dir / "test.yaml")
+        check_schema(data, schema)
+
+    def test_rejects_missing_required_id(self, schema: dict[str, Any]) -> None:
+        """Id is required."""
+        data = {k: v for k, v in _MINIMAL_TEST.items() if k != "id"}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_rejects_missing_required_name(self, schema: dict[str, Any]) -> None:
+        """Name is required."""
+        data = {k: v for k, v in _MINIMAL_TEST.items() if k != "name"}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_rejects_missing_required_language(self, schema: dict[str, Any]) -> None:
+        """Language is required."""
+        data = {k: v for k, v in _MINIMAL_TEST.items() if k != "language"}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_rejects_additional_property(self, schema: dict[str, Any]) -> None:
+        """Schema must reject unknown top-level keys."""
+        data = {**_MINIMAL_TEST, "unknown_key": "value"}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_rejects_invalid_language(self, schema: dict[str, Any]) -> None:
+        """Language must be python or mojo."""
+        data = {**_MINIMAL_TEST, "language": "javascript"}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_accepts_optional_tags(self, schema: dict[str, Any]) -> None:
+        """Tags array is accepted."""
+        data = {**_MINIMAL_TEST, "tags": ["build-system", "migration"]}
+        check_schema(data, schema)
+
+    def test_accepts_optional_tiers(self, schema: dict[str, Any]) -> None:
+        """Tiers array is accepted."""
+        data = {**_MINIMAL_TEST, "tiers": ["T0", "T1", "T2"]}
+        check_schema(data, schema)
+
+    def test_accepts_minimal_valid_test(self, schema: dict[str, Any]) -> None:
+        """All required fields present, no optional ones."""
+        check_schema(_MINIMAL_TEST, schema)
+
+
+# ---------------------------------------------------------------------------
+# rubric.schema.json
+# ---------------------------------------------------------------------------
+
+_MINIMAL_RUBRIC_REQUIREMENTS = {
+    "requirements": [
+        {
+            "id": "R001",
+            "description": "First requirement",
+            "weight": 1.0,
+            "evaluation": "binary",
+        }
+    ],
+    "grading": {"pass_threshold": 0.60},
+}
+
+_MINIMAL_RUBRIC_CATEGORIES = {
+    "categories": {
+        "functional": {
+            "weight": 1.0,
+            "scoring_type": "checklist",
+            "items": [{"id": "F1", "check": "File exists", "points": 1.0}],
+        }
+    },
+    "grading": {"pass_threshold": 0.60},
+}
+
+
+class TestRubricSchema:
+    """Tests for rubric.schema.json against fixture rubric files."""
+
+    @pytest.fixture
+    def schema(self) -> dict[str, Any]:
+        """Load rubric schema."""
+        return load_schema("rubric.schema.json")
+
+    @pytest.mark.parametrize(
+        "fixture_path",
+        [
+            "test-001/expected/rubric.yaml",
+            "test-002/expected/rubric.yaml",
+            "test-003/expected/rubric.yaml",
+        ],
+    )
+    def test_real_rubric_fixture_is_valid(self, schema: dict[str, Any], fixture_path: str) -> None:
+        """Real rubric fixture files must conform to rubric.schema.json."""
+        data = load_yaml(TESTS_FIXTURES_DIR / fixture_path)
+        check_schema(data, schema)
+
+    def test_rejects_missing_grading(self, schema: dict[str, Any]) -> None:
+        """Grading is required."""
+        data = {"requirements": _MINIMAL_RUBRIC_REQUIREMENTS["requirements"]}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_rejects_additional_top_level_property(self, schema: dict[str, Any]) -> None:
+        """Schema must reject unknown top-level keys."""
+        data = {**_MINIMAL_RUBRIC_REQUIREMENTS, "unknown_field": "value"}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_rejects_invalid_pass_threshold(self, schema: dict[str, Any]) -> None:
+        """pass_threshold must be in [0.0, 1.0]."""
+        data = {**_MINIMAL_RUBRIC_REQUIREMENTS, "grading": {"pass_threshold": 1.5}}
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(data, schema)
+
+    def test_accepts_requirements_format(self, schema: dict[str, Any]) -> None:
+        """Requirements-based rubric is accepted."""
+        check_schema(_MINIMAL_RUBRIC_REQUIREMENTS, schema)
+
+    def test_accepts_categories_format(self, schema: dict[str, Any]) -> None:
+        """Categories-based rubric is accepted."""
+        check_schema(_MINIMAL_RUBRIC_CATEGORIES, schema)
+
+    def test_accepts_requirement_with_criteria(self, schema: dict[str, Any]) -> None:
+        """Requirement items may include optional criteria array."""
+        data = {
+            "requirements": [
+                {
+                    "id": "R001",
+                    "description": "Check with criteria",
+                    "weight": 1.0,
+                    "evaluation": "scaled",
+                    "criteria": ["criterion one", "criterion two"],
+                }
+            ],
+            "grading": {"pass_threshold": 0.60},
+        }
+        check_schema(data, schema)
+
+    def test_accepts_minimal_valid_rubric(self, schema: dict[str, Any]) -> None:
+        """Only grading is required."""
+        check_schema({"grading": {"pass_threshold": 0.60}}, schema)

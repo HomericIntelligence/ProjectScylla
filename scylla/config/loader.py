@@ -189,6 +189,9 @@ class ConfigLoader:
         test_path = self.base_path / "tests" / test_id / "test.yaml"
         data = self._load_yaml(test_path)
 
+        if not test_id.startswith("_"):
+            _validate_schema(data, "test", test_path)
+
         try:
             return EvalCase(**data)
         except Exception as e:
@@ -213,6 +216,9 @@ class ConfigLoader:
         """
         rubric_path = self.base_path / "tests" / test_id / "expected" / "rubric.yaml"
         data = self._load_yaml(rubric_path)
+
+        if not test_id.startswith("_"):
+            _validate_schema(data, "rubric", rubric_path)
 
         try:
             return Rubric(**data)

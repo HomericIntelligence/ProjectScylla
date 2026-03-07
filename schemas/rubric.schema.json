@@ -4,16 +4,16 @@
   "title": "ProjectScylla Rubric Schema",
   "description": "Schema for rubric.yaml files that define scoring rubrics for LLM-as-Judge evaluation",
   "type": "object",
-  "required": ["requirements", "grading"],
+  "required": ["grading"],
   "additionalProperties": false,
   "properties": {
     "requirements": {
       "type": "array",
-      "description": "List of evaluation requirements",
+      "description": "List of evaluation requirements (requirements-based format)",
       "minItems": 1,
       "items": {
         "type": "object",
-        "required": ["id", "description", "weight", "evaluation"],
+        "required": ["id", "description", "weight"],
         "additionalProperties": false,
         "properties": {
           "id": {
@@ -25,8 +25,7 @@
           "description": {
             "type": "string",
             "description": "What this requirement measures",
-            "minLength": 10,
-            "maxLength": 200,
+            "minLength": 3,
             "examples": [
               "Makefile exists and is syntactically valid",
               "All justfile recipes have Makefile equivalents"
@@ -43,6 +42,75 @@
             "type": "string",
             "description": "Evaluation type: binary (pass/fail) or scaled (0.0-1.0)",
             "enum": ["binary", "scaled"]
+          },
+          "criteria": {
+            "type": "array",
+            "description": "Detailed evaluation criteria checklist",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "skill_validation": {
+            "type": "string",
+            "description": "Skill used to validate this requirement"
+          },
+          "skill_source": {
+            "type": "string",
+            "description": "Source URL for the validation skill"
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "description": "Category-based rubric (alternative to requirements-based format)",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["weight", "scoring_type", "items"],
+        "additionalProperties": false,
+        "properties": {
+          "weight": {
+            "type": "number",
+            "description": "Category weight (0.0-1.0)",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "scoring_type": {
+            "type": "string",
+            "description": "Scoring approach for this category",
+            "enum": ["checklist", "subjective"]
+          },
+          "items": {
+            "type": "array",
+            "description": "Checklist or subjective items in this category",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["id", "check", "points"],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Item identifier"
+                },
+                "check": {
+                  "type": "string",
+                  "description": "What to check or evaluate",
+                  "minLength": 1
+                },
+                "points": {
+                  "type": "number",
+                  "description": "Points awarded for this item",
+                  "minimum": 0
+                },
+                "na_condition": {
+                  "type": "string",
+                  "description": "Condition under which this item is not applicable"
+                }
+              }
+            }
           }
         }
       }
