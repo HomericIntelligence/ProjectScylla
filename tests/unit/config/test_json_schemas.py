@@ -244,6 +244,25 @@ class TestTierSchema:
                 "uses_delegation": False,
                 "uses_hierarchy": False,
             },
+    def test_rejects_hierarchy_without_delegation(self, schema: dict[str, Any]) -> None:
+        """uses_hierarchy=true without uses_delegation=true must fail schema validation."""
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema(
+                {"tier": "t4", "name": "Invalid", "uses_hierarchy": True, "uses_delegation": False},
+                schema,
+            )
+
+    def test_accepts_hierarchy_with_delegation(self, schema: dict[str, Any]) -> None:
+        """uses_hierarchy=true with uses_delegation=true must pass schema validation."""
+        check_schema(
+            {"tier": "t4", "name": "Hierarchy", "uses_hierarchy": True, "uses_delegation": True},
+            schema,
+        )
+
+    def test_accepts_delegation_without_hierarchy(self, schema: dict[str, Any]) -> None:
+        """uses_delegation=true without uses_hierarchy (t3 pattern) must pass schema validation."""
+        check_schema(
+            {"tier": "t3", "name": "Delegation", "uses_delegation": True, "uses_hierarchy": False},
             schema,
         )
 
