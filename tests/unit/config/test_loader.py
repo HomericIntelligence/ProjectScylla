@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from scylla.config.loader import ConfigLoader
+from scylla.config.models import ConfigurationError
 
 # Path to the actual config directory (relative to repo root)
 _REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -75,3 +76,22 @@ class TestLoadAllModels:
             f"Expected no config for deprecated short ID '{short_id}'; "
             f"files should now use the versioned filename"
         )
+
+
+class TestLoadTierValidation:
+    """Integration tests for tier validation in ConfigLoader.load_tier()."""
+
+    def test_load_tier_hierarchy_without_delegation_raises_configuration_error(
+        self, tmp_path: Path
+    ) -> None:
+        """load_tier() raises ConfigurationError for uses_hierarchy=true, uses_delegation=false."""
+        tiers_dir = tmp_path / "config" / "tiers"
+        tiers_dir.mkdir(parents=True)
+        invalid_yaml = tiers_dir / "t4.yaml"
+        invalid_yaml.write_text(
+            "tier: 't4'\nname: 'Invalid Hierarchy'\nuses_hierarchy: true\nuses_delegation: false\n"
+        )
+
+        loader = ConfigLoader(tmp_path)
+        with pytest.raises(ConfigurationError):
+            loader.load_tier("t4")

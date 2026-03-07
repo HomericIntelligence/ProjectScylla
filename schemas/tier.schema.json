@@ -62,5 +62,13 @@
       "description": "Whether this tier uses hierarchical orchestration",
       "default": false
     }
+  },
+  "if": {
+    "properties": {"uses_hierarchy": {"const": true}},
+    "required": ["uses_hierarchy"]
+  },
+  "then": {
+    "properties": {"uses_delegation": {"const": true}},
+    "required": ["uses_delegation"]
   }
 }
