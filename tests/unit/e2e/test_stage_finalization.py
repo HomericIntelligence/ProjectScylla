@@ -182,6 +182,66 @@ class TestStageExecuteJudge:
         with pytest.raises(ValueError, match="judge_models is required"):
             stage_execute_judge(ctx)
 
+    def test_reloads_judge_prompt_from_disk_when_empty(
+        self, minimal_run_context: RunContext
+    ) -> None:
+        """Defense-in-depth: reloads judge_prompt from disk when ctx.judge_prompt is empty."""
+        ctx = minimal_run_context
+        ctx.judgment = None
+        ctx.judge_prompt = ""
+        (ctx.run_dir / "judge_prompt.md").write_text("prompt from disk")
+
+        # Patch _call_claude_judge at its source module
+        valid_response = '{"score": 0.8, "passed": true, "reasoning": "ok"}'
+        with patch(
+            "scylla.e2e.llm_judge._call_claude_judge",
+            return_value=("", "", valid_response),
+        ):
+            stage_execute_judge(ctx)
+
+        assert ctx.judge_prompt == "prompt from disk"
+        assert ctx.judgment is not None
+
+    def test_raises_when_judge_prompt_empty_and_no_file(
+        self, minimal_run_context: RunContext
+    ) -> None:
+        """Raises ValueError when judge_prompt is empty and no judge_prompt.md on disk."""
+        ctx = minimal_run_context
+        ctx.judgment = None
+        ctx.judge_prompt = ""
+        # No judge_prompt.md written to run_dir
+
+        with pytest.raises(ValueError, match="judge_prompt is empty"):
+            stage_execute_judge(ctx)
+
+    def test_retries_on_parse_failure(self, minimal_run_context: RunContext) -> None:
+        """Judge retries once with JSON reminder when first attempt returns non-JSON."""
+        ctx = minimal_run_context
+        ctx.judgment = None
+        ctx.judge_prompt = "evaluate this"
+
+        bad_response = "Sorry, I cannot evaluate this."
+        good_response = '{"score": 0.9, "passed": true, "reasoning": "great"}'
+
+        call_count = 0
+
+        def mock_call_judge(prompt: str, model: str, workspace: object) -> tuple[str, str, str]:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return ("", "", bad_response)
+            return ("", "", good_response)
+
+        with patch(
+            "scylla.e2e.llm_judge._call_claude_judge",
+            side_effect=mock_call_judge,
+        ):
+            stage_execute_judge(ctx)
+
+        assert call_count == 2
+        assert ctx.judgment is not None
+        assert ctx.judgment["score"] == pytest.approx(0.9)
+
 
 # ---------------------------------------------------------------------------
 # TestStageFinalizeRun

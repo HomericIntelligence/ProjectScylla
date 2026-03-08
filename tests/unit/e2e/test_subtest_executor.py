@@ -796,3 +796,32 @@ class TestRestoreRunContext:
 
         assert ctx.agent_result is not None
         assert ctx.agent_duration == 0.0
+
+    def test_judge_prompt_built_loads_judge_prompt(self, tmp_path: Path) -> None:
+        """Resuming from JUDGE_PROMPT_BUILT loads judge_prompt from disk.
+
+        This is the fix for the empty-prompt resume bug: the threshold was
+        previously JUDGE_COMPLETE, which meant a run suspended at
+        JUDGE_PROMPT_BUILT would resume with an empty ctx.judge_prompt.
+        """
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+        (run_dir / "judge_prompt.md").write_text("the judge prompt built before crash")
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "judge_prompt_built")
+
+        assert ctx.judge_prompt == "the judge prompt built before crash"
+
+    def test_judge_prompt_built_missing_file_leaves_empty(self, tmp_path: Path) -> None:
+        """If judge_prompt.md is missing at JUDGE_PROMPT_BUILT, ctx.judge_prompt stays empty."""
+        run_dir = tmp_path / "run_01"
+        run_dir.mkdir()
+        _write_agent_result(run_dir)
+        # No judge_prompt.md
+
+        ctx = _make_ctx(run_dir)
+        _restore_run_context(ctx, "judge_prompt_built")
+
+        assert ctx.judge_prompt == ""

@@ -711,6 +711,7 @@ class TierManager:
 
         """
         merged_resources: dict[str, Any] = {}
+        failed_tier_ids: list[str] = []
 
         for tier_id in inherit_from_tiers:
             # 1. Load tier result.json to get best_subtest
@@ -728,11 +729,12 @@ class TierManager:
                 best_subtest_id = selection.get("winning_subtest")
 
             if not best_subtest_id:
-                raise ValueError(
-                    f"Cannot inherit from {tier_id.value}: neither result.json nor "
-                    f"best_subtest.json found with best subtest selection. "
-                    f"Ensure tier {tier_id.value} completed before T5."
+                logger.warning(
+                    f"Cannot inherit from {tier_id.value}: no best subtest found "
+                    f"(tier may have failed). Skipping inheritance from {tier_id.value}."
                 )
+                failed_tier_ids.append(tier_id.value)
+                continue
 
             # 2. Load config_manifest.json from best subtest
             manifest_file = (
@@ -766,6 +768,12 @@ class TierManager:
             # 3. Merge resources
             subtest_resources = manifest.get("resources", {})
             self._merge_tier_resources(merged_resources, subtest_resources, tier_id)
+
+        if failed_tier_ids and len(failed_tier_ids) == len(inherit_from_tiers):
+            raise ValueError(
+                f"Cannot build merged baseline: all required tiers failed "
+                f"({', '.join(failed_tier_ids)}). At least one must complete for T5."
+            )
 
         return merged_resources
 

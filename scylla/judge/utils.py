@@ -37,13 +37,15 @@ def extract_json_from_llm_response(output: str) -> dict[str, Any] | None:
         {'score': 5}
 
     """
-    # Try to find JSON in code blocks first
-    json_block = re.search(r"```(?:json)?\s*(\{[\s\S]*?\})\s*```", output)
-    if json_block:
-        try:
-            return cast(dict[str, Any], json.loads(json_block.group(1)))
-        except json.JSONDecodeError:
-            pass
+    # Try to find JSON in code blocks first; extract full block content then parse
+    code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", output)
+    if code_block:
+        block_text = code_block.group(1).strip()
+        if block_text.startswith("{"):
+            try:
+                return cast(dict[str, Any], json.loads(block_text))
+            except json.JSONDecodeError:
+                pass  # Fall through to brace-matching
 
     # Try to find raw JSON object using brace matching
     start = output.find("{")

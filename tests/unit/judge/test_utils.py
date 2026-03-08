@@ -129,3 +129,22 @@ Let me know if you need clarification!"""
         output = '{"first": 1} {"second": 2}'
         result = extract_json_from_llm_response(output)
         assert result == {"first": 1}
+
+    def test_nested_json_in_code_block(self) -> None:
+        r"""Nested JSON in a code block is parsed correctly.
+
+        Regression: the old non-greedy regex ``{[\s\S]*?}`` stopped at the
+        first ``}`` inside a nested object, producing a truncated/invalid
+        JSON string that failed to parse.
+        """
+        output = '```json\n{"score": 0.8, "criteria_scores": {"correctness": {"score": 0.9}}}\n```'
+        result = extract_json_from_llm_response(output)
+        assert result is not None
+        assert result["score"] == 0.8
+        assert result["criteria_scores"]["correctness"]["score"] == 0.9
+
+    def test_truncated_json_in_code_block_returns_none(self) -> None:
+        """Truncated (invalid) JSON inside a code block returns None gracefully."""
+        output = '```json\n{"score": 0.8, "nested": {"key": "val"\n```'
+        result = extract_json_from_llm_response(output)
+        assert result is None
