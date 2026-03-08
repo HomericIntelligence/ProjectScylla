@@ -224,10 +224,17 @@ class TestTierSchema:
         """Schema accepts capability fields explicitly set to false."""
         check_schema({"tier": "t0", "name": "Vanilla", field: False}, schema)
 
-    @pytest.mark.parametrize("field", ["uses_tools", "uses_delegation", "uses_hierarchy"])
+    @pytest.mark.parametrize("field", ["uses_tools", "uses_delegation"])
     def test_capability_field_explicit_true(self, schema: dict[str, Any], field: str) -> None:
         """Schema accepts capability fields explicitly set to true."""
         check_schema({"tier": "t4", "name": "Hierarchy", field: True}, schema)
+
+    def test_capability_field_uses_hierarchy_explicit_true(self, schema: dict[str, Any]) -> None:
+        """Schema accepts uses_hierarchy=true when uses_delegation=true is also present."""
+        check_schema(
+            {"tier": "t4", "name": "Hierarchy", "uses_delegation": True, "uses_hierarchy": True},
+            schema,
+        )
 
     def test_capability_fields_absent(self, schema: dict[str, Any]) -> None:
         """Schema accepts tier when all capability fields are absent (default-false path)."""
@@ -244,6 +251,9 @@ class TestTierSchema:
                 "uses_delegation": False,
                 "uses_hierarchy": False,
             },
+            schema,
+        )
+
     def test_rejects_hierarchy_without_delegation(self, schema: dict[str, Any]) -> None:
         """uses_hierarchy=true without uses_delegation=true must fail schema validation."""
         with pytest.raises(jsonschema.ValidationError):
