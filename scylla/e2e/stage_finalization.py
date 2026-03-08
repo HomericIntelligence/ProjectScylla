@@ -30,6 +30,51 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _call_judge_with_retry(
+    judge_prompt: str,
+    model: str,
+    workspace: Any,
+    judge_num: int,
+) -> tuple[str, str, str, Any]:
+    """Call the LLM judge with one retry on parse failure.
+
+    Args:
+        judge_prompt: The full judge prompt text.
+        model: Model identifier to use for judging.
+        workspace: Workspace path passed to the judge runner.
+        judge_num: Judge index (1-based), used in log messages.
+
+    Returns:
+        Tuple of (stdout, stderr, raw_result, parsed_judge_result).
+
+    Raises:
+        ValueError: If both attempts fail to produce valid JSON.
+
+    """
+    from scylla.e2e.llm_judge import _call_claude_judge, _parse_judge_response
+
+    json_reminder = "\n\nIMPORTANT: Respond with ONLY a valid JSON object."
+    last_parse_error: Exception | None = None
+    stdout = stderr = result = ""
+    judge_result: Any = None
+    for attempt in range(2):
+        prompt = judge_prompt if attempt == 0 else judge_prompt + json_reminder
+        stdout, stderr, result = _call_claude_judge(prompt, model, workspace)
+        try:
+            judge_result = _parse_judge_response(result)
+            last_parse_error = None
+            break
+        except ValueError as e:
+            last_parse_error = e
+            if attempt == 0:
+                logger.warning(
+                    f"Judge {judge_num} parse failed (attempt {attempt + 1}), retrying..."
+                )
+    if last_parse_error:
+        raise last_parse_error
+    return stdout, stderr, result, judge_result
+
+
 def stage_execute_judge(ctx: RunContext) -> None:
     """JUDGE_PROMPT_BUILT -> JUDGE_COMPLETE: Execute judge(s) and save results.
 
@@ -47,18 +92,24 @@ def stage_execute_judge(ctx: RunContext) -> None:
         return
 
     from scylla.e2e.judge_runner import _compute_judge_consensus, _save_judge_result
-    from scylla.e2e.llm_judge import (
-        JudgeResult,
-        _call_claude_judge,
-        _parse_judge_response,
-        _save_judge_logs,
-    )
+    from scylla.e2e.llm_judge import JudgeResult, _save_judge_logs
     from scylla.e2e.models import JudgeResultSummary
     from scylla.e2e.rate_limit import RateLimitError
 
     judge_dir = get_judge_dir(ctx.run_dir)
     if not ctx.config.judge_models:
         raise ValueError("judge_models is required")
+
+    if not ctx.judge_prompt:
+        saved_prompt = ctx.run_dir / "judge_prompt.md"
+        if saved_prompt.exists():
+            ctx.judge_prompt = saved_prompt.read_text()
+            logger.info("Reloaded judge_prompt from disk in stage_execute_judge")
+        else:
+            raise ValueError(
+                f"judge_prompt is empty and no judge_prompt.md found at {saved_prompt}. "
+                f"Cannot execute judge without a prompt."
+            )
 
     judges = []
     judge_start = datetime.now(timezone.utc)
@@ -72,8 +123,9 @@ def stage_execute_judge(ctx: RunContext) -> None:
             actual_judge_dir = judge_dir / f"judge_{judge_num:02d}"
             actual_judge_dir.mkdir(parents=True, exist_ok=True)
 
-            stdout, stderr, result = _call_claude_judge(ctx.judge_prompt, model, ctx.workspace)
-            judge_result = _parse_judge_response(result)
+            stdout, stderr, result, judge_result = _call_judge_with_retry(
+                ctx.judge_prompt, model, ctx.workspace, judge_num
+            )
 
             _save_judge_logs(
                 actual_judge_dir,

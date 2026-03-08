@@ -859,8 +859,8 @@ class TestBuildMergedBaseline:
         assert "skills" in merged
         assert set(merged["skills"]["categories"]) == {"github", "mojo"}
 
-    def test_missing_tier_result_raises(self, tmp_path: Path) -> None:
-        """Test that missing tier result raises ValueError."""
+    def test_missing_tier_result_all_fail_raises(self, tmp_path: Path) -> None:
+        """All tiers missing result → warning+skip per tier, then ValueError at post-loop check."""
         experiment_dir = tmp_path / "experiment"
         experiment_dir.mkdir()
 
@@ -868,14 +868,14 @@ class TestBuildMergedBaseline:
         tiers_dir.mkdir()
         manager = TierManager(tiers_dir)
 
-        # Should raise because neither T0/result.json nor T0/best_subtest.json exist
+        # Neither T0/result.json nor T0/best_subtest.json exist; all tiers failed
         import pytest
 
-        with pytest.raises(ValueError, match="neither result\\.json nor best_subtest\\.json"):
+        with pytest.raises(ValueError, match="all required tiers failed"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
 
-    def test_no_best_subtest_raises(self, tmp_path: Path) -> None:
-        """Test that missing best_subtest raises ValueError."""
+    def test_no_best_subtest_all_fail_raises(self, tmp_path: Path) -> None:
+        """result.json exists but has no best_subtest → warning+skip, then ValueError."""
         import json
 
         import pytest
@@ -891,10 +891,57 @@ class TestBuildMergedBaseline:
         tiers_dir.mkdir()
         manager = TierManager(tiers_dir)
 
-        # Should raise because best_subtest is missing from result.json
-        # and best_subtest.json doesn't exist
-        with pytest.raises(ValueError, match="neither result\\.json nor best_subtest\\.json"):
+        # best_subtest is missing and no best_subtest.json → treated as failed tier
+        with pytest.raises(ValueError, match="all required tiers failed"):
             manager.build_merged_baseline([TierID.T0], experiment_dir)
+
+    def test_one_failed_tier_partial_inheritance(self, tmp_path: Path) -> None:
+        """One missing tier is skipped; valid tier resources are still merged."""
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+
+        # T0: has result.json with best_subtest and a config_manifest
+        t0_dir = experiment_dir / "T0"
+        t0_subtest = t0_dir / "subtest-01"
+        t0_subtest.mkdir(parents=True)
+        (t0_dir / "result.json").write_text(json.dumps({"best_subtest": "subtest-01"}))
+        manifest = {"resources": {"claude_md": {"blocks": ["B01"]}}}
+        (t0_subtest / "config_manifest.json").write_text(json.dumps(manifest))
+
+        # T1: failed — no result.json and no best_subtest.json
+        (experiment_dir / "T1").mkdir(parents=True)
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        # Should NOT raise — T0 succeeds so merged_resources is non-empty
+        merged = manager.build_merged_baseline([TierID.T0, TierID.T1], experiment_dir)
+        assert "claude_md" in merged
+        assert merged["claude_md"]["blocks"] == ["B01"]
+
+    def test_all_tiers_failed_raises_with_tier_names(self, tmp_path: Path) -> None:
+        """ValueError message lists all failed tier IDs when no tier provides resources."""
+        import json
+
+        import pytest
+
+        experiment_dir = tmp_path / "experiment"
+
+        # T0 and T1 both have result.json but no best_subtest (failed)
+        for tier in ("T0", "T1"):
+            tier_dir = experiment_dir / tier
+            tier_dir.mkdir(parents=True)
+            (tier_dir / "result.json").write_text(json.dumps({"pass_rate": 0.0}))
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        with pytest.raises(ValueError, match="T0") as exc_info:
+            manager.build_merged_baseline([TierID.T0, TierID.T1], experiment_dir)
+        assert "T1" in str(exc_info.value)
 
     def test_fallback_to_best_subtest_json(self, tmp_path: Path) -> None:
         """Test that build_merged_baseline falls back to best_subtest.json.

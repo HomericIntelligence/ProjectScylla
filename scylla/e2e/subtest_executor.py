@@ -147,7 +147,7 @@ def _restore_run_context(ctx: Any, current_state: str) -> None:
         ctx.agent_ran = False
 
     # If past JUDGE_PROMPT_BUILT, the saved judge_prompt.md is the source of truth
-    if is_at_or_past_state(run_state, RunState.JUDGE_COMPLETE) and not ctx.judge_prompt:
+    if is_at_or_past_state(run_state, RunState.JUDGE_PROMPT_BUILT) and not ctx.judge_prompt:
         saved_prompt = ctx.run_dir / "judge_prompt.md"
         if saved_prompt.exists():
             ctx.judge_prompt = saved_prompt.read_text()
