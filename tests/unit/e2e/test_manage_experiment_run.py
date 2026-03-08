@@ -1496,7 +1496,7 @@ class TestRetryErrorsInBatch:
         }
         (results_dir / "batch_summary.json").write_text(json.dumps(summary))
 
-        # Create checkpoint for test-001 with a failed run inside (T1/01/1=failed)
+        # Create checkpoint for test-001 with a failed run and an intermediate-state run
         exp_dir = results_dir / "2024-01-01T00-00-00-test-001"
         exp_dir.mkdir(parents=True)
         checkpoint = E2ECheckpoint(
@@ -1509,7 +1509,7 @@ class TestRetryErrorsInBatch:
             status="complete",
             run_states={
                 "T0": {"00": {"1": "worktree_cleaned"}},
-                "T1": {"01": {"1": "failed"}},
+                "T1": {"01": {"1": "failed", "2": "judge_prompt_built"}},
             },
             completed_runs={"T0": {"00": {1: "passed"}}},
         )
@@ -1644,10 +1644,10 @@ class TestRetryErrorsInBatch:
         assert "test-002" in executed_ids
 
     def test_retry_errors_resets_failed_and_rate_limited_runs(self, tmp_path: Path) -> None:
-        """_reset_terminal_runs resets both failed and rate_limited runs, cascading state."""
+        """_reset_non_completed_runs resets failed/rate_limited and cascades intermediate states."""
         from datetime import datetime, timezone
 
-        from manage_experiment import _reset_terminal_runs
+        from manage_experiment import _reset_non_completed_runs
 
         from scylla.e2e.checkpoint import E2ECheckpoint
 
@@ -1662,21 +1662,24 @@ class TestRetryErrorsInBatch:
             last_updated_at=datetime.now(timezone.utc).isoformat(),
             status="failed",
             run_states={
-                "T0": {"00": {"1": "failed", "2": "worktree_cleaned"}},
-                "T1": {"01": {"1": "rate_limited"}},
+                "T0": {"00": {"1": "failed", "2": "worktree_cleaned", "3": "judge_prompt_built"}},
+                "T1": {"01": {"1": "rate_limited", "2": "replay_generated"}},
             },
             completed_runs={},
         )
 
-        reset_count = _reset_terminal_runs(checkpoint)
+        reset_count = _reset_non_completed_runs(checkpoint)
 
+        # Only failed and rate_limited runs are reset to pending (2 total)
         assert reset_count == 2
-        # Both terminal runs are reset to pending
         assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
         assert checkpoint.run_states["T1"]["01"]["1"] == "pending"
-        # Non-terminal run is untouched
+        # Intermediate runs keep their state (resume where they left off)
+        assert checkpoint.run_states["T0"]["00"]["3"] == "judge_prompt_built"
+        assert checkpoint.run_states["T1"]["01"]["2"] == "replay_generated"
+        # Completed run is untouched
         assert checkpoint.run_states["T0"]["00"]["2"] == "worktree_cleaned"
-        # Subtest states cascade to pending
+        # Subtest states cascade to pending (both T0/00 and T1/01 have non-completed runs)
         assert checkpoint.get_subtest_state("T0", "00") == "pending"
         assert checkpoint.get_subtest_state("T1", "01") == "pending"
         # Tier states cascade to pending
@@ -1684,6 +1687,114 @@ class TestRetryErrorsInBatch:
         assert checkpoint.get_tier_state("T1") == "pending"
         # Experiment state updated
         assert checkpoint.experiment_state == "tiers_running"
+
+    def test_reset_non_completed_runs_intermediate_states_preserved(self, tmp_path: Path) -> None:
+        """Intermediate run states are preserved; tier/subtest cascade happens for re-entry."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {
+                    "00": {
+                        "1": "worktree_cleaned",
+                        "2": "judge_prompt_built",
+                        "3": "dir_structure_created",
+                    }
+                },
+                "T2": {"01": {"1": "replay_generated", "2": "config_committed"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+
+        reset_count = _reset_non_completed_runs(checkpoint)
+
+        # No failed/rate_limited runs → reset_count is 0
+        assert reset_count == 0
+        # Intermediate run states are preserved (resume where they left off)
+        assert checkpoint.run_states["T0"]["00"]["2"] == "judge_prompt_built"
+        assert checkpoint.run_states["T0"]["00"]["3"] == "dir_structure_created"
+        assert checkpoint.run_states["T2"]["01"]["1"] == "replay_generated"
+        assert checkpoint.run_states["T2"]["01"]["2"] == "config_committed"
+        # Completed run is untouched
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        # Subtest/tier cascade happens so the run loop re-enters
+        assert checkpoint.get_subtest_state("T0", "00") == "pending"
+        assert checkpoint.get_subtest_state("T2", "01") == "pending"
+        assert checkpoint.get_tier_state("T0") == "pending"
+        assert checkpoint.get_tier_state("T2") == "pending"
+        assert checkpoint.experiment_state == "tiers_running"
+
+    def test_checkpoint_has_retryable_runs_true_for_intermediate_states(
+        self, tmp_path: Path
+    ) -> None:
+        """_checkpoint_has_retryable_runs returns True for runs at intermediate states."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned", "2": "judge_prompt_built"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        cp_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, cp_path)
+
+        assert _checkpoint_has_retryable_runs(cp_path) is True
+
+    def test_checkpoint_has_retryable_runs_false_when_all_complete(self, tmp_path: Path) -> None:
+        """_checkpoint_has_retryable_runs returns False when all runs are worktree_cleaned."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned", "2": "worktree_cleaned"}},
+                "T1": {"01": {"1": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed", 2: "passed"}}, "T1": {"01": {1: "passed"}}},
+        )
+        cp_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, cp_path)
+
+        assert _checkpoint_has_retryable_runs(cp_path) is False
 
 
 # ---------------------------------------------------------------------------
@@ -2855,7 +2966,7 @@ class TestPromptOverride:
 
 
 class TestRetryErrorsInSingleMode:
-    """Tests --retry-errors single mode resets failed/rate-limited runs via _reset_terminal_runs."""
+    """Tests --retry-errors single mode resets non-completed runs via _reset_non_completed_runs."""
 
     def _make_test_dir(self, path: Path) -> None:
         """Create a minimal test directory with test.yaml and prompt.md."""
@@ -2873,7 +2984,7 @@ class TestRetryErrorsInSingleMode:
         (path / "prompt.md").write_text("test prompt")
 
     def test_retry_errors_single_mode_calls_reset_for_failed_runs(self, tmp_path: Path) -> None:
-        """--retry-errors single mode resets failed runs to pending via _reset_terminal_runs."""
+        """--retry-errors single mode resets failed runs to pending (non-completed runs reset)."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
@@ -2961,7 +3072,7 @@ class TestRetryErrorsInSingleMode:
         mock_run.assert_called_once()
 
     def test_retry_errors_resets_all_terminal_runs_across_tiers(self, tmp_path: Path) -> None:
-        """--retry-errors resets all terminal runs across all tiers via _reset_terminal_runs."""
+        """--retry-errors resets terminal runs in all tiers via _reset_non_completed_runs."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run

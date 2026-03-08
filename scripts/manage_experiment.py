@@ -270,7 +270,7 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--retry-errors",
         action="store_true",
-        help="Re-run failed tests (single mode: reset failed runs; batch mode: retry failed)",
+        help="Re-run incomplete/failed tests (resumes interrupted runs, resets failed runs)",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
@@ -305,7 +305,7 @@ def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
 
 
 def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
-    """Return True if checkpoint contains failed or rate-limited runs."""
+    """Return True if checkpoint contains any non-completed runs."""
     import json
 
     try:
@@ -314,21 +314,27 @@ def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
         for subtests in data.get("run_states", {}).values():
             for runs in subtests.values():
                 for state in runs.values():
-                    if state in ("failed", "rate_limited"):
+                    if state != "worktree_cleaned":
                         return True
     except Exception:
         pass
     return False
 
 
-def _reset_terminal_runs(checkpoint: Any) -> int:
-    """Reset all failed/rate-limited runs to pending with tier/subtest cascade.
+def _reset_non_completed_runs(checkpoint: Any) -> int:
+    """Reset failed/rate-limited runs to pending; cascade tier/subtest for all non-completed runs.
+
+    Failed and rate-limited runs are reset to ``pending`` so they restart from scratch.
+    Runs stuck in intermediate states (e.g. ``judge_prompt_built``, ``replay_generated``)
+    keep their current state so they resume where they left off, but their containing
+    subtest and tier are cascaded to ``pending`` so the run loop re-enters and
+    ``advance_to_completion`` picks them up.
 
     Args:
         checkpoint: Loaded E2ECheckpoint to mutate in-place.
 
     Returns:
-        Number of runs reset.
+        Number of runs reset to pending (failed/rate_limited only).
 
     """
     terminal_states = ("failed", "rate_limited")
@@ -339,12 +345,17 @@ def _reset_terminal_runs(checkpoint: Any) -> int:
     for tier_id, subtests in checkpoint.run_states.items():
         for subtest_id, runs in subtests.items():
             for run_num_str, state in list(runs.items()):
+                if state == "worktree_cleaned":
+                    continue
+                # All non-completed runs trigger the tier/subtest cascade
+                affected_tiers.add(tier_id)
+                affected_subtests.add((tier_id, subtest_id))
                 if state in terminal_states:
+                    # Terminal runs restart from scratch
                     runs[run_num_str] = "pending"
                     checkpoint.unmark_run_completed(tier_id, subtest_id, int(run_num_str))
-                    affected_tiers.add(tier_id)
-                    affected_subtests.add((tier_id, subtest_id))
                     reset_count += 1
+                # else: intermediate state — leave run state as-is; cascade handles re-entry
 
     for tier_id, subtest_id in affected_subtests:
         checkpoint.set_subtest_state(tier_id, subtest_id, "pending")
@@ -634,12 +645,12 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:  # noqa:
                 _cp_path = _find_checkpoint_path(args.results_dir, experiment_id)
                 if _cp_path is not None:
                     _cp = _load_cp(_cp_path)
-                    _reset_count = _reset_terminal_runs(_cp)
+                    _reset_count = _reset_non_completed_runs(_cp)
                     if _reset_count > 0:
                         _save_cp(_cp, _cp_path)
                         logger.info(
                             f"[{test_id}] --retry-errors: reset {_reset_count} "
-                            "failed/rate-limited run(s)"
+                            "non-completed run(s) for retry"
                         )
 
             with terminal_guard():
@@ -1016,19 +1027,17 @@ def cmd_run(args: argparse.Namespace) -> int:  # noqa: C901  # CLI dispatch with
         save_checkpoint(checkpoint, checkpoint_path)
         logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
 
-    # Handle --retry-errors in single mode: reset failed/rate-limited runs to pending
+    # Handle --retry-errors in single mode: reset non-completed runs
     if args.retry_errors and not (from_run_state or from_tier_state or from_experiment_state):
         from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint
 
         checkpoint_path = _find_checkpoint_path(args.results_dir, experiment_id)
         if checkpoint_path is not None:
             checkpoint = load_checkpoint(checkpoint_path)
-            reset_count = _reset_terminal_runs(checkpoint)
+            reset_count = _reset_non_completed_runs(checkpoint)
             if reset_count > 0:
                 save_checkpoint(checkpoint, checkpoint_path)
-                logger.info(
-                    f"--retry-errors: reset {reset_count} failed/rate-limited run(s) for retry"
-                )
+                logger.info(f"--retry-errors: reset {reset_count} non-completed run(s) for retry")
 
     try:
         with terminal_guard(request_shutdown):
