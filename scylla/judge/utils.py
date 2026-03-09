@@ -48,14 +48,18 @@ def extract_json_from_llm_response(output: str) -> dict[str, Any] | None:
                 pass  # Fall through to brace-matching
 
     # Try to find raw JSON object using brace matching
-    start = output.find("{")
+    return _extract_brace_matched_json(output)
+
+
+def _extract_brace_matched_json(text: str) -> dict[str, Any] | None:
+    """Extract JSON object from text using brace matching."""
+    start = text.find("{")
     if start == -1:
         return None
 
-    # Find matching closing brace
     depth = 0
     end = start
-    for i, char in enumerate(output[start:], start):
+    for i, char in enumerate(text[start:], start):
         if char == "{":
             depth += 1
         elif char == "}":
@@ -68,6 +72,6 @@ def extract_json_from_llm_response(output: str) -> dict[str, Any] | None:
         return None
 
     try:
-        return cast(dict[str, Any], json.loads(output[start:end]))
+        return cast(dict[str, Any], json.loads(text[start:end]))
     except json.JSONDecodeError:
         return None

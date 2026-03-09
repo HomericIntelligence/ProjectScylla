@@ -806,6 +806,38 @@ def _load_reference_patch(reference_path: Path) -> str | None:
         return None
 
 
+def _run_and_log_pipeline(
+    workspace: Path, language: str, judge_dir: Path | None
+) -> BuildPipelineResult:
+    """Run the build pipeline and log results."""
+    logger.info(f"Running {language} build/lint/test pipeline")
+    result = _run_build_pipeline(workspace, language=language)
+
+    status_summary = result.get_status_summary()
+    failed_steps = result.get_failure_summary()
+    if failed_steps == "none":
+        if result.has_na_items():
+            logger.warning(f"Build pipeline: ⚠️  {status_summary}")
+        else:
+            logger.info(f"Build pipeline: {status_summary}")
+    else:
+        logger.warning(f"Build pipeline: {status_summary}")
+
+    if judge_dir:
+        run_dir = judge_dir.parent if judge_dir.parent.name.startswith("run_") else judge_dir
+        _save_pipeline_outputs(run_dir, result, language=language)
+
+    return result
+
+
+def _format_pipeline_result(result: BuildPipelineResult | None) -> str | None:
+    """Format a pipeline result into a context string."""
+    if not result:
+        return None
+    status = "ALL PASSED ✓" if result.all_passed else "SOME FAILED ✗"
+    return f"**Overall Status**: {status}\n\n{result.to_context_string()}"
+
+
 def _gather_judge_context(
     workspace: Path,
     task_prompt: str,
@@ -861,36 +893,10 @@ def _gather_judge_context(
 
     pipeline_result = None
     if run_build_pipeline:
-        logger.info(f"Running {language} build/lint/test pipeline")
-        pipeline_result = _run_build_pipeline(workspace, language=language)
+        pipeline_result = _run_and_log_pipeline(workspace, language, judge_dir)
 
-        status_summary = pipeline_result.get_status_summary()
-        failed_steps = pipeline_result.get_failure_summary()
-        if failed_steps == "none":
-            if pipeline_result.has_na_items():
-                logger.warning(f"Build pipeline: ⚠️  {status_summary}")
-            else:
-                logger.info(f"Build pipeline: {status_summary}")
-        else:
-            logger.warning(f"Build pipeline: {status_summary}")
-
-        if judge_dir:
-            run_dir = judge_dir.parent if judge_dir.parent.name.startswith("run_") else judge_dir
-            _save_pipeline_outputs(run_dir, pipeline_result, language=language)
-
-    pipeline_result_str = None
-    if pipeline_result:
-        overall_status = "ALL PASSED ✓" if pipeline_result.all_passed else "SOME FAILED ✗"
-        pipeline_result_str = (
-            f"**Overall Status**: {overall_status}\n\n{pipeline_result.to_context_string()}"
-        )
-
-    baseline_pipeline_str = None
-    if pipeline_baseline:
-        baseline_status = "ALL PASSED ✓" if pipeline_baseline.all_passed else "SOME FAILED ✗"
-        baseline_pipeline_str = (
-            f"**Overall Status**: {baseline_status}\n\n{pipeline_baseline.to_context_string()}"
-        )
+    pipeline_result_str = _format_pipeline_result(pipeline_result)
+    baseline_pipeline_str = _format_pipeline_result(pipeline_baseline)
 
     judge_prompt = build_task_prompt(
         task_prompt=task_prompt,
