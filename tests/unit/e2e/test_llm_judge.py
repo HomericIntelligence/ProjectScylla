@@ -446,7 +446,7 @@ class TestRunBuildPipeline:
 
     def test_routes_to_python(self, tmp_path: Path) -> None:
         """Test routing to Python pipeline."""
-        with patch("scylla.e2e.llm_judge._run_python_pipeline") as mock_python:
+        with patch("scylla.e2e.build_pipeline._run_python_pipeline") as mock_python:
             mock_python.return_value = BuildPipelineResult(
                 language="python", build_passed=True, build_output="OK"
             )
@@ -455,7 +455,7 @@ class TestRunBuildPipeline:
 
     def test_routes_to_mojo(self, tmp_path: Path) -> None:
         """Test routing to Mojo pipeline."""
-        with patch("scylla.e2e.llm_judge._run_mojo_pipeline") as mock_mojo:
+        with patch("scylla.e2e.build_pipeline._run_mojo_pipeline") as mock_mojo:
             mock_mojo.return_value = BuildPipelineResult(
                 language="mojo", build_passed=True, build_output="OK"
             )
