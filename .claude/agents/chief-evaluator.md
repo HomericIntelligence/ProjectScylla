@@ -123,4 +123,4 @@ Chief Evaluator:
 - [Evaluation Guidelines](/.claude/shared/evaluation-guidelines.md)
 - [Metrics Definitions](/.claude/shared/metrics-definitions.md)
 - [Research Methodology](/docs/research.md)
-- [Agent Hierarchy](/agents/hierarchy.md)
+- [Agent Hierarchy](/.claude/agents/)

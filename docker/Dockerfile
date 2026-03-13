@@ -127,9 +127,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 # Install Claude Code CLI (pinned to specific version for reproducibility)
 # This is the primary tool for agent-based test execution
-# Version 2.1.42 verified working in #601
+# Version 2.1.74 verified working
 # See: https://github.com/mvillmow/ProjectScylla/issues/650
-RUN npm install -g @anthropic-ai/claude-code@2.1.42
+RUN npm install -g @anthropic-ai/claude-code@2.1.74
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
