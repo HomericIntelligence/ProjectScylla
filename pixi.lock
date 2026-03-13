@@ -3807,24 +3807,24 @@ packages:
 - pypi: ./
   name: scylla
   version: 0.1.0
-  sha256: d5726766cf8c25837f0974d7b4d5af78352b528acc2d65931542c690bfd89053
+  sha256: 2b5ac04e10959723a78e7f5c17763301f8fdc1c4951f2f55071405ed02bb3fc7
   requires_dist:
-  - click>=8.0
-  - pydantic>=2.0
-  - pyyaml>=6.0
-  - pytest>=7.0 ; extra == 'dev'
-  - pytest-cov>=4.0 ; extra == 'dev'
-  - pre-commit>=3.0 ; extra == 'dev'
-  - ruff>=0.1.0 ; extra == 'dev'
-  - defusedxml>=0.7 ; extra == 'dev'
-  - matplotlib>=3.8 ; extra == 'analysis'
-  - numpy>=1.24 ; extra == 'analysis'
-  - pandas>=2.0 ; extra == 'analysis'
-  - seaborn>=0.13 ; extra == 'analysis'
-  - scipy>=1.11 ; extra == 'analysis'
-  - altair>=5.0 ; extra == 'analysis'
-  - vl-convert-python>=1.0 ; extra == 'analysis'
-  - krippendorff>=0.6.0 ; extra == 'analysis'
+  - click>=8.0,<9
+  - pydantic>=2.0,<3
+  - pyyaml>=6.0,<7
+  - pytest>=7.0,<9 ; extra == 'dev'
+  - pytest-cov>=4.0,<7 ; extra == 'dev'
+  - pre-commit>=3.0,<5 ; extra == 'dev'
+  - ruff>=0.1.0,<1 ; extra == 'dev'
+  - defusedxml>=0.7,<1 ; extra == 'dev'
+  - matplotlib>=3.8,<4 ; extra == 'analysis'
+  - numpy>=1.24,<3 ; extra == 'analysis'
+  - pandas>=2.0,<3 ; extra == 'analysis'
+  - seaborn>=0.13,<1 ; extra == 'analysis'
+  - scipy>=1.11,<2 ; extra == 'analysis'
+  - altair>=5.0,<7 ; extra == 'analysis'
+  - vl-convert-python>=1.0,<2 ; extra == 'analysis'
+  - krippendorff>=0.6.0,<1 ; extra == 'analysis'
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/83/11/00d3c3dfc25ad54e731d91449895a79e4bf2384dc3ac01809010ba88f6d5/seaborn-0.13.2-py3-none-any.whl
   name: seaborn
