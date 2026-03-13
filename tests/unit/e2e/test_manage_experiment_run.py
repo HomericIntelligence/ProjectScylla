@@ -1670,8 +1670,8 @@ class TestRetryErrorsInBatch:
 
         reset_count = _reset_non_completed_runs(checkpoint)
 
-        # Only failed and rate_limited runs are reset to pending (2 total)
-        assert reset_count == 2
+        # All non-completed runs counted (failed + rate_limited + intermediate = 4)
+        assert reset_count == 4
         assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
         assert checkpoint.run_states["T1"]["01"]["1"] == "pending"
         # Intermediate runs keep their state (resume where they left off)
@@ -1721,8 +1721,8 @@ class TestRetryErrorsInBatch:
 
         reset_count = _reset_non_completed_runs(checkpoint)
 
-        # No failed/rate_limited runs → reset_count is 0
-        assert reset_count == 0
+        # 4 intermediate non-completed runs found
+        assert reset_count == 4
         # Intermediate run states are preserved (resume where they left off)
         assert checkpoint.run_states["T0"]["00"]["2"] == "judge_prompt_built"
         assert checkpoint.run_states["T0"]["00"]["3"] == "dir_structure_created"
