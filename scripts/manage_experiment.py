@@ -334,7 +334,7 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
         checkpoint: Loaded E2ECheckpoint to mutate in-place.
 
     Returns:
-        Number of runs reset to pending (failed/rate_limited only).
+        Number of non-completed runs found (terminal resets + intermediate).
 
     """
     terminal_states = ("failed", "rate_limited")
@@ -350,11 +350,11 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
                 # All non-completed runs trigger the tier/subtest cascade
                 affected_tiers.add(tier_id)
                 affected_subtests.add((tier_id, subtest_id))
+                reset_count += 1  # Count ALL non-completed runs
                 if state in terminal_states:
                     # Terminal runs restart from scratch
                     runs[run_num_str] = "pending"
                     checkpoint.unmark_run_completed(tier_id, subtest_id, int(run_num_str))
-                    reset_count += 1
                 # else: intermediate state — leave run state as-is; cascade handles re-entry
 
     for tier_id, subtest_id in affected_subtests:
