@@ -3807,13 +3807,13 @@ packages:
 - pypi: ./
   name: scylla
   version: 0.1.0
-  sha256: a2df383b837cb0f83ea5f7779ca609b8a28692a55a553a22897570c835085bad
+  sha256: b2298d0878e90cc8b9a1a5639af6449a9afd68c8d631139d253a71c8146e0acc
   requires_dist:
   - click>=8.0,<9
   - pydantic>=2.0,<3
   - pyyaml>=6.0,<7
   - pytest>=7.0,<9 ; extra == 'dev'
-  - pytest-cov>=4.0,<7 ; extra == 'dev'
+  - pytest-cov>=4.0,<8 ; extra == 'dev'
   - pre-commit>=3.0,<5 ; extra == 'dev'
   - ruff>=0.1.0,<1 ; extra == 'dev'
   - defusedxml>=0.7,<1 ; extra == 'dev'
