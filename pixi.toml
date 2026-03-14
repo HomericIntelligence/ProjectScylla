@@ -12,6 +12,11 @@ lint = "ruff check scylla scripts tests"
 format = "ruff format scylla scripts tests"
 plan-issues = "python scripts/plan_issues.py"
 audit = "pixi run --environment lint pip-audit"
+# CI container tasks (requires podman or docker)
+ci-build = "podman build -f ci/Containerfile -t scylla-ci:local . || docker build -f ci/Containerfile -t scylla-ci:local ."
+ci-lint = "./scripts/run_ci_local.sh pre-commit"
+ci-test = "./scripts/run_ci_local.sh test"
+ci-all = "./scripts/run_ci_local.sh all"
 
 [dependencies]
 python = ">=3.10"

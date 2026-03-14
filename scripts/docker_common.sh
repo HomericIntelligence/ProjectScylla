@@ -1,16 +1,18 @@
 #!/bin/bash
-# Shared Docker setup functions for container scripts
+# Shared container setup functions for Docker/Podman scripts
 #
-# This file provides common functions for Docker-based scripts to eliminate duplication.
-# Source this file at the beginning of scripts that use Docker.
+# This file provides common functions for container-based scripts to eliminate duplication.
+# Supports both Podman (rootless, preferred) and Docker.
 #
 # Usage:
 #   source "$(dirname "${BASH_SOURCE[0]}")/docker_common.sh"
-#   check_docker_prerequisites
+#   # CONTAINER_ENGINE is auto-detected (podman first, docker fallback)
+#   # Override: CONTAINER_ENGINE=docker source docker_common.sh
+#   check_container_prerequisites
 #   ensure_image_built
 #   prepare_credential_mount
 #   prepare_env_vars
-#   # ... run docker commands ...
+#   # ... run "${CONTAINER_ENGINE}" commands ...
 #   cleanup_temp_creds  # or rely on trap
 
 set -euo pipefail
@@ -46,37 +48,74 @@ VOLUMES=()
 ENV_VARS=()
 TEMP_CREDS_DIR=""
 
-# Check if Docker is installed and daemon is running
-check_docker_prerequisites() {
-    if ! command -v docker &> /dev/null; then
-        log_error "Docker is not installed or not in PATH"
-        log_error "Please install Docker: https://docs.docker.com/get-docker/"
-        return 1
+# Detect container engine: Podman first (rootless, no SU), Docker as fallback.
+# Override by setting CONTAINER_ENGINE before sourcing this file.
+detect_container_engine() {
+    if [ -n "${CONTAINER_ENGINE:-}" ]; then
+        # Already set by caller — validate it exists
+        if ! command -v "${CONTAINER_ENGINE}" &> /dev/null; then
+            log_error "CONTAINER_ENGINE=${CONTAINER_ENGINE} not found in PATH"
+            return 1
+        fi
+        log_info "Using container engine: ${CONTAINER_ENGINE} (from CONTAINER_ENGINE env var)"
+        return 0
     fi
 
-    if ! docker info &> /dev/null; then
-        log_error "Docker daemon is not running"
-        log_error "Please start Docker and try again"
+    if command -v podman &> /dev/null; then
+        CONTAINER_ENGINE="podman"
+        log_info "Using container engine: podman (rootless)"
+    elif command -v docker &> /dev/null; then
+        CONTAINER_ENGINE="docker"
+        log_info "Using container engine: docker"
+    else
+        log_error "No container engine found. Install podman (recommended) or docker."
+        log_error "  Podman: https://podman.io/getting-started/installation"
+        log_error "  Docker: https://docs.docker.com/get-docker/"
         return 1
     fi
+    export CONTAINER_ENGINE
+}
+
+# Check if the container engine is installed and available.
+# For Podman, no daemon is required (rootless). For Docker, checks the daemon.
+check_container_prerequisites() {
+    detect_container_engine || return 1
+
+    if [ "${CONTAINER_ENGINE}" = "docker" ]; then
+        if ! docker info &> /dev/null; then
+            log_error "Docker daemon is not running"
+            log_error "Please start Docker and try again"
+            return 1
+        fi
+    fi
+    # Podman is daemonless — no additional check needed
 
     return 0
 }
 
-# Build Docker image if it doesn't exist
-ensure_image_built() {
-    if ! docker images -q "${IMAGE_NAME}" &> /dev/null || [ -z "$(docker images -q "${IMAGE_NAME}")" ]; then
-        log_warn "Docker image ${IMAGE_NAME} not found"
-        log_info "Building Docker image..."
+# Backward-compatible alias
+check_docker_prerequisites() {
+    check_container_prerequisites "$@"
+}
 
-        if docker build -t "${IMAGE_NAME}" -f "${PROJECT_DIR}/docker/Dockerfile" "${PROJECT_DIR}"; then
-            log_info "Docker image built successfully"
+# Build container image if it doesn't exist
+ensure_image_built() {
+    detect_container_engine || return 1
+
+    if ! "${CONTAINER_ENGINE}" images -q "${IMAGE_NAME}" &> /dev/null || \
+       [ -z "$("${CONTAINER_ENGINE}" images -q "${IMAGE_NAME}")" ]; then
+        log_warn "Container image ${IMAGE_NAME} not found"
+        log_info "Building container image..."
+
+        if "${CONTAINER_ENGINE}" build -t "${IMAGE_NAME}" \
+               -f "${PROJECT_DIR}/docker/Dockerfile" "${PROJECT_DIR}"; then
+            log_info "Container image built successfully"
         else
-            log_error "Failed to build Docker image"
+            log_error "Failed to build container image"
             return 1
         fi
     else
-        log_info "Using existing Docker image: ${IMAGE_NAME}"
+        log_info "Using existing container image: ${IMAGE_NAME}"
     fi
 
     return 0
