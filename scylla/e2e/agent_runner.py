@@ -88,7 +88,8 @@ def _create_agent_model_md(agent_dir: Path, model: str) -> None:
             timeout=10,
         )
         claude_code_version = result.stdout.strip() if result.returncode == 0 else "unknown"
-    except Exception:
+    except Exception as e:
+        logger.debug("Could not determine claude --version: %s", e)
         claude_code_version = "unknown"
 
     model_info = f"""# Agent Model Information

@@ -567,8 +567,8 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
                     disk_tier = disk_data.get("tier_states", {})
                     disk_tier.update(data.get("tier_states", {}))
                     data["tier_states"] = disk_tier
-                except (OSError, json.JSONDecodeError, KeyError):
-                    pass  # Disk read failed — fall through and save as-is
+                except (OSError, json.JSONDecodeError, KeyError) as e:
+                    logger.debug("Checkpoint disk-merge read failed, saving as-is: %s", e)
 
             with open(temp_path, "w") as f:
                 json.dump(data, f, indent=2)
@@ -691,8 +691,8 @@ def get_experiment_status(experiment_dir: Path) -> dict[str, Any]:
             result["completed_runs"] = checkpoint.get_completed_run_count()
             if checkpoint.rate_limit_until:
                 result["rate_limit_until"] = checkpoint.rate_limit_until
-        except CheckpointError:
-            pass
+        except CheckpointError as e:
+            logger.debug("Could not load checkpoint for status check: %s", e)
 
     # Check if process is running
     if pid_path.exists():

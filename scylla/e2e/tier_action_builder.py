@@ -188,8 +188,8 @@ class TierActionBuilder:
                         checkpoint.run_states = disk_cp.run_states
                         checkpoint.subtest_states = disk_cp.subtest_states
                         checkpoint.tier_states = disk_cp.tier_states
-                except Exception:
-                    pass  # Non-fatal: stale in-memory state is better than crashing
+                except Exception as e:
+                    logger.debug("Disk checkpoint merge failed, using in-memory state: %s", e)
 
         def action_subtests_running() -> None:
             # SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest.
