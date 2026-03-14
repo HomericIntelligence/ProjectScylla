@@ -976,6 +976,45 @@ class TestBuildMergedBaseline:
         merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
         assert set(merged["tools"]["enabled"]) == {"bash", "read"}
 
+    def test_fallback_to_best_subtest_json_when_result_json_has_null_best_subtest(
+        self, tmp_path: Path
+    ) -> None:
+        """Test that build_merged_baseline falls back to best_subtest.json.
+
+        When result.json exists but best_subtest is null (e.g. tier report was
+        regenerated with empty data during a re-run).
+        """
+        import json
+
+        experiment_dir = tmp_path / "experiment"
+        t0_dir = experiment_dir / "T0"
+        t0_subtest_dir = t0_dir / "subtest-01"
+        t0_subtest_dir.mkdir(parents=True)
+
+        # result.json exists but best_subtest is null
+        (t0_dir / "result.json").write_text(json.dumps({"best_subtest": None, "scores": {}}))
+
+        # best_subtest.json has the winning subtest
+        (t0_dir / "best_subtest.json").write_text(
+            json.dumps({"winning_subtest": "subtest-01", "rationale": "Best pass rate"})
+        )
+
+        # Create config_manifest.json for the subtest
+        manifest = {
+            "resources": {
+                "tools": {"enabled": ["bash", "read"]},
+            }
+        }
+        (t0_subtest_dir / "config_manifest.json").write_text(json.dumps(manifest))
+
+        tiers_dir = tmp_path / "tiers"
+        tiers_dir.mkdir()
+        manager = TierManager(tiers_dir)
+
+        # Should succeed by falling through to best_subtest.json
+        merged = manager.build_merged_baseline([TierID.T0], experiment_dir)
+        assert set(merged["tools"]["enabled"]) == {"bash", "read"}
+
     def test_best_subtest_missing_manifest_falls_back_to_sibling(self, tmp_path: Path) -> None:
         """Test fallback when best subtest has no config_manifest.json but a sibling does."""
         import json

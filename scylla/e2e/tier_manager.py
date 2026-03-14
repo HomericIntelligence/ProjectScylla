@@ -723,7 +723,8 @@ class TierManager:
                 with open(result_file) as f:
                     tier_result = json.load(f)
                 best_subtest_id = tier_result.get("best_subtest")
-            elif best_subtest_file.exists():
+
+            if not best_subtest_id and best_subtest_file.exists():
                 with open(best_subtest_file) as f:
                     selection = json.load(f)
                 best_subtest_id = selection.get("winning_subtest")
