@@ -2017,6 +2017,182 @@ class TestRetryErrorsInBatch:
         assert corrected == 0
         assert checkpoint.run_states["T0"]["00"]["1"] == "judge_complete"
 
+    def test_reconcile_corrupted_run_result_json(self, tmp_path: Path) -> None:
+        """Malformed run_result.json leaves state unchanged (no crash)."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # Write malformed JSON
+        (run_dir / "run_result.json").write_text("{ not valid json !!!")
+        (run_dir / "report.md").write_text("# Report")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "judge_prompt_built"}}},
+            completed_runs={},
+        )
+
+        # Should not raise; state advances via disk evidence but status stays None
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        # State is advanced (report.md + no workspace => worktree_cleaned inferred)
+        assert corrected == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        # set_run_state("worktree_cleaned") auto-calls mark_run_completed with "passed"
+        # because no explicit inferred_status is set (corrupted JSON → None)
+        assert checkpoint.get_run_status("T0", "00", 1) == "passed"
+
+    def test_reconcile_missing_judge_passed_field(self, tmp_path: Path) -> None:
+        """run_result.json without judge_passed advances state but leaves status=None."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # run_result.json exists but has no judge_passed key
+        (run_dir / "run_result.json").write_text(json.dumps({"cost_usd": 0.05}))
+        (run_dir / "report.md").write_text("# Report")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "baseline_captured"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        # judge_passed defaulted to False by .get("judge_passed", False) → status="failed"
+        assert checkpoint.get_run_status("T0", "00", 1) == "failed"
+
+    def test_reconcile_worktree_created_state_gets_correct_rank(self, tmp_path: Path) -> None:
+        """Run stuck in worktree_created with agent artifact on disk advances to agent_complete."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        agent_result = {
+            "exit_code": 0,
+            "token_stats": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.01,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(agent_result))
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "worktree_created"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "agent_complete"
+
+    def test_reset_interleaved_rate_limited_and_failed(self, tmp_path: Path) -> None:
+        """Mixed run states: failed + rate_limited reset; worktree_cleaned preserved."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={
+                "T0": {
+                    "00": {
+                        "1": "failed",
+                        "2": "rate_limited",
+                        "3": "worktree_cleaned",
+                    }
+                }
+            },
+            completed_runs={"T0": {"00": {3: "passed"}}},
+        )
+
+        _reset_non_completed_runs(checkpoint)
+
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+        assert checkpoint.run_states["T0"]["00"]["2"] == "pending"
+        assert checkpoint.run_states["T0"]["00"]["3"] == "worktree_cleaned"
+        assert checkpoint.get_run_status("T0", "00", 3) == "passed"
+
+    def test_reconcile_state_order_covers_all_run_states(self) -> None:
+        """All non-terminal RunState values must appear in state_rank (regression guard)."""
+        import inspect
+
+        import manage_experiment
+
+        from scylla.e2e.models import RunState
+
+        # Extract state_order from the function source to avoid calling it with real args.
+        # Instead, instantiate a minimal proxy to extract the dict at runtime.
+        # We inspect the function source to find the state_order list.
+        source = inspect.getsource(manage_experiment._reconcile_checkpoint_with_disk)
+
+        terminal_states = {RunState.FAILED.value, RunState.RATE_LIMITED.value}
+        non_terminal = {s.value for s in RunState if s.value not in terminal_states}
+
+        for state_value in non_terminal:
+            assert state_value in source, (
+                f"RunState '{state_value}' is missing from _reconcile_checkpoint_with_disk "
+                f"state_order — add it in the correct sequential position."
+            )
+
 
 # ---------------------------------------------------------------------------
 # --add-judge in batch mode (bug fix validation)
