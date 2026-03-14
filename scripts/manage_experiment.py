@@ -403,8 +403,11 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
     state_order = [
         "pending",
         "dir_structure_created",
+        "worktree_created",
         "symlinks_applied",
+        "config_committed",
         "baseline_captured",
+        "prompt_written",
         "replay_generated",
         "agent_complete",
         "diff_captured",
