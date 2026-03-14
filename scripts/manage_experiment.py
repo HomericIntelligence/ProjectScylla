@@ -400,7 +400,7 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
     from scylla.e2e.judge_runner import _has_valid_judge_result
 
     # State ordering: later states take priority over earlier ones
-    _STATE_ORDER = [
+    state_order = [
         "pending",
         "dir_structure_created",
         "symlinks_applied",
@@ -416,7 +416,7 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
         "checkpointed",
         "worktree_cleaned",
     ]
-    _STATE_RANK = {s: i for i, s in enumerate(_STATE_ORDER)}
+    state_rank = {s: i for i, s in enumerate(state_order)}
 
     corrected = 0
 
@@ -461,8 +461,8 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
                 if inferred_state is None:
                     continue
 
-                current_rank = _STATE_RANK.get(current_state, 0)
-                inferred_rank = _STATE_RANK.get(inferred_state, 0)
+                current_rank = state_rank.get(current_state, 0)
+                inferred_rank = state_rank.get(inferred_state, 0)
 
                 if inferred_rank > current_rank:
                     checkpoint.set_run_state(tier_id, subtest_id, run_num, inferred_state)
@@ -1155,16 +1155,12 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
             # Step 1: Reconcile checkpoint with disk state
             reconcile_count = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
             if reconcile_count > 0:
-                logger.info(
-                    f"--retry-errors: reconciled {reconcile_count} run state(s) with disk"
-                )
+                logger.info(f"--retry-errors: reconciled {reconcile_count} run state(s) with disk")
             # Step 2: Reset non-completed and judge-failed runs
             reset_count = _reset_non_completed_runs(checkpoint)
             if reconcile_count > 0 or reset_count > 0:
                 save_checkpoint(checkpoint, checkpoint_path)
-                logger.info(
-                    f"--retry-errors: reset {reset_count} non-completed run(s) for retry"
-                )
+                logger.info(f"--retry-errors: reset {reset_count} non-completed run(s) for retry")
 
     try:
         with terminal_guard(request_shutdown):

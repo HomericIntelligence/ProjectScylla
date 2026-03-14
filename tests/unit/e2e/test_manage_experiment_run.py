@@ -1797,7 +1797,10 @@ class TestRetryErrorsInBatch:
         assert _checkpoint_has_retryable_runs(cp_path) is False
 
     def test_checkpoint_has_retryable_runs_true_for_judge_failed(self, tmp_path: Path) -> None:
-        """_checkpoint_has_retryable_runs returns True for judge-failed runs (worktree_cleaned+failed)."""
+        """_checkpoint_has_retryable_runs returns True for judge-failed runs.
+
+        worktree_cleaned state with completed_runs status == "failed".
+        """
         from datetime import datetime, timezone
 
         from manage_experiment import _checkpoint_has_retryable_runs
@@ -1983,7 +1986,16 @@ class TestRetryErrorsInBatch:
         # Only agent result exists (no judge result or run_result.json)
         agent_dir = run_dir / "agent"
         agent_dir.mkdir()
-        agent_result = {"exit_code": 0, "token_stats": {"input_tokens": 10, "output_tokens": 5, "cache_creation_tokens": 0, "cache_read_tokens": 0}, "cost_usd": 0.01}
+        agent_result = {
+            "exit_code": 0,
+            "token_stats": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.01,
+        }
         (agent_dir / "result.json").write_text(json.dumps(agent_result))
 
         # Checkpoint already at judge_complete — more advanced than agent_complete
