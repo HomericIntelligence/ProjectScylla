@@ -16,7 +16,7 @@ Fix CLAUDE.md "Current Status" which falsely said "Research and planning phase".
 - 95 test files with 73%+ coverage threshold enforced in CI
 - Full Docker deployment with multi-stage builds, health checks, non-root security
 - 3 CI workflows (test, pre-commit, docker-test)
-- Real experiment results in `docs/arxiv/dryrun/` with 27 figures and 9 tables
+- Real experiment results in `docs/arxiv/dryrun/` with 34 figures and 9 tables
 - End-to-end pipeline running T0–T6 ablation studies with 120 YAML subtests
 - Published paper (`research_paper.tex` with 36 academic citations)
 
