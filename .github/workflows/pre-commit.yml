@@ -16,6 +16,12 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Run inside the CI container — pre-commit hook environments are pre-installed,
+    # so 'pre-commit run --all-files' starts immediately without downloading hooks.
+    container:
+      image: ghcr.io/homericintelligence/scylla-ci:latest
+      options: --user root
+
     steps:
       - uses: actions/checkout@v6
         with:
