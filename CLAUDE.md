@@ -100,7 +100,7 @@ method for completing tasks.
 
 Agent hierarchy is defined in `.claude/agents/` and `tests/claude-code/shared/agents/`:
 
-- 5-level hierarchy (L0 Chief Evaluator → L4 Junior Engineers)
+- 6-level hierarchy (L0 Chief Evaluator → L5 Junior Engineers)
 - Model assignments (Opus, Sonnet, Haiku)
 - Specialized evaluation and benchmarking agents
 
