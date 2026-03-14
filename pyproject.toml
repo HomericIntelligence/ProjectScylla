@@ -35,7 +35,7 @@ scylla = "scylla.cli.main:main"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0,<9",
+    "pytest>=7.0,<10",
     "pytest-cov>=4.0,<8",
     "pre-commit>=3.0,<5",
     "ruff>=0.1.0,<1",
