@@ -1,0 +1,101 @@
+name: CI Image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ci/Containerfile"
+      - "pixi.toml"
+      - "pixi.lock"
+      - ".pre-commit-config.yaml"
+      - "pyproject.toml"
+      - ".github/workflows/ci-image.yml"
+  pull_request:
+    paths:
+      - "ci/Containerfile"
+      - "pixi.toml"
+      - "pixi.lock"
+      - ".pre-commit-config.yaml"
+      - "pyproject.toml"
+      - ".github/workflows/ci-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/homericintelligence/scylla-ci
+
+jobs:
+  build-and-push:
+    name: Build, scan, and push CI image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify Podman is available
+        run: |
+          podman --version
+          podman info --format '{{.Host.Security.Rootless}}'
+
+      - name: Log in to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            podman login ghcr.io \
+              --username "${{ github.actor }}" \
+              --password-stdin
+
+      - name: Build CI image
+        id: build
+        env:
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          SHORT="${GIT_SHA:0:8}"
+          podman build \
+            --file ci/Containerfile \
+            --layers \
+            --tag "${IMAGE_NAME}:latest" \
+            --tag "${IMAGE_NAME}:${SHORT}" \
+            --label "org.opencontainers.image.revision=${GIT_SHA}" \
+            --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            .
+          echo "short_sha=${SHORT}" >> "$GITHUB_OUTPUT"
+
+      - name: Scan image for vulnerabilities (Trivy)
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:latest
+          format: table
+          exit-code: 1
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+
+      - name: Push CI image to GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          SHORT_SHA: ${{ steps.build.outputs.short_sha }}
+        run: |
+          podman push "${IMAGE_NAME}:latest"
+          podman push "${IMAGE_NAME}:${SHORT_SHA}"
+          {
+            echo "## CI Image Published"
+            echo ""
+            echo "| Tag | Value |"
+            echo "|-----|-------|"
+            echo "| \`${IMAGE_NAME}:latest\` | pushed |"
+            echo "| \`${IMAGE_NAME}:${SHORT_SHA}\` | pinned SHA |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report PR build status
+        if: github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## CI Image Build (PR)"
+            echo ""
+            echo "Image built and scanned successfully — not pushed (PR build only)."
+            echo "Push happens on merge to \`main\`."
+          } >> "$GITHUB_STEP_SUMMARY"
