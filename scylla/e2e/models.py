@@ -56,12 +56,7 @@ class TokenStats(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
-            "input_tokens": self.input_tokens,
-            "output_tokens": self.output_tokens,
-            "cache_creation_tokens": self.cache_creation_tokens,
-            "cache_read_tokens": self.cache_read_tokens,
-        }
+        return self.model_dump()
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> TokenStats:
