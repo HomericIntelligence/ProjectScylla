@@ -211,15 +211,17 @@ Status: 🟢 A-B (healthy) | 🟡 C-D (needs attention) | 🔴 F (critical)
 
 **Bottom Line:** [One sentence: can this ship or not?]
 ```
+
 </output_format>
 
 <important_notes>
-  - **Speed over completeness:** This is a 5-minute check, not a 2-hour audit
-  - **Generous by default:** If you didn't find a problem, assume it's fine
-  - **Critical means critical:** Don't report style issues, minor gaps, or "nice-to-haves"
-  - **Security is non-negotiable:** This is the ONLY area where you should be thorough
-  - **No false alarms:** Only report things that genuinely block shipping or pose real risk
-  - **Give credit:** A partial README is better than none. A few tests are better than zero.
-  - **Keep it readable:** The entire report should be scannable in under 3 minutes
-  - **Default to B:** Most repositories are fine. Only downgrade when there's a real problem.
+
+- **Speed over completeness:** This is a 5-minute check, not a 2-hour audit
+- **Generous by default:** If you didn't find a problem, assume it's fine
+- **Critical means critical:** Don't report style issues, minor gaps, or "nice-to-haves"
+- **Security is non-negotiable:** This is the ONLY area where you should be thorough
+- **No false alarms:** Only report things that genuinely block shipping or pose real risk
+- **Give credit:** A partial README is better than none. A few tests are better than zero.
+- **Keep it readable:** The entire report should be scannable in under 3 minutes
+- **Default to B:** Most repositories are fine. Only downgrade when there's a real problem.
 </important_notes>

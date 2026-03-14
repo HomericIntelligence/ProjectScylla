@@ -16,13 +16,20 @@
       "sup",
       "issue-number",
       "number",
-      "role"
+      "role",
+      "system",
+      "task",
+      "principle",
+      "section",
+      "sections",
+      "step"
     ]
   },
   "MD036": false,
   "MD040": false,
   "MD041": false,
   "MD042": false,
+  "MD046": false,
   "MD051": false,
   "MD060": false
 }
