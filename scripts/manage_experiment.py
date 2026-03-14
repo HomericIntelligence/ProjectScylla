@@ -267,11 +267,6 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Filter to specific test IDs (batch mode)",
     )
-    parser.add_argument(
-        "--retry-errors",
-        action="store_true",
-        help="Re-run incomplete/failed tests (resumes interrupted runs, resets failed runs)",
-    )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
 
@@ -305,7 +300,10 @@ def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
 
 
 def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
-    """Return True if checkpoint contains any non-completed or judge-failed runs."""
+    """Return True if checkpoint contains any non-completed runs (infra failures or
+    mid-pipeline crashes). Runs in worktree_cleaned state (even with bad grades) are
+    NOT considered retryable.
+    """
     import json
 
     try:
@@ -315,12 +313,6 @@ def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
             for runs in subtests.values():
                 for state in runs.values():
                     if state != "worktree_cleaned":
-                        return True
-        # Also check completed_runs for judge-failed runs (worktree_cleaned but judge failed)
-        for subtests in data.get("completed_runs", {}).values():
-            for runs in subtests.values():
-                for status in runs.values():
-                    if status == "failed":
                         return True
     except Exception:
         pass
@@ -335,6 +327,9 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
     keep their current state so they resume where they left off, but their containing
     subtest and tier are cascaded to ``pending`` so the run loop re-enters and
     ``advance_to_completion`` picks them up.
+
+    Runs in ``worktree_cleaned`` state (whether passed or bad grade) are never reset —
+    they represent completed runs with a valid (if poor) judge result.
 
     Args:
         checkpoint: Loaded E2ECheckpoint to mutate in-place.
@@ -352,15 +347,7 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
         for subtest_id, runs in subtests.items():
             for run_num_str, state in list(runs.items()):
                 if state == "worktree_cleaned":
-                    # Second pass: also reset judge-failed worktree_cleaned runs
-                    run_status = checkpoint.get_run_status(tier_id, subtest_id, int(run_num_str))
-                    if run_status == "failed":
-                        runs[run_num_str] = "pending"
-                        checkpoint.unmark_run_completed(tier_id, subtest_id, int(run_num_str))
-                        affected_tiers.add(tier_id)
-                        affected_subtests.add((tier_id, subtest_id))
-                        reset_count += 1
-                    continue
+                    continue  # Completed run (passed or bad grade) — never reset
                 # All non-completed runs trigger the tier/subtest cascade
                 affected_tiers.add(tier_id)
                 affected_subtests.add((tier_id, subtest_id))
@@ -744,34 +731,27 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                         "starting fresh"
                     )
 
-            # Handle --retry-errors: reset failed/rate-limited runs in checkpoint
-            if args.retry_errors:
-                from scylla.e2e.checkpoint import (
-                    load_checkpoint as _load_cp,
-                )
-                from scylla.e2e.checkpoint import (
-                    save_checkpoint as _save_cp,
-                )
+            # Always reconcile and reset infra failures before re-running
+            from scylla.e2e.checkpoint import (
+                load_checkpoint as _load_cp,
+            )
+            from scylla.e2e.checkpoint import (
+                save_checkpoint as _save_cp,
+            )
 
-                _cp_path = _find_checkpoint_path(args.results_dir, experiment_id)
-                if _cp_path is not None:
-                    _cp = _load_cp(_cp_path)
-                    _exp_dir = Path(_cp.experiment_dir)
-                    # Step 1: Reconcile checkpoint with disk state
-                    _reconcile_count = _reconcile_checkpoint_with_disk(_cp, _exp_dir)
-                    if _reconcile_count > 0:
-                        logger.info(
-                            f"[{test_id}] --retry-errors: reconciled {_reconcile_count} "
-                            "run state(s) with disk"
-                        )
-                    # Step 2: Reset non-completed and judge-failed runs
-                    _reset_count = _reset_non_completed_runs(_cp)
-                    if _reconcile_count > 0 or _reset_count > 0:
-                        _save_cp(_cp, _cp_path)
-                        logger.info(
-                            f"[{test_id}] --retry-errors: reset {_reset_count} "
-                            "non-completed run(s) for retry"
-                        )
+            _cp_path = _find_checkpoint_path(args.results_dir, experiment_id)
+            if _cp_path is not None:
+                _cp = _load_cp(_cp_path)
+                _exp_dir = Path(_cp.experiment_dir)
+                # Step 1: Reconcile checkpoint with disk state
+                _reconcile_count = _reconcile_checkpoint_with_disk(_cp, _exp_dir)
+                if _reconcile_count > 0:
+                    logger.info(f"[{test_id}] reconciled {_reconcile_count} run state(s) with disk")
+                # Step 2: Reset non-completed runs (infra failures and mid-pipeline crashes)
+                _reset_count = _reset_non_completed_runs(_cp)
+                if _reconcile_count > 0 or _reset_count > 0:
+                    _save_cp(_cp, _cp_path)
+                    logger.info(f"[{test_id}] reset {_reset_count} non-completed run(s) for retry")
 
             with terminal_guard():
                 results = run_experiment(
@@ -797,7 +777,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
     args.results_dir.mkdir(parents=True, exist_ok=True)
 
-    # Handle retry-errors: load existing batch_summary and skip completed tests
+    # Load existing batch_summary to skip already-completed tests
     completed_ids: set[str] = set()
     if not args.fresh:
         import json
@@ -813,13 +793,12 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                     last_by_test[r["test_id"]] = r
 
                 for test_id, r in last_by_test.items():
-                    if args.retry_errors:
-                        if r.get("status") == "error":
-                            continue  # Error tests always re-run
-                        # Success tests: check checkpoint for internal failures
-                        cp_path = _find_checkpoint_path(args.results_dir, test_id)
-                        if cp_path is not None and _checkpoint_has_retryable_runs(cp_path):
-                            continue  # Has failed/rate-limited runs internally
+                    if r.get("status") == "error":
+                        continue  # Batch-level errors always re-run
+                    # Check checkpoint for infra failures or mid-pipeline crashes
+                    cp_path = _find_checkpoint_path(args.results_dir, test_id)
+                    if cp_path is not None and _checkpoint_has_retryable_runs(cp_path):
+                        continue  # Has infra failures or mid-pipeline crashes
                     # If --max-subtests was specified, check whether the checkpoint
                     # has fewer subtests than requested. If so, re-run to expand.
                     if args.max_subtests is not None:
@@ -1147,8 +1126,8 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         save_checkpoint(checkpoint, checkpoint_path)
         logger.info(f"Reset {reset_count} items for --from. Resuming execution...")
 
-    # Handle --retry-errors in single mode: reset non-completed runs
-    if args.retry_errors and not (from_run_state or from_tier_state or from_experiment_state):
+    # Always reconcile and reset infra failures before running (unless --from was used)
+    if not (from_run_state or from_tier_state or from_experiment_state):
         from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint
 
         checkpoint_path = _find_checkpoint_path(args.results_dir, experiment_id)
@@ -1158,12 +1137,12 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
             # Step 1: Reconcile checkpoint with disk state
             reconcile_count = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
             if reconcile_count > 0:
-                logger.info(f"--retry-errors: reconciled {reconcile_count} run state(s) with disk")
-            # Step 2: Reset non-completed and judge-failed runs
+                logger.info(f"reconciled {reconcile_count} run state(s) with disk")
+            # Step 2: Reset non-completed runs (infra failures and mid-pipeline crashes)
             reset_count = _reset_non_completed_runs(checkpoint)
             if reconcile_count > 0 or reset_count > 0:
                 save_checkpoint(checkpoint, checkpoint_path)
-                logger.info(f"--retry-errors: reset {reset_count} non-completed run(s) for retry")
+                logger.info(f"reset {reset_count} non-completed run(s) for retry")
 
     try:
         with terminal_guard(request_shutdown):

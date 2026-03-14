@@ -93,7 +93,6 @@ class TestBuildParser:
         assert args.filter_judge_slot is None
         assert args.threads == 4
         assert args.tests is None
-        assert not args.retry_errors
 
     def test_repair_subcommand_requires_checkpoint_path(self) -> None:
         """'repair' subcommand requires a positional checkpoint_path argument."""
@@ -273,12 +272,6 @@ class TestBuildParser:
         parser = build_parser()
         args = parser.parse_args(["run", "--tests", "test-001", "test-005"])
         assert args.tests == ["test-001", "test-005"]
-
-    def test_run_accepts_retry_errors(self) -> None:
-        """'run' subcommand accepts --retry-errors flag."""
-        parser = build_parser()
-        args = parser.parse_args(["run", "--retry-errors"])
-        assert args.retry_errors is True
 
     def test_run_accepts_multi_config(self) -> None:
         """'run' subcommand accepts multiple --config arguments."""
