@@ -1285,17 +1285,17 @@ class TestBatchTestsFilter:
 
 
 # ---------------------------------------------------------------------------
-# --retry-errors behavioral logic
+# Retry infra failures (unconditional) behavioral logic
 # ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
-# --retry-errors behavioral logic
+# Retry infra failures (unconditional) behavioral logic
 # ---------------------------------------------------------------------------
 
 
-class TestRetryErrorsInBatch:
-    """Tests that --retry-errors reruns only failed tests."""
+class TestRetryInfraFailuresInBatch:
+    """Tests that infra failures are always retried (no flag required)."""
 
     def _make_test_dir_with_yaml(self, path: Path, test_name: str) -> None:
         """Create a test dir with test.yaml and prompt.md."""
@@ -1312,8 +1312,8 @@ class TestRetryErrorsInBatch:
         (path / "test.yaml").write_text(yaml.dump(test_yaml))
         (path / "prompt.md").write_text("test prompt")
 
-    def test_retry_errors_reruns_failed_tests(self, tmp_path: Path) -> None:
-        """--retry-errors reruns test-001 (error) but skips test-002 (success)."""
+    def test_batch_reruns_test_with_error_status(self, tmp_path: Path) -> None:
+        """Batch always reruns test-001 (error) but skips test-002 (success)."""
         results_dir = tmp_path / "results"
         results_dir.mkdir()
 
@@ -1337,7 +1337,6 @@ class TestRetryErrorsInBatch:
                 str(tmp_path / "test-001"),
                 "--config",
                 str(tmp_path / "test-002"),
-                "--retry-errors",
                 "--results-dir",
                 str(results_dir),
                 "--threads",
@@ -1364,59 +1363,8 @@ class TestRetryErrorsInBatch:
         # Only test-001 (the errored one) was re-run
         assert executed_ids == ["test-001"]
 
-    def test_without_retry_errors_skips_all_completed(self, tmp_path: Path) -> None:
-        """Without --retry-errors, both success and error tests are skipped."""
-        results_dir = tmp_path / "results"
-        results_dir.mkdir()
-
-        # Pre-populate batch_summary.json: test-001=error, test-002=success
-        summary = {
-            "results": [
-                {"test_id": "test-001", "status": "error", "error": "some error"},
-                {"test_id": "test-002", "status": "success"},
-            ]
-        }
-        (results_dir / "batch_summary.json").write_text(json.dumps(summary))
-
-        for test_name in ["test-001", "test-002"]:
-            self._make_test_dir_with_yaml(tmp_path / test_name, test_name)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(tmp_path / "test-001"),
-                "--config",
-                str(tmp_path / "test-002"),
-                "--results-dir",
-                str(results_dir),
-                "--threads",
-                "1",
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        executed_ids: list[str] = []
-
-        def mock_run_experiment(config: Any, tiers_dir: Any, results_dir: Any, fresh: Any) -> Any:
-            executed_ids.append(config.experiment_id)
-            return {"T0": {}}
-
-        with (
-            patch("scylla.e2e.model_validation.validate_model", return_value=True),
-            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
-        ):
-            result = cmd_run(args)
-
-        assert result == 0
-        # No tests were re-run (all previously completed)
-        assert executed_ids == []
-
-    def test_retry_errors_uses_last_entry_per_test(self, tmp_path: Path) -> None:
-        """--retry-errors uses only the last entry per test_id.
+    def test_batch_uses_last_entry_per_test(self, tmp_path: Path) -> None:
+        """Batch uses only the last entry per test_id.
 
         test-001 has entries [error, error, success] — last is success, so skipped.
         test-002 has entries [success, success, error] — last is error, so re-run.
@@ -1447,7 +1395,6 @@ class TestRetryErrorsInBatch:
                 str(tmp_path / "test-001"),
                 "--config",
                 str(tmp_path / "test-002"),
-                "--retry-errors",
                 "--results-dir",
                 str(results_dir),
                 "--threads",
@@ -1474,10 +1421,8 @@ class TestRetryErrorsInBatch:
         # Only test-002 (last entry is error) was re-run; test-001 (last entry is success) skipped
         assert executed_ids == ["test-002"]
 
-    def test_retry_errors_reruns_success_test_with_failed_checkpoint_runs(
-        self, tmp_path: Path
-    ) -> None:
-        """--retry-errors reruns a 'success' test if its checkpoint has failed runs."""
+    def test_batch_reruns_test_with_failed_run_state(self, tmp_path: Path) -> None:
+        """Batch reruns a 'success' test if its checkpoint has FAILED run states."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
@@ -1542,7 +1487,6 @@ class TestRetryErrorsInBatch:
                 str(tmp_path / "test-001"),
                 "--config",
                 str(tmp_path / "test-002"),
-                "--retry-errors",
                 "--results-dir",
                 str(results_dir),
                 "--threads",
@@ -1568,8 +1512,11 @@ class TestRetryErrorsInBatch:
         assert "test-001" in executed_ids
         assert "test-002" not in executed_ids
 
-    def test_retry_errors_skips_success_test_with_all_runs_complete(self, tmp_path: Path) -> None:
-        """--retry-errors skips a 'success' test when all checkpoint runs are complete."""
+    def test_batch_skips_test_with_only_bad_grades(self, tmp_path: Path) -> None:
+        """Batch skips a test where all runs are worktree_cleaned (even with bad grades).
+
+        Bad grades (completed_runs=failed) are valid results — the test is done.
+        """
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
@@ -1587,7 +1534,7 @@ class TestRetryErrorsInBatch:
         }
         (results_dir / "batch_summary.json").write_text(json.dumps(summary))
 
-        # Checkpoint with all runs at worktree_cleaned (no failures)
+        # Checkpoint with all runs at worktree_cleaned (some bad grades, but no infra failures)
         exp_dir = results_dir / "2024-01-01T00-00-00-test-001"
         exp_dir.mkdir(parents=True)
         checkpoint = E2ECheckpoint(
@@ -1602,7 +1549,10 @@ class TestRetryErrorsInBatch:
                 "T0": {"00": {"1": "worktree_cleaned"}},
                 "T1": {"01": {"1": "worktree_cleaned"}},
             },
-            completed_runs={"T0": {"00": {1: "passed"}}, "T1": {"01": {1: "passed"}}},
+            completed_runs={
+                "T0": {"00": {1: "failed"}},  # bad grade — still complete
+                "T1": {"01": {1: "failed"}},  # bad grade — still complete
+            },
         )
         save_checkpoint(checkpoint, exp_dir / "checkpoint.json")
 
@@ -1617,7 +1567,6 @@ class TestRetryErrorsInBatch:
                 str(tmp_path / "test-001"),
                 "--config",
                 str(tmp_path / "test-002"),
-                "--retry-errors",
                 "--results-dir",
                 str(results_dir),
                 "--threads",
@@ -1639,11 +1588,13 @@ class TestRetryErrorsInBatch:
             result = cmd_run(args)
 
         assert result == 0
-        # test-001 skipped (success + no retryable runs); test-002 re-runs (error status)
+        # test-001 skipped (success + no retryable runs, bad grades are valid); test-002 re-runs (error status)
         assert "test-001" not in executed_ids
         assert "test-002" in executed_ids
 
-    def test_retry_errors_resets_failed_and_rate_limited_runs(self, tmp_path: Path) -> None:
+    def test_reset_resets_failed_run_state_and_rate_limited_to_pending(
+        self, tmp_path: Path
+    ) -> None:
         """_reset_non_completed_runs resets failed/rate_limited and cascades intermediate states."""
         from datetime import datetime, timezone
 
@@ -1796,10 +1747,12 @@ class TestRetryErrorsInBatch:
 
         assert _checkpoint_has_retryable_runs(cp_path) is False
 
-    def test_checkpoint_has_retryable_runs_true_for_judge_failed(self, tmp_path: Path) -> None:
-        """_checkpoint_has_retryable_runs returns True for judge-failed runs.
+    def test_checkpoint_has_retryable_runs_false_for_worktree_cleaned_bad_grade(
+        self, tmp_path: Path
+    ) -> None:
+        """_checkpoint_has_retryable_runs returns False for bad-grade runs (worktree_cleaned).
 
-        worktree_cleaned state with completed_runs status == "failed".
+        worktree_cleaned + completed_runs=failed is a valid judge result, NOT an infra failure.
         """
         from datetime import datetime, timezone
 
@@ -1825,12 +1778,13 @@ class TestRetryErrorsInBatch:
         cp_path = exp_dir / "checkpoint.json"
         save_checkpoint(checkpoint, cp_path)
 
-        assert _checkpoint_has_retryable_runs(cp_path) is True
+        assert _checkpoint_has_retryable_runs(cp_path) is False
 
-    def test_reset_non_completed_runs_resets_judge_failed_worktree_cleaned(
-        self, tmp_path: Path
-    ) -> None:
-        """_reset_non_completed_runs resets worktree_cleaned runs with judge-failed status."""
+    def test_reset_does_not_touch_bad_grade_worktree_cleaned(self, tmp_path: Path) -> None:
+        """_reset_non_completed_runs does NOT reset worktree_cleaned runs regardless of grade.
+
+        Bad grades (judge_passed=False) are valid results and must never be discarded.
+        """
         from datetime import datetime, timezone
 
         from manage_experiment import _reset_non_completed_runs
@@ -1855,17 +1809,14 @@ class TestRetryErrorsInBatch:
 
         reset_count = _reset_non_completed_runs(checkpoint)
 
-        assert reset_count == 1
-        # Run 1 (passed) is untouched
+        # Both runs are worktree_cleaned — neither is reset
+        assert reset_count == 0
         assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        assert checkpoint.run_states["T0"]["00"]["2"] == "worktree_cleaned"
         assert checkpoint.get_run_status("T0", "00", 1) == "passed"
-        # Run 2 (judge-failed) is reset to pending
-        assert checkpoint.run_states["T0"]["00"]["2"] == "pending"
-        assert checkpoint.get_run_status("T0", "00", 2) is None
-        # Subtest and tier cascade
-        assert checkpoint.get_subtest_state("T0", "00") == "pending"
-        assert checkpoint.get_tier_state("T0") == "pending"
-        assert checkpoint.experiment_state == "tiers_running"
+        assert checkpoint.get_run_status("T0", "00", 2) == "failed"
+        # No cascade — experiment state unchanged
+        assert checkpoint.experiment_state == "complete"
 
     def test_reconcile_checkpoint_with_disk_advances_stale_state(self, tmp_path: Path) -> None:
         """_reconcile_checkpoint_with_disk advances stale intermediate state to worktree_cleaned."""
@@ -3358,12 +3309,12 @@ class TestPromptOverride:
 
 
 # ---------------------------------------------------------------------------
-# --retry-errors in single mode
+# Always-on infra failure retry in single mode
 # ---------------------------------------------------------------------------
 
 
-class TestRetryErrorsInSingleMode:
-    """Tests --retry-errors single mode resets non-completed runs via _reset_non_completed_runs."""
+class TestAlwaysRetryInSingleMode:
+    """Tests that single mode always resets non-completed runs via _reset_non_completed_runs."""
 
     def _make_test_dir(self, path: Path) -> None:
         """Create a minimal test directory with test.yaml and prompt.md."""
@@ -3380,8 +3331,8 @@ class TestRetryErrorsInSingleMode:
         (path / "test.yaml").write_text(yaml.dump(test_yaml))
         (path / "prompt.md").write_text("test prompt")
 
-    def test_retry_errors_single_mode_calls_reset_for_failed_runs(self, tmp_path: Path) -> None:
-        """--retry-errors single mode resets failed runs to pending (non-completed runs reset)."""
+    def test_single_mode_resets_failed_runs_unconditionally(self, tmp_path: Path) -> None:
+        """Single mode resets failed runs to pending without any flag."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
@@ -3406,7 +3357,7 @@ class TestRetryErrorsInSingleMode:
             last_updated_at=datetime.now(timezone.utc).isoformat(),
             status="failed",
             run_states={"T0": {"00": {"1": "failed"}}},
-            completed_runs={"T0": {"00": {1: "failed"}}},
+            completed_runs={},
         )
         checkpoint_path = exp_dir / "checkpoint.json"
         save_checkpoint(checkpoint, checkpoint_path)
@@ -3419,7 +3370,6 @@ class TestRetryErrorsInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--retry-errors",
                 "--skip-judge-validation",
             ]
         )
@@ -3435,8 +3385,8 @@ class TestRetryErrorsInSingleMode:
         saved = load_checkpoint(checkpoint_path)
         assert saved.run_states["T0"]["00"]["1"] == "pending"
 
-    def test_retry_errors_single_mode_no_existing_checkpoint_is_noop(self, tmp_path: Path) -> None:
-        """--retry-errors with no existing checkpoint is a no-op (fresh run starts normally)."""
+    def test_single_mode_no_existing_checkpoint_is_noop(self, tmp_path: Path) -> None:
+        """With no existing checkpoint, reconcile+reset is a no-op (fresh run starts normally)."""
         from manage_experiment import cmd_run
 
         config_dir = tmp_path / "test-exp"
@@ -3454,7 +3404,6 @@ class TestRetryErrorsInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--retry-errors",
                 "--skip-judge-validation",
             ]
         )
@@ -3468,8 +3417,8 @@ class TestRetryErrorsInSingleMode:
         assert result == 0
         mock_run.assert_called_once()
 
-    def test_retry_errors_resets_all_terminal_runs_across_tiers(self, tmp_path: Path) -> None:
-        """--retry-errors resets terminal runs in all tiers via _reset_non_completed_runs."""
+    def test_single_mode_resets_all_terminal_runs_across_tiers(self, tmp_path: Path) -> None:
+        """Single mode resets terminal runs in all tiers unconditionally."""
         from datetime import datetime, timezone
 
         from manage_experiment import cmd_run
@@ -3497,10 +3446,7 @@ class TestRetryErrorsInSingleMode:
                 "T0": {"00": {"1": "failed"}},
                 "T1": {"00": {"1": "failed"}},
             },
-            completed_runs={
-                "T0": {"00": {1: "failed"}},
-                "T1": {"00": {1: "failed"}},
-            },
+            completed_runs={},
         )
         checkpoint_path = exp_dir / "checkpoint.json"
         save_checkpoint(checkpoint, checkpoint_path)
@@ -3513,7 +3459,6 @@ class TestRetryErrorsInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--retry-errors",
                 "--skip-judge-validation",
             ]
         )
@@ -3529,6 +3474,231 @@ class TestRetryErrorsInSingleMode:
         saved = load_checkpoint(checkpoint_path)
         assert saved.run_states["T0"]["00"]["1"] == "pending"
         assert saved.run_states["T1"]["00"]["1"] == "pending"
+
+    def test_single_mode_does_not_reset_bad_grade_runs(self, tmp_path: Path) -> None:
+        """Single mode never resets worktree_cleaned runs, even with bad grades."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import cmd_run
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint
+
+        config_dir = tmp_path / "test-exp"
+        self._make_test_dir(config_dir)
+
+        results_dir = tmp_path / "results"
+        results_dir.mkdir()
+
+        # Checkpoint with all runs completed (bad grade)
+        exp_dir = results_dir / "2024-01-01T00-00-00-test-exp"
+        exp_dir.mkdir(parents=True)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "failed"}}},
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--results-dir",
+                str(results_dir),
+                "--skip-judge-validation",
+            ]
+        )
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        # Bad-grade run stays at worktree_cleaned — never reset
+        saved = load_checkpoint(checkpoint_path)
+        assert saved.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        assert saved.get_run_status("T0", "00", 1) == "failed"
+
+
+# ---------------------------------------------------------------------------
+# _checkpoint_has_retryable_runs + _reset_non_completed_runs unit tests
+# ---------------------------------------------------------------------------
+
+
+class TestCheckpointRetryableRunsAndReset:
+    """Unit tests for _checkpoint_has_retryable_runs and _reset_non_completed_runs semantics."""
+
+    def _make_checkpoint_file(
+        self,
+        tmp_path: Path,
+        run_states: dict[str, Any],
+        completed_runs: dict[str, Any] | None = None,
+    ) -> Path:
+        """Write a minimal checkpoint JSON file and return its path."""
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir(exist_ok=True)
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states=run_states,
+            completed_runs=completed_runs or {},
+        )
+        cp_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, cp_path)
+        return cp_path
+
+    def test_checkpoint_has_retryable_runs_true_for_failed_run_state(self, tmp_path: Path) -> None:
+        """FAILED in run_states → retryable (infra crash)."""
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        cp = self._make_checkpoint_file(tmp_path, run_states={"T0": {"00": {"1": "failed"}}})
+        assert _checkpoint_has_retryable_runs(cp) is True
+
+    def test_checkpoint_has_retryable_runs_true_for_rate_limited(self, tmp_path: Path) -> None:
+        """RATE_LIMITED in run_states → retryable."""
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        cp = self._make_checkpoint_file(tmp_path, run_states={"T0": {"00": {"1": "rate_limited"}}})
+        assert _checkpoint_has_retryable_runs(cp) is True
+
+    def test_checkpoint_has_retryable_runs_true_for_intermediate_state(
+        self, tmp_path: Path
+    ) -> None:
+        """Mid-pipeline state (replay_generated) → retryable (crashed before completion)."""
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        cp = self._make_checkpoint_file(
+            tmp_path, run_states={"T0": {"00": {"1": "replay_generated"}}}
+        )
+        assert _checkpoint_has_retryable_runs(cp) is True
+
+    def test_checkpoint_has_retryable_runs_false_for_worktree_cleaned_bad_grade(
+        self, tmp_path: Path
+    ) -> None:
+        """WORKTREE_CLEANED + completed_runs=failed → NOT retryable (valid bad-grade result)."""
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        cp = self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "failed"}}},
+        )
+        assert _checkpoint_has_retryable_runs(cp) is False
+
+    def test_checkpoint_has_retryable_runs_false_for_worktree_cleaned_passed(
+        self, tmp_path: Path
+    ) -> None:
+        """WORKTREE_CLEANED + passed → NOT retryable."""
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        cp = self._make_checkpoint_file(
+            tmp_path,
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "passed"}}},
+        )
+        assert _checkpoint_has_retryable_runs(cp) is False
+
+    def test_reset_does_not_touch_bad_grade_worktree_cleaned_run(self, tmp_path: Path) -> None:
+        """Bad-grade run stays WORKTREE_CLEANED after reset — valid result is preserved."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}}},
+            completed_runs={"T0": {"00": {1: "failed"}}},
+        )
+
+        reset_count = _reset_non_completed_runs(checkpoint)
+
+        assert reset_count == 0
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        assert checkpoint.get_run_status("T0", "00", 1) == "failed"
+
+    def test_reset_resets_failed_run_state_to_pending(self, tmp_path: Path) -> None:
+        """run_state=FAILED → reset to pending (infra crash, not a grade)."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="failed",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
+            run_states={"T0": {"00": {"1": "failed"}}},
+            completed_runs={},
+        )
+
+        reset_count = _reset_non_completed_runs(checkpoint)
+
+        assert reset_count == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+
+    def test_reset_resets_rate_limited_to_pending(self, tmp_path: Path) -> None:
+        """run_state=RATE_LIMITED → reset to pending."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="failed",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
+            run_states={"T0": {"00": {"1": "rate_limited"}}},
+            completed_runs={},
+        )
+
+        reset_count = _reset_non_completed_runs(checkpoint)
+
+        assert reset_count == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
 
 
 # ---------------------------------------------------------------------------
