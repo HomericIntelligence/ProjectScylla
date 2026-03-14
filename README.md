@@ -27,7 +27,7 @@ ProjectScylla is a comprehensive testing framework for AI agent workflows that:
 - **⚖️ Optimizes** agent decisions through trade-off evaluation
 - **📋 Generates** publication-ready reports, figures, and tables
 
-**Key Output**: Publication-quality statistical reports with **27 figures** and **11 tables** from a single command.
+**Key Output**: Publication-quality statistical reports with **34 figures** and **11 tables** from a single command.
 
 > "In Homer's Odyssey, Scylla represents one of the greatest challenges on the journey home — a monster that forced sailors to navigate perilous straits where every choice carried risk. ProjectScylla provides the same proving ground for AI agents."
 
@@ -47,7 +47,7 @@ cd ProjectScylla
 pixi run python --version  # Verify installation
 pixi run python scripts/generate_all_results.py --data-dir ~/fullruns
 
-# 4. View results (27 figures + 11 tables generated)
+# 4. View results (34 figures + 11 tables generated)
 open results/analysis/figures/*.png  # macOS
 xdg-open results/analysis/figures/*.png  # Linux
 ```
@@ -153,7 +153,7 @@ pixi run python scripts/export_data.py \
 
 **Outputs:** `runs.csv`, `judges.csv`, `criteria.csv`, `subtests.csv`, `summary.json`, `statistical_results.json`
 
-**2. Generate Figures Only (27 figures × 5 formats)**
+**2. Generate Figures Only (34 figures × 5 formats)**
 
 ```bash
 pixi run python scripts/generate_figures.py \
@@ -184,10 +184,10 @@ results/analysis/
 │   ├── subtests.csv                  # Subtest metadata
 │   ├── summary.json                  # Experiment summary
 │   └── statistical_results.json      # Statistical analysis
-├── figures/                          # 27 figures × 5 formats
+├── figures/                          # 34 figures × 5 formats
 │   ├── fig01_score_variance.*
 │   ├── fig02_grade_distribution.*
-│   └── ... (27 total)
+│   └── ... (34 total)
 └── tables/                           # 11 tables × 2 formats
     ├── table01_tier_summary.md
     ├── table01_tier_summary.tex
