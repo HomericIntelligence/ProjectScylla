@@ -32,6 +32,12 @@ services:
       - ${WORKSPACE_PATH:-./workspace}:/workspace
     stdin_open: true
     tty: true
+    # Security hardening: drop all Linux capabilities, run read-only root fs.
+    # /tmp is writable via tmpfs; /workspace is mounted rw by the volume above.
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   # Test service - validates environment
   test:
