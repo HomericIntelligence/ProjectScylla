@@ -4,46 +4,61 @@ from __future__ import annotations
 
 from generate_figures import FIGURES
 
+# ---------------------------------------------------------------------------
+# TestFiguresRegistry
+# ---------------------------------------------------------------------------
+
+VALID_CATEGORIES = {
+    "variance",
+    "tier",
+    "cost",
+    "token",
+    "model",
+    "subtest",
+    "effect_size",
+    "correlation",
+    "diagnostics",
+    "impl_rate",
+    "judge",
+    "criteria",
+}
+
 
 class TestFiguresRegistry:
-    """Tests for the FIGURES module-level registry."""
+    """Tests for the FIGURES registry dict."""
 
-    def test_figures_dict_is_not_empty(self) -> None:
+    def test_registry_is_non_empty(self) -> None:
         """FIGURES registry contains at least one entry."""
         assert len(FIGURES) > 0
 
-    def test_figures_keys_are_strings(self) -> None:
-        """All keys in FIGURES are strings."""
-        for key in FIGURES:
-            assert isinstance(key, str)
-
-    def test_figures_values_are_tuples(self) -> None:
-        """All values in FIGURES are (category_str, callable) tuples."""
+    def test_all_values_are_category_callable_tuples(self) -> None:
+        """Every registry value is a 2-tuple of (str category, callable generator)."""
         for name, value in FIGURES.items():
-            assert isinstance(value, tuple), f"{name} value is not a tuple"
-            assert len(value) == 2, f"{name} tuple has unexpected length"
+            assert isinstance(value, tuple), f"{name}: expected tuple"
+            assert len(value) == 2, f"{name}: expected 2-tuple"
+            category, func = value
+            assert isinstance(category, str), f"{name}: category should be str"
+            assert callable(func), f"{name}: second element should be callable"
 
-    def test_figures_categories_are_strings(self) -> None:
-        """First element of each tuple (category) is a string."""
-        for name, (category, _fn) in FIGURES.items():
-            assert isinstance(category, str), f"{name} category is not a string"
+    def test_all_figure_names_start_with_fig(self) -> None:
+        """All registry keys follow the 'fig' naming convention."""
+        for name in FIGURES:
+            assert name.startswith("fig"), f"{name} does not start with 'fig'"
 
-    def test_figures_functions_are_callable(self) -> None:
-        """Second element of each tuple (generator fn) is callable."""
-        for name, (_category, fn) in FIGURES.items():
-            assert callable(fn), f"{name} generator function is not callable"
+    def test_all_categories_are_valid(self) -> None:
+        """Every figure's category string belongs to the set of known valid categories."""
+        for name, (category, _) in FIGURES.items():
+            assert category in VALID_CATEGORIES, f"{name} has unknown category '{category}'"
 
-    def test_known_figures_present(self) -> None:
-        """Spot-check that key figures are registered."""
-        expected = [
-            "fig01_score_variance_by_tier",
-            "fig04_pass_rate_by_tier",
-            "fig06_cop_by_tier",
-        ]
-        for fig in expected:
-            assert fig in FIGURES, f"{fig} not found in FIGURES registry"
+    def test_no_duplicate_generator_functions(self) -> None:
+        """No two figures share the same generator function object."""
+        seen: dict[int, str] = {}
+        for name, (_, func) in FIGURES.items():
+            func_id = id(func)
+            assert func_id not in seen, f"{name} reuses generator from {seen[func_id]}"
+            seen[func_id] = name
 
-    def test_no_duplicate_figure_names(self) -> None:
-        """All figure names are unique (dict keys are inherently unique)."""
-        # This is trivially true for a dict but documents the intent.
-        assert len(FIGURES) == len(set(FIGURES.keys()))
+    def test_expected_figure_count(self) -> None:
+        """Registry contains at least 30 figures, consistent with the documented ~34."""
+        # 34 figures as documented in README and audit
+        assert len(FIGURES) >= 30, f"Expected ~34 figures, got {len(FIGURES)}"
