@@ -1,0 +1,111 @@
+# Containerfile for scylla-ci:latest
+# CI container for running tests, linting, and security scans.
+#
+# This image provides:
+# - Python 3.12 environment (same base as docker/Dockerfile)
+# - pixi v0.63.2 with default + lint environments pre-installed
+# - pre-commit hook environments baked in (largest speedup)
+# - BATS for shell testing
+# - Non-root user 'ci' for rootless Podman compatibility
+#
+# Build (OCI-compliant — works with both podman and docker):
+#   podman build -f ci/Containerfile -t scylla-ci:local .
+#   docker build -f ci/Containerfile -t scylla-ci:local .
+#
+# Run:
+#   podman run --rm -v .:/workspace:Z scylla-ci:local pixi run pytest tests/unit
+#   podman run --rm -v .:/workspace:Z scylla-ci:local pixi run pre-commit run --all-files
+
+# ============================================================================
+# Stage 1: Builder — install pixi and Python environments
+# ============================================================================
+# Pinned to same SHA256 as docker/Dockerfile for consistency
+FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    # Pixi install location
+    PIXI_HOME=/opt/pixi \
+    PATH="/opt/pixi/bin:$PATH"
+
+# Install build dependencies + git (required by pre-commit hooks)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    ca-certificates \
+    gcc \
+    g++ \
+    build-essential \
+    bats \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pixi (pinned version matching CI workflows)
+# Using official installer — no root required after this point
+ARG PIXI_VERSION=v0.63.2
+RUN curl -fsSL https://pixi.sh/install.sh \
+    | PIXI_VERSION="${PIXI_VERSION}" PIXI_HOME=/opt/pixi bash
+
+# Layer 1: Dependency files — cache layer invalidated only when deps change
+# Copy in order of change frequency (least → most frequent)
+WORKDIR /opt/scylla-build
+COPY pixi.lock pixi.toml pyproject.toml .pre-commit-config.yaml ./
+
+# Layer 2: Install pixi environments (default + lint)
+# This bakes all Python packages into the image — no network needed at runtime
+RUN pixi install --manifest-path pixi.toml && \
+    pixi install --manifest-path pixi.toml --environment lint
+
+# Layer 3: Install pre-commit hook environments
+# Baking this in means 'pre-commit run --all-files' starts immediately,
+# without downloading hook repos or creating virtualenvs at CI time.
+# Hooks that use 'language: system' (pixi run ...) just need pixi available.
+RUN pixi run --manifest-path pixi.toml --environment lint \
+    pre-commit install-hooks
+
+# ============================================================================
+# Stage 2: Runtime — minimal image without build tools
+# ============================================================================
+FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c
+
+LABEL org.opencontainers.image.title="scylla-ci"
+LABEL org.opencontainers.image.description="CI container for ProjectScylla — testing, linting, security scans"
+LABEL org.opencontainers.image.vendor="ProjectScylla"
+LABEL org.opencontainers.image.source="https://github.com/HomericIntelligence/ProjectScylla"
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIXI_HOME=/opt/pixi \
+    PATH="/opt/pixi/bin:$PATH"
+
+# Runtime-only system packages (no build tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    ca-certificates \
+    bats \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy pixi binary and pre-installed environments from builder
+COPY --from=builder /opt/pixi /opt/pixi
+
+# Copy pre-commit hook cache from builder (baked-in hook envs)
+COPY --from=builder /root/.cache/pre-commit /root/.cache/pre-commit
+
+# Create non-root user for rootless Podman compatibility
+# UID 1000 is the default first user on most Linux systems, matching typical
+# developer UIDs for smooth volume mount permissions without --userns=keep-id
+RUN groupadd -r ci && useradd -r -g ci -u 1000 -m -s /bin/bash ci
+
+# Copy pre-commit cache to ci user's home (pre-commit uses $HOME/.cache)
+RUN cp -r /root/.cache/pre-commit /home/ci/.cache/ 2>/dev/null || true && \
+    chown -R ci:ci /home/ci/.cache
+
+# Working directory is the mounted repo root at runtime
+WORKDIR /workspace
+
+# No ENTRYPOINT — commands are provided externally by CI or run_ci_local.sh
+# Example: podman run --rm -v .:/workspace:Z scylla-ci:local pixi run pytest
+
+USER ci
