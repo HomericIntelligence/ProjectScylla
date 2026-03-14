@@ -1796,6 +1796,215 @@ class TestRetryErrorsInBatch:
 
         assert _checkpoint_has_retryable_runs(cp_path) is False
 
+    def test_checkpoint_has_retryable_runs_true_for_judge_failed(self, tmp_path: Path) -> None:
+        """_checkpoint_has_retryable_runs returns True for judge-failed runs (worktree_cleaned+failed)."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _checkpoint_has_retryable_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned", "2": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed", 2: "failed"}}},
+        )
+        cp_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, cp_path)
+
+        assert _checkpoint_has_retryable_runs(cp_path) is True
+
+    def test_reset_non_completed_runs_resets_judge_failed_worktree_cleaned(
+        self, tmp_path: Path
+    ) -> None:
+        """_reset_non_completed_runs resets worktree_cleaned runs with judge-failed status."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="complete",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="complete",
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned", "2": "worktree_cleaned"}},
+            },
+            completed_runs={"T0": {"00": {1: "passed", 2: "failed"}}},
+        )
+
+        reset_count = _reset_non_completed_runs(checkpoint)
+
+        assert reset_count == 1
+        # Run 1 (passed) is untouched
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        assert checkpoint.get_run_status("T0", "00", 1) == "passed"
+        # Run 2 (judge-failed) is reset to pending
+        assert checkpoint.run_states["T0"]["00"]["2"] == "pending"
+        assert checkpoint.get_run_status("T0", "00", 2) is None
+        # Subtest and tier cascade
+        assert checkpoint.get_subtest_state("T0", "00") == "pending"
+        assert checkpoint.get_tier_state("T0") == "pending"
+        assert checkpoint.experiment_state == "tiers_running"
+
+    def test_reconcile_checkpoint_with_disk_advances_stale_state(self, tmp_path: Path) -> None:
+        """_reconcile_checkpoint_with_disk advances stale intermediate state to worktree_cleaned."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # Create run_result.json + report.md, no workspace dir => worktree_cleaned
+        run_result = {"judge_passed": True, "cost_usd": 0.01}
+        (run_dir / "run_result.json").write_text(json.dumps(run_result))
+        (run_dir / "report.md").write_text("# Report")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "judge_prompt_built"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        assert checkpoint.get_run_status("T0", "00", 1) == "passed"
+
+    def test_reconcile_checkpoint_with_disk_leaves_no_disk_state(self, tmp_path: Path) -> None:
+        """_reconcile_checkpoint_with_disk leaves pending runs with no disk artifacts as-is."""
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "pending"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 0
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+
+    def test_reconcile_checkpoint_with_disk_detects_judge_failed_from_run_result(
+        self, tmp_path: Path
+    ) -> None:
+        """_reconcile_checkpoint_with_disk reads judge_passed=False from run_result.json."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # Judge failed run: judge_passed=False
+        run_result = {"judge_passed": False, "cost_usd": 0.01}
+        (run_dir / "run_result.json").write_text(json.dumps(run_result))
+        (run_dir / "report.md").write_text("# Report")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "dir_structure_created"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 1
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+        assert checkpoint.get_run_status("T0", "00", 1) == "failed"
+
+    def test_reconcile_checkpoint_with_disk_does_not_regress_advanced_state(
+        self, tmp_path: Path
+    ) -> None:
+        """_reconcile_checkpoint_with_disk never regresses a state already more advanced."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir.mkdir(parents=True)
+
+        # Only agent result exists (no judge result or run_result.json)
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir()
+        agent_result = {"exit_code": 0, "token_stats": {"input_tokens": 10, "output_tokens": 5, "cache_creation_tokens": 0, "cache_read_tokens": 0}, "cost_usd": 0.01}
+        (agent_dir / "result.json").write_text(json.dumps(agent_result))
+
+        # Checkpoint already at judge_complete — more advanced than agent_complete
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "judge_complete"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        # No regression — state stays at judge_complete
+        assert corrected == 0
+        assert checkpoint.run_states["T0"]["00"]["1"] == "judge_complete"
+
 
 # ---------------------------------------------------------------------------
 # --add-judge in batch mode (bug fix validation)

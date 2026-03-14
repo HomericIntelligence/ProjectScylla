@@ -305,7 +305,7 @@ def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
 
 
 def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
-    """Return True if checkpoint contains any non-completed runs."""
+    """Return True if checkpoint contains any non-completed or judge-failed runs."""
     import json
 
     try:
@@ -315,6 +315,12 @@ def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
             for runs in subtests.values():
                 for state in runs.values():
                     if state != "worktree_cleaned":
+                        return True
+        # Also check completed_runs for judge-failed runs (worktree_cleaned but judge failed)
+        for subtests in data.get("completed_runs", {}).values():
+            for runs in subtests.values():
+                for status in runs.values():
+                    if status == "failed":
                         return True
     except Exception:
         pass
@@ -346,6 +352,14 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
         for subtest_id, runs in subtests.items():
             for run_num_str, state in list(runs.items()):
                 if state == "worktree_cleaned":
+                    # Second pass: also reset judge-failed worktree_cleaned runs
+                    run_status = checkpoint.get_run_status(tier_id, subtest_id, int(run_num_str))
+                    if run_status == "failed":
+                        runs[run_num_str] = "pending"
+                        checkpoint.unmark_run_completed(tier_id, subtest_id, int(run_num_str))
+                        affected_tiers.add(tier_id)
+                        affected_subtests.add((tier_id, subtest_id))
+                        reset_count += 1
                     continue
                 # All non-completed runs trigger the tier/subtest cascade
                 affected_tiers.add(tier_id)
@@ -365,6 +379,100 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
         checkpoint.experiment_state = "tiers_running"
 
     return reset_count
+
+
+def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> int:
+    """Reconcile checkpoint run_states with on-disk artifacts.
+
+    For each run in the checkpoint, infer the true state from which files
+    exist on disk. Updates run_states and completed_runs to match reality.
+    Only advances states forward — never regresses a more advanced state.
+
+    Args:
+        checkpoint: Loaded E2ECheckpoint to mutate in-place.
+        experiment_dir: Path to the experiment directory containing tier subdirs.
+
+    Returns:
+        Number of run states corrected.
+
+    """
+    from scylla.e2e.agent_runner import _has_valid_agent_result
+    from scylla.e2e.judge_runner import _has_valid_judge_result
+
+    # State ordering: later states take priority over earlier ones
+    _STATE_ORDER = [
+        "pending",
+        "dir_structure_created",
+        "symlinks_applied",
+        "baseline_captured",
+        "replay_generated",
+        "agent_complete",
+        "diff_captured",
+        "judge_pipeline_run",
+        "judge_prompt_built",
+        "judge_complete",
+        "run_finalized",
+        "report_written",
+        "checkpointed",
+        "worktree_cleaned",
+    ]
+    _STATE_RANK = {s: i for i, s in enumerate(_STATE_ORDER)}
+
+    corrected = 0
+
+    for tier_id, subtests in checkpoint.run_states.items():
+        for subtest_id, runs in subtests.items():
+            for run_num_str, current_state in list(runs.items()):
+                run_num = int(run_num_str)
+                run_dir = experiment_dir / tier_id / subtest_id / f"run_{run_num:02d}"
+
+                if not run_dir.exists():
+                    continue
+
+                # Infer state from disk artifacts
+                run_result_file = run_dir / "run_result.json"
+                report_md = run_dir / "report.md"
+                workspace_dir = run_dir / "workspace"
+
+                inferred_state: str | None = None
+                inferred_status: str | None = None
+
+                if run_result_file.exists():
+                    try:
+                        import json as _json
+
+                        run_result_data = _json.loads(run_result_file.read_text())
+                        judge_passed = run_result_data.get("judge_passed", False)
+                        inferred_status = "passed" if judge_passed else "failed"
+                    except (OSError, ValueError, KeyError):
+                        inferred_status = None
+
+                    if report_md.exists() and not workspace_dir.exists():
+                        inferred_state = "worktree_cleaned"
+                    elif report_md.exists():
+                        inferred_state = "report_written"
+                    else:
+                        inferred_state = "run_finalized"
+                elif _has_valid_judge_result(run_dir):
+                    inferred_state = "judge_complete"
+                elif _has_valid_agent_result(run_dir):
+                    inferred_state = "agent_complete"
+
+                if inferred_state is None:
+                    continue
+
+                current_rank = _STATE_RANK.get(current_state, 0)
+                inferred_rank = _STATE_RANK.get(inferred_state, 0)
+
+                if inferred_rank > current_rank:
+                    checkpoint.set_run_state(tier_id, subtest_id, run_num, inferred_state)
+                    if inferred_status is not None:
+                        checkpoint.mark_run_completed(
+                            tier_id, subtest_id, run_num, status=inferred_status
+                        )
+                    corrected += 1
+
+    return corrected
 
 
 def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
@@ -645,8 +753,17 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 _cp_path = _find_checkpoint_path(args.results_dir, experiment_id)
                 if _cp_path is not None:
                     _cp = _load_cp(_cp_path)
+                    _exp_dir = Path(_cp.experiment_dir)
+                    # Step 1: Reconcile checkpoint with disk state
+                    _reconcile_count = _reconcile_checkpoint_with_disk(_cp, _exp_dir)
+                    if _reconcile_count > 0:
+                        logger.info(
+                            f"[{test_id}] --retry-errors: reconciled {_reconcile_count} "
+                            "run state(s) with disk"
+                        )
+                    # Step 2: Reset non-completed and judge-failed runs
                     _reset_count = _reset_non_completed_runs(_cp)
-                    if _reset_count > 0:
+                    if _reconcile_count > 0 or _reset_count > 0:
                         _save_cp(_cp, _cp_path)
                         logger.info(
                             f"[{test_id}] --retry-errors: reset {_reset_count} "
@@ -1034,10 +1151,20 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         checkpoint_path = _find_checkpoint_path(args.results_dir, experiment_id)
         if checkpoint_path is not None:
             checkpoint = load_checkpoint(checkpoint_path)
+            exp_dir = Path(checkpoint.experiment_dir)
+            # Step 1: Reconcile checkpoint with disk state
+            reconcile_count = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+            if reconcile_count > 0:
+                logger.info(
+                    f"--retry-errors: reconciled {reconcile_count} run state(s) with disk"
+                )
+            # Step 2: Reset non-completed and judge-failed runs
             reset_count = _reset_non_completed_runs(checkpoint)
-            if reset_count > 0:
+            if reconcile_count > 0 or reset_count > 0:
                 save_checkpoint(checkpoint, checkpoint_path)
-                logger.info(f"--retry-errors: reset {reset_count} non-completed run(s) for retry")
+                logger.info(
+                    f"--retry-errors: reset {reset_count} non-completed run(s) for retry"
+                )
 
     try:
         with terminal_guard(request_shutdown):
