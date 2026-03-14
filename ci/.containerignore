@@ -1,0 +1,44 @@
+# Files excluded from CI container build context
+# Modeled after docker/.dockerignore — CI container only needs source + config files
+
+# Version control
+.git/
+.gitignore
+
+# Build artifacts and caches
+build/
+.pixi/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg/
+dist/
+.eggs/
+
+# Experiment results (large, not needed for CI)
+results/
+workspace/
+fullruns/
+
+# Documentation (not needed for running tests)
+docs/
+notes/
+
+# Docker-specific (CI container uses its own Containerfile)
+docker/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+/tmp/
