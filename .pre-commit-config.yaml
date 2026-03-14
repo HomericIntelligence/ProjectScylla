@@ -3,16 +3,27 @@
 
 repos:
 
+  # Secrets scanning — detect credentials committed to git history
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
   # Security checks
   - repo: local
     hooks:
-      - id: check-shell-injection
-        name: Check for shell=True (Security)
-        description: Prevent command injection vulnerabilities via shell=True
-        entry: 'shell=True'
-        language: pygrep
-        files: \.py$
+      - id: bandit-security-scan
+        name: Bandit Security Scan
+        description: >-
+          AST-based Python security scanning. Replaces the naive pygrep shell=True
+          check with bandit which understands code context (skips comments/strings).
+          Medium+ severity only (-ll) to avoid low-severity noise.
+        entry: pixi run --environment lint bandit
+        language: system
+        args: [-c, pyproject.toml, --severity-level, medium]
+        files: ^(scripts|scylla)/.*\.py$
         types: [python]
+        pass_filenames: true
       - id: check-mojo-artifacts
         name: Check for Mojo Migration Artifacts
         description: >-

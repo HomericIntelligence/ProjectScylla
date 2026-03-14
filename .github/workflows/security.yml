@@ -1,13 +1,11 @@
 name: Security
 
 on:
+  # pip-audit: only on dependency/source changes (path-filtered per job via if: conditions)
+  # secrets-scan: on all PRs — credentials can be added to any file type
   pull_request:
-    paths:
-      - "pixi.toml"
-      - "pixi.lock"
-      - "pyproject.toml"
-      - "**/*.py"
-      - ".github/workflows/security.yml"
+  push:
+    branches: [main]
   schedule:
     - cron: "0 8 * * 1"
   workflow_dispatch:
@@ -51,3 +49,20 @@ jobs:
               echo "Vulnerabilities detected — see job logs for details."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+  secrets-scan:
+    name: Secrets scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # Full history checkout so gitleaks can scan all commits, not just HEAD.
+      # Without fetch-depth: 0, gitleaks only sees the working directory.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

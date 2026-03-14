@@ -85,6 +85,15 @@ COPY scylla/ /opt/scylla/scylla/
 RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 
 # ============================================================================
+# Node.js source stage — copy binaries without curl | bash installer
+# ============================================================================
+# Pinned to node:20-slim SHA256 for reproducibility.
+# Using multi-stage copy avoids the NodeSource curl|bash pattern which
+# introduces an external dependency and pipe-to-shell security risk.
+# Digest pinned 2026-03-14: node:20-slim
+FROM node:20-slim@sha256:65b1bbfe64ca6cdf2ed1395e55f4a27dd13fffdb5b31da8ae1b26afbcc17e7f4 AS node-source
+
+# ============================================================================
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
@@ -111,19 +120,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
     XDG_CONFIG_HOME=/home/scylla/.config \
     CLAUDE_CONFIG_DIR=/home/scylla/.claude
 
-# Install ONLY runtime dependencies (no build tools)
+# Install ONLY runtime dependencies (no build tools, no curl — Node.js copied from source stage)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
-    curl \
     ca-certificates \
-    gnupg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js (required for Claude Code CLI)
-# Using NodeSource repository for latest LTS version
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y --no-install-recommends nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Copy from pinned node:20-slim stage — avoids curl|bash external dependency risk.
+# node:20-slim ships /usr/local/bin/node and /usr/local/lib/node_modules/npm
+COPY --from=node-source /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-source /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
 # Install Claude Code CLI (pinned to specific version for reproducibility)
 # This is the primary tool for agent-based test execution
