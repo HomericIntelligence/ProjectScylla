@@ -117,8 +117,8 @@ def parse_retry_after(stderr: str) -> float | None:
 
         try:
             tz = zoneinfo.ZoneInfo(tz_str)
-        except Exception:
-            # Fallback to UTC if timezone parsing fails
+        except Exception as e:
+            logger.debug("Timezone parsing failed, falling back to UTC: %s", e)
             tz = zoneinfo.ZoneInfo("UTC")
 
         # Get current time and target reset time
@@ -418,5 +418,8 @@ def check_api_rate_limit_status() -> RateLimitInfo | None:
 
     except subprocess.TimeoutExpired:
         return None  # Timeout is not a rate limit
-    except Exception:
-        return None  # Other errors are not rate limits
+    except Exception as e:
+        logger.debug(
+            "Unexpected error during rate limit detection, treating as no rate limit: %s", e
+        )
+        return None
