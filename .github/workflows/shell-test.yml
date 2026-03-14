@@ -21,6 +21,10 @@ jobs:
   bats:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Run inside the CI container — BATS is pre-installed
+    container:
+      image: ghcr.io/homericintelligence/scylla-ci:latest
+      options: --user root
 
     steps:
       - uses: actions/checkout@v6
