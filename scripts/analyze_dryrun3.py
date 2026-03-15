@@ -52,7 +52,7 @@ def discover_experiments(results_dir: Path) -> dict[str, tuple[str, Path]]:
     Returns:
         dict mapping test_name -> (experiment_dir_name, experiment_dir_path)
     """
-    pattern = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{6})-(\w+)-(test-\d{3})$")
+    pattern = re.compile(r"^(\d{4}-\d{2}-\d{2}T[\d-]+)-(test-\d{3})$")
     experiments: dict[str, list[tuple[str, Path]]] = defaultdict(list)
 
     for d in results_dir.iterdir():
@@ -60,7 +60,7 @@ def discover_experiments(results_dir: Path) -> dict[str, tuple[str, Path]]:
             continue
         m = pattern.match(d.name)
         if m:
-            test_name = m.group(3)
+            test_name = m.group(2)
             experiments[test_name].append((d.name, d))
 
     # Pick latest (lexicographic sort on timestamp prefix)
@@ -218,11 +218,11 @@ def analyze_test(
     passed, failed, missing_json = load_grades(experiment_dir, complete_runs)
     per_tier_grades = load_per_tier_grades(experiment_dir, complete_runs)
 
-    # Expected total active runs
+    # Expected total active runs (1 run per subtest)
     if max_subtests is None:
-        expected_runs = TOTAL_SUBTESTS_FULL * 3  # 3 runs per subtest
+        expected_runs = TOTAL_SUBTESTS_FULL
     else:
-        expected_runs = TOTAL_SUBTESTS_STANDARD * 3
+        expected_runs = TOTAL_SUBTESTS_STANDARD
 
     return {
         "test_name": test_name,
@@ -296,8 +296,8 @@ def go_nogo(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
     return "NOGO", reasons
 
 
-def generate_report(all_results: list[dict[str, Any]]) -> None:
-    """Print the analysis report to stdout."""
+def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
+    """Print the analysis report to stdout. Returns (verdict, reasons)."""
     today = date.today().isoformat()
     print(f"=== DRYRUN3 COMPLETION ANALYSIS ({today}) ===")
     print()
@@ -331,7 +331,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
     for r in all_results:
         if r.get("missing_subtests"):
             for tier_id, (actual, expected) in r["missing_subtests"].items():
-                total_missing_runs += (expected - actual) * 3  # 3 runs per subtest
+                total_missing_runs += expected - actual
 
     print("--- SUMMARY ---")
     print(f"Tests: {len(all_results)} | Complete: {len(tests_complete)}")
@@ -341,7 +341,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
         f"Incomplete: {total_infra_error + total_intermediate} | "
         f"Missing: {total_missing_runs}"
     )
-    print(f"Orphan runs: {total_orphan} (test-004 only, ignored)")
+    print(f"Orphan runs: {total_orphan} (ignored)")
     print()
 
     if tests_needing_work:
@@ -369,7 +369,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
                     missing_parts.append(f"{tier_id}({actual}/{expected})")
                 print(f"  MISSING SUBTESTS: {', '.join(missing_parts)}")
                 total_ms = sum(exp - act for act, exp in r["missing_subtests"].values())
-                print(f"  ({total_ms} subtests = {total_ms * 3} runs not yet in checkpoint)")
+                print(f"  ({total_ms} subtests / runs not yet in checkpoint)")
 
             if r.get("infra_error", 0) > 0:
                 items = [
@@ -433,6 +433,8 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
         print("  All criteria met.")
     print()
 
+    return verdict, reasons
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze dryrun3 experiment results")
@@ -469,7 +471,11 @@ def main() -> None:
         result = analyze_test(test_name, exp_dir_name, experiment_dir)
         all_results.append(result)
 
-    generate_report(all_results)
+    verdict, reasons = generate_report(all_results)
+
+    if verdict == "NOGO":
+        sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
