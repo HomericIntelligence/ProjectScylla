@@ -15,10 +15,10 @@ Builder stage (Stage 1):
   4. Layer 2 pip install before source COPY (Layer 3)
   5. Layer 3 source installed (no-deps) before runtime stage FROM
 
-Runtime stage (Stage 2):
+Runtime stage (Stage 3):
   6. COPY --from=builder before runtime apt install
-  7. Runtime apt install before Node.js install
-  8. Node.js install before Claude Code CLI npm install
+  7. Runtime apt install before Node.js copy (from node-source stage)
+  8. Node.js copy before Claude Code CLI npm install
   9. Non-root user created (groupadd/useradd) before USER directive
  10. COPY entrypoint.sh before USER scylla (chown on copy, not after)
  11. USER scylla before HEALTHCHECK and ENTRYPOINT
@@ -89,36 +89,39 @@ def _from_line_indices(lines: list[str]) -> list[int]:
 
 
 class TestMultiStageStructure:
-    """The Dockerfile must have exactly two stages: builder then runtime."""
+    """The Dockerfile must have exactly three stages: builder, node-source, then runtime."""
 
-    def test_two_from_lines_exist(self, lines: list[str]) -> None:
-        """There must be exactly two FROM instructions (builder + runtime)."""
+    def test_three_from_lines_exist(self, lines: list[str]) -> None:
+        """There must be exactly three FROM instructions (builder, node-source, runtime)."""
         from_indices = _from_line_indices(lines)
-        assert len(from_indices) == 2, (
-            f"Expected exactly 2 FROM lines in docker/Dockerfile, found {len(from_indices)}: "
+        assert len(from_indices) == 3, (
+            f"Expected exactly 3 FROM lines in docker/Dockerfile, found {len(from_indices)}: "
             + str([lines[i] for i in from_indices])
         )
 
     def test_builder_stage_comes_first(self, lines: list[str]) -> None:
-        """The 'AS builder' stage must be declared before the runtime stage."""
+        """The 'AS builder' stage must be declared before the node-source and runtime stages."""
         builder_idx = _first_line_containing(lines, "AS builder")
         from_indices = _from_line_indices(lines)
-        # Runtime FROM is the second FROM (no 'AS ...' alias, or at least not 'AS builder')
+        # Runtime FROM is the third FROM (no alias)
         assert builder_idx is not None, "No 'AS builder' stage found in docker/Dockerfile"
-        assert len(from_indices) >= 2, "Expected at least 2 FROM lines"
-        runtime_from_idx = from_indices[1]
+        assert len(from_indices) >= 3, "Expected at least 3 FROM lines"
+        runtime_from_idx = from_indices[2]
         assert builder_idx < runtime_from_idx, (
             f"Builder stage (line {builder_idx + 1}) must appear before "
             f"runtime stage FROM (line {runtime_from_idx + 1})"
         )
 
     def test_runtime_stage_does_not_use_builder_alias(self, lines: list[str]) -> None:
-        """The runtime (second) FROM must not carry an 'AS builder' alias."""
+        """The runtime (third) FROM must not carry an 'AS builder' or 'AS node-source' alias."""
         from_indices = _from_line_indices(lines)
-        assert len(from_indices) >= 2, "Expected at least 2 FROM lines"
-        runtime_from_line = lines[from_indices[1]]
+        assert len(from_indices) >= 3, "Expected at least 3 FROM lines"
+        runtime_from_line = lines[from_indices[2]]
         assert "AS builder" not in runtime_from_line, (
-            "The second FROM line must not use 'AS builder' — it is the runtime stage"
+            "The third FROM line must not use 'AS builder' — it is the runtime stage"
+        )
+        assert "AS node-source" not in runtime_from_line, (
+            "The third FROM line must not use 'AS node-source' — it is the runtime stage"
         )
 
 
@@ -246,8 +249,8 @@ class TestBuilderStageOrdering:
         """
         nodeps_idx = _first_line_containing(lines, "--no-deps", "/opt/scylla/")
         from_indices = _from_line_indices(lines)
-        assert len(from_indices) >= 2, "Expected at least 2 FROM lines"
-        runtime_from_idx = from_indices[1]
+        assert len(from_indices) >= 3, "Expected at least 3 FROM lines"
+        runtime_from_idx = from_indices[2]
         _assert_before(
             nodeps_idx,
             runtime_from_idx,
@@ -266,8 +269,8 @@ class TestRuntimeStageOrdering:
 
     def _runtime_from_idx(self, lines: list[str]) -> int:
         from_indices = _from_line_indices(lines)
-        assert len(from_indices) >= 2, "Expected at least 2 FROM lines"
-        return from_indices[1]
+        assert len(from_indices) >= 3, "Expected at least 3 FROM lines"
+        return from_indices[2]
 
     def test_copy_from_builder_before_runtime_apt(self, lines: list[str]) -> None:
         """COPY --from=builder must come before the runtime apt-get install.
@@ -290,10 +293,11 @@ class TestRuntimeStageOrdering:
         )
 
     def test_runtime_apt_before_nodejs(self, lines: list[str]) -> None:
-        """Runtime apt-get install must precede the Node.js setup script.
+        """Runtime apt-get install must precede the Node.js multi-stage copy.
 
-        The runtime apt layer installs git, curl, ca-certificates — curl is
-        needed to download the NodeSource setup script.
+        The runtime apt layer installs git and ca-certificates.  Node.js is
+        then copied from the pinned node:20-slim stage (multi-stage build),
+        avoiding the NodeSource curl|bash pattern.
 
         Note: the RUN apt-get instruction is multi-line; git appears on the
         continuation line after ``apt-get install``.  We look for the
@@ -309,25 +313,26 @@ class TestRuntimeStageOrdering:
             (i for i, line in enumerate(lines) if i > runtime_from and "apt-get update" in line),
             None,
         )
-        nodejs_idx = _first_line_containing(lines, "nodesource")
+        nodejs_idx = _first_line_containing(lines, "COPY --from=node-source")
         _assert_before(
             runtime_apt_idx,
             nodejs_idx,
-            "runtime apt-get update (git/curl/ca-certificates block)",
-            "Node.js setup (nodesource)",
+            "runtime apt-get update (git/ca-certificates block)",
+            "Node.js copy from node-source stage",
         )
 
     def test_nodejs_before_claude_code_cli(self, lines: list[str]) -> None:
         """Node.js must be installed before the Claude Code CLI npm install.
 
         npm is provided by Node.js; the npm install will fail without it.
+        Node.js is installed via multi-stage COPY from the pinned node-source stage.
         """
-        nodejs_idx = _first_line_containing(lines, "nodesource")
+        nodejs_idx = _first_line_containing(lines, "COPY --from=node-source")
         claude_idx = _first_line_containing(lines, "npm install", "claude-code")
         _assert_before(
             nodejs_idx,
             claude_idx,
-            "Node.js install (nodesource)",
+            "Node.js copy from node-source stage",
             "npm install @anthropic-ai/claude-code",
         )
 
