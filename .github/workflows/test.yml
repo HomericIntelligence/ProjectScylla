@@ -4,15 +4,6 @@ on:
   pull_request:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      use-container:
-        description: 'Run tests inside CI container (scylla-ci:latest)'
-        type: boolean
-        default: true
-
-env:
-  CI_IMAGE: ghcr.io/homericintelligence/scylla-ci:latest
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
@@ -25,11 +16,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    # When use-container input is true (or default on workflow_dispatch), run inside the CI image.
-    # On pull_request and push triggers, the container is always used.
-    container:
-      image: ghcr.io/homericintelligence/scylla-ci:latest
-      options: --user root  # checkout action needs root to set safe.directory
 
     strategy:
       fail-fast: false
