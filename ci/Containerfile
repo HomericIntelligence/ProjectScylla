@@ -49,7 +49,7 @@ RUN curl -fsSL https://pixi.sh/install.sh \
 # Layer 1: Dependency files — cache layer invalidated only when deps change
 # Copy in order of change frequency (least → most frequent)
 WORKDIR /opt/scylla-build
-COPY pixi.lock pixi.toml pyproject.toml .pre-commit-config.yaml ./
+COPY pixi.lock pixi.toml pyproject.toml .pre-commit-config.yaml README.md ./
 
 # Layer 2: Install pixi environments (default + lint)
 # This bakes all Python packages into the image — no network needed at runtime
