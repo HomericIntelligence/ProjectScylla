@@ -18,6 +18,9 @@ on:
       - ".pre-commit-config.yaml"
       - "pyproject.toml"
       - ".github/workflows/ci-image.yml"
+  schedule:
+    # Rebuild weekly on Mondays at 06:00 UTC to pick up base image security patches
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -75,7 +78,7 @@ jobs:
           severity: HIGH,CRITICAL
 
       - name: Push CI image to GHCR
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request'
         env:
           SHORT_SHA: ${{ steps.build.outputs.short_sha }}
         run: |
