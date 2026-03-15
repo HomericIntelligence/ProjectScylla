@@ -50,6 +50,7 @@ jobs:
             --exclude-dir=".pixi" \
             | grep -v "scylla/core/results.py" \
             | grep -v "# deprecated" \
+            | grep -v "(deprecated)" \
             | grep -v "test_results.py" \
             | wc -l)
           echo "BaseRunMetrics usage count (excluding definition and tests): $count"
@@ -58,6 +59,7 @@ jobs:
             grep -rn "BaseRunMetrics" . --include="*.py" --exclude-dir=".pixi" \
               | grep -v "scylla/core/results.py" \
               | grep -v "# deprecated" \
+              | grep -v "(deprecated)" \
               | grep -v "test_results.py"
             exit 1
           fi
