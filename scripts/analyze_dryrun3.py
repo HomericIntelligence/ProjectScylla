@@ -219,10 +219,11 @@ def analyze_test(
     per_tier_grades = load_per_tier_grades(experiment_dir, complete_runs)
 
     # Expected total active runs
-    if max_subtests is None:
-        expected_runs = TOTAL_SUBTESTS_FULL * 3  # 3 runs per subtest
-    else:
-        expected_runs = TOTAL_SUBTESTS_STANDARD * 3
+    expected_runs = (
+        TOTAL_SUBTESTS_FULL * 3
+        if max_subtests is None
+        else TOTAL_SUBTESTS_STANDARD * 3
+    )
 
     return {
         "test_name": test_name,
@@ -330,7 +331,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
     total_missing_runs = 0
     for r in all_results:
         if r.get("missing_subtests"):
-            for tier_id, (actual, expected) in r["missing_subtests"].items():
+            for _tier_id, (actual, expected) in r["missing_subtests"].items():
                 total_missing_runs += (expected - actual) * 3  # 3 runs per subtest
 
     print("--- SUMMARY ---")
@@ -435,6 +436,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
 
 
 def main() -> None:
+    """Analyze dryrun3 experiment results from checkpoint files."""
     parser = argparse.ArgumentParser(description="Analyze dryrun3 experiment results")
     parser.add_argument(
         "--results-dir",
