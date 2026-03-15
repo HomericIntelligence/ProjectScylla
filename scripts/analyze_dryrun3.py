@@ -51,6 +51,7 @@ def discover_experiments(results_dir: Path) -> dict[str, tuple[str, Path]]:
 
     Returns:
         dict mapping test_name -> (experiment_dir_name, experiment_dir_path)
+
     """
     pattern = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{6})-(\w+)-(test-\d{3})$")
     experiments: dict[str, list[tuple[str, Path]]] = defaultdict(list)
@@ -79,6 +80,7 @@ def classify_runs(
 
     Returns:
         dict mapping classification -> list of (tier_id, subtest_id, run_id, state)
+
     """
     classified: dict[str, list[tuple[str, str, str, str]]] = defaultdict(list)
 
@@ -112,12 +114,15 @@ def check_subtest_coverage(
     Returns:
         dict mapping tier_id -> (actual_active_subtests, expected_subtests)
         Only includes tiers with missing subtests.
+
     """
     max_subtests = get_max_subtests(test_name)
     missing: dict[str, tuple[int, int]] = {}
 
     for tier_id, expected_count in TIER_SUBTEST_COUNTS.items():
-        effective_max = min(max_subtests, expected_count) if max_subtests is not None else expected_count
+        effective_max = (
+            min(max_subtests, expected_count) if max_subtests is not None else expected_count
+        )
         subtests = run_states.get(tier_id, {})
 
         # Count active (non-orphan) subtests
@@ -137,13 +142,16 @@ def load_grades(
 
     Returns:
         (passed, failed, missing_json) counts
+
     """
     passed = 0
     failed = 0
     missing_json = 0
 
     for tier_id, sub_id, run_id, _state in complete_runs:
-        run_result_path = experiment_dir / tier_id / sub_id / f"run_{int(run_id):02d}" / "run_result.json"
+        run_result_path = (
+            experiment_dir / tier_id / sub_id / f"run_{int(run_id):02d}" / "run_result.json"
+        )
         if not run_result_path.exists():
             missing_json += 1
             continue
@@ -168,7 +176,9 @@ def load_per_tier_grades(
     tier_grades: dict[str, list[bool]] = defaultdict(list)
 
     for tier_id, sub_id, run_id, _state in complete_runs:
-        run_result_path = experiment_dir / tier_id / sub_id / f"run_{int(run_id):02d}" / "run_result.json"
+        run_result_path = (
+            experiment_dir / tier_id / sub_id / f"run_{int(run_id):02d}" / "run_result.json"
+        )
         if not run_result_path.exists():
             continue
         try:
@@ -207,11 +217,7 @@ def analyze_test(
     orphan_runs = classified.get(ORPHAN, [])
     intermediate_runs = classified.get(INTERMEDIATE, [])
 
-    total_in_cp = sum(
-        len(runs)
-        for subtests in run_states.values()
-        for runs in subtests.values()
-    )
+    total_in_cp = sum(len(runs) for subtests in run_states.values() for runs in subtests.values())
     active_in_cp = total_in_cp - len(orphan_runs)
 
     missing_subtests = check_subtest_coverage(run_states, test_name)
@@ -219,11 +225,7 @@ def analyze_test(
     per_tier_grades = load_per_tier_grades(experiment_dir, complete_runs)
 
     # Expected total active runs
-    expected_runs = (
-        TOTAL_SUBTESTS_FULL * 3
-        if max_subtests is None
-        else TOTAL_SUBTESTS_STANDARD * 3
-    )
+    expected_runs = TOTAL_SUBTESTS_FULL * 3 if max_subtests is None else TOTAL_SUBTESTS_STANDARD * 3
 
     return {
         "test_name": test_name,
@@ -253,6 +255,7 @@ def go_nogo(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
 
     Returns:
         (verdict, list_of_reasons)
+
     """
     reasons: list[str] = []
     warnings: list[str] = []
@@ -260,17 +263,20 @@ def go_nogo(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
     # 1. Coverage: all 47 tests have checkpoints
     errored = [r for r in all_results if "error" in r]
     if errored:
-        reasons.append(f"{len(errored)} tests missing checkpoint: {[r['test_name'] for r in errored]}")
+        reasons.append(
+            f"{len(errored)} tests missing checkpoint: {[r['test_name'] for r in errored]}"
+        )
 
     # 2. Active completion: all non-orphan runs at worktree_cleaned
     total_incomplete = sum(r.get("infra_error", 0) + r.get("intermediate", 0) for r in all_results)
     if total_incomplete > 0:
-        reasons.append(f"{total_incomplete} active runs not yet complete (infra errors or intermediate)")
+        reasons.append(
+            f"{total_incomplete} active runs not yet complete (infra errors or intermediate)"
+        )
 
     # 3. Subtest expansion: tests have expected subtest count per tier
     tests_with_missing = [
-        r for r in all_results
-        if r.get("missing_subtests") and not r.get("error")
+        r for r in all_results if r.get("missing_subtests") and not r.get("error")
     ]
     if tests_with_missing:
         reasons.append(
@@ -307,14 +313,16 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
     all_results.sort(key=lambda r: r["test_name"])
 
     tests_needing_work = [
-        r for r in all_results
+        r
+        for r in all_results
         if r.get("error")
         or r.get("infra_error", 0) > 0
         or r.get("intermediate", 0) > 0
         or r.get("missing_subtests")
     ]
     tests_complete = [
-        r for r in all_results
+        r
+        for r in all_results
         if not r.get("error")
         and r.get("infra_error", 0) == 0
         and r.get("intermediate", 0) == 0
@@ -350,7 +358,11 @@ def generate_report(all_results: list[dict[str, Any]]) -> None:
         for r in tests_needing_work:
             test_name = r["test_name"]
             max_sub = r.get("max_subtests")
-            subtest_type = "full ablation, all subtests" if max_sub is None else f"standard, max_subtests={max_sub}"
+            subtest_type = (
+                "full ablation, all subtests"
+                if max_sub is None
+                else f"standard, max_subtests={max_sub}"
+            )
             print(f"\n{test_name} ({subtest_type}):")
 
             if r.get("error"):
@@ -463,7 +475,9 @@ def main() -> None:
 
     # Add missing tests as errors
     for test_name in sorted(missing_tests):
-        all_results.append({"test_name": test_name, "exp_dir": "", "error": "no experiment dir found"})
+        all_results.append(
+            {"test_name": test_name, "exp_dir": "", "error": "no experiment dir found"}
+        )
 
     # Analyze found experiments
     for test_name in sorted(experiments.keys()):
