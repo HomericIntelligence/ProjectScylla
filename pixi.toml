@@ -24,6 +24,8 @@ pip = "*"
 pre-commit = ">=4.5.1,<5"
 pytest = ">=9.0.2,<10"
 pytest-cov = ">=7.0.0,<8"
+pytest-timeout = ">=2.0,<3"
+pytest-rerunfailures = ">=14.0,<15"
 types-pyyaml = ">=6.0.12.20250915,<7"
 types-jsonschema = ">=4.26.0.20260202,<5"
 

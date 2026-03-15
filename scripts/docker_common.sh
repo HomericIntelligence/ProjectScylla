@@ -132,9 +132,9 @@ prepare_credential_mount() {
         TEMP_CREDS_DIR="${PROJECT_DIR}/.tmp-container-creds"
         mkdir -p "${TEMP_CREDS_DIR}"
 
-        # Copy credentials file with world-readable permissions
+        # Copy credentials file with owner-only permissions
         cp "${creds_file}" "${TEMP_CREDS_DIR}/.credentials.json"
-        chmod 644 "${TEMP_CREDS_DIR}/.credentials.json"
+        chmod 600 "${TEMP_CREDS_DIR}/.credentials.json"
 
         # Mount the temp directory into container
         VOLUMES+=("-v" "${TEMP_CREDS_DIR}:/tmp/host-creds:ro")

@@ -5,6 +5,13 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -113,12 +120,19 @@ jobs:
           TEST_PATH: ${{ matrix.test-group.path }}
         run: |
           # Install package in dev mode for unit tests
+          JUNITXML="junit-${{ matrix.test-group.name }}.xml"
           if [[ "$TEST_PATH" == "tests/unit" ]]; then
             pixi run pip install -e .
-            pixi run pytest "$TEST_PATH" --override-ini="addopts=" -v --strict-markers --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75
+            pixi run pytest "$TEST_PATH" --override-ini="addopts=" -v --strict-markers \
+              --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75 \
+              --junitxml="$JUNITXML"
           else
             # Integration tests: 5% floor prevents regression without blocking new work
-            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=5
+            # --reruns 2: retry flaky integration tests (network/API calls) up to 2 times
+            pixi run pytest "$TEST_PATH" -v \
+              --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=5 \
+              --reruns 2 --reruns-delay 5 \
+              --junitxml="$JUNITXML"
           fi
 
       - name: Upload coverage
@@ -135,5 +149,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.test-group.name }}
-          path: coverage.xml
+          path: |
+            coverage.xml
+            junit-${{ matrix.test-group.name }}.xml
           retention-days: 7
