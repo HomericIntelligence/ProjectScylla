@@ -103,6 +103,7 @@ testpaths = ["tests"]
 #             `from export_data import …`, `from manage_experiment import …`).
 #             Audited in #1193: no collection errors; all scripts importable.
 pythonpath = [".", "scripts"]
+timeout = 120
 addopts = [
     "-v",
     "--strict-markers",

@@ -50,6 +50,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.14.3-he1279bd_1_cp314t.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-librt-0.8.1-py314h3f2afee_0.conda
@@ -158,6 +160,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-3.14.3-h994187b_1_cp314t.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-librt-0.8.1-py314hef6ada0_0.conda
@@ -267,6 +271,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.3-h6c44a53_1_cp314t.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-librt-0.8.1-py314h8dbd3ad_0.conda
@@ -376,6 +382,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/python-3.14.3-h4b44e0e_101_cp314.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/python-librt-0.8.1-py314hc5dbbe4_0.conda
@@ -502,6 +510,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.14.3-he1279bd_1_cp314t.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-librt-0.8.1-py314h3f2afee_0.conda
@@ -609,6 +619,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-3.14.3-h994187b_1_cp314t.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-64/python-librt-0.8.1-py314hef6ada0_0.conda
@@ -717,6 +729,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.14.3-h6c44a53_1_cp314t.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-librt-0.8.1-py314h8dbd3ad_0.conda
@@ -825,6 +839,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.19.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.2-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.0.0-pyhcf101f3_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/python-3.14.3-h4b44e0e_101_cp314.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-discovery-1.1.3-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/python-librt-0.8.1-py314hc5dbbe4_0.conda
@@ -3194,6 +3210,33 @@ packages:
   - pkg:pypi/pytest-cov?source=hash-mapping
   size: 29016
   timestamp: 1757612051022
+- conda: https://conda.anaconda.org/conda-forge/noarch/pytest-rerunfailures-14.0-pyhd8ed1ab_0.conda
+  sha256: 08fb77f313c5739a3526a07c865671f6e36d1458d073c1b23b4f0b66501138bd
+  md5: 0696324a8c882d182485f20368d21583
+  depends:
+  - importlib-metadata >=1
+  - packaging >=17.1
+  - pytest >=7.2
+  - python >=3.8
+  - setuptools
+  license: MPL-2.0
+  license_family: OTHER
+  purls:
+  - pkg:pypi/pytest-rerunfailures?source=hash-mapping
+  size: 17835
+  timestamp: 1710357496750
+- conda: https://conda.anaconda.org/conda-forge/noarch/pytest-timeout-2.4.0-pyhd8ed1ab_0.conda
+  sha256: 25afa7d9387f2aa151b45eb6adf05f9e9e3f58c8de2bc09be7e85c114118eeb9
+  md5: 52a50ca8ea1b3496fbd3261bea8c5722
+  depends:
+  - pytest >=7.0.0
+  - python >=3.9
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/pytest-timeout?source=hash-mapping
+  size: 20137
+  timestamp: 1746533140824
 - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.14.3-he1279bd_1_cp314t.conda
   build_number: 1
   sha256: 4212a85ccc69264eaf9e68b77ff9b504e78935a53d0923fa409900084418edce
@@ -3808,7 +3851,7 @@ packages:
 - pypi: ./
   name: scylla
   version: 0.1.0
-  sha256: 8e5a010aa2c765440aa03f6f7adda5b90b3594e21a65e054cb3620a0545bc396
+  sha256: 7b2e456d82d8a26476aad10af093aebe2c69c324de801e953ecd56ee1a9abbad
   requires_dist:
   - click>=8.0,<9
   - pydantic>=2.0,<3

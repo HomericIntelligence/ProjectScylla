@@ -12,6 +12,13 @@ on:
     - cron: "0 8 * * 1"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   pip-audit:
     name: Dependency vulnerability scan
