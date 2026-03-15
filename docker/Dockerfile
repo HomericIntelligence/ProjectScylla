@@ -90,8 +90,8 @@ RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 # Pinned to node:20-slim SHA256 for reproducibility.
 # Using multi-stage copy avoids the NodeSource curl|bash pattern which
 # introduces an external dependency and pipe-to-shell security risk.
-# Digest pinned 2026-03-14: node:20-slim
-FROM node:20-slim@sha256:65b1bbfe64ca6cdf2ed1395e55f4a27dd13fffdb5b31da8ae1b26afbcc17e7f4 AS node-source
+# Digest pinned 2026-03-15: node:20-slim
+FROM node:20-slim@sha256:eef3816042c0f522a2ca9655c1947ca6f97c908b0c227aa50e19432646342ab7 AS node-source
 
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
