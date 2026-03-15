@@ -69,4 +69,4 @@ jobs:
             | tar xz -C /usr/local/bin gitleaks
 
       - name: Run gitleaks
-        run: gitleaks detect --source . --verbose
+        run: gitleaks detect --source . --config .gitleaks.toml --verbose

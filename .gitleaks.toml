@@ -1,0 +1,6 @@
+[allowlist]
+  description = "Allowlist for test fixtures and dryrun data containing example API keys"
+  paths = [
+    '''tests/fixtures/''',
+    '''docs/paper-dryrun-data/''',
+  ]
