@@ -43,7 +43,7 @@ jobs:
             exit 1
           fi
 
-      - name: Track deprecated BaseRunMetrics usage
+      - name: Enforce no new deprecated BaseRunMetrics usage
         run: |
           count=$(grep -rn "BaseRunMetrics" . \
             --include="*.py" \
@@ -54,11 +54,12 @@ jobs:
             | wc -l)
           echo "BaseRunMetrics usage count (excluding definition and tests): $count"
           if [ "$count" -gt "0" ]; then
-            echo "::warning::Found $count usages of deprecated BaseRunMetrics"
+            echo "::error::Found $count usages of deprecated BaseRunMetrics — remove before merging"
             grep -rn "BaseRunMetrics" . --include="*.py" --exclude-dir=".pixi" \
               | grep -v "scylla/core/results.py" \
               | grep -v "# deprecated" \
               | grep -v "test_results.py"
+            exit 1
           fi
 
       - name: Enforce tier label consistency in metrics-definitions.md
@@ -78,6 +79,16 @@ jobs:
 
       - name: Set up Pixi
         uses: ./.github/actions/setup-pixi
+
+      # Early gate: fail fast if pixi.lock is out of date before running expensive tests.
+      # Catches the common rebase issue (pixi.lock SHA256 invalidated by source change)
+      # early, before spending minutes on test execution. Runs after pixi is available.
+      - name: Validate pixi.lock is up-to-date
+        run: |
+          if ! pixi install --locked 2>/dev/null; then
+            echo "::error::pixi.lock is stale — run 'pixi install' locally and commit pixi.lock"
+            exit 1
+          fi
 
       - name: Check doc/config consistency
         if: matrix.test-group.name == 'unit'
@@ -104,7 +115,8 @@ jobs:
             pixi run pip install -e .
             pixi run pytest "$TEST_PATH" --override-ini="addopts=" -v --strict-markers --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75
           else
-            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml
+            # Integration tests: 5% floor prevents regression without blocking new work
+            pixi run pytest "$TEST_PATH" -v --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=5
           fi
 
       - name: Upload coverage
@@ -115,3 +127,11 @@ jobs:
           flags: ${{ matrix.test-group.name }}
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.test-group.name }}
+          path: coverage.xml
+          retention-days: 7

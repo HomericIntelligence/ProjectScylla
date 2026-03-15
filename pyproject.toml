@@ -142,8 +142,11 @@ omit = [
 ]
 
 [tool.coverage.report]
-# Combined scylla/+scripts/ floor; scripts/ integration coverage is WIP.
-# Scylla/ 75% enforced in test.yml unit step.
+# DUAL THRESHOLD DESIGN:
+# - This 9% floor: combined scylla/ + scripts/ floor (scripts/ has low coverage by design).
+# - 75% floor: scylla/ unit tests only, enforced via --cov-fail-under=75 in test.yml unit step.
+# - 5% floor: integration tests, enforced via --cov-fail-under=5 in test.yml integration step.
+# Do not raise this value — the per-module floors in test.yml are the authoritative thresholds.
 fail_under = 9
 precision = 2
 show_missing = true
