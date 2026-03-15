@@ -300,7 +300,7 @@ def _find_checkpoint_path(results_dir: Path, experiment_id: str) -> Path | None:
 
 
 def _checkpoint_has_retryable_runs(checkpoint_path: Path) -> bool:
-    """Return True if checkpoint contains any non-completed runs (infra failures or mid-pipeline crashes).
+    """Check if checkpoint has non-completed runs (infra failures or crashes).
 
     Runs in worktree_cleaned state (even with bad grades) are NOT considered retryable.
     """
