@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 RESULTS_DIR=~/dryrun3
 THREADS=2
+FAILED_TESTS=()
 
 # Full-ablation tests: run all subtests (no cap)
 FULL_ABLATION_TESTS=(test-001 test-002 test-003)
@@ -18,25 +19,48 @@ STANDARD_TESTS=(
     test-046 test-047
 )
 
+# Pre-run analysis
+echo "=== PRE-RUN STATUS ==="
+pixi run python scripts/analyze_dryrun3.py --results-dir "$RESULTS_DIR" || true
+echo ""
+
 echo "=== dryrun3 retry: full-ablation tests (all subtests) ==="
 for test in "${FULL_ABLATION_TESTS[@]}"; do
     echo "--- $test ---"
-    pixi run python scripts/manage_experiment.py run \
+    if ! pixi run python scripts/manage_experiment.py run \
         --config "tests/fixtures/tests/$test" \
         --results-dir "$RESULTS_DIR" \
         --threads "$THREADS" \
-        -v
+        --parallel 1 \
+        --max-subtests 50 \
+        -v; then
+        FAILED_TESTS+=("$test")
+        echo "WARNING: $test exited with non-zero status"
+    fi
 done
 
 echo "=== dryrun3 retry: standard tests (max-subtests=3) ==="
 for test in "${STANDARD_TESTS[@]}"; do
     echo "--- $test ---"
-    pixi run python scripts/manage_experiment.py run \
+    if ! pixi run python scripts/manage_experiment.py run \
         --config "tests/fixtures/tests/$test" \
         --max-subtests 3 \
         --results-dir "$RESULTS_DIR" \
         --threads "$THREADS" \
-        -v
+        --parallel 1 \
+        -v; then
+        FAILED_TESTS+=("$test")
+        echo "WARNING: $test exited with non-zero status"
+    fi
 done
 
-echo "=== All done ==="
+# Summary of any manage_experiment errors
+if [ ${#FAILED_TESTS[@]} -gt 0 ]; then
+    echo ""
+    echo "=== TESTS WITH MANAGE_EXPERIMENT ERRORS: ${FAILED_TESTS[*]} ==="
+fi
+
+# Post-run analysis + Go/NoGo
+echo ""
+echo "=== POST-RUN STATUS ==="
+pixi run python scripts/analyze_dryrun3.py --results-dir "$RESULTS_DIR"
