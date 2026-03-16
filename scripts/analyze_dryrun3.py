@@ -90,9 +90,13 @@ def classify_runs(
         tier_total = TIER_SUBTEST_COUNTS.get(tier_id, 0)
         effective_max = min(max_subtests, tier_total) if max_subtests is not None else tier_total
 
+        # Sort subtests by numeric ID; first effective_max are active, rest are orphans.
+        # This handles both 0-based (T0: 00,01,...) and 1-based (T1-T6: 01,02,...) IDs.
+        sorted_sub_ids = sorted(subtests.keys(), key=lambda s: int(s))
+        active_sub_ids = set(sorted_sub_ids[:effective_max])
+
         for sub_id, runs in subtests.items():
-            sub_index = int(sub_id)
-            is_orphan = sub_index >= effective_max
+            is_orphan = sub_id not in active_sub_ids
 
             for run_id, state in runs.items():
                 entry = (tier_id, sub_id, run_id, state)
@@ -127,8 +131,10 @@ def check_subtest_coverage(
         )
         subtests = run_states.get(tier_id, {})
 
-        # Count active (non-orphan) subtests
-        active = sum(1 for sub_id in subtests if int(sub_id) < effective_max)
+        # Count active (non-orphan) subtests — sort by numeric ID and take first effective_max.
+        # This handles both 0-based (T0: 00,01,...) and 1-based (T1-T6: 01,02,...) IDs.
+        sorted_sub_ids = sorted(subtests.keys(), key=lambda s: int(s))
+        active = min(len(sorted_sub_ids), effective_max)
 
         if active < effective_max:
             missing[tier_id] = (active, effective_max)
@@ -210,7 +216,7 @@ def classify_complete_runs(
     agent_failure_runs: list[tuple[str, str, str, str]] = []
 
     for entry in complete_runs:
-        tier_id, sub_id, run_id, state = entry
+        tier_id, sub_id, run_id, _state = entry
         run_result_path = (
             experiment_dir / tier_id / sub_id / f"run_{int(run_id):02d}" / "run_result.json"
         )
@@ -268,10 +274,7 @@ def analyze_test(
     per_tier_grades = load_per_tier_grades(experiment_dir, complete_runs)
 
     # Expected total active runs (1 run per subtest)
-    if max_subtests is None:
-        expected_runs = TOTAL_SUBTESTS_FULL
-    else:
-        expected_runs = TOTAL_SUBTESTS_STANDARD
+    expected_runs = TOTAL_SUBTESTS_FULL if max_subtests is None else TOTAL_SUBTESTS_STANDARD
 
     return {
         "test_name": test_name,
@@ -389,7 +392,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
     total_missing_runs = 0
     for r in all_results:
         if r.get("missing_subtests"):
-            for tier_id, (actual, expected) in r["missing_subtests"].items():
+            for _tier_id, (actual, expected) in r["missing_subtests"].items():
                 total_missing_runs += expected - actual
 
     print("--- SUMMARY ---")
@@ -507,7 +510,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
 
 
 def main() -> None:
-    """Analyze dryrun3 experiment results from checkpoint files."""
+    """Analyze dryrun3 results and print Go/NoGo verdict."""
     parser = argparse.ArgumentParser(description="Analyze dryrun3 experiment results")
     parser.add_argument(
         "--results-dir",
@@ -544,7 +547,7 @@ def main() -> None:
         result = analyze_test(test_name, exp_dir_name, experiment_dir)
         all_results.append(result)
 
-    verdict, reasons = generate_report(all_results)
+    verdict, _reasons = generate_report(all_results)
 
     if verdict == "NOGO":
         sys.exit(1)
