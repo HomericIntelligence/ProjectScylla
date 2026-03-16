@@ -34,6 +34,8 @@ TERMINAL_ERROR_STATES = {"failed", "rate_limited"}
 
 # Run classification labels
 COMPLETE = "COMPLETE"
+COMPLETE_PASS = "COMPLETE_PASS"
+AGENT_FAILURE = "AGENT_FAILURE"
 INFRA_ERROR = "INFRA_ERROR"
 ORPHAN = "ORPHAN"
 INTERMEDIATE = "INTERMEDIATE"
@@ -191,6 +193,44 @@ def load_per_tier_grades(
     return {tier: (sum(grades), len(grades)) for tier, grades in tier_grades.items()}
 
 
+def classify_complete_runs(
+    experiment_dir: Path,
+    complete_runs: list[tuple[str, str, str, str]],
+) -> tuple[list[tuple[str, str, str, str]], list[tuple[str, str, str, str]]]:
+    """Split COMPLETE runs into COMPLETE_PASS and AGENT_FAILURE based on judge grade.
+
+    COMPLETE_PASS: worktree_cleaned + judge_passed=True (valid pass, never retried)
+    AGENT_FAILURE: worktree_cleaned + judge_passed=False/missing (valid failure, never retried)
+
+    Returns:
+        (pass_runs, agent_failure_runs)
+
+    """
+    pass_runs: list[tuple[str, str, str, str]] = []
+    agent_failure_runs: list[tuple[str, str, str, str]] = []
+
+    for entry in complete_runs:
+        tier_id, sub_id, run_id, state = entry
+        run_result_path = (
+            experiment_dir / tier_id / sub_id / f"run_{int(run_id):02d}" / "run_result.json"
+        )
+        judge_passed = False
+        if run_result_path.exists():
+            try:
+                with open(run_result_path) as f:
+                    data = json.load(f)
+                judge_passed = data.get("judge_passed", False)
+            except Exception:
+                pass
+
+        if judge_passed:
+            pass_runs.append(entry)
+        else:
+            agent_failure_runs.append(entry)
+
+    return pass_runs, agent_failure_runs
+
+
 def analyze_test(
     test_name: str,
     exp_dir_name: str,
@@ -217,6 +257,9 @@ def analyze_test(
     orphan_runs = classified.get(ORPHAN, [])
     intermediate_runs = classified.get(INTERMEDIATE, [])
 
+    # Sub-classify complete runs into pass vs agent failure
+    pass_runs, agent_failure_runs = classify_complete_runs(experiment_dir, complete_runs)
+
     total_in_cp = sum(len(runs) for subtests in run_states.values() for runs in subtests.values())
     active_in_cp = total_in_cp - len(orphan_runs)
 
@@ -239,6 +282,8 @@ def analyze_test(
         "active_in_cp": active_in_cp,
         "expected_runs": expected_runs,
         "complete": len(complete_runs),
+        "complete_pass": len(pass_runs),
+        "agent_failure": len(agent_failure_runs),
         "infra_error": len(infra_error_runs),
         "orphan": len(orphan_runs),
         "intermediate": len(intermediate_runs),
@@ -334,6 +379,8 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
 
     total_active = sum(r.get("active_in_cp", 0) for r in all_results)
     total_complete_runs = sum(r.get("complete", 0) for r in all_results)
+    total_complete_pass = sum(r.get("complete_pass", 0) for r in all_results)
+    total_agent_failure = sum(r.get("agent_failure", 0) for r in all_results)
     total_infra_error = sum(r.get("infra_error", 0) for r in all_results)
     total_intermediate = sum(r.get("intermediate", 0) for r in all_results)
     total_orphan = sum(r.get("orphan", 0) for r in all_results)
@@ -353,6 +400,13 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
         f"Incomplete: {total_infra_error + total_intermediate} | "
         f"Missing: {total_missing_runs}"
     )
+    print(
+        f"  Complete breakdown: "
+        f"PASS={total_complete_pass} | "
+        f"AGENT_FAILURE={total_agent_failure} (valid, never retried)"
+    )
+    if total_infra_error > 0:
+        print(f"  INFRA_ERROR={total_infra_error} (always retried on resume)")
     print(f"Orphan runs: {total_orphan} (ignored)")
     print()
 

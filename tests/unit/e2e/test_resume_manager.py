@@ -398,6 +398,106 @@ class TestResetFailedStates:
         assert checkpoint.subtest_states["T1"]["T1_00"] == "aggregated"  # untouched
         assert checkpoint.subtest_states["T1"]["T1_01"] == "pending"
 
+    def test_failed_run_states_reset_to_pending(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Failed run_states are reset to pending (infrastructure errors always retried)."""
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": "failed", "2": "worktree_cleaned"}},
+        }
+        base_checkpoint.completed_runs = {"T0": {"00": {1: "failed"}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+        assert checkpoint.run_states["T0"]["00"]["2"] == "worktree_cleaned"
+        # experiment_state unchanged (was tiers_running, not failed/interrupted)
+        assert checkpoint.experiment_state == "tiers_running"
+
+    def test_rate_limited_run_states_reset_to_pending(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Rate-limited run_states are reset to pending."""
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": "rate_limited"}},
+        }
+        base_checkpoint.completed_runs = {"T0": {"00": {1: "rate_limited"}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+
+    def test_worktree_cleaned_run_states_never_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """worktree_cleaned runs are never reset (agent/judge failures are valid)."""
+        base_checkpoint.experiment_state = "failed"
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": "worktree_cleaned"}},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.run_states["T0"]["00"]["1"] == "worktree_cleaned"
+
+    def test_run_state_reset_unconditional_on_experiment_state(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Run-state reset happens even when experiment is complete (not just failed)."""
+        base_checkpoint.experiment_state = "complete"
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": "failed", "2": "rate_limited", "3": "worktree_cleaned"}},
+        }
+        base_checkpoint.completed_runs = {
+            "T0": {"00": {1: "failed", 2: "rate_limited"}},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+        assert checkpoint.run_states["T0"]["00"]["2"] == "pending"
+        assert checkpoint.run_states["T0"]["00"]["3"] == "worktree_cleaned"
+        # experiment_state stays complete (not failed/interrupted)
+        assert checkpoint.experiment_state == "complete"
+
+    def test_run_state_reset_across_multiple_tiers(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Run-state reset works across multiple tiers and subtests."""
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.run_states = {
+            "T0": {
+                "00": {"1": "failed"},
+                "01": {"1": "worktree_cleaned"},
+            },
+            "T1": {
+                "00": {"1": "rate_limited", "2": "worktree_cleaned"},
+            },
+        }
+        base_checkpoint.completed_runs = {
+            "T0": {"00": {1: "failed"}},
+            "T1": {"00": {1: "rate_limited"}},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+        assert checkpoint.run_states["T0"]["00"]["1"] == "pending"
+        assert checkpoint.run_states["T0"]["01"]["1"] == "worktree_cleaned"
+        assert checkpoint.run_states["T1"]["00"]["1"] == "pending"
+        assert checkpoint.run_states["T1"]["00"]["2"] == "worktree_cleaned"
+
 
 # ---------------------------------------------------------------------------
 # check_tiers_need_execution
