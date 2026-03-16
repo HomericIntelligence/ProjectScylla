@@ -127,18 +127,48 @@ class ResumeManager:
             self.config = self.config.model_copy(update=non_none_rest)
         return self.config, self.checkpoint
 
+    def _reset_infra_error_runs(self) -> int:
+        """Reset failed/rate_limited run_states to pending for retry.
+
+        Infrastructure errors (crashed runs, rate limits) are always retried on resume.
+        Completed runs (worktree_cleaned) are never reset regardless of judge grade.
+
+        Returns:
+            Number of run_states reset.
+
+        """
+        count = 0
+        for tier_id in self.checkpoint.run_states:
+            for subtest_id in self.checkpoint.run_states[tier_id]:
+                for run_num, state in list(self.checkpoint.run_states[tier_id][subtest_id].items()):
+                    if state in ("failed", "rate_limited"):
+                        self.checkpoint.run_states[tier_id][subtest_id][run_num] = "pending"
+                        self.checkpoint.unmark_run_completed(tier_id, subtest_id, int(run_num))
+                        count += 1
+        return count
+
     def reset_failed_states(self) -> tuple[ExperimentConfig, E2ECheckpoint]:
-        """Reset failed/interrupted experiment and tier/subtest states for re-execution.
+        """Reset failed/interrupted experiment, tier, subtest, and run states for re-execution.
 
         Resets:
+        - run_states: failed/rate_limited → pending (always, regardless of experiment_state)
         - experiment_state: failed/interrupted → tiers_running
         - tier_states: failed → pending
         - subtest_states: failed → pending
+
+        Run-state reset is unconditional: individual runs can be failed/rate_limited
+        even when the experiment itself is in tiers_running (partial failures).
 
         Returns:
             Updated (config, checkpoint) tuple.
 
         """
+        # Always reset failed/rate_limited run_states regardless of experiment_state,
+        # since individual runs can fail while the experiment is still running.
+        run_reset_count = self._reset_infra_error_runs()
+        if run_reset_count > 0:
+            logger.info("Reset %d failed/rate_limited run_states to pending", run_reset_count)
+
         if self.checkpoint.experiment_state not in ("failed", "interrupted"):
             return self.config, self.checkpoint
 
