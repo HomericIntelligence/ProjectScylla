@@ -1588,7 +1588,8 @@ class TestRetryInfraFailuresInBatch:
             result = cmd_run(args)
 
         assert result == 0
-        # test-001 skipped (success + no retryable runs, bad grades OK); test-002 re-runs
+        # test-001 skipped (success + no retryable runs, bad grades are valid);
+        # test-002 re-runs (error status)
         assert "test-001" not in executed_ids
         assert "test-002" in executed_ids
 
