@@ -918,3 +918,37 @@ def test_table_cfp_comparison_statistical_workflow(sample_runs_df: Any) -> None:
 
     # LaTeX should have two table environments
     assert latex.count(r"\begin{table}") >= 2
+
+
+def test_table11_experiment_overview_format(sample_runs_df: Any) -> None:
+    """Test Table 11 returns valid dual-format output."""
+    from scylla.analysis.tables import table11_experiment_overview
+
+    markdown, latex = table11_experiment_overview(sample_runs_df)
+
+    assert isinstance(markdown, str)
+    assert isinstance(latex, str)
+    assert len(markdown) > 0
+    assert len(latex) > 0
+
+    # Verify key content
+    assert "Experiment" in markdown
+    assert "Pass Rate" in markdown
+    assert "Best Tier" in markdown
+    assert "tabular" in latex
+
+
+def test_table11_one_row_per_experiment(sample_runs_df: Any) -> None:
+    """Table 11 has one data row per experiment."""
+    from scylla.analysis.tables import table11_experiment_overview
+
+    markdown, _latex = table11_experiment_overview(sample_runs_df)
+
+    n_experiments = sample_runs_df["experiment"].nunique()
+    # Count data rows (exclude header, separator, and title lines)
+    data_lines = [
+        line
+        for line in markdown.split("\n")
+        if line.startswith("|") and "---" not in line and "Experiment" not in line
+    ]
+    assert len(data_lines) == n_experiments

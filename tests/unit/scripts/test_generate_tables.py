@@ -57,6 +57,7 @@ class TestMain:
             patch("generate_tables.table08_summary_statistics", return_value=("md", "tex")),
             patch("generate_tables.table09_experiment_config", return_value=("md", "tex")),
             patch("generate_tables.table10_normality_tests", return_value=("md", "tex")),
+            patch("generate_tables.table11_experiment_overview", return_value=("md", "tex")),
             patch(
                 "sys.argv",
                 ["generate_tables.py", "--output-dir", str(output_dir)],
@@ -94,6 +95,7 @@ class TestMain:
             patch("generate_tables.table08_summary_statistics", return_value=("md", "tex")),
             patch("generate_tables.table09_experiment_config", return_value=("md", "tex")),
             patch("generate_tables.table10_normality_tests", return_value=("md", "tex")),
+            patch("generate_tables.table11_experiment_overview", return_value=("md", "tex")),
             patch(
                 "sys.argv",
                 ["generate_tables.py", "--output-dir", str(output_dir)],

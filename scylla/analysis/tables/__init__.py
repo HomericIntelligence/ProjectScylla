@@ -28,16 +28,14 @@ from scylla.analysis.tables.detail import (
 from scylla.analysis.tables.summary import (
     table01_tier_summary,
     table05_cost_analysis,
+    table11_experiment_overview,
 )
 
 # Export all table functions
 __all__ = [
-    # Summary tables
     "table01_tier_summary",
-    # Comparison tables
     "table02_tier_comparison",
     "table02b_impl_rate_comparison",
-    # Detail tables
     "table03_judge_agreement",
     "table04_criteria_performance",
     "table05_cost_analysis",
@@ -46,5 +44,6 @@ __all__ = [
     "table08_summary_statistics",
     "table09_experiment_config",
     "table10_normality_tests",
+    "table11_experiment_overview",
     "table_cfp_comparison",
 ]

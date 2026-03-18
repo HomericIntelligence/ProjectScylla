@@ -279,3 +279,123 @@ def fig22_cumulative_cost(runs_df: pd.DataFrame, output_dir: Path, render: bool 
     )
 
     save_figure(chart, "fig22_cumulative_cost", output_dir, render)
+
+
+def fig34_per_experiment_cost_frontier(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig 34: Per-Experiment Cost Frontier.
+
+    Small-multiples scatter showing pass rate vs mean cost, one panel per tier.
+    Each dot is one experiment. Shows cost-quality tradeoff variation.
+
+    Args:
+        runs_df: Runs DataFrame
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    tier_order = derive_tier_order(runs_df)
+
+    # Compute mean cost and pass rate per (experiment, tier)
+    stats = (
+        runs_df.groupby(["experiment", "tier"])
+        .agg({"cost_usd": "mean", "passed": "mean"})
+        .reset_index()
+    )
+    stats.columns = ["experiment", "tier", "mean_cost", "pass_rate"]
+
+    # Filter out zero costs for log scale
+    stats = stats[stats["mean_cost"] > 0]
+
+    scatter = (
+        alt.Chart(stats)
+        .mark_circle(size=40, opacity=0.7)
+        .encode(
+            x=alt.X("mean_cost:Q", title="Mean Cost (USD)", scale=alt.Scale(type="log")),
+            y=alt.Y("pass_rate:Q", title="Pass Rate", scale=alt.Scale(domain=[0, 1])),
+            tooltip=[
+                alt.Tooltip("experiment:O", title="Experiment"),
+                alt.Tooltip("mean_cost:Q", title="Mean Cost", format="$.4f"),
+                alt.Tooltip("pass_rate:Q", title="Pass Rate", format=".2%"),
+            ],
+        )
+    )
+
+    chart = scatter.facet(column=alt.Column("tier:N", title="Tier", sort=tier_order)).properties(
+        title="Per-Experiment Cost vs Pass Rate by Tier"
+    )
+
+    save_figure(chart, "fig34_per_experiment_cost_frontier", output_dir, render)
+
+    csv_path = output_dir / "fig34_per_experiment_cost_frontier.csv"
+    stats.to_csv(csv_path, index=False)
+
+
+def fig39_cost_scaling_with_difficulty(
+    runs_df: pd.DataFrame, output_dir: Path, render: bool = True
+) -> None:
+    """Generate Fig 39: Cost Scaling with Task Difficulty.
+
+    Scatter of mean cost per experiment vs mean pass rate, colored by tier.
+    Shows how cost scales with task difficulty and whether delegation tiers
+    scale differently.
+
+    Args:
+        runs_df: Runs DataFrame (must contain 'experiment', 'tier', 'cost_usd', 'passed')
+        output_dir: Output directory
+        render: Whether to render to PNG/PDF
+
+    """
+    required = {"experiment", "tier", "cost_usd", "passed"}
+    if not required.issubset(runs_df.columns):
+        return
+
+    tier_order = derive_tier_order(runs_df)
+
+    # Compute mean cost and pass rate per (experiment, tier)
+    exp_tier_stats = (
+        runs_df.groupby(["experiment", "tier"])
+        .agg({"cost_usd": "mean", "passed": "mean"})
+        .reset_index()
+    )
+    exp_tier_stats.columns = ["experiment", "tier", "mean_cost", "pass_rate"]
+
+    # Filter out zero costs for log scale
+    exp_tier_stats = exp_tier_stats[exp_tier_stats["mean_cost"] > 0]
+
+    if len(exp_tier_stats) < 2:
+        return
+
+    domain, range_ = get_color_scale("tiers", tier_order)
+
+    chart = (
+        alt.Chart(exp_tier_stats)
+        .mark_circle(size=50, opacity=0.7)
+        .encode(
+            x=alt.X(
+                "pass_rate:Q",
+                title="Pass Rate (Task Difficulty)",
+                scale=alt.Scale(domain=[0, 1]),
+            ),
+            y=alt.Y("mean_cost:Q", title="Mean Cost (USD)", scale=alt.Scale(type="log")),
+            color=alt.Color(
+                "tier:O",
+                title="Tier",
+                sort=tier_order,
+                scale=alt.Scale(domain=domain, range=range_),
+            ),
+            tooltip=[
+                alt.Tooltip("experiment:O", title="Experiment"),
+                alt.Tooltip("tier:O", title="Tier"),
+                alt.Tooltip("mean_cost:Q", title="Mean Cost", format="$.4f"),
+                alt.Tooltip("pass_rate:Q", title="Pass Rate", format=".2%"),
+            ],
+        )
+        .properties(title="Cost Scaling with Task Difficulty")
+    )
+
+    save_figure(chart, "fig39_cost_scaling_with_difficulty", output_dir, render)
+
+    csv_path = output_dir / "fig39_cost_scaling_with_difficulty.csv"
+    exp_tier_stats.to_csv(csv_path, index=False)

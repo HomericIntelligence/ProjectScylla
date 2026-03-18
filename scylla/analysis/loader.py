@@ -729,12 +729,17 @@ def load_run(run_dir: Path, experiment: str, tier: str, subtest: str, agent_mode
     )
 
 
-def load_experiment(experiment_dir: Path, agent_model: str) -> list[RunData]:
+def load_experiment(
+    experiment_dir: Path,
+    agent_model: str,
+    experiment_name: str | None = None,
+) -> list[RunData]:
     """Load all runs from an experiment.
 
     Args:
         experiment_dir: Path to experiment directory (contains tier dirs)
         agent_model: Agent model display name
+        experiment_name: Override for experiment name. If None, uses directory name.
 
     Returns:
         List of all run data
@@ -744,7 +749,7 @@ def load_experiment(experiment_dir: Path, agent_model: str) -> list[RunData]:
 
     """
     runs = []
-    experiment_name = experiment_dir.name
+    experiment_name = experiment_name or experiment_dir.name
 
     # Iterate through tier directories (T0-T6)
     for tier_dir in sorted(experiment_dir.iterdir()):
@@ -825,7 +830,7 @@ def load_all_experiments(
             logger.warning("%s, skipping experiment", e)
             continue
 
-        runs = load_experiment(actual_exp_dir, agent_model)
+        runs = load_experiment(actual_exp_dir, agent_model, experiment_name=exp_name)
         experiments[exp_name] = runs
         logger.info("  Loaded %d runs (agent model: %s)", len(runs), agent_model)
 

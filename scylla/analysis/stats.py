@@ -31,6 +31,7 @@ __all__ = [
     "compute_frontier_cop",
     "compute_impl_rate",
     "holm_bonferroni_correction",
+    "kendall_tau",
     "krippendorff_alpha",
     "kruskal_wallis",
     "kruskal_wallis_power",
@@ -311,6 +312,34 @@ def spearman_correlation(
     """
     corr, pvalue = stats.spearmanr(x, y)
     return float(corr), float(pvalue)
+
+
+def kendall_tau(x: pd.Series | np.ndarray, y: pd.Series | np.ndarray) -> tuple[float, float]:
+    """Compute Kendall's tau rank correlation.
+
+    Measures ordinal association between two rankings. Useful for assessing
+    tier rank stability across experiments (e.g., do tier rankings agree?).
+
+    Args:
+        x: First ranking variable
+        y: Second ranking variable
+
+    Returns:
+        Tuple of (tau, p-value)
+
+    """
+    x_arr = np.array(x)
+    y_arr = np.array(y)
+
+    if len(x_arr) < 2 or len(y_arr) < 2:
+        logger.warning(
+            f"Kendall's tau called with sample sizes {len(x_arr)}, {len(y_arr)}. "
+            "Need at least 2 samples. Returning tau=0, p=1.0."
+        )
+        return 0.0, 1.0
+
+    tau, pvalue = stats.kendalltau(x_arr, y_arr)
+    return float(tau), float(pvalue)
 
 
 def pearson_correlation(

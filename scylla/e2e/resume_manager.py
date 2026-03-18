@@ -147,30 +147,125 @@ class ResumeManager:
                         count += 1
         return count
 
-    def reset_failed_states(self) -> tuple[ExperimentConfig, E2ECheckpoint]:
-        """Reset failed/interrupted experiment, tier, subtest, and run states for re-execution.
+    def _find_tiers_with_intermediate_runs(self) -> dict[str, list[str]]:
+        """Find tiers that have runs in non-terminal, non-pending states.
 
-        Resets:
-        - run_states: failed/rate_limited → pending (always, regardless of experiment_state)
-        - experiment_state: failed/interrupted → tiers_running
-        - tier_states: failed → pending
-        - subtest_states: failed → pending
-
-        Run-state reset is unconditional: individual runs can be failed/rate_limited
-        even when the experiment itself is in tiers_running (partial failures).
+        These are runs that were interrupted mid-pipeline (e.g. report_written)
+        and need to be resumed to reach a terminal state.
 
         Returns:
-            Updated (config, checkpoint) tuple.
+            Dict mapping tier_id -> list of "subtest_id/run_num" descriptors.
 
         """
-        # Always reset failed/rate_limited run_states regardless of experiment_state,
-        # since individual runs can fail while the experiment is still running.
-        run_reset_count = self._reset_infra_error_runs()
-        if run_reset_count > 0:
-            logger.info("Reset %d failed/rate_limited run_states to pending", run_reset_count)
+        from scylla.e2e.state_machine import is_terminal_state
 
+        result: dict[str, list[str]] = {}
+        for tier_id, subtests in self.checkpoint.run_states.items():
+            intermediate: list[str] = []
+            for subtest_id, runs in subtests.items():
+                for run_num, state_str in runs.items():
+                    try:
+                        state = RunState(state_str)
+                    except ValueError:
+                        continue
+                    if not is_terminal_state(state) and state != RunState.PENDING:
+                        intermediate.append(f"{subtest_id}/run_{run_num}")
+            if intermediate:
+                result[tier_id] = intermediate
+        return result
+
+    def _find_orphaned_subtest_states(self) -> dict[str, list[str]]:
+        """Find subtests marked as aggregated but with no corresponding run_states.
+
+        This detects checkpoint integrity issues where a subtest was marked
+        complete without recording its runs.
+
+        Returns:
+            Dict mapping tier_id -> list of orphaned subtest_ids.
+
+        """
+        result: dict[str, list[str]] = {}
+        for tier_id, subtests in self.checkpoint.subtest_states.items():
+            orphaned: list[str] = []
+            for subtest_id, sub_state in subtests.items():
+                if sub_state in ("aggregated", "runs_complete"):
+                    runs = self.checkpoint.run_states.get(tier_id, {}).get(subtest_id, {})
+                    if not runs:
+                        orphaned.append(subtest_id)
+            if orphaned:
+                result[tier_id] = orphaned
+        return result
+
+    _COMPLETE_FAMILY_STATES = ("complete", "tiers_complete", "reports_generated")
+    _COMPLETE_TIER_STATES = ("complete", "subtests_complete", "best_selected", "reports_generated")
+
+    def _reset_experiment_to_tiers_running(self) -> None:
+        """Reset experiment_state to tiers_running if in a complete-family state."""
+        if self.checkpoint.experiment_state in self._COMPLETE_FAMILY_STATES:
+            self.checkpoint.experiment_state = "tiers_running"
+
+    def _reset_tier_to_config_loaded(self, tier_id: str) -> None:
+        """Reset a tier to config_loaded if in a complete-family state."""
+        if self.checkpoint.tier_states.get(tier_id, "") in self._COMPLETE_TIER_STATES:
+            self.checkpoint.tier_states[tier_id] = "config_loaded"
+
+    def _reset_intermediate_runs_in_complete_experiment(self) -> None:
+        """Reset complete experiments that have runs stuck in intermediate states.
+
+        Intermediate runs (e.g. report_written) need the experiment/tier reset
+        so the pipeline re-enters and finishes them.
+
+        """
+        tiers_with_intermediate = self._find_tiers_with_intermediate_runs()
+        if not tiers_with_intermediate:
+            return
+        if self.checkpoint.experiment_state not in self._COMPLETE_FAMILY_STATES:
+            return
+
+        total = sum(len(v) for v in tiers_with_intermediate.values())
+        logger.info(
+            "Resetting experiment from '%s' to 'tiers_running' — %d intermediate runs in tiers: %s",
+            self.checkpoint.experiment_state,
+            total,
+            list(tiers_with_intermediate.keys()),
+        )
+        self.checkpoint.experiment_state = "tiers_running"
+        for tier_id in tiers_with_intermediate:
+            self._reset_tier_to_config_loaded(tier_id)
+            for sub_id, sub_state in self.checkpoint.subtest_states.get(tier_id, {}).items():
+                if sub_state in (
+                    "aggregated",
+                    "runs_complete",
+                ) and self._subtest_has_incomplete_runs(tier_id, sub_id):
+                    self.checkpoint.subtest_states[tier_id][sub_id] = "runs_in_progress"
+
+    def _reset_orphaned_subtest_states(self) -> None:
+        """Reset subtests marked aggregated/runs_complete but with no run_states entries.
+
+        These are checkpoint integrity issues where a subtest was marked
+        complete without recording its runs.
+
+        """
+        orphaned = self._find_orphaned_subtest_states()
+        if not orphaned:
+            return
+
+        total_orphaned = sum(len(v) for v in orphaned.values())
+        logger.info(
+            "Resetting %d orphaned subtest_states (aggregated without run_states): %s",
+            total_orphaned,
+            orphaned,
+        )
+        for tier_id, sub_ids in orphaned.items():
+            for sub_id in sub_ids:
+                self.checkpoint.subtest_states[tier_id][sub_id] = "pending"
+            self._reset_experiment_to_tiers_running()
+            self._reset_tier_to_config_loaded(tier_id)
+
+    def _reset_failed_and_interrupted(self) -> None:
+        """Reset failed/interrupted experiment, tier, and subtest states."""
         if self.checkpoint.experiment_state not in ("failed", "interrupted"):
-            return self.config, self.checkpoint
+            return
 
         logger.info(
             "Resetting experiment state from '%s' to 'tiers_running' for re-execution",
@@ -186,6 +281,33 @@ class ResumeManager:
             for subtest_id, sub_state in self.checkpoint.subtest_states[tier_id].items():
                 if sub_state == "failed":
                     self.checkpoint.subtest_states[tier_id][subtest_id] = "pending"
+
+    def reset_failed_states(self) -> tuple[ExperimentConfig, E2ECheckpoint]:
+        """Reset failed/interrupted experiment, tier, subtest, and run states for re-execution.
+
+        Resets:
+        - run_states: failed/rate_limited → pending (always, regardless of experiment_state)
+        - experiment_state: failed/interrupted → tiers_running
+        - experiment_state: complete-family → tiers_running (when intermediate runs exist)
+        - tier_states: failed → pending
+        - tier_states: complete-family → config_loaded (when tier has intermediate runs)
+        - subtest_states: failed → pending
+        - subtest_states: aggregated without run_states → pending (orphaned)
+
+        Run-state reset is unconditional: individual runs can be failed/rate_limited
+        even when the experiment itself is in tiers_running (partial failures).
+
+        Returns:
+            Updated (config, checkpoint) tuple.
+
+        """
+        run_reset_count = self._reset_infra_error_runs()
+        if run_reset_count > 0:
+            logger.info("Reset %d failed/rate_limited run_states to pending", run_reset_count)
+
+        self._reset_intermediate_runs_in_complete_experiment()
+        self._reset_orphaned_subtest_states()
+        self._reset_failed_and_interrupted()
 
         return self.config, self.checkpoint
 

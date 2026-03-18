@@ -323,6 +323,8 @@ class TestResetFailedStates:
         """Failed subtest states are reset to pending."""
         base_checkpoint.experiment_state = "failed"
         base_checkpoint.subtest_states = {"T0": {"T0_00": "failed", "T0_01": "aggregated"}}
+        # Provide run_states for T0_01 so orphan detection doesn't trigger
+        base_checkpoint.run_states = {"T0": {"T0_01": {"1": RunState.WORKTREE_CLEANED.value}}}
         rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
         _, checkpoint = rm.reset_failed_states()
         assert checkpoint.subtest_states["T0"]["T0_00"] == "pending"
@@ -391,6 +393,8 @@ class TestResetFailedStates:
             "T0": {"T0_00": "failed", "T0_01": "failed"},
             "T1": {"T1_00": "aggregated", "T1_01": "failed"},
         }
+        # Provide run_states for T1_00 so orphan detection doesn't trigger
+        base_checkpoint.run_states = {"T1": {"T1_00": {"1": RunState.WORKTREE_CLEANED.value}}}
         rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
         _, checkpoint = rm.reset_failed_states()
         assert checkpoint.subtest_states["T0"]["T0_00"] == "pending"
@@ -1102,3 +1106,223 @@ class TestSubtestHasIncompleteRuns:
         base_checkpoint.run_states = {"T0": {"T0_00": {"1": RunState.PENDING.value}}}
         rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
         assert rm._subtest_has_incomplete_runs("T0", "T0_01") is False
+
+
+# ---------------------------------------------------------------------------
+# _find_tiers_with_intermediate_runs (private helper)
+# ---------------------------------------------------------------------------
+
+
+class TestFindTiersWithIntermediateRuns:
+    """Tests for _find_tiers_with_intermediate_runs() private helper."""
+
+    def test_no_intermediate_runs(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Returns empty dict when all runs are terminal."""
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": RunState.WORKTREE_CLEANED.value}},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._find_tiers_with_intermediate_runs() == {}
+
+    def test_report_written_is_intermediate(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """report_written is a non-terminal, non-pending state — detected as intermediate."""
+        base_checkpoint.run_states = {
+            "T3": {
+                "03": {"1": RunState.REPORT_WRITTEN.value},
+                "04": {"1": RunState.REPORT_WRITTEN.value},
+            },
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm._find_tiers_with_intermediate_runs()
+        assert "T3" in result
+        assert len(result["T3"]) == 2
+
+    def test_pending_not_counted_as_intermediate(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """PENDING runs are not intermediate — they haven't started yet."""
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": RunState.PENDING.value}},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._find_tiers_with_intermediate_runs() == {}
+
+    def test_mixed_tiers(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Only tiers with intermediate runs are returned."""
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": RunState.WORKTREE_CLEANED.value}},
+            "T3": {"03": {"1": RunState.AGENT_COMPLETE.value}},
+        }
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm._find_tiers_with_intermediate_runs()
+        assert "T0" not in result
+        assert "T3" in result
+
+
+# ---------------------------------------------------------------------------
+# _find_orphaned_subtest_states (private helper)
+# ---------------------------------------------------------------------------
+
+
+class TestFindOrphanedSubtestStates:
+    """Tests for _find_orphaned_subtest_states() private helper."""
+
+    def test_no_orphans(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Returns empty dict when all aggregated subtests have run_states."""
+        base_checkpoint.subtest_states = {"T0": {"02": "aggregated"}}
+        base_checkpoint.run_states = {"T0": {"02": {"1": RunState.WORKTREE_CLEANED.value}}}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._find_orphaned_subtest_states() == {}
+
+    def test_orphaned_aggregated_subtest(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Detects aggregated subtest with no run_states entry."""
+        base_checkpoint.subtest_states = {"T0": {"02": "aggregated"}}
+        base_checkpoint.run_states = {"T0": {}}  # No runs for subtest 02
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm._find_orphaned_subtest_states()
+        assert result == {"T0": ["02"]}
+
+    def test_orphaned_runs_complete_subtest(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Detects runs_complete subtest with no run_states entry."""
+        base_checkpoint.subtest_states = {"T0": {"02": "runs_complete"}}
+        base_checkpoint.run_states = {}  # No tier entry at all
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        result = rm._find_orphaned_subtest_states()
+        assert result == {"T0": ["02"]}
+
+    def test_pending_subtest_not_orphaned(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Pending subtests without run_states are not orphaned."""
+        base_checkpoint.subtest_states = {"T0": {"02": "pending"}}
+        base_checkpoint.run_states = {}
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        assert rm._find_orphaned_subtest_states() == {}
+
+
+# ---------------------------------------------------------------------------
+# reset_failed_states — intermediate runs in complete experiments
+# ---------------------------------------------------------------------------
+
+
+class TestResetFailedStatesIntermediateRuns:
+    """Tests for intermediate run and orphaned subtest handling in reset_failed_states()."""
+
+    def test_complete_experiment_with_intermediate_runs_reset(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Complete experiment with intermediate runs resets to tiers_running."""
+        base_checkpoint.experiment_state = "complete"
+        base_checkpoint.tier_states = {"T3": "complete"}
+        base_checkpoint.subtest_states = {"T3": {"03": "aggregated", "04": "aggregated"}}
+        base_checkpoint.run_states = {
+            "T3": {
+                "03": {"1": RunState.REPORT_WRITTEN.value},
+                "04": {"1": RunState.REPORT_WRITTEN.value},
+            },
+        }
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+
+        assert checkpoint.experiment_state == "tiers_running"
+        assert checkpoint.tier_states["T3"] == "config_loaded"
+        assert checkpoint.subtest_states["T3"]["03"] == "runs_in_progress"
+        assert checkpoint.subtest_states["T3"]["04"] == "runs_in_progress"
+
+    def test_complete_experiment_all_terminal_stays_complete(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Complete experiment with all terminal runs stays complete."""
+        base_checkpoint.experiment_state = "complete"
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.subtest_states = {"T0": {"00": "aggregated"}}
+        base_checkpoint.run_states = {
+            "T0": {"00": {"1": RunState.WORKTREE_CLEANED.value}},
+        }
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+
+        assert checkpoint.experiment_state == "complete"
+
+    def test_orphaned_subtest_reset_to_pending(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """Orphaned subtest (aggregated, no run_states) reset to pending."""
+        base_checkpoint.experiment_state = "complete"
+        base_checkpoint.tier_states = {"T0": "complete"}
+        base_checkpoint.subtest_states = {"T0": {"02": "aggregated"}}
+        base_checkpoint.run_states = {"T0": {}}
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+
+        assert checkpoint.subtest_states["T0"]["02"] == "pending"
+        assert checkpoint.experiment_state == "tiers_running"
+        assert checkpoint.tier_states["T0"] == "config_loaded"
+
+    def test_tiers_running_with_intermediate_not_affected(
+        self,
+        base_checkpoint: E2ECheckpoint,
+        base_config: ExperimentConfig,
+        mock_tier_manager: MagicMock,
+    ) -> None:
+        """tiers_running experiment with intermediate runs is not reset (already running)."""
+        base_checkpoint.experiment_state = "tiers_running"
+        base_checkpoint.tier_states = {"T3": "config_loaded"}
+        base_checkpoint.subtest_states = {"T3": {"03": "runs_in_progress"}}
+        base_checkpoint.run_states = {
+            "T3": {"03": {"1": RunState.REPORT_WRITTEN.value}},
+        }
+
+        rm = _make_manager(base_checkpoint, base_config, mock_tier_manager)
+        _, checkpoint = rm.reset_failed_states()
+
+        # Should stay tiers_running — no reset needed
+        assert checkpoint.experiment_state == "tiers_running"
