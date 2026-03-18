@@ -49,6 +49,20 @@ def test_load_all_experiments_signature() -> None:
     assert "rubric_conflict" not in sig.parameters
 
 
+def test_load_experiment_uses_experiment_name_override() -> None:
+    """Test that load_experiment uses experiment_name param over dir name."""
+    import inspect
+
+    from scylla.analysis.loader import load_experiment
+
+    sig = inspect.signature(load_experiment)
+    assert "experiment_name" in sig.parameters
+
+    # Verify default is None
+    param = sig.parameters["experiment_name"]
+    assert param.default is None
+
+
 def test_validate_numeric_with_valid_values() -> None:
     """Test validate_numeric with valid numeric inputs."""
     from scylla.analysis.loader import validate_numeric

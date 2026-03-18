@@ -16,8 +16,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-# Tier subtest counts from tests/claude-code/shared/subtests/
-TIER_SUBTEST_COUNTS: dict[str, int] = {
+# Tier subtest counts from tests/claude-code/shared/subtests/ (validation fallback)
+DEFAULT_TIER_SUBTEST_COUNTS: dict[str, int] = {
     "T0": 24,
     "T1": 10,
     "T2": 15,
@@ -26,10 +26,14 @@ TIER_SUBTEST_COUNTS: dict[str, int] = {
     "T5": 15,
     "T6": 1,
 }
+
+# Module-level reference; overwritten per-test by derive_tier_subtest_counts()
+TIER_SUBTEST_COUNTS: dict[str, int] = dict(DEFAULT_TIER_SUBTEST_COUNTS)
 TOTAL_SUBTESTS_FULL = sum(TIER_SUBTEST_COUNTS.values())  # 120
 TOTAL_SUBTESTS_STANDARD = sum(min(3, v) for v in TIER_SUBTEST_COUNTS.values())  # 19
 
 FULL_ABLATION_TESTS = {"test-001", "test-002", "test-003"}
+FULL_ABLATION_SUBTEST_THRESHOLD = 3  # If any tier has >N subtests, it's full ablation
 TERMINAL_ERROR_STATES = {"failed", "rate_limited"}
 
 # Run classification labels
@@ -39,6 +43,29 @@ AGENT_FAILURE = "AGENT_FAILURE"
 INFRA_ERROR = "INFRA_ERROR"
 ORPHAN = "ORPHAN"
 INTERMEDIATE = "INTERMEDIATE"
+
+
+def derive_tier_subtest_counts(
+    run_states: dict[str, dict[str, dict[str, str]]],
+) -> dict[str, int]:
+    """Derive subtest counts per tier from checkpoint run_states.
+
+    Args:
+        run_states: Nested dict of tier_id -> subtest_id -> run_id -> state
+
+    Returns:
+        dict mapping tier_id -> number of subtests observed
+
+    """
+    return {tier_id: len(subtests) for tier_id, subtests in run_states.items()}
+
+
+def is_full_ablation(run_states: dict[str, dict[str, dict[str, str]]]) -> bool:
+    """Return True if any tier has more than FULL_ABLATION_SUBTEST_THRESHOLD subtests.
+
+    This detects full-ablation experiments without relying on hardcoded test names.
+    """
+    return any(len(subtests) > FULL_ABLATION_SUBTEST_THRESHOLD for subtests in run_states.values())
 
 
 def get_max_subtests(test_name: str) -> int | None:
@@ -237,6 +264,32 @@ def classify_complete_runs(
     return pass_runs, agent_failure_runs
 
 
+def check_orphaned_subtest_states(
+    cp: dict[str, Any],
+) -> list[tuple[str, str, str]]:
+    """Find subtest_states entries that have no corresponding run_states.
+
+    These indicate checkpoint integrity issues where a subtest was marked
+    aggregated/runs_complete but its runs were never recorded.
+
+    Returns:
+        List of (tier_id, subtest_id, subtest_state) for orphaned entries.
+
+    """
+    subtest_states: dict[str, dict[str, str]] = cp.get("subtest_states", {})
+    run_states: dict[str, dict[str, dict[str, str]]] = cp.get("run_states", {})
+    orphaned: list[tuple[str, str, str]] = []
+
+    for tier_id, subtests in subtest_states.items():
+        for sub_id, sub_state in subtests.items():
+            if sub_state in ("aggregated", "runs_complete"):
+                runs = run_states.get(tier_id, {}).get(sub_id, {})
+                if not runs:
+                    orphaned.append((tier_id, sub_id, sub_state))
+
+    return orphaned
+
+
 def analyze_test(
     test_name: str,
     exp_dir_name: str,
@@ -270,6 +323,7 @@ def analyze_test(
     active_in_cp = total_in_cp - len(orphan_runs)
 
     missing_subtests = check_subtest_coverage(run_states, test_name)
+    orphaned_subtests = check_orphaned_subtest_states(cp)
     passed, failed, missing_json = load_grades(experiment_dir, complete_runs)
     per_tier_grades = load_per_tier_grades(experiment_dir, complete_runs)
 
@@ -291,6 +345,7 @@ def analyze_test(
         "orphan": len(orphan_runs),
         "intermediate": len(intermediate_runs),
         "missing_subtests": missing_subtests,
+        "orphaned_subtests": orphaned_subtests,
         "infra_error_runs": infra_error_runs,
         "intermediate_runs": intermediate_runs,
         "passed": passed,
@@ -334,6 +389,13 @@ def go_nogo(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
             f"{len(tests_with_missing)} tests have missing subtests (not yet created in checkpoint)"
         )
 
+    # 3b. Checkpoint integrity: subtest_states without run_states
+    total_orphaned = sum(len(r.get("orphaned_subtests", [])) for r in all_results)
+    if total_orphaned > 0:
+        reasons.append(
+            f"{total_orphaned} orphaned subtest_states (aggregated without run_states entries)"
+        )
+
     # 4. Data quality: >=95% complete runs have valid run_result.json
     total_complete = sum(r.get("complete", 0) for r in all_results)
     total_missing_json = sum(r.get("missing_json", 0) for r in all_results)
@@ -370,6 +432,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
         or r.get("infra_error", 0) > 0
         or r.get("intermediate", 0) > 0
         or r.get("missing_subtests")
+        or r.get("orphaned_subtests")
     ]
     tests_complete = [
         r
@@ -378,6 +441,7 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
         and r.get("infra_error", 0) == 0
         and r.get("intermediate", 0) == 0
         and not r.get("missing_subtests")
+        and not r.get("orphaned_subtests")
     ]
 
     total_active = sum(r.get("active_in_cp", 0) for r in all_results)
@@ -460,6 +524,13 @@ def generate_report(all_results: list[dict[str, Any]]) -> tuple[str, list[str]]:
                 suffix = f" ... (+{r['intermediate'] - 10} more)" if r["intermediate"] > 10 else ""
                 print(f"  INTERMEDIATE: {', '.join(items)}{suffix}")
 
+            if r.get("orphaned_subtests"):
+                items = [
+                    f"{t}/{s}(subtest_state={st}, no run_states)"
+                    for t, s, st in r["orphaned_subtests"]
+                ]
+                print(f"  ORPHANED SUBTESTS: {', '.join(items)}")
+
         print()
 
     # Grade distribution
@@ -527,8 +598,12 @@ def main() -> None:
 
     experiments = discover_experiments(results_dir)
 
-    # Check for missing tests
-    all_test_names = {f"test-{i:03d}" for i in range(1, 48)}
+    # Derive expected test set from discovered experiments (no hardcoded count)
+    all_test_names: set[str] = set()
+    if experiments:
+        max_test_num = max(int(name.split("-")[1]) for name in experiments)
+        all_test_names = {f"test-{i:03d}" for i in range(1, max_test_num + 1)}
+
     missing_tests = all_test_names - experiments.keys()
     if missing_tests:
         print(f"WARNING: No experiment dirs found for: {sorted(missing_tests)}", file=sys.stderr)

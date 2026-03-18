@@ -279,7 +279,99 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
     return markdown, latex
 
 
+def table11_experiment_overview(runs_df: pd.DataFrame) -> tuple[str, str]:
+    """Generate Table 11: Experiment Overview.
+
+    One row per experiment: test name, overall pass rate, best tier, CoP, total cost.
+
+    Args:
+        runs_df: Runs DataFrame
+
+    Returns:
+        Tuple of (markdown_table, latex_table)
+
+    """
+    exp_order = sorted(runs_df["experiment"].unique())
+
+    rows = []
+    for exp in exp_order:
+        exp_data = runs_df[runs_df["experiment"] == exp]
+
+        overall_pass_rate = exp_data["passed"].mean()
+        total_cost = exp_data["cost_usd"].sum()
+        mean_cost = exp_data["cost_usd"].mean()
+        cop = compute_cop(mean_cost, overall_pass_rate)
+        n_runs = len(exp_data)
+
+        # Best tier by pass rate
+        tier_pass_rates = exp_data.groupby("tier")["passed"].mean()
+        best_tier = tier_pass_rates.idxmax() if len(tier_pass_rates) > 0 else "—"
+
+        rows.append(
+            {
+                "Experiment": exp,
+                "Runs": n_runs,
+                "Pass Rate": overall_pass_rate,
+                "Best Tier": best_tier,
+                "Mean Cost": mean_cost,
+                "Total Cost": total_cost,
+                "CoP": cop if cop != float("inf") else None,
+            }
+        )
+
+    df = pd.DataFrame(rows)
+
+    # Markdown
+    md_lines = ["# Table 11: Experiment Overview", ""]
+    md_lines.append(
+        "| Experiment | Runs | Pass Rate | Best Tier | Mean Cost ($) | Total Cost ($) | CoP ($) |"
+    )
+    md_lines.append(
+        "|------------|------|-----------|-----------|---------------|----------------|---------|"
+    )
+
+    for _, row in df.iterrows():
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "∞"
+        md_lines.append(
+            f"| {row['Experiment']} | {row['Runs']} | "
+            f"{row['Pass Rate']:{_FMT_RATE}} | {row['Best Tier']} | "
+            f"{row['Mean Cost']:{_FMT_COST}} | {row['Total Cost']:{_FMT_COST}} | "
+            f"{cop_str} |"
+        )
+
+    markdown = "\n".join(md_lines)
+
+    # LaTeX
+    latex_lines = [
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{Experiment Overview}",
+        r"\label{tab:experiment_overview}",
+        r"\small",
+        r"\begin{tabular}{lrrrrrr}",
+        r"\toprule",
+        r"Experiment & Runs & Pass Rate & Best Tier & "
+        r"Mean Cost (\$) & Total Cost (\$) & CoP (\$) \\",
+        r"\midrule",
+    ]
+
+    for _, row in df.iterrows():
+        cop_str = f"{row['CoP']:{_FMT_COST}}" if row["CoP"] is not None else "$\\infty$"
+        latex_lines.append(
+            f"{row['Experiment']} & {row['Runs']} & "
+            f"{row['Pass Rate']:{_FMT_RATE}} & {row['Best Tier']} & "
+            f"{row['Mean Cost']:{_FMT_COST}} & {row['Total Cost']:{_FMT_COST}} & "
+            f"{cop_str} \\\\"
+        )
+
+    latex_lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}"])
+    latex = "\n".join(latex_lines)
+
+    return markdown, latex
+
+
 __all__ = [
     "table01_tier_summary",
     "table05_cost_analysis",
+    "table11_experiment_overview",
 ]

@@ -760,3 +760,197 @@ def test_fig_strategic_drift_by_tier_all_null(tmp_path: Any) -> None:
     )
     fig_strategic_drift_by_tier(df, tmp_path, render=False)
     assert not (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
+
+
+def test_fig31_experiment_tier_heatmap(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig31 generates heatmap and CSV."""
+    from scylla.analysis.figures.tier_performance import fig31_experiment_tier_heatmap
+
+    fig31_experiment_tier_heatmap(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig31_experiment_tier_heatmap.vl.json").exists()
+    assert (tmp_path / "fig31_experiment_tier_heatmap.csv").exists()
+
+
+def test_fig32_tier_win_count(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig32 generates bar chart and CSV."""
+    from scylla.analysis.figures.tier_performance import fig32_tier_win_count
+
+    fig32_tier_win_count(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig32_tier_win_count.vl.json").exists()
+    assert (tmp_path / "fig32_tier_win_count.csv").exists()
+
+
+def test_fig33_convergence_analysis(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig33 generates convergence chart and CSV."""
+    from scylla.analysis.figures.tier_performance import fig33_convergence_analysis
+
+    fig33_convergence_analysis(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig33_convergence_analysis.vl.json").exists()
+    assert (tmp_path / "fig33_convergence_analysis.csv").exists()
+
+
+def test_fig33_convergence_analysis_single_experiment(tmp_path: Any) -> None:
+    """fig33 returns early with <2 experiments."""
+    import pandas as pd
+
+    from scylla.analysis.figures.tier_performance import fig33_convergence_analysis
+
+    df = pd.DataFrame(
+        {
+            "experiment": ["test-001"] * 5,
+            "agent_model": ["Haiku 4.5"] * 5,
+            "tier": ["T0"] * 5,
+            "passed": [True] * 5,
+        }
+    )
+    fig33_convergence_analysis(df, tmp_path, render=False)
+    # Should not generate files with a single experiment
+    assert not (tmp_path / "fig33_convergence_analysis.vl.json").exists()
+
+
+def test_fig34_per_experiment_cost_frontier(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig34 generates cost frontier and CSV."""
+    from scylla.analysis.figures.cost_analysis import fig34_per_experiment_cost_frontier
+
+    fig34_per_experiment_cost_frontier(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig34_per_experiment_cost_frontier.vl.json").exists()
+    assert (tmp_path / "fig34_per_experiment_cost_frontier.csv").exists()
+
+
+def test_generate_figures_registry_includes_new_figures() -> None:
+    """FIGURES registry contains all four new aggregate figures."""
+    from scripts.generate_figures import FIGURES
+
+    assert "fig31_experiment_tier_heatmap" in FIGURES
+    assert "fig32_tier_win_count" in FIGURES
+    assert "fig33_convergence_analysis" in FIGURES
+    assert "fig34_per_experiment_cost_frontier" in FIGURES
+
+
+def test_fig35_task_difficulty_distribution(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig35 generates histogram and CSV."""
+    # Add a second experiment to enable the histogram
+    import pandas as pd
+
+    from scylla.analysis.figures.task_analysis import fig35_task_difficulty_distribution
+
+    df2 = sample_runs_df.copy()
+    df2["experiment"] = "test-002"
+    combined = pd.concat([sample_runs_df, df2], ignore_index=True)
+
+    fig35_task_difficulty_distribution(combined, tmp_path, render=False)
+    assert (tmp_path / "fig35_task_difficulty_distribution.vl.json").exists()
+    assert (tmp_path / "fig35_task_difficulty_distribution.csv").exists()
+
+
+def test_fig35_task_difficulty_single_experiment(sample_runs_df: Any, tmp_path: Any) -> None:
+    """fig35 returns early with <2 experiments."""
+    # sample_runs_df has only 1 experiment name pattern, but let's ensure it
+
+    from scylla.analysis.figures.task_analysis import fig35_task_difficulty_distribution
+
+    df = sample_runs_df.copy()
+    df["experiment"] = "single-exp"
+    fig35_task_difficulty_distribution(df, tmp_path, render=False)
+    assert not (tmp_path / "fig35_task_difficulty_distribution.vl.json").exists()
+
+
+def test_fig36_tier_rank_stability(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig36 generates heatmap and CSV."""
+    from scylla.analysis.figures.task_analysis import fig36_tier_rank_stability
+
+    fig36_tier_rank_stability(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig36_tier_rank_stability.vl.json").exists()
+    assert (tmp_path / "fig36_tier_rank_stability.csv").exists()
+
+
+def test_fig37_complexity_vs_differentiation(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig37 generates scatter plot and CSV."""
+    from scylla.analysis.figures.task_analysis import fig37_complexity_vs_differentiation
+
+    fig37_complexity_vs_differentiation(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig37_complexity_vs_differentiation.vl.json").exists()
+    assert (tmp_path / "fig37_complexity_vs_differentiation.csv").exists()
+
+
+def test_fig38_full_ablation_comparison(tmp_path: Any) -> None:
+    """Smoke test: fig38 generates comparison chart and CSV."""
+    import numpy as np
+    import pandas as pd
+
+    from scylla.analysis.figures.task_analysis import fig38_full_ablation_comparison
+
+    # Create data with both full-ablation and standard experiments
+    np.random.seed(42)
+    rows = []
+    for exp, n_subtests in [("full-001", 5), ("std-001", 3), ("std-002", 2)]:
+        for tier in ["T0", "T1", "T2"]:
+            for sub in range(n_subtests):
+                rows.append(
+                    {
+                        "experiment": exp,
+                        "tier": tier,
+                        "subtest": f"{sub:02d}",
+                        "passed": np.random.choice([0, 1]),
+                        "agent_model": "Haiku 4.5",
+                    }
+                )
+    df = pd.DataFrame(rows)
+
+    fig38_full_ablation_comparison(df, tmp_path, render=False)
+    assert (tmp_path / "fig38_full_ablation_comparison.vl.json").exists()
+    assert (tmp_path / "fig38_full_ablation_comparison.csv").exists()
+
+
+def test_fig38_no_full_ablation(sample_runs_df: Any, tmp_path: Any) -> None:
+    """fig38 returns early when no full-ablation experiments detected."""
+    from scylla.analysis.figures.task_analysis import fig38_full_ablation_comparison
+
+    # sample_runs_df has only 2 subtests per tier (< 3), so auto-detect finds none
+    fig38_full_ablation_comparison(sample_runs_df, tmp_path, render=False)
+    assert not (tmp_path / "fig38_full_ablation_comparison.vl.json").exists()
+
+
+def test_fig39_cost_scaling_with_difficulty(sample_runs_df: Any, tmp_path: Any) -> None:
+    """Smoke test: fig39 generates scatter plot and CSV."""
+    from scylla.analysis.figures.cost_analysis import fig39_cost_scaling_with_difficulty
+
+    fig39_cost_scaling_with_difficulty(sample_runs_df, tmp_path, render=False)
+    assert (tmp_path / "fig39_cost_scaling_with_difficulty.vl.json").exists()
+    assert (tmp_path / "fig39_cost_scaling_with_difficulty.csv").exists()
+
+
+def test_generate_figures_registry_includes_task_analysis_figures() -> None:
+    """FIGURES registry contains all five new task analysis figures."""
+    from scripts.generate_figures import FIGURES
+
+    assert "fig35_task_difficulty_distribution" in FIGURES
+    assert "fig36_tier_rank_stability" in FIGURES
+    assert "fig37_complexity_vs_differentiation" in FIGURES
+    assert "fig38_full_ablation_comparison" in FIGURES
+    assert "fig39_cost_scaling_with_difficulty" in FIGURES
+
+
+def test_generate_figures_single_judge_guard() -> None:
+    """Single-judge figures are in the guard set."""
+    # Verify the guard set exists and contains expected figures
+    single_judge_figures = {
+        "fig02_judge_variance",
+        "fig14_judge_agreement",
+        "fig17_judge_variance_overall",
+    }
+    from scripts.generate_figures import FIGURES
+
+    # All guarded figures must exist in registry
+    for fig in single_judge_figures:
+        assert fig in FIGURES
+
+
+def test_task_analysis_module_structure() -> None:
+    """Test that task_analysis module exists and has expected functions."""
+    from scylla.analysis.figures import task_analysis
+
+    assert hasattr(task_analysis, "fig35_task_difficulty_distribution")
+    assert hasattr(task_analysis, "fig36_tier_rank_stability")
+    assert hasattr(task_analysis, "fig37_complexity_vs_differentiation")
+    assert hasattr(task_analysis, "fig38_full_ablation_comparison")

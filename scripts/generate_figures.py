@@ -25,6 +25,8 @@ from scylla.analysis.figures.cost_analysis import (
     fig06_cop_by_tier,
     fig08_cost_quality_pareto,
     fig22_cumulative_cost,
+    fig34_per_experiment_cost_frontier,
+    fig39_cost_scaling_with_difficulty,
 )
 from scylla.analysis.figures.criteria_analysis import fig09_criteria_by_tier
 from scylla.analysis.figures.diagnostics import fig23_qq_plots, fig24_score_histograms
@@ -53,9 +55,18 @@ from scylla.analysis.figures.subtest_detail import (
     fig15b_subtest_best_heatmap,
     fig15c_tier_summary_heatmap,
 )
+from scylla.analysis.figures.task_analysis import (
+    fig35_task_difficulty_distribution,
+    fig36_tier_rank_stability,
+    fig37_complexity_vs_differentiation,
+    fig38_full_ablation_comparison,
+)
 from scylla.analysis.figures.tier_performance import (
     fig04_pass_rate_by_tier,
     fig05_grade_heatmap,
+    fig31_experiment_tier_heatmap,
+    fig32_tier_win_count,
+    fig33_convergence_analysis,
 )
 from scylla.analysis.figures.token_analysis import fig07_token_distribution
 from scylla.analysis.figures.variance import (
@@ -103,6 +114,15 @@ FIGURES: dict[str, tuple[str, Any]] = {
     "fig29_cfp_by_tier": ("tier", fig29_cfp_by_tier),
     "fig30_pr_revert_by_tier": ("tier", fig30_pr_revert_by_tier),
     "fig_strategic_drift_by_tier": ("tier", fig_strategic_drift_by_tier),
+    "fig31_experiment_tier_heatmap": ("tier", fig31_experiment_tier_heatmap),
+    "fig32_tier_win_count": ("tier", fig32_tier_win_count),
+    "fig33_convergence_analysis": ("tier", fig33_convergence_analysis),
+    "fig34_per_experiment_cost_frontier": ("cost", fig34_per_experiment_cost_frontier),
+    "fig35_task_difficulty_distribution": ("tier", fig35_task_difficulty_distribution),
+    "fig36_tier_rank_stability": ("tier", fig36_tier_rank_stability),
+    "fig37_complexity_vs_differentiation": ("tier", fig37_complexity_vs_differentiation),
+    "fig38_full_ablation_comparison": ("tier", fig38_full_ablation_comparison),
+    "fig39_cost_scaling_with_difficulty": ("cost", fig39_cost_scaling_with_difficulty),
 }
 
 
@@ -191,9 +211,39 @@ def main() -> None:  # figure generation with many conditional paths
     success_count = 0
     failed = []
 
+    # Detect single-model dataset for guarding multi-model figures
+    try:
+        n_models = int(runs_df["agent_model"].nunique())
+    except (KeyError, TypeError, ValueError):
+        n_models = 0
+    multi_model_figures = {"fig11_tier_uplift", "fig12_consistency"}
+
+    # Detect single-judge dataset for guarding multi-judge figures
+    try:
+        n_judges = int(judges_df["judge_model"].nunique())
+    except (KeyError, TypeError, ValueError):
+        n_judges = 0
+    single_judge_figures = {
+        "fig02_judge_variance",
+        "fig14_judge_agreement",
+        "fig17_judge_variance_overall",
+    }
+
     for fig_name in figures_to_generate:
         if fig_name not in FIGURES:
             print(f"WARNING: Unknown figure '{fig_name}', skipping")
+            continue
+
+        # Skip multi-model figures on single-model data
+        if fig_name in multi_model_figures and n_models < 2:
+            print(f"\n{fig_name}: SKIPPED (requires >=2 models, found {n_models})")
+            success_count += 1  # Not a failure, just inapplicable
+            continue
+
+        # Skip multi-judge figures on single-judge data
+        if fig_name in single_judge_figures and n_judges < 2:
+            print(f"\n{fig_name}: SKIPPED (requires >=2 judges, found {n_judges})")
+            success_count += 1  # Not a failure, just inapplicable
             continue
 
         category, generator_func = FIGURES[fig_name]

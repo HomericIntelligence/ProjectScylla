@@ -29,6 +29,7 @@ from scylla.analysis.tables import (
     table08_summary_statistics,
     table09_experiment_config,
     table10_normality_tests,
+    table11_experiment_overview,
 )
 
 
@@ -92,6 +93,12 @@ def main() -> None:
     # Generate tables with error isolation
     print(f"\nGenerating tables in {output_dir}...")
 
+    # Detect single-model dataset for guarding multi-model tables
+    try:
+        n_models = int(runs_df["agent_model"].nunique())
+    except (KeyError, TypeError, ValueError):
+        n_models = 0
+
     tables = [
         ("Table 1", "tab01_tier_summary", lambda: table01_tier_summary(runs_df)),
         ("Table 2", "tab02_tier_comparison", lambda: table02_tier_comparison(runs_df)),
@@ -112,12 +119,22 @@ def main() -> None:
         ("Table 8", "tab08_summary_statistics", lambda: table08_summary_statistics(runs_df)),
         ("Table 9", "tab09_experiment_config", lambda: table09_experiment_config(runs_df)),
         ("Table 10", "tab10_normality_tests", lambda: table10_normality_tests(runs_df)),
+        ("Table 11", "tab11_experiment_overview", lambda: table11_experiment_overview(runs_df)),
     ]
 
     success_count = 0
     failed = []
 
+    # Tables requiring multiple models
+    multi_model_tables = {"tab06_model_comparison"}
+
     for table_name, file_prefix, generator_func in tables:
+        # Skip multi-model tables on single-model data
+        if file_prefix in multi_model_tables and n_models < 2:
+            print(f"\n{table_name}: SKIPPED (requires >=2 models, found {n_models})")
+            success_count += 1
+            continue
+
         print(f"\n{table_name}")
         try:
             md, tex = generator_func()
