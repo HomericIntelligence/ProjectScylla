@@ -1407,6 +1407,7 @@ class TestInitializeOrResumeExperimentMaxSubtests:
         saved_config.save(config_dir / "experiment.json")
 
         # Checkpoint has only 2 subtests (simulating --max-subtests 2 was used)
+        # Include run_states so orphan detector doesn't reset aggregated subtests
         checkpoint = E2ECheckpoint(
             experiment_id="test-exp",
             experiment_dir=str(exp_dir),
@@ -1414,6 +1415,7 @@ class TestInitializeOrResumeExperimentMaxSubtests:
             experiment_state="complete",
             tier_states={"T0": "complete"},
             subtest_states={"T0": {"00": "aggregated", "01": "aggregated"}},
+            run_states={"T0": {"00": {"1": "worktree_cleaned"}, "01": {"1": "worktree_cleaned"}}},
             started_at=datetime.now(timezone.utc).isoformat(),
             last_updated_at=datetime.now(timezone.utc).isoformat(),
             status="completed",
