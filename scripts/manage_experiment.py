@@ -53,6 +53,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import logging
 import sys
 from pathlib import Path
@@ -66,11 +67,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-MODEL_ALIASES: dict[str, str] = {
-    "sonnet": "claude-sonnet-4-5-20250929",
-    "opus": "claude-opus-4-5-20251101",
-    "haiku": "claude-haiku-4-5-20251001",
-}
 
 # ---------------------------------------------------------------------------
 # Subcommand: run
@@ -429,6 +425,8 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
                 inferred_status: str | None = None
 
                 if run_result_file.exists():
+                    if not _has_valid_agent_result(run_dir):
+                        continue  # Skip — _reset_invalid_runs will handle
                     try:
                         import json as _json
 
@@ -445,6 +443,8 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
                     else:
                         inferred_state = "run_finalized"
                 elif _has_valid_judge_result(run_dir):
+                    if not _has_valid_agent_result(run_dir):
+                        continue  # Skip — _reset_invalid_runs will handle
                     inferred_state = "judge_complete"
                 elif _has_valid_agent_result(run_dir):
                     inferred_state = "agent_complete"
@@ -634,15 +634,13 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                     "error": "Missing task_repo or task_commit",
                 }
 
-            model_id = MODEL_ALIASES.get(args.model, args.model)
-            judge_model_id = MODEL_ALIASES.get(args.judge_model, args.judge_model)
+            model_id = args.model
+            judge_model_id = args.judge_model
             judge_models = [judge_model_id]
             if args.add_judge:
                 for extra_judge in args.add_judge:
-                    if extra_judge:
-                        extra_id = MODEL_ALIASES.get(extra_judge, extra_judge)
-                        if extra_id not in judge_models:
-                            judge_models.append(extra_id)
+                    if extra_judge and extra_judge not in judge_models:
+                        judge_models.append(extra_judge)
 
             tier_ids = _batch_tier_ids
             until_run_state = _batch_until_run
@@ -865,11 +863,30 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
 def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command branches
     """Execute the 'run' subcommand (single test or batch mode)."""
+    import os
+    import signal
+
     import yaml
 
     from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
     from scylla.e2e.runner import request_shutdown, run_experiment
     from scylla.utils.terminal import terminal_guard
+
+    # Create a new process group so we can kill all children on signal.
+    # This ensures Ctrl+C / Ctrl+Z kills subprocesses (agent, judges) too.
+    with contextlib.suppress(OSError):
+        os.setpgrp()
+
+    def _kill_group(signum: int, frame: object) -> None:
+        """Kill entire process group on second signal for forceful exit."""
+        try:
+            os.killpg(os.getpgrp(), signal.SIGKILL)
+        except OSError:
+            os._exit(128 + signum)
+
+    # Register forceful kill on SIGTSTP (Ctrl+Z) — no job control for experiments
+    with contextlib.suppress(OSError, ValueError):
+        signal.signal(signal.SIGTSTP, _kill_group)
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -949,24 +966,31 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         logger.error("--commit is required (or set in test.yaml)")
         return 1
 
-    # Resolve model IDs
+    # Resolve model IDs (pass through as-is — no alias resolution)
     from scylla.e2e.model_validation import validate_model
 
-    model_id = MODEL_ALIASES.get(args.model, args.model)
-    judge_model_id = MODEL_ALIASES.get(args.judge_model, args.judge_model)
+    model_id = args.model
+    judge_model_id = args.judge_model
     judge_models = [judge_model_id]
     if args.add_judge:
         for extra_judge in args.add_judge:
-            if extra_judge:
-                extra_id = MODEL_ALIASES.get(extra_judge, extra_judge)
-                if extra_id not in judge_models:
-                    judge_models.append(extra_id)
+            if extra_judge and extra_judge not in judge_models:
+                judge_models.append(extra_judge)
 
-    # Validate judges (unless skipped)
+    # Validate all models upfront before starting any work
     if not args.skip_judge_validation:
-        for jm in judge_models:
-            if not validate_model(jm):
-                logger.warning(f"Judge model {jm!r} may be unavailable")
+        all_models_to_validate = [model_id, *judge_models]
+        invalid_models = [
+            m
+            for m in dict.fromkeys(all_models_to_validate)
+            if not validate_model(m, max_retries=1, base_delay=5)
+        ]
+        if invalid_models:
+            logger.error(
+                f"Invalid model(s): {', '.join(invalid_models)}. "
+                f"Use full model IDs (e.g., 'claude-sonnet-4-6')."
+            )
+            return 1
 
     # Resolve tiers
     tier_ids = []

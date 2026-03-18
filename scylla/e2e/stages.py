@@ -33,7 +33,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import signal
 import subprocess
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -101,6 +104,10 @@ if TYPE_CHECKING:
     from scylla.e2e.workspace_manager import WorkspaceManager
 
 logger = logging.getLogger(__name__)
+
+# Global lock serializing heavy pipeline executions (pre-commit, pytest, ruff)
+# across concurrent threads to prevent machine hang from resource exhaustion.
+_pipeline_lock = threading.Lock()
 
 
 @dataclass
@@ -340,10 +347,11 @@ def stage_capture_baseline(ctx: RunContext) -> None:
         from scylla.e2e.llm_judge import _run_build_pipeline
 
         logger.info("Capturing pipeline baseline inline (experiment-level baseline unavailable)")
-        ctx.pipeline_baseline = _run_build_pipeline(
-            workspace=ctx.workspace,
-            language=ctx.config.language,
-        )
+        with _pipeline_lock:
+            ctx.pipeline_baseline = _run_build_pipeline(
+                workspace=ctx.workspace,
+                language=ctx.config.language,
+            )
         # Save at subtest level for this run's use
         _save_pipeline_baseline(ctx.run_dir.parent, ctx.pipeline_baseline)
 
@@ -469,6 +477,26 @@ def stage_generate_replay(ctx: RunContext) -> None:
     ctx.adapter_config = adapter_config
 
 
+def _kill_process_group(proc: subprocess.Popen[str]) -> None:
+    """Kill a subprocess and its entire process group.
+
+    Sends SIGTERM first, then SIGKILL if needed.
+
+    Args:
+        proc: Popen process to kill.
+
+    """
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+        proc.wait(timeout=5)
+    except Exception:
+        try:
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except Exception:
+            proc.kill()
+        proc.wait()
+
+
 def stage_execute_agent(ctx: RunContext) -> None:
     """REPLAY_GENERATED -> AGENT_COMPLETE: Execute agent and save outputs.
 
@@ -517,13 +545,21 @@ def stage_execute_agent(ctx: RunContext) -> None:
 
     agent_start = datetime.now(timezone.utc)
     try:
-        result = subprocess.run(
+        # Use Popen with start_new_session so the agent subprocess gets its own
+        # process group. This lets us kill it (and its children) cleanly on shutdown.
+        proc = subprocess.Popen(
             ["bash", str(replay_script.resolve())],
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=adapter_config.timeout,
             cwd=ctx.workspace.resolve(),
+            start_new_session=True,
         )
+        try:
+            stdout, stderr = proc.communicate(timeout=adapter_config.timeout)
+        except subprocess.TimeoutExpired:
+            _kill_process_group(proc)
+            raise
 
         # If the agent was killed by a shutdown signal (Ctrl+C), do NOT advance the
         # run state — leave it at REPLAY_GENERATED so the next invocation can retry
@@ -532,13 +568,11 @@ def stage_execute_agent(ctx: RunContext) -> None:
         from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
 
         if is_shutdown_requested():
+            _kill_process_group(proc)
             raise ShutdownInterruptedError(
                 f"Shutdown requested during agent execution for run {ctx.run_number} "
                 f"({ctx.tier_id.value}/{ctx.subtest.id})"
             )
-
-        stdout = result.stdout
-        stderr = result.stderr
 
         token_stats = ctx.adapter._parse_token_stats(stdout, stderr)
         api_calls = ctx.adapter._parse_api_calls(stdout, stderr)
@@ -553,7 +587,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
         ctx.adapter.write_logs(agent_dir, stdout, stderr)
 
         agent_result = AdapterResult(
-            exit_code=result.returncode,
+            exit_code=proc.returncode,
             stdout=stdout,
             stderr=stderr,
             token_stats=token_stats,
@@ -693,10 +727,11 @@ def stage_run_judge_pipeline(ctx: RunContext) -> None:
     from scylla.e2e.llm_judge import _run_build_pipeline, _save_pipeline_commands
 
     logger.info(f"Running {ctx.config.language} build pipeline for judge evaluation")
-    ctx.judge_pipeline_result = _run_build_pipeline(
-        workspace=ctx.workspace,
-        language=ctx.config.language,
-    )
+    with _pipeline_lock:
+        ctx.judge_pipeline_result = _run_build_pipeline(
+            workspace=ctx.workspace,
+            language=ctx.config.language,
+        )
 
     # Save pipeline commands for debugging
     _save_pipeline_commands(ctx.run_dir, ctx.workspace, language=ctx.config.language)

@@ -692,10 +692,10 @@ class TestStageExecuteAgent:
             api_calls=0,
         )
 
-        with patch("subprocess.run") as mock_subprocess:
+        with patch("scylla.e2e.stages.subprocess.Popen") as mock_popen:
             stage_execute_agent(stage_context)
 
-        mock_subprocess.assert_not_called()
+        mock_popen.assert_not_called()
         assert stage_context.agent_result.stdout == "existing"
 
     def test_runs_subprocess_and_saves_result(self, stage_context: RunContext) -> None:
@@ -708,9 +708,9 @@ class TestStageExecuteAgent:
         stage_generate_replay(stage_context)
 
         mock_proc = MagicMock()
-        mock_proc.stdout = "Agent output here"
-        mock_proc.stderr = ""
+        mock_proc.communicate.return_value = ("Agent output here", "")
         mock_proc.returncode = 0
+        mock_proc.pid = 12345
 
         stage_context.adapter._parse_token_stats.return_value = AdapterTokenStats(  # type: ignore[attr-defined]
             input_tokens=100, output_tokens=50
@@ -718,7 +718,7 @@ class TestStageExecuteAgent:
         stage_context.adapter._parse_api_calls.return_value = 1  # type: ignore[attr-defined]
         stage_context.adapter._parse_cost.return_value = 0.05  # type: ignore[attr-defined]
 
-        with patch("subprocess.run", return_value=mock_proc):
+        with patch("scylla.e2e.stages.subprocess.Popen", return_value=mock_proc):
             stage_execute_agent(stage_context)
 
         assert stage_context.agent_result is not None

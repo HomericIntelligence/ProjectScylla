@@ -136,15 +136,23 @@ def _restore_run_context(ctx: Any, current_state: str) -> None:
 
     # If past REPLAY_GENERATED, agent_result should be available on disk
     past_agent = is_at_or_past_state(run_state, RunState.AGENT_COMPLETE)
-    if past_agent and ctx.agent_result is None and _has_valid_agent_result(ctx.run_dir):
-        agent_dir = get_agent_dir(ctx.run_dir)
-        ctx.agent_result = _load_agent_result(agent_dir)
-        agent_timing = agent_dir / "timing.json"
-        if agent_timing.exists():
-            ctx.agent_duration = json.loads(agent_timing.read_text()).get(
-                "agent_duration_seconds", 0.0
+    if past_agent and ctx.agent_result is None:
+        if _has_valid_agent_result(ctx.run_dir):
+            agent_dir = get_agent_dir(ctx.run_dir)
+            ctx.agent_result = _load_agent_result(agent_dir)
+            agent_timing = agent_dir / "timing.json"
+            if agent_timing.exists():
+                ctx.agent_duration = json.loads(agent_timing.read_text()).get(
+                    "agent_duration_seconds", 0.0
+                )
+            ctx.agent_ran = False
+        else:
+            logger.warning(
+                "Resuming run at state '%s' but agent result is invalid at %s "
+                "— run should have been reset by _reset_invalid_runs()",
+                current_state,
+                ctx.run_dir,
             )
-        ctx.agent_ran = False
 
     # If past JUDGE_PROMPT_BUILT, the saved judge_prompt.md is the source of truth
     if is_at_or_past_state(run_state, RunState.JUDGE_PROMPT_BUILT) and not ctx.judge_prompt:

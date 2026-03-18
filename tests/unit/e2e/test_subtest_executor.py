@@ -825,3 +825,35 @@ class TestRestoreRunContext:
         _restore_run_context(ctx, "judge_prompt_built")
 
         assert ctx.judge_prompt == ""
+
+    def test_invalid_agent_result_logs_warning(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Resuming past AGENT_COMPLETE with invalid agent result logs a warning."""
+        import logging
+
+        run_dir = tmp_path / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+        # Write an invalid agent result: exit_code=-1 and all token_stats=0
+        invalid_result = {
+            "exit_code": -1,
+            "stdout": "",
+            "stderr": "",
+            "token_stats": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.0,
+            "api_calls": 0,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(invalid_result))
+
+        ctx = _make_ctx(run_dir)
+        with caplog.at_level(logging.WARNING, logger="scylla.e2e.subtest_executor"):
+            _restore_run_context(ctx, "judge_complete")
+
+        assert ctx.agent_result is None
+        assert any("agent result is invalid" in msg for msg in caplog.messages)

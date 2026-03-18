@@ -71,6 +71,9 @@ def install_signal_handlers(shutdown_fn: Callable[[], None]) -> None:
 
     signal.signal(signal.SIGINT, _handler)
     signal.signal(signal.SIGTERM, _handler)
+    # SIGTSTP (Ctrl+Z) — treat the same as Ctrl+C for clean shutdown
+    with contextlib.suppress(OSError, ValueError):
+        signal.signal(signal.SIGTSTP, _handler)
 
 
 @contextmanager
