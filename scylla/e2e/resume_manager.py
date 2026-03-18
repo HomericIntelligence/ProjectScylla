@@ -10,9 +10,25 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from scylla.e2e.agent_runner import _has_valid_agent_result
 from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
 from scylla.e2e.health import DEFAULT_HEARTBEAT_TIMEOUT_SECONDS, is_zombie, reset_zombie_checkpoint
 from scylla.e2e.models import ExperimentConfig, RunState, TierID
+
+# Run states past AGENT_COMPLETE where a valid agent_result is required.
+# If the agent result is invalid at these states, the run must be reset.
+_STATES_PAST_AGENT_COMPLETE = frozenset(
+    {
+        RunState.AGENT_COMPLETE.value,
+        RunState.DIFF_CAPTURED.value,
+        RunState.JUDGE_PIPELINE_RUN.value,
+        RunState.JUDGE_PROMPT_BUILT.value,
+        RunState.JUDGE_COMPLETE.value,
+        RunState.RUN_FINALIZED.value,
+        RunState.REPORT_WRITTEN.value,
+        RunState.CHECKPOINTED.value,
+    }
+)
 
 if TYPE_CHECKING:
     from scylla.e2e.tier_manager import TierManager
@@ -263,7 +279,16 @@ class ResumeManager:
             self._reset_tier_to_config_loaded(tier_id)
 
     def _reset_failed_and_interrupted(self) -> None:
-        """Reset failed/interrupted experiment, tier, and subtest states."""
+        """Reset failed/interrupted experiment, tier, and subtest states.
+
+        Also resets runs with invalid agent results to replay_generated
+        for re-execution (defense-in-depth).
+        """
+        # Always reset invalid runs regardless of experiment state,
+        # since they can exist even in non-failed experiments.
+        invalid_count = self._reset_invalid_runs()
+        if invalid_count > 0:
+            logger.info("Reset %d run(s) with invalid agent results", invalid_count)
         if self.checkpoint.experiment_state not in ("failed", "interrupted"):
             return
 
@@ -310,6 +335,39 @@ class ResumeManager:
         self._reset_failed_and_interrupted()
 
         return self.config, self.checkpoint
+
+    def _reset_invalid_runs(self) -> int:
+        """Reset runs with invalid agent results to replay_generated.
+
+        Scans all run states and checks for runs that advanced past
+        AGENT_COMPLETE but have invalid agent results (exit_code=-1
+        with zero token stats). These runs are reset to
+        REPLAY_GENERATED so they get re-executed from the agent stage.
+
+        Returns:
+            Number of runs reset.
+
+        """
+        reset_count = 0
+        experiment_dir = Path(self.checkpoint.experiment_dir)
+        for tier_id, subtests in self.checkpoint.run_states.items():
+            for subtest_id, runs in subtests.items():
+                for run_id, state in runs.items():
+                    if state not in _STATES_PAST_AGENT_COMPLETE:
+                        continue
+                    # Build run directory path: experiment_dir/tier/subtest/run_NN
+                    run_dir = experiment_dir / tier_id / subtest_id / f"run_{int(run_id):02d}"
+                    if not _has_valid_agent_result(run_dir):
+                        logger.info(
+                            "Resetting invalid run %s/%s/%s from '%s' to 'replay_generated'",
+                            tier_id,
+                            subtest_id,
+                            run_id,
+                            state,
+                        )
+                        runs[run_id] = RunState.REPLAY_GENERATED.value
+                        reset_count += 1
+        return reset_count
 
     def _reset_tier_state_for_rerun(self, tier_id_str: str) -> None:
         """Reset a tier's checkpoint state so it can be re-executed.

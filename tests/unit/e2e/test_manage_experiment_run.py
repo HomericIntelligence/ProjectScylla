@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-from manage_experiment import MODEL_ALIASES, build_parser
+from manage_experiment import build_parser
 
 # ---------------------------------------------------------------------------
 # Parser construction
@@ -501,9 +501,8 @@ class TestAddJudgeDedup:
             cmd_run(args)
 
         assert len(captured_configs) == 1
-        # judge_models should contain exactly one entry (deduped)
-        sonnet_id = "claude-sonnet-4-5-20250929"
-        assert captured_configs[0].judge_models == [sonnet_id]
+        # judge_models should contain exactly one entry (deduped); no alias resolution
+        assert captured_configs[0].judge_models == ["sonnet"]
 
     def test_add_judge_different_model_appended(self, tmp_path: Path) -> None:
         """--add-judge with a different model is appended to judge_models."""
@@ -539,9 +538,8 @@ class TestAddJudgeDedup:
             cmd_run(args)
 
         assert len(captured_configs) == 1
-        sonnet_id = "claude-sonnet-4-5-20250929"
-        opus_id = "claude-opus-4-5-20251101"
-        assert captured_configs[0].judge_models == [sonnet_id, opus_id]
+        # No alias resolution — model names passed through as-is
+        assert captured_configs[0].judge_models == ["sonnet", "opus"]
 
     def test_add_judge_bare_flag_defaults_to_sonnet(self, tmp_path: Path) -> None:
         """--add-judge with no value uses const='sonnet'; deduped against default judge-model."""
@@ -576,8 +574,8 @@ class TestAddJudgeDedup:
             cmd_run(args)
 
         assert len(captured_configs) == 1
-        sonnet_id = "claude-sonnet-4-5-20250929"
-        assert captured_configs[0].judge_models == [sonnet_id]
+        # No alias resolution — model names passed through as-is
+        assert captured_configs[0].judge_models == ["sonnet"]
 
 
 # ---------------------------------------------------------------------------
@@ -1837,6 +1835,21 @@ class TestRetryInfraFailuresInBatch:
         (run_dir / "run_result.json").write_text(json.dumps(run_result))
         (run_dir / "report.md").write_text("# Report")
 
+        # Valid agent result required for reconciliation to advance
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir()
+        valid_agent = {
+            "exit_code": 0,
+            "token_stats": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.01,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(valid_agent))
+
         checkpoint = E2ECheckpoint(
             experiment_id="test-001",
             experiment_dir=str(exp_dir),
@@ -1901,6 +1914,21 @@ class TestRetryInfraFailuresInBatch:
         run_result = {"judge_passed": False, "cost_usd": 0.01}
         (run_dir / "run_result.json").write_text(json.dumps(run_result))
         (run_dir / "report.md").write_text("# Report")
+
+        # Valid agent result required for reconciliation to advance
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir()
+        valid_agent = {
+            "exit_code": 0,
+            "token_stats": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.01,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(valid_agent))
 
         checkpoint = E2ECheckpoint(
             experiment_id="test-001",
@@ -1985,6 +2013,21 @@ class TestRetryInfraFailuresInBatch:
         (run_dir / "run_result.json").write_text("{ not valid json !!!")
         (run_dir / "report.md").write_text("# Report")
 
+        # Valid agent result required for reconciliation to advance
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir()
+        valid_agent = {
+            "exit_code": 0,
+            "token_stats": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.01,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(valid_agent))
+
         checkpoint = E2ECheckpoint(
             experiment_id="test-001",
             experiment_dir=str(exp_dir),
@@ -2023,6 +2066,21 @@ class TestRetryInfraFailuresInBatch:
         # run_result.json exists but has no judge_passed key
         (run_dir / "run_result.json").write_text(json.dumps({"cost_usd": 0.05}))
         (run_dir / "report.md").write_text("# Report")
+
+        # Valid agent result required for reconciliation to advance
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir()
+        valid_agent = {
+            "exit_code": 0,
+            "token_stats": {
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.01,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(valid_agent))
 
         checkpoint = E2ECheckpoint(
             experiment_id="test-001",
@@ -2123,6 +2181,107 @@ class TestRetryInfraFailuresInBatch:
         assert checkpoint.run_states["T0"]["00"]["3"] == "worktree_cleaned"
         assert checkpoint.get_run_status("T0", "00", 3) == "passed"
 
+    def test_reconcile_skips_run_with_invalid_agent_but_valid_run_result(
+        self, tmp_path: Path
+    ) -> None:
+        """Run with run_result.json + report.md but invalid agent result is NOT advanced."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        agent_dir = run_dir / "agent"
+        agent_dir.mkdir(parents=True)
+
+        # Valid run_result.json + report.md exist
+        run_result = {"judge_passed": True, "cost_usd": 0.01}
+        (run_dir / "run_result.json").write_text(json.dumps(run_result))
+        (run_dir / "report.md").write_text("# Report")
+
+        # Invalid agent result: exit_code=-1 and all token_stats=0
+        invalid_agent = {
+            "exit_code": -1,
+            "token_stats": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.0,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(invalid_agent))
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "judge_prompt_built"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 0
+        assert checkpoint.run_states["T0"]["00"]["1"] == "judge_prompt_built"
+
+    def test_reconcile_skips_run_with_invalid_agent_but_valid_judge(self, tmp_path: Path) -> None:
+        """Run with valid judge result but invalid agent result is NOT advanced."""
+        import json
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reconcile_checkpoint_with_disk
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        run_dir = exp_dir / "T0" / "00" / "run_01"
+        agent_dir = run_dir / "agent"
+        judge_dir = run_dir / "judge"
+        agent_dir.mkdir(parents=True)
+        judge_dir.mkdir(parents=True)
+
+        # Valid judge result
+        judge_result = {"score": 0.8, "passed": True, "grade": "B", "is_valid": True}
+        (judge_dir / "result.json").write_text(json.dumps(judge_result))
+
+        # Invalid agent result: exit_code=-1 and all token_stats=0
+        invalid_agent = {
+            "exit_code": -1,
+            "token_stats": {
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "cache_creation_tokens": 0,
+                "cache_read_tokens": 0,
+            },
+            "cost_usd": 0.0,
+        }
+        (agent_dir / "result.json").write_text(json.dumps(invalid_agent))
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={"T0": {"00": {"1": "replay_generated"}}},
+            completed_runs={},
+        )
+
+        corrected = _reconcile_checkpoint_with_disk(checkpoint, exp_dir)
+
+        assert corrected == 0
+        assert checkpoint.run_states["T0"]["00"]["1"] == "replay_generated"
+
     def test_reconcile_state_order_covers_all_run_states(self) -> None:
         """All non-terminal RunState values must appear in state_rank (regression guard)."""
         import inspect
@@ -2217,11 +2376,9 @@ class TestAddJudgeBatchMode:
 
         assert result == 0
         assert len(captured_configs) == 2
-        sonnet_id = "claude-sonnet-4-5-20250929"
-        opus_id = "claude-opus-4-5-20251101"
-        # Both batch configs should have both judge models
+        # No alias resolution — model names passed through as-is
         for config in captured_configs:
-            assert config.judge_models == [sonnet_id, opus_id]
+            assert config.judge_models == ["sonnet", "opus"]
 
 
 # ---------------------------------------------------------------------------
@@ -2397,7 +2554,7 @@ class TestParallelSemaphoreFlowsToConfig:
 
 
 class TestModelAliasResolution:
-    """Tests that model/judge alias names resolve to full model IDs."""
+    """Tests that model/judge names are passed through as-is (no alias resolution)."""
 
     def _make_test_dir(self, path: Path) -> None:
         """Create a minimal test directory with test.yaml and prompt.md."""
@@ -2414,8 +2571,8 @@ class TestModelAliasResolution:
         (path / "test.yaml").write_text(yaml.dump(test_yaml))
         (path / "prompt.md").write_text("test prompt")
 
-    def test_model_opus_resolves_to_full_id(self, tmp_path: Path) -> None:
-        """--model opus resolves to full opus model ID in ExperimentConfig.models."""
+    def test_model_opus_passed_through(self, tmp_path: Path) -> None:
+        """--model opus is passed through as-is in ExperimentConfig.models."""
         config_dir = tmp_path / "test-dir"
         self._make_test_dir(config_dir)
 
@@ -2445,11 +2602,11 @@ class TestModelAliasResolution:
         ):
             cmd_run(args)
 
-        opus_id = "claude-opus-4-5-20251101"
-        assert captured[0].models == [opus_id]
+        # No alias resolution — model name passed through as-is
+        assert captured[0].models == ["opus"]
 
-    def test_judge_model_haiku_resolves_to_full_id(self, tmp_path: Path) -> None:
-        """--judge-model haiku resolves to full haiku ID in ExperimentConfig.judge_models."""
+    def test_judge_model_haiku_passed_through(self, tmp_path: Path) -> None:
+        """--judge-model haiku is passed through as-is in ExperimentConfig.judge_models."""
         config_dir = tmp_path / "test-dir"
         self._make_test_dir(config_dir)
 
@@ -2479,8 +2636,8 @@ class TestModelAliasResolution:
         ):
             cmd_run(args)
 
-        haiku_id = "claude-haiku-4-5-20251001"
-        assert haiku_id in captured[0].judge_models
+        # No alias resolution — model name passed through as-is
+        assert "haiku" in captured[0].judge_models
 
 
 # ---------------------------------------------------------------------------
@@ -2787,33 +2944,6 @@ class TestTimeoutFallbackToTestYaml:
 
         assert result == 0
         assert captured[0].timeout_seconds == 7200
-
-
-# ---------------------------------------------------------------------------
-# MODEL_ALIASES module-level constant
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
-# MODEL_ALIASES module-level constant
-# ---------------------------------------------------------------------------
-
-
-class TestModelAliasConstant:
-    """Tests for MODEL_ALIASES module-level constant."""
-
-    def test_model_aliases_has_expected_keys(self) -> None:
-        """MODEL_ALIASES is a module-level dict with sonnet, opus, and haiku keys."""
-        assert isinstance(MODEL_ALIASES, dict)
-        assert "sonnet" in MODEL_ALIASES
-        assert "opus" in MODEL_ALIASES
-        assert "haiku" in MODEL_ALIASES
-
-    def test_model_aliases_values_are_full_model_ids(self) -> None:
-        """MODEL_ALIASES values contain full versioned model IDs."""
-        assert MODEL_ALIASES["sonnet"] == "claude-sonnet-4-5-20250929"
-        assert MODEL_ALIASES["opus"] == "claude-opus-4-5-20251101"
-        assert MODEL_ALIASES["haiku"] == "claude-haiku-4-5-20251001"
 
 
 # ---------------------------------------------------------------------------

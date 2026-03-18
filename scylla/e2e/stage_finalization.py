@@ -304,9 +304,30 @@ def stage_finalize_run(ctx: RunContext) -> None:
 
     """
     if ctx.agent_result is None:
-        raise RuntimeError("agent_result must be set before finalize_run")
+        logger.error(
+            "stage_finalize_run: agent_result is None for %s/%s/run_%02d "
+            "(run_dir=%s). Invalid agent result not caught by _reset_invalid_runs().",
+            ctx.tier_id.value,
+            ctx.subtest.id,
+            ctx.run_number,
+            ctx.run_dir,
+        )
+        raise RuntimeError(
+            f"agent_result is None for {ctx.tier_id.value}/{ctx.subtest.id}"
+            f"/run_{ctx.run_number:02d} — cannot finalize"
+        )
     if ctx.judgment is None:
-        raise RuntimeError("judgment must be set before finalize_run")
+        logger.error(
+            "stage_finalize_run: judgment is None for %s/%s/run_%02d (run_dir=%s).",
+            ctx.tier_id.value,
+            ctx.subtest.id,
+            ctx.run_number,
+            ctx.run_dir,
+        )
+        raise RuntimeError(
+            f"judgment is None for {ctx.tier_id.value}/{ctx.subtest.id}"
+            f"/run_{ctx.run_number:02d} — cannot finalize"
+        )
 
     # Resume guard: if progress_steps/change_results were not populated this
     # session (e.g., crash between DIFF_CAPTURED and JUDGE_COMPLETE skipped
@@ -416,9 +437,29 @@ def stage_write_report(ctx: RunContext) -> None:
     if ctx.run_result is None:
         raise RuntimeError("run_result must be set before write_report")
     if ctx.agent_result is None:
-        raise RuntimeError("agent_result must be set before write_report")
+        logger.error(
+            "stage_write_report: agent_result is None for %s/%s/run_%02d (run_dir=%s).",
+            ctx.tier_id.value,
+            ctx.subtest.id,
+            ctx.run_number,
+            ctx.run_dir,
+        )
+        raise RuntimeError(
+            f"agent_result is None for {ctx.tier_id.value}/{ctx.subtest.id}"
+            f"/run_{ctx.run_number:02d} — cannot write report"
+        )
     if ctx.judgment is None:
-        raise RuntimeError("judgment must be set before write_report")
+        logger.error(
+            "stage_write_report: judgment is None for %s/%s/run_%02d (run_dir=%s).",
+            ctx.tier_id.value,
+            ctx.subtest.id,
+            ctx.run_number,
+            ctx.run_dir,
+        )
+        raise RuntimeError(
+            f"judgment is None for {ctx.tier_id.value}/{ctx.subtest.id}"
+            f"/run_{ctx.run_number:02d} — cannot write report"
+        )
 
     token_stats = ctx.run_result.token_stats
 

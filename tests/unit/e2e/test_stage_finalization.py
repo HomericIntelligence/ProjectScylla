@@ -257,7 +257,7 @@ class TestStageFinalizeRun:
         ctx.agent_result = None
         ctx.judgment = _make_judgment()
 
-        with pytest.raises(RuntimeError, match="agent_result must be set"):
+        with pytest.raises(RuntimeError, match="agent_result is None for"):
             stage_finalize_run(ctx)
 
     def test_raises_when_judgment_missing(self, minimal_run_context: RunContext) -> None:
@@ -266,7 +266,7 @@ class TestStageFinalizeRun:
         ctx.agent_result = _make_adapter_result()
         ctx.judgment = None
 
-        with pytest.raises(RuntimeError, match="judgment must be set"):
+        with pytest.raises(RuntimeError, match="judgment is None for"):
             stage_finalize_run(ctx)
 
     def test_run_result_json_created(self, minimal_run_context: RunContext) -> None:
@@ -493,7 +493,7 @@ class TestStageWriteReport:
         ctx.agent_result = None
         ctx.judgment = _make_judgment()
 
-        with pytest.raises(RuntimeError, match="agent_result must be set"):
+        with pytest.raises(RuntimeError, match="agent_result is None for"):
             stage_write_report(ctx)
 
     def test_raises_when_judgment_missing(self, minimal_run_context: RunContext) -> None:
@@ -503,7 +503,7 @@ class TestStageWriteReport:
         ctx.agent_result = _make_adapter_result()
         ctx.judgment = None
 
-        with pytest.raises(RuntimeError, match="judgment must be set"):
+        with pytest.raises(RuntimeError, match="judgment is None for"):
             stage_write_report(ctx)
 
     def test_reads_process_metrics_from_run_result_json(
