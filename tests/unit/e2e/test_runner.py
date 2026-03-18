@@ -815,17 +815,48 @@ class TestInitializeOrResumeExperimentFailedReset:
         tmp_path: Path,
     ) -> None:
         """Failed subtest states are reset to 'pending' when experiment resumes from 'failed'."""
-        runner = self._run_resume(
-            mock_config,
-            tmp_path,
-            checkpoint_state="failed",
+        from datetime import datetime, timezone
+
+        from scylla.e2e.checkpoint import E2ECheckpoint, save_checkpoint
+
+        runner = self._make_runner(mock_config, tmp_path)
+
+        exp_dir = tmp_path / mock_config.experiment_id
+        exp_dir.mkdir(parents=True)
+
+        # Provide run_states for subtest "01" so orphan detector doesn't reset it
+        checkpoint = E2ECheckpoint(
+            experiment_id=mock_config.experiment_id,
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="failed",
+            tier_states={},
             subtest_states={"T0": {"00": "failed", "01": "aggregated"}},
+            run_states={"T0": {"01": {"1": "worktree_cleaned"}}},
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="failed",
         )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        def fake_load(path: Path) -> tuple[Any, Path]:
+            runner.checkpoint = checkpoint
+            runner.experiment_dir = exp_dir
+            return checkpoint, exp_dir
+
+        with (
+            patch.object(runner, "_find_existing_checkpoint", return_value=checkpoint_path),
+            patch.object(runner, "_load_checkpoint_and_config", side_effect=fake_load),
+            patch.object(runner, "_write_pid_file"),
+            patch("scylla.e2e.resume_manager.is_zombie", return_value=False),
+        ):
+            runner._initialize_or_resume_experiment()
 
         assert runner.checkpoint is not None
         # Failed subtest reset to pending
         assert runner.checkpoint.subtest_states["T0"]["00"] == "pending"
-        # Aggregated subtest is untouched
+        # Aggregated subtest with backing run_states is untouched
         assert runner.checkpoint.subtest_states["T0"]["01"] == "aggregated"
 
     def test_resume_interrupted_experiment_resets_to_tiers_running(
