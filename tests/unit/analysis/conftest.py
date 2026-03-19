@@ -3,7 +3,6 @@
 import sys
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -19,7 +18,7 @@ if _scripts_dir not in sys.path:
 
 
 @pytest.fixture(autouse=True)
-def mock_power_simulations() -> Generator[Any, None, None]:
+def mock_power_simulations() -> Generator[None, None, None]:
     """Mock expensive Monte Carlo simulations to prevent test hangs.
 
     mann_whitney_power() and kruskal_wallis_power() each run 10,000 simulations
@@ -44,7 +43,7 @@ def mock_power_simulations() -> Generator[Any, None, None]:
 
 
 @pytest.fixture
-def sample_runs_df() -> Any:
+def sample_runs_df() -> pd.DataFrame:
     """Sample runs DataFrame for testing (~140 rows).
 
     Covers 2 models, 7 tiers (T0-T6), 2 subtests, 5 runs per combination.
@@ -137,7 +136,7 @@ def sample_runs_df() -> Any:
 
 
 @pytest.fixture
-def sample_judges_df(sample_runs_df: Any) -> Any:
+def sample_judges_df(sample_runs_df: pd.DataFrame) -> pd.DataFrame:
     """Sample judges DataFrame (3 judges per run)."""
     np.random.seed(42)
     data = []
@@ -193,7 +192,7 @@ def sample_judges_df(sample_runs_df: Any) -> Any:
 
 
 @pytest.fixture
-def sample_criteria_df(sample_judges_df: Any) -> Any:
+def sample_criteria_df(sample_judges_df: pd.DataFrame) -> pd.DataFrame:
     """Sample criteria DataFrame (5 criteria per judge)."""
     np.random.seed(42)
     data = []
@@ -234,14 +233,14 @@ def sample_criteria_df(sample_judges_df: Any) -> Any:
 
 
 @pytest.fixture
-def sample_subtests_df(sample_runs_df: Any) -> Any:
+def sample_subtests_df(sample_runs_df: pd.DataFrame) -> pd.DataFrame:
     """Sample subtests DataFrame matching production build_subtests_df schema.
 
     Must match columns produced by dataframes.build_subtests_df().
     """
     from scylla.analysis.stats import compute_consistency, compute_cop
 
-    def compute_subtest_stats(group: Any) -> Any:
+    def compute_subtest_stats(group: pd.DataFrame) -> pd.Series:
         """Compute statistics for a subtest group (matches production)."""
         pass_rate = group["passed"].mean()
         mean_score = group["score"].mean()
@@ -344,31 +343,31 @@ def sample_subtests_df(sample_runs_df: Any) -> Any:
 
 # Degenerate input fixtures for edge case testing
 @pytest.fixture
-def degenerate_single_element() -> Any:
+def degenerate_single_element() -> np.ndarray:
     """Single-element array for testing n=1 edge cases."""
     return np.array([0.5])
 
 
 @pytest.fixture
-def degenerate_all_same() -> Any:
+def degenerate_all_same() -> np.ndarray:
     """Array with all identical values for testing zero variance."""
     return np.array([0.7, 0.7, 0.7, 0.7, 0.7])
 
 
 @pytest.fixture
-def degenerate_all_pass() -> Any:
+def degenerate_all_pass() -> np.ndarray:
     """Array with all passing (1) values."""
     return np.array([1, 1, 1, 1, 1])
 
 
 @pytest.fixture
-def degenerate_all_fail() -> Any:
+def degenerate_all_fail() -> np.ndarray:
     """Array with all failing (0) values."""
     return np.array([0, 0, 0, 0, 0])
 
 
 @pytest.fixture
-def degenerate_unbalanced_groups() -> Any:
+def degenerate_unbalanced_groups() -> dict[str, np.ndarray]:
     """Two groups with severely unbalanced sizes (n1=2, n2=50)."""
     return {
         "small": np.array([0.3, 0.4]),
@@ -377,42 +376,42 @@ def degenerate_unbalanced_groups() -> Any:
 
 
 @pytest.fixture
-def degenerate_empty_array() -> Any:
+def degenerate_empty_array() -> np.ndarray:
     """Empty array for testing n=0 edge cases."""
     return np.array([])
 
 
 @pytest.fixture
-def degenerate_nan_values() -> Any:
+def degenerate_nan_values() -> np.ndarray:
     """Array containing NaN values for testing missing data handling."""
     return np.array([0.5, np.nan, 0.7, np.nan, 0.9])
 
 
 @pytest.fixture
-def degenerate_inf_values() -> Any:
+def degenerate_inf_values() -> np.ndarray:
     """Array containing infinite values for testing boundary conditions."""
     return np.array([0.5, 0.7, np.inf, 0.9, -np.inf])
 
 
 @pytest.fixture
-def degenerate_binary_data() -> Any:
+def degenerate_binary_data() -> np.ndarray:
     """Binary (0/1) data for testing categorical/boolean edge cases."""
     return np.array([0, 1, 0, 1, 1, 0, 0, 1])
 
 
 @pytest.fixture
-def degenerate_boundary_values() -> Any:
+def degenerate_boundary_values() -> np.ndarray:
     """Return data at exact boundaries (0.0, 1.0) for testing threshold logic."""
     return np.array([0.0, 0.0, 1.0, 1.0, 0.5])
 
 
 @pytest.fixture
-def degenerate_near_zero() -> Any:
+def degenerate_near_zero() -> np.ndarray:
     """Very small positive values for testing numerical stability."""
     return np.array([1e-10, 1e-9, 1e-8, 1e-7, 1e-6])
 
 
 @pytest.fixture
-def degenerate_high_variance() -> Any:
+def degenerate_high_variance() -> np.ndarray:
     """Return data with extremely high variance for testing statistical robustness."""
     return np.array([0.01, 0.02, 0.98, 0.99, 0.5])

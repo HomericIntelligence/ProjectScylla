@@ -3,7 +3,6 @@
 import subprocess
 import threading
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,7 +12,7 @@ from scylla.automation.planner import Planner
 
 
 @pytest.fixture
-def mock_options() -> Any:
+def mock_options() -> None:
     """Create mock PlannerOptions."""
     return PlannerOptions(
         issues=[123],
@@ -27,7 +26,7 @@ def mock_options() -> Any:
 
 
 @pytest.fixture
-def planner(mock_options: Any) -> Any:
+def planner(mock_options):
     """Create a Planner instance."""
     return Planner(mock_options)
 
@@ -35,7 +34,7 @@ def planner(mock_options: Any) -> Any:
 class TestCallClaude:
     """Tests for _call_claude method."""
 
-    def test_successful_call(self, planner: Any) -> None:
+    def test_successful_call(self, planner) -> None:
         """Test successful Claude call."""
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(stdout="This is a plan", returncode=0)
@@ -51,7 +50,7 @@ class TestCallClaude:
             assert "--output-format" in args
             assert "text" in args
 
-    def test_empty_response(self, planner: Any) -> None:
+    def test_empty_response(self, planner) -> None:
         """Test handling of empty response."""
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(stdout="   ", returncode=0)
@@ -59,7 +58,7 @@ class TestCallClaude:
             with pytest.raises(RuntimeError, match="empty response"):
                 planner._call_claude("Test prompt")
 
-    def test_timeout(self, planner: Any) -> None:
+    def test_timeout(self, planner) -> None:
         """Test timeout handling."""
         import subprocess
 
@@ -69,7 +68,7 @@ class TestCallClaude:
             with pytest.raises(RuntimeError, match="timed out"):
                 planner._call_claude("Test prompt", timeout=300)
 
-    def test_rate_limit_retry(self, planner: Any) -> None:
+    def test_rate_limit_retry(self, planner) -> None:
         """Test rate limit retry logic."""
         import subprocess
 
@@ -92,7 +91,7 @@ class TestCallClaude:
             assert result == "Success"
             assert mock_run.call_count == 2
 
-    def test_system_prompt_passthrough(self, mock_options: Any) -> None:
+    def test_system_prompt_passthrough(self, mock_options) -> None:
         """Test system prompt file is passed through."""
         mock_options.system_prompt_file = Path("/tmp/system.md")
 
@@ -113,7 +112,7 @@ class TestCallClaude:
 class TestRunAdvise:
     """Tests for _run_advise method."""
 
-    def test_returns_findings(self, planner: Any) -> None:
+    def test_returns_findings(self, planner) -> None:
         """Test successful advise returns findings."""
         with (
             patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
@@ -129,7 +128,7 @@ class TestRunAdvise:
                 assert "Related Skills" in result
                 assert "Found 3 skills" in result
 
-    def test_graceful_failure_on_error(self, planner: Any) -> None:
+    def test_graceful_failure_on_error(self, planner) -> None:
         """Test graceful failure when advise errors."""
         with patch("scylla.automation.planner.get_repo_root") as mock_get_repo:
             mock_get_repo.side_effect = RuntimeError("Git error")
@@ -138,7 +137,7 @@ class TestRunAdvise:
 
             assert result == ""
 
-    def test_skips_when_mnemosyne_missing_and_clone_fails(self, planner: Any) -> None:
+    def test_skips_when_mnemosyne_missing_and_clone_fails(self, planner) -> None:
         """Test returns empty string when ProjectMnemosyne is missing and clone fails."""
         with (
             patch("scylla.automation.planner.get_repo_root") as mock_get_repo,
@@ -152,7 +151,7 @@ class TestRunAdvise:
             assert result == ""
             mock_ensure.assert_called_once()
 
-    def test_clones_mnemosyne_when_missing(self, planner: Any) -> None:
+    def test_clones_mnemosyne_when_missing(self, planner) -> None:
         """Test proceeds with advise after cloning ProjectMnemosyne."""
         call_count = [0]
 
@@ -173,7 +172,7 @@ class TestRunAdvise:
 
         assert "Related Skills" in result
 
-    def test_marketplace_missing_triggers_reclone_and_succeeds(self, planner: Any) -> None:
+    def test_marketplace_missing_triggers_reclone_and_succeeds(self, planner) -> None:
         """Test that missing marketplace.json triggers re-clone and succeeds on retry."""
         # mnemosyne_root exists but marketplace.json is absent initially.
         # After re-clone, marketplace.json becomes present.
@@ -204,7 +203,7 @@ class TestRunAdvise:
         mock_ensure.assert_called_once()
         assert "Found Skills" in result
 
-    def test_marketplace_missing_reclone_fails_returns_empty(self, planner: Any) -> None:
+    def test_marketplace_missing_reclone_fails_returns_empty(self, planner) -> None:
         """Test that missing marketplace.json with failed re-clone returns empty string."""
 
         def patched_exists(p: Path) -> bool:
@@ -230,7 +229,7 @@ class TestRunAdvise:
 class TestGeneratePlan:
     """Tests for _generate_plan method."""
 
-    def test_plan_with_advise_findings(self, planner: Any) -> None:
+    def test_plan_with_advise_findings(self, planner) -> None:
         """Test plan generation with advise findings injected."""
         with (
             patch("scylla.automation.planner.gh_issue_json") as mock_gh,
@@ -254,7 +253,7 @@ class TestGeneratePlan:
             assert "Prior Learnings" in call_args
             assert "Related Skills" in call_args
 
-    def test_plan_without_advise(self, mock_options: Any) -> None:
+    def test_plan_without_advise(self, mock_options) -> None:
         """Test plan generation with advise disabled."""
         mock_options.enable_advise = False
         planner = Planner(mock_options)
@@ -281,7 +280,7 @@ class TestGeneratePlan:
 class TestEnsureMnemosyne:
     """Tests for _ensure_mnemosyne method."""
 
-    def test_clone_success(self, planner: Any, tmp_path: Any) -> None:
+    def test_clone_success(self, planner, tmp_path) -> None:
         """Test successful clone returns True and runs correct command."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
 
@@ -299,7 +298,7 @@ class TestEnsureMnemosyne:
         assert "HomericIntelligence/ProjectMnemosyne" in cmd
         assert str(mnemosyne_root) in cmd
 
-    def test_clone_failure(self, planner: Any, tmp_path: Any) -> None:
+    def test_clone_failure(self, planner, tmp_path) -> None:
         """Test clone failure returns False and logs warning."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
 
@@ -312,7 +311,7 @@ class TestEnsureMnemosyne:
 
         assert result is False
 
-    def test_no_clone_if_exists(self, planner: Any, tmp_path: Any) -> None:
+    def test_no_clone_if_exists(self, planner, tmp_path) -> None:
         """Test does not clone when directory already exists (runs git pull instead)."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
         mnemosyne_root.mkdir()
@@ -329,7 +328,7 @@ class TestEnsureMnemosyne:
         assert "pull" in cmd
         assert "gh" not in cmd
 
-    def test_lock_file_removed_after_successful_clone(self, planner: Any, tmp_path: Any) -> None:
+    def test_lock_file_removed_after_successful_clone(self, planner, tmp_path) -> None:
         """Test that the lock file is removed after a successful clone."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
         lock_path = tmp_path / ".mnemosyne.lock"
@@ -342,7 +341,7 @@ class TestEnsureMnemosyne:
         assert result is True
         assert not lock_path.exists(), "Lock file should be removed after successful clone"
 
-    def test_git_pull_called_when_directory_exists(self, planner: Any, tmp_path: Any) -> None:
+    def test_git_pull_called_when_directory_exists(self, planner, tmp_path) -> None:
         """Test that git pull --ff-only is called when directory already exists."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
         mnemosyne_root.mkdir()
@@ -361,9 +360,7 @@ class TestEnsureMnemosyne:
         assert "pull" in cmd
         assert "--ff-only" in cmd
 
-    def test_git_pull_failure_logs_warning_and_returns_true(
-        self, planner: Any, tmp_path: Any
-    ) -> None:
+    def test_git_pull_failure_logs_warning_and_returns_true(self, planner, tmp_path) -> None:
         """Test that a git pull failure logs a warning but still returns True."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
         mnemosyne_root.mkdir()
@@ -377,14 +374,14 @@ class TestEnsureMnemosyne:
 
         assert result is True
 
-    def test_concurrent_clone_only_once(self, mock_options: Any, tmp_path: Any) -> None:
+    def test_concurrent_clone_only_once(self, mock_options, tmp_path) -> None:
         """Test concurrent calls only clone once (lock prevents double-clone)."""
         mnemosyne_root = tmp_path / "ProjectMnemosyne"
 
         clone_calls = []
         start_event = threading.Event()
 
-        def fake_subprocess(cmd: list[str], **kwargs: Any) -> MagicMock:
+        def fake_subprocess(cmd: list[str], **kwargs: object) -> MagicMock:
             # Only count gh repo clone calls, not git pull calls
             if "gh" in cmd and "clone" in cmd:
                 clone_calls.append(1)

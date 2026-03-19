@@ -1,7 +1,5 @@
 """Unit tests for DataFrame builder functions using mock RunData."""
 
-from typing import Any
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,7 +10,7 @@ from scylla.e2e.models import TokenStats
 
 
 @pytest.fixture
-def mock_criterion_scores() -> Any:
+def mock_criterion_scores() -> None:
     """Create mock criterion scores for testing."""
     return {
         "functional": CriterionScore(
@@ -41,7 +39,7 @@ def mock_criterion_scores() -> Any:
 
 
 @pytest.fixture
-def mock_judges(mock_criterion_scores: Any) -> Any:
+def mock_judges(mock_criterion_scores):
     """Create mock judge evaluations for testing."""
     return [
         JudgeEvaluation(
@@ -78,7 +76,7 @@ def mock_judges(mock_criterion_scores: Any) -> Any:
 
 
 @pytest.fixture
-def mock_run_data(mock_judges: Any) -> Any:
+def mock_run_data(mock_judges):
     """Create a mock RunData object for testing."""
     return RunData(
         experiment="test-experiment-001",
@@ -104,7 +102,7 @@ def mock_run_data(mock_judges: Any) -> Any:
     )
 
 
-def test_build_runs_df_with_mock_data(mock_run_data: Any) -> None:
+def test_build_runs_df_with_mock_data(mock_run_data) -> None:
     """Test build_runs_df with mock RunData objects."""
     # Arrange
     experiments = {"test-experiment-001": [mock_run_data]}
@@ -125,7 +123,7 @@ def test_build_runs_df_with_mock_data(mock_run_data: Any) -> None:
     assert df.iloc[0]["cost_usd"] == 0.05
 
 
-def test_build_runs_df_impl_rate_consensus(mock_run_data: Any) -> None:
+def test_build_runs_df_impl_rate_consensus(mock_run_data) -> None:
     """Test that build_runs_df correctly computes consensus impl_rate as median."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -140,7 +138,7 @@ def test_build_runs_df_impl_rate_consensus(mock_run_data: Any) -> None:
     assert abs(df.iloc[0]["impl_rate"] - expected_impl_rate) < 1e-6
 
 
-def test_build_runs_df_token_stats(mock_run_data: Any) -> None:
+def test_build_runs_df_token_stats(mock_run_data) -> None:
     """Test that build_runs_df correctly extracts token statistics."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -158,7 +156,7 @@ def test_build_runs_df_token_stats(mock_run_data: Any) -> None:
     assert df.iloc[0]["total_tokens"] == 2000
 
 
-def test_build_runs_df_multiple_runs(mock_run_data: Any) -> None:
+def test_build_runs_df_multiple_runs(mock_run_data) -> None:
     """Test build_runs_df with multiple runs."""
     # Arrange - create second run with different data
     run2 = RunData(
@@ -240,7 +238,7 @@ def test_build_runs_df_empty_judges() -> None:
     assert np.isnan(df.iloc[0]["impl_rate"])  # Should be NaN when no judges
 
 
-def test_build_judges_df_with_mock_data(mock_run_data: Any) -> None:
+def test_build_judges_df_with_mock_data(mock_run_data) -> None:
     """Test build_judges_df with mock RunData objects."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -257,7 +255,7 @@ def test_build_judges_df_with_mock_data(mock_run_data: Any) -> None:
     assert (df["run_number"] == 1).all()
 
 
-def test_build_judges_df_judge_fields(mock_run_data: Any) -> None:
+def test_build_judges_df_judge_fields(mock_run_data) -> None:
     """Test build_judges_df correctly extracts judge-specific fields."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -274,7 +272,7 @@ def test_build_judges_df_judge_fields(mock_run_data: Any) -> None:
     assert judge1["judge_is_valid"]  # Check truthy (pandas returns np.True_)
 
 
-def test_build_judges_df_impl_rate_per_judge(mock_run_data: Any) -> None:
+def test_build_judges_df_impl_rate_per_judge(mock_run_data) -> None:
     """Test that build_judges_df computes impl_rate per judge."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -289,7 +287,7 @@ def test_build_judges_df_impl_rate_per_judge(mock_run_data: Any) -> None:
         assert abs(row["judge_impl_rate"] - expected_impl_rate) < 1e-6
 
 
-def test_build_judges_df_multiple_runs(mock_run_data: Any) -> None:
+def test_build_judges_df_multiple_runs(mock_run_data) -> None:
     """Test build_judges_df with multiple runs."""
     # Arrange
     run2 = RunData(
@@ -325,7 +323,7 @@ def test_build_judges_df_multiple_runs(mock_run_data: Any) -> None:
     assert len(run2_judges) == 3
 
 
-def test_build_criteria_df_with_mock_data(mock_run_data: Any) -> None:
+def test_build_criteria_df_with_mock_data(mock_run_data) -> None:
     """Test build_criteria_df with mock RunData objects."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -340,7 +338,7 @@ def test_build_criteria_df_with_mock_data(mock_run_data: Any) -> None:
     assert (df["agent_model"] == "claude-sonnet-4-6").all()
 
 
-def test_build_criteria_df_criterion_fields(mock_run_data: Any) -> None:
+def test_build_criteria_df_criterion_fields(mock_run_data) -> None:
     """Test build_criteria_df correctly extracts criterion fields."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}
@@ -361,7 +359,7 @@ def test_build_criteria_df_criterion_fields(mock_run_data: Any) -> None:
     assert code_quality["criterion_max"] == 10.0
 
 
-def test_build_criteria_df_multiple_judges(mock_run_data: Any) -> None:
+def test_build_criteria_df_multiple_judges(mock_run_data) -> None:
     """Test build_criteria_df includes all judges."""
     # Arrange
     experiments = {"test-001": [mock_run_data]}

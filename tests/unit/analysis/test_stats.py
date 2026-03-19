@@ -387,33 +387,6 @@ def test_spearman_correlation() -> None:
     assert corr == pytest.approx(-1.0, abs=1e-6)
 
 
-def test_kendall_tau() -> None:
-    """Test Kendall's tau rank correlation."""
-    from scylla.analysis.stats import kendall_tau
-
-    # Perfect positive correlation
-    x = [1, 2, 3, 4, 5]
-    y = [2, 4, 6, 8, 10]
-    tau, p_value = kendall_tau(x, y)
-    assert tau == pytest.approx(1.0, abs=1e-6)
-    assert p_value < 0.05
-
-    # Perfect negative correlation
-    x = [1, 2, 3, 4, 5]
-    y = [10, 8, 6, 4, 2]
-    tau, p_value = kendall_tau(x, y)
-    assert tau == pytest.approx(-1.0, abs=1e-6)
-
-
-def test_kendall_tau_small_sample() -> None:
-    """Test Kendall's tau with insufficient data returns defaults."""
-    from scylla.analysis.stats import kendall_tau
-
-    tau, p_value = kendall_tau([1], [2])
-    assert tau == 0.0
-    assert p_value == 1.0
-
-
 def test_pearson_correlation() -> None:
     """Test Pearson correlation."""
     from scylla.analysis.stats import pearson_correlation

@@ -3,7 +3,6 @@
 import json
 import subprocess
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -13,7 +12,7 @@ from scylla.automation.models import ImplementerOptions, IssueInfo
 
 
 @pytest.fixture
-def mock_options() -> Any:
+def mock_options() -> None:
     """Create mock ImplementerOptions."""
     return ImplementerOptions(
         epic_number=123,
@@ -25,7 +24,7 @@ def mock_options() -> Any:
 
 
 @pytest.fixture
-def implementer(mock_options: Any) -> Any:
+def implementer(mock_options):
     """Create an IssueImplementer instance."""
     with (
         patch("scylla.automation.implementer.get_repo_root") as mock_repo,
@@ -38,7 +37,7 @@ def implementer(mock_options: Any) -> Any:
 class TestRunClaudeCode:
     """Tests for _run_claude_code method."""
 
-    def test_captures_session_id_from_json(self, implementer: Any, tmp_path: Any) -> None:
+    def test_captures_session_id_from_json(self, implementer, tmp_path) -> None:
         """Test successful session_id capture from JSON output."""
         implementer.state_dir = tmp_path
         worktree_path = tmp_path / "worktree"
@@ -79,7 +78,7 @@ class TestRunClaudeCode:
             assert "--allowedTools" in args
             assert "Read,Write,Edit,Glob,Grep,Bash" in args
 
-    def test_graceful_failure_on_json_parse_error(self, implementer: Any, tmp_path: Any) -> None:
+    def test_graceful_failure_on_json_parse_error(self, implementer, tmp_path) -> None:
         """Test graceful handling when JSON parse fails."""
         implementer.state_dir = tmp_path
         worktree_path = tmp_path / "worktree"
@@ -104,7 +103,7 @@ class TestRunClaudeCode:
             mock_logger.warning.assert_called_once()
             assert "Could not parse session_id" in str(mock_logger.warning.call_args)
 
-    def test_graceful_failure_on_missing_session_id(self, implementer: Any, tmp_path: Any) -> None:
+    def test_graceful_failure_on_missing_session_id(self, implementer, tmp_path) -> None:
         """Test graceful handling when session_id is missing from JSON."""
         implementer.state_dir = tmp_path
         worktree_path = tmp_path / "worktree"
@@ -132,7 +131,7 @@ class TestRunClaudeCode:
             # Should return None when session_id is missing
             assert session_id is None
 
-    def test_timeout_raises_runtime_error(self, implementer: Any, tmp_path: Any) -> None:
+    def test_timeout_raises_runtime_error(self, implementer, tmp_path) -> None:
         """Test timeout handling."""
         implementer.state_dir = tmp_path
         worktree_path = tmp_path / "worktree"
@@ -150,7 +149,7 @@ class TestRunClaudeCode:
                     prompt="Implement issue",
                 )
 
-    def test_dry_run_returns_none(self, mock_options: Any) -> None:
+    def test_dry_run_returns_none(self, mock_options) -> None:
         """Test dry run mode returns None."""
         mock_options.dry_run = True
         implementer = IssueImplementer(mock_options)
@@ -163,7 +162,7 @@ class TestRunClaudeCode:
 
         assert session_id is None
 
-    def test_claude_code_output_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_claude_code_output_saved_to_log(self, implementer, tmp_path) -> None:
         """Test that Claude Code stdout is saved to log file on success."""
         # Use tmp_path for state_dir to enable actual file writes
         implementer.state_dir = tmp_path
@@ -198,7 +197,7 @@ class TestRunClaudeCode:
             assert log_file.exists()
             assert "test-session-123" in log_file.read_text()
 
-    def test_claude_code_failure_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_claude_code_failure_saved_to_log(self, implementer, tmp_path) -> None:
         """Test that Claude Code failure output is saved to log file."""
         # Use tmp_path for state_dir
         implementer.state_dir = tmp_path
@@ -240,15 +239,15 @@ class TestRunClaudeCode:
 class TestRunRetrospective:
     """Tests for _run_retrospective method."""
 
-    def test_successful_retrospective(self, implementer: Any, tmp_path: Any) -> None:
+    def test_successful_retrospective(self, implementer, tmp_path) -> None:
         """Test successful retrospective run."""
         # Use tmp_path for state_dir to enable actual file writes
         implementer.state_dir = tmp_path
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger") as mock_logger,
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger") as mock_logger,
         ):
             # Mock successful run with stdout
             mock_run.return_value = MagicMock(stdout="Retrospective output")
@@ -291,13 +290,13 @@ class TestRunRetrospective:
             # Should return True on success
             assert result is True
 
-    def test_graceful_failure_on_error(self, implementer: Any, tmp_path: Any) -> None:
+    def test_graceful_failure_on_error(self, implementer, tmp_path) -> None:
         """Test graceful failure when retrospective errors."""
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger") as mock_logger,
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger") as mock_logger,
         ):
             mock_run.side_effect = RuntimeError("Claude error")
 
@@ -316,13 +315,13 @@ class TestRunRetrospective:
             # Should return False on failure
             assert result is False
 
-    def test_timeout_is_non_blocking(self, implementer: Any, tmp_path: Any) -> None:
+    def test_timeout_is_non_blocking(self, implementer, tmp_path) -> None:
         """Test timeout in retrospective doesn't block pipeline."""
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger") as mock_logger,
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger") as mock_logger,
         ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
 
@@ -340,15 +339,15 @@ class TestRunRetrospective:
             # Should return False on timeout
             assert result is False
 
-    def test_retrospective_failure_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_retrospective_failure_saved_to_log(self, implementer, tmp_path) -> None:
         """Test that retrospective failure output is saved to log file."""
         # Use tmp_path for state_dir
         implementer.state_dir = tmp_path
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger"),
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger"),
         ):
             error = subprocess.CalledProcessError(
                 returncode=1,
@@ -378,7 +377,7 @@ class TestRunRetrospective:
             # Should return False on failure
             assert result is False
 
-    def test_retrospective_needs_rerun_failed_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_retrospective_needs_rerun_failed_log(self, implementer, tmp_path) -> None:
         """Test _retrospective_needs_rerun returns True for failed log."""
         implementer.state_dir = tmp_path
 
@@ -389,14 +388,14 @@ class TestRunRetrospective:
         result = implementer._retrospective_needs_rerun(123)
         assert result is True
 
-    def test_retrospective_needs_rerun_no_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_retrospective_needs_rerun_no_log(self, implementer, tmp_path) -> None:
         """Test _retrospective_needs_rerun returns True when no log exists."""
         implementer.state_dir = tmp_path
 
         result = implementer._retrospective_needs_rerun(123)
         assert result is True
 
-    def test_retrospective_no_rerun_successful_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_retrospective_no_rerun_successful_log(self, implementer, tmp_path) -> None:
         """Test _retrospective_needs_rerun returns False for successful log."""
         implementer.state_dir = tmp_path
 
@@ -407,9 +406,7 @@ class TestRunRetrospective:
         result = implementer._retrospective_needs_rerun(123)
         assert result is False
 
-    def test_rerun_failed_retrospectives_finds_failures(
-        self, implementer: Any, tmp_path: Any
-    ) -> None:
+    def test_rerun_failed_retrospectives_finds_failures(self, implementer, tmp_path) -> None:
         """Test _rerun_failed_retrospectives re-runs failed retrospectives."""
         implementer.state_dir = tmp_path
 
@@ -445,7 +442,7 @@ class TestRunRetrospective:
             assert state.retrospective_completed is True
             mock_save.assert_called_once()
 
-    def test_rerun_skips_already_successful(self, implementer: Any, tmp_path: Any) -> None:
+    def test_rerun_skips_already_successful(self, implementer, tmp_path) -> None:
         """Test _rerun_failed_retrospectives skips already successful retrospectives."""
         implementer.state_dir = tmp_path
 
@@ -468,9 +465,7 @@ class TestRunRetrospective:
             mock_retro.assert_not_called()
             assert results == {}
 
-    def test_old_state_without_retrospective_completed(
-        self, implementer: Any, tmp_path: Any
-    ) -> None:
+    def test_old_state_without_retrospective_completed(self, implementer, tmp_path) -> None:
         """Test backward compatibility for old JSON files without retrospective_completed."""
         # Simulate loading old state JSON that doesn't have retrospective_completed field
         old_state_json = """
@@ -497,7 +492,7 @@ class TestRunRetrospective:
 class TestImplementIssuePipeline:
     """Tests for _implement_issue pipeline with retrospective."""
 
-    def test_retrospective_phase_when_enabled(self, mock_options: Any) -> None:
+    def test_retrospective_phase_when_enabled(self, mock_options) -> None:
         """Test retrospective phase runs when enabled."""
         mock_options.enable_retrospective = True
 
@@ -533,7 +528,7 @@ class TestImplementIssuePipeline:
                 assert mock_retro.call_args[0][0] == "session123"
                 assert result.success is True
 
-    def test_retrospective_phase_when_disabled(self, mock_options: Any) -> None:
+    def test_retrospective_phase_when_disabled(self, mock_options) -> None:
         """Test retrospective phase skipped when disabled."""
         mock_options.enable_retrospective = False
 
@@ -568,7 +563,7 @@ class TestImplementIssuePipeline:
                 mock_retro.assert_not_called()
                 assert result.success is True
 
-    def test_retrospective_skipped_when_no_session_id(self, mock_options: Any) -> None:
+    def test_retrospective_skipped_when_no_session_id(self, mock_options) -> None:
         """Test retrospective skipped when session_id is None."""
         mock_options.enable_retrospective = True
 
@@ -607,7 +602,7 @@ class TestImplementIssuePipeline:
 class TestParseFollowUpItems:
     """Tests for _parse_follow_up_items method."""
 
-    def test_valid_json_in_code_block(self, implementer: Any) -> None:
+    def test_valid_json_in_code_block(self, implementer) -> None:
         """Test parsing JSON from code blocks."""
         text = """Here are the follow-up items:
 ```json
@@ -627,7 +622,7 @@ class TestParseFollowUpItems:
         assert items[0]["body"] == "Need more tests"
         assert items[0]["labels"] == ["test"]
 
-    def test_valid_bare_json(self, implementer: Any) -> None:
+    def test_valid_bare_json(self, implementer) -> None:
         """Test parsing bare JSON array."""
         text = '[{"title": "Fix bug", "body": "Found a bug", "labels": ["bug"]}]'
 
@@ -636,7 +631,7 @@ class TestParseFollowUpItems:
         assert len(items) == 1
         assert items[0]["title"] == "Fix bug"
 
-    def test_empty_array(self, implementer: Any) -> None:
+    def test_empty_array(self, implementer) -> None:
         """Test parsing empty array."""
         text = "```json\n[]\n```"
 
@@ -644,13 +639,13 @@ class TestParseFollowUpItems:
 
         assert items == []
 
-    def test_empty_string(self, implementer: Any) -> None:
+    def test_empty_string(self, implementer) -> None:
         """Test handling empty string."""
         items = implementer._parse_follow_up_items("")
 
         assert items == []
 
-    def test_invalid_json(self, implementer: Any) -> None:
+    def test_invalid_json(self, implementer) -> None:
         """Test graceful handling of invalid JSON."""
         text = "This is not valid JSON {{"
 
@@ -658,7 +653,7 @@ class TestParseFollowUpItems:
 
         assert items == []
 
-    def test_missing_required_fields_skipped(self, implementer: Any) -> None:
+    def test_missing_required_fields_skipped(self, implementer) -> None:
         """Test that items missing required fields are skipped."""
         text = """
 [
@@ -674,7 +669,7 @@ class TestParseFollowUpItems:
         assert items[0]["title"] == "Valid item"
         assert items[1]["title"] == "Another valid"
 
-    def test_caps_at_five_items(self, implementer: Any) -> None:
+    def test_caps_at_five_items(self, implementer) -> None:
         """Test that items are capped at 5."""
         items_json = [{"title": f"Item {i}", "body": f"Body {i}", "labels": []} for i in range(10)]
         text = f"```json\n{json.dumps(items_json)}\n```"
@@ -687,7 +682,7 @@ class TestParseFollowUpItems:
 class TestRunFollowUpIssues:
     """Tests for _run_follow_up_issues method."""
 
-    def test_successful_creation(self, implementer: Any, tmp_path: Any) -> None:
+    def test_successful_creation(self, implementer, tmp_path) -> None:
         """Test successful follow-up issue creation."""
         implementer.state_dir = tmp_path
 
@@ -697,10 +692,10 @@ class TestRunFollowUpIssues:
         )
 
         with (
-            patch("scylla.automation.follow_up.run") as mock_run,
-            patch("scylla.automation.follow_up.gh_issue_create") as mock_create,
-            patch("scylla.automation.follow_up.gh_issue_comment") as mock_comment,
-            patch("scylla.automation.follow_up.time.sleep"),
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
+            patch("scylla.automation.implementer.gh_issue_comment") as mock_comment,
+            patch("scylla.automation.implementer.time.sleep"),
         ):
             mock_run.return_value = mock_result
             mock_create.return_value = 456
@@ -714,7 +709,7 @@ class TestRunFollowUpIssues:
             mock_comment.assert_called_once()
             assert "#456" in mock_comment.call_args[0][1]
 
-    def test_no_items_identified(self, implementer: Any, tmp_path: Any) -> None:
+    def test_no_items_identified(self, implementer, tmp_path) -> None:
         """Test when no follow-up items are identified."""
         implementer.state_dir = tmp_path
 
@@ -722,9 +717,9 @@ class TestRunFollowUpIssues:
         mock_result.stdout = json.dumps({"result": "[]"})
 
         with (
-            patch("scylla.automation.follow_up.run") as mock_run,
-            patch("scylla.automation.follow_up.gh_issue_create") as mock_create,
-            patch("scylla.automation.follow_up.logger") as mock_logger,
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
+            patch("scylla.automation.implementer.logger") as mock_logger,
         ):
             mock_run.return_value = mock_result
 
@@ -735,13 +730,13 @@ class TestRunFollowUpIssues:
                 "No follow-up items" in str(call) for call in mock_logger.info.call_args_list
             )
 
-    def test_graceful_failure_on_error(self, implementer: Any, tmp_path: Any) -> None:
+    def test_graceful_failure_on_error(self, implementer, tmp_path) -> None:
         """Test graceful handling when run fails."""
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.follow_up.run") as mock_run,
-            patch("scylla.automation.follow_up.logger") as mock_logger,
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger") as mock_logger,
         ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
 
@@ -750,9 +745,7 @@ class TestRunFollowUpIssues:
 
             assert any("failed" in str(call).lower() for call in mock_logger.warning.call_args_list)
 
-    def test_partial_failure_creates_available_issues(
-        self, implementer: Any, tmp_path: Any
-    ) -> None:
+    def test_partial_failure_creates_available_issues(self, implementer, tmp_path) -> None:
         """Test that partial failures still create available issues."""
         implementer.state_dir = tmp_path
 
@@ -767,10 +760,10 @@ class TestRunFollowUpIssues:
         )
 
         with (
-            patch("scylla.automation.follow_up.run") as mock_run,
-            patch("scylla.automation.follow_up.gh_issue_create") as mock_create,
-            patch("scylla.automation.follow_up.gh_issue_comment") as mock_comment,
-            patch("scylla.automation.follow_up.time.sleep"),
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create") as mock_create,
+            patch("scylla.automation.implementer.gh_issue_comment") as mock_comment,
+            patch("scylla.automation.implementer.time.sleep"),
         ):
             mock_run.return_value = mock_result
             # First succeeds, second fails
@@ -783,7 +776,7 @@ class TestRunFollowUpIssues:
             # Only successful issue in summary
             assert "#789" in mock_comment.call_args[0][1]
 
-    def test_follow_up_output_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_follow_up_output_saved_to_log(self, implementer, tmp_path) -> None:
         """Test that follow-up output is saved to log file on success."""
         # Use tmp_path for state_dir
         implementer.state_dir = tmp_path
@@ -795,10 +788,10 @@ class TestRunFollowUpIssues:
         )
 
         with (
-            patch("scylla.automation.follow_up.run") as mock_run,
-            patch("scylla.automation.follow_up.gh_issue_create", return_value=999),
-            patch("scylla.automation.follow_up.gh_issue_comment"),
-            patch("scylla.automation.follow_up.time.sleep"),
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.gh_issue_create", return_value=999),
+            patch("scylla.automation.implementer.gh_issue_comment"),
+            patch("scylla.automation.implementer.time.sleep"),
         ):
             mock_run.return_value = mock_result
 
@@ -810,15 +803,15 @@ class TestRunFollowUpIssues:
             content = log_file.read_text()
             assert "Follow-up" in content
 
-    def test_follow_up_failure_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_follow_up_failure_saved_to_log(self, implementer, tmp_path) -> None:
         """Test that follow-up failure output is saved to log file."""
         # Use tmp_path for state_dir
         implementer.state_dir = tmp_path
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.follow_up.run") as mock_run,
-            patch("scylla.automation.follow_up.logger"),
+            patch("scylla.automation.implementer.run") as mock_run,
+            patch("scylla.automation.implementer.logger"),
         ):
             error = subprocess.CalledProcessError(
                 returncode=1,
@@ -969,7 +962,7 @@ class TestImplementIssuePipelineFollowUp:
 class TestLogHelper:
     """Tests for _log helper method."""
 
-    def test_log_helper_routes_to_ui(self, implementer: Any) -> None:
+    def test_log_helper_routes_to_ui(self, implementer) -> None:
         """Test that _log writes to both logger and log_manager."""
         with (
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -986,7 +979,7 @@ class TestLogHelper:
             # Should log to UI with ERROR prefix
             mock_log_manager.assert_called_once_with(12345, "ERROR: Test error message")
 
-    def test_log_helper_warning_level(self, implementer: Any) -> None:
+    def test_log_helper_warning_level(self, implementer) -> None:
         """Test _log with warning level."""
         with (
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -1000,7 +993,7 @@ class TestLogHelper:
             mock_logger.warning.assert_called_once_with("Test warning")
             mock_log_manager.assert_called_once_with(12345, "WARN: Test warning")
 
-    def test_log_helper_info_level(self, implementer: Any) -> None:
+    def test_log_helper_info_level(self, implementer) -> None:
         """Test _log with info level (no prefix)."""
         with (
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -1014,7 +1007,7 @@ class TestLogHelper:
             mock_logger.info.assert_called_once_with("Test info")
             mock_log_manager.assert_called_once_with(12345, "Test info")
 
-    def test_log_helper_custom_thread_id(self, implementer: Any) -> None:
+    def test_log_helper_custom_thread_id(self, implementer) -> None:
         """Test _log with custom thread_id."""
         with (
             patch("scylla.automation.implementer.logger") as mock_logger,
@@ -1029,7 +1022,7 @@ class TestLogHelper:
 class TestErrorVisibility:
     """Tests for error visibility in UI."""
 
-    def test_failure_shows_in_status_slot(self, mock_options: Any) -> None:
+    def test_failure_shows_in_status_slot(self, mock_options) -> None:
         """Test that slot shows FAILED before release."""
         with (
             patch("scylla.automation.implementer.get_repo_root"),
@@ -1065,7 +1058,7 @@ class TestErrorVisibility:
                 )
                 assert result.success is False
 
-    def test_exception_classification_timeout(self, mock_options: Any) -> None:
+    def test_exception_classification_timeout(self, mock_options) -> None:
         """Test TimeoutExpired exceptions are classified correctly."""
         with (
             patch("scylla.automation.implementer.get_repo_root"),
@@ -1099,7 +1092,7 @@ class TestErrorVisibility:
                 assert any("Timeout" in str(call) for call in mock_log.call_args_list)
                 assert result.success is False
 
-    def test_exception_classification_called_process_error(self, mock_options: Any) -> None:
+    def test_exception_classification_called_process_error(self, mock_options) -> None:
         """Test CalledProcessError exceptions are classified correctly."""
         with (
             patch("scylla.automation.implementer.get_repo_root"),
@@ -1139,7 +1132,7 @@ class TestErrorVisibility:
 class TestGranularStatusUpdates:
     """Tests for granular status updates."""
 
-    def test_granular_status_updates(self, mock_options: Any) -> None:
+    def test_granular_status_updates(self, mock_options) -> None:
         """Test that status shows granular sub-steps."""
         with (
             patch("scylla.automation.implementer.get_repo_root"),

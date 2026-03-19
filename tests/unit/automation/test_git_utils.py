@@ -2,7 +2,6 @@
 
 import subprocess
 from pathlib import Path
-from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -37,7 +36,7 @@ class TestRun:
         result = run(["false"], check=False)
         assert result.returncode != 0
 
-    def test_with_cwd(self, tmp_path: Any) -> None:
+    def test_with_cwd(self, tmp_path) -> None:
         """Test running command with custom working directory."""
         test_file = tmp_path / "test.txt"
         test_file.write_text("content")
@@ -52,7 +51,7 @@ class TestGetRepoRoot:
     """Tests for get_repo_root function."""
 
     @patch("scylla.automation.git_utils.run")
-    def test_successful_detection(self, mock_run: Any) -> None:
+    def test_successful_detection(self, mock_run) -> None:
         """Test successful repository root detection."""
         mock_result = Mock()
         mock_result.stdout = "/home/user/repo\n"
@@ -64,7 +63,7 @@ class TestGetRepoRoot:
         mock_run.assert_called_once()
 
     @patch("scylla.automation.git_utils.run")
-    def test_not_in_git_repo(self, mock_run: Any) -> None:
+    def test_not_in_git_repo(self, mock_run) -> None:
         """Test when not in a git repository."""
         mock_run.side_effect = subprocess.CalledProcessError(128, "git")
 
@@ -77,7 +76,7 @@ class TestGetRepoInfo:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_ssh_url_format(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_ssh_url_format(self, mock_get_root, mock_run) -> None:
         """Test parsing SSH URL format."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_result = Mock()
@@ -91,7 +90,7 @@ class TestGetRepoInfo:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_https_url_format(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_https_url_format(self, mock_get_root, mock_run) -> None:
         """Test parsing HTTPS URL format."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_result = Mock()
@@ -105,7 +104,7 @@ class TestGetRepoInfo:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_invalid_url_format(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_invalid_url_format(self, mock_get_root, mock_run) -> None:
         """Test handling invalid URL format."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_result = Mock()
@@ -121,7 +120,7 @@ class TestGetCurrentBranch:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_successful_detection(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_successful_detection(self, mock_get_root, mock_run) -> None:
         """Test successful branch detection."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_result = Mock()
@@ -134,7 +133,7 @@ class TestGetCurrentBranch:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_failed_detection(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_failed_detection(self, mock_get_root, mock_run) -> None:
         """Test failed branch detection."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_run.side_effect = subprocess.CalledProcessError(128, "git")
@@ -148,7 +147,7 @@ class TestIsCleanWorkingTree:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_clean_tree(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_clean_tree(self, mock_get_root, mock_run) -> None:
         """Test clean working tree."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_result = Mock()
@@ -159,7 +158,7 @@ class TestIsCleanWorkingTree:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_dirty_tree(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_dirty_tree(self, mock_get_root, mock_run) -> None:
         """Test dirty working tree."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_result = Mock()
@@ -170,7 +169,7 @@ class TestIsCleanWorkingTree:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.get_repo_root")
-    def test_error_returns_false(self, mock_get_root: Any, mock_run: Any) -> None:
+    def test_error_returns_false(self, mock_get_root, mock_run) -> None:
         """Test error returns False."""
         mock_get_root.return_value = Path("/home/user/repo")
         mock_run.side_effect = subprocess.CalledProcessError(128, "git")
@@ -182,7 +181,7 @@ class TestSafeGitFetch:
     """Tests for safe_git_fetch function."""
 
     @patch("scylla.automation.git_utils.run")
-    def test_successful_fetch(self, mock_run: Any) -> None:
+    def test_successful_fetch(self, mock_run) -> None:
         """Test successful git fetch."""
         repo_root = Path("/home/user/repo")
 
@@ -193,7 +192,7 @@ class TestSafeGitFetch:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.time.sleep")
-    def test_retry_on_failure(self, mock_sleep: Any, mock_run: Any) -> None:
+    def test_retry_on_failure(self, mock_sleep, mock_run) -> None:
         """Test retry on fetch failure."""
         repo_root = Path("/home/user/repo")
         mock_run.side_effect = [
@@ -209,7 +208,7 @@ class TestSafeGitFetch:
 
     @patch("scylla.automation.git_utils.run")
     @patch("scylla.automation.git_utils.time.sleep")
-    def test_all_retries_fail(self, mock_sleep: Any, mock_run: Any) -> None:
+    def test_all_retries_fail(self, mock_sleep, mock_run) -> None:
         """Test when all retries fail."""
         repo_root = Path("/home/user/repo")
         mock_run.side_effect = subprocess.CalledProcessError(1, "git")
