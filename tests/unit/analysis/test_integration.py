@@ -5,13 +5,13 @@ Tests the full pipeline flow: load -> build DataFrames -> generate outputs.
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
 
 import pandas as pd
 import pytest
+import numpy as np
 
 
-def test_e2e_pipeline_with_sample_data(sample_runs_df: Any) -> None:
+def test_e2e_pipeline_with_sample_data(sample_runs_df: pd.DataFrame) -> None:
     """End-to-end test: complete analysis pipeline with sample data.
 
     Verifies that the full pipeline can execute without crashes:
@@ -29,14 +29,14 @@ def test_e2e_pipeline_with_sample_data(sample_runs_df: Any) -> None:
     assert "tier" in sample_runs_df.columns
     assert "agent_model" in sample_runs_df.columns
     assert "passed" in sample_runs_df.columns
-    assert len(sample_runs_df) > 0
+    assert len(sample_runs_df: pd.DataFrame) > 0
 
     # Test table generation (no exceptions)
     with TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
 
         # Generate summary table (tables don't take output_dir)
-        table_md, table_tex = table01_tier_summary(sample_runs_df)
+        table_md, table_tex = table01_tier_summary(sample_runs_df: pd.DataFrame)
         assert isinstance(table_md, str)
         assert isinstance(table_tex, str)
         assert len(table_md) > 0
@@ -70,7 +70,7 @@ def test_e2e_empty_dataframe_handling() -> None:
     assert isinstance(table_tex, str)
 
 
-def test_e2e_dataframe_types_validation(sample_runs_df: Any) -> None:
+def test_e2e_dataframe_types_validation(sample_runs_df: pd.DataFrame) -> None:
     """Verify DataFrame has correct column types for analysis."""
     # Critical columns must exist
     required_cols = ["tier", "agent_model", "passed", "score"]
@@ -102,7 +102,7 @@ def test_e2e_dataframe_types_validation(sample_runs_df: Any) -> None:
         ("table01_tier_summary", "scylla.analysis.tables.summary"),
     ],
 )
-def test_e2e_smoke_test_outputs(function_name: Any, module_path: Any, sample_runs_df: Any) -> None:
+def test_e2e_smoke_test_outputs(function_name, module_path, sample_runs_df) -> None:
     """Smoke test: verify key outputs can be generated without crashes."""
     import importlib
 
@@ -115,7 +115,7 @@ def test_e2e_smoke_test_outputs(function_name: Any, module_path: Any, sample_run
         # Call function - should not raise
         if "table" in function_name:
             # Tables don't take output_dir
-            result = func(sample_runs_df)
+            result = func(sample_runs_df: pd.DataFrame)
             assert result is not None
             assert len(result) == 2  # (markdown, latex)
         else:
@@ -125,7 +125,7 @@ def test_e2e_smoke_test_outputs(function_name: Any, module_path: Any, sample_run
             assert len(list(output_dir.iterdir())) > 0
 
 
-def test_e2e_statistical_pipeline_integration(sample_runs_df: Any) -> None:
+def test_e2e_statistical_pipeline_integration(sample_runs_df: pd.DataFrame) -> None:
     """Test that statistical functions integrate properly with DataFrames."""
     from scylla.analysis.stats import bootstrap_ci, cliffs_delta, mann_whitney_u
 

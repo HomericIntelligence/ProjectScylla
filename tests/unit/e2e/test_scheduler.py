@@ -12,6 +12,7 @@ Tests cover:
 from __future__ import annotations
 
 import threading
+from multiprocessing import Manager
 
 import pytest
 
@@ -23,10 +24,19 @@ from scylla.e2e.scheduler import (
 )
 
 
+@pytest.fixture(scope="module")
+def mp_manager() -> None:
+    """Create a multiprocessing Manager shared across tests in this module."""
+    mgr = Manager()
+    yield mgr
+    mgr.shutdown()
+
+
 @pytest.fixture
-def scheduler() -> ParallelismScheduler:
+def scheduler(mp_manager) -> ParallelismScheduler:
     """Create a ParallelismScheduler with small limits for testing."""
     return ParallelismScheduler(
+        manager=mp_manager,
         parallel_high=2,
         parallel_med=4,
         parallel_low=8,
@@ -43,9 +53,9 @@ class TestParallelismSchedulerInit:
         assert config.parallel_med == 4
         assert config.parallel_low == 8
 
-    def test_semaphores_created_for_all_classes(self) -> None:
+    def test_semaphores_created_for_all_classes(self, mp_manager) -> None:
         """All three memory class semaphores are created."""
-        s = ParallelismScheduler(parallel_high=1, parallel_med=2, parallel_low=3)
+        s = ParallelismScheduler(mp_manager, parallel_high=1, parallel_med=2, parallel_low=3)
         # Acquire and release each semaphore to verify they work
         for cls in MEMORY_CLASSES:
             s.acquire_raw(cls)
@@ -115,9 +125,9 @@ class TestParallelismSchedulerRawControl:
 class TestParallelismSchedulerConcurrency:
     """Tests for ParallelismScheduler concurrency limiting."""
 
-    def test_high_semaphore_limits_concurrency(self) -> None:
+    def test_high_semaphore_limits_concurrency(self, mp_manager) -> None:
         """High semaphore with count 1 prevents more than 1 concurrent acquisition."""
-        s = ParallelismScheduler(parallel_high=1, parallel_med=4, parallel_low=8)
+        s = ParallelismScheduler(mp_manager, parallel_high=1, parallel_med=4, parallel_low=8)
 
         acquired_count = [0]
         max_concurrent = [0]
@@ -149,18 +159,20 @@ class TestParallelismSchedulerConcurrency:
 class TestCreateSchedulerFromConfig:
     """Tests for create_scheduler_from_config() factory function."""
 
-    def test_factory_creates_scheduler(self) -> None:
+    def test_factory_creates_scheduler(self, mp_manager) -> None:
         """Verify factory creates a ParallelismScheduler with given config."""
-        s = create_scheduler_from_config(parallel_high=3, parallel_med=5, parallel_low=10)
+        s = create_scheduler_from_config(
+            mp_manager, parallel_high=3, parallel_med=5, parallel_low=10
+        )
         assert isinstance(s, ParallelismScheduler)
         config = s.get_config()
         assert config.parallel_high == 3
         assert config.parallel_med == 5
         assert config.parallel_low == 10
 
-    def test_factory_uses_defaults(self) -> None:
+    def test_factory_uses_defaults(self, mp_manager) -> None:
         """Verify factory uses default parallelism values when none provided."""
-        s = create_scheduler_from_config()
+        s = create_scheduler_from_config(mp_manager)
         config = s.get_config()
         assert config.parallel_high == 2
         assert config.parallel_med == 4

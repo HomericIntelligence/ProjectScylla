@@ -6,8 +6,6 @@ Complements test_stats.py with broader coverage using pytest.mark.parametrize.
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -50,7 +48,7 @@ class TestCliffsDeltaParametrized:
             "single_eq",
         ],
     )
-    def test_cliffs_delta_values(self, g1: Any, g2: Any, expected_delta: Any) -> None:
+    def test_cliffs_delta_values(self, g1, g2, expected_delta) -> None:
         """Test Cliff's delta with various input combinations."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -67,7 +65,7 @@ class TestCliffsDeltaParametrized:
         ],
         ids=["empty_g1", "empty_g2", "both_empty", "pandas_empty"],
     )
-    def test_cliffs_delta_empty_groups(self, g1: Any, g2: Any) -> None:
+    def test_cliffs_delta_empty_groups(self, g1, g2) -> None:
         """Test Cliff's delta returns NaN for empty groups."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -83,7 +81,7 @@ class TestCliffsDeltaParametrized:
         ],
         ids=["pandas_pos", "pandas_neg", "numpy"],
     )
-    def test_cliffs_delta_input_types(self, g1: Any, g2: Any) -> None:
+    def test_cliffs_delta_input_types(self, g1, g2) -> None:
         """Test Cliff's delta works with different input types."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -106,7 +104,7 @@ class TestBootstrapCIParametrized:
         ],
         ids=["int_1-5", "int_10-50", "float_decimals", "numpy", "pandas"],
     )
-    def test_bootstrap_ci_mean(self, data: Any, expected_mean: Any) -> None:
+    def test_bootstrap_ci_mean(self, data, expected_mean) -> None:
         """Test bootstrap CI computes correct mean."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -122,7 +120,7 @@ class TestBootstrapCIParametrized:
         ],
         ids=["5_elements", "3_elements", "4_elements"],
     )
-    def test_bootstrap_ci_bounds(self, data: Any) -> None:
+    def test_bootstrap_ci_bounds(self, data) -> None:
         """Test bootstrap CI bounds satisfy ci_low <= mean <= ci_high."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -138,7 +136,7 @@ class TestBootstrapCIParametrized:
         ],
         ids=["single_element", "single_zero", "zero_variance"],
     )
-    def test_bootstrap_ci_degenerate(self, data: Any, expected: Any) -> None:
+    def test_bootstrap_ci_degenerate(self, data, expected) -> None:
         """Test bootstrap CI with degenerate inputs (zero variance)."""
         from scylla.analysis.stats import bootstrap_ci
 
@@ -162,7 +160,7 @@ class TestMannWhitneyUParametrized:
         ],
         ids=["clearly_different", "identical", "overlap"],
     )
-    def test_mann_whitney_significance(self, g1: Any, g2: Any, expect_significant: Any) -> None:
+    def test_mann_whitney_significance(self, g1, g2, expect_significant) -> None:
         """Test Mann-Whitney U significance detection."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -182,7 +180,7 @@ class TestMannWhitneyUParametrized:
         ],
         ids=["single_g1", "single_g2", "empty_g1", "empty_g2"],
     )
-    def test_mann_whitney_degenerate_safe_defaults(self, g1: Any, g2: Any) -> None:
+    def test_mann_whitney_degenerate_safe_defaults(self, g1, g2) -> None:
         """Test Mann-Whitney U returns safe defaults for degenerate input."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -206,9 +204,7 @@ class TestConsistencyParametrized:
         ],
         ids=["zero_variance", "cv_0.1", "cv_0.2", "cv_0.5", "cv_1.0"],
     )
-    def test_consistency_values(
-        self, mean_score: Any, std_score: Any, expected_consistency: Any
-    ) -> None:
+    def test_consistency_values(self, mean_score, std_score, expected_consistency) -> None:
         """Test consistency calculation with known values."""
         from scylla.analysis.stats import compute_consistency
 
@@ -223,7 +219,7 @@ class TestConsistencyParametrized:
         ],
         ids=["zero_mean_zero_std", "zero_mean_nonzero_std"],
     )
-    def test_consistency_edge_cases(self, mean_score: Any, std_score: Any, expected: Any) -> None:
+    def test_consistency_edge_cases(self, mean_score, std_score, expected) -> None:
         """Test consistency with edge cases."""
         from scylla.analysis.stats import compute_consistency
 
@@ -244,7 +240,7 @@ class TestCostOfPassParametrized:
         ],
         ids=["perfect_pass", "half_pass", "quarter_pass", "tenth_pass"],
     )
-    def test_cop_values(self, mean_cost: Any, pass_rate: Any, expected_cop: Any) -> None:
+    def test_cop_values(self, mean_cost, pass_rate, expected_cop) -> None:
         """Test CoP calculation with known values."""
         from scylla.analysis.stats import compute_cop
 
@@ -260,7 +256,7 @@ class TestCostOfPassParametrized:
         ],
         ids=["zero_pass_nonzero_cost", "zero_pass_high_cost", "zero_both"],
     )
-    def test_cop_zero_pass_rate(self, mean_cost: Any, pass_rate: Any) -> None:
+    def test_cop_zero_pass_rate(self, mean_cost, pass_rate) -> None:
         """Test CoP returns infinity for zero pass rate."""
         from scylla.analysis.stats import compute_cop
 
@@ -291,7 +287,7 @@ class TestHolmBonferroniParametrized:
             "single_not_significant",
         ],
     )
-    def test_holm_bonferroni_rejections(self, p_values: Any, expected_rejections: Any) -> None:
+    def test_holm_bonferroni_rejections(self, p_values, expected_rejections) -> None:
         """Test Holm-Bonferroni correction rejection pattern (alpha=0.05)."""
         from scylla.analysis.stats import holm_bonferroni_correction
 
@@ -310,7 +306,7 @@ class TestHolmBonferroniParametrized:
         ],
         ids=["ascending", "descending"],
     )
-    def test_holm_bonferroni_monotonicity(self, p_values: Any) -> None:
+    def test_holm_bonferroni_monotonicity(self, p_values) -> None:
         """Test corrected p-values are monotonically increasing."""
         from scylla.analysis.stats import holm_bonferroni_correction
 
@@ -336,7 +332,7 @@ class TestImplRateParametrized:
         ],
         ids=["perfect", "half", "three_quarters", "zero", "different_scale"],
     )
-    def test_impl_rate_values(self, achieved: Any, max_points: Any, expected_rate: Any) -> None:
+    def test_impl_rate_values(self, achieved, max_points, expected_rate) -> None:
         """Test implementation rate calculation."""
         from scylla.analysis.stats import compute_impl_rate
 
@@ -351,7 +347,7 @@ class TestImplRateParametrized:
         ],
         ids=["zero_both", "zero_max"],
     )
-    def test_impl_rate_edge_cases(self, achieved: Any, max_points: Any) -> None:
+    def test_impl_rate_edge_cases(self, achieved, max_points) -> None:
         """Test implementation rate edge cases (division by zero)."""
         from scylla.analysis.stats import compute_impl_rate
 
