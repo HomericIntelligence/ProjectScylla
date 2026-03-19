@@ -130,8 +130,8 @@ class RunContext:
         workspace: Workspace directory for this run (run_dir/workspace/)
         experiment_dir: Root experiment directory (for T5 inheritance, prompts)
 
-        tier_manager: Tier configuration manager (reconstructed in child process)
-        workspace_manager: Workspace manager (reconstructed in child process)
+        tier_manager: Tier configuration manager (shared across worker threads)
+        workspace_manager: Workspace manager (shared across worker threads)
         adapter: Claude Code adapter for building commands
 
         pipeline_baseline: Build pipeline baseline captured before first run
@@ -148,7 +148,7 @@ class RunContext:
         judge_duration: Judge execution duration in seconds
         run_result: Final E2ERunResult (set by stage_finalize_run)
 
-        coordinator: Rate limit coordinator for cross-process pause/resume
+        coordinator: Rate limit coordinator for cross-thread pause/resume
         checkpoint: Experiment checkpoint (mutated by StateMachine)
         checkpoint_path: Path to checkpoint file
 
@@ -167,7 +167,7 @@ class RunContext:
     workspace: Path
     experiment_dir: Path | None
 
-    # Managers (reconstructed in child process, not serialized)
+    # Managers (shared across worker threads)
     tier_manager: TierManager
     workspace_manager: WorkspaceManager
     adapter: ClaudeCodeAdapter
@@ -195,7 +195,7 @@ class RunContext:
     progress_steps: list[ProgressStep] | None = None
     change_results: list[ChangeResult] | None = None
 
-    # Cross-process coordination
+    # Cross-thread coordination
     coordinator: RateLimitCoordinator | None = None
     checkpoint: E2ECheckpoint | None = None
     checkpoint_path: Path | None = None

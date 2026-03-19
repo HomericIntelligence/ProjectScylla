@@ -145,26 +145,14 @@ class CheckpointFinalizer:
     ) -> None:
         """Mark checkpoint as completed.
 
-        Reloads run_states/subtest_states/tier_states from disk before marking
-        complete to preserve state written by parallel subprocess workers.
-        ProcessPoolExecutor workers write directly to disk; the main-process
-        checkpoint has stale (pre-fork) copies of these dicts.
+        With ThreadPoolExecutor, all worker threads share the same in-memory
+        checkpoint object, so no disk-merge is needed — the checkpoint is
+        already up-to-date.
 
         Args:
             checkpoint: In-memory checkpoint object to update in-place.
             experiment_dir: Experiment directory containing checkpoint.json.
 
         """
-        checkpoint_path = experiment_dir / "checkpoint.json"
-        # Merge worker-written state into the shared in-memory checkpoint object.
-        # We update in-place so the ExperimentStateMachine (which holds a reference
-        # to checkpoint) also sees the merged data when it calls save_checkpoint.
-        try:
-            disk_cp = load_checkpoint(checkpoint_path)
-            checkpoint.run_states = disk_cp.run_states
-            checkpoint.subtest_states = disk_cp.subtest_states
-            checkpoint.tier_states = disk_cp.tier_states
-        except Exception:  # broad catch: checkpoint merge at completion; fallback to in-memory copy
-            pass  # Fallback: keep stale in-memory copy (better than crashing)
         checkpoint.status = _STATUS_COMPLETED
         logger.debug("Checkpoint marked as completed")

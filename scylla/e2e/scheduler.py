@@ -12,10 +12,7 @@ same concurrency as lightweight stages (directory creation, report generation),
 which was the root cause of OOM kills in T5/T6 runs.
 
 Usage:
-    # In runner setup
-    from multiprocessing import Manager
-    manager = Manager()
-    scheduler = ParallelismScheduler(manager, parallel_high=2, parallel_med=4, parallel_low=8)
+    scheduler = ParallelismScheduler(parallel_high=2, parallel_med=4, parallel_low=8)
 
     # In stage functions (context manager style)
     with scheduler.acquire("high"):
@@ -33,12 +30,9 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import threading
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from multiprocessing.managers import SyncManager
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +63,10 @@ class ParallelismScheduler:
     more RAM than low-memory stages (file I/O). Using separate semaphores
     ensures we don't start more memory-heavy work than the system can handle.
 
-    The scheduler is safe to use across processes via multiprocessing.Manager
-    semaphores.
+    Uses threading.Semaphore for in-process coordination across worker threads.
 
     Example:
-        >>> from multiprocessing import Manager
-        >>> manager = Manager()
-        >>> scheduler = ParallelismScheduler(manager, parallel_high=2)
+        >>> scheduler = ParallelismScheduler(parallel_high=2)
         >>> with scheduler.acquire("high"):
         ...     run_agent()
 
@@ -83,7 +74,6 @@ class ParallelismScheduler:
 
     def __init__(
         self,
-        manager: SyncManager,
         parallel_high: int = 2,
         parallel_med: int = 4,
         parallel_low: int = 8,
@@ -91,8 +81,6 @@ class ParallelismScheduler:
         """Initialize the scheduler with per-class semaphores.
 
         Args:
-            manager: Multiprocessing manager for cross-process shared objects.
-                     Use Manager() from the multiprocessing module.
             parallel_high: Semaphore count for high-memory class (default 2).
                            Controls agent execution and judge execution concurrency.
             parallel_med: Semaphore count for medium-memory class (default 4).
@@ -102,9 +90,9 @@ class ParallelismScheduler:
 
         """
         self._semaphores = {
-            "high": manager.Semaphore(parallel_high),
-            "med": manager.Semaphore(parallel_med),
-            "low": manager.Semaphore(parallel_low),
+            "high": threading.Semaphore(parallel_high),
+            "med": threading.Semaphore(parallel_med),
+            "low": threading.Semaphore(parallel_low),
         }
         self._config = ParallelismConfig(
             parallel_high=parallel_high,
@@ -173,7 +161,6 @@ class ParallelismScheduler:
 
 
 def create_scheduler_from_config(
-    manager: SyncManager,
     parallel_high: int = 2,
     parallel_med: int = 4,
     parallel_low: int = 8,
@@ -184,7 +171,6 @@ def create_scheduler_from_config(
     from CLI arguments.
 
     Args:
-        manager: Multiprocessing manager (from Manager())
         parallel_high: Max concurrent high-memory operations
         parallel_med: Max concurrent medium-memory operations
         parallel_low: Max concurrent low-memory operations
@@ -194,7 +180,6 @@ def create_scheduler_from_config(
 
     """
     return ParallelismScheduler(
-        manager=manager,
         parallel_high=parallel_high,
         parallel_med=parallel_med,
         parallel_low=parallel_low,

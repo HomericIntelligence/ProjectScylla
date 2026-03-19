@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 import tempfile
 from datetime import datetime, timezone
-from multiprocessing import Manager
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock, patch
@@ -33,7 +32,7 @@ from scylla.e2e.rate_limit import (
 )
 from scylla.e2e.subtest_executor import (
     RateLimitCoordinator,
-    _run_subtest_in_process_safe,
+    _run_subtest_safe,
 )
 
 
@@ -42,8 +41,7 @@ class TestRateLimitCoordinator:
 
     def test_coordinator_initialization(self) -> None:
         """Test that coordinator is properly initialized."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         # Check initial state
         assert not coordinator.check_if_paused()
@@ -52,8 +50,7 @@ class TestRateLimitCoordinator:
 
     def test_signal_and_check_pause(self) -> None:
         """Test that pause signals are properly coordinated."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         # Signal rate limit
         rate_limit_info = RateLimitInfo(
@@ -71,8 +68,7 @@ class TestRateLimitCoordinator:
 
     def test_resume_all_workers(self) -> None:
         """Test that resume signal clears pause state."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         # Signal rate limit
         rate_limit_info = RateLimitInfo(
@@ -92,8 +88,7 @@ class TestRateLimitCoordinator:
 
     def test_shutdown_coordination(self) -> None:
         """Test that shutdown signals are properly coordinated."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         # Signal shutdown
         coordinator.signal_shutdown()
@@ -103,8 +98,7 @@ class TestRateLimitCoordinator:
 
     def test_multiple_pause_signals(self) -> None:
         """Test handling multiple rate limit signals from different workers."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         # Signal from agent
         agent_info = RateLimitInfo(
@@ -181,8 +175,7 @@ class TestParallelRateLimitHandling:
             # Test the coordinator directly instead of trying to mock the entire parallel execution
             from scylla.e2e.subtest_executor import RateLimitCoordinator
 
-            manager = Manager()
-            coordinator = RateLimitCoordinator(manager)
+            coordinator = RateLimitCoordinator()
 
             # Test that coordinator can signal and retrieve rate limit info
             rate_limit_info = RateLimitInfo(
@@ -252,8 +245,7 @@ class TestParallelRateLimitHandling:
 
     def test_coordinator_pause_resume_behavior(self) -> None:
         """Test that coordinator properly handles pause/resume cycles."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         # Initially not paused
         assert not coordinator.check_if_paused()
@@ -369,8 +361,7 @@ class TestParallelCheckpointIntegration:
 
     def test_rate_limit_coordinator_with_checkpoint(self) -> None:
         """Test that coordinator works correctly with checkpoint pausing."""
-        manager = Manager()
-        coordinator = RateLimitCoordinator(manager)
+        coordinator = RateLimitCoordinator()
 
         with tempfile.TemporaryDirectory():
             # Signal rate limit through coordinator
@@ -454,15 +445,13 @@ class TestRateLimitErrorPropagation:
         assert "hit your limit" in rate_limit_error.info.error_message.lower()
 
     def test_worker_safe_wrapper_exception_handling(self) -> None:
-        """Test that _run_subtest_in_process_safe properly handles RateLimitError."""
+        """Test that _run_subtest_safe properly handles RateLimitError."""
         # Create mock arguments for safe wrapper
         config = Mock(spec=ExperimentConfig)
         tier_id = TierID.T0
         subtest = Mock(spec=SubTestConfig)
         subtest.id = "test_subtest"
         results_dir = Path("/tmp/test")
-        tiers_dir = Path("/tmp/tiers")
-        base_repo = Path("/tmp/repo")
 
         # Test that RateLimitError becomes a structured error result
         info = RateLimitInfo(
@@ -479,17 +468,15 @@ class TestRateLimitErrorPropagation:
             mock_executor.run_subtest.side_effect = RateLimitError(info)
 
             # Call the safe wrapper
-            result = _run_subtest_in_process_safe(
+            result = _run_subtest_safe(
                 config=config,
                 tier_id=tier_id,
                 tier_config=Mock(),
                 subtest=subtest,
                 baseline=None,
                 results_dir=results_dir,
-                tiers_dir=tiers_dir,
-                base_repo=base_repo,
-                repo_url="https://example.com",
-                commit=None,
+                tier_manager=Mock(),
+                workspace_manager=Mock(),
             )
 
             # Should return a SubTestResult with rate limit info

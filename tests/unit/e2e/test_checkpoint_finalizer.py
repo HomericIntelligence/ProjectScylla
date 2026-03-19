@@ -270,59 +270,23 @@ class TestMarkCheckpointCompleted:
 
         assert checkpoint.status == "completed"
 
-    def test_merges_disk_run_states(self, finalizer: CheckpointFinalizer, tmp_path: Path) -> None:
-        """mark_checkpoint_completed() merges run_states from disk into in-memory checkpoint."""
-        checkpoint = _make_checkpoint(tmp_path)
-        checkpoint_path = tmp_path / "checkpoint.json"
-
-        # Write disk checkpoint with extra run_states (simulating worker writes)
-        disk_checkpoint = _make_checkpoint(tmp_path)
-        disk_checkpoint.run_states = {"T0": {"00": {"run_01": "complete"}}}
-        save_checkpoint(disk_checkpoint, checkpoint_path)
-
-        # In-memory checkpoint has empty run_states
-        finalizer.mark_checkpoint_completed(checkpoint, tmp_path)
-
-        assert checkpoint.run_states == {"T0": {"00": {"run_01": "complete"}}}
-
-    def test_merges_disk_subtest_states(
+    def test_preserves_in_memory_state(
         self, finalizer: CheckpointFinalizer, tmp_path: Path
     ) -> None:
-        """mark_checkpoint_completed() merges subtest_states from disk."""
-        checkpoint = _make_checkpoint(tmp_path)
-        checkpoint_path = tmp_path / "checkpoint.json"
+        """mark_checkpoint_completed() preserves existing in-memory state.
 
-        disk_checkpoint = _make_checkpoint(tmp_path)
-        disk_checkpoint.subtest_states = {"T0": {"00": "aggregated"}}
-        save_checkpoint(disk_checkpoint, checkpoint_path)
+        With ThreadPoolExecutor, all worker threads share the same in-memory
+        checkpoint, so no disk-merge is needed — the checkpoint is already
+        up-to-date when mark_checkpoint_completed() is called.
+        """
+        checkpoint = _make_checkpoint(tmp_path)
+        checkpoint.run_states = {"T0": {"00": {"1": "worktree_cleaned"}}}
+        checkpoint.subtest_states = {"T0": {"00": "aggregated"}}
+        checkpoint.tier_states = {"T0": "complete"}
 
         finalizer.mark_checkpoint_completed(checkpoint, tmp_path)
 
-        assert checkpoint.subtest_states == {"T0": {"00": "aggregated"}}
-
-    def test_merges_disk_tier_states(self, finalizer: CheckpointFinalizer, tmp_path: Path) -> None:
-        """mark_checkpoint_completed() merges tier_states from disk."""
-        checkpoint = _make_checkpoint(tmp_path)
-        checkpoint_path = tmp_path / "checkpoint.json"
-
-        disk_checkpoint = _make_checkpoint(tmp_path)
-        disk_checkpoint.tier_states = {"T0": "complete"}
-        save_checkpoint(disk_checkpoint, checkpoint_path)
-
-        finalizer.mark_checkpoint_completed(checkpoint, tmp_path)
-
-        assert checkpoint.tier_states == {"T0": "complete"}
-
-    def test_fallback_to_in_memory_on_load_error(
-        self, finalizer: CheckpointFinalizer, tmp_path: Path
-    ) -> None:
-        """Falls back to in-memory checkpoint if disk read fails — does not raise."""
-        checkpoint = _make_checkpoint(tmp_path)
-        checkpoint_path = tmp_path / "checkpoint.json"
-        checkpoint_path.write_text("{invalid}")
-
-        # Should not raise
-        finalizer.mark_checkpoint_completed(checkpoint, tmp_path)
-
-        # Status is still set to completed
         assert checkpoint.status == "completed"
+        assert checkpoint.run_states == {"T0": {"00": {"1": "worktree_cleaned"}}}
+        assert checkpoint.subtest_states == {"T0": {"00": "aggregated"}}
+        assert checkpoint.tier_states == {"T0": "complete"}
