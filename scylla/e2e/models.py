@@ -828,7 +828,6 @@ class ExperimentConfig(BaseModel):
         runs_per_subtest: Number of runs per sub-test (default: 10)
         tiers_to_run: List of tiers to evaluate
         judge_models: List of models to use for judging (consensus voting)
-        parallel_subtests: Max parallel sub-tests (default: 4)
         timeout_seconds: Timeout per run in seconds
         max_turns: Maximum conversation turns for agent (None = unlimited)
         max_subtests: Maximum sub-tests per tier for testing (None = all)
@@ -853,10 +852,6 @@ class ExperimentConfig(BaseModel):
     runs_per_subtest: int = 10
     tiers_to_run: list[TierID] = Field(default_factory=lambda: list(TierID))
     judge_models: list[str] = Field(default_factory=lambda: [DEFAULT_JUDGE_MODEL])
-    parallel_subtests: int = 4
-    parallel_high: int = 2  # Max concurrent high-memory ops (agent, judge, worktree)
-    parallel_med: int = 4  # Max concurrent medium-memory ops (build pipeline, git diff)
-    parallel_low: int = 8  # Max concurrent low-memory ops (file I/O, reporting)
     timeout_seconds: int = 3600
     max_turns: int | None = None  # Max conversation turns for agent (None = unlimited)
     max_subtests: int | None = None  # Max sub-tests per tier (None = all)
@@ -894,10 +889,6 @@ class ExperimentConfig(BaseModel):
             "runs_per_subtest": self.runs_per_subtest,
             "tiers_to_run": [t.value for t in self.tiers_to_run],
             "judge_models": self.judge_models,
-            "parallel_subtests": self.parallel_subtests,
-            "parallel_high": self.parallel_high,
-            "parallel_med": self.parallel_med,
-            "parallel_low": self.parallel_low,
             "timeout_seconds": self.timeout_seconds,
             "max_turns": self.max_turns,
             "max_subtests": self.max_subtests,
@@ -934,10 +925,6 @@ class ExperimentConfig(BaseModel):
             runs_per_subtest=data.get("runs_per_subtest", 10),
             tiers_to_run=[TierID.from_string(t) for t in data.get("tiers_to_run", [])],
             judge_models=judge_models,
-            parallel_subtests=data.get("parallel_subtests", 4),
-            parallel_high=data.get("parallel_high", 2),
-            parallel_med=data.get("parallel_med", 4),
-            parallel_low=data.get("parallel_low", 8),
             timeout_seconds=data.get("timeout_seconds", 3600),
             max_turns=data.get("max_turns"),
             max_subtests=data.get("max_subtests"),

@@ -22,7 +22,6 @@ from scylla.e2e.models import (
     ExperimentConfig,
     SubTestConfig,
     TierConfig,
-    TierID,
 )
 from scylla.e2e.rate_limit import (
     RateLimitError,
@@ -32,7 +31,6 @@ from scylla.e2e.rate_limit import (
 )
 from scylla.e2e.subtest_executor import (
     RateLimitCoordinator,
-    _run_subtest_safe,
 )
 
 
@@ -142,7 +140,6 @@ class TestParallelRateLimitHandling:
         """Test that multiple workers hitting rate limits are coordinated properly."""
         # Create a mock configuration
         config = Mock(spec=ExperimentConfig)
-        config.parallel_subtests = 2
         config.runs_per_subtest = 1
         config.models = ["claude-3-5-sonnet-20241022"]
         config.judge_models = ["claude-3-5-sonnet-20241022"]
@@ -443,46 +440,6 @@ class TestRateLimitErrorPropagation:
         assert rate_limit_error.info == info
         assert rate_limit_error.info.source == "agent"
         assert "hit your limit" in rate_limit_error.info.error_message.lower()
-
-    def test_worker_safe_wrapper_exception_handling(self) -> None:
-        """Test that _run_subtest_safe properly handles RateLimitError."""
-        # Create mock arguments for safe wrapper
-        config = Mock(spec=ExperimentConfig)
-        tier_id = TierID.T0
-        subtest = Mock(spec=SubTestConfig)
-        subtest.id = "test_subtest"
-        results_dir = Path("/tmp/test")
-
-        # Test that RateLimitError becomes a structured error result
-        info = RateLimitInfo(
-            source="agent",
-            retry_after_seconds=120.0,
-            error_message="Test rate limit",
-            detected_at=datetime.now(timezone.utc).isoformat(),
-        )
-
-        with patch("scylla.e2e.subtest_executor.SubTestExecutor") as mock_executor_class:
-            # Mock the executor to raise RateLimitError
-            mock_executor = Mock()
-            mock_executor_class.return_value = mock_executor
-            mock_executor.run_subtest.side_effect = RateLimitError(info)
-
-            # Call the safe wrapper
-            result = _run_subtest_safe(
-                config=config,
-                tier_id=tier_id,
-                tier_config=Mock(),
-                subtest=subtest,
-                baseline=None,
-                results_dir=results_dir,
-                tier_manager=Mock(),
-                workspace_manager=Mock(),
-            )
-
-            # Should return a SubTestResult with rate limit info
-            assert result.selection_reason.startswith("RateLimitError:")
-            assert "Test rate limit" in result.selection_reason
-            assert result.rate_limit_info == info
 
     def test_parallel_exception_consistency(self) -> None:
         """Test that parallel execution raises same exception type as single execution."""

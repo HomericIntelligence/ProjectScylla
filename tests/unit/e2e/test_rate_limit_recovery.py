@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 from scylla.e2e.models import SubTestResult, TierID
-from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
+from scylla.e2e.rate_limit import RateLimitInfo
 from scylla.e2e.subtest_executor import (
     _detect_rate_limit_from_results,
-    _run_subtest_safe,
 )
 
 
@@ -114,97 +112,6 @@ class TestDetectRateLimitFromResults:
         detected = _detect_rate_limit_from_results(results, tmp_path)
 
         assert detected is None
-
-
-class TestRunSubtestSafe:
-    """Tests for _run_subtest_safe wrapper."""
-
-    def test_returns_result_on_success(self) -> None:
-        """Test that successful execution returns SubTestResult."""
-        mock_config = Mock()
-        mock_tier_config = Mock()
-        mock_subtest = Mock()
-        mock_subtest.id = "01"
-
-        # Mock successful result
-        expected_result = SubTestResult(
-            subtest_id="01",
-            tier_id=TierID.T5,
-            runs=[],
-            pass_rate=1.0,
-            mean_score=0.95,
-        )
-
-        with patch(
-            "scylla.e2e.parallel_executor._run_subtest",
-            return_value=expected_result,
-        ):
-            result = _run_subtest_safe(
-                config=mock_config,
-                tier_id=TierID.T5,
-                tier_config=mock_tier_config,
-                subtest=mock_subtest,
-                baseline=None,
-                results_dir=Path("/tmp/results"),
-                tier_manager=Mock(),
-                workspace_manager=Mock(),
-            )
-
-        assert result == expected_result
-
-    def test_catches_rate_limit_error(self) -> None:
-        """Test that RateLimitError is caught and converted to SubTestResult."""
-        mock_subtest = Mock()
-        mock_subtest.id = "01"
-
-        rate_info = RateLimitInfo(
-            source="agent",
-            retry_after_seconds=60.0,
-            error_message="Rate limit exceeded",
-            detected_at="2026-01-09T12:00:00Z",
-        )
-
-        with patch(
-            "scylla.e2e.parallel_executor._run_subtest",
-            side_effect=RateLimitError(rate_info),
-        ):
-            result = _run_subtest_safe(
-                config=Mock(),
-                tier_id=TierID.T5,
-                tier_config=Mock(),
-                subtest=mock_subtest,
-                baseline=None,
-                results_dir=Path("/tmp/results"),
-                tier_manager=Mock(),
-                workspace_manager=Mock(),
-            )
-
-        assert result.selection_reason.startswith("RateLimitError:")
-        assert result.rate_limit_info == rate_info
-        assert result.pass_rate == 0.0
-
-    def test_catches_generic_exception(self) -> None:
-        """Test that generic exceptions are caught and converted."""
-        mock_subtest = Mock()
-        mock_subtest.id = "01"
-
-        with patch(
-            "scylla.e2e.parallel_executor._run_subtest",
-            side_effect=ValueError("Something went wrong"),
-        ):
-            result = _run_subtest_safe(
-                config=Mock(),
-                tier_id=TierID.T5,
-                tier_config=Mock(),
-                subtest=mock_subtest,
-                baseline=None,
-                results_dir=Path("/tmp/results"),
-                tier_manager=Mock(),
-                workspace_manager=Mock(),
-            )
-
-        assert result.selection_reason.startswith("WorkerError: ValueError:")
-        assert result.pass_rate == 0.0
 
 
 class TestSubTestResultSerialization:

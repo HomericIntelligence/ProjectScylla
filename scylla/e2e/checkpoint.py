@@ -564,7 +564,7 @@ def compute_config_hash(config: ExperimentConfig) -> str:
     """Compute hash of experiment config for validation.
 
     Includes all fields that affect experiment execution.
-    Excludes fields that don't affect results (parallel_subtests, max_subtests).
+    Excludes fields that don't affect results (max_subtests, legacy parallel_* fields).
 
     Args:
         config: Experiment configuration
@@ -576,7 +576,10 @@ def compute_config_hash(config: ExperimentConfig) -> str:
     config_dict = config.model_dump(mode="json")
 
     # Remove fields that don't affect results
-    config_dict.pop("parallel_subtests", None)  # Just parallelization setting
+    config_dict.pop("parallel_subtests", None)  # Legacy parallelization setting
+    config_dict.pop("parallel_high", None)  # Legacy parallelization setting
+    config_dict.pop("parallel_med", None)  # Legacy parallelization setting
+    config_dict.pop("parallel_low", None)  # Legacy parallelization setting
     config_dict.pop("max_subtests", None)  # Development/testing only
     config_dict.pop("tiers_to_run", None)  # Tiers are additive across resumes
     # Remove ephemeral --until flags (changing these between runs must not break resume)

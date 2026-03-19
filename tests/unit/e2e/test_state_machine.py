@@ -87,15 +87,6 @@ class TestTransitionRegistry:
             "Duplicate from_state entries in TRANSITION_REGISTRY"
         )
 
-    def test_all_memory_classes_are_valid(self) -> None:
-        """All transitions use valid memory class names."""
-        valid_classes = {"low", "med", "high"}
-        for transition in TRANSITION_REGISTRY:
-            assert transition.memory_class in valid_classes, (
-                f"Transition {transition.from_state.value} -> {transition.to_state.value} "
-                f"has invalid memory class: {transition.memory_class!r}"
-            )
-
     def test_sequence_covers_all_non_terminal_non_pending_states(self) -> None:
         """The RUN_STATE_SEQUENCE covers all states except terminal/special ones."""
         # FAILED and RATE_LIMITED are terminal states not in the normal sequence
@@ -104,13 +95,6 @@ class TestTransitionRegistry:
         not_in_sequence = all_states - sequence_states - _TERMINAL_STATES
         # FAILED and RATE_LIMITED are terminals but appear separately
         assert not_in_sequence == set(), f"States not in sequence or terminals: {not_in_sequence}"
-
-    def test_high_memory_transitions(self) -> None:
-        """Agent and judge execution and worktree creation use 'high' memory class."""
-        high_transitions = {t.from_state for t in TRANSITION_REGISTRY if t.memory_class == "high"}
-        assert RunState.DIR_STRUCTURE_CREATED in high_transitions  # worktree creation
-        assert RunState.REPLAY_GENERATED in high_transitions  # agent execution
-        assert RunState.JUDGE_PROMPT_BUILT in high_transitions  # judge execution
 
 
 # ---------------------------------------------------------------------------

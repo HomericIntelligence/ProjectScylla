@@ -66,10 +66,6 @@ def minimal_run_context(tmp_path: Path) -> RunContext:
         models=["claude-sonnet-4-5-20250929"],
         runs_per_subtest=1,
         judge_models=["claude-opus-4-5-20251101"],
-        parallel_subtests=1,
-        parallel_high=1,
-        parallel_med=2,
-        parallel_low=4,
         timeout_seconds=60,
     )
     subtest = SubTestConfig(id="00-empty", name="Empty", description="Empty subtest")

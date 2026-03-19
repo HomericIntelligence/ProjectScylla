@@ -62,7 +62,6 @@ from scylla.e2e.workspace_setup import (
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
     from scylla.e2e.parallel_executor import RateLimitCoordinator
-    from scylla.e2e.scheduler import ParallelismScheduler
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +87,6 @@ __all__ = [
     "_restore_run_context",
     "_run_judge",
     "_run_subtest",  # noqa: F822
-    "_run_subtest_safe",  # noqa: F822
     # Agent runner exports
     "_save_agent_result",
     # Judge runner exports
@@ -105,7 +103,6 @@ def __getattr__(name: str):  # type: ignore[no-untyped-def]
         "RateLimitCoordinator",
         "run_tier_subtests_parallel",
         "_detect_rate_limit_from_results",
-        "_run_subtest_safe",
         "_run_subtest",
     ]:
         from scylla.e2e import parallel_executor
@@ -339,7 +336,6 @@ class SubTestExecutor:
         checkpoint: E2ECheckpoint | None = None,
         checkpoint_path: Path | None = None,
         coordinator: RateLimitCoordinator | None = None,
-        scheduler: ParallelismScheduler | None = None,
         experiment_dir: Path | None = None,
     ) -> SubTestResult:
         """Run a single sub-test N times and aggregate results.
@@ -358,7 +354,6 @@ class SubTestExecutor:
             checkpoint: Optional checkpoint for resume capability
             checkpoint_path: Path to checkpoint file for saving
             coordinator: Optional rate limit coordinator for parallel execution
-            scheduler: Optional ParallelismScheduler for per-stage concurrency limits
             experiment_dir: Path to experiment directory (needed for T5 inheritance)
 
         Returns:
@@ -530,7 +525,7 @@ class SubTestExecutor:
                     run_num=run_num,
                 )
 
-                actions = build_actions_dict(ctx, scheduler=scheduler)
+                actions = build_actions_dict(ctx)
 
                 # Restore RunContext fields from disk when resuming from an
                 # intermediate state — earlier stages were skipped, so their

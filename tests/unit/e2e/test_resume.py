@@ -37,7 +37,6 @@ def experiment_config() -> ExperimentConfig:
         runs_per_subtest=2,
         tiers_to_run=[TierID.T0],
         judge_models=["claude-opus-4-5-20251101"],
-        parallel_subtests=2,
         timeout_seconds=300,
     )
 
@@ -357,12 +356,12 @@ class TestResumeConfigMismatch:
         self,
         experiment_config: ExperimentConfig,
     ) -> None:
-        """Hash must remain the same when only excluded fields (parallel_subtests) change."""
-        config_a = experiment_config.model_copy(update={"parallel_subtests": 1})
-        config_b = experiment_config.model_copy(update={"parallel_subtests": 8})
+        """Hash must remain the same when only excluded fields (max_subtests) change."""
+        config_a = experiment_config.model_copy(update={"max_subtests": 1})
+        config_b = experiment_config.model_copy(update={"max_subtests": 8})
 
         assert compute_config_hash(config_a) == compute_config_hash(config_b), (
-            "compute_config_hash() must be stable when only parallel_subtests changes"
+            "compute_config_hash() must be stable when only max_subtests changes"
         )
 
     @pytest.mark.parametrize(

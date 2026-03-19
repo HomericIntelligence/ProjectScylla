@@ -86,7 +86,6 @@ from scylla.e2e.stage_process_metrics import (
 from scylla.e2e.stage_process_metrics import (
     _parse_diff_numstat_output as _parse_diff_numstat_output,
 )
-from scylla.e2e.state_machine import TRANSITION_REGISTRY
 from scylla.metrics.process import (
     ChangeResult,
     ProgressStep,
@@ -99,7 +98,6 @@ if TYPE_CHECKING:
     from scylla.e2e.llm_judge import BuildPipelineResult
     from scylla.e2e.models import JudgeResultSummary
     from scylla.e2e.parallel_executor import RateLimitCoordinator
-    from scylla.e2e.scheduler import ParallelismScheduler
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
 
@@ -867,52 +865,22 @@ def stage_build_judge_prompt(ctx: RunContext) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _make_scheduled_action(
-    scheduler: ParallelismScheduler,
-    memory_class: str,
-    action: Callable[..., Any],
-) -> Callable[..., Any]:
-    """Wrap a stage action with semaphore acquire/release for the given memory class.
-
-    Args:
-        scheduler: ParallelismScheduler with per-class semaphores
-        memory_class: "low", "med", or "high"
-        action: Stage callable to wrap
-
-    Returns:
-        Wrapped callable that acquires/releases the semaphore around action()
-
-    """
-
-    def wrapped() -> None:
-        with scheduler.acquire(memory_class):
-            action()
-
-    return wrapped
-
-
 def build_actions_dict(
     ctx: RunContext,
-    scheduler: ParallelismScheduler | None = None,
 ) -> dict[RunState, Callable[..., Any]]:
     """Build the {RunState -> Callable} map for StateMachine.advance_to_completion().
 
     Each entry maps from_state -> callable that performs the work for the
-    transition starting at that state. If a scheduler is provided, the action
-    is wrapped with the appropriate semaphore for that transition's memory class.
+    transition starting at that state.
 
     Args:
         ctx: Run context holding all state for this run
-        scheduler: Optional ParallelismScheduler; if None, no semaphore wrapping
 
     Returns:
         Dict mapping RunState to callable stage function
 
     """
-    # Build lookup: from_state -> memory_class from the global registry
-    memory_class_by_state = {t.from_state: t.memory_class for t in TRANSITION_REGISTRY}
-
-    raw_actions: dict[RunState, Callable[..., Any]] = {
+    return {
         RunState.PENDING: lambda: stage_create_dir_structure(ctx),
         RunState.DIR_STRUCTURE_CREATED: lambda: stage_create_worktree(ctx),
         RunState.WORKTREE_CREATED: lambda: stage_apply_symlinks(ctx),
@@ -929,14 +897,3 @@ def build_actions_dict(
         RunState.RUN_FINALIZED: lambda: stage_write_report(ctx),
         RunState.CHECKPOINTED: lambda: stage_cleanup_worktree(ctx),
     }
-
-    if scheduler is None:
-        return raw_actions
-
-    # Wrap each action with its memory-class semaphore
-    scheduled_actions: dict[RunState, Callable[..., Any]] = {}
-    for state, action in raw_actions.items():
-        memory_class = memory_class_by_state.get(state, "low")
-        scheduled_actions[state] = _make_scheduled_action(scheduler, memory_class, action)
-
-    return scheduled_actions
