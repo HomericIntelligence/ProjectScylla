@@ -1148,3 +1148,54 @@ class TestStageWriteReportGuards:
 
         with pytest.raises(RuntimeError, match=expected_match):
             stage_write_report(stage_context)
+
+
+# ---------------------------------------------------------------------------
+# TestCommunicateWithShutdownCheck
+# ---------------------------------------------------------------------------
+
+
+class TestCommunicateWithShutdownCheck:
+    """Tests for _communicate_with_shutdown_check shutdown behavior."""
+
+    def test_raises_shutdown_interrupted_on_shutdown(self, stage_context: RunContext) -> None:
+        """Raises ShutdownInterruptedError when shutdown is requested."""
+        import subprocess
+
+        from scylla.e2e.runner import ShutdownInterruptedError
+        from scylla.e2e.stages import _communicate_with_shutdown_check
+
+        # Create a mock Popen whose communicate() always times out
+        mock_proc = MagicMock(spec=subprocess.Popen)
+        mock_proc.communicate.side_effect = subprocess.TimeoutExpired("cmd", 2.0)
+
+        with (
+            patch("scylla.e2e.runner.is_shutdown_requested", return_value=True),
+            patch("scylla.e2e.stages._kill_process_group"),
+            pytest.raises(ShutdownInterruptedError),
+        ):
+            _communicate_with_shutdown_check(mock_proc, timeout=10.0, ctx=stage_context)
+
+
+# ---------------------------------------------------------------------------
+# TestStageExecuteAgentStdinDevNull — AST regression guard
+# ---------------------------------------------------------------------------
+
+
+class TestStageExecuteAgentStdinDevNull:
+    """AST regression guard: stage_execute_agent must use stdin=subprocess.DEVNULL."""
+
+    def test_popen_uses_stdin_devnull(self) -> None:
+        """stage_execute_agent source contains 'stdin=subprocess.DEVNULL'.
+
+        This prevents the agent subprocess from inheriting stdin, which would
+        cause the TTY to be shared and lead to signal delivery issues (SIGTSTP,
+        SIGTTIN) that hang the parent process.
+        """
+        import inspect
+
+        source = inspect.getsource(stage_execute_agent)
+        assert "stdin=subprocess.DEVNULL" in source, (
+            "stage_execute_agent must use stdin=subprocess.DEVNULL in Popen "
+            "to prevent TTY sharing and signal delivery issues"
+        )

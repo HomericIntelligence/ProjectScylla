@@ -59,12 +59,19 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Configure logging
+# Configure logging with thread-local context (tier/subtest/run)
+from scylla.e2e.log_context import ContextFilter
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    format=(
+        "%(asctime)s [%(levelname)s] [T:%(thread)d]"
+        " [%(tier_id)s/%(subtest_id)s/%(run_num)s]"
+        " %(name)s: %(message)s"
+    ),
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+logging.getLogger().addFilter(ContextFilter())
 logger = logging.getLogger(__name__)
 
 
@@ -481,7 +488,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
     """
     import threading
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
     from datetime import datetime, timezone
 
     import yaml
@@ -839,20 +846,32 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         futures = {executor.submit(run_one_test, d): d for d in to_run}
-        for future in as_completed(futures):
-            test_dir = futures[future]
-            try:
-                result = future.result()
-                if result.get("status") != "success":
+        # Poll with timeout so shutdown can interrupt blocking waits
+        pending = set(futures.keys())
+        while pending:
+            from scylla.e2e.runner import is_shutdown_requested
+
+            if is_shutdown_requested():
+                logger.warning("Shutdown requested, cancelling remaining batch tests...")
+                for pending_future in pending:
+                    pending_future.cancel()
+                break
+
+            done, pending = wait(pending, timeout=2.0, return_when=FIRST_COMPLETED)
+            for future in done:
+                test_dir = futures[future]
+                try:
+                    result = future.result(timeout=0)
+                    if result.get("status") != "success":
+                        failed_count += 1
+                        logger.warning(
+                            f"Test {test_dir.name} completed with status: {result['status']}"
+                        )
+                    else:
+                        logger.info(f"Test {test_dir.name} completed successfully")
+                except Exception as e:
+                    logger.error(f"Test {test_dir.name} raised exception: {e}")
                     failed_count += 1
-                    logger.warning(
-                        f"Test {test_dir.name} completed with status: {result['status']}"
-                    )
-                else:
-                    logger.info(f"Test {test_dir.name} completed successfully")
-            except Exception as e:
-                logger.error(f"Test {test_dir.name} raised exception: {e}")
-                failed_count += 1
 
     total = len(to_run)
     passed = total - failed_count

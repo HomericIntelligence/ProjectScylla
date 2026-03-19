@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -97,10 +97,14 @@ class RateLimitCoordinator:
         """
         if self._pause_event.is_set():
             logger.debug("Worker blocked on pause event, waiting for resume...")
-            self._resume_event.wait()  # Block until resume
+            # Poll with timeout so shutdown can interrupt a stuck pause.
             # Do NOT clear _resume_event here — only the producer (main thread via
             # resume_all_workers()) should manage Event state to avoid a race where
             # one worker clears the event before other workers have woken up.
+            while not self._resume_event.wait(timeout=2.0):
+                if self._shutdown_event.is_set():
+                    logger.info("Worker exiting pause due to shutdown signal")
+                    return True
             logger.debug("Worker resumed after rate limit wait")
             return True
         return False
@@ -260,83 +264,87 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
             )
             futures[future] = subtest.id
 
-        # Monitor futures and handle rate limits
+        # Poll with timeout so shutdown can interrupt blocking waits
         completed_count = 0
-        for future in as_completed(futures):
-            subtest_id = futures[future]
-            try:
-                results[subtest_id] = future.result()
-                completed_count += 1
+        pending = set(futures.keys())
+        while pending:
+            from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
 
-                # Log progress after each completion
-                elapsed = time.time() - start_time
-                active_workers = total_subtests - completed_count
-                logger.info(
-                    f"[PROGRESS] Tier {tier_id.value}: "
-                    f"{completed_count}/{total_subtests} complete, "
-                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
+            if is_shutdown_requested():
+                logger.warning("Shutdown requested, signaling workers to stop...")
+                coordinator.signal_shutdown()
+                for f in pending:
+                    f.cancel()
+                raise ShutdownInterruptedError(
+                    f"Shutdown requested during parallel subtest execution for {tier_id.value}"
                 )
 
-                # Check for shutdown request
-                from scylla.e2e.runner import is_shutdown_requested
+            done, pending = wait(pending, timeout=2.0, return_when=FIRST_COMPLETED)
+            for future in done:
+                subtest_id = futures[future]
+                try:
+                    results[subtest_id] = future.result(timeout=0)
+                    completed_count += 1
 
-                if is_shutdown_requested():
-                    logger.warning("Shutdown requested, signaling workers to stop...")
-                    coordinator.signal_shutdown()
-                    break
-
-                # Check if rate limit was signaled during execution
-                rate_limit_info = coordinator.get_rate_limit_info()
-                if rate_limit_info and checkpoint and checkpoint_path:
-                    logger.info(f"Rate limit from {rate_limit_info.source}, pausing workers...")
-                    # Wait for rate limit to expire
-                    wait_for_rate_limit(
-                        rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
+                    # Log progress after each completion
+                    elapsed = time.time() - start_time
+                    active_workers = total_subtests - completed_count
+                    logger.info(
+                        f"[PROGRESS] Tier {tier_id.value}: "
+                        f"{completed_count}/{total_subtests} complete, "
+                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
                     )
-                    # Resume all workers
-                    coordinator.resume_all_workers()
 
-            except RateLimitError as e:
-                # Rate limit from a worker - re-raise to maintain consistent behavior
-                # with single-subtest path
-                logger.warning(
-                    f"Rate limit detected from {e.info.source} in parallel worker "
-                    f"for {subtest_id}, re-raising for proper handling"
-                )
-                raise
+                    # Check if rate limit was signaled during execution
+                    rate_limit_info = coordinator.get_rate_limit_info()
+                    if rate_limit_info and checkpoint and checkpoint_path:
+                        logger.info(f"Rate limit from {rate_limit_info.source}, pausing workers...")
+                        # Wait for rate limit to expire
+                        wait_for_rate_limit(
+                            rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
+                        )
+                        # Resume all workers
+                        coordinator.resume_all_workers()
 
-            except Exception as e:
-                from scylla.e2e.runner import ShutdownInterruptedError
-
-                if isinstance(e, ShutdownInterruptedError):
-                    # Runs left at last good state — propagate so the tier can
-                    # shut down cleanly without marking anything FAILED.
+                except RateLimitError as e:
+                    # Rate limit from a worker - re-raise to maintain consistent behavior
+                    # with single-subtest path
+                    logger.warning(
+                        f"Rate limit detected from {e.info.source} in parallel worker "
+                        f"for {subtest_id}, re-raising for proper handling"
+                    )
                     raise
 
-                # Other errors
-                results[subtest_id] = SubTestResult(
-                    subtest_id=subtest_id,
-                    tier_id=tier_id,
-                    runs=[],
-                    pass_rate=0.0,
-                    mean_score=0.0,
-                    median_score=0.0,
-                    std_dev_score=0.0,
-                    mean_cost=0.0,
-                    total_cost=0.0,
-                    consistency=0.0,
-                    selection_reason=f"Error: {e}",
-                )
-                completed_count += 1
+                except Exception as e:
+                    if isinstance(e, ShutdownInterruptedError):
+                        # Runs left at last good state — propagate so the tier can
+                        # shut down cleanly without marking anything FAILED.
+                        raise
 
-                # Log progress after error
-                elapsed = time.time() - start_time
-                active_workers = total_subtests - completed_count
-                logger.info(
-                    f"[PROGRESS] Tier {tier_id.value}: "
-                    f"{completed_count}/{total_subtests} complete, "
-                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
-                )
+                    # Other errors
+                    results[subtest_id] = SubTestResult(
+                        subtest_id=subtest_id,
+                        tier_id=tier_id,
+                        runs=[],
+                        pass_rate=0.0,
+                        mean_score=0.0,
+                        median_score=0.0,
+                        std_dev_score=0.0,
+                        mean_cost=0.0,
+                        total_cost=0.0,
+                        consistency=0.0,
+                        selection_reason=f"Error: {e}",
+                    )
+                    completed_count += 1
+
+                    # Log progress after error
+                    elapsed = time.time() - start_time
+                    active_workers = total_subtests - completed_count
+                    logger.info(
+                        f"[PROGRESS] Tier {tier_id.value}: "
+                        f"{completed_count}/{total_subtests} complete, "
+                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
+                    )
 
     return results
 
@@ -532,8 +540,10 @@ def _run_subtest(
 
     """
     # Import here to avoid circular dependency
+    from scylla.e2e.log_context import set_log_context
     from scylla.e2e.subtest_executor import SubTestExecutor
 
+    set_log_context(tier_id=tier_id.value, subtest_id=subtest.id)
     executor = SubTestExecutor(config, tier_manager, workspace_manager)
     return executor.run_subtest(
         tier_id=tier_id,

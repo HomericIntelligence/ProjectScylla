@@ -71,9 +71,9 @@ def install_signal_handlers(shutdown_fn: Callable[[], None]) -> None:
 
     signal.signal(signal.SIGINT, _handler)
     signal.signal(signal.SIGTERM, _handler)
-    # SIGTSTP (Ctrl+Z) — treat the same as Ctrl+C for clean shutdown
-    with contextlib.suppress(OSError, ValueError):
-        signal.signal(signal.SIGTSTP, _handler)
+    # Note: SIGTSTP (Ctrl+Z) is intentionally NOT handled here.
+    # It is a job-control signal; callers (e.g., cmd_run) register their
+    # own SIGTSTP handler for forceful process-group kill.
 
 
 @contextmanager

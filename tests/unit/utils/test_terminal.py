@@ -176,3 +176,41 @@ class TestTerminalGuard:
             with terminal_guard():
                 pass
             mock_install.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# SIGTSTP exclusion guard
+# ---------------------------------------------------------------------------
+
+
+class TestInstallSignalHandlersSigtstpExclusion:
+    """Tests that install_signal_handlers does NOT register a handler for SIGTSTP."""
+
+    def test_sigtstp_not_handled(self) -> None:
+        """install_signal_handlers must NOT register a handler for SIGTSTP.
+
+        SIGTSTP (Ctrl+Z) is a job-control signal. Callers (e.g., cmd_run)
+        register their own SIGTSTP handler for forceful process-group kill.
+        install_signal_handlers must not interfere with that.
+        """
+        shutdown_fn = MagicMock()
+
+        # Save original handler
+        original_handler = signal.getsignal(signal.SIGTSTP)
+
+        try:
+            # Set a sentinel so we can detect if it gets changed
+            sentinel = signal.SIG_DFL
+            signal.signal(signal.SIGTSTP, sentinel)
+
+            install_signal_handlers(shutdown_fn)
+
+            # SIGTSTP handler must still be the sentinel (not overwritten)
+            current_handler = signal.getsignal(signal.SIGTSTP)
+            assert current_handler is sentinel, (
+                "install_signal_handlers must NOT register a handler for SIGTSTP. "
+                "SIGTSTP is a job-control signal handled separately by callers."
+            )
+        finally:
+            # Restore original handler
+            signal.signal(signal.SIGTSTP, original_handler)

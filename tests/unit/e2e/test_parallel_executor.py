@@ -14,6 +14,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from scylla.e2e.parallel_executor import RateLimitCoordinator
 from scylla.e2e.rate_limit import RateLimitInfo
 
@@ -516,3 +518,106 @@ class TestRunSubtestSafe:
                     f"Expected SubTestResult but got {type(result).__name__} "
                     f"when inner raised {type(exc).__name__}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# RateLimitCoordinator: check_if_paused exits on shutdown
+# ---------------------------------------------------------------------------
+
+
+class TestRateLimitCoordinatorCheckIfPausedShutdown:
+    """Tests that check_if_paused() exits promptly when _shutdown_event is set."""
+
+    def test_check_if_paused_exits_on_shutdown_within_timeout(self) -> None:
+        """Returns within ~3s when _shutdown_event is set but _resume_event is not."""
+        import time as time_mod
+
+        coordinator = _make_coordinator()
+        # Put into paused state
+        coordinator._pause_event.set()
+        # _resume_event is NOT set — would block forever without shutdown
+        coordinator._shutdown_event.set()
+
+        start = time_mod.monotonic()
+        result = coordinator.check_if_paused()
+        elapsed = time_mod.monotonic() - start
+
+        # Should return True (was paused) and complete quickly (poll interval is 2s)
+        assert result is True
+        assert elapsed < 5.0, (
+            f"check_if_paused took {elapsed:.1f}s — should exit within ~3s on shutdown"
+        )
+
+    def test_check_if_paused_blocks_without_shutdown(self) -> None:
+        """Blocks when paused and neither resume nor shutdown is set."""
+        import threading
+
+        coordinator = _make_coordinator()
+        coordinator._pause_event.set()
+        # Neither resume nor shutdown set — should block
+
+        completed = threading.Event()
+
+        def worker() -> None:
+            coordinator.check_if_paused()
+            completed.set()
+
+        t = threading.Thread(target=worker, daemon=True)
+        t.start()
+
+        # Should NOT complete within 1 second
+        assert not completed.wait(timeout=1.0), (
+            "check_if_paused should block when no resume/shutdown"
+        )
+
+        # Clean up: signal shutdown so the thread exits
+        coordinator._shutdown_event.set()
+        t.join(timeout=5.0)
+
+
+# ---------------------------------------------------------------------------
+# Parallel subtest loop: shutdown raises ShutdownInterruptedError
+# ---------------------------------------------------------------------------
+
+
+class TestParallelSubtestLoopShutdown:
+    """Tests that the parallel subtest loop raises ShutdownInterruptedError on shutdown."""
+
+    def test_raises_shutdown_interrupted_error(self, tmp_path: Any) -> None:
+        """run_tier_subtests_parallel raises ShutdownInterruptedError when shutdown is requested."""
+        from scylla.e2e.models import ExperimentConfig, SubTestConfig, TierID
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        config = ExperimentConfig(
+            experiment_id="test",
+            task_repo="https://example.com/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+
+        # Need >= 2 subtests to trigger the parallel coordinator path
+        sub1 = SubTestConfig(id="00", name="Sub 0", description="first")
+        sub2 = SubTestConfig(id="01", name="Sub 1", description="second")
+        tier_config = MagicMock()
+        tier_config.subtests = [sub1, sub2]
+
+        mock_tier_manager = MagicMock()
+        mock_workspace = MagicMock()
+
+        with (
+            patch("scylla.e2e.runner.is_shutdown_requested", return_value=True),
+            pytest.raises(ShutdownInterruptedError),
+        ):
+            from scylla.e2e.parallel_executor import run_tier_subtests_parallel
+
+            run_tier_subtests_parallel(
+                config=config,
+                tier_id=TierID.T0,
+                tier_config=tier_config,
+                tier_manager=mock_tier_manager,
+                workspace_manager=mock_workspace,
+                baseline=None,
+                results_dir=tmp_path,
+            )

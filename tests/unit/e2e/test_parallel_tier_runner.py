@@ -417,3 +417,51 @@ class TestCreateBaselineFromTierResult:
 
         with pytest.raises(RuntimeError, match="experiment_dir must be set"):
             runner.create_baseline_from_tier_result(TierID.T0, tier_result)
+
+
+# ---------------------------------------------------------------------------
+# TestParallelTierGroupShutdown
+# ---------------------------------------------------------------------------
+
+
+class TestParallelTierGroupShutdown:
+    """Tests that execute_parallel_tier_group raises ShutdownInterruptedError on shutdown."""
+
+    def test_raises_shutdown_interrupted_when_shutdown_requested(self) -> None:
+        """Raises ShutdownInterruptedError when is_shutdown_requested() is True."""
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        def blocking_run_tier(tier_id: TierID, *args: Any) -> TierResult:
+            """Simulate a blocking tier that would take 10 seconds."""
+            import time
+
+            time.sleep(10)
+            return _make_tier_result(tier_id)
+
+        runner = _make_runner(run_tier_fn=blocking_run_tier)
+
+        with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
+            with pytest.raises(ShutdownInterruptedError):
+                runner.execute_parallel_tier_group(
+                    [TierID.T0, TierID.T1], previous_baseline=None, scheduler=None
+                )
+
+    def test_cancels_pending_futures_on_shutdown(self) -> None:
+        """Cancels pending futures when shutdown is requested."""
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        def blocking_run_tier(tier_id: TierID, *args: Any) -> TierResult:
+            """Simulate a blocking tier that would take 10 seconds."""
+            import time
+
+            time.sleep(10)
+            return _make_tier_result(tier_id)
+
+        runner = _make_runner(run_tier_fn=blocking_run_tier)
+
+        # Patch at the parallel_tier_runner import site so the loop sees shutdown=True
+        with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
+            with pytest.raises(ShutdownInterruptedError, match="Shutdown requested"):
+                runner.execute_parallel_tier_group(
+                    [TierID.T0, TierID.T1], previous_baseline=None, scheduler=None
+                )
