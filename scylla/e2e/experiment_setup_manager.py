@@ -166,6 +166,8 @@ class ExperimentSetupManager:
         branch_name = f"baseline_{self.config.experiment_id[:8]}"
         try:
             workspace_manager.create_worktree(worktree_path)
+            # Seed shared .pixi before parallel worktrees start
+            workspace_manager.symlink_pixi(worktree_path)
             logger.info(f"Capturing experiment-level pipeline baseline at {worktree_path}")
             result = _run_build_pipeline(
                 workspace=worktree_path,
