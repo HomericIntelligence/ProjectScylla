@@ -1,13 +1,12 @@
 """Unit tests for DataFrame builders."""
 
-from typing import Any
-
 import numpy as np
 import pandas as pd
 import pytest
+from pathlib import Path
 
 
-def test_build_runs_df_structure(sample_runs_df: Any) -> None:
+def test_build_runs_df_structure(sample_runs_df: pd.DataFrame) -> None:
     """Test runs DataFrame has expected structure."""
     # Verify required columns exist
     required_cols = [
@@ -41,7 +40,7 @@ def test_build_runs_df_structure(sample_runs_df: Any) -> None:
     assert sample_runs_df["run_number"].dtype == np.int64
 
 
-def test_build_runs_df_values(sample_runs_df: Any) -> None:
+def test_build_runs_df_values(sample_runs_df: pd.DataFrame) -> None:
     """Test runs DataFrame has valid values."""
     # Score should be in [0, 1]
     assert sample_runs_df["score"].min() >= 0.0
@@ -60,7 +59,7 @@ def test_build_runs_df_values(sample_runs_df: Any) -> None:
     assert (sample_runs_df["cache_read_tokens"] >= 0).all()
 
 
-def test_build_judges_df_structure(sample_judges_df: Any) -> None:
+def test_build_judges_df_structure(sample_judges_df: pd.DataFrame) -> None:
     """Test judges DataFrame has expected structure."""
     required_cols = [
         "experiment",
@@ -86,7 +85,7 @@ def test_build_judges_df_structure(sample_judges_df: Any) -> None:
     assert (judges_per_run == 3).all()
 
 
-def test_build_criteria_df_structure(sample_criteria_df: Any) -> None:
+def test_build_criteria_df_structure(sample_criteria_df: pd.DataFrame) -> None:
     """Test criteria DataFrame has expected structure."""
     required_cols = [
         "experiment",
@@ -112,7 +111,7 @@ def test_build_criteria_df_structure(sample_criteria_df: Any) -> None:
     assert (criteria_per_judge == 5).all()
 
 
-def test_build_subtests_df_structure(sample_subtests_df: Any) -> None:
+def test_build_subtests_df_structure(sample_subtests_df: pd.DataFrame) -> None:
     """Test subtests DataFrame has expected structure matching production.
 
     Must match columns produced by dataframes.build_subtests_df().
@@ -165,11 +164,11 @@ def test_build_subtests_df_structure(sample_subtests_df: Any) -> None:
     assert sample_subtests_df["consistency"].max() <= 1.0
 
 
-def test_tier_summary_aggregation(sample_runs_df: Any) -> None:
+def test_tier_summary_aggregation(sample_runs_df: pd.DataFrame) -> None:
     """Test tier_summary() aggregation function."""
     from scylla.analysis.dataframes import tier_summary
 
-    summary = tier_summary(sample_runs_df)
+    summary = tier_summary(sample_runs_df: pd.DataFrame)
 
     # Verify structure
     assert "tier" in summary.columns
@@ -195,11 +194,11 @@ def test_tier_summary_aggregation(sample_runs_df: Any) -> None:
     assert first_row["pass_rate"] == pytest.approx(expected_pass_rate, abs=1e-6)
 
 
-def test_model_comparison_aggregation(sample_runs_df: Any) -> None:
+def test_model_comparison_aggregation(sample_runs_df: pd.DataFrame) -> None:
     """Test model_comparison() aggregation function."""
     from scylla.analysis.dataframes import model_comparison
 
-    comparison = model_comparison(sample_runs_df)
+    comparison = model_comparison(sample_runs_df: pd.DataFrame)
 
     # Verify structure - model_comparison returns MultiIndex columns
     # from the aggregation: ('passed', 'mean'), ('score', 'mean'), etc.
@@ -216,11 +215,11 @@ def test_model_comparison_aggregation(sample_runs_df: Any) -> None:
     assert len(comparison) == expected_rows
 
 
-def test_model_comparison_process_metric_columns(sample_runs_df: Any) -> None:
+def test_model_comparison_process_metric_columns(sample_runs_df: pd.DataFrame) -> None:
     """Test model_comparison() includes process metric aggregation columns."""
     from scylla.analysis.dataframes import model_comparison
 
-    comparison = model_comparison(sample_runs_df)
+    comparison = model_comparison(sample_runs_df: pd.DataFrame)
     column_tuples = list(comparison.columns)
 
     # All 12 process metric columns must be present
@@ -242,11 +241,11 @@ def test_model_comparison_process_metric_columns(sample_runs_df: Any) -> None:
         assert col in column_tuples, f"Missing column: {col}"
 
 
-def test_model_comparison_process_metric_values(sample_runs_df: Any) -> None:
+def test_model_comparison_process_metric_values(sample_runs_df: pd.DataFrame) -> None:
     """Test model_comparison() process metric values match manual aggregation."""
     from scylla.analysis.dataframes import model_comparison
 
-    comparison = model_comparison(sample_runs_df)
+    comparison = model_comparison(sample_runs_df: pd.DataFrame)
 
     # Verify aggregation correctness for one group
     model = comparison["agent_model"].iloc[0]
@@ -354,7 +353,7 @@ def test_empty_dataframe_handling() -> None:
     assert len(summary) == 0
 
 
-def test_dataframe_filtering(sample_runs_df: Any) -> None:
+def test_dataframe_filtering(sample_runs_df: pd.DataFrame) -> None:
     """Test filtering DataFrames by tier/model."""
     # Filter by single tier
     t0_only = sample_runs_df[sample_runs_df["tier"] == "T0"]
@@ -375,11 +374,11 @@ def test_dataframe_filtering(sample_runs_df: Any) -> None:
     assert (t0_sonnet["agent_model"] == "claude-sonnet-4-6").all()
 
 
-def test_judge_summary_aggregation(sample_judges_df: Any) -> None:
+def test_judge_summary_aggregation(sample_judges_df: pd.DataFrame) -> None:
     """Test judge_summary() aggregates judge scores correctly."""
     from scylla.analysis.dataframes import judge_summary
 
-    summary = judge_summary(sample_judges_df)
+    summary = judge_summary(sample_judges_df: pd.DataFrame)
 
     # Verify structure - should have one row per judge_model
     assert "judge_model" in summary.columns
@@ -431,11 +430,11 @@ def test_judge_summary_empty_dataframe() -> None:
     assert len(summary) == 0
 
 
-def test_criteria_summary_aggregation(sample_criteria_df: Any) -> None:
+def test_criteria_summary_aggregation(sample_criteria_df: pd.DataFrame) -> None:
     """Test criteria_summary() aggregates by criterion correctly."""
     from scylla.analysis.dataframes import criteria_summary
 
-    summary = criteria_summary(sample_criteria_df)
+    summary = criteria_summary(sample_criteria_df: pd.DataFrame)
 
     # Verify structure - should have one row per (agent_model, tier, criterion)
     assert "agent_model" in summary.columns

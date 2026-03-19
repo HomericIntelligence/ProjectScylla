@@ -5,22 +5,19 @@ float tolerance, and error message contents.
 """
 
 import warnings
-from typing import Any
 
 import pytest
 import yaml
 
 
-def _write_rubric(path: Any, categories: dict[str, object]) -> None:
+def _write_rubric(path, categories: dict[str, object]) -> None:
     """Write a rubric.yaml file at path/rubric.yaml."""
     path.mkdir(parents=True, exist_ok=True)
     with (path / "rubric.yaml").open("w") as f:
         yaml.dump({"categories": categories}, f)
 
 
-def _make_two_experiment_dir(
-    tmp_path: Any, cats1: dict[str, object], cats2: dict[str, object]
-) -> Any:
+def _make_two_experiment_dir(tmp_path, cats1: dict[str, object], cats2: dict[str, object]) -> None:
     """Create data_dir with two experiments having different rubric weights."""
     data_dir = tmp_path / "fullruns"
     exp1_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
@@ -35,7 +32,7 @@ def _make_two_experiment_dir(
 # ---------------------------------------------------------------------------
 
 
-def test_rubric_conflict_raises_by_default(tmp_path: Any) -> Any:
+def test_rubric_conflict_raises_by_default(tmp_path) -> None:
     """Two experiments with same category, different weights → RubricConflictError."""
     from scylla.analysis.loader import RubricConflictError, load_rubric_weights
 
@@ -49,7 +46,7 @@ def test_rubric_conflict_raises_by_default(tmp_path: Any) -> Any:
         load_rubric_weights(data_dir)
 
 
-def test_rubric_conflict_raises_explicitly(tmp_path: Any) -> None:
+def test_rubric_conflict_raises_explicitly(tmp_path) -> None:
     """Passing rubric_conflict='error' raises RubricConflictError."""
     from scylla.analysis.loader import RubricConflictError, load_rubric_weights
 
@@ -63,7 +60,7 @@ def test_rubric_conflict_raises_explicitly(tmp_path: Any) -> None:
         load_rubric_weights(data_dir, rubric_conflict="error")
 
 
-def test_rubric_conflict_error_message_contains_details(tmp_path: Any) -> None:
+def test_rubric_conflict_error_message_contains_details(tmp_path) -> None:
     """Error message includes category name, both experiment names, both weights."""
     from scylla.analysis.loader import RubricConflictError, load_rubric_weights
 
@@ -89,7 +86,7 @@ def test_rubric_conflict_error_message_contains_details(tmp_path: Any) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_rubric_conflict_warn(tmp_path: Any) -> None:
+def test_rubric_conflict_warn(tmp_path) -> None:
     """rubric_conflict='warn' emits UserWarning and returns weights."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -107,7 +104,7 @@ def test_rubric_conflict_warn(tmp_path: Any) -> None:
     assert any(issubclass(w.category, UserWarning) for w in caught)
 
 
-def test_rubric_conflict_warn_message_contains_details(tmp_path: Any) -> None:
+def test_rubric_conflict_warn_message_contains_details(tmp_path) -> None:
     """Warning message includes category name and conflicting weights."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -130,7 +127,7 @@ def test_rubric_conflict_warn_message_contains_details(tmp_path: Any) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_rubric_conflict_first(tmp_path: Any) -> None:
+def test_rubric_conflict_first(tmp_path) -> None:
     """rubric_conflict='first' keeps the first experiment's weights."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -146,7 +143,7 @@ def test_rubric_conflict_first(tmp_path: Any) -> None:
     assert weights["functional"] == pytest.approx(10.0)
 
 
-def test_rubric_conflict_last(tmp_path: Any) -> None:
+def test_rubric_conflict_last(tmp_path) -> None:
     """rubric_conflict='last' keeps the last experiment's weights."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -167,7 +164,7 @@ def test_rubric_conflict_last(tmp_path: Any) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_rubric_no_conflict_identical_weights(tmp_path: Any) -> None:
+def test_rubric_no_conflict_identical_weights(tmp_path) -> None:
     """Same weights across experiments → no error or warning raised."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -188,7 +185,7 @@ def test_rubric_no_conflict_identical_weights(tmp_path: Any) -> None:
     assert len(rubric_warnings) == 0
 
 
-def test_rubric_conflict_float_tolerance(tmp_path: Any) -> None:
+def test_rubric_conflict_float_tolerance(tmp_path) -> None:
     """Weights differing by ≤ 1e-6 are not treated as a conflict."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -204,7 +201,7 @@ def test_rubric_conflict_float_tolerance(tmp_path: Any) -> None:
     assert weights["functional"] == pytest.approx(10.0)
 
 
-def test_rubric_new_category_in_second_experiment(tmp_path: Any) -> None:
+def test_rubric_new_category_in_second_experiment(tmp_path) -> None:
     """Second experiment adds a new category → no conflict, weights merged."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -225,7 +222,7 @@ def test_rubric_new_category_in_second_experiment(tmp_path: Any) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_load_all_experiments_no_rubric_conflict_param(tmp_path: Any) -> None:
+def test_load_all_experiments_no_rubric_conflict_param(tmp_path) -> None:
     """load_all_experiments() does not accept rubric_conflict; callers use load_rubric_weights()."""
     import inspect
 
@@ -238,7 +235,7 @@ def test_load_all_experiments_no_rubric_conflict_param(tmp_path: Any) -> None:
     assert "rubric_conflict" not in sig.parameters
 
 
-def test_load_rubric_weights_is_independent_callable(tmp_path: Any) -> None:
+def test_load_rubric_weights_is_independent_callable(tmp_path) -> None:
     """load_rubric_weights() can be called independently with rubric_conflict policy."""
     from scylla.analysis.loader import load_rubric_weights
 
