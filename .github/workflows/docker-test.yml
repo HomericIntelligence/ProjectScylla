@@ -63,13 +63,14 @@ jobs:
           echo "duration=$((SECONDS - START))" >> "$GITHUB_OUTPUT"
 
       - name: Scan experiment image for vulnerabilities (Trivy)
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: scylla-experiment:trivy-scan
           format: table
           exit-code: 1
           ignore-unfixed: true
           severity: HIGH,CRITICAL
+          version: v0.69.3
 
       - name: Apply trivial source-only change
         run: echo '# timing-probe' >> scylla/__init__.py
