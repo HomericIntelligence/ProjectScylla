@@ -141,3 +141,85 @@ class TestThreadLocalIsolation:
 
         # Clean up main thread
         clear_log_context()
+
+
+class TestHandlerFormatterIntegration:
+    """Tests that ContextFilter works through the full handler+formatter pipeline.
+
+    Catches the KeyError regression where %(tier_id)s in a format string
+    fails if the filter is added to the logger instead of the handler.
+    Uses handler.handle() which mirrors the real logging pipeline:
+    handle() → filter() → emit() → format().
+    """
+
+    def test_format_with_context_fields_does_not_raise(self) -> None:
+        """Handler with ContextFilter formats %(tier_id)s without KeyError."""
+        clear_log_context()
+
+        # Build a handler+formatter that uses the context placeholders
+        handler = logging.StreamHandler()
+        handler.addFilter(ContextFilter())
+        captured: list[str] = []
+
+        class _CapturingFormatter(logging.Formatter):
+            def format(self, record: logging.LogRecord) -> str:
+                result = super().format(record)
+                captured.append(result)
+                return result
+
+        handler.setFormatter(
+            _CapturingFormatter("[%(tier_id)s/%(subtest_id)s/%(run_num)s] %(message)s")
+        )
+
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="pipeline test",
+            args=(),
+            exc_info=None,
+        )
+
+        # handle() runs filter() before emit()/format() — the real pipeline
+        handler.handle(record)
+
+        assert len(captured) == 1
+        assert "[//]" in captured[0]  # defaults: empty/empty/empty
+        assert "pipeline test" in captured[0]
+
+    def test_format_with_set_context(self) -> None:
+        """Handler with ContextFilter formats set context values correctly."""
+        set_log_context(tier_id="T2", subtest_id="03", run_num=1)
+
+        handler = logging.StreamHandler()
+        handler.addFilter(ContextFilter())
+        captured: list[str] = []
+
+        class _CapturingFormatter(logging.Formatter):
+            def format(self, record: logging.LogRecord) -> str:
+                result = super().format(record)
+                captured.append(result)
+                return result
+
+        handler.setFormatter(
+            _CapturingFormatter("[%(tier_id)s/%(subtest_id)s/%(run_num)s] %(message)s")
+        )
+
+        record = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="context test",
+            args=(),
+            exc_info=None,
+        )
+
+        handler.handle(record)
+
+        assert len(captured) == 1
+        assert "[T2/03/1]" in captured[0]
+        assert "context test" in captured[0]
+
+        clear_log_context()
