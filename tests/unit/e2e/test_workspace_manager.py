@@ -368,8 +368,8 @@ class TestCentralizedRepos:
         assert "cat-file" in str(mock_run.call_args_list[0])
         assert "fetch" in str(mock_run.call_args_list[1])
 
-    def test_full_clone_for_centralized(self, tmp_path: Path) -> None:
-        """Test that centralized repos use full clone (no --depth=1)."""
+    def test_shallow_clone_for_centralized(self, tmp_path: Path) -> None:
+        """Test that centralized repos use shallow clone (--depth=1)."""
         repos_dir = tmp_path / "repos"
         manager = WorkspaceManager(
             experiment_dir=tmp_path / "experiment",
@@ -385,10 +385,10 @@ class TestCentralizedRepos:
             with patch("fcntl.flock"):
                 manager.setup_base_repo()
 
-        # Check that clone command does NOT include --depth=1
+        # Check that clone command includes --depth=1
         clone_call = mock_run.call_args_list[0]
         clone_cmd = clone_call[0][0]
-        assert "--depth=1" not in clone_cmd
+        assert "--depth=1" in clone_cmd
         assert "clone" in clone_cmd
 
     def test_shallow_clone_for_legacy(self, tmp_path: Path) -> None:
@@ -539,3 +539,148 @@ class TestWorkspaceManagerGuards:
         with patch("subprocess.run", return_value=worktree_fail):
             with pytest.raises(RuntimeError, match="Failed to create worktree at"):
                 manager.create_worktree(workspace)
+
+
+class TestSymlinkPixi:
+    """Tests for .pixi symlink functionality."""
+
+    def test_symlink_pixi_standalone_repo(self, tmp_path: Path) -> None:
+        """Workspace with pixi.toml at root gets .pixi symlinked."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        (workspace / "pixi.toml").write_text("[project]\nname = 'test'\n")
+
+        manager.symlink_pixi(workspace)
+
+        pixi_link = workspace / ".pixi"
+        assert pixi_link.is_symlink()
+        assert pixi_link.resolve() == manager.get_shared_pixi_dir().resolve()
+
+    def test_symlink_pixi_modular_repo(self, tmp_path: Path) -> None:
+        """Workspace with mojo/pixi.toml gets mojo/.pixi symlinked."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+
+        workspace = tmp_path / "workspace"
+        mojo_dir = workspace / "mojo"
+        mojo_dir.mkdir(parents=True)
+        (mojo_dir / "pixi.toml").write_text("[project]\nname = 'mojo'\n")
+
+        manager.symlink_pixi(workspace)
+
+        pixi_link = mojo_dir / ".pixi"
+        assert pixi_link.is_symlink()
+        assert pixi_link.resolve() == manager.get_shared_pixi_dir(subpath="mojo").resolve()
+
+    def test_symlink_pixi_no_pixi_toml(self, tmp_path: Path) -> None:
+        """No pixi.toml means no symlink created."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+
+        manager.symlink_pixi(workspace)
+
+        assert not (workspace / ".pixi").exists()
+        assert not (workspace / ".pixi").is_symlink()
+
+    def test_symlink_pixi_idempotent(self, tmp_path: Path) -> None:
+        """Calling symlink_pixi twice does not raise."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        (workspace / "pixi.toml").write_text("[project]\nname = 'test'\n")
+
+        manager.symlink_pixi(workspace)
+        manager.symlink_pixi(workspace)  # Second call should be no-op
+
+        pixi_link = workspace / ".pixi"
+        assert pixi_link.is_symlink()
+
+    def test_symlink_pixi_existing_dir_skipped(self, tmp_path: Path) -> None:
+        """If .pixi already exists as a real directory, symlink is skipped."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        (workspace / "pixi.toml").write_text("[project]\nname = 'test'\n")
+        (workspace / ".pixi").mkdir()  # Real directory already exists
+
+        manager.symlink_pixi(workspace)
+
+        # Should remain a real directory, not a symlink
+        assert (workspace / ".pixi").is_dir()
+        assert not (workspace / ".pixi").is_symlink()
+
+    def test_get_shared_pixi_dir(self, tmp_path: Path) -> None:
+        """Verify path construction for root and mojo subpaths."""
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path,
+            repo_url="https://github.com/test/repo.git",
+        )
+
+        root_shared = manager.get_shared_pixi_dir()
+        assert root_shared == manager.base_repo.parent / f"{manager.base_repo.name}_pixi"
+
+        mojo_shared = manager.get_shared_pixi_dir(subpath="mojo")
+        assert mojo_shared == manager.base_repo.parent / f"{manager.base_repo.name}_pixi_mojo"
+
+    def test_get_shared_pixi_dir_centralized(self, tmp_path: Path) -> None:
+        """Verify shared pixi dir for centralized repos."""
+        repos_dir = tmp_path / "repos"
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path / "experiment",
+            repo_url="https://github.com/test/repo.git",
+            repos_dir=repos_dir,
+        )
+
+        shared = manager.get_shared_pixi_dir()
+        assert shared.parent == repos_dir
+        assert shared.name == f"{manager.base_repo.name}_pixi"
+
+
+class TestShallowClone:
+    """Tests for shallow clone behavior."""
+
+    def test_ensure_commit_available_depth_one(self, tmp_path: Path) -> None:
+        """Verify --depth=1 in fetch command for _ensure_commit_available."""
+        repos_dir = tmp_path / "repos"
+        manager = WorkspaceManager(
+            experiment_dir=tmp_path / "experiment",
+            repo_url="https://github.com/test/repo.git",
+            commit="abc123",
+            repos_dir=repos_dir,
+        )
+
+        # Mock that commit doesn't exist, then fetch succeeds
+        check_result = MagicMock()
+        check_result.returncode = 1  # Not found
+
+        fetch_result = MagicMock()
+        fetch_result.returncode = 0
+        fetch_result.stderr = ""
+
+        with patch("subprocess.run", side_effect=[check_result, fetch_result]) as mock_run:
+            manager._ensure_commit_available()
+
+        # Verify fetch includes --depth=1
+        fetch_cmd = mock_run.call_args_list[1][0][0]
+        assert "--depth=1" in fetch_cmd
+        assert "fetch" in fetch_cmd

@@ -299,6 +299,9 @@ def stage_apply_symlinks(ctx: RunContext) -> None:
         thinking_enabled=thinking_enabled,
     )
 
+    # Symlink .pixi to shared directory so worktrees reuse one pixi environment
+    ctx.workspace_manager.symlink_pixi(ctx.workspace)
+
 
 def stage_commit_config(ctx: RunContext) -> None:
     """SYMLINKS_APPLIED -> CONFIG_COMMITTED: Commit test config to workspace.

@@ -94,15 +94,13 @@ class WorkspaceManager:
                 else:
                     logger.info(f"Cloning base repo to {self.base_repo}")
 
-                    # Determine clone depth based on layout
-                    # Centralized repos need full clone for commit availability
-                    # Per-experiment repos can use shallow clone
-                    use_shallow = self.repos_dir is None
-
-                    clone_cmd = ["git", "clone"]
-                    if use_shallow:
-                        clone_cmd.append("--depth=1")
-                    clone_cmd.extend([self.repo_url, str(self.base_repo)])
+                    clone_cmd = [
+                        "git",
+                        "clone",
+                        "--depth=1",
+                        self.repo_url,
+                        str(self.base_repo),
+                    ]
 
                     # Retry logic for transient network errors
                     max_retries = 3
@@ -220,8 +218,16 @@ class WorkspaceManager:
             logger.debug(f"Commit {self.commit} already available in object store")
             return  # Already available
 
-        # Fetch the specific commit
-        fetch_cmd = ["git", "-C", str(self.base_repo), "fetch", "origin", self.commit]
+        # Fetch the specific commit (shallow: only this commit's tree)
+        fetch_cmd = [
+            "git",
+            "-C",
+            str(self.base_repo),
+            "fetch",
+            "--depth=1",
+            "origin",
+            self.commit,
+        ]
         result = subprocess.run(fetch_cmd, capture_output=True, text=True)
         if result.returncode != 0:
             logger.debug(f"Fetch returned non-zero (may be ok): {result.stderr}")
@@ -359,6 +365,54 @@ class WorkspaceManager:
 
         subprocess.run(prune_cmd, capture_output=True, text=True)
         logger.debug("Pruned stale worktrees")
+
+    def get_shared_pixi_dir(self, subpath: str = "") -> Path:
+        """Return the path to the shared .pixi directory for worktrees.
+
+        All worktrees symlink their .pixi to this shared location so they
+        reuse a single pixi environment instead of duplicating it per worktree.
+
+        Args:
+            subpath: Optional sub-directory within the repo (e.g. "mojo" for
+                     modular repos with a nested pixi.toml).
+
+        Returns:
+            Path to the shared pixi directory.
+
+        """
+        suffix = f"_pixi_{subpath}" if subpath else "_pixi"
+        return self.base_repo.parent / f"{self.base_repo.name}{suffix}"
+
+    def symlink_pixi(self, workspace: Path) -> None:
+        """Symlink .pixi in workspace to a shared directory.
+
+        Detects pixi.toml at workspace root and/or workspace/mojo/ and
+        creates symlinks so all worktrees share a single pixi environment.
+
+        Idempotent: skips if .pixi already exists or is already a symlink.
+
+        Args:
+            workspace: Path to the worktree workspace.
+
+        """
+        # Root-level pixi.toml
+        if (workspace / "pixi.toml").exists():
+            pixi_dir = workspace / ".pixi"
+            if not pixi_dir.exists() and not pixi_dir.is_symlink():
+                shared = self.get_shared_pixi_dir()
+                shared.mkdir(parents=True, exist_ok=True)
+                pixi_dir.symlink_to(shared)
+                logger.debug(f"Symlinked {pixi_dir} -> {shared}")
+
+        # Modular repo: mojo/pixi.toml
+        mojo_dir = workspace / "mojo"
+        if (mojo_dir / "pixi.toml").exists():
+            pixi_dir = mojo_dir / ".pixi"
+            if not pixi_dir.exists() and not pixi_dir.is_symlink():
+                shared = self.get_shared_pixi_dir(subpath="mojo")
+                shared.mkdir(parents=True, exist_ok=True)
+                pixi_dir.symlink_to(shared)
+                logger.debug(f"Symlinked {pixi_dir} -> {shared}")
 
     @property
     def is_setup(self) -> bool:
