@@ -71,7 +71,8 @@ logging.basicConfig(
     ),
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logging.getLogger().addFilter(ContextFilter())
+for _handler in logging.getLogger().handlers:
+    _handler.addFilter(ContextFilter())
 logger = logging.getLogger(__name__)
 
 
