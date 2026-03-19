@@ -2485,63 +2485,6 @@ class TestParallelSemaphoreFlowsToConfig:
 
         return captured[0]
 
-    def test_parallel_high_flows_to_config(self, tmp_path: Path) -> None:
-        """--parallel-high 3 is stored in ExperimentConfig.parallel_high."""
-        config_dir = tmp_path / "test-dir"
-        self._make_test_dir(config_dir)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--parallel-high",
-                "3",
-                "--skip-judge-validation",
-            ]
-        )
-        config = self._run_and_capture(args)
-        assert config.parallel_high == 3
-
-    def test_parallel_med_flows_to_config(self, tmp_path: Path) -> None:
-        """--parallel-med 5 is stored in ExperimentConfig.parallel_med."""
-        config_dir = tmp_path / "test-dir"
-        self._make_test_dir(config_dir)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--parallel-med",
-                "5",
-                "--skip-judge-validation",
-            ]
-        )
-        config = self._run_and_capture(args)
-        assert config.parallel_med == 5
-
-    def test_parallel_low_flows_to_config(self, tmp_path: Path) -> None:
-        """--parallel-low 10 is stored in ExperimentConfig.parallel_low."""
-        config_dir = tmp_path / "test-dir"
-        self._make_test_dir(config_dir)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--parallel-low",
-                "10",
-                "--skip-judge-validation",
-            ]
-        )
-        config = self._run_and_capture(args)
-        assert config.parallel_low == 10
-
 
 # ---------------------------------------------------------------------------
 # Model alias resolution

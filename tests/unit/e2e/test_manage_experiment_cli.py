@@ -76,7 +76,6 @@ class TestBuildParser:
             ]
         )
         assert args.runs == 10
-        assert args.parallel == 4
         assert args.model == "sonnet"
         assert args.judge_model == "sonnet"
         assert args.thinking == "None"

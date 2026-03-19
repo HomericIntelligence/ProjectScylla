@@ -59,13 +59,11 @@ class TestBuildExperimentActions:
         runner.experiment_dir = Path("/tmp/exp")
         runner.checkpoint = MagicMock()
         tier_groups: list[Any] = [[TierID.T0]]
-        scheduler = MagicMock()
         tier_results: dict[TierID, TierResult] = {}
         start_time = MagicMock()
 
         actions = runner._build_experiment_actions(
             tier_groups=tier_groups,
-            scheduler=scheduler,
             tier_results=tier_results,
             start_time=start_time,
         )
@@ -85,13 +83,11 @@ class TestBuildExperimentActions:
         runner.experiment_dir = Path("/tmp/exp")
         runner.checkpoint = MagicMock()
         tier_groups: list[Any] = [[TierID.T0]]
-        scheduler = MagicMock()
         tier_results: dict[TierID, TierResult] = {}
         start_time = MagicMock()
 
         actions = runner._build_experiment_actions(
             tier_groups=tier_groups,
-            scheduler=scheduler,
             tier_results=tier_results,
             start_time=start_time,
         )
@@ -117,13 +113,11 @@ class TestBuildTierActions:
         runner.workspace_manager = MagicMock()
         tier_id = TierID.T0
         baseline = None
-        scheduler = MagicMock()
         tier_ctx = TierContext()
 
         actions = runner._build_tier_actions(
             tier_id=tier_id,
             baseline=baseline,
-            scheduler=scheduler,
             tier_ctx=tier_ctx,
         )
 
@@ -146,13 +140,11 @@ class TestBuildTierActions:
         runner.workspace_manager = MagicMock()
         tier_id = TierID.T0
         baseline = None
-        scheduler = MagicMock()
         tier_ctx = TierContext()
 
         actions = runner._build_tier_actions(
             tier_id=tier_id,
             baseline=baseline,
-            scheduler=scheduler,
             tier_ctx=tier_ctx,
         )
 
@@ -174,7 +166,7 @@ class TestRunUsesExperimentStateMachine:
         """run() should call ExperimentStateMachine.advance_to_completion()."""
         with (
             patch.object(runner, "_initialize_or_resume_experiment") as mock_init,
-            patch("scylla.e2e.runner.E2ERunner._setup_workspace_and_scheduler") as mock_setup,
+            patch("scylla.e2e.runner.E2ERunner._setup_workspace"),
             patch("scylla.e2e.runner.E2ERunner._get_tier_groups") as mock_groups,
             patch("scylla.e2e.health.HeartbeatThread") as mock_heartbeat_cls,
             patch(
@@ -184,7 +176,7 @@ class TestRunUsesExperimentStateMachine:
             mock_exp_dir = Path("/tmp/exp")
             mock_checkpoint_path = mock_exp_dir / "checkpoint.json"
             mock_init.return_value = mock_checkpoint_path
-            mock_setup.return_value = MagicMock()
+
             mock_groups.return_value = [[TierID.T0]]
 
             # Mock heartbeat
@@ -217,7 +209,7 @@ class TestRunUsesExperimentStateMachine:
 
         with (
             patch.object(runner, "_initialize_or_resume_experiment") as mock_init,
-            patch("scylla.e2e.runner.E2ERunner._setup_workspace_and_scheduler") as mock_setup,
+            patch("scylla.e2e.runner.E2ERunner._setup_workspace"),
             patch("scylla.e2e.runner.E2ERunner._get_tier_groups") as mock_groups,
             patch("scylla.e2e.health.HeartbeatThread") as mock_heartbeat_cls,
             patch(
@@ -227,7 +219,7 @@ class TestRunUsesExperimentStateMachine:
             mock_exp_dir = Path("/tmp/exp")
             mock_checkpoint_path = mock_exp_dir / "checkpoint.json"
             mock_init.return_value = mock_checkpoint_path
-            mock_setup.return_value = MagicMock()
+
             mock_groups.return_value = [[TierID.T0]]
 
             mock_heartbeat = MagicMock()
@@ -284,7 +276,7 @@ class TestRunTierUsesTierStateMachine:
             mock_build_actions.return_value = {}
 
             # Test that _run_tier calls advance_to_completion via TierStateMachine
-            result = runner._run_tier(TierID.T0, None, None)
+            result = runner._run_tier(TierID.T0, None)
             # advance_to_completion was called via the state machine
             mock_advance.assert_called_once()
             assert isinstance(result, TierResult)
@@ -317,7 +309,7 @@ class TestRunTierUsesTierStateMachine:
 
             # Capture the call — may fail due to missing TierResult; we just check the call
             with contextlib.suppress(Exception):
-                runner._run_tier(TierID.T0, None, None)
+                runner._run_tier(TierID.T0, None)
 
             if mock_advance.called:
                 call_kwargs = mock_advance.call_args

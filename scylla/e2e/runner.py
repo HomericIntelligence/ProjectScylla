@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from scylla.e2e.judge_selection import JudgeSelection
     from scylla.e2e.models import SubTestResult, TierConfig
-    from scylla.e2e.scheduler import ParallelismScheduler
 
 import contextlib
 
@@ -370,15 +369,11 @@ class E2ERunner:
             raise RuntimeError("experiment_dir must be set before getting checkpoint path")
         return self.experiment_dir / "checkpoint.json"
 
-    def _setup_workspace_and_scheduler(self) -> ParallelismScheduler:
-        """Set up workspace manager and parallelism scheduler for parallel execution.
+    def _setup_workspace(self) -> None:
+        """Set up workspace manager for execution.
 
-        Returns:
-            ParallelismScheduler for limiting concurrent operations by memory class
-            across all tiers.
-
+        Creates and configures the WorkspaceManager if not already initialized.
         """
-        # Create/resume workspace manager
         if not hasattr(self, "workspace_manager") or self.workspace_manager is None:
             # Use centralized repos directory for shared clones across experiments
             repos_dir = self.results_base_dir / "repos"
@@ -394,17 +389,6 @@ class E2ERunner:
             )
             # Setup base repo (idempotent - checks for existing clone internally)
             self.workspace_manager.setup_base_repo()
-
-        # Create per-memory-class scheduler for fine-grained parallelism control
-        from scylla.e2e.scheduler import ParallelismScheduler
-
-        scheduler = ParallelismScheduler(
-            parallel_high=self.config.parallel_high,
-            parallel_med=self.config.parallel_med,
-            parallel_low=self.config.parallel_low,
-        )
-
-        return scheduler
 
     def _capture_experiment_baseline(self) -> None:
         """Capture pipeline baseline once at experiment level from a clean repo state."""
@@ -429,14 +413,12 @@ class E2ERunner:
     def _execute_tier_groups(
         self,
         tier_groups: list[list[TierID]],
-        scheduler: ParallelismScheduler | None,
         previous_baseline: TierBaseline | None = None,
     ) -> dict[TierID, TierResult]:
-        """Execute all tier groups with parallel/sequential orchestration.
+        """Execute all tier groups sequentially.
 
         Args:
-            tier_groups: List of tier groups for parallel execution
-            scheduler: ParallelismScheduler for limiting concurrent operations
+            tier_groups: List of tier groups for execution
             previous_baseline: Optional baseline from previous tier
 
         Returns:
@@ -449,7 +431,7 @@ class E2ERunner:
             experiment_dir=self.experiment_dir,
             run_tier_fn=self._run_tier,
             save_tier_result_fn=self._save_tier_result,
-        ).execute_tier_groups(tier_groups, scheduler, previous_baseline)
+        ).execute_tier_groups(tier_groups, previous_baseline)
 
     def _create_baseline_from_tier_result(
         self,
@@ -501,15 +483,9 @@ class E2ERunner:
         # experiment_dir and checkpoint were created/loaded in _initialize_or_resume_experiment
         pass
 
-    def _action_exp_dir_created(self, scheduler_ref: list[ParallelismScheduler | None]) -> None:
-        """DIR_CREATED -> REPO_CLONED: Setup workspace and scheduler, capture baseline.
-
-        Args:
-            scheduler_ref: Single-element list used as a mutable box so the caller
-                can observe the newly created scheduler after this method returns.
-
-        """
-        scheduler_ref[0] = self._setup_workspace_and_scheduler()
+    def _action_exp_dir_created(self) -> None:
+        """DIR_CREATED -> REPO_CLONED: Setup workspace and capture baseline."""
+        self._setup_workspace()
         self._capture_experiment_baseline()
 
     def _action_exp_repo_cloned(self, tier_groups: list[list[TierID]]) -> None:
@@ -524,18 +500,16 @@ class E2ERunner:
     def _action_exp_tiers_running(
         self,
         tier_groups: list[list[TierID]],
-        scheduler: ParallelismScheduler | None,
         tier_results: dict[TierID, TierResult],
     ) -> None:
         """TIERS_RUNNING -> TIERS_COMPLETE: Execute all tier groups.
 
         Args:
-            tier_groups: Tier dependency groups for parallel execution.
-            scheduler: ParallelismScheduler for concurrent operation limits.
+            tier_groups: Tier dependency groups for execution.
             tier_results: Mutable dict updated in-place with execution results.
 
         """
-        results = self._execute_tier_groups(tier_groups, scheduler)
+        results = self._execute_tier_groups(tier_groups)
         tier_results.update(results)
 
     def _action_exp_tiers_complete(
@@ -573,7 +547,6 @@ class E2ERunner:
     def _build_experiment_actions(
         self,
         tier_groups: list[list[TierID]],
-        scheduler: ParallelismScheduler | None,
         tier_results: dict[TierID, TierResult],
         start_time: datetime,
     ) -> dict[ExperimentState, Callable[[], None]]:
@@ -584,7 +557,6 @@ class E2ERunner:
 
         Args:
             tier_groups: Tier dependency groups computed before SM starts
-            scheduler: ParallelismScheduler for concurrent operation limits
             tier_results: Mutable dict accumulated by TIERS_RUNNING action
             start_time: Experiment start time for duration calculation
 
@@ -592,16 +564,12 @@ class E2ERunner:
             Dict mapping ExperimentState to callable
 
         """
-        # Mutable box so _action_exp_dir_created can update scheduler in-place.
-        # TIERS_RUNNING reads scheduler_ref[0] to pick up the value set by DIR_CREATED.
-        scheduler_ref: list[ParallelismScheduler | None] = [scheduler]
-
         return {
             ExperimentState.INITIALIZING: self._action_exp_initializing,
-            ExperimentState.DIR_CREATED: lambda: self._action_exp_dir_created(scheduler_ref),
+            ExperimentState.DIR_CREATED: self._action_exp_dir_created,
             ExperimentState.REPO_CLONED: lambda: self._action_exp_repo_cloned(tier_groups),
             ExperimentState.TIERS_RUNNING: lambda: self._action_exp_tiers_running(
-                tier_groups, scheduler_ref[0], tier_results
+                tier_groups, tier_results
             ),
             ExperimentState.TIERS_COMPLETE: lambda: self._action_exp_tiers_complete(
                 tier_results, start_time
@@ -645,7 +613,7 @@ class E2ERunner:
         # Shared mutable state accumulated by the TIERS_RUNNING action
         tier_results: dict[TierID, TierResult] = {}
 
-        # Pre-seed scheduler: on resume from TIERS_RUNNING or later states,
+        # Pre-seed workspace: on resume from TIERS_RUNNING or later states,
         # action_dir_created will be skipped so we must set up workspace now.
 
         _current_exp_state = ExperimentState.INITIALIZING
@@ -658,18 +626,14 @@ class E2ERunner:
             ExperimentState.TIERS_COMPLETE,
             ExperimentState.REPORTS_GENERATED,
         }
-        scheduler: ParallelismScheduler | None
         if _current_exp_state in _resume_states:
             # Filesystem cross-validation: verify expected dirs exist before resuming
             self._validate_filesystem_on_resume(_current_exp_state)
-            scheduler = self._setup_workspace_and_scheduler()
-        else:
-            scheduler = None
+            self._setup_workspace()
 
         # Build ExperimentStateMachine actions
         actions = self._build_experiment_actions(
             tier_groups=tier_groups,
-            scheduler=scheduler,
             tier_results=tier_results,
             start_time=start_time,
         )
@@ -726,7 +690,6 @@ class E2ERunner:
         self,
         tier_id: TierID,
         baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None,
         tier_ctx: TierContext,
     ) -> dict[TierState, Callable[[], None]]:
         """Build the TierState -> Callable action map for TierStateMachine.
@@ -737,7 +700,6 @@ class E2ERunner:
         Args:
             tier_id: The tier to run
             baseline: Previous tier's winning baseline
-            scheduler: ParallelismScheduler for concurrent operation limits
             tier_ctx: Mutable TierContext for inter-action state
 
         Returns:
@@ -747,7 +709,6 @@ class E2ERunner:
         return TierActionBuilder(
             tier_id=tier_id,
             baseline=baseline,
-            scheduler=scheduler,
             tier_ctx=tier_ctx,
             config=self.config,
             tier_manager=self.tier_manager,
@@ -761,14 +722,12 @@ class E2ERunner:
         self,
         tier_id: TierID,
         baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None = None,
     ) -> TierResult:
         """Run a single tier's evaluation.
 
         Args:
             tier_id: The tier to run
             baseline: Previous tier's winning baseline
-            scheduler: Optional ParallelismScheduler for concurrent operation limits
 
         Returns:
             TierResult with all sub-test results.
@@ -828,7 +787,6 @@ class E2ERunner:
         actions = self._build_tier_actions(
             tier_id=tier_id,
             baseline=baseline,
-            scheduler=scheduler,
             tier_ctx=tier_ctx,
         )
 
@@ -966,10 +924,7 @@ def run_experiment(
                 "Please run with checkpoint support (default) and the experiment "
                 "will resume after the rate limit expires."
             )
-            logger.error(
-                "If this persists, try reducing parallel_subtests or "
-                "runs_per_subtest in your config."
-            )
+            logger.error("If this persists, try reducing runs_per_subtest in your config.")
 
             # Re-raise with context
             raise RuntimeError(

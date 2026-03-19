@@ -41,7 +41,6 @@ def experiment_config() -> ExperimentConfig:
         runs_per_subtest=3,
         tiers_to_run=[TierID.T0],
         judge_models=["claude-opus-4-5-20251101"],
-        parallel_subtests=2,
         timeout_seconds=300,
     )
 
@@ -75,19 +74,6 @@ class TestComputeConfigHash:
 
         assert hash1 != hash2
 
-    def test_compute_config_hash_ignores_parallel_subtests(
-        self, experiment_config: ExperimentConfig
-    ) -> None:
-        """Verify parallel_subtests doesn't affect hash (parallelization only)."""
-        hash1 = compute_config_hash(experiment_config)
-
-        # Change parallel_subtests
-        experiment_config.parallel_subtests = 4
-        hash2 = compute_config_hash(experiment_config)
-
-        # Hash should be the same
-        assert hash1 == hash2
-
     def test_compute_config_hash_ignores_max_subtests(
         self, experiment_config: ExperimentConfig
     ) -> None:
@@ -105,7 +91,6 @@ class TestComputeConfigHash:
             runs_per_subtest=experiment_config.runs_per_subtest,
             tiers_to_run=experiment_config.tiers_to_run,
             judge_models=experiment_config.judge_models,
-            parallel_subtests=experiment_config.parallel_subtests,
             timeout_seconds=experiment_config.timeout_seconds,
             max_subtests=5,  # Add max_subtests
         )

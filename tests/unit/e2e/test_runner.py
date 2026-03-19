@@ -614,7 +614,7 @@ class TestResumeTierConfigPreload:
                 "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
             ):
                 with contextlib.suppress(Exception):
-                    runner._run_tier(TierID.T0, baseline=None, scheduler=None)
+                    runner._run_tier(TierID.T0, baseline=None)
                     # We only care that tier_manager.load_tier_config was called
 
         # load_tier_config must be called once for the pre-load (resume path)
@@ -657,7 +657,7 @@ class TestResumeTierConfigPreload:
                 "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
             ):
                 with contextlib.suppress(Exception):
-                    runner._run_tier(TierID.T0, baseline=None, scheduler=None)
+                    runner._run_tier(TierID.T0, baseline=None)
 
         # load_tier_config should NOT have been called (pre-load skipped for PENDING)
         mock_tm.load_tier_config.assert_not_called()
@@ -698,7 +698,7 @@ class TestResumeTierConfigPreload:
                 "scylla.e2e.tier_action_builder.run_tier_subtests_parallel", return_value={}
             ):
                 with contextlib.suppress(Exception):
-                    runner._run_tier(TierID.T0, baseline=None, scheduler=None)
+                    runner._run_tier(TierID.T0, baseline=None)
 
         mock_tm.load_tier_config.assert_not_called()
 
@@ -1478,7 +1478,6 @@ class TestBuildExperimentActionsGuards:
         tier_results: dict[TierID, TierResult] = {}
         actions = runner._build_experiment_actions(
             tier_groups=[[TierID.T0]],
-            scheduler=None,
             tier_results=tier_results,
             start_time=datetime.now(timezone.utc),
         )

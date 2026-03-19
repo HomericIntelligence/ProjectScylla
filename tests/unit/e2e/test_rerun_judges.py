@@ -574,7 +574,6 @@ class TestScanJudgesNeedingRerun:
             runs_per_subtest=1,
             tiers_to_run=[TierID.T0],
             judge_models=["claude-opus-4-6", "claude-sonnet-4-5"],
-            parallel_subtests=1,
             timeout_seconds=300,
         )
 

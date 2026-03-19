@@ -1,7 +1,6 @@
-"""Parallel tier execution orchestrator.
+"""Sequential tier execution orchestrator.
 
-Encapsulates _execute_tier_groups, _execute_parallel_tier_group,
-_select_best_baseline_from_group, _execute_single_tier, and
+Encapsulates execute_tier_groups, _execute_single_tier, and
 _create_baseline_from_tier_result from E2ERunner.
 """
 
@@ -9,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,18 +19,16 @@ from scylla.e2e.models import (
 )
 
 if TYPE_CHECKING:
-    from scylla.e2e.scheduler import ParallelismScheduler
     from scylla.e2e.tier_manager import TierManager
 
 logger = logging.getLogger(__name__)
 
 
 class ParallelTierRunner:
-    """Orchestrates parallel and sequential tier group execution.
+    """Orchestrates sequential tier execution.
 
-    Encapsulates the logic for executing tier groups — running tiers
-    sequentially within a group of one, or in parallel for larger groups.
-    Also handles baseline selection and creation between tier groups.
+    Encapsulates the logic for executing tiers sequentially, handling
+    baseline selection and creation between tiers.
 
     Receives runner state as explicit constructor arguments (no runner reference)
     to avoid circular coupling.
@@ -43,9 +39,7 @@ class ParallelTierRunner:
         config: ExperimentConfig,
         tier_manager: TierManager,
         experiment_dir: Path | None,
-        run_tier_fn: Callable[
-            [TierID, TierBaseline | None, ParallelismScheduler | None], TierResult
-        ],
+        run_tier_fn: Callable[[TierID, TierBaseline | None], TierResult],
         save_tier_result_fn: Callable[[TierID, TierResult], None],
     ) -> None:
         """Initialize ParallelTierRunner with all required collaborators.
@@ -67,14 +61,12 @@ class ParallelTierRunner:
     def execute_tier_groups(
         self,
         tier_groups: list[list[TierID]],
-        scheduler: ParallelismScheduler | None,
         previous_baseline: TierBaseline | None = None,
     ) -> dict[TierID, TierResult]:
-        """Execute all tier groups with parallel/sequential orchestration.
+        """Execute all tier groups sequentially.
 
         Args:
-            tier_groups: List of tier groups for parallel execution.
-            scheduler: ParallelismScheduler for limiting concurrent operations.
+            tier_groups: List of tier groups (flattened into sequential execution).
             previous_baseline: Optional baseline from previous tier.
 
         Returns:
@@ -91,98 +83,19 @@ class ParallelTierRunner:
                 logger.warning("Shutdown requested before tier group, stopping...")
                 break
 
-            if len(group) == 1:
-                # Single tier - run sequentially
-                tier_id = group[0]
+            for tier_id in group:
+                from scylla.e2e.runner import is_shutdown_requested as _check_shutdown
+
+                if _check_shutdown():
+                    logger.warning("Shutdown requested before tier, stopping...")
+                    break
+
                 logger.info(f"Starting tier {tier_id.value}")
 
                 tier_result, previous_baseline = self._execute_single_tier(
-                    tier_id, previous_baseline, scheduler
+                    tier_id, previous_baseline
                 )
                 tier_results[tier_id] = tier_result
-
-            else:
-                # Multiple tiers - run in parallel
-                logger.info(f"Starting {len(group)} tiers in parallel: {[t.value for t in group]}")
-
-                group_results = self.execute_parallel_tier_group(
-                    group, previous_baseline, scheduler
-                )
-                tier_results.update(group_results)
-
-                # Select best baseline from group for next tier group
-                previous_baseline = self.select_best_baseline_from_group(group, tier_results)
-
-        return tier_results
-
-    def execute_parallel_tier_group(
-        self,
-        group: list[TierID],
-        previous_baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None,
-    ) -> dict[TierID, TierResult]:
-        """Execute multiple tiers in parallel using ThreadPoolExecutor.
-
-        Args:
-            group: List of tier IDs to execute in parallel.
-            previous_baseline: Shared baseline for all tiers.
-            scheduler: ParallelismScheduler for limiting concurrent operations.
-
-        Returns:
-            Dictionary mapping tier IDs to their results.
-
-        Raises:
-            RuntimeError: If all tiers in the group fail.
-
-        """
-        tier_results: dict[TierID, TierResult] = {}
-        errors: dict[TierID, Exception] = {}
-
-        with ThreadPoolExecutor(max_workers=len(group)) as executor:
-            # Submit all tiers in this group
-            futures = {
-                executor.submit(self.run_tier_fn, tier_id, previous_baseline, scheduler): tier_id
-                for tier_id in group
-            }
-
-            # Poll with timeout so shutdown can interrupt blocking waits
-            pending = set(futures.keys())
-            while pending:
-                from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
-
-                if is_shutdown_requested():
-                    for f in pending:
-                        f.cancel()
-                    raise ShutdownInterruptedError(
-                        "Shutdown requested during parallel tier execution"
-                    )
-
-                done, pending = wait(pending, timeout=2.0, return_when=FIRST_COMPLETED)
-                for future in done:
-                    tier_id = futures[future]
-                    try:
-                        tier_result = future.result(timeout=0)
-                        tier_results[tier_id] = tier_result
-
-                        # Save intermediate results
-                        self.save_tier_result_fn(tier_id, tier_result)
-
-                        logger.info(f"Completed tier {tier_id.value} in parallel group")
-                    except Exception as e:
-                        if isinstance(e, ShutdownInterruptedError):
-                            raise
-                        logger.error(f"Tier {tier_id.value} failed: {e}")
-                        errors[tier_id] = e
-
-        # Only raise if ALL tiers failed — a single failure should not abort siblings
-        if errors and not tier_results:
-            first_error = next(iter(errors.values()))
-            raise RuntimeError(
-                f"All tiers in parallel group failed. First error: {first_error}"
-            ) from first_error
-        elif errors:
-            for tid, err in errors.items():
-                logger.warning(f"Tier {tid.value} failed but other tiers succeeded: {err}")
 
         return tier_results
 
@@ -196,7 +109,7 @@ class ParallelTierRunner:
         Only relevant when T5 is in the experiment (for T0-T4 -> T5 transition).
 
         Args:
-            group: List of tier IDs that were executed in parallel.
+            group: List of tier IDs that were executed.
             tier_results: Results from all tiers in the group.
 
         Returns:
@@ -260,20 +173,18 @@ class ParallelTierRunner:
         self,
         tier_id: TierID,
         previous_baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None,
     ) -> tuple[TierResult, TierBaseline | None]:
         """Execute a single tier sequentially and update baseline.
 
         Args:
             tier_id: The tier to execute.
             previous_baseline: Baseline from previous tier (if any).
-            scheduler: ParallelismScheduler for limiting concurrent operations.
 
         Returns:
             Tuple of (tier_result, updated_baseline).
 
         """
-        tier_result = self.run_tier_fn(tier_id, previous_baseline, scheduler)
+        tier_result = self.run_tier_fn(tier_id, previous_baseline)
 
         # Set baseline for next tier
         updated_baseline = (

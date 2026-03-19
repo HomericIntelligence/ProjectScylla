@@ -56,51 +56,31 @@ class TestActionExpDirCreated:
     """Tests for _action_exp_dir_created — workspace setup and baseline capture."""
 
     def test_calls_setup_and_baseline(self, runner: E2ERunner) -> None:
-        """Calls _setup_workspace_and_scheduler and _capture_experiment_baseline."""
-        mock_scheduler = MagicMock()
-        scheduler_ref: list[object] = [None]
-
+        """Calls _setup_workspace and _capture_experiment_baseline."""
         with (
-            patch.object(
-                runner, "_setup_workspace_and_scheduler", return_value=mock_scheduler
-            ) as mock_setup,
+            patch.object(runner, "_setup_workspace") as mock_setup,
             patch.object(runner, "_capture_experiment_baseline") as mock_baseline,
         ):
-            runner._action_exp_dir_created(scheduler_ref)  # type: ignore[arg-type]
+            runner._action_exp_dir_created()
 
         mock_setup.assert_called_once()
         mock_baseline.assert_called_once()
 
-    def test_scheduler_ref_updated(self, runner: E2ERunner) -> None:
-        """_action_exp_dir_created stores the new scheduler into scheduler_ref[0]."""
-        mock_scheduler = MagicMock()
-        scheduler_ref: list[object] = [None]
-
-        with (
-            patch.object(runner, "_setup_workspace_and_scheduler", return_value=mock_scheduler),
-            patch.object(runner, "_capture_experiment_baseline"),
-        ):
-            runner._action_exp_dir_created(scheduler_ref)  # type: ignore[arg-type]
-
-        assert scheduler_ref[0] is mock_scheduler
-
     def test_setup_called_before_baseline(self, runner: E2ERunner) -> None:
-        """_setup_workspace_and_scheduler is invoked before _capture_experiment_baseline."""
+        """_setup_workspace is invoked before _capture_experiment_baseline."""
         call_order: list[str] = []
 
-        def fake_setup() -> MagicMock:
+        def fake_setup() -> None:
             call_order.append("setup")
-            return MagicMock()
 
         def fake_baseline() -> None:
             call_order.append("baseline")
 
-        scheduler_ref: list[object] = [None]
         with (
-            patch.object(runner, "_setup_workspace_and_scheduler", side_effect=fake_setup),
+            patch.object(runner, "_setup_workspace", side_effect=fake_setup),
             patch.object(runner, "_capture_experiment_baseline", side_effect=fake_baseline),
         ):
-            runner._action_exp_dir_created(scheduler_ref)  # type: ignore[arg-type]
+            runner._action_exp_dir_created()
 
         assert call_order == ["setup", "baseline"]
 
@@ -136,13 +116,12 @@ class TestActionExpTiersRunning:
     def test_calls_execute_tier_groups(self, runner: E2ERunner) -> None:
         """_action_exp_tiers_running calls _execute_tier_groups with the given args."""
         tier_groups = [[TierID.T0]]
-        mock_scheduler = MagicMock()
         tier_results: dict[TierID, TierResult] = {}
 
         with patch.object(runner, "_execute_tier_groups", return_value={}) as mock_exec:
-            runner._action_exp_tiers_running(tier_groups, mock_scheduler, tier_results)
+            runner._action_exp_tiers_running(tier_groups, tier_results)
 
-        mock_exec.assert_called_once_with(tier_groups, mock_scheduler)
+        mock_exec.assert_called_once_with(tier_groups)
 
     def test_updates_tier_results(self, runner: E2ERunner) -> None:
         """_action_exp_tiers_running merges execution results into tier_results."""
@@ -151,17 +130,10 @@ class TestActionExpTiersRunning:
         tier_results: dict[TierID, TierResult] = {}
 
         with patch.object(runner, "_execute_tier_groups", return_value={TierID.T0: tier_result}):
-            runner._action_exp_tiers_running(tier_groups, None, tier_results)
+            runner._action_exp_tiers_running(tier_groups, tier_results)
 
         assert TierID.T0 in tier_results
         assert tier_results[TierID.T0] is tier_result
-
-    def test_accepts_none_scheduler(self, runner: E2ERunner) -> None:
-        """_action_exp_tiers_running accepts None as scheduler."""
-        tier_results: dict[TierID, TierResult] = {}
-
-        with patch.object(runner, "_execute_tier_groups", return_value={}):
-            runner._action_exp_tiers_running([[TierID.T0]], None, tier_results)
 
 
 class TestActionExpTiersComplete:
@@ -262,7 +234,6 @@ class TestBuildExperimentActions:
         start_time = datetime.now(timezone.utc)
         actions = runner._build_experiment_actions(
             tier_groups=[[TierID.T0]],
-            scheduler=None,
             tier_results={},
             start_time=start_time,
         )
@@ -282,7 +253,6 @@ class TestBuildExperimentActions:
         start_time = datetime.now(timezone.utc)
         actions = runner._build_experiment_actions(
             tier_groups=[[TierID.T0]],
-            scheduler=None,
             tier_results={},
             start_time=start_time,
         )
@@ -290,27 +260,23 @@ class TestBuildExperimentActions:
         for state, action in actions.items():
             assert callable(action), f"Action for {state} is not callable"
 
-    def test_dir_created_updates_scheduler_ref(self, runner: E2ERunner) -> None:
-        """The DIR_CREATED action updates scheduler via the mutable box."""
+    def test_dir_created_calls_setup_and_baseline(self, runner: E2ERunner) -> None:
+        """The DIR_CREATED action calls setup and baseline capture."""
         from scylla.e2e.models import ExperimentState
 
-        mock_scheduler = MagicMock()
         start_time = datetime.now(timezone.utc)
         tier_results: dict[TierID, TierResult] = {}
 
         actions = runner._build_experiment_actions(
             tier_groups=[[TierID.T0]],
-            scheduler=None,
             tier_results=tier_results,
             start_time=start_time,
         )
 
         with (
-            patch.object(runner, "_setup_workspace_and_scheduler", return_value=mock_scheduler),
-            patch.object(runner, "_capture_experiment_baseline"),
-            patch.object(runner, "_execute_tier_groups", return_value={}) as mock_exec,
+            patch.object(runner, "_setup_workspace") as mock_setup,
+            patch.object(runner, "_capture_experiment_baseline") as mock_baseline,
         ):
             actions[ExperimentState.DIR_CREATED]()
-            # TIERS_RUNNING must use the scheduler set by DIR_CREATED
-            actions[ExperimentState.TIERS_RUNNING]()
-            mock_exec.assert_called_once_with([[TierID.T0]], mock_scheduler)
+            mock_setup.assert_called_once()
+            mock_baseline.assert_called_once()

@@ -28,7 +28,6 @@ from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
     from scylla.e2e.runner import TierContext
-    from scylla.e2e.scheduler import ParallelismScheduler
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
 
@@ -50,7 +49,6 @@ class TierActionBuilder:
         self,
         tier_id: TierID,
         baseline: TierBaseline | None,
-        scheduler: ParallelismScheduler | None,
         tier_ctx: TierContext,
         config: ExperimentConfig,
         tier_manager: TierManager,
@@ -64,7 +62,6 @@ class TierActionBuilder:
         Args:
             tier_id: The tier to run.
             baseline: Previous tier's winning baseline (may be None).
-            scheduler: ParallelismScheduler for concurrent operation limits (may be None).
             tier_ctx: Mutable TierContext for inter-action state accumulation.
             config: Experiment configuration (read-only).
             tier_manager: Provides tier config loading and baseline retrieval.
@@ -76,7 +73,6 @@ class TierActionBuilder:
         """
         self.tier_id = tier_id
         self.baseline = baseline
-        self.scheduler = scheduler
         self.tier_ctx = tier_ctx
         self.config = config
         self.tier_manager = tier_manager
@@ -97,7 +93,6 @@ class TierActionBuilder:
         """
         tier_id = self.tier_id
         baseline = self.baseline
-        scheduler = self.scheduler
         tier_ctx = self.tier_ctx
         config = self.config
         tier_manager = self.tier_manager
@@ -141,7 +136,7 @@ class TierActionBuilder:
             tier_ctx.tier_dir = tier_dir
 
         def action_config_loaded() -> None:
-            # CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests in parallel.
+            # CONFIG_LOADED -> SUBTESTS_RUNNING: Execute all subtests sequentially.
             if tier_ctx.tier_config is None:
                 raise RuntimeError("tier_config must be set before running subtests")
             if tier_ctx.tier_dir is None:
@@ -159,7 +154,6 @@ class TierActionBuilder:
                 results_dir=tier_ctx.tier_dir,
                 checkpoint=checkpoint,
                 checkpoint_path=checkpoint_path,
-                scheduler=scheduler,
                 experiment_dir=experiment_dir,
             )
             tier_ctx.subtest_results = subtest_results

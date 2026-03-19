@@ -1,9 +1,8 @@
 """Unit tests for ParallelTierRunner.
 
-Tests the extracted parallel/sequential tier execution class,
-which encapsulates _execute_tier_groups, _execute_parallel_tier_group,
-_select_best_baseline_from_group, _execute_single_tier, and
-_create_baseline_from_tier_result from E2ERunner.
+Tests the sequential tier execution class, which encapsulates
+execute_tier_groups, _execute_single_tier, select_best_baseline_from_group,
+and create_baseline_from_tier_result from E2ERunner.
 """
 
 from __future__ import annotations
@@ -162,7 +161,7 @@ class TestExecuteTierGroups:
             experiment_dir=tmp_path,
         )
 
-        results = runner.execute_tier_groups([[TierID.T0]], scheduler=None)
+        results = runner.execute_tier_groups([[TierID.T0]])
 
         assert TierID.T0 in results
         run_tier_fn.assert_called_once()
@@ -185,7 +184,7 @@ class TestExecuteTierGroups:
             tier_manager=mock_tier_manager,
             experiment_dir=tmp_path,
         )
-        results = runner.execute_tier_groups([[TierID.T0], [TierID.T1]], scheduler=None)
+        results = runner.execute_tier_groups([[TierID.T0], [TierID.T1]])
 
         assert TierID.T0 in results
         assert TierID.T1 in results
@@ -197,13 +196,13 @@ class TestExecuteTierGroups:
 
         with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
             runner = _make_runner(run_tier_fn=run_tier_fn)
-            results = runner.execute_tier_groups([[TierID.T0], [TierID.T1]], scheduler=None)
+            results = runner.execute_tier_groups([[TierID.T0], [TierID.T1]])
 
         assert results == {}
         run_tier_fn.assert_not_called()
 
-    def test_parallel_group_submits_multiple_tiers(self) -> None:
-        """Parallel group runs both tiers."""
+    def test_group_runs_multiple_tiers_sequentially(self, tmp_path: Path) -> None:
+        """Group with multiple tiers runs each tier sequentially."""
         t1_result = _make_tier_result(TierID.T1)
         t2_result = _make_tier_result(TierID.T2)
 
@@ -218,77 +217,18 @@ class TestExecuteTierGroups:
             language="python",
             tiers_to_run=[TierID.T1, TierID.T2],
         )
-        runner = _make_runner(config=config, run_tier_fn=run_tier)
-        results = runner.execute_tier_groups([[TierID.T1, TierID.T2]], scheduler=None)
+        mock_tier_manager = MagicMock()
+        mock_tier_manager.get_baseline_for_subtest.return_value = MagicMock(spec=TierBaseline)
+        runner = _make_runner(
+            config=config,
+            run_tier_fn=run_tier,
+            tier_manager=mock_tier_manager,
+            experiment_dir=tmp_path,
+        )
+        results = runner.execute_tier_groups([[TierID.T1, TierID.T2]])
 
         assert TierID.T1 in results
         assert TierID.T2 in results
-
-
-# ---------------------------------------------------------------------------
-# TestExecuteParallelTierGroup
-# ---------------------------------------------------------------------------
-
-
-class TestExecuteParallelTierGroup:
-    """Tests for ParallelTierRunner.execute_parallel_tier_group()."""
-
-    def test_both_tiers_succeed(self) -> None:
-        """Both tiers in parallel group are returned."""
-        t1_result = _make_tier_result(TierID.T1)
-        t2_result = _make_tier_result(TierID.T2)
-
-        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
-            return t1_result if tier_id == TierID.T1 else t2_result
-
-        runner = _make_runner(run_tier_fn=run_tier)
-        results = runner.execute_parallel_tier_group(
-            [TierID.T1, TierID.T2], previous_baseline=None, scheduler=None
-        )
-
-        assert TierID.T1 in results
-        assert TierID.T2 in results
-
-    def test_partial_failure_other_tier_succeeds(self) -> None:
-        """One failure doesn't abort sibling tiers."""
-        t1_result = _make_tier_result(TierID.T1)
-
-        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
-            if tier_id == TierID.T2:
-                raise RuntimeError("T2 failed")
-            return t1_result
-
-        runner = _make_runner(run_tier_fn=run_tier)
-        results = runner.execute_parallel_tier_group(
-            [TierID.T1, TierID.T2], previous_baseline=None, scheduler=None
-        )
-
-        assert TierID.T1 in results
-        assert TierID.T2 not in results
-
-    def test_all_fail_raises_runtime_error(self) -> None:
-        """All tiers failing raises RuntimeError."""
-
-        def run_tier(tier_id: TierID, *args: Any) -> TierResult:
-            raise RuntimeError(f"{tier_id.value} failed")
-
-        runner = _make_runner(run_tier_fn=run_tier)
-
-        with pytest.raises(RuntimeError, match="All tiers in parallel group failed"):
-            runner.execute_parallel_tier_group(
-                [TierID.T1, TierID.T2], previous_baseline=None, scheduler=None
-            )
-
-    def test_calls_save_tier_result_fn_on_success(self) -> None:
-        """save_tier_result_fn is called for each successful tier."""
-        save_fn = MagicMock()
-        t0_result = _make_tier_result(TierID.T0)
-        run_tier_fn = MagicMock(return_value=t0_result)
-
-        runner = _make_runner(run_tier_fn=run_tier_fn, save_tier_result_fn=save_fn)
-        runner.execute_parallel_tier_group([TierID.T0], previous_baseline=None, scheduler=None)
-
-        save_fn.assert_called_once_with(TierID.T0, t0_result)
 
 
 # ---------------------------------------------------------------------------
@@ -417,51 +357,3 @@ class TestCreateBaselineFromTierResult:
 
         with pytest.raises(RuntimeError, match="experiment_dir must be set"):
             runner.create_baseline_from_tier_result(TierID.T0, tier_result)
-
-
-# ---------------------------------------------------------------------------
-# TestParallelTierGroupShutdown
-# ---------------------------------------------------------------------------
-
-
-class TestParallelTierGroupShutdown:
-    """Tests that execute_parallel_tier_group raises ShutdownInterruptedError on shutdown."""
-
-    def test_raises_shutdown_interrupted_when_shutdown_requested(self) -> None:
-        """Raises ShutdownInterruptedError when is_shutdown_requested() is True."""
-        from scylla.e2e.runner import ShutdownInterruptedError
-
-        def blocking_run_tier(tier_id: TierID, *args: Any) -> TierResult:
-            """Simulate a blocking tier that would take 10 seconds."""
-            import time
-
-            time.sleep(10)
-            return _make_tier_result(tier_id)
-
-        runner = _make_runner(run_tier_fn=blocking_run_tier)
-
-        with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
-            with pytest.raises(ShutdownInterruptedError):
-                runner.execute_parallel_tier_group(
-                    [TierID.T0, TierID.T1], previous_baseline=None, scheduler=None
-                )
-
-    def test_cancels_pending_futures_on_shutdown(self) -> None:
-        """Cancels pending futures when shutdown is requested."""
-        from scylla.e2e.runner import ShutdownInterruptedError
-
-        def blocking_run_tier(tier_id: TierID, *args: Any) -> TierResult:
-            """Simulate a blocking tier that would take 10 seconds."""
-            import time
-
-            time.sleep(10)
-            return _make_tier_result(tier_id)
-
-        runner = _make_runner(run_tier_fn=blocking_run_tier)
-
-        # Patch at the parallel_tier_runner import site so the loop sees shutdown=True
-        with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
-            with pytest.raises(ShutdownInterruptedError, match="Shutdown requested"):
-                runner.execute_parallel_tier_group(
-                    [TierID.T0, TierID.T1], previous_baseline=None, scheduler=None
-                )

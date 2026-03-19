@@ -32,7 +32,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from scylla.e2e.models import RunState
 
@@ -93,116 +93,97 @@ class StateTransition:
     Attributes:
         from_state: State before this transition
         to_state: State after this transition completes successfully
-        memory_class: Resource class controlling which semaphore is acquired
-            from ParallelismScheduler. One of "low", "med", or "high".
         description: Human-readable description for logging
 
     """
 
     from_state: RunState
     to_state: RunState
-    memory_class: Literal["low", "med", "high"]
     description: str
 
 
-# Registry of all valid transitions with their memory classifications.
+# Registry of all valid transitions.
 # Actions (the callables that perform the work) are injected at runtime
 # by callers who hold references to the appropriate stage functions.
 TRANSITION_REGISTRY: list[StateTransition] = [
     StateTransition(
         from_state=RunState.PENDING,
         to_state=RunState.DIR_STRUCTURE_CREATED,
-        memory_class="low",
         description="Create run_NN/, agent/, judge/ directories",
     ),
     StateTransition(
         from_state=RunState.DIR_STRUCTURE_CREATED,
         to_state=RunState.WORKTREE_CREATED,
-        memory_class="high",
         description="Create git worktree",
     ),
     StateTransition(
         from_state=RunState.WORKTREE_CREATED,
         to_state=RunState.SYMLINKS_APPLIED,
-        memory_class="low",
         description="Symlink tier resources to workspace",
     ),
     StateTransition(
         from_state=RunState.SYMLINKS_APPLIED,
         to_state=RunState.CONFIG_COMMITTED,
-        memory_class="low",
         description="Write CLAUDE.md and settings.json, git commit",
     ),
     StateTransition(
         from_state=RunState.CONFIG_COMMITTED,
         to_state=RunState.BASELINE_CAPTURED,
-        memory_class="med",
         description="Capture pipeline baseline (compileall, ruff, pytest, pre-commit)",
     ),
     StateTransition(
         from_state=RunState.BASELINE_CAPTURED,
         to_state=RunState.PROMPT_WRITTEN,
-        memory_class="low",
         description="Write task_prompt.md, inject thinking keyword if configured",
     ),
     StateTransition(
         from_state=RunState.PROMPT_WRITTEN,
         to_state=RunState.REPLAY_GENERATED,
-        memory_class="low",
         description="Build adapter command, generate replay.sh",
     ),
     StateTransition(
         from_state=RunState.REPLAY_GENERATED,
         to_state=RunState.AGENT_COMPLETE,
-        memory_class="high",
         description="Execute Claude CLI agent via replay.sh",
     ),
     StateTransition(
         from_state=RunState.AGENT_COMPLETE,
         to_state=RunState.DIFF_CAPTURED,
-        memory_class="low",
         description="Capture git diff and workspace state",
     ),
     StateTransition(
         from_state=RunState.DIFF_CAPTURED,
         to_state=RunState.JUDGE_PIPELINE_RUN,
-        memory_class="med",
         description="Run build pipeline on agent-modified workspace",
     ),
     StateTransition(
         from_state=RunState.JUDGE_PIPELINE_RUN,
         to_state=RunState.JUDGE_PROMPT_BUILT,
-        memory_class="low",
         description="Assemble judge prompt with all context",
     ),
     StateTransition(
         from_state=RunState.JUDGE_PROMPT_BUILT,
         to_state=RunState.JUDGE_COMPLETE,
-        memory_class="high",
         description="Execute Claude CLI judge(s), compute consensus",
     ),
     StateTransition(
         from_state=RunState.JUDGE_COMPLETE,
         to_state=RunState.RUN_FINALIZED,
-        memory_class="low",
         description="Build E2ERunResult, save run_result.json",
     ),
     StateTransition(
         from_state=RunState.RUN_FINALIZED,
         to_state=RunState.REPORT_WRITTEN,
-        memory_class="low",
         description="Generate report.md and report.json",
     ),
     StateTransition(
         from_state=RunState.REPORT_WRITTEN,
         to_state=RunState.CHECKPOINTED,
-        memory_class="low",
         description="Save checkpoint (no-op — auto-saved after each transition)",
     ),
     StateTransition(
         from_state=RunState.CHECKPOINTED,
         to_state=RunState.WORKTREE_CLEANED,
-        memory_class="low",
         description="Remove worktree for passed runs",
     ),
 ]

@@ -3,7 +3,6 @@
 Tests cover:
 - RunContext construction
 - build_actions_dict completeness (all RunState keys present)
-- _make_scheduled_action wraps correctly (semaphore acquire/release)
 - Individual stage functions with mocks (smoke tests)
 - Heavy stage functions with real filesystem I/O
 """
@@ -25,7 +24,6 @@ from scylla.e2e.models import (
 )
 from scylla.e2e.stages import (
     RunContext,
-    _make_scheduled_action,
     build_actions_dict,
     stage_apply_symlinks,
     stage_build_judge_prompt,
@@ -58,10 +56,6 @@ def minimal_config() -> ExperimentConfig:
         models=["claude-sonnet-4-5-20250929"],
         runs_per_subtest=1,
         judge_models=["claude-opus-4-5-20251101"],
-        parallel_subtests=1,
-        parallel_high=1,
-        parallel_med=2,
-        parallel_low=4,
         timeout_seconds=60,
     )
 
@@ -215,27 +209,6 @@ class TestBuildActionsDict:
         # REPORT_WRITTEN is intentionally not in the actions dict
         assert RunState.REPORT_WRITTEN not in actions
 
-    def test_without_scheduler_no_wrapping(self, run_context: RunContext) -> None:
-        """Without scheduler, actions are plain lambdas (not wrapped)."""
-        actions = build_actions_dict(run_context, scheduler=None)
-        # With no scheduler, actions should be the raw lambdas
-        # We verify this by checking they run without semaphore side effects
-        assert len(actions) > 0
-
-    def test_with_scheduler_wraps_actions(self, run_context: RunContext) -> None:
-        """With scheduler, actions are wrapped with semaphore acquire/release."""
-        scheduler = MagicMock()
-        # Make acquire() work as context manager
-        acquire_ctx = MagicMock()
-        acquire_ctx.__enter__ = MagicMock(return_value=None)
-        acquire_ctx.__exit__ = MagicMock(return_value=False)
-        scheduler.acquire.return_value = acquire_ctx
-
-        actions = build_actions_dict(run_context, scheduler=scheduler)
-        assert len(actions) > 0
-        # Actions are wrapped functions
-        assert all(callable(a) for a in actions.values())
-
     def test_action_count_matches_transition_registry(self, run_context: RunContext) -> None:
         """Number of actions matches number of TRANSITION_REGISTRY entries minus REPORT_WRITTEN.
 
@@ -244,48 +217,6 @@ class TestBuildActionsDict:
         """
         actions = build_actions_dict(run_context)
         assert len(actions) == len(TRANSITION_REGISTRY) - 1
-
-
-class TestMakeScheduledAction:
-    """Tests for _make_scheduled_action() helper."""
-
-    def test_acquires_and_releases_semaphore(self) -> None:
-        """Wrapped action acquires and releases the semaphore."""
-        scheduler = MagicMock()
-        acquire_ctx = MagicMock()
-        acquire_ctx.__enter__ = MagicMock(return_value=None)
-        acquire_ctx.__exit__ = MagicMock(return_value=False)
-        scheduler.acquire.return_value = acquire_ctx
-
-        call_log: list[str] = []
-        action = MagicMock(side_effect=lambda: call_log.append("action"))
-
-        wrapped = _make_scheduled_action(scheduler, "high", action)
-        wrapped()
-
-        scheduler.acquire.assert_called_once_with("high")
-        acquire_ctx.__enter__.assert_called_once()
-        acquire_ctx.__exit__.assert_called_once()
-        action.assert_called_once()
-
-    def test_releases_on_exception(self) -> None:
-        """Wrapped action releases semaphore even when action raises."""
-        scheduler = MagicMock()
-        acquire_ctx = MagicMock()
-        acquire_ctx.__enter__ = MagicMock(return_value=None)
-        acquire_ctx.__exit__ = MagicMock(return_value=False)
-        scheduler.acquire.return_value = acquire_ctx
-
-        def failing_action() -> None:
-            raise RuntimeError("action failed")
-
-        wrapped = _make_scheduled_action(scheduler, "med", failing_action)
-
-        with pytest.raises(RuntimeError, match="action failed"):
-            wrapped()
-
-        # __exit__ still called (context manager handles cleanup)
-        acquire_ctx.__exit__.assert_called_once()
 
 
 class TestStageCleanupWorktree:
@@ -344,10 +275,6 @@ def stage_config(tmp_path: Path) -> ExperimentConfig:
         models=["claude-sonnet-4-5-20250929"],
         runs_per_subtest=1,
         judge_models=["claude-opus-4-5-20251101"],
-        parallel_subtests=1,
-        parallel_high=1,
-        parallel_med=2,
-        parallel_low=4,
         timeout_seconds=60,
     )
 

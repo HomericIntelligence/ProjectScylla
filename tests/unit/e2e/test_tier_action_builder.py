@@ -111,7 +111,6 @@ def _make_builder(
     save_tier_result_fn: MagicMock | None = None,
     experiment_dir: Path | None = None,
     baseline: TierBaseline | None = None,
-    scheduler: MagicMock | None = None,
 ) -> TierActionBuilder:
     """Create a TierActionBuilder with sensible defaults for testing."""
     if config is None:
@@ -142,7 +141,6 @@ def _make_builder(
     return TierActionBuilder(
         tier_id=tier_id,
         baseline=baseline,
-        scheduler=scheduler,
         tier_ctx=tier_ctx,
         config=config,
         tier_manager=tier_manager,

@@ -107,27 +107,6 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--runs", type=int, default=10, help="Runs per sub-test (default: 10)")
     parser.add_argument(
-        "--parallel", type=int, default=4, help="Max parallel sub-tests (default: 4)"
-    )
-    parser.add_argument(
-        "--parallel-high",
-        type=int,
-        default=2,
-        help="Max concurrent high-memory operations (default: 2)",
-    )
-    parser.add_argument(
-        "--parallel-med",
-        type=int,
-        default=4,
-        help="Max concurrent medium-memory operations (default: 4)",
-    )
-    parser.add_argument(
-        "--parallel-low",
-        type=int,
-        default=8,
-        help="Max concurrent low-memory operations (default: 8)",
-    )
-    parser.add_argument(
         "--timeout", type=int, default=None, help="Timeout per run in seconds (default: 3600)"
     )
     parser.add_argument("--max-subtests", type=int, default=None, help="Limit sub-tests per tier")
@@ -673,10 +652,6 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 models=[model_id],
                 runs_per_subtest=args.runs,
                 judge_models=judge_models,
-                parallel_subtests=args.parallel,
-                parallel_high=args.parallel_high,
-                parallel_med=args.parallel_med,
-                parallel_low=args.parallel_low,
                 timeout_seconds=timeout_seconds,
                 max_subtests=args.max_subtests,
                 skip_agent_teams=args.skip_agent_teams,
@@ -1104,10 +1079,6 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         models=[model_id],
         runs_per_subtest=args.runs,
         judge_models=judge_models,
-        parallel_subtests=args.parallel,
-        parallel_high=args.parallel_high,
-        parallel_med=args.parallel_med,
-        parallel_low=args.parallel_low,
         timeout_seconds=timeout_seconds,
         max_subtests=args.max_subtests,
         skip_agent_teams=args.skip_agent_teams,
