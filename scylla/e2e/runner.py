@@ -9,9 +9,7 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
-import threading
 from collections.abc import Callable
-from concurrent.futures.process import BrokenProcessPool
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -165,11 +163,6 @@ class E2ERunner:
         self.checkpoint: E2ECheckpoint | None = None
         self._fresh = fresh
         self._last_experiment_result: ExperimentResult | None = None
-        # Lock for merging subprocess-written checkpoint state back into self.checkpoint.
-        # ProcessPoolExecutor workers write run_states/subtest_states directly to disk;
-        # after each parallel subtest batch finishes, the main process must merge those
-        # disk writes into the shared self.checkpoint object before the next save.
-        self._checkpoint_merge_lock = threading.Lock()
 
     def _result_writer(self) -> ExperimentResultWriter:
         """Create an ExperimentResultWriter bound to current state.
@@ -403,13 +396,9 @@ class E2ERunner:
             self.workspace_manager.setup_base_repo()
 
         # Create per-memory-class scheduler for fine-grained parallelism control
-        from multiprocessing import Manager
-
         from scylla.e2e.scheduler import ParallelismScheduler
 
-        manager = Manager()
         scheduler = ParallelismScheduler(
-            manager=manager,
             parallel_high=self.config.parallel_high,
             parallel_med=self.config.parallel_med,
             parallel_low=self.config.parallel_low,
@@ -694,11 +683,8 @@ class E2ERunner:
                 actions,
                 until_state=self.config.until_experiment_state,
             )
-        except (KeyboardInterrupt, BrokenProcessPool) as e:
-            if isinstance(e, KeyboardInterrupt):
-                logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
-            else:
-                logger.warning("Process pool interrupted, cleaning up...")
+        except KeyboardInterrupt:
+            logger.warning("Shutdown requested (Ctrl+C), cleaning up...")
         except (
             Exception
         ) as e:  # broad catch: top-level experiment boundary; re-raised after logging
@@ -768,7 +754,6 @@ class E2ERunner:
             workspace_manager=self.workspace_manager,
             checkpoint=self.checkpoint,
             experiment_dir=self.experiment_dir,
-            checkpoint_merge_lock=self._checkpoint_merge_lock,
             save_tier_result_fn=self._save_tier_result,
         ).build()
 

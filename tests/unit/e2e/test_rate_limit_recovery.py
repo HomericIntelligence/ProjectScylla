@@ -10,7 +10,7 @@ from scylla.e2e.models import SubTestResult, TierID
 from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
 from scylla.e2e.subtest_executor import (
     _detect_rate_limit_from_results,
-    _run_subtest_in_process_safe,
+    _run_subtest_safe,
 )
 
 
@@ -116,22 +116,15 @@ class TestDetectRateLimitFromResults:
         assert detected is None
 
 
-class TestRunSubtestInProcessSafe:
-    """Tests for _run_subtest_in_process_safe wrapper."""
+class TestRunSubtestSafe:
+    """Tests for _run_subtest_safe wrapper."""
 
     def test_returns_result_on_success(self) -> None:
         """Test that successful execution returns SubTestResult."""
-        # Create mock arguments
         mock_config = Mock()
         mock_tier_config = Mock()
         mock_subtest = Mock()
         mock_subtest.id = "01"
-        mock_baseline = None
-        mock_results_dir = Path("/tmp/results")
-        mock_tiers_dir = Path("/tmp/tiers")
-        mock_base_repo = Path("/tmp/repo")
-        mock_repo_url = "https://github.com/test/repo"
-        mock_commit = "abc123"
 
         # Mock successful result
         expected_result = SubTestResult(
@@ -142,38 +135,27 @@ class TestRunSubtestInProcessSafe:
             mean_score=0.95,
         )
 
-        # Patch _run_subtest_in_process to return success
         with patch(
-            "scylla.e2e.parallel_executor._run_subtest_in_process",
+            "scylla.e2e.parallel_executor._run_subtest",
             return_value=expected_result,
         ):
-            result = _run_subtest_in_process_safe(
+            result = _run_subtest_safe(
                 config=mock_config,
                 tier_id=TierID.T5,
                 tier_config=mock_tier_config,
                 subtest=mock_subtest,
-                baseline=mock_baseline,
-                results_dir=mock_results_dir,
-                tiers_dir=mock_tiers_dir,
-                base_repo=mock_base_repo,
-                repo_url=mock_repo_url,
-                commit=mock_commit,
+                baseline=None,
+                results_dir=Path("/tmp/results"),
+                tier_manager=Mock(),
+                workspace_manager=Mock(),
             )
 
         assert result == expected_result
 
     def test_catches_rate_limit_error(self) -> None:
         """Test that RateLimitError is caught and converted to SubTestResult."""
-        mock_config = Mock()
-        mock_tier_config = Mock()
         mock_subtest = Mock()
         mock_subtest.id = "01"
-        mock_baseline = None
-        mock_results_dir = Path("/tmp/results")
-        mock_tiers_dir = Path("/tmp/tiers")
-        mock_base_repo = Path("/tmp/repo")
-        mock_repo_url = "https://github.com/test/repo"
-        mock_commit = "abc123"
 
         rate_info = RateLimitInfo(
             source="agent",
@@ -182,22 +164,19 @@ class TestRunSubtestInProcessSafe:
             detected_at="2026-01-09T12:00:00Z",
         )
 
-        # Patch _run_subtest_in_process to raise RateLimitError
         with patch(
-            "scylla.e2e.parallel_executor._run_subtest_in_process",
+            "scylla.e2e.parallel_executor._run_subtest",
             side_effect=RateLimitError(rate_info),
         ):
-            result = _run_subtest_in_process_safe(
-                config=mock_config,
+            result = _run_subtest_safe(
+                config=Mock(),
                 tier_id=TierID.T5,
-                tier_config=mock_tier_config,
+                tier_config=Mock(),
                 subtest=mock_subtest,
-                baseline=mock_baseline,
-                results_dir=mock_results_dir,
-                tiers_dir=mock_tiers_dir,
-                base_repo=mock_base_repo,
-                repo_url=mock_repo_url,
-                commit=mock_commit,
+                baseline=None,
+                results_dir=Path("/tmp/results"),
+                tier_manager=Mock(),
+                workspace_manager=Mock(),
             )
 
         assert result.selection_reason.startswith("RateLimitError:")
@@ -206,33 +185,22 @@ class TestRunSubtestInProcessSafe:
 
     def test_catches_generic_exception(self) -> None:
         """Test that generic exceptions are caught and converted."""
-        mock_config = Mock()
-        mock_tier_config = Mock()
         mock_subtest = Mock()
         mock_subtest.id = "01"
-        mock_baseline = None
-        mock_results_dir = Path("/tmp/results")
-        mock_tiers_dir = Path("/tmp/tiers")
-        mock_base_repo = Path("/tmp/repo")
-        mock_repo_url = "https://github.com/test/repo"
-        mock_commit = "abc123"
 
-        # Patch _run_subtest_in_process to raise generic exception
         with patch(
-            "scylla.e2e.parallel_executor._run_subtest_in_process",
+            "scylla.e2e.parallel_executor._run_subtest",
             side_effect=ValueError("Something went wrong"),
         ):
-            result = _run_subtest_in_process_safe(
-                config=mock_config,
+            result = _run_subtest_safe(
+                config=Mock(),
                 tier_id=TierID.T5,
-                tier_config=mock_tier_config,
+                tier_config=Mock(),
                 subtest=mock_subtest,
-                baseline=mock_baseline,
-                results_dir=mock_results_dir,
-                tiers_dir=mock_tiers_dir,
-                base_repo=mock_base_repo,
-                repo_url=mock_repo_url,
-                commit=mock_commit,
+                baseline=None,
+                results_dir=Path("/tmp/results"),
+                tier_manager=Mock(),
+                workspace_manager=Mock(),
             )
 
         assert result.selection_reason.startswith("WorkerError: ValueError:")

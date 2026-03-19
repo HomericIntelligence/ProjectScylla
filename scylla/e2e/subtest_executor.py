@@ -86,10 +86,9 @@ __all__ = [
     # Workspace setup exports
     "_move_to_failed",
     "_restore_run_context",
-    "_retry_with_new_pool",  # noqa: F822
     "_run_judge",
-    "_run_subtest_in_process",  # noqa: F822
-    "_run_subtest_in_process_safe",  # noqa: F822
+    "_run_subtest",  # noqa: F822
+    "_run_subtest_safe",  # noqa: F822
     # Agent runner exports
     "_save_agent_result",
     # Judge runner exports
@@ -106,9 +105,8 @@ def __getattr__(name: str):  # type: ignore[no-untyped-def]
         "RateLimitCoordinator",
         "run_tier_subtests_parallel",
         "_detect_rate_limit_from_results",
-        "_retry_with_new_pool",
-        "_run_subtest_in_process_safe",
-        "_run_subtest_in_process",
+        "_run_subtest_safe",
+        "_run_subtest",
     ]:
         from scylla.e2e import parallel_executor
 

@@ -1,22 +1,20 @@
 """Parallel execution and rate limit coordination for E2E testing.
 
 This module handles:
-- Parallel execution of subtests with ProcessPoolExecutor
-- Rate limit detection and coordination across workers
+- Parallel execution of subtests with ThreadPoolExecutor
+- Rate limit detection and coordination across worker threads
 - Retry logic for rate-limited subtests
-- Process pool crash recovery
 """
 
 from __future__ import annotations
 
 import logging
+import threading
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from concurrent.futures.process import BrokenProcessPool
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from multiprocessing import Manager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from scylla.e2e.models import (
     ExperimentConfig,
@@ -32,8 +30,6 @@ from scylla.e2e.rate_limit import (
 )
 
 if TYPE_CHECKING:
-    from multiprocessing.managers import SyncManager
-
     from scylla.e2e.checkpoint import E2ECheckpoint
     from scylla.e2e.models import SubTestConfig, TierBaseline
     from scylla.e2e.scheduler import ParallelismScheduler
@@ -44,36 +40,30 @@ logger = logging.getLogger(__name__)
 
 
 class RateLimitCoordinator:
-    """Coordinates rate limit pause across parallel workers.
+    """Coordinates rate limit pause across parallel worker threads.
 
     When ANY worker detects a rate limit, this coordinator:
     1. Signals all workers to pause
     2. Waits for the rate limit to expire
     3. Signals all workers to resume
 
-    Uses multiprocessing.Manager for cross-process coordination.
+    Uses threading primitives for in-process coordination.
 
     Example:
-        >>> manager = Manager()
-        >>> coordinator = RateLimitCoordinator(manager)
-        >>> # In worker process:
+        >>> coordinator = RateLimitCoordinator()
+        >>> # In worker thread:
         >>> if coordinator.check_if_paused():
         >>>     # Worker blocks here until resume
         >>>     pass
 
     """
 
-    def __init__(self, manager: SyncManager) -> None:
-        """Initialize coordinator with shared state.
-
-        Args:
-            manager: Multiprocessing manager for shared objects
-
-        """
-        self._pause_event = manager.Event()
-        self._resume_event = manager.Event()
-        self._rate_limit_info = manager.dict()
-        self._shutdown_event = manager.Event()
+    def __init__(self) -> None:
+        """Initialize coordinator with shared state."""
+        self._pause_event = threading.Event()
+        self._resume_event = threading.Event()
+        self._rate_limit_info: dict[str, Any] = {}
+        self._shutdown_event = threading.Event()
 
     def signal_rate_limit(self, info: RateLimitInfo) -> None:
         """Signal that a rate limit was detected (called by worker).
@@ -244,174 +234,109 @@ def run_tier_subtests_parallel(  # noqa: C901  # parallel execution with many co
     total_subtests = len(tier_config.subtests)
     start_time = time.time()
 
-    # Create rate limit coordinator for parallel execution
-    manager = Manager()
-    try:
-        coordinator = RateLimitCoordinator(manager)
-    except Exception:
-        manager.shutdown()
-        raise
+    # Create rate limit coordinator for parallel execution (threads share memory)
+    coordinator = RateLimitCoordinator()
 
-    try:
-        with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
-            futures = {}
+    with ThreadPoolExecutor(max_workers=config.parallel_subtests) as pool:
+        futures = {}
 
-            for subtest in tier_config.subtests:
-                subtest_dir = results_dir / subtest.id
-                future = pool.submit(
-                    _run_subtest_in_process_safe,  # Use safe wrapper to prevent pool crashes
-                    config=config,
-                    tier_id=tier_id,
-                    tier_config=tier_config,
-                    subtest=subtest,
-                    baseline=baseline,
-                    results_dir=subtest_dir,
-                    tiers_dir=tier_manager.tiers_dir,
-                    base_repo=workspace_manager.base_repo,
-                    repo_url=workspace_manager.repo_url,
-                    commit=workspace_manager.commit,
-                    checkpoint=checkpoint,
-                    checkpoint_path=checkpoint_path,
-                    coordinator=coordinator,
-                    scheduler=scheduler,
-                    experiment_dir=experiment_dir,
+        for subtest in tier_config.subtests:
+            subtest_dir = results_dir / subtest.id
+            future = pool.submit(
+                _run_subtest_safe,
+                config=config,
+                tier_id=tier_id,
+                tier_config=tier_config,
+                subtest=subtest,
+                baseline=baseline,
+                results_dir=subtest_dir,
+                tier_manager=tier_manager,
+                workspace_manager=workspace_manager,
+                checkpoint=checkpoint,
+                checkpoint_path=checkpoint_path,
+                coordinator=coordinator,
+                scheduler=scheduler,
+                experiment_dir=experiment_dir,
+            )
+            futures[future] = subtest.id
+
+        # Monitor futures and handle rate limits
+        completed_count = 0
+        for future in as_completed(futures):
+            subtest_id = futures[future]
+            try:
+                results[subtest_id] = future.result()
+                completed_count += 1
+
+                # Log progress after each completion
+                elapsed = time.time() - start_time
+                active_workers = total_subtests - completed_count
+                logger.info(
+                    f"[PROGRESS] Tier {tier_id.value}: "
+                    f"{completed_count}/{total_subtests} complete, "
+                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
                 )
-                futures[future] = subtest.id
 
-            # Monitor futures and handle rate limits
-            completed_count = 0
-            for future in as_completed(futures):
-                subtest_id = futures[future]
-                try:
-                    results[subtest_id] = future.result()
-                    completed_count += 1
+                # Check for shutdown request
+                from scylla.e2e.runner import is_shutdown_requested
 
-                    # Log progress after each completion
-                    elapsed = time.time() - start_time
-                    active_workers = total_subtests - completed_count
-                    logger.info(
-                        f"[PROGRESS] Tier {tier_id.value}: "
-                        f"{completed_count}/{total_subtests} complete, "
-                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
+                if is_shutdown_requested():
+                    logger.warning("Shutdown requested, signaling workers to stop...")
+                    coordinator.signal_shutdown()
+                    break
+
+                # Check if rate limit was signaled during execution
+                rate_limit_info = coordinator.get_rate_limit_info()
+                if rate_limit_info and checkpoint and checkpoint_path:
+                    logger.info(f"Rate limit from {rate_limit_info.source}, pausing workers...")
+                    # Wait for rate limit to expire
+                    wait_for_rate_limit(
+                        rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
                     )
+                    # Resume all workers
+                    coordinator.resume_all_workers()
 
-                    # Check for shutdown request
-                    from scylla.e2e.runner import is_shutdown_requested
+            except RateLimitError as e:
+                # Rate limit from a worker - re-raise to maintain consistent behavior
+                # with single-subtest path
+                logger.warning(
+                    f"Rate limit detected from {e.info.source} in parallel worker "
+                    f"for {subtest_id}, re-raising for proper handling"
+                )
+                raise
 
-                    if is_shutdown_requested():
-                        logger.warning("Shutdown requested, signaling workers to stop...")
-                        coordinator.signal_shutdown()
-                        break
+            except Exception as e:
+                from scylla.e2e.runner import ShutdownInterruptedError
 
-                    # Check if rate limit was signaled during execution
-                    rate_limit_info = coordinator.get_rate_limit_info()
-                    if rate_limit_info and checkpoint and checkpoint_path:
-                        logger.info(f"Rate limit from {rate_limit_info.source}, pausing workers...")
-                        # Wait for rate limit to expire
-                        wait_for_rate_limit(
-                            rate_limit_info.retry_after_seconds, checkpoint, checkpoint_path
-                        )
-                        # Resume all workers
-                        coordinator.resume_all_workers()
-
-                except RateLimitError as e:
-                    # Rate limit from a worker - re-raise to maintain consistent behavior
-                    # with single-subtest path
-                    logger.warning(
-                        f"Rate limit detected from {e.info.source} in parallel worker "
-                        f"for {subtest_id}, re-raising for proper handling"
-                    )
+                if isinstance(e, ShutdownInterruptedError):
+                    # Runs left at last good state — propagate so the tier can
+                    # shut down cleanly without marking anything FAILED.
                     raise
 
-                except Exception as e:
-                    from scylla.e2e.runner import ShutdownInterruptedError
-
-                    if isinstance(e, ShutdownInterruptedError):
-                        # Runs left at last good state — propagate so the tier can
-                        # shut down cleanly without marking anything FAILED.
-                        raise
-
-                    # Other errors
-                    results[subtest_id] = SubTestResult(
-                        subtest_id=subtest_id,
-                        tier_id=tier_id,
-                        runs=[],
-                        pass_rate=0.0,
-                        mean_score=0.0,
-                        median_score=0.0,
-                        std_dev_score=0.0,
-                        mean_cost=0.0,
-                        total_cost=0.0,
-                        consistency=0.0,
-                        selection_reason=f"Error: {e}",
-                    )
-                    completed_count += 1
-
-                    # Log progress after error
-                    elapsed = time.time() - start_time
-                    active_workers = total_subtests - completed_count
-                    logger.info(
-                        f"[PROGRESS] Tier {tier_id.value}: "
-                        f"{completed_count}/{total_subtests} complete, "
-                        f"{active_workers} active, elapsed: {elapsed:.0f}s"
-                    )
-
-    except (KeyboardInterrupt, BrokenProcessPool) as e:
-        if isinstance(e, BrokenProcessPool):
-            # Scan results for rate limit indicators
-            rate_limit_info = _detect_rate_limit_from_results(results, results_dir)
-
-            if rate_limit_info and checkpoint and checkpoint_path:
-                logger.warning(
-                    f"BrokenProcessPool caused by rate limit from {rate_limit_info.source}"
+                # Other errors
+                results[subtest_id] = SubTestResult(
+                    subtest_id=subtest_id,
+                    tier_id=tier_id,
+                    runs=[],
+                    pass_rate=0.0,
+                    mean_score=0.0,
+                    median_score=0.0,
+                    std_dev_score=0.0,
+                    mean_cost=0.0,
+                    total_cost=0.0,
+                    consistency=0.0,
+                    selection_reason=f"Error: {e}",
                 )
-                logger.info(f"Waiting {rate_limit_info.retry_after_seconds or 60}s before retry...")
+                completed_count += 1
 
-                wait_for_rate_limit(
-                    rate_limit_info.retry_after_seconds,
-                    checkpoint,
-                    checkpoint_path,
+                # Log progress after error
+                elapsed = time.time() - start_time
+                active_workers = total_subtests - completed_count
+                logger.info(
+                    f"[PROGRESS] Tier {tier_id.value}: "
+                    f"{completed_count}/{total_subtests} complete, "
+                    f"{active_workers} active, elapsed: {elapsed:.0f}s"
                 )
-
-                # Identify remaining subtests (not yet completed OR marked as rate_limited)
-                remaining = [
-                    s
-                    for s in tier_config.subtests
-                    if s.id not in results
-                    or results[s.id].selection_reason.startswith("RateLimitError:")
-                ]
-
-                if remaining:
-                    logger.info(f"Retrying {len(remaining)} subtests after rate limit...")
-                    retry_results = _retry_with_new_pool(
-                        remaining_subtests=remaining,
-                        config=config,
-                        tier_id=tier_id,
-                        tier_config=tier_config,
-                        tier_manager=tier_manager,
-                        workspace_manager=workspace_manager,
-                        baseline=baseline,
-                        results_dir=results_dir,
-                        checkpoint=checkpoint,
-                        checkpoint_path=checkpoint_path,
-                        scheduler=scheduler,
-                        experiment_dir=experiment_dir,
-                    )
-                    results.update(retry_results)
-                    return results
-
-            # Not a rate limit, or no checkpoint - fall through to cleanup
-            logger.error(f"BrokenProcessPool with no recovery path: {e}")
-
-        # KeyboardInterrupt or unrecoverable - cleanup
-        logger.warning("Experiment interrupted, cleaning up...")
-        # Cancel pending futures
-        for future in futures:
-            if not future.done():
-                future.cancel()
-
-    finally:
-        manager.shutdown()
 
     return results
 
@@ -470,214 +395,15 @@ def _detect_rate_limit_from_results(
     return None
 
 
-def _run_subtests_in_pool(
-    subtests: list[SubTestConfig],
-    config: ExperimentConfig,
-    tier_id: TierID,
-    tier_config: TierConfig,
-    tier_manager: TierManager,
-    workspace_manager: WorkspaceManager,
-    baseline: TierBaseline | None,
-    results_dir: Path,
-    checkpoint: E2ECheckpoint | None,
-    checkpoint_path: Path | None,
-    scheduler: ParallelismScheduler | None,
-    experiment_dir: Path | None,
-) -> dict[str, SubTestResult]:
-    """Submit subtests to a fresh ProcessPoolExecutor and collect results.
-
-    Args:
-        subtests: Subtests to run.
-        config: Experiment configuration.
-        tier_id: Tier identifier.
-        tier_config: Tier configuration.
-        tier_manager: Tier manager instance.
-        workspace_manager: Workspace manager instance.
-        baseline: Previous tier's baseline.
-        results_dir: Base directory for tier results.
-        checkpoint: Optional checkpoint for resume.
-        checkpoint_path: Path to checkpoint file.
-        scheduler: Optional ParallelismScheduler.
-        experiment_dir: Path to experiment directory.
-
-    Returns:
-        Dict mapping subtest_id to SubTestResult.
-
-    """
-    results: dict[str, SubTestResult] = {}
-    manager = Manager()
-    try:
-        coordinator = RateLimitCoordinator(manager)
-    except Exception:
-        manager.shutdown()
-        raise
-
-    with ProcessPoolExecutor(max_workers=config.parallel_subtests) as pool:
-        futures = {}
-        for subtest in subtests:
-            subtest_dir = results_dir / subtest.id
-            future = pool.submit(
-                _run_subtest_in_process_safe,
-                config=config,
-                tier_id=tier_id,
-                tier_config=tier_config,
-                subtest=subtest,
-                baseline=baseline,
-                results_dir=subtest_dir,
-                tiers_dir=tier_manager.tiers_dir,
-                base_repo=workspace_manager.base_repo,
-                repo_url=workspace_manager.repo_url,
-                commit=workspace_manager.commit,
-                checkpoint=checkpoint,
-                checkpoint_path=checkpoint_path,
-                coordinator=coordinator,
-                scheduler=scheduler,
-                experiment_dir=experiment_dir,
-            )
-            futures[future] = subtest.id
-
-        for future in as_completed(futures):
-            subtest_id = futures[future]
-            try:
-                results[subtest_id] = future.result()
-            except Exception as e:
-                logger.error(f"Unexpected exception from safe wrapper: {e}")
-                results[subtest_id] = SubTestResult(
-                    subtest_id=subtest_id,
-                    tier_id=tier_id,
-                    runs=[],
-                    pass_rate=0.0,
-                    selection_reason=f"UnexpectedError: {e}",
-                )
-
-    return results
-
-
-def _retry_with_new_pool(
-    remaining_subtests: list[SubTestConfig],
-    config: ExperimentConfig,
-    tier_id: TierID,
-    tier_config: TierConfig,
-    tier_manager: TierManager,
-    workspace_manager: WorkspaceManager,
-    baseline: TierBaseline | None,
-    results_dir: Path,
-    checkpoint: E2ECheckpoint | None,
-    checkpoint_path: Path | None,
-    scheduler: ParallelismScheduler | None = None,
-    experiment_dir: Path | None = None,
-    max_retries: int = 3,
-) -> dict[str, SubTestResult]:
-    """Create new ProcessPoolExecutor and retry remaining subtests.
-
-    Has its own retry loop for repeated rate limits.
-
-    Args:
-        remaining_subtests: Subtests that need to be retried
-        config: Experiment configuration
-        tier_id: Tier identifier
-        tier_config: Tier configuration
-        tier_manager: Tier manager instance
-        workspace_manager: Workspace manager instance
-        baseline: Previous tier's baseline
-        results_dir: Base directory for tier results
-        checkpoint: Optional checkpoint for resume
-        checkpoint_path: Path to checkpoint file
-        scheduler: Optional ParallelismScheduler for per-memory-class concurrency limits
-        experiment_dir: Path to experiment directory (needed for T5 inheritance)
-        max_retries: Maximum retry attempts for rate limits
-
-    Returns:
-        Dictionary of SubTestResults for retried subtests
-
-    """
-    results: dict[str, SubTestResult] = {}
-    retries = 0
-
-    while remaining_subtests and retries < max_retries:
-        logger.info(
-            f"Retry attempt {retries + 1}/{max_retries} for {len(remaining_subtests)} subtests"
-        )
-
-        try:
-            results.update(
-                _run_subtests_in_pool(
-                    remaining_subtests,
-                    config,
-                    tier_id,
-                    tier_config,
-                    tier_manager,
-                    workspace_manager,
-                    baseline,
-                    results_dir,
-                    checkpoint,
-                    checkpoint_path,
-                    scheduler,
-                    experiment_dir,
-                )
-            )
-
-            # Check for rate-limited results that need retry
-            remaining_subtests = [
-                s
-                for s in remaining_subtests
-                if s.id in results and results[s.id].selection_reason.startswith("RateLimitError:")
-            ]
-
-            if remaining_subtests:
-                rate_info = _detect_rate_limit_from_results(results, results_dir)
-                if rate_info and checkpoint and checkpoint_path:
-                    logger.info(
-                        f"Rate limit still active after retry {retries + 1}, waiting again..."
-                    )
-                    wait_for_rate_limit(
-                        rate_info.retry_after_seconds,
-                        checkpoint,
-                        checkpoint_path,
-                    )
-                else:
-                    logger.warning(
-                        f"Subtests still failing after retry {retries + 1} "
-                        f"but no rate limit detected"
-                    )
-                    break
-                retries += 1
-            else:
-                break
-
-        except BrokenProcessPool as e:
-            logger.warning(f"BrokenProcessPool during retry attempt {retries + 1}: {e}")
-            rate_info = _detect_rate_limit_from_results(results, results_dir)
-            if rate_info and checkpoint and checkpoint_path:
-                wait_for_rate_limit(
-                    rate_info.retry_after_seconds,
-                    checkpoint,
-                    checkpoint_path,
-                )
-                retries += 1
-            else:
-                logger.error("BrokenProcessPool without rate limit, cannot retry")
-                break
-
-    if retries >= max_retries:
-        logger.warning(
-            f"Max retries ({max_retries}) reached, {len(remaining_subtests)} subtests still failing"
-        )
-
-    return results
-
-
-def _run_subtest_in_process_safe(
+def _run_subtest_safe(
     config: ExperimentConfig,
     tier_id: TierID,
     tier_config: TierConfig,
     subtest: SubTestConfig,
     baseline: TierBaseline | None,
     results_dir: Path,
-    tiers_dir: Path,
-    base_repo: Path,
-    repo_url: str,
-    commit: str | None,
+    tier_manager: TierManager,
+    workspace_manager: WorkspaceManager,
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
@@ -686,29 +412,27 @@ def _run_subtest_in_process_safe(
 ) -> SubTestResult:
     """Safe wrapper that catches ALL exceptions and returns structured error.
 
-    This prevents worker crashes from poisoning the entire ProcessPoolExecutor.
+    This prevents worker exceptions from crashing the ThreadPoolExecutor.
     Any exception (including RateLimitError) is converted to a SubTestResult
     with error details in selection_reason.
 
     Args:
-        (same as _run_subtest_in_process)
+        (same as _run_subtest)
 
     Returns:
         SubTestResult (never raises exceptions)
 
     """
     try:
-        return _run_subtest_in_process(
+        return _run_subtest(
             config=config,
             tier_id=tier_id,
             tier_config=tier_config,
             subtest=subtest,
             baseline=baseline,
             results_dir=results_dir,
-            tiers_dir=tiers_dir,
-            base_repo=base_repo,
-            repo_url=repo_url,
-            commit=commit,
+            tier_manager=tier_manager,
+            workspace_manager=workspace_manager,
             checkpoint=checkpoint,
             checkpoint_path=checkpoint_path,
             coordinator=coordinator,
@@ -764,28 +488,29 @@ def _run_subtest_in_process_safe(
         )
 
 
-def _run_subtest_in_process(
+def _run_subtest(
     config: ExperimentConfig,
     tier_id: TierID,
     tier_config: TierConfig,
     subtest: SubTestConfig,
     baseline: TierBaseline | None,
     results_dir: Path,
-    tiers_dir: Path,
-    base_repo: Path,
-    repo_url: str,
-    commit: str | None,
+    tier_manager: TierManager,
+    workspace_manager: WorkspaceManager,
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     coordinator: RateLimitCoordinator | None = None,
     scheduler: ParallelismScheduler | None = None,
     experiment_dir: Path | None = None,
 ) -> SubTestResult:
-    """Run a sub-test in a separate process.
+    """Run a sub-test in a worker thread.
 
     This is a helper for parallel execution with checkpoint and rate limit support.
     Per-stage semaphore acquire/release is handled inside build_actions_dict()
     via the scheduler; there is no subtest-level global lock here.
+
+    Threads share the parent's TierManager and WorkspaceManager directly
+    (threads share the parent's objects directly).
 
     Args:
         config: Experiment configuration
@@ -794,10 +519,8 @@ def _run_subtest_in_process(
         subtest: Subtest configuration
         baseline: Baseline from previous tier
         results_dir: Results directory for this subtest
-        tiers_dir: Path to tier configurations
-        base_repo: Base repository path
-        repo_url: Repository URL
-        commit: Commit hash
+        tier_manager: Tier configuration manager (shared from parent thread)
+        workspace_manager: Workspace manager (shared from parent thread)
         checkpoint: Optional checkpoint for resume
         checkpoint_path: Path to checkpoint file
         coordinator: Optional rate limit coordinator
@@ -810,16 +533,6 @@ def _run_subtest_in_process(
     """
     # Import here to avoid circular dependency
     from scylla.e2e.subtest_executor import SubTestExecutor
-    from scylla.e2e.tier_manager import TierManager
-    from scylla.e2e.workspace_manager import WorkspaceManager
-
-    tier_manager = TierManager(tiers_dir)
-    # Recreate workspace manager in child process (base repo already cloned by parent)
-    workspace_manager = WorkspaceManager.from_existing(
-        base_repo=base_repo,
-        repo_url=repo_url,
-        commit=commit,
-    )
 
     executor = SubTestExecutor(config, tier_manager, workspace_manager)
     return executor.run_subtest(
