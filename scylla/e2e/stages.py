@@ -497,6 +497,50 @@ def _kill_process_group(proc: subprocess.Popen[str]) -> None:
         proc.wait()
 
 
+def _communicate_with_shutdown_check(
+    proc: subprocess.Popen[str],
+    timeout: float,
+    ctx: RunContext,
+) -> tuple[str, str]:
+    """Poll subprocess with periodic shutdown checks.
+
+    Calls proc.communicate(timeout=poll_interval) in a loop so that
+    Ctrl+C can interrupt a long-running agent (timeout can be up to 3600s).
+    communicate(timeout=N) does NOT consume partial output on TimeoutExpired,
+    so calling it in a loop is safe — the successful call returns all output.
+
+    Args:
+        proc: Running subprocess.
+        timeout: Overall timeout in seconds.
+        ctx: Run context for error messages.
+
+    Returns:
+        Tuple of (stdout, stderr) from the completed process.
+
+    Raises:
+        ShutdownInterruptedError: If shutdown is requested during execution.
+        subprocess.TimeoutExpired: If the overall timeout expires.
+
+    """
+    poll_interval = 2.0
+    remaining = float(timeout)
+    while True:
+        try:
+            return proc.communicate(timeout=poll_interval)
+        except subprocess.TimeoutExpired:
+            remaining -= poll_interval
+            if remaining <= 0:
+                raise
+            from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
+
+            if is_shutdown_requested():
+                _kill_process_group(proc)
+                raise ShutdownInterruptedError(
+                    f"Shutdown requested during agent execution for run "
+                    f"{ctx.run_number} ({ctx.tier_id.value}/{ctx.subtest.id})"
+                ) from None
+
+
 def stage_execute_agent(ctx: RunContext) -> None:
     """REPLAY_GENERATED -> AGENT_COMPLETE: Execute agent and save outputs.
 
@@ -549,6 +593,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
         # process group. This lets us kill it (and its children) cleanly on shutdown.
         proc = subprocess.Popen(
             ["bash", str(replay_script.resolve())],
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -556,7 +601,11 @@ def stage_execute_agent(ctx: RunContext) -> None:
             start_new_session=True,
         )
         try:
-            stdout, stderr = proc.communicate(timeout=adapter_config.timeout)
+            # Poll subprocess with periodic shutdown checks so Ctrl+C can interrupt
+            # a long-running agent (timeout can be up to 3600s).
+            # communicate(timeout=N) does NOT consume partial output on TimeoutExpired,
+            # so calling it in a loop is safe — the successful call returns all output.
+            stdout, stderr = _communicate_with_shutdown_check(proc, adapter_config.timeout, ctx)
         except subprocess.TimeoutExpired:
             _kill_process_group(proc)
             raise

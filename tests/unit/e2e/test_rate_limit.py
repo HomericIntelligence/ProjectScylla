@@ -735,3 +735,73 @@ class TestCheckApiRateLimitStatus:
         result = check_api_rate_limit_status()
 
         assert result is None
+
+
+class TestWaitForRateLimitShutdown:
+    """Tests that wait_for_rate_limit raises ShutdownInterruptedError on shutdown."""
+
+    def test_raises_shutdown_interrupted_during_sleep_loop(self) -> None:
+        """Raises ShutdownInterruptedError when is_shutdown_requested() is True."""
+        from scylla.e2e.runner import ShutdownInterruptedError
+
+        checkpoint = E2ECheckpoint(
+            version="1.0",
+            experiment_id="test-exp",
+            experiment_dir="/tmp/test",
+            config_hash="abc123",
+            status="running",
+            pause_count=0,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            checkpoint_path = Path(tmpdir) / "checkpoint.json"
+
+            # Mock time.sleep to be a no-op (don't actually sleep)
+            # Mock is_shutdown_requested to return True after the first sleep
+            with (
+                patch("time.sleep"),
+                patch(
+                    "scylla.e2e.runner.is_shutdown_requested",
+                    return_value=True,
+                ),
+                pytest.raises(ShutdownInterruptedError),
+            ):
+                wait_for_rate_limit(
+                    retry_after=120.0,
+                    checkpoint=checkpoint,
+                    checkpoint_path=checkpoint_path,
+                )
+
+    def test_checkpoint_restored_to_running_on_shutdown(self) -> None:
+        """wait_for_rate_limit restores checkpoint status to 'running' before raising."""
+        checkpoint = E2ECheckpoint(
+            version="1.0",
+            experiment_id="test-exp",
+            experiment_dir="/tmp/test",
+            config_hash="abc123",
+            status="running",
+            pause_count=0,
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            checkpoint_path = Path(tmpdir) / "checkpoint.json"
+
+            with (
+                patch("time.sleep"),
+                patch(
+                    "scylla.e2e.runner.is_shutdown_requested",
+                    return_value=True,
+                ),
+            ):
+                import contextlib
+
+                with contextlib.suppress(Exception):
+                    wait_for_rate_limit(
+                        retry_after=120.0,
+                        checkpoint=checkpoint,
+                        checkpoint_path=checkpoint_path,
+                    )
+
+            # Checkpoint should be restored to running state
+            assert checkpoint.status == "running"
+            assert checkpoint.rate_limit_until is None

@@ -304,6 +304,17 @@ def wait_for_rate_limit(
         time.sleep(sleep_chunk)
         remaining -= sleep_chunk
 
+        # Check for shutdown between sleep iterations
+        from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
+
+        if is_shutdown_requested():
+            # Restore checkpoint to running state before raising
+            checkpoint.status = "running"
+            checkpoint.rate_limit_until = None
+            checkpoint.rate_limit_source = None
+            save_checkpoint(checkpoint, checkpoint_path)
+            raise ShutdownInterruptedError("Shutdown requested during rate limit wait")
+
         if remaining > 0:
             # Calculate when next update will occur
             next_fib = fib_prev + fib_curr

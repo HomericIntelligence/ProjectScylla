@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -145,20 +145,34 @@ class ParallelTierRunner:
                 for tier_id in group
             }
 
-            # Collect results as they complete
-            for future in as_completed(futures):
-                tier_id = futures[future]
-                try:
-                    tier_result = future.result()
-                    tier_results[tier_id] = tier_result
+            # Poll with timeout so shutdown can interrupt blocking waits
+            pending = set(futures.keys())
+            while pending:
+                from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
 
-                    # Save intermediate results
-                    self.save_tier_result_fn(tier_id, tier_result)
+                if is_shutdown_requested():
+                    for f in pending:
+                        f.cancel()
+                    raise ShutdownInterruptedError(
+                        "Shutdown requested during parallel tier execution"
+                    )
 
-                    logger.info(f"Completed tier {tier_id.value} in parallel group")
-                except Exception as e:
-                    logger.error(f"Tier {tier_id.value} failed: {e}")
-                    errors[tier_id] = e
+                done, pending = wait(pending, timeout=2.0, return_when=FIRST_COMPLETED)
+                for future in done:
+                    tier_id = futures[future]
+                    try:
+                        tier_result = future.result(timeout=0)
+                        tier_results[tier_id] = tier_result
+
+                        # Save intermediate results
+                        self.save_tier_result_fn(tier_id, tier_result)
+
+                        logger.info(f"Completed tier {tier_id.value} in parallel group")
+                    except Exception as e:
+                        if isinstance(e, ShutdownInterruptedError):
+                            raise
+                        logger.error(f"Tier {tier_id.value} failed: {e}")
+                        errors[tier_id] = e
 
         # Only raise if ALL tiers failed — a single failure should not abort siblings
         if errors and not tier_results:

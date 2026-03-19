@@ -521,6 +521,15 @@ class SubTestExecutor:
                     checkpoint_path=checkpoint_path,
                 )
 
+                # Set thread-local log context for structured logging
+                from scylla.e2e.log_context import set_log_context
+
+                set_log_context(
+                    tier_id=tier_id.value,
+                    subtest_id=subtest.id,
+                    run_num=run_num,
+                )
+
                 actions = build_actions_dict(ctx, scheduler=scheduler)
 
                 # Restore RunContext fields from disk when resuming from an
