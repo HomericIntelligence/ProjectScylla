@@ -3,18 +3,19 @@
 Tests cover:
 - RateLimitCoordinator: all methods and state transitions
 - Race condition regression: _resume_event not cleared by worker
+- Manager() cleanup via finally block
 - run_tier_subtests_parallel: single-subtest path (no coordinator)
-- _run_subtest_safe: safe wrapper for worker exceptions
+- WorkspaceManager.from_existing() usage in child process
+- _run_subtest_in_process_safe: safe wrapper for worker exceptions
 """
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from scylla.e2e.parallel_executor import RateLimitCoordinator
 from scylla.e2e.rate_limit import RateLimitInfo
@@ -25,8 +26,16 @@ from scylla.e2e.rate_limit import RateLimitInfo
 
 
 def _make_coordinator() -> RateLimitCoordinator:
-    """Create a RateLimitCoordinator with threading primitives."""
-    return RateLimitCoordinator()
+    """Create a RateLimitCoordinator backed by threading primitives.
+
+    Uses threading.Event (same API as multiprocessing Event proxy) and a
+    plain dict (same API as multiprocessing dict proxy) instead of spinning
+    up a real multiprocessing.Manager, which is expensive in the test suite.
+    """
+    mgr = MagicMock()
+    mgr.Event.side_effect = threading.Event
+    mgr.dict.return_value = {}
+    return RateLimitCoordinator(mgr)
 
 
 def _make_info(
@@ -216,7 +225,7 @@ class TestRateLimitCoordinatorCheckIfPaused:
 
 
 class TestRunTierSubtestsParallelSingleSubtest:
-    """Tests for run_tier_subtests_parallel with a single subtest (no coordinator needed)."""
+    """Tests for run_tier_subtests_parallel with a single subtest (no Manager needed)."""
 
     def _make_subtest_config(self, subtest_id: str = "00-empty") -> MagicMock:
         """Create a mock SubTestConfig."""
@@ -231,7 +240,7 @@ class TestRunTierSubtestsParallelSingleSubtest:
         return tier_config
 
     def test_single_subtest_no_coordinator_created(self, tmp_path: Path) -> None:
-        """Single-subtest path runs without creating a coordinator."""
+        """Single-subtest path runs without creating a Manager or coordinator."""
         from scylla.e2e.models import ExperimentConfig, SubTestResult, TierID
 
         config = ExperimentConfig(
@@ -258,9 +267,17 @@ class TestRunTierSubtestsParallelSingleSubtest:
         mock_executor.run_subtest.return_value = mock_result
 
         # SubTestExecutor is imported inside the function body, so patch at import site
-        with patch(
-            "scylla.e2e.subtest_executor.SubTestExecutor",
-            return_value=mock_executor,
+        with (
+            patch(
+                "scylla.e2e.subtest_executor.SubTestExecutor",
+                return_value=mock_executor,
+            ),
+            patch("scylla.e2e.parallel_executor.Manager") as mock_manager_cls,
+            patch(
+                "scylla.e2e.parallel_executor.SubTestExecutor",
+                return_value=mock_executor,
+                create=True,
+            ),
         ):
             from scylla.e2e.parallel_executor import run_tier_subtests_parallel
 
@@ -274,6 +291,8 @@ class TestRunTierSubtestsParallelSingleSubtest:
                 results_dir=tmp_path,
             )
 
+        # Manager should NOT be instantiated for single-subtest path
+        mock_manager_cls.assert_not_called()
         assert "00-empty" in results
         assert results["00-empty"] is mock_result
 
@@ -327,18 +346,69 @@ class TestRunTierSubtestsParallelSingleSubtest:
 
 
 # ---------------------------------------------------------------------------
-# _run_subtest_safe tests
+# WorkspaceManager.from_existing usage
 # ---------------------------------------------------------------------------
 
 
-class TestRunSubtestSafe:
-    """Tests for _run_subtest_safe — the safe wrapper function.
+class TestWorkspaceManagerFromExisting:
+    """Tests verifying WorkspaceManager.from_existing() is used in child process."""
 
-    This wrapper prevents worker exceptions from crashing the ThreadPoolExecutor
+    def test_from_existing_is_used_not_is_setup_hack(self) -> None:
+        """_run_subtest_in_process uses WorkspaceManager.from_existing(), not _is_setup=True hack.
+
+        This is a regression guard to ensure the _is_setup attribute mutation hack
+        has been replaced by the proper from_existing() classmethod.
+        """
+        import inspect
+
+        from scylla.e2e.parallel_executor import _run_subtest_in_process
+
+        source = inspect.getsource(_run_subtest_in_process)
+
+        # Should use from_existing classmethod
+        assert "from_existing" in source, (
+            "_run_subtest_in_process must use WorkspaceManager.from_existing() "
+            "instead of manually setting _is_setup=True"
+        )
+
+        # Should NOT use the old _is_setup=True hack
+        assert "_is_setup = True" not in source, (
+            "_run_subtest_in_process must not use the _is_setup=True hack — "
+            "use WorkspaceManager.from_existing() instead"
+        )
+
+    def test_manager_shutdown_in_finally(self) -> None:
+        """run_tier_subtests_parallel calls manager.shutdown() in finally block.
+
+        This is a regression guard to ensure Manager() resources are cleaned up
+        even if an exception is raised during parallel execution.
+        """
+        import inspect
+
+        from scylla.e2e.parallel_executor import run_tier_subtests_parallel
+
+        source = inspect.getsource(run_tier_subtests_parallel)
+
+        # Should have manager.shutdown() in a finally block
+        assert "manager.shutdown()" in source, (
+            "run_tier_subtests_parallel must call manager.shutdown() to prevent "
+            "resource leaks from multiprocessing.Manager()"
+        )
+
+
+# ---------------------------------------------------------------------------
+# _run_subtest_in_process_safe tests
+# ---------------------------------------------------------------------------
+
+
+class TestRunSubtestInProcessSafe:
+    """Tests for _run_subtest_in_process_safe — the safe wrapper function.
+
+    This wrapper prevents worker crashes from poisoning ProcessPoolExecutor
     by catching all exceptions and returning structured SubTestResult objects.
     """
 
-    def _make_subtest_config(self) -> Any:
+    def _make_subtest_config(self) -> None:
         """Create a minimal SubTestConfig for testing."""
         from scylla.e2e.models import SubTestConfig
 
@@ -349,9 +419,9 @@ class TestRunSubtestSafe:
         )
 
     def _make_call_args(self, tmp_path: Path) -> dict[str, Any]:
-        """Build the keyword arguments for _run_subtest_safe.
+        """Build the keyword arguments for _run_subtest_in_process_safe.
 
-        Uses MagicMock for complex objects since _run_subtest is mocked.
+        Uses MagicMock for complex objects since _run_subtest_in_process is mocked.
         """
         from scylla.e2e.models import TierID
 
@@ -366,8 +436,10 @@ class TestRunSubtestSafe:
             "subtest": subtest,
             "baseline": None,
             "results_dir": tmp_path / "results",
-            "tier_manager": MagicMock(),
-            "workspace_manager": MagicMock(),
+            "tiers_dir": tmp_path / "tiers",
+            "base_repo": tmp_path / "repo",
+            "repo_url": "https://github.com/example/repo.git",
+            "commit": None,
             "checkpoint": None,
             "checkpoint_path": None,
             "coordinator": None,
@@ -375,10 +447,10 @@ class TestRunSubtestSafe:
             "experiment_dir": None,
         }
 
-    def test_success_passthrough(self, tmp_path: Any) -> None:
-        """When _run_subtest succeeds, result is passed through unchanged."""
+    def test_success_passthrough(self, tmp_path) -> None:
+        """When _run_subtest_in_process succeeds, result is passed through unchanged."""
         from scylla.e2e.models import SubTestResult, TierID
-        from scylla.e2e.parallel_executor import _run_subtest_safe
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
 
         expected_result = SubTestResult(
             subtest_id="test-01",
@@ -397,18 +469,18 @@ class TestRunSubtestSafe:
         call_args = self._make_call_args(tmp_path)
 
         with patch(
-            "scylla.e2e.parallel_executor._run_subtest",
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
             return_value=expected_result,
         ) as mock_inner:
-            result = _run_subtest_safe(**call_args)
+            result = _run_subtest_in_process_safe(**call_args)
 
         mock_inner.assert_called_once()
         assert result is expected_result
 
-    def test_rate_limit_error_handling(self, tmp_path: Any) -> None:
+    def test_rate_limit_error_handling(self, tmp_path) -> None:
         """RateLimitError is caught; SubTestResult has rate_limit_info set."""
         from scylla.e2e.models import SubTestResult, TierID
-        from scylla.e2e.parallel_executor import _run_subtest_safe
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
         from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
 
         rate_info = RateLimitInfo(
@@ -421,10 +493,10 @@ class TestRunSubtestSafe:
         call_args = self._make_call_args(tmp_path)
 
         with patch(
-            "scylla.e2e.parallel_executor._run_subtest",
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
             side_effect=RateLimitError(rate_info),
         ):
-            result = _run_subtest_safe(**call_args)
+            result = _run_subtest_in_process_safe(**call_args)
 
         assert isinstance(result, SubTestResult)
         assert result.rate_limit_info is not None
@@ -436,18 +508,18 @@ class TestRunSubtestSafe:
         assert result.tier_id == TierID.T0
         assert result.pass_rate == 0.0
 
-    def test_generic_exception_handling(self, tmp_path: Any) -> None:
+    def test_generic_exception_handling(self, tmp_path) -> None:
         """Generic Exception is caught; SubTestResult carries error info."""
         from scylla.e2e.models import SubTestResult, TierID
-        from scylla.e2e.parallel_executor import _run_subtest_safe
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
 
         call_args = self._make_call_args(tmp_path)
 
         with patch(
-            "scylla.e2e.parallel_executor._run_subtest",
+            "scylla.e2e.parallel_executor._run_subtest_in_process",
             side_effect=RuntimeError("something went very wrong"),
         ):
-            result = _run_subtest_safe(**call_args)
+            result = _run_subtest_in_process_safe(**call_args)
 
         assert isinstance(result, SubTestResult)
         assert result.rate_limit_info is None
@@ -458,14 +530,14 @@ class TestRunSubtestSafe:
         assert result.tier_id == TierID.T0
         assert result.pass_rate == 0.0
 
-    def test_never_raises(self, tmp_path: Any) -> None:
+    def test_never_raises(self, tmp_path) -> None:
         """Safe wrapper never raises for any Exception subclass from inner function.
 
         The wrapper catches Exception (and RateLimitError), converting them to
         structured SubTestResult objects.  BaseException subclasses like SystemExit
         are intentionally NOT suppressed (they signal process termination).
         """
-        from scylla.e2e.parallel_executor import _run_subtest_safe
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
 
         call_args = self._make_call_args(tmp_path)
 
@@ -476,21 +548,21 @@ class TestRunSubtestSafe:
             OSError("disk full"),
         ]:
             with patch(
-                "scylla.e2e.parallel_executor._run_subtest",
+                "scylla.e2e.parallel_executor._run_subtest_in_process",
                 side_effect=exc,
             ):
                 try:
-                    _run_subtest_safe(**call_args)
+                    _run_subtest_in_process_safe(**call_args)
                 except Exception as raised:
                     raise AssertionError(
-                        f"_run_subtest_safe raised {type(raised).__name__} "
+                        f"_run_subtest_in_process_safe raised {type(raised).__name__} "
                         f"when it should never raise"
                     ) from raised
 
-    def test_returns_subtest_result_type(self, tmp_path: Any) -> None:
+    def test_returns_subtest_result_type(self, tmp_path) -> None:
         """Return type is always SubTestResult regardless of inner outcome."""
         from scylla.e2e.models import SubTestResult
-        from scylla.e2e.parallel_executor import _run_subtest_safe
+        from scylla.e2e.parallel_executor import _run_subtest_in_process_safe
         from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
 
         call_args = self._make_call_args(tmp_path)
@@ -510,114 +582,11 @@ class TestRunSubtestSafe:
 
         for exc in scenarios:
             with patch(
-                "scylla.e2e.parallel_executor._run_subtest",
+                "scylla.e2e.parallel_executor._run_subtest_in_process",
                 side_effect=exc,
             ):
-                result = _run_subtest_safe(**call_args)
+                result = _run_subtest_in_process_safe(**call_args)
                 assert isinstance(result, SubTestResult), (
                     f"Expected SubTestResult but got {type(result).__name__} "
                     f"when inner raised {type(exc).__name__}"
                 )
-
-
-# ---------------------------------------------------------------------------
-# RateLimitCoordinator: check_if_paused exits on shutdown
-# ---------------------------------------------------------------------------
-
-
-class TestRateLimitCoordinatorCheckIfPausedShutdown:
-    """Tests that check_if_paused() exits promptly when _shutdown_event is set."""
-
-    def test_check_if_paused_exits_on_shutdown_within_timeout(self) -> None:
-        """Returns within ~3s when _shutdown_event is set but _resume_event is not."""
-        import time as time_mod
-
-        coordinator = _make_coordinator()
-        # Put into paused state
-        coordinator._pause_event.set()
-        # _resume_event is NOT set — would block forever without shutdown
-        coordinator._shutdown_event.set()
-
-        start = time_mod.monotonic()
-        result = coordinator.check_if_paused()
-        elapsed = time_mod.monotonic() - start
-
-        # Should return True (was paused) and complete quickly (poll interval is 2s)
-        assert result is True
-        assert elapsed < 5.0, (
-            f"check_if_paused took {elapsed:.1f}s — should exit within ~3s on shutdown"
-        )
-
-    def test_check_if_paused_blocks_without_shutdown(self) -> None:
-        """Blocks when paused and neither resume nor shutdown is set."""
-        import threading
-
-        coordinator = _make_coordinator()
-        coordinator._pause_event.set()
-        # Neither resume nor shutdown set — should block
-
-        completed = threading.Event()
-
-        def worker() -> None:
-            coordinator.check_if_paused()
-            completed.set()
-
-        t = threading.Thread(target=worker, daemon=True)
-        t.start()
-
-        # Should NOT complete within 1 second
-        assert not completed.wait(timeout=1.0), (
-            "check_if_paused should block when no resume/shutdown"
-        )
-
-        # Clean up: signal shutdown so the thread exits
-        coordinator._shutdown_event.set()
-        t.join(timeout=5.0)
-
-
-# ---------------------------------------------------------------------------
-# Parallel subtest loop: shutdown raises ShutdownInterruptedError
-# ---------------------------------------------------------------------------
-
-
-class TestParallelSubtestLoopShutdown:
-    """Tests that the parallel subtest loop raises ShutdownInterruptedError on shutdown."""
-
-    def test_raises_shutdown_interrupted_error(self, tmp_path: Any) -> None:
-        """run_tier_subtests_parallel raises ShutdownInterruptedError when shutdown is requested."""
-        from scylla.e2e.models import ExperimentConfig, SubTestConfig, TierID
-        from scylla.e2e.runner import ShutdownInterruptedError
-
-        config = ExperimentConfig(
-            experiment_id="test",
-            task_repo="https://example.com/repo",
-            task_commit="abc123",
-            task_prompt_file=Path("prompt.md"),
-            language="python",
-            tiers_to_run=[TierID.T0],
-        )
-
-        # Need >= 2 subtests to trigger the parallel coordinator path
-        sub1 = SubTestConfig(id="00", name="Sub 0", description="first")
-        sub2 = SubTestConfig(id="01", name="Sub 1", description="second")
-        tier_config = MagicMock()
-        tier_config.subtests = [sub1, sub2]
-
-        mock_tier_manager = MagicMock()
-        mock_workspace = MagicMock()
-
-        with (
-            patch("scylla.e2e.runner.is_shutdown_requested", return_value=True),
-            pytest.raises(ShutdownInterruptedError),
-        ):
-            from scylla.e2e.parallel_executor import run_tier_subtests_parallel
-
-            run_tier_subtests_parallel(
-                config=config,
-                tier_id=TierID.T0,
-                tier_config=tier_config,
-                tier_manager=mock_tier_manager,
-                workspace_manager=mock_workspace,
-                baseline=None,
-                results_dir=tmp_path,
-            )

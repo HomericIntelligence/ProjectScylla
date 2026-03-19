@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -304,8 +303,8 @@ class TestExperimentStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to COMPLETE."""
         actions_called = []
 
-        def make_action(state: ExperimentState) -> Any:
-            def action() -> Any:
+        def make_action(state: ExperimentState) -> None:
+            def action() -> None:
                 actions_called.append(state)
 
             return action
@@ -320,10 +319,10 @@ class TestExperimentStateMachineAdvanceToCompletion:
 
     def test_marks_failed_on_exception(
         self, esm: ExperimentStateMachine, checkpoint: E2ECheckpoint, checkpoint_path: Path
-    ) -> Any:
+    ) -> None:
         """If action raises, experiment is marked FAILED and exception re-raised."""
 
-        def failing_action() -> Any:
+        def failing_action() -> None:
             raise RuntimeError("simulated experiment failure")
 
         with pytest.raises(RuntimeError, match="simulated experiment failure"):
@@ -339,8 +338,8 @@ class TestExperimentStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: ExperimentState) -> Any:
-            def action() -> Any:
+        def make_action(state: ExperimentState) -> None:
+            def action() -> None:
                 actions_called.append(state)
 
             return action

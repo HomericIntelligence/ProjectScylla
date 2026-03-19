@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -345,8 +344,8 @@ class TestSubtestStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to AGGREGATED."""
         actions_called = []
 
-        def make_action(state: SubtestState) -> Any:
-            def action() -> Any:
+        def make_action(state: SubtestState) -> None:
+            def action() -> None:
                 actions_called.append(state)
 
             return action
@@ -364,14 +363,14 @@ class TestSubtestStateMachineAdvanceToCompletion:
         ssm: SubtestStateMachine,
         checkpoint: E2ECheckpoint,
         checkpoint_path: Path,
-    ) -> Any:
+    ) -> None:
         """advance_to_completion skips already-completed states on resume."""
         checkpoint.set_subtest_state(TIER_ID, SUBTEST_ID, SubtestState.RUNS_COMPLETE.value)
 
         actions_called = []
 
-        def make_action(state: SubtestState) -> Any:
-            def action() -> Any:
+        def make_action(state: SubtestState) -> None:
+            def action() -> None:
                 actions_called.append(state)
 
             return action
@@ -400,8 +399,8 @@ class TestSubtestStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: SubtestState) -> Any:
-            def action() -> Any:
+        def make_action(state: SubtestState) -> None:
+            def action() -> None:
                 actions_called.append(state)
 
             return action

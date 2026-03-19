@@ -2,7 +2,6 @@
 
 import subprocess
 from pathlib import Path
-from typing import Any
 from unittest.mock import Mock, patch
 
 import pytest
@@ -14,7 +13,7 @@ class TestWorktreeManager:
     """Tests for WorktreeManager class."""
 
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_initialization_default_base_dir(self, mock_get_root: Any, tmp_path: Any) -> None:
+    def test_initialization_default_base_dir(self, mock_get_root, tmp_path) -> None:
         """Test initialization with default base directory."""
         mock_get_root.return_value = tmp_path
 
@@ -25,7 +24,7 @@ class TestWorktreeManager:
         assert manager.worktrees == {}
 
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_initialization_custom_base_dir(self, mock_get_root: Any, tmp_path: Any) -> None:
+    def test_initialization_custom_base_dir(self, mock_get_root, tmp_path) -> None:
         """Test initialization with custom base directory."""
         mock_get_root.return_value = tmp_path
         custom_dir = tmp_path / "custom_worktrees"
@@ -36,9 +35,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_create_worktree_success(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_create_worktree_success(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test successful worktree creation."""
         mock_get_root.return_value = tmp_path
         # Mock base branch auto-detection
@@ -59,9 +56,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_create_worktree_default_branch_name(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_create_worktree_default_branch_name(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test worktree creation with default branch name."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -74,9 +69,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_create_worktree_already_exists(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_create_worktree_already_exists(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test creating worktree when already exists."""
         mock_get_root.return_value = tmp_path
         # Mock base branch auto-detection
@@ -98,7 +91,7 @@ class TestWorktreeManager:
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
     def test_create_worktree_removes_stale_directory(
-        self, mock_get_root: Any, mock_run: Any, mock_rmtree: Any, tmp_path: Any
+        self, mock_get_root, mock_run, mock_rmtree, tmp_path
     ) -> None:
         """Test that stale directories are removed before creation."""
         mock_get_root.return_value = tmp_path
@@ -120,9 +113,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_create_worktree_failure(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_create_worktree_failure(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test worktree creation failure."""
         mock_get_root.return_value = tmp_path
         mock_run.side_effect = subprocess.CalledProcessError(1, "git")
@@ -134,9 +125,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_remove_worktree_success(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_remove_worktree_success(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test successful worktree removal."""
         mock_get_root.return_value = tmp_path
         # Mock base branch auto-detection
@@ -157,7 +146,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_remove_worktree_force(self, mock_get_root: Any, mock_run: Any, tmp_path: Any) -> None:
+    def test_remove_worktree_force(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test forced worktree removal."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -172,9 +161,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_remove_worktree_not_found(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_remove_worktree_not_found(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test removing non-existent worktree."""
         mock_get_root.return_value = tmp_path
         # Mock base branch auto-detection
@@ -189,9 +176,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_remove_worktree_failure(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_remove_worktree_failure(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test worktree removal failure."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -205,7 +190,7 @@ class TestWorktreeManager:
             manager.remove_worktree(123)
 
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_get_worktree(self, mock_get_root: Any, tmp_path: Any) -> None:
+    def test_get_worktree(self, mock_get_root, tmp_path) -> None:
         """Test getting worktree path."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -218,7 +203,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_cleanup_all(self, mock_get_root: Any, mock_run: Any, tmp_path: Any) -> None:
+    def test_cleanup_all(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test cleaning up all worktrees."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -237,9 +222,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_cleanup_all_with_failures(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_cleanup_all_with_failures(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test cleanup continues even if some removals fail."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -258,7 +241,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_prune_worktrees(self, mock_get_root: Any, mock_run: Any, tmp_path: Any) -> None:
+    def test_prune_worktrees(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test pruning stale worktree metadata."""
         mock_get_root.return_value = tmp_path
         # Mock base branch auto-detection
@@ -274,7 +257,7 @@ class TestWorktreeManager:
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_list_worktrees(self, mock_get_root: Any, mock_run: Any, tmp_path: Any) -> None:
+    def test_list_worktrees(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test listing all worktrees."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
@@ -300,7 +283,7 @@ branch refs/heads/123-feature
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_ensure_branch_deleted(self, mock_get_root: Any, mock_run: Any, tmp_path: Any) -> None:
+    def test_ensure_branch_deleted(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test deleting branch from local and remote."""
         mock_get_root.return_value = tmp_path
         # Mock base branch auto-detection
@@ -320,9 +303,7 @@ branch refs/heads/123-feature
 
     @patch("scylla.automation.worktree_manager.run")
     @patch("scylla.automation.worktree_manager.get_repo_root")
-    def test_ensure_branch_deleted_handles_failure(
-        self, mock_get_root: Any, mock_run: Any, tmp_path: Any
-    ) -> None:
+    def test_ensure_branch_deleted_handles_failure(self, mock_get_root, mock_run, tmp_path) -> None:
         """Test branch deletion handles failures gracefully."""
         mock_get_root.return_value = tmp_path
         manager = WorktreeManager()
