@@ -489,12 +489,26 @@ class E2ERunner:
         self._capture_experiment_baseline()
 
     def _action_exp_repo_cloned(self, tier_groups: list[list[TierID]]) -> None:
-        """REPO_CLONED -> TIERS_RUNNING: Log tier groups for parallel execution.
+        """REPO_CLONED -> TIERS_RUNNING: Pre-flight checks and log tier groups.
 
         Args:
             tier_groups: Tier dependency groups for parallel execution.
 
         """
+        # Single pre-flight rate limit check for the entire experiment
+        from scylla.e2e.rate_limit import check_api_rate_limit_status, wait_for_rate_limit
+
+        rate_limit_info = check_api_rate_limit_status()
+        if rate_limit_info:
+            logger.warning("Pre-flight rate limit detected, waiting...")
+            if self.checkpoint and self.experiment_dir:
+                checkpoint_path = self.experiment_dir / "checkpoint.json"
+                wait_for_rate_limit(
+                    rate_limit_info.retry_after_seconds,
+                    self.checkpoint,
+                    checkpoint_path,
+                )
+
         logger.info(f"Tier groups for parallel execution: {tier_groups}")
 
     def _action_exp_tiers_running(

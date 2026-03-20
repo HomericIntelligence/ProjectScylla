@@ -78,7 +78,7 @@ TIER_TRANSITION_REGISTRY: list[TierTransition] = [
     TierTransition(
         from_state=TierState.SUBTESTS_RUNNING,
         to_state=TierState.SUBTESTS_COMPLETE,
-        description="Run all subtests in parallel",
+        description="Execute all subtests",
     ),
     TierTransition(
         from_state=TierState.SUBTESTS_COMPLETE,

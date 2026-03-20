@@ -192,6 +192,10 @@ def run_tier_subtests_parallel(
     start_time = time.time()
     completed_count = 0
 
+    from scylla.e2e.log_context import set_log_context
+
+    set_log_context(tier_id=tier_id.value)
+
     for subtest in tier_config.subtests:
         # Check for shutdown before starting subtest
         from scylla.e2e.runner import is_shutdown_requested
@@ -201,6 +205,7 @@ def run_tier_subtests_parallel(
             break
 
         subtest_dir = results_dir / subtest.id
+        set_log_context(tier_id=tier_id.value, subtest_id=subtest.id)
         try:
             results[subtest.id] = executor.run_subtest(
                 tier_id=tier_id,
