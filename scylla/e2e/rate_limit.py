@@ -415,6 +415,7 @@ def check_api_rate_limit_status() -> RateLimitInfo | None:
             capture_output=True,
             text=True,
             timeout=30,
+            stdin=subprocess.DEVNULL,
         )
 
         if "rate limit" in result.stderr.lower() or "hit your limit" in result.stderr.lower():

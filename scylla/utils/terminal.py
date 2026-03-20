@@ -13,6 +13,7 @@ import contextlib
 import signal
 import subprocess
 import sys
+import threading
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 
@@ -20,10 +21,13 @@ from contextlib import contextmanager
 def restore_terminal() -> None:
     """Restore terminal to sane state using stty.
 
-    No-ops when stdin is not a TTY. Swallows all exceptions — safe to call
-    in signal handlers and atexit callbacks.
+    No-ops when stdin is not a TTY or when called from a non-main thread
+    (stty requires the controlling terminal, which only the main thread owns).
+    Swallows all exceptions — safe to call in signal handlers and atexit callbacks.
     """
     with contextlib.suppress(Exception):
+        if threading.current_thread() is not threading.main_thread():
+            return
         if sys.stdin.isatty():
             subprocess.run(["stty", "sane"], stdin=sys.stdin, check=False)
     # Best effort — never raise during cleanup

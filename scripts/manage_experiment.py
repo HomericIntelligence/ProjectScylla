@@ -53,7 +53,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import contextlib
 import logging
 import sys
 from pathlib import Path
@@ -858,30 +857,11 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
 
 def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command branches
     """Execute the 'run' subcommand (single test or batch mode)."""
-    import os
-    import signal
-
     import yaml
 
     from scylla.e2e.models import ExperimentConfig, ExperimentState, RunState, TierID, TierState
     from scylla.e2e.runner import request_shutdown, run_experiment
     from scylla.utils.terminal import terminal_guard
-
-    # Create a new process group so we can kill all children on signal.
-    # This ensures Ctrl+C / Ctrl+Z kills subprocesses (agent, judges) too.
-    with contextlib.suppress(OSError):
-        os.setpgrp()
-
-    def _kill_group(signum: int, frame: object) -> None:
-        """Kill entire process group on second signal for forceful exit."""
-        try:
-            os.killpg(os.getpgrp(), signal.SIGKILL)
-        except OSError:
-            os._exit(128 + signum)
-
-    # Register forceful kill on SIGTSTP (Ctrl+Z) — no job control for experiments
-    with contextlib.suppress(OSError, ValueError):
-        signal.signal(signal.SIGTSTP, _kill_group)
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)

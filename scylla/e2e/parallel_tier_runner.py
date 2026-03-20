@@ -90,6 +90,9 @@ class ParallelTierRunner:
                     logger.warning("Shutdown requested before tier, stopping...")
                     break
 
+                from scylla.e2e.log_context import set_log_context
+
+                set_log_context(tier_id=tier_id.value)
                 logger.info(f"Starting tier {tier_id.value}")
 
                 tier_result, previous_baseline = self._execute_single_tier(

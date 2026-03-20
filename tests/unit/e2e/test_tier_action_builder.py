@@ -28,9 +28,6 @@ from scylla.e2e.tier_action_builder import TierActionBuilder
 if TYPE_CHECKING:
     pass
 
-# Patch target for rate limit check (used in action_pending tests)
-_RATE_LIMIT_PATCH = "scylla.e2e.tier_action_builder.check_api_rate_limit_status"
-
 
 def _make_subtest_result(
     subtest_id: str = "00",
@@ -245,8 +242,7 @@ class TestActionPending:
             experiment_dir=tmp_path,
         )
         actions = builder.build()
-        with patch(_RATE_LIMIT_PATCH, return_value=None):
-            actions[TierState.PENDING]()
+        actions[TierState.PENDING]()
 
         assert tier_ctx.tier_config is tier_config
 
@@ -259,8 +255,7 @@ class TestActionPending:
             experiment_dir=tmp_path,
         )
         actions = builder.build()
-        with patch(_RATE_LIMIT_PATCH, return_value=None):
-            actions[TierState.PENDING]()
+        actions[TierState.PENDING]()
 
         assert tier_ctx.tier_dir is not None
         assert tier_ctx.tier_dir == tmp_path / TierID.T0.value
@@ -291,8 +286,7 @@ class TestActionPending:
             experiment_dir=tmp_path,
         )
         actions = builder.build()
-        with patch(_RATE_LIMIT_PATCH, return_value=None):
-            actions[TierState.PENDING]()
+        actions[TierState.PENDING]()
 
         assert tier_config.subtests == ["00", "01"]
 
@@ -301,10 +295,7 @@ class TestActionPending:
         builder = _make_builder(experiment_dir=None)
         actions = builder.build()
 
-        with (
-            patch(_RATE_LIMIT_PATCH, return_value=None),
-            pytest.raises(RuntimeError, match="experiment_dir must be set"),
-        ):
+        with pytest.raises(RuntimeError, match="experiment_dir must be set"):
             actions[TierState.PENDING]()
 
     def test_calls_load_tier_config_with_correct_args(self, tmp_path: Path) -> None:
@@ -330,8 +321,7 @@ class TestActionPending:
             experiment_dir=tmp_path,
         )
         actions = builder.build()
-        with patch(_RATE_LIMIT_PATCH, return_value=None):
-            actions[TierState.PENDING]()
+        actions[TierState.PENDING]()
 
         tier_manager.load_tier_config.assert_called_once_with(TierID.T0, config.skip_agent_teams)
 

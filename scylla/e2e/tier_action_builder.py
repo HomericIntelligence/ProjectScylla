@@ -22,7 +22,6 @@ from scylla.e2e.models import (
     TierState,
     TokenStats,
 )
-from scylla.e2e.rate_limit import check_api_rate_limit_status, wait_for_rate_limit
 from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 
 if TYPE_CHECKING:
@@ -119,18 +118,6 @@ class TierActionBuilder:
                 raise RuntimeError("experiment_dir must be set before loading tier config")
             tier_dir = experiment_dir / tier_id.value
             tier_dir.mkdir(parents=True, exist_ok=True)
-
-            # Check for active rate limit before starting this tier
-            rate_limit_info = check_api_rate_limit_status()
-            if rate_limit_info:
-                logger.warning(f"Pre-flight rate limit detected for {tier_id.value}")
-                if checkpoint and experiment_dir:
-                    checkpoint_path = experiment_dir / "checkpoint.json"
-                    wait_for_rate_limit(
-                        rate_limit_info.retry_after_seconds,
-                        checkpoint,
-                        checkpoint_path,
-                    )
 
             tier_ctx.tier_config = tier_config
             tier_ctx.tier_dir = tier_dir
