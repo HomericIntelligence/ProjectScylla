@@ -510,16 +510,22 @@ def stage_write_report(ctx: RunContext) -> None:
 
 
 def stage_cleanup_worktree(ctx: RunContext) -> None:
-    """CHECKPOINTED -> WORKTREE_CLEANED: Remove git worktree for passed runs.
+    """CHECKPOINTED -> WORKTREE_CLEANED: Remove git worktree to free disk space.
 
-    For passed runs, removes the git worktree to free disk space.
-    For failed runs, preserves the workspace for debugging.
+    By default, cleans up ALL workspaces (passed and failed) since the diff,
+    pipeline results, and judge prompt are already saved. Use
+    --keep-failed-workspaces to preserve failed run workspaces for debugging.
+
+    Note: Workspace semaphore acquire/release is handled by the caller
+    (SubtestExecutor) via ResourceManager.workspace_slot() context manager,
+    not by individual stage functions.
 
     Args:
         ctx: Run context
 
     """
-    # Only clean up if the run passed (preserve failed workspaces for debugging)
+    # Determine if we should preserve this workspace
+    keep_failed = ctx.config.keep_failed_workspaces
     run_passed = ctx.run_result is not None and ctx.run_result.judge_passed
     if not run_passed and ctx.checkpoint:
         run_status = ctx.checkpoint.get_run_status(
@@ -527,11 +533,14 @@ def stage_cleanup_worktree(ctx: RunContext) -> None:
         )
         run_passed = run_status == "passed"
 
-    if run_passed and ctx.workspace.exists():
+    should_cleanup = run_passed or not keep_failed
+
+    if should_cleanup and ctx.workspace.exists():
         try:
             ctx.workspace_manager.cleanup_worktree(ctx.workspace)
+            status = "passed" if run_passed else "failed"
             logger.info(
-                f"Cleaned up worktree for passed run {ctx.tier_id.value}/{ctx.subtest.id}"
+                f"Cleaned up worktree for {status} run {ctx.tier_id.value}/{ctx.subtest.id}"
                 f"/run_{ctx.run_number:02d}"
             )
         except Exception as e:
@@ -540,8 +549,8 @@ def stage_cleanup_worktree(ctx: RunContext) -> None:
                 f"Failed to clean up worktree for "
                 f"{ctx.tier_id.value}/{ctx.subtest.id}/run_{ctx.run_number:02d}: {e}"
             )
-    else:
+    elif not should_cleanup:
         logger.debug(
-            f"Preserving workspace for failed/unresolved run "
+            f"Preserving workspace for failed run (--keep-failed-workspaces) "
             f"{ctx.tier_id.value}/{ctx.subtest.id}/run_{ctx.run_number:02d}"
         )

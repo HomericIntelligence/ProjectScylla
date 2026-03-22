@@ -31,6 +31,7 @@ from scylla.e2e.rate_limit import (
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
     from scylla.e2e.models import SubTestConfig, TierBaseline
+    from scylla.e2e.resource_manager import ResourceManager
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
 
@@ -163,6 +164,7 @@ def run_tier_subtests_parallel(
     checkpoint: E2ECheckpoint | None = None,
     checkpoint_path: Path | None = None,
     experiment_dir: Path | None = None,
+    resource_manager: ResourceManager | None = None,
 ) -> dict[str, SubTestResult]:
     """Run all sub-tests for a tier sequentially with rate limit handling.
 
@@ -177,6 +179,7 @@ def run_tier_subtests_parallel(
         checkpoint: Optional checkpoint for resume capability
         checkpoint_path: Path to checkpoint file for saving
         experiment_dir: Path to experiment directory (needed for T5 inheritance)
+        resource_manager: Optional resource limiter for concurrency control
 
     Returns:
         Dict mapping sub-test ID to results.
@@ -186,7 +189,9 @@ def run_tier_subtests_parallel(
     from scylla.e2e.subtest_executor import SubTestExecutor
 
     results: dict[str, SubTestResult] = {}
-    executor = SubTestExecutor(config, tier_manager, workspace_manager)
+    executor = SubTestExecutor(
+        config, tier_manager, workspace_manager, resource_manager=resource_manager
+    )
 
     total_subtests = len(tier_config.subtests)
     start_time = time.time()

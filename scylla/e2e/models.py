@@ -876,6 +876,10 @@ class ExperimentConfig(BaseModel):
     filter_runs: list[int] | None = None
     filter_statuses: list[str] | None = None
     filter_judge_slots: list[int] | None = None
+    # Resource management (ephemeral, not saved to experiment.json)
+    keep_failed_workspaces: bool = False  # Preserve workspaces for failed runs
+    max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
+    max_concurrent_agents: int | None = None  # Limit concurrent claude CLI processes (None = auto)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""

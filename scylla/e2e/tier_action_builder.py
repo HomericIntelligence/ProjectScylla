@@ -26,6 +26,7 @@ from scylla.e2e.subtest_executor import run_tier_subtests_parallel
 
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
+    from scylla.e2e.resource_manager import ResourceManager
     from scylla.e2e.runner import TierContext
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
@@ -55,6 +56,7 @@ class TierActionBuilder:
         checkpoint: E2ECheckpoint | None,
         experiment_dir: Path | None,
         save_tier_result_fn: Callable[[TierID, TierResult], None],
+        resource_manager: ResourceManager | None = None,
     ) -> None:
         """Initialize TierActionBuilder with all required collaborators.
 
@@ -68,6 +70,7 @@ class TierActionBuilder:
             checkpoint: Current E2ECheckpoint for persistence (may be None).
             experiment_dir: Root directory for this experiment's outputs (may be None).
             save_tier_result_fn: Callable injected from the runner to save tier results.
+            resource_manager: Optional resource limiter for concurrency control.
 
         """
         self.tier_id = tier_id
@@ -79,6 +82,7 @@ class TierActionBuilder:
         self.checkpoint = checkpoint
         self.experiment_dir = experiment_dir
         self.save_tier_result_fn = save_tier_result_fn
+        self.resource_manager = resource_manager
 
     def build(self) -> dict[TierState, Callable[[], None]]:  # noqa: C901  # action map with many tier state branches
         """Build and return the TierState -> Callable action map.
@@ -142,6 +146,7 @@ class TierActionBuilder:
                 checkpoint=checkpoint,
                 checkpoint_path=checkpoint_path,
                 experiment_dir=experiment_dir,
+                resource_manager=self.resource_manager,
             )
             tier_ctx.subtest_results = subtest_results
 

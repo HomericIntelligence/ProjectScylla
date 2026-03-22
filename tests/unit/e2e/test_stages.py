@@ -243,13 +243,26 @@ class TestStageCleanupWorktree:
             run_context.workspace
         )
 
-    def test_skips_cleanup_for_failed_run_result(self, run_context: RunContext) -> None:
-        """stage_cleanup_worktree skips cleanup for failed runs."""
+    def test_cleans_up_failed_run_by_default(self, run_context: RunContext) -> None:
+        """stage_cleanup_worktree cleans up failed runs by default (eager cleanup)."""
         from scylla.e2e.models import E2ERunResult
 
         mock_result = MagicMock(spec=E2ERunResult)
         mock_result.judge_passed = False
         run_context.run_result = mock_result
+
+        stage_cleanup_worktree(run_context)
+
+        run_context.workspace_manager.cleanup_worktree.assert_called_once()  # type: ignore[attr-defined]
+
+    def test_skips_cleanup_for_failed_run_with_keep_flag(self, run_context: RunContext) -> None:
+        """stage_cleanup_worktree skips failed runs when keep_failed_workspaces=True."""
+        from scylla.e2e.models import E2ERunResult
+
+        mock_result = MagicMock(spec=E2ERunResult)
+        mock_result.judge_passed = False
+        run_context.run_result = mock_result
+        run_context.config.keep_failed_workspaces = True
 
         stage_cleanup_worktree(run_context)
 
