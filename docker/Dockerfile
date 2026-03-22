@@ -12,7 +12,7 @@
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
 # Python 3.12 aligns with pyproject.toml classifiers (3.10-3.13); requires-python = ">=3.10"
-FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c AS builder
+FROM python:3.12-slim@sha256:3d5ed973e45820f5ba5e46bd065bd88b3a504ff0724d85980dcd05eab361fcf4 AS builder
 
 # Set build environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -90,15 +90,15 @@ RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 # Pinned to node:20-slim SHA256 for reproducibility.
 # Using multi-stage copy avoids the NodeSource curl|bash pattern which
 # introduces an external dependency and pipe-to-shell security risk.
-# Digest pinned 2026-03-15: node:20-slim
-FROM node:20-slim@sha256:eef3816042c0f522a2ca9655c1947ca6f97c908b0c227aa50e19432646342ab7 AS node-source
+# Digest pinned 2026-03-22: node:20-slim
+FROM node:20-slim@sha256:17281e8d1dc4d671976c6b89a12f47a44c2f390b63a989e2e327631041f544fd AS node-source
 
 # ============================================================================
 # Stage 2: Runtime - Minimal production image
 # ============================================================================
 # Pinned to SHA256 digest for reproducibility - prevents drift from upstream updates
 # Python 3.12 aligns with pyproject.toml classifiers (3.10-3.13); requires-python = ">=3.10"
-FROM python:3.12-slim@sha256:f3fa41d74a768c2fce8016b98c191ae8c1bacd8f1152870a3f9f87d350920b7c
+FROM python:3.12-slim@sha256:3d5ed973e45820f5ba5e46bd065bd88b3a504ff0724d85980dcd05eab361fcf4
 
 # Set labels for image metadata
 LABEL org.opencontainers.image.title="scylla-runner"
@@ -121,7 +121,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CLAUDE_CONFIG_DIR=/home/scylla/.claude
 
 # Install ONLY runtime dependencies (no build tools, no curl — Node.js copied from source stage)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# apt-get upgrade patches OS-level CVEs (e.g. libc-bin) even when base image digest is pinned
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     git \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -138,7 +139,10 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # This is the primary tool for agent-based test execution
 # Version 2.1.74 verified working
 # See: https://github.com/mvillmow/ProjectScylla/issues/650
-RUN npm install -g @anthropic-ai/claude-code@2.1.74
+# Install Claude Code CLI and patch known npm vulnerabilities (cross-spawn, glob, minimatch, tar)
+RUN npm install -g @anthropic-ai/claude-code@2.1.74 \
+    && cd /usr/local/lib/node_modules/@anthropic-ai/claude-code \
+    && npm audit fix --force 2>/dev/null || true
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
