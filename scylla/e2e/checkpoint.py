@@ -499,12 +499,20 @@ class E2ECheckpoint(BaseModel):
         return data
 
 
-def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
-    """Save checkpoint to file with atomic write.
+# Lock protecting checkpoint serialization. With ThreadPoolExecutor, multiple
+# threads may call save_checkpoint() concurrently. Without this lock, thread A
+# could serialize stale state (before thread B's mutation) and overwrite B's
+# checkpoint on the atomic rename. The lock ensures serialize + rename is atomic
+# with respect to other threads.
+_checkpoint_write_lock = threading.Lock()
 
-    With ThreadPoolExecutor, all worker threads share the same in-memory
-    checkpoint object, so no disk-merge is needed — the checkpoint is already
-    up-to-date. We simply serialize the in-memory state and write atomically.
+
+def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
+    """Save checkpoint to file with atomic write, serialized across threads.
+
+    All worker threads share the same in-memory checkpoint object. This function
+    serializes access so that mutations from one thread are not lost when another
+    thread writes concurrently.
 
     Args:
         checkpoint: Checkpoint to save
@@ -514,26 +522,27 @@ def save_checkpoint(checkpoint: E2ECheckpoint, path: Path) -> None:
         CheckpointError: If save fails
 
     """
-    try:
-        # Update timestamp
-        checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
+    with _checkpoint_write_lock:
+        try:
+            # Update timestamp
+            checkpoint.last_updated_at = datetime.now(timezone.utc).isoformat()
 
-        # Atomic write: write to temp file, then rename.
-        # Include both PID and thread ID in the temp filename so concurrent threads
-        # in the same process each get a unique file, preventing ENOENT when one
-        # thread renames the file before another can.
-        tid = threading.get_ident()
-        temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}.{tid}{path.suffix}"
-        data = checkpoint.model_dump()
+            # Atomic write: write to temp file, then rename.
+            # Include both PID and thread ID in the temp filename so concurrent threads
+            # in the same process each get a unique file, preventing ENOENT when one
+            # thread renames the file before another can.
+            tid = threading.get_ident()
+            temp_path = path.parent / f"{path.stem}.tmp.{os.getpid()}.{tid}{path.suffix}"
+            data = checkpoint.model_dump()
 
-        with open(temp_path, "w") as f:
-            json.dump(data, f, indent=2)
+            with open(temp_path, "w") as f:
+                json.dump(data, f, indent=2)
 
-        # Atomic rename — each writer has a unique temp file (PID+TID)
-        temp_path.replace(path)
+            # Atomic rename — each writer has a unique temp file (PID+TID)
+            temp_path.replace(path)
 
-    except OSError as e:
-        raise CheckpointError(f"Failed to save checkpoint to {path}: {e}") from e
+        except OSError as e:
+            raise CheckpointError(f"Failed to save checkpoint to {path}: {e}") from e
 
 
 def load_checkpoint(path: Path) -> E2ECheckpoint:
@@ -596,6 +605,10 @@ def compute_config_hash(config: ExperimentConfig) -> str:
     config_dict.pop("filter_runs", None)
     config_dict.pop("filter_statuses", None)
     config_dict.pop("filter_judge_slots", None)
+    # Remove ephemeral resource management flags
+    config_dict.pop("keep_failed_workspaces", None)
+    config_dict.pop("max_concurrent_workspaces", None)
+    config_dict.pop("max_concurrent_agents", None)
 
     # Stable JSON serialization (sorted keys)
     config_json = json.dumps(config_dict, sort_keys=True)

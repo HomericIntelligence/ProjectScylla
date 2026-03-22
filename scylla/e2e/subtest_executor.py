@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from scylla.e2e.llm_judge import BuildPipelineResult
+    from scylla.e2e.resource_manager import ResourceManager
 
 from scylla.adapters.claude_code import ClaudeCodeAdapter
 
@@ -311,6 +312,7 @@ class SubTestExecutor:
         tier_manager: TierManager,
         workspace_manager: WorkspaceManager,
         adapter: ClaudeCodeAdapter | None = None,
+        resource_manager: ResourceManager | None = None,
     ) -> None:
         """Initialize the executor.
 
@@ -319,12 +321,14 @@ class SubTestExecutor:
             tier_manager: Tier configuration manager
             workspace_manager: Workspace manager for git worktrees
             adapter: Optional adapter (defaults to ClaudeCodeAdapter)
+            resource_manager: Optional resource limiter for concurrency control
 
         """
         self.config = config
         self.tier_manager = tier_manager
         self.workspace_manager = workspace_manager
         self.adapter = adapter or ClaudeCodeAdapter()
+        self._resource_manager = resource_manager
 
     def run_subtest(  # noqa: C901  # orchestration with many retry/outcome paths
         self,
@@ -514,6 +518,7 @@ class SubTestExecutor:
                     coordinator=coordinator,
                     checkpoint=checkpoint,
                     checkpoint_path=checkpoint_path,
+                    resource_manager=self._resource_manager,
                 )
 
                 # Set thread-local log context for structured logging
@@ -536,18 +541,30 @@ class SubTestExecutor:
                         _restore_run_context(ctx, _current_run_state.value)
 
                 try:
-                    if sm:
-                        sm.advance_to_completion(
-                            tier_id.value,
-                            subtest.id,
-                            run_num,
-                            actions,
-                            until_state=self.config.until_run_state,
-                        )
-                    else:
-                        # No checkpoint — run all stages directly without state machine
-                        for action in actions.values():
-                            action()
+                    # Wrap entire run in workspace_slot to guarantee release on
+                    # any exception (including ShutdownInterruptedError).
+                    import contextlib
+                    from contextlib import AbstractContextManager
+
+                    ws_ctx: AbstractContextManager[Any] = (
+                        self._resource_manager.workspace_slot()
+                        if self._resource_manager
+                        else contextlib.nullcontext()
+                    )
+
+                    with ws_ctx:
+                        if sm:
+                            sm.advance_to_completion(
+                                tier_id.value,
+                                subtest.id,
+                                run_num,
+                                actions,
+                                until_state=self.config.until_run_state,
+                            )
+                        else:
+                            # No checkpoint — run all stages directly without state machine
+                            for action in actions.values():
+                                action()
 
                     if ctx.run_result:
                         runs.append(ctx.run_result)

@@ -595,6 +595,9 @@ def _call_claude_judge(
         prompt_file_path = prompt_file.name
 
     try:
+        # Judge evaluates from provided context only (workspace state, git diff,
+        # pipeline results are all included in the prompt). No tool access needed,
+        # which reduces memory overhead and avoids dependency on workspace existence.
         cmd = [
             "claude",
             "--model",
@@ -604,22 +607,15 @@ def _call_claude_judge(
             "text",
             "--dangerously-skip-permissions",
             "--allowedTools",
-            "Read,Glob,Grep",  # Judge can read workspace files but not modify
+            "",  # No tools — all context is in the prompt
             "--system-prompt-file",
             str(JUDGE_SYSTEM_PROMPT_FILE),
             "-p",
             prompt_file_path,
         ]
 
-        # Run judge in workspace directory if provided, so it can access files
-        # But only if the workspace still exists (may have been cleaned up)
-        cwd = None
-        if workspace and workspace.exists():
-            cwd = workspace
-
         result = subprocess.run(
             cmd,
-            cwd=cwd,
             capture_output=True,
             text=True,
             timeout=1200,  # 20 minutes - judging can take time with Opus

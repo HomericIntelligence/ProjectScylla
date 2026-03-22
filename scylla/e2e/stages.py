@@ -98,13 +98,14 @@ if TYPE_CHECKING:
     from scylla.e2e.llm_judge import BuildPipelineResult
     from scylla.e2e.models import JudgeResultSummary
     from scylla.e2e.parallel_executor import RateLimitCoordinator
+    from scylla.e2e.resource_manager import ResourceManager
     from scylla.e2e.tier_manager import TierManager
     from scylla.e2e.workspace_manager import WorkspaceManager
 
 logger = logging.getLogger(__name__)
 
-# Global lock serializing heavy pipeline executions (pre-commit, pytest, ruff)
-# across concurrent threads to prevent machine hang from resource exhaustion.
+# Fallback lock for pipeline serialization when no ResourceManager is configured.
+# Prefer ctx.resource_manager.pipeline_slot() when available.
 _pipeline_lock = threading.Lock()
 
 
@@ -198,6 +199,9 @@ class RunContext:
     checkpoint: E2ECheckpoint | None = None
     checkpoint_path: Path | None = None
 
+    # Resource management (shared across all runs in a batch)
+    resource_manager: ResourceManager | None = None
+
 
 # ---------------------------------------------------------------------------
 # Stage functions
@@ -231,6 +235,9 @@ def stage_create_worktree(ctx: RunContext) -> None:
 
     Sets up the git worktree in ctx.workspace. Preserves existing workspace
     if run already passed (checkpoint resume).
+
+    Acquires _workspace_semaphore to limit concurrent live workspaces.
+    The semaphore is released in stage_cleanup_worktree.
 
     Args:
         ctx: Run context
@@ -348,7 +355,8 @@ def stage_capture_baseline(ctx: RunContext) -> None:
         from scylla.e2e.llm_judge import _run_build_pipeline
 
         logger.info("Capturing pipeline baseline inline (experiment-level baseline unavailable)")
-        with _pipeline_lock:
+        _lock = ctx.resource_manager.pipeline_slot() if ctx.resource_manager else _pipeline_lock
+        with _lock:
             ctx.pipeline_baseline = _run_build_pipeline(
                 workspace=ctx.workspace,
                 language=ctx.config.language,
@@ -659,7 +667,6 @@ def stage_execute_agent(ctx: RunContext) -> None:
             cost_usd=0.0,
             api_calls=0,
         )
-
     ctx.agent_duration = (datetime.now(timezone.utc) - agent_start).total_seconds()
     ctx.agent_result = agent_result
     ctx.agent_ran = True
@@ -777,7 +784,8 @@ def stage_run_judge_pipeline(ctx: RunContext) -> None:
     from scylla.e2e.llm_judge import _run_build_pipeline, _save_pipeline_commands
 
     logger.info(f"Running {ctx.config.language} build pipeline for judge evaluation")
-    with _pipeline_lock:
+    _lock = ctx.resource_manager.pipeline_slot() if ctx.resource_manager else _pipeline_lock
+    with _lock:
         ctx.judge_pipeline_result = _run_build_pipeline(
             workspace=ctx.workspace,
             language=ctx.config.language,
@@ -880,6 +888,23 @@ def build_actions_dict(
         Dict mapping RunState to callable stage function
 
     """
+
+    def _agent_with_slot() -> None:
+        """Execute agent within agent_slot context manager (RAM protection)."""
+        if ctx.resource_manager:
+            with ctx.resource_manager.agent_slot():
+                stage_execute_agent(ctx)
+        else:
+            stage_execute_agent(ctx)
+
+    def _judge_with_slot() -> None:
+        """Execute judge within agent_slot context manager (RAM protection)."""
+        if ctx.resource_manager:
+            with ctx.resource_manager.agent_slot():
+                stage_execute_judge(ctx)
+        else:
+            stage_execute_judge(ctx)
+
     return {
         RunState.PENDING: lambda: stage_create_dir_structure(ctx),
         RunState.DIR_STRUCTURE_CREATED: lambda: stage_create_worktree(ctx),
@@ -888,11 +913,11 @@ def build_actions_dict(
         RunState.CONFIG_COMMITTED: lambda: stage_capture_baseline(ctx),
         RunState.BASELINE_CAPTURED: lambda: stage_write_prompt(ctx),
         RunState.PROMPT_WRITTEN: lambda: stage_generate_replay(ctx),
-        RunState.REPLAY_GENERATED: lambda: stage_execute_agent(ctx),
+        RunState.REPLAY_GENERATED: _agent_with_slot,
         RunState.AGENT_COMPLETE: lambda: stage_capture_diff(ctx),
         RunState.DIFF_CAPTURED: lambda: stage_run_judge_pipeline(ctx),
         RunState.JUDGE_PIPELINE_RUN: lambda: stage_build_judge_prompt(ctx),
-        RunState.JUDGE_PROMPT_BUILT: lambda: stage_execute_judge(ctx),
+        RunState.JUDGE_PROMPT_BUILT: _judge_with_slot,
         RunState.JUDGE_COMPLETE: lambda: stage_finalize_run(ctx),
         RunState.RUN_FINALIZED: lambda: stage_write_report(ctx),
         RunState.CHECKPOINTED: lambda: stage_cleanup_worktree(ctx),

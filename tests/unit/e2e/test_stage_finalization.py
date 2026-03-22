@@ -644,9 +644,25 @@ class TestStageCleanupWorktree:
 
         wm.cleanup_worktree.assert_called_once_with(ctx.workspace)
 
-    def test_cleanup_not_called_for_failed_run(self, minimal_run_context: RunContext) -> None:
-        """cleanup_worktree is NOT called when run failed."""
+    def test_cleanup_called_for_failed_run_by_default(
+        self, minimal_run_context: RunContext
+    ) -> None:
+        """cleanup_worktree IS called for failed runs by default (eager cleanup)."""
         ctx = minimal_run_context
+        run_result = _make_run_result(ctx, passed=False)
+        ctx.run_result = run_result
+        wm = cast(MagicMock, ctx.workspace_manager)
+
+        stage_cleanup_worktree(ctx)
+
+        wm.cleanup_worktree.assert_called_once()
+
+    def test_cleanup_not_called_for_failed_run_with_keep_flag(
+        self, minimal_run_context: RunContext
+    ) -> None:
+        """cleanup_worktree is NOT called for failed runs when keep_failed_workspaces=True."""
+        ctx = minimal_run_context
+        ctx.config.keep_failed_workspaces = True
         run_result = _make_run_result(ctx, passed=False)
         ctx.run_result = run_result
         wm = cast(MagicMock, ctx.workspace_manager)
@@ -699,11 +715,28 @@ class TestStageCleanupWorktree:
 
         wm.cleanup_worktree.assert_called_once_with(ctx.workspace)
 
-    def test_preserves_workspace_when_checkpoint_says_failed(
+    def test_cleans_workspace_when_checkpoint_says_failed(
         self, minimal_run_context: RunContext
     ) -> None:
-        """Does not clean up when checkpoint indicates 'failed'."""
+        """Cleans up even when checkpoint indicates 'failed' (eager cleanup)."""
         ctx = minimal_run_context
+        ctx.run_result = None
+        wm = cast(MagicMock, ctx.workspace_manager)
+
+        mock_checkpoint = MagicMock()
+        mock_checkpoint.get_run_status.return_value = "failed"
+        ctx.checkpoint = mock_checkpoint
+
+        stage_cleanup_worktree(ctx)
+
+        wm.cleanup_worktree.assert_called_once()
+
+    def test_preserves_workspace_when_checkpoint_says_failed_and_keep_flag(
+        self, minimal_run_context: RunContext
+    ) -> None:
+        """Does not clean up when checkpoint says 'failed' and keep_failed_workspaces=True."""
+        ctx = minimal_run_context
+        ctx.config.keep_failed_workspaces = True
         ctx.run_result = None
         wm = cast(MagicMock, ctx.workspace_manager)
 
@@ -715,10 +748,10 @@ class TestStageCleanupWorktree:
 
         wm.cleanup_worktree.assert_not_called()
 
-    def test_preserves_workspace_when_no_run_result_and_no_checkpoint(
+    def test_cleans_workspace_when_no_run_result_and_no_checkpoint(
         self, minimal_run_context: RunContext
     ) -> None:
-        """Does not clean up when both run_result and checkpoint are None."""
+        """Cleans up even when both run_result and checkpoint are None (eager cleanup)."""
         ctx = minimal_run_context
         ctx.run_result = None
         ctx.checkpoint = None
@@ -726,7 +759,7 @@ class TestStageCleanupWorktree:
 
         stage_cleanup_worktree(ctx)
 
-        wm.cleanup_worktree.assert_not_called()
+        wm.cleanup_worktree.assert_called_once()
 
     def test_cleanup_uses_correct_workspace_path(self, minimal_run_context: RunContext) -> None:
         """cleanup_worktree is called with ctx.workspace (not run_dir)."""

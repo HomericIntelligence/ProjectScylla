@@ -201,8 +201,13 @@ class HeartbeatThread(threading.Thread):
     def run(self) -> None:
         """Update heartbeat on a fixed interval until stop() is called."""
         logger.debug(f"HeartbeatThread started (interval={self._interval}s)")
+        self._check_count = 0
         while not self._stop_event.wait(timeout=self._interval):
             self._write_heartbeat()
+            # Log resource usage every 5 heartbeats (~2.5 min at 30s interval)
+            self._check_count += 1
+            if self._check_count % 5 == 0:
+                _log_resource_usage()
         logger.debug("HeartbeatThread stopped")
 
     def stop(self) -> None:
@@ -228,3 +233,82 @@ class HeartbeatThread(threading.Thread):
             logger.warning(f"Failed to write heartbeat: {e}")
         except Exception as e:
             logger.warning(f"Unexpected error writing heartbeat: {e}")
+
+
+def _get_memory_info() -> tuple[int, int] | None:
+    """Read available and total RAM from /proc/meminfo (Linux only).
+
+    Returns:
+        Tuple of (available_mb, total_mb) or None if not available.
+
+    """
+    try:
+        with open("/proc/meminfo") as f:
+            meminfo = {}
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 2:
+                    meminfo[parts[0].rstrip(":")] = int(parts[1])
+        total_kb = meminfo.get("MemTotal", 0)
+        avail_kb = meminfo.get("MemAvailable", meminfo.get("MemFree", 0))
+        return (avail_kb // 1024, total_kb // 1024)
+    except (OSError, ValueError, KeyError):
+        return None
+
+
+def _log_resource_usage() -> None:
+    """Log current memory and disk usage at INFO level."""
+    import shutil
+
+    mem = _get_memory_info()
+    if mem:
+        avail_mb, total_mb = mem
+        used_pct = ((total_mb - avail_mb) / total_mb * 100) if total_mb > 0 else 0
+        level = logging.WARNING if avail_mb < 2048 else logging.DEBUG
+        logger.log(
+            level,
+            f"Memory: {avail_mb}MB available / {total_mb}MB total ({used_pct:.0f}% used)",
+        )
+
+    try:
+        usage = shutil.disk_usage("/")
+        free_gb = usage.free / (1024**3)
+        total_gb = usage.total / (1024**3)
+        used_pct = (usage.used / usage.total * 100) if usage.total > 0 else 0
+        level = logging.WARNING if free_gb < 20 else logging.DEBUG
+        logger.log(
+            level,
+            f"Disk: {free_gb:.1f}GB free / {total_gb:.1f}GB total ({used_pct:.0f}% used)",
+        )
+    except OSError:
+        pass
+
+
+def log_resource_preflight() -> None:
+    """Log resource availability before an experiment starts.
+
+    Warns if memory < 4GB available or disk < 50GB free.
+    """
+    import shutil
+
+    mem = _get_memory_info()
+    if mem:
+        avail_mb, total_mb = mem
+        logger.info(f"Pre-flight: {avail_mb}MB RAM available / {total_mb}MB total")
+        if avail_mb < 4096:
+            logger.warning(
+                f"Low memory warning: only {avail_mb}MB available. "
+                f"Consider reducing --threads or --max-concurrent-agents."
+            )
+
+    try:
+        usage = shutil.disk_usage("/")
+        free_gb = usage.free / (1024**3)
+        logger.info(f"Pre-flight: {free_gb:.1f}GB disk free")
+        if free_gb < 50:
+            logger.warning(
+                f"Low disk warning: only {free_gb:.1f}GB free. "
+                f"Consider cleaning up old experiment workspaces."
+            )
+    except OSError:
+        pass

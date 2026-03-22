@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from scylla.e2e.judge_selection import JudgeSelection
     from scylla.e2e.models import SubTestResult, TierConfig
+    from scylla.e2e.resource_manager import ResourceManager
 
 import contextlib
 
@@ -162,6 +163,7 @@ class E2ERunner:
         self.checkpoint: E2ECheckpoint | None = None
         self._fresh = fresh
         self._last_experiment_result: ExperimentResult | None = None
+        self._resource_manager: ResourceManager | None = None
 
     def _result_writer(self) -> ExperimentResultWriter:
         """Create an ExperimentResultWriter bound to current state.
@@ -613,6 +615,17 @@ class E2ERunner:
         if self.checkpoint:
             self.checkpoint.pid = os.getpid()
 
+        # Initialize resource manager and log pre-flight resource availability
+        from scylla.e2e.health import log_resource_preflight
+        from scylla.e2e.resource_manager import ResourceManager
+
+        log_resource_preflight()
+        if self._resource_manager is None:
+            self._resource_manager = ResourceManager(
+                max_workspaces=self.config.max_concurrent_workspaces,
+                max_agents=self.config.max_concurrent_agents,
+            )
+
         # Start heartbeat thread to prevent zombie detection on long runs
         from scylla.e2e.health import HeartbeatThread
 
@@ -730,6 +743,7 @@ class E2ERunner:
             checkpoint=self.checkpoint,
             experiment_dir=self.experiment_dir,
             save_tier_result_fn=self._save_tier_result,
+            resource_manager=self._resource_manager,
         ).build()
 
     def _run_tier(
@@ -908,6 +922,7 @@ def run_experiment(
     tiers_dir: Path,
     results_dir: Path,
     fresh: bool = False,
+    resource_manager: ResourceManager | None = None,
 ) -> ExperimentResult:
     """Run an experiment with the given configuration.
 
@@ -916,6 +931,8 @@ def run_experiment(
         tiers_dir: Path to tier configurations
         results_dir: Path to results directory
         fresh: If True, ignore existing checkpoints and start fresh
+        resource_manager: Optional shared ResourceManager for concurrency control.
+            When running in batch mode, all experiments share the same instance.
 
     Returns:
         ExperimentResult with all results.
@@ -923,6 +940,7 @@ def run_experiment(
     """
     try:
         runner = E2ERunner(config, tiers_dir, results_dir, fresh=fresh)
+        runner._resource_manager = resource_manager
         return runner.run()
     except (
         Exception

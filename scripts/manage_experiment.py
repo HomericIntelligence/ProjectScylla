@@ -249,6 +249,27 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Filter to specific test IDs (batch mode)",
     )
+    # Resource management arguments
+    parser.add_argument(
+        "--keep-failed-workspaces",
+        action="store_true",
+        default=False,
+        help="Preserve workspaces for failed runs (default: clean up all)",
+    )
+    parser.add_argument(
+        "--max-concurrent-workspaces",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Max live workspaces at any time (default: cpu_count * 2)",
+    )
+    parser.add_argument(
+        "--max-concurrent-agents",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Max concurrent claude CLI processes (default: min(threads, cpu_count))",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument("-q", "--quiet", action="store_true", help="Suppress non-error output")
 
@@ -668,6 +689,9 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 filter_runs=args.filter_run,
                 filter_statuses=args.filter_status,
                 filter_judge_slots=args.filter_judge_slot,
+                keep_failed_workspaces=args.keep_failed_workspaces,
+                max_concurrent_workspaces=args.max_concurrent_workspaces,
+                max_concurrent_agents=args.max_concurrent_agents,
             )
 
             # If --from specified, load existing checkpoint and reset states
@@ -740,6 +764,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                     tiers_dir=test_dir,
                     results_dir=args.results_dir,
                     fresh=args.fresh,
+                    resource_manager=batch_resource_manager,
                 )
 
             status = "success" if results else "error"
@@ -816,6 +841,16 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
         return 0
 
     logger.info(f"Batch mode: running {len(to_run)} tests with {args.threads} threads")
+
+    # Create shared ResourceManager for all experiments in this batch.
+    # Passed to each run_experiment() so all threads share the same semaphores.
+    from scylla.e2e.resource_manager import ResourceManager
+
+    batch_resource_manager = ResourceManager(
+        max_workspaces=args.max_concurrent_workspaces,
+        max_agents=args.max_concurrent_agents,
+        threads=args.threads,
+    )
 
     failed_count = 0
 
@@ -1076,6 +1111,9 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         filter_runs=args.filter_run,
         filter_statuses=args.filter_status,
         filter_judge_slots=args.filter_judge_slot,
+        keep_failed_workspaces=args.keep_failed_workspaces,
+        max_concurrent_workspaces=args.max_concurrent_workspaces,
+        max_concurrent_agents=args.max_concurrent_agents,
     )
 
     # If --from specified, load existing checkpoint and reset states

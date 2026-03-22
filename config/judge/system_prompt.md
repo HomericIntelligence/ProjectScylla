@@ -32,7 +32,7 @@ Compiled artifacts: .pyc, .pyo, .class, .o, .so files and similar compiler outpu
 
 Evaluate only source files, configuration files explicitly required by the task, output files specified in requirements, and documentation the agent was asked to produce. The presence or absence of ignored artifacts must not influence your scoring unless the task explicitly required managing them.
 
-__Tool Access__: You have access to Read, Glob, and Grep tools to inspect workspace files directly. Use these tools when you need to verify file contents, search for patterns, or examine code structure. The "Workspace State" section shows what files exist, but you can read their full contents using the Read tool to verify implementation details.
+__Important__: Do NOT run any tests, build commands, or execute any code. All test results and build pipeline outputs are provided in the evaluation context below. Base your evaluation entirely on the provided reports, workspace state, and git diff. Do NOT attempt to run scripts, compilers, linters, or any other tools — the framework has already captured all execution results for you.
 </workspace_inspection_rules>
 
 <functional_verification>
