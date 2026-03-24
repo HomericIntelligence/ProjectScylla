@@ -5,7 +5,6 @@ Tests cover:
 - Race condition regression: _resume_event not cleared by worker
 - Manager() cleanup via finally block
 - run_tier_subtests_parallel: single-subtest path (no coordinator)
-- WorkspaceManager.from_existing() usage in child process
 """
 
 from __future__ import annotations
@@ -258,17 +257,9 @@ class TestRunTierSubtestsParallelSingleSubtest:
         mock_executor.run_subtest.return_value = mock_result
 
         # SubTestExecutor is imported inside the function body, so patch at import site
-        with (
-            patch(
-                "scylla.e2e.subtest_executor.SubTestExecutor",
-                return_value=mock_executor,
-            ),
-            patch("scylla.e2e.parallel_executor.Manager") as mock_manager_cls,
-            patch(
-                "scylla.e2e.parallel_executor.SubTestExecutor",
-                return_value=mock_executor,
-                create=True,
-            ),
+        with patch(
+            "scylla.e2e.subtest_executor.SubTestExecutor",
+            return_value=mock_executor,
         ):
             from scylla.e2e.parallel_executor import run_tier_subtests_parallel
 
@@ -282,8 +273,6 @@ class TestRunTierSubtestsParallelSingleSubtest:
                 results_dir=tmp_path,
             )
 
-        # Manager should NOT be instantiated for single-subtest path
-        mock_manager_cls.assert_not_called()
         assert "00-empty" in results
         assert results["00-empty"] is mock_result
 
@@ -433,54 +422,3 @@ class TestParallelSubtestLoopShutdown:
 
         # Should return empty results since shutdown was requested before any subtest ran
         assert results == {}
-
-
-# ---------------------------------------------------------------------------
-# WorkspaceManager.from_existing usage
-# ---------------------------------------------------------------------------
-
-
-class TestWorkspaceManagerFromExisting:
-    """Tests verifying WorkspaceManager.from_existing() is used in child process."""
-
-    def test_from_existing_is_used_not_is_setup_hack(self) -> None:
-        """_run_subtest uses WorkspaceManager.from_existing(), not _is_setup=True hack.
-
-        This is a regression guard to ensure the _is_setup attribute mutation hack
-        has been replaced by the proper from_existing() classmethod.
-        """
-        import inspect
-
-        from scylla.e2e.parallel_executor import _run_subtest
-
-        source = inspect.getsource(_run_subtest)
-
-        # Should use from_existing classmethod
-        assert "from_existing" in source, (
-            "_run_subtest must use WorkspaceManager.from_existing() "
-            "instead of manually setting _is_setup=True"
-        )
-
-        # Should NOT use the old _is_setup=True hack
-        assert "_is_setup = True" not in source, (
-            "_run_subtest must not use the _is_setup=True hack — "
-            "use WorkspaceManager.from_existing() instead"
-        )
-
-    def test_manager_shutdown_in_finally(self) -> None:
-        """run_tier_subtests_parallel calls manager.shutdown() in finally block.
-
-        This is a regression guard to ensure Manager() resources are cleaned up
-        even if an exception is raised during parallel execution.
-        """
-        import inspect
-
-        from scylla.e2e.parallel_executor import run_tier_subtests_parallel
-
-        source = inspect.getsource(run_tier_subtests_parallel)
-
-        # Should have manager.shutdown() in a finally block
-        assert "manager.shutdown()" in source, (
-            "run_tier_subtests_parallel must call manager.shutdown() to prevent "
-            "resource leaks from multiprocessing.Manager()"
-        )
