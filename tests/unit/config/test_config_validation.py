@@ -20,12 +20,12 @@ class TestValidateModelConfigReferenced:
         models_dir.mkdir(parents=True)
         config_dir = tmp_path / "config"
 
-        model_file = models_dir / "claude-opus-4-1.yaml"
-        model_file.write_text("model_id: claude-opus-4-1\n")
+        model_file = models_dir / "claude-opus-4-6.yaml"
+        model_file.write_text("model_id: claude-opus-4-6\n")
 
         # Reference the model by stem in another config YAML
         experiment_yaml = config_dir / "experiment.yaml"
-        experiment_yaml.write_text("model: claude-opus-4-1\ntier: t0\n")
+        experiment_yaml.write_text("model: claude-opus-4-6\ntier: t0\n")
 
         warnings = validate_model_config_referenced(model_file, [config_dir, tmp_path / "tests"])
 
@@ -38,11 +38,11 @@ class TestValidateModelConfigReferenced:
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
 
-        model_file = models_dir / "claude-sonnet-4-5.yaml"
-        model_file.write_text("model_id: claude-sonnet-4-5\n")
+        model_file = models_dir / "claude-sonnet-4-6.yaml"
+        model_file.write_text("model_id: claude-sonnet-4-6\n")
 
         test_py = tests_dir / "test_something.py"
-        test_py.write_text('model_id = "claude-sonnet-4-5"\n')
+        test_py.write_text('model_id = "claude-sonnet-4-6"\n')
 
         warnings = validate_model_config_referenced(model_file, [tmp_path / "config", tests_dir])
 
@@ -60,8 +60,8 @@ class TestValidateModelConfigReferenced:
         model_file.write_text("model_id: deprecated-model\n")
 
         # Other files that do NOT reference this model
-        (config_dir / "other.yaml").write_text("model: claude-sonnet-4-5\n")
-        (tests_dir / "test_other.py").write_text('model = "claude-sonnet-4-5"\n')
+        (config_dir / "other.yaml").write_text("model: claude-sonnet-4-6\n")
+        (tests_dir / "test_other.py").write_text('model = "claude-sonnet-4-6"\n')
 
         warnings = validate_model_config_referenced(model_file, [config_dir, tests_dir])
 

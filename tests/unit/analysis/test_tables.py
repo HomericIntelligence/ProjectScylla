@@ -84,7 +84,7 @@ def test_table01_consistency_clamped() -> None:
     # This should trigger the clamping logic
     test_data = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 10,
+            "agent_model": ["claude-sonnet-4-6"] * 10,
             "tier": ["T0"] * 10,
             "score": [0.1, 0.2, 0.3, 0.8, 0.9, 0.05, 0.15, 0.25, 0.5, 0.7],  # High variance
             "passed": [True] * 5 + [False] * 5,
@@ -122,7 +122,7 @@ def test_table01_uses_compute_cop() -> None:
     # Create test data with zero pass rate to trigger inf CoP
     test_data = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 5,
+            "agent_model": ["claude-sonnet-4-6"] * 5,
             "tier": ["T0"] * 5,
             "score": [0.0] * 5,
             "passed": [False] * 5,  # Zero pass rate
@@ -150,7 +150,7 @@ def test_table08_summary_statistics() -> None:
     # Create minimal test data
     test_data = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 20,
+            "agent_model": ["claude-sonnet-4-6"] * 20,
             "tier": ["T0"] * 20,
             "score": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] * 2,
             "cost_usd": [1.0, 1.5, 2.0, 2.5, 3.0] * 4,
@@ -183,7 +183,7 @@ def test_table09_experiment_config() -> None:
     # Create minimal test data
     test_data = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 10,
+            "agent_model": ["claude-sonnet-4-6"] * 10,
             "tier": ["T0"] * 5 + ["T1"] * 5,
             "subtest": ["test1", "test2", "test1", "test2", "test1"] * 2,
         }
@@ -212,7 +212,7 @@ def test_table10_normality_tests() -> None:
     # Create test data with sufficient samples for Shapiro-Wilk (need N >= 3)
     test_data = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 10,
+            "agent_model": ["claude-sonnet-4-6"] * 10,
             "tier": ["T0"] * 10,
             "score": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
             "cost_usd": [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5],
@@ -326,7 +326,7 @@ def test_table03_handles_single_judge(sample_runs_df: Any) -> None:
             "subtest": sample_runs_df["subtest"][:10],
             "run_number": sample_runs_df["run_number"][:10],
             "judge_number": [1] * 10,
-            "judge_model": ["claude-opus-4-5"] * 10,
+            "judge_model": ["claude-opus-4-6"] * 10,
             "judge_score": [0.5, 0.6, 0.7, 0.8, 0.9, 0.4, 0.5, 0.6, 0.7, 0.8],  # Varied scores
             "judge_grade": ["A"] * 10,
         }
@@ -363,8 +363,10 @@ def test_table04_handles_single_model(sample_criteria_df: Any, sample_runs_df: A
     from scylla.analysis.tables import table04_criteria_performance
 
     # Filter to single model
-    single_model_criteria = sample_criteria_df[sample_criteria_df["agent_model"] == "Sonnet 4.5"]
-    single_model_runs = sample_runs_df[sample_runs_df["agent_model"] == "Sonnet 4.5"]
+    single_model_criteria = sample_criteria_df[
+        sample_criteria_df["agent_model"] == "claude-sonnet-4-6"
+    ]
+    single_model_runs = sample_runs_df[sample_runs_df["agent_model"] == "claude-sonnet-4-6"]
 
     markdown, latex = table04_criteria_performance(single_model_criteria, single_model_runs)
 
@@ -444,7 +446,7 @@ def test_table06_model_comparison_holm_bonferroni(sample_runs_df: Any) -> None:
     assert len(latex) > 100
 
     # Verify contains model names
-    assert "Sonnet" in markdown or "Haiku" in markdown
+    assert "sonnet" in markdown or "haiku" in markdown
 
     # Verify contains comparison metrics
     assert "Pass Rate" in markdown or "Mean Score" in markdown
@@ -460,7 +462,7 @@ def test_table06_handles_single_model() -> None:
     # Single model data
     single_model = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 10,
+            "agent_model": ["claude-sonnet-4-6"] * 10,
             "tier": ["T0"] * 10,
             "score": [0.8] * 10,
             "passed": [True] * 10,
@@ -597,7 +599,7 @@ def test_table02b_handles_missing_impl_rate() -> None:
     # Create DataFrame without impl_rate column
     test_data = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 5,
+            "agent_model": ["claude-sonnet-4-6"] * 5,
             "tier": ["T0"] * 5,
             "score": [0.5, 0.6, 0.7, 0.8, 0.9],
             "passed": [True] * 5,
@@ -870,7 +872,7 @@ def test_table_cfp_comparison_missing_column() -> None:
 
     df = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 5,
+            "agent_model": ["claude-sonnet-4-6"] * 5,
             "tier": ["T0"] * 5,
             "score": [0.5, 0.6, 0.7, 0.8, 0.9],
             "passed": [True] * 5,

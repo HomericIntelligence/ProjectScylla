@@ -60,7 +60,7 @@ def base_config() -> ExperimentConfig:
         task_prompt_file=Path("/tmp/prompt.md"),
         language="python",
         tiers_to_run=[TierID.T0],
-        judge_models=["claude-haiku-4-5-20251001"],
+        judge_models=["claude-haiku-4-5"],
     )
 
 
@@ -118,7 +118,7 @@ def _make_builder(
             task_prompt_file=Path("/tmp/prompt.md"),
             language="python",
             tiers_to_run=[TierID.T0],
-            judge_models=["claude-haiku-4-5-20251001"],
+            judge_models=["claude-haiku-4-5"],
         )
     if tier_manager is None:
         mgr = MagicMock()
@@ -271,7 +271,7 @@ class TestActionPending:
             task_prompt_file=Path("/tmp/prompt.md"),
             language="python",
             tiers_to_run=[TierID.T0],
-            judge_models=["claude-haiku-4-5-20251001"],
+            judge_models=["claude-haiku-4-5"],
             max_subtests=2,
         )
         tier_manager = MagicMock()
@@ -311,7 +311,7 @@ class TestActionPending:
             task_prompt_file=Path("/tmp/prompt.md"),
             language="python",
             tiers_to_run=[TierID.T0],
-            judge_models=["claude-haiku-4-5-20251001"],
+            judge_models=["claude-haiku-4-5"],
         )
 
         builder = _make_builder(

@@ -126,7 +126,7 @@ def test_build_environment_with_api_keys(mock_docker_executor: Any) -> None:
         workspace_dir=Path("/tmp/workspace"),
         output_dir=Path("/tmp/agent"),
         task_prompt_path=Path("/tmp/task.md"),
-        model="claude-opus-4-5",
+        model="claude-opus-4-6",
         timeout_seconds=1200,
     )
 
@@ -140,7 +140,7 @@ def test_build_environment_with_api_keys(mock_docker_executor: Any) -> None:
     ):
         env_vars = manager._build_environment(config)
 
-    assert env_vars["MODEL"] == "claude-opus-4-5"
+    assert env_vars["MODEL"] == "claude-opus-4-6"
     assert env_vars["TIMEOUT"] == "1200"
     assert env_vars["ANTHROPIC_API_KEY"] == "test-anthropic-key"
     assert env_vars["OPENAI_API_KEY"] == "test-openai-key"
@@ -163,7 +163,7 @@ def test_build_environment_without_api_keys(mock_docker_executor: Any) -> None:
     # Should not contain API keys if not in environment
     assert "ANTHROPIC_API_KEY" not in env_vars
     assert "OPENAI_API_KEY" not in env_vars
-    assert env_vars["MODEL"] == "claude-sonnet-4-5-20250929"
+    assert env_vars["MODEL"] == "claude-sonnet-4-6"
     assert env_vars["TIMEOUT"] == "600"
 
 
@@ -185,7 +185,7 @@ def test_run_with_volumes_success(
         workspace_dir=temp_directories["workspace"],
         output_dir=temp_directories["output"],
         task_prompt_path=temp_directories["prompt"],
-        model="claude-sonnet-4-5",
+        model="claude-sonnet-4-6",
     )
 
     with patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}):

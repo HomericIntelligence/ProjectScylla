@@ -39,7 +39,7 @@ class TestParseArgs:
                 "--output",
                 "/output",
                 "--model",
-                "claude-opus-4-5-20251101",
+                "claude-opus-4-6",
                 "--prompt",
                 "/prompt/task.md",
             ],
@@ -48,7 +48,7 @@ class TestParseArgs:
         args = parse_args()
         assert args.workspace == Path("/workspace")
         assert args.output == Path("/output")
-        assert args.model == "claude-opus-4-5-20251101"
+        assert args.model == "claude-opus-4-6"
         assert args.prompt == Path("/prompt/task.md")
         assert args.timeout == 300  # default
         assert args.verbose is False
@@ -64,7 +64,7 @@ class TestParseArgs:
                 "--output",
                 "/output",
                 "--model",
-                "claude-sonnet-4-5-20250929",
+                "claude-sonnet-4-6",
                 "--prompt",
                 "/prompt/task.md",
                 "--timeout",
@@ -286,7 +286,7 @@ class TestRunEvaluation:
         workspace.mkdir()
 
         prompt = "Convert Justfile to Makefile"
-        model = "claude-opus-4-5-20251101"
+        model = "claude-opus-4-6"
         timeout = 300
 
         judgment = run_evaluation(workspace, prompt, model, timeout)
@@ -383,7 +383,7 @@ class TestMain:
                 "--output",
                 str(output),
                 "--model",
-                "claude-opus-4-5-20251101",
+                "claude-opus-4-6",
                 "--prompt",
                 str(prompt_file),
             ],
@@ -409,7 +409,7 @@ class TestMain:
                 "--output",
                 str(output),
                 "--model",
-                "claude-opus-4-5-20251101",
+                "claude-opus-4-6",
                 "--prompt",
                 str(prompt_file),
             ],
@@ -446,7 +446,7 @@ class TestMain:
                 "--output",
                 str(output),
                 "--model",
-                "claude-opus-4-5-20251101",
+                "claude-opus-4-6",
                 "--prompt",
                 str(prompt_file),
                 "--verbose",

@@ -273,7 +273,7 @@ def test_scan_run_results_skips_failed_directories(tmp_path: Path) -> None:
 def test_rebuild_tier_results_empty() -> None:
     """Test rebuild_tier_results with empty run results."""
     config = MagicMock(spec=ExperimentConfig)
-    config.judge_model = "claude-opus-4-5-20251101"
+    config.judge_model = "claude-opus-4-6"
     stats = RegenerateStats()
 
     tier_results = rebuild_tier_results({}, config, stats)

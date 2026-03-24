@@ -59,7 +59,7 @@ def make_run_result() -> ReportingRunResult:
     return ReportingRunResult(
         test_id="001-test",
         tier_id="T1",
-        model_id="claude-opus-4-5-20251101",
+        model_id="claude-opus-4-6",
         run_number=1,
         timestamp="2024-01-15T14:30:00Z",
         execution=make_execution(),
@@ -189,7 +189,7 @@ class TestReportingRunResult:
         result = make_run_result()
         assert result.test_id == "001-test"
         assert result.tier_id == "T1"
-        assert result.model_id == "claude-opus-4-5-20251101"
+        assert result.model_id == "claude-opus-4-6"
         assert result.run_number == 1
         assert result.timestamp == "2024-01-15T14:30:00Z"
 
@@ -200,7 +200,7 @@ class TestReportingRunResult:
 
         assert data["test_id"] == "001-test"
         assert data["tier_id"] == "T1"
-        assert data["model_id"] == "claude-opus-4-5-20251101"
+        assert data["model_id"] == "claude-opus-4-6"
         assert data["run_number"] == 1
         assert "execution" in data
         assert "metrics" in data
@@ -346,7 +346,7 @@ class TestResultWriter:
             assert read_result is not None
             assert read_result.test_id == "001-test"
             assert read_result.tier_id == "T1"
-            assert read_result.model_id == "claude-opus-4-5-20251101"
+            assert read_result.model_id == "claude-opus-4-6"
             assert read_result.execution.status == "completed"
 
     def test_read_result_not_found(self) -> None:

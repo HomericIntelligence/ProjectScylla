@@ -45,10 +45,9 @@ class TestLoadAllModels:
     @pytest.mark.parametrize(
         "model_id",
         [
-            "claude-opus-4-5-20251101",
-            "claude-sonnet-4-5-20250929",
-            "claude-haiku-4-5-20250929",
-            "claude-opus-4-1",
+            "claude-opus-4-6",
+            "claude-sonnet-4-6",
+            "claude-haiku-4-5",
         ],
     )
     def test_load_model_by_versioned_id(self, model_id: str) -> None:
@@ -60,22 +59,19 @@ class TestLoadAllModels:
         assert config.model_id == model_id
 
     @pytest.mark.parametrize(
-        "short_id",
+        "missing_id",
         [
-            "claude-opus-4-5",
-            "claude-sonnet-4-5",
-            "claude-haiku-4-5",
+            "claude-opus-4-0",
+            "claude-sonnet-3-5",
+            "claude-nonexistent-1-0",
         ],
     )
-    def test_load_model_by_short_id_returns_none(self, short_id: str) -> None:
-        """load_model() with short (pre-rename) ID must return None after the rename."""
+    def test_load_model_nonexistent_returns_none(self, missing_id: str) -> None:
+        """load_model() with a model ID that has no config file must return None."""
         loader = ConfigLoader(_REPO_ROOT)
-        config = loader.load_model(short_id)
+        config = loader.load_model(missing_id)
 
-        assert config is None, (
-            f"Expected no config for deprecated short ID '{short_id}'; "
-            f"files should now use the versioned filename"
-        )
+        assert config is None, f"Expected no config for nonexistent model ID '{missing_id}'"
 
 
 class TestLoadTierValidation:

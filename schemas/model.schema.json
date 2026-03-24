@@ -11,7 +11,7 @@
       "type": "string",
       "description": "Unique model identifier",
       "minLength": 1,
-      "examples": ["claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101", "goose"]
+      "examples": ["claude-sonnet-4-6", "claude-opus-4-6", "goose"]
     },
     "name": {
       "type": "string",

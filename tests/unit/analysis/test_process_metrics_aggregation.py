@@ -67,7 +67,7 @@ def _make_runs_df(
         rows.append(
             {
                 "experiment": "test-exp",
-                "agent_model": "Sonnet 4.5",
+                "agent_model": "claude-sonnet-4-6",
                 "tier": "T0",
                 "subtest": "00",
                 "run_number": i + 1,

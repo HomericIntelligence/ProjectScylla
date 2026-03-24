@@ -137,7 +137,7 @@ class TestJudgeContainerManagerBuildEnvironment:
         env = manager._build_environment(config)
 
         assert env["ROLE"] == "judge"
-        assert env["MODEL"] == "claude-opus-4-5-20251101"
+        assert env["MODEL"] == "claude-opus-4-6"
         assert env["WORKSPACE_PATH"] == "/workspace"
         assert env["OUTPUT_PATH"] == "/output"
 

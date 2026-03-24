@@ -746,7 +746,7 @@ class TestCallClaudeJudge:
 
         with patch("subprocess.run", return_value=mock_result):
             stdout, _stderr, response = _call_claude_judge(
-                "Evaluate this task", "claude-opus-4-5-20251101", tmp_path
+                "Evaluate this task", "claude-opus-4-6", tmp_path
             )
 
         assert '{"score": 0.9' in stdout
@@ -761,7 +761,7 @@ class TestCallClaudeJudge:
 
         with patch("subprocess.run", return_value=mock_result):
             with pytest.raises(RuntimeError, match="Rate limit exceeded"):
-                _call_claude_judge("Evaluate", "claude-opus-4-5-20251101", tmp_path)
+                _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
 
     def test_judge_call_with_rate_limit(self, tmp_path: Path) -> None:
         """Test rate limit detection."""
@@ -780,7 +780,7 @@ class TestCallClaudeJudge:
                 )
 
                 with pytest.raises(RateLimitError):
-                    _call_claude_judge("Evaluate", "claude-opus-4-5-20251101", tmp_path)
+                    _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
 
 
 class TestSavePipelineOutputs:
@@ -891,7 +891,7 @@ class TestSaveJudgeLogs:
                 "Task prompt",
                 '{"score": 0.8}',
                 result,
-                "claude-opus-4-5-20251101",
+                "claude-opus-4-6",
                 tmp_path / "workspace",
                 raw_stdout="stdout content",
                 raw_stderr="stderr content",
@@ -954,7 +954,7 @@ class TestRunLlmJudge:
                             workspace=workspace,
                             task_prompt="Complete the task",
                             agent_output="Task completed",
-                            model="claude-opus-4-5-20251101",
+                            model="claude-opus-4-6",
                         )
 
         assert result.score == 0.9

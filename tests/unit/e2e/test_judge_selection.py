@@ -69,7 +69,7 @@ class TestSelectBestSubtest:
             ),
         }
 
-        selection = select_best_subtest(results, judge_models=["claude-sonnet-4-5"])
+        selection = select_best_subtest(results, judge_models=["claude-sonnet-4-6"])
 
         assert selection.winning_subtest == "baseline"
         assert selection.margin == 1.0
@@ -94,7 +94,7 @@ class TestSelectBestSubtest:
             ),
         }
 
-        selection = select_best_subtest(results, judge_models=["claude-sonnet-4-5"])
+        selection = select_best_subtest(results, judge_models=["claude-sonnet-4-6"])
 
         assert selection.winning_subtest == "01"
         assert abs(selection.margin - 0.20) < 0.001  # Float comparison
@@ -134,7 +134,7 @@ class TestSelectBestSubtest:
         }
 
         selection = select_best_subtest(
-            results, judge_models=["claude-sonnet-4-5"], tie_threshold=0.05
+            results, judge_models=["claude-sonnet-4-6"], tie_threshold=0.05
         )
 
         assert selection.tiebreaker_needed
@@ -146,7 +146,7 @@ class TestSelectBestSubtest:
     def test_empty_results(self) -> None:
         """Test that empty results raise error."""
         with pytest.raises(ValueError, match="No sub-test results"):
-            select_best_subtest({}, judge_models=["claude-sonnet-4-5"])
+            select_best_subtest({}, judge_models=["claude-sonnet-4-6"])
 
 
 class TestCompositeScore:

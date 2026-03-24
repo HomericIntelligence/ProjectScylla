@@ -187,7 +187,7 @@ class TestCreateAgentModelMd:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="1.0.0\n")
-            _create_agent_model_md(agent_dir, "claude-sonnet-4-5")
+            _create_agent_model_md(agent_dir, "claude-sonnet-4-6")
 
         assert (agent_dir / "MODEL.md").exists()
 
@@ -197,10 +197,10 @@ class TestCreateAgentModelMd:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="1.2.3\n")
-            _create_agent_model_md(agent_dir, "claude-opus-4-5")
+            _create_agent_model_md(agent_dir, "claude-opus-4-6")
 
         content = (agent_dir / "MODEL.md").read_text()
-        assert "claude-opus-4-5" in content
+        assert "claude-opus-4-6" in content
 
     def test_claude_version_captured(self, tmp_path: Path) -> None:
         """Claude Code version from subprocess is recorded."""
@@ -229,7 +229,7 @@ class TestCreateAgentModelMd:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=1, stdout="")
-            _create_agent_model_md(agent_dir, "claude-sonnet-4-5")
+            _create_agent_model_md(agent_dir, "claude-sonnet-4-6")
 
         content = (agent_dir / "MODEL.md").read_text()
         assert "unknown" in content
@@ -240,7 +240,7 @@ class TestCreateAgentModelMd:
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(returncode=0, stdout="1.0.0\n")
-            _create_agent_model_md(agent_dir, "claude-sonnet-4-5")
+            _create_agent_model_md(agent_dir, "claude-sonnet-4-6")
 
         assert (agent_dir / "MODEL.md").exists()
 

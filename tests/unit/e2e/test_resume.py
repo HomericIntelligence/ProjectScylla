@@ -33,10 +33,10 @@ def experiment_config() -> ExperimentConfig:
         task_commit="abc123",
         task_prompt_file=Path("/tmp/prompt.md"),
         language="mojo",
-        models=["claude-sonnet-4-5-20250929"],
+        models=["claude-sonnet-4-6"],
         runs_per_subtest=2,
         tiers_to_run=[TierID.T0],
-        judge_models=["claude-opus-4-5-20251101"],
+        judge_models=["claude-opus-4-6"],
         timeout_seconds=300,
     )
 
@@ -370,7 +370,7 @@ class TestResumeConfigMismatch:
             ("runs_per_subtest", 5),
             ("task_commit", "deadbeef"),
             ("language", "python"),
-            ("models", ["claude-haiku-4-5-20251001"]),
+            ("models", ["claude-haiku-4-5"]),
         ],
     )
     def test_hash_differs_for_included_fields(

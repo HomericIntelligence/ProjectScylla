@@ -147,7 +147,7 @@ class TestComputeJudgeConsensus:
 
         judges = [
             JudgeResultSummary(
-                model="claude-sonnet-4-5",
+                model="claude-sonnet-4-6",
                 score=0.8,
                 passed=True,
                 grade="B",
@@ -190,7 +190,7 @@ class TestComputeJudgeConsensus:
 
         judges = [
             JudgeResultSummary(
-                model="claude-sonnet-4-5",
+                model="claude-sonnet-4-6",
                 score=0.9,
                 passed=True,
                 grade="A",

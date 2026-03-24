@@ -557,11 +557,11 @@ adapter: anthropic_adapter
         config_dir = tmp_path / "config" / "models"
         config_dir.mkdir(parents=True)
 
-        # Filename says opus-4, but model_id is sonnet-4-5
+        # Filename says opus-4, but model_id is sonnet-4-6
         config_path = config_dir / "claude-opus-4.yaml"
         config_path.write_text("""
-model_id: claude-sonnet-4-5
-name: Claude Sonnet 4.5
+model_id: claude-sonnet-4-6
+name: Claude Sonnet 4.6
 provider: anthropic
 adapter: anthropic_adapter
 """)
@@ -571,12 +571,12 @@ adapter: anthropic_adapter
             config = loader.load_model("claude-opus-4")
 
         assert config is not None
-        assert config.model_id == "claude-sonnet-4-5"
+        assert config.model_id == "claude-sonnet-4-6"
         # Should have warning about mismatch
         assert len(caplog.records) == 1
         assert "claude-opus-4.yaml" in caplog.text
-        assert "claude-sonnet-4-5" in caplog.text
-        assert "claude-sonnet-4-5.yaml" in caplog.text
+        assert "claude-sonnet-4-6" in caplog.text
+        assert "claude-sonnet-4-6.yaml" in caplog.text
 
     def test_test_fixtures_skip_validation(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
@@ -1095,7 +1095,7 @@ class TestValidateSchema:
             "name": "Prompts",
         }
         valid_model = {
-            "model_id": "claude-3-5-haiku-20241022",
+            "model_id": "claude-haiku-4-5",
         }
 
         _validate_schema(valid_tier, "tier", Path("t0.yaml"))

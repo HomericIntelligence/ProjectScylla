@@ -84,7 +84,7 @@ def get_expected_filename(model_id: str) -> str:
     Converts model_id to valid filename format by replacing ':' with '-'.
 
     Args:
-        model_id: Model identifier (e.g., 'claude-sonnet-4-5')
+        model_id: Model identifier (e.g., 'claude-sonnet-4-6')
 
     Returns:
         Expected filename stem (without .yaml extension)

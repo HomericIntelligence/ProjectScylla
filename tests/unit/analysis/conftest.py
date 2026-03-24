@@ -52,7 +52,7 @@ def sample_runs_df() -> Any:
     np.random.seed(42)
     data = []
 
-    models = ["Sonnet 4.5", "Haiku 4.5"]
+    models = ["claude-sonnet-4-6", "claude-haiku-4-5"]
     tiers = ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]
     subtests = ["00", "01"]
 
@@ -143,9 +143,9 @@ def sample_judges_df(sample_runs_df: Any) -> Any:
     data = []
 
     judge_models = [
-        "claude-opus-4-5-20251101",
-        "claude-sonnet-4-5-20250129",
-        "claude-haiku-4-5-20241223",
+        "claude-opus-4-6",
+        "claude-sonnet-4-6-20250129",
+        "claude-haiku-4-5",
     ]
 
     for _idx, row in sample_runs_df.iterrows():

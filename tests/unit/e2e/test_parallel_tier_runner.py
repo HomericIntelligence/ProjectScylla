@@ -39,7 +39,7 @@ def base_config() -> ExperimentConfig:
         task_prompt_file=Path("/tmp/prompt.md"),
         language="python",
         tiers_to_run=[TierID.T0, TierID.T1],
-        judge_models=["claude-haiku-4-5-20251001"],
+        judge_models=["claude-haiku-4-5"],
     )
 
 

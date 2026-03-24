@@ -45,7 +45,7 @@ def mock_judges(mock_criterion_scores: Any) -> Any:
     """Create mock judge evaluations for testing."""
     return [
         JudgeEvaluation(
-            judge_model="claude-opus-4-5-20251101",
+            judge_model="claude-opus-4-6",
             judge_number=1,
             score=0.75,
             passed=True,
@@ -55,7 +55,7 @@ def mock_judges(mock_criterion_scores: Any) -> Any:
             criteria=mock_criterion_scores,
         ),
         JudgeEvaluation(
-            judge_model="claude-sonnet-4-5-20250929",
+            judge_model="claude-sonnet-4-6",
             judge_number=2,
             score=0.80,
             passed=True,
@@ -65,7 +65,7 @@ def mock_judges(mock_criterion_scores: Any) -> Any:
             criteria=mock_criterion_scores,
         ),
         JudgeEvaluation(
-            judge_model="claude-haiku-4-5-20241223",
+            judge_model="claude-haiku-4-5",
             judge_number=3,
             score=0.70,
             passed=True,
@@ -82,7 +82,7 @@ def mock_run_data(mock_judges: Any) -> Any:
     """Create a mock RunData object for testing."""
     return RunData(
         experiment="test-experiment-001",
-        agent_model="Sonnet 4.5",
+        agent_model="claude-sonnet-4-6",
         tier="T0",
         subtest="test-01",
         run_number=1,
@@ -115,7 +115,7 @@ def test_build_runs_df_with_mock_data(mock_run_data: Any) -> None:
     # Assert
     assert len(df) == 1
     assert df.iloc[0]["experiment"] == "test-experiment-001"
-    assert df.iloc[0]["agent_model"] == "Sonnet 4.5"
+    assert df.iloc[0]["agent_model"] == "claude-sonnet-4-6"
     assert df.iloc[0]["tier"] == "T0"
     assert df.iloc[0]["subtest"] == "test-01"
     assert df.iloc[0]["run_number"] == 1
@@ -163,7 +163,7 @@ def test_build_runs_df_multiple_runs(mock_run_data: Any) -> None:
     # Arrange - create second run with different data
     run2 = RunData(
         experiment="test-experiment-001",
-        agent_model="Haiku 4.5",
+        agent_model="claude-haiku-4-5",
         tier="T1",
         subtest="test-02",
         run_number=2,
@@ -188,8 +188,8 @@ def test_build_runs_df_multiple_runs(mock_run_data: Any) -> None:
 
     # Assert
     assert len(df) == 2
-    assert df.iloc[0]["agent_model"] == "Sonnet 4.5"
-    assert df.iloc[1]["agent_model"] == "Haiku 4.5"
+    assert df.iloc[0]["agent_model"] == "claude-sonnet-4-6"
+    assert df.iloc[1]["agent_model"] == "claude-haiku-4-5"
     assert df.iloc[0]["tier"] == "T0"
     assert df.iloc[1]["tier"] == "T1"
 
@@ -212,7 +212,7 @@ def test_build_runs_df_empty_judges() -> None:
     # Arrange
     run_no_judges = RunData(
         experiment="test-001",
-        agent_model="Sonnet 4.5",
+        agent_model="claude-sonnet-4-6",
         tier="T0",
         subtest="test-01",
         run_number=1,
@@ -251,7 +251,7 @@ def test_build_judges_df_with_mock_data(mock_run_data: Any) -> None:
     # Assert
     assert len(df) == 3  # 3 judges
     assert (df["experiment"] == "test-experiment-001").all()
-    assert (df["agent_model"] == "Sonnet 4.5").all()
+    assert (df["agent_model"] == "claude-sonnet-4-6").all()
     assert (df["tier"] == "T0").all()
     assert (df["subtest"] == "test-01").all()
     assert (df["run_number"] == 1).all()
@@ -267,7 +267,7 @@ def test_build_judges_df_judge_fields(mock_run_data: Any) -> None:
 
     # Assert - Check first judge
     judge1 = df[df["judge_number"] == 1].iloc[0]
-    assert judge1["judge_model"] == "claude-opus-4-5-20251101"
+    assert judge1["judge_model"] == "claude-opus-4-6"
     assert judge1["judge_score"] == 0.75
     assert judge1["judge_passed"]  # Check truthy (pandas returns np.True_)
     assert judge1["judge_grade"] == "B"
@@ -294,7 +294,7 @@ def test_build_judges_df_multiple_runs(mock_run_data: Any) -> None:
     # Arrange
     run2 = RunData(
         experiment="test-001",
-        agent_model="Haiku 4.5",
+        agent_model="claude-haiku-4-5",
         tier="T1",
         subtest="test-02",
         run_number=2,
@@ -337,7 +337,7 @@ def test_build_criteria_df_with_mock_data(mock_run_data: Any) -> None:
     # 3 judges × 2 criteria = 6 rows
     assert len(df) == 6
     assert (df["experiment"] == "test-experiment-001").all()
-    assert (df["agent_model"] == "Sonnet 4.5").all()
+    assert (df["agent_model"] == "claude-sonnet-4-6").all()
 
 
 def test_build_criteria_df_criterion_fields(mock_run_data: Any) -> None:

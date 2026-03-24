@@ -37,7 +37,7 @@ class JudgeContainerConfig:
     Attributes:
         agent_workspace: Path to agent workspace (mounted read-only).
         output_dir: Path for judge output (mounted read-write).
-        judge_model: Model to use for judging (default: claude-opus-4-5-20251101).
+        judge_model: Model to use for judging (default: claude-opus-4-6).
         rubric_path: Path to scoring rubric file.
         criteria_path: Path to success criteria file.
         prompt_path: Path to original task prompt file.

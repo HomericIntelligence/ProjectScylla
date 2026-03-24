@@ -293,9 +293,9 @@ class TestModelSchema:
     @pytest.mark.parametrize(
         "model_file",
         [
-            "claude-sonnet-4-5-20250929.yaml",
-            "claude-haiku-4-5-20250929.yaml",
-            "claude-opus-4-5-20251101.yaml",
+            "claude-sonnet-4-6.yaml",
+            "claude-haiku-4-5.yaml",
+            "claude-opus-4-6.yaml",
             "goose.yaml",
         ],
     )

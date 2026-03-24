@@ -117,7 +117,7 @@ def test_regenerate_consensus_all_valid_judges(tmp_path: Path) -> None:
             )
         )
 
-    models = ["claude-sonnet-4-5", "claude-opus-4-6"]
+    models = ["claude-sonnet-4-6", "claude-opus-4-6"]
     assert _regenerate_consensus(run_dir, models)
 
     # Check that consensus was written with is_valid=True
@@ -167,7 +167,7 @@ def test_regenerate_consensus_with_invalid_judge(tmp_path: Path) -> None:
         )
     )
 
-    models = ["claude-sonnet-4-5", "claude-haiku-4-5"]
+    models = ["claude-sonnet-4-6", "claude-haiku-4-5"]
     assert _regenerate_consensus(run_dir, models)
 
     # Check consensus - should only use valid judge for score but mark consensus as invalid
@@ -211,7 +211,7 @@ def test_regenerate_consensus_no_judges(tmp_path: Path) -> None:
     run_dir = tmp_path / "run_01"
     run_dir.mkdir()
 
-    models = ["claude-sonnet-4-5"]
+    models = ["claude-sonnet-4-6"]
     assert not _regenerate_consensus(run_dir, models)
 
 
@@ -234,7 +234,7 @@ def test_regenerate_consensus_backward_compat_no_is_valid(tmp_path: Path) -> Non
         )
     )
 
-    models = ["claude-sonnet-4-5"]
+    models = ["claude-sonnet-4-6"]
     assert _regenerate_consensus(run_dir, models)
 
     # Should treat missing is_valid as True
@@ -280,7 +280,7 @@ def test_regenerate_consensus_representative_reasoning(tmp_path: Path) -> None:
         )
     )
 
-    models = ["claude-sonnet-4-5", "claude-opus-4-6"]
+    models = ["claude-sonnet-4-6", "claude-opus-4-6"]
     assert _regenerate_consensus(run_dir, models)
 
     # Check consensus - should use judge 2's reasoning (closer to 0.675 consensus)
@@ -328,7 +328,7 @@ def test_regenerate_consensus_writes_criteria_scores_to_run_result_json(
         )
     )
 
-    models = ["claude-sonnet-4-5"]
+    models = ["claude-sonnet-4-6"]
     assert _regenerate_consensus(run_dir, models)
 
     # Verify run_result.json was updated with criteria_scores
@@ -364,7 +364,7 @@ def test_regenerate_consensus_writes_empty_criteria_scores_when_null(
     run_result_file = run_dir / "run_result.json"
     run_result_file.write_text(json.dumps({"run_number": 1, "judge_score": 0.0}))
 
-    models = ["claude-sonnet-4-5"]
+    models = ["claude-sonnet-4-6"]
     assert _regenerate_consensus(run_dir, models)
 
     run_data = json.loads(run_result_file.read_text())
@@ -440,7 +440,7 @@ class TestClassifyJudgeSlots:
         (agent_dir / "result.json").write_text('{"exit_code": 0}')
 
         # Create valid judge results
-        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-6"]
         for i, _model in enumerate(judge_models, start=1):
             judge_dir = run_dir / "judge" / f"judge_{i:02d}"
             judge_dir.mkdir(parents=True)
@@ -471,7 +471,7 @@ class TestClassifyJudgeSlots:
         (agent_dir / "output.txt").write_text("Agent output")
         (agent_dir / "result.json").write_text('{"exit_code": 0}')
 
-        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-6"]
         results = _classify_judge_slots(run_dir, judge_models)
 
         assert len(results) == 2
@@ -503,7 +503,7 @@ class TestClassifyJudgeSlots:
         run_dir = tmp_path / "run_01"
         run_dir.mkdir()
 
-        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-6"]
         results = _classify_judge_slots(run_dir, judge_models)
 
         assert len(results) == 2
@@ -519,7 +519,7 @@ class TestClassifyJudgeSlots:
         (agent_dir / "output.txt").write_text("Agent output")
         (agent_dir / "result.json").write_text('{"exit_code": 0}')
 
-        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5", "claude-haiku-4-5"]
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"]
 
         # Judge 1: Complete
         judge_1_dir = run_dir / "judge" / "judge_01"
@@ -570,10 +570,10 @@ class TestScanJudgesNeedingRerun:
             task_commit="abc123",
             task_prompt_file=Path("/tmp/prompt.md"),
             language="python",
-            models=["claude-sonnet-4-5"],
+            models=["claude-sonnet-4-6"],
             runs_per_subtest=1,
             tiers_to_run=[TierID.T0],
-            judge_models=["claude-opus-4-6", "claude-sonnet-4-5"],
+            judge_models=["claude-opus-4-6", "claude-sonnet-4-6"],
             timeout_seconds=300,
         )
 
@@ -716,7 +716,7 @@ class TestRerunJudgeStats:
             2: {"complete": 2, "missing": 1, "failed": 2},
         }
 
-        judge_models = ["claude-opus-4-6", "claude-sonnet-4-5"]
+        judge_models = ["claude-opus-4-6", "claude-sonnet-4-6"]
         stats.print_summary(judge_models)
 
         captured = capsys.readouterr()

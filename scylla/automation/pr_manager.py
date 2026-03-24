@@ -108,7 +108,7 @@ def commit_changes(issue_number: int, worktree_path: Path) -> None:
 
 Closes #{issue_number}
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 """
 
     # Commit

@@ -63,9 +63,9 @@ def minimal_run_context(tmp_path: Path) -> RunContext:
         task_commit="abc123",
         task_prompt_file=Path("/tmp/prompt.md"),
         language="python",
-        models=["claude-sonnet-4-5-20250929"],
+        models=["claude-sonnet-4-6"],
         runs_per_subtest=1,
-        judge_models=["claude-opus-4-5-20251101"],
+        judge_models=["claude-opus-4-6"],
         timeout_seconds=60,
     )
     subtest = SubTestConfig(id="00-empty", name="Empty", description="Empty subtest")

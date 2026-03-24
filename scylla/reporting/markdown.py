@@ -353,7 +353,7 @@ def create_report_data(
     test_id: str,
     test_name: str,
     runs_per_tier: int = 10,
-    judge_model: str = "Claude Opus 4.5",
+    judge_model: str = "claude-opus-4-6",
     timestamp: str | None = None,
 ) -> ReportData:
     """Create ReportData from experiment results.
