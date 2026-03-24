@@ -3,10 +3,10 @@
 Tests edge cases and boundary conditions using degenerate fixtures from conftest.py.
 """
 
+from typing import Any
+
 import numpy as np
 import pytest
-import pandas as pd
-from pathlib import Path
 
 
 # Cliff's Delta Degenerate Tests
@@ -21,7 +21,9 @@ class TestCliffsDetaDegenerate:
         delta = cliffs_delta(degenerate_all_same, degenerate_all_same)
         assert delta == pytest.approx(0.0)
 
-    def test_cliffs_delta_single_element_groups(self, degenerate_single_element: np.ndarray) -> None:
+    def test_cliffs_delta_single_element_groups(
+        self, degenerate_single_element: np.ndarray
+    ) -> None:
         """Test Cliff's delta with single-element groups."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -35,7 +37,9 @@ class TestCliffsDetaDegenerate:
         delta = cliffs_delta(g1, g2)
         assert delta == pytest.approx(-1.0)  # g1 < g2
 
-    def test_cliffs_delta_unbalanced_groups(self, degenerate_unbalanced_groups: dict[str, np.ndarray]) -> None:
+    def test_cliffs_delta_unbalanced_groups(
+        self, degenerate_unbalanced_groups: dict[str, np.ndarray]
+    ) -> None:
         """Test Cliff's delta with severely unbalanced group sizes."""
         from scylla.analysis.stats import cliffs_delta
 
@@ -73,7 +77,7 @@ class TestBootstrapCIDegenerate:
         """Test bootstrap CI with zero variance data."""
         from scylla.analysis.stats import bootstrap_ci
 
-        mean, ci_low, ci_high = bootstrap_ci(degenerate_all_same: np.ndarray)
+        mean, ci_low, ci_high = bootstrap_ci(degenerate_all_same)
         # All values are 0.7
         assert mean == pytest.approx(0.7, abs=1e-6)
         assert ci_low == pytest.approx(0.7, abs=1e-6)
@@ -83,7 +87,7 @@ class TestBootstrapCIDegenerate:
         """Test bootstrap CI with binary data."""
         from scylla.analysis.stats import bootstrap_ci
 
-        mean, ci_low, ci_high = bootstrap_ci(degenerate_binary_data: np.ndarray)
+        mean, ci_low, ci_high = bootstrap_ci(degenerate_binary_data)
         # Binary data should produce valid CI
         assert 0.0 <= ci_low <= mean <= ci_high <= 1.0
 
@@ -91,7 +95,7 @@ class TestBootstrapCIDegenerate:
         """Test bootstrap CI with exact boundary values (0.0, 1.0)."""
         from scylla.analysis.stats import bootstrap_ci
 
-        mean, ci_low, ci_high = bootstrap_ci(degenerate_boundary_values: np.ndarray)
+        mean, ci_low, ci_high = bootstrap_ci(degenerate_boundary_values)
         # Should handle boundaries gracefully
         assert 0.0 <= ci_low <= mean <= ci_high <= 1.0
 
@@ -99,7 +103,7 @@ class TestBootstrapCIDegenerate:
         """Test bootstrap CI with very small values (numerical stability)."""
         from scylla.analysis.stats import bootstrap_ci
 
-        mean, ci_low, ci_high = bootstrap_ci(degenerate_near_zero: np.ndarray)
+        mean, ci_low, ci_high = bootstrap_ci(degenerate_near_zero)
         # Should maintain order and positivity
         assert 0.0 < ci_low <= mean <= ci_high
         assert mean < 1e-5  # All values are very small
@@ -108,7 +112,7 @@ class TestBootstrapCIDegenerate:
         """Test bootstrap CI with extreme variance."""
         from scylla.analysis.stats import bootstrap_ci
 
-        mean, ci_low, ci_high = bootstrap_ci(degenerate_high_variance: np.ndarray)
+        mean, ci_low, ci_high = bootstrap_ci(degenerate_high_variance)
         # Should produce wide CI
         assert 0.0 <= ci_low <= mean <= ci_high <= 1.0
         ci_width = ci_high - ci_low
@@ -127,7 +131,9 @@ class TestMannWhitneyDegenerate:
         # Identical distributions -> not significant
         assert p_value > 0.05
 
-    def test_mann_whitney_all_pass_vs_all_fail(self, degenerate_all_pass, degenerate_all_fail) -> None:
+    def test_mann_whitney_all_pass_vs_all_fail(
+        self, degenerate_all_pass: Any, degenerate_all_fail: Any
+    ) -> None:
         """Test Mann-Whitney U with completely separated groups."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -147,7 +153,9 @@ class TestMannWhitneyDegenerate:
         # With very small samples, expect high p-value or warning
         assert isinstance(p_value, float)
 
-    def test_mann_whitney_unbalanced(self, degenerate_unbalanced_groups: dict[str, np.ndarray]) -> None:
+    def test_mann_whitney_unbalanced(
+        self, degenerate_unbalanced_groups: dict[str, np.ndarray]
+    ) -> None:
         """Test Mann-Whitney U with unbalanced group sizes."""
         from scylla.analysis.stats import mann_whitney_u
 
@@ -168,8 +176,8 @@ class TestConsistencyDegenerate:
         """Test consistency with zero variance."""
         from scylla.analysis.stats import compute_consistency
 
-        mean = np.mean(degenerate_all_same: np.ndarray)
-        std = np.std(degenerate_all_same: np.ndarray)
+        mean = np.mean(degenerate_all_same)
+        std = np.std(degenerate_all_same)
         # All same values -> std = 0 -> CV = 0 -> consistency = 1.0
         consistency = compute_consistency(mean, std)
         assert consistency == pytest.approx(1.0, abs=1e-6)
@@ -178,8 +186,8 @@ class TestConsistencyDegenerate:
         """Test consistency with single element."""
         from scylla.analysis.stats import compute_consistency
 
-        mean = np.mean(degenerate_single_element: np.ndarray)
-        std = np.std(degenerate_single_element: np.ndarray)
+        mean = np.mean(degenerate_single_element)
+        std = np.std(degenerate_single_element)
         # n=1 -> std=0 -> CV = 0 -> consistency = 1.0
         consistency = compute_consistency(mean, std)
         assert consistency == pytest.approx(1.0, abs=1e-6)
@@ -188,8 +196,8 @@ class TestConsistencyDegenerate:
         """Test consistency with extreme variance."""
         from scylla.analysis.stats import compute_consistency
 
-        mean = np.mean(degenerate_high_variance: np.ndarray)
-        std = np.std(degenerate_high_variance: np.ndarray)
+        mean = np.mean(degenerate_high_variance)
+        std = np.std(degenerate_high_variance)
         consistency = compute_consistency(mean, std)
         # High CV -> low consistency (could be negative, clamped to 0)
         assert 0.0 <= consistency <= 1.0
@@ -198,8 +206,8 @@ class TestConsistencyDegenerate:
         """Test consistency when mean is near zero."""
         from scylla.analysis.stats import compute_consistency
 
-        mean = np.mean(degenerate_near_zero: np.ndarray)
-        std = np.std(degenerate_near_zero: np.ndarray)
+        mean = np.mean(degenerate_near_zero)
+        std = np.std(degenerate_near_zero)
         # Very small mean -> CV could be very large
         consistency = compute_consistency(mean, std)
         # Should be clamped to [0, 1]
@@ -223,7 +231,9 @@ class TestKruskalWallisDegenerate:
         # This is expected behavior from scipy when all values are identical
         assert np.isnan(p_value) or p_value > 0.05
 
-    def test_kruskal_two_groups_only(self, degenerate_all_pass, degenerate_all_fail) -> None:
+    def test_kruskal_two_groups_only(
+        self, degenerate_all_pass: Any, degenerate_all_fail: Any
+    ) -> None:
         """Test Kruskal-Wallis with minimum 2 groups."""
         from scylla.analysis.stats import kruskal_wallis
 
@@ -233,7 +243,9 @@ class TestKruskalWallisDegenerate:
         # Completely different groups -> significant
         assert p_value < 0.05
 
-    def test_kruskal_unbalanced_groups(self, degenerate_unbalanced_groups: dict[str, np.ndarray]) -> None:
+    def test_kruskal_unbalanced_groups(
+        self, degenerate_unbalanced_groups: dict[str, np.ndarray]
+    ) -> None:
         """Test Kruskal-Wallis with severely unbalanced groups."""
         from scylla.analysis.stats import kruskal_wallis
 
@@ -260,7 +272,7 @@ class TestKruskalWallisDegenerate:
         "degenerate_binary_data",
     ],
 )
-def test_stats_pipeline_with_degenerate_data(fixture_name, request) -> None:
+def test_stats_pipeline_with_degenerate_data(fixture_name: Any, request: Any) -> None:
     """Integration test: ensure stats pipeline handles degenerate data gracefully.
 
     This test verifies that the core statistical pipeline (used in tables/figures)

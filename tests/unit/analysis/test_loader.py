@@ -4,6 +4,8 @@ Note: These tests use the public API of the loader module.
 Internal/private helper functions are not tested directly.
 """
 
+from typing import Any
+
 import pytest
 
 
@@ -202,7 +204,7 @@ def test_model_id_to_display_returns_identity() -> None:
     assert model_id_to_display("unknown-model") == "unknown-model"
 
 
-def test_dynamic_judge_discovery(tmp_path) -> None:
+def test_dynamic_judge_discovery(tmp_path: Any) -> None:
     """Test that judge loading discovers judge directories dynamically.
 
     Regression test for P1 bug where hardcoded loop [1,2,3] silently ignored
@@ -278,7 +280,7 @@ def test_dynamic_judge_discovery(tmp_path) -> None:
     assert judge_scores[5] == pytest.approx(0.95, abs=0.01)
 
 
-def test_load_run_with_missing_fields(tmp_path) -> None:
+def test_load_run_with_missing_fields(tmp_path: Any) -> None:
     """Test that load_run handles missing fields with NaN defaults."""
     from scylla.analysis.loader import load_run
 
@@ -318,7 +320,7 @@ def test_load_run_with_missing_fields(tmp_path) -> None:
     assert len(run_data.judges) == 0
 
 
-def test_load_run_with_malformed_json(tmp_path) -> None:
+def test_load_run_with_malformed_json(tmp_path: Any) -> None:
     """Test that load_run handles malformed JSON gracefully."""
     from scylla.analysis.loader import load_run
 
@@ -340,7 +342,7 @@ def test_load_run_with_malformed_json(tmp_path) -> None:
         )
 
 
-def test_load_run_missing_file(tmp_path) -> None:
+def test_load_run_missing_file(tmp_path: Any) -> None:
     """Test that load_run raises FileNotFoundError for missing run_result.json."""
     from scylla.analysis.loader import load_run
 
@@ -359,7 +361,7 @@ def test_load_run_missing_file(tmp_path) -> None:
         )
 
 
-def test_load_judgment_with_criteria(tmp_path) -> None:
+def test_load_judgment_with_criteria(tmp_path: Any) -> None:
     """Test loading judgment with full criteria scores."""
     from scylla.analysis.loader import load_judgment
 
@@ -424,7 +426,7 @@ def test_load_judgment_with_criteria(tmp_path) -> None:
     assert func_crit.items["req1"].max_points == pytest.approx(5)
 
 
-def test_load_judgment_with_none_criteria(tmp_path) -> None:
+def test_load_judgment_with_none_criteria(tmp_path: Any) -> None:
     """Test loading judgment with None criteria (edge case)."""
     from scylla.analysis.loader import load_judgment
 
@@ -450,7 +452,7 @@ def test_load_judgment_with_none_criteria(tmp_path) -> None:
     assert len(judge_eval.criteria) == 0  # Should be empty dict
 
 
-def test_load_experiment_skips_corrupted_runs(tmp_path) -> None:
+def test_load_experiment_skips_corrupted_runs(tmp_path: Any) -> None:
     """Test that load_experiment skips corrupted runs with warnings."""
     from scylla.analysis.loader import load_experiment
 
@@ -491,7 +493,7 @@ def test_load_experiment_skips_corrupted_runs(tmp_path) -> None:
     assert run_numbers == {1, 3}
 
 
-def test_parse_judge_model_handles_missing_file(tmp_path) -> None:
+def test_parse_judge_model_handles_missing_file(tmp_path: Any) -> None:
     """Test parse_judge_model raises FileNotFoundError for missing MODEL.md."""
     from scylla.analysis.loader import parse_judge_model
 
@@ -503,7 +505,7 @@ def test_parse_judge_model_handles_missing_file(tmp_path) -> None:
         parse_judge_model(model_path)
 
 
-def test_parse_judge_model_handles_invalid_format(tmp_path) -> None:
+def test_parse_judge_model_handles_invalid_format(tmp_path: Any) -> None:
     """Test parse_judge_model raises ValueError for invalid format."""
     from scylla.analysis.loader import parse_judge_model
 
@@ -516,7 +518,7 @@ def test_parse_judge_model_handles_invalid_format(tmp_path) -> None:
         parse_judge_model(model_path)
 
 
-def test_parse_judge_model_success(tmp_path) -> None:
+def test_parse_judge_model_success(tmp_path: Any) -> None:
     """Test parse_judge_model extracts model correctly."""
     from scylla.analysis.loader import parse_judge_model
 
@@ -547,7 +549,7 @@ def test_model_id_to_display_comprehensive() -> None:
     assert model_id_to_display("claude") == "claude"
 
 
-def test_schema_validation_valid_data(tmp_path) -> None:
+def test_schema_validation_valid_data(tmp_path: Any) -> None:
     """Test that valid run_result.json passes schema validation."""
     from scylla.analysis.loader import load_run
 
@@ -608,7 +610,7 @@ def test_schema_validation_valid_data(tmp_path) -> None:
     assert run_data.passed is True
 
 
-def test_schema_validation_invalid_grade(tmp_path, caplog) -> None:
+def test_schema_validation_invalid_grade(tmp_path: Any, caplog: Any) -> None:
     """Test that invalid grade triggers schema validation warning."""
     from scylla.analysis.loader import load_run
 
@@ -643,7 +645,7 @@ def test_schema_validation_invalid_grade(tmp_path, caplog) -> None:
     assert run_data.grade == "X"  # Data loaded despite validation failure
 
 
-def test_schema_validation_missing_required_field(tmp_path, caplog) -> None:
+def test_schema_validation_missing_required_field(tmp_path: Any, caplog: Any) -> None:
     """Test that missing required field triggers schema validation warning."""
     from scylla.analysis.loader import load_run
 
@@ -676,7 +678,7 @@ def test_schema_validation_missing_required_field(tmp_path, caplog) -> None:
     assert run_data.run_number == 1
 
 
-def test_resolve_agent_model_from_experiment_json(tmp_path) -> None:
+def test_resolve_agent_model_from_experiment_json(tmp_path: Any) -> None:
     """Test resolve_agent_model() reads from experiment.json first."""
     import json
 
@@ -699,7 +701,7 @@ def test_resolve_agent_model_from_experiment_json(tmp_path) -> None:
     assert model == "claude-sonnet-4-6"
 
 
-def test_resolve_agent_model_from_model_md_fallback(tmp_path) -> None:
+def test_resolve_agent_model_from_model_md_fallback(tmp_path: Any) -> None:
     """Test resolve_agent_model() falls back to MODEL.md if experiment.json missing."""
     from scylla.analysis.loader import resolve_agent_model
 
@@ -716,7 +718,7 @@ def test_resolve_agent_model_from_model_md_fallback(tmp_path) -> None:
     assert model == "claude-opus-4-6"
 
 
-def test_resolve_agent_model_raises_on_missing_data(tmp_path) -> None:
+def test_resolve_agent_model_raises_on_missing_data(tmp_path: Any) -> None:
     """Test resolve_agent_model() raises ValueError when no model found."""
     from scylla.analysis.loader import resolve_agent_model
 
@@ -729,7 +731,7 @@ def test_resolve_agent_model_raises_on_missing_data(tmp_path) -> None:
         resolve_agent_model(exp_dir)
 
 
-def test_load_all_experiments_functionality(tmp_path) -> None:
+def test_load_all_experiments_functionality(tmp_path: Any) -> None:
     """Test load_all_experiments() loads multiple experiments from directory."""
     import json
 
@@ -798,7 +800,7 @@ def test_load_all_experiments_functionality(tmp_path) -> None:
     assert experiments["experiment2"][0].score == pytest.approx(0.6)
 
 
-def test_load_all_experiments_excludes_experiments(tmp_path) -> None:
+def test_load_all_experiments_excludes_experiments(tmp_path: Any) -> None:
     """Test load_all_experiments() excludes specified experiments."""
     import json
 
@@ -839,7 +841,7 @@ def test_load_all_experiments_excludes_experiments(tmp_path) -> None:
     assert "experiment2" in experiments
 
 
-def test_load_rubric_weights_from_rubric_yaml(tmp_path) -> None:
+def test_load_rubric_weights_from_rubric_yaml(tmp_path: Any) -> None:
     """Test load_rubric_weights() parses category weights from rubric.yaml."""
     import yaml
 
@@ -871,7 +873,7 @@ def test_load_rubric_weights_from_rubric_yaml(tmp_path) -> None:
     assert weights["proportionality"] == pytest.approx(3.0)
 
 
-def test_load_rubric_weights_returns_empty_dict_if_missing(tmp_path) -> None:
+def test_load_rubric_weights_returns_empty_dict_if_missing(tmp_path: Any) -> None:
     """Test load_rubric_weights() returns {} if no rubric.yaml found."""
     from scylla.analysis.loader import load_rubric_weights
 
@@ -886,7 +888,7 @@ def test_load_rubric_weights_returns_empty_dict_if_missing(tmp_path) -> None:
     assert weights == {}
 
 
-def test_load_rubric_weights_excludes_experiments(tmp_path) -> None:
+def test_load_rubric_weights_excludes_experiments(tmp_path: Any) -> None:
     """Test load_rubric_weights() respects exclude list."""
     import yaml
 

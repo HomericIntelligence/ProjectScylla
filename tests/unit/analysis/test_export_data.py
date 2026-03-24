@@ -1,10 +1,11 @@
 """Tests for export_data.py script."""
 
 import json
+from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
-from pathlib import Path
 
 
 def test_compute_statistical_results(sample_runs_df: pd.DataFrame, tmp_path: Path) -> None:
@@ -13,7 +14,7 @@ def test_compute_statistical_results(sample_runs_df: pd.DataFrame, tmp_path: Pat
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     results = compute_statistical_results(sample_runs_df, tier_order)
 
     # Verify structure
@@ -86,7 +87,7 @@ def test_enhanced_summary_json(sample_runs_df: pd.DataFrame, tmp_path: Path) -> 
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sample_runs_df["agent_model"].unique()
 
     # Build enhanced by_model section
@@ -187,7 +188,7 @@ def test_json_nan_handler() -> None:
     assert json_nan_handler({"key": "value"}) == {"key": "value"}
 
 
-def test_compute_statistical_results_empty_df(tmp_path) -> None:
+def test_compute_statistical_results_empty_df(tmp_path: Any) -> None:
     """Test compute_statistical_results handles empty DataFrame gracefully."""
     import pandas as pd
     from export_data import compute_statistical_results
@@ -270,7 +271,7 @@ def test_compute_statistical_results_correlation_correction(sample_runs_df: pd.D
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     results = compute_statistical_results(sample_runs_df, tier_order)
 
     # Check that correlations include p_value_corrected
@@ -282,7 +283,7 @@ def test_compute_statistical_results_correlation_correction(sample_runs_df: pd.D
         # This is a forward-looking test
 
 
-def test_export_data_validation_warnings(sample_runs_df, tmp_path, capsys) -> None:
+def test_export_data_validation_warnings(sample_runs_df: Any, tmp_path: Any, capsys: Any) -> None:
     """Test that export_data logs warnings for data validation issues."""
     from export_data import compute_statistical_results
 
@@ -306,7 +307,7 @@ def test_impl_rate_integration(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     results = compute_statistical_results(sample_runs_df, tier_order)
 
     # Verify impl_rate in normality tests
@@ -342,7 +343,7 @@ def test_process_metrics_in_summary(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
 
     # --- overall_stats ---
     process_metric_keys = [
@@ -467,7 +468,7 @@ def test_compute_normality_tests_structure(sample_runs_df: pd.DataFrame) -> None
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_normality_tests(sample_runs_df, models, tier_order)
 
@@ -487,7 +488,7 @@ def test_compute_normality_tests_all_four_metrics(sample_runs_df: pd.DataFrame) 
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_normality_tests(sample_runs_df, models, tier_order)
 
@@ -504,7 +505,7 @@ def test_compute_omnibus_tests_structure(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_omnibus_tests(sample_runs_df, models, tier_order)
 
@@ -524,7 +525,7 @@ def test_compute_omnibus_tests_three_metrics(sample_runs_df: pd.DataFrame) -> No
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_omnibus_tests(sample_runs_df, models, tier_order)
 
@@ -540,7 +541,7 @@ def test_collect_pairwise_pass_rate_includes_overall_contrast(sample_runs_df: pd
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     model = sorted(sample_runs_df["agent_model"].unique())[0]
     model_runs = sample_runs_df[sample_runs_df["agent_model"] == model]
 
@@ -563,7 +564,7 @@ def test_compute_pairwise_comparisons_metrics(sample_runs_df: pd.DataFrame) -> N
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_pairwise_comparisons(sample_runs_df, models, tier_order)
 
@@ -588,7 +589,7 @@ def test_compute_effect_sizes_structure(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_effect_sizes(sample_runs_df, models, tier_order)
 
@@ -617,7 +618,7 @@ def test_compute_effect_sizes_three_metrics(sample_runs_df: pd.DataFrame) -> Non
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_effect_sizes(sample_runs_df, models, tier_order)
 
@@ -633,7 +634,7 @@ def test_compute_power_analysis_structure(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     effect_sizes = _compute_effect_sizes(sample_runs_df, models, tier_order)
     results = _compute_power_analysis(sample_runs_df, models, tier_order, effect_sizes)
@@ -652,7 +653,7 @@ def test_compute_power_analysis_includes_omnibus(sample_runs_df: pd.DataFrame) -
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     effect_sizes = _compute_effect_sizes(sample_runs_df, models, tier_order)
     results = _compute_power_analysis(sample_runs_df, models, tier_order, effect_sizes)
@@ -706,7 +707,7 @@ def test_compute_tier_descriptives_structure(sample_runs_df: pd.DataFrame) -> No
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_tier_descriptives(sample_runs_df, models, tier_order)
 
@@ -725,7 +726,7 @@ def test_compute_tier_descriptives_frontier_row(sample_runs_df: pd.DataFrame) ->
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_tier_descriptives(sample_runs_df, models, tier_order)
 
@@ -740,7 +741,7 @@ def test_compute_interaction_tests_structure(sample_runs_df: pd.DataFrame) -> No
     """_compute_interaction_tests returns SRH results for four metrics."""
     from export_data import _compute_interaction_tests
 
-    results = _compute_interaction_tests(sample_runs_df: pd.DataFrame)
+    results = _compute_interaction_tests(sample_runs_df)
 
     assert isinstance(results, list)
     assert len(results) > 0
@@ -755,7 +756,7 @@ def test_compute_interaction_tests_four_metrics(sample_runs_df: pd.DataFrame) ->
     """_compute_interaction_tests covers score, impl_rate, cost_usd, duration_seconds."""
     from export_data import _compute_interaction_tests
 
-    results = _compute_interaction_tests(sample_runs_df: pd.DataFrame)
+    results = _compute_interaction_tests(sample_runs_df)
 
     metrics_present = {entry["metric"] for entry in results}
     assert "score" in metrics_present
@@ -765,13 +766,13 @@ def test_compute_interaction_tests_four_metrics(sample_runs_df: pd.DataFrame) ->
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_normality_tests(sample_runs_df, metric) -> None:
+def test_process_metrics_in_normality_tests(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in normality_tests with required fields (Issue #1186)."""
     from export_data import _compute_normality_tests
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_normality_tests(sample_runs_df, models, tier_order)
 
@@ -786,13 +787,13 @@ def test_process_metrics_in_normality_tests(sample_runs_df, metric) -> None:
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_omnibus_tests(sample_runs_df, metric) -> None:
+def test_process_metrics_in_omnibus_tests(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in omnibus_tests with required fields (Issue #1186)."""
     from export_data import _compute_omnibus_tests
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_omnibus_tests(sample_runs_df, models, tier_order)
 
@@ -806,13 +807,13 @@ def test_process_metrics_in_omnibus_tests(sample_runs_df, metric) -> None:
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_pairwise_comparisons(sample_runs_df, metric) -> None:
+def test_process_metrics_in_pairwise_comparisons(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in pairwise_comparisons with required fields (Issue #1186)."""
     from export_data import _compute_pairwise_comparisons
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_pairwise_comparisons(sample_runs_df, models, tier_order)
 
@@ -831,13 +832,13 @@ def test_process_metrics_in_pairwise_comparisons(sample_runs_df, metric) -> None
 
 
 @pytest.mark.parametrize("metric", ["r_prog", "cfp", "pr_revert_rate"])
-def test_process_metrics_in_effect_sizes(sample_runs_df, metric) -> None:
+def test_process_metrics_in_effect_sizes(sample_runs_df: Any, metric: Any) -> None:
     """Process metrics appear in effect_sizes with required fields (Issue #1186)."""
     from export_data import _compute_effect_sizes
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_effect_sizes(sample_runs_df, models, tier_order)
 
@@ -866,7 +867,7 @@ def test_normality_tests_all_metrics(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
     results = _compute_normality_tests(sample_runs_df, models, tier_order)
 
@@ -948,7 +949,7 @@ def test_helpers_compose_to_same_result(sample_runs_df: pd.DataFrame) -> None:
 
     from scylla.analysis.figures import derive_tier_order
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     models = sorted(sample_runs_df["agent_model"].unique())
 
     orchestrated = compute_statistical_results(sample_runs_df, tier_order)
@@ -968,4 +969,4 @@ def test_helpers_compose_to_same_result(sample_runs_df: pd.DataFrame) -> None:
     assert orchestrated["tier_descriptives"] == _compute_tier_descriptives(
         sample_runs_df, models, tier_order
     )
-    assert orchestrated["interaction_tests"] == _compute_interaction_tests(sample_runs_df: pd.DataFrame)
+    assert orchestrated["interaction_tests"] == _compute_interaction_tests(sample_runs_df)

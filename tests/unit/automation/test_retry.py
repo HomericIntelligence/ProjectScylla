@@ -1,5 +1,6 @@
 """Tests for retry decorator with exponential backoff."""
 
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -139,7 +140,7 @@ class TestRetryWithBackoff:
         """Test decorator preserves function name and docstring."""
 
         @retry_with_backoff(max_retries=2)
-        def example_function() -> None:
+        def example_function() -> Any:
             """Return example result."""
             return "result"
 

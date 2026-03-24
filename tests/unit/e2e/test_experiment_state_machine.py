@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -303,7 +304,7 @@ class TestExperimentStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to COMPLETE."""
         actions_called = []
 
-        def make_action(state: ExperimentState) -> None:
+        def make_action(state: ExperimentState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 
@@ -338,7 +339,7 @@ class TestExperimentStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: ExperimentState) -> None:
+        def make_action(state: ExperimentState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 

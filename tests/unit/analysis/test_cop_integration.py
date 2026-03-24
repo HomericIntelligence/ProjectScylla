@@ -1,16 +1,15 @@
 """Tests for CoP and Frontier CoP integration (Issue #325)."""
 
+import pandas as pd
+
 
 def test_cop_frontier_cop_integration(sample_runs_df: pd.DataFrame) -> None:
     """Test that CoP and Frontier CoP are integrated (Issue #325)."""
     from export_data import compute_statistical_results
 
     from scylla.analysis.figures import derive_tier_order
-import pandas as pd
-from pathlib import Path
-import numpy as np
 
-    tier_order = derive_tier_order(sample_runs_df: pd.DataFrame)
+    tier_order = derive_tier_order(sample_runs_df)
     results = compute_statistical_results(sample_runs_df, tier_order)
 
     # Verify tier_descriptives section exists
