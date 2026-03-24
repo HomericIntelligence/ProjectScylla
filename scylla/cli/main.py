@@ -87,7 +87,7 @@ def run(
 
         scylla run 001-justfile-to-makefile --tier T0 --tier T1
 
-        scylla run 001-justfile-to-makefile --model claude-opus-4-5-20251101 --runs 1
+        scylla run 001-justfile-to-makefile --model claude-opus-4-6 --runs 1
 
     """
     if verbose and quiet:

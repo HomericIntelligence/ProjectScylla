@@ -53,9 +53,9 @@ def minimal_config() -> ExperimentConfig:
         task_commit="abc123",
         task_prompt_file=Path("/tmp/prompt.md"),
         language="python",
-        models=["claude-sonnet-4-5-20250929"],
+        models=["claude-sonnet-4-6"],
         runs_per_subtest=1,
-        judge_models=["claude-opus-4-5-20251101"],
+        judge_models=["claude-opus-4-6"],
         timeout_seconds=60,
     )
 
@@ -285,9 +285,9 @@ def stage_config(tmp_path: Path) -> ExperimentConfig:
         task_commit="abc123",
         task_prompt_file=prompt_file,
         language="python",
-        models=["claude-sonnet-4-5-20250929"],
+        models=["claude-sonnet-4-6"],
         runs_per_subtest=1,
-        judge_models=["claude-opus-4-5-20251101"],
+        judge_models=["claude-opus-4-6"],
         timeout_seconds=60,
     )
 
@@ -326,7 +326,7 @@ def stage_context(
     workspace_manager = MagicMock()
     workspace_manager.base_repo = tmp_path / "repo"
     adapter = MagicMock()
-    adapter._build_command.return_value = ["claude", "--model", "claude-sonnet-4-5-20250929"]
+    adapter._build_command.return_value = ["claude", "--model", "claude-sonnet-4-6"]
 
     return RunContext(
         config=stage_config,

@@ -98,7 +98,7 @@
       "type": "string",
       "description": "Default model ID when no --model flag is provided",
       "minLength": 1,
-      "examples": ["claude-sonnet-4-5-20250929"]
+      "examples": ["claude-sonnet-4-6"]
     },
     "runs_per_tier": {
       "type": "integer",

@@ -362,17 +362,17 @@ def test_dataframe_filtering(sample_runs_df: Any) -> None:
     assert len(t0_only) > 0
 
     # Filter by single model
-    sonnet_only = sample_runs_df[sample_runs_df["agent_model"] == "Sonnet 4.5"]
-    assert (sonnet_only["agent_model"] == "Sonnet 4.5").all()
+    sonnet_only = sample_runs_df[sample_runs_df["agent_model"] == "claude-sonnet-4-6"]
+    assert (sonnet_only["agent_model"] == "claude-sonnet-4-6").all()
     assert len(sonnet_only) > 0
 
     # Filter by both
     t0_sonnet = sample_runs_df[
-        (sample_runs_df["tier"] == "T0") & (sample_runs_df["agent_model"] == "Sonnet 4.5")
+        (sample_runs_df["tier"] == "T0") & (sample_runs_df["agent_model"] == "claude-sonnet-4-6")
     ]
     assert len(t0_sonnet) > 0
     assert (t0_sonnet["tier"] == "T0").all()
-    assert (t0_sonnet["agent_model"] == "Sonnet 4.5").all()
+    assert (t0_sonnet["agent_model"] == "claude-sonnet-4-6").all()
 
 
 def test_judge_summary_aggregation(sample_judges_df: Any) -> None:

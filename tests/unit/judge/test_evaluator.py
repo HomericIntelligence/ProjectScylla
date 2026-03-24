@@ -115,7 +115,7 @@ class TestEvaluatorConfig:
     def test_default_config(self) -> None:
         """Test Default config."""
         config = EvaluatorConfig()
-        assert config.model == "claude-opus-4-5-20251101"
+        assert config.model == "claude-opus-4-6"
         assert config.num_runs == 3
         assert config.timeout == 300
         assert config.pass_threshold == 0.70

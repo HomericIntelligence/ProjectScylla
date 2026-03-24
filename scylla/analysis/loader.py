@@ -222,7 +222,7 @@ class JudgeEvaluation:
     """A single judge's evaluation of a run.
 
     Attributes:
-        judge_model: Model ID of the judge (e.g., "claude-opus-4-5-20251101")
+        judge_model: Model ID of the judge (e.g., "claude-opus-4-6")
         judge_number: Judge number (1, 2, or 3)
         score: Overall score (0.0-1.0)
         passed: Whether the run passed
@@ -274,7 +274,7 @@ class RunData:
 
     Attributes:
         experiment: Experiment identifier
-        agent_model: Model used for agent (Sonnet 4.5, Haiku 4.5)
+        agent_model: Model used for agent (claude-sonnet-4-6, claude-haiku-4-5)
         tier: Tier ID (T0-T6)
         subtest: Subtest ID
         run_number: Run number (1-10)
@@ -325,38 +325,23 @@ class RunData:
 
 
 def model_id_to_display(model_id: str) -> str:
-    """Convert model ID to display name.
+    """Return model ID as its display name.
 
     Args:
-        model_id: Full model ID (e.g., "claude-sonnet-4-5-20250929")
+        model_id: Model ID (e.g., "claude-sonnet-4-6")
 
     Returns:
-        Display name (e.g., "Sonnet 4.5") or original ID if unknown
+        The model ID unchanged — display matches the identifier for clarity.
 
     Examples:
-        >>> model_id_to_display("claude-sonnet-4-5-20250929")
-        'Sonnet 4.5'
+        >>> model_id_to_display("claude-sonnet-4-6")
+        'claude-sonnet-4-6'
         >>> model_id_to_display("claude-haiku-4-5")
-        'Haiku 4.5'
+        'claude-haiku-4-5'
         >>> model_id_to_display("unknown-model")
         'unknown-model'
 
     """
-    # Extract model family and version from ID
-    # Pattern: claude-{family}-{major}-{minor}-{date} or claude-{family}-{major}-{minor}
-    patterns = [
-        (r"claude-opus-(\d+)-(\d+)", r"Opus \1.\2"),
-        (r"claude-sonnet-(\d+)-(\d+)", r"Sonnet \1.\2"),
-        (r"claude-haiku-(\d+)-(\d+)", r"Haiku \1.\2"),
-    ]
-
-    for pattern, replacement in patterns:
-        match = re.search(pattern, model_id)
-        if match:
-            # Use match.group(0) to avoid including trailing date suffix
-            return re.sub(pattern, replacement, match.group(0))
-
-    # Unknown model - return as-is
     return model_id
 
 

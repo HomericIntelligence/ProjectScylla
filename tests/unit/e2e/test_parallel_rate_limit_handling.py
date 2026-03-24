@@ -141,8 +141,8 @@ class TestParallelRateLimitHandling:
         # Create a mock configuration
         config = Mock(spec=ExperimentConfig)
         config.runs_per_subtest = 1
-        config.models = ["claude-3-5-sonnet-20241022"]
-        config.judge_models = ["claude-3-5-sonnet-20241022"]
+        config.models = ["claude-sonnet-4-6"]
+        config.judge_models = ["claude-sonnet-4-6"]
         config.language = "python"
         config.timeout_seconds = 300
         config.thinking_mode = None

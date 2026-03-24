@@ -499,7 +499,7 @@ def run_llm_judge(
 ) -> JudgeResult:
     """Run LLM judge evaluation on agent's work.
 
-    IMPORTANT: The judge model MUST be claude-opus-4-5-20251101.
+    IMPORTANT: The judge model MUST be claude-opus-4-6.
     Opus provides the most accurate and consistent evaluations.
     Do NOT use Sonnet or Haiku - quality matters more than speed for judging.
 
@@ -568,7 +568,7 @@ def _call_claude_judge(
 ) -> tuple[str, str, str]:
     """Call Claude CLI to get judgment with tool access to workspace.
 
-    IMPORTANT: Always use claude-opus-4-5-20251101 for judging.
+    IMPORTANT: Always use claude-opus-4-6 for judging.
     Opus provides the most accurate and consistent evaluations.
     Do NOT change to Sonnet or Haiku - quality matters more than speed for judging.
 

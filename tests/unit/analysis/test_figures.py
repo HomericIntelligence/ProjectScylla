@@ -193,7 +193,7 @@ def test_model_color_scale() -> None:
     from scylla.analysis.figures.spec_builder import model_color_scale
 
     # Test with sample model names
-    models = ["Opus 4.5", "Sonnet 4.5", "Haiku 4.5"]
+    models = ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"]
     scale = model_color_scale(models)
 
     # Verify it's an Altair Scale
@@ -235,8 +235,8 @@ def test_colors_constant() -> None:
     assert "token_types" in COLORS
 
     # Verify models palette has required keys
-    assert "Sonnet 4.5" in COLORS["models"]
-    assert "Haiku 4.5" in COLORS["models"]
+    assert "claude-sonnet-4-6" in COLORS["models"]
+    assert "claude-haiku-4-5" in COLORS["models"]
 
     # Verify tiers palette has all 7 tiers
     for tier in ["T0", "T1", "T2", "T3", "T4", "T5", "T6"]:
@@ -438,7 +438,7 @@ def test_impl_rate_figures_handle_missing_column(tmp_path: Any) -> None:
     # Create DataFrame without impl_rate column
     df = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 5,
+            "agent_model": ["claude-sonnet-4-6"] * 5,
             "tier": ["T0"] * 5,
             "passed": [True] * 5,
             "score": [0.8] * 5,
@@ -461,7 +461,7 @@ def test_get_color_with_static_colors() -> None:
     from scylla.analysis.figures import get_color
 
     # Test models category
-    sonnet_color = get_color("models", "Sonnet 4.5")
+    sonnet_color = get_color("models", "claude-sonnet-4-6")
     assert sonnet_color.startswith("#")  # Valid hex color
     assert len(sonnet_color) == 7  # #RRGGBB format
 
@@ -514,7 +514,7 @@ def test_get_color_scale_with_known_keys() -> None:
     from scylla.analysis.figures import get_color_scale
 
     # Test with known models
-    models = ["Sonnet 4.5", "Haiku 4.5", "Opus 4.5"]
+    models = ["claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-6"]
     domain, range_ = get_color_scale("models", models)
 
     # Verify domain matches input
@@ -551,7 +551,7 @@ def test_get_color_scale_with_mixed_keys() -> None:
     from scylla.analysis.figures import get_color_scale
 
     # Mix known and unknown models
-    mixed_models = ["Sonnet 4.5", "Unknown Model", "Haiku 4.5"]
+    mixed_models = ["claude-sonnet-4-6", "Unknown Model", "claude-haiku-4-5"]
     domain, range_ = get_color_scale("models", mixed_models)
 
     # Verify structure
@@ -579,10 +579,10 @@ def test_get_color_scale_single_key() -> None:
     """Test get_color_scale() handles single key correctly."""
     from scylla.analysis.figures import get_color_scale
 
-    domain, range_ = get_color_scale("models", ["Sonnet 4.5"])
+    domain, range_ = get_color_scale("models", ["claude-sonnet-4-6"])
 
     # Verify single-element lists
-    assert domain == ["Sonnet 4.5"]
+    assert domain == ["claude-sonnet-4-6"]
     assert len(range_) == 1
     assert range_[0].startswith("#")
 
@@ -708,7 +708,7 @@ def test_process_metrics_figures_handle_missing_columns(tmp_path: Any) -> None:
     # DataFrame without any process-metrics columns
     df = pd.DataFrame(
         {
-            "agent_model": ["Sonnet 4.5"] * 5,
+            "agent_model": ["claude-sonnet-4-6"] * 5,
             "tier": ["T0"] * 5,
             "passed": [True] * 5,
             "score": [0.8] * 5,
@@ -740,7 +740,7 @@ def test_fig_strategic_drift_by_tier_missing_column(tmp_path: Any) -> None:
 
     from scylla.analysis.figures.process_metrics import fig_strategic_drift_by_tier
 
-    df = pd.DataFrame({"tier": ["T0"], "agent_model": ["Sonnet 4.5"], "score": [0.8]})
+    df = pd.DataFrame({"tier": ["T0"], "agent_model": ["claude-sonnet-4-6"], "score": [0.8]})
     fig_strategic_drift_by_tier(df, tmp_path, render=False)
     assert not (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
 
@@ -754,7 +754,7 @@ def test_fig_strategic_drift_by_tier_all_null(tmp_path: Any) -> None:
     df = pd.DataFrame(
         {
             "tier": ["T0", "T1"],
-            "agent_model": ["Sonnet 4.5", "Sonnet 4.5"],
+            "agent_model": ["claude-sonnet-4-6", "claude-sonnet-4-6"],
             "strategic_drift": [None, None],
         }
     )
@@ -798,7 +798,7 @@ def test_fig33_convergence_analysis_single_experiment(tmp_path: Any) -> None:
     df = pd.DataFrame(
         {
             "experiment": ["test-001"] * 5,
-            "agent_model": ["Haiku 4.5"] * 5,
+            "agent_model": ["claude-haiku-4-5"] * 5,
             "tier": ["T0"] * 5,
             "passed": [True] * 5,
         }
@@ -892,7 +892,7 @@ def test_fig38_full_ablation_comparison(tmp_path: Any) -> None:
                         "tier": tier,
                         "subtest": f"{sub:02d}",
                         "passed": np.random.choice([0, 1]),
-                        "agent_model": "Haiku 4.5",
+                        "agent_model": "claude-haiku-4-5",
                     }
                 )
     df = pd.DataFrame(rows)

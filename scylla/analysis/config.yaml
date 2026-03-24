@@ -92,9 +92,9 @@ colors:
   # Model colors (diverging blue-red)
   # NOTE: config.yaml is the authoritative source for all color definitions
   models:
-    "Sonnet 4.5": "#4C78A8"  # Blue (Vega default blue)
-    "Haiku 4.5": "#E45756"   # Red (Vega default red)
-    "Opus 4.5": "#2ecc71"    # Green (reserved)
+    "claude-sonnet-4-6": "#4C78A8"  # Blue (Vega default blue)
+    "claude-haiku-4-5": "#E45756"   # Red (Vega default red)
+    "claude-opus-4-6": "#2ecc71"    # Green (reserved)
 
   # Tier colors (ColorBrewer Set2 - colorblind safe)
   tiers:
@@ -126,9 +126,9 @@ colors:
 
   # Judge colors (for judge variance and agreement figures)
   judges:
-    "Opus 4.5": "#4C78A8"    # Blue
-    "Sonnet 4.5": "#E45756"  # Red
-    "Haiku 4.5": "#72B7B2"   # Teal
+    "claude-opus-4-6": "#4C78A8"    # Blue
+    "claude-sonnet-4-6": "#E45756"  # Red
+    "claude-haiku-4-5": "#72B7B2"   # Teal
 
   # Criteria colors (for criteria analysis figures)
   criteria:

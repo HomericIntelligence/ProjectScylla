@@ -20,8 +20,8 @@ def write_yaml(directory: Path, filename: str, content: str) -> Path:
 
 
 VALID_CONTENT = """\
-    model_id: "claude-sonnet-4-5-20250929"
-    name: "Claude Sonnet 4.5"
+    model_id: "claude-sonnet-4-6"
+    name: "claude-sonnet-4-6"
     provider: "anthropic"
     adapter: "claude_code"
 """
@@ -85,8 +85,8 @@ class TestCheckConfigs:
         """Directory of matching configs should return exit code 0."""
         write_yaml(
             tmp_path,
-            "claude-sonnet-4-5-20250929.yaml",
-            'model_id: "claude-sonnet-4-5-20250929"\nname: "S"\nprovider: "a"\nadapter: "b"\n',
+            "claude-sonnet-4-6.yaml",
+            'model_id: "claude-sonnet-4-6"\nname: "S"\nprovider: "a"\nadapter: "b"\n',
         )
         assert check_configs(tmp_path) == 0
 
@@ -95,7 +95,7 @@ class TestCheckConfigs:
         write_yaml(
             tmp_path,
             "wrong-name.yaml",
-            'model_id: "claude-opus-4-1"\nname: "O"\nprovider: "a"\nadapter: "b"\n',
+            'model_id: "claude-opus-4-6"\nname: "O"\nprovider: "a"\nadapter: "b"\n',
         )
         assert check_configs(tmp_path) == 1
 
@@ -106,12 +106,12 @@ class TestCheckConfigs:
         write_yaml(
             tmp_path,
             "bad-a.yaml",
-            'model_id: "claude-opus-4-1"\nname: "A"\nprovider: "a"\nadapter: "b"\n',
+            'model_id: "claude-opus-4-6"\nname: "A"\nprovider: "a"\nadapter: "b"\n',
         )
         write_yaml(
             tmp_path,
             "bad-b.yaml",
-            'model_id: "claude-sonnet-4-5"\nname: "B"\nprovider: "a"\nadapter: "b"\n',
+            'model_id: "claude-sonnet-4-6"\nname: "B"\nprovider: "a"\nadapter: "b"\n',
         )
         exit_code = check_configs(tmp_path)
         assert exit_code == 1
@@ -167,7 +167,7 @@ class TestCheckConfigs:
         "filename,model_id",
         [
             # Exact match
-            ("claude-opus-4-1.yaml", "claude-opus-4-1"),
+            ("claude-opus-4-6.yaml", "claude-opus-4-6"),
             # Colon-to-hyphen normalization (API versioned model IDs)
             ("claude-sonnet-3-7-20250219.yaml", "claude-sonnet-3-7-20250219"),
         ],
@@ -187,11 +187,11 @@ class TestCheckConfigs:
         """With verbose=True, passing files should be printed to stdout."""
         write_yaml(
             tmp_path,
-            "claude-opus-4-1.yaml",
-            'model_id: "claude-opus-4-1"\nname: "O"\nprovider: "a"\nadapter: "b"\n',
+            "claude-opus-4-6.yaml",
+            'model_id: "claude-opus-4-6"\nname: "O"\nprovider: "a"\nadapter: "b"\n',
         )
         exit_code = check_configs(tmp_path, verbose=True)
         assert exit_code == 0
         captured = capsys.readouterr()
         assert "PASS" in captured.out
-        assert "claude-opus-4-1.yaml" in captured.out
+        assert "claude-opus-4-6.yaml" in captured.out

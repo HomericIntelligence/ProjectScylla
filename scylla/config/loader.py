@@ -386,7 +386,7 @@ class ConfigLoader:
             if model_file.name.startswith("."):
                 continue
 
-            model_key = model_file.stem  # e.g., "claude-opus-4-5" from "claude-opus-4-5.yaml"
+            model_key = model_file.stem  # e.g., "claude-opus-4-6" from "claude-opus-4-6.yaml"
             model = self.load_model(model_key)
             if model:
                 result[model_key] = model

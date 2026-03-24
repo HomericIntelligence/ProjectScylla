@@ -21,11 +21,11 @@ class TestExtractModelFamily:
     @pytest.mark.parametrize(
         "stem, expected",
         [
-            ("claude-sonnet-4-5", "sonnet"),
-            ("claude-opus-4-5", "opus"),
+            ("claude-sonnet-4-6", "sonnet"),
+            ("claude-opus-4-6", "opus"),
             ("claude-haiku-4-5", "haiku"),
-            ("claude-sonnet-4-5-20250929", "sonnet"),
-            ("claude-opus-4-1", "opus"),
+            ("claude-sonnet-4-6", "sonnet"),
+            ("claude-opus-4-6", "opus"),
             ("claude-3-5-sonnet", "sonnet"),
             ("claude-haiku-3", "haiku"),
         ],
@@ -59,10 +59,10 @@ class TestValidateNameModelFamilyConsistency:
     @pytest.mark.parametrize(
         "filename, name",
         [
-            ("claude-sonnet-4-5.yaml", "Claude Sonnet 4.5"),
-            ("claude-opus-4-5.yaml", "Claude Opus 4.5"),
-            ("claude-haiku-4-5.yaml", "Claude Haiku 4.5"),
-            ("claude-sonnet-4-5-20250929.yaml", "Claude Sonnet 4.5"),
+            ("claude-sonnet-4-6.yaml", "Claude Sonnet 4.5"),
+            ("claude-opus-4-6.yaml", "claude-opus-4-6"),
+            ("claude-haiku-4-5.yaml", "claude-haiku-4-5"),
+            ("claude-sonnet-4-6.yaml", "claude-sonnet-4-6"),
         ],
     )
     def test_valid_name_no_warnings(self, tmp_path: Path, filename: str, name: str) -> None:
@@ -74,8 +74,8 @@ class TestValidateNameModelFamilyConsistency:
     @pytest.mark.parametrize(
         "filename, name",
         [
-            ("claude-sonnet-4-5.yaml", "Claude Opus 4.5"),
-            ("claude-opus-4-5.yaml", "Claude Sonnet 4.5"),
+            ("claude-sonnet-4-6.yaml", "claude-opus-4-6"),
+            ("claude-opus-4-6.yaml", "Claude Sonnet 4.5"),
             ("claude-haiku-4-5.yaml", "Claude Opus 4.1"),
         ],
     )
@@ -117,8 +117,8 @@ class TestValidateNameModelFamilyConsistency:
         "filename, name",
         [
             ("claude-haiku-4-5.yaml", "Claude HAIKU 4.5"),
-            ("claude-sonnet-4-5.yaml", "claude sonnet model"),
-            ("claude-opus-4-5.yaml", "CLAUDE OPUS"),
+            ("claude-sonnet-4-6.yaml", "claude sonnet model"),
+            ("claude-opus-4-6.yaml", "CLAUDE OPUS"),
         ],
     )
     def test_case_insensitive_match(self, tmp_path: Path, filename: str, name: str) -> None:
@@ -129,17 +129,17 @@ class TestValidateNameModelFamilyConsistency:
 
     def test_empty_name_warns(self, tmp_path: Path) -> None:
         """Empty name produces a warning for a known family."""
-        config_path = tmp_path / "claude-opus-4-5.yaml"
+        config_path = tmp_path / "claude-opus-4-6.yaml"
         warnings = validate_name_model_family_consistency(config_path, "")
         assert len(warnings) == 1
 
     def test_warning_message_contains_family_and_filename(self, tmp_path: Path) -> None:
         """Warning message includes family name and filename stem."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
-        warnings = validate_name_model_family_consistency(config_path, "Claude Opus 4.5")
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
+        warnings = validate_name_model_family_consistency(config_path, "claude-opus-4-6")
         assert len(warnings) == 1
         assert "sonnet" in warnings[0]
-        assert "claude-sonnet-4-5" in warnings[0]
+        assert "claude-sonnet-4-6" in warnings[0]
 
 
 class TestValidateDefaultsFilename:
@@ -190,11 +190,11 @@ class TestGetExpectedFilename:
 
     def test_colon_replaced_with_dash(self) -> None:
         """Colons in model_id are replaced with dashes."""
-        assert get_expected_filename("anthropic:claude-sonnet-4-5") == "anthropic-claude-sonnet-4-5"
+        assert get_expected_filename("anthropic:claude-sonnet-4-6") == "anthropic-claude-sonnet-4-6"
 
     def test_plain_model_id_unchanged(self) -> None:
         """Model IDs without colons are returned unchanged."""
-        assert get_expected_filename("claude-sonnet-4-5") == "claude-sonnet-4-5"
+        assert get_expected_filename("claude-sonnet-4-6") == "claude-sonnet-4-6"
 
     def test_multiple_colons_all_replaced(self) -> None:
         """Multiple colons are all replaced."""
@@ -210,23 +210,23 @@ class TestValidateFilenameModelIdConsistency:
 
     def test_exact_match_no_warnings(self, tmp_path: Path) -> None:
         """No warnings when filename stem exactly matches model_id."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
-        warnings = validate_filename_model_id_consistency(config_path, "claude-sonnet-4-5")
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
+        warnings = validate_filename_model_id_consistency(config_path, "claude-sonnet-4-6")
         assert warnings == []
 
     def test_normalized_match_no_warnings(self, tmp_path: Path) -> None:
         """No warnings when filename matches model_id after normalizing colons."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
-        warnings = validate_filename_model_id_consistency(config_path, "claude:sonnet:4-5")
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
+        warnings = validate_filename_model_id_consistency(config_path, "claude:sonnet:4-6")
         assert warnings == []
 
     def test_mismatch_produces_warning(self, tmp_path: Path) -> None:
         """Warning when filename does not match model_id."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
-        warnings = validate_filename_model_id_consistency(config_path, "claude-opus-4-5")
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
+        warnings = validate_filename_model_id_consistency(config_path, "claude-opus-4-6")
         assert len(warnings) == 1
-        assert "claude-sonnet-4-5" in warnings[0]
-        assert "claude-opus-4-5" in warnings[0]
+        assert "claude-sonnet-4-6" in warnings[0]
+        assert "claude-opus-4-6" in warnings[0]
 
     def test_test_fixture_skipped(self, tmp_path: Path) -> None:
         """Test fixtures (prefixed with _) are skipped."""
@@ -238,7 +238,7 @@ class TestValidateFilenameModelIdConsistency:
         "stem, model_id",
         [
             ("claude-haiku-4-5", "claude-haiku-4-5"),
-            ("claude-opus-4-1", "claude-opus-4-1"),
+            ("claude-opus-4-6", "claude-opus-4-6"),
         ],
     )
     def test_various_exact_matches(self, tmp_path: Path, stem: str, model_id: str) -> None:
@@ -250,9 +250,9 @@ class TestValidateFilenameModelIdConsistency:
     def test_warning_message_contains_expected_filename(self, tmp_path: Path) -> None:
         """Warning message contains the expected filename."""
         config_path = tmp_path / "wrong-name.yaml"
-        warnings = validate_filename_model_id_consistency(config_path, "claude-sonnet-4-5")
+        warnings = validate_filename_model_id_consistency(config_path, "claude-sonnet-4-6")
         assert len(warnings) == 1
-        assert "claude-sonnet-4-5.yaml" in warnings[0]
+        assert "claude-sonnet-4-6.yaml" in warnings[0]
 
 
 class TestValidateModelConfigReferenced:
@@ -271,10 +271,10 @@ class TestValidateModelConfigReferenced:
 
     def test_no_warning_when_referenced_in_yaml(self, tmp_path: Path) -> None:
         """No warning when the stem is referenced in a YAML file."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
         search_root = tmp_path / "config"
         search_root.mkdir()
-        (search_root / "experiment.yaml").write_text("model: claude-sonnet-4-5\n")
+        (search_root / "experiment.yaml").write_text("model: claude-sonnet-4-6\n")
 
         warnings = validate_model_config_referenced(config_path, [search_root])
 
@@ -303,8 +303,8 @@ class TestValidateModelConfigReferenced:
 
     def test_self_reference_not_counted(self, tmp_path: Path) -> None:
         """The config file itself is not counted as a reference."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
-        config_path.write_text("model_id: claude-sonnet-4-5\n")
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
+        config_path.write_text("model_id: claude-sonnet-4-6\n")
 
         warnings = validate_model_config_referenced(config_path, [tmp_path])
 
@@ -312,7 +312,7 @@ class TestValidateModelConfigReferenced:
 
     def test_nonexistent_search_root_skipped(self, tmp_path: Path) -> None:
         """Non-existent search root directories are silently skipped."""
-        config_path = tmp_path / "claude-opus-4-5.yaml"
+        config_path = tmp_path / "claude-opus-4-6.yaml"
         nonexistent = tmp_path / "does-not-exist"
 
         # Should not raise, returns a warning since nothing found
@@ -322,12 +322,12 @@ class TestValidateModelConfigReferenced:
 
     def test_multiple_search_roots(self, tmp_path: Path) -> None:
         """Reference found in any search root prevents warning."""
-        config_path = tmp_path / "claude-sonnet-4-5.yaml"
+        config_path = tmp_path / "claude-sonnet-4-6.yaml"
         root_a = tmp_path / "src_a"
         root_a.mkdir()
         root_b = tmp_path / "src_b"
         root_b.mkdir()
-        (root_b / "config.py").write_text('MODEL = "claude-sonnet-4-5"')
+        (root_b / "config.py").write_text('MODEL = "claude-sonnet-4-6"')
 
         warnings = validate_model_config_referenced(config_path, [root_a, root_b])
 

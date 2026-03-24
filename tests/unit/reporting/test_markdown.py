@@ -118,7 +118,7 @@ class TestReportData:
             test_name="Test Name",
             timestamp="2024-01-15T14:30:00Z",
             runs_per_tier=10,
-            judge_model="Claude Opus 4.5",
+            judge_model="claude-opus-4-6",
         )
         assert data.test_id == "001-test"
         assert data.tiers == []
@@ -131,7 +131,7 @@ class TestReportData:
             test_name="Test Name",
             timestamp="2024-01-15T14:30:00Z",
             runs_per_tier=10,
-            judge_model="Claude Opus 4.5",
+            judge_model="claude-opus-4-6",
             tiers=[make_tier_metrics()],
         )
         assert len(data.tiers) == 1
@@ -143,7 +143,7 @@ class TestReportData:
             test_name="Test Name",
             timestamp="2024-01-15T14:30:00Z",
             runs_per_tier=10,
-            judge_model="Claude Opus 4.5",
+            judge_model="claude-opus-4-6",
             sensitivity=SensitivityAnalysis(0.05, 0.03, 0.10),
         )
         assert data.sensitivity is not None

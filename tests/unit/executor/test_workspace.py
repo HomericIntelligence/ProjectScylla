@@ -110,7 +110,7 @@ class TestCreateWorkspace:
         """Full directory path matches specification."""
         workspace = create_workspace(
             test_id="001-justfile",
-            model_id="claude-opus-4-5-20251101",
+            model_id="claude-opus-4-6",
             run_number=1,
             timestamp="2024-01-15T14-30-00",
             base_path=tmp_path,
@@ -120,7 +120,7 @@ class TestCreateWorkspace:
             tmp_path
             / "001-justfile"
             / "2024-01-15T14-30-00"
-            / "claude-opus-4-5-20251101"
+            / "claude-opus-4-6"
             / "run-01"
             / "workspace"
         )

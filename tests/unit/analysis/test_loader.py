@@ -200,24 +200,20 @@ def test_validate_int_with_invalid_values() -> None:
 # or run analysis pipeline on real data in ~/fullruns/
 
 
-def test_model_id_to_display_removes_date_suffix() -> None:
-    """Test that model_id_to_display removes date suffix from model IDs.
-
-    Regression test for P0 bug where re.sub replaced pattern within full string,
-    causing date suffix to leak through (e.g., "Sonnet 4.5-20250929").
-    """
+def test_model_id_to_display_returns_identity() -> None:
+    """Test that model_id_to_display returns the model ID unchanged."""
     from scylla.analysis.loader import model_id_to_display
 
-    # Test date-suffixed models
-    assert model_id_to_display("claude-sonnet-4-5-20250929") == "Sonnet 4.5"
-    assert model_id_to_display("claude-opus-4-5-20251101") == "Opus 4.5"
-    assert model_id_to_display("claude-haiku-3-5-20241022") == "Haiku 3.5"
+    # Current models
+    assert model_id_to_display("claude-sonnet-4-6") == "claude-sonnet-4-6"
+    assert model_id_to_display("claude-opus-4-6") == "claude-opus-4-6"
+    assert model_id_to_display("claude-haiku-4-5") == "claude-haiku-4-5"
 
-    # Test without date suffix (should still work)
-    assert model_id_to_display("claude-sonnet-3-5") == "Sonnet 3.5"
-    assert model_id_to_display("claude-opus-4-0") == "Opus 4.0"
+    # Legacy models (still returned as-is)
+    assert model_id_to_display("claude-haiku-3-5-20241022") == "claude-haiku-3-5-20241022"
+    assert model_id_to_display("claude-sonnet-3-5") == "claude-sonnet-3-5"
 
-    # Test unknown model (should return as-is)
+    # Unknown model (returned as-is)
     assert model_id_to_display("gpt-4") == "gpt-4"
     assert model_id_to_display("unknown-model") == "unknown-model"
 
@@ -273,7 +269,7 @@ def test_dynamic_judge_discovery(tmp_path: Any) -> None:
         (judge_subdir / "judgment.json").write_text(__import__("json").dumps(judgment))
 
         # Create MODEL.md with proper format
-        (judge_subdir / "MODEL.md").write_text(f"**Model**: claude-opus-4-5-judge{judge_num}\n")
+        (judge_subdir / "MODEL.md").write_text(f"**Model**: claude-opus-4-6-judge{judge_num}\n")
 
     # Load the run
     run_data = load_run(
@@ -281,7 +277,7 @@ def test_dynamic_judge_discovery(tmp_path: Any) -> None:
         experiment="test-experiment",
         tier="T0",
         subtest="00",
-        agent_model="Sonnet 4.5",
+        agent_model="claude-sonnet-4-6",
     )
 
     # Should discover all 3 judges (01, 03, 05), not just [1, 2, 3]
@@ -321,7 +317,7 @@ def test_load_run_with_missing_fields(tmp_path: Any) -> None:
         experiment="test",
         tier="T0",
         subtest="00",
-        agent_model="Sonnet 4.5",
+        agent_model="claude-sonnet-4-6",
     )
 
     # Verify NaN defaults for missing numeric fields
@@ -356,7 +352,7 @@ def test_load_run_with_malformed_json(tmp_path: Any) -> None:
             experiment="test",
             tier="T0",
             subtest="00",
-            agent_model="Sonnet 4.5",
+            agent_model="claude-sonnet-4-6",
         )
 
 
@@ -375,7 +371,7 @@ def test_load_run_missing_file(tmp_path: Any) -> None:
             experiment="test",
             tier="T0",
             subtest="00",
-            agent_model="Sonnet 4.5",
+            agent_model="claude-sonnet-4-6",
         )
 
 
@@ -413,7 +409,7 @@ def test_load_judgment_with_criteria(tmp_path: Any) -> None:
         },
     }
     judgment_path.write_text(__import__("json").dumps(judgment))
-    model_path.write_text("**Model**: claude-opus-4-5-20251101\n")
+    model_path.write_text("**Model**: claude-opus-4-6\n")
 
     # Load judgment
     judge_eval = load_judgment(judgment_path, judge_number=1)
@@ -423,7 +419,7 @@ def test_load_judgment_with_criteria(tmp_path: Any) -> None:
     assert judge_eval.passed is True
     assert judge_eval.grade == "A"
     # Note: load_judgment returns raw model ID, not display name
-    assert judge_eval.judge_model == "claude-opus-4-5-20251101"
+    assert judge_eval.judge_model == "claude-opus-4-6"
     assert judge_eval.judge_number == 1
 
     # Verify criteria
@@ -461,7 +457,7 @@ def test_load_judgment_with_none_criteria(tmp_path: Any) -> None:
         "criteria_scores": None,  # Edge case: None instead of dict
     }
     judgment_path.write_text(__import__("json").dumps(judgment))
-    model_path.write_text("**Model**: claude-haiku-4-5-20241223\n")
+    model_path.write_text("**Model**: claude-haiku-4-5\n")
 
     # Load judgment - should handle None gracefully
     judge_eval = load_judgment(judgment_path, judge_number=2)
@@ -501,7 +497,7 @@ def test_load_experiment_skips_corrupted_runs(tmp_path: Any) -> None:
             (run_dir / "run_result.json").write_text(__import__("json").dumps(run_result))
 
     # Load experiment - should skip corrupted run 2, load runs 1 and 3
-    runs = load_experiment(exp_dir, agent_model="Sonnet 4.5")
+    runs = load_experiment(exp_dir, agent_model="claude-sonnet-4-6")
 
     # Should have loaded 2 out of 3 runs
     assert len(runs) == 2
@@ -541,27 +537,23 @@ def test_parse_judge_model_success(tmp_path: Any) -> None:
     from scylla.analysis.loader import parse_judge_model
 
     model_path = tmp_path / "MODEL.md"
-    model_path.write_text("**Model**: claude-sonnet-4-5-20250929\n")
+    model_path.write_text("**Model**: claude-sonnet-4-6\n")
 
     result = parse_judge_model(model_path)
-    assert result == "claude-sonnet-4-5-20250929"
+    assert result == "claude-sonnet-4-6"
 
 
 def test_model_id_to_display_comprehensive() -> None:
     """Comprehensive test for model_id_to_display function."""
     from scylla.analysis.loader import model_id_to_display
 
-    # Claude models with dates
-    assert model_id_to_display("claude-sonnet-4-5-20250929") == "Sonnet 4.5"
-    assert model_id_to_display("claude-opus-4-5-20251101") == "Opus 4.5"
-    assert model_id_to_display("claude-haiku-4-5-20241223") == "Haiku 4.5"
-    assert model_id_to_display("claude-haiku-3-5-20241022") == "Haiku 3.5"
-
-    # Claude models without dates
-    assert model_id_to_display("claude-sonnet-3-5") == "Sonnet 3.5"
-    assert model_id_to_display("claude-opus-4-0") == "Opus 4.0"
-
-    # Unknown models (pass through)
+    # All model IDs are returned as-is
+    assert model_id_to_display("claude-sonnet-4-6") == "claude-sonnet-4-6"
+    assert model_id_to_display("claude-opus-4-6") == "claude-opus-4-6"
+    assert model_id_to_display("claude-haiku-4-5") == "claude-haiku-4-5"
+    assert model_id_to_display("claude-haiku-3-5-20241022") == "claude-haiku-3-5-20241022"
+    assert model_id_to_display("claude-sonnet-3-5") == "claude-sonnet-3-5"
+    assert model_id_to_display("claude-opus-4-0") == "claude-opus-4-0"
     assert model_id_to_display("gpt-4") == "gpt-4"
     assert model_id_to_display("gemini-pro") == "gemini-pro"
     assert model_id_to_display("unknown-model-123") == "unknown-model-123"
@@ -601,7 +593,7 @@ def test_schema_validation_valid_data(tmp_path: Any) -> None:
         "judge_reasoning": "Good work",
         "judges": [
             {
-                "model": "claude-opus-4-5-20251101",
+                "model": "claude-opus-4-6",
                 "score": 0.85,
                 "passed": True,
                 "grade": "A",
@@ -622,7 +614,7 @@ def test_schema_validation_valid_data(tmp_path: Any) -> None:
         experiment="test",
         tier="T0",
         subtest="00",
-        agent_model="Sonnet 4.5",
+        agent_model="claude-sonnet-4-6",
     )
 
     # Verify data loaded correctly
@@ -656,7 +648,7 @@ def test_schema_validation_invalid_grade(tmp_path: Any, caplog: Any) -> None:
             experiment="test",
             tier="T0",
             subtest="00",
-            agent_model="Sonnet 4.5",
+            agent_model="claude-sonnet-4-6",
         )
 
     # Verify warning was logged
@@ -689,7 +681,7 @@ def test_schema_validation_missing_required_field(tmp_path: Any, caplog: Any) ->
             experiment="test",
             tier="T0",
             subtest="00",
-            agent_model="Sonnet 4.5",
+            agent_model="claude-sonnet-4-6",
         )
 
     # Verify warning was logged
@@ -713,14 +705,14 @@ def test_resolve_agent_model_from_experiment_json(tmp_path: Any) -> None:
 
     # Create experiment.json with models list
     experiment_config = {
-        "models": ["claude-sonnet-4-5-20250929", "claude-opus-4-5-20251101"],
+        "models": ["claude-sonnet-4-6", "claude-opus-4-6"],
         "other_config": "data",
     }
     (config_dir / "experiment.json").write_text(json.dumps(experiment_config))
 
     # Resolve agent model - should return first model as display name
     model = resolve_agent_model(exp_dir)
-    assert model == "Sonnet 4.5"
+    assert model == "claude-sonnet-4-6"
 
 
 def test_resolve_agent_model_from_model_md_fallback(tmp_path: Any) -> None:
@@ -733,11 +725,11 @@ def test_resolve_agent_model_from_model_md_fallback(tmp_path: Any) -> None:
     tier_dir.mkdir(parents=True)
 
     # Create MODEL.md
-    (tier_dir / "MODEL.md").write_text("**Model**: claude-opus-4-5-20251101\n")
+    (tier_dir / "MODEL.md").write_text("**Model**: claude-opus-4-6\n")
 
     # Resolve agent model - should find MODEL.md and return display name
     model = resolve_agent_model(exp_dir)
-    assert model == "Opus 4.5"
+    assert model == "claude-opus-4-6"
 
 
 def test_resolve_agent_model_raises_on_missing_data(tmp_path: Any) -> None:
@@ -767,7 +759,7 @@ def test_load_all_experiments_functionality(tmp_path: Any) -> None:
     exp1_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
     config1_dir = exp1_dir / "config"
     config1_dir.mkdir(parents=True)
-    experiment1_config = {"models": ["claude-sonnet-4-5-20250929"]}
+    experiment1_config = {"models": ["claude-sonnet-4-6"]}
     (config1_dir / "experiment.json").write_text(json.dumps(experiment1_config))
 
     # Create one run for experiment 1
@@ -788,7 +780,7 @@ def test_load_all_experiments_functionality(tmp_path: Any) -> None:
     exp2_dir = data_dir / "experiment2" / "2026-01-31T11-00-00-run"
     config2_dir = exp2_dir / "config"
     config2_dir.mkdir(parents=True)
-    experiment2_config = {"models": ["claude-haiku-4-5-20241223"]}
+    experiment2_config = {"models": ["claude-haiku-4-5"]}
     (config2_dir / "experiment.json").write_text(json.dumps(experiment2_config))
 
     # Create one run for experiment 2
@@ -836,9 +828,7 @@ def test_load_all_experiments_excludes_experiments(tmp_path: Any) -> None:
     exp1_dir = data_dir / "experiment1" / "2026-01-31T10-00-00-run"
     config1_dir = exp1_dir / "config"
     config1_dir.mkdir(parents=True)
-    (config1_dir / "experiment.json").write_text(
-        json.dumps({"models": ["claude-sonnet-4-5-20250929"]})
-    )
+    (config1_dir / "experiment.json").write_text(json.dumps({"models": ["claude-sonnet-4-6"]}))
     run1_dir = exp1_dir / "T0" / "00" / "run_01"
     run1_dir.mkdir(parents=True)
     (run1_dir / "run_result.json").write_text(
@@ -849,9 +839,7 @@ def test_load_all_experiments_excludes_experiments(tmp_path: Any) -> None:
     exp2_dir = data_dir / "experiment2" / "2026-01-31T11-00-00-run"
     config2_dir = exp2_dir / "config"
     config2_dir.mkdir(parents=True)
-    (config2_dir / "experiment.json").write_text(
-        json.dumps({"models": ["claude-haiku-4-5-20241223"]})
-    )
+    (config2_dir / "experiment.json").write_text(json.dumps({"models": ["claude-haiku-4-5"]}))
     run2_dir = exp2_dir / "T0" / "00" / "run_01"
     run2_dir.mkdir(parents=True)
     (run2_dir / "run_result.json").write_text(

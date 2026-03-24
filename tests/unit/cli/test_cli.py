@@ -195,7 +195,7 @@ class TestListModelsCommand:
 
         assert result.exit_code == 0
         assert "Configured models:" in result.output
-        assert "claude-opus-4-5-20251101" in result.output
+        assert "claude-opus-4-6" in result.output
 
 
 class TestStatusCommand:
@@ -234,8 +234,8 @@ class TestAuditModelsCommand:
         """Audit models exits 0 when all filenames match model_id."""
         models_dir = tmp_path / "config" / "models"
         models_dir.mkdir(parents=True)
-        (models_dir / "claude-opus-4-1.yaml").write_text(
-            "model_id: claude-opus-4-1\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
+        (models_dir / "claude-opus-4-6.yaml").write_text(
+            "model_id: claude-opus-4-6\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
         )
 
         runner = CliRunner()
@@ -248,9 +248,9 @@ class TestAuditModelsCommand:
         """Audit models exits 1 when a filename does not match model_id."""
         models_dir = tmp_path / "config" / "models"
         models_dir.mkdir(parents=True)
-        # Filename is 'wrong-name.yaml' but model_id is 'claude-opus-4-1'
+        # Filename is 'wrong-name.yaml' but model_id is 'claude-opus-4-6'
         (models_dir / "wrong-name.yaml").write_text(
-            "model_id: claude-opus-4-1\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
+            "model_id: claude-opus-4-6\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
         )
 
         runner = CliRunner()
@@ -287,11 +287,10 @@ class TestAuditModelsCommand:
         models_dir = tmp_path / "config" / "models"
         models_dir.mkdir(parents=True)
         (models_dir / "bad-name-a.yaml").write_text(
-            "model_id: claude-opus-4-1\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
+            "model_id: claude-opus-4-6\ncost_per_1k_input: 0.015\ncost_per_1k_output: 0.075\n"
         )
         (models_dir / "bad-name-b.yaml").write_text(
-            "model_id: claude-sonnet-4-5-20250929\n"
-            "cost_per_1k_input: 0.003\ncost_per_1k_output: 0.015\n"
+            "model_id: claude-sonnet-4-6\ncost_per_1k_input: 0.003\ncost_per_1k_output: 0.015\n"
         )
 
         runner = CliRunner()
@@ -303,8 +302,8 @@ class TestAuditModelsCommand:
     @pytest.mark.parametrize(
         "model_id,filename",
         [
-            ("claude-opus-4-1", "claude-opus-4-1.yaml"),
-            ("claude-sonnet-4-5-20250929", "claude-sonnet-4-5-20250929.yaml"),
+            ("claude-opus-4-6", "claude-opus-4-6.yaml"),
+            ("claude-sonnet-4-6", "claude-sonnet-4-6.yaml"),
         ],
     )
     def test_audit_models_clean_parametrized(

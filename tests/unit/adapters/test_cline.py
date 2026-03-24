@@ -35,7 +35,7 @@ class TestBuildCommand:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -45,7 +45,7 @@ class TestBuildCommand:
 
             assert cmd[0] == "cline"
             assert "--model" in cmd
-            assert "claude-sonnet-4-5-20250929" in cmd
+            assert "claude-sonnet-4-6" in cmd
             assert "--non-interactive" in cmd
             assert "--prompt" in cmd
             assert "Test prompt" in cmd
@@ -59,7 +59,7 @@ class TestBuildCommand:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -82,7 +82,7 @@ class TestBuildCommand:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -250,7 +250,7 @@ class TestRun:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -278,7 +278,7 @@ class TestRun:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -314,7 +314,7 @@ class TestRun:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -345,7 +345,7 @@ class TestRun:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -364,7 +364,7 @@ class TestRun:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -391,7 +391,7 @@ class TestRun:
 
             adapter = ClineAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,

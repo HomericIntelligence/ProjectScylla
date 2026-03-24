@@ -271,8 +271,8 @@ class TestModelConfig:
 
     def test_minimal_model_config(self) -> None:
         """Minimal model config with only required fields."""
-        config = ModelConfig(model_id="claude-sonnet-4-5-20250929")
-        assert config.model_id == "claude-sonnet-4-5-20250929"
+        config = ModelConfig(model_id="claude-sonnet-4-6")
+        assert config.model_id == "claude-sonnet-4-6"
         assert config.name == ""
         assert config.adapter == "claude_code"
         assert config.temperature == 0.0
@@ -401,7 +401,7 @@ class TestJudgeConfig:
     def test_default_judge_config(self) -> None:
         """JudgeConfig should have sensible defaults."""
         config = JudgeConfig()
-        assert config.model == "claude-opus-4-5-20251101"
+        assert config.model == "claude-opus-4-6"
         assert config.adapter == "claude_code"
 
 
@@ -523,10 +523,10 @@ class TestScyllaConfig:
 
     def test_scylla_config_with_model(self) -> None:
         """ScyllaConfig with model configuration."""
-        model = ModelConfig(model_id="claude-sonnet-4-5-20250929")
-        config = ScyllaConfig(model=model, model_id="claude-sonnet-4-5-20250929")
+        model = ModelConfig(model_id="claude-sonnet-4-6")
+        config = ScyllaConfig(model=model, model_id="claude-sonnet-4-6")
         assert config.model is not None
-        assert config.model_id == "claude-sonnet-4-5-20250929"
+        assert config.model_id == "claude-sonnet-4-6"
 
     def test_scylla_config_with_context(self) -> None:
         """ScyllaConfig with test and model context."""

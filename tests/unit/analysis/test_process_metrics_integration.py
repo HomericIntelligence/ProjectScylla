@@ -95,7 +95,7 @@ def _load_run(run_dir: Path) -> RunData:
         experiment="test-exp",
         tier="T0",
         subtest="00",
-        agent_model="Sonnet 4.5",
+        agent_model="claude-sonnet-4-6",
     )
 
 
@@ -265,7 +265,7 @@ def _make_run_data(
     cfp: float | None = None,
     pr_revert_rate: float | None = None,
     tier: str = "T0",
-    agent_model: str = "Sonnet 4.5",
+    agent_model: str = "claude-sonnet-4-6",
 ) -> RunData:
     """Construct a minimal RunData with optional process metrics.
 
@@ -362,7 +362,7 @@ def sample_runs_df_with_process_metrics() -> pd.DataFrame:
     """Sample runs_df with process metric columns populated for half the rows."""
     np.random.seed(42)
     data = []
-    models = ["Sonnet 4.5", "Haiku 4.5"]
+    models = ["claude-sonnet-4-6", "claude-haiku-4-5"]
     tiers = ["T0", "T1", "T2", "T3"]
 
     for model in models:
@@ -434,7 +434,7 @@ def test_fig28_r_prog_by_tier_skips_missing_column(tmp_path: Any) -> None:
     """fig28_r_prog_by_tier skips gracefully when r_prog column is absent."""
     from scylla.analysis.figures.process_metrics import fig28_r_prog_by_tier
 
-    df = pd.DataFrame({"tier": ["T0"], "agent_model": ["Sonnet 4.5"], "score": [0.8]})
+    df = pd.DataFrame({"tier": ["T0"], "agent_model": ["claude-sonnet-4-6"], "score": [0.8]})
     # Should not raise
     fig28_r_prog_by_tier(df, tmp_path, render=False)
     # No file should be produced
@@ -448,7 +448,7 @@ def test_fig28_r_prog_by_tier_skips_all_null(tmp_path: Any) -> None:
     df = pd.DataFrame(
         {
             "tier": ["T0", "T1"],
-            "agent_model": ["Sonnet 4.5", "Sonnet 4.5"],
+            "agent_model": ["claude-sonnet-4-6", "claude-sonnet-4-6"],
             "r_prog": [None, None],
         }
     )

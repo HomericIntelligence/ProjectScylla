@@ -358,7 +358,7 @@ class TestRunJudge:
                 task_prompt="task",
                 stdout="output",
                 judge_dir=judge_dir,
-                judge_models=["claude-haiku-4-5", "claude-sonnet-4-5"],
+                judge_models=["claude-haiku-4-5", "claude-sonnet-4-6"],
             )
 
         assert consensus["score"] == 0.0

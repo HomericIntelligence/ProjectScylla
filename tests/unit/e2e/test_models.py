@@ -138,7 +138,7 @@ class TestJudgeResultSummary:
     def test_to_dict_with_valid_result(self) -> None:
         """Test that is_valid=True serializes correctly."""
         summary = JudgeResultSummary(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-6",
             score=0.8,
             passed=True,
             grade="B",
@@ -150,7 +150,7 @@ class TestJudgeResultSummary:
 
         result = summary.to_dict()
 
-        assert result["model"] == "claude-sonnet-4-5"
+        assert result["model"] == "claude-sonnet-4-6"
         assert result["score"] == 0.8
         assert result["is_valid"] is True
         assert result["criteria_scores"]["accuracy"]["score"] == 0.9

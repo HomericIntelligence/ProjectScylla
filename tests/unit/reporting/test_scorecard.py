@@ -99,21 +99,21 @@ class TestModelScorecard:
     def test_create(self) -> None:
         """Test Create."""
         scorecard = ModelScorecard(
-            model_id="claude-opus-4-5-20251101",
-            model_name="Claude Opus 4.5",
+            model_id="claude-opus-4-6",
+            model_name="claude-opus-4-6",
             updated="2024-01-15T14:30:00Z",
             overall=OverallStats(
                 tests_completed=5, average_grade="B", total_cost_usd=25.0, total_runs=50
             ),
         )
-        assert scorecard.model_id == "claude-opus-4-5-20251101"
-        assert scorecard.model_name == "Claude Opus 4.5"
+        assert scorecard.model_id == "claude-opus-4-6"
+        assert scorecard.model_name == "claude-opus-4-6"
 
     def test_create_with_tests(self) -> None:
         """Test Create with tests."""
         scorecard = ModelScorecard(
-            model_id="claude-opus-4-5-20251101",
-            model_name="Claude Opus 4.5",
+            model_id="claude-opus-4-6",
+            model_name="claude-opus-4-6",
             updated="2024-01-15T14:30:00Z",
             overall=OverallStats(
                 tests_completed=1, average_grade="A", total_cost_usd=10.0, total_runs=10
@@ -125,8 +125,8 @@ class TestModelScorecard:
     def test_to_dict(self) -> None:
         """Test To dict."""
         scorecard = ModelScorecard(
-            model_id="claude-opus-4-5-20251101",
-            model_name="Claude Opus 4.5",
+            model_id="claude-opus-4-6",
+            model_name="claude-opus-4-6",
             updated="2024-01-15T14:30:00Z",
             overall=OverallStats(
                 tests_completed=1, average_grade="A", total_cost_usd=10.0, total_runs=10
@@ -135,7 +135,7 @@ class TestModelScorecard:
         )
         data = scorecard.model_dump()
 
-        assert data["model_id"] == "claude-opus-4-5-20251101"
+        assert data["model_id"] == "claude-opus-4-6"
         assert "overall" in data
         assert "001-test" in data["tests"]
 

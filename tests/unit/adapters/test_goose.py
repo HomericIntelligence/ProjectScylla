@@ -35,7 +35,7 @@ class TestBuildCommand:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -57,7 +57,7 @@ class TestBuildCommand:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -80,7 +80,7 @@ class TestBuildCommand:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -228,12 +228,12 @@ class TestPrepareEnv:
                 prompt_file=tmppath / "prompt.md",
                 workspace=tmppath,
                 output_dir=tmppath,
-                env_vars={"GOOSE_MODEL": "claude-sonnet-4-5"},
+                env_vars={"GOOSE_MODEL": "claude-sonnet-4-6"},
             )
 
             env = adapter._prepare_env(config)
 
-            assert env["GOOSE_MODEL"] == "claude-sonnet-4-5"
+            assert env["GOOSE_MODEL"] == "claude-sonnet-4-6"
 
 
 class TestRun:
@@ -248,7 +248,7 @@ class TestRun:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -276,7 +276,7 @@ class TestRun:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -312,7 +312,7 @@ class TestRun:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -343,7 +343,7 @@ class TestRun:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -362,7 +362,7 @@ class TestRun:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
@@ -389,7 +389,7 @@ class TestRun:
 
             adapter = GooseAdapter()
             config = AdapterConfig(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-6",
                 prompt_file=prompt_file,
                 workspace=tmppath,
                 output_dir=tmppath,
