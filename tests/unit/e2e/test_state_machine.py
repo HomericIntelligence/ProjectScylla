@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -340,7 +341,7 @@ class TestStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to WORKTREE_CLEANED."""
         actions_called = []
 
-        def make_action(state: RunState) -> None:
+        def make_action(state: RunState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 
@@ -420,7 +421,7 @@ class TestStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: RunState) -> None:
+        def make_action(state: RunState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 
@@ -460,7 +461,7 @@ class TestStateMachineAdvanceToCompletion:
         """advance_to_completion stops cleanly AFTER transitioning into until_state (inclusive)."""
         actions_called: list[RunState] = []
 
-        def make_action(state: RunState) -> None:
+        def make_action(state: RunState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 

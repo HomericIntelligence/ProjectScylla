@@ -4,16 +4,18 @@ Note: These are basic smoke tests to ensure tables can be generated.
 Full validation of table content is deferred to integration tests.
 """
 
+from typing import Any
+
 import numpy as np
+import pandas as pd
 import pytest
-from pathlib import Path
 
 
 def test_table01_tier_summary_format(sample_runs_df: pd.DataFrame) -> None:
     """Test Table 1 returns valid dual-format output."""
     from scylla.analysis.tables import table01_tier_summary
 
-    markdown, latex = table01_tier_summary(sample_runs_df: pd.DataFrame)
+    markdown, latex = table01_tier_summary(sample_runs_df)
 
     # Verify both formats are non-empty strings
     assert isinstance(markdown, str)
@@ -242,7 +244,7 @@ def test_table02_tier_comparison_statistical_workflow(sample_runs_df: pd.DataFra
     """Test Table 2 statistical workflow: Kruskal-Wallis → pairwise → Holm-Bonferroni."""
     from scylla.analysis.tables import table02_tier_comparison
 
-    markdown, latex = table02_tier_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table02_tier_comparison(sample_runs_df)
 
     # Verify both formats generated
     assert isinstance(markdown, str)
@@ -284,7 +286,7 @@ def test_table02_holm_bonferroni_correction_applied(sample_runs_df: pd.DataFrame
     # The fixture has 2 models × (3 choose 2) = 2 × 3 = 6 pairwise comparisons
     # Holm-Bonferroni should correct these p-values
 
-    markdown, _latex = table02_tier_comparison(sample_runs_df: pd.DataFrame)
+    markdown, _latex = table02_tier_comparison(sample_runs_df)
 
     # Verify correction method mentioned in footer
     assert "Holm-Bonferroni" in markdown
@@ -294,7 +296,7 @@ def test_table03_judge_agreement(sample_judges_df: pd.DataFrame) -> None:
     """Test Table 3 judge agreement with Krippendorff's alpha."""
     from scylla.analysis.tables import table03_judge_agreement
 
-    markdown, latex = table03_judge_agreement(sample_judges_df: pd.DataFrame)
+    markdown, latex = table03_judge_agreement(sample_judges_df)
 
     # Verify both formats generated
     assert isinstance(markdown, str)
@@ -336,7 +338,9 @@ def test_table03_handles_single_judge(sample_runs_df: pd.DataFrame) -> None:
         table03_judge_agreement(single_judge)
 
 
-def test_table04_criteria_performance_holm_bonferroni(sample_criteria_df, sample_runs_df) -> None:
+def test_table04_criteria_performance_holm_bonferroni(
+    sample_criteria_df: Any, sample_runs_df: Any
+) -> None:
     """Test Table 4 uses Holm-Bonferroni for criteria comparisons."""
     from scylla.analysis.tables import table04_criteria_performance
 
@@ -355,7 +359,7 @@ def test_table04_criteria_performance_holm_bonferroni(sample_criteria_df, sample
     assert "p-value" in markdown or "p =" in markdown or "Winner" in markdown
 
 
-def test_table04_handles_single_model(sample_criteria_df, sample_runs_df) -> None:
+def test_table04_handles_single_model(sample_criteria_df: Any, sample_runs_df: Any) -> None:
     """Test Table 4 handles single model gracefully."""
     from scylla.analysis.tables import table04_criteria_performance
 
@@ -373,7 +377,7 @@ def test_table04_handles_single_model(sample_criteria_df, sample_runs_df) -> Non
     assert len(markdown) > 50
 
 
-def test_table04_data_driven_criteria_weights(sample_criteria_df, sample_runs_df) -> None:
+def test_table04_data_driven_criteria_weights(sample_criteria_df: Any, sample_runs_df: Any) -> None:
     """Test Table 4 derives criteria weights from data when not provided."""
     from scylla.analysis.tables import table04_criteria_performance
 
@@ -399,7 +403,7 @@ def test_table05_cost_analysis_token_breakdown(sample_runs_df: pd.DataFrame) -> 
     """Test Table 5 cost analysis includes token breakdown."""
     from scylla.analysis.tables import table05_cost_analysis
 
-    markdown, latex = table05_cost_analysis(sample_runs_df: pd.DataFrame)
+    markdown, latex = table05_cost_analysis(sample_runs_df)
 
     # Verify both formats generated
     assert isinstance(markdown, str)
@@ -434,7 +438,7 @@ def test_table06_model_comparison_holm_bonferroni(sample_runs_df: pd.DataFrame) 
     """Test Table 6 uses Holm-Bonferroni for model comparisons."""
     from scylla.analysis.tables import table06_model_comparison
 
-    markdown, latex = table06_model_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table06_model_comparison(sample_runs_df)
 
     # Verify both formats generated
     assert isinstance(markdown, str)
@@ -505,7 +509,7 @@ def test_table07_subtest_detail_appendix(sample_runs_df: pd.DataFrame) -> None:
     from scylla.analysis.tables import table07_subtest_detail
 
     # Build proper subtests DataFrame using the function
-    subtests_df = build_subtests_df(sample_runs_df: pd.DataFrame)
+    subtests_df = build_subtests_df(sample_runs_df)
 
     # Note: signature is table07_subtest_detail(runs_df, subtests_df)
     markdown, latex = table07_subtest_detail(sample_runs_df, subtests_df)
@@ -558,7 +562,7 @@ def test_table02b_impl_rate_comparison_format(sample_runs_df: pd.DataFrame) -> N
     """Test Table 2b returns valid dual-format output."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
-    markdown, latex = table02b_impl_rate_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
 
     # Verify both formats are non-empty strings
     assert isinstance(markdown, str)
@@ -575,7 +579,7 @@ def test_table02b_impl_rate_statistical_workflow(sample_runs_df: pd.DataFrame) -
     """Test Table 2b follows correct statistical workflow."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
-    markdown, _latex = table02b_impl_rate_comparison(sample_runs_df: pd.DataFrame)
+    markdown, _latex = table02b_impl_rate_comparison(sample_runs_df)
 
     # Verify statistical components are present
     assert "Kruskal-Wallis" in markdown
@@ -614,7 +618,7 @@ def test_table02b_holm_bonferroni_correction_applied(sample_runs_df: pd.DataFram
     """Test that Holm-Bonferroni correction is applied to p-values."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
-    markdown, _latex = table02b_impl_rate_comparison(sample_runs_df: pd.DataFrame)
+    markdown, _latex = table02b_impl_rate_comparison(sample_runs_df)
 
     # Verify correction is documented
     assert "Holm-Bonferroni" in markdown
@@ -704,7 +708,7 @@ def test_table02_power_column_present(sample_runs_df: pd.DataFrame) -> None:
     """Test that Power column is present in Table 2 markdown and LaTeX output."""
     from scylla.analysis.tables import table02_tier_comparison
 
-    markdown, latex = table02_tier_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table02_tier_comparison(sample_runs_df)
 
     assert "Power" in markdown
     assert "Power" in latex
@@ -714,7 +718,7 @@ def test_table02b_power_column_present(sample_runs_df: pd.DataFrame) -> None:
     """Test that Power column is present in Table 2b markdown and LaTeX output."""
     from scylla.analysis.tables import table02b_impl_rate_comparison
 
-    markdown, latex = table02b_impl_rate_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table02b_impl_rate_comparison(sample_runs_df)
 
     assert "Power" in markdown
     assert "Power" in latex
@@ -728,7 +732,7 @@ def test_table02_power_is_numeric(sample_runs_df: pd.DataFrame) -> None:
     """
     from scylla.analysis.tables import table02_tier_comparison
 
-    markdown, _latex = table02_tier_comparison(sample_runs_df: pd.DataFrame)
+    markdown, _latex = table02_tier_comparison(sample_runs_df)
 
     # The mocked mann_whitney_power returns 0.8, so we expect 0.800 in output
     assert "0.800" in markdown
@@ -782,7 +786,7 @@ def test_table02_omnibus_power_in_footer(sample_runs_df: pd.DataFrame) -> None:
     """Test that omnibus KW power value appears in Table 2 footer section."""
     from scylla.analysis.tables import table02_tier_comparison
 
-    markdown, latex = table02_tier_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table02_tier_comparison(sample_runs_df)
 
     # The mocked kruskal_wallis_power returns 0.75
     assert "power=0.750" in markdown
@@ -849,7 +853,7 @@ def test_table_cfp_comparison_format(sample_runs_df: pd.DataFrame) -> None:
     """Test table_cfp_comparison returns valid dual-format output."""
     from scylla.analysis.tables import table_cfp_comparison
 
-    markdown, latex = table_cfp_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table_cfp_comparison(sample_runs_df)
 
     assert isinstance(markdown, str)
     assert isinstance(latex, str)
@@ -904,7 +908,7 @@ def test_table_cfp_comparison_statistical_workflow(sample_runs_df: pd.DataFrame)
     """Test table_cfp_comparison uses correct statistical workflow."""
     from scylla.analysis.tables import table_cfp_comparison
 
-    markdown, latex = table_cfp_comparison(sample_runs_df: pd.DataFrame)
+    markdown, latex = table_cfp_comparison(sample_runs_df)
 
     # Verify statistical workflow documented in CFP section
     assert "Kruskal-Wallis" in markdown

@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pathlib import Path
 
 
 def test_build_runs_df_structure(sample_runs_df: pd.DataFrame) -> None:
@@ -168,7 +167,7 @@ def test_tier_summary_aggregation(sample_runs_df: pd.DataFrame) -> None:
     """Test tier_summary() aggregation function."""
     from scylla.analysis.dataframes import tier_summary
 
-    summary = tier_summary(sample_runs_df: pd.DataFrame)
+    summary = tier_summary(sample_runs_df)
 
     # Verify structure
     assert "tier" in summary.columns
@@ -198,7 +197,7 @@ def test_model_comparison_aggregation(sample_runs_df: pd.DataFrame) -> None:
     """Test model_comparison() aggregation function."""
     from scylla.analysis.dataframes import model_comparison
 
-    comparison = model_comparison(sample_runs_df: pd.DataFrame)
+    comparison = model_comparison(sample_runs_df)
 
     # Verify structure - model_comparison returns MultiIndex columns
     # from the aggregation: ('passed', 'mean'), ('score', 'mean'), etc.
@@ -219,7 +218,7 @@ def test_model_comparison_process_metric_columns(sample_runs_df: pd.DataFrame) -
     """Test model_comparison() includes process metric aggregation columns."""
     from scylla.analysis.dataframes import model_comparison
 
-    comparison = model_comparison(sample_runs_df: pd.DataFrame)
+    comparison = model_comparison(sample_runs_df)
     column_tuples = list(comparison.columns)
 
     # All 12 process metric columns must be present
@@ -245,7 +244,7 @@ def test_model_comparison_process_metric_values(sample_runs_df: pd.DataFrame) ->
     """Test model_comparison() process metric values match manual aggregation."""
     from scylla.analysis.dataframes import model_comparison
 
-    comparison = model_comparison(sample_runs_df: pd.DataFrame)
+    comparison = model_comparison(sample_runs_df)
 
     # Verify aggregation correctness for one group
     model = comparison["agent_model"].iloc[0]
@@ -378,7 +377,7 @@ def test_judge_summary_aggregation(sample_judges_df: pd.DataFrame) -> None:
     """Test judge_summary() aggregates judge scores correctly."""
     from scylla.analysis.dataframes import judge_summary
 
-    summary = judge_summary(sample_judges_df: pd.DataFrame)
+    summary = judge_summary(sample_judges_df)
 
     # Verify structure - should have one row per judge_model
     assert "judge_model" in summary.columns
@@ -434,7 +433,7 @@ def test_criteria_summary_aggregation(sample_criteria_df: pd.DataFrame) -> None:
     """Test criteria_summary() aggregates by criterion correctly."""
     from scylla.analysis.dataframes import criteria_summary
 
-    summary = criteria_summary(sample_criteria_df: pd.DataFrame)
+    summary = criteria_summary(sample_criteria_df)
 
     # Verify structure - should have one row per (agent_model, tier, criterion)
     assert "agent_model" in summary.columns

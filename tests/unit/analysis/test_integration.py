@@ -5,10 +5,10 @@ Tests the full pipeline flow: load -> build DataFrames -> generate outputs.
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Any
 
 import pandas as pd
 import pytest
-import numpy as np
 
 
 def test_e2e_pipeline_with_sample_data(sample_runs_df: pd.DataFrame) -> None:
@@ -29,14 +29,14 @@ def test_e2e_pipeline_with_sample_data(sample_runs_df: pd.DataFrame) -> None:
     assert "tier" in sample_runs_df.columns
     assert "agent_model" in sample_runs_df.columns
     assert "passed" in sample_runs_df.columns
-    assert len(sample_runs_df: pd.DataFrame) > 0
+    assert len(sample_runs_df) > 0
 
     # Test table generation (no exceptions)
     with TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
 
         # Generate summary table (tables don't take output_dir)
-        table_md, table_tex = table01_tier_summary(sample_runs_df: pd.DataFrame)
+        table_md, table_tex = table01_tier_summary(sample_runs_df)
         assert isinstance(table_md, str)
         assert isinstance(table_tex, str)
         assert len(table_md) > 0
@@ -102,7 +102,7 @@ def test_e2e_dataframe_types_validation(sample_runs_df: pd.DataFrame) -> None:
         ("table01_tier_summary", "scylla.analysis.tables.summary"),
     ],
 )
-def test_e2e_smoke_test_outputs(function_name, module_path, sample_runs_df) -> None:
+def test_e2e_smoke_test_outputs(function_name: Any, module_path: Any, sample_runs_df: Any) -> None:
     """Smoke test: verify key outputs can be generated without crashes."""
     import importlib
 
@@ -115,7 +115,7 @@ def test_e2e_smoke_test_outputs(function_name, module_path, sample_runs_df) -> N
         # Call function - should not raise
         if "table" in function_name:
             # Tables don't take output_dir
-            result = func(sample_runs_df: pd.DataFrame)
+            result = func(sample_runs_df)
             assert result is not None
             assert len(result) == 2  # (markdown, latex)
         else:

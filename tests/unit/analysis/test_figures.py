@@ -1,11 +1,14 @@
 """Unit tests for figure generation."""
 
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+
 
 def test_fig01_score_variance_by_tier(sample_runs_df: pd.DataFrame, tmp_path: Path) -> None:
     """Test Fig 1 generates files correctly."""
     from scylla.analysis.figures.variance import fig01_score_variance_by_tier
-from pathlib import Path
-import numpy as np
 
     fig01_score_variance_by_tier(sample_runs_df, tmp_path, render=False)
 
@@ -347,7 +350,7 @@ def test_latex_snippet_generation(sample_runs_df: pd.DataFrame, tmp_path: Path) 
 
     # Create a simple chart (avoiding mocked figure functions)
     chart = (
-        alt.Chart(sample_runs_df: pd.DataFrame)
+        alt.Chart(sample_runs_df)
         .mark_bar()
         .encode(x="tier:O", y="mean(score):Q")
         .properties(title="Test Figure for LaTeX")
@@ -372,7 +375,7 @@ def test_latex_snippet_generation(sample_runs_df: pd.DataFrame, tmp_path: Path) 
     assert "\\end{figure}" in content
 
 
-def test_latex_snippet_with_custom_caption(tmp_path) -> None:
+def test_latex_snippet_with_custom_caption(tmp_path: Any) -> None:
     """Test LaTeX snippet with custom caption."""
     import altair as alt
     import pandas as pd
@@ -425,7 +428,7 @@ def test_fig27_impl_rate_distribution(sample_runs_df: pd.DataFrame, tmp_path: Pa
     assert (tmp_path / "fig27_impl_rate_distribution.vl.json").exists()
 
 
-def test_impl_rate_figures_handle_missing_column(tmp_path) -> None:
+def test_impl_rate_figures_handle_missing_column(tmp_path: Any) -> None:
     """Test Impl-Rate figures handle missing impl_rate column gracefully."""
     import pandas as pd
 
@@ -695,7 +698,7 @@ def test_fig30_pr_revert_by_tier(sample_runs_df: pd.DataFrame, tmp_path: Path) -
     assert (tmp_path / "fig30_pr_revert_by_tier.vl.json").exists()
 
 
-def test_process_metrics_figures_handle_missing_columns(tmp_path) -> None:
+def test_process_metrics_figures_handle_missing_columns(tmp_path: Any) -> None:
     """Process-metrics figures skip gracefully when their column is absent."""
     import pandas as pd
 
@@ -734,7 +737,7 @@ def test_fig_strategic_drift_by_tier(sample_runs_df: pd.DataFrame, tmp_path: Pat
     assert (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
 
 
-def test_fig_strategic_drift_by_tier_missing_column(tmp_path) -> None:
+def test_fig_strategic_drift_by_tier_missing_column(tmp_path: Any) -> None:
     """fig_strategic_drift_by_tier skips gracefully when column absent."""
     import pandas as pd
 
@@ -745,7 +748,7 @@ def test_fig_strategic_drift_by_tier_missing_column(tmp_path) -> None:
     assert not (tmp_path / "fig_strategic_drift_by_tier.vl.json").exists()
 
 
-def test_fig_strategic_drift_by_tier_all_null(tmp_path) -> None:
+def test_fig_strategic_drift_by_tier_all_null(tmp_path: Any) -> None:
     """fig_strategic_drift_by_tier skips gracefully when column all-null."""
     import pandas as pd
 

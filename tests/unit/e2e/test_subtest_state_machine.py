@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -344,7 +345,7 @@ class TestSubtestStateMachineAdvanceToCompletion:
         """advance_to_completion runs through all states to AGGREGATED."""
         actions_called = []
 
-        def make_action(state: SubtestState) -> None:
+        def make_action(state: SubtestState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 
@@ -369,7 +370,7 @@ class TestSubtestStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: SubtestState) -> None:
+        def make_action(state: SubtestState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 
@@ -399,7 +400,7 @@ class TestSubtestStateMachineAdvanceToCompletion:
 
         actions_called = []
 
-        def make_action(state: SubtestState) -> None:
+        def make_action(state: SubtestState) -> Any:
             def action() -> None:
                 actions_called.append(state)
 
