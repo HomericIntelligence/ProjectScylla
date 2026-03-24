@@ -1,13 +1,13 @@
 # Contributor Covenant Code of Conduct
 
-## Our Commitment
+## Our Pledge
 
-We as members, contributors, and leaders commit to making participation in our community a harassment-free
+We as members, contributors, and leaders pledge to make participation in our community a harassment-free
 experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex
 characteristics, gender identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity and orientation.
+nationality, personal appearance, race, caste, color, religion, or sexual identity and orientation.
 
-We commit to acting and interacting in ways that contribute to an open, welcoming, diverse, inclusive, and
+We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and
 healthy community.
 
 ## Our Standards
@@ -48,7 +48,8 @@ online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders
-responsible for enforcement at <4211002+mvillmow@users.noreply.github.com>. All complaints will be reviewed and investigated.
+responsible for enforcement by reporting issues via GitHub repository Issues. All complaints will be reviewed
+and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 
@@ -96,14 +97,14 @@ individuals.
 This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 2.1, available at
 [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
 
-Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcement ladder][mozilla coc].
+Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcement ladder][Mozilla CoC].
 
 For answers to common questions about this code of conduct, see the FAQ at
-[https://www.contributor-covenant.org/faq][faq]. Translations are available at
+[https://www.contributor-covenant.org/faq][FAQ]. Translations are available at
 [https://www.contributor-covenant.org/translations][translations].
 
 [homepage]: https://www.contributor-covenant.org
-[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct/
-[mozilla coc]: https://github.com/mozilla/inclusion
-[faq]: https://www.contributor-covenant.org/faq/
-[translations]: https://www.contributor-covenant.org/translations/
+[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
+[Mozilla CoC]: https://github.com/mozilla/diversity
+[FAQ]: https://www.contributor-covenant.org/faq
+[translations]: https://www.contributor-covenant.org/translations
