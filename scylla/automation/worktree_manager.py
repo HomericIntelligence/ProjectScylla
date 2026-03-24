@@ -47,9 +47,22 @@ class WorktreeManager:
                 base_branch = result.stdout.strip()
                 logger.debug(f"Auto-detected base branch: {base_branch}")
             except Exception:
-                # Fallback to origin/main if auto-detection fails
-                base_branch = "origin/main"
-                logger.warning("Could not auto-detect base branch, using origin/main")
+                # Fallback: probe which branch actually exists
+                for candidate in ("origin/main", "origin/master"):
+                    try:
+                        run(
+                            ["git", "rev-parse", "--verify", candidate],
+                            cwd=self.repo_root,
+                            capture_output=True,
+                        )
+                        base_branch = candidate
+                        logger.warning(f"Could not auto-detect base branch, found {candidate}")
+                        break
+                    except Exception:
+                        continue
+                if base_branch is None:
+                    base_branch = "origin/main"
+                    logger.warning("Could not auto-detect base branch, defaulting to origin/main")
 
         self.base_branch = base_branch
         self.worktrees: dict[int, Path] = {}
