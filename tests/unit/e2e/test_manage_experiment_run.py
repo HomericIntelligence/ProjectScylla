@@ -71,7 +71,6 @@ class TestCmdRunFromWithCheckpoint:
                 "replay_generated",
                 "--filter-tier",
                 "T0",
-                "--skip-judge-validation",
             ]
         )
 
@@ -144,7 +143,6 @@ class TestCmdRunFromWithCheckpoint:
                 str(results_dir),
                 "--from-tier",
                 "subtests_running",
-                "--skip-judge-validation",
             ]
         )
 
@@ -205,7 +203,6 @@ class TestCmdRunFromWithCheckpoint:
                 "subtests_running",
                 "--filter-tier",
                 "T0",
-                "--skip-judge-validation",
             ]
         )
 
@@ -258,7 +255,6 @@ class TestCmdRunFromWithCheckpoint:
                 str(results_dir),
                 "--from-experiment",
                 "tiers_running",
-                "--skip-judge-validation",
             ]
         )
 
@@ -352,7 +348,6 @@ class TestCmdRunFromInBatchMode:
                 "replay_generated",
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -424,7 +419,6 @@ class TestCmdRunFromInBatchMode:
                 "not_a_valid_state",
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -484,7 +478,6 @@ class TestAddJudgeDedup:
                 "sonnet",
                 "--add-judge",
                 "sonnet",
-                "--skip-judge-validation",
             ]
         )
 
@@ -523,7 +516,6 @@ class TestAddJudgeDedup:
                 "sonnet",
                 "--add-judge",
                 "opus",
-                "--skip-judge-validation",
             ]
         )
 
@@ -561,7 +553,6 @@ class TestAddJudgeDedup:
                 "--config",
                 str(config_dir),
                 "--add-judge",
-                "--skip-judge-validation",
             ]
         )
 
@@ -624,7 +615,6 @@ class TestYamlConfigFileMode:
                 "run",
                 "--config",
                 str(yaml_path),
-                "--skip-judge-validation",
             ]
         )
 
@@ -687,7 +677,6 @@ class TestYamlConfigFileMode:
                 "run",
                 "--config",
                 str(override_yaml),
-                "--skip-judge-validation",
             ]
         )
 
@@ -746,7 +735,6 @@ class TestTestConfigLoaderExclusion:
                 "run",
                 "--config",
                 str(tmp_path),
-                "--skip-judge-validation",
             ]
         )
 
@@ -826,7 +814,6 @@ class TestFilterJudgeSlotNoEffect:
                 "1",
                 "--filter-judge-slot",
                 "2",
-                "--skip-judge-validation",
             ]
         )
 
@@ -894,7 +881,6 @@ class TestNonExistentConfigPath:
                 "https://github.com/test/repo",
                 "--commit",
                 "abc123",
-                "--skip-judge-validation",
             ]
         )
 
@@ -950,7 +936,6 @@ class TestFreshFlag:
                 "--config",
                 str(config_dir),
                 "--fresh",
-                "--skip-judge-validation",
             ]
         )
 
@@ -985,7 +970,6 @@ class TestFreshFlag:
                 "run",
                 "--config",
                 str(config_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -1053,7 +1037,6 @@ class TestUntilStateFlowsToConfig:
                 str(config_dir),
                 "--until",
                 "agent_complete",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1092,7 +1075,6 @@ class TestUntilStateFlowsToConfig:
                 str(config_dir),
                 "--until-tier",
                 "subtests_complete",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1131,7 +1113,6 @@ class TestUntilStateFlowsToConfig:
                 str(config_dir),
                 "--until-experiment",
                 "tiers_running",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1204,7 +1185,6 @@ class TestBatchFromMissingCheckpoint:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1281,7 +1261,6 @@ class TestBatchTestsFilter:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1365,7 +1344,6 @@ class TestRetryInfraFailuresInBatch:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1425,7 +1403,6 @@ class TestRetryInfraFailuresInBatch:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1519,7 +1496,6 @@ class TestRetryInfraFailuresInBatch:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -1601,7 +1577,6 @@ class TestRetryInfraFailuresInBatch:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2390,7 +2365,6 @@ class TestAddJudgeBatchMode:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2565,7 +2539,6 @@ class TestModelAliasResolution:
                 str(config_dir),
                 "--model",
                 "opus",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2601,7 +2574,6 @@ class TestModelAliasResolution:
                 str(config_dir),
                 "--judge-model",
                 "haiku",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2666,7 +2638,6 @@ class TestUnknownTierReturnsError:
                 str(config_dir),
                 "--tiers",
                 "TX",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2689,7 +2660,7 @@ class TestUnknownTierReturnsError:
 
 
 class TestJudgeValidationBehavior:
-    """Tests for --skip-judge-validation flag behavior."""
+    """Tests for mandatory model validation behavior."""
 
     def _make_test_dir(self, path: Path) -> None:
         """Create a minimal test directory with test.yaml and prompt.md."""
@@ -2706,33 +2677,8 @@ class TestJudgeValidationBehavior:
         (path / "test.yaml").write_text(yaml.dump(test_yaml))
         (path / "prompt.md").write_text("test prompt")
 
-    def test_skip_judge_validation_skips_validate_model(self, tmp_path: Path) -> None:
-        """With --skip-judge-validation, validate_model is never called."""
-        config_dir = tmp_path / "test-dir"
-        self._make_test_dir(config_dir)
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--skip-judge-validation",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with (
-            patch("scylla.e2e.model_validation.validate_model", return_value=True) as mock_validate,
-            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
-        ):
-            cmd_run(args)
-
-        mock_validate.assert_not_called()
-
-    def test_without_skip_validation_calls_validate_model(self, tmp_path: Path) -> None:
-        """Without --skip-judge-validation, validate_model is called for each judge model."""
+    def test_validation_always_calls_validate_model(self, tmp_path: Path) -> None:
+        """Model validation is always called for all models."""
         config_dir = tmp_path / "test-dir"
         self._make_test_dir(config_dir)
 
@@ -2754,6 +2700,29 @@ class TestJudgeValidationBehavior:
             cmd_run(args)
 
         mock_validate.assert_called()
+
+    def test_invalid_model_aborts_with_error(self, tmp_path: Path) -> None:
+        """Invalid models cause cmd_run to abort with exit code 1."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--judge-model",
+                "invalid-model",
+            ]
+        )
+
+        from manage_experiment import cmd_run
+
+        with patch("scylla.e2e.model_validation.validate_model", return_value=False):
+            result = cmd_run(args)
+
+        assert result == 1
 
 
 # ---------------------------------------------------------------------------
@@ -2793,7 +2762,6 @@ class TestTimeoutOverride:
                 str(config_dir),
                 "--timeout",
                 "7200",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2853,7 +2821,6 @@ class TestThinkingModeFlowsToConfig:
                 str(config_dir),
                 "--thinking",
                 "High",
-                "--skip-judge-validation",
             ]
         )
 
@@ -2912,7 +2879,6 @@ class TestTimeoutFallbackToTestYaml:
                 "run",
                 "--config",
                 str(config_dir),
-                "--skip-judge-validation",
             ]
         )
         assert args.timeout is None  # verify default is None
@@ -2986,7 +2952,6 @@ class TestBatchEarlyValidation:
                 "TX",
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3017,7 +2982,6 @@ class TestBatchEarlyValidation:
                 "bogus_state_xyz",
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3057,7 +3021,6 @@ class TestConfigPathExistence:
                 "https://github.com/test/repo",
                 "--commit",
                 "abc123",
-                "--skip-judge-validation",
             ]
         )
 
@@ -3118,7 +3081,6 @@ class TestSingleModeExceptionHandling:
                 "run",
                 "--config",
                 str(config_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3205,7 +3167,6 @@ class TestBatchMissingTaskRepo:
                 str(results_dir),
                 "--threads",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -3288,7 +3249,6 @@ class TestFilterSubtestAndRunWiring:
                 "replay_generated",
                 "--filter-subtest",
                 "00",
-                "--skip-judge-validation",
             ]
         )
 
@@ -3333,7 +3293,6 @@ class TestFilterSubtestAndRunWiring:
                 "replay_generated",
                 "--filter-run",
                 "1",
-                "--skip-judge-validation",
             ]
         )
 
@@ -3403,7 +3362,6 @@ class TestPromptOverride:
                 str(config_dir),
                 "--prompt",
                 str(custom_prompt),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3494,7 +3452,6 @@ class TestAlwaysRetryInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3528,7 +3485,6 @@ class TestAlwaysRetryInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3583,7 +3539,6 @@ class TestAlwaysRetryInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3638,7 +3593,6 @@ class TestAlwaysRetryInSingleMode:
                 str(config_dir),
                 "--results-dir",
                 str(results_dir),
-                "--skip-judge-validation",
             ]
         )
 
@@ -3871,7 +3825,6 @@ class TestCmdRunTiersAndMaxSubtests:
                 "--tiers",
                 "T0",
                 "T2",
-                "--skip-judge-validation",
             ]
         )
 
@@ -3908,7 +3861,6 @@ class TestCmdRunTiersAndMaxSubtests:
                 str(config_dir),
                 "--max-subtests",
                 "3",
-                "--skip-judge-validation",
             ]
         )
 
@@ -3943,7 +3895,6 @@ class TestCmdRunTiersAndMaxSubtests:
                 "run",
                 "--config",
                 str(config_dir),
-                "--skip-judge-validation",
             ]
         )
 

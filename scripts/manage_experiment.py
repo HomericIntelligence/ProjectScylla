@@ -128,11 +128,6 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         help="Add additional judge model (use multiple times)",
     )
     parser.add_argument(
-        "--skip-judge-validation",
-        action="store_true",
-        help="Skip model validation for judges",
-    )
-    parser.add_argument(
         "--thinking",
         choices=["None", "Low", "High", "UltraThink"],
         default="None",
@@ -578,6 +573,28 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
             return 1
     # --- End early validation ---
 
+    # Validate all models upfront before spawning threads
+    from scylla.e2e.model_validation import validate_model
+
+    _batch_model_id = args.model
+    _batch_judge_model_id = args.judge_model
+    _batch_judge_models_list = [_batch_judge_model_id]
+    if args.add_judge:
+        for _extra_judge in args.add_judge:
+            if _extra_judge and _extra_judge not in _batch_judge_models_list:
+                _batch_judge_models_list.append(_extra_judge)
+
+    _all_models = [_batch_model_id, *_batch_judge_models_list]
+    _invalid_models = [
+        m for m in dict.fromkeys(_all_models) if not validate_model(m, max_retries=1, base_delay=5)
+    ]
+    if _invalid_models:
+        logger.error(
+            f"Invalid model(s): {', '.join(_invalid_models)}. "
+            f"Use full model IDs (e.g., 'claude-sonnet-4-6') or short aliases (e.g., 'sonnet')."
+        )
+        return 1
+
     _save_lock = threading.Lock()
 
     def save_result(result: dict[str, Any]) -> None:
@@ -988,19 +1005,18 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
                 judge_models.append(extra_judge)
 
     # Validate all models upfront before starting any work
-    if not args.skip_judge_validation:
-        all_models_to_validate = [model_id, *judge_models]
-        invalid_models = [
-            m
-            for m in dict.fromkeys(all_models_to_validate)
-            if not validate_model(m, max_retries=1, base_delay=5)
-        ]
-        if invalid_models:
-            logger.error(
-                f"Invalid model(s): {', '.join(invalid_models)}. "
-                f"Use full model IDs (e.g., 'claude-sonnet-4-6')."
-            )
-            return 1
+    all_models_to_validate = [model_id, *judge_models]
+    invalid_models = [
+        m
+        for m in dict.fromkeys(all_models_to_validate)
+        if not validate_model(m, max_retries=1, base_delay=5)
+    ]
+    if invalid_models:
+        logger.error(
+            f"Invalid model(s): {', '.join(invalid_models)}. "
+            f"Use full model IDs (e.g., 'claude-sonnet-4-6') or short aliases (e.g., 'sonnet')."
+        )
+        return 1
 
     # Resolve tiers
     tier_ids = []

@@ -335,7 +335,6 @@ class TestVerboseQuietLogging:
                 "--config",
                 str(config_dir),
                 "--verbose",
-                "--skip-judge-validation",
             ]
         )
 
@@ -365,7 +364,6 @@ class TestVerboseQuietLogging:
                 "--config",
                 str(config_dir),
                 "--quiet",
-                "--skip-judge-validation",
             ]
         )
 
@@ -430,7 +428,6 @@ class TestBatchModeDetection:
                 "run",
                 "--config",
                 str(tmp_path),
-                "--skip-judge-validation",
             ]
         )
 
@@ -504,7 +501,6 @@ class TestCmdRunUntilValidation:
                 str(tmp_path),
                 "--until",
                 "nonexistent_state_xyz",
-                "--skip-judge-validation",  # avoid API call
             ]
         )
 
@@ -529,7 +525,6 @@ class TestCmdRunUntilValidation:
                 str(tmp_path),
                 "--until-tier",
                 "invalid_tier_state",
-                "--skip-judge-validation",
             ]
         )
 
@@ -553,7 +548,6 @@ class TestCmdRunUntilValidation:
                 str(tmp_path),
                 "--until-experiment",
                 "invalid_experiment_state",
-                "--skip-judge-validation",
             ]
         )
 
@@ -573,7 +567,6 @@ class TestCmdRunUntilValidation:
                 "abc123",
                 "--config",
                 str(tmp_path),
-                "--skip-judge-validation",
             ]
         )
 
@@ -593,7 +586,6 @@ class TestCmdRunUntilValidation:
                 "https://github.com/test/repo",
                 "--config",
                 str(tmp_path),
-                "--skip-judge-validation",
             ]
         )
 
@@ -631,7 +623,6 @@ class TestCmdRunFromValidation:
                 str(tmp_path),
                 "--from",
                 "nonexistent_state_xyz",
-                "--skip-judge-validation",
             ]
         )
 
@@ -659,7 +650,6 @@ class TestCmdRunFromValidation:
                 str(tmp_path / "results"),
                 "--experiment-id",
                 "test-exp",
-                "--skip-judge-validation",
             ]
         )
 
@@ -683,7 +673,6 @@ class TestCmdRunFromValidation:
                 str(tmp_path),
                 "--from-tier",
                 "invalid_tier_xyz",
-                "--skip-judge-validation",
             ]
         )
 
@@ -707,7 +696,6 @@ class TestCmdRunFromValidation:
                 str(tmp_path),
                 "--from-experiment",
                 "invalid_experiment_xyz",
-                "--skip-judge-validation",
             ]
         )
 
