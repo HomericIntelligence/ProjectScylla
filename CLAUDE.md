@@ -12,11 +12,22 @@ Scylla represents the challenge of navigating trade-offs between capability gain
 studies across 120 YAML subtests with published results and 9%+ test coverage enforced in CI (combined
 scylla/ + scripts/ floor; scylla/ unit coverage is enforced at 75%+ separately in the unit CI step).
 
-**Ecosystem Context**: Part of a three-project ecosystem:
+**Ecosystem Context**: Part of a 12-repository ecosystem:
 
-- **ProjectOdyssey** - Training and capability development for agents
-- **ProjectKeystone** - Communication and distributed agent coordination
-- **ProjectScylla** - Testing, measurement, and optimization under constraints (this project)
+| Repository | Role |
+|------------|------|
+| **AchaeanFleet** | Container images for the agent mesh — base images, Dockerfiles, Compose |
+| **Myrmidons** | GitOps agent provisioning — agent definitions as code |
+| **Odysseus** | CLI and core platform for agent lifecycle management |
+| **ProjectArgus** | Observability — monitoring and metrics |
+| **ProjectHephaestus** | Shared Python utilities and foundational tools |
+| **ProjectHermes** | Webhook-to-NATS bridge — event ingestion |
+| **ProjectKeystone** | DAG execution engine |
+| **ProjectMnemosyne** | Skills marketplace — team knowledge sharing |
+| **ProjectOdyssey** | Training and capability development for agents |
+| **ProjectProteus** | CI/CD pipeline infrastructure |
+| **ProjectScylla** | Testing, measurement, and optimization under constraints (this project) |
+| **ProjectTelemachy** | Workflow engine |
 
 ## Critical Rules - Read First
 

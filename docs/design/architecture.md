@@ -16,13 +16,22 @@ ProjectScylla is an AI agent testing and optimization framework designed to meas
 
 ### Ecosystem Context
 
-ProjectScylla is part of a three-project ecosystem:
+ProjectScylla is part of a 12-repository ecosystem:
 
-| Project | Purpose |
-|---------|---------|
+| Repository | Role |
+|------------|------|
+| **AchaeanFleet** | Container images for the agent mesh |
+| **Myrmidons** | GitOps agent provisioning |
+| **Odysseus** | CLI and core platform for agent lifecycle management |
+| **ProjectArgus** | Observability — monitoring and metrics |
+| **ProjectHephaestus** | Shared Python utilities and foundational tools |
+| **ProjectHermes** | Webhook-to-NATS bridge — event ingestion |
+| **ProjectKeystone** | DAG execution engine |
+| **ProjectMnemosyne** | Skills marketplace — team knowledge sharing |
 | **ProjectOdyssey** | Training and capability development for agents |
-| **ProjectKeystone** | Communication and distributed agent coordination |
-| **ProjectScylla** | Testing, measurement, and optimization under constraints |
+| **ProjectProteus** | CI/CD pipeline infrastructure |
+| **ProjectScylla** | Testing, measurement, and optimization under constraints (this project) |
+| **ProjectTelemachy** | Workflow engine |
 
 ### Framework Characteristics
 
