@@ -9,6 +9,7 @@ from typing import Any
 
 import click
 
+from scylla import __version__
 from scylla.config import DEFAULT_JUDGE_MODEL, ConfigLoader
 from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
@@ -31,7 +32,7 @@ FORMAT_GENERATORS: dict[str, type[MarkdownReportGenerator] | type[JsonReportGene
 
 
 @click.group()
-@click.version_option(version="0.1.0", prog_name="scylla")
+@click.version_option(version=__version__, prog_name="scylla")
 def cli() -> None:
     """ProjectScylla - AI Agent Testing Framework.
 
