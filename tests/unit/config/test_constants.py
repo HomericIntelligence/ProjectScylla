@@ -1,7 +1,9 @@
 """Tests for scylla.config.constants module."""
 
+import pytest
+
 import scylla.config.constants as constants_module
-from scylla.config import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
+from scylla.config import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL, normalize_model_id
 from scylla.config.constants import DEFAULT_AGENT_MODEL as AGENT_MODEL_DIRECT
 from scylla.config.constants import DEFAULT_JUDGE_MODEL as JUDGE_MODEL_DIRECT
 
@@ -71,3 +73,54 @@ class TestNoCircularImports:
             assert not stripped.startswith("import scylla"), (
                 f"constants.py must not import scylla.*: {line!r}"
             )
+
+
+class TestNormalizeModelId:
+    """Tests for normalize_model_id() alias resolution."""
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("sonnet", "claude-sonnet-4-6"),
+            ("opus", "claude-opus-4-6"),
+            ("haiku", "claude-haiku-4-5"),
+        ],
+    )
+    def test_short_alias(self, raw: str, expected: str) -> None:
+        """Short aliases resolve to canonical full IDs."""
+        assert normalize_model_id(raw) == expected
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("opus-4.6", "claude-opus-4-6"),
+            ("sonnet-4.6", "claude-sonnet-4-6"),
+            ("haiku-4.5", "claude-haiku-4-5"),
+            ("opus-4.5", "claude-opus-4-5"),
+            ("sonnet-4.5", "claude-sonnet-4-5"),
+        ],
+    )
+    def test_legacy_dot_notation(self, raw: str, expected: str) -> None:
+        """Legacy dot-notation IDs resolve to canonical full IDs."""
+        assert normalize_model_id(raw) == expected
+
+    @pytest.mark.parametrize(
+        "full_id",
+        ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5"],
+    )
+    def test_full_id_passthrough(self, full_id: str) -> None:
+        """Full canonical IDs pass through unchanged."""
+        assert normalize_model_id(full_id) == full_id
+
+    def test_unknown_id_passthrough(self) -> None:
+        """Unknown model IDs pass through unchanged."""
+        assert normalize_model_id("some-future-model") == "some-future-model"
+
+    def test_case_insensitive(self) -> None:
+        """Alias lookup is case-insensitive."""
+        assert normalize_model_id("Sonnet") == "claude-sonnet-4-6"
+        assert normalize_model_id("OPUS") == "claude-opus-4-6"
+
+    def test_whitespace_stripped(self) -> None:
+        """Leading/trailing whitespace is stripped before lookup."""
+        assert normalize_model_id("  sonnet  ") == "claude-sonnet-4-6"

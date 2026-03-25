@@ -15,7 +15,11 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
+from scylla.config.constants import (
+    DEFAULT_AGENT_MODEL,
+    DEFAULT_JUDGE_MODEL,
+    normalize_model_id,
+)
 from scylla.core.results import RunResultBase
 
 # Grade ordering for min/max calculations (F=worst, S=best)
@@ -880,6 +884,16 @@ class ExperimentConfig(BaseModel):
     keep_failed_workspaces: bool = False  # Preserve workspaces for failed runs
     max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
     max_concurrent_agents: int | None = None  # Limit concurrent claude CLI processes (None = auto)
+
+    @field_validator("models", mode="before")
+    @classmethod
+    def _normalize_models(cls, v: list[str]) -> list[str]:
+        return [normalize_model_id(m) for m in v]
+
+    @field_validator("judge_models", mode="before")
+    @classmethod
+    def _normalize_judge_models(cls, v: list[str]) -> list[str]:
+        return [normalize_model_id(m) for m in v]
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
