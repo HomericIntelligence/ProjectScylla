@@ -582,6 +582,10 @@ def _call_claude_judge(
     # Judge evaluates from provided context only (workspace state, git diff,
     # pipeline results are all included in the prompt). No tool access needed,
     # which reduces memory overhead and avoids dependency on workspace existence.
+    #
+    # NOTE: --allowedTools takes variadic <tools...>, so any positional arg
+    # placed after it gets consumed as a tool name instead of the prompt.
+    # We pipe the evaluation context via stdin to avoid this and ARG_MAX limits.
     cmd = [
         "claude",
         "--model",
@@ -596,22 +600,13 @@ def _call_claude_judge(
         str(JUDGE_SYSTEM_PROMPT_FILE),
     ]
 
-    # Pass evaluation context as the prompt. For very large prompts (T5/T6),
-    # pipe via stdin to avoid OS ARG_MAX limits (~2MB on Linux).
-    max_arg_length = 1_000_000
-    stdin_input: str | None = None
-    if len(evaluation_context) < max_arg_length:
-        cmd.append(evaluation_context)
-    else:
-        stdin_input = evaluation_context
-
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
         timeout=1200,  # 20 minutes - judging can take time with Opus
         env={k: v for k, v in os.environ.items() if k != "CLAUDECODE"},
-        input=stdin_input,
+        input=evaluation_context,
     )
 
     if result.returncode != 0:
