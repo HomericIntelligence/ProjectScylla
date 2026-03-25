@@ -483,6 +483,7 @@ class ConfigLoader:
             "output": defaults.output,
             "logging": defaults.logging,
             "metrics": defaults.metrics,
+            "nats": defaults.nats,
         }
 
         # Load model config (optional)

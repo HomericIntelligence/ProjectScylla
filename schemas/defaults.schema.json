@@ -168,6 +168,38 @@
           "description": "Whether to keep logs after run"
         }
       }
+    },
+    "nats": {
+      "type": "object",
+      "description": "NATS JetStream subscription settings",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether NATS event subscription is active"
+        },
+        "url": {
+          "type": "string",
+          "description": "NATS server URL",
+          "examples": ["nats://localhost:4222"]
+        },
+        "stream": {
+          "type": "string",
+          "description": "JetStream stream name",
+          "examples": ["TASKS"]
+        },
+        "subjects": {
+          "type": "array",
+          "description": "Subject patterns to subscribe to",
+          "items": {"type": "string"},
+          "examples": [["hi.tasks.>"]]
+        },
+        "durable_name": {
+          "type": "string",
+          "description": "Durable consumer name for at-least-once delivery",
+          "examples": ["scylla-subscriber"]
+        }
+      }
     }
   }
 }

@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
+from scylla.nats.config import NATSConfig
 
 
 class ConfigurationError(Exception):
@@ -296,6 +297,7 @@ class DefaultsConfig(BaseModel):
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
     adapters: AdaptersConfig = Field(default_factory=AdaptersConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
+    nats: NATSConfig = Field(default_factory=NATSConfig)
 
 
 # -----------------------------------------------------------------------------
@@ -324,6 +326,7 @@ class ScyllaConfig(BaseModel):
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     metrics: MetricsConfig = Field(default_factory=MetricsConfig)
+    nats: NATSConfig = Field(default_factory=NATSConfig)
 
     # From model config (optional)
     model: ModelConfig | None = Field(default=None)
