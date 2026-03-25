@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
 
-from scylla.cli.progress import ProgressDisplay, RunStatus
 from scylla.config import ConfigLoader, EvalCase, Rubric
+from scylla.e2e.progress import ProgressDisplay, RunStatus
 from scylla.executor import checkout_hash, cleanup_workspace, clone_repo, create_workspace
 from scylla.reporting import ReportingRunResult, ResultWriter, create_run_result
 

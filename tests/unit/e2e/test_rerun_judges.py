@@ -9,13 +9,13 @@ from unittest.mock import patch
 
 import pytest
 
+from scylla.e2e.agent_runner import _has_valid_agent_result
 from scylla.e2e.models import ExperimentConfig, SubTestConfig, TierConfig, TierID
 from scylla.e2e.rerun_judges import (
     JudgeSlotStatus,
     JudgeSlotToRerun,
     RerunJudgeStats,
     _classify_judge_slots,
-    _has_valid_agent_result,
     _is_valid_judgment,
     _regenerate_consensus,
     scan_judges_needing_rerun,
@@ -373,7 +373,7 @@ def test_regenerate_consensus_writes_empty_criteria_scores_when_null(
 
 
 class TestHasValidAgentResult:
-    """Tests for _has_valid_agent_result()."""
+    """Tests for _has_valid_agent_result() (canonical version from agent_runner)."""
 
     def test_valid_agent_result(self, tmp_path: Path) -> None:
         """Test with valid agent result."""
@@ -381,32 +381,11 @@ class TestHasValidAgentResult:
         agent_dir = run_dir / "agent"
         agent_dir.mkdir(parents=True)
 
-        # Create valid agent files
-        (agent_dir / "output.txt").write_text("Agent output")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+        (agent_dir / "result.json").write_text(
+            '{"exit_code": 0, "token_stats": {"input_tokens": 100}, "cost_usd": 0.01}'
+        )
 
         assert _has_valid_agent_result(run_dir)
-
-    def test_missing_output_file(self, tmp_path: Path) -> None:
-        """Test with missing output.txt."""
-        run_dir = tmp_path / "run_01"
-        agent_dir = run_dir / "agent"
-        agent_dir.mkdir(parents=True)
-
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
-
-        assert not _has_valid_agent_result(run_dir)
-
-    def test_empty_output_file(self, tmp_path: Path) -> None:
-        """Test with empty output.txt."""
-        run_dir = tmp_path / "run_01"
-        agent_dir = run_dir / "agent"
-        agent_dir.mkdir(parents=True)
-
-        (agent_dir / "output.txt").write_text("")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
-
-        assert not _has_valid_agent_result(run_dir)
 
     def test_missing_result_json(self, tmp_path: Path) -> None:
         """Test with missing result.json."""
@@ -437,7 +416,9 @@ class TestClassifyJudgeSlots:
 
         # Valid agent result
         (agent_dir / "output.txt").write_text("Agent output")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+        (agent_dir / "result.json").write_text(
+            '{"exit_code": 0, "token_stats": {"input_tokens": 100}, "cost_usd": 0.01}'
+        )
 
         # Create valid judge results
         judge_models = ["claude-opus-4-6", "claude-sonnet-4-6"]
@@ -469,7 +450,9 @@ class TestClassifyJudgeSlots:
 
         # Valid agent result
         (agent_dir / "output.txt").write_text("Agent output")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+        (agent_dir / "result.json").write_text(
+            '{"exit_code": 0, "token_stats": {"input_tokens": 100}, "cost_usd": 0.01}'
+        )
 
         judge_models = ["claude-opus-4-6", "claude-sonnet-4-6"]
         results = _classify_judge_slots(run_dir, judge_models)
@@ -485,7 +468,9 @@ class TestClassifyJudgeSlots:
 
         # Valid agent result
         (agent_dir / "output.txt").write_text("Agent output")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+        (agent_dir / "result.json").write_text(
+            '{"exit_code": 0, "token_stats": {"input_tokens": 100}, "cost_usd": 0.01}'
+        )
 
         # Create judge directories without valid judgment.json
         judge_models = ["claude-opus-4-6"]
@@ -517,7 +502,9 @@ class TestClassifyJudgeSlots:
 
         # Valid agent result
         (agent_dir / "output.txt").write_text("Agent output")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+        (agent_dir / "result.json").write_text(
+            '{"exit_code": 0, "token_stats": {"input_tokens": 100}, "cost_usd": 0.01}'
+        )
 
         judge_models = ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"]
 
@@ -561,7 +548,9 @@ class TestScanJudgesNeedingRerun:
         agent_dir = run_dir / "agent"
         agent_dir.mkdir(parents=True)
         (agent_dir / "output.txt").write_text("Agent output")
-        (agent_dir / "result.json").write_text('{"exit_code": 0}')
+        (agent_dir / "result.json").write_text(
+            '{"exit_code": 0, "token_stats": {"input_tokens": 100}, "cost_usd": 0.01}'
+        )
 
         # Create config
         config = ExperimentConfig(

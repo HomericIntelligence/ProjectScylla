@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 from unittest.mock import patch
 
-from scylla.cli.progress import (
+from scylla.e2e.progress import (
     EvalProgress,
     ProgressDisplay,
     RunProgress,
@@ -39,7 +39,7 @@ class TestRunProgress:
             status=RunStatus.EXECUTING,
             start_time=fixed_start,
         )
-        with patch("scylla.cli.progress.datetime") as mock_dt:
+        with patch("scylla.e2e.progress.datetime") as mock_dt:
             mock_dt.now.return_value = fixed_now
             assert run.elapsed == timedelta(seconds=10)
 

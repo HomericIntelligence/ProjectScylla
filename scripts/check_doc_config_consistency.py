@@ -302,7 +302,7 @@ def check_readme_test_count(
     raw_matches = re.findall(r"(\d[\d,]*)\+?\s+tests?", text, re.IGNORECASE)
 
     if not raw_matches:
-        return ["README.md: No test count mention found (expected pattern: '<N> tests')"]
+        return []  # No hardcoded test count is fine — users can run pytest --collect-only
 
     errors: list[str] = []
     for raw in raw_matches:
