@@ -15,6 +15,8 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from scylla.config.constants import DEFAULT_JUDGE_MODEL
+from scylla.e2e.agent_runner import _has_valid_agent_result
+from scylla.e2e.judge_runner import _has_valid_judge_result
 from scylla.e2e.judge_selection import select_best_subtest
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import (
@@ -460,53 +462,6 @@ def rejudge_missing_runs(  # noqa: C901  # workspace state detection with many f
                 except Exception as e:
                     logger.error(f"❌ Failed to re-judge {run_dir}: {e}")
                     continue
-
-
-def _has_valid_agent_result(run_dir: Path) -> bool:
-    """Check if a valid agent result exists (from subtest_executor.py:331)."""
-    result_file = run_dir / "agent" / "result.json"
-    if not result_file.exists():
-        return False
-
-    try:
-        data = json.loads(result_file.read_text())
-        required_fields = ["exit_code", "token_stats", "cost_usd"]
-        if not all(field in data for field in required_fields):
-            return False
-
-        # Check for incomplete execution
-        if data["exit_code"] == -1:
-            token_stats = data["token_stats"]
-            all_tokens_zero = (
-                token_stats.get("input_tokens", 0) == 0
-                and token_stats.get("output_tokens", 0) == 0
-                and token_stats.get("cache_creation_tokens", 0) == 0
-                and token_stats.get("cache_read_tokens", 0) == 0
-            )
-            if all_tokens_zero:
-                return False
-
-        return True
-    except (json.JSONDecodeError, KeyError, OSError):
-        return False
-
-
-def _has_valid_judge_result(run_dir: Path) -> bool:
-    """Check if a valid judge result exists (from subtest_executor.py:382)."""
-    judge_result_file = run_dir / "judge" / "result.json"
-    if not judge_result_file.exists():
-        return False
-
-    try:
-        data = json.loads(judge_result_file.read_text())
-        required_fields = ["score", "passed", "grade"]
-        if not all(field in data for field in required_fields):
-            return False
-        # Check is_valid flag
-        is_valid = data.get("is_valid", True) is not False
-        return is_valid
-    except (json.JSONDecodeError, KeyError, OSError):
-        return False
 
 
 def rebuild_tier_results(
