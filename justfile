@@ -50,6 +50,7 @@ bump part:
     pixi run python scripts/bump_version.py {{part}}
     pixi lock
 
+
 # Run all pre-commit hooks
 pre-commit:
     pixi run pre-commit run --all-files
