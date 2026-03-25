@@ -98,7 +98,7 @@ pixi run python scripts/generate_all_results.py \
 - ⚖️ **Trade-Off Evaluation**: Agents face scenarios where every decision has cost, mirroring Scylla and Charybdis dilemma
 - 📊 **Metrics & Benchmarks**: Structured measurement across adaptability, efficiency, and reliability
 - 🔄 **Iterative Optimization**: Continuous refinement through repeated trials
-- 🧭 **Resilience Testing**: Assessment under uncertainty, constraints, and risks
+- 🧭 **Ablation Benchmarking**: Systematic evaluation of agent architectures across complexity tiers
 
 ## Ecosystem
 
