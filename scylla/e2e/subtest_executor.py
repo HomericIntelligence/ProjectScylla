@@ -158,29 +158,39 @@ def _restore_run_context(ctx: Any, current_state: str) -> None:
 
     # If past JUDGE_COMPLETE, judgment should be available on disk
     if is_at_or_past_state(run_state, RunState.JUDGE_COMPLETE) and ctx.judgment is None:
-        from scylla.e2e.judge_runner import _has_valid_judge_result, _load_judge_result
-        from scylla.e2e.paths import get_judge_dir
-
-        judge_dir = get_judge_dir(ctx.run_dir)
-        if _has_valid_judge_result(ctx.run_dir):
-            ctx.judgment = _load_judge_result(judge_dir)
-            judge_timing = judge_dir / "timing.json"
-            if judge_timing.exists():
-                ctx.judge_duration = json.loads(judge_timing.read_text()).get(
-                    "judge_duration_seconds", 0.0
-                )
+        _restore_judgment(ctx)
 
     # If past RUN_FINALIZED, run_result should be available on disk
     if is_at_or_past_state(run_state, RunState.RUN_FINALIZED) and ctx.run_result is None:
-        run_result_path = ctx.run_dir / "run_result.json"
-        if run_result_path.exists():
-            ctx.run_result = _load_run_result(run_result_path)
-        else:
-            logger.warning(
-                "Resuming run at state '%s' but run_result.json missing at %s",
-                current_state,
-                ctx.run_dir,
+        _restore_run_result(ctx, current_state)
+
+
+def _restore_judgment(ctx: Any) -> None:
+    """Restore ctx.judgment from on-disk judge result."""
+    from scylla.e2e.judge_runner import _has_valid_judge_result, _load_judge_result
+    from scylla.e2e.paths import get_judge_dir
+
+    judge_dir = get_judge_dir(ctx.run_dir)
+    if _has_valid_judge_result(ctx.run_dir):
+        ctx.judgment = _load_judge_result(judge_dir)
+        judge_timing = judge_dir / "timing.json"
+        if judge_timing.exists():
+            ctx.judge_duration = json.loads(judge_timing.read_text()).get(
+                "judge_duration_seconds", 0.0
             )
+
+
+def _restore_run_result(ctx: Any, current_state: str) -> None:
+    """Restore ctx.run_result from on-disk run_result.json."""
+    run_result_path = ctx.run_dir / "run_result.json"
+    if run_result_path.exists():
+        ctx.run_result = _load_run_result(run_result_path)
+    else:
+        logger.warning(
+            "Resuming run at state '%s' but run_result.json missing at %s",
+            current_state,
+            ctx.run_dir,
+        )
 
 
 def _load_run_result(run_result_path: Path) -> Any:
