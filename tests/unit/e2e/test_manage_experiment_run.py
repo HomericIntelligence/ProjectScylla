@@ -498,8 +498,8 @@ class TestAddJudgeDedup:
             cmd_run(args)
 
         assert len(captured_configs) == 1
-        # judge_models should contain exactly one entry (deduped); no alias resolution
-        assert captured_configs[0].judge_models == ["sonnet"]
+        # judge_models should contain exactly one entry (deduped); aliases normalized
+        assert captured_configs[0].judge_models == ["claude-sonnet-4-6"]
 
     def test_add_judge_different_model_appended(self, tmp_path: Path) -> None:
         """--add-judge with a different model is appended to judge_models."""
@@ -536,17 +536,17 @@ class TestAddJudgeDedup:
             cmd_run(args)
 
         assert len(captured_configs) == 1
-        # No alias resolution — model names passed through as-is
-        assert captured_configs[0].judge_models == ["sonnet", "opus"]
+        # Short aliases normalized to full IDs
+        assert captured_configs[0].judge_models == ["claude-sonnet-4-6", "claude-opus-4-6"]
 
-    def test_add_judge_bare_flag_defaults_to_sonnet(self, tmp_path: Path) -> None:
-        """--add-judge with no value uses const='sonnet'; deduped against default judge-model."""
+    def test_add_judge_bare_flag_defaults_to_judge_model(self, tmp_path: Path) -> None:
+        """--add-judge with no value uses const=DEFAULT_JUDGE_MODEL; deduped against default."""
         config_dir = tmp_path / "test-dir"
         self._make_test_dir(config_dir)
 
         parser = build_parser()
-        # --add-judge with no value: argparse uses const="sonnet"
-        # --judge-model defaults to "sonnet", so the result deduplicates to one sonnet entry
+        # --add-judge with no value: argparse uses const=DEFAULT_JUDGE_MODEL
+        # --judge-model also defaults to DEFAULT_JUDGE_MODEL, so it deduplicates
         args = parser.parse_args(
             [
                 "run",
@@ -573,8 +573,8 @@ class TestAddJudgeDedup:
             cmd_run(args)
 
         assert len(captured_configs) == 1
-        # No alias resolution — model names passed through as-is
-        assert captured_configs[0].judge_models == ["sonnet"]
+        # Default judge model deduped to single entry
+        assert captured_configs[0].judge_models == ["claude-opus-4-6"]
 
 
 # ---------------------------------------------------------------------------
@@ -2386,9 +2386,9 @@ class TestAddJudgeBatchMode:
 
         assert result == 0
         assert len(captured_configs) == 2
-        # No alias resolution — model names passed through as-is
+        # Short aliases normalized to full IDs
         for config in captured_configs:
-            assert config.judge_models == ["sonnet", "opus"]
+            assert config.judge_models == ["claude-sonnet-4-6", "claude-opus-4-6"]
 
 
 # ---------------------------------------------------------------------------
@@ -2558,11 +2558,11 @@ class TestModelAliasResolution:
         ):
             cmd_run(args)
 
-        # No alias resolution — model name passed through as-is
-        assert captured[0].models == ["opus"]
+        # Short alias "opus" normalized to full ID
+        assert captured[0].models == ["claude-opus-4-6"]
 
-    def test_judge_model_haiku_passed_through(self, tmp_path: Path) -> None:
-        """--judge-model haiku is passed through as-is in ExperimentConfig.judge_models."""
+    def test_judge_model_haiku_normalized(self, tmp_path: Path) -> None:
+        """--judge-model haiku is normalized to full ID in ExperimentConfig.judge_models."""
         config_dir = tmp_path / "test-dir"
         self._make_test_dir(config_dir)
 
@@ -2593,8 +2593,8 @@ class TestModelAliasResolution:
         ):
             cmd_run(args)
 
-        # No alias resolution — model name passed through as-is
-        assert "haiku" in captured[0].judge_models
+        # Short alias "haiku" normalized to full ID
+        assert "claude-haiku-4-5" in captured[0].judge_models
 
 
 # ---------------------------------------------------------------------------

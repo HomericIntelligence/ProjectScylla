@@ -13,7 +13,7 @@ Example:
 
 """
 
-from .constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
+from .constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL, normalize_model_id
 from .loader import ConfigLoader
 from .models import (
     AdaptersConfig,
@@ -71,6 +71,7 @@ __all__ = [
     "ValidationConfig",
     "calculate_cost",
     "get_model_pricing",
+    "normalize_model_id",
     # Validation
     "validate_defaults_filename",
 ]

@@ -59,6 +59,7 @@ from pathlib import Path
 from typing import Any
 
 # Configure logging with thread-local context (tier/subtest/run)
+from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.e2e.log_context import ContextFilter
 
 logging.basicConfig(
@@ -117,13 +118,15 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Run agents/judges in Docker containers",
     )
-    parser.add_argument("--model", type=str, default="sonnet", help="Primary model")
-    parser.add_argument("--judge-model", type=str, default="sonnet", help="Model for judging")
+    parser.add_argument("--model", type=str, default=DEFAULT_AGENT_MODEL, help="Primary model")
+    parser.add_argument(
+        "--judge-model", type=str, default=DEFAULT_JUDGE_MODEL, help="Model for judging"
+    )
     parser.add_argument(
         "--add-judge",
         action="append",
         nargs="?",
-        const="sonnet",
+        const=DEFAULT_JUDGE_MODEL,
         metavar="MODEL",
         help="Add additional judge model (use multiple times)",
     )
@@ -574,15 +577,17 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
     # --- End early validation ---
 
     # Validate all models upfront before spawning threads
+    from scylla.config.constants import normalize_model_id
     from scylla.e2e.model_validation import validate_model
 
-    _batch_model_id = args.model
-    _batch_judge_model_id = args.judge_model
+    _batch_model_id = normalize_model_id(args.model)
+    _batch_judge_model_id = normalize_model_id(args.judge_model)
     _batch_judge_models_list = [_batch_judge_model_id]
     if args.add_judge:
         for _extra_judge in args.add_judge:
-            if _extra_judge and _extra_judge not in _batch_judge_models_list:
-                _batch_judge_models_list.append(_extra_judge)
+            _resolved = normalize_model_id(_extra_judge) if _extra_judge else _extra_judge
+            if _resolved and _resolved not in _batch_judge_models_list:
+                _batch_judge_models_list.append(_resolved)
 
     _all_models = [_batch_model_id, *_batch_judge_models_list]
     _invalid_models = [
@@ -658,13 +663,14 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                     "error": "Missing task_repo or task_commit",
                 }
 
-            model_id = args.model
-            judge_model_id = args.judge_model
+            model_id = normalize_model_id(args.model)
+            judge_model_id = normalize_model_id(args.judge_model)
             judge_models = [judge_model_id]
             if args.add_judge:
                 for extra_judge in args.add_judge:
-                    if extra_judge and extra_judge not in judge_models:
-                        judge_models.append(extra_judge)
+                    _resolved = normalize_model_id(extra_judge) if extra_judge else extra_judge
+                    if _resolved and _resolved not in judge_models:
+                        judge_models.append(_resolved)
 
             tier_ids = _batch_tier_ids
             until_run_state = _batch_until_run
@@ -993,16 +999,17 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         logger.error("--commit is required (or set in test.yaml)")
         return 1
 
-    # Resolve model IDs (pass through as-is — no alias resolution)
+    from scylla.config.constants import normalize_model_id
     from scylla.e2e.model_validation import validate_model
 
-    model_id = args.model
-    judge_model_id = args.judge_model
+    model_id = normalize_model_id(args.model)
+    judge_model_id = normalize_model_id(args.judge_model)
     judge_models = [judge_model_id]
     if args.add_judge:
         for extra_judge in args.add_judge:
-            if extra_judge and extra_judge not in judge_models:
-                judge_models.append(extra_judge)
+            _resolved = normalize_model_id(extra_judge) if extra_judge else extra_judge
+            if _resolved and _resolved not in judge_models:
+                judge_models.append(_resolved)
 
     # Validate all models upfront before starting any work
     all_models_to_validate = [model_id, *judge_models]
