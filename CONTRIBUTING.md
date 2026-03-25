@@ -321,11 +321,28 @@ pre-commit run --all-files
 - **Integration tests**: For multi-component features
 - **E2E tests**: For complete workflow changes
 
+### Coverage Thresholds
+
+ProjectScylla uses a dual-threshold coverage strategy:
+
+| Threshold | Scope | Where Enforced | Value |
+|-----------|-------|----------------|-------|
+| Combined floor | `scylla/` + `scripts/` | `pyproject.toml` (`fail_under`) — local runs | 75% |
+| Unit floor | `scylla/` only | CI `test.yml` unit step (`--cov-fail-under=75`) | 75% |
+| Integration floor | `scylla/` only | CI `test.yml` integration step (`--cov-fail-under=5`) | 5% |
+
+- **`pixi run test`** runs all tests with the combined 75% floor from `pyproject.toml`.
+- **`pixi run test-unit`** runs `tests/unit/` with the same 75% `scylla/` floor as CI, giving you local parity with the CI unit step.
+- **CI** uses `--override-ini="addopts="` to bypass `pyproject.toml` and apply its own per-step floors independently.
+
 ### Running Tests
 
 ```bash
-# All tests
-pixi run pytest tests/ --verbose
+# All tests (combined 75% coverage floor)
+pixi run test
+
+# Unit tests with CI-matching 75% scylla/ coverage floor
+pixi run test-unit
 
 # Specific categories
 pixi run pytest tests/unit/ -v          # Unit tests only

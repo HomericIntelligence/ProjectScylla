@@ -9,8 +9,8 @@ the performance and cost-efficiency of agentic AI workflows. Named after the myt
 Scylla represents the challenge of navigating trade-offs between capability gains and operational costs.
 
 **Current Status**: Operational - active research with full evaluation infrastructure, running T0–T6 ablation
-studies across 120 YAML subtests with published results and 9%+ test coverage enforced in CI (combined
-scylla/ + scripts/ floor; scylla/ unit coverage is enforced at 75%+ separately in the unit CI step).
+studies across 120 YAML subtests with published results and 75%+ test coverage enforced locally and in CI
+(combined scylla/ + scripts/ floor; scylla/ unit coverage is also enforced at 75% in the CI unit step).
 
 **Ecosystem Context**: Part of a 12-repository ecosystem:
 

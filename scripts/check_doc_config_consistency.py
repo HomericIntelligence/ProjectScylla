@@ -4,7 +4,9 @@
 Checks:
 1. Coverage threshold in CLAUDE.md matches ``fail_under`` in ``pyproject.toml``.
 2. ``--cov=<path>`` in README.md matches ``addopts`` in ``pyproject.toml``.
-3. ``--cov-fail-under=N`` in ``addopts`` matches ``fail_under`` in ``[tool.coverage.report]``.
+3. If ``--cov-fail-under=N`` is present in ``addopts``, it must match ``fail_under``
+   in ``[tool.coverage.report]``. Absent is OK — ``[tool.coverage.report].fail_under``
+   is the single source of truth.
 4. Test count in README.md is within 10% of actual pytest collect count.
 
 Usage:
@@ -217,10 +219,11 @@ def extract_cov_fail_under_from_addopts(repo_root: Path) -> int | None:
 
 
 def check_addopts_cov_fail_under(repo_root: Path, expected_threshold: int) -> list[str]:
-    """Check that ``--cov-fail-under`` in ``addopts`` matches ``fail_under`` in coverage report.
+    """Check that ``--cov-fail-under`` in ``addopts`` matches ``fail_under`` if present.
 
-    Reads ``--cov-fail-under=N`` from ``[tool.pytest.ini_options].addopts`` and compares it
-    to *expected_threshold* (from ``[tool.coverage.report].fail_under``).
+    If ``--cov-fail-under=N`` is present in ``[tool.pytest.ini_options].addopts``, it must
+    match *expected_threshold*. If absent, the check passes — ``[tool.coverage.report].fail_under``
+    is the single source of truth and pytest-cov reads it directly.
 
     Args:
         repo_root: Path to the repository root.
@@ -232,10 +235,9 @@ def check_addopts_cov_fail_under(repo_root: Path, expected_threshold: int) -> li
     """
     addopts_threshold = extract_cov_fail_under_from_addopts(repo_root)
 
+    # Absent is fine — [tool.coverage.report].fail_under is the single source of truth.
     if addopts_threshold is None:
-        return [
-            "pyproject.toml: No --cov-fail-under=N flag found in [tool.pytest.ini_options].addopts"
-        ]
+        return []
 
     if addopts_threshold != expected_threshold:
         return [
@@ -365,10 +367,18 @@ def main() -> int:  # CLI orchestration with many check paths
     if addopts_errors:
         all_errors.extend(addopts_errors)
     elif args.verbose:
-        print(
-            f"PASS: [tool.pytest.ini_options].addopts --cov-fail-under matches "
-            f"[tool.coverage.report].fail_under ({expected_threshold}%)"
-        )
+        addopts_val = extract_cov_fail_under_from_addopts(repo_root)
+        if addopts_val is not None:
+            print(
+                f"PASS: [tool.pytest.ini_options].addopts --cov-fail-under matches "
+                f"[tool.coverage.report].fail_under ({expected_threshold}%)"
+            )
+        else:
+            print(
+                f"PASS: No --cov-fail-under in addopts — "
+                f"[tool.coverage.report].fail_under "
+                f"({expected_threshold}%) is single source of truth"
+            )
 
     # --- Check 4: README.md test count ---
     actual_count = collect_actual_test_count(repo_root)
