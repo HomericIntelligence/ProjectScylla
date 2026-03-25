@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from scylla.e2e.agent_runner import _has_valid_agent_result
 from scylla.e2e.models import ExperimentConfig
 from scylla.e2e.rerun_base import load_rerun_context, print_dry_run_summary
 from scylla.e2e.tier_manager import TierManager
@@ -102,23 +103,6 @@ class JudgeSlotToRerun(BaseModel):
     judge_model: str  # Model to use for this slot
     status: JudgeSlotStatus  # Current status
     reason: str  # Human-readable description
-
-
-def _has_valid_agent_result(run_dir: Path) -> bool:
-    """Check if run has a valid agent result.
-
-    Args:
-        run_dir: Path to run directory
-
-    Returns:
-        True if agent result exists and is valid
-
-    """
-    agent_dir = run_dir / "agent"
-    agent_output = agent_dir / "output.txt"
-    agent_result = agent_dir / "result.json"
-
-    return agent_output.exists() and agent_output.stat().st_size > 0 and agent_result.exists()
 
 
 def _is_valid_judgment(judgment_file: Path) -> bool:

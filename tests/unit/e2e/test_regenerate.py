@@ -4,12 +4,12 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
+from scylla.e2e.agent_runner import _has_valid_agent_result
+from scylla.e2e.judge_runner import _has_valid_judge_result
 from scylla.e2e.models import E2ERunResult, ExperimentConfig, TierID, TierResult, TokenStats
 from scylla.e2e.regenerate import (
     RegenerateStats,
     _find_frontier,
-    _has_valid_agent_result,
-    _has_valid_judge_result,
     rebuild_tier_results,
     scan_run_results,
 )

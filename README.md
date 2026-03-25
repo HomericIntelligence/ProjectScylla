@@ -339,7 +339,7 @@ Schema: `scylla/analysis/schemas/run_result.schema.json`
 
 ### 🧪 Testing
 
-ProjectScylla has a comprehensive test suite of 4870 tests covering all functionality. To see the current test count:
+ProjectScylla has a comprehensive test suite covering all functionality. To see the current test count:
 
 ```bash
 pixi run pytest tests/ --collect-only -q | tail -1

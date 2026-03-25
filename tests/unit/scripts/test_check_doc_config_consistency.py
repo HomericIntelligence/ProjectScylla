@@ -488,12 +488,11 @@ class TestCheckReadmeTestCount:
         assert "5000" in errors[0]
         assert "3507" in errors[0]
 
-    def test_no_test_count_in_readme_returns_error(self, tmp_path: Path) -> None:
-        """Should return error when README.md has no test count mention."""
+    def test_no_test_count_in_readme_is_acceptable(self, tmp_path: Path) -> None:
+        """No hardcoded test count in README is acceptable (users run pytest --collect-only)."""
         write_readme(tmp_path, "Just run pytest to execute tests.\n")
         errors = check_readme_test_count(tmp_path, 3507)
-        assert len(errors) == 1
-        assert "No test count mention" in errors[0]
+        assert len(errors) == 0
 
     def test_missing_readme_returns_error(self, tmp_path: Path) -> None:
         """Should return error when README.md does not exist."""
