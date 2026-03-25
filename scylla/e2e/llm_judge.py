@@ -563,6 +563,47 @@ def run_llm_judge(
     )
 
 
+def _extract_response_from_stream(stream_output: str) -> str:
+    """Extract assistant response text from stream-json output.
+
+    Parses newline-delimited JSON events and concatenates text blocks
+    from type:assistant message events. Falls back to the result field
+    if populated (for forward compatibility when CLI bug is fixed).
+
+    Args:
+        stream_output: Raw stream-json output from Claude CLI
+
+    Returns:
+        Extracted response text
+
+    """
+    text_parts: list[str] = []
+    result_text = ""
+
+    for line in stream_output.strip().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        if event.get("type") == "assistant":
+            message = event.get("message", {})
+            for block in message.get("content", []):
+                if block.get("type") == "text":
+                    text_parts.append(block["text"])
+        elif event.get("type") == "result":
+            result_text = event.get("result", "")
+
+    # Prefer result field if populated (CLI bug is fixed)
+    if result_text.strip():
+        return result_text
+
+    return "".join(text_parts)
+
+
 def _call_claude_judge(
     evaluation_context: str, model: str, workspace: Path | None = None
 ) -> tuple[str, str, str]:
@@ -587,13 +628,17 @@ def _call_claude_judge(
     # NOTE: --allowedTools takes variadic <tools...>, so any positional arg
     # placed after it gets consumed as a tool name instead of the prompt.
     # We pipe the evaluation context via stdin to avoid this and ARG_MAX limits.
+    # Use stream-json to work around Claude CLI v2.1.83 bug where --print
+    # mode returns empty result field despite the model generating tokens.
+    # Stream-json events contain the actual response in type:assistant messages.
     cmd = [
         "claude",
         "--model",
         model,
         "--print",
         "--output-format",
-        "text",
+        "stream-json",
+        "--verbose",
         "--dangerously-skip-permissions",
         "--allowedTools",
         "",  # No tools — all context is in the prompt
@@ -618,14 +663,14 @@ def _call_claude_judge(
 
         # Check stdout for JSON error response (Claude outputs errors as JSON)
         if result.stdout:
-            try:
-                data = json.loads(result.stdout.strip())
-                if data.get("is_error"):
-                    error_msg = data.get("result", data.get("error", "Unknown JSON error"))
-            except json.JSONDecodeError:
-                # Not JSON, check if stdout has useful text
-                if result.stdout.strip():
-                    error_msg = f"stdout: {result.stdout.strip()[:200]}"
+            for line in result.stdout.strip().splitlines():
+                try:
+                    data = json.loads(line.strip())
+                    if data.get("is_error"):
+                        error_msg = data.get("result", data.get("error", "Unknown JSON error"))
+                        break
+                except json.JSONDecodeError:
+                    continue
 
         # Fall back to stderr if no useful stdout
         if error_msg == "No error message" and result.stderr:
@@ -645,8 +690,9 @@ def _call_claude_judge(
     # Record success with circuit breaker
     cb._record_success()
 
-    # Return stdout, stderr, and raw response (stdout is the judge response)
-    return result.stdout, result.stderr, result.stdout
+    # Extract response text from stream-json events
+    response_text = _extract_response_from_stream(result.stdout)
+    return result.stdout, result.stderr, response_text
 
 
 def _parse_judge_response(response: str) -> JudgeResult:

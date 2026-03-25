@@ -738,19 +738,27 @@ class TestCallClaudeJudge:
     """Tests for _call_claude_judge."""
 
     def test_successful_judge_call(self, tmp_path: Path) -> None:
-        """Test successful Claude judge call."""
+        """Test successful Claude judge call with stream-json output."""
+        judge_text = '{"score": 0.9, "passed": true, "reasoning": "Excellent"}'
+        # Simulate stream-json output: assistant event with content, then result event
+        stream_output = (
+            '{"type":"assistant","message":{"content":[{"type":"text","text":'
+            + json.dumps(judge_text)
+            + "}]}}\n"
+            + '{"type":"result","result":""}\n'
+        )
         mock_result = MagicMock()
         mock_result.returncode = 0
-        mock_result.stdout = '{"score": 0.9, "passed": true, "reasoning": "Excellent"}'
+        mock_result.stdout = stream_output
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result):
-            stdout, _stderr, response = _call_claude_judge(
+            _stdout, _stderr, response = _call_claude_judge(
                 "Evaluate this task", "claude-opus-4-6", tmp_path
             )
 
-        assert '{"score": 0.9' in stdout
-        assert response == stdout
+        assert '{"score": 0.9' in response
+        assert response == judge_text
 
     def test_judge_call_with_json_error(self, tmp_path: Path) -> None:
         """Test handling of JSON error response."""
