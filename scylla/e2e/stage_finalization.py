@@ -30,6 +30,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class _JudgeParseError(ValueError):
+    """Judge parse failure with captured outputs for diagnostics."""
+
+    def __init__(self, original: ValueError, stdout: str, stderr: str) -> None:
+        super().__init__(str(original))
+        self.stdout = stdout
+        self.stderr = stderr
+
+
 def _call_judge_with_retry(
     judge_prompt: str,
     model: str,
@@ -48,13 +57,14 @@ def _call_judge_with_retry(
         Tuple of (stdout, stderr, raw_result, parsed_judge_result).
 
     Raises:
-        ValueError: If both attempts fail to produce valid JSON.
+        _JudgeParseError: If both attempts fail to produce valid JSON
+            (wraps ValueError with captured stdout/stderr).
 
     """
     from scylla.e2e.llm_judge import _call_claude_judge, _parse_judge_response
 
     json_reminder = "\n\nIMPORTANT: Respond with ONLY a valid JSON object."
-    last_parse_error: Exception | None = None
+    last_parse_error: ValueError | None = None
     stdout = stderr = result = ""
     judge_result: Any = None
     for attempt in range(2):
@@ -68,11 +78,38 @@ def _call_judge_with_retry(
             last_parse_error = e
             if attempt == 0:
                 logger.warning(
-                    f"Judge {judge_num} parse failed (attempt {attempt + 1}), retrying..."
+                    f"Judge {judge_num} parse failed (attempt {attempt + 1}), retrying... "
+                    f"stdout_len={len(stdout)}, stderr_len={len(stderr)}"
                 )
     if last_parse_error:
-        raise last_parse_error
+        raise _JudgeParseError(last_parse_error, stdout=stdout, stderr=stderr)
     return stdout, stderr, result, judge_result
+
+
+def _save_judge_failure(judge_dir: Any, judge_num: int, error: Exception) -> None:
+    """Save diagnostics for a failed judge invocation."""
+    judge_specific_dir = judge_dir / f"judge_{judge_num:02d}"
+    judge_specific_dir.mkdir(parents=True, exist_ok=True)
+
+    timing_file = judge_specific_dir / "timing.json"
+    with open(timing_file, "w") as f:
+        json.dump(
+            {
+                "judge_duration_seconds": 0.0,
+                "measured_at": datetime.now(timezone.utc).isoformat(),
+                "failed": True,
+                "error": str(error),
+            },
+            f,
+            indent=2,
+        )
+    (judge_specific_dir / "error.log").write_text(f"Judge failed: {error}\n")
+
+    # Save raw outputs for debugging (available from _JudgeParseError)
+    if hasattr(error, "stdout") and error.stdout:
+        (judge_specific_dir / "stdout.log").write_text(error.stdout)
+    if hasattr(error, "stderr") and error.stderr:
+        (judge_specific_dir / "stderr.log").write_text(error.stderr)
 
 
 def stage_execute_judge(ctx: RunContext) -> None:
@@ -171,23 +208,7 @@ def stage_execute_judge(ctx: RunContext) -> None:
                 f"Judge {judge_num} failed with model {model}: {e}",
                 exc_info=True,
             )
-
-            judge_specific_dir = judge_dir / f"judge_{judge_num:02d}"
-            judge_specific_dir.mkdir(parents=True, exist_ok=True)
-
-            timing_file = judge_specific_dir / "timing.json"
-            with open(timing_file, "w") as f:
-                json.dump(
-                    {
-                        "judge_duration_seconds": 0.0,
-                        "measured_at": datetime.now(timezone.utc).isoformat(),
-                        "failed": True,
-                        "error": str(e),
-                    },
-                    f,
-                    indent=2,
-                )
-            (judge_specific_dir / "error.log").write_text(f"Judge failed: {e}\n")
+            _save_judge_failure(judge_dir, judge_num, e)
 
             failed_summary = JudgeResultSummary(
                 model=model,
