@@ -127,13 +127,17 @@ def calculate_range(values: list[float]) -> tuple[float, float]:
 
 
 def calculate_variance(values: list[float]) -> float:
-    """Calculate the population variance.
+    """Calculate the sample variance using Bessel's correction.
+
+    Uses N-1 denominator (Bessel's correction) to provide an unbiased
+    estimate of the population variance from a sample. This is the
+    standard choice for small-N ablation runs (typically 9-10 per tier).
 
     Args:
         values: List of numeric values.
 
     Returns:
-        Variance, or 0.0 if empty or single value.
+        Sample variance, or 0.0 if fewer than 2 values.
 
     """
     if len(values) < 2:
@@ -141,17 +145,19 @@ def calculate_variance(values: list[float]) -> float:
 
     mean = calculate_mean(values)
     squared_diffs = [(v - mean) ** 2 for v in values]
-    return sum(squared_diffs) / len(values)
+    return sum(squared_diffs) / (len(values) - 1)
 
 
 def calculate_std_dev(values: list[float]) -> float:
-    """Calculate the population standard deviation.
+    """Calculate the sample standard deviation.
+
+    Uses Bessel's correction (N-1) via calculate_variance().
 
     Args:
         values: List of numeric values.
 
     Returns:
-        Standard deviation, or 0.0 if empty or single value.
+        Sample standard deviation, or 0.0 if fewer than 2 values.
 
     """
     variance = calculate_variance(values)

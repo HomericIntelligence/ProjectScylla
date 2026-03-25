@@ -135,11 +135,30 @@ class TestCalculateVariance:
         assert calculate_variance(values) == 0.0
 
     def test_known_variance(self) -> None:
-        """Test Known variance."""
+        """Test Known sample variance with Bessel's correction."""
         # Values: 2, 4, 6, mean = 4
-        # Variance = ((2-4)^2 + (4-4)^2 + (6-4)^2) / 3 = (4+0+4)/3 = 8/3
+        # Sample variance = ((2-4)^2 + (4-4)^2 + (6-4)^2) / (3-1) = (4+0+4)/2 = 4.0
         values = [2.0, 4.0, 6.0]
-        assert calculate_variance(values) == pytest.approx(8.0 / 3)
+        assert calculate_variance(values) == pytest.approx(4.0)
+
+    def test_two_values(self) -> None:
+        """Test Bessel's correction with minimum sample size."""
+        # Values: 0, 2, mean = 1
+        # Sample variance = ((0-1)^2 + (2-1)^2) / (2-1) = 2/1 = 2.0
+        values = [0.0, 2.0]
+        assert calculate_variance(values) == pytest.approx(2.0)
+
+    @pytest.mark.parametrize(
+        ("values", "expected"),
+        [
+            ([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], 7.5),
+            ([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0], 9.166666666666666),
+        ],
+        ids=["nine-runs", "ten-runs"],
+    )
+    def test_typical_ablation_sizes(self, values: list[float], expected: float) -> None:
+        """Test with typical 9-10 run ablation sizes."""
+        assert calculate_variance(values) == pytest.approx(expected)
 
 
 class TestCalculateStdDev:
@@ -159,10 +178,10 @@ class TestCalculateStdDev:
         assert calculate_std_dev(values) == 0.0
 
     def test_known_std_dev(self) -> None:
-        """Test Known std dev."""
-        # Variance = 8/3, std_dev = sqrt(8/3)
+        """Test Known sample std dev with Bessel's correction."""
+        # Sample variance = 4.0, std_dev = sqrt(4.0) = 2.0
         values = [2.0, 4.0, 6.0]
-        expected = math.sqrt(8.0 / 3)
+        expected = math.sqrt(4.0)
         assert calculate_std_dev(values) == pytest.approx(expected)
 
 
