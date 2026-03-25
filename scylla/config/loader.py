@@ -480,6 +480,7 @@ class ConfigLoader:
             "judge": defaults.judge,
             "adapters": defaults.adapters,
             "cleanup": defaults.cleanup,
+            "maestro": defaults.maestro,
             "output": defaults.output,
             "logging": defaults.logging,
             "metrics": defaults.metrics,
