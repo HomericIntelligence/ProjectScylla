@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
+from scylla.maestro.models import MaestroConfig as MaestroConfig
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 
 
@@ -296,6 +297,10 @@ class DefaultsConfig(BaseModel):
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
     adapters: AdaptersConfig = Field(default_factory=AdaptersConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
+    maestro: MaestroConfig | None = Field(
+        default=None,
+        description="AI Maestro REST API configuration (None = disabled)",
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -321,6 +326,10 @@ class ScyllaConfig(BaseModel):
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
     adapters: AdaptersConfig = Field(default_factory=AdaptersConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
+    maestro: MaestroConfig | None = Field(
+        default=None,
+        description="AI Maestro REST API configuration (None = disabled)",
+    )
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     metrics: MetricsConfig = Field(default_factory=MetricsConfig)
