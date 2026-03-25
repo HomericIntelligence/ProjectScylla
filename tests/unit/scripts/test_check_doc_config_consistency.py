@@ -357,15 +357,13 @@ class TestCheckAddoptsCovFailUnder:
         assert "80" in errors[0]
         assert "75" in errors[0]
 
-    def test_missing_flag_returns_error(self, tmp_path: Path) -> None:
-        """Should return an error when --cov-fail-under is absent from addopts."""
+    def test_missing_flag_returns_no_errors(self, tmp_path: Path) -> None:
+        """Should return no errors when --cov-fail-under is absent (single source of truth)."""
         write_pyproject(
             tmp_path,
             '[tool.pytest.ini_options]\naddopts = ["--cov=scylla"]\n',
         )
-        errors = check_addopts_cov_fail_under(tmp_path, 75)
-        assert len(errors) == 1
-        assert "--cov-fail-under" in errors[0]
+        assert check_addopts_cov_fail_under(tmp_path, 75) == []
 
 
 # ---------------------------------------------------------------------------
@@ -645,8 +643,8 @@ class TestMainIntegration:
             finally:
                 sys.argv = original_argv
 
-    def test_addopts_fail_under_absent_exits_one(self, tmp_path: Path) -> None:
-        """Missing --cov-fail-under in addopts should produce exit code 1."""
+    def test_addopts_fail_under_absent_exits_zero(self, tmp_path: Path) -> None:
+        """Missing --cov-fail-under in addopts should pass (single source of truth)."""
         import sys
 
         from scripts.check_doc_config_consistency import main
@@ -660,7 +658,7 @@ class TestMainIntegration:
         ):
             try:
                 result = main()
-                assert result == 1
+                assert result == 0
             finally:
                 sys.argv = original_argv
 

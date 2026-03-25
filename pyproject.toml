@@ -113,7 +113,6 @@ addopts = [
     "--cov=scripts",
     "--cov-report=term-missing",
     "--cov-report=html",
-    "--cov-fail-under=9",
 ]
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
@@ -156,11 +155,12 @@ omit = [
 
 [tool.coverage.report]
 # DUAL THRESHOLD DESIGN:
-# - This 9% floor: combined scylla/ + scripts/ floor (scripts/ has low coverage by design).
+# - This 75% floor: combined scylla/ + scripts/ floor for local runs.
 # - 75% floor: scylla/ unit tests only, enforced via --cov-fail-under=75 in test.yml unit step.
 # - 5% floor: integration tests, enforced via --cov-fail-under=5 in test.yml integration step.
-# Do not raise this value — the per-module floors in test.yml are the authoritative thresholds.
-fail_under = 9
+# CI uses --override-ini="addopts=" to bypass these addopts and apply its own per-step floors.
+# Locally, this floor gives developers immediate feedback on coverage regressions.
+fail_under = 75
 precision = 2
 show_missing = true
 skip_covered = false
