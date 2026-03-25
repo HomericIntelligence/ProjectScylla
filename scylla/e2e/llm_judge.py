@@ -10,7 +10,6 @@ Data models are in llm_judge_models.py.
 
 from __future__ import annotations
 
-import contextlib
 import json
 import logging
 import os
@@ -566,96 +565,84 @@ def run_llm_judge(
 def _call_claude_judge(
     evaluation_context: str, model: str, workspace: Path | None = None
 ) -> tuple[str, str, str]:
-    """Call Claude CLI to get judgment with tool access to workspace.
+    """Call Claude CLI to get judgment.
 
-    IMPORTANT: Always use claude-opus-4-6 for judging.
-    Opus provides the most accurate and consistent evaluations.
-    Do NOT change to Sonnet or Haiku - quality matters more than speed for judging.
+    The evaluation context (task, agent output, workspace state, pipeline results)
+    is passed directly as the CLI prompt. No tool access is needed.
 
     Args:
         evaluation_context: The task, agent output, and workspace state to evaluate
-        model: Model to use (must be Opus for accurate judging)
-        workspace: Path to workspace for judge to inspect files (optional)
+        model: Model to use for judging
+        workspace: Path to workspace (unused, kept for API compatibility)
 
     Returns:
         Tuple of (stdout, stderr, raw_response) where raw_response is the same as stdout.
 
     """
-    import tempfile
+    # Judge evaluates from provided context only (workspace state, git diff,
+    # pipeline results are all included in the prompt). No tool access needed,
+    # which reduces memory overhead and avoids dependency on workspace existence.
+    cmd = [
+        "claude",
+        "--model",
+        model,
+        "--print",
+        "--output-format",
+        "text",
+        "--dangerously-skip-permissions",
+        "--allowedTools",
+        "",  # No tools — all context is in the prompt
+        "--system-prompt-file",
+        str(JUDGE_SYSTEM_PROMPT_FILE),
+    ]
 
-    # Write evaluation context to temp file to avoid "Argument list too long" errors
-    # This is necessary for T5/T6 where the combined config can be very large
-    with tempfile.NamedTemporaryFile(
-        mode="w",
-        suffix=".md",
-        prefix="judge_prompt_",
-        delete=False,
-    ) as prompt_file:
-        prompt_file.write(evaluation_context)
-        prompt_file_path = prompt_file.name
+    # Pass evaluation context as the prompt. For very large prompts (T5/T6),
+    # pipe via stdin to avoid OS ARG_MAX limits (~2MB on Linux).
+    max_arg_length = 1_000_000
+    stdin_input: str | None = None
+    if len(evaluation_context) < max_arg_length:
+        cmd.append(evaluation_context)
+    else:
+        stdin_input = evaluation_context
 
-    try:
-        # Judge evaluates from provided context only (workspace state, git diff,
-        # pipeline results are all included in the prompt). No tool access needed,
-        # which reduces memory overhead and avoids dependency on workspace existence.
-        cmd = [
-            "claude",
-            "--model",
-            model,
-            "--print",
-            "--output-format",
-            "text",
-            "--dangerously-skip-permissions",
-            "--allowedTools",
-            "",  # No tools — all context is in the prompt
-            "--system-prompt-file",
-            str(JUDGE_SYSTEM_PROMPT_FILE),
-            "-p",
-            prompt_file_path,
-        ]
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=1200,  # 20 minutes - judging can take time with Opus
+        env={k: v for k, v in os.environ.items() if k != "CLAUDECODE"},
+        input=stdin_input,
+    )
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=1200,  # 20 minutes - judging can take time with Opus
-            env={k: v for k, v in os.environ.items() if k != "CLAUDECODE"},
-        )
+    if result.returncode != 0:
+        error_msg = "No error message"
 
-        if result.returncode != 0:
-            error_msg = "No error message"
+        # Check stdout for JSON error response (Claude outputs errors as JSON)
+        if result.stdout:
+            try:
+                data = json.loads(result.stdout.strip())
+                if data.get("is_error"):
+                    error_msg = data.get("result", data.get("error", "Unknown JSON error"))
+            except json.JSONDecodeError:
+                # Not JSON, check if stdout has useful text
+                if result.stdout.strip():
+                    error_msg = f"stdout: {result.stdout.strip()[:200]}"
 
-            # Check stdout for JSON error response (Claude outputs errors as JSON)
-            if result.stdout:
-                try:
-                    data = json.loads(result.stdout.strip())
-                    if data.get("is_error"):
-                        error_msg = data.get("result", data.get("error", "Unknown JSON error"))
-                except json.JSONDecodeError:
-                    # Not JSON, check if stdout has useful text
-                    if result.stdout.strip():
-                        error_msg = f"stdout: {result.stdout.strip()[:200]}"
+        # Fall back to stderr if no useful stdout
+        if error_msg == "No error message" and result.stderr:
+            error_msg = result.stderr.strip()
 
-            # Fall back to stderr if no useful stdout
-            if error_msg == "No error message" and result.stderr:
-                error_msg = result.stderr.strip()
+        raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
 
-            raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
+    # Check for rate limit before returning
+    from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
 
-        # Check for rate limit before returning
-        from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
+    rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
+    if rate_limit_info:
+        raise RateLimitError(rate_limit_info)
 
-        rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
-        if rate_limit_info:
-            raise RateLimitError(rate_limit_info)
-
-        # Return stdout, stderr, and raw response (stdout is the judge response)
-        return result.stdout, result.stderr, result.stdout
-
-    finally:
-        # Clean up temp file
-        with contextlib.suppress(OSError):
-            os.unlink(prompt_file_path)
+    # Return stdout, stderr, and raw response (stdout is the judge response)
+    return result.stdout, result.stderr, result.stdout
 
 
 def _parse_judge_response(response: str) -> JudgeResult:
@@ -670,6 +657,14 @@ def _parse_judge_response(response: str) -> JudgeResult:
     """
     # Extract JSON from response using shared utility
     response = response.strip()
+
+    if not response:
+        raise ValueError(
+            "Judge returned empty response. "
+            "This may indicate the prompt was not delivered to the model. "
+            "Check stderr logs for details."
+        )
+
     data = extract_json_from_llm_response(response)
 
     if data is None:
