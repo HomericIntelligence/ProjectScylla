@@ -352,6 +352,20 @@ pre-commit run --all-files
 
 ## Common Commands
 
+### Quick Start (justfile)
+
+The justfile provides a convenient interface to all development tasks:
+
+```bash
+just              # List all available recipes
+just test         # Run pytest
+just lint         # Run ruff check
+just format       # Run ruff format
+just typecheck    # Run mypy
+just pre-commit   # Run all pre-commit hooks
+just ci-all       # Run full CI suite in container
+```
+
 ### Development Workflows
 
 **Pull Requests**: See [pr-workflow.md](/.claude/shared/pr-workflow.md)
