@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -463,3 +464,67 @@ class TestExperimentConfigDefaults:
             language="python",
         )
         assert config.judge_models == [DEFAULT_JUDGE_MODEL]
+
+
+class TestExperimentConfigModelNormalization:
+    """Tests for model ID normalization in ExperimentConfig."""
+
+    _BASE_KWARGS: ClassVar[dict[str, object]] = {
+        "experiment_id": "test-norm",
+        "task_repo": "https://github.com/test/repo",
+        "task_commit": "abc123",
+        "task_prompt_file": Path("prompt.md"),
+        "language": "python",
+    }
+
+    def test_models_normalized_from_short_alias(self) -> None:
+        """Short aliases in models are expanded to full IDs."""
+        config = ExperimentConfig(**self._BASE_KWARGS, models=["sonnet"])  # type: ignore[arg-type]
+        assert config.models == ["claude-sonnet-4-6"]
+
+    def test_judge_models_normalized_from_dot_notation(self) -> None:
+        """Legacy dot-notation judge_models are expanded to full IDs."""
+        config = ExperimentConfig(
+            **self._BASE_KWARGS,  # type: ignore[arg-type]
+            judge_models=["opus-4.6", "sonnet-4.6", "haiku-4.5"],
+        )
+        assert config.judge_models == [
+            "claude-opus-4-6",
+            "claude-sonnet-4-6",
+            "claude-haiku-4-5",
+        ]
+
+    def test_full_ids_unchanged(self) -> None:
+        """Already-canonical IDs pass through unchanged."""
+        config = ExperimentConfig(
+            **self._BASE_KWARGS,  # type: ignore[arg-type]
+            models=["claude-sonnet-4-6"],
+            judge_models=["claude-opus-4-6"],
+        )
+        assert config.models == ["claude-sonnet-4-6"]
+        assert config.judge_models == ["claude-opus-4-6"]
+
+    def test_load_normalizes_legacy_ids(self, tmp_path: Path) -> None:
+        """ExperimentConfig.load() normalizes legacy model IDs from saved JSON."""
+        import json
+
+        config_data = {
+            "experiment_id": "test-norm",
+            "task_repo": "https://github.com/test/repo",
+            "task_commit": "abc123",
+            "task_prompt_file": "prompt.md",
+            "language": "python",
+            "models": ["haiku-4.5"],
+            "judge_models": ["opus-4.6", "sonnet-4.6", "haiku-4.5"],
+        }
+        config_path = tmp_path / "experiment.json"
+        config_path.write_text(json.dumps(config_data))
+
+        loaded = ExperimentConfig.load(config_path)
+
+        assert loaded.models == ["claude-haiku-4-5"]
+        assert loaded.judge_models == [
+            "claude-opus-4-6",
+            "claude-sonnet-4-6",
+            "claude-haiku-4-5",
+        ]

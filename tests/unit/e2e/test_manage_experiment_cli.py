@@ -76,8 +76,8 @@ class TestBuildParser:
             ]
         )
         assert args.runs == 10
-        assert args.model == "sonnet"
-        assert args.judge_model == "sonnet"
+        assert args.model == "claude-sonnet-4-6"
+        assert args.judge_model == "claude-opus-4-6"
         assert args.thinking == "None"
         assert args.until is None
         assert args.until_tier is None
