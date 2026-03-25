@@ -13,6 +13,8 @@ Example:
 
 """
 
+from scylla.nats.config import NATSConfig
+
 from .constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL, normalize_model_id
 from .loader import ConfigLoader
 from .models import (
@@ -61,6 +63,7 @@ __all__ = [
     "MetricsConfig",
     "ModelConfig",
     "ModelPricing",
+    "NATSConfig",
     "OutputConfig",
     "Requirement",
     "Rubric",

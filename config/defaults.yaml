@@ -40,3 +40,12 @@ logging:
 
 # Default model used when no --model flag is provided
 default_model: "claude-sonnet-4-6"
+
+# NATS JetStream subscription settings
+nats:
+  enabled: false
+  url: "nats://localhost:4222"
+  stream: "TASKS"
+  subjects:
+    - "hi.tasks.>"
+  durable_name: "scylla-subscriber"
