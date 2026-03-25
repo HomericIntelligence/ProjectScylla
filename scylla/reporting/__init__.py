@@ -3,6 +3,7 @@
 This module provides result writing and report generation capabilities.
 """
 
+from scylla.reporting.json_report import JsonReportGenerator
 from scylla.reporting.markdown import (
     MarkdownReportGenerator,
     ReportData,
@@ -39,15 +40,12 @@ from scylla.reporting.summary import (
 )
 
 __all__ = [
-    # Scorecard
     "EvalResult",
-    # Summary
     "EvaluationReport",
-    # Result
     "ExecutionInfo",
     "GradingInfo",
+    "JsonReportGenerator",
     "JudgmentInfo",
-    # Markdown
     "MarkdownReportGenerator",
     "MetricsInfo",
     "ModelScorecard",

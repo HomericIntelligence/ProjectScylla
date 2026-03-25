@@ -123,6 +123,41 @@ class TestReportCommand:
         assert "Generating json report for: 001-test" in result.output
         assert "No results found" in result.output
 
+    def test_report_json_format_with_results(self, tmp_path: Path) -> None:
+        """Test report --format json generates JSON output when results exist."""
+        # Create a fake result.json
+        runs_dir = tmp_path / "runs" / "001-test" / "T0" / "run-1"
+        runs_dir.mkdir(parents=True)
+        result_data = {
+            "tier_id": "T0",
+            "grading": {"pass_rate": 0.8, "composite_score": 0.75, "cost_of_pass": 1.5},
+            "judgment": {"impl_rate": 0.7, "passed": True},
+            "metrics": {"cost_usd": 0.05},
+        }
+        import json as json_mod
+
+        (runs_dir / "result.json").write_text(json_mod.dumps(result_data))
+
+        runner = CliRunner()
+        with patch("scylla.cli.main._load_results", return_value=[result_data]):
+            result = runner.invoke(
+                cli, ["report", "001-test", "--format", "json"], catch_exceptions=False
+            )
+
+        assert result.exit_code == 0
+        assert "Generating json report for: 001-test" in result.output
+        assert "Report generated:" in result.output
+        assert "report.json" in result.output
+
+    def test_report_html_format_rejected(self) -> None:
+        """Test that html format is rejected by Click validation."""
+        runner = CliRunner()
+        result = runner.invoke(cli, ["report", "001-test", "--format", "html"])
+
+        # Click should reject 'html' since it's no longer in the choices
+        assert result.exit_code != 0
+        assert "Invalid value" in result.output or "invalid choice" in result.output.lower()
+
 
 class TestListCommand:
     """Tests for 'list' command."""

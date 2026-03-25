@@ -223,7 +223,7 @@ def _calculate_tier_metrics(
     "--format",
     "-f",
     "output_format",
-    type=click.Choice(["markdown", "json", "html"]),
+    type=click.Choice(["markdown", "json"]),
     default="markdown",
     help="Report format (default: markdown).",
 )
@@ -353,9 +353,13 @@ def report(
         generator = MarkdownReportGenerator(report_dir)
         report_path = generator.write_report(report_data)
         click.echo(f"\nReport generated: {report_path}")
-    else:
-        click.echo(f"\n{output_format} format not yet implemented.", err=True)
-        sys.exit(1)
+    elif output_format == "json":
+        from scylla.reporting.json_report import JsonReportGenerator
+
+        report_dir = output.parent if output else base_path / "reports"
+        json_generator = JsonReportGenerator(report_dir)
+        report_path = json_generator.write_report(report_data)
+        click.echo(f"\nReport generated: {report_path}")
 
 
 @cli.command("list")
