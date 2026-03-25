@@ -102,11 +102,22 @@ pixi run python scripts/generate_all_results.py \
 
 ## Ecosystem
 
-- **ProjectOdyssey** → Training and capability development
-- **ProjectKeystone** → Communication and distributed agent coordination
-- **ProjectScylla** → Testing, measurement, and optimization under trial
+Part of a 12-repository ecosystem:
 
-Together: cohesive ecosystem for building, connecting, and refining agent workflows.
+| Repository | Role |
+|------------|------|
+| **AchaeanFleet** | Container images for the agent mesh |
+| **Myrmidons** | GitOps agent provisioning |
+| **Odysseus** | CLI and core platform for agent lifecycle management |
+| **ProjectArgus** | Observability — monitoring and metrics |
+| **ProjectHephaestus** | Shared Python utilities and foundational tools |
+| **ProjectHermes** | Webhook-to-NATS bridge — event ingestion |
+| **ProjectKeystone** | DAG execution engine |
+| **ProjectMnemosyne** | Skills marketplace — team knowledge sharing |
+| **ProjectOdyssey** | Training and capability development for agents |
+| **ProjectProteus** | CI/CD pipeline infrastructure |
+| **ProjectScylla** | Testing, measurement, and optimization under constraints (this project) |
+| **ProjectTelemachy** | Workflow engine |
 
 ---
 
