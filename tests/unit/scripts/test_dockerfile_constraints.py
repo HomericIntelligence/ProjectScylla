@@ -237,6 +237,95 @@ class TestDockerfileBaseImageDigestConsistency:
         )
 
 
+def _parse_node_base_digest(dockerfile_content: str) -> str | None:
+    """Extract SHA256 digest from the node base image FROM line.
+
+    Matches ``node:XX-slim@sha256:<64 hex>`` on FROM lines.
+
+    Args:
+        dockerfile_content: Raw text content of the Dockerfile.
+
+    Returns:
+        The digest string (e.g. ``sha256:abc...``), or ``None`` if not found.
+
+    """
+    for line in dockerfile_content.splitlines():
+        stripped = line.strip()
+        if not stripped.upper().startswith("FROM"):
+            continue
+        if not re.search(r"node:", stripped, re.IGNORECASE):
+            continue
+        match = re.search(r"@(sha256:[a-f0-9]{64})", stripped, re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return None
+
+
+class TestDockerfileNodeImageDigestPin:
+    """Assert the node:20-slim FROM line carries a SHA256 digest pin."""
+
+    def test_node_from_line_has_sha256_digest(self) -> None:
+        """The node-source stage must carry a SHA256 digest pin.
+
+        Without a digest pin, the node stage can silently drift to a
+        different upstream image.  See issues #1542 and #1591.
+        """
+        content = DOCKERFILE_PATH.read_text()
+        digest = _parse_node_base_digest(content)
+        assert digest is not None, (
+            "No SHA256 digest found on the node:*-slim FROM line in docker/Dockerfile. "
+            "The node-source stage must include a @sha256:<64-hex> pin for reproducibility. "
+            "See issue #1591."
+        )
+
+    def test_node_digest_is_64_hex_chars(self) -> None:
+        """The node digest must be a valid 64-character hex string."""
+        content = DOCKERFILE_PATH.read_text()
+        digest = _parse_node_base_digest(content)
+        assert digest is not None, "No node digest found"
+        assert re.fullmatch(r"sha256:[a-f0-9]{64}", digest), (
+            f"Node digest '{digest}' is not a valid sha256:<64-hex> string."
+        )
+
+
+class TestParseNodeBaseDigest:
+    """Unit tests for _parse_node_base_digest helper."""
+
+    _DIGEST = "sha256:" + "a" * 64
+
+    def test_node_from_line_with_digest(self) -> None:
+        """Should extract digest from a node FROM line."""
+        content = f"FROM node:20-slim@{self._DIGEST} AS node-source"
+        assert _parse_node_base_digest(content) == self._DIGEST
+
+    def test_node_from_line_without_digest(self) -> None:
+        """Node FROM line without @sha256 should return None."""
+        content = "FROM node:20-slim AS node-source"
+        assert _parse_node_base_digest(content) is None
+
+    def test_ignores_python_from_lines(self) -> None:
+        """FROM lines referencing python images should be ignored."""
+        content = f"FROM python:3.12-slim@{self._DIGEST}\nFROM node:20-slim AS node-source"
+        assert _parse_node_base_digest(content) is None
+
+    def test_ignores_comment_lines(self) -> None:
+        """Comment lines containing node digest should be ignored."""
+        content = (
+            f"# FROM node:20-slim@{self._DIGEST}\nFROM node:20-slim@{self._DIGEST} AS node-source"
+        )
+        assert _parse_node_base_digest(content) == self._DIGEST
+
+    def test_empty_dockerfile(self) -> None:
+        """Empty Dockerfile should return None."""
+        assert _parse_node_base_digest("") is None
+
+    def test_short_hash_not_matched(self) -> None:
+        """A hash shorter than 64 hex chars must not be matched."""
+        short = "sha256:" + "f" * 63
+        content = f"FROM node:20-slim@{short} AS node-source"
+        assert _parse_node_base_digest(content) is None
+
+
 class TestParsePythonBaseDigests:
     """Unit tests for _parse_python_base_digests helper."""
 
