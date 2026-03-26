@@ -43,6 +43,7 @@ RUN pip install --no-cache-dir "hatchling==1.29.0"
 # into this layer when EXTRAS is set at build time:
 #   analysis  — matplotlib, numpy, pandas, scipy, seaborn, altair, vl-convert-python, krippendorff
 #   dev       — pytest, pytest-cov, pre-commit, ruff, defusedxml
+#   nats      — nats-py (NATS JetStream event subscription)
 #
 # EXTRAS validation: unknown group names emit an error and exit non-zero (see #1204).
 # Typos like EXTRAS=analyysis are caught immediately rather than silently omitted.
