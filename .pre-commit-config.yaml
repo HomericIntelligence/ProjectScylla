@@ -205,6 +205,18 @@ repos:
         language: system
         files: ^scylla/.*\.py$
         pass_filenames: false
+      - id: check-package-version-consistency
+        name: Check Package Version Consistency
+        description: >-
+          Fails if pixi.toml or scylla/__init__.py version diverges from
+          pyproject.toml, or if CHANGELOG.md contains aspirational version
+          references. Use --scan-skills to also check skill template files.
+        entry: pixi run python scripts/check_package_version_consistency.py --scan-skills
+        language: system
+        files: >-
+          ^(pyproject\.toml|pixi\.toml|scylla/__init__\.py|CHANGELOG\.md|
+          \.claude-plugin/skills/.*\.md|\.claude/.*\.md)$
+        pass_filenames: false
 
   # Markdown linting
   - repo: https://github.com/DavidAnson/markdownlint-cli2
