@@ -4,6 +4,7 @@ This module provides an HTTP client for communicating with the AI Maestro
 service to inject failures into agents during E2E evaluation runs.
 """
 
+from scylla.maestro.async_client import AsyncMaestroClient as AsyncMaestroClient
 from scylla.maestro.client import MaestroClient as MaestroClient
 from scylla.maestro.errors import MaestroAPIError as MaestroAPIError
 from scylla.maestro.errors import MaestroConnectionError as MaestroConnectionError
@@ -14,6 +15,7 @@ from scylla.maestro.models import InjectionResult as InjectionResult
 from scylla.maestro.models import MaestroConfig as MaestroConfig
 
 __all__ = [
+    "AsyncMaestroClient",
     "FailureSpec",
     "HealthResponse",
     "InjectionResult",
