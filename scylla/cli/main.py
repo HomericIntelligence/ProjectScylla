@@ -239,13 +239,13 @@ def _calculate_tier_metrics(
 @click.option(
     "--output",
     "-o",
-    type=click.Path(path_type=Path),
-    help="Output file path.",
+    default=None,
+    help="Output file path. Use '-' for stdout.",
 )
 def report(
     test_id: str,
     output_format: str,
-    output: Path | None,
+    output: str | None,
 ) -> None:
     """Generate report for a completed test.
 
@@ -256,18 +256,21 @@ def report(
 
         scylla report 001-justfile-to-makefile --format json
 
+        scylla report 001-justfile-to-makefile --format json --output -
+
     """
-    click.echo(f"Generating {output_format} report for: {test_id}")
+    stdout_mode = output == "-"
+    click.echo(f"Generating {output_format} report for: {test_id}", err=stdout_mode)
 
     base_path = Path(".")
     results = _load_results(test_id, base_path)
 
     if not results:
         click.echo(f"\nNo results found for test: {test_id}", err=True)
-        click.echo("Run 'scylla run {test_id}' first to generate results.", err=True)
+        click.echo(f"Run 'scylla run {test_id}' first to generate results.", err=True)
         sys.exit(1)
 
-    click.echo(f"  Found {len(results)} run results")
+    click.echo(f"  Found {len(results)} run results", err=stdout_mode)
 
     # Group results by tier
     by_tier: dict[str, list[dict[str, Any]]] = {}
@@ -293,7 +296,8 @@ def report(
         metrics = _calculate_tier_metrics(tier_id, by_tier[tier_id], t0_pass_rate)
         tier_metrics.append(metrics)
         click.echo(
-            f"  {tier_id}: {len(by_tier[tier_id])} runs, pass rate: {metrics.pass_rate_median:.1%}"
+            f"  {tier_id}: {len(by_tier[tier_id])} runs, pass rate: {metrics.pass_rate_median:.1%}",
+            err=stdout_mode,
         )
 
     # Calculate sensitivity analysis if multiple tiers
@@ -358,10 +362,16 @@ def report(
 
     # Generate report using dict-dispatch — single code path for all formats
     generator_cls = FORMAT_GENERATORS[output_format]
-    report_dir = output.parent if output else base_path / "reports"
-    generator = generator_cls(report_dir)
-    report_path = generator.write_report(report_data)
-    click.echo(f"\nReport generated: {report_path}")
+    if stdout_mode:
+        generator = generator_cls(Path("."))
+        content = generator.generate_report(report_data)
+        click.echo(content)
+    else:
+        output_path = Path(output) if output else None
+        report_dir = output_path.parent if output_path else base_path / "reports"
+        generator = generator_cls(report_dir)
+        report_path = generator.write_report(report_data)
+        click.echo(f"\nReport generated: {report_path}")
 
 
 @cli.command("list")
