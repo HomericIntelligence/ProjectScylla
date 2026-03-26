@@ -7,6 +7,7 @@ Thank you for your interest in contributing to ProjectScylla! This guide will he
 - [Quick Start](#quick-start)
 - [Development Setup](#development-setup)
 - [Development Workflow](#development-workflow)
+- [Versioning and Releases](#versioning-and-releases)
 - [Code Quality Standards](#code-quality-standards)
 - [Testing Requirements](#testing-requirements)
 - [Pull Request Process](#pull-request-process)
@@ -189,6 +190,49 @@ How you tested the changes
 - [x] Code formatted
 - [x] Documentation updated"
 ```
+
+## Versioning and Releases
+
+ProjectScylla follows [Semantic Versioning](https://semver.org/) (SemVer).
+
+### Version Declaration Sites
+
+The version is declared in three files that **must stay in sync**:
+
+| File | Field | Role |
+|------|-------|------|
+| `pyproject.toml` | `project.version` | Canonical source (used by hatchling for package metadata) |
+| `pixi.toml` | `workspace.version` | Pixi workspace version |
+| `scylla/__init__.py` | `__version__` | Runtime access; imported by the CLI |
+
+A CI check (`scripts/check_version_consistency.py`) verifies all three agree on every PR.
+
+### How to Bump the Version
+
+1. Update the version string in all three files listed above.
+2. Run `pixi install` to regenerate `pixi.lock` (the lock encodes the package SHA).
+3. Add a new section to `CHANGELOG.md` following [Keep a Changelog](https://keepachangelog.com/) format.
+4. Commit all changes (including `pixi.lock`).
+
+### Creating a Release
+
+Releases are created by pushing a version tag:
+
+```bash
+# After your version-bump PR is merged on main:
+git checkout main && git pull
+git tag v<VERSION>      # e.g. git tag v0.2.0
+git push origin v<VERSION>
+```
+
+The `.github/workflows/release.yml` workflow automatically creates a GitHub release
+with auto-generated release notes from conventional commits.
+
+### CHANGELOG Maintenance
+
+- Add entries under `## [Unreleased]` as you work.
+- When releasing, rename `[Unreleased]` to `[<version>] - <date>` and add a fresh `[Unreleased]` section.
+- Use Keep a Changelog categories: Added, Changed, Deprecated, Removed, Fixed, Security.
 
 ## Code Quality Standards
 

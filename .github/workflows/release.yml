@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag matches package version
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          TAG_VERSION="${TAG_NAME#v}"
+          PKG_VERSION=$(python3 -c "
+          import re, pathlib
+          text = pathlib.Path('pyproject.toml').read_text()
+          m = re.search(r'^version\s*=\s*\"([^\"]+)\"', text, re.MULTILINE)
+          print(m.group(1) if m else '')
+          ")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match pyproject.toml version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG_NAME" \
+            --title "$TAG_NAME" \
+            --generate-notes
