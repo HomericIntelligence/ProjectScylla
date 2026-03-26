@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
-"""Enforce package version consistency across pyproject.toml, pixi.toml, and CHANGELOG.md.
+"""Enforce package version consistency across all version declaration sites.
 
 Reads the canonical version from ``pyproject.toml`` ``[project].version`` and
-validates that:
+validates that every other version declaration in the repository matches.
 
-1. ``pixi.toml`` ``[workspace].version`` matches.
-2. ``scylla/__init__.py`` uses ``importlib.metadata`` (not a hardcoded string).
-3. ``CHANGELOG.md`` does not reference version numbers higher than the canonical
-   version (aspirational versions like ``v2.0.0`` when the project is at ``0.1.0``).
+Checks (always run):
+1. ``pixi.toml`` ``[workspace].version`` matches canonical version.
+2. ``scylla/__init__.py`` ``__version__`` matches canonical version.
+3. ``CHANGELOG.md`` does not reference version numbers higher than the
+   canonical version (outside ``[Unreleased]`` sections).
+
+Check (opt-in via ``--scan-skills``):
+4. Markdown files under ``.claude-plugin/skills/`` and ``.claude/`` do not
+   reference version numbers higher than the canonical version.
 
 Usage:
     python scripts/check_package_version_consistency.py
-    python scripts/check_package_version_consistency.py --repo-root /path/to/repo
-    python scripts/check_package_version_consistency.py --verbose
+    python scripts/check_package_version_consistency.py --scan-skills
+    python scripts/check_package_version_consistency.py --repo-root /path/to/repo --verbose
 
 Exit codes:
-    0: All version sources are consistent
-    1: A mismatch or policy violation was detected
+    0: All checks pass
+    1: One or more checks failed
 """
 
 import argparse
@@ -29,37 +34,35 @@ try:
 except ImportError:
     import tomli as tomllib
 
-# Regex matching hardcoded ``__version__ = "..."`` assignments.
-_HARDCODED_VERSION_RE = re.compile(r'^__version__\s*=\s*["\'][\d.]+["\']', re.MULTILINE)
-
-# Regex matching version-like references in CHANGELOG (e.g., ``v1.5.0``, ``v2.0.0``).
-_CHANGELOG_VERSION_REF_RE = re.compile(r"\bv(\d+\.\d+\.\d+)\b")
+# Matches semver-ish version strings: v1.5.0, 1.5.0, v2.0.0, 0.1.0, etc.
+# Negative lookbehind excludes versions embedded in URL paths (e.g. /en/1.0.0/).
+_VERSION_RE = re.compile(r"(?<!/)\bv?(\d+\.\d+\.\d+)\b")
 
 
 def _parse_version_tuple(version_str: str) -> tuple[int, ...]:
-    """Convert a dotted version string to an integer tuple for comparison.
+    """Parse a ``"X.Y.Z"`` string into a tuple of ints for comparison.
 
     Args:
-        version_str: A version string like ``"0.1.0"`` or ``"2.0.0"``.
+        version_str: A version string like ``"0.1.0"`` or ``"1.5.0"``.
 
     Returns:
         A tuple of integers, e.g. ``(0, 1, 0)``.
 
     """
-    return tuple(int(p) for p in version_str.split("."))
+    return tuple(int(part) for part in version_str.split("."))
 
 
-def get_pyproject_version(pyproject_path: Path) -> str:
-    """Read the canonical version from ``pyproject.toml`` ``[project].version``.
+def get_canonical_version(pyproject_path: Path) -> str:
+    """Read the canonical package version from ``pyproject.toml``.
 
     Args:
         pyproject_path: Path to ``pyproject.toml``.
 
     Returns:
-        The version string.
+        The version string from ``[project].version``.
 
     Raises:
-        SystemExit: If the file is missing, malformed, or has no version field.
+        SystemExit: If the file is missing, malformed, or lacks the version key.
 
     """
     if not pyproject_path.is_file():
@@ -84,152 +87,217 @@ def get_pyproject_version(pyproject_path: Path) -> str:
     return str(version)
 
 
-def get_pixi_version(pixi_path: Path) -> str:
-    """Read the version from ``pixi.toml`` ``[workspace].version``.
+def check_pixi_version(repo_root: Path, canonical: str) -> list[str]:
+    """Check that ``pixi.toml`` version matches the canonical version.
 
     Args:
-        pixi_path: Path to ``pixi.toml``.
+        repo_root: Repository root directory.
+        canonical: The canonical version string from ``pyproject.toml``.
 
     Returns:
-        The version string.
-
-    Raises:
-        SystemExit: If the file is missing, malformed, or has no version field.
+        List of error strings (empty if the check passes).
 
     """
+    pixi_path = repo_root / "pixi.toml"
     if not pixi_path.is_file():
-        print(f"ERROR: pixi.toml not found: {pixi_path}", file=sys.stderr)
-        sys.exit(1)
+        return [f"pixi.toml not found at {pixi_path}"]
 
     try:
         with open(pixi_path, "rb") as f:
             data = tomllib.load(f)
     except Exception as exc:
-        print(f"ERROR: Could not parse {pixi_path}: {exc}", file=sys.stderr)
-        sys.exit(1)
+        return [f"Could not parse pixi.toml: {exc}"]
 
-    version = data.get("workspace", {}).get("version")
-    if not version:
-        print(
-            f"ERROR: No [workspace].version found in {pixi_path}",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    pixi_version = data.get("workspace", {}).get("version")
+    if pixi_version is None:
+        return ["pixi.toml: No [workspace].version found"]
 
-    return str(version)
+    if str(pixi_version) != canonical:
+        return [
+            f"pixi.toml: Version mismatch — "
+            f"pixi.toml has '{pixi_version}', pyproject.toml has '{canonical}'"
+        ]
+    return []
 
 
-def check_init_uses_importlib(init_path: Path) -> bool:
-    """Check that ``__init__.py`` uses ``importlib.metadata`` instead of a hardcoded version.
+def check_init_version(repo_root: Path, canonical: str) -> list[str]:
+    """Check that ``scylla/__init__.py`` ``__version__`` matches the canonical version.
 
     Args:
-        init_path: Path to ``scylla/__init__.py``.
+        repo_root: Repository root directory.
+        canonical: The canonical version string from ``pyproject.toml``.
 
     Returns:
-        True if the file uses importlib.metadata, False if it has a hardcoded version.
+        List of error strings (empty if the check passes).
 
     """
+    init_path = repo_root / "scylla" / "__init__.py"
     if not init_path.is_file():
-        print(f"ERROR: __init__.py not found: {init_path}", file=sys.stderr)
-        sys.exit(1)
+        return [f"scylla/__init__.py not found at {init_path}"]
 
-    content = init_path.read_text()
-    return not _HARDCODED_VERSION_RE.search(content)
-
-
-def find_aspirational_versions(changelog_path: Path, canonical_version: str) -> list[str]:
-    """Find version references in CHANGELOG.md that exceed the canonical version.
-
-    Args:
-        changelog_path: Path to ``CHANGELOG.md``.
-        canonical_version: The canonical version from ``pyproject.toml``.
-
-    Returns:
-        A list of aspirational version strings found (e.g. ``["v1.5.0", "v2.0.0"]``).
-
-    """
-    if not changelog_path.is_file():
-        # CHANGELOG.md is optional — no error if missing.
+    content = init_path.read_text(encoding="utf-8")
+    match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
+    if not match:
+        # Could be using importlib.metadata — that's fine
         return []
 
-    content = changelog_path.read_text()
-    canonical_tuple = _parse_version_tuple(canonical_version)
-
-    aspirational: list[str] = []
-    for match in _CHANGELOG_VERSION_REF_RE.finditer(content):
-        ref_version = match.group(1)
-        # Skip version references inside URLs (e.g., semver.org/spec/v2.0.0.html)
-        start = match.start()
-        line_start = content.rfind("\n", 0, start) + 1
-        line_end = content.find("\n", start)
-        if line_end == -1:
-            line_end = len(content)
-        line = content[line_start:line_end]
-        # Skip if the version appears inside a URL (http:// or https://)
-        if re.search(r"https?://\S*" + re.escape(match.group(0)), line):
-            continue
-        if _parse_version_tuple(ref_version) > canonical_tuple:
-            full_ref = f"v{ref_version}"
-            if full_ref not in aspirational:
-                aspirational.append(full_ref)
-
-    return aspirational
+    init_version = match.group(1)
+    if init_version != canonical:
+        return [
+            f"scylla/__init__.py: Version mismatch — "
+            f"__version__ is '{init_version}', pyproject.toml has '{canonical}'"
+        ]
+    return []
 
 
-def check_package_version_consistency(repo_root: Path, verbose: bool = False) -> int:
-    """Validate package version consistency across all sources.
+def find_aspirational_versions(
+    file_path: Path,
+    canonical_tuple: tuple[int, ...],
+    label: str,
+) -> list[str]:
+    """Find version references in a file that are higher than the canonical version.
 
     Args:
-        repo_root: Root directory of the repository.
-        verbose: If True, print details even when everything is consistent.
+        file_path: Path to the file to scan.
+        canonical_tuple: The canonical version as a tuple of ints for comparison.
+        label: Human-readable label for error messages (e.g. ``"CHANGELOG.md"``).
 
     Returns:
-        0 if all sources are consistent, 1 if any mismatch is found.
+        List of error strings for each aspirational version found.
+
+    """
+    content = file_path.read_text(encoding="utf-8")
+    errors: list[str] = []
+
+    for line_num, line in enumerate(content.splitlines(), start=1):
+        for match in _VERSION_RE.finditer(line):
+            version_str = match.group(1)
+            version_tuple = _parse_version_tuple(version_str)
+            if version_tuple > canonical_tuple:
+                errors.append(
+                    f"{label}:{line_num}: Aspirational version reference "
+                    f"'v{version_str}' exceeds canonical version "
+                    f"'{'.'.join(str(p) for p in canonical_tuple)}'"
+                )
+
+    return errors
+
+
+def check_changelog(repo_root: Path, canonical: str) -> list[str]:
+    """Check ``CHANGELOG.md`` for version references higher than canonical.
+
+    Args:
+        repo_root: Repository root directory.
+        canonical: The canonical version string from ``pyproject.toml``.
+
+    Returns:
+        List of error strings (empty if the check passes).
+
+    """
+    changelog_path = repo_root / "CHANGELOG.md"
+    if not changelog_path.is_file():
+        return []  # No CHANGELOG is fine — nothing to validate
+
+    canonical_tuple = _parse_version_tuple(canonical)
+    return find_aspirational_versions(changelog_path, canonical_tuple, "CHANGELOG.md")
+
+
+def check_skill_files(repo_root: Path, canonical: str) -> list[str]:
+    """Scan skill template markdown files for aspirational version references.
+
+    Scans ``*.md`` files under ``.claude-plugin/skills/`` and ``.claude/``
+    for version numbers higher than the canonical version.
+
+    Args:
+        repo_root: Repository root directory.
+        canonical: The canonical version string from ``pyproject.toml``.
+
+    Returns:
+        List of error strings (empty if all files pass).
+
+    """
+    canonical_tuple = _parse_version_tuple(canonical)
+    errors: list[str] = []
+
+    scan_dirs = [
+        repo_root / ".claude-plugin" / "skills",
+        repo_root / ".claude",
+    ]
+
+    for scan_dir in scan_dirs:
+        if not scan_dir.is_dir():
+            continue
+        for md_file in sorted(scan_dir.rglob("*.md")):
+            rel_path = md_file.relative_to(repo_root)
+            errors.extend(find_aspirational_versions(md_file, canonical_tuple, str(rel_path)))
+
+    return errors
+
+
+def check_package_version_consistency(
+    repo_root: Path,
+    scan_skills: bool = False,
+    verbose: bool = False,
+) -> int:
+    """Run all package version consistency checks.
+
+    Args:
+        repo_root: Repository root directory.
+        scan_skills: If True, also scan skill template files.
+        verbose: If True, print passing check names.
+
+    Returns:
+        0 if all checks pass, 1 if any fail.
 
     """
     pyproject_path = repo_root / "pyproject.toml"
-    pixi_path = repo_root / "pixi.toml"
-    init_path = repo_root / "scylla" / "__init__.py"
-    changelog_path = repo_root / "CHANGELOG.md"
+    canonical = get_canonical_version(pyproject_path)
 
-    canonical = get_pyproject_version(pyproject_path)
-    errors: list[str] = []
+    if verbose:
+        print(f"Canonical version (pyproject.toml): {canonical}")
 
-    # Check pixi.toml version matches
-    pixi_version = get_pixi_version(pixi_path)
-    if pixi_version != canonical:
-        errors.append(f"pixi.toml version ({pixi_version}) != pyproject.toml version ({canonical})")
+    all_errors: list[str] = []
+
+    # Check 1: pixi.toml
+    pixi_errors = check_pixi_version(repo_root, canonical)
+    if pixi_errors:
+        all_errors.extend(pixi_errors)
     elif verbose:
-        print(f"OK: pixi.toml version matches ({pixi_version})")
+        print(f"PASS: pixi.toml version matches ({canonical})")
 
-    # Check __init__.py uses importlib.metadata
-    if not check_init_uses_importlib(init_path):
-        errors.append(
-            "scylla/__init__.py has a hardcoded __version__ string. "
-            "Use importlib.metadata.version() instead."
+    # Check 2: scylla/__init__.py
+    init_errors = check_init_version(repo_root, canonical)
+    if init_errors:
+        all_errors.extend(init_errors)
+    elif verbose:
+        print(f"PASS: scylla/__init__.py __version__ matches ({canonical})")
+
+    # Check 3: CHANGELOG.md
+    changelog_errors = check_changelog(repo_root, canonical)
+    if changelog_errors:
+        all_errors.extend(changelog_errors)
+    elif verbose:
+        print("PASS: CHANGELOG.md has no aspirational version references")
+
+    # Check 4: Skill files (opt-in)
+    if scan_skills:
+        skill_errors = check_skill_files(repo_root, canonical)
+        if skill_errors:
+            all_errors.extend(skill_errors)
+        elif verbose:
+            print("PASS: Skill template files have no aspirational version references")
+
+    if all_errors:
+        for error in all_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        print(
+            f"\nFound {len(all_errors)} package version consistency violation(s).",
+            file=sys.stderr,
         )
-    elif verbose:
-        print("OK: scylla/__init__.py uses importlib.metadata (no hardcoded version)")
-
-    # Check CHANGELOG.md for aspirational version references
-    aspirational = find_aspirational_versions(changelog_path, canonical)
-    if aspirational:
-        refs = ", ".join(aspirational)
-        errors.append(
-            f"CHANGELOG.md references versions higher than {canonical}: {refs}. "
-            "Use [Unreleased] convention instead of aspirational version numbers."
-        )
-    elif verbose:
-        print("OK: CHANGELOG.md has no aspirational version references")
-
-    if errors:
-        print("ERROR: Package version inconsistencies detected:", file=sys.stderr)
-        for error in errors:
-            print(f"  - {error}", file=sys.stderr)
         return 1
 
     if verbose:
-        print(f"OK: All version sources are consistent ({canonical})")
+        print(f"\nOK: All package version checks passed ({canonical})")
     return 0
 
 
@@ -237,14 +305,12 @@ def main() -> int:
     """CLI entry point for package version consistency checking.
 
     Returns:
-        Exit code (0 if consistent, 1 if mismatch detected).
+        Exit code (0 if consistent, 1 if mismatch or error).
 
     """
     parser = argparse.ArgumentParser(
-        description=(
-            "Enforce package version consistency across pyproject.toml, pixi.toml, and CHANGELOG.md"
-        ),
-        epilog="Example: %(prog)s --repo-root /path/to/repo --verbose",
+        description="Enforce package version consistency across all version declaration sites",
+        epilog="Example: %(prog)s --scan-skills --verbose",
     )
     parser.add_argument(
         "--repo-root",
@@ -253,14 +319,25 @@ def main() -> int:
         help="Repository root directory (default: parent of this script's directory)",
     )
     parser.add_argument(
+        "--scan-skills",
+        action="store_true",
+        help=(
+            "Also scan .claude-plugin/skills/ and .claude/ markdown files for aspirational versions"
+        ),
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
-        help="Print details even when versions are consistent",
+        help="Print passing check names and canonical version",
     )
 
     args = parser.parse_args()
-    return check_package_version_consistency(args.repo_root, verbose=args.verbose)
+    return check_package_version_consistency(
+        args.repo_root,
+        scan_skills=args.scan_skills,
+        verbose=args.verbose,
+    )
 
 
 if __name__ == "__main__":
