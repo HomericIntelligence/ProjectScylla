@@ -1691,6 +1691,96 @@ def cmd_visualize(args: argparse.Namespace) -> int:  # CLI dispatch with many vi
 
 
 # ---------------------------------------------------------------------------
+# Subcommand: subscribe
+# ---------------------------------------------------------------------------
+
+
+def _add_subscribe_args(parser: argparse.ArgumentParser) -> None:
+    """Add arguments for the 'subscribe' subcommand."""
+    parser.add_argument(
+        "--config-dir",
+        type=Path,
+        default=Path("."),
+        help="Project root directory containing config/defaults.yaml (default: .)",
+    )
+
+
+def cmd_subscribe(args: argparse.Namespace) -> int:
+    """Execute the 'subscribe' subcommand.
+
+    Starts a long-running NATS JetStream subscriber that listens for task
+    events on the ``hi.tasks.*`` subject hierarchy.  Press Ctrl+C to stop.
+    """
+    import signal
+    import threading
+
+    from scylla.config import ConfigLoader, ConfigurationError
+
+    loader = ConfigLoader(args.config_dir)
+
+    try:
+        defaults = loader.load_defaults()
+    except ConfigurationError as exc:
+        logger.error("Error loading configuration: %s", exc)
+        return 1
+
+    # Guard: DefaultsConfig must expose a .nats field (added by #1505).
+    if not hasattr(defaults, "nats"):
+        logger.error(
+            "DefaultsConfig has no 'nats' field — "
+            "NATS support requires the infrastructure from issue #1505."
+        )
+        return 1
+
+    nats_config = defaults.nats
+
+    if not nats_config.enabled:
+        logger.error(
+            "NATS subscription is disabled in config/defaults.yaml "
+            "(nats.enabled=false). Set nats.enabled to true or use "
+            "NATS_URL env var to enable."
+        )
+        return 1
+
+    try:
+        from scylla.nats import NATSSubscriberThread, create_default_router
+    except (ImportError, ModuleNotFoundError):
+        logger.error("nats-py is not installed. Install with: pip install 'scylla[nats]'")
+        return 1
+
+    # Configure logging from defaults
+    log_level = getattr(logging, defaults.logging.level, logging.INFO)
+    logging.getLogger().setLevel(log_level)
+
+    router = create_default_router()
+    subscriber = NATSSubscriberThread(config=nats_config, handler=router.dispatch)
+
+    stop_event = threading.Event()
+
+    def _signal_handler(signum: int, frame: object) -> None:
+        logger.info("Shutdown requested (signal %s)", signum)
+        stop_event.set()
+
+    signal.signal(signal.SIGINT, _signal_handler)
+    signal.signal(signal.SIGTERM, _signal_handler)
+
+    logger.info(
+        "Subscribing to NATS at %s (stream=%s)",
+        nats_config.url,
+        nats_config.stream,
+    )
+    subscriber.start()
+
+    # Block until shutdown signal
+    stop_event.wait()
+
+    logger.info("Stopping subscriber...")
+    subscriber.stop()
+    logger.info("Subscriber stopped.")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -1706,6 +1796,7 @@ Subcommands:
   run        Run single or batch experiments with optional --from re-execution
   repair     Repair corrupt checkpoint (rebuilds from run_result.json files)
   visualize  Show experiment state from checkpoint
+  subscribe  Subscribe to NATS JetStream events from ProjectHermes
 
 Use 'manage_experiment.py <subcommand> --help' for subcommand-specific options.
 
@@ -1755,6 +1846,17 @@ Equivalence mapping (old → new):
     )
     _add_visualize_args(visualize_parser)
 
+    # subscribe subcommand
+    subscribe_parser = subparsers.add_parser(
+        "subscribe",
+        help="Subscribe to NATS JetStream events from ProjectHermes",
+        description=(
+            "Start a long-running subscriber that listens for task events "
+            "on the hi.tasks.* subject hierarchy. Press Ctrl+C to stop."
+        ),
+    )
+    _add_subscribe_args(subscribe_parser)
+
     return parser
 
 
@@ -1767,6 +1869,7 @@ def main() -> int:
         "run": cmd_run,
         "repair": cmd_repair,
         "visualize": cmd_visualize,
+        "subscribe": cmd_subscribe,
     }
 
     handler = subcommand_map.get(args.subcommand)
