@@ -306,10 +306,12 @@ BAD: Updated grading.py (ambiguous - which file?)
 
 ## Delegation to Agent Hub
 
-.claude/ is the centralized location for agent configurations and skills. Sub-agents reference
+.claude/ is the centralized location for agent configurations. Sub-agents reference
 `.claude/agents/*.md` for roles and capabilities.
 
 ### Skills and Knowledge Sharing
+
+All 82 skills have been migrated to **ProjectMnemosyne** using the flat `skills/<name>.md` format.
 
 When using `/retrospective` to capture session learnings, push directly to ProjectMnemosyne:
 
@@ -329,10 +331,11 @@ When using `/retrospective` to capture session learnings, push directly to Proje
    gh pr create --title "feat(skills): Add {name}"
    ```
 
-**Location**: `<ProjectRoot>/build/ProjectMnemosyne`
+**Location**: `HomericIntelligence/ProjectMnemosyne/skills/`
 **Purpose**: Central repository for team knowledge and reusable skills
+**Search**: Use `/mnemosyne:advise` to discover and search skills
 
-**IMPORTANT**: Do NOT create skills locally in `.claude-plugin/` — all skills go to ProjectMnemosyne only.
+**IMPORTANT**: Do NOT create skills locally in ProjectScylla — all skills go to ProjectMnemosyne only.
 
 ### Shared Reference Files
 
