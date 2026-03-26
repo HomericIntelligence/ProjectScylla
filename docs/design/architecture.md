@@ -126,6 +126,8 @@ Each tier runs 9 times per test case for statistical validity:
     |  | - Docker      |     |   consensus   |     | - Aggregation |        |
     |  | - Adapter     |     | - Rubric      |     | - Markdown    |        |
     |  | - 9 runs/tier |     |   scoring     |     |   reports     |        |
+    |  | - Maestro     |     |               |     |               |        |
+    |  |   (optional)  |     |               |     |               |        |
     |  +-------+-------+     +-------+-------+     +---------------+        |
     |          |                     |                                      |
     |          v                     v                                      |
@@ -138,6 +140,17 @@ Each tier runs 9 times per test case for statistical validity:
     |  | - OpenCode    |     |               |     | - R_Prog      |        |
     |  | - Goose       |     |               |     |               |        |
     |  +---------------+     +---------------+     +---------------+        |
+    |          :                                                            |
+    |          : (optional)                                                 |
+    |          v                                                            |
+    |  +- - - - - - - -+                                                   |
+    |  : MAESTRO API   :                                                   |
+    |  :               :                                                   |
+    |  : - Health      :                                                   |
+    |  : - Inject      :                                                   |
+    |  : - Clear       :                                                   |
+    |  : - Diagnostics :                                                   |
+    |  +- - - - - - - -+                                                   |
     |                                                                       |
     +----------------------------------------------------------------------+
 ```
@@ -345,6 +358,76 @@ The Reporter generates output artifacts from evaluation results.
 | `scorecard.json` | Tier comparison scorecard |
 | `report.md` | Human-readable Markdown report |
 
+### 4.7 Maestro Client (Optional)
+
+The Maestro Client provides optional failure-injection capabilities for
+the Odysseus agent mesh. It is fully opt-in and disabled by default.
+
+**Location**: `scylla/maestro/`
+
+**Module Structure**:
+
+| File | Purpose |
+|------|---------|
+| `client.py` | Synchronous HTTP client (`MaestroClient`) |
+| `async_client.py` | Asynchronous HTTP client (`AsyncMaestroClient`) |
+| `models.py` | Configuration and data models |
+| `errors.py` | Exception hierarchy |
+
+**Client Interface** (`MaestroClient`):
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `health_check()` | `HealthResponse \| None` | Check API health; `None` if unreachable |
+| `inject_failure(spec)` | `InjectionResult` | Inject a failure into an agent |
+| `clear_failure(injection_id)` | `None` | Remove an injected failure |
+| `get_diagnostics()` | `dict[str, Any]` | Retrieve diagnostic information |
+| `list_agents()` | `list[dict[str, Any]]` | List all registered agents |
+
+Both `MaestroClient` (sync) and `AsyncMaestroClient` (async) implement
+the same interface and support context-manager usage.
+
+**Configuration** (`MaestroConfig`):
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `base_url` | `str` | `http://localhost:23000` | Maestro REST API base URL |
+| `enabled` | `bool` | `False` | Whether integration is active |
+| `timeout_seconds` | `int` | `10` | Timeout for mutation requests (1-300) |
+| `health_check_timeout_seconds` | `int` | `5` | Timeout for health checks (1-60) |
+| `max_retries` | `int` | `3` | Retry attempts for transient failures (0-10) |
+
+Configured via the `maestro` field on `ExperimentConfig` (type
+`MaestroConfig | None`). When `None` or `enabled: false`, all
+maestro stages are no-ops.
+
+**Data Models**:
+
+| Model | Key Fields | Description |
+|-------|------------|-------------|
+| `FailureSpec` | `agent_id`, `failure_type`, `duration_seconds`, `parameters` | Describes a failure to inject |
+| `HealthResponse` | `status`, `version` | API health status |
+| `InjectionResult` | `injection_id`, `status` | Result of a successful injection |
+
+**Error Hierarchy**:
+
+```
+MaestroError (base)
+├── MaestroConnectionError   — network failures, timeouts
+└── MaestroAPIError          — non-2xx HTTP responses (status_code, response_body)
+```
+
+**Retry Strategy**: Transient failures (connection errors, timeouts,
+HTTP 502/503/504) are retried with exponential backoff (1s base, 2×
+factor, up to `max_retries` attempts).
+
+**Design Properties**:
+
+- **Opt-in**: Disabled by default; zero behavioral change when unconfigured
+- **Graceful degradation**: All stages log warnings and continue on API errors
+- **Resumable**: Injection ID persisted to `maestro_injection.json` for
+  checkpoint/resume support
+
 ---
 
 ## 5. Data Flow
@@ -370,9 +453,21 @@ Test Case (YAML)
 +------------------+
         |
         v
++- - - - - - - - - +
+: Inject Failure   :-----> (optional) Maestro failure injection
+: [FAILURE_INJECTED]:      Persists maestro_injection.json
++- - - - - - - - - +
+        |
+        v
 +------------------+
 | Adapter          |-----> Agent invocation (9 runs per tier)
 +------------------+
+        |
+        v
++- - - - - - - - - +
+: Clear Failure    :-----> (optional) Maestro failure clearing
+: [FAILURE_CLEARED]:       Deletes maestro_injection.json
++- - - - - - - - - +
         |
         v
 +------------------+
@@ -387,9 +482,21 @@ Test Case (YAML)
 
 **Input**: `test.yaml`, tier definitions from `tests/claude-code/shared/tiers.yaml`
 
-**Process**: Docker isolation, adapter invocation, metric collection
+**Process**: Docker isolation, optional failure injection via Maestro,
+adapter invocation, failure clearing, metric collection
 
 **Output**: Modified workspace, execution logs, raw metrics
+
+**Maestro Stages** (optional, dashed boxes above):
+
+The `stage_inject_failure` and `stage_clear_failure` stages bracket the
+adapter invocation. They are no-ops when Maestro is unconfigured or
+disabled. On API errors, both stages log warnings and continue
+(graceful degradation). The injection ID is persisted to
+`maestro_injection.json` in the run directory to support
+checkpoint/resume — if a run resumes between `FAILURE_INJECTED` and
+`FAILURE_CLEARED`, the injection ID is restored from disk so the
+failure can be properly cleared.
 
 ### 5.2 Judgment Phase
 
@@ -511,6 +618,11 @@ ProjectScylla/
             cline.py                    # Cline adapter
             opencode.py                 # OpenCode adapter
             goose.py                    # Goose adapter
+        maestro/                        # Failure injection client (optional)
+            client.py                   # Synchronous HTTP client
+            async_client.py             # Asynchronous HTTP client
+            models.py                   # MaestroConfig, FailureSpec, etc.
+            errors.py                   # MaestroError hierarchy
         judge/                          # Claude + Opus evaluation
             rubric.py                   # Rubric parser
             prompts/                    # Judge prompt templates
@@ -566,6 +678,7 @@ ProjectScylla/
 | **Judge Container** | Separate | Judge runs in separate container from agent |
 | **API Keys** | Environment variables | Pass from host via docker `-e` flags |
 | **Timeout Handling** | Include as failures | Count timeouts as pass_rate=0, impl_rate=0 |
+| **Maestro Integration** | Opt-in, graceful degradation | Failure injection must never block execution; API errors are logged and skipped |
 
 ---
 
@@ -600,6 +713,11 @@ The framework tests across 7 tiers of increasing complexity:
 - **Git**: Repository cloning and version control
 - **Claude API**: Judge evaluation via Opus 4.5
 - **Agent CLIs**: Claude Code, Codex, Cline, OpenCode
+- **Maestro API** (optional): Failure injection for the Odysseus agent
+  mesh. Default endpoint `http://localhost:23000`. API routes used:
+  `/api/v1/health`, `/api/agents/inject`, `/api/agents/inject/{id}`,
+  `/api/agents`, `/api/diagnostics`. Enabled via
+  `ExperimentConfig.maestro`
 
 ### 9.2 Configuration Hierarchy
 
