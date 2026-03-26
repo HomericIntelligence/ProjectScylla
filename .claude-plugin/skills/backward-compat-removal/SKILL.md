@@ -7,7 +7,7 @@
 | Date | 2026-02-20 |
 | Issue | #784 |
 | PR | #832 |
-| Objective | Remove deprecated `BaseExecutionInfo` dataclass as part of v2.0.0 cleanup |
+| Objective | Remove deprecated `BaseExecutionInfo` dataclass as part of the target major version cleanup |
 | Outcome | Success — 209 lines deleted, 2266 tests pass, all pre-commit hooks green |
 | Category | testing |
 
@@ -16,7 +16,7 @@
 Trigger this skill when:
 
 - A class or symbol has a `DeprecationWarning` added via `warnings.warn()`
-- The deprecation milestone (e.g. v2.0.0) has arrived
+- The deprecation milestone (e.g. the target major version) has arrived
 - Issue says "delete", "remove", or "cleanup" for a previously deprecated symbol
 - You see `TestXxxBackwardCompatibility` or `TestXxx` test classes only testing deprecated code
 
