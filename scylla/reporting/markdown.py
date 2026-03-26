@@ -291,20 +291,27 @@ class MarkdownReportGenerator:
 
         return "".join(sections)
 
-    def write_report(self, data: ReportData) -> Path:
+    def write_report(self, data: ReportData, output_path: Path | None = None) -> Path:
         """Generate and write a report to file.
 
         Args:
             data: Report data
+            output_path: Explicit file path to write the report to. When
+                provided, the report is written to this exact path instead of
+                the convention-based ``{base_dir}/{test_id}/report.md``.
 
         Returns:
-            Path to written report.md
+            Path to written report file.
 
         """
-        report_dir = self.get_report_dir(data.test_id)
-        report_dir.mkdir(parents=True, exist_ok=True)
+        if output_path is not None:
+            report_path = output_path
+        else:
+            report_dir = self.get_report_dir(data.test_id)
+            report_dir.mkdir(parents=True, exist_ok=True)
+            report_path = report_dir / "report.md"
 
-        report_path = report_dir / "report.md"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
         report_content = self.generate_report(data)
         report_path.write_text(report_content)
 
