@@ -216,6 +216,28 @@ class TierConfig(BaseModel):
 # -----------------------------------------------------------------------------
 
 
+class NatsConfig(BaseModel):
+    """NATS messaging configuration.
+
+    Supports environment variable overrides applied after YAML loading:
+    - NATS_ENABLED: truthy string ("1", "true", "yes") to enable
+    - NATS_URL, NATS_STREAM, NATS_DURABLE_NAME: string overrides
+    """
+
+    enabled: bool = Field(default=False, description="Whether NATS messaging is enabled")
+    url: str = Field(default="nats://localhost:4222", description="NATS server URL")
+    stream: str = Field(default="scylla", description="NATS stream name")
+    durable_name: str = Field(default="scylla-consumer", description="NATS durable consumer name")
+
+    @field_validator("enabled", mode="before")
+    @classmethod
+    def coerce_none_to_false(cls, v: object) -> object:
+        """Defense-in-depth: coerce None to False."""
+        if v is None:
+            return False
+        return v
+
+
 class JudgeConfig(BaseModel):
     """Judge model configuration."""
 
