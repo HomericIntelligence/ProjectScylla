@@ -59,6 +59,11 @@ resilience:
 # Default model used when no --model flag is provided
 default_model: "claude-sonnet-4-6"
 
+# Maestro orchestration settings
+maestro:
+  enabled: false
+  url: null
+
 # NATS JetStream subscription settings
 nats:
   enabled: false
