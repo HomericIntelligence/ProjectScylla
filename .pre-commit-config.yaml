@@ -161,6 +161,13 @@ repos:
         language: system
         files: ^(CHANGELOG\.md|pyproject\.toml)$
         pass_filenames: false
+      - id: check-package-version-consistency
+        name: Check Package Version Consistency
+        description: Fails if package version in pyproject.toml, pixi.toml, or CHANGELOG.md are inconsistent
+        entry: pixi run python scripts/check_package_version_consistency.py
+        language: system
+        files: ^(pyproject\.toml|pixi\.toml|scylla/__init__\.py|CHANGELOG\.md)$
+        pass_filenames: false
       - id: validate-config-schemas
         name: Validate Config Files Against JSON Schemas
         description: >-
