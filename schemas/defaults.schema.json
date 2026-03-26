@@ -169,6 +169,25 @@
         }
       }
     },
+    "maestro": {
+      "type": "object",
+      "description": "Maestro orchestration settings",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether maestro orchestration is active"
+        },
+        "url": {
+          "description": "Maestro server URL",
+          "oneOf": [
+            {"type": "string"},
+            {"type": "null"}
+          ],
+          "examples": ["http://maestro:8080"]
+        }
+      }
+    },
     "nats": {
       "type": "object",
       "description": "NATS JetStream subscription settings",

@@ -842,6 +842,8 @@ class ExperimentConfig(BaseModel):
             (default: tiers_dir/../expected/criteria.md)
         rubric_file: Optional path to rubric.yaml
             (default: tiers_dir/../expected/rubric.yaml)
+        maestro_enabled: Enable maestro orchestration (default: False)
+        maestro_url: Maestro server URL (default: None)
 
     """
 
@@ -866,6 +868,8 @@ class ExperimentConfig(BaseModel):
     )
     criteria_file: Path | None = None  # Optional explicit path to criteria.md
     rubric_file: Path | None = None  # Optional explicit path to rubric.yaml
+    maestro_enabled: bool = False  # Enable maestro orchestration
+    maestro_url: str | None = None  # Maestro server URL
     # Ephemeral --until controls (not saved to experiment.json / not in config_hash)
     until_run_state: RunState | None = None
     until_tier_state: TierState | None = None
@@ -913,6 +917,8 @@ class ExperimentConfig(BaseModel):
             "skip_agent_teams": self.skip_agent_teams,
             "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
+            "maestro_enabled": self.maestro_enabled,
+            "maestro_url": self.maestro_url,
         }
 
     def save(self, path: Path) -> None:
@@ -949,6 +955,8 @@ class ExperimentConfig(BaseModel):
             skip_agent_teams=data.get("skip_agent_teams", False),
             thinking_mode=data.get("thinking_mode", "None"),
             use_containers=data.get("use_containers", False),
+            maestro_enabled=data.get("maestro_enabled", False),
+            maestro_url=data.get("maestro_url"),
         )
 
 
