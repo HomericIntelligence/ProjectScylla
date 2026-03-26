@@ -104,30 +104,39 @@ def function_name(
 ### Project Structure
 
 ```text
-scylla/
-  metrics/
-    __init__.py
-    pass_rate.py
-    cost_of_pass.py
-    ...
-  e2e/
-    __init__.py
-    harness.py
-    tier_config.py
-    ...
-  analysis/
-    __init__.py
-    statistical.py
-    ...
+scylla/                          # Python source code
+  adapters/                      # CLI adapters
+  analysis/                      # Statistical analysis
+  automation/                    # Automation utilities
+  config/                        # Configuration
+  core/                          # Core types
+  discovery/                     # Resource discovery
+  e2e/                           # E2E testing framework
+  executor/                      # Execution engine
+  judge/                         # LLM judge system
+  metrics/                       # Metrics calculation
+  reporting/                     # Report generation
+  utils/                         # Utility functions
 tests/
-  unit/
-    metrics/
-    e2e/
+  unit/                          # Unit tests (mirrors scylla/ layout)
+    adapters/
     analysis/
-scripts/
-  automation/
-    run_benchmarks.py
-    collect_results.py
+    automation/
+    config/
+    core/
+    discovery/
+    e2e/
+    executor/
+    judge/
+    metrics/
+    reporting/
+    utils/
+  integration/                   # Integration tests
+  scripts/                       # Script tests
+scripts/                         # Python automation scripts
+config/                          # Configuration files
+  models/                        # Model configurations (YAML)
+schemas/                         # JSON schemas
 ```
 
 ## Examples
