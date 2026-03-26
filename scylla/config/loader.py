@@ -7,6 +7,7 @@ configuration files with a three-level priority hierarchy:
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -439,11 +440,33 @@ class ConfigLoader:
             _validate_schema(data, "defaults", defaults_path)
 
         try:
-            return DefaultsConfig(**data)
+            config = DefaultsConfig(**data)
         except Exception as e:
             raise ConfigurationError(
                 f"Invalid defaults configuration in {defaults_path}: {e}"
             ) from e
+
+        # Apply NATS env var overrides (precedence: env var > YAML > Pydantic default)
+        nats_overrides: dict[str, object] = {}
+        nats_enabled_env = os.environ.get("NATS_ENABLED", "")
+        if nats_enabled_env:
+            nats_overrides["enabled"] = nats_enabled_env.lower() in ("1", "true", "yes")
+        nats_url_env = os.environ.get("NATS_URL")
+        if nats_url_env is not None:
+            nats_overrides["url"] = nats_url_env
+        nats_stream_env = os.environ.get("NATS_STREAM")
+        if nats_stream_env is not None:
+            nats_overrides["stream"] = nats_stream_env
+        nats_durable_env = os.environ.get("NATS_DURABLE_NAME")
+        if nats_durable_env is not None:
+            nats_overrides["durable_name"] = nats_durable_env
+
+        if nats_overrides:
+            config = config.model_copy(
+                update={"nats": config.nats.model_copy(update=nats_overrides)}
+            )
+
+        return config
 
     # -------------------------------------------------------------------------
     # Merged Configuration Loading
