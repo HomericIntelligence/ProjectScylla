@@ -107,7 +107,7 @@ git checkout -b 123-fix-judge-timeout
 
 ### 2. Make Your Changes
 
-- Follow existing code patterns in `scylla/`
+- Follow existing code patterns in `src/scylla/`
 - Add type hints to all function signatures
 - Write docstrings for public APIs
 - Keep changes focused and minimal
@@ -126,8 +126,8 @@ pixi run pytest tests/unit/your_test.py -v
 
 ```bash
 # Format and lint code
-pixi run ruff check scylla/ --fix
-pixi run ruff format scylla/
+pixi run ruff check src/scylla/ --fix
+pixi run ruff format src/scylla/
 
 # Run all tests
 pixi run pytest tests/ -v
@@ -503,7 +503,7 @@ pixi run pytest tests/ -v --pdb  # Drop into debugger on failure
 
 ```
 ProjectScylla/
-├── scylla/              # Python source code
+├── src/scylla/          # Python source code
 │   ├── analysis/        # Statistical analysis
 │   ├── adapters/        # CLI adapters
 │   ├── automation/      # Automation utilities
