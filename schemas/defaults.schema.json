@@ -200,6 +200,107 @@
           "examples": ["scylla-subscriber"]
         }
       }
+    },
+    "resilience": {
+      "type": "object",
+      "description": "Resilience settings for external service calls",
+      "additionalProperties": false,
+      "properties": {
+        "retry": {
+          "type": "object",
+          "description": "Retry configuration with exponential backoff",
+          "additionalProperties": false,
+          "properties": {
+            "max_retries": {
+              "type": "integer",
+              "description": "Maximum number of retry attempts",
+              "minimum": 0,
+              "maximum": 10,
+              "examples": [3]
+            },
+            "initial_delay": {
+              "type": "number",
+              "description": "Initial delay in seconds before first retry",
+              "minimum": 0.1,
+              "examples": [1.0]
+            },
+            "backoff_factor": {
+              "type": "integer",
+              "description": "Multiplier for delay between retries",
+              "minimum": 1,
+              "maximum": 10,
+              "examples": [2]
+            },
+            "max_delay": {
+              "type": "number",
+              "description": "Maximum delay cap in seconds",
+              "minimum": 1.0,
+              "examples": [30.0]
+            },
+            "jitter": {
+              "type": "boolean",
+              "description": "Apply random jitter to prevent thundering herd"
+            }
+          }
+        },
+        "circuit_breaker": {
+          "type": "object",
+          "description": "Circuit breaker configuration for fail-fast on repeated failures",
+          "additionalProperties": false,
+          "properties": {
+            "failure_threshold": {
+              "type": "integer",
+              "description": "Number of consecutive failures before opening circuit",
+              "minimum": 1,
+              "maximum": 50,
+              "examples": [5]
+            },
+            "recovery_timeout": {
+              "type": "integer",
+              "description": "Seconds to wait before transitioning to half-open",
+              "minimum": 1,
+              "examples": [60]
+            },
+            "half_open_max_calls": {
+              "type": "integer",
+              "description": "Maximum calls allowed in half-open state",
+              "minimum": 1,
+              "examples": [1]
+            }
+          }
+        },
+        "timeouts": {
+          "type": "object",
+          "description": "Default timeout values for different operation types",
+          "additionalProperties": false,
+          "properties": {
+            "api_call": {
+              "type": "integer",
+              "description": "Timeout for API calls in seconds",
+              "minimum": 1,
+              "examples": [60]
+            },
+            "benchmark_run": {
+              "type": "integer",
+              "description": "Timeout for benchmark runs in seconds",
+              "minimum": 1,
+              "examples": [300]
+            },
+            "analysis": {
+              "type": "integer",
+              "description": "Timeout for analysis operations in seconds",
+              "minimum": 1,
+              "examples": [120]
+            },
+            "judge": {
+              "type": "integer",
+              "description": "Timeout for judge evaluations in seconds",
+              "minimum": 1,
+              "examples": [1200]
+            }
+          }
+        }
+      }
     }
   }
 }

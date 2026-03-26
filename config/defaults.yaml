@@ -38,6 +38,24 @@ logging:
   level: "INFO"
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+# Resilience settings for external service calls
+resilience:
+  retry:
+    max_retries: 3
+    initial_delay: 1.0
+    backoff_factor: 2
+    max_delay: 30.0
+    jitter: true
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 60
+    half_open_max_calls: 1
+  timeouts:
+    api_call: 60
+    benchmark_run: 300
+    analysis: 120
+    judge: 1200
+
 # Default model used when no --model flag is provided
 default_model: "claude-sonnet-4-6"
 

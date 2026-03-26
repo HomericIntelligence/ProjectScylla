@@ -52,13 +52,15 @@ class TestSetupBaseRepoRetry:
 
         with patch("subprocess.run", side_effect=[fail_result, success_result]) as mock_run:
             with patch("time.sleep") as mock_sleep:
-                with patch("fcntl.flock"):  # Mock file locking
-                    manager.setup_base_repo()
+                with patch("random.uniform", return_value=1.0):
+                    with patch("fcntl.flock"):  # Mock file locking
+                        manager.setup_base_repo()
 
         # Should retry and succeed
         assert mock_run.call_count == 2
         assert mock_sleep.call_count == 1
-        assert mock_sleep.call_args == call(1.0)  # 1s delay for first retry
+        # With jitter (uniform=1.0): delay = 1.0 * 2^0 * 1.0 = 1.0
+        assert mock_sleep.call_args == call(1.0)
         assert manager.is_setup is True
 
     def test_retry_with_early_eof_error(self, tmp_path: Path) -> None:
@@ -105,11 +107,12 @@ class TestSetupBaseRepoRetry:
                 side_effect=[fail_result, fail_result, success_result],
             ),
             patch("time.sleep") as mock_sleep,
+            patch("random.uniform", return_value=1.0),
             patch("fcntl.flock"),
         ):
             manager.setup_base_repo()
 
-        # Should have exponential backoff: 1s, 2s
+        # Should have exponential backoff: 1s, 2s (with jitter uniform=1.0)
         assert mock_sleep.call_count == 2
         assert mock_sleep.call_args_list == [call(1.0), call(2.0)]
 

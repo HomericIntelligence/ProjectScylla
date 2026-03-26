@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from scylla.config.constants import DEFAULT_JUDGE_MODEL
+from scylla.core.circuit_breaker import get_circuit_breaker
 
 # Re-export build pipeline functions for backward compatibility
 from scylla.e2e.build_pipeline import (
@@ -609,6 +610,9 @@ def _call_claude_judge(
         input=evaluation_context,
     )
 
+    # Use circuit breaker for judge API calls
+    cb = get_circuit_breaker("claude_api_judge", failure_threshold=5, recovery_timeout=60.0)
+
     if result.returncode != 0:
         error_msg = "No error message"
 
@@ -627,6 +631,7 @@ def _call_claude_judge(
         if error_msg == "No error message" and result.stderr:
             error_msg = result.stderr.strip()
 
+        cb._record_failure()
         raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
 
     # Check for rate limit before returning
@@ -634,7 +639,11 @@ def _call_claude_judge(
 
     rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
     if rate_limit_info:
+        # Rate limits are not circuit breaker failures
         raise RateLimitError(rate_limit_info)
+
+    # Record success with circuit breaker
+    cb._record_success()
 
     # Return stdout, stderr, and raw response (stdout is the judge response)
     return result.stdout, result.stderr, result.stdout

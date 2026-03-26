@@ -1,7 +1,8 @@
 """Claude Code CLI adapter.
 
 This module provides an adapter for running the Claude Code CLI
-within the Scylla evaluation framework.
+within the Scylla evaluation framework. Includes circuit breaker
+integration for fail-fast on repeated API failures.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from scylla.adapters.base import (
     AdapterTokenStats,
     BaseAdapter,
 )
+from scylla.core.circuit_breaker import get_circuit_breaker
 
 if TYPE_CHECKING:
     from scylla.executor.tier_config import TierConfig
@@ -84,6 +86,20 @@ class ClaudeCodeAdapter(BaseAdapter):
         # Prepare environment with API keys
         env = self._prepare_env(config)
 
+        # Check circuit breaker before executing
+        cb = get_circuit_breaker("claude_api", failure_threshold=5, recovery_timeout=60.0)
+        try:
+            cb_state = cb.state
+            from scylla.core.circuit_breaker import CircuitBreakerState
+
+            if cb_state == CircuitBreakerState.OPEN:
+                raise AdapterError(
+                    "Circuit breaker 'claude_api' is open — "
+                    "too many consecutive failures. Failing fast."
+                )
+        except AdapterError:
+            raise
+
         # Execute
         start_time = datetime.now(timezone.utc)
         try:
@@ -101,7 +117,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
-            # Write logs even on timeout
+            # Timeouts are intentional, don't record as circuit breaker failure
             stdout = e.stdout.decode() if e.stdout else ""
             stderr = e.stderr.decode() if e.stderr else ""
             self.write_logs(config.output_dir, stdout, stderr)
@@ -121,6 +137,7 @@ class ClaudeCodeAdapter(BaseAdapter):
             ) from None
 
         except subprocess.SubprocessError as e:
+            cb._record_failure()
             raise AdapterError(f"Failed to execute Claude Code: {e}") from e
 
         end_time = datetime.now(timezone.utc)
@@ -132,9 +149,12 @@ class ClaudeCodeAdapter(BaseAdapter):
 
         rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="agent")
         if rate_limit_info:
-            # Write logs before raising exception
+            # Rate limits are not circuit breaker failures — they're expected
             self.write_logs(config.output_dir, result.stdout, result.stderr)
             raise RateLimitError(rate_limit_info)
+
+        # Record successful execution with circuit breaker
+        cb._record_success()
 
         # Parse output for metrics
         token_stats = self._parse_token_stats(result.stdout, result.stderr)

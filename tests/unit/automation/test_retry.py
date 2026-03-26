@@ -1,11 +1,17 @@
 """Tests for retry decorator with exponential backoff."""
 
+import subprocess
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scylla.automation.retry import is_network_error, retry_on_network_error, retry_with_backoff
+from scylla.automation.retry import (
+    is_network_error,
+    retry_on_network_error,
+    retry_on_subprocess_error,
+    retry_with_backoff,
+)
 
 
 class TestIsNetworkError:
@@ -390,3 +396,90 @@ class TestRetryWithJitter:
         log_message = mock_logger.call_args[0][0]
         # Jittered delay = 1.0 * 2^0 * 0.75 = 0.75
         assert "0.75" in log_message
+
+
+class TestRetryOnSubprocessError:
+    """Tests for retry_on_subprocess_error convenience decorator."""
+
+    def test_retries_called_process_error(self) -> None:
+        """Test retry on CalledProcessError."""
+        mock_func = MagicMock(
+            side_effect=[
+                subprocess.CalledProcessError(1, "cmd"),
+                "success",
+            ]
+        )
+        decorated = retry_on_subprocess_error(max_retries=2)(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep"):
+            with patch("scylla.automation.retry.random.uniform", return_value=1.0):
+                result = decorated()
+
+        assert result == "success"
+        assert mock_func.call_count == 2
+
+    def test_retries_subprocess_error(self) -> None:
+        """Test retry on SubprocessError."""
+        mock_func = MagicMock(
+            side_effect=[
+                subprocess.SubprocessError("crash"),
+                "success",
+            ]
+        )
+        decorated = retry_on_subprocess_error(max_retries=2)(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep"):
+            with patch("scylla.automation.retry.random.uniform", return_value=1.0):
+                result = decorated()
+
+        assert result == "success"
+        assert mock_func.call_count == 2
+
+    def test_retries_connection_error(self) -> None:
+        """Test retry on ConnectionError."""
+        mock_func = MagicMock(side_effect=[ConnectionError("refused"), "success"])
+        decorated = retry_on_subprocess_error(max_retries=2)(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep"):
+            with patch("scylla.automation.retry.random.uniform", return_value=1.0):
+                result = decorated()
+
+        assert result == "success"
+        assert mock_func.call_count == 2
+
+    def test_does_not_retry_value_error(self) -> None:
+        """Test ValueError is not retried."""
+        mock_func = MagicMock(side_effect=ValueError("bad value"))
+        decorated = retry_on_subprocess_error(max_retries=2)(mock_func)
+
+        with pytest.raises(ValueError):
+            decorated()
+
+        assert mock_func.call_count == 1
+
+    def test_uses_jitter(self) -> None:
+        """Test retry_on_subprocess_error enables jitter by default."""
+        mock_func = MagicMock(side_effect=[subprocess.SubprocessError("fail"), "success"])
+        decorated = retry_on_subprocess_error(max_retries=1)(mock_func)
+
+        with patch("scylla.automation.retry.time.sleep"):
+            with patch("scylla.automation.retry.random.uniform", return_value=1.0) as mock_uniform:
+                decorated()
+
+        # Jitter should have been applied
+        mock_uniform.assert_called_with(0.5, 1.5)
+
+    def test_respects_max_delay(self) -> None:
+        """Test max_delay parameter is respected."""
+        mock_func = MagicMock(side_effect=[subprocess.SubprocessError("fail")] * 3 + ["success"])
+        decorated = retry_on_subprocess_error(max_retries=3, initial_delay=10.0, max_delay=5.0)(
+            mock_func
+        )
+
+        with patch("scylla.automation.retry.time.sleep") as mock_sleep:
+            with patch("scylla.automation.retry.random.uniform", return_value=1.0):
+                decorated()
+
+        # All delays should be capped at 5.0 (before jitter)
+        for call in mock_sleep.call_args_list:
+            assert call.args[0] <= 5.0 * 1.5  # max_delay * max_jitter
