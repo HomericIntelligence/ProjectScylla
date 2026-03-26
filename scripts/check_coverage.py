@@ -5,8 +5,8 @@ This script validates that code coverage meets the required threshold.
 Used in CI to enforce coverage requirements.
 
 Usage:
-    python scripts/check_coverage.py --threshold 90 --path scylla/
-    python scripts/check_coverage.py --config coverage.toml --path scylla/metrics
+    python scripts/check_coverage.py --threshold 90 --path src/scylla/
+    python scripts/check_coverage.py --config coverage.toml --path src/scylla/metrics
 """
 
 import argparse
@@ -218,7 +218,7 @@ def main() -> None:
     if not args.coverage_file.exists():
         print(f"\n⚠️  WARNING: Coverage file not found: {args.coverage_file}", file=sys.stderr)
         print(
-            "\n   Run tests with coverage first: pytest --cov=scylla --cov-report=xml",
+            "\n   Run tests with coverage first: pytest --cov=src/scylla --cov-report=xml",
             file=sys.stderr,
         )
         sys.exit(1)
