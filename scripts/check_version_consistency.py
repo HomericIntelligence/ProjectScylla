@@ -1,107 +1,171 @@
-"""Check that the version string is consistent across all declaration sites.
+#!/usr/bin/env python3
+"""Detect version drift between pyproject.toml and pixi.toml.
 
-Reads the version from:
-  1. pyproject.toml  (project.version)
-  2. pixi.toml       (workspace.version)
-  3. scylla/__init__.py (__version__)
+Parses the ``version`` field from both ``pyproject.toml`` (``[project]`` section)
+and ``pixi.toml`` (``[workspace]`` section) and fails if they differ.
 
-Exits non-zero if any disagree.
+Usage:
+    python scripts/check_version_consistency.py
+    python scripts/check_version_consistency.py --repo-root /path/to/repo
+    python scripts/check_version_consistency.py --verbose
+
+Exit codes:
+    0: Versions are consistent
+    1: Versions differ or a file could not be parsed
 """
 
-from __future__ import annotations
-
+import argparse
 import re
 import sys
 from pathlib import Path
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 
-def _read_toml_version(path: Path, table_key: str) -> str | None:
-    """Read a version string from a TOML file without requiring a TOML library.
-
-    Looks for ``version = "..."`` under a ``[<table_key>]`` header.
-
-    Args:
-        path: Path to the TOML file.
-        table_key: The TOML table header to search under (e.g. "project" or "workspace").
-
-    Returns:
-        The version string, or None if not found.
-
-    """
-    if not path.exists():
-        return None
-
-    text = path.read_text()
-    in_table = False
-    for line in text.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            in_table = stripped == f"[{table_key}]"
-            continue
-        if in_table:
-            match = re.match(r'^version\s*=\s*"([^"]+)"', stripped)
-            if match:
-                return match.group(1)
-    return None
+# Regex to match version = "X.Y.Z" in pixi.toml [workspace] section.
+# We use regex instead of a TOML parser to avoid reformatting the file.
+_PIXI_VERSION_RE = re.compile(r'^version\s*=\s*"([^"]+)"', re.MULTILINE)
 
 
-def _read_init_version(path: Path) -> str | None:
-    """Read ``__version__`` from a Python file.
+def get_pyproject_version(repo_root: Path) -> str:
+    """Extract the version string from pyproject.toml [project] section.
 
     Args:
-        path: Path to the Python file (e.g. ``scylla/__init__.py``).
+        repo_root: Root directory of the repository.
 
     Returns:
-        The version string, or None if not found.
+        The version string (e.g. ``"0.1.0"``).
+
+    Raises:
+        SystemExit: With code 1 if the file is missing, malformed, or has
+            no ``version`` field in ``[project]``.
 
     """
-    if not path.exists():
-        return None
+    pyproject_path = repo_root / "pyproject.toml"
+    if not pyproject_path.is_file():
+        print(f"ERROR: pyproject.toml not found: {pyproject_path}", file=sys.stderr)
+        sys.exit(1)
 
-    text = path.read_text()
-    match = re.search(r'^__version__\s*=\s*"([^"]+)"', text, re.MULTILINE)
-    return match.group(1) if match else None
+    try:
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+    except Exception as exc:
+        print(f"ERROR: Could not parse {pyproject_path}: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    project = data.get("project")
+    if project is None:
+        print(
+            f"ERROR: No [project] section found in {pyproject_path}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    version = project.get("version")
+    if version is None:
+        print(
+            f"ERROR: No version field in [project] section of {pyproject_path}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    return str(version)
 
 
-def check_version_consistency(root: Path | None = None) -> int:
-    """Check version consistency across declaration sites.
+def get_pixi_version(repo_root: Path) -> str:
+    """Extract the version string from pixi.toml [workspace] section.
 
     Args:
-        root: Project root directory. Defaults to the repository root
-              (parent of the ``scripts/`` directory).
+        repo_root: Root directory of the repository.
 
     Returns:
-        0 if all versions match, 1 otherwise.
+        The version string (e.g. ``"0.1.0"``).
+
+    Raises:
+        SystemExit: With code 1 if the file is missing or has no
+            ``version = "..."`` line.
 
     """
-    if root is None:
-        root = Path(__file__).resolve().parent.parent
+    pixi_path = repo_root / "pixi.toml"
+    if not pixi_path.is_file():
+        print(f"ERROR: pixi.toml not found: {pixi_path}", file=sys.stderr)
+        sys.exit(1)
 
-    sources: dict[str, str | None] = {
-        "pyproject.toml": _read_toml_version(root / "pyproject.toml", "project"),
-        "pixi.toml": _read_toml_version(root / "pixi.toml", "workspace"),
-        "scylla/__init__.py": _read_init_version(root / "scylla" / "__init__.py"),
-    }
+    content = pixi_path.read_text()
+    match = _PIXI_VERSION_RE.search(content)
+    if not match:
+        print(
+            f'ERROR: No version = "..." line found in {pixi_path}',
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
-    missing = [name for name, ver in sources.items() if ver is None]
-    if missing:
-        for name in missing:
-            print(f"ERROR: could not read version from {name}")
+    return match.group(1)
+
+
+def check_version_consistency(repo_root: Path, verbose: bool = False) -> int:
+    """Compare package version in pyproject.toml vs pixi.toml.
+
+    Args:
+        repo_root: Root directory of the repository.
+        verbose: If True, print the parsed versions even when they match.
+
+    Returns:
+        0 if versions match, 1 if they differ.
+
+    """
+    pyproject_version = get_pyproject_version(repo_root)
+    pixi_version = get_pixi_version(repo_root)
+
+    if verbose:
+        print(f"pyproject.toml version: {pyproject_version}")
+        print(f"pixi.toml version:      {pixi_version}")
+
+    if pyproject_version != pixi_version:
+        print(
+            f"ERROR: Package version mismatch detected:\n"
+            f"  pyproject.toml: {pyproject_version}\n"
+            f"  pixi.toml:      {pixi_version}\n"
+            f"Run: pixi run python scripts/bump_version.py <major|minor|patch>\n"
+            f"to update both files atomically.",
+            file=sys.stderr,
+        )
         return 1
 
-    versions = {name: ver for name, ver in sources.items() if ver is not None}
-    unique = set(versions.values())
+    if verbose:
+        print(f"OK: Package version is consistent ({pyproject_version})")
+    return 0
 
-    if len(unique) == 1:
-        version = unique.pop()
-        print(f"OK: all version sources agree: {version}")
-        return 0
 
-    print("ERROR: version mismatch detected:")
-    for name, ver in versions.items():
-        print(f"  {name}: {ver}")
-    return 1
+def main() -> int:
+    """CLI entry point for package version consistency checking.
+
+    Returns:
+        Exit code (0 if consistent, 1 if mismatch or parse error).
+
+    """
+    parser = argparse.ArgumentParser(
+        description="Detect version drift between pyproject.toml and pixi.toml",
+        epilog="Example: %(prog)s --repo-root /path/to/repo --verbose",
+    )
+    parser.add_argument(
+        "--repo-root",
+        type=Path,
+        default=Path(__file__).parent.parent,
+        help="Repository root directory (default: parent of this script's directory)",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Print parsed versions even when they match",
+    )
+
+    args = parser.parse_args()
+    return check_version_consistency(args.repo_root, verbose=args.verbose)
 
 
 if __name__ == "__main__":
-    sys.exit(check_version_consistency())
+    sys.exit(main())

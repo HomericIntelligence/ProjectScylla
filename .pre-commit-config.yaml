@@ -45,6 +45,13 @@ repos:
         language: system
         files: ^(pyproject\.toml|pixi\.toml|pixi\.lock)$
         pass_filenames: false
+      - id: check-version-consistency
+        name: Check pyproject.toml/pixi.toml Version Consistency
+        description: Fails if pyproject.toml and pixi.toml package versions differ
+        entry: pixi run python scripts/check_version_consistency.py
+        language: system
+        files: ^(pyproject\.toml|pixi\.toml)$
+        pass_filenames: false
 
   # Python formatting and linting
   - repo: local
