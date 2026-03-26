@@ -2,12 +2,14 @@
 
 Provides ``MaestroClient``, a thin wrapper around ``httpx.Client`` that
 exposes health-checking, agent listing, failure injection, and diagnostics
-endpoints.
+endpoints.  Transient failures are automatically retried with exponential
+backoff (configurable via ``MaestroConfig.max_retries``).
 """
 
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import httpx
@@ -21,6 +23,19 @@ from scylla.maestro.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Status codes that indicate transient server-side issues worth retrying.
+_RETRYABLE_STATUS_CODES: frozenset[int] = frozenset({502, 503, 504})
+
+# httpx exception types that represent transient network problems.
+_RETRYABLE_EXCEPTIONS: tuple[type[Exception], ...] = (
+    httpx.ConnectError,
+    httpx.TimeoutException,
+    httpx.RemoteProtocolError,
+)
+
+_BASE_RETRY_DELAY: float = 1.0
+_RETRY_BACKOFF_FACTOR: int = 2
 
 
 class MaestroClient:
@@ -80,7 +95,11 @@ class MaestroClient:
         json: dict[str, Any] | None = None,
         timeout: float | None = None,
     ) -> httpx.Response:
-        """Send an HTTP request and handle common error scenarios.
+        """Send an HTTP request with automatic retry on transient failures.
+
+        Retries on connection errors, timeouts, remote protocol errors, and
+        HTTP 502/503/504 responses using exponential backoff (1s, 2s, 4s, ...).
+        Non-retryable errors (e.g. HTTP 400/401/403/404) raise immediately.
 
         Args:
             method: HTTP method (GET, POST, DELETE, etc.).
@@ -92,34 +111,76 @@ class MaestroClient:
             The ``httpx.Response`` object.
 
         Raises:
-            MaestroConnectionError: On network or timeout failures.
-            MaestroAPIError: On non-2xx status codes.
+            MaestroConnectionError: On network or timeout failures after retries.
+            MaestroAPIError: On non-2xx status codes (after retries for 502/503/504).
 
         """
-        try:
-            response = self._client.request(
-                method,
-                path,
-                json=json,
-                timeout=timeout,
-            )
-        except httpx.ConnectError as exc:
-            raise MaestroConnectionError(
-                f"Failed to connect to Maestro API at {self._base_url}: {exc}"
-            ) from exc
-        except httpx.TimeoutException as exc:
-            raise MaestroConnectionError(f"Request to Maestro API timed out: {exc}") from exc
-        except httpx.HTTPError as exc:
-            raise MaestroError(f"HTTP error communicating with Maestro API: {exc}") from exc
+        max_attempts = self._config.max_retries + 1
+        last_exception: Exception | None = None
 
-        if not response.is_success:
-            raise MaestroAPIError(
-                f"Maestro API returned {response.status_code} for {method} {path}",
-                status_code=response.status_code,
-                response_body=response.text,
-            )
+        for attempt in range(max_attempts):
+            try:
+                response = self._client.request(
+                    method,
+                    path,
+                    json=json,
+                    timeout=timeout,
+                )
+            except _RETRYABLE_EXCEPTIONS as exc:
+                last_exception = exc
+                if attempt < self._config.max_retries:
+                    delay = _BASE_RETRY_DELAY * (_RETRY_BACKOFF_FACTOR**attempt)
+                    logger.warning(
+                        "Maestro request %s %s failed (attempt %d/%d): %s — retrying in %.1fs",
+                        method,
+                        path,
+                        attempt + 1,
+                        max_attempts,
+                        exc,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    continue
+                # Last attempt exhausted — raise as connection error
+                raise MaestroConnectionError(
+                    f"Failed to connect to Maestro API at {self._base_url} "
+                    f"after {max_attempts} attempts: {exc}"
+                ) from exc
+            except httpx.HTTPError as exc:
+                raise MaestroError(f"HTTP error communicating with Maestro API: {exc}") from exc
 
-        return response
+            # Check for non-success status codes
+            if not response.is_success:
+                if (
+                    response.status_code in _RETRYABLE_STATUS_CODES
+                    and attempt < self._config.max_retries
+                ):
+                    delay = _BASE_RETRY_DELAY * (_RETRY_BACKOFF_FACTOR**attempt)
+                    logger.warning(
+                        "Maestro API returned %d for %s %s (attempt %d/%d) — retrying in %.1fs",
+                        response.status_code,
+                        method,
+                        path,
+                        attempt + 1,
+                        max_attempts,
+                        delay,
+                    )
+                    time.sleep(delay)
+                    continue
+                raise MaestroAPIError(
+                    f"Maestro API returned {response.status_code} for {method} {path}",
+                    status_code=response.status_code,
+                    response_body=response.text,
+                )
+
+            return response
+
+        # Should only be reached if max_retries > 0 and all attempts raised
+        # retryable exceptions (the last attempt re-raises above, so this is
+        # a safety net for the type checker).
+        raise MaestroConnectionError(  # pragma: no cover
+            f"All {max_attempts} attempts to {method} {path} failed: {last_exception}"
+        )
 
     # -- Public API ----------------------------------------------------------
 

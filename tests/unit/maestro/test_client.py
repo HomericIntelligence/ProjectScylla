@@ -18,12 +18,13 @@ from scylla.maestro.models import (
 
 @pytest.fixture
 def config() -> MaestroConfig:
-    """Create a test MaestroConfig."""
+    """Create a test MaestroConfig with retries disabled for basic tests."""
     return MaestroConfig(
         base_url="http://localhost:23000",
         enabled=True,
         timeout_seconds=5,
         health_check_timeout_seconds=2,
+        max_retries=0,
     )
 
 
@@ -127,7 +128,7 @@ class TestListAgents:
     @patch("scylla.maestro.client.httpx.Client")
     def test_success(self, mock_client_cls: MagicMock, config: MaestroConfig) -> None:
         """Successful list returns agent dicts."""
-        agents = [{"id": "agent-1", "name": "Test Agent"}]
+        agents: list[dict[str, Any]] = [{"id": "agent-1", "name": "Test Agent"}]
         mock_http = mock_client_cls.return_value
         mock_http.request.return_value = _mock_response(json_data=agents)
 
@@ -278,7 +279,7 @@ class TestGetDiagnostics:
     @patch("scylla.maestro.client.httpx.Client")
     def test_success(self, mock_client_cls: MagicMock, config: MaestroConfig) -> None:
         """Successful diagnostics returns dict."""
-        diag = {"uptime": 3600, "agents_active": 5}
+        diag: dict[str, Any] = {"uptime": 3600, "agents_active": 5}
         mock_http = mock_client_cls.return_value
         mock_http.request.return_value = _mock_response(json_data=diag)
 
