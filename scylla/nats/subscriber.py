@@ -108,44 +108,59 @@ class NATSSubscriberThread(threading.Thread):
         try:
             js = nc.jetstream()
 
-            sub = await js.subscribe(
-                subject=self._config.subjects[0] if self._config.subjects else "hi.tasks.>",
-                durable=self._config.durable_name,
-                stream=self._config.stream,
+            subjects = self._config.subjects or ["hi.tasks.>"]
+            subscriptions = []
+            for i, subject in enumerate(subjects):
+                durable = (
+                    self._config.durable_name
+                    if len(subjects) == 1
+                    else f"{self._config.durable_name}-{i}"
+                )
+                sub = await js.subscribe(
+                    subject=subject,
+                    durable=durable,
+                    stream=self._config.stream,
+                )
+                subscriptions.append(sub)
+
+            logger.info(
+                "Subscribed to %d NATS JetStream subject(s) on stream=%s: %s",
+                len(subscriptions),
+                self._config.stream,
+                subjects,
             )
 
-            logger.info("Subscribed to NATS JetStream (stream=%s)", self._config.stream)
-
             while not self._stop_event.is_set():
-                try:
-                    msg = await asyncio.wait_for(
-                        sub.next_msg(timeout=2.0),
-                        timeout=3.0,
-                    )
-                except (asyncio.TimeoutError, TimeoutError):
-                    continue
+                for sub in subscriptions:
+                    try:
+                        msg = await asyncio.wait_for(
+                            sub.next_msg(timeout=0.5),
+                            timeout=1.0,
+                        )
+                    except (asyncio.TimeoutError, TimeoutError):
+                        continue
 
-                # Parse and dispatch
-                try:
-                    data: dict[str, Any] = json.loads(msg.data.decode())
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    logger.warning(
-                        "Failed to decode message on %s (seq=%d)",
-                        msg.subject,
-                        msg.metadata.sequence.stream if msg.metadata else 0,
+                    # Parse and dispatch
+                    try:
+                        data: dict[str, Any] = json.loads(msg.data.decode())
+                    except (json.JSONDecodeError, UnicodeDecodeError):
+                        logger.warning(
+                            "Failed to decode message on %s (seq=%d)",
+                            msg.subject,
+                            msg.metadata.sequence.stream if msg.metadata else 0,
+                        )
+                        await msg.ack()
+                        continue
+
+                    event = NATSEvent(
+                        subject=msg.subject,
+                        data=data,
+                        timestamp=(msg.headers.get("Nats-Time-Stamp", "") if msg.headers else ""),
+                        sequence=msg.metadata.sequence.stream if msg.metadata else 0,
                     )
+
+                    self._handler(event)
                     await msg.ack()
-                    continue
-
-                event = NATSEvent(
-                    subject=msg.subject,
-                    data=data,
-                    timestamp=msg.headers.get("Nats-Time-Stamp", "") if msg.headers else "",
-                    sequence=msg.metadata.sequence.stream if msg.metadata else 0,
-                )
-
-                self._handler(event)
-                await msg.ack()
 
         finally:
             await nc.drain()
