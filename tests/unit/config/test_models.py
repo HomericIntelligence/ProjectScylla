@@ -13,6 +13,7 @@ from scylla.config.models import (
     GradingConfig,
     JudgeConfig,
     LoggingConfig,
+    MaestroConfig,
     MetricsConfig,
     ModelConfig,
     OutputConfig,
@@ -480,6 +481,51 @@ class TestLoggingConfig:
         assert "%(asctime)s" in config.format
 
 
+class TestMaestroConfig:
+    """Tests for MaestroConfig model."""
+
+    def test_maestro_defaults(self) -> None:
+        """MaestroConfig should have sensible defaults."""
+        config = MaestroConfig()
+        assert config.base_url == "http://localhost:23000"
+        assert config.enabled is False
+        assert config.timeout_seconds == 10
+        assert config.health_check_timeout_seconds == 5
+
+    def test_maestro_custom_values(self) -> None:
+        """MaestroConfig should accept custom values."""
+        config = MaestroConfig(
+            base_url="http://maestro.example.com:8080",
+            enabled=True,
+            timeout_seconds=30,
+            health_check_timeout_seconds=15,
+        )
+        assert config.base_url == "http://maestro.example.com:8080"
+        assert config.enabled is True
+        assert config.timeout_seconds == 30
+        assert config.health_check_timeout_seconds == 15
+
+    def test_maestro_timeout_seconds_min(self) -> None:
+        """timeout_seconds must be >= 1."""
+        with pytest.raises(ValidationError):
+            MaestroConfig(timeout_seconds=0)
+
+    def test_maestro_timeout_seconds_max(self) -> None:
+        """timeout_seconds must be <= 300."""
+        with pytest.raises(ValidationError):
+            MaestroConfig(timeout_seconds=301)
+
+    def test_maestro_health_check_timeout_min(self) -> None:
+        """health_check_timeout_seconds must be >= 1."""
+        with pytest.raises(ValidationError):
+            MaestroConfig(health_check_timeout_seconds=0)
+
+    def test_maestro_health_check_timeout_max(self) -> None:
+        """health_check_timeout_seconds must be <= 60."""
+        with pytest.raises(ValidationError):
+            MaestroConfig(health_check_timeout_seconds=61)
+
+
 class TestDefaultsConfig:
     """Tests for DefaultsConfig model."""
 
@@ -493,6 +539,7 @@ class TestDefaultsConfig:
         assert isinstance(config.judge, JudgeConfig)
         assert isinstance(config.adapters, AdaptersConfig)
         assert isinstance(config.cleanup, CleanupConfig)
+        assert isinstance(config.maestro, MaestroConfig)
 
     def test_defaults_with_custom_values(self) -> None:
         """DefaultsConfig should accept custom values."""

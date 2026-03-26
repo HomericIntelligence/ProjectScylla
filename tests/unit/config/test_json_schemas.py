@@ -155,6 +155,37 @@ class TestDefaultsSchema:
         """evaluation.seed can be an integer."""
         check_schema({"evaluation": {"seed": 42}}, schema)
 
+    def test_accepts_valid_maestro_block(self, schema: dict[str, Any]) -> None:
+        """Schema accepts a fully specified maestro configuration."""
+        check_schema(
+            {
+                "maestro": {
+                    "base_url": "http://localhost:23000",
+                    "enabled": False,
+                    "timeout_seconds": 10,
+                    "health_check_timeout_seconds": 5,
+                }
+            },
+            schema,
+        )
+
+    def test_rejects_maestro_additional_property(self, schema: dict[str, Any]) -> None:
+        """Maestro must reject unknown keys."""
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema({"maestro": {"unknown_field": "value"}}, schema)
+
+    def test_rejects_maestro_timeout_out_of_range(self, schema: dict[str, Any]) -> None:
+        """maestro.timeout_seconds must be in [1, 300]."""
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema({"maestro": {"timeout_seconds": 0}}, schema)
+
+    def test_rejects_maestro_health_check_timeout_out_of_range(
+        self, schema: dict[str, Any]
+    ) -> None:
+        """maestro.health_check_timeout_seconds must be in [1, 60]."""
+        with pytest.raises(jsonschema.ValidationError):
+            check_schema({"maestro": {"health_check_timeout_seconds": 61}}, schema)
+
 
 # ---------------------------------------------------------------------------
 # tier.schema.json
