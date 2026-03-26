@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Legacy `scylla` Click CLI (`scylla/cli/main.py`). Use `scripts/manage_experiment.py` instead.
 - `[project.scripts]` entry point from `pyproject.toml`.
+- `BaseExecutionInfo` dataclass in `scylla/core/results.py` — deprecated legacy
+  dataclass, now fully removed. Use `ExecutionInfoBase` (Pydantic model) or its
+  domain-specific subtypes (`ExecutorExecutionInfo`,
+  `ReportingExecutionInfo`). Related: #728, follow-up from #658.
+- `BaseRunMetrics` dataclass in `scylla/core/results.py` — deprecated legacy
+  dataclass, now fully removed. Use `RunMetricsBase` (Pydantic model).
+  Related: #787, follow-up from #728.
 
 ### Fixed
 
@@ -22,20 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Moved `scylla/cli/progress.py` to `scylla/e2e/progress.py` (used by orchestrator).
-
-### Deprecated
-
-- `BaseExecutionInfo` dataclass in `scylla/core/results.py` — planned for
-  removal in a future major version. **Migration**: Replace with
-  `ExecutionInfoBase` (Pydantic model) or its domain-specific subtypes
-  (`ExecutorExecutionInfo`, `ReportingExecutionInfo`). A runtime
-  `DeprecationWarning` is emitted on each instantiation. Related: #728,
-  follow-up from #658.
-
-- `BaseRunMetrics` dataclass in `scylla/core/results.py` — planned for
-  removal in a future major version. **Migration**: Replace with
-  `RunMetricsBase` (Pydantic model). A runtime `DeprecationWarning` is
-  emitted on each instantiation. Related: #787, follow-up from #728.
 
 ## [0.1.0] - 2026-03-25
 
@@ -52,14 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - JSON schema validation for all config files.
 - Docker multi-stage build with SHA256-pinned base images.
 - 8 specialized agent configurations for evaluation workflows.
-
-## Migration Timeline
-
-| Version | Action |
-|---------|--------|
-| v1.5.0  | `BaseExecutionInfo` deprecated; `DeprecationWarning` added at runtime |
-| v1.5.0  | `BaseRunMetrics` deprecated; `DeprecationWarning` added at runtime |
-| v2.0.0  | Both removed; only Pydantic hierarchy (`ExecutionInfoBase`, `RunMetricsBase`) remains |
 
 [Unreleased]: https://github.com/HomericIntelligence/ProjectScylla/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/HomericIntelligence/ProjectScylla/releases/tag/v0.1.0

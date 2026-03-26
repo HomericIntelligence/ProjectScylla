@@ -76,7 +76,7 @@ class BaseRunMetrics:
     def __post_init__(self) -> None:
         """Emit a DeprecationWarning on instantiation."""
         warnings.warn(
-            "BaseRunMetrics is deprecated and will be removed in v2.0.0. "
+            "BaseRunMetrics is deprecated and will be removed in a future major version. "
             "Use RunMetricsBase instead.",
             DeprecationWarning,
             stacklevel=2,
@@ -88,7 +88,7 @@ class BaseRunMetrics:
 - `stacklevel=2` — surfaces the caller's line in the warning, not `__post_init__` itself
 - Docstring on `__post_init__` is **required** — ruff `D105` will fail without it
 - `import warnings` must be present at the top of the file (verify it's already imported)
-- Warning message format: `"<ClassName> is deprecated and will be removed in v2.0.0. Use <NewClassName> instead."`
+- Warning message format: `"<ClassName> is deprecated and will be removed in a future major version. Use <NewClassName> instead."`
 
 ### 3. Export from `__init__.py`
 
@@ -147,7 +147,7 @@ class TestBaseRunMetricsBackwardCompatibility:
     def test_deprecation_warning_emitted(self) -> None:
         with pytest.warns(
             DeprecationWarning,
-            match="BaseRunMetrics is deprecated and will be removed in v2.0.0",
+            match="BaseRunMetrics is deprecated and will be removed in a future major version",
         ):
             BaseRunMetrics(tokens_input=1, tokens_output=1, cost_usd=0.0)
 ```
@@ -159,19 +159,17 @@ class TestBaseRunMetricsBackwardCompatibility:
 
 ### Deprecated
 
-- `BaseRunMetrics` dataclass in `scylla/core/results.py` is deprecated
-  as of v1.5.0. It will be removed in v2.0.0.
+- `BaseRunMetrics` dataclass in `scylla/core/results.py` is deprecated.
+  It will be removed in a future major version.
   **Migration**: Replace with `RunMetricsBase` (Pydantic model).
   A runtime `DeprecationWarning` is now emitted on each instantiation.
   Related: #787, follow-up from #728.
-
-## Migration Timeline
-
-| Version | Action |
-|---------|--------|
-| v1.5.0  | `<LegacyClass>` deprecated; `DeprecationWarning` added at runtime |
-| v2.0.0  | Removed; only Pydantic hierarchy remains |
 ```
+
+> **Note**: Do not use aspirational version numbers (e.g., ``v1.5.0``, ``v2.0.0``)
+> in the CHANGELOG. Use ``[Unreleased]`` per keepachangelog.com convention and
+> phrase timelines as "a future major version". The ``check-package-version-consistency``
+> pre-commit hook will reject version references higher than the canonical version.
 
 ### 7. Add non-blocking CI tracking step
 
@@ -217,7 +215,7 @@ warnings.simplefilter('always')
 from scylla.core.results import BaseRunMetrics
 m = BaseRunMetrics(tokens_input=1, tokens_output=1, cost_usd=0.0)
 "
-# Expected: DeprecationWarning: BaseRunMetrics is deprecated and will be removed in v2.0.0...
+# Expected: DeprecationWarning: BaseRunMetrics is deprecated and will be removed in a future major version...
 
 python -c "
 from scylla.core import RunMetricsBase
@@ -277,7 +275,7 @@ When deprecating `OldClass` → `NewClass`:
 - [ ] `import warnings` present at top of module
 - [ ] `NewClass(BaseModel)` created with `frozen=True` and `Field(...)` for required fields
 - [ ] `OldClass.__post_init__` added with docstring and `stacklevel=2`
-- [ ] Warning message: `"<OldClass> is deprecated and will be removed in v2.0.0. Use <NewClass> instead."`
+- [ ] Warning message: `"<OldClass> is deprecated and will be removed in a future major version. Use <NewClass> instead."`
 - [ ] `NewClass` exported from `__init__.py` and added to `__all__`
 - [ ] ALL instantiation sites in tests wrapped with `pytest.warns`
 - [ ] `TestNewClass` added (construction, immutability, `model_dump`, equality)
