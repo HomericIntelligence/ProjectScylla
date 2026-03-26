@@ -137,9 +137,10 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 
 # Install Claude Code CLI (pinned to specific version for reproducibility)
 # This is the primary tool for agent-based test execution
-# Version 2.1.74 verified working
-# See: https://github.com/mvillmow/ProjectScylla/issues/650
-RUN npm install -g @anthropic-ai/claude-code@2.1.74
+# Version 2.1.84 verified working — upgraded from 2.1.74 to resolve Trivy HIGH CVEs
+# in transitive deps (cross-spawn, glob, minimatch, tar). See #650, #1542.
+RUN npm install -g @anthropic-ai/claude-code@2.1.84 \
+    && npm audit fix --global --audit-level=high 2>/dev/null || true
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
