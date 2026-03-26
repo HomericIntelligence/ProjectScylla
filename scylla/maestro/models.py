@@ -35,6 +35,12 @@ class MaestroConfig(BaseModel):
         le=60,
         description="Timeout in seconds for health-check requests",
     )
+    max_retries: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Maximum retry attempts for transient network failures (0 disables retry)",
+    )
 
 
 class FailureSpec(BaseModel):
