@@ -86,6 +86,13 @@ jobs:
       - name: Check Python version consistency (pyproject.toml vs Dockerfile)
         run: python3 scripts/check_python_version_consistency.py
 
+      - name: Install nats-server
+        if: matrix.test-group.name == 'integration'
+        run: |
+          curl -fsSL https://github.com/nats-io/nats-server/releases/download/v2.10.24/nats-server-v2.10.24-linux-amd64.tar.gz | tar xz
+          sudo mv nats-server-v2.10.24-linux-amd64/nats-server /usr/local/bin/
+          nats-server --version
+
       - name: Set up Pixi
         uses: ./.github/actions/setup-pixi
 
