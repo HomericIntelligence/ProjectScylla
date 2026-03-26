@@ -227,6 +227,35 @@ def _calculate_tier_metrics(
     )
 
 
+def _resolve_output_path(output: str | None, base_path: Path) -> tuple[Path, Path | None]:
+    """Resolve the --output flag into a report directory and optional file path.
+
+    Paths with a recognized extension (.md, .json) are treated as explicit file
+    paths; paths without extensions are treated as directories.
+
+    Args:
+        output: Raw --output value (``None`` when not provided, ``"-"`` for
+            stdout is handled by the caller).
+        base_path: Fallback base directory (used when *output* is ``None``).
+
+    Returns:
+        Tuple of ``(report_dir, resolved_output_path)``.
+
+    """
+    output_path = Path(output) if output else None
+    resolved: Path | None = None
+
+    if output_path is not None and output_path.suffix in (".md", ".json"):
+        resolved = output_path
+        report_dir = output_path.parent
+    elif output_path is not None:
+        report_dir = output_path
+    else:
+        report_dir = base_path / "reports"
+
+    return report_dir, resolved
+
+
 @cli.command()
 @click.argument("test_id")
 @click.option(
@@ -368,10 +397,9 @@ def report(
         content = generator.generate_report(report_data)
         click.echo(content)
     else:
-        output_path = Path(output) if output else None
-        report_dir = output_path.parent if output_path else base_path / "reports"
+        report_dir, resolved_output_path = _resolve_output_path(output, base_path)
         generator = generator_cls(report_dir)
-        report_path = generator.write_report(report_data)
+        report_path = generator.write_report(report_data, output_path=resolved_output_path)
         click.echo(f"\nReport generated: {report_path}")
 
 

@@ -117,3 +117,41 @@ class TestJsonReportGenerator:
             data = _make_report_data()
             path = gen.write_report(data)
             assert path.exists()
+
+    def test_write_report_with_explicit_output_path(self) -> None:
+        """When output_path is provided, write to that exact path."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gen = JsonReportGenerator(Path(tmpdir))
+            data = _make_report_data()
+            target = Path(tmpdir) / "my-custom-report.json"
+
+            path = gen.write_report(data, output_path=target)
+
+            assert path == target
+            assert target.exists()
+            content = json.loads(target.read_text())
+            assert content["test_id"] == "test-001"
+
+    def test_write_report_with_output_path_creates_parents(self) -> None:
+        """Parent directories are created when output_path has non-existent parents."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gen = JsonReportGenerator(Path(tmpdir))
+            data = _make_report_data()
+            target = Path(tmpdir) / "deep" / "nested" / "report.json"
+
+            path = gen.write_report(data, output_path=target)
+
+            assert path == target
+            assert target.exists()
+
+    def test_write_report_without_output_path_uses_convention(self) -> None:
+        """Default behavior (no output_path) writes to {base_dir}/{test_id}/report.json."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gen = JsonReportGenerator(Path(tmpdir))
+            data = _make_report_data()
+
+            path = gen.write_report(data)
+
+            expected = Path(tmpdir) / "test-001" / "report.json"
+            assert path == expected
+            assert path.exists()
