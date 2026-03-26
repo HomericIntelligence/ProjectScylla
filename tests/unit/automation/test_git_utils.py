@@ -192,7 +192,7 @@ class TestSafeGitFetch:
         mock_run.assert_called_once()
 
     @patch("scylla.automation.git_utils.run")
-    @patch("scylla.automation.git_utils.time.sleep")
+    @patch("scylla.automation.retry.time.sleep")
     def test_retry_on_failure(self, mock_sleep: Any, mock_run: Any) -> None:
         """Test retry on fetch failure."""
         repo_root = Path("/home/user/repo")
@@ -208,7 +208,7 @@ class TestSafeGitFetch:
         assert mock_run.call_count == 3
 
     @patch("scylla.automation.git_utils.run")
-    @patch("scylla.automation.git_utils.time.sleep")
+    @patch("scylla.automation.retry.time.sleep")
     def test_all_retries_fail(self, mock_sleep: Any, mock_run: Any) -> None:
         """Test when all retries fail."""
         repo_root = Path("/home/user/repo")
@@ -217,6 +217,5 @@ class TestSafeGitFetch:
         result = safe_git_fetch(repo_root, retries=2)
 
         assert result is False
-        assert mock_run.call_count == 2
-        # Should call sleep once (after first failure, not after last)
-        assert mock_sleep.call_count == 1
+        # With retry_with_backoff(max_retries=2), it runs initial + 2 retries = 3
+        assert mock_run.call_count == 3

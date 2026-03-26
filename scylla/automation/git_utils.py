@@ -9,8 +9,9 @@ Provides helpers for:
 
 import logging
 import subprocess
-import time
 from pathlib import Path
+
+from scylla.automation.retry import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -126,7 +127,10 @@ def get_repo_info(repo_root: Path | None = None) -> tuple[str, str]:
 
 
 def safe_git_fetch(repo_root: Path, retries: int = 3) -> bool:
-    """Safely fetch from git remote with retry logic.
+    """Safely fetch from git remote with retry and exponential backoff.
+
+    Uses the retry_with_backoff decorator for consistent retry behavior
+    with jitter to prevent thundering herd problems.
 
     Args:
         repo_root: Repository root directory
@@ -136,22 +140,30 @@ def safe_git_fetch(repo_root: Path, retries: int = 3) -> bool:
         True if fetch succeeded, False otherwise
 
     """
-    for attempt in range(retries):
-        try:
-            run(
-                ["git", "fetch", "origin"],
-                cwd=repo_root,
-                timeout=30,
-            )
-            logger.debug("Git fetch succeeded")
-            return True
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-            logger.warning(f"Git fetch attempt {attempt + 1}/{retries} failed: {e}")
-            if attempt < retries - 1:
-                time.sleep(2**attempt)  # Exponential backoff
 
-    logger.error("Git fetch failed after all retries")
-    return False
+    @retry_with_backoff(
+        max_retries=retries,
+        initial_delay=1.0,
+        backoff_factor=2,
+        retry_on=(subprocess.CalledProcessError, subprocess.TimeoutExpired),
+        logger=logger.warning,
+        max_delay=30.0,
+        jitter=True,
+    )
+    def _fetch() -> bool:
+        run(
+            ["git", "fetch", "origin"],
+            cwd=repo_root,
+            timeout=30,
+        )
+        logger.debug("Git fetch succeeded")
+        return True
+
+    try:
+        return _fetch()
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        logger.error("Git fetch failed after all retries")
+        return False
 
 
 def clean_stale_git_locks(repo_root: Path) -> None:

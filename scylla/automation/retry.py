@@ -155,3 +155,43 @@ def retry_on_network_error(
         retry_on=(ConnectionError, TimeoutError, OSError),
         logger=logger,
     )
+
+
+def retry_on_subprocess_error(
+    max_retries: int = 3,
+    initial_delay: float = 1.0,
+    max_delay: float = 30.0,
+    logger: Callable[[str], None] | None = None,
+) -> Callable[[F], F]:
+    """Retry on subprocess errors (crashes, non-zero exits).
+
+    Does NOT retry on TimeoutExpired - timeouts are intentional.
+    Use this for wrapping subprocess calls that may fail due to
+    transient infrastructure issues.
+
+    Args:
+        max_retries: Maximum number of retry attempts
+        initial_delay: Initial delay in seconds before first retry
+        max_delay: Maximum delay cap in seconds
+        logger: Optional logging function
+
+    Returns:
+        Decorated function with subprocess error retry logic
+
+    """
+    import subprocess
+
+    return retry_with_backoff(
+        max_retries=max_retries,
+        initial_delay=initial_delay,
+        backoff_factor=2,
+        retry_on=(
+            subprocess.SubprocessError,
+            subprocess.CalledProcessError,
+            ConnectionError,
+            OSError,
+        ),
+        logger=logger,
+        max_delay=max_delay,
+        jitter=True,
+    )

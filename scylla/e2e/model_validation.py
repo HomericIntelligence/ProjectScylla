@@ -1,6 +1,7 @@
 """Model validation utilities for E2E testing.
 
 Extracted from scripts/run_e2e_experiment.py to be usable as a library module.
+Uses retry_with_backoff for consistent retry behavior across the codebase.
 """
 
 from __future__ import annotations

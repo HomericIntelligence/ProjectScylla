@@ -10,8 +10,9 @@ import fcntl
 import hashlib
 import logging
 import subprocess
-import time
 from pathlib import Path
+
+from scylla.core.resilience import TRANSIENT_ERROR_PATTERNS
 
 logger = logging.getLogger(__name__)
 
@@ -102,49 +103,7 @@ class WorkspaceManager:
                         str(self.base_repo),
                     ]
 
-                    # Retry logic for transient network errors
-                    max_retries = 3
-                    base_delay = 1.0
-
-                    for attempt in range(max_retries):
-                        result = subprocess.run(
-                            clone_cmd,
-                            capture_output=True,
-                            text=True,
-                        )
-
-                        if result.returncode == 0:
-                            break
-
-                        stderr = result.stderr.lower()
-
-                        # Detect transient network errors (retry-able)
-                        transient_patterns = [
-                            "connection reset",
-                            "connection refused",
-                            "network unreachable",
-                            "network is unreachable",
-                            "temporary failure",
-                            "could not resolve host",
-                            "curl 56",  # RPC failed curl error
-                            "timed out",
-                            "early eof",
-                            "recv failure",
-                        ]
-
-                        is_transient = any(pattern in stderr for pattern in transient_patterns)
-
-                        # Fail immediately on non-transient errors or last attempt
-                        if not is_transient or attempt == max_retries - 1:
-                            raise RuntimeError(f"Failed to clone repository: {result.stderr}")
-
-                        # Exponential backoff: 1s, 2s, 4s
-                        delay = base_delay * (2**attempt)
-                        logger.warning(
-                            f"Git clone failed (attempt {attempt + 1}/{max_retries}), "
-                            f"retrying in {delay}s: {result.stderr.strip()}"
-                        )
-                        time.sleep(delay)
+                    self._clone_with_retry(clone_cmd)
             finally:
                 fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
@@ -159,6 +118,49 @@ class WorkspaceManager:
 
         self._is_setup = True
         logger.info("Base repo setup complete")
+
+    def _clone_with_retry(
+        self,
+        clone_cmd: list[str],
+        max_retries: int = 3,
+        initial_delay: float = 1.0,
+    ) -> None:
+        """Clone a repository with exponential backoff on transient errors.
+
+        Args:
+            clone_cmd: Git clone command as list of strings
+            max_retries: Maximum number of retry attempts
+            initial_delay: Initial delay in seconds before first retry
+
+        Raises:
+            RuntimeError: If clone fails after all retries
+
+        """
+        import random
+        import time
+
+        for attempt in range(max_retries):
+            result = subprocess.run(
+                clone_cmd,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                return
+
+            stderr = result.stderr.lower()
+            is_transient = any(pattern in stderr for pattern in TRANSIENT_ERROR_PATTERNS)
+
+            if not is_transient or attempt == max_retries - 1:
+                raise RuntimeError(f"Failed to clone repository: {result.stderr}")
+
+            delay = initial_delay * (2**attempt) * random.uniform(0.5, 1.5)
+            logger.warning(
+                f"Git clone failed (attempt {attempt + 1}/{max_retries}), "
+                f"retrying in {delay:.1f}s: {result.stderr.strip()}"
+            )
+            time.sleep(delay)
 
     def _checkout_commit(self) -> None:
         """Fetch and checkout specific commit in base repo (legacy per-experiment layout)."""
