@@ -53,6 +53,9 @@ analysis = [
     "krippendorff>=0.6.0,<1",
 ]
 
+[project.scripts]
+scylla = "scylla.cli.main:cli"
+
 [project.urls]
 Homepage = "https://github.com/HomericIntelligence/ProjectScylla"
 Repository = "https://github.com/HomericIntelligence/ProjectScylla"

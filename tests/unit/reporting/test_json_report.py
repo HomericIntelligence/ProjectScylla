@@ -4,116 +4,200 @@ import json
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from scylla.reporting.json_report import JsonReportGenerator, _sanitize_for_json
-from scylla.reporting.markdown import ReportData, TierMetrics
+from scylla.reporting.markdown import (
+    SensitivityAnalysis,
+    TierMetrics,
+    TransitionAssessment,
+    create_report_data,
+)
 
 
-def _make_report_data(test_id: str = "test-001") -> ReportData:
-    """Create minimal ReportData for testing."""
-    return ReportData(
-        test_id=test_id,
-        test_name="Test 001",
-        timestamp="2025-01-01T00:00:00Z",
-        runs_per_tier=10,
-        judge_model="claude-opus-4-6",
+def _make_tier_metrics(
+    tier_id: str = "T0",
+    tier_name: str = "T0 (Vanilla)",
+    pass_rate_median: float = 0.8,
+    impl_rate_median: float = 0.75,
+    composite_median: float = 0.775,
+    cost_of_pass_median: float = 1.0,
+    consistency_std_dev: float = 0.1,
+    uplift: float = 0.0,
+) -> TierMetrics:
+    """Create test TierMetrics."""
+    return TierMetrics(
+        tier_id=tier_id,
+        tier_name=tier_name,
+        pass_rate_median=pass_rate_median,
+        impl_rate_median=impl_rate_median,
+        composite_median=composite_median,
+        cost_of_pass_median=cost_of_pass_median,
+        consistency_std_dev=consistency_std_dev,
+        uplift=uplift,
     )
 
 
 class TestSanitizeForJson:
     """Tests for _sanitize_for_json helper."""
 
-    def test_sanitize_inf(self) -> None:
-        """Positive infinity is replaced with None."""
-        assert _sanitize_for_json(float("inf")) is None
+    def test_nan_replaced_with_none(self) -> None:
+        """Test NaN replaced with none."""
+        result = _sanitize_for_json(float("nan"))
+        assert result is None
 
-    def test_sanitize_negative_inf(self) -> None:
-        """Negative infinity is replaced with None."""
-        assert _sanitize_for_json(float("-inf")) is None
+    def test_inf_replaced_with_none(self) -> None:
+        """Test Inf replaced with none."""
+        result = _sanitize_for_json(float("inf"))
+        assert result is None
 
-    def test_sanitize_nan(self) -> None:
-        """NaN is replaced with None."""
-        assert _sanitize_for_json(float("nan")) is None
+    def test_negative_inf_replaced_with_none(self) -> None:
+        """Test negative Inf replaced with none."""
+        result = _sanitize_for_json(float("-inf"))
+        assert result is None
 
-    def test_sanitize_normal_float(self) -> None:
-        """Normal floats are preserved."""
-        assert _sanitize_for_json(1.5) == 1.5
+    def test_normal_float_preserved(self) -> None:
+        """Test normal float preserved."""
+        result = _sanitize_for_json(1.5)
+        assert result == 1.5
 
-    def test_sanitize_dict(self) -> None:
-        """Dict values are recursively sanitized."""
-        result = _sanitize_for_json({"a": float("inf"), "b": 1.0})
-        assert result == {"a": None, "b": 1.0}
+    def test_zero_float_preserved(self) -> None:
+        """Test zero float preserved."""
+        result = _sanitize_for_json(0.0)
+        assert result == 0.0
 
-    def test_sanitize_list(self) -> None:
-        """List values are recursively sanitized."""
-        result = _sanitize_for_json([float("nan"), 2.0])
-        assert result == [None, 2.0]
+    def test_dict_recursion(self) -> None:
+        """Test dict recursion."""
+        data: dict[str, object] = {"a": 1.0, "b": float("nan"), "c": "text"}
+        result = _sanitize_for_json(data)
+        assert result == {"a": 1.0, "b": None, "c": "text"}
 
-    def test_sanitize_nested(self) -> None:
-        """Nested structures are recursively sanitized."""
-        result = _sanitize_for_json({"items": [{"cost": float("inf")}]})
-        assert result == {"items": [{"cost": None}]}
+    def test_list_recursion(self) -> None:
+        """Test list recursion."""
+        data: list[object] = [1.0, float("inf"), "text"]
+        result = _sanitize_for_json(data)
+        assert result == [1.0, None, "text"]
 
-    def test_sanitize_non_float(self) -> None:
-        """Non-float values are passed through."""
-        assert _sanitize_for_json("hello") == "hello"
+    def test_nested_dict_and_list(self) -> None:
+        """Test nested dict and list."""
+        data: dict[str, object] = {
+            "tiers": [{"cost": float("inf")}, {"cost": 1.5}],
+        }
+        result = _sanitize_for_json(data)
+        assert result == {"tiers": [{"cost": None}, {"cost": 1.5}]}
+
+    def test_non_float_passthrough(self) -> None:
+        """Test non-float passthrough."""
         assert _sanitize_for_json(42) == 42
+        assert _sanitize_for_json("hello") == "hello"
+        assert _sanitize_for_json(None) is None
+        assert _sanitize_for_json(True) is True
 
 
 class TestJsonReportGenerator:
-    """Tests for JsonReportGenerator."""
+    """Tests for JsonReportGenerator class."""
 
-    def test_get_report_dir(self) -> None:
-        """Report dir is base_dir / test_id."""
-        gen = JsonReportGenerator(Path("/reports"))
-        assert gen.get_report_dir("test-001") == Path("/reports/test-001")
+    def test_generate_report_valid_json(self) -> None:
+        """Test generate_report returns valid JSON."""
+        generator = JsonReportGenerator(Path("/tmp"))
+        data = create_report_data(
+            test_id="001-test",
+            test_name="Test Name",
+            timestamp="2024-01-15T14:30:00Z",
+        )
+        result = generator.generate_report(data)
 
-    def test_generate_report_returns_valid_json(self) -> None:
-        """generate_report returns parseable JSON."""
-        gen = JsonReportGenerator(Path("/tmp"))
-        data = _make_report_data()
-        result = gen.generate_report(data)
         parsed = json.loads(result)
-        assert parsed["test_id"] == "test-001"
-        assert parsed["test_name"] == "Test 001"
+        assert parsed["test_id"] == "001-test"
+        assert parsed["test_name"] == "Test Name"
+        assert parsed["timestamp"] == "2024-01-15T14:30:00Z"
+        assert parsed["tiers"] == []
 
-    def test_generate_report_sanitizes_inf(self) -> None:
-        """Infinity values in tier metrics are sanitized to null."""
-        gen = JsonReportGenerator(Path("/tmp"))
-        data = _make_report_data()
+    def test_generate_report_with_tiers(self) -> None:
+        """Test generate_report includes tier data."""
+        generator = JsonReportGenerator(Path("/tmp"))
+        data = create_report_data(
+            test_id="001-test",
+            test_name="Test Name",
+            timestamp="2024-01-15T14:30:00Z",
+        )
         data.tiers = [
-            TierMetrics(
-                tier_id="T0",
-                tier_name="Vanilla",
-                pass_rate_median=0.5,
-                impl_rate_median=0.5,
-                composite_median=0.5,
-                cost_of_pass_median=float("inf"),
-                consistency_std_dev=0.1,
-                uplift=0.0,
-            )
+            _make_tier_metrics(tier_id="T0"),
+            _make_tier_metrics(tier_id="T1", pass_rate_median=0.9, uplift=0.12),
         ]
-        result = gen.generate_report(data)
+
+        result = generator.generate_report(data)
         parsed = json.loads(result)
+
+        assert len(parsed["tiers"]) == 2
+        assert parsed["tiers"][0]["tier_id"] == "T0"
+        assert parsed["tiers"][1]["tier_id"] == "T1"
+        assert parsed["tiers"][1]["pass_rate_median"] == pytest.approx(0.9)
+
+    def test_generate_report_sanitizes_infinity(self) -> None:
+        """Test generate_report replaces Inf with null in JSON."""
+        generator = JsonReportGenerator(Path("/tmp"))
+        data = create_report_data(test_id="001-test", test_name="Test")
+        data.tiers = [_make_tier_metrics(cost_of_pass_median=float("inf"))]
+
+        result = generator.generate_report(data)
+        parsed = json.loads(result)
+
         assert parsed["tiers"][0]["cost_of_pass_median"] is None
 
+    def test_generate_report_with_sensitivity(self) -> None:
+        """Test generate_report includes sensitivity analysis."""
+        generator = JsonReportGenerator(Path("/tmp"))
+        data = create_report_data(test_id="001-test", test_name="Test")
+        data.sensitivity = SensitivityAnalysis(0.05, 0.03, 0.10)
+
+        result = generator.generate_report(data)
+        parsed = json.loads(result)
+
+        assert parsed["sensitivity"]["pass_rate_variance"] == pytest.approx(0.05)
+
+    def test_generate_report_with_transitions(self) -> None:
+        """Test generate_report includes transition assessments."""
+        generator = JsonReportGenerator(Path("/tmp"))
+        data = create_report_data(test_id="001-test", test_name="Test")
+        data.transitions = [
+            TransitionAssessment("T0", "T1", 0.1, 0.15, 0.5, True),
+        ]
+
+        result = generator.generate_report(data)
+        parsed = json.loads(result)
+
+        assert len(parsed["transitions"]) == 1
+        assert parsed["transitions"][0]["from_tier"] == "T0"
+        assert parsed["transitions"][0]["worth_it"] is True
+
     def test_write_report_creates_file(self) -> None:
-        """write_report creates report.json in the correct directory."""
+        """Test write_report creates the JSON file on disk."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            gen = JsonReportGenerator(Path(tmpdir))
-            data = _make_report_data()
-            path = gen.write_report(data)
+            generator = JsonReportGenerator(Path(tmpdir))
+            data = create_report_data(test_id="001-test", test_name="Test")
+            data.tiers = [_make_tier_metrics()]
 
-            assert path.exists()
-            assert path.name == "report.json"
-            assert path.parent.name == "test-001"
+            output_path = generator.write_report(data)
 
-            content = json.loads(path.read_text())
-            assert content["test_id"] == "test-001"
+            assert output_path.exists()
+            assert output_path.name == "report.json"
+            expected_path = Path(tmpdir) / "001-test" / "report.json"
+            assert output_path == expected_path
+
+            # Verify content is valid JSON
+            content = json.loads(output_path.read_text())
+            assert content["test_id"] == "001-test"
+
+    def test_get_report_dir(self) -> None:
+        """Test get_report_dir returns correct path."""
+        generator = JsonReportGenerator(Path("/reports"))
+        assert generator.get_report_dir("001-test") == Path("/reports/001-test")
 
     def test_write_report_creates_directories(self) -> None:
         """write_report creates missing directories."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            gen = JsonReportGenerator(Path(tmpdir) / "nested" / "reports")
-            data = _make_report_data()
-            path = gen.write_report(data)
+            generator = JsonReportGenerator(Path(tmpdir) / "nested" / "reports")
+            data = create_report_data(test_id="test-001", test_name="Test 001")
+            path = generator.write_report(data)
             assert path.exists()

@@ -3,7 +3,12 @@
 This module provides result writing and report generation capabilities.
 """
 
-from scylla.reporting.json_report import JsonReportGenerator
+from scylla.reporting.json_report import (
+    JsonReportGenerator as JsonReportGenerator,
+)
+from scylla.reporting.json_report import (
+    _sanitize_for_json as _sanitize_for_json,
+)
 from scylla.reporting.markdown import (
     MarkdownReportGenerator,
     ReportData,
@@ -61,6 +66,7 @@ __all__ = [
     "SummaryStatistics",
     "TierMetrics",
     "TransitionAssessment",
+    "_sanitize_for_json",
     "create_model_statistics",
     "create_report_data",
     "create_run_result",
