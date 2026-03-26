@@ -60,3 +60,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 | v1.5.0  | `BaseExecutionInfo` deprecated; `DeprecationWarning` added at runtime |
 | v1.5.0  | `BaseRunMetrics` deprecated; `DeprecationWarning` added at runtime |
 | v2.0.0  | Both removed; only Pydantic hierarchy (`ExecutionInfoBase`, `RunMetricsBase`) remains |
+
+[Unreleased]: https://github.com/HomericIntelligence/ProjectScylla/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/HomericIntelligence/ProjectScylla/releases/tag/v0.1.0
