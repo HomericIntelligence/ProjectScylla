@@ -131,3 +131,59 @@ class TestReportCommand:
             assert result.exit_code == 0
             assert "T0:" in result.output
             assert "T1:" in result.output
+
+    def test_report_output_file_path_markdown(self) -> None:
+        """--output with .md extension writes to that exact file path."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            target = Path("my-report.md")
+            result = runner.invoke(cli, ["report", "test-001", "--output", str(target)])
+            assert result.exit_code == 0
+            assert target.exists()
+            assert "# Evaluation Report:" in target.read_text()
+
+    def test_report_output_file_path_json(self) -> None:
+        """--output with .json extension writes to that exact file path."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            target = Path("my-report.json")
+            result = runner.invoke(
+                cli, ["report", "test-001", "--format", "json", "--output", str(target)]
+            )
+            assert result.exit_code == 0
+            assert target.exists()
+            content = json.loads(target.read_text())
+            assert content["test_id"] == "test-001"
+
+    def test_report_output_directory_uses_default_filename(self) -> None:
+        """--output without extension is treated as directory, uses default filename."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            result = runner.invoke(cli, ["report", "test-001", "--output", "custom-dir"])
+            assert result.exit_code == 0
+            assert Path("custom-dir/test-001/report.md").exists()
+
+    def test_report_output_nested_file_path(self) -> None:
+        """--output with nested path and extension creates parent dirs."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            target = Path("deep/nested/report.md")
+            result = runner.invoke(cli, ["report", "test-001", "--output", str(target)])
+            assert result.exit_code == 0
+            assert target.exists()

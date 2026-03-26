@@ -71,20 +71,27 @@ class JsonReportGenerator:
         sanitized = _sanitize_for_json(raw)
         return json.dumps(sanitized, indent=2)
 
-    def write_report(self, data: ReportData) -> Path:
+    def write_report(self, data: ReportData, output_path: Path | None = None) -> Path:
         """Generate and write a JSON report to file.
 
         Args:
             data: Report data
+            output_path: Explicit file path to write the report to. When
+                provided, the report is written to this exact path instead of
+                the convention-based ``{base_dir}/{test_id}/report.json``.
 
         Returns:
-            Path to written report.json
+            Path to written report file.
 
         """
-        report_dir = self.get_report_dir(data.test_id)
-        report_dir.mkdir(parents=True, exist_ok=True)
+        if output_path is not None:
+            report_path = output_path
+        else:
+            report_dir = self.get_report_dir(data.test_id)
+            report_dir.mkdir(parents=True, exist_ok=True)
+            report_path = report_dir / "report.json"
 
-        report_path = report_dir / "report.json"
+        report_path.parent.mkdir(parents=True, exist_ok=True)
         report_content = self.generate_report(data)
         report_path.write_text(report_content)
 
