@@ -35,8 +35,12 @@ except ImportError:
     import tomli as tomllib
 
 # Matches semver-ish version strings: v1.5.0, 1.5.0, v2.0.0, 0.1.0, etc.
-# Negative lookbehind excludes versions embedded in URL paths (e.g. /en/1.0.0/).
-_VERSION_RE = re.compile(r"(?<!/)\bv?(\d+\.\d+\.\d+)\b")
+# Negative lookbehind excludes versions embedded in URL paths (e.g. /en/1.0.0/)
+# and GitHub Action version pins (e.g. @v0.8.1).
+_VERSION_RE = re.compile(r"(?<!/)(?<!@)\bv?(\d+\.\d+\.\d+)\b")
+
+# Matches inline code spans: `...` or ``...`` (but not fenced code block markers).
+_INLINE_CODE_RE = re.compile(r"``[^`]+``|`[^`]+`")
 
 
 def _parse_version_tuple(version_str: str) -> tuple[int, ...]:
@@ -150,12 +154,31 @@ def check_init_version(repo_root: Path, canonical: str) -> list[str]:
     return []
 
 
+def _strip_inline_code(line: str) -> str:
+    """Replace inline code spans with whitespace so version matches inside them are ignored.
+
+    Handles both single-backtick (``...``) and double-backtick (````...````) spans.
+
+    Args:
+        line: A single line of text.
+
+    Returns:
+        The line with inline code contents replaced by spaces.
+
+    """
+    return _INLINE_CODE_RE.sub(lambda m: " " * len(m.group(0)), line)
+
+
 def find_aspirational_versions(
     file_path: Path,
     canonical_tuple: tuple[int, ...],
     label: str,
 ) -> list[str]:
     """Find version references in a file that are higher than the canonical version.
+
+    Skips version references inside fenced code blocks (triple-backtick regions)
+    and inline code spans (backtick-wrapped text), since these typically refer to
+    external tool versions rather than the project's own version.
 
     Args:
         file_path: Path to the file to scan.
@@ -168,9 +191,21 @@ def find_aspirational_versions(
     """
     content = file_path.read_text(encoding="utf-8")
     errors: list[str] = []
+    in_code_block = False
 
     for line_num, line in enumerate(content.splitlines(), start=1):
-        for match in _VERSION_RE.finditer(line):
+        stripped = line.strip()
+        # Toggle fenced code block state on ``` or ~~~ markers.
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+
+        # Strip inline code spans so versions inside backticks are ignored.
+        scannable = _strip_inline_code(line)
+
+        for match in _VERSION_RE.finditer(scannable):
             version_str = match.group(1)
             version_tuple = _parse_version_tuple(version_str)
             if version_tuple > canonical_tuple:
