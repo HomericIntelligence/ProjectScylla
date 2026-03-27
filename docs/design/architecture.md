@@ -360,7 +360,7 @@ The Reporter generates output artifacts from evaluation results.
 
 ### 4.7 Maestro Client (Optional)
 
-The Maestro Client provides optional failure-injection capabilities for
+The Maestro Client provides optional fault-injection capabilities for
 the Odysseus agent mesh. It is fully opt-in and disabled by default.
 
 **Location**: `scylla/maestro/`
@@ -454,7 +454,7 @@ Test Case (YAML)
         |
         v
 +- - - - - - - - - +
-: Inject Failure   :-----> (optional) Maestro failure injection
+: Inject Failure   :-----> (optional) Maestro fault injection
 : [FAILURE_INJECTED]:      Persists maestro_injection.json
 +- - - - - - - - - +
         |
@@ -482,7 +482,7 @@ Test Case (YAML)
 
 **Input**: `test.yaml`, tier definitions from `tests/claude-code/shared/tiers.yaml`
 
-**Process**: Docker isolation, optional failure injection via Maestro,
+**Process**: Docker isolation, optional fault injection via Maestro,
 adapter invocation, failure clearing, metric collection
 
 **Output**: Modified workspace, execution logs, raw metrics
@@ -618,7 +618,7 @@ ProjectScylla/
             cline.py                    # Cline adapter
             opencode.py                 # OpenCode adapter
             goose.py                    # Goose adapter
-        maestro/                        # Failure injection client (optional)
+        maestro/                        # Fault injection client (optional)
             client.py                   # Synchronous HTTP client
             async_client.py             # Asynchronous HTTP client
             models.py                   # MaestroConfig, FailureSpec, etc.
@@ -678,7 +678,7 @@ ProjectScylla/
 | **Judge Container** | Separate | Judge runs in separate container from agent |
 | **API Keys** | Environment variables | Pass from host via docker `-e` flags |
 | **Timeout Handling** | Include as failures | Count timeouts as pass_rate=0, impl_rate=0 |
-| **Maestro Integration** | Opt-in, graceful degradation | Failure injection must never block execution; API errors are logged and skipped |
+| **Maestro Integration** | Opt-in, graceful degradation | Fault injection must never block execution; API errors are logged and skipped |
 
 ---
 
@@ -713,7 +713,7 @@ The framework tests across 7 tiers of increasing complexity:
 - **Git**: Repository cloning and version control
 - **Claude API**: Judge evaluation via Opus 4.5
 - **Agent CLIs**: Claude Code, Codex, Cline, OpenCode
-- **Maestro API** (optional): Failure injection for the Odysseus agent
+- **Maestro API** (optional): Fault injection for the Odysseus agent
   mesh. Default endpoint `http://localhost:23000`. API routes used:
   `/api/v1/health`, `/api/agents/inject`, `/api/agents/inject/{id}`,
   `/api/agents`, `/api/diagnostics`. Enabled via
