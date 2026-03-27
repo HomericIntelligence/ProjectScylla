@@ -21,17 +21,17 @@ repos:
         entry: pixi run --environment lint bandit
         language: system
         args: [-c, pyproject.toml, --severity-level, medium]
-        files: ^(scripts|scylla)/.*\.py$
+        files: ^(scripts|src/scylla)/.*\.py$
         types: [python]
         pass_filenames: true
       - id: check-mojo-artifacts
         name: Check for Mojo Migration Artifacts
         description: >-
-          Fail if scylla/ contains Mojo migration artifact phrases
+          Fail if src/scylla/ contains Mojo migration artifact phrases
           ('Mojo equivalents' or 'no Mojo') left over from a prior migration attempt.
         entry: '(Mojo equivalents|no Mojo)'
         language: pygrep
-        files: ^scylla/.*\.py$
+        files: ^src/scylla/.*\.py$
         types: [python]
       - id: pip-audit
         name: pip-audit CVE Scan
@@ -58,26 +58,26 @@ repos:
     hooks:
       - id: ruff-format-python
         name: Ruff Format Python
-        description: Format Python files in scripts/, scylla/, tests/, and all subdirectories using pixi run ruff format
-        entry: pixi run ruff format scripts/ scylla/ tests/
+        description: Format Python files in scripts/, src/scylla/, tests/, and all subdirectories using pixi run ruff format
+        entry: pixi run ruff format scripts/ src/scylla/ tests/
         language: system
-        files: ^(scripts|scylla|tests)/.*\.py$
+        files: ^(scripts|src/scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
       - id: ruff-check-python
         name: Ruff Check Python
-        description: Lint Python files in scripts/, scylla/, tests/, and all subdirectories using pixi run ruff check
-        entry: pixi run ruff check --fix scripts/ scylla/ tests/
+        description: Lint Python files in scripts/, src/scylla/, tests/, and all subdirectories using pixi run ruff check
+        entry: pixi run ruff check --fix scripts/ src/scylla/ tests/
         language: system
-        files: ^(scripts|scylla|tests)/.*\.py$
+        files: ^(scripts|src/scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
       - id: mypy-check-python
         name: Mypy Type Check Python
-        description: Type check Python files in scripts/, scylla/, tests/ using pixi run mypy.
-        entry: pixi run mypy scripts/ scylla/ tests/
+        description: Type check Python files in scripts/, src/scylla/, tests/ using pixi run mypy.
+        entry: pixi run mypy scripts/ src/scylla/ tests/
         language: system
-        files: ^(scripts|scylla|tests)/.*\.py$
+        files: ^(scripts|src/scylla|tests)/.*\.py$
         types: [python]
         pass_filenames: false
       - id: check-type-alias-shadowing
@@ -85,7 +85,7 @@ repos:
         description: Prevent type aliases that shadow more specific domain names (e.g., Result = DomainResult)
         entry: python scripts/check_type_alias_shadowing.py
         language: system
-        files: ^(scripts|scylla|tests)/.*\.py$
+        files: ^(scripts|src/scylla|tests)/.*\.py$
         exclude: ^tests/test_check_type_alias_shadowing\.py$
         types: [python]
         pass_filenames: true
@@ -186,28 +186,28 @@ repos:
       - id: ruff-check-complexity
         name: Ruff Complexity Check (C901)
         description: Fail if any function exceeds McCabe complexity 12 without a noqa directive
-        entry: pixi run ruff check --select C901 scripts/ scylla/
+        entry: pixi run ruff check --select C901 scripts/ src/scylla/
         language: system
-        files: ^(scripts|scylla)/.*\.py$
+        files: ^(scripts|src/scylla)/.*\.py$
         types: [python]
         pass_filenames: false
       - id: check-max-complexity
         name: Check Cyclomatic Complexity
-        description: Fails if any function in scylla/ exceeds max cyclomatic complexity of 10
-        entry: pixi run python scripts/check_max_complexity.py --threshold 10
+        description: Fails if any function in src/scylla/ exceeds max cyclomatic complexity of 10
+        entry: pixi run python scripts/check_max_complexity.py --threshold 10 --path src/scylla/
         language: system
-        files: ^scylla/.*\.py$
+        files: ^src/scylla/.*\.py$
         pass_filenames: false
       - id: check-package-version-consistency
         name: Check Package Version Consistency
         description: >-
-          Fails if pixi.toml or scylla/__init__.py version diverges from
+          Fails if pixi.toml or src/scylla/__init__.py version diverges from
           pyproject.toml, or if CHANGELOG.md contains aspirational version
           references. Use --scan-skills to also check skill template files.
         entry: pixi run python scripts/check_package_version_consistency.py --scan-skills
         language: system
         files: >-
-          ^(pyproject\.toml|pixi\.toml|scylla/__init__\.py|CHANGELOG\.md|
+          ^(pyproject\.toml|pixi\.toml|src/scylla/__init__\.py|CHANGELOG\.md|
           \.claude-plugin/skills/.*\.md|\.claude/.*\.md)$
         pass_filenames: false
 

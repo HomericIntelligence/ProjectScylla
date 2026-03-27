@@ -33,7 +33,7 @@ from .validation import (
 
 logger = logging.getLogger(__name__)
 
-_SCHEMAS_DIR = Path(__file__).parent.parent.parent / "schemas"
+_SCHEMAS_DIR = Path(__file__).parent.parent.parent.parent / "schemas"
 _SCHEMA_CACHE: dict[str, dict[str, Any]] = {}
 
 

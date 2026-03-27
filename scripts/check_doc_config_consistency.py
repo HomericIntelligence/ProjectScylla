@@ -76,7 +76,7 @@ def extract_cov_path_from_pyproject(repo_root: Path) -> str:
         repo_root: Path to the repository root containing ``pyproject.toml``.
 
     Returns:
-        The package path string (e.g. ``"scylla"``).
+        The package path string (e.g. ``"src/scylla"``).
 
     Raises:
         SystemExit: If the key is missing or no ``--cov=`` flag is found.

@@ -128,8 +128,8 @@ def main() -> None:
     parser.add_argument(
         "--path",
         type=str,
-        default="scylla/",
-        help="Path to source code to check (default: scylla/)",
+        default="src/scylla/",
+        help="Path to source code to check (default: src/scylla/)",
     )
     parser.add_argument(
         "--verbose",

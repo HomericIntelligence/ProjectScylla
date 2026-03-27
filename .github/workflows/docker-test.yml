@@ -4,14 +4,14 @@ on:
   pull_request:
     paths:
       - 'docker/**'
-      - 'scylla/**'
+      - 'src/scylla/**'
       - 'tests/shell/**'
       - '.github/workflows/docker-test.yml'
   push:
     branches: [main]
     paths:
       - 'docker/**'
-      - 'scylla/**'
+      - 'src/scylla/**'
       - 'tests/shell/**'
       - '.github/workflows/docker-test.yml'
 
@@ -97,7 +97,7 @@ jobs:
           fi
 
       - name: Apply trivial source-only change
-        run: echo '# timing-probe' >> scylla/__init__.py
+        run: echo '# timing-probe' >> src/scylla/__init__.py
 
       - name: Build warm (source-only change, Layer 1+2 should be cached)
         id: warm_build
@@ -109,7 +109,7 @@ jobs:
 
       - name: Revert source change
         if: always()
-        run: git checkout scylla/__init__.py
+        run: git checkout src/scylla/__init__.py
 
       - name: Report timing results
         env:

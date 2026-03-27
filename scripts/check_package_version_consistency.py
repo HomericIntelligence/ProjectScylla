@@ -6,7 +6,7 @@ validates that every other version declaration in the repository matches.
 
 Checks (always run):
 1. ``pixi.toml`` ``[workspace].version`` matches canonical version.
-2. ``scylla/__init__.py`` ``__version__`` matches canonical version.
+2. ``src/scylla/__init__.py`` ``__version__`` matches canonical version.
 3. ``CHANGELOG.md`` does not reference version numbers higher than the
    canonical version (outside ``[Unreleased]`` sections).
 
@@ -125,7 +125,7 @@ def check_pixi_version(repo_root: Path, canonical: str) -> list[str]:
 
 
 def check_init_version(repo_root: Path, canonical: str) -> list[str]:
-    """Check that ``scylla/__init__.py`` ``__version__`` matches the canonical version.
+    """Check that ``src/scylla/__init__.py`` ``__version__`` matches the canonical version.
 
     Args:
         repo_root: Repository root directory.
@@ -135,9 +135,9 @@ def check_init_version(repo_root: Path, canonical: str) -> list[str]:
         List of error strings (empty if the check passes).
 
     """
-    init_path = repo_root / "scylla" / "__init__.py"
+    init_path = repo_root / "src" / "scylla" / "__init__.py"
     if not init_path.is_file():
-        return [f"scylla/__init__.py not found at {init_path}"]
+        return [f"src/scylla/__init__.py not found at {init_path}"]
 
     content = init_path.read_text(encoding="utf-8")
     match = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', content, re.MULTILINE)
@@ -148,7 +148,7 @@ def check_init_version(repo_root: Path, canonical: str) -> list[str]:
     init_version = match.group(1)
     if init_version != canonical:
         return [
-            f"scylla/__init__.py: Version mismatch — "
+            f"src/scylla/__init__.py: Version mismatch — "
             f"__version__ is '{init_version}', pyproject.toml has '{canonical}'"
         ]
     return []
@@ -300,12 +300,12 @@ def check_package_version_consistency(
     elif verbose:
         print(f"PASS: pixi.toml version matches ({canonical})")
 
-    # Check 2: scylla/__init__.py
+    # Check 2: src/scylla/__init__.py
     init_errors = check_init_version(repo_root, canonical)
     if init_errors:
         all_errors.extend(init_errors)
     elif verbose:
-        print(f"PASS: scylla/__init__.py __version__ matches ({canonical})")
+        print(f"PASS: src/scylla/__init__.py __version__ matches ({canonical})")
 
     # Check 3: CHANGELOG.md
     changelog_errors = check_changelog(repo_root, canonical)

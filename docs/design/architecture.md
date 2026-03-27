@@ -199,7 +199,7 @@ validation:
 
 The Executor orchestrates test execution across tiers and runs.
 
-**Location**: `scylla/executor/`
+**Location**: `src/scylla/executor/`
 
 **Responsibilities**:
 
@@ -230,7 +230,7 @@ Total: 36 runs per test x N adapters
 
 Adapters provide a unified interface for different agent CLI tools.
 
-**Location**: `scylla/adapters/`
+**Location**: `src/scylla/adapters/`
 
 **Interface**:
 
@@ -259,7 +259,7 @@ class BaseAdapter:
 
 The Judge evaluates agent outputs using Claude + Opus 4.5 with a two-layer prompt architecture.
 
-**Location**: `scylla/judge/`
+**Location**: `src/scylla/judge/`
 
 **Components**:
 
@@ -317,7 +317,7 @@ Execution Output
 
 The Metrics component calculates quality, economic, and process metrics.
 
-**Location**: `scylla/metrics/`
+**Location**: `src/scylla/metrics/`
 
 **Quality Metrics**:
 
@@ -347,7 +347,7 @@ The Metrics component calculates quality, economic, and process metrics.
 
 The Reporter generates output artifacts from evaluation results.
 
-**Location**: `scylla/reporting/`
+**Location**: `src/scylla/reporting/`
 
 **Output Files**:
 
@@ -603,40 +603,41 @@ ProjectScylla/
             t5-hybrid.md                # T5 prompt template
             t6-super.md                 # T6 prompt template
 
-    scylla/
-        __init__.py
-        cli.py                          # Command-line interface
-        executor/                       # Test execution
-            runner.py                   # Main test runner
-            workspace.py                # Git clone management
-            docker.py                   # Container orchestration
-            tier_config.py              # Tier configuration
-        adapters/                       # Agent CLI adapters
-            base.py                     # Abstract base class
-            claude_code.py              # Claude Code adapter
-            openai_codex.py             # OpenAI Codex adapter
-            cline.py                    # Cline adapter
-            opencode.py                 # OpenCode adapter
-            goose.py                    # Goose adapter
-        maestro/                        # Fault injection client (optional)
-            client.py                   # Synchronous HTTP client
-            async_client.py             # Asynchronous HTTP client
-            models.py                   # MaestroConfig, FailureSpec, etc.
-            errors.py                   # MaestroError hierarchy
-        judge/                          # Claude + Opus evaluation
-            rubric.py                   # Rubric parser
-            prompts/                    # Judge prompt templates
-            evaluator.py                # Opus 4.5 invocation
-            parser.py                   # Judgment parser
-        metrics/                        # Statistical calculations
-            quality.py                  # Pass-Rate, Impl-Rate, R_Prog
-            economic.py                 # CoP, token distribution
-            process.py                  # Latency, strategic drift
-        reporting/                      # Report generation
-            result_writer.py            # result.json
-            summary_writer.py           # summary.json
-            scorecard_writer.py         # scorecard.json
-            markdown_writer.py          # report.md
+    src/
+        scylla/
+            __init__.py
+            cli.py                          # Command-line interface
+            executor/                       # Test execution
+                runner.py                   # Main test runner
+                workspace.py                # Git clone management
+                docker.py                   # Container orchestration
+                tier_config.py              # Tier configuration
+            adapters/                       # Agent CLI adapters
+                base.py                     # Abstract base class
+                claude_code.py              # Claude Code adapter
+                openai_codex.py             # OpenAI Codex adapter
+                cline.py                    # Cline adapter
+                opencode.py                 # OpenCode adapter
+                goose.py                    # Goose adapter
+            maestro/                        # Fault injection client (optional)
+                client.py                   # Synchronous HTTP client
+                async_client.py             # Asynchronous HTTP client
+                models.py                   # MaestroConfig, FailureSpec, etc.
+                errors.py                   # MaestroError hierarchy
+            judge/                          # Claude + Opus evaluation
+                rubric.py                   # Rubric parser
+                prompts/                    # Judge prompt templates
+                evaluator.py                # Opus 4.5 invocation
+                parser.py                   # Judgment parser
+            metrics/                        # Statistical calculations
+                quality.py                  # Pass-Rate, Impl-Rate, R_Prog
+                economic.py                 # CoP, token distribution
+                process.py                  # Latency, strategic drift
+            reporting/                      # Report generation
+                result_writer.py            # result.json
+                summary_writer.py           # summary.json
+                scorecard_writer.py         # scorecard.json
+                markdown_writer.py          # report.md
 
     runs/                               # OUTPUTS (gitignored)
         <test-id>/

@@ -68,7 +68,9 @@ class TierManager:
 
         # Auto-detect config_dir if not provided
         if config_dir is None:
-            config_dir = Path(__file__).parent.parent.parent / "tests" / "claude-code" / "shared"
+            config_dir = (
+                Path(__file__).parent.parent.parent.parent / "tests" / "claude-code" / "shared"
+            )
 
         # Initialize global tier config loader from tests/claude-code/shared/
         self.tier_config_loader = TierConfigLoader(config_dir)
