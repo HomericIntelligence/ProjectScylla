@@ -271,6 +271,53 @@ class TestFindAspirationalVersions:
         )
         assert find_aspirational_versions(path, (0, 1, 0), "test.md") == []
 
+    def test_fenced_code_block_ignored(self, tmp_path: Path) -> None:
+        """Should not flag versions inside fenced code blocks."""
+        path = tmp_path / "test.md"
+        path.write_text(
+            "# Config example\n\n"
+            "```yaml\n"
+            "pixi-version: v0.62.2\n"
+            "bats-core: '>=1.11.0'\n"
+            "```\n\n"
+            "Plain text v2.0.0 should still be flagged.\n"
+        )
+        errors = find_aspirational_versions(path, (0, 1, 0), "test.md")
+        assert len(errors) == 1
+        assert "v2.0.0" in errors[0]
+
+    def test_tilde_fenced_code_block_ignored(self, tmp_path: Path) -> None:
+        """Should not flag versions inside tilde-fenced code blocks."""
+        path = tmp_path / "test.md"
+        path.write_text("~~~\nversion = '5.0.0'\n~~~\n")
+        assert find_aspirational_versions(path, (0, 1, 0), "test.md") == []
+
+    def test_inline_code_versions_ignored(self, tmp_path: Path) -> None:
+        """Should not flag versions inside inline code spans (backticks)."""
+        path = tmp_path / "test.md"
+        path.write_text("Known bug in `v2.0.67`. Use the `/config` command.\n")
+        assert find_aspirational_versions(path, (0, 1, 0), "test.md") == []
+
+    def test_double_backtick_inline_code_ignored(self, tmp_path: Path) -> None:
+        """Should not flag versions inside double-backtick inline code spans."""
+        path = tmp_path / "test.md"
+        path.write_text("Do not use aspirational versions (e.g., ``v1.5.0``, ``v2.0.0``).\n")
+        assert find_aspirational_versions(path, (0, 1, 0), "test.md") == []
+
+    def test_github_action_version_pin_ignored(self, tmp_path: Path) -> None:
+        """Should not flag versions in GitHub Action pins like @v0.8.1."""
+        path = tmp_path / "test.md"
+        path.write_text("Use prefix-dev/setup-pixi@v0.8.1 for CI.\n")
+        assert find_aspirational_versions(path, (0, 1, 0), "test.md") == []
+
+    def test_plain_text_version_still_flagged(self, tmp_path: Path) -> None:
+        """Should still flag plain-text aspirational versions outside code contexts."""
+        path = tmp_path / "test.md"
+        path.write_text("This will ship in v2.0.0 of our project.\n")
+        errors = find_aspirational_versions(path, (0, 1, 0), "test.md")
+        assert len(errors) == 1
+        assert "v2.0.0" in errors[0]
+
 
 # ---------------------------------------------------------------------------
 # TestCheckChangelog

@@ -85,7 +85,7 @@ When thinking mode IS enabled (rare cases), follow these budget guidelines from 
 **Solution:** Press Tab key to toggle it off (the toggle is sticky across sessions)
 
 **Problem:** Tab key not working to toggle thinking
-**Solution:** Known bug in some versions (v2.0.67). Use `/config` command to manually toggle.
+**Solution:** Known bug in some versions (`v2.0.67`). Use `/config` command to manually toggle.
 
 ## References
 
