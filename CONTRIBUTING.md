@@ -203,7 +203,7 @@ The version is declared in three files that **must stay in sync**:
 |------|-------|------|
 | `pyproject.toml` | `project.version` | Canonical source (used by hatchling for package metadata) |
 | `pixi.toml` | `workspace.version` | Pixi workspace version |
-| `scylla/__init__.py` | `__version__` | Runtime access; imported by the CLI |
+| `src/scylla/__init__.py` | `__version__` | Runtime access; imported by the CLI |
 
 A CI check (`scripts/check_version_consistency.py`) verifies all three agree on every PR.
 
@@ -327,12 +327,12 @@ ProjectScylla uses a dual-threshold coverage strategy:
 
 | Threshold | Scope | Where Enforced | Value |
 |-----------|-------|----------------|-------|
-| Combined floor | `scylla/` + `scripts/` | `pyproject.toml` (`fail_under`) — local runs | 75% |
-| Unit floor | `scylla/` only | CI `test.yml` unit step (`--cov-fail-under=75`) | 75% |
-| Integration floor | `scylla/` only | CI `test.yml` integration step (`--cov-fail-under=5`) | 5% |
+| Combined floor | `src/scylla/` + `scripts/` | `pyproject.toml` (`fail_under`) — local runs | 75% |
+| Unit floor | `src/scylla/` only | CI `test.yml` unit step (`--cov-fail-under=75`) | 75% |
+| Integration floor | `src/scylla/` only | CI `test.yml` integration step (`--cov-fail-under=5`) | 5% |
 
 - **`pixi run test`** runs all tests with the combined 75% floor from `pyproject.toml`.
-- **`pixi run test-unit`** runs `tests/unit/` with the same 75% `scylla/` floor as CI, giving you local parity with the CI unit step.
+- **`pixi run test-unit`** runs `tests/unit/` with the same 75% `src/scylla/` floor as CI, giving you local parity with the CI unit step.
 - **CI** uses `--override-ini="addopts="` to bypass `pyproject.toml` and apply its own per-step floors independently.
 
 ### Running Tests
@@ -341,7 +341,7 @@ ProjectScylla uses a dual-threshold coverage strategy:
 # All tests (combined 75% coverage floor)
 pixi run test
 
-# Unit tests with CI-matching 75% scylla/ coverage floor
+# Unit tests with CI-matching 75% src/scylla/ coverage floor
 pixi run test-unit
 
 # Specific categories

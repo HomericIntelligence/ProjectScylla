@@ -7,10 +7,10 @@ platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
 [tasks]
 test = "pytest"
-test-unit = "pytest tests/unit --override-ini='addopts=' -v --strict-markers --cov=scylla --cov-report=term-missing --cov-fail-under=75"
+test-unit = "pytest tests/unit --override-ini='addopts=' -v --strict-markers --cov=src/scylla --cov-report=term-missing --cov-fail-under=75"
 test-shell = "bats tests/shell/ --recursive --timing"
-lint = "ruff check scylla scripts tests"
-format = "ruff format scylla scripts tests"
+lint = "ruff check src/scylla scripts tests"
+format = "ruff format src/scylla scripts tests"
 plan-issues = "python scripts/plan_issues.py"
 audit = "pixi run --environment lint pip-audit"
 # CI container tasks (requires podman or docker)

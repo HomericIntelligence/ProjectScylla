@@ -13,12 +13,12 @@ else:
     import tomli as tomllib
 
 REPO_ROOT = Path(__file__).parents[3]
-SCYLLA_PKG = REPO_ROOT / "scylla"
+SCYLLA_PKG = REPO_ROOT / "src" / "scylla"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 
 def test_py_typed_marker_exists() -> None:
-    """scylla/py.typed must exist as a file (PEP 561)."""
+    """src/scylla/py.typed must exist as a file (PEP 561)."""
     marker = SCYLLA_PKG / "py.typed"
     assert marker.is_file(), f"Missing PEP 561 marker: {marker}"
 
@@ -37,6 +37,6 @@ def test_py_typed_in_hatch_build_targets() -> None:
         .get("force-include", {})
     )
 
-    assert "scylla/py.typed" in force_include, (
-        "scylla/py.typed is not in [tool.hatch.build.targets.wheel.force-include]"
+    assert "src/scylla/py.typed" in force_include, (
+        "src/scylla/py.typed is not in [tool.hatch.build.targets.wheel.force-include]"
     )

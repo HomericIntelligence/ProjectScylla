@@ -263,13 +263,13 @@ def scan_file(file_path: Path, repo_root: Path) -> list[FragmentFinding]:
 
 
 def _is_scylla_file(path: Path, root: Path) -> bool:
-    """Return True if path is a .py file under the scylla/ directory."""
-    scylla_dir = root / "scylla"
+    """Return True if path is a .py file under the src/scylla/ directory."""
+    scylla_dir = root / "src" / "scylla"
     return path.suffix == ".py" and path.is_relative_to(scylla_dir)
 
 
 def scan_repository(repo_root: Path) -> list[FragmentFinding]:
-    """Scan all Python files under scylla/ in the repository."""
+    """Scan all Python files under src/scylla/ in the repository."""
     all_findings: list[FragmentFinding] = []
 
     for py_file in sorted(repo_root.rglob("*.py")):

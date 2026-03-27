@@ -219,12 +219,12 @@ class TestBuilderStageOrdering:
         Source changes must not invalidate the dependency install cache layer.
         """
         layer2_idx = _first_line_containing(lines, "optional-dependencies")
-        source_copy_idx = _first_line_containing(lines, "COPY", "scylla/", "/opt/scylla/scylla/")
+        source_copy_idx = _first_line_containing(lines, "COPY", "src/", "/opt/scylla/src/")
         _assert_before(
             layer2_idx,
             source_copy_idx,
             "Layer 2 dependency install",
-            "COPY scylla/ source (Layer 3)",
+            "COPY src/ source (Layer 3)",
         )
 
     def test_source_copy_before_nodeps_install(self, lines: list[str]) -> None:
@@ -233,12 +233,12 @@ class TestBuilderStageOrdering:
         Layer 3 installs the scylla package itself (without pulling deps again).
         The source must be present on disk first.
         """
-        source_copy_idx = _first_line_containing(lines, "COPY", "scylla/", "/opt/scylla/scylla/")
+        source_copy_idx = _first_line_containing(lines, "COPY", "src/", "/opt/scylla/src/")
         nodeps_idx = _first_line_containing(lines, "--no-deps", "/opt/scylla/")
         _assert_before(
             source_copy_idx,
             nodeps_idx,
-            "COPY scylla/ source (Layer 3)",
+            "COPY src/ source (Layer 3)",
             "pip install --no-deps (Layer 3 package install)",
         )
 

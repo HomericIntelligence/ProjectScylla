@@ -302,7 +302,7 @@ Rigorous non-parametric methods for bounded, ordinal, non-normal data:
 - **Effect Sizes**: Cliff's delta with bootstrapped CIs
 - **Inter-Rater Reliability**: Krippendorff's alpha for judge agreement
 
-Configuration: `scylla/analysis/config.yaml` (all parameters externalized)
+Configuration: `src/scylla/analysis/config.yaml` (all parameters externalized)
 
 ### Metrics
 
@@ -342,7 +342,7 @@ fullruns/{experiment_name}/{timestamp}/
 - `exit_code` (0 = success)
 - `judges` (list with grades & criteria)
 
-Schema: `scylla/analysis/schemas/run_result.schema.json`
+Schema: `src/scylla/analysis/schemas/run_result.schema.json`
 
 ---
 
@@ -377,7 +377,7 @@ pixi run pytest tests/unit/adapters/ -v
 pixi run pytest tests/unit/config/ -v
 
 # Coverage analysis
-pixi run pytest tests/ --cov=scylla --cov-report=html
+pixi run pytest tests/ --cov=src/scylla --cov-report=html
 
 # Specific test file
 pixi run pytest tests/unit/analysis/test_stats.py -v
@@ -387,8 +387,8 @@ pixi run pytest tests/unit/analysis/test_stats.py -v
 
 ```bash
 # Code quality (linting + formatting)
-pixi run ruff check scylla/
-pixi run ruff format scylla/ --check
+pixi run ruff check src/scylla/
+pixi run ruff format src/scylla/ --check
 ```
 
 ### Git Hooks
@@ -413,14 +413,14 @@ The coverage threshold is read directly from `pyproject.toml` — update it ther
 
 **New Figures:**
 
-1. Create module in `scylla/analysis/figures/`
+1. Create module in `src/scylla/analysis/figures/`
 2. Implement function following existing pattern
 3. Register in `scripts/generate_figures.py`
 4. Add tests in `tests/unit/analysis/test_figures.py`
 
 **New Tables:**
 
-1. Add function to module in `scylla/analysis/tables/`
+1. Add function to module in `src/scylla/analysis/tables/`
 2. Register in `scripts/generate_tables.py`
 3. Add tests in `tests/unit/analysis/test_tables.py`
 
@@ -428,11 +428,11 @@ The coverage threshold is read directly from `pyproject.toml` — update it ther
 
 ```bash
 # Linting
-pixi run ruff check scylla/analysis/
+pixi run ruff check src/scylla/analysis/
 
 # Auto-fix and format
-pixi run ruff check --fix scylla/analysis/
-pixi run ruff format scylla/analysis/
+pixi run ruff check --fix src/scylla/analysis/
+pixi run ruff format src/scylla/analysis/
 ```
 
 ---

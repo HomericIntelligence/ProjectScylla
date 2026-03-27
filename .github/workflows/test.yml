@@ -32,8 +32,8 @@ jobs:
           count=$(grep -rn "BaseExecutionInfo" . \
             --include="*.py" \
             --exclude-dir=".pixi" \
-            | grep -v "scylla/core/results.py" \
-            | grep -v "scylla/core/__init__.py" \
+            | grep -v "src/scylla/core/results.py" \
+            | grep -v "src/scylla/core/__init__.py" \
             | grep -v "# deprecated" \
             | grep -v "(deprecated)" \
             | grep -v "test_results.py" \
@@ -42,8 +42,8 @@ jobs:
           if [ "$count" -gt "0" ]; then
             echo "::error::Found $count usages of deprecated BaseExecutionInfo — remove before merging"
             grep -rn "BaseExecutionInfo" . --include="*.py" --exclude-dir=".pixi" \
-              | grep -v "scylla/core/results.py" \
-              | grep -v "scylla/core/__init__.py" \
+              | grep -v "src/scylla/core/results.py" \
+              | grep -v "src/scylla/core/__init__.py" \
               | grep -v "# deprecated" \
               | grep -v "(deprecated)" \
               | grep -v "test_results.py"
@@ -55,7 +55,7 @@ jobs:
           count=$(grep -rn "BaseRunMetrics" . \
             --include="*.py" \
             --exclude-dir=".pixi" \
-            | grep -v "scylla/core/results.py" \
+            | grep -v "src/scylla/core/results.py" \
             | grep -v "# deprecated" \
             | grep -v "(deprecated)" \
             | grep -v "test_results.py" \
@@ -64,7 +64,7 @@ jobs:
           if [ "$count" -gt "0" ]; then
             echo "::error::Found $count usages of deprecated BaseRunMetrics — remove before merging"
             grep -rn "BaseRunMetrics" . --include="*.py" --exclude-dir=".pixi" \
-              | grep -v "scylla/core/results.py" \
+              | grep -v "src/scylla/core/results.py" \
               | grep -v "# deprecated" \
               | grep -v "(deprecated)" \
               | grep -v "test_results.py"
@@ -86,7 +86,7 @@ jobs:
       - name: Check Python version consistency (pyproject.toml vs Dockerfile)
         run: python3 scripts/check_python_version_consistency.py
 
-      - name: Check version consistency (pyproject.toml, pixi.toml, scylla/__init__.py)
+      - name: Check version consistency (pyproject.toml, pixi.toml, src/scylla/__init__.py)
         run: python3 scripts/check_version_consistency.py
 
       - name: Install nats-server
@@ -138,13 +138,13 @@ jobs:
           if [[ "$TEST_PATH" == "tests/unit" ]]; then
             pixi run pip install -e .
             pixi run pytest "$TEST_PATH" --override-ini="addopts=" -v --strict-markers \
-              --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75 \
+              --cov=src/scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=75 \
               --junitxml="$JUNITXML"
           else
             # Integration tests: 5% floor prevents regression without blocking new work
             # --reruns 2: retry flaky integration tests (network/API calls) up to 2 times
             pixi run pytest "$TEST_PATH" -v \
-              --cov=scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=5 \
+              --cov=src/scylla --cov-report=term-missing --cov-report=xml --cov-fail-under=5 \
               --reruns 2 --reruns-delay 5 \
               --junitxml="$JUNITXML"
           fi

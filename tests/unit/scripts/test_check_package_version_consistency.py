@@ -45,9 +45,9 @@ def write_pixi(directory: Path, version: str = "0.1.0") -> Path:
 
 
 def write_init(directory: Path, version: str = "0.1.0") -> Path:
-    """Write a minimal scylla/__init__.py with __version__."""
-    scylla_dir = directory / "scylla"
-    scylla_dir.mkdir(exist_ok=True)
+    """Write a minimal src/scylla/__init__.py with __version__."""
+    scylla_dir = directory / "src" / "scylla"
+    scylla_dir.mkdir(parents=True, exist_ok=True)
     path = scylla_dir / "__init__.py"
     path.write_text(f'__version__ = "{version}"\n')
     return path
@@ -186,8 +186,8 @@ class TestCheckInitVersion:
 
     def test_importlib_metadata_passes(self, tmp_path: Path) -> None:
         """Should pass when __init__.py uses importlib.metadata (no hardcoded __version__)."""
-        scylla_dir = tmp_path / "scylla"
-        scylla_dir.mkdir()
+        scylla_dir = tmp_path / "src" / "scylla"
+        scylla_dir.mkdir(parents=True)
         init_path = scylla_dir / "__init__.py"
         init_path.write_text(
             "from importlib.metadata import version as _get_version\n"
@@ -198,8 +198,8 @@ class TestCheckInitVersion:
 
     def test_single_quote_version(self, tmp_path: Path) -> None:
         """Should match __version__ with single quotes."""
-        scylla_dir = tmp_path / "scylla"
-        scylla_dir.mkdir()
+        scylla_dir = tmp_path / "src" / "scylla"
+        scylla_dir.mkdir(parents=True)
         init_path = scylla_dir / "__init__.py"
         init_path.write_text("__version__ = '0.1.0'\n")
         assert check_init_version(tmp_path, "0.1.0") == []

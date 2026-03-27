@@ -52,7 +52,7 @@ class TestRunRuffComplexityCheck:
         mock_result.returncode = 1
 
         with patch("subprocess.run", return_value=mock_result):
-            result = run_ruff_complexity_check("scylla/", threshold=10, repo_root=tmp_path)
+            result = run_ruff_complexity_check("src/scylla/", threshold=10, repo_root=tmp_path)
 
         assert result == []
 
@@ -63,7 +63,7 @@ class TestRunRuffComplexityCheck:
         mock_result.returncode = 0
 
         with patch("subprocess.run", return_value=mock_result):
-            result = run_ruff_complexity_check("scylla/", threshold=10, repo_root=tmp_path)
+            result = run_ruff_complexity_check("src/scylla/", threshold=10, repo_root=tmp_path)
 
         assert result == []
 

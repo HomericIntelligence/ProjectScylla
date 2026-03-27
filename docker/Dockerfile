@@ -79,10 +79,10 @@ PYEOF
 RUN pip install --user --no-cache-dir $(cat /tmp/deps.txt) \
     && rm -f /tmp/deps.txt
 
-# Layer 3: Package install (invalidated when scylla/ source changes)
+# Layer 3: Package install (invalidated when src/scylla/ source changes)
 # Source-only changes hit cached layer 2 and only re-run this install step.
 COPY README.md /opt/scylla/
-COPY scylla/ /opt/scylla/scylla/
+COPY src/ /opt/scylla/src/
 RUN pip install --user --no-cache-dir --no-deps /opt/scylla/
 
 # ============================================================================

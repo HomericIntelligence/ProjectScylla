@@ -10,7 +10,7 @@ Scylla represents the challenge of navigating trade-offs between capability gain
 
 **Current Status**: Operational - active research with full evaluation infrastructure, running T0–T6 ablation
 studies across 120 YAML subtests with published results and 75%+ test coverage enforced locally and in CI
-(combined scylla/ + scripts/ floor; scylla/ unit coverage is also enforced at 75% in the CI unit step).
+(combined src/scylla/ + scripts/ floor; src/scylla/ unit coverage is also enforced at 75% in the CI unit step).
 
 **Ecosystem Context**: Part of a 12-repository ecosystem:
 
@@ -285,7 +285,7 @@ Is the task well-defined with predictable steps?
 **DO**: Use absolute file paths with line numbers when referencing code:
 
 ```markdown
-GOOD: Updated /home/user/ProjectScylla/scylla/metrics/grading.py:45-52
+GOOD: Updated /home/user/ProjectScylla/src/scylla/metrics/grading.py:45-52
 
 BAD: Updated grading.py (ambiguous - which file?)
 ```
@@ -440,20 +440,21 @@ ProjectScylla/
 |   +-- research.md              # Research methodology
 |   +-- dev/                     # Developer documentation
 +-- schemas/                     # JSON schemas
-+-- scylla/                      # Python source code
-|   +-- adapters/                # CLI adapters (.py)
-|   +-- analysis/                # Statistical analysis (.py)
-|   +-- automation/              # Automation utilities (.py)
-|   +-- cli/                     # CLI interface (.py)
-|   +-- config/                  # Configuration (.py)
-|   +-- core/                    # Core types (.py)
-|   +-- discovery/               # Resource discovery (.py)
-|   +-- e2e/                     # E2E testing framework + EvalOrchestrator (.py)
-|   +-- executor/                # Execution engine (.py)
-|   +-- judge/                   # LLM judge system (.py)
-|   +-- metrics/                 # Metrics calculation (.py)
-|   +-- reporting/               # Report generation (.py)
-|   +-- utils/                   # Utility functions (.py)
++-- src/                         # Python source root (src-layout)
+|   +-- scylla/                  # Python source code
+|       +-- adapters/            # CLI adapters (.py)
+|       +-- analysis/            # Statistical analysis (.py)
+|       +-- automation/          # Automation utilities (.py)
+|       +-- cli/                 # CLI interface (.py)
+|       +-- config/              # Configuration (.py)
+|       +-- core/                # Core types (.py)
+|       +-- discovery/           # Resource discovery (.py)
+|       +-- e2e/                 # E2E testing framework + EvalOrchestrator (.py)
+|       +-- executor/            # Execution engine (.py)
+|       +-- judge/               # LLM judge system (.py)
+|       +-- metrics/             # Metrics calculation (.py)
+|       +-- reporting/           # Report generation (.py)
+|       +-- utils/               # Utility functions (.py)
 +-- scripts/                     # Python automation scripts
 +-- tests/                       # Python test suite (pytest)
 +-- .claude/                     # Operational configurations
