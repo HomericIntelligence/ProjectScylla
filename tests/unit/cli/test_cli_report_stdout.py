@@ -115,7 +115,7 @@ class TestOutputFileRegression:
             assert Path("reports/test-001/report.md").exists()
 
     def test_output_file_path_writes_file(self) -> None:
-        """--output <path> writes to the specified path's directory."""
+        """--output <path.json> writes to the exact specified file path."""
         runner = CliRunner()
         with runner.isolated_filesystem():
             _setup_mock_results()
@@ -123,7 +123,7 @@ class TestOutputFileRegression:
                 cli, ["report", "test-001", "--format", "json", "--output", "custom/report.json"]
             )
             assert result.exit_code == 0
-            assert Path("custom/test-001/report.json").exists()
+            assert Path("custom/report.json").exists()
 
     @pytest.mark.parametrize("fmt", ["json", "markdown"])
     def test_default_format_dispatch(self, fmt: str) -> None:
