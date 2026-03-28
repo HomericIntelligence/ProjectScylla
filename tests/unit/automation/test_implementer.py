@@ -19,7 +19,7 @@ def mock_options() -> Any:
         epic_number=123,
         dry_run=False,
         max_workers=1,
-        enable_retrospective=False,  # Explicitly disable for most tests
+        enable_learn=False,  # Explicitly disable for most tests
         enable_follow_up=False,  # Disable for most tests
     )
 
@@ -237,8 +237,8 @@ class TestRunClaudeCode:
             assert "Claude stderr output" in content
 
 
-class TestRunRetrospective:
-    """Tests for _run_retrospective method."""
+class TestRunLearn:
+    """Tests for _run_learn method."""
 
     def test_successful_retrospective(self, implementer: Any, tmp_path: Any) -> None:
         """Test successful retrospective run."""
@@ -247,13 +247,13 @@ class TestRunRetrospective:
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger") as mock_logger,
+            patch("scylla.automation.learn.run") as mock_run,
+            patch("scylla.automation.learn.logger") as mock_logger,
         ):
             # Mock successful run with stdout
             mock_run.return_value = MagicMock(stdout="Retrospective output")
 
-            result = implementer._run_retrospective(
+            result = implementer._run_learn(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
@@ -268,7 +268,7 @@ class TestRunRetrospective:
             assert args[0] == "claude"
             assert args[1] == "--resume"
             assert args[2] == "abc123"
-            assert "/skills-registry-commands:retrospective" in args[3]
+            assert "/skills-registry-commands:learn" in args[3]
             assert "--print" in args
             assert "--permission-mode" in args
             assert "dontAsk" in args
@@ -279,7 +279,7 @@ class TestRunRetrospective:
             assert kwargs["cwd"] == Path("/tmp/worktree")
 
             # Verify log file was created and written
-            log_file = tmp_path / "retrospective-123.log"
+            log_file = tmp_path / "learn-123.log"
             assert log_file.exists()
             assert log_file.read_text() == "Retrospective output"
 
@@ -296,13 +296,13 @@ class TestRunRetrospective:
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger") as mock_logger,
+            patch("scylla.automation.learn.run") as mock_run,
+            patch("scylla.automation.learn.logger") as mock_logger,
         ):
             mock_run.side_effect = RuntimeError("Claude error")
 
             # Should not raise - graceful degradation
-            result = implementer._run_retrospective(
+            result = implementer._run_learn(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
@@ -321,13 +321,13 @@ class TestRunRetrospective:
         implementer.state_dir = tmp_path
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger") as mock_logger,
+            patch("scylla.automation.learn.run") as mock_run,
+            patch("scylla.automation.learn.logger") as mock_logger,
         ):
             mock_run.side_effect = subprocess.TimeoutExpired("claude", 600)
 
             # Should not raise
-            result = implementer._run_retrospective(
+            result = implementer._run_learn(
                 session_id="abc123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=123,
@@ -340,15 +340,15 @@ class TestRunRetrospective:
             # Should return False on timeout
             assert result is False
 
-    def test_retrospective_failure_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
+    def test_learn_failure_saved_to_log(self, implementer: Any, tmp_path: Any) -> None:
         """Test that retrospective failure output is saved to log file."""
         # Use tmp_path for state_dir
         implementer.state_dir = tmp_path
         implementer.state_dir.mkdir(exist_ok=True)
 
         with (
-            patch("scylla.automation.retrospective.run") as mock_run,
-            patch("scylla.automation.retrospective.logger"),
+            patch("scylla.automation.learn.run") as mock_run,
+            patch("scylla.automation.learn.logger"),
         ):
             error = subprocess.CalledProcessError(
                 returncode=1,
@@ -361,14 +361,14 @@ class TestRunRetrospective:
             mock_run.side_effect = error
 
             # Should not raise (non-blocking)
-            result = implementer._run_retrospective(
+            result = implementer._run_learn(
                 session_id="test123",
                 worktree_path=Path("/tmp/worktree"),
                 issue_number=789,
             )
 
             # Verify log file was created with failure details
-            log_file = tmp_path / "retrospective-789.log"
+            log_file = tmp_path / "learn-789.log"
             assert log_file.exists()
             content = log_file.read_text()
             assert "FAILED:" in content
@@ -378,39 +378,39 @@ class TestRunRetrospective:
             # Should return False on failure
             assert result is False
 
-    def test_retrospective_needs_rerun_failed_log(self, implementer: Any, tmp_path: Any) -> None:
-        """Test _retrospective_needs_rerun returns True for failed log."""
+    def test_learn_needs_rerun_failed_log(self, implementer: Any, tmp_path: Any) -> None:
+        """Test _learn_needs_rerun returns True for failed log."""
         implementer.state_dir = tmp_path
 
         # Create failed log file
-        log_file = tmp_path / "retrospective-123.log"
+        log_file = tmp_path / "learn-123.log"
         log_file.write_text("FAILED: Session not found")
 
-        result = implementer._retrospective_needs_rerun(123)
+        result = implementer._learn_needs_rerun(123)
         assert result is True
 
-    def test_retrospective_needs_rerun_no_log(self, implementer: Any, tmp_path: Any) -> None:
-        """Test _retrospective_needs_rerun returns True when no log exists."""
+    def test_learn_needs_rerun_no_log(self, implementer: Any, tmp_path: Any) -> None:
+        """Test _learn_needs_rerun returns True when no log exists."""
         implementer.state_dir = tmp_path
 
-        result = implementer._retrospective_needs_rerun(123)
+        result = implementer._learn_needs_rerun(123)
         assert result is True
 
-    def test_retrospective_no_rerun_successful_log(self, implementer: Any, tmp_path: Any) -> None:
-        """Test _retrospective_needs_rerun returns False for successful log."""
+    def test_learn_no_rerun_successful_log(self, implementer: Any, tmp_path: Any) -> None:
+        """Test _learn_needs_rerun returns False for successful log."""
         implementer.state_dir = tmp_path
 
         # Create successful log file
-        log_file = tmp_path / "retrospective-123.log"
+        log_file = tmp_path / "learn-123.log"
         log_file.write_text("Retrospective completed successfully")
 
-        result = implementer._retrospective_needs_rerun(123)
+        result = implementer._learn_needs_rerun(123)
         assert result is False
 
-    def test_rerun_failed_retrospectives_finds_failures(
+    def test_rerun_failed_learns_finds_failures(
         self, implementer: Any, tmp_path: Any
     ) -> None:
-        """Test _rerun_failed_retrospectives re-runs failed retrospectives."""
+        """Test _rerun_failed_learns re-runs failed retrospectives."""
         implementer.state_dir = tmp_path
 
         # Create state for completed issue with failed retrospective
@@ -419,7 +419,7 @@ class TestRunRetrospective:
         state = ImplementationState(
             issue_number=123,
             phase=ImplementationPhase.COMPLETED,
-            retrospective_completed=False,
+            learn_completed=False,
             session_id="session123",
             worktree_path=str(tmp_path / "worktree"),
         )
@@ -430,23 +430,23 @@ class TestRunRetrospective:
         worktree.mkdir()
 
         # Create failed log
-        log_file = tmp_path / "retrospective-123.log"
+        log_file = tmp_path / "learn-123.log"
         log_file.write_text("FAILED: Session not found")
 
         with (
-            patch.object(implementer, "_run_retrospective", return_value=True) as mock_retro,
+            patch.object(implementer, "_run_learn", return_value=True) as mock_retro,
             patch.object(implementer, "_save_state") as mock_save,
         ):
-            results = implementer._rerun_failed_retrospectives()
+            results = implementer._rerun_failed_learns()
 
             # Should have re-run retrospective
             mock_retro.assert_called_once_with("session123", worktree, 123, slot_id=None)
             assert results == {123: True}
-            assert state.retrospective_completed is True
+            assert state.learn_completed is True
             mock_save.assert_called_once()
 
     def test_rerun_skips_already_successful(self, implementer: Any, tmp_path: Any) -> None:
-        """Test _rerun_failed_retrospectives skips already successful retrospectives."""
+        """Test _rerun_failed_learns skips already successful retrospectives."""
         implementer.state_dir = tmp_path
 
         # Create state for completed issue with successful retrospective
@@ -455,24 +455,24 @@ class TestRunRetrospective:
         state = ImplementationState(
             issue_number=123,
             phase=ImplementationPhase.COMPLETED,
-            retrospective_completed=True,  # Already completed
+            learn_completed=True,  # Already completed
             session_id="session123",
             worktree_path=str(tmp_path / "worktree"),
         )
         implementer.states[123] = state
 
-        with patch.object(implementer, "_run_retrospective") as mock_retro:
-            results = implementer._rerun_failed_retrospectives()
+        with patch.object(implementer, "_run_learn") as mock_retro:
+            results = implementer._rerun_failed_learns()
 
             # Should NOT re-run
             mock_retro.assert_not_called()
             assert results == {}
 
-    def test_old_state_without_retrospective_completed(
+    def test_old_state_without_learn_completed(
         self, implementer: Any, tmp_path: Any
     ) -> None:
-        """Test backward compatibility for old JSON files without retrospective_completed."""
-        # Simulate loading old state JSON that doesn't have retrospective_completed field
+        """Test backward compatibility for old JSON files without learn_completed."""
+        # Simulate loading old state JSON that doesn't have learn_completed field
         old_state_json = """
         {
             "issue_number": 123,
@@ -490,16 +490,16 @@ class TestRunRetrospective:
         state = ImplementationState.model_validate_json(old_state_json)
 
         # Should default to False (correct: their retrospectives did fail)
-        assert state.retrospective_completed is False
+        assert state.learn_completed is False
         assert state.issue_number == 123
 
 
 class TestImplementIssuePipeline:
     """Tests for _implement_issue pipeline with retrospective."""
 
-    def test_retrospective_phase_when_enabled(self, mock_options: Any) -> None:
+    def test_learn_phase_when_enabled(self, mock_options: Any) -> None:
         """Test retrospective phase runs when enabled."""
-        mock_options.enable_retrospective = True
+        mock_options.enable_learn = True
 
         with (
             patch("scylla.automation.implementer.get_repo_root"),
@@ -516,7 +516,7 @@ class TestImplementIssuePipeline:
                     "scylla.automation.implementer.fetch_issue_info",
                     return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
                 ),
-                patch.object(implementer, "_run_retrospective") as mock_retro,
+                patch.object(implementer, "_run_learn") as mock_retro,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
                 patch("scylla.automation.implementer.run"),
@@ -533,9 +533,9 @@ class TestImplementIssuePipeline:
                 assert mock_retro.call_args[0][0] == "session123"
                 assert result.success is True
 
-    def test_retrospective_phase_when_disabled(self, mock_options: Any) -> None:
+    def test_learn_phase_when_disabled(self, mock_options: Any) -> None:
         """Test retrospective phase skipped when disabled."""
-        mock_options.enable_retrospective = False
+        mock_options.enable_learn = False
 
         with (
             patch("scylla.automation.implementer.get_repo_root"),
@@ -552,7 +552,7 @@ class TestImplementIssuePipeline:
                     "scylla.automation.implementer.fetch_issue_info",
                     return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
                 ),
-                patch.object(implementer, "_run_retrospective") as mock_retro,
+                patch.object(implementer, "_run_learn") as mock_retro,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
                 patch("scylla.automation.implementer.run"),
@@ -568,9 +568,9 @@ class TestImplementIssuePipeline:
                 mock_retro.assert_not_called()
                 assert result.success is True
 
-    def test_retrospective_skipped_when_no_session_id(self, mock_options: Any) -> None:
+    def test_learn_skipped_when_no_session_id(self, mock_options: Any) -> None:
         """Test retrospective skipped when session_id is None."""
-        mock_options.enable_retrospective = True
+        mock_options.enable_learn = True
 
         with (
             patch("scylla.automation.implementer.get_repo_root"),
@@ -587,7 +587,7 @@ class TestImplementIssuePipeline:
                     "scylla.automation.implementer.fetch_issue_info",
                     return_value=IssueInfo(number=123, title="Test issue", body="Test body"),
                 ),
-                patch.object(implementer, "_run_retrospective") as mock_retro,
+                patch.object(implementer, "_run_learn") as mock_retro,
                 patch.object(implementer, "_save_state"),
                 patch.object(implementer.worktree_manager, "create_worktree"),
                 patch("scylla.automation.implementer.run"),

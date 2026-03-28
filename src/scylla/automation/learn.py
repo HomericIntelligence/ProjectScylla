@@ -1,8 +1,8 @@
-"""Retrospective lifecycle functions for issue implementation.
+"""Learn lifecycle functions for issue implementation.
 
 Provides:
-- Running /retrospective skill in Claude sessions
-- Checking if retrospective needs re-run
+- Running /learn skill in Claude sessions
+- Checking if learn needs re-run
 """
 
 from __future__ import annotations
@@ -15,14 +15,14 @@ from .git_utils import run
 logger = logging.getLogger(__name__)
 
 
-def run_retrospective(
+def run_learn(
     session_id: str,
     worktree_path: Path,
     issue_number: int,
     state_dir: Path,
     slot_id: int | None = None,
 ) -> bool:
-    """Resume Claude session to run /retrospective.
+    """Resume Claude session to run /learn.
 
     Args:
         session_id: Claude session ID
@@ -32,14 +32,14 @@ def run_retrospective(
         slot_id: Worker slot ID (unused; kept for interface symmetry)
 
     Returns:
-        True if retrospective completed successfully, False otherwise
+        True if learn completed successfully, False otherwise
 
     Runs from worktree directory so Claude can find the session.
-    Output is logged to state_dir/retrospective-{issue_number}.log.
+    Output is logged to state_dir/learn-{issue_number}.log.
 
     """
     state_dir.mkdir(parents=True, exist_ok=True)
-    log_file = state_dir / f"retrospective-{issue_number}.log"
+    log_file = state_dir / f"learn-{issue_number}.log"
     try:
         result = run(
             [
@@ -47,7 +47,7 @@ def run_retrospective(
                 "--resume",
                 session_id,
                 (
-                    "/skills-registry-commands:retrospective"
+                    "/skills-registry-commands:learn"
                     " commit the results and create a PR."
                     " IMPORTANT: Only push skills to ProjectMnemosyne."
                     " Do NOT create files under .claude-plugin/ in this repo."
@@ -63,11 +63,11 @@ def run_retrospective(
         )
         # Write output to log file
         log_file.write_text(result.stdout or "")
-        logger.info(f"Retrospective completed for issue #{issue_number}")
-        logger.info(f"Retrospective log: {log_file}")
+        logger.info(f"Learn completed for issue #{issue_number}")
+        logger.info(f"Learn log: {log_file}")
         return True
     except Exception as e:  # broad catch: external claude process; non-blocking, must not propagate
-        logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
+        logger.warning(f"Learn failed for issue #{issue_number}: {e}")
 
         # Save failure output to log file
         error_output = f"FAILED: {e}\n"
@@ -81,18 +81,18 @@ def run_retrospective(
         return False
 
 
-def retrospective_needs_rerun(issue_number: int, state_dir: Path) -> bool:
-    """Check if retrospective log indicates failure.
+def learn_needs_rerun(issue_number: int, state_dir: Path) -> bool:
+    """Check if learn log indicates failure.
 
     Args:
         issue_number: Issue number
-        state_dir: Directory containing retrospective log files
+        state_dir: Directory containing learn log files
 
     Returns:
-        True if retrospective needs to be re-run (missing or failed log)
+        True if learn needs to be re-run (missing or failed log)
 
     """
-    log_file = state_dir / f"retrospective-{issue_number}.log"
+    log_file = state_dir / f"learn-{issue_number}.log"
     if not log_file.exists():
         return True
     try:

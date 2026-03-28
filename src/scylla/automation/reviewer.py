@@ -559,14 +559,14 @@ class PRReviewer:
         else:
             logger.info(f"No new commits to push for PR #{pr_number}")
 
-    def _run_retrospective(
+    def _run_learn(
         self,
         session_id: str,
         worktree_path: Path,
         issue_number: int,
         slot_id: int | None = None,
     ) -> bool:
-        """Resume Claude session to run /retrospective.
+        """Resume Claude session to run /learn.
 
         Args:
             session_id: Claude session ID
@@ -575,11 +575,11 @@ class PRReviewer:
             slot_id: Worker slot ID for status updates
 
         Returns:
-            True if retrospective completed successfully, False otherwise
+            True if learn completed successfully, False otherwise
 
         """
         self.state_dir.mkdir(parents=True, exist_ok=True)
-        log_file = self.state_dir / f"review-retrospective-{issue_number}.log"
+        log_file = self.state_dir / f"review-learn-{issue_number}.log"
         try:
             result = run(
                 [
@@ -587,7 +587,7 @@ class PRReviewer:
                     "--resume",
                     session_id,
                     (
-                        "/skills-registry-commands:retrospective"
+                        "/skills-registry-commands:learn"
                         " commit the results and create a PR."
                         " IMPORTANT: Only push skills to ProjectMnemosyne."
                         " Do NOT create files under .claude-plugin/ in this repo."
@@ -602,10 +602,10 @@ class PRReviewer:
                 timeout=600,  # 10 minutes
             )
             log_file.write_text(result.stdout or "")
-            logger.info(f"Retrospective completed for issue #{issue_number}")
+            logger.info(f"Learn completed for issue #{issue_number}")
             return True
         except Exception as e:
-            logger.warning(f"Retrospective failed for issue #{issue_number}: {e}")
+            logger.warning(f"Learn failed for issue #{issue_number}: {e}")
             error_output = f"FAILED: {e}\n"
             if hasattr(e, "stdout"):
                 error_output += f"\nSTDOUT:\n{getattr(e, 'stdout', '') or ''}"
@@ -737,15 +737,15 @@ class PRReviewer:
 
             self._push_fixes(pr_number, issue_number, branch_name, worktree_path)
 
-            # Phase 5: Retrospective (optional)
-            if self.options.enable_retrospective and session_id:
+            # Phase 5: Learn (optional)
+            if self.options.enable_learn and session_id:
                 self.status_tracker.update_slot(
-                    slot_id, f"#{issue_number}: PR #{pr_number} Retrospective"
+                    slot_id, f"#{issue_number}: PR #{pr_number} Learn"
                 )
                 with self.state_lock:
-                    state.phase = ReviewPhase.RETROSPECTIVE
+                    state.phase = ReviewPhase.LEARN
                 self._save_state(state)
-                self._run_retrospective(session_id, worktree_path, issue_number, slot_id)
+                self._run_learn(session_id, worktree_path, issue_number, slot_id)
 
             # Mark completed
             with self.state_lock:
