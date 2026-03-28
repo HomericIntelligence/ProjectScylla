@@ -155,9 +155,9 @@ Examples:
     )
 
     parser.add_argument(
-        "--no-retrospective",
+        "--no-learn",
         action="store_true",
-        help="Disable /retrospective after implementation (enabled by default)",
+        help="Disable /learn after implementation (enabled by default)",
     )
 
     parser.add_argument(
@@ -220,7 +220,7 @@ def main() -> int:
         skip_closed=not args.no_skip_closed,
         auto_merge=not args.no_auto_merge,
         dry_run=args.dry_run,
-        enable_retrospective=not args.no_retrospective,
+        enable_learn=not args.no_learn,
         enable_follow_up=not args.no_follow_up,
         enable_ui=not args.no_ui,
     )
@@ -244,7 +244,7 @@ def main() -> int:
                     issues=args.issues or [],
                     max_workers=args.max_workers,
                     dry_run=args.dry_run,
-                    enable_retrospective=not args.no_retrospective,
+                    enable_learn=not args.no_learn,
                     enable_ui=not args.no_ui,
                 )
                 reviewer = PRReviewer(reviewer_options)

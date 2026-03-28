@@ -18,7 +18,7 @@ def mock_options() -> ReviewerOptions:
         issues=[595, 596],
         max_workers=1,
         dry_run=False,
-        enable_retrospective=False,
+        enable_learn=False,
         enable_ui=False,
     )
 
@@ -43,7 +43,7 @@ class TestReviewerOptions:
         assert opts.issues == []
         assert opts.max_workers == 3
         assert opts.dry_run is False
-        assert opts.enable_retrospective is True
+        assert opts.enable_learn is True
         assert opts.enable_ui is True
 
     def test_custom_values(self) -> None:
@@ -52,13 +52,13 @@ class TestReviewerOptions:
             issues=[1, 2, 3],
             max_workers=5,
             dry_run=True,
-            enable_retrospective=False,
+            enable_learn=False,
             enable_ui=False,
         )
         assert opts.issues == [1, 2, 3]
         assert opts.max_workers == 5
         assert opts.dry_run is True
-        assert opts.enable_retrospective is False
+        assert opts.enable_learn is False
         assert opts.enable_ui is False
 
 
@@ -82,7 +82,7 @@ class TestReviewState:
         assert "analyzing" in phases
         assert "fixing" in phases
         assert "pushing" in phases
-        assert "retrospective" in phases
+        assert "learn" in phases
         assert "completed" in phases
         assert "failed" in phases
 
@@ -673,10 +673,10 @@ class TestReviewPR:
         # At least one saved state should be FAILED
         assert any(s.phase == ReviewPhase.FAILED for s in saved_states)
 
-    def test_retrospective_skipped_when_disabled(
+    def test_learn_skipped_when_disabled(
         self, reviewer: PRReviewer, tmp_path: Path
     ) -> None:
-        """Test that retrospective is not called when enable_retrospective=False."""
+        """Test that retrospective is not called when enable_learn=False."""
         reviewer.state_dir = tmp_path
 
         worktree_path = tmp_path / "worktree"
@@ -688,7 +688,7 @@ class TestReviewPR:
             patch.object(reviewer, "_run_analysis_session") as mock_analysis,
             patch.object(reviewer, "_run_fix_session") as mock_fix,
             patch.object(reviewer, "_push_fixes"),
-            patch.object(reviewer, "_run_retrospective") as mock_retro,
+            patch.object(reviewer, "_run_learn") as mock_retro,
             patch.object(reviewer, "_save_state"),
         ):
             mock_create.return_value = worktree_path
@@ -707,11 +707,11 @@ class TestReviewPR:
 
         mock_retro.assert_not_called()
 
-    def test_retrospective_called_when_enabled(
+    def test_learn_called_when_enabled(
         self, mock_options: ReviewerOptions, tmp_path: Path
     ) -> None:
-        """Test retrospective is called when enable_retrospective=True and session_id exists."""
-        mock_options.enable_retrospective = True
+        """Test retrospective is called when enable_learn=True and session_id exists."""
+        mock_options.enable_learn = True
 
         with (
             patch("scylla.automation.reviewer.get_repo_root") as mock_repo,
@@ -730,7 +730,7 @@ class TestReviewPR:
             patch.object(reviewer, "_run_analysis_session") as mock_analysis,
             patch.object(reviewer, "_run_fix_session") as mock_fix,
             patch.object(reviewer, "_push_fixes"),
-            patch.object(reviewer, "_run_retrospective") as mock_retro,
+            patch.object(reviewer, "_run_learn") as mock_retro,
             patch.object(reviewer, "_save_state"),
         ):
             mock_create.return_value = worktree_path

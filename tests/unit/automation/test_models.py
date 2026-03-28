@@ -109,14 +109,14 @@ class TestImplementationState:
         assert restored.worktree_path == state.worktree_path
         assert restored.session_id == state.session_id
 
-    def test_retrospective_phase(self) -> None:
-        """Test RETROSPECTIVE phase in ImplementationPhase enum."""
-        assert ImplementationPhase.RETROSPECTIVE == "retrospective"
+    def test_learn_phase(self) -> None:
+        """Test LEARN phase in ImplementationPhase enum."""
+        assert ImplementationPhase.LEARN == "learn"
 
         # Verify it can be used in state
         state = ImplementationState(
             issue_number=123,
-            phase=ImplementationPhase.RETROSPECTIVE,
+            phase=ImplementationPhase.LEARN,
         )
         assert state.phase == ImplementationPhase.RETROSPECTIVE
 
@@ -307,7 +307,7 @@ class TestImplementerOptions:
         assert options.skip_closed is True
         assert options.auto_merge is True
         assert options.dry_run is False
-        assert options.enable_retrospective is True
+        assert options.enable_learn is True
         assert options.enable_follow_up is True  # Enabled by default
 
     def test_custom_values(self) -> None:
@@ -321,7 +321,7 @@ class TestImplementerOptions:
             skip_closed=False,
             auto_merge=False,
             dry_run=True,
-            enable_retrospective=True,
+            enable_learn=True,
             enable_follow_up=True,
         )
 
@@ -333,5 +333,5 @@ class TestImplementerOptions:
         assert options.skip_closed is False
         assert options.auto_merge is False
         assert options.dry_run is True
-        assert options.enable_retrospective is True
+        assert options.enable_learn is True
         assert options.enable_follow_up is True

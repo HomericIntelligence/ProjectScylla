@@ -53,7 +53,7 @@ class ImplementationPhase(str, Enum):
     COMMITTING = "committing"
     PUSHING = "pushing"
     CREATING_PR = "creating_pr"
-    RETROSPECTIVE = "retrospective"
+    LEARN = "learn"
     FOLLOW_UP_ISSUES = "follow_up_issues"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -72,7 +72,7 @@ class ImplementationState(BaseModel):
     completed_at: datetime | None = None
     error: str | None = None
     attempts: int = 0
-    retrospective_completed: bool = False
+    learn_completed: bool = False
 
 
 class WorkerResult(BaseModel):
@@ -119,7 +119,7 @@ class ImplementerOptions(BaseModel):
     skip_closed: bool = True
     auto_merge: bool = True
     dry_run: bool = False
-    enable_retrospective: bool = True
+    enable_learn: bool = True
     enable_follow_up: bool = True
     enable_ui: bool = True
 
@@ -130,7 +130,7 @@ class ReviewPhase(str, Enum):
     ANALYZING = "analyzing"
     FIXING = "fixing"
     PUSHING = "pushing"
-    RETROSPECTIVE = "retrospective"
+    LEARN = "learn"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -156,7 +156,7 @@ class ReviewerOptions(BaseModel):
     issues: list[int] = Field(default_factory=list)
     max_workers: int = 3
     dry_run: bool = False
-    enable_retrospective: bool = True
+    enable_learn: bool = True
     enable_ui: bool = True
 
 

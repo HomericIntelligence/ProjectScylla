@@ -34,7 +34,7 @@ from .models import (
 )
 from .pr_manager import commit_changes, create_pr, ensure_pr_created
 from .prompts import get_implementation_prompt
-from .retrospective import retrospective_needs_rerun, run_retrospective
+from .learn import learn_needs_rerun, run_learn
 from .status_tracker import StatusTracker
 from .worktree_manager import WorktreeManager
 
@@ -119,14 +119,14 @@ class IssueImplementer:
         if self.options.analyze_only:
             return self._analyze_dependencies()
 
-        # Always load state to detect failed retrospectives
+        # Always load state to detect failed learns
         self._load_state()
 
-        # Re-run failed retrospectives before normal processing
-        if self.options.enable_retrospective:
-            retro_results = self._rerun_failed_retrospectives()
+        # Re-run failed learns before normal processing
+        if self.options.enable_learn:
+            retro_results = self._rerun_failed_learns()
             if retro_results:
-                logger.info(f"Re-ran {len(retro_results)} failed retrospective(s)")
+                logger.info(f"Re-ran {len(retro_results)} failed learn(s)")
 
         # Start UI if enabled and not in dry run
         if not self.options.dry_run and self.options.enable_ui:
@@ -417,20 +417,20 @@ class IssueImplementer:
                 state.pr_number = pr_number
             self._save_state(state)
 
-            # Retrospective phase (after CREATING_PR, before COMPLETED)
-            if self.options.enable_retrospective and state.session_id:
-                self.status_tracker.update_slot(slot_id, f"#{issue_number}: Running retrospective")
+            # Learn phase (after CREATING_PR, before COMPLETED)
+            if self.options.enable_learn and state.session_id:
+                self.status_tracker.update_slot(slot_id, f"#{issue_number}: Running learn")
                 with self.state_lock:
-                    state.phase = ImplementationPhase.RETROSPECTIVE
+                    state.phase = ImplementationPhase.LEARN
                 self._save_state(state)
-                retro_success = self._run_retrospective(
+                retro_success = self._run_learn(
                     state.session_id, worktree_path, issue_number, slot_id
                 )
                 with self.state_lock:
-                    state.retrospective_completed = retro_success
+                    state.learn_completed = retro_success
                 self._save_state(state)
 
-            # Follow-up issues phase (after RETROSPECTIVE, before COMPLETED)
+            # Follow-up issues phase (after LEARN, before COMPLETED)
             if self.options.enable_follow_up and state.session_id:
                 self.status_tracker.update_slot(slot_id, f"#{issue_number}: Identifying follow-ups")
                 with self.state_lock:
@@ -596,12 +596,12 @@ class IssueImplementer:
             slot_id,
         )
 
-    def _retrospective_needs_rerun(self, issue_number: int) -> bool:
-        """Check if retrospective log indicates failure."""
-        return retrospective_needs_rerun(issue_number, self.state_dir)
+    def _learn_needs_rerun(self, issue_number: int) -> bool:
+        """Check if learn log indicates failure."""
+        return learn_needs_rerun(issue_number, self.state_dir)
 
-    def _rerun_failed_retrospectives(self) -> dict[int, bool]:
-        """Re-run failed retrospectives for completed issues.
+    def _rerun_failed_learns(self) -> dict[int, bool]:
+        """Re-run failed learns for completed issues.
 
         Returns:
             Dictionary mapping issue number to success status
@@ -610,41 +610,41 @@ class IssueImplementer:
         results: dict[int, bool] = {}
 
         for issue_number, state in self.states.items():
-            # Only re-run for completed issues with failed retrospectives
+            # Only re-run for completed issues with failed learns
             if (
                 state.phase != ImplementationPhase.COMPLETED
-                or state.retrospective_completed
+                or state.learn_completed
                 or not state.session_id
             ):
                 continue
 
             # Check if log indicates failure
-            if not self._retrospective_needs_rerun(issue_number):
+            if not self._learn_needs_rerun(issue_number):
                 continue
 
             # Verify worktree exists
             if not state.worktree_path:
                 logger.warning(
-                    f"Skipping retrospective re-run for #{issue_number}: no worktree_path"
+                    f"Skipping learn re-run for #{issue_number}: no worktree_path"
                 )
                 continue
 
             worktree_path = Path(state.worktree_path)
             if not worktree_path.exists():
                 logger.warning(
-                    f"Skipping retrospective re-run for #{issue_number}: worktree not found"
+                    f"Skipping learn re-run for #{issue_number}: worktree not found"
                 )
                 continue
 
-            # Re-run retrospective
-            logger.info(f"Re-running failed retrospective for issue #{issue_number}")
-            success = self._run_retrospective(
+            # Re-run learn
+            logger.info(f"Re-running failed learn for issue #{issue_number}")
+            success = self._run_learn(
                 state.session_id, worktree_path, issue_number, slot_id=None
             )
 
             # Update and save state
             with self.state_lock:
-                state.retrospective_completed = success
+                state.learn_completed = success
             self._save_state(state)
 
             results[issue_number] = success
@@ -652,21 +652,21 @@ class IssueImplementer:
         if results:
             success_count = sum(1 for s in results.values() if s)
             logger.info(
-                f"Re-ran {len(results)} retrospective(s): {success_count} succeeded, "
+                f"Re-ran {len(results)} learn(s): {success_count} succeeded, "
                 f"{len(results) - success_count} failed"
             )
 
         return results
 
-    def _run_retrospective(
+    def _run_learn(
         self,
         session_id: str,
         worktree_path: Path,
         issue_number: int,
         slot_id: int | None = None,
     ) -> bool:
-        """Resume Claude session to run /retrospective."""
-        return run_retrospective(session_id, worktree_path, issue_number, self.state_dir, slot_id)
+        """Resume Claude session to run /learn."""
+        return run_learn(session_id, worktree_path, issue_number, self.state_dir, slot_id)
 
     def _run_claude_code(
         self, issue_number: int, worktree_path: Path, prompt: str, slot_id: int | None = None
