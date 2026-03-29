@@ -13,9 +13,6 @@ from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 from scylla.nats.config import NATSConfig
 
-# Backward-compat alias — MaestroConfig was renamed to AgamemnonConfig in ADR-006
-MaestroConfig = AgamemnonConfig
-
 
 class ConfigurationError(Exception):
     """Raised when configuration loading or validation fails."""
@@ -328,10 +325,6 @@ class DefaultsConfig(BaseModel):
         default=None,
         description="ProjectAgamemnon chaos API configuration (None = disabled)",
     )
-    maestro: AgamemnonConfig | None = Field(
-        default=None,
-        description="DEPRECATED: Use agamemnon instead (ADR-006). Backward-compat alias.",
-    )
 
 
 # -----------------------------------------------------------------------------
@@ -360,10 +353,6 @@ class ScyllaConfig(BaseModel):
     agamemnon: AgamemnonConfig | None = Field(
         default=None,
         description="ProjectAgamemnon chaos API configuration (None = disabled)",
-    )
-    maestro: AgamemnonConfig | None = Field(
-        default=None,
-        description="DEPRECATED: Use agamemnon instead (ADR-006). Backward-compat alias.",
     )
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)

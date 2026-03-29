@@ -119,15 +119,15 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         help="Run agents/judges in Docker containers",
     )
     parser.add_argument(
-        "--maestro-enabled",
+        "--agamemnon-enabled",
         action="store_true",
-        help="Enable maestro orchestration",
+        help="Enable Agamemnon orchestration",
     )
     parser.add_argument(
-        "--maestro-url",
+        "--agamemnon-url",
         type=str,
         default=None,
-        help="Maestro server URL (required when --maestro-enabled is set)",
+        help="Agamemnon server URL (required when --agamemnon-enabled is set)",
     )
     parser.add_argument("--model", type=str, default=DEFAULT_AGENT_MODEL, help="Primary model")
     parser.add_argument(
@@ -712,8 +712,8 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 max_subtests=args.max_subtests,
                 skip_agent_teams=args.skip_agent_teams,
                 use_containers=args.use_containers,
-                maestro_enabled=args.maestro_enabled,
-                maestro_url=args.maestro_url,
+                agamemnon_enabled=args.agamemnon_enabled,
+                agamemnon_url=args.agamemnon_url,
                 thinking_mode=args.thinking or "None",
                 tiers_to_run=tier_ids,
                 until_run_state=until_run_state,
@@ -1014,8 +1014,8 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         logger.error("--commit is required (or set in test.yaml)")
         return 1
 
-    if args.maestro_enabled and not args.maestro_url:
-        logger.error("--maestro-url is required when --maestro-enabled is set")
+    if args.agamemnon_enabled and not args.agamemnon_url:
+        logger.error("--agamemnon-url is required when --agamemnon-enabled is set")
         return 1
 
     from scylla.config.constants import normalize_model_id
@@ -1140,8 +1140,8 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         max_subtests=args.max_subtests,
         skip_agent_teams=args.skip_agent_teams,
         use_containers=args.use_containers,
-        maestro_enabled=args.maestro_enabled,
-        maestro_url=args.maestro_url,
+        agamemnon_enabled=args.agamemnon_enabled,
+        agamemnon_url=args.agamemnon_url,
         thinking_mode=args.thinking or "None",
         tiers_to_run=tier_ids,
         until_run_state=until_run_state,

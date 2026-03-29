@@ -13,9 +13,9 @@ State flow for a single run (18 sequential states):
     -> BASELINE_CAPTURED       (build pipeline baseline, first run only)
     -> PROMPT_WRITTEN          (task_prompt.md written, thinking keyword injected)
     -> REPLAY_GENERATED        (adapter command built, replay.sh generated)
-    -> FAILURE_INJECTED        (Maestro failure injected, no-op if disabled)
+    -> FAILURE_INJECTED        (Agamemnon failure injected, no-op if disabled)
     -> AGENT_COMPLETE          (agent executed, outputs saved)
-    -> FAILURE_CLEARED         (Maestro failure cleared, no-op if disabled)
+    -> FAILURE_CLEARED         (Agamemnon failure cleared, no-op if disabled)
     -> DIFF_CAPTURED           (git diff captured, workspace state saved)
     -> JUDGE_PIPELINE_RUN      (build pipeline run on agent-modified workspace)
     -> JUDGE_PROMPT_BUILT      (full judge prompt assembled)
@@ -148,7 +148,7 @@ TRANSITION_REGISTRY: list[StateTransition] = [
     StateTransition(
         from_state=RunState.REPLAY_GENERATED,
         to_state=RunState.FAILURE_INJECTED,
-        description="Inject failure via Maestro API if enabled",
+        description="Inject failure via Agamemnon API if enabled",
     ),
     StateTransition(
         from_state=RunState.FAILURE_INJECTED,
@@ -158,7 +158,7 @@ TRANSITION_REGISTRY: list[StateTransition] = [
     StateTransition(
         from_state=RunState.AGENT_COMPLETE,
         to_state=RunState.FAILURE_CLEARED,
-        description="Clear injected failure via Maestro API",
+        description="Clear injected failure via Agamemnon API",
     ),
     StateTransition(
         from_state=RunState.FAILURE_CLEARED,

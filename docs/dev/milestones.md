@@ -12,7 +12,7 @@ framework's feature set without requiring API-breaking changes.
 
 **Scope includes:**
 
-- New CLI commands and flags (report formats, NATS integration, Maestro wiring)
+- New CLI commands and flags (report formats, NATS integration, Agamemnon wiring)
 - Resilience patterns (retry logic, failure injection, backoff)
 - Evaluation infrastructure improvements
 - Supply chain hardening (SHA pinning, CI hardening)

@@ -1,10 +1,10 @@
-"""Unit tests for Agamemnon chaos failure injection stages in scylla/e2e/stages.py.
+"""Unit tests for Agamemnon failure injection stages in scylla/e2e/stages.py.
 
 Tests cover:
 - stage_inject_failure: no-op when disabled, injection when enabled, graceful degradation
 - stage_clear_failure: no-op when no injection, clear when injection exists, graceful degradation
-- RunContext.agamemnon_injection_id field (and backward-compat maestro_injection_id alias)
-- Resume: _restore_run_context loads agamemnon_injection.json (with maestro_injection.json fallback)
+- RunContext.agamemnon_injection_id field
+- Resume: _restore_run_context loads agamemnon_injection.json
 """
 
 from __future__ import annotations
@@ -29,26 +29,12 @@ from scylla.e2e.stages import (
     stage_inject_failure,
 )
 
-# Backward-compat alias — still importable
-from scylla.maestro.models import MaestroConfig
-
 
 @pytest.fixture
 def agamemnon_config() -> AgamemnonConfig:
     """AgamemnonConfig with enabled=True for testing."""
     return AgamemnonConfig(
-        base_url="http://localhost:8080",
-        enabled=True,
-        timeout_seconds=5,
-        health_check_timeout_seconds=2,
-    )
-
-
-@pytest.fixture
-def maestro_config() -> MaestroConfig:
-    """MaestroConfig (backward-compat alias for AgamemnonConfig) with enabled=True."""
-    return MaestroConfig(
-        base_url="http://localhost:8080",
+        base_url="http://localhost:23000",
         enabled=True,
         timeout_seconds=5,
         health_check_timeout_seconds=2,
@@ -147,15 +133,8 @@ def agamemnon_run_context(
     )
 
 
-# Backward-compat alias fixture
-@pytest.fixture
-def maestro_run_context(agamemnon_run_context: RunContext) -> RunContext:
-    """Alias for agamemnon_run_context for backward-compat test naming."""
-    return agamemnon_run_context
-
-
-class TestRunContextInjectionField:
-    """Tests for agamemnon_injection_id field on RunContext (and backward-compat alias)."""
+class TestRunContextAgamemnonField:
+    """Tests for agamemnon_injection_id field on RunContext."""
 
     def test_defaults_to_none(self, run_context: RunContext) -> None:
         """agamemnon_injection_id defaults to None."""
@@ -165,16 +144,6 @@ class TestRunContextInjectionField:
         """agamemnon_injection_id can be assigned."""
         run_context.agamemnon_injection_id = "inj-123"
         assert run_context.agamemnon_injection_id == "inj-123"
-
-    def test_maestro_injection_id_alias_reads_agamemnon(self, run_context: RunContext) -> None:
-        """maestro_injection_id property returns same value as agamemnon_injection_id."""
-        run_context.agamemnon_injection_id = "inj-abc"
-        assert run_context.maestro_injection_id == "inj-abc"
-
-    def test_maestro_injection_id_alias_writes_agamemnon(self, run_context: RunContext) -> None:
-        """Writing to maestro_injection_id updates agamemnon_injection_id."""
-        run_context.maestro_injection_id = "inj-xyz"
-        assert run_context.agamemnon_injection_id == "inj-xyz"
 
 
 class TestStageInjectFailure:
@@ -212,7 +181,7 @@ class TestStageInjectFailure:
         stage_inject_failure(agamemnon_run_context)
 
         assert agamemnon_run_context.agamemnon_injection_id == "inj-abc"
-        # Verify injection file was written with new filename
+        # Verify injection file was written
         injection_file = agamemnon_run_context.run_dir / "agamemnon_injection.json"
         assert injection_file.exists()
         data = json.loads(injection_file.read_text())
@@ -305,30 +274,19 @@ class TestStageClearFailure:
         assert agamemnon_run_context.agamemnon_injection_id is None
 
 
-class TestRestoreRunContextInjection:
+class TestRestoreRunContextAgamemnon:
     """Tests for _restore_run_context agamemnon_injection_id restoration."""
 
-    def test_restores_injection_id_from_agamemnon_file(self, run_context: RunContext) -> None:
+    def test_restores_injection_id_from_disk(self, run_context: RunContext) -> None:
         """Restores agamemnon_injection_id when resuming from FAILURE_INJECTED."""
         from scylla.e2e.subtest_executor import _restore_run_context
 
-        # Write new-style injection file
+        # Write injection file
         injection_file = run_context.run_dir / "agamemnon_injection.json"
         injection_file.write_text(json.dumps({"injection_id": "inj-resume-123"}))
 
         _restore_run_context(run_context, RunState.FAILURE_INJECTED.value)
         assert run_context.agamemnon_injection_id == "inj-resume-123"
-
-    def test_restores_injection_id_from_maestro_fallback(self, run_context: RunContext) -> None:
-        """Falls back to maestro_injection.json for pre-migration checkpoints."""
-        from scylla.e2e.subtest_executor import _restore_run_context
-
-        # Write old-style injection file (backward compat)
-        injection_file = run_context.run_dir / "maestro_injection.json"
-        injection_file.write_text(json.dumps({"injection_id": "inj-legacy-456"}))
-
-        _restore_run_context(run_context, RunState.FAILURE_INJECTED.value)
-        assert run_context.agamemnon_injection_id == "inj-legacy-456"
 
     def test_no_restore_past_failure_cleared(self, run_context: RunContext) -> None:
         """Does not restore injection_id when past FAILURE_CLEARED."""
@@ -388,7 +346,7 @@ class TestExperimentConfigAgamemnon:
         d = config.to_dict()
         assert "agamemnon" in d
         assert d["agamemnon"]["enabled"] is True
-        assert d["agamemnon"]["base_url"] == "http://localhost:8080"
+        assert d["agamemnon"]["base_url"] == "http://localhost:23000"
 
     def test_save_and_load_roundtrip(
         self, tmp_path: Path, agamemnon_config: AgamemnonConfig
@@ -407,7 +365,7 @@ class TestExperimentConfigAgamemnon:
         loaded = ExperimentConfig.load(config_path)
         assert loaded.agamemnon is not None
         assert loaded.agamemnon.enabled is True
-        assert loaded.agamemnon.base_url == "http://localhost:8080"
+        assert loaded.agamemnon.base_url == "http://localhost:23000"
         assert loaded.agamemnon.timeout_seconds == 5
 
     def test_load_without_agamemnon(self, tmp_path: Path) -> None:
@@ -423,17 +381,3 @@ class TestExperimentConfigAgamemnon:
         config.save(config_path)
         loaded = ExperimentConfig.load(config_path)
         assert loaded.agamemnon is None
-
-    def test_backward_compat_maestro_field(self, maestro_config: MaestroConfig) -> None:
-        """ExperimentConfig.maestro backward-compat field is still accepted."""
-        config = ExperimentConfig(
-            experiment_id="test",
-            task_repo="https://github.com/test/repo",
-            task_commit="abc123",
-            task_prompt_file=Path("/tmp/prompt.md"),
-            language="python",
-            maestro=maestro_config,
-        )
-        # maestro field is accepted as AgamemnonConfig alias
-        assert config.maestro is not None
-        assert config.maestro.enabled is True

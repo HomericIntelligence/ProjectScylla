@@ -107,9 +107,9 @@ class RunState(str, Enum):
     BASELINE_CAPTURED = "baseline_captured"  # build pipeline baseline (first run only)
     PROMPT_WRITTEN = "prompt_written"  # task_prompt.md written, thinking keyword injected
     REPLAY_GENERATED = "replay_generated"  # adapter command built, replay.sh generated
-    FAILURE_INJECTED = "failure_injected"  # Maestro failure injected (no-op if disabled)
+    FAILURE_INJECTED = "failure_injected"  # Agamemnon failure injected (no-op if disabled)
     AGENT_COMPLETE = "agent_complete"  # agent executed, outputs saved
-    FAILURE_CLEARED = "failure_cleared"  # Maestro failure cleared (no-op if disabled)
+    FAILURE_CLEARED = "failure_cleared"  # Agamemnon failure cleared (no-op if disabled)
     DIFF_CAPTURED = "diff_captured"  # git diff captured, workspace state saved
     JUDGE_PIPELINE_RUN = "judge_pipeline_run"  # build pipeline run on agent-modified workspace
     JUDGE_PROMPT_BUILT = "judge_prompt_built"  # full judge prompt assembled
@@ -845,8 +845,8 @@ class ExperimentConfig(BaseModel):
             (default: tiers_dir/../expected/criteria.md)
         rubric_file: Optional path to rubric.yaml
             (default: tiers_dir/../expected/rubric.yaml)
-        maestro_enabled: Enable maestro orchestration (default: False) [DEPRECATED]
-        maestro_url: Maestro server URL (default: None) [DEPRECATED]
+        agamemnon_enabled: Enable Agamemnon orchestration (default: False)
+        agamemnon_url: Agamemnon server URL (default: None)
 
     """
 
@@ -871,8 +871,8 @@ class ExperimentConfig(BaseModel):
     )
     criteria_file: Path | None = None  # Optional explicit path to criteria.md
     rubric_file: Path | None = None  # Optional explicit path to rubric.yaml
-    maestro_enabled: bool = False  # Enable maestro orchestration
-    maestro_url: str | None = None  # Maestro server URL
+    agamemnon_enabled: bool = False  # Enable Agamemnon orchestration
+    agamemnon_url: str | None = None  # Agamemnon server URL
     # Ephemeral --until controls (not saved to experiment.json / not in config_hash)
     until_run_state: RunState | None = None
     until_tier_state: TierState | None = None
@@ -924,8 +924,8 @@ class ExperimentConfig(BaseModel):
             "skip_agent_teams": self.skip_agent_teams,
             "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
-            "maestro_enabled": self.maestro_enabled,
-            "maestro_url": self.maestro_url,
+            "agamemnon_enabled": self.agamemnon_enabled,
+            "agamemnon_url": self.agamemnon_url,
             **({"agamemnon": self.agamemnon.model_dump()} if self.agamemnon is not None else {}),
         }
 
@@ -963,8 +963,8 @@ class ExperimentConfig(BaseModel):
             skip_agent_teams=data.get("skip_agent_teams", False),
             thinking_mode=data.get("thinking_mode", "None"),
             use_containers=data.get("use_containers", False),
-            maestro_enabled=data.get("maestro_enabled", False),
-            maestro_url=data.get("maestro_url"),
+            agamemnon_enabled=data.get("agamemnon_enabled", data.get("maestro_enabled", False)),
+            agamemnon_url=data.get("agamemnon_url", data.get("maestro_url")),
             agamemnon=(
                 AgamemnonConfig(**data["agamemnon"])
                 if data.get("agamemnon")

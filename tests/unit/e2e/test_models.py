@@ -435,33 +435,33 @@ class TestExperimentConfig:
             assert loaded.runs_per_subtest == 5
             assert loaded.tiers_to_run == [TierID.T0, TierID.T1, TierID.T2]
 
-    def test_to_dict_includes_maestro_fields(self) -> None:
-        """Test that to_dict() includes maestro_enabled and maestro_url."""
+    def test_to_dict_includes_agamemnon_fields(self) -> None:
+        """Test that to_dict() includes agamemnon_enabled and agamemnon_url."""
         config = ExperimentConfig(
-            experiment_id="test-maestro",
+            experiment_id="test-agamemnon",
             task_repo="https://github.com/test/repo",
             task_commit="abc123",
             task_prompt_file=Path("prompt.md"),
             language="python",
-            maestro_enabled=True,
-            maestro_url="http://maestro:8080",
+            agamemnon_enabled=True,
+            agamemnon_url="http://agamemnon:8080",
         )
 
         d = config.to_dict()
 
-        assert d["maestro_enabled"] is True
-        assert d["maestro_url"] == "http://maestro:8080"
+        assert d["agamemnon_enabled"] is True
+        assert d["agamemnon_url"] == "http://agamemnon:8080"
 
-    def test_save_and_load_maestro_fields(self) -> None:
-        """Test that maestro fields round-trip through save/load."""
+    def test_save_and_load_agamemnon_fields(self) -> None:
+        """Test that agamemnon fields round-trip through save/load."""
         config = ExperimentConfig(
-            experiment_id="test-maestro-rt",
+            experiment_id="test-agamemnon-rt",
             task_repo="https://github.com/test/repo",
             task_commit="abc123",
             task_prompt_file=Path("prompt.md"),
             language="python",
-            maestro_enabled=True,
-            maestro_url="http://maestro:8080",
+            agamemnon_enabled=True,
+            agamemnon_url="http://agamemnon:8080",
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -470,11 +470,11 @@ class TestExperimentConfig:
 
             loaded = ExperimentConfig.load(path)
 
-            assert loaded.maestro_enabled is True
-            assert loaded.maestro_url == "http://maestro:8080"
+            assert loaded.agamemnon_enabled is True
+            assert loaded.agamemnon_url == "http://agamemnon:8080"
 
-    def test_load_backward_compat_missing_maestro_fields(self) -> None:
-        """Test that load() handles missing maestro fields (backward compatibility)."""
+    def test_load_backward_compat_missing_agamemnon_fields(self) -> None:
+        """Test that load() handles missing agamemnon fields (backward compatibility)."""
         import json
 
         config_data = {
@@ -492,11 +492,11 @@ class TestExperimentConfig:
 
             loaded = ExperimentConfig.load(path)
 
-            assert loaded.maestro_enabled is False
-            assert loaded.maestro_url is None
+            assert loaded.agamemnon_enabled is False
+            assert loaded.agamemnon_url is None
 
-    def test_default_maestro_fields(self) -> None:
-        """Test that maestro fields default correctly."""
+    def test_default_agamemnon_fields(self) -> None:
+        """Test that agamemnon fields default correctly."""
         config = ExperimentConfig(
             experiment_id="test-defaults",
             task_repo="https://github.com/test/repo",
@@ -505,8 +505,8 @@ class TestExperimentConfig:
             language="python",
         )
 
-        assert config.maestro_enabled is False
-        assert config.maestro_url is None
+        assert config.agamemnon_enabled is False
+        assert config.agamemnon_url is None
 
 
 class TestExperimentConfigDefaults:

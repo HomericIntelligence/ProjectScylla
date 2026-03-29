@@ -126,7 +126,7 @@ Each tier runs 9 times per test case for statistical validity:
     |  | - Docker      |     |   consensus   |     | - Aggregation |        |
     |  | - Adapter     |     | - Rubric      |     | - Markdown    |        |
     |  | - 9 runs/tier |     |   scoring     |     |   reports     |        |
-    |  | - Maestro     |     |               |     |               |        |
+    |  | - Agamemnon   |     |               |     |               |        |
     |  |   (optional)  |     |               |     |               |        |
     |  +-------+-------+     +-------+-------+     +---------------+        |
     |          |                     |                                      |
@@ -144,7 +144,7 @@ Each tier runs 9 times per test case for statistical validity:
     |          : (optional)                                                 |
     |          v                                                            |
     |  +- - - - - - - -+                                                   |
-    |  : MAESTRO API   :                                                   |
+    |  : AGAMEMNON API :                                                   |
     |  :               :                                                   |
     |  : - Health      :                                                   |
     |  : - Inject      :                                                   |
@@ -364,7 +364,7 @@ The Agamemnon Chaos Client provides optional fault-injection capabilities for
 the ProjectAgamemnon/ProjectCharybdis agent mesh. It is fully opt-in and
 disabled by default. (ADR-006: migrated from ai-maestro.)
 
-**Location**: `scylla/agamemnon/` (deprecated stubs remain in `scylla/maestro/`)
+**Location**: `scylla/agamemnon/`
 
 **Module Structure**:
 
@@ -628,7 +628,6 @@ ProjectScylla/
             client.py                   # Synchronous HTTP client
             models.py                   # AgamemnonConfig, FailureSpec, etc.
             errors.py                   # AgamemnonError hierarchy
-        maestro/                        # DEPRECATED: re-exports from agamemnon/ (ADR-006)
         judge/                          # Claude + Opus evaluation
             rubric.py                   # Rubric parser
             prompts/                    # Judge prompt templates
@@ -684,7 +683,7 @@ ProjectScylla/
 | **Judge Container** | Separate | Judge runs in separate container from agent |
 | **API Keys** | Environment variables | Pass from host via docker `-e` flags |
 | **Timeout Handling** | Include as failures | Count timeouts as pass_rate=0, impl_rate=0 |
-| **Maestro Integration** | Opt-in, graceful degradation | Fault injection must never block execution; API errors are logged and skipped |
+| **Agamemnon Integration** | Opt-in, graceful degradation | Fault injection must never block execution; API errors are logged and skipped |
 
 ---
 

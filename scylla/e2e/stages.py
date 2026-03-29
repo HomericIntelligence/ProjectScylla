@@ -207,16 +207,6 @@ class RunContext:
     # Agamemnon chaos failure injection tracking
     agamemnon_injection_id: str | None = None
 
-    @property
-    def maestro_injection_id(self) -> str | None:
-        """Backward-compat alias for agamemnon_injection_id (ADR-006)."""
-        return self.agamemnon_injection_id
-
-    @maestro_injection_id.setter
-    def maestro_injection_id(self, value: str | None) -> None:
-        """Backward-compat alias setter for agamemnon_injection_id (ADR-006)."""
-        self.agamemnon_injection_id = value
-
 
 # ---------------------------------------------------------------------------
 # Stage functions
