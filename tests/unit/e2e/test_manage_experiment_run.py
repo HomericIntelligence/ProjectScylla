@@ -3916,6 +3916,69 @@ class TestCmdRunTiersAndMaxSubtests:
         assert len(captured_configs) == 1
         assert len(captured_configs[0].tiers_to_run) > 0
 
+    def test_off_peak_flag_flows_to_config(self, tmp_path: Path) -> None:
+        """--off-peak sets config.off_peak to True."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        from manage_experiment import cmd_run
+
+        parser = build_parser()
+        args = parser.parse_args(
+            [
+                "run",
+                "--config",
+                str(config_dir),
+                "--off-peak",
+            ]
+        )
+
+        captured_configs: list[Any] = []
+
+        def mock_run_experiment(
+            config: Any, tiers_dir: Any, results_dir: Any, fresh: Any, **kwargs: Any
+        ) -> Any:
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].off_peak is True
+
+    def test_off_peak_defaults_to_false(self, tmp_path: Path) -> None:
+        """Without --off-peak, config.off_peak is False."""
+        config_dir = tmp_path / "test-dir"
+        self._make_test_dir(config_dir)
+
+        from manage_experiment import cmd_run
+
+        parser = build_parser()
+        args = parser.parse_args(["run", "--config", str(config_dir)])
+
+        captured_configs: list[Any] = []
+
+        def mock_run_experiment(
+            config: Any, tiers_dir: Any, results_dir: Any, fresh: Any, **kwargs: Any
+        ) -> Any:
+            captured_configs.append(config)
+            return {"T0": {}}
+
+        with (
+            patch("scylla.e2e.model_validation.validate_model", return_value=True),
+            patch("scylla.e2e.runner.run_experiment", side_effect=mock_run_experiment),
+        ):
+            result = cmd_run(args)
+
+        assert result == 0
+        assert len(captured_configs) == 1
+        assert captured_configs[0].off_peak is False
+
 
 # ---------------------------------------------------------------------------
 # cmd_repair() edge cases: skip existing entries and corrupt JSON handling
