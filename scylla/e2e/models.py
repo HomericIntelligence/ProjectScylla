@@ -15,7 +15,6 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from scylla.agamemnon.models import AgamemnonConfig
 from scylla.config.constants import (
     DEFAULT_AGENT_MODEL,
     DEFAULT_JUDGE_MODEL,
@@ -90,10 +89,10 @@ class RunState(str, Enum):
     The state machine advances through these states sequentially, saving the
     checkpoint after each transition to enable resume from any point.
 
-    Sequential states (18):
+    Sequential states (16):
       PENDING -> DIR_STRUCTURE_CREATED -> WORKTREE_CREATED -> SYMLINKS_APPLIED
       -> CONFIG_COMMITTED -> BASELINE_CAPTURED -> PROMPT_WRITTEN -> REPLAY_GENERATED
-      -> FAILURE_INJECTED -> AGENT_COMPLETE -> FAILURE_CLEARED -> DIFF_CAPTURED
+      -> AGENT_COMPLETE -> DIFF_CAPTURED
       -> JUDGE_PIPELINE_RUN -> JUDGE_PROMPT_BUILT -> JUDGE_COMPLETE -> RUN_FINALIZED
       -> REPORT_WRITTEN -> CHECKPOINTED -> WORKTREE_CLEANED
     Terminal (2): FAILED | RATE_LIMITED
@@ -107,9 +106,7 @@ class RunState(str, Enum):
     BASELINE_CAPTURED = "baseline_captured"  # build pipeline baseline (first run only)
     PROMPT_WRITTEN = "prompt_written"  # task_prompt.md written, thinking keyword injected
     REPLAY_GENERATED = "replay_generated"  # adapter command built, replay.sh generated
-    FAILURE_INJECTED = "failure_injected"  # Agamemnon failure injected (no-op if disabled)
     AGENT_COMPLETE = "agent_complete"  # agent executed, outputs saved
-    FAILURE_CLEARED = "failure_cleared"  # Agamemnon failure cleared (no-op if disabled)
     DIFF_CAPTURED = "diff_captured"  # git diff captured, workspace state saved
     JUDGE_PIPELINE_RUN = "judge_pipeline_run"  # build pipeline run on agent-modified workspace
     JUDGE_PROMPT_BUILT = "judge_prompt_built"  # full judge prompt assembled
@@ -845,8 +842,6 @@ class ExperimentConfig(BaseModel):
             (default: tiers_dir/../expected/criteria.md)
         rubric_file: Optional path to rubric.yaml
             (default: tiers_dir/../expected/rubric.yaml)
-        agamemnon_enabled: Enable Agamemnon orchestration (default: False)
-        agamemnon_url: Agamemnon server URL (default: None)
 
     """
 
@@ -871,8 +866,6 @@ class ExperimentConfig(BaseModel):
     )
     criteria_file: Path | None = None  # Optional explicit path to criteria.md
     rubric_file: Path | None = None  # Optional explicit path to rubric.yaml
-    agamemnon_enabled: bool = False  # Enable Agamemnon orchestration
-    agamemnon_url: str | None = None  # Agamemnon server URL
     # Ephemeral --until controls (not saved to experiment.json / not in config_hash)
     until_run_state: RunState | None = None
     until_tier_state: TierState | None = None
@@ -887,10 +880,6 @@ class ExperimentConfig(BaseModel):
     filter_runs: list[int] | None = None
     filter_statuses: list[str] | None = None
     filter_judge_slots: list[int] | None = None
-    # Agamemnon chaos failure injection (optional, disabled by default)
-    agamemnon: AgamemnonConfig | None = None
-    # Backward-compat alias: maps old `maestro` field to `agamemnon`
-    maestro: AgamemnonConfig | None = None
     # Resource management (ephemeral, not saved to experiment.json)
     keep_failed_workspaces: bool = False  # Preserve workspaces for failed runs
     max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
@@ -924,9 +913,6 @@ class ExperimentConfig(BaseModel):
             "skip_agent_teams": self.skip_agent_teams,
             "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
-            "agamemnon_enabled": self.agamemnon_enabled,
-            "agamemnon_url": self.agamemnon_url,
-            **({"agamemnon": self.agamemnon.model_dump()} if self.agamemnon is not None else {}),
         }
 
     def save(self, path: Path) -> None:
@@ -963,16 +949,6 @@ class ExperimentConfig(BaseModel):
             skip_agent_teams=data.get("skip_agent_teams", False),
             thinking_mode=data.get("thinking_mode", "None"),
             use_containers=data.get("use_containers", False),
-            agamemnon_enabled=data.get("agamemnon_enabled", data.get("maestro_enabled", False)),
-            agamemnon_url=data.get("agamemnon_url", data.get("maestro_url")),
-            agamemnon=(
-                AgamemnonConfig(**data["agamemnon"])
-                if data.get("agamemnon")
-                # backward compat: load from old "maestro" key if "agamemnon" absent
-                else AgamemnonConfig(**data["maestro"])
-                if data.get("maestro")
-                else None
-            ),
         )
 
 

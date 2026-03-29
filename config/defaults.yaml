@@ -59,16 +59,6 @@ resilience:
 # Default model used when no --model flag is provided
 default_model: "claude-sonnet-4-6"
 
-# Agamemnon chaos API settings (replaces maestro, see ADR-006)
-agamemnon:
-  enabled: false
-  url: null
-
-# DEPRECATED: maestro section kept for backward compatibility (ADR-006)
-# maestro:
-#   enabled: false
-#   url: null
-
 # NATS JetStream subscription settings
 nats:
   enabled: false

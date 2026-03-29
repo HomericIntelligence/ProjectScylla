@@ -503,7 +503,6 @@ class ConfigLoader:
             "judge": defaults.judge,
             "adapters": defaults.adapters,
             "cleanup": defaults.cleanup,
-            "agamemnon": defaults.agamemnon,
             "output": defaults.output,
             "logging": defaults.logging,
             "metrics": defaults.metrics,

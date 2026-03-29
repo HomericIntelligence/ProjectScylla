@@ -9,7 +9,7 @@ earlier stages to later ones without complex argument threading.
 build_actions_dict() assembles the {RunState -> Callable} map expected by
 StateMachine.advance_to_completion().
 
-18-stage pipeline (17 explicit stage functions + 1 implicit auto-transition):
+16-stage pipeline (15 explicit stage functions + 1 implicit auto-transition):
   PENDING              -> stage_create_dir_structure()
   DIR_STRUCTURE_CREATED -> stage_create_worktree()
   WORKTREE_CREATED     -> stage_apply_symlinks()
@@ -17,10 +17,8 @@ StateMachine.advance_to_completion().
   CONFIG_COMMITTED     -> stage_capture_baseline()
   BASELINE_CAPTURED    -> stage_write_prompt()
   PROMPT_WRITTEN       -> stage_generate_replay()
-  REPLAY_GENERATED     -> stage_inject_failure()
-  FAILURE_INJECTED     -> stage_execute_agent()
-  AGENT_COMPLETE       -> stage_clear_failure()
-  FAILURE_CLEARED      -> stage_capture_diff()
+  REPLAY_GENERATED     -> stage_execute_agent()
+  AGENT_COMPLETE       -> stage_capture_diff()
   DIFF_CAPTURED        -> stage_run_judge_pipeline()
   JUDGE_PIPELINE_RUN   -> stage_build_judge_prompt()
   JUDGE_PROMPT_BUILT   -> stage_execute_judge()
@@ -203,9 +201,6 @@ class RunContext:
 
     # Resource management (shared across all runs in a batch)
     resource_manager: ResourceManager | None = None
-
-    # Agamemnon chaos failure injection tracking
-    agamemnon_injection_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -491,78 +486,6 @@ def stage_generate_replay(ctx: RunContext) -> None:
     ctx.adapter_config = adapter_config
 
 
-def stage_inject_failure(ctx: RunContext) -> None:
-    """REPLAY_GENERATED -> FAILURE_INJECTED: Inject failure via Agamemnon chaos API.
-
-    If Agamemnon is not configured or disabled, this is a no-op.
-    On AgamemnonError, logs a warning and continues (graceful degradation).
-
-    Args:
-        ctx: Run context (mutates ctx.agamemnon_injection_id)
-
-    """
-    if ctx.config.agamemnon is None or not ctx.config.agamemnon.enabled:
-        return
-
-    from scylla.agamemnon import AgamemnonClient, AgamemnonError, FailureSpec
-
-    try:
-        with AgamemnonClient(ctx.config.agamemnon) as client:
-            health = client.health_check()
-            if health is None:
-                logger.warning("Agamemnon API unreachable, skipping failure injection")
-                return
-
-            spec = FailureSpec(
-                agent_id=f"{ctx.tier_id.value}/{ctx.subtest.id}/run_{ctx.run_number:02d}",
-                failure_type="default",
-            )
-            result = client.inject_failure(spec)
-            ctx.agamemnon_injection_id = result.injection_id
-
-        # Persist injection_id for resume capability
-        injection_file = ctx.run_dir / "agamemnon_injection.json"
-        injection_file.write_text(
-            json.dumps({"injection_id": ctx.agamemnon_injection_id}, indent=2)
-        )
-        logger.info(f"[AGAMEMNON] Injected failure: {ctx.agamemnon_injection_id}")
-    except AgamemnonError as e:
-        logger.warning(f"Agamemnon failure injection failed, continuing without injection: {e}")
-
-
-def stage_clear_failure(ctx: RunContext) -> None:
-    """AGENT_COMPLETE -> FAILURE_CLEARED: Clear injected failure via Agamemnon chaos API.
-
-    If no injection was made (agamemnon_injection_id is None), this is a no-op.
-    On AgamemnonError, logs a warning and continues (graceful degradation).
-
-    Args:
-        ctx: Run context (clears ctx.agamemnon_injection_id)
-
-    """
-    if ctx.agamemnon_injection_id is None:
-        return
-
-    if ctx.config.agamemnon is None:
-        return
-
-    from scylla.agamemnon import AgamemnonClient, AgamemnonError
-
-    try:
-        with AgamemnonClient(ctx.config.agamemnon) as client:
-            client.clear_failure(ctx.agamemnon_injection_id)
-        logger.info(f"[AGAMEMNON] Cleared failure: {ctx.agamemnon_injection_id}")
-    except AgamemnonError as e:
-        logger.warning(f"Agamemnon failure cleanup failed: {e}")
-
-    # Remove injection tracking file
-    injection_file = ctx.run_dir / "agamemnon_injection.json"
-    if injection_file.exists():
-        injection_file.unlink()
-
-    ctx.agamemnon_injection_id = None
-
-
 def _kill_process_group(proc: subprocess.Popen[str]) -> None:
     """Kill a subprocess and its entire process group.
 
@@ -628,7 +551,7 @@ def _communicate_with_shutdown_check(
 
 
 def stage_execute_agent(ctx: RunContext) -> None:
-    """FAILURE_INJECTED -> AGENT_COMPLETE: Execute agent and save outputs.
+    """REPLAY_GENERATED -> AGENT_COMPLETE: Execute agent and save outputs.
 
     If ctx.agent_result is already set (resume), this is a no-op.
     Otherwise, runs via replay.sh and saves all agent artifacts.
@@ -784,7 +707,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
 
 
 def stage_capture_diff(ctx: RunContext) -> None:
-    """FAILURE_CLEARED -> DIFF_CAPTURED: Capture workspace diff and state.
+    """AGENT_COMPLETE -> DIFF_CAPTURED: Capture workspace diff and state.
 
     Runs git diff/status to capture changes made by the agent.
     Saves diff data to ctx.diff_result for use by later stages.
@@ -990,10 +913,8 @@ def build_actions_dict(
         RunState.CONFIG_COMMITTED: lambda: stage_capture_baseline(ctx),
         RunState.BASELINE_CAPTURED: lambda: stage_write_prompt(ctx),
         RunState.PROMPT_WRITTEN: lambda: stage_generate_replay(ctx),
-        RunState.REPLAY_GENERATED: lambda: stage_inject_failure(ctx),
-        RunState.FAILURE_INJECTED: _agent_with_slot,
-        RunState.AGENT_COMPLETE: lambda: stage_clear_failure(ctx),
-        RunState.FAILURE_CLEARED: lambda: stage_capture_diff(ctx),
+        RunState.REPLAY_GENERATED: _agent_with_slot,
+        RunState.AGENT_COMPLETE: lambda: stage_capture_diff(ctx),
         RunState.DIFF_CAPTURED: lambda: stage_run_judge_pipeline(ctx),
         RunState.JUDGE_PIPELINE_RUN: lambda: stage_build_judge_prompt(ctx),
         RunState.JUDGE_PROMPT_BUILT: _judge_with_slot,

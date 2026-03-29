@@ -112,28 +112,6 @@ def __getattr__(name: str):  # type: ignore[no-untyped-def]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def _load_injection_id(run_dir: Path) -> str | None:
-    """Load the agamemnon injection ID from disk, with backward-compat fallback.
-
-    Checks agamemnon_injection.json first, then maestro_injection.json for
-    runs that were checkpointed before the ADR-006 migration.
-
-    Args:
-        run_dir: Directory for the current run.
-
-    Returns:
-        The injection ID string, or None if no injection file is found.
-
-    """
-    for filename in ("agamemnon_injection.json", "maestro_injection.json"):
-        injection_file = run_dir / filename
-        if injection_file.exists():
-            data: dict[str, object] = json.loads(injection_file.read_text())
-            value = data.get("injection_id")
-            return str(value) if value is not None else None
-    return None
-
-
 def _restore_run_context(ctx: Any, current_state: str) -> None:
     """Restore RunContext fields from disk for resume from intermediate states.
 
@@ -151,12 +129,6 @@ def _restore_run_context(ctx: Any, current_state: str) -> None:
     from scylla.e2e.state_machine import is_at_or_past_state
 
     run_state = RunState(current_state)
-
-    # If past FAILURE_INJECTED, reload agamemnon_injection_id from disk
-    if is_at_or_past_state(run_state, RunState.FAILURE_INJECTED) and not is_at_or_past_state(
-        run_state, RunState.FAILURE_CLEARED
-    ):
-        ctx.agamemnon_injection_id = _load_injection_id(ctx.run_dir)
 
     # If past REPLAY_GENERATED, agent_result should be available on disk
     past_agent = is_at_or_past_state(run_state, RunState.AGENT_COMPLETE)
