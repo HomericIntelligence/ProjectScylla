@@ -21,7 +21,6 @@ from scylla.config.constants import (
     normalize_model_id,
 )
 from scylla.core.results import RunResultBase
-from scylla.maestro.models import MaestroConfig
 
 # Grade ordering for min/max calculations (F=worst, S=best)
 GRADE_ORDER: list[str] = ["F", "D", "C", "B", "A", "S"]
@@ -90,10 +89,10 @@ class RunState(str, Enum):
     The state machine advances through these states sequentially, saving the
     checkpoint after each transition to enable resume from any point.
 
-    Sequential states (18):
+    Sequential states (16):
       PENDING -> DIR_STRUCTURE_CREATED -> WORKTREE_CREATED -> SYMLINKS_APPLIED
       -> CONFIG_COMMITTED -> BASELINE_CAPTURED -> PROMPT_WRITTEN -> REPLAY_GENERATED
-      -> FAILURE_INJECTED -> AGENT_COMPLETE -> AGENT_CHANGES_COMMITTED -> FAILURE_CLEARED
+      -> AGENT_COMPLETE -> AGENT_CHANGES_COMMITTED
       -> DIFF_CAPTURED -> PROMOTED_TO_COMPLETED -> JUDGE_PIPELINE_RUN -> JUDGE_PROMPT_BUILT
       -> JUDGE_COMPLETE -> RUN_FINALIZED -> REPORT_WRITTEN -> CHECKPOINTED -> WORKTREE_CLEANED
     Terminal (2): FAILED | RATE_LIMITED
@@ -107,10 +106,8 @@ class RunState(str, Enum):
     BASELINE_CAPTURED = "baseline_captured"  # build pipeline baseline (first run only)
     PROMPT_WRITTEN = "prompt_written"  # task_prompt.md written, thinking keyword injected
     REPLAY_GENERATED = "replay_generated"  # adapter command built, replay.sh generated
-    FAILURE_INJECTED = "failure_injected"  # Maestro failure injected (no-op if disabled)
     AGENT_COMPLETE = "agent_complete"  # agent executed, outputs saved
     AGENT_CHANGES_COMMITTED = "agent_changes_committed"  # agent changes committed to branch
-    FAILURE_CLEARED = "failure_cleared"  # Maestro failure cleared (no-op if disabled)
     DIFF_CAPTURED = "diff_captured"  # git diff captured, workspace state saved
     PROMOTED_TO_COMPLETED = "promoted_to_completed"  # run dir moved to completed/
     JUDGE_PIPELINE_RUN = "judge_pipeline_run"  # build pipeline run on agent-modified workspace
@@ -847,8 +844,6 @@ class ExperimentConfig(BaseModel):
             (default: tiers_dir/../expected/criteria.md)
         rubric_file: Optional path to rubric.yaml
             (default: tiers_dir/../expected/rubric.yaml)
-        maestro_enabled: Enable maestro orchestration (default: False)
-        maestro_url: Maestro server URL (default: None)
 
     """
 
@@ -873,8 +868,6 @@ class ExperimentConfig(BaseModel):
     )
     criteria_file: Path | None = None  # Optional explicit path to criteria.md
     rubric_file: Path | None = None  # Optional explicit path to rubric.yaml
-    maestro_enabled: bool = False  # Enable maestro orchestration
-    maestro_url: str | None = None  # Maestro server URL
     # Ephemeral --until controls (not saved to experiment.json / not in config_hash)
     until_run_state: RunState | None = None
     until_tier_state: TierState | None = None
@@ -889,8 +882,6 @@ class ExperimentConfig(BaseModel):
     filter_runs: list[int] | None = None
     filter_statuses: list[str] | None = None
     filter_judge_slots: list[int] | None = None
-    # Maestro failure injection (optional, disabled by default)
-    maestro: MaestroConfig | None = None
     # Resource management (ephemeral, not saved to experiment.json)
     keep_failed_workspaces: bool = False  # Preserve workspaces for failed runs
     max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
@@ -925,9 +916,6 @@ class ExperimentConfig(BaseModel):
             "skip_agent_teams": self.skip_agent_teams,
             "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
-            "maestro_enabled": self.maestro_enabled,
-            "maestro_url": self.maestro_url,
-            **({"maestro": self.maestro.model_dump()} if self.maestro is not None else {}),
         }
 
     def save(self, path: Path) -> None:
@@ -964,9 +952,6 @@ class ExperimentConfig(BaseModel):
             skip_agent_teams=data.get("skip_agent_teams", False),
             thinking_mode=data.get("thinking_mode", "None"),
             use_containers=data.get("use_containers", False),
-            maestro_enabled=data.get("maestro_enabled", False),
-            maestro_url=data.get("maestro_url"),
-            maestro=MaestroConfig(**data["maestro"]) if data.get("maestro") else None,
         )
 
 

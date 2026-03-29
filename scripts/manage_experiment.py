@@ -118,17 +118,6 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Run agents/judges in Docker containers",
     )
-    parser.add_argument(
-        "--maestro-enabled",
-        action="store_true",
-        help="Enable maestro orchestration",
-    )
-    parser.add_argument(
-        "--maestro-url",
-        type=str,
-        default=None,
-        help="Maestro server URL (required when --maestro-enabled is set)",
-    )
     parser.add_argument("--model", type=str, default=DEFAULT_AGENT_MODEL, help="Primary model")
     parser.add_argument(
         "--judge-model", type=str, default=DEFAULT_JUDGE_MODEL, help="Model for judging"
@@ -721,8 +710,6 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 max_subtests=args.max_subtests,
                 skip_agent_teams=args.skip_agent_teams,
                 use_containers=args.use_containers,
-                maestro_enabled=args.maestro_enabled,
-                maestro_url=args.maestro_url,
                 thinking_mode=args.thinking or "None",
                 tiers_to_run=tier_ids,
                 until_run_state=until_run_state,
@@ -1024,10 +1011,6 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         logger.error("--commit is required (or set in test.yaml)")
         return 1
 
-    if args.maestro_enabled and not args.maestro_url:
-        logger.error("--maestro-url is required when --maestro-enabled is set")
-        return 1
-
     from scylla.config.constants import normalize_model_id
     from scylla.e2e.model_validation import validate_model
 
@@ -1150,8 +1133,6 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         max_subtests=args.max_subtests,
         skip_agent_teams=args.skip_agent_teams,
         use_containers=args.use_containers,
-        maestro_enabled=args.maestro_enabled,
-        maestro_url=args.maestro_url,
         thinking_mode=args.thinking or "None",
         tiers_to_run=tier_ids,
         until_run_state=until_run_state,

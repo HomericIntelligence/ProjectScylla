@@ -92,8 +92,6 @@ class TestBuildParser:
         assert args.filter_judge_slot is None
         assert args.threads == 4
         assert args.tests is None
-        assert args.maestro_enabled is False
-        assert args.maestro_url is None
 
     def test_repair_subcommand_requires_checkpoint_path(self) -> None:
         """'repair' subcommand requires a positional checkpoint_path argument."""
@@ -706,117 +704,6 @@ class TestCmdRunFromValidation:
         with patch("scylla.e2e.model_validation.validate_model", return_value=True):
             result = cmd_run(args)
         assert result == 1
-
-
-# ---------------------------------------------------------------------------
-# --maestro-enabled / --maestro-url flags
-# ---------------------------------------------------------------------------
-
-
-class TestMaestroFlags:
-    """Tests for --maestro-enabled and --maestro-url CLI flags."""
-
-    def test_run_accepts_maestro_enabled_flag(self) -> None:
-        """'run' subcommand accepts --maestro-enabled flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--maestro-enabled",
-            ]
-        )
-        assert args.maestro_enabled is True
-
-    def test_run_accepts_maestro_url_flag(self) -> None:
-        """'run' subcommand accepts --maestro-url flag."""
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--repo",
-                "https://github.com/test/repo",
-                "--commit",
-                "abc123",
-                "--maestro-url",
-                "http://maestro:8080",
-            ]
-        )
-        assert args.maestro_url == "http://maestro:8080"
-
-    def test_maestro_enabled_without_url_returns_1(self, tmp_path: Path) -> None:
-        """cmd_run returns exit code 1 when --maestro-enabled is set without --maestro-url."""
-        config_dir = tmp_path / "test-dir"
-        config_dir.mkdir()
-
-        import yaml
-
-        test_yaml = {
-            "task_repo": "https://github.com/test/repo",
-            "task_commit": "abc123",
-            "experiment_id": "test-exp",
-            "timeout_seconds": 3600,
-            "language": "python",
-        }
-        (config_dir / "test.yaml").write_text(yaml.dump(test_yaml))
-        (config_dir / "prompt.md").write_text("test prompt")
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--maestro-enabled",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with patch("scylla.e2e.model_validation.validate_model", return_value=True):
-            result = cmd_run(args)
-        assert result == 1
-
-    def test_maestro_enabled_with_url_passes_validation(self, tmp_path: Path) -> None:
-        """cmd_run does not fail validation when both --maestro-enabled and --maestro-url set."""
-        config_dir = tmp_path / "test-dir"
-        config_dir.mkdir()
-
-        import yaml
-
-        test_yaml = {
-            "task_repo": "https://github.com/test/repo",
-            "task_commit": "abc123",
-            "experiment_id": "test-exp",
-            "timeout_seconds": 3600,
-            "language": "python",
-        }
-        (config_dir / "test.yaml").write_text(yaml.dump(test_yaml))
-        (config_dir / "prompt.md").write_text("test prompt")
-
-        parser = build_parser()
-        args = parser.parse_args(
-            [
-                "run",
-                "--config",
-                str(config_dir),
-                "--maestro-enabled",
-                "--maestro-url",
-                "http://maestro:8080",
-            ]
-        )
-
-        from manage_experiment import cmd_run
-
-        with (
-            patch("scylla.e2e.model_validation.validate_model", return_value=True),
-            patch("scylla.e2e.runner.run_experiment", return_value={"T0": {}}),
-        ):
-            result = cmd_run(args)
-        assert result == 0
 
 
 # ---------------------------------------------------------------------------

@@ -17,11 +17,9 @@ StateMachine.advance_to_completion().
   CONFIG_COMMITTED         -> stage_capture_baseline()
   BASELINE_CAPTURED        -> stage_write_prompt()
   PROMPT_WRITTEN           -> stage_generate_replay()
-  REPLAY_GENERATED         -> stage_inject_failure()
-  FAILURE_INJECTED         -> stage_execute_agent()
+  REPLAY_GENERATED         -> stage_execute_agent()
   AGENT_COMPLETE           -> stage_commit_agent_changes()
-  AGENT_CHANGES_COMMITTED  -> stage_clear_failure()
-  FAILURE_CLEARED          -> stage_capture_diff()
+  AGENT_CHANGES_COMMITTED  -> stage_capture_diff()
   DIFF_CAPTURED            -> stage_promote_to_completed()
   PROMOTED_TO_COMPLETED    -> stage_run_judge_pipeline()
   JUDGE_PIPELINE_RUN       -> stage_build_judge_prompt()
@@ -205,9 +203,6 @@ class RunContext:
 
     # Resource management (shared across all runs in a batch)
     resource_manager: ResourceManager | None = None
-
-    # Maestro failure injection tracking
-    maestro_injection_id: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -493,76 +488,6 @@ def stage_generate_replay(ctx: RunContext) -> None:
     ctx.adapter_config = adapter_config
 
 
-def stage_inject_failure(ctx: RunContext) -> None:
-    """REPLAY_GENERATED -> FAILURE_INJECTED: Inject failure via Maestro API.
-
-    If Maestro is not configured or disabled, this is a no-op.
-    On MaestroError, logs a warning and continues (graceful degradation).
-
-    Args:
-        ctx: Run context (mutates ctx.maestro_injection_id)
-
-    """
-    if ctx.config.maestro is None or not ctx.config.maestro.enabled:
-        return
-
-    from scylla.maestro import FailureSpec, MaestroClient, MaestroError
-
-    try:
-        with MaestroClient(ctx.config.maestro) as client:
-            health = client.health_check()
-            if health is None:
-                logger.warning("Maestro API unreachable, skipping failure injection")
-                return
-
-            spec = FailureSpec(
-                agent_id=f"{ctx.tier_id.value}/{ctx.subtest.id}/run_{ctx.run_number:02d}",
-                failure_type="default",
-            )
-            result = client.inject_failure(spec)
-            ctx.maestro_injection_id = result.injection_id
-
-        # Persist injection_id for resume capability
-        injection_file = ctx.run_dir / "maestro_injection.json"
-        injection_file.write_text(json.dumps({"injection_id": ctx.maestro_injection_id}, indent=2))
-        logger.info(f"[MAESTRO] Injected failure: {ctx.maestro_injection_id}")
-    except MaestroError as e:
-        logger.warning(f"Maestro failure injection failed, continuing without injection: {e}")
-
-
-def stage_clear_failure(ctx: RunContext) -> None:
-    """AGENT_CHANGES_COMMITTED -> FAILURE_CLEARED: Clear injected failure via Maestro API.
-
-    If no injection was made (maestro_injection_id is None), this is a no-op.
-    On MaestroError, logs a warning and continues (graceful degradation).
-
-    Args:
-        ctx: Run context (clears ctx.maestro_injection_id)
-
-    """
-    if ctx.maestro_injection_id is None:
-        return
-
-    if ctx.config.maestro is None:
-        return
-
-    from scylla.maestro import MaestroClient, MaestroError
-
-    try:
-        with MaestroClient(ctx.config.maestro) as client:
-            client.clear_failure(ctx.maestro_injection_id)
-        logger.info(f"[MAESTRO] Cleared failure: {ctx.maestro_injection_id}")
-    except MaestroError as e:
-        logger.warning(f"Maestro failure cleanup failed: {e}")
-
-    # Remove injection tracking file
-    injection_file = ctx.run_dir / "maestro_injection.json"
-    if injection_file.exists():
-        injection_file.unlink()
-
-    ctx.maestro_injection_id = None
-
-
 def _kill_process_group(proc: subprocess.Popen[str]) -> None:
     """Kill a subprocess and its entire process group.
 
@@ -628,7 +553,7 @@ def _communicate_with_shutdown_check(
 
 
 def stage_execute_agent(ctx: RunContext) -> None:
-    """FAILURE_INJECTED -> AGENT_COMPLETE: Execute agent and save outputs.
+    """REPLAY_GENERATED -> AGENT_COMPLETE: Execute agent and save outputs.
 
     If ctx.agent_result is already set (resume), this is a no-op.
     Otherwise, runs via replay.sh and saves all agent artifacts.
@@ -881,7 +806,7 @@ def stage_promote_to_completed(ctx: RunContext) -> None:
 
 
 def stage_capture_diff(ctx: RunContext) -> None:
-    """FAILURE_CLEARED -> DIFF_CAPTURED: Capture workspace diff and state.
+    """AGENT_CHANGES_COMMITTED -> DIFF_CAPTURED: Capture workspace diff and state.
 
     Runs git diff/status to capture changes made by the agent.
     Saves diff data to ctx.diff_result for use by later stages.
@@ -1088,11 +1013,9 @@ def build_actions_dict(
         RunState.CONFIG_COMMITTED: lambda: stage_capture_baseline(ctx),
         RunState.BASELINE_CAPTURED: lambda: stage_write_prompt(ctx),
         RunState.PROMPT_WRITTEN: lambda: stage_generate_replay(ctx),
-        RunState.REPLAY_GENERATED: lambda: stage_inject_failure(ctx),
-        RunState.FAILURE_INJECTED: _agent_with_slot,
+        RunState.REPLAY_GENERATED: _agent_with_slot,
         RunState.AGENT_COMPLETE: lambda: stage_commit_agent_changes(ctx),
-        RunState.AGENT_CHANGES_COMMITTED: lambda: stage_clear_failure(ctx),
-        RunState.FAILURE_CLEARED: lambda: stage_capture_diff(ctx),
+        RunState.AGENT_CHANGES_COMMITTED: lambda: stage_capture_diff(ctx),
         RunState.DIFF_CAPTURED: lambda: stage_promote_to_completed(ctx),
         RunState.PROMOTED_TO_COMPLETED: lambda: stage_run_judge_pipeline(ctx),
         RunState.JUDGE_PIPELINE_RUN: lambda: stage_build_judge_prompt(ctx),
