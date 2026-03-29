@@ -739,9 +739,7 @@ class PRReviewer:
 
             # Phase 5: Learn (optional)
             if self.options.enable_learn and session_id:
-                self.status_tracker.update_slot(
-                    slot_id, f"#{issue_number}: PR #{pr_number} Learn"
-                )
+                self.status_tracker.update_slot(slot_id, f"#{issue_number}: PR #{pr_number} Learn")
                 with self.state_lock:
                     state.phase = ReviewPhase.LEARN
                 self._save_state(state)

@@ -285,8 +285,8 @@ class TestRunLearn:
 
             # Should log success with log file path
             assert mock_logger.info.call_count == 2
-            assert "Retrospective completed" in str(mock_logger.info.call_args_list[0])
-            assert "Retrospective log" in str(mock_logger.info.call_args_list[1])
+            assert "Learn completed" in str(mock_logger.info.call_args_list[0])
+            assert "Learn log" in str(mock_logger.info.call_args_list[1])
 
             # Should return True on success
             assert result is True
@@ -311,7 +311,7 @@ class TestRunLearn:
 
             # Should log warning
             mock_logger.warning.assert_called_once()
-            assert "Retrospective failed" in str(mock_logger.warning.call_args)
+            assert "Learn failed" in str(mock_logger.warning.call_args)
 
             # Should return False on failure
             assert result is False
@@ -407,9 +407,7 @@ class TestRunLearn:
         result = implementer._learn_needs_rerun(123)
         assert result is False
 
-    def test_rerun_failed_learns_finds_failures(
-        self, implementer: Any, tmp_path: Any
-    ) -> None:
+    def test_rerun_failed_learns_finds_failures(self, implementer: Any, tmp_path: Any) -> None:
         """Test _rerun_failed_learns re-runs failed retrospectives."""
         implementer.state_dir = tmp_path
 
@@ -468,9 +466,7 @@ class TestRunLearn:
             mock_retro.assert_not_called()
             assert results == {}
 
-    def test_old_state_without_learn_completed(
-        self, implementer: Any, tmp_path: Any
-    ) -> None:
+    def test_old_state_without_learn_completed(self, implementer: Any, tmp_path: Any) -> None:
         """Test backward compatibility for old JSON files without learn_completed."""
         # Simulate loading old state JSON that doesn't have learn_completed field
         old_state_json = """

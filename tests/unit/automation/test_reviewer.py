@@ -673,9 +673,7 @@ class TestReviewPR:
         # At least one saved state should be FAILED
         assert any(s.phase == ReviewPhase.FAILED for s in saved_states)
 
-    def test_learn_skipped_when_disabled(
-        self, reviewer: PRReviewer, tmp_path: Path
-    ) -> None:
+    def test_learn_skipped_when_disabled(self, reviewer: PRReviewer, tmp_path: Path) -> None:
         """Test that retrospective is not called when enable_learn=False."""
         reviewer.state_dir = tmp_path
 
@@ -707,9 +705,7 @@ class TestReviewPR:
 
         mock_retro.assert_not_called()
 
-    def test_learn_called_when_enabled(
-        self, mock_options: ReviewerOptions, tmp_path: Path
-    ) -> None:
+    def test_learn_called_when_enabled(self, mock_options: ReviewerOptions, tmp_path: Path) -> None:
         """Test retrospective is called when enable_learn=True and session_id exists."""
         mock_options.enable_learn = True
 

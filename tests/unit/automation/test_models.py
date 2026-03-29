@@ -118,7 +118,7 @@ class TestImplementationState:
             issue_number=123,
             phase=ImplementationPhase.LEARN,
         )
-        assert state.phase == ImplementationPhase.RETROSPECTIVE
+        assert state.phase == ImplementationPhase.LEARN
 
     def test_follow_up_issues_phase(self) -> None:
         """Test FOLLOW_UP_ISSUES phase in ImplementationPhase enum."""
