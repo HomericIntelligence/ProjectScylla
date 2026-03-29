@@ -571,6 +571,41 @@ class TestGetPatchfile:
 
         assert "(git diff timed out)" in patch_str
 
+    def test_patchfile_missing_workspace(self, tmp_path: Path) -> None:
+        """Missing workspace returns sentinel string without crashing."""
+        missing = tmp_path / "nonexistent"
+        patch_str = _get_patchfile(missing)
+        assert "workspace not found" in patch_str
+
+    def test_patchfile_falls_back_to_committed_diff(self, tmp_path: Path) -> None:
+        """When no staged/unstaged changes, falls back to committed diff (HEAD~1..HEAD)."""
+        # unstaged and staged both return empty stdout
+        mock_empty = MagicMock()
+        mock_empty.returncode = 0
+        mock_empty.stdout = ""
+
+        # committed diff returns real content
+        mock_committed = MagicMock()
+        mock_committed.returncode = 0
+        mock_committed.stdout = "diff --git a/foo.py b/foo.py\n+added line"
+
+        with patch("subprocess.run", side_effect=[mock_empty, mock_empty, mock_committed]):
+            patch_str = _get_patchfile(tmp_path)
+
+        assert "## Committed Changes" in patch_str
+        assert "+added line" in patch_str
+
+    def test_patchfile_no_committed_diff_when_all_empty(self, tmp_path: Path) -> None:
+        """When staged, unstaged, and committed diffs all empty, returns no-changes sentinel."""
+        mock_empty = MagicMock()
+        mock_empty.returncode = 0
+        mock_empty.stdout = ""
+
+        with patch("subprocess.run", return_value=mock_empty):
+            patch_str = _get_patchfile(tmp_path)
+
+        assert "(no changes detected)" in patch_str
+
 
 class TestGetDeletedFiles:
     """Tests for _get_deleted_files."""
