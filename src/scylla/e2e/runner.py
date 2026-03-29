@@ -545,6 +545,17 @@ class E2ERunner:
         """
         if self.experiment_dir is None:
             raise RuntimeError("experiment_dir must be set before aggregating tier results")
+
+        # Re-hydrate tier_results from disk if empty — occurs when ExperimentSM resumes
+        # from TIERS_COMPLETE+, which skips _action_exp_tiers_running.
+        if not tier_results and self.experiment_dir.exists():
+            from scylla.e2e.rehydrate import load_experiment_tier_results
+
+            rehydrated = load_experiment_tier_results(self.experiment_dir, self.config)
+            tier_results.update(rehydrated)
+            if rehydrated:
+                logger.info(f"Re-hydrated {len(rehydrated)} tier results from disk")
+
         result = self._aggregate_results(tier_results, start_time)
         self._save_final_results(result)
         self._generate_report(result)
@@ -707,6 +718,10 @@ class E2ERunner:
             return self._last_experiment_result
 
         # Fallback: aggregate from tier_results (e.g. resumed past TIERS_COMPLETE)
+        if not tier_results and self.experiment_dir and self.experiment_dir.exists():
+            from scylla.e2e.rehydrate import load_experiment_tier_results
+
+            tier_results.update(load_experiment_tier_results(self.experiment_dir, self.config))
         return self._aggregate_results(tier_results, start_time)
 
     def _setup_manager(self) -> ExperimentSetupManager:
@@ -842,7 +857,16 @@ class E2ERunner:
         # If stopped early, build a minimal partial TierResult from whatever was accumulated
         from functools import reduce
 
+        # Re-hydrate subtest_results from disk if empty — occurs when TierSM resumes
+        # past CONFIG_LOADED and tier_result was never set (e.g. stopped early).
         subtest_results = tier_ctx.subtest_results
+        if not subtest_results and self.experiment_dir:
+            tier_dir = self.experiment_dir / tier_id.value
+            if tier_dir.exists():
+                from scylla.e2e.rehydrate import load_tier_subtest_results
+
+                subtest_results = load_tier_subtest_results(tier_dir, tier_id)
+                tier_ctx.subtest_results = subtest_results
         selection = tier_ctx.selection
         end_time = datetime.now(timezone.utc)
         duration = (end_time - tier_ctx.start_time).total_seconds()
