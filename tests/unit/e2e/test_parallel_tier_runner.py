@@ -304,7 +304,7 @@ class TestSelectBestBaselineFromGroup:
         mock_tier_manager.get_baseline_for_subtest.assert_called_once_with(
             tier_id=TierID.T1,
             subtest_id="00",
-            results_dir=tmp_path / TierID.T1.value / "00",
+            results_dir=tmp_path / "completed" / TierID.T1.value / "00",
         )
 
 
@@ -347,7 +347,7 @@ class TestCreateBaselineFromTierResult:
         mock_tier_manager.get_baseline_for_subtest.assert_called_once_with(
             tier_id=TierID.T0,
             subtest_id="01",
-            results_dir=tmp_path / TierID.T0.value / "01",
+            results_dir=tmp_path / "completed" / TierID.T0.value / "01",
         )
 
     def test_raises_when_experiment_dir_is_none(self) -> None:

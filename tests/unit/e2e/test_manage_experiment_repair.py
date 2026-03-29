@@ -56,8 +56,8 @@ class TestCmdRepair:
 
     def test_repair_fills_completed_runs_from_run_result(self, tmp_path: Path) -> None:
         """cmd_repair rebuilds completed_runs[tier][subtest][run_num] from run_result.json."""
-        # Create directory structure
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
+        # Create directory structure under completed/ (promoted runs live here)
+        run_dir = tmp_path / "completed" / "T0" / "00-empty" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Write a passing run_result.json
@@ -87,7 +87,7 @@ class TestCmdRepair:
 
     def test_repair_marks_failed_run_correctly(self, tmp_path: Path) -> None:
         """cmd_repair marks runs with judge_passed=False as 'failed'."""
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
+        run_dir = tmp_path / "completed" / "T0" / "00-empty" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Write a failing run_result.json
@@ -130,9 +130,9 @@ class TestCmdRepair:
 
     def test_repair_processes_multiple_runs(self, tmp_path: Path) -> None:
         """cmd_repair processes all runs in run_states and returns 0."""
-        # Create two run directories
+        # Create two run directories under completed/ (promoted runs)
         for run_num in [1, 2]:
-            run_dir = tmp_path / "T0" / "00-empty" / f"run_{run_num:02d}"
+            run_dir = tmp_path / "completed" / "T0" / "00-empty" / f"run_{run_num:02d}"
             run_dir.mkdir(parents=True)
             (run_dir / "run_result.json").write_text(
                 json.dumps({"judge_passed": run_num == 1})  # run 1 passes, run 2 fails
@@ -191,7 +191,7 @@ class TestCmdRepairEdgeCases:
 
     def test_repair_skips_existing_completed_run(self, tmp_path: Path) -> None:
         """cmd_repair does not overwrite an existing completed_runs entry."""
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
+        run_dir = tmp_path / "completed" / "T0" / "00-empty" / "run_01"
         run_dir.mkdir(parents=True)
 
         # run_result.json says failed, but checkpoint already has it as passed
@@ -217,7 +217,7 @@ class TestCmdRepairEdgeCases:
 
     def test_repair_handles_corrupt_run_result_json(self, tmp_path: Path) -> None:
         """cmd_repair continues past a corrupt run_result.json without crashing."""
-        run_dir = tmp_path / "T0" / "00-empty" / "run_01"
+        run_dir = tmp_path / "completed" / "T0" / "00-empty" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Write invalid JSON

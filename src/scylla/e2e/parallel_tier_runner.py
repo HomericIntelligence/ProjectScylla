@@ -165,7 +165,11 @@ class ParallelTierRunner:
             raise RuntimeError(
                 "experiment_dir must be set before getting baseline for previous tier"
             )
-        subtest_dir = self.experiment_dir / tier_id.value / tier_result.best_subtest
+        from scylla.e2e.paths import get_subtest_dir
+
+        subtest_dir = get_subtest_dir(
+            self.experiment_dir, tier_id.value, tier_result.best_subtest, completed=True
+        )
         return self.tier_manager.get_baseline_for_subtest(
             tier_id=tier_id,
             subtest_id=tier_result.best_subtest,

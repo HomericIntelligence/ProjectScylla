@@ -716,9 +716,12 @@ class TierManager:
         failed_tier_ids: list[str] = []
 
         for tier_id in inherit_from_tiers:
-            # 1. Load tier result.json to get best_subtest
-            result_file = experiment_dir / tier_id.value / "result.json"
-            best_subtest_file = experiment_dir / tier_id.value / "best_subtest.json"
+            # 1. Load tier result.json to get best_subtest (from completed/ phase dir)
+            from scylla.e2e.paths import get_subtest_dir, get_tier_dir
+
+            completed_tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
+            result_file = completed_tier_dir / "result.json"
+            best_subtest_file = completed_tier_dir / "best_subtest.json"
 
             best_subtest_id = None
             if result_file.exists():
@@ -739,13 +742,13 @@ class TierManager:
                 failed_tier_ids.append(tier_id.value)
                 continue
 
-            # 2. Load config_manifest.json from best subtest
-            manifest_file = (
-                experiment_dir / tier_id.value / best_subtest_id / "config_manifest.json"
-            )
+            # 2. Load config_manifest.json from best subtest (under completed/ phase dir)
+            manifest_file = get_subtest_dir(
+                experiment_dir, tier_id.value, best_subtest_id, completed=True
+            ) / "config_manifest.json"
             if not manifest_file.exists():
                 # Best subtest failed before manifest was written — find an alternative
-                tier_dir = experiment_dir / tier_id.value
+                tier_dir = completed_tier_dir
                 alternative = None
                 for subdir in sorted(tier_dir.iterdir()):
                     candidate = subdir / "config_manifest.json"

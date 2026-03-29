@@ -423,11 +423,18 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
 
     corrected = 0
 
+    from scylla.e2e.paths import get_run_dir
+
     for tier_id, subtests in checkpoint.run_states.items():
         for subtest_id, runs in subtests.items():
             for run_num_str, current_state in list(runs.items()):
                 run_num = int(run_num_str)
-                run_dir = experiment_dir / tier_id / subtest_id / f"run_{run_num:02d}"
+                # Check completed/ first (promoted runs), then in_progress/ (active runs)
+                run_dir = get_run_dir(experiment_dir, tier_id, subtest_id, run_num, completed=True)
+                if not run_dir.exists():
+                    run_dir = get_run_dir(
+                        experiment_dir, tier_id, subtest_id, run_num, completed=False
+                    )
 
                 if not run_dir.exists():
                     continue
@@ -1260,14 +1267,20 @@ def cmd_repair(args: argparse.Namespace) -> int:
     checkpoint = load_checkpoint(checkpoint_path)
     experiment_dir = Path(checkpoint.experiment_dir)
 
+    from scylla.e2e.paths import get_run_dir
+
     fixed_count = 0
     for tier_id in checkpoint.run_states:
         for subtest_id in checkpoint.run_states[tier_id]:
             for run_num_str in checkpoint.run_states[tier_id][subtest_id]:
                 run_num = int(run_num_str)
-                run_result_path = (
-                    experiment_dir / tier_id / subtest_id / f"run_{run_num:02d}" / "run_result.json"
-                )
+                # Check completed/ first, then in_progress/ (run may be in either)
+                run_dir = get_run_dir(experiment_dir, tier_id, subtest_id, run_num, completed=True)
+                if not run_dir.exists():
+                    run_dir = get_run_dir(
+                        experiment_dir, tier_id, subtest_id, run_num, completed=False
+                    )
+                run_result_path = run_dir / "run_result.json"
                 if run_result_path.exists():
                     try:
                         result_data = json.loads(run_result_path.read_text())
