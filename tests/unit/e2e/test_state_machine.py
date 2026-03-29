@@ -150,13 +150,25 @@ class TestValidateTransition:
         """Verify FAILURE_INJECTED to AGENT_COMPLETE is a valid transition."""
         assert validate_transition(RunState.FAILURE_INJECTED, RunState.AGENT_COMPLETE)
 
-    def test_valid_transition_agent_complete_to_failure_cleared(self) -> None:
-        """Verify AGENT_COMPLETE to FAILURE_CLEARED is a valid transition."""
-        assert validate_transition(RunState.AGENT_COMPLETE, RunState.FAILURE_CLEARED)
+    def test_valid_transition_agent_complete_to_agent_changes_committed(self) -> None:
+        """Verify AGENT_COMPLETE to AGENT_CHANGES_COMMITTED is a valid transition."""
+        assert validate_transition(RunState.AGENT_COMPLETE, RunState.AGENT_CHANGES_COMMITTED)
+
+    def test_valid_transition_agent_changes_committed_to_failure_cleared(self) -> None:
+        """Verify AGENT_CHANGES_COMMITTED to FAILURE_CLEARED is a valid transition."""
+        assert validate_transition(RunState.AGENT_CHANGES_COMMITTED, RunState.FAILURE_CLEARED)
 
     def test_valid_transition_failure_cleared_to_diff_captured(self) -> None:
         """Verify FAILURE_CLEARED to DIFF_CAPTURED is a valid transition."""
         assert validate_transition(RunState.FAILURE_CLEARED, RunState.DIFF_CAPTURED)
+
+    def test_valid_transition_diff_captured_to_promoted_to_completed(self) -> None:
+        """Verify DIFF_CAPTURED to PROMOTED_TO_COMPLETED is a valid transition."""
+        assert validate_transition(RunState.DIFF_CAPTURED, RunState.PROMOTED_TO_COMPLETED)
+
+    def test_valid_transition_promoted_to_completed_to_judge_pipeline_run(self) -> None:
+        """Verify PROMOTED_TO_COMPLETED to JUDGE_PIPELINE_RUN is a valid transition."""
+        assert validate_transition(RunState.PROMOTED_TO_COMPLETED, RunState.JUDGE_PIPELINE_RUN)
 
     def test_invalid_transition_skips_state(self) -> None:
         """Verify skipping states is an invalid transition."""

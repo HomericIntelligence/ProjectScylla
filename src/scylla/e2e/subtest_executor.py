@@ -505,6 +505,19 @@ class SubTestExecutor:
 
                 # Check if already in a terminal state (fully complete or previously failed)
                 if sm and sm.is_complete(tier_id.value, subtest.id, run_num):
+                    # Completed runs are promoted to completed/ — check there first
+                    if experiment_dir is not None:
+                        from scylla.e2e.paths import get_run_dir
+
+                        completed_run_dir = get_run_dir(
+                            experiment_dir,
+                            tier_id.value,
+                            subtest.id,
+                            run_num,
+                            completed=True,
+                        )
+                        if completed_run_dir.exists():
+                            run_dir = completed_run_dir
                     run_result_file = run_dir / "run_result.json"
                     if run_dir.exists() and run_result_file.exists():
                         from scylla.e2e.rate_limit import validate_run_result

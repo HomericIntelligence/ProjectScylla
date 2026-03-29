@@ -293,12 +293,14 @@ class TestLoadExperimentTierResults:
         assert result == mock_tier_results
 
     def test_loads_from_real_run_data(self, tmp_path: Path) -> None:
-        """Integration: loads tier results from actual run_result.json files."""
+        """Integration: loads tier results from actual run_result.json files in completed/."""
         config = MagicMock()
         config.judge_models = ["claude-haiku-4-5"]
 
-        # Create a run_result.json under T0/00/run_01/
-        _write_run_result(tmp_path / "T0" / "00" / "run_01", run_number=1, judge_score=0.9)
+        # Create a run_result.json under completed/T0/00/run_01/ (new structure)
+        _write_run_result(
+            tmp_path / "completed" / "T0" / "00" / "run_01", run_number=1, judge_score=0.9
+        )
 
         result = load_experiment_tier_results(tmp_path, config)
 

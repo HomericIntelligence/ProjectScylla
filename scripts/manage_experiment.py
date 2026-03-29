@@ -258,6 +258,13 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Filter to specific test IDs (batch mode)",
     )
+    # Scheduling arguments
+    parser.add_argument(
+        "--off-peak",
+        action="store_true",
+        default=False,
+        help="Wait for off-peak API hours before each subtest (avoids 8AM-2PM ET weekdays)",
+    )
     # Resource management arguments
     parser.add_argument(
         "--keep-failed-workspaces",
@@ -411,8 +418,10 @@ def _reconcile_checkpoint_with_disk(checkpoint: Any, experiment_dir: Path) -> in
         "replay_generated",
         "failure_injected",
         "agent_complete",
+        "agent_changes_committed",
         "failure_cleared",
         "diff_captured",
+        "promoted_to_completed",
         "judge_pipeline_run",
         "judge_prompt_built",
         "judge_complete",
@@ -727,6 +736,7 @@ def _run_batch(test_dirs: list[Path], args: argparse.Namespace) -> int:
                 filter_runs=args.filter_run,
                 filter_statuses=args.filter_status,
                 filter_judge_slots=args.filter_judge_slot,
+                off_peak=args.off_peak,
                 keep_failed_workspaces=args.keep_failed_workspaces,
                 max_concurrent_workspaces=args.max_concurrent_workspaces,
                 max_concurrent_agents=args.max_concurrent_agents,
@@ -1155,6 +1165,7 @@ def cmd_run(args: argparse.Namespace) -> int:  # CLI dispatch with many command 
         filter_runs=args.filter_run,
         filter_statuses=args.filter_status,
         filter_judge_slots=args.filter_judge_slot,
+        off_peak=args.off_peak,
         keep_failed_workspaces=args.keep_failed_workspaces,
         max_concurrent_workspaces=args.max_concurrent_workspaces,
         max_concurrent_agents=args.max_concurrent_agents,

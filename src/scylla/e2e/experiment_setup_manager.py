@@ -60,6 +60,12 @@ class ExperimentSetupManager:
         experiment_dir = self.results_base_dir / f"{timestamp}-{self.config.experiment_id}"
         experiment_dir.mkdir(parents=True, exist_ok=True)
 
+        # Create phase directories for run lifecycle management
+        from scylla.e2e.paths import COMPLETED_DIR, IN_PROGRESS_DIR
+
+        (experiment_dir / IN_PROGRESS_DIR).mkdir(exist_ok=True)
+        (experiment_dir / COMPLETED_DIR).mkdir(exist_ok=True)
+
         # Create config directory
         (experiment_dir / "config").mkdir(exist_ok=True)
 

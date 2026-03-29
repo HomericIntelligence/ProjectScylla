@@ -152,7 +152,7 @@ class TestSaveTierResult:
         ):
             writer.save_tier_result(TierID.T0, result)
 
-        result_file = tmp_path / TierID.T0.value / RESULT_FILE
+        result_file = tmp_path / "completed" / TierID.T0.value / RESULT_FILE
         assert result_file.exists()
         data = json.loads(result_file.read_text())
         assert data["tier_id"] == "T0"
@@ -171,7 +171,7 @@ class TestSaveTierResult:
         ):
             writer.save_tier_result(TierID.T0, result)
 
-        assert (tmp_path / TierID.T0.value).is_dir()
+        assert (tmp_path / "completed" / TierID.T0.value).is_dir()
 
     def test_writes_summary_md(self, tmp_path: Path) -> None:
         """save_tier_result writes summary.md."""
@@ -188,7 +188,7 @@ class TestSaveTierResult:
         ):
             writer.save_tier_result(TierID.T0, result)
 
-        summary_file = tmp_path / TierID.T0.value / "summary.md"
+        summary_file = tmp_path / "completed" / TierID.T0.value / "summary.md"
         assert summary_file.exists()
         assert summary_file.read_text() == "summary_content"
 

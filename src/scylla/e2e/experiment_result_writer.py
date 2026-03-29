@@ -75,7 +75,9 @@ class ExperimentResultWriter:
 
         """
         if self.experiment_dir:
-            tier_dir = self.experiment_dir / tier_id.value
+            from scylla.e2e.paths import get_tier_dir
+
+            tier_dir = get_tier_dir(self.experiment_dir, tier_id.value, completed=True)
             tier_dir.mkdir(parents=True, exist_ok=True)
 
             # Save detailed result

@@ -120,7 +120,9 @@ class TierActionBuilder:
 
             if experiment_dir is None:
                 raise RuntimeError("experiment_dir must be set before loading tier config")
-            tier_dir = experiment_dir / tier_id.value
+            from scylla.e2e.paths import get_tier_dir
+
+            tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=False)
             tier_dir.mkdir(parents=True, exist_ok=True)
 
             tier_ctx.tier_config = tier_config
@@ -157,15 +159,21 @@ class TierActionBuilder:
 
             # Re-hydrate subtest_results from disk if empty — occurs when TierSM resumes
             # from SUBTESTS_RUNNING+, which skips action_config_loaded.
-            if not tier_ctx.subtest_results and tier_ctx.tier_dir.exists():
+            # Rehydration reads from completed/ since runs are promoted after diff capture.
+            if experiment_dir is not None and not tier_ctx.subtest_results:
+                from scylla.e2e.paths import get_tier_dir
                 from scylla.e2e.rehydrate import load_tier_subtest_results
 
-                tier_ctx.subtest_results = load_tier_subtest_results(tier_ctx.tier_dir, tier_id)
-                if tier_ctx.subtest_results:
-                    logger.info(
-                        f"Re-hydrated {len(tier_ctx.subtest_results)} subtest results "
-                        f"from disk for {tier_id.value}"
+                completed_tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
+                if completed_tier_dir.exists():
+                    tier_ctx.subtest_results = load_tier_subtest_results(
+                        completed_tier_dir, tier_id
                     )
+                    if tier_ctx.subtest_results:
+                        logger.info(
+                            f"Re-hydrated {len(tier_ctx.subtest_results)} subtest results "
+                            f"from disk for {tier_id.value}"
+                        )
 
             subtest_results = tier_ctx.subtest_results
 
@@ -182,7 +190,15 @@ class TierActionBuilder:
                     else f"Highest median score ({selection.winning_score:.3f})"
                 )
 
-            save_selection(selection, str(tier_ctx.tier_dir / "best_subtest.json"))
+            # Save best_subtest.json to completed/ tier dir (where results live)
+            if experiment_dir is not None:
+                from scylla.e2e.paths import get_tier_dir
+
+                completed_tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
+                completed_tier_dir.mkdir(parents=True, exist_ok=True)
+                save_selection(selection, str(completed_tier_dir / "best_subtest.json"))
+            else:
+                save_selection(selection, str(tier_ctx.tier_dir / "best_subtest.json"))
             tier_ctx.selection = selection
 
         def action_subtests_complete() -> None:
@@ -191,21 +207,29 @@ class TierActionBuilder:
             # Re-hydrate subtest_results and selection from disk if empty — occurs when
             # TierSM resumes from SUBTESTS_COMPLETE+, which skips action_config_loaded
             # and action_subtests_running.
-            if (
-                not tier_ctx.subtest_results
-                and tier_ctx.tier_dir is not None
-                and tier_ctx.tier_dir.exists()
-            ):
+            # Rehydration reads from completed/ since runs are promoted after diff capture.
+            if experiment_dir is not None and not tier_ctx.subtest_results:
+                from scylla.e2e.paths import get_tier_dir
                 from scylla.e2e.rehydrate import load_tier_subtest_results
 
-                tier_ctx.subtest_results = load_tier_subtest_results(tier_ctx.tier_dir, tier_id)
-                if tier_ctx.subtest_results:
-                    logger.info(
-                        f"Re-hydrated {len(tier_ctx.subtest_results)} subtest results "
-                        f"from disk for {tier_id.value}"
+                completed_tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
+                if completed_tier_dir.exists():
+                    tier_ctx.subtest_results = load_tier_subtest_results(
+                        completed_tier_dir, tier_id
                     )
+                    if tier_ctx.subtest_results:
+                        logger.info(
+                            f"Re-hydrated {len(tier_ctx.subtest_results)} subtest results "
+                            f"from disk for {tier_id.value}"
+                        )
 
-            if tier_ctx.selection is None and tier_ctx.tier_dir is not None:
+            if tier_ctx.selection is None and experiment_dir is not None:
+                from scylla.e2e.paths import get_tier_dir
+                from scylla.e2e.rehydrate import load_tier_selection
+
+                completed_tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
+                tier_ctx.selection = load_tier_selection(completed_tier_dir)
+            elif tier_ctx.selection is None and tier_ctx.tier_dir is not None:
                 from scylla.e2e.rehydrate import load_tier_selection
 
                 tier_ctx.selection = load_tier_selection(tier_ctx.tier_dir)

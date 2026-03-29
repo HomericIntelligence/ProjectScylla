@@ -825,7 +825,11 @@ class E2ERunner:
                 ]
             tier_ctx.tier_config = _resume_tier_config
             if self.experiment_dir:
-                tier_ctx.tier_dir = self.experiment_dir / tier_id.value
+                from scylla.e2e.paths import get_tier_dir
+
+                tier_ctx.tier_dir = get_tier_dir(
+                    self.experiment_dir, tier_id.value, completed=False
+                )
 
         actions = self._build_tier_actions(
             tier_id=tier_id,
@@ -836,7 +840,9 @@ class E2ERunner:
         # Filesystem cross-validation on resume
         _tier_current = tsm.get_state(tier_id.value)
         if _tier_current == TierState.SUBTESTS_COMPLETE and self.experiment_dir:
-            tier_dir = self.experiment_dir / tier_id.value
+            from scylla.e2e.paths import get_tier_dir
+
+            tier_dir = get_tier_dir(self.experiment_dir, tier_id.value, completed=True)
             run_results = list(tier_dir.rglob("run_result.json")) if tier_dir.exists() else []
             if not run_results:
                 logger.warning(
@@ -861,10 +867,11 @@ class E2ERunner:
         # past CONFIG_LOADED and tier_result was never set (e.g. stopped early).
         subtest_results = tier_ctx.subtest_results
         if not subtest_results and self.experiment_dir:
-            tier_dir = self.experiment_dir / tier_id.value
-            if tier_dir.exists():
-                from scylla.e2e.rehydrate import load_tier_subtest_results
+            from scylla.e2e.paths import get_tier_dir
+            from scylla.e2e.rehydrate import load_tier_subtest_results
 
+            tier_dir = get_tier_dir(self.experiment_dir, tier_id.value, completed=True)
+            if tier_dir.exists():
                 subtest_results = load_tier_subtest_results(tier_dir, tier_id)
                 tier_ctx.subtest_results = subtest_results
         selection = tier_ctx.selection

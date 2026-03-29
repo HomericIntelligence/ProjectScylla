@@ -4,26 +4,28 @@ This module provides a state machine that advances a single run through
 discrete, resumable states. Each transition saves a checkpoint, enabling
 resume from any point after a crash or kill signal.
 
-State flow for a single run (18 sequential states):
+State flow for a single run (20 sequential states):
   PENDING
-    -> DIR_STRUCTURE_CREATED  (create run_NN/, agent/, judge/ dirs)
-    -> WORKTREE_CREATED        (git worktree add)
-    -> SYMLINKS_APPLIED        (tier resources symlinked to workspace)
-    -> CONFIG_COMMITTED        (CLAUDE.md, settings.json, git commit)
-    -> BASELINE_CAPTURED       (build pipeline baseline, first run only)
-    -> PROMPT_WRITTEN          (task_prompt.md written, thinking keyword injected)
-    -> REPLAY_GENERATED        (adapter command built, replay.sh generated)
-    -> FAILURE_INJECTED        (Maestro failure injected, no-op if disabled)
-    -> AGENT_COMPLETE          (agent executed, outputs saved)
-    -> FAILURE_CLEARED         (Maestro failure cleared, no-op if disabled)
-    -> DIFF_CAPTURED           (git diff captured, workspace state saved)
-    -> JUDGE_PIPELINE_RUN      (build pipeline run on agent-modified workspace)
-    -> JUDGE_PROMPT_BUILT      (full judge prompt assembled)
-    -> JUDGE_COMPLETE          (judge executed, consensus, results saved)
-    -> RUN_FINALIZED           (RunResult built, run_result.json saved)
-    -> REPORT_WRITTEN          (report.md and report.json generated)
-    -> CHECKPOINTED            (checkpoint saved)
-    -> WORKTREE_CLEANED        (worktree removed)
+    -> DIR_STRUCTURE_CREATED    (create run_NN/, agent/, judge/ dirs)
+    -> WORKTREE_CREATED          (git worktree add)
+    -> SYMLINKS_APPLIED          (tier resources symlinked to workspace)
+    -> CONFIG_COMMITTED          (CLAUDE.md, settings.json, git commit)
+    -> BASELINE_CAPTURED         (build pipeline baseline, first run only)
+    -> PROMPT_WRITTEN            (task_prompt.md written, thinking keyword injected)
+    -> REPLAY_GENERATED          (adapter command built, replay.sh generated)
+    -> FAILURE_INJECTED          (Maestro failure injected, no-op if disabled)
+    -> AGENT_COMPLETE            (agent executed, outputs saved)
+    -> AGENT_CHANGES_COMMITTED   (agent changes committed to worktree branch)
+    -> FAILURE_CLEARED           (Maestro failure cleared, no-op if disabled)
+    -> DIFF_CAPTURED             (git diff captured, workspace state saved)
+    -> PROMOTED_TO_COMPLETED     (run dir moved from in_progress/ to completed/)
+    -> JUDGE_PIPELINE_RUN        (build pipeline run on agent-modified workspace)
+    -> JUDGE_PROMPT_BUILT        (full judge prompt assembled)
+    -> JUDGE_COMPLETE            (judge executed, consensus, results saved)
+    -> RUN_FINALIZED             (RunResult built, run_result.json saved)
+    -> REPORT_WRITTEN            (report.md and report.json generated)
+    -> CHECKPOINTED              (checkpoint saved)
+    -> WORKTREE_CLEANED          (worktree removed)
   Terminal: FAILED | RATE_LIMITED
 """
 
@@ -56,8 +58,10 @@ _RUN_STATE_SEQUENCE: list[RunState] = [
     RunState.REPLAY_GENERATED,
     RunState.FAILURE_INJECTED,
     RunState.AGENT_COMPLETE,
+    RunState.AGENT_CHANGES_COMMITTED,
     RunState.FAILURE_CLEARED,
     RunState.DIFF_CAPTURED,
+    RunState.PROMOTED_TO_COMPLETED,
     RunState.JUDGE_PIPELINE_RUN,
     RunState.JUDGE_PROMPT_BUILT,
     RunState.JUDGE_COMPLETE,
@@ -157,6 +161,11 @@ TRANSITION_REGISTRY: list[StateTransition] = [
     ),
     StateTransition(
         from_state=RunState.AGENT_COMPLETE,
+        to_state=RunState.AGENT_CHANGES_COMMITTED,
+        description="Commit agent changes to worktree branch",
+    ),
+    StateTransition(
+        from_state=RunState.AGENT_CHANGES_COMMITTED,
         to_state=RunState.FAILURE_CLEARED,
         description="Clear injected failure via Maestro API",
     ),
@@ -167,6 +176,11 @@ TRANSITION_REGISTRY: list[StateTransition] = [
     ),
     StateTransition(
         from_state=RunState.DIFF_CAPTURED,
+        to_state=RunState.PROMOTED_TO_COMPLETED,
+        description="Move run directory from in_progress/ to completed/",
+    ),
+    StateTransition(
+        from_state=RunState.PROMOTED_TO_COMPLETED,
         to_state=RunState.JUDGE_PIPELINE_RUN,
         description="Run build pipeline on agent-modified workspace",
     ),

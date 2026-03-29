@@ -258,7 +258,7 @@ class TestActionPending:
         actions[TierState.PENDING]()
 
         assert tier_ctx.tier_dir is not None
-        assert tier_ctx.tier_dir == tmp_path / TierID.T0.value
+        assert tier_ctx.tier_dir == tmp_path / "in_progress" / TierID.T0.value
         assert tier_ctx.tier_dir.exists()
 
     def test_limits_subtests_when_max_subtests_set(self, tmp_path: Path) -> None:
@@ -681,11 +681,12 @@ class TestActionSubtestsRunningRehydratesWhenEmpty:
         from scylla.e2e.judge_selection import JudgeSelection
         from scylla.e2e.models import SubTestResult
 
-        tier_dir = tmp_path / "T0"
-        _write_run_result_file(tier_dir / "00" / "run_01", run_number=1, judge_score=0.9)
+        # Results live under completed/ — rehydration scans there
+        completed_tier_dir = tmp_path / "completed" / "T0"
+        _write_run_result_file(completed_tier_dir / "00" / "run_01", run_number=1, judge_score=0.9)
 
         tier_ctx = TierContext()
-        tier_ctx.tier_dir = tier_dir
+        tier_ctx.tier_dir = tmp_path / "in_progress" / "T0"
         tier_ctx.subtest_results = {}  # empty — simulates resume from SUBTESTS_RUNNING
 
         builder = _make_builder(tier_ctx=tier_ctx, experiment_dir=tmp_path)
