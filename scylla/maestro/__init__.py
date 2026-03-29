@@ -1,25 +1,20 @@
-"""AI Maestro REST API integration.
+"""DEPRECATED: Use scylla.agamemnon instead (ADR-006).
 
-This module provides an HTTP client for communicating with the AI Maestro
-service to inject failures into agents during E2E evaluation runs.
+All symbols re-exported for backward compatibility.
 """
 
-from scylla.maestro.client import MaestroClient as MaestroClient
-from scylla.maestro.errors import MaestroAPIError as MaestroAPIError
-from scylla.maestro.errors import MaestroConnectionError as MaestroConnectionError
-from scylla.maestro.errors import MaestroError as MaestroError
-from scylla.maestro.models import FailureSpec as FailureSpec
-from scylla.maestro.models import HealthResponse as HealthResponse
-from scylla.maestro.models import InjectionResult as InjectionResult
-from scylla.maestro.models import MaestroConfig as MaestroConfig
+from scylla.agamemnon import AgamemnonAPIError as AgamemnonAPIError
+from scylla.agamemnon import AgamemnonClient as AgamemnonClient
+from scylla.agamemnon import AgamemnonConfig as AgamemnonConfig
+from scylla.agamemnon import AgamemnonConnectionError as AgamemnonConnectionError
+from scylla.agamemnon import AgamemnonError as AgamemnonError
+from scylla.agamemnon import FailureSpec as FailureSpec
+from scylla.agamemnon import HealthResponse as HealthResponse
+from scylla.agamemnon import InjectionResult as InjectionResult
 
-__all__ = [
-    "FailureSpec",
-    "HealthResponse",
-    "InjectionResult",
-    "MaestroAPIError",
-    "MaestroClient",
-    "MaestroConfig",
-    "MaestroConnectionError",
-    "MaestroError",
-]
+# Backward-compat aliases (ADR-006)
+MaestroAPIError = AgamemnonAPIError
+MaestroClient = AgamemnonClient
+MaestroConfig = AgamemnonConfig
+MaestroConnectionError = AgamemnonConnectionError
+MaestroError = AgamemnonError

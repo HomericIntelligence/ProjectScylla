@@ -293,7 +293,10 @@ class Planner:
             return response
 
         except subprocess.CalledProcessError as e:
-            stderr = e.stderr if e.stderr else ""
+            import time
+
+            stderr = e.stderr.strip() if e.stderr else ""
+            stdout = e.stdout.strip() if e.stdout else ""
 
             # Check for rate limit
             is_rate_limited, reset_epoch = detect_rate_limit(stderr)
@@ -301,11 +304,7 @@ class Planner:
                 if reset_epoch > 0:
                     wait_until(reset_epoch, "Claude API rate limit")
                 else:
-                    # No reset time, wait a bit
-                    import time
-
                     time.sleep(5)
-                # Retry with decremented counter
                 return self._call_claude(
                     prompt,
                     max_retries=max_retries - 1,
@@ -313,7 +312,25 @@ class Planner:
                     extra_args=extra_args,
                 )
 
-            raise RuntimeError(f"Claude failed: {stderr}") from e
+            # Generic retry with backoff for transient failures (empty stderr,
+            # connection errors, API outages)
+            if max_retries > 0:
+                delay = 5 * (4 - max_retries)  # 5s, 10s, 15s
+                detail = stderr or stdout or "no output"
+                logger.warning(
+                    f"Claude call failed (rc={e.returncode}, retries left={max_retries},"
+                    f" delay={delay}s): {detail}"
+                )
+                time.sleep(delay)
+                return self._call_claude(
+                    prompt,
+                    max_retries=max_retries - 1,
+                    timeout=timeout,
+                    extra_args=extra_args,
+                )
+
+            error_detail = stderr or stdout or f"exit code {e.returncode}"
+            raise RuntimeError(f"Claude failed (rc={e.returncode}): {error_detail}") from e
 
         except subprocess.TimeoutExpired as e:
             raise RuntimeError(f"Claude timed out after {timeout}s") from e

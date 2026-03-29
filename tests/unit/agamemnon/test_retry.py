@@ -1,4 +1,4 @@
-"""Tests for MaestroClient retry logic.
+"""Tests for AgamemnonClient retry logic.
 
 Verifies that transient failures (connection errors, timeouts, HTTP 502/503/504)
 are retried with exponential backoff, while permanent errors (4xx) raise immediately.
@@ -10,16 +10,16 @@ from unittest.mock import MagicMock, call, patch
 import httpx
 import pytest
 
-from scylla.maestro.client import MaestroClient
-from scylla.maestro.errors import MaestroAPIError, MaestroConnectionError
-from scylla.maestro.models import FailureSpec, MaestroConfig
+from scylla.agamemnon.client import AgamemnonClient
+from scylla.agamemnon.errors import AgamemnonAPIError, AgamemnonConnectionError
+from scylla.agamemnon.models import AgamemnonConfig, FailureSpec
 
 
 @pytest.fixture
-def retry_config() -> MaestroConfig:
+def retry_config() -> AgamemnonConfig:
     """Config with 3 retries for retry tests."""
-    return MaestroConfig(
-        base_url="http://localhost:23000",
+    return AgamemnonConfig(
+        base_url="http://localhost:8080",
         enabled=True,
         timeout_seconds=5,
         health_check_timeout_seconds=2,
@@ -50,7 +50,7 @@ class TestRetryOnTransientErrors:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """ConnectError on first attempt, success on second."""
         mock_http = mock_client_cls.return_value
@@ -59,7 +59,7 @@ class TestRetryOnTransientErrors:
             _mock_response(json_data=[]),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
         result = client.list_agents()
 
@@ -73,7 +73,7 @@ class TestRetryOnTransientErrors:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """TimeoutException on first attempt, success on second."""
         mock_http = mock_client_cls.return_value
@@ -82,7 +82,7 @@ class TestRetryOnTransientErrors:
             _mock_response(json_data=[]),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
         result = client.list_agents()
 
@@ -95,7 +95,7 @@ class TestRetryOnTransientErrors:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """RemoteProtocolError on first attempt, success on second."""
         mock_http = mock_client_cls.return_value
@@ -104,7 +104,7 @@ class TestRetryOnTransientErrors:
             _mock_response(json_data=[]),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
         result = client.list_agents()
 
@@ -118,7 +118,7 @@ class TestRetryOnTransientErrors:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
         status_code: int,
     ) -> None:
         """HTTP 502/503/504 on first attempt, success on second."""
@@ -128,7 +128,7 @@ class TestRetryOnTransientErrors:
             _mock_response(json_data=[]),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
         result = client.list_agents()
 
@@ -146,16 +146,16 @@ class TestRetryExhaustion:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
-        """Raises MaestroConnectionError after max_retries+1 ConnectErrors."""
+        """Raises AgamemnonConnectionError after max_retries+1 ConnectErrors."""
         mock_http = mock_client_cls.return_value
         mock_http.request.side_effect = httpx.ConnectError("refused")
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
-        with pytest.raises(MaestroConnectionError, match="after 4 attempts"):
+        with pytest.raises(AgamemnonConnectionError, match="after 4 attempts"):
             client.list_agents()
 
         assert mock_http.request.call_count == 4  # 1 initial + 3 retries
@@ -167,16 +167,16 @@ class TestRetryExhaustion:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
-        """Raises MaestroAPIError after max_retries+1 502s."""
+        """Raises AgamemnonAPIError after max_retries+1 502s."""
         mock_http = mock_client_cls.return_value
         mock_http.request.return_value = _mock_response(status_code=502, text="Bad Gateway")
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
-        with pytest.raises(MaestroAPIError) as exc_info:
+        with pytest.raises(AgamemnonAPIError) as exc_info:
             client.list_agents()
 
         assert exc_info.value.status_code == 502
@@ -193,7 +193,7 @@ class TestNoRetryOnPermanentErrors:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
         status_code: int,
     ) -> None:
         """4xx errors raise immediately without retry."""
@@ -202,10 +202,10 @@ class TestNoRetryOnPermanentErrors:
             status_code=status_code, text="Client Error"
         )
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
-        with pytest.raises(MaestroAPIError) as exc_info:
+        with pytest.raises(AgamemnonAPIError) as exc_info:
             client.list_agents()
 
         assert exc_info.value.status_code == status_code
@@ -218,7 +218,7 @@ class TestNoRetryOnPermanentErrors:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """HTTP 500 is not in the retryable set — raises immediately."""
         mock_http = mock_client_cls.return_value
@@ -226,10 +226,10 @@ class TestNoRetryOnPermanentErrors:
             status_code=500, text="Internal Server Error"
         )
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
-        with pytest.raises(MaestroAPIError) as exc_info:
+        with pytest.raises(AgamemnonAPIError) as exc_info:
             client.list_agents()
 
         assert exc_info.value.status_code == 500
@@ -246,16 +246,16 @@ class TestRetryBackoff:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """Delays follow 1s, 2s, 4s exponential pattern."""
         mock_http = mock_client_cls.return_value
         mock_http.request.side_effect = httpx.ConnectError("refused")
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
-        with pytest.raises(MaestroConnectionError):
+        with pytest.raises(AgamemnonConnectionError):
             client.list_agents()
 
         assert mock_sleep.call_args_list == [
@@ -274,7 +274,7 @@ class TestRetryLogging:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """Each retry attempt logs a WARNING with attempt info."""
@@ -284,7 +284,7 @@ class TestRetryLogging:
             _mock_response(json_data=[]),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
         import logging
@@ -303,7 +303,7 @@ class TestRetryLogging:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
         caplog: pytest.LogCaptureFixture,
     ) -> None:
         """HTTP 502 retry logs a WARNING with status code."""
@@ -313,7 +313,7 @@ class TestRetryLogging:
             _mock_response(json_data=[]),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
         import logging
@@ -336,18 +336,18 @@ class TestRetryConfig:
         mock_sleep: MagicMock,
     ) -> None:
         """With max_retries=0, errors raise immediately."""
-        config = MaestroConfig(
-            base_url="http://localhost:23000",
+        config = AgamemnonConfig(
+            base_url="http://localhost:8080",
             enabled=True,
             max_retries=0,
         )
         mock_http = mock_client_cls.return_value
         mock_http.request.side_effect = httpx.ConnectError("refused")
 
-        client = MaestroClient(config)
+        client = AgamemnonClient(config)
         client._client = mock_http
 
-        with pytest.raises(MaestroConnectionError):
+        with pytest.raises(AgamemnonConnectionError):
             client.list_agents()
 
         assert mock_http.request.call_count == 1
@@ -361,18 +361,18 @@ class TestRetryConfig:
         mock_sleep: MagicMock,
     ) -> None:
         """With max_retries=1, only 1 retry is attempted."""
-        config = MaestroConfig(
-            base_url="http://localhost:23000",
+        config = AgamemnonConfig(
+            base_url="http://localhost:8080",
             enabled=True,
             max_retries=1,
         )
         mock_http = mock_client_cls.return_value
         mock_http.request.side_effect = httpx.ConnectError("refused")
 
-        client = MaestroClient(config)
+        client = AgamemnonClient(config)
         client._client = mock_http
 
-        with pytest.raises(MaestroConnectionError):
+        with pytest.raises(AgamemnonConnectionError):
             client.list_agents()
 
         assert mock_http.request.call_count == 2  # 1 initial + 1 retry
@@ -388,7 +388,7 @@ class TestRetryWithPublicMethods:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """inject_failure retries on transient errors."""
         mock_http = mock_client_cls.return_value
@@ -397,7 +397,7 @@ class TestRetryWithPublicMethods:
             _mock_response(json_data={"injection_id": "inj-001", "status": "active"}),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
         spec = FailureSpec(agent_id="agent-1", failure_type="crash")
@@ -412,7 +412,7 @@ class TestRetryWithPublicMethods:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """clear_failure retries on transient errors."""
         mock_http = mock_client_cls.return_value
@@ -421,7 +421,7 @@ class TestRetryWithPublicMethods:
             _mock_response(json_data={}),
         ]
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
         client.clear_failure("inj-001")
@@ -433,13 +433,13 @@ class TestRetryWithPublicMethods:
         self,
         mock_client_cls: MagicMock,
         mock_sleep: MagicMock,
-        retry_config: MaestroConfig,
+        retry_config: AgamemnonConfig,
     ) -> None:
         """health_check retries internally before returning None."""
         mock_http = mock_client_cls.return_value
         mock_http.request.side_effect = httpx.ConnectError("refused")
 
-        client = MaestroClient(retry_config)
+        client = AgamemnonClient(retry_config)
         client._client = mock_http
 
         result = client.health_check()

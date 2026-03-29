@@ -15,13 +15,13 @@ from typing import Any
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from scylla.agamemnon.models import AgamemnonConfig
 from scylla.config.constants import (
     DEFAULT_AGENT_MODEL,
     DEFAULT_JUDGE_MODEL,
     normalize_model_id,
 )
 from scylla.core.results import RunResultBase
-from scylla.maestro.models import MaestroConfig
 
 # Grade ordering for min/max calculations (F=worst, S=best)
 GRADE_ORDER: list[str] = ["F", "D", "C", "B", "A", "S"]
@@ -845,8 +845,8 @@ class ExperimentConfig(BaseModel):
             (default: tiers_dir/../expected/criteria.md)
         rubric_file: Optional path to rubric.yaml
             (default: tiers_dir/../expected/rubric.yaml)
-        maestro_enabled: Enable maestro orchestration (default: False)
-        maestro_url: Maestro server URL (default: None)
+        maestro_enabled: Enable maestro orchestration (default: False) [DEPRECATED]
+        maestro_url: Maestro server URL (default: None) [DEPRECATED]
 
     """
 
@@ -887,8 +887,10 @@ class ExperimentConfig(BaseModel):
     filter_runs: list[int] | None = None
     filter_statuses: list[str] | None = None
     filter_judge_slots: list[int] | None = None
-    # Maestro failure injection (optional, disabled by default)
-    maestro: MaestroConfig | None = None
+    # Agamemnon chaos failure injection (optional, disabled by default)
+    agamemnon: AgamemnonConfig | None = None
+    # Backward-compat alias: maps old `maestro` field to `agamemnon`
+    maestro: AgamemnonConfig | None = None
     # Resource management (ephemeral, not saved to experiment.json)
     keep_failed_workspaces: bool = False  # Preserve workspaces for failed runs
     max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
@@ -924,7 +926,7 @@ class ExperimentConfig(BaseModel):
             "use_containers": self.use_containers,
             "maestro_enabled": self.maestro_enabled,
             "maestro_url": self.maestro_url,
-            **({"maestro": self.maestro.model_dump()} if self.maestro is not None else {}),
+            **({"agamemnon": self.agamemnon.model_dump()} if self.agamemnon is not None else {}),
         }
 
     def save(self, path: Path) -> None:
@@ -963,7 +965,14 @@ class ExperimentConfig(BaseModel):
             use_containers=data.get("use_containers", False),
             maestro_enabled=data.get("maestro_enabled", False),
             maestro_url=data.get("maestro_url"),
-            maestro=MaestroConfig(**data["maestro"]) if data.get("maestro") else None,
+            agamemnon=(
+                AgamemnonConfig(**data["agamemnon"])
+                if data.get("agamemnon")
+                # backward compat: load from old "maestro" key if "agamemnon" absent
+                else AgamemnonConfig(**data["maestro"])
+                if data.get("maestro")
+                else None
+            ),
         )
 
 

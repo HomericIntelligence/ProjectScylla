@@ -358,23 +358,23 @@ The Reporter generates output artifacts from evaluation results.
 | `scorecard.json` | Tier comparison scorecard |
 | `report.md` | Human-readable Markdown report |
 
-### 4.7 Maestro Client (Optional)
+### 4.7 Agamemnon Chaos Client (Optional)
 
-The Maestro Client provides optional fault-injection capabilities for
-the Odysseus agent mesh. It is fully opt-in and disabled by default.
+The Agamemnon Chaos Client provides optional fault-injection capabilities for
+the ProjectAgamemnon/ProjectCharybdis agent mesh. It is fully opt-in and
+disabled by default. (ADR-006: migrated from ai-maestro.)
 
-**Location**: `scylla/maestro/`
+**Location**: `scylla/agamemnon/` (deprecated stubs remain in `scylla/maestro/`)
 
 **Module Structure**:
 
 | File | Purpose |
 |------|---------|
-| `client.py` | Synchronous HTTP client (`MaestroClient`) |
-| `async_client.py` | Asynchronous HTTP client (`AsyncMaestroClient`) |
+| `client.py` | Synchronous HTTP client (`AgamemnonClient`) |
 | `models.py` | Configuration and data models |
 | `errors.py` | Exception hierarchy |
 
-**Client Interface** (`MaestroClient`):
+**Client Interface** (`AgamemnonClient`):
 
 | Method | Return Type | Description |
 |--------|-------------|-------------|
@@ -384,22 +384,28 @@ the Odysseus agent mesh. It is fully opt-in and disabled by default.
 | `get_diagnostics()` | `dict[str, Any]` | Retrieve diagnostic information |
 | `list_agents()` | `list[dict[str, Any]]` | List all registered agents |
 
-Both `MaestroClient` (sync) and `AsyncMaestroClient` (async) implement
-the same interface and support context-manager usage.
-
-**Configuration** (`MaestroConfig`):
+**Configuration** (`AgamemnonConfig`):
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `base_url` | `str` | `http://localhost:23000` | Maestro REST API base URL |
+| `base_url` | `str` | `http://localhost:8080` | Agamemnon chaos API base URL |
 | `enabled` | `bool` | `False` | Whether integration is active |
 | `timeout_seconds` | `int` | `10` | Timeout for mutation requests (1-300) |
 | `health_check_timeout_seconds` | `int` | `5` | Timeout for health checks (1-60) |
 | `max_retries` | `int` | `3` | Retry attempts for transient failures (0-10) |
 
-Configured via the `maestro` field on `ExperimentConfig` (type
-`MaestroConfig | None`). When `None` or `enabled: false`, all
-maestro stages are no-ops.
+Configured via the `agamemnon` field on `ExperimentConfig` (type
+`AgamemnonConfig | None`). When `None` or `enabled: false`, all
+chaos injection stages are no-ops.
+
+**API Endpoints** (Agamemnon `/v1/chaos/*`):
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/health` | GET | Health check |
+| `/v1/agents` | GET | List agents |
+| `/v1/chaos/inject` | POST | Inject failure |
+| `/v1/chaos/inject/{id}` | DELETE | Clear failure |
 
 **Data Models**:
 
@@ -412,9 +418,9 @@ maestro stages are no-ops.
 **Error Hierarchy**:
 
 ```
-MaestroError (base)
-├── MaestroConnectionError   — network failures, timeouts
-└── MaestroAPIError          — non-2xx HTTP responses (status_code, response_body)
+AgamemnonError (base)
+├── AgamemnonConnectionError   — network failures, timeouts
+└── AgamemnonAPIError          — non-2xx HTTP responses (status_code, response_body)
 ```
 
 **Retry Strategy**: Transient failures (connection errors, timeouts,
@@ -425,7 +431,7 @@ factor, up to `max_retries` attempts).
 
 - **Opt-in**: Disabled by default; zero behavioral change when unconfigured
 - **Graceful degradation**: All stages log warnings and continue on API errors
-- **Resumable**: Injection ID persisted to `maestro_injection.json` for
+- **Resumable**: Injection ID persisted to `agamemnon_injection.json` for
   checkpoint/resume support
 
 ---
@@ -454,8 +460,8 @@ Test Case (YAML)
         |
         v
 +- - - - - - - - - +
-: Inject Failure   :-----> (optional) Maestro fault injection
-: [FAILURE_INJECTED]:      Persists maestro_injection.json
+: Inject Failure   :-----> (optional) Agamemnon chaos fault injection
+: [FAILURE_INJECTED]:      Persists agamemnon_injection.json
 +- - - - - - - - - +
         |
         v
@@ -465,8 +471,8 @@ Test Case (YAML)
         |
         v
 +- - - - - - - - - +
-: Clear Failure    :-----> (optional) Maestro failure clearing
-: [FAILURE_CLEARED]:       Deletes maestro_injection.json
+: Clear Failure    :-----> (optional) Agamemnon chaos failure clearing
+: [FAILURE_CLEARED]:       Deletes agamemnon_injection.json
 +- - - - - - - - - +
         |
         v
@@ -482,18 +488,18 @@ Test Case (YAML)
 
 **Input**: `test.yaml`, tier definitions from `tests/claude-code/shared/tiers.yaml`
 
-**Process**: Docker isolation, optional fault injection via Maestro,
+**Process**: Docker isolation, optional fault injection via Agamemnon/ProjectCharybdis,
 adapter invocation, failure clearing, metric collection
 
 **Output**: Modified workspace, execution logs, raw metrics
 
-**Maestro Stages** (optional, dashed boxes above):
+**Agamemnon Chaos Stages** (optional, dashed boxes above):
 
 The `stage_inject_failure` and `stage_clear_failure` stages bracket the
-adapter invocation. They are no-ops when Maestro is unconfigured or
+adapter invocation. They are no-ops when Agamemnon is unconfigured or
 disabled. On API errors, both stages log warnings and continue
 (graceful degradation). The injection ID is persisted to
-`maestro_injection.json` in the run directory to support
+`agamemnon_injection.json` in the run directory to support
 checkpoint/resume — if a run resumes between `FAILURE_INJECTED` and
 `FAILURE_CLEARED`, the injection ID is restored from disk so the
 failure can be properly cleared.
@@ -618,11 +624,11 @@ ProjectScylla/
             cline.py                    # Cline adapter
             opencode.py                 # OpenCode adapter
             goose.py                    # Goose adapter
-        maestro/                        # Fault injection client (optional)
+        agamemnon/                      # Chaos fault injection client (optional)
             client.py                   # Synchronous HTTP client
-            async_client.py             # Asynchronous HTTP client
-            models.py                   # MaestroConfig, FailureSpec, etc.
-            errors.py                   # MaestroError hierarchy
+            models.py                   # AgamemnonConfig, FailureSpec, etc.
+            errors.py                   # AgamemnonError hierarchy
+        maestro/                        # DEPRECATED: re-exports from agamemnon/ (ADR-006)
         judge/                          # Claude + Opus evaluation
             rubric.py                   # Rubric parser
             prompts/                    # Judge prompt templates
@@ -713,11 +719,10 @@ The framework tests across 7 tiers of increasing complexity:
 - **Git**: Repository cloning and version control
 - **Claude API**: Judge evaluation via Opus 4.5
 - **Agent CLIs**: Claude Code, Codex, Cline, OpenCode
-- **Maestro API** (optional): Fault injection for the Odysseus agent
-  mesh. Default endpoint `http://localhost:23000`. API routes used:
-  `/api/v1/health`, `/api/agents/inject`, `/api/agents/inject/{id}`,
-  `/api/agents`, `/api/diagnostics`. Enabled via
-  `ExperimentConfig.maestro`
+- **Agamemnon/ProjectCharybdis chaos API** (optional): Fault injection for the
+  agent mesh. Default endpoint `http://localhost:8080`. API routes used:
+  `/v1/health`, `/v1/chaos/inject`, `/v1/chaos/inject/{id}`,
+  `/v1/agents`. Enabled via `ExperimentConfig.agamemnon`
 
 ### 9.2 Configuration Hierarchy
 

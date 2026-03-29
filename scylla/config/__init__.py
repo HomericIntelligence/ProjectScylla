@@ -19,6 +19,7 @@ from .constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL, normalize_model
 from .loader import ConfigLoader
 from .models import (
     AdaptersConfig,
+    AgamemnonConfig,
     CleanupConfig,
     ConfigurationError,
     DefaultsConfig,
@@ -53,6 +54,7 @@ __all__ = [
     "DEFAULT_JUDGE_MODEL",
     "MODEL_PRICING",
     "AdaptersConfig",
+    "AgamemnonConfig",
     "CleanupConfig",
     "ConfigLoader",
     "ConfigurationError",

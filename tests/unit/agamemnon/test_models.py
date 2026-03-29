@@ -1,23 +1,22 @@
-"""Tests for scylla.maestro.models."""
+"""Tests for scylla.agamemnon.models."""
 
 import pytest
 from pydantic import ValidationError
 
-from scylla.maestro.models import (
+from scylla.agamemnon.models import (
+    AgamemnonConfig,
     FailureSpec,
     HealthResponse,
     InjectionResult,
-    MaestroConfig,
 )
 
 
-class TestMaestroConfig:
-    """Tests for MaestroConfig defaults and validation."""
+class TestAgamemnonConfig:
+    """Tests for AgamemnonConfig defaults and validation."""
 
     def test_defaults(self) -> None:
         """Default config is disabled with localhost URL."""
-        config = MaestroConfig()
-        # MaestroConfig is now an alias for AgamemnonConfig (ADR-006)
+        config = AgamemnonConfig()
         assert config.base_url == "http://localhost:8080"
         assert config.enabled is False
         assert config.timeout_seconds == 10
@@ -25,13 +24,13 @@ class TestMaestroConfig:
 
     def test_custom_values(self) -> None:
         """Custom values override defaults."""
-        config = MaestroConfig(
-            base_url="http://maestro.example.com:8080",
+        config = AgamemnonConfig(
+            base_url="http://agamemnon.example.com:8080",
             enabled=True,
             timeout_seconds=30,
             health_check_timeout_seconds=3,
         )
-        assert config.base_url == "http://maestro.example.com:8080"
+        assert config.base_url == "http://agamemnon.example.com:8080"
         assert config.enabled is True
         assert config.timeout_seconds == 30
         assert config.health_check_timeout_seconds == 3
@@ -39,17 +38,17 @@ class TestMaestroConfig:
     def test_timeout_minimum(self) -> None:
         """Timeout must be >= 1."""
         with pytest.raises(ValidationError):
-            MaestroConfig(timeout_seconds=0)
+            AgamemnonConfig(timeout_seconds=0)
 
     def test_timeout_maximum(self) -> None:
         """Timeout must be <= 300."""
         with pytest.raises(ValidationError):
-            MaestroConfig(timeout_seconds=301)
+            AgamemnonConfig(timeout_seconds=301)
 
     def test_health_check_timeout_maximum(self) -> None:
         """Health check timeout must be <= 60."""
         with pytest.raises(ValidationError):
-            MaestroConfig(health_check_timeout_seconds=61)
+            AgamemnonConfig(health_check_timeout_seconds=61)
 
 
 class TestFailureSpec:

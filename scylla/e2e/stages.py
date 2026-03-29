@@ -204,8 +204,18 @@ class RunContext:
     # Resource management (shared across all runs in a batch)
     resource_manager: ResourceManager | None = None
 
-    # Maestro failure injection tracking
-    maestro_injection_id: str | None = None
+    # Agamemnon chaos failure injection tracking
+    agamemnon_injection_id: str | None = None
+
+    @property
+    def maestro_injection_id(self) -> str | None:
+        """Backward-compat alias for agamemnon_injection_id (ADR-006)."""
+        return self.agamemnon_injection_id
+
+    @maestro_injection_id.setter
+    def maestro_injection_id(self, value: str | None) -> None:
+        """Backward-compat alias setter for agamemnon_injection_id (ADR-006)."""
+        self.agamemnon_injection_id = value
 
 
 # ---------------------------------------------------------------------------
@@ -492,25 +502,25 @@ def stage_generate_replay(ctx: RunContext) -> None:
 
 
 def stage_inject_failure(ctx: RunContext) -> None:
-    """REPLAY_GENERATED -> FAILURE_INJECTED: Inject failure via Maestro API.
+    """REPLAY_GENERATED -> FAILURE_INJECTED: Inject failure via Agamemnon chaos API.
 
-    If Maestro is not configured or disabled, this is a no-op.
-    On MaestroError, logs a warning and continues (graceful degradation).
+    If Agamemnon is not configured or disabled, this is a no-op.
+    On AgamemnonError, logs a warning and continues (graceful degradation).
 
     Args:
-        ctx: Run context (mutates ctx.maestro_injection_id)
+        ctx: Run context (mutates ctx.agamemnon_injection_id)
 
     """
-    if ctx.config.maestro is None or not ctx.config.maestro.enabled:
+    if ctx.config.agamemnon is None or not ctx.config.agamemnon.enabled:
         return
 
-    from scylla.maestro import FailureSpec, MaestroClient, MaestroError
+    from scylla.agamemnon import AgamemnonClient, AgamemnonError, FailureSpec
 
     try:
-        with MaestroClient(ctx.config.maestro) as client:
+        with AgamemnonClient(ctx.config.agamemnon) as client:
             health = client.health_check()
             if health is None:
-                logger.warning("Maestro API unreachable, skipping failure injection")
+                logger.warning("Agamemnon API unreachable, skipping failure injection")
                 return
 
             spec = FailureSpec(
@@ -518,47 +528,49 @@ def stage_inject_failure(ctx: RunContext) -> None:
                 failure_type="default",
             )
             result = client.inject_failure(spec)
-            ctx.maestro_injection_id = result.injection_id
+            ctx.agamemnon_injection_id = result.injection_id
 
         # Persist injection_id for resume capability
-        injection_file = ctx.run_dir / "maestro_injection.json"
-        injection_file.write_text(json.dumps({"injection_id": ctx.maestro_injection_id}, indent=2))
-        logger.info(f"[MAESTRO] Injected failure: {ctx.maestro_injection_id}")
-    except MaestroError as e:
-        logger.warning(f"Maestro failure injection failed, continuing without injection: {e}")
+        injection_file = ctx.run_dir / "agamemnon_injection.json"
+        injection_file.write_text(
+            json.dumps({"injection_id": ctx.agamemnon_injection_id}, indent=2)
+        )
+        logger.info(f"[AGAMEMNON] Injected failure: {ctx.agamemnon_injection_id}")
+    except AgamemnonError as e:
+        logger.warning(f"Agamemnon failure injection failed, continuing without injection: {e}")
 
 
 def stage_clear_failure(ctx: RunContext) -> None:
-    """AGENT_COMPLETE -> FAILURE_CLEARED: Clear injected failure via Maestro API.
+    """AGENT_COMPLETE -> FAILURE_CLEARED: Clear injected failure via Agamemnon chaos API.
 
-    If no injection was made (maestro_injection_id is None), this is a no-op.
-    On MaestroError, logs a warning and continues (graceful degradation).
+    If no injection was made (agamemnon_injection_id is None), this is a no-op.
+    On AgamemnonError, logs a warning and continues (graceful degradation).
 
     Args:
-        ctx: Run context (clears ctx.maestro_injection_id)
+        ctx: Run context (clears ctx.agamemnon_injection_id)
 
     """
-    if ctx.maestro_injection_id is None:
+    if ctx.agamemnon_injection_id is None:
         return
 
-    if ctx.config.maestro is None:
+    if ctx.config.agamemnon is None:
         return
 
-    from scylla.maestro import MaestroClient, MaestroError
+    from scylla.agamemnon import AgamemnonClient, AgamemnonError
 
     try:
-        with MaestroClient(ctx.config.maestro) as client:
-            client.clear_failure(ctx.maestro_injection_id)
-        logger.info(f"[MAESTRO] Cleared failure: {ctx.maestro_injection_id}")
-    except MaestroError as e:
-        logger.warning(f"Maestro failure cleanup failed: {e}")
+        with AgamemnonClient(ctx.config.agamemnon) as client:
+            client.clear_failure(ctx.agamemnon_injection_id)
+        logger.info(f"[AGAMEMNON] Cleared failure: {ctx.agamemnon_injection_id}")
+    except AgamemnonError as e:
+        logger.warning(f"Agamemnon failure cleanup failed: {e}")
 
     # Remove injection tracking file
-    injection_file = ctx.run_dir / "maestro_injection.json"
+    injection_file = ctx.run_dir / "agamemnon_injection.json"
     if injection_file.exists():
         injection_file.unlink()
 
-    ctx.maestro_injection_id = None
+    ctx.agamemnon_injection_id = None
 
 
 def _kill_process_group(proc: subprocess.Popen[str]) -> None:

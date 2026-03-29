@@ -1,9 +1,9 @@
-"""Integration tests for MaestroClient using httpx.MockTransport.
+"""Integration tests for AgamemnonClient using httpx.MockTransport.
 
 These tests exercise full HTTP request/response cycles through the real
 ``httpx.Client`` internals — URL construction, header handling, JSON
 serialization and deserialization, and error response handling — without
-requiring a live Maestro instance.
+requiring a live Agamemnon instance.
 """
 
 from __future__ import annotations
@@ -15,13 +15,13 @@ from typing import Any
 import httpx
 import pytest
 
-from scylla.maestro.client import MaestroClient
-from scylla.maestro.errors import MaestroAPIError
-from scylla.maestro.models import (
+from scylla.agamemnon.client import AgamemnonClient
+from scylla.agamemnon.errors import AgamemnonAPIError
+from scylla.agamemnon.models import (
+    AgamemnonConfig,
     FailureSpec,
     HealthResponse,
     InjectionResult,
-    MaestroConfig,
 )
 
 pytestmark = pytest.mark.integration
@@ -75,7 +75,7 @@ class TestURLConstruction:
     )
     def test_url_and_method(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
         method_name: str,
         method_args: list[Any],
         expected_http_method: str,
@@ -107,7 +107,7 @@ class TestURLConstruction:
 
     def test_trailing_slash_stripped(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """Trailing slash on base_url does not cause double-slash in paths."""
         captured: list[httpx.Request] = []
@@ -117,11 +117,11 @@ class TestURLConstruction:
             return _json_response(data={"status": "ok"})
 
         # Override config to have trailing slash
-        config = MaestroConfig(
+        config = AgamemnonConfig(
             base_url="http://testserver/",
             enabled=True,
         )
-        client = MaestroClient(config)
+        client = AgamemnonClient(config)
         client._client = httpx.Client(
             transport=httpx.MockTransport(handler),
             base_url=config.base_url.rstrip("/"),
@@ -145,7 +145,7 @@ class TestHeaderHandling:
 
     def test_post_sends_json_content_type(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """POST requests include a JSON content-type header."""
         captured: list[httpx.Request] = []
@@ -164,7 +164,7 @@ class TestHeaderHandling:
 
     def test_get_does_not_send_json_body(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """GET requests do not include a JSON request body."""
         captured: list[httpx.Request] = []
@@ -181,7 +181,7 @@ class TestHeaderHandling:
 
     def test_user_agent_present(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """Requests include a User-Agent header (httpx default)."""
         captured: list[httpx.Request] = []
@@ -207,7 +207,7 @@ class TestJSONSerialization:
 
     def test_basic_failure_spec_payload(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """inject_failure sends the correct JSON body for a basic spec."""
         captured: list[httpx.Request] = []
@@ -229,7 +229,7 @@ class TestJSONSerialization:
 
     def test_duration_included_when_set(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """duration_seconds appears in payload only when provided."""
         captured: list[httpx.Request] = []
@@ -251,7 +251,7 @@ class TestJSONSerialization:
 
     def test_duration_absent_when_none(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """duration_seconds is omitted from payload when not set."""
         captured: list[httpx.Request] = []
@@ -269,7 +269,7 @@ class TestJSONSerialization:
 
     def test_custom_parameters_serialized(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """Custom parameters dict is preserved in the JSON payload."""
         captured: list[httpx.Request] = []
@@ -301,7 +301,7 @@ class TestJSONDeserialization:
 
     def test_health_check_returns_health_response(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """health_check returns a HealthResponse with correct fields."""
 
@@ -317,7 +317,7 @@ class TestJSONDeserialization:
 
     def test_list_agents_returns_list(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """list_agents returns a list of dicts matching the JSON array."""
         agents = [
@@ -335,7 +335,7 @@ class TestJSONDeserialization:
 
     def test_inject_failure_returns_injection_result(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """inject_failure returns an InjectionResult with correct fields."""
 
@@ -352,7 +352,7 @@ class TestJSONDeserialization:
 
     def test_get_diagnostics_returns_dict(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """get_diagnostics returns a dict matching the JSON response."""
         diag = {"uptime": 3600, "agents_active": 5}
@@ -367,7 +367,7 @@ class TestJSONDeserialization:
 
     def test_list_agents_null_coerced_to_empty_list(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """Null JSON response from list_agents is coerced to empty list."""
 
@@ -383,7 +383,7 @@ class TestJSONDeserialization:
 
     def test_get_diagnostics_null_coerced_to_empty_dict(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """Null JSON response from get_diagnostics is coerced to empty dict."""
 
@@ -416,20 +416,20 @@ class TestErrorResponses:
         ],
         ids=["400", "404", "500", "503"],
     )
-    def test_non_2xx_raises_maestro_api_error(
+    def test_non_2xx_raises_agamemnon_api_error(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
         status_code: int,
         body_text: str,
     ) -> None:
-        """Non-2xx responses raise MaestroAPIError with correct attributes."""
+        """Non-2xx responses raise AgamemnonAPIError with correct attributes."""
 
         def handler(request: httpx.Request) -> httpx.Response:
             return _json_response(status_code=status_code, text=body_text)
 
         client = make_client(handler)
 
-        with pytest.raises(MaestroAPIError) as exc_info:
+        with pytest.raises(AgamemnonAPIError) as exc_info:
             client.list_agents()
 
         assert exc_info.value.status_code == status_code
@@ -437,7 +437,7 @@ class TestErrorResponses:
 
     def test_health_check_returns_none_on_error(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """health_check swallows errors and returns None for non-2xx."""
 
@@ -451,9 +451,9 @@ class TestErrorResponses:
 
     def test_error_on_inject_failure(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
-        """inject_failure raises MaestroAPIError on server error."""
+        """inject_failure raises AgamemnonAPIError on server error."""
 
         def handler(request: httpx.Request) -> httpx.Response:
             return _json_response(status_code=422, text="Unprocessable Entity")
@@ -461,23 +461,23 @@ class TestErrorResponses:
         client = make_client(handler)
         spec = FailureSpec(agent_id="a1", failure_type="crash")
 
-        with pytest.raises(MaestroAPIError) as exc_info:
+        with pytest.raises(AgamemnonAPIError) as exc_info:
             client.inject_failure(spec)
 
         assert exc_info.value.status_code == 422
 
     def test_error_on_clear_failure(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
-        """clear_failure raises MaestroAPIError on 404."""
+        """clear_failure raises AgamemnonAPIError on 404."""
 
         def handler(request: httpx.Request) -> httpx.Response:
             return _json_response(status_code=404, text="Not Found")
 
         client = make_client(handler)
 
-        with pytest.raises(MaestroAPIError) as exc_info:
+        with pytest.raises(AgamemnonAPIError) as exc_info:
             client.clear_failure("nonexistent")
 
         assert exc_info.value.status_code == 404
@@ -493,17 +493,17 @@ class TestClientLifecycle:
 
     def test_context_manager_works_with_mock_transport(
         self,
-        maestro_config: MaestroConfig,
+        agamemnon_config: AgamemnonConfig,
     ) -> None:
         """Client works as a context manager with MockTransport."""
 
         def handler(request: httpx.Request) -> httpx.Response:
             return _json_response(data={"status": "ok"})
 
-        with MaestroClient(maestro_config) as client:
+        with AgamemnonClient(agamemnon_config) as client:
             client._client = httpx.Client(
                 transport=httpx.MockTransport(handler),
-                base_url=maestro_config.base_url,
+                base_url=agamemnon_config.base_url,
                 timeout=httpx.Timeout(5),
             )
             result = client.health_check()
@@ -512,7 +512,7 @@ class TestClientLifecycle:
 
     def test_explicit_close(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """close() can be called explicitly without error."""
 
@@ -525,7 +525,7 @@ class TestClientLifecycle:
 
     def test_requests_work_before_close(
         self,
-        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], MaestroClient],
+        make_client: Callable[[Callable[[httpx.Request], httpx.Response]], AgamemnonClient],
     ) -> None:
         """Multiple requests can be made before close."""
         call_count = 0

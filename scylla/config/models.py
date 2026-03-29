@@ -8,10 +8,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from scylla.agamemnon.models import AgamemnonConfig as AgamemnonConfig
 from scylla.config.constants import DEFAULT_AGENT_MODEL, DEFAULT_JUDGE_MODEL
-from scylla.maestro.models import MaestroConfig as MaestroConfig
 from scylla.metrics.grading import DEFAULT_PASS_THRESHOLD
 from scylla.nats.config import NATSConfig
+
+# Backward-compat alias — MaestroConfig was renamed to AgamemnonConfig in ADR-006
+MaestroConfig = AgamemnonConfig
 
 
 class ConfigurationError(Exception):
@@ -321,9 +324,13 @@ class DefaultsConfig(BaseModel):
     adapters: AdaptersConfig = Field(default_factory=AdaptersConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
     nats: NATSConfig = Field(default_factory=NATSConfig)
-    maestro: MaestroConfig | None = Field(
+    agamemnon: AgamemnonConfig | None = Field(
         default=None,
-        description="AI Maestro REST API configuration (None = disabled)",
+        description="ProjectAgamemnon chaos API configuration (None = disabled)",
+    )
+    maestro: AgamemnonConfig | None = Field(
+        default=None,
+        description="DEPRECATED: Use agamemnon instead (ADR-006). Backward-compat alias.",
     )
 
 
@@ -350,9 +357,13 @@ class ScyllaConfig(BaseModel):
     judge: JudgeConfig = Field(default_factory=JudgeConfig)
     adapters: AdaptersConfig = Field(default_factory=AdaptersConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
-    maestro: MaestroConfig | None = Field(
+    agamemnon: AgamemnonConfig | None = Field(
         default=None,
-        description="AI Maestro REST API configuration (None = disabled)",
+        description="ProjectAgamemnon chaos API configuration (None = disabled)",
+    )
+    maestro: AgamemnonConfig | None = Field(
+        default=None,
+        description="DEPRECATED: Use agamemnon instead (ADR-006). Backward-compat alias.",
     )
     output: OutputConfig = Field(default_factory=OutputConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
