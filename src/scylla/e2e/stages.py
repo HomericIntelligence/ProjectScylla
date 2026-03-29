@@ -9,26 +9,28 @@ earlier stages to later ones without complex argument threading.
 build_actions_dict() assembles the {RunState -> Callable} map expected by
 StateMachine.advance_to_completion().
 
-18-stage pipeline (17 explicit stage functions + 1 implicit auto-transition):
-  PENDING              -> stage_create_dir_structure()
-  DIR_STRUCTURE_CREATED -> stage_create_worktree()
-  WORKTREE_CREATED     -> stage_apply_symlinks()
-  SYMLINKS_APPLIED     -> stage_commit_config()
-  CONFIG_COMMITTED     -> stage_capture_baseline()
-  BASELINE_CAPTURED    -> stage_write_prompt()
-  PROMPT_WRITTEN       -> stage_generate_replay()
-  REPLAY_GENERATED     -> stage_inject_failure()
-  FAILURE_INJECTED     -> stage_execute_agent()
-  AGENT_COMPLETE       -> stage_clear_failure()
-  FAILURE_CLEARED      -> stage_capture_diff()
-  DIFF_CAPTURED        -> stage_run_judge_pipeline()
-  JUDGE_PIPELINE_RUN   -> stage_build_judge_prompt()
-  JUDGE_PROMPT_BUILT   -> stage_execute_judge()
-  JUDGE_COMPLETE       -> stage_finalize_run()
-  RUN_FINALIZED        -> stage_write_report()
-  REPORT_WRITTEN       -> (no-op: StateMachine auto-saves checkpoint after every transition,
-                           so no explicit stage_save_checkpoint function is needed here)
-  CHECKPOINTED         -> stage_cleanup_worktree()
+20-stage pipeline (19 explicit stage functions + 1 implicit auto-transition):
+  PENDING                  -> stage_create_dir_structure()
+  DIR_STRUCTURE_CREATED    -> stage_create_worktree()
+  WORKTREE_CREATED         -> stage_apply_symlinks()
+  SYMLINKS_APPLIED         -> stage_commit_config()
+  CONFIG_COMMITTED         -> stage_capture_baseline()
+  BASELINE_CAPTURED        -> stage_write_prompt()
+  PROMPT_WRITTEN           -> stage_generate_replay()
+  REPLAY_GENERATED         -> stage_inject_failure()
+  FAILURE_INJECTED         -> stage_execute_agent()
+  AGENT_COMPLETE           -> stage_commit_agent_changes()
+  AGENT_CHANGES_COMMITTED  -> stage_clear_failure()
+  FAILURE_CLEARED          -> stage_capture_diff()
+  DIFF_CAPTURED            -> stage_promote_to_completed()
+  PROMOTED_TO_COMPLETED    -> stage_run_judge_pipeline()
+  JUDGE_PIPELINE_RUN       -> stage_build_judge_prompt()
+  JUDGE_PROMPT_BUILT       -> stage_execute_judge()
+  JUDGE_COMPLETE           -> stage_finalize_run()
+  RUN_FINALIZED            -> stage_write_report()
+  REPORT_WRITTEN           -> (no-op: StateMachine auto-saves checkpoint after every transition,
+                               so no explicit stage_save_checkpoint function is needed here)
+  CHECKPOINTED             -> stage_cleanup_worktree()
 """
 
 from __future__ import annotations
@@ -529,7 +531,7 @@ def stage_inject_failure(ctx: RunContext) -> None:
 
 
 def stage_clear_failure(ctx: RunContext) -> None:
-    """AGENT_COMPLETE -> FAILURE_CLEARED: Clear injected failure via Maestro API.
+    """AGENT_CHANGES_COMMITTED -> FAILURE_CLEARED: Clear injected failure via Maestro API.
 
     If no injection was made (maestro_injection_id is None), this is a no-op.
     On MaestroError, logs a warning and continues (graceful degradation).
@@ -781,6 +783,103 @@ def stage_execute_agent(ctx: RunContext) -> None:
     logger.info(f"[AGENT] Complete ({ctx.agent_duration:.1f}s)")
 
 
+def stage_commit_agent_changes(ctx: RunContext) -> None:
+    """AGENT_COMPLETE -> AGENT_CHANGES_COMMITTED: Commit agent changes to worktree branch.
+
+    Detects infrastructure failures (exit_code=-1 with zero tokens) and moves
+    the run to a .failed/ archive directory, then raises to abort the pipeline.
+    For normal runs, stages and commits all workspace changes so the worktree
+    can be safely cleaned up between phases.
+
+    Args:
+        ctx: Run context (reads ctx.agent_result, ctx.workspace, ctx.run_dir)
+
+    Raises:
+        RuntimeError: If an infrastructure failure is detected (exit_code=-1, zero tokens)
+
+    """
+    import shutil
+
+    agent_result = ctx.agent_result
+    if agent_result is not None:
+        is_infra_failure = (
+            agent_result.exit_code == -1
+            and agent_result.token_stats.input_tokens == 0
+            and agent_result.token_stats.output_tokens == 0
+        )
+        if is_infra_failure:
+            # Move run directory to .failed/ archive under the subtest dir to prevent
+            # phantom 0.0 scores from polluting pass_rate statistics
+            failed_archive = ctx.run_dir.parent / ".failed"
+            failed_archive.mkdir(exist_ok=True)
+            dest = failed_archive / ctx.run_dir.name
+            if dest.exists():
+                shutil.rmtree(str(dest))
+            shutil.move(str(ctx.run_dir), str(dest))
+            logger.warning(
+                f"[AGENT] Infrastructure failure detected (exit_code=-1, zero tokens) — "
+                f"run moved to {dest}"
+            )
+            raise RuntimeError(
+                f"Infrastructure failure in run {ctx.run_number} "
+                f"({ctx.tier_id.value}/{ctx.subtest.id}): agent crashed before making any API calls"
+            )
+
+    # Commit all workspace changes so they survive worktree cleanup between phases
+    if ctx.workspace.exists():
+        commit_result = subprocess.run(
+            ["git", "add", "-A"],
+            cwd=ctx.workspace,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        if commit_result.returncode != 0:
+            logger.warning(f"[AGENT] git add -A failed: {commit_result.stderr.strip()}")
+        else:
+            commit_result = subprocess.run(
+                ["git", "commit", "--allow-empty", "-m", "[scylla] Agent changes"],
+                cwd=ctx.workspace,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if commit_result.returncode != 0:
+                logger.warning(
+                    f"[AGENT] git commit failed (may be empty): {commit_result.stderr.strip()}"
+                )
+            else:
+                logger.info("[AGENT] Agent changes committed to worktree branch")
+    else:
+        logger.warning(f"[AGENT] Workspace not found at {ctx.workspace} — skipping commit")
+
+
+def stage_promote_to_completed(ctx: RunContext) -> None:
+    """DIFF_CAPTURED -> PROMOTED_TO_COMPLETED: Move run directory to completed/.
+
+    Moves the run directory from in_progress/<tier>/<subtest>/run_NN/ to
+    completed/<tier>/<subtest>/run_NN/ and updates ctx.run_dir and ctx.workspace
+    to point to the new location. Also promotes pipeline_baseline.json if present.
+
+    Args:
+        ctx: Run context (mutates ctx.run_dir and ctx.workspace)
+
+    """
+    from scylla.e2e.paths import get_experiment_dir_from_run, promote_run_to_completed
+
+    experiment_dir = get_experiment_dir_from_run(ctx.run_dir)
+    new_run_dir = promote_run_to_completed(
+        experiment_dir, ctx.tier_id.value, ctx.subtest.id, ctx.run_number
+    )
+
+    # Update ctx paths to point to new location
+    old_workspace_name = ctx.workspace.name
+    ctx.run_dir = new_run_dir
+    ctx.workspace = new_run_dir / old_workspace_name
+
+    logger.info(f"[PROMOTE] Run moved to completed: {new_run_dir}")
+
+
 def stage_capture_diff(ctx: RunContext) -> None:
     """FAILURE_CLEARED -> DIFF_CAPTURED: Capture workspace diff and state.
 
@@ -895,10 +994,11 @@ def stage_build_judge_prompt(ctx: RunContext) -> None:
         # Resumed — judge result already loaded in stage_capture_diff
         return
 
+    # Find rubric path (symlinked at experiment root)
+    from scylla.e2e.paths import get_experiment_dir_from_run
     from scylla.judge.prompts import build_task_prompt
 
-    # Find rubric path (symlinked at experiment root)
-    experiment_dir_calc = ctx.run_dir.parent.parent.parent
+    experiment_dir_calc = get_experiment_dir_from_run(ctx.run_dir)
     rubric_path = experiment_dir_calc / "rubric.yaml"
 
     rubric_content = None
@@ -990,9 +1090,11 @@ def build_actions_dict(
         RunState.PROMPT_WRITTEN: lambda: stage_generate_replay(ctx),
         RunState.REPLAY_GENERATED: lambda: stage_inject_failure(ctx),
         RunState.FAILURE_INJECTED: _agent_with_slot,
-        RunState.AGENT_COMPLETE: lambda: stage_clear_failure(ctx),
+        RunState.AGENT_COMPLETE: lambda: stage_commit_agent_changes(ctx),
+        RunState.AGENT_CHANGES_COMMITTED: lambda: stage_clear_failure(ctx),
         RunState.FAILURE_CLEARED: lambda: stage_capture_diff(ctx),
-        RunState.DIFF_CAPTURED: lambda: stage_run_judge_pipeline(ctx),
+        RunState.DIFF_CAPTURED: lambda: stage_promote_to_completed(ctx),
+        RunState.PROMOTED_TO_COMPLETED: lambda: stage_run_judge_pipeline(ctx),
         RunState.JUDGE_PIPELINE_RUN: lambda: stage_build_judge_prompt(ctx),
         RunState.JUDGE_PROMPT_BUILT: _judge_with_slot,
         RunState.JUDGE_COMPLETE: lambda: stage_finalize_run(ctx),

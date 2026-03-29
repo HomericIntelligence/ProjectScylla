@@ -197,8 +197,8 @@ def test_scan_run_results_empty_directory(tmp_path: Path) -> None:
 
 def test_scan_run_results_with_valid_runs(tmp_path: Path) -> None:
     """Test scan_run_results with valid run_result.json files."""
-    # Create directory structure: T0/00-test/run_01/run_result.json
-    tier_dir = tmp_path / "T0"
+    # Create directory structure: completed/T0/00-test/run_01/run_result.json
+    tier_dir = tmp_path / "completed" / "T0"
     subtest_dir = tier_dir / "00-test"
     run_dir = subtest_dir / "run_01"
     run_dir.mkdir(parents=True)
@@ -240,8 +240,8 @@ def test_scan_run_results_with_valid_runs(tmp_path: Path) -> None:
 
 def test_scan_run_results_skips_failed_directories(tmp_path: Path) -> None:
     """Test scan_run_results skips .failed directories."""
-    # Create directory structure with .failed
-    tier_dir = tmp_path / "T0"
+    # Create directory structure with .failed under completed/
+    tier_dir = tmp_path / "completed" / "T0"
     subtest_dir = tier_dir / "00-test"
     run_dir = subtest_dir / ".failed" / "run_01"
     run_dir.mkdir(parents=True)

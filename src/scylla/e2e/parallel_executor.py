@@ -209,6 +209,12 @@ def run_tier_subtests_parallel(
             logger.warning("Shutdown requested, stopping subtest execution...")
             break
 
+        # Wait for off-peak hours if configured
+        if config.off_peak:
+            from scylla.e2e.scheduling import wait_for_off_peak
+
+            wait_for_off_peak()
+
         subtest_dir = results_dir / subtest.id
         set_log_context(tier_id=tier_id.value, subtest_id=subtest.id)
         try:

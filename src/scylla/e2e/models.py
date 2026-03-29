@@ -93,9 +93,9 @@ class RunState(str, Enum):
     Sequential states (18):
       PENDING -> DIR_STRUCTURE_CREATED -> WORKTREE_CREATED -> SYMLINKS_APPLIED
       -> CONFIG_COMMITTED -> BASELINE_CAPTURED -> PROMPT_WRITTEN -> REPLAY_GENERATED
-      -> FAILURE_INJECTED -> AGENT_COMPLETE -> FAILURE_CLEARED -> DIFF_CAPTURED
-      -> JUDGE_PIPELINE_RUN -> JUDGE_PROMPT_BUILT -> JUDGE_COMPLETE -> RUN_FINALIZED
-      -> REPORT_WRITTEN -> CHECKPOINTED -> WORKTREE_CLEANED
+      -> FAILURE_INJECTED -> AGENT_COMPLETE -> AGENT_CHANGES_COMMITTED -> FAILURE_CLEARED
+      -> DIFF_CAPTURED -> PROMOTED_TO_COMPLETED -> JUDGE_PIPELINE_RUN -> JUDGE_PROMPT_BUILT
+      -> JUDGE_COMPLETE -> RUN_FINALIZED -> REPORT_WRITTEN -> CHECKPOINTED -> WORKTREE_CLEANED
     Terminal (2): FAILED | RATE_LIMITED
     """
 
@@ -109,8 +109,10 @@ class RunState(str, Enum):
     REPLAY_GENERATED = "replay_generated"  # adapter command built, replay.sh generated
     FAILURE_INJECTED = "failure_injected"  # Maestro failure injected (no-op if disabled)
     AGENT_COMPLETE = "agent_complete"  # agent executed, outputs saved
+    AGENT_CHANGES_COMMITTED = "agent_changes_committed"  # agent changes committed to branch
     FAILURE_CLEARED = "failure_cleared"  # Maestro failure cleared (no-op if disabled)
     DIFF_CAPTURED = "diff_captured"  # git diff captured, workspace state saved
+    PROMOTED_TO_COMPLETED = "promoted_to_completed"  # run dir moved to completed/
     JUDGE_PIPELINE_RUN = "judge_pipeline_run"  # build pipeline run on agent-modified workspace
     JUDGE_PROMPT_BUILT = "judge_prompt_built"  # full judge prompt assembled
     JUDGE_COMPLETE = "judge_complete"  # judge executed, consensus computed, results saved
@@ -893,6 +895,7 @@ class ExperimentConfig(BaseModel):
     keep_failed_workspaces: bool = False  # Preserve workspaces for failed runs
     max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
     max_concurrent_agents: int | None = None  # Limit concurrent claude CLI processes (None = auto)
+    off_peak: bool = False  # Wait for off-peak hours before each subtest run
 
     @field_validator("models", mode="before")
     @classmethod

@@ -23,6 +23,7 @@
 #   --config <dir>         Test config directory (default: tests/fixtures/tests/)
 #   --threads <n>          Phase 1/3 thread count (default: 5)
 #   --max-concurrent-agents <n>  Concurrent agent limit (default: 3)
+#   --off-peak             Wait for off-peak API hours before each subtest
 #
 # Examples:
 #   # Minimal: single test, default model
@@ -57,6 +58,7 @@ MAX_SUBTESTS=50
 CONFIG_DIR="tests/fixtures/tests/"
 THREADS=5
 MAX_CONCURRENT_AGENTS=3
+OFF_PEAK=0
 
 # --------------------------------------------------------------------------- #
 # Argument parsing
@@ -91,6 +93,7 @@ while [[ $# -gt 0 ]]; do
         --config)                 CONFIG_DIR="$2";             shift 2 ;;
         --threads)                THREADS="$2";                shift 2 ;;
         --max-concurrent-agents)  MAX_CONCURRENT_AGENTS="$2";  shift 2 ;;
+        --off-peak)               OFF_PEAK=1;                  shift ;;
         --help|-h)
             sed -n '2,/^set -euo/p' "$0" | grep '^#' | sed 's/^# \?//'
             exit 0
@@ -133,6 +136,9 @@ COMMON_ARGS+=(
     --model "$MODEL"
     --tests "${TESTS[@]}"
 )
+if [[ "$OFF_PEAK" -eq 1 ]]; then
+    COMMON_ARGS+=(--off-peak)
+fi
 
 LOG_FILE="$RESULTS_DIR/run.log"
 mkdir -p "$RESULTS_DIR"

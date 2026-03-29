@@ -355,7 +355,11 @@ def _find_model_md_in_experiment(experiment_dir: Path) -> str | None:
         Model display string, or None if no MODEL.md found.
 
     """
-    for tier_dir in sorted(experiment_dir.iterdir()):
+    from scylla.e2e.paths import COMPLETED_DIR
+
+    completed_dir = experiment_dir / COMPLETED_DIR
+    scan_base = completed_dir if completed_dir.exists() else experiment_dir
+    for tier_dir in sorted(scan_base.iterdir()):
         if not tier_dir.is_dir() or not tier_dir.name.startswith("T"):
             continue
         for subtest_dir in sorted(tier_dir.iterdir()):
@@ -736,8 +740,12 @@ def load_experiment(
     runs = []
     experiment_name = experiment_name or experiment_dir.name
 
-    # Iterate through tier directories (T0-T6)
-    for tier_dir in sorted(experiment_dir.iterdir()):
+    # Iterate through tier directories (T0-T6) — results live under completed/
+    from scylla.e2e.paths import COMPLETED_DIR
+
+    completed_dir = experiment_dir / COMPLETED_DIR
+    scan_base = completed_dir if completed_dir.exists() else experiment_dir
+    for tier_dir in sorted(scan_base.iterdir()):
         if not tier_dir.is_dir() or not tier_dir.name.startswith("T"):
             continue
 

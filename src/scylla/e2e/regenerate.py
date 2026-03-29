@@ -161,8 +161,11 @@ def scan_run_results(
     """
     results: dict[str, dict[str, list[E2ERunResult]]] = {}
 
-    # Find all run_result.json files
-    for run_result_file in experiment_dir.rglob("run_result.json"):
+    # Find all run_result.json files — only scan completed/ to exclude in-progress runs
+    from scylla.e2e.paths import COMPLETED_DIR
+
+    scan_root = experiment_dir / COMPLETED_DIR
+    for run_result_file in scan_root.rglob("run_result.json"):
         stats.runs_found += 1
 
         # Skip .failed directories

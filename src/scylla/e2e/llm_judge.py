@@ -208,6 +208,70 @@ def _get_workspace_state(workspace: Path) -> str:  # noqa: C901  # workspace sta
         return f"(error getting workspace state: {e})"
 
 
+def _get_committed_diff(workspace: Path) -> str | None:
+    """Get diff of the most recent commit (fallback when no staged/unstaged changes).
+
+    Used when the agent committed its changes via stage_commit_agent_changes.
+
+    Args:
+        workspace: Path to the workspace directory.
+
+    Returns:
+        Diff string if the last commit has changes, None otherwise.
+
+    """
+    result = subprocess.run(
+        ["git", "diff", "HEAD~1..HEAD", "--", ".", ":(exclude)CLAUDE.md", ":(exclude).claude"],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if result.returncode == 0 and result.stdout.strip():
+        return "## Committed Changes\n" + result.stdout.strip()
+    return None
+
+
+def _collect_diff_sections(workspace: Path) -> list[str] | None:
+    """Collect diff sections from staged, unstaged, and committed changes.
+
+    Returns list of diff section strings, None if git diff failed entirely.
+
+    Args:
+        workspace: Path to the workspace directory.
+
+    """
+    exclude_args = [":(exclude)CLAUDE.md", ":(exclude).claude"]
+    unstaged = subprocess.run(
+        ["git", "diff", "--", ".", *exclude_args],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--", ".", *exclude_args],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    if unstaged.returncode != 0 and staged.returncode != 0:
+        logger.warning("git diff failed")
+        return None
+
+    sections: list[str] = []
+    if unstaged.stdout.strip():
+        sections.append("## Unstaged Changes\n" + unstaged.stdout.strip())
+    if staged.stdout.strip():
+        sections.append("## Staged Changes\n" + staged.stdout.strip())
+    if not sections:
+        committed = _get_committed_diff(workspace)
+        if committed:
+            sections.append(committed)
+    return sections
+
+
 def _get_patchfile(workspace: Path) -> str:
     """Generate a patchfile from the agent's changes.
 
@@ -222,42 +286,17 @@ def _get_patchfile(workspace: Path) -> str:
         String containing the git diff output.
 
     """
+    if not workspace.exists():
+        return "(workspace not found — worktree may have been cleaned)"
+
     try:
-        # Get unstaged changes (files modified but not staged)
-        # Exclude test config files (CLAUDE.md, .claude/) that are framework-managed
-        unstaged_result = subprocess.run(
-            ["git", "diff", "--", ".", ":(exclude)CLAUDE.md", ":(exclude).claude"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        # Get staged changes (files in staging area)
-        # Exclude test config files (CLAUDE.md, .claude/) that are framework-managed
-        staged_result = subprocess.run(
-            ["git", "diff", "--cached", "--", ".", ":(exclude)CLAUDE.md", ":(exclude).claude"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-
-        if unstaged_result.returncode != 0 and staged_result.returncode != 0:
-            logger.warning("git diff failed")
+        sections = _collect_diff_sections(workspace)
+        if sections is None:
             return "(unable to generate patchfile)"
-
-        # Combine both diffs
-        diffs = []
-        if unstaged_result.stdout.strip():
-            diffs.append("## Unstaged Changes\n" + unstaged_result.stdout.strip())
-        if staged_result.stdout.strip():
-            diffs.append("## Staged Changes\n" + staged_result.stdout.strip())
-
-        if not diffs:
+        if not sections:
             return "(no changes detected)"
 
-        diff = "\n\n".join(diffs)
+        diff = "\n\n".join(sections)
 
         # Truncate if too long (keep first and last portions)
         max_lines = 500
