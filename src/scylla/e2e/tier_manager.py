@@ -743,9 +743,10 @@ class TierManager:
                 continue
 
             # 2. Load config_manifest.json from best subtest (under completed/ phase dir)
-            manifest_file = get_subtest_dir(
-                experiment_dir, tier_id.value, best_subtest_id, completed=True
-            ) / "config_manifest.json"
+            manifest_file = (
+                get_subtest_dir(experiment_dir, tier_id.value, best_subtest_id, completed=True)
+                / "config_manifest.json"
+            )
             if not manifest_file.exists():
                 # Best subtest failed before manifest was written — find an alternative
                 tier_dir = completed_tier_dir

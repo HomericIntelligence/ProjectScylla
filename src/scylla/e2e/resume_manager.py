@@ -361,7 +361,9 @@ class ResumeManager:
                     from scylla.e2e.paths import get_run_dir
 
                     run_num = int(run_id)
-                    run_dir = get_run_dir(experiment_dir, tier_id, subtest_id, run_num, completed=True)
+                    run_dir = get_run_dir(
+                        experiment_dir, tier_id, subtest_id, run_num, completed=True
+                    )
                     if not run_dir.exists():
                         run_dir = get_run_dir(
                             experiment_dir, tier_id, subtest_id, run_num, completed=False
