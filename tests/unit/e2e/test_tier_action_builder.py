@@ -617,3 +617,97 @@ class TestActionReportsGenerated:
         actions = builder.build()
         # Should not raise
         actions[TierState.REPORTS_GENERATED]()
+
+
+# ---------------------------------------------------------------------------
+# TestResumeRehydration
+# ---------------------------------------------------------------------------
+
+
+def _write_run_result_file(run_dir: Path, run_number: int = 1, judge_score: float = 0.8) -> None:
+    """Write a minimal run_result.json for rehydration tests."""
+    import json
+
+    run_dir.mkdir(parents=True, exist_ok=True)
+    data = {
+        "run_number": run_number,
+        "exit_code": 0,
+        "token_stats": {"input_tokens": 100, "output_tokens": 50},
+        "cost_usd": 0.01,
+        "duration_seconds": 10.0,
+        "agent_duration_seconds": 8.0,
+        "judge_duration_seconds": 2.0,
+        "judge_score": judge_score,
+        "judge_passed": judge_score >= 0.5,
+        "judge_grade": "B" if judge_score >= 0.5 else "F",
+        "judge_reasoning": "Test",
+        "workspace_path": "/tmp/ws",
+        "logs_path": "/tmp/logs",
+        "command_log_path": None,
+        "criteria_scores": {},
+    }
+    (run_dir / "run_result.json").write_text(json.dumps(data))
+
+
+def _write_best_subtest_file(tier_dir: Path, winning_subtest: str = "00") -> None:
+    """Write a minimal best_subtest.json for rehydration tests."""
+    import json
+
+    data = {
+        "winning_subtest": winning_subtest,
+        "winning_score": 0.8,
+        "votes": [
+            {
+                "subtest_id": winning_subtest,
+                "score": 0.8,
+                "confidence": 0.9,
+                "reasoning": "Best",
+            }
+        ],
+        "margin": 0.1,
+        "tiebreaker_needed": False,
+        "tiebreaker_result": None,
+    }
+    (tier_dir / "best_subtest.json").write_text(json.dumps(data))
+
+
+class TestActionSubtestsRunningRehydratesWhenEmpty:
+    """action_subtests_running re-hydrates subtest_results from disk if empty."""
+
+    def test_rehydrates_subtest_results(self, tmp_path: Path) -> None:
+        """Loads SubTestResult objects from disk when tier_ctx.subtest_results is empty."""
+        from unittest.mock import patch
+
+        from scylla.e2e.judge_selection import JudgeSelection
+        from scylla.e2e.models import SubTestResult
+
+        tier_dir = tmp_path / "T0"
+        _write_run_result_file(tier_dir / "00" / "run_01", run_number=1, judge_score=0.9)
+
+        tier_ctx = TierContext()
+        tier_ctx.tier_dir = tier_dir
+        tier_ctx.subtest_results = {}  # empty — simulates resume from SUBTESTS_RUNNING
+
+        builder = _make_builder(tier_ctx=tier_ctx, experiment_dir=tmp_path)
+        actions = builder.build()
+
+        # Patch select_best_subtest to avoid needing full pipeline
+        mock_selection = MagicMock(spec=JudgeSelection)
+        mock_selection.winning_subtest = "00"
+        mock_selection.winning_score = 0.9
+        mock_selection.tiebreaker_needed = False
+        mock_selection.tiebreaker_result = None
+
+        with (
+            patch(
+                "scylla.e2e.tier_action_builder.select_best_subtest",
+                return_value=mock_selection,
+            ),
+            patch("scylla.e2e.tier_action_builder.save_selection"),
+        ):
+            actions[TierState.SUBTESTS_RUNNING]()
+
+        # Re-hydration should have populated subtest_results
+        assert "00" in tier_ctx.subtest_results
+        assert isinstance(tier_ctx.subtest_results["00"], SubTestResult)
+        assert len(tier_ctx.subtest_results["00"].runs) == 1

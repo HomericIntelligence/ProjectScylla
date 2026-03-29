@@ -154,6 +154,19 @@ class TierActionBuilder:
             # SUBTESTS_RUNNING -> SUBTESTS_COMPLETE: Select best subtest.
             if tier_ctx.tier_dir is None:
                 raise RuntimeError("tier_dir must be set before selecting best subtest")
+
+            # Re-hydrate subtest_results from disk if empty — occurs when TierSM resumes
+            # from SUBTESTS_RUNNING+, which skips action_config_loaded.
+            if not tier_ctx.subtest_results and tier_ctx.tier_dir.exists():
+                from scylla.e2e.rehydrate import load_tier_subtest_results
+
+                tier_ctx.subtest_results = load_tier_subtest_results(tier_ctx.tier_dir, tier_id)
+                if tier_ctx.subtest_results:
+                    logger.info(
+                        f"Re-hydrated {len(tier_ctx.subtest_results)} subtest results "
+                        f"from disk for {tier_id.value}"
+                    )
+
             subtest_results = tier_ctx.subtest_results
 
             selection = select_best_subtest(
@@ -174,6 +187,29 @@ class TierActionBuilder:
 
         def action_subtests_complete() -> None:
             # SUBTESTS_COMPLETE -> BEST_SELECTED: Aggregate token stats, build TierResult.
+
+            # Re-hydrate subtest_results and selection from disk if empty — occurs when
+            # TierSM resumes from SUBTESTS_COMPLETE+, which skips action_config_loaded
+            # and action_subtests_running.
+            if (
+                not tier_ctx.subtest_results
+                and tier_ctx.tier_dir is not None
+                and tier_ctx.tier_dir.exists()
+            ):
+                from scylla.e2e.rehydrate import load_tier_subtest_results
+
+                tier_ctx.subtest_results = load_tier_subtest_results(tier_ctx.tier_dir, tier_id)
+                if tier_ctx.subtest_results:
+                    logger.info(
+                        f"Re-hydrated {len(tier_ctx.subtest_results)} subtest results "
+                        f"from disk for {tier_id.value}"
+                    )
+
+            if tier_ctx.selection is None and tier_ctx.tier_dir is not None:
+                from scylla.e2e.rehydrate import load_tier_selection
+
+                tier_ctx.selection = load_tier_selection(tier_ctx.tier_dir)
+
             if tier_ctx.selection is None:
                 raise RuntimeError("selection must be set before aggregating subtest results")
             subtest_results = tier_ctx.subtest_results

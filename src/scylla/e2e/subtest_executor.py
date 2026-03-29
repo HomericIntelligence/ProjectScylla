@@ -711,7 +711,22 @@ class SubTestExecutor:
             _run_loop_and_save_manifest()
             _aggregate()
 
-        return result if result is not None else self._aggregate_results(tier_id, subtest.id, runs)
+        if result is not None:
+            return result
+
+        # Re-hydrate runs from disk if empty — occurs when SubtestSM resumes from
+        # AGGREGATED (terminal), which skips _run_loop and leaves `runs` empty.
+        if not runs and results_dir.exists():
+            from scylla.e2e.rehydrate import load_subtest_run_results
+
+            runs = load_subtest_run_results(results_dir)
+            if runs:
+                logger.info(
+                    f"Re-hydrated {len(runs)} run results from disk for "
+                    f"{tier_id.value}/{subtest.id}"
+                )
+
+        return self._aggregate_results(tier_id, subtest.id, runs)
 
     def _compute_judge_consensus(
         self, judges: list[Any]

@@ -857,3 +857,53 @@ class TestRestoreRunContext:
 
         assert ctx.agent_result is None
         assert any("agent result is invalid" in msg for msg in caplog.messages)
+
+
+class TestRunSubtestRehydratesOnResume:
+    """Tests that run_subtest re-hydrates run data from disk on AGGREGATED resume."""
+
+    def _write_run_result(self, run_dir: Path, run_number: int = 1) -> None:
+        """Write a minimal run_result.json."""
+        run_dir.mkdir(parents=True, exist_ok=True)
+        data = {
+            "run_number": run_number,
+            "exit_code": 0,
+            "token_stats": {"input_tokens": 100, "output_tokens": 50},
+            "cost_usd": 0.05,
+            "duration_seconds": 10.0,
+            "agent_duration_seconds": 8.0,
+            "judge_duration_seconds": 2.0,
+            "judge_score": 0.9,
+            "judge_passed": True,
+            "judge_grade": "A",
+            "judge_reasoning": "Good work",
+            "workspace_path": "/tmp/ws",
+            "logs_path": "/tmp/logs",
+            "command_log_path": None,
+            "criteria_scores": {},
+        }
+        (run_dir / "run_result.json").write_text(json.dumps(data))
+
+    def test_rehydrates_from_disk_when_runs_empty(self, tmp_path: Path) -> None:
+        """Fallback re-hydration loads run_result.json files when `runs` is empty.
+
+        The production scenario (resume from AGGREGATED) leaves `runs=[]` and
+        `result=None` after advance_to_completion exits immediately. The fallback
+        at the end of run_subtest calls load_subtest_run_results to pick up
+        on-disk files. We test the rehydration function directly here.
+        """
+        from scylla.e2e.models import TierID
+        from scylla.e2e.rehydrate import load_subtest_run_results
+        from scylla.e2e.subtest_executor import aggregate_run_results
+
+        results_dir = tmp_path / "T0" / "00"
+        self._write_run_result(results_dir / "run_01", run_number=1)
+        self._write_run_result(results_dir / "run_02", run_number=2)
+
+        # Simulate the fallback path: runs=[], result=None, results_dir has data
+        runs = load_subtest_run_results(results_dir)
+        result = aggregate_run_results(TierID.T0, "00", runs)
+
+        assert result.total_cost == pytest.approx(0.10)
+        assert len(result.runs) == 2
+        assert result.pass_rate == pytest.approx(1.0)
