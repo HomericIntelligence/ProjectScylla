@@ -229,10 +229,6 @@ class TierActionBuilder:
 
                 completed_tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
                 tier_ctx.selection = load_tier_selection(completed_tier_dir)
-            elif tier_ctx.selection is None and tier_ctx.tier_dir is not None:
-                from scylla.e2e.rehydrate import load_tier_selection
-
-                tier_ctx.selection = load_tier_selection(tier_ctx.tier_dir)
 
             if tier_ctx.selection is None:
                 raise RuntimeError("selection must be set before aggregating subtest results")
