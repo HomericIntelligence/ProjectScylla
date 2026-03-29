@@ -66,9 +66,7 @@ class TestRunLearn:
         worktree_path = tmp_path / "worktree"
         worktree_path.mkdir()
 
-        with patch(
-            "scylla.automation.learn.run", side_effect=RuntimeError("claude crashed")
-        ):
+        with patch("scylla.automation.learn.run", side_effect=RuntimeError("claude crashed")):
             result = run_learn("session-abc", worktree_path, 42, tmp_path)
 
         assert result is False

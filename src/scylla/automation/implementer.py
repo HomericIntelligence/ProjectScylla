@@ -25,6 +25,7 @@ from .dependency_resolver import CyclicDependencyError, DependencyResolver
 from .follow_up import parse_follow_up_items, run_follow_up_issues
 from .git_utils import get_repo_root, run
 from .github_api import fetch_issue_info
+from .learn import learn_needs_rerun, run_learn
 from .models import (
     ImplementationPhase,
     ImplementationState,
@@ -34,7 +35,6 @@ from .models import (
 )
 from .pr_manager import commit_changes, create_pr, ensure_pr_created
 from .prompts import get_implementation_prompt
-from .learn import learn_needs_rerun, run_learn
 from .status_tracker import StatusTracker
 from .worktree_manager import WorktreeManager
 
@@ -624,23 +624,17 @@ class IssueImplementer:
 
             # Verify worktree exists
             if not state.worktree_path:
-                logger.warning(
-                    f"Skipping learn re-run for #{issue_number}: no worktree_path"
-                )
+                logger.warning(f"Skipping learn re-run for #{issue_number}: no worktree_path")
                 continue
 
             worktree_path = Path(state.worktree_path)
             if not worktree_path.exists():
-                logger.warning(
-                    f"Skipping learn re-run for #{issue_number}: worktree not found"
-                )
+                logger.warning(f"Skipping learn re-run for #{issue_number}: worktree not found")
                 continue
 
             # Re-run learn
             logger.info(f"Re-running failed learn for issue #{issue_number}")
-            success = self._run_learn(
-                state.session_id, worktree_path, issue_number, slot_id=None
-            )
+            success = self._run_learn(state.session_id, worktree_path, issue_number, slot_id=None)
 
             # Update and save state
             with self.state_lock:
