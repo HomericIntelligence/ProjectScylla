@@ -130,15 +130,6 @@ def _restore_run_context(ctx: Any, current_state: str) -> None:
 
     run_state = RunState(current_state)
 
-    # If past FAILURE_INJECTED, reload maestro_injection_id from disk
-    if is_at_or_past_state(run_state, RunState.FAILURE_INJECTED) and not is_at_or_past_state(
-        run_state, RunState.FAILURE_CLEARED
-    ):
-        injection_file = ctx.run_dir / "maestro_injection.json"
-        if injection_file.exists():
-            injection_data = json.loads(injection_file.read_text())
-            ctx.maestro_injection_id = injection_data.get("injection_id")
-
     # If past REPLAY_GENERATED, agent_result should be available on disk
     past_agent = is_at_or_past_state(run_state, RunState.AGENT_COMPLETE)
     if past_agent and ctx.agent_result is None:

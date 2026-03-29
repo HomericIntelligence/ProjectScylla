@@ -142,25 +142,17 @@ class TestValidateTransition:
         """Verify PENDING to DIR_STRUCTURE_CREATED is a valid transition."""
         assert validate_transition(RunState.PENDING, RunState.DIR_STRUCTURE_CREATED)
 
-    def test_valid_transition_replay_generated_to_failure_injected(self) -> None:
-        """Verify REPLAY_GENERATED to FAILURE_INJECTED is a valid transition."""
-        assert validate_transition(RunState.REPLAY_GENERATED, RunState.FAILURE_INJECTED)
-
-    def test_valid_transition_failure_injected_to_agent_complete(self) -> None:
-        """Verify FAILURE_INJECTED to AGENT_COMPLETE is a valid transition."""
-        assert validate_transition(RunState.FAILURE_INJECTED, RunState.AGENT_COMPLETE)
+    def test_valid_transition_replay_generated_to_agent_complete(self) -> None:
+        """Verify REPLAY_GENERATED to AGENT_COMPLETE is a valid transition."""
+        assert validate_transition(RunState.REPLAY_GENERATED, RunState.AGENT_COMPLETE)
 
     def test_valid_transition_agent_complete_to_agent_changes_committed(self) -> None:
         """Verify AGENT_COMPLETE to AGENT_CHANGES_COMMITTED is a valid transition."""
         assert validate_transition(RunState.AGENT_COMPLETE, RunState.AGENT_CHANGES_COMMITTED)
 
-    def test_valid_transition_agent_changes_committed_to_failure_cleared(self) -> None:
-        """Verify AGENT_CHANGES_COMMITTED to FAILURE_CLEARED is a valid transition."""
-        assert validate_transition(RunState.AGENT_CHANGES_COMMITTED, RunState.FAILURE_CLEARED)
-
-    def test_valid_transition_failure_cleared_to_diff_captured(self) -> None:
-        """Verify FAILURE_CLEARED to DIFF_CAPTURED is a valid transition."""
-        assert validate_transition(RunState.FAILURE_CLEARED, RunState.DIFF_CAPTURED)
+    def test_valid_transition_agent_changes_committed_to_diff_captured(self) -> None:
+        """Verify AGENT_CHANGES_COMMITTED to DIFF_CAPTURED is a valid transition."""
+        assert validate_transition(RunState.AGENT_CHANGES_COMMITTED, RunState.DIFF_CAPTURED)
 
     def test_valid_transition_diff_captured_to_promoted_to_completed(self) -> None:
         """Verify DIFF_CAPTURED to PROMOTED_TO_COMPLETED is a valid transition."""
