@@ -20,7 +20,9 @@ from scylla.e2e.models import ExperimentConfig, RunState, TierID
 _STATES_PAST_AGENT_COMPLETE = frozenset(
     {
         RunState.AGENT_COMPLETE.value,
+        RunState.AGENT_CHANGES_COMMITTED.value,
         RunState.DIFF_CAPTURED.value,
+        RunState.PROMOTED_TO_COMPLETED.value,
         RunState.JUDGE_PIPELINE_RUN.value,
         RunState.JUDGE_PROMPT_BUILT.value,
         RunState.JUDGE_COMPLETE.value,
@@ -355,8 +357,15 @@ class ResumeManager:
                 for run_id, state in runs.items():
                     if state not in _STATES_PAST_AGENT_COMPLETE:
                         continue
-                    # Build run directory path: experiment_dir/tier/subtest/run_NN
-                    run_dir = experiment_dir / tier_id / subtest_id / f"run_{int(run_id):02d}"
+                    # Build run directory path — check completed/ first, then in_progress/
+                    from scylla.e2e.paths import get_run_dir
+
+                    run_num = int(run_id)
+                    run_dir = get_run_dir(experiment_dir, tier_id, subtest_id, run_num, completed=True)
+                    if not run_dir.exists():
+                        run_dir = get_run_dir(
+                            experiment_dir, tier_id, subtest_id, run_num, completed=False
+                        )
                     if not _has_valid_agent_result(run_dir):
                         logger.info(
                             "Resetting invalid run %s/%s/%s from '%s' to 'replay_generated'",

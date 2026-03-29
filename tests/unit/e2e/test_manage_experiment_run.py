@@ -1836,7 +1836,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Create run_result.json + report.md, no workspace dir => worktree_cleaned
@@ -1916,7 +1916,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Judge failed run: judge_passed=False
@@ -1969,7 +1969,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Only agent result exists (no judge result or run_result.json)
@@ -2015,7 +2015,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         run_dir.mkdir(parents=True)
 
         # Write malformed JSON
@@ -2069,7 +2069,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         run_dir.mkdir(parents=True)
 
         # run_result.json exists but has no judge_passed key
@@ -2120,7 +2120,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         agent_dir = run_dir / "agent"
         agent_dir.mkdir(parents=True)
 
@@ -2202,7 +2202,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         agent_dir = run_dir / "agent"
         agent_dir.mkdir(parents=True)
 
@@ -2251,7 +2251,7 @@ class TestRetryInfraFailuresInBatch:
         from scylla.e2e.checkpoint import E2ECheckpoint
 
         exp_dir = tmp_path / "exp"
-        run_dir = exp_dir / "T0" / "00" / "run_01"
+        run_dir = exp_dir / "completed" / "T0" / "00" / "run_01"
         agent_dir = run_dir / "agent"
         judge_dir = run_dir / "judge"
         agent_dir.mkdir(parents=True)

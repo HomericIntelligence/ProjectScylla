@@ -341,7 +341,7 @@ class TestSelectBestBaselineFromGroup:
         mock_tier_manager.get_baseline_for_subtest.assert_called_once_with(
             tier_id=TierID.T1,
             subtest_id="sub1",
-            results_dir=exp_dir / TierID.T1.value / "sub1",
+            results_dir=exp_dir / "completed" / TierID.T1.value / "sub1",
         )
 
     def test_returns_none_when_best_subtest_is_none(

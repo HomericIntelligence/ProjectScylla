@@ -259,7 +259,11 @@ def rejudge_missing_runs(  # noqa: C901  # workspace state detection with many f
     for tier_id, subtests in run_results.items():
         for subtest_id, runs in subtests.items():
             for run in runs:
-                run_dir = experiment_dir / tier_id / subtest_id / f"run_{run.run_number:02d}"
+                from scylla.e2e.paths import get_run_dir
+
+                run_dir = get_run_dir(
+                    experiment_dir, tier_id, subtest_id, run.run_number, completed=True
+                )
 
                 # Check if judge result exists and is valid
                 if _has_valid_judge_result(run_dir):
@@ -615,9 +619,12 @@ def save_all_results(
     summary_md = generate_experiment_summary_table(result.tier_results)
     (experiment_dir / "summary.md").write_text(summary_md)
 
-    # Save tier-level reports
+    # Save tier-level reports to completed/ phase directory
+    from scylla.e2e.paths import get_subtest_dir, get_tier_dir
+
     for tier_id, tier_result in result.tier_results.items():
-        tier_dir = experiment_dir / tier_id.value
+        tier_dir = get_tier_dir(experiment_dir, tier_id.value, completed=True)
+        tier_dir.mkdir(parents=True, exist_ok=True)
         save_tier_report(tier_dir, tier_id.value, tier_result)
 
         # Generate and save tier summary
@@ -626,5 +633,6 @@ def save_all_results(
 
         # Save subtest-level reports
         for subtest_id, subtest_result in tier_result.subtest_results.items():
-            subtest_dir = tier_dir / subtest_id
+            subtest_dir = get_subtest_dir(experiment_dir, tier_id.value, subtest_id, completed=True)
+            subtest_dir.mkdir(parents=True, exist_ok=True)
             save_subtest_report(subtest_dir, subtest_id, subtest_result)

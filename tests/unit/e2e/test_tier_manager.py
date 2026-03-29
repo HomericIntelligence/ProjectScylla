@@ -786,9 +786,9 @@ class TestBuildMergedBaseline:
         """Test building merged baseline from single tier."""
         import json
 
-        # Create experiment directory structure
+        # Create experiment directory structure (tier data lives under completed/)
         experiment_dir = tmp_path / "experiment"
-        t0_dir = experiment_dir / "T0"
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_dir.mkdir(parents=True)
 
         # Create result.json with best_subtest
@@ -826,8 +826,8 @@ class TestBuildMergedBaseline:
 
         experiment_dir = tmp_path / "experiment"
 
-        # T0 result
-        t0_dir = experiment_dir / "T0"
+        # T0 result (under completed/)
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_dir.mkdir(parents=True)
         (t0_dir / "result.json").write_text(json.dumps({"best_subtest": "03"}))
         t0_subtest = t0_dir / "03"
@@ -836,8 +836,8 @@ class TestBuildMergedBaseline:
             json.dumps({"resources": {"claude_md": {"blocks": ["B01", "B02"]}}})
         )
 
-        # T1 result
-        t1_dir = experiment_dir / "T1"
+        # T1 result (under completed/)
+        t1_dir = experiment_dir / "completed" / "T1"
         t1_dir.mkdir(parents=True)
         (t1_dir / "result.json").write_text(json.dumps({"best_subtest": "02"}))
         t1_subtest = t1_dir / "02"
@@ -881,7 +881,7 @@ class TestBuildMergedBaseline:
         import pytest
 
         experiment_dir = tmp_path / "experiment"
-        t0_dir = experiment_dir / "T0"
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_dir.mkdir(parents=True)
 
         # Create result.json without best_subtest
@@ -901,8 +901,8 @@ class TestBuildMergedBaseline:
 
         experiment_dir = tmp_path / "experiment"
 
-        # T0: has result.json with best_subtest and a config_manifest
-        t0_dir = experiment_dir / "T0"
+        # T0: has result.json with best_subtest and a config_manifest (under completed/)
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_subtest = t0_dir / "subtest-01"
         t0_subtest.mkdir(parents=True)
         (t0_dir / "result.json").write_text(json.dumps({"best_subtest": "subtest-01"}))
@@ -910,7 +910,7 @@ class TestBuildMergedBaseline:
         (t0_subtest / "config_manifest.json").write_text(json.dumps(manifest))
 
         # T1: failed — no result.json and no best_subtest.json
-        (experiment_dir / "T1").mkdir(parents=True)
+        (experiment_dir / "completed" / "T1").mkdir(parents=True)
 
         tiers_dir = tmp_path / "tiers"
         tiers_dir.mkdir()
@@ -929,9 +929,9 @@ class TestBuildMergedBaseline:
 
         experiment_dir = tmp_path / "experiment"
 
-        # T0 and T1 both have result.json but no best_subtest (failed)
+        # T0 and T1 both have result.json but no best_subtest (failed) — under completed/
         for tier in ("T0", "T1"):
-            tier_dir = experiment_dir / tier
+            tier_dir = experiment_dir / "completed" / tier
             tier_dir.mkdir(parents=True)
             (tier_dir / "result.json").write_text(json.dumps({"pass_rate": 0.0}))
 
@@ -951,7 +951,7 @@ class TestBuildMergedBaseline:
         import json
 
         experiment_dir = tmp_path / "experiment"
-        t0_dir = experiment_dir / "T0"
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_subtest_dir = t0_dir / "subtest-01"
         t0_subtest_dir.mkdir(parents=True)
 
@@ -987,7 +987,7 @@ class TestBuildMergedBaseline:
         import json
 
         experiment_dir = tmp_path / "experiment"
-        t0_dir = experiment_dir / "T0"
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_subtest_dir = t0_dir / "subtest-01"
         t0_subtest_dir.mkdir(parents=True)
 
@@ -1020,7 +1020,7 @@ class TestBuildMergedBaseline:
         import json
 
         experiment_dir = tmp_path / "experiment"
-        t1_dir = experiment_dir / "T1"
+        t1_dir = experiment_dir / "completed" / "T1"
         # best subtest 02 has no manifest
         (t1_dir / "02").mkdir(parents=True)
         # sibling subtest 00 has a manifest
@@ -1046,7 +1046,7 @@ class TestBuildMergedBaseline:
         import json
 
         experiment_dir = tmp_path / "experiment"
-        t1_dir = experiment_dir / "T1"
+        t1_dir = experiment_dir / "completed" / "T1"
         # two subtests, neither has a manifest
         (t1_dir / "00").mkdir(parents=True)
         (t1_dir / "01").mkdir(parents=True)
@@ -1070,14 +1070,14 @@ class TestBuildMergedBaseline:
         experiment_dir = tmp_path / "experiment"
 
         # T1: best subtest 00 has no manifest
-        t1_dir = experiment_dir / "T1"
+        t1_dir = experiment_dir / "completed" / "T1"
         (t1_dir / "00").mkdir(parents=True)
         (t1_dir / "best_subtest.json").write_text(
             json.dumps({"winning_subtest": "00", "rationale": "tiebreaker"})
         )
 
         # T0: best subtest 01 has a manifest
-        t0_dir = experiment_dir / "T0"
+        t0_dir = experiment_dir / "completed" / "T0"
         t0_subtest = t0_dir / "01"
         t0_subtest.mkdir(parents=True)
         manifest = {"resources": {"claude_md": {"blocks": ["B01"]}}}
