@@ -10,6 +10,7 @@ from hephaestus.resilience.circuit_breaker import (
     get_circuit_breaker,
     reset_all_circuit_breakers,
 )
+
 from scylla.core.results import (
     ExecutionInfoBase,
     GradingInfoBase,
