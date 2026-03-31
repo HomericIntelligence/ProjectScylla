@@ -86,7 +86,6 @@ def resilient_call(
     circuit_breaker_name: str | None = None,
     max_retries: int = 3,
     initial_delay: float = 1.0,
-    max_delay: float = 30.0,
     **kwargs: object,
 ) -> object:
     """Execute a function with retry and optional circuit breaker.
@@ -101,7 +100,6 @@ def resilient_call(
         circuit_breaker_name: Optional circuit breaker name for fail-fast
         max_retries: Maximum retry attempts
         initial_delay: Initial backoff delay in seconds
-        max_delay: Maximum backoff delay cap in seconds
         **kwargs: Keyword arguments for func
 
     Returns:
@@ -122,7 +120,6 @@ def resilient_call(
         backoff_factor=2,
         retry_on=TRANSIENT_SUBPROCESS_ERRORS,
         logger=logger.warning,
-        max_delay=max_delay,
         jitter=True,
     )
     def _inner() -> object:
