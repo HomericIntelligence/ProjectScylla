@@ -3,6 +3,7 @@
 
 This script is kept for backwards compatibility. Use `hephaestus-implement-issues` instead.
 """
+
 import sys
 
 from hephaestus.automation.implementer import main
