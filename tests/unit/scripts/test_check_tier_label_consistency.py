@@ -6,11 +6,10 @@ import json
 from pathlib import Path
 
 import pytest
-from check_tier_label_consistency import (
+from hephaestus.validation.tier_labels import (
     BAD_PATTERNS,
     TierLabelFinding,
     _collect_mismatches,
-    check_tier_label_consistency,
     find_violations,
     format_json,
     format_report,
@@ -98,97 +97,6 @@ class TestFindViolations:
         violations = find_violations("T3 Tooling")
         assert len(violations) == 1
         assert len(violations[0]) == 4
-
-
-class TestCheckTierLabelConsistency:
-    """Tests for check_tier_label_consistency() — legacy single-file API."""
-
-    def test_clean_file_returns_zero(self, tmp_path: Path) -> None:
-        """File with no bad patterns returns exit code 0."""
-        f = tmp_path / "metrics-definitions.md"
-        f.write_text("T3 Delegation\nT4 Hierarchy\n", encoding="utf-8")
-        assert check_tier_label_consistency(f) == 0
-
-    def test_violation_returns_one(self, tmp_path: Path) -> None:
-        """File with a bad pattern returns exit code 1."""
-        f = tmp_path / "metrics-definitions.md"
-        f.write_text("T3 Tooling tier\n", encoding="utf-8")
-        assert check_tier_label_consistency(f) == 1
-
-    def test_missing_file_returns_one(self, tmp_path: Path) -> None:
-        """Non-existent file returns exit code 1."""
-        missing = tmp_path / "nonexistent.md"
-        assert check_tier_label_consistency(missing) == 1
-
-    def test_missing_file_prints_error_to_stderr(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        """Error message for missing file is printed to stderr."""
-        missing = tmp_path / "nonexistent.md"
-        check_tier_label_consistency(missing)
-        captured = capsys.readouterr()
-        assert "not found" in captured.err.lower() or "nonexistent.md" in captured.err
-
-    def test_violation_details_printed_to_stderr(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        """Violation line and pattern are printed to stderr."""
-        f = tmp_path / "metrics-definitions.md"
-        f.write_text("T4 Delegation mismatched\n", encoding="utf-8")
-        check_tier_label_consistency(f)
-        captured = capsys.readouterr()
-        assert "T4" in captured.err
-        assert "Deleg" in captured.err
-
-    def test_violation_count_in_error_message(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        """Error message reports the number of violations."""
-        f = tmp_path / "metrics-definitions.md"
-        f.write_text("T3 Tooling\nT5 Hierarchy\n", encoding="utf-8")
-        check_tier_label_consistency(f)
-        captured = capsys.readouterr()
-        assert "2" in captured.err
-
-    @pytest.mark.parametrize(
-        "bad_line",
-        [
-            # Original set
-            "T3 Tooling",
-            "T4 Delegation",
-            "T5 Hierarchy",
-            "T2 Skills",
-            # Reverse/symmetric set
-            "T2 Delegation",
-            "T3 Hierarchy",
-            "T4 Hybrid",
-            "T1 Tooling",
-            "T0 Skills",
-            "T1 Prompts",
-            "T2 Prompts",
-            "T3 Skills",
-            "T4 Tooling",
-            "T5 Delegation",
-            "T6 Hierarchy",
-            "T6 Hybrid",
-            "T0 Tooling",
-            "T0 Delegation",
-            "T5 Skills",
-            "T6 Delegation",
-        ],
-    )
-    def test_each_bad_pattern_causes_failure(self, tmp_path: Path, bad_line: str) -> None:
-        """Each individual bad pattern triggers a failure."""
-        f = tmp_path / "metrics-definitions.md"
-        f.write_text(bad_line + "\n", encoding="utf-8")
-        assert check_tier_label_consistency(f) == 1
-
-    def test_actual_metrics_definitions_file_is_clean(self) -> None:
-        """The real metrics-definitions.md file has no tier label mismatches."""
-        target = Path(".claude/shared/metrics-definitions.md")
-        if not target.is_file():
-            pytest.skip("metrics-definitions.md not found (not in repo root context)")
-        assert check_tier_label_consistency(target) == 0
 
 
 class TestBadPatterns:

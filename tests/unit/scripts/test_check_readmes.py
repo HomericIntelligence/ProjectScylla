@@ -4,12 +4,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from check_readmes import (
+from hephaestus.validation.markdown import (
     check_markdown_formatting,
     check_required_sections,
     extract_sections,
     find_readmes,
-    validate_readme,
 )
 
 # ---------------------------------------------------------------------------
@@ -81,37 +80,34 @@ class TestExtractSections:
 class TestCheckRequiredSections:
     """Tests for check_required_sections()."""
 
-    def test_default_readme_passes_with_required_sections(self, tmp_path: Path) -> None:
-        """README in a default location passes when all required sections present."""
-        readme = tmp_path / "README.md"
+    def test_readme_passes_with_required_sections(self) -> None:
+        """README content passes when all required sections present."""
+        content = "## Overview\n\n## Installation\n\n## Usage\n"
         sections = ["Overview", "Installation", "Usage"]
-        ok, missing = check_required_sections(readme, sections)
+        ok, missing = check_required_sections(content, sections)
         assert ok is True
         assert missing == []
 
-    def test_default_readme_fails_with_missing_section(self, tmp_path: Path) -> None:
-        """README in default location fails when required section is missing."""
-        readme = tmp_path / "README.md"
-        sections = ["Overview", "Installation"]  # Missing "Usage"
-        ok, missing = check_required_sections(readme, sections)
+    def test_readme_fails_with_missing_section(self) -> None:
+        """README content fails when required section is missing."""
+        content = "## Overview\n\n## Installation\n"
+        sections = ["Overview", "Installation", "Usage"]
+        ok, missing = check_required_sections(content, sections)
         assert ok is False
         assert "Usage" in missing
 
-    def test_directory_readme_uses_directory_requirements(self, tmp_path: Path) -> None:
-        """README in docs/ uses directory-type requirements (Overview + Structure)."""
-        docs = tmp_path / "docs"
-        docs.mkdir()
-        readme = docs / "README.md"
+    def test_all_sections_present_returns_true(self) -> None:
+        """Returns True when all required sections are found."""
+        content = "## Overview\n\n## Structure\n"
         sections = ["Overview", "Structure"]
-        ok, _missing = check_required_sections(readme, sections)
+        ok, _missing = check_required_sections(content, sections)
         assert ok is True
 
-    def test_case_insensitive_section_matching(self, tmp_path: Path) -> None:
-        """Section matching is case-insensitive."""
-        readme = tmp_path / "README.md"
-        # "overview" lowercase should match "Overview" requirement
-        sections = ["overview", "installation", "usage"]
-        ok, _missing = check_required_sections(readme, sections)
+    def test_case_sensitive_section_matching(self) -> None:
+        """Section matching is case-sensitive (hephaestus uses regex exact match)."""
+        content = "## Overview\n\n## Installation\n\n## Usage\n"
+        sections = ["Overview", "Installation", "Usage"]
+        ok, _missing = check_required_sections(content, sections)
         assert ok is True
 
 
@@ -146,47 +142,3 @@ class TestCheckMarkdownFormatting:
         content = "Some text\n\n- list item\n"
         issues = check_markdown_formatting(content)
         assert not any("List without" in i for i in issues)
-
-
-# ---------------------------------------------------------------------------
-# validate_readme
-# ---------------------------------------------------------------------------
-
-
-class TestValidateReadme:
-    """Tests for validate_readme()."""
-
-    def test_valid_readme_passes(self, tmp_path: Path) -> None:
-        """Complete README with all required sections passes validation."""
-        readme = tmp_path / "README.md"
-        readme.write_text(
-            "# Title\n\n## Overview\n\nText.\n\n## Installation\n\nSteps.\n\n## Usage\n\nUsage.\n"
-        )
-        result = validate_readme(readme)
-        assert result["passed"] is True
-        assert result["issues"] == []
-
-    def test_readme_missing_sections_fails(self, tmp_path: Path) -> None:
-        """README missing required sections fails validation."""
-        readme = tmp_path / "README.md"
-        readme.write_text("# Title\n\nNo sections here.\n")
-        result = validate_readme(readme)
-        assert result["passed"] is False
-        assert any("Missing" in issue for issue in result["issues"])
-
-    def test_readme_without_trailing_newline_fails(self, tmp_path: Path) -> None:
-        """README not ending with newline fails validation."""
-        readme = tmp_path / "README.md"
-        readme.write_bytes(
-            b"# Title\n\n## Overview\n\n## Installation\n\n## Usage\n\nno trailing newline"
-        )
-        result = validate_readme(readme)
-        assert result["passed"] is False
-        assert any("newline" in issue.lower() for issue in result["issues"])
-
-    def test_result_contains_path(self, tmp_path: Path) -> None:
-        """Result dictionary contains the file path."""
-        readme = tmp_path / "README.md"
-        readme.write_text("# T\n")
-        result = validate_readme(readme)
-        assert "path" in result

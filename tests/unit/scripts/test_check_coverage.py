@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from check_coverage import (
+from hephaestus.validation.coverage import (
     check_coverage,
     get_module_threshold,
     load_coverage_config,

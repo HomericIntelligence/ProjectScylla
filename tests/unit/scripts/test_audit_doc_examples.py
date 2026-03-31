@@ -7,8 +7,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
-
-from scripts.audit_doc_examples import (
+from hephaestus.validation.doc_policy import (
     Finding,
     Severity,
     _extract_code_blocks,
