@@ -12,12 +12,15 @@ set -euo pipefail
 # Configuration
 # ---------------------------------------------------------------------------
 TESTS=("test-001" "test-002" "test-003")
-TIERS="T0 T1 T2 T3 T4 T5 T6"
+read -ra TIERS <<< "${TIERS:-T0 T1 T2 T3 T4 T5 T6}"
 RUNS=3
 AGENT_MODEL="claude-haiku-4-5"
 PRIMARY_JUDGE="claude-opus-4-6"
 RESULTS_DIR="${RESULTS_DIR:-results}"
 OFF_PEAK="${OFF_PEAK:---off-peak}"  # set OFF_PEAK="" to disable
+# Build optional --off-peak flag array (empty when OFF_PEAK is unset)
+off_peak_args=()
+[[ -n "${OFF_PEAK}" ]] && off_peak_args=("${OFF_PEAK}")
 
 # ---------------------------------------------------------------------------
 # Pre-flight checks
@@ -78,9 +81,12 @@ run_stage() {
     local stage="$2"
     local config_dir="tests/fixtures/tests/${test_id}"
 
+    local tiers_args=()
+    for t in "${TIERS[@]}"; do tiers_args+=(--tiers "$t"); done
+
     local common_args=(
         --config "$config_dir"
-        --tiers $TIERS
+        "${tiers_args[@]}"
         --runs "$RUNS"
         --model "$AGENT_MODEL"
         --judge-model "$PRIMARY_JUDGE"
@@ -97,7 +103,7 @@ run_stage() {
                 "${common_args[@]}" \
                 --max-concurrent-agents 10 \
                 --until agent_complete \
-                ${OFF_PEAK}
+                "${off_peak_args[@]}"
             ;;
         2)
             echo "[$test_id] Stage 2: Commit + Diff + Promote (2 concurrent agents)"
@@ -111,7 +117,7 @@ run_stage() {
             pixi run python scripts/manage_experiment.py run \
                 "${common_args[@]}" \
                 --max-concurrent-agents 5 \
-                ${OFF_PEAK}
+                "${off_peak_args[@]}"
             ;;
         *)
             echo "Unknown stage: $stage"
