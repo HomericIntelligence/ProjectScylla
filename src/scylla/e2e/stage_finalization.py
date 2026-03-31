@@ -105,11 +105,14 @@ def _save_judge_failure(judge_dir: Any, judge_num: int, error: Exception) -> Non
         )
     (judge_specific_dir / "error.log").write_text(f"Judge failed: {error}\n")
 
-    # Save raw outputs for debugging (available from _JudgeParseError)
-    if hasattr(error, "stdout") and error.stdout:
-        (judge_specific_dir / "stdout.log").write_text(error.stdout)
-    if hasattr(error, "stderr") and error.stderr:
-        (judge_specific_dir / "stderr.log").write_text(error.stderr)
+    # Save raw outputs for debugging (available from _JudgeParseError and
+    # subprocess.TimeoutExpired — the latter stores bytes, not str).
+    for attr, filename in (("stdout", "stdout.log"), ("stderr", "stderr.log")):
+        data = getattr(error, attr, None)
+        if data:
+            if isinstance(data, bytes):
+                data = data.decode("utf-8", errors="replace")
+            (judge_specific_dir / filename).write_text(data)
 
 
 def stage_execute_judge(ctx: RunContext) -> None:

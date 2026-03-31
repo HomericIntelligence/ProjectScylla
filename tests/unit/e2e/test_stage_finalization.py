@@ -25,6 +25,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from scylla.e2e.stage_finalization import (
+    _save_judge_failure,
     stage_cleanup_worktree,
     stage_execute_judge,
     stage_finalize_run,
@@ -775,3 +776,49 @@ class TestStageCleanupWorktree:
         call_args = wm.cleanup_worktree.call_args[0]
         assert call_args[0] == ctx.workspace
         assert call_args[0] != ctx.run_dir
+
+
+# ---------------------------------------------------------------------------
+# _save_judge_failure: handles bytes from subprocess.TimeoutExpired
+# ---------------------------------------------------------------------------
+
+
+class TestSaveJudgeFailure:
+    """Tests for _save_judge_failure handling of bytes vs str outputs."""
+
+    def test_saves_str_stdout_stderr(self, tmp_path: Path) -> None:
+        """String stdout/stderr from _JudgeParseError is written correctly."""
+        error = Exception("parse failed")
+        error.stdout = "judge stdout text"  # type: ignore[attr-defined]
+        error.stderr = "judge stderr text"  # type: ignore[attr-defined]
+
+        _save_judge_failure(tmp_path, 1, error)
+
+        judge_dir = tmp_path / "judge_01"
+        assert (judge_dir / "stdout.log").read_text() == "judge stdout text"
+        assert (judge_dir / "stderr.log").read_text() == "judge stderr text"
+
+    def test_saves_bytes_stdout_stderr(self, tmp_path: Path) -> None:
+        """Bytes stdout/stderr from TimeoutExpired is decoded and written."""
+        import subprocess
+
+        error = subprocess.TimeoutExpired(cmd=["claude"], timeout=1200)
+        error.stdout = b"partial judge output"
+        error.stderr = b"timeout error details"
+
+        _save_judge_failure(tmp_path, 2, error)
+
+        judge_dir = tmp_path / "judge_02"
+        assert (judge_dir / "stdout.log").read_text() == "partial judge output"
+        assert (judge_dir / "stderr.log").read_text() == "timeout error details"
+
+    def test_no_stdout_stderr_attributes(self, tmp_path: Path) -> None:
+        """Plain Exception without stdout/stderr does not crash."""
+        error = RuntimeError("generic failure")
+
+        _save_judge_failure(tmp_path, 3, error)
+
+        judge_dir = tmp_path / "judge_03"
+        assert (judge_dir / "error.log").exists()
+        assert not (judge_dir / "stdout.log").exists()
+        assert not (judge_dir / "stderr.log").exists()
