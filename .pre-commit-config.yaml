@@ -142,7 +142,7 @@ repos:
       - id: check-docstring-fragments
         name: Check Orphaned Docstring Fragments
         description: Detects orphaned lowercase continuation lines in module-level and function docstrings (e.g., lines starting with connector words like 'across', 'and', 'or') and fails the commit
-        entry: pixi run python scripts/check_docstring_fragments.py
+        entry: pixi run python scripts/check_docstring_fragments.py --directory src/scylla/
         language: system
         files: \.py$
         types: [python]

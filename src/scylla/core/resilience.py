@@ -12,6 +12,7 @@ import logging
 import subprocess
 
 from hephaestus.utils.retry import retry_with_backoff
+
 from scylla.core.circuit_breaker import CircuitBreaker, get_circuit_breaker
 
 logger = logging.getLogger(__name__)
