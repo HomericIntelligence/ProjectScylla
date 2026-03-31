@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fix_markdown import MarkdownFixer
+from hephaestus.markdown.fixer import FixerOptions, MarkdownFixer
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -13,7 +13,7 @@ from fix_markdown import MarkdownFixer
 
 def fixer(verbose: bool = False, dry_run: bool = False) -> MarkdownFixer:
     """Return a MarkdownFixer instance."""
-    return MarkdownFixer(verbose=verbose, dry_run=dry_run)
+    return MarkdownFixer(options=FixerOptions(verbose=verbose, dry_run=dry_run))
 
 
 # ---------------------------------------------------------------------------

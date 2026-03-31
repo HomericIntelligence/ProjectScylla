@@ -8,16 +8,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
-from scripts.check_docstring_fragments import (
+from hephaestus.validation.docstrings import (
     FragmentFinding,
     _is_genuine_fragment,
-    _is_scylla_file,
     format_json,
     format_report,
     main,
     scan_file,
-    scan_repository,
 )
 
 # ---------------------------------------------------------------------------
@@ -311,121 +308,6 @@ class TestScanFilePassesValidDocstrings:
 
 
 # ---------------------------------------------------------------------------
-# _is_scylla_file — unit tests
-# ---------------------------------------------------------------------------
-
-
-class TestIsScyllaFile:
-    """_is_scylla_file returns True only for .py files under scylla/."""
-
-    def test_scylla_py_file_accepted(self, tmp_path: Path) -> None:
-        """A .py file under src/scylla/ should be accepted."""
-        scylla_dir = tmp_path / "src" / "scylla"
-        scylla_dir.mkdir(parents=True)
-        py = scylla_dir / "module.py"
-        py.touch()
-        assert _is_scylla_file(py, tmp_path)
-
-    def test_scylla_nested_py_file_accepted(self, tmp_path: Path) -> None:
-        """A .py file in a src/scylla/ subdirectory should be accepted."""
-        nested = tmp_path / "src" / "scylla" / "subpackage"
-        nested.mkdir(parents=True)
-        py = nested / "module.py"
-        py.touch()
-        assert _is_scylla_file(py, tmp_path)
-
-    def test_scripts_py_file_rejected(self, tmp_path: Path) -> None:
-        """A .py file under scripts/ should be rejected."""
-        scripts_dir = tmp_path / "scripts"
-        scripts_dir.mkdir()
-        py = scripts_dir / "tool.py"
-        py.touch()
-        assert not _is_scylla_file(py, tmp_path)
-
-    def test_tests_py_file_rejected(self, tmp_path: Path) -> None:
-        """A .py file under tests/ should be rejected."""
-        tests_dir = tmp_path / "tests"
-        tests_dir.mkdir()
-        py = tests_dir / "test_foo.py"
-        py.touch()
-        assert not _is_scylla_file(py, tmp_path)
-
-    def test_root_py_file_rejected(self, tmp_path: Path) -> None:
-        """A .py file at the repo root should be rejected."""
-        py = tmp_path / "setup.py"
-        py.touch()
-        assert not _is_scylla_file(py, tmp_path)
-
-    def test_non_py_file_in_scylla_rejected(self, tmp_path: Path) -> None:
-        """A non-.py file under src/scylla/ should be rejected."""
-        scylla_dir = tmp_path / "src" / "scylla"
-        scylla_dir.mkdir(parents=True)
-        txt = scylla_dir / "README.md"
-        txt.touch()
-        assert not _is_scylla_file(txt, tmp_path)
-
-
-# ---------------------------------------------------------------------------
-# scan_repository — scope filter (scylla/ only)
-# ---------------------------------------------------------------------------
-
-
-class TestScanRepositoryScope:
-    """scan_repository only scans files under src/scylla/."""
-
-    def test_scylla_file_with_fragment_is_found(self, tmp_path: Path) -> None:
-        """Fragment in a src/scylla/ file should be reported."""
-        scylla_dir = tmp_path / "src" / "scylla"
-        scylla_dir.mkdir(parents=True)
-        bad_py = scylla_dir / "module.py"
-        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
-        findings = scan_repository(tmp_path)
-        assert len(findings) == 1
-
-    def test_scripts_file_not_scanned(self, tmp_path: Path) -> None:
-        """Fragment in a scripts/ file should not be reported."""
-        scripts_dir = tmp_path / "scripts"
-        scripts_dir.mkdir()
-        bad_py = scripts_dir / "tool.py"
-        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
-        findings = scan_repository(tmp_path)
-        assert findings == []
-
-    def test_tests_file_not_scanned(self, tmp_path: Path) -> None:
-        """Fragment in a tests/ file should not be reported."""
-        tests_dir = tmp_path / "tests"
-        tests_dir.mkdir()
-        bad_py = tests_dir / "test_foo.py"
-        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
-        findings = scan_repository(tmp_path)
-        assert findings == []
-
-    def test_root_file_not_scanned(self, tmp_path: Path) -> None:
-        """Fragment in a repo-root .py file should not be reported."""
-        bad_py = tmp_path / "setup.py"
-        bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
-        findings = scan_repository(tmp_path)
-        assert findings == []
-
-    def test_scylla_nested_file_scanned(self, tmp_path: Path) -> None:
-        """Fragment in a nested src/scylla/ subpackage file should be reported."""
-        nested = tmp_path / "src" / "scylla" / "executor"
-        nested.mkdir(parents=True)
-        bad_py = nested / "runner.py"
-        bad_py.write_text('"""and returns the computed result."""\nx = 1\n')
-        findings = scan_repository(tmp_path)
-        assert len(findings) == 1
-        assert "src/scylla/executor/runner.py" in findings[0].file
-
-    def test_empty_scylla_dir_returns_no_findings(self, tmp_path: Path) -> None:
-        """Empty src/scylla/ directory returns no findings."""
-        scylla_dir = tmp_path / "src" / "scylla"
-        scylla_dir.mkdir(parents=True)
-        findings = scan_repository(tmp_path)
-        assert findings == []
-
-
-# ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
 
@@ -545,7 +427,7 @@ class TestMainVerboseFlag:
     ) -> None:
         """--verbose with no findings should print the no-violations message."""
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--verbose"]),
         ):
             exit_code = main()
@@ -564,7 +446,7 @@ class TestMainVerboseFlag:
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
 
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--verbose"]),
         ):
             exit_code = main()
@@ -577,7 +459,7 @@ class TestMainVerboseFlag:
     def test_verbose_exit_code_zero_when_clean(self, tmp_path: Path) -> None:
         """--verbose exits with 0 when no fragments found."""
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--verbose"]),
         ):
             assert main() == 0
@@ -591,7 +473,7 @@ class TestMainJsonFlag:
     ) -> None:
         """--json with no findings should print an empty JSON array."""
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
         ):
             exit_code = main()
@@ -611,7 +493,7 @@ class TestMainJsonFlag:
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
 
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
         ):
             exit_code = main()
@@ -633,7 +515,7 @@ class TestMainJsonFlag:
         bad_py.write_text('"""and returns the result."""\nx = 1\n')
 
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
         ):
             main()
@@ -648,7 +530,7 @@ class TestMainJsonFlag:
     def test_json_exit_code_zero_when_clean(self, tmp_path: Path) -> None:
         """--json exits with 0 when no fragments found."""
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py", "--json"]),
         ):
             assert main() == 0
@@ -662,7 +544,7 @@ class TestMainDefaultBehavior:
     ) -> None:
         """Without flags, plain text report is printed."""
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py"]),
         ):
             exit_code = main()
@@ -681,7 +563,7 @@ class TestMainDefaultBehavior:
         bad_py.write_text('"""across multiple tiers."""\nx = 1\n')
 
         with (
-            patch("scripts.check_docstring_fragments.get_repo_root", return_value=tmp_path),
+            patch("hephaestus.validation.docstrings.get_repo_root", return_value=tmp_path),
             patch("sys.argv", ["check_docstring_fragments.py"]),
         ):
             exit_code = main()
