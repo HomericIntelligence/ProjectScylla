@@ -143,11 +143,10 @@ def _restore_run_context(ctx: Any, current_state: str) -> None:
                 )
             ctx.agent_ran = False
         else:
-            logger.warning(
-                "Resuming run at state '%s' but agent result is invalid at %s "
-                "— run should have been reset by _reset_invalid_runs()",
-                current_state,
-                ctx.run_dir,
+            raise RuntimeError(
+                f"Resuming run at state '{current_state}' but agent result is "
+                f"invalid at {ctx.run_dir} "
+                f"— run should have been reset by _reset_invalid_runs()"
             )
 
     # If past JUDGE_PROMPT_BUILT, the saved judge_prompt.md is the source of truth
@@ -565,6 +564,27 @@ class SubTestExecutor:
                             runs.append(run_result)
                             last_workspace = workspace
                             continue
+
+                # For runs past PROMOTED_TO_COMPLETED, the directory has been
+                # moved to completed/ — redirect run_dir so we find agent results.
+                if sm and experiment_dir is not None:
+                    from scylla.e2e.models import RunState
+                    from scylla.e2e.state_machine import is_at_or_past_state
+
+                    _cur = sm.get_state(tier_id.value, subtest.id, run_num)
+                    if is_at_or_past_state(_cur, RunState.PROMOTED_TO_COMPLETED):
+                        from scylla.e2e.paths import get_run_dir
+
+                        completed_run_dir = get_run_dir(
+                            experiment_dir,
+                            tier_id.value,
+                            subtest.id,
+                            run_num,
+                            completed=True,
+                        )
+                        if completed_run_dir.exists():
+                            run_dir = completed_run_dir
+                            workspace = run_dir / "workspace"
 
                 run_dir.mkdir(parents=True, exist_ok=True)
                 workspace.mkdir(parents=True, exist_ok=True)
