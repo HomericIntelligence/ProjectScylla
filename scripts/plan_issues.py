@@ -3,6 +3,7 @@
 
 This script is kept for backwards compatibility. Use `hephaestus-plan-issues` instead.
 """
+
 import sys
 
 from hephaestus.automation.planner import main
