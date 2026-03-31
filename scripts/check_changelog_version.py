@@ -1,30 +1,22 @@
 #!/usr/bin/env python3
-"""Verify CHANGELOG.md contains an entry matching the version in pyproject.toml.
+"""Check that CHANGELOG.md contains an entry for the current version.
 
-Checks that CHANGELOG.md has a ``## [X.Y.Z]`` or ``## X.Y.Z`` header matching
-the ``[project] version`` field in ``pyproject.toml``.  This prevents releasing
-without documenting changes.
-
-Usage:
-    python scripts/check_changelog_version.py
-    python scripts/check_changelog_version.py --repo-root /path/to/repo
-    python scripts/check_changelog_version.py --verbose
-
-Exit codes:
-    0: CHANGELOG.md contains a matching version entry
-    1: Version entry missing or files unreadable
+Thin wrapper — delegates to hephaestus.git.changelog.check_version_main().
+Install homericintelligence-hephaestus to use this script.
 """
-
-import argparse
-import re
 import sys
 from pathlib import Path
 
-import tomllib
+# Import from hephaestus (canonical implementation)
+from hephaestus.git.changelog import (
+    changelog_has_version as _hephaestus_changelog_has_version,
+    check_version_main,
+    extract_version_from_pyproject as _hephaestus_extract_version,
+)
 
-_REPO_ROOT = Path(__file__).parent.parent
-if str(_REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(_REPO_ROOT))
+
+# Compatibility shims: Scylla's API took repo_root: Path and internally
+# appended the filename; hephaestus takes the file path directly.
 
 
 def extract_version_from_pyproject(repo_root: Path) -> str:
@@ -41,38 +33,19 @@ def extract_version_from_pyproject(repo_root: Path) -> str:
 
     """
     pyproject = repo_root / "pyproject.toml"
-    if not pyproject.exists():
-        print(f"ERROR: pyproject.toml not found at {pyproject}", file=sys.stderr)
+    version = _hephaestus_extract_version(pyproject)
+    if version is None:
+        print(f"ERROR: Could not read version from {pyproject}", file=sys.stderr)
         sys.exit(1)
-
-    try:
-        with open(pyproject, "rb") as f:
-            data = tomllib.load(f)
-    except Exception as exc:
-        print(f"ERROR: Failed to parse pyproject.toml: {exc}", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        version: str = data["project"]["version"]
-    except KeyError:
-        print(
-            "ERROR: [project].version not found in pyproject.toml",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
     return version
 
 
 def changelog_has_version(repo_root: Path, version: str) -> bool:
     """Check whether CHANGELOG.md contains a header for *version*.
 
-    Scans for ``## [X.Y.Z]`` (Keep a Changelog format) or ``## X.Y.Z``
-    (without brackets) anywhere in the file.
-
     Args:
         repo_root: Path to the repository root containing ``CHANGELOG.md``.
-        version: The version string to search for (e.g. ``"0.1.0"``).
+        version: The version string to search for.
 
     Returns:
         ``True`` if a matching header is found, ``False`` otherwise.
@@ -85,15 +58,7 @@ def changelog_has_version(repo_root: Path, version: str) -> bool:
     if not changelog.exists():
         print(f"ERROR: CHANGELOG.md not found at {changelog}", file=sys.stderr)
         sys.exit(1)
-
-    text = changelog.read_text(encoding="utf-8")
-
-    # Match "## [0.1.0]" with optional trailing content (date, link, etc.)
-    # or "## 0.1.0" without brackets.
-    # Use (?:\s|$) instead of \b because \b after ']' requires a word char.
-    escaped = re.escape(version)
-    pattern = rf"^##\s+(?:\[{escaped}\]|{escaped})(?:\s|$)"
-    return bool(re.search(pattern, text, re.MULTILINE))
+    return _hephaestus_changelog_has_version(changelog, version)
 
 
 def main() -> int:
@@ -103,9 +68,12 @@ def main() -> int:
         Exit code: 0 if the check passes, 1 if it fails.
 
     """
+    import argparse
+
+    _REPO_ROOT = Path(__file__).parent.parent
+
     parser = argparse.ArgumentParser(
         description="Verify CHANGELOG.md contains an entry for the pyproject.toml version",
-        epilog="Example: %(prog)s --repo-root /path/to/repo",
     )
     parser.add_argument(
         "--repo-root",
