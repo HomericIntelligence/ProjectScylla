@@ -259,10 +259,16 @@ def check_skill_files(repo_root: Path, canonical: str) -> list[str]:
         repo_root / ".claude",
     ]
 
+    # Directories to exclude from scanning (local-only worktrees, caches, etc.)
+    skip_dirs = {"worktrees"}
+
     for scan_dir in scan_dirs:
         if not scan_dir.is_dir():
             continue
         for md_file in sorted(scan_dir.rglob("*.md")):
+            # Skip files under excluded directories
+            if any(part in skip_dirs for part in md_file.parts):
+                continue
             rel_path = md_file.relative_to(repo_root)
             errors.extend(find_aspirational_versions(md_file, canonical_tuple, str(rel_path)))
 

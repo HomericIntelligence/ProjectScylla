@@ -10,11 +10,13 @@ from unittest.mock import patch
 import pytest
 from hephaestus.validation.docstrings import (
     FragmentFinding,
-    _is_genuine_fragment,
     format_json,
     format_report,
     main,
     scan_file,
+)
+from hephaestus.validation.docstrings import (
+    is_genuine_fragment as _is_genuine_fragment,
 )
 
 # ---------------------------------------------------------------------------
