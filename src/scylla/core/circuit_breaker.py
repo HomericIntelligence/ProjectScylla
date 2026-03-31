@@ -4,7 +4,8 @@ This module re-exports from hephaestus.resilience.circuit_breaker for
 backwards compatibility. Import directly from hephaestus.resilience for
 new code.
 """
-from hephaestus.resilience.circuit_breaker import (  # noqa: F401
+
+from hephaestus.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpenError,
     CircuitBreakerState,
