@@ -19,7 +19,7 @@ from scylla.adapters.base import (
     AdapterTokenStats,
     BaseAdapter,
 )
-from scylla.core.circuit_breaker import get_circuit_breaker
+from hephaestus.resilience.circuit_breaker import get_circuit_breaker
 
 if TYPE_CHECKING:
     from scylla.executor.tier_config import TierConfig
@@ -90,7 +90,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         cb = get_circuit_breaker("claude_api", failure_threshold=5, recovery_timeout=60.0)
         try:
             cb_state = cb.state
-            from scylla.core.circuit_breaker import CircuitBreakerState
+            from hephaestus.resilience.circuit_breaker import CircuitBreakerState
 
             if cb_state == CircuitBreakerState.OPEN:
                 raise AdapterError(

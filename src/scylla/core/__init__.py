@@ -3,7 +3,7 @@
 This module provides foundational types used across the codebase.
 """
 
-from scylla.core.circuit_breaker import (
+from hephaestus.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpenError,
     CircuitBreakerState,

@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from scylla.config.constants import DEFAULT_JUDGE_MODEL
-from scylla.core.circuit_breaker import get_circuit_breaker
+from hephaestus.resilience.circuit_breaker import get_circuit_breaker
 
 # Re-export build pipeline functions for backward compatibility
 from scylla.e2e.build_pipeline import (
