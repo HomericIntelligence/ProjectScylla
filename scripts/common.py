@@ -5,14 +5,14 @@ This module provides common functionality used across multiple scripts to avoid 
 
 Centralized Utilities:
 - LABEL_COLORS: GitHub label colors for evaluation workflow
-- get_repo_root(): Repository root finder (imported from scylla.automation.git_utils)
+- get_repo_root(): Repository root finder (imported from hephaestus.utils.helpers)
 - get_agents_dir(): .claude/agents path helper
 - Colors: ANSI terminal colors with disable() method
 """
 
 from pathlib import Path
 
-from scylla.automation.git_utils import get_repo_root
+from hephaestus.utils.helpers import get_repo_root
 
 # Label colors for GitHub issues (evaluation workflow)
 LABEL_COLORS = {
