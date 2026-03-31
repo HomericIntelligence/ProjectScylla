@@ -12,6 +12,8 @@ import subprocess
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, cast
 
+from hephaestus.resilience.circuit_breaker import get_circuit_breaker
+
 from scylla.adapters.base import (
     AdapterConfig,
     AdapterError,
@@ -19,7 +21,6 @@ from scylla.adapters.base import (
     AdapterTokenStats,
     BaseAdapter,
 )
-from hephaestus.resilience.circuit_breaker import get_circuit_breaker
 
 if TYPE_CHECKING:
     from scylla.executor.tier_config import TierConfig

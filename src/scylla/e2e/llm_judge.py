@@ -18,8 +18,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from scylla.config.constants import DEFAULT_JUDGE_MODEL
 from hephaestus.resilience.circuit_breaker import get_circuit_breaker
+
+from scylla.config.constants import DEFAULT_JUDGE_MODEL
 
 # Re-export build pipeline functions for backward compatibility
 from scylla.e2e.build_pipeline import (
