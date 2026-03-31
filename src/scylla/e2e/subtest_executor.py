@@ -565,14 +565,17 @@ class SubTestExecutor:
                             last_workspace = workspace
                             continue
 
-                # For runs past PROMOTED_TO_COMPLETED, the directory has been
-                # moved to completed/ — redirect run_dir so we find agent results.
+                # If the run was previously promoted to completed/ (and possibly
+                # had its checkpoint state regressed), the artifacts live in
+                # completed/ even though the state may be as early as
+                # AGENT_COMPLETE.  Prefer the completed/ directory when it
+                # exists so _restore_run_context finds agent/judge artifacts.
                 if sm and experiment_dir is not None:
                     from scylla.e2e.models import RunState
                     from scylla.e2e.state_machine import is_at_or_past_state
 
                     _cur = sm.get_state(tier_id.value, subtest.id, run_num)
-                    if is_at_or_past_state(_cur, RunState.PROMOTED_TO_COMPLETED):
+                    if is_at_or_past_state(_cur, RunState.AGENT_COMPLETE):
                         from scylla.e2e.paths import get_run_dir
 
                         completed_run_dir = get_run_dir(
