@@ -26,6 +26,7 @@ classifiers = [
 keywords = ["ai", "agents", "benchmarking", "evaluation", "testing"]
 dependencies = [
     "click>=8.0,<9",
+    "homericintelligence-hephaestus>=0.6.0,<1",
     "httpx>=0.27,<1",
     "pydantic>=2.0,<3",
     "pyyaml>=6.0,<7",
