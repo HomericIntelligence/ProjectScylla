@@ -720,15 +720,14 @@ class TestRestoreRunContext:
         assert ctx.agent_duration == 99.5
         assert ctx.agent_ran is False
 
-    def test_agent_complete_no_result_file_leaves_none(self, tmp_path: Path) -> None:
-        """If agent/result.json is missing, agent_result stays None."""
+    def test_agent_complete_no_result_file_raises(self, tmp_path: Path) -> None:
+        """If agent/result.json is missing, raises RuntimeError."""
         run_dir = tmp_path / "run_01"
         run_dir.mkdir()
 
         ctx = _make_ctx(run_dir)
-        _restore_run_context(ctx, "agent_complete")
-
-        assert ctx.agent_result is None
+        with pytest.raises(RuntimeError, match="agent result is invalid"):
+            _restore_run_context(ctx, "agent_complete")
 
     def test_judge_complete_loads_both_fields(self, tmp_path: Path) -> None:
         """Resuming from JUDGE_COMPLETE loads agent_result and judge_prompt."""
@@ -826,12 +825,8 @@ class TestRestoreRunContext:
 
         assert ctx.judge_prompt == ""
 
-    def test_invalid_agent_result_logs_warning(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        """Resuming past AGENT_COMPLETE with invalid agent result logs a warning."""
-        import logging
-
+    def test_invalid_agent_result_raises(self, tmp_path: Path) -> None:
+        """Resuming past AGENT_COMPLETE with invalid agent result raises RuntimeError."""
         run_dir = tmp_path / "run_01"
         agent_dir = run_dir / "agent"
         agent_dir.mkdir(parents=True)
@@ -852,11 +847,8 @@ class TestRestoreRunContext:
         (agent_dir / "result.json").write_text(json.dumps(invalid_result))
 
         ctx = _make_ctx(run_dir)
-        with caplog.at_level(logging.WARNING, logger="scylla.e2e.subtest_executor"):
+        with pytest.raises(RuntimeError, match="agent result is invalid"):
             _restore_run_context(ctx, "judge_complete")
-
-        assert ctx.agent_result is None
-        assert any("agent result is invalid" in msg for msg in caplog.messages)
 
 
 class TestRunSubtestRehydratesOnResume:
