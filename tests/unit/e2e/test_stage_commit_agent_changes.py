@@ -184,3 +184,21 @@ class TestStagePromoteToCompleted:
         baseline_dst = tmp_path / "completed" / "T0" / "00" / "pipeline_baseline.json"
         assert baseline_dst.exists()
         assert baseline_dst.read_text() == '{"baseline": true}'
+
+    def test_promote_is_noop_when_already_promoted(self, tmp_path: Path) -> None:
+        """promote_run_to_completed returns dest without error if already promoted."""
+        from scylla.e2e.paths import promote_run_to_completed
+
+        experiment_dir = tmp_path
+        # Set up only the completed/ dir (no in_progress/ — already promoted)
+        completed_run = experiment_dir / "completed" / "T0" / "00" / "run_01"
+        completed_run.mkdir(parents=True)
+        (completed_run / "agent").mkdir()
+        (completed_run / "agent" / "result.json").write_text("{}")
+
+        result = promote_run_to_completed(experiment_dir, "T0", "00", 1)
+
+        assert result == completed_run
+        # Directory still intact
+        assert completed_run.exists()
+        assert (completed_run / "agent" / "result.json").exists()

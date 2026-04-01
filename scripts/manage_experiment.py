@@ -337,8 +337,10 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
     subtest and tier are cascaded to ``pending`` so the run loop re-enters and
     ``advance_to_completion`` picks them up.
 
-    Runs in ``worktree_cleaned`` state (whether passed or bad grade) are never reset —
-    they represent completed runs with a valid (if poor) judge result.
+    Runs in ``worktree_cleaned`` or ``promoted_to_completed`` state are never reset —
+    worktree_cleaned represents completed runs with a valid judge result, and
+    promoted_to_completed runs have data safely in completed/ (resetting them would
+    cause stage_promote_to_completed to fail with ENOENT since in_progress/ is gone).
 
     Args:
         checkpoint: Loaded E2ECheckpoint to mutate in-place.
@@ -355,8 +357,8 @@ def _reset_non_completed_runs(checkpoint: Any) -> int:
     for tier_id, subtests in checkpoint.run_states.items():
         for subtest_id, runs in subtests.items():
             for run_num_str, state in list(runs.items()):
-                if state == "worktree_cleaned":
-                    continue  # Completed run (passed or bad grade) — never reset
+                if state in ("worktree_cleaned", "promoted_to_completed"):
+                    continue  # Completed/promoted run — never reset
                 # All non-completed runs trigger the tier/subtest cascade
                 affected_tiers.add(tier_id)
                 affected_subtests.add((tier_id, subtest_id))

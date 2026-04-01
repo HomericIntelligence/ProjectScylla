@@ -1826,6 +1826,51 @@ class TestRetryInfraFailuresInBatch:
         # No cascade — experiment state unchanged
         assert checkpoint.experiment_state == "complete"
 
+    def test_reset_does_not_touch_promoted_to_completed(self, tmp_path: Path) -> None:
+        """_reset_non_completed_runs does NOT reset promoted_to_completed runs.
+
+        Runs already promoted to completed/ have their data safely moved — resetting
+        them would cause stage_promote_to_completed to fail with ENOENT because the
+        in_progress/ source directory no longer exists.
+        """
+        from datetime import datetime, timezone
+
+        from manage_experiment import _reset_non_completed_runs
+
+        from scylla.e2e.checkpoint import E2ECheckpoint
+
+        exp_dir = tmp_path / "exp"
+        exp_dir.mkdir()
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-001",
+            experiment_dir=str(exp_dir),
+            config_hash="abc123",
+            experiment_state="tiers_running",
+            started_at=datetime.now(timezone.utc).isoformat(),
+            last_updated_at=datetime.now(timezone.utc).isoformat(),
+            status="running",
+            run_states={
+                "T0": {
+                    "00": {
+                        "1": "promoted_to_completed",
+                        "2": "promoted_to_completed",
+                        "3": "worktree_cleaned",
+                    }
+                },
+            },
+            completed_runs={"T0": {"00": {3: "passed"}}},
+        )
+
+        reset_count = _reset_non_completed_runs(checkpoint)
+
+        # promoted_to_completed runs are NOT reset (same as worktree_cleaned)
+        assert reset_count == 0
+        assert checkpoint.run_states["T0"]["00"]["1"] == "promoted_to_completed"
+        assert checkpoint.run_states["T0"]["00"]["2"] == "promoted_to_completed"
+        assert checkpoint.run_states["T0"]["00"]["3"] == "worktree_cleaned"
+        # No cascade — experiment state unchanged
+        assert checkpoint.experiment_state == "tiers_running"
+
     def test_reconcile_checkpoint_with_disk_advances_stale_state(self, tmp_path: Path) -> None:
         """_reconcile_checkpoint_with_disk advances stale intermediate state to worktree_cleaned."""
         import json
