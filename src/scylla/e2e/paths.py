@@ -177,6 +177,11 @@ def promote_run_to_completed(
     """
     src = get_run_dir(experiment_dir, tier_id, subtest_id, run_num, completed=False)
     dst = get_run_dir(experiment_dir, tier_id, subtest_id, run_num, completed=True)
+
+    # Guard: if already promoted (source gone, dest exists), return existing destination
+    if not src.exists() and dst.exists():
+        return dst
+
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.move(str(src), str(dst))
 
