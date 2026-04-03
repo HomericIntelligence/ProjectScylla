@@ -734,7 +734,9 @@ def _call_claude_judge(
 
             rl_msg, rl_retry = _detect_rate_limit_from_stderr(error_msg)
             if rl_msg:
-                from datetime import datetime, timezone as tz
+                from datetime import datetime
+                from datetime import timezone as tz
+
                 from scylla.e2e.rate_limit import RateLimitInfo
 
                 raise RateLimitError(
