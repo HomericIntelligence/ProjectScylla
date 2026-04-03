@@ -138,14 +138,16 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 
 # Install Claude Code CLI (pinned to specific version for reproducibility)
 # This is the primary tool for agent-based test execution
-# Version 2.1.84 verified working — upgraded from 2.1.74 to resolve Trivy HIGH CVEs
-# in transitive deps (cross-spawn, glob, minimatch, tar). See #650, #1542.
-RUN npm install -g @anthropic-ai/claude-code@2.1.84
-# Apply security patches for HIGH CVEs in Node.js transitive dependencies:
-#   CVE-2024-21538 (cross-spawn ReDoS), CVE-2025-64756 (glob command injection),
-#   CVE-2026-26996/27903/27904 (minimatch DoS via catastrophic backtracking)
-# --force allows semver-breaking upgrades needed to reach safe versions
-RUN npm audit fix --force 2>/dev/null || true
+RUN npm install -g @anthropic-ai/claude-code@2.1.91
+# Patch HIGH CVEs in Node.js transitive dependencies by overriding vulnerable packages
+# in the global node_modules tree. npm audit fix --force is unreliable for global
+# installs, so we replace the vulnerable packages directly.
+#   CVE-2024-21538 (cross-spawn ReDoS)
+#   CVE-2025-64756 (glob command injection)
+#   CVE-2026-26996/27903/27904 (minimatch DoS)
+#   CVE-2026-23745/23950/24842/26960/29786/31802 (tar path traversal/overwrite)
+RUN cd /usr/local/lib/node_modules/@anthropic-ai/claude-code && \
+    npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save 2>/dev/null || true
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
