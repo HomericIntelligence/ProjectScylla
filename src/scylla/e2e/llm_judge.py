@@ -644,6 +644,61 @@ def _extract_response_from_stream(stream_output: str) -> str:
     return "".join(text_parts)
 
 
+def _raise_if_rate_limit(stdout: str, stderr: str) -> None:
+    """Raise RateLimitError if stdout/stderr contain rate limit indicators."""
+    from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
+
+    rate_limit_info = detect_rate_limit(stdout, stderr, source="judge")
+    if rate_limit_info:
+        raise RateLimitError(rate_limit_info)
+
+
+def _raise_if_rate_limit_in_error(error_msg: str) -> None:
+    """Raise RateLimitError if the extracted error message matches rate limit patterns.
+
+    Handles the case where detect_rate_limit misses stream-json format but the
+    error message was successfully extracted from individual JSON lines.
+    """
+    if error_msg == "No error message":
+        return
+    from datetime import datetime
+    from datetime import timezone as tz
+
+    from scylla.e2e.rate_limit import (
+        RateLimitError,
+        RateLimitInfo,
+        _detect_rate_limit_from_stderr,
+    )
+
+    rl_msg, rl_retry = _detect_rate_limit_from_stderr(error_msg)
+    if rl_msg:
+        raise RateLimitError(
+            RateLimitInfo(
+                source="judge",
+                retry_after_seconds=rl_retry,
+                error_message=error_msg,
+                detected_at=datetime.now(tz.utc).isoformat(),
+            )
+        )
+
+
+def _extract_cli_error(stdout: str, stderr: str) -> str:
+    """Extract error message from Claude CLI output (JSON stdout or stderr)."""
+    error_msg = "No error message"
+    if stdout:
+        for line in stdout.strip().splitlines():
+            try:
+                data = json.loads(line.strip())
+                if data.get("is_error"):
+                    error_msg = data.get("result", data.get("error", "Unknown JSON error"))
+                    break
+            except json.JSONDecodeError:
+                continue
+    if error_msg == "No error message" and stderr:
+        error_msg = stderr.strip()
+    return error_msg
+
+
 def _call_claude_judge(
     evaluation_context: str,
     model: str,
@@ -704,57 +759,15 @@ def _call_claude_judge(
     from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
 
     if result.returncode != 0:
-        # Check for rate limit FIRST — must raise RateLimitError (not RuntimeError)
-        # so the experiment halts instead of silently scoring F.
-        rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
-        if rate_limit_info:
-            raise RateLimitError(rate_limit_info)
-
-        error_msg = "No error message"
-
-        # Check stdout for JSON error response (Claude outputs errors as JSON)
-        if result.stdout:
-            for line in result.stdout.strip().splitlines():
-                try:
-                    data = json.loads(line.strip())
-                    if data.get("is_error"):
-                        error_msg = data.get("result", data.get("error", "Unknown JSON error"))
-                        break
-                except json.JSONDecodeError:
-                    continue
-
-        # Fall back to stderr if no useful stdout
-        if error_msg == "No error message" and result.stderr:
-            error_msg = result.stderr.strip()
-
-        # Second chance: detect_rate_limit may miss stream-json format,
-        # so also check the extracted error_msg directly for rate limit keywords.
-        if error_msg != "No error message":
-            from scylla.e2e.rate_limit import _detect_rate_limit_from_stderr
-
-            rl_msg, rl_retry = _detect_rate_limit_from_stderr(error_msg)
-            if rl_msg:
-                from datetime import datetime
-                from datetime import timezone as tz
-
-                from scylla.e2e.rate_limit import RateLimitInfo
-
-                raise RateLimitError(
-                    RateLimitInfo(
-                        source="judge",
-                        retry_after_seconds=rl_retry,
-                        error_message=error_msg,
-                        detected_at=datetime.now(tz.utc).isoformat(),
-                    )
-                )
-
+        _raise_if_rate_limit(result.stdout, result.stderr)
+        error_msg = _extract_cli_error(result.stdout, result.stderr)
+        _raise_if_rate_limit_in_error(error_msg)
         cb._record_failure()
         raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
 
     # Check for rate limit in successful responses too
     rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
     if rate_limit_info:
-        # Rate limits are not circuit breaker failures
         raise RateLimitError(rate_limit_info)
 
     # Record success with circuit breaker
