@@ -796,14 +796,42 @@ class TestCallClaudeJudge:
         assert response == judge_text
 
     def test_judge_call_with_json_error(self, tmp_path: Path) -> None:
-        """Test handling of JSON error response."""
+        """Test handling of non-rate-limit JSON error response."""
         mock_result = MagicMock()
         mock_result.returncode = 1
-        mock_result.stdout = json.dumps({"is_error": True, "error": "Rate limit exceeded"})
+        mock_result.stdout = json.dumps({"is_error": True, "error": "Internal server error"})
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result):
-            with pytest.raises(RuntimeError, match="Rate limit exceeded"):
+            with pytest.raises(RuntimeError, match="Internal server error"):
+                _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
+
+    def test_judge_call_exit1_rate_limit_raises_rate_limit_error(self, tmp_path: Path) -> None:
+        """Exit code 1 with rate limit message raises RateLimitError, not RuntimeError.
+
+        This is the critical fix: "You've hit your limit" on exit code 1 must halt
+        the experiment via RateLimitError, not silently score F via RuntimeError.
+        """
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = json.dumps(
+            {"is_error": True, "result": "You've hit your limit \u00b7 resets Apr 3, 6am"}
+        )
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            with pytest.raises(RateLimitError):
+                _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
+
+    def test_judge_call_exit1_rate_limit_in_stderr(self, tmp_path: Path) -> None:
+        """Exit code 1 with rate limit in stderr also raises RateLimitError."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = ""
+        mock_result.stderr = "Error: 429 rate limit exceeded"
+
+        with patch("subprocess.run", return_value=mock_result):
+            with pytest.raises(RateLimitError):
                 _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
 
     def test_judge_call_with_rate_limit(self, tmp_path: Path) -> None:
