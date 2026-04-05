@@ -1579,3 +1579,65 @@ class TestRunCheckpointGuards:
             ),
         ):
             runner.run()
+
+
+# ---------------------------------------------------------------------------
+# run() early-exit for already-complete experiments
+# ---------------------------------------------------------------------------
+
+
+class TestRunAlreadyCompleteEarlyExit:
+    """Tests that run() exits immediately when the experiment is already complete."""
+
+    def test_already_complete_skips_rehydrate(
+        self,
+        mock_config: ExperimentConfig,
+        tmp_path: Path,
+    ) -> None:
+        """run() returns immediately without rehydrating when experiment is already complete."""
+        from scylla.e2e.checkpoint import E2ECheckpoint, compute_config_hash, save_checkpoint
+
+        runner = E2ERunner(mock_config, Path(tmp_path / "tiers"), tmp_path)
+
+        exp_dir = tmp_path / "test-exp"
+        config_dir = exp_dir / "config"
+        config_dir.mkdir(parents=True)
+        mock_config.save(config_dir / "experiment.json")
+
+        checkpoint = E2ECheckpoint(
+            experiment_id="test-exp",
+            experiment_dir=str(exp_dir),
+            config_hash=compute_config_hash(mock_config),
+            experiment_state="complete",
+            tier_states={"T0": "complete", "T1": "complete"},
+            subtest_states={
+                "T0": {"00": "aggregated"},
+                "T1": {"00": "aggregated"},
+            },
+            run_states={
+                "T0": {"00": {"1": "worktree_cleaned"}},
+                "T1": {"00": {"1": "worktree_cleaned"}},
+            },
+            started_at="2024-01-01T00:00:00+00:00",
+            last_updated_at="2024-01-01T00:00:00+00:00",
+            status="completed",
+        )
+        checkpoint_path = exp_dir / "checkpoint.json"
+        save_checkpoint(checkpoint, checkpoint_path)
+
+        def fake_init() -> Path:
+            runner.checkpoint = checkpoint
+            runner.experiment_dir = exp_dir
+            return checkpoint_path
+
+        mock_heartbeat = MagicMock()
+
+        with (
+            patch.object(runner, "_initialize_or_resume_experiment", side_effect=fake_init),
+            patch("scylla.e2e.health.HeartbeatThread", return_value=mock_heartbeat),
+            patch("scylla.e2e.rehydrate.load_experiment_tier_results") as mock_rehydrate,
+        ):
+            result = runner.run()
+
+        assert result is not None
+        mock_rehydrate.assert_not_called()

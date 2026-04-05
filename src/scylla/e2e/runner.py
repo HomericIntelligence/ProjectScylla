@@ -705,6 +705,12 @@ class E2ERunner:
             logger.warning("Experiment interrupted - returning partial results")
             return self._aggregate_results(tier_results, start_time)
 
+        # Fast path: experiment was already complete before the state machine ran.
+        # No transitions occurred, no work done — skip expensive rehydrate.
+        if _current_exp_state == ExperimentState.COMPLETE and self._last_experiment_result is None:
+            logger.info("Experiment already complete — nothing to do")
+            return self._aggregate_results(tier_results, start_time)
+
         # Handle early stop (--until-experiment)
         final_state = esm.get_state()
         if final_state not in (ExperimentState.COMPLETE, ExperimentState.FAILED) and (
