@@ -278,7 +278,7 @@ class RunData:
         tier: Tier ID (T0-T6)
         subtest: Subtest ID
         run_number: Run number (1-10)
-        score: Consensus judge score (median of 3 judges)
+        score: Consensus judge score (arithmetic mean of judges)
         passed: Consensus pass decision (majority vote)
         grade: Consensus grade
         cost_usd: Total cost in USD
