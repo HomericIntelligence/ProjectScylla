@@ -1,0 +1,202 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-0edfcdefc89f098161d36c6f924a8eac"
+  },
+  "mark": {
+    "type": "rect"
+  },
+  "encoding": {
+    "color": {
+      "field": "pass_rate",
+      "scale": {
+        "domain": [
+          0,
+          1
+        ],
+        "scheme": "viridis"
+      },
+      "title": "Pass Rate",
+      "type": "quantitative"
+    },
+    "tooltip": [
+      {
+        "field": "experiment",
+        "title": "Experiment",
+        "type": "ordinal"
+      },
+      {
+        "field": "tier",
+        "title": "Tier",
+        "type": "ordinal"
+      },
+      {
+        "field": "pass_rate",
+        "format": ".2%",
+        "title": "Pass Rate",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "tier",
+      "sort": [
+        "T0",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "title": "Tier",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "experiment",
+      "sort": [
+        "test-001",
+        "test-002",
+        "test-003"
+      ],
+      "title": "Experiment",
+      "type": "ordinal"
+    }
+  },
+  "height": 300,
+  "title": "Pass Rate by Experiment and Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-0edfcdefc89f098161d36c6f924a8eac": [
+      {
+        "experiment": "test-001",
+        "tier": "T0",
+        "pass_rate": 0.9583333333333334
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T1",
+        "pass_rate": 1.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T2",
+        "pass_rate": 1.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T3",
+        "pass_rate": 0.34959349593495936
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T4",
+        "pass_rate": 0.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T5",
+        "pass_rate": 0.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T6",
+        "pass_rate": 0.0
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T0",
+        "pass_rate": 0.9027777777777778
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T1",
+        "pass_rate": 0.9333333333333333
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T2",
+        "pass_rate": 0.9555555555555556
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T3",
+        "pass_rate": 0.967479674796748
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T4",
+        "pass_rate": 0.9761904761904762
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T5",
+        "pass_rate": 0.9555555555555556
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T6",
+        "pass_rate": 1.0
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T0",
+        "pass_rate": 0.9444444444444444
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T1",
+        "pass_rate": 0.9666666666666667
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T2",
+        "pass_rate": 0.9777777777777777
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T3",
+        "pass_rate": 0.959349593495935
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T4",
+        "pass_rate": 0.9523809523809523
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T5",
+        "pass_rate": 0.9333333333333333
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T6",
+        "pass_rate": 1.0
+      }
+    ]
+  }
+}

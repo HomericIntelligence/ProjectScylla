@@ -1,0 +1,5489 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-1de7c246ab96f7680dc2e45f83cd02a6"
+  },
+  "facet": {
+    "column": {
+      "field": "agent_model",
+      "title": "Model",
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "boxplot"
+    },
+    "encoding": {
+      "color": {
+        "field": "agent_model",
+        "scale": {
+          "domain": [
+            "claude-haiku-4-5"
+          ],
+          "range": [
+            "#E45756"
+          ]
+        },
+        "title": "Model",
+        "type": "nominal"
+      },
+      "x": {
+        "field": "tier",
+        "sort": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "title": "Tier",
+        "type": "nominal"
+      },
+      "y": {
+        "field": "strategic_drift",
+        "scale": {
+          "domain": [
+            0,
+            1
+          ]
+        },
+        "title": "Strategic Drift",
+        "type": "quantitative"
+      }
+    }
+  },
+  "title": "Strategic Drift by Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-1de7c246ab96f7680dc2e45f83cd02a6": [
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T2",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      },
+      {
+        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "strategic_drift": 0.0
+      }
+    ]
+  }
+}

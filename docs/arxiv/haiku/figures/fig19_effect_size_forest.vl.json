@@ -48,7 +48,7 @@
     },
     {
       "data": {
-        "name": "data-8ccb7eedf34e13c425e11b8ec4f8ee89"
+        "name": "data-06a8d466beed9b7d8ca8fd63de488c60"
       },
       "mark": {
         "type": "errorbar"
@@ -88,7 +88,7 @@
     },
     {
       "data": {
-        "name": "data-8ccb7eedf34e13c425e11b8ec4f8ee89"
+        "name": "data-06a8d466beed9b7d8ca8fd63de488c60"
       },
       "mark": {
         "type": "circle",
@@ -177,66 +177,66 @@
         "x": 0
       }
     ],
-    "data-8ccb7eedf34e13c425e11b8ec4f8ee89": [
+    "data-06a8d466beed9b7d8ca8fd63de488c60": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "transition": "T0\u2192T1",
         "tier1": "T0",
         "tier2": "T1",
-        "delta": 0.09391411801050355,
-        "ci_low": -0.038207097318514745,
-        "ci_high": 0.21902996601791783,
+        "delta": 0.03148148148148148,
+        "ci_low": -0.025,
+        "ci_high": 0.07685185185185185,
         "significant": "No"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "transition": "T1\u2192T2",
         "tier1": "T1",
         "tier2": "T2",
-        "delta": 0.09582947173308619,
-        "ci_low": -0.014921223354958294,
-        "ci_high": 0.2142724745134384,
+        "delta": 0.011111111111111112,
+        "ci_low": -0.025925925925925925,
+        "ci_high": 0.06296296296296296,
         "significant": "No"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "transition": "T2\u2192T3",
         "tier1": "T2",
         "tier2": "T3",
-        "delta": -0.06847414880201766,
-        "ci_low": -0.16683480453972258,
-        "ci_high": 0.02887767969735183,
-        "significant": "No"
+        "delta": -0.21897018970189702,
+        "ci_low": -0.2682926829268293,
+        "ci_high": -0.16820234869015355,
+        "significant": "Yes"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "transition": "T3\u2192T4",
         "tier1": "T3",
         "tier2": "T4",
-        "delta": 0.0507130481140877,
-        "ci_low": -0.055280886965158454,
-        "ci_high": 0.15648519731788274,
-        "significant": "No"
+        "delta": -0.1159504452187379,
+        "ci_low": -0.21232837027993734,
+        "ci_high": -0.02338610668671478,
+        "significant": "Yes"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "transition": "T4\u2192T5",
         "tier1": "T4",
         "tier2": "T5",
-        "delta": -0.3130081300813008,
-        "ci_low": -0.5024390243902439,
-        "ci_high": -0.12113821138211382,
-        "significant": "Yes"
+        "delta": -0.013227513227513227,
+        "ci_low": -0.12804232804232804,
+        "ci_high": 0.10793650793650794,
+        "significant": "No"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "transition": "T5\u2192T6",
         "tier1": "T5",
         "tier2": "T6",
-        "delta": 0.43333333333333335,
-        "ci_low": 0.2,
-        "ci_high": 0.6333333333333333,
-        "significant": "Yes"
+        "delta": 0.037037037037037035,
+        "ci_low": -0.3333333333333333,
+        "ci_high": 0.3111111111111111,
+        "significant": "No"
       }
     ]
   }

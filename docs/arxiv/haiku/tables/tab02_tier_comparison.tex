@@ -2,21 +2,21 @@
 \centering
 \caption{Table 2: Tier Pairwise Comparison}
 \label{tab:tier_comparison}
-\begin{tabular}{llrrrrl}
+\begin{tabular}{llrrrrrl}
 \toprule
-Model & Transition & N (T1, T2) & Pass Rate $\Delta$ & p-value & Cliff's $\delta$ & Significant? \\
+Model & Transition & N (T1, T2) & Pass Rate $\Delta$ & p-value & Cliff's $\delta$ & Power & Significant? \\
 \midrule
-haiku & T0→T1 & (117, 83) & +0.0939 & 0.4865 & +0.094 &  \\
-haiku & T1→T2 & (83, 130) & +0.0958 & 0.3725 & +0.096 &  \\
-haiku & T2→T3 & (130, 122) & -0.0685 & 0.4865 & -0.068 &  \\
-haiku & T3→T4 & (122, 123) & +0.0507 & 0.4865 & +0.051 &  \\
-haiku & T4→T5 & (123, 30) & -0.3130 & 0.0028 & -0.313 & \checkmark \\
-haiku & T5→T6 & (30, 15) & +0.4333 & 0.0292 & +0.433 & \checkmark \\
-haiku & T0→T6 & (117, 15) & +0.2923 & 0.1187 & +0.292 &  \\
+claude-haiku-4-5 & T0→T1 & (216, 90) & +0.0315 & 1.0000 & +0.031 & 0.069 &  \\
+claude-haiku-4-5 & T1→T2 & (90, 135) & +0.0111 & 1.0000 & +0.011 & 0.054 &  \\
+claude-haiku-4-5 & T2→T3 & (135, 369) & -0.2190 & 0.0000 & -0.219 & 0.965 & \checkmark \\
+claude-haiku-4-5 & T3→T4 & (369, 126) & -0.1160 & 0.0577 & -0.116 & 0.495 &  \\
+claude-haiku-4-5 & T4→T5 & (126, 135) & -0.0132 & 1.0000 & -0.013 & 0.050 &  \\
+claude-haiku-4-5 & T5→T6 & (135, 9) & +0.0370 & 1.0000 & +0.037 & 0.054 &  \\
+claude-haiku-4-5 & T0→T6 & (216, 9) & -0.2685 & 0.0176 & -0.269 & 0.267 & \checkmark \\
 \midrule
-\multicolumn{7}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
-\multicolumn{7}{l}{haiku: $H(6)=27.49$, $p=0.0001$ $p < 0.05$} \\
-\multicolumn{7}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
+\multicolumn{8}{l}{\textbf{Omnibus Test (Kruskal-Wallis):}} \\
+\multicolumn{8}{l}{claude-haiku-4-5: $H(6)=119.01$, $p=0.0000$ $p < 0.05$, power=1.000} \\
+\multicolumn{8}{l}{\footnotesize Pairwise p-values corrected with Holm-Bonferroni method.} \\
 \bottomrule
 \end{tabular}
 \end{table}

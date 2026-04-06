@@ -1,0 +1,88 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-e5bea49975c25cd44d0112f7160376cb"
+  },
+  "mark": {
+    "type": "bar"
+  },
+  "encoding": {
+    "tooltip": [
+      {
+        "bin": {
+          "step": 0.1
+        },
+        "field": "pass_rate",
+        "title": "Pass Rate Bin",
+        "type": "quantitative"
+      },
+      {
+        "aggregate": "count",
+        "title": "Count",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "bin": {
+        "step": 0.1
+      },
+      "field": "pass_rate",
+      "scale": {
+        "domain": [
+          0,
+          1
+        ]
+      },
+      "title": "Overall Pass Rate",
+      "type": "quantitative"
+    },
+    "y": {
+      "aggregate": "count",
+      "title": "Number of Experiments",
+      "type": "quantitative"
+    }
+  },
+  "title": "Task Difficulty Distribution (Pass Rate per Experiment)",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-e5bea49975c25cd44d0112f7160376cb": [
+      {
+        "experiment": "test-001",
+        "pass_rate": 0.5194444444444445
+      },
+      {
+        "experiment": "test-002",
+        "pass_rate": 0.95
+      },
+      {
+        "experiment": "test-003",
+        "pass_rate": 0.9555555555555556
+      }
+    ]
+  }
+}

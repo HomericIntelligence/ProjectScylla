@@ -1,0 +1,94 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-6028b300f07704c26619e82152866ba2"
+  },
+  "mark": {
+    "type": "circle",
+    "opacity": 0.7,
+    "size": 60
+  },
+  "encoding": {
+    "tooltip": [
+      {
+        "field": "experiment",
+        "title": "Experiment",
+        "type": "ordinal"
+      },
+      {
+        "field": "mean_pass_rate",
+        "format": ".2%",
+        "title": "Mean Pass Rate",
+        "type": "quantitative"
+      },
+      {
+        "field": "tier_std",
+        "format": ".3f",
+        "title": "Tier Std Dev",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "mean_pass_rate",
+      "scale": {
+        "domain": [
+          0,
+          1
+        ]
+      },
+      "title": "Task Difficulty (Mean Pass Rate)",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "tier_std",
+      "title": "Tier Differentiation (Std Dev of Tier Pass Rates)",
+      "type": "quantitative"
+    }
+  },
+  "title": "Task Complexity vs Tier Differentiation",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-6028b300f07704c26619e82152866ba2": [
+      {
+        "experiment": "test-001",
+        "mean_pass_rate": 0.47256097560975613,
+        "tier_std": 0.4962226080589727
+      },
+      {
+        "experiment": "test-002",
+        "mean_pass_rate": 0.9558417676013494,
+        "tier_std": 0.031150282977770786
+      },
+      {
+        "experiment": "test-003",
+        "mean_pass_rate": 0.9619932525855871,
+        "tier_std": 0.02215190650585851
+      }
+    ]
+  }
+}

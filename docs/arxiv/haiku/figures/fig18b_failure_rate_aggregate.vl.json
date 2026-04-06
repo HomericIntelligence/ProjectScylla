@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-8da1d840f18c839ca9553e3bc4b31717"
+    "name": "data-992907903db3931b67f7079acfd4b12f"
   },
   "facet": {
     "column": {
@@ -132,54 +132,54 @@
   "title": "Aggregate Failure Rate by Tier (Summary)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-8da1d840f18c839ca9553e3bc4b31717": [
+    "data-992907903db3931b67f7079acfd4b12f": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "failure_rate": 0.3589743589743589,
-        "n_runs": 117,
-        "n_subtests": 17
+        "failure_rate": 0.06481481481481477,
+        "n_runs": 216,
+        "n_subtests": 24
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "failure_rate": 0.2650602409638554,
-        "n_runs": 83,
-        "n_subtests": 7
+        "failure_rate": 0.033333333333333326,
+        "n_runs": 90,
+        "n_subtests": 10
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "failure_rate": 0.16923076923076918,
-        "n_runs": 130,
-        "n_subtests": 14
+        "failure_rate": 0.022222222222222254,
+        "n_runs": 135,
+        "n_subtests": 15
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
-        "failure_rate": 0.23770491803278693,
-        "n_runs": 122,
-        "n_subtests": 19
+        "failure_rate": 0.24119241192411922,
+        "n_runs": 369,
+        "n_subtests": 41
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "failure_rate": 0.1869918699186992,
-        "n_runs": 123,
+        "failure_rate": 0.3571428571428571,
+        "n_runs": 126,
         "n_subtests": 14
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
-        "failure_rate": 0.5,
-        "n_runs": 30,
-        "n_subtests": 2
+        "failure_rate": 0.37037037037037035,
+        "n_runs": 135,
+        "n_subtests": 15
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
-        "failure_rate": 0.06666666666666665,
-        "n_runs": 15,
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9,
         "n_subtests": 1
       }
     ]

@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-21b20476b108ae23aa3b26acfdc4dd0b"
+    "name": "data-9d59d564b561cf4b555bde9d57bcc950"
   },
   "facet": {
     "row": {
@@ -57,10 +57,10 @@
             "field": "agent_model",
             "scale": {
               "domain": [
-                "haiku"
+                "claude-haiku-4-5"
               ],
               "range": [
-                "#F58518"
+                "#E45756"
               ]
             },
             "title": "Model",
@@ -113,10 +113,10 @@
             "field": "agent_model",
             "scale": {
               "domain": [
-                "haiku"
+                "claude-haiku-4-5"
               ],
               "range": [
-                "#F58518"
+                "#E45756"
               ]
             },
             "type": "nominal"
@@ -149,3016 +149,4551 @@
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-21b20476b108ae23aa3b26acfdc4dd0b": [
+    "data-9d59d564b561cf4b555bde9d57bcc950": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.8848484848484849
+        "impl_rate": 0.14166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.2
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.8484848484848485
+        "impl_rate": 0.125
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9933333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 1.0
+        "impl_rate": 0.95625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.8971428571428572
+        "impl_rate": 0.9655172413793104
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.8484848484848485
+        "impl_rate": 0.9640625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.8636363636363636
+        "impl_rate": 0.990625
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8363636363636364
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8515151515151516
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7428571428571429
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8666666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7636363636363637
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7970588235294118
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8575757575757575
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8742857142857142
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7944444444444445
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8428571428571429
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8212121212121213
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.88125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.9548387096774194
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8787878787878788
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7857142857142857
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.896969696969697
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.9142857142857143
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7714285714285715
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8285714285714286
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.825
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8166666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.68
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8625
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8666666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8857142857142857
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8515151515151516
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8484848484848485
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8909090909090909
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8363636363636364
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8285714285714286
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7121212121212122
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.84
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8285714285714286
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.76
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8428571428571429
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8228571428571428
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.9769230769230769
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.8472222222222222
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.83125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.8171428571428572
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.8484848484848485
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.90625
-      },
-      {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9533333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9631818181818181
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9466666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.7111111111111111
+        "impl_rate": 0.9870833333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.99375
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.17916666666666667
+        "impl_rate": 0.99
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.965625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.4166666666666667
+        "impl_rate": 0.96
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.75
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9607142857142856
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9953125
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.835
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9620689655172413
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6083333333333333
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9733333333333333
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.946875
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9466666666666667
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.05777777777777778
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7166666666666667
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.96
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8857142857142858
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9354838709677419
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7000000000000001
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.99
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6363636363636364
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.5454545454545454
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8041666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7000000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6749999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8789473684210526
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.9791666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8999999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.7000000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6545454545454545
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8999999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8444444444444444
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8666666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.725
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7416666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.75
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.82
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8083333333333332
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.35
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.6111111111111112
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.9833333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.44166666666666665
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.5599999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.4
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.6
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.31666666666666665
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8999999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.75
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
         "impl_rate": 0.9857142857142858
       },
       {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.7833333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.825
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.44166666666666665
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.875
-      },
-      {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9655172413793104
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.990625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.928125
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9785714285714285
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.98
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 1.0
+        "impl_rate": 0.9354838709677419
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.0
+        "impl_rate": 0.9857142857142858
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.8333333333333334
+        "impl_rate": 0.925
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 1.0
+        "impl_rate": 0.96875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "impl_rate": 0.6666666666666666
+        "impl_rate": 0.9866666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.953125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.99375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9500000000000001
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.995
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9566666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9821428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.995
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9071428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.959375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9857142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.964516129032258
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9933333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9354838709677419
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.996875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7533333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7200000000000001
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 1.028047619047619
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.990625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.0
+        "impl_rate": 0.9642857142857143
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.990625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.0
+        "impl_rate": 0.9892857142857142
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.9966666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.6666666666666666
+        "impl_rate": 0.9354838709677419
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.8333333333333334
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.7216666666666667
+        "impl_rate": 0.9866666666666667
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7216666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.16666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.16666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.6116666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.445
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "impl_rate": 0.7783333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7614285714285715
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7783333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.16666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7783333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.6666666666666666
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.9516666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.9266666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.9166666666666666
+        "impl_rate": 0.9666666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.6666666666666666
+        "impl_rate": 0.98
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.8333333333333334
+        "impl_rate": 0.9482954545454545
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.8333333333333334
+        "impl_rate": 0.928125
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.8333333333333334
+        "impl_rate": 0.9866666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 1.0
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.9166666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.445
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8888333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6116666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.555
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.9175
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.7216666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.89
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6783333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.3333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.7216666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8888333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8883333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.16666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.445
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.445
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7783333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7783333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.2375
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.5571428571428572
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7142857142857143
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.08333333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7222222222222222
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.78125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8625
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7999999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.75
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.875
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.7285714285714285
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8529411764705882
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.65
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.65
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "impl_rate": 0.8833333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.875
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.65
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7636363636363637
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.70625
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8800000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6000000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.6428571428571429
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7375
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8681818181818183
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.8300000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.5454545454545454
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.4166666666666667
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7285714285714285
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.06
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "impl_rate": 0.7875
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8833333333333333
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.575
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.88125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8333333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.92
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
         "impl_rate": 0.9
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.95
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9533333333333334
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7000000000000001
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.925
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9833333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.99375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9428571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9571428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.95625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9466666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9916666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9857142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9733333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9655172413793104
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9857142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9833333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "impl_rate": 0.91875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.5833333333333334
+        "impl_rate": 0.925
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.4666666666666667
+        "impl_rate": 0.98
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.7416666666666667
+        "impl_rate": 0.98
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.7444444444444445
+        "impl_rate": 0.921875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.775
+        "impl_rate": 0.9933333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.7428571428571429
+        "impl_rate": 0.9166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.9
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.9125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8428571428571429
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6625
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7083333333333334
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6066666666666667
-      },
-      {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "impl_rate": 0.9375
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.8375
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "impl_rate": 0.6222222222222222
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.6499999999999999
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8571428571428571
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.8166666666666668
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7857142857142857
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "impl_rate": 0.7428571428571429
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8250000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.625
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.74375
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.7125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8722222222222222
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.91875
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.0375
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8142857142857143
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.35714285714285715
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.8818181818181817
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.7000000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.7000000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "impl_rate": 0.016666666666666666
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7357142857142858
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.88125
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.9055555555555556
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.9611111111111111
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.84375
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8300000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.5700000000000001
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
         "impl_rate": 0.925
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7571428571428571
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.99
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8999999999999999
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9600000000000001
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.35000000000000003
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9933333333333334
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8883333333333333
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.915625
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.5833333333333334
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9904666666666666
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7428571428571428
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9866666666666667
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.75
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9933333333333334
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.22000000000000003
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.93
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9875
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.995
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9535714285714285
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9857142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.98
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9666666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.95625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9233333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9142857142857144
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9933333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.959375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9769230769230769
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.95
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9770833333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.967741935483871
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9571428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9264705882352942
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0294642857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9533333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9904666666666666
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9700892857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.93125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.98
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.990625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9846666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9833333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9933333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.95625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.99
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.925
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9275
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.86
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8117647058823529
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7914285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8457142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7914285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8083333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7885714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8457142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8529411764705882
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8612903225806451
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7666666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.5321428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7787878787878788
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8142857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8151515151515151
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7885714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7714285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8382352941176471
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.825
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8294117647058823
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8542857142857142
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.86
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7941176470588235
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.76
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.72
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8705882352941177
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7485714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7277777777777777
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8818181818181818
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8727272727272728
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7857142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8314285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7999999999999999
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8314285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7794117647058824
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7828571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7777777777777778
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8558823529411765
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7742857142857144
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8388888888888889
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7942857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8542857142857142
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7250000000000001
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.6894980694980695
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7757575757575758
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7848484848484848
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7714285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8294117647058823
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8205882352941176
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.7771428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7828571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7878787878787878
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7999999999999999
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8151515151515151
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7771428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8121212121212121
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.703125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.6971428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7942857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8171428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7575757575757576
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8333333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7857142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8242424242424242
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7638888888888888
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8085714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7666666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.7878787878787878
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8057142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8121212121212121
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8114285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8083333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8088235294117647
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8142857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8457142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8636363636363636
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.859375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8055555555555556
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8058823529411764
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8333333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8514285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7714285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8235294117647058
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7999999999999999
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7327380952380953
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7777777777777778
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8142857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8085714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8057142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7818181818181819
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8171428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8333333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8484848484848485
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8088235294117647
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8235294117647058
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8083333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7999999999999999
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8303030303030303
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7121212121212122
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8117647058823529
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7942857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8212121212121213
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.803030303030303
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8085714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8264705882352942
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7514285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.7714285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8060606060606061
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7942857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8787878787878788
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8566666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.796969696969697
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8323529411764705
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.86
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7611111111111111
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.78
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7878787878787878
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7878787878787878
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.796969696969697
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8352941176470587
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8060606060606061
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8363636363636364
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7771428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8151515151515151
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.861764705882353
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7805555555555556
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7942857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8575757575757574
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8393939393939394
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8055555555555556
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.878125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.78
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7999999999999999
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.840625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8258064516129032
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8424242424242424
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8314285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8514285714285713
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7885714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8085714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8714285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8111111111111111
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.790909090909091
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8057142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8305555555555555
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7914285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7485714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8060606060606061
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8657142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8090909090909091
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8212121212121213
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8060606060606061
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8424242424242424
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8472222222222222
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7885714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8057142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.6424242424242425
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7878787878787878
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.871875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.765625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.793939393939394
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8457142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8117647058823529
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7457142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8242424242424242
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8027777777777777
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8242424242424242
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7333333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7805555555555556
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7628571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.796969696969697
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8088235294117647
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8242424242424242
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8454545454545455
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.840625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8171428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7857142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8171428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.43125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8636363636363636
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8222222222222223
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8411764705882353
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7857142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8666666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7642857142857142
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8171428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8457142857142858
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.02857142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.7371428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.84
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8114285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8314285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8117647058823529
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8235294117647058
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.85
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8371428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.861764705882353
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8363636363636364
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8636363636363636
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8424242424242424
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8457142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8114285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7818181818181819
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7857142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7828571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7727272727272727
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.85625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7742857142857144
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8411764705882353
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8085714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.793939393939394
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8121212121212121
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7515151515151516
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8794117647058823
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.790909090909091
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.788235294117647
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8371428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8176470588235294
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7742857142857144
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8228571428571428
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.6785714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7857142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7935483870967742
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8485714285714285
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.793939393939394
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8181818181818182
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8363636363636364
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "impl_rate": 0.7999999999999999
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "impl_rate": 0.8555555555555556
+        "impl_rate": 0.8171428571428572
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "impl_rate": 0.8857142857142858
+        "impl_rate": 0.8114285714285714
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
+        "impl_rate": 0.8060606060606061
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8333333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7242424242424242
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7714285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7657142857142857
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.7636363636363637
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8171428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.8371428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8314285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.78
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8222222222222223
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8457142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8083333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8529411764705882
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8705882352941176
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8382352941176471
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8636363636363636
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8485714285714285
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8371428571428572
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8212121212121212
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8529411764705882
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8257142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8117647058823529
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7914285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7777777777777778
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8060606060606061
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8457142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7714285714285715
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.82
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8342857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8314285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8028571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8580645161290323
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8363636363636364
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8257142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7314285714285714
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7171428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8205882352941176
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7941176470588235
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8424242424242424
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8428571428571429
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8285714285714286
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8257142857142856
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7361111111111112
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8514285714285713
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.7972222222222222
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8323529411764706
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8484848484848485
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8571428571428571
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8027777777777777
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "impl_rate": 0.8441176470588235
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "impl_rate": 0.8484848484848485
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "impl_rate": 0.8142857142857143
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
         "impl_rate": 0.75
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.4714285714285714
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.2833333333333333
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.8714285714285713
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.7000000000000001
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.6666666666666666
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.9071428571428571
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.9375
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.9333333333333333
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "impl_rate": 0.9000000000000001
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.8888888888888888
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8333333333333334
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8888888888888888
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.65625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.8125
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.71875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "impl_rate": 0.7909090909090909
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.9375
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.8888888888888888
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.75
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "impl_rate": 0.625
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "impl_rate": 1.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "impl_rate": 0.875
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "impl_rate": 0.875
       }
     ]
   }

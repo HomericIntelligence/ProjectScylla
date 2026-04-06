@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-fafc0538b13e53819038f9077be0c8ec"
+    "name": "data-38d6070105bafae6bd357bb3e107a207"
   },
   "facet": {
     "column": {
@@ -127,598 +127,966 @@
   "title": "Failure Rate per Subtest (Detailed)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-fafc0538b13e53819038f9077be0c8ec": [
+    "data-38d6070105bafae6bd357bb3e107a207": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "00",
         "subtest_label": "T0-00",
-        "failure_rate": 0.85,
-        "n_runs": 20
+        "failure_rate": 0.8888888888888888,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "01",
         "subtest_label": "T0-01",
-        "failure_rate": 0.5,
-        "n_runs": 20
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "02",
         "subtest_label": "T0-02",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "03",
         "subtest_label": "T0-03",
-        "failure_rate": 0.6,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "04",
         "subtest_label": "T0-04",
-        "failure_rate": 0.09999999999999998,
-        "n_runs": 10
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "05",
         "subtest_label": "T0-05",
-        "failure_rate": 0.2857142857142857,
-        "n_runs": 7
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "06",
+        "subtest_label": "T0-06",
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "07",
         "subtest_label": "T0-07",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "08",
         "subtest_label": "T0-08",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "09",
         "subtest_label": "T0-09",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "10",
         "subtest_label": "T0-10",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "11",
         "subtest_label": "T0-11",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "12",
         "subtest_label": "T0-12",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "13",
         "subtest_label": "T0-13",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "14",
         "subtest_label": "T0-14",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "15",
         "subtest_label": "T0-15",
-        "failure_rate": 0.75,
-        "n_runs": 4
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "16",
+        "subtest_label": "T0-16",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "17",
+        "subtest_label": "T0-17",
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "18",
         "subtest_label": "T0-18",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "19",
         "subtest_label": "T0-19",
         "failure_rate": 0.0,
-        "n_runs": 1
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "20",
+        "subtest_label": "T0-20",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "21",
+        "subtest_label": "T0-21",
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "22",
+        "subtest_label": "T0-22",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "23",
+        "subtest_label": "T0-23",
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "01",
         "subtest_label": "T1-01",
-        "failure_rate": 0.28,
-        "n_runs": 25
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "02",
         "subtest_label": "T1-02",
-        "failure_rate": 0.36,
-        "n_runs": 25
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "03",
         "subtest_label": "T1-03",
-        "failure_rate": 0.30000000000000004,
-        "n_runs": 10
+        "failure_rate": 0.2222222222222222,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "04",
         "subtest_label": "T1-04",
-        "failure_rate": 0.125,
-        "n_runs": 8
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "05",
+        "subtest_label": "T1-05",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "06",
         "subtest_label": "T1-06",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "07",
         "subtest_label": "T1-07",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "subtest": "08",
         "subtest_label": "T1-08",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "09",
+        "subtest_label": "T1-09",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "10",
+        "subtest_label": "T1-10",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "01",
         "subtest_label": "T2-01",
-        "failure_rate": 0.07999999999999996,
-        "n_runs": 25
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "02",
         "subtest_label": "T2-02",
-        "failure_rate": 0.28,
-        "n_runs": 25
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "03",
         "subtest_label": "T2-03",
-        "failure_rate": 0.4,
-        "n_runs": 10
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "04",
         "subtest_label": "T2-04",
-        "failure_rate": 0.09999999999999998,
-        "n_runs": 10
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "05",
         "subtest_label": "T2-05",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "06",
         "subtest_label": "T2-06",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "07",
         "subtest_label": "T2-07",
-        "failure_rate": 0.5,
-        "n_runs": 10
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "08",
         "subtest_label": "T2-08",
-        "failure_rate": 0.0,
-        "n_runs": 10
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "09",
+        "subtest_label": "T2-09",
+        "failure_rate": 0.0,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "10",
         "subtest_label": "T2-10",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "11",
         "subtest_label": "T2-11",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "12",
         "subtest_label": "T2-12",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "13",
         "subtest_label": "T2-13",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "14",
         "subtest_label": "T2-14",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "subtest": "15",
         "subtest_label": "T2-15",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "01",
         "subtest_label": "T3-01",
-        "failure_rate": 0.23529411764705888,
-        "n_runs": 17
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "02",
         "subtest_label": "T3-02",
-        "failure_rate": 0.26086956521739135,
-        "n_runs": 23
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "03",
         "subtest_label": "T3-03",
-        "failure_rate": 0.4285714285714286,
-        "n_runs": 7
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "04",
         "subtest_label": "T3-04",
-        "failure_rate": 0.4,
-        "n_runs": 5
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "05",
         "subtest_label": "T3-05",
-        "failure_rate": 0.4,
-        "n_runs": 10
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "06",
         "subtest_label": "T3-06",
-        "failure_rate": 0.5,
-        "n_runs": 4
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "07",
         "subtest_label": "T3-07",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "08",
         "subtest_label": "T3-08",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "09",
         "subtest_label": "T3-09",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "10",
         "subtest_label": "T3-10",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "11",
         "subtest_label": "T3-11",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.0,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "12",
         "subtest_label": "T3-12",
         "failure_rate": 0.0,
-        "n_runs": 5
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "13",
         "subtest_label": "T3-13",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.11111111111111116,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "14",
         "subtest_label": "T3-14",
         "failure_rate": 0.0,
-        "n_runs": 3
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "15",
         "subtest_label": "T3-15",
-        "failure_rate": 0.5,
-        "n_runs": 2
+        "failure_rate": 0.2222222222222222,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "16",
+        "subtest_label": "T3-16",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "17",
         "subtest_label": "T3-17",
-        "failure_rate": 0.4,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "18",
         "subtest_label": "T3-18",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "19",
         "subtest_label": "T3-19",
-        "failure_rate": 0.25,
-        "n_runs": 4
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "20",
         "subtest_label": "T3-20",
-        "failure_rate": 0.5,
-        "n_runs": 2
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "21",
+        "subtest_label": "T3-21",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "22",
+        "subtest_label": "T3-22",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "23",
+        "subtest_label": "T3-23",
+        "failure_rate": 0.5555555555555556,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "24",
+        "subtest_label": "T3-24",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "25",
+        "subtest_label": "T3-25",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "26",
+        "subtest_label": "T3-26",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "27",
+        "subtest_label": "T3-27",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "28",
+        "subtest_label": "T3-28",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "29",
+        "subtest_label": "T3-29",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "30",
+        "subtest_label": "T3-30",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "31",
+        "subtest_label": "T3-31",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "32",
+        "subtest_label": "T3-32",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "33",
+        "subtest_label": "T3-33",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "34",
+        "subtest_label": "T3-34",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "35",
+        "subtest_label": "T3-35",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "36",
+        "subtest_label": "T3-36",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "37",
+        "subtest_label": "T3-37",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "38",
+        "subtest_label": "T3-38",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "39",
+        "subtest_label": "T3-39",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "40",
+        "subtest_label": "T3-40",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "41",
+        "subtest_label": "T3-41",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "01",
         "subtest_label": "T4-01",
-        "failure_rate": 0.16000000000000003,
-        "n_runs": 25
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "02",
         "subtest_label": "T4-02",
-        "failure_rate": 0.24,
-        "n_runs": 25
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "03",
         "subtest_label": "T4-03",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 10
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "04",
         "subtest_label": "T4-04",
         "failure_rate": 0.33333333333333337,
-        "n_runs": 6
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "05",
         "subtest_label": "T4-05",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "06",
         "subtest_label": "T4-06",
-        "failure_rate": 0.4,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "07",
         "subtest_label": "T4-07",
-        "failure_rate": 0.30000000000000004,
-        "n_runs": 10
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "08",
         "subtest_label": "T4-08",
-        "failure_rate": 0.1428571428571429,
-        "n_runs": 7
+        "failure_rate": 0.5555555555555556,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "09",
         "subtest_label": "T4-09",
-        "failure_rate": 0.4,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "10",
         "subtest_label": "T4-10",
-        "failure_rate": 0.19999999999999996,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "11",
         "subtest_label": "T4-11",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "12",
         "subtest_label": "T4-12",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "13",
         "subtest_label": "T4-13",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "14",
         "subtest_label": "T4-14",
-        "failure_rate": 0.0,
-        "n_runs": 5
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "01",
         "subtest_label": "T5-01",
-        "failure_rate": 0.5333333333333333,
-        "n_runs": 15
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "02",
         "subtest_label": "T5-02",
-        "failure_rate": 0.4666666666666667,
-        "n_runs": 15
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "03",
+        "subtest_label": "T5-03",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "04",
+        "subtest_label": "T5-04",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "05",
+        "subtest_label": "T5-05",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "06",
+        "subtest_label": "T5-06",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "07",
+        "subtest_label": "T5-07",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "08",
+        "subtest_label": "T5-08",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "09",
+        "subtest_label": "T5-09",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "10",
+        "subtest_label": "T5-10",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "11",
+        "subtest_label": "T5-11",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "12",
+        "subtest_label": "T5-12",
+        "failure_rate": 0.4444444444444444,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "13",
+        "subtest_label": "T5-13",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "14",
+        "subtest_label": "T5-14",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "15",
+        "subtest_label": "T5-15",
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "subtest": "01",
         "subtest_label": "T6-01",
-        "failure_rate": 0.06666666666666665,
-        "n_runs": 15
+        "failure_rate": 0.33333333333333337,
+        "n_runs": 9
       }
     ]
   }
