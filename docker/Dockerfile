@@ -148,6 +148,9 @@ RUN npm install -g @anthropic-ai/claude-code@2.1.91
 #   CVE-2026-23745/23950/24842/26960/29786/31802 (tar path traversal/overwrite)
 RUN cd /usr/local/lib/node_modules/@anthropic-ai/claude-code && \
     npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save 2>/dev/null || true
+# Patch npm's own bundled tar (6.2.1 → 7.5.13) — Trivy flags the same CVEs there
+RUN cd /usr/local/lib/node_modules/npm && \
+    npm install tar@7.5.13 --save 2>/dev/null || true
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
