@@ -3,14 +3,14 @@
 *Statistical workflow: Kruskal-Wallis omnibus test, then pairwise Mann-Whitney U with Holm-Bonferroni correction (step-down)*
 
 **Omnibus Test Results (Kruskal-Wallis):**
-- haiku: H(6)=27.49, p=0.0001 ✓ (proceed to pairwise)
+- claude-haiku-4-5: H(6)=119.01, p=0.0000 ✓ (proceed to pairwise), power=1.000
 
-| Model | Transition | N (T1, T2) | Pass Rate Δ | p-value | Cliff's δ | Significant? |
-|-------|------------|------------|-------------|---------|-----------|--------------|
-| haiku | T0→T1 | (117, 83) | +0.0939 | 0.4865 | +0.094 | No |
-| haiku | T1→T2 | (83, 130) | +0.0958 | 0.3725 | +0.096 | No |
-| haiku | T2→T3 | (130, 122) | -0.0685 | 0.4865 | -0.068 | No |
-| haiku | T3→T4 | (122, 123) | +0.0507 | 0.4865 | +0.051 | No |
-| haiku | T4→T5 | (123, 30) | -0.3130 | 0.0024 | -0.313 | Yes |
-| haiku | T5→T6 | (30, 15) | +0.4333 | 0.0243 | +0.433 | Yes |
-| haiku | T0→T6 | (117, 15) | +0.2923 | 0.1187 | +0.292 | No |
+| Model | Transition | N (T1, T2) | Pass Rate Δ | p-value | Cliff's δ | Power | Significant? |
+|-------|------------|------------|-------------|---------|-----------|-------|--------------|
+| claude-haiku-4-5 | T0→T1 | (216, 90) | +0.0315 | 1.0000 | +0.031 | 0.069 | No |
+| claude-haiku-4-5 | T1→T2 | (90, 135) | +0.0111 | 1.0000 | +0.011 | 0.054 | No |
+| claude-haiku-4-5 | T2→T3 | (135, 369) | -0.2190 | 0.0000 | -0.219 | 0.965 | Yes |
+| claude-haiku-4-5 | T3→T4 | (369, 126) | -0.1160 | 0.0577 | -0.116 | 0.495 | No |
+| claude-haiku-4-5 | T4→T5 | (126, 135) | -0.0132 | 1.0000 | -0.013 | 0.050 | No |
+| claude-haiku-4-5 | T5→T6 | (135, 9) | +0.0370 | 1.0000 | +0.037 | 0.054 | No |
+| claude-haiku-4-5 | T0→T6 | (216, 9) | -0.2685 | 0.0176 | -0.269 | 0.267 | Yes |

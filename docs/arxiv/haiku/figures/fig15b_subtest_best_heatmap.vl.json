@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-1e7e4d573c45549ea3bc2ed4c7cde171"
+    "name": "data-0b5bd619f562480fb9955f9fce59d7d7"
   },
   "facet": {
     "column": {
@@ -117,10 +117,32 @@
           "13",
           "14",
           "15",
+          "16",
           "17",
           "18",
           "19",
-          "20"
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31",
+          "32",
+          "33",
+          "34",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "40",
+          "41"
         ],
         "title": "Subtest",
         "type": "ordinal"
@@ -137,441 +159,537 @@
   "title": "Best Subtest Scores by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-1e7e4d573c45549ea3bc2ed4c7cde171": [
+    "data-0b5bd619f562480fb9955f9fce59d7d7": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "00",
         "run_number": 1,
-        "score": 0.89,
+        "score": 1.0,
         "subtest_num": 0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "01",
-        "run_number": 1,
-        "score": 1.0,
+        "run_number": 3,
+        "score": 0.9166666666666666,
         "subtest_num": 1
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "02",
-        "run_number": 3,
-        "score": 0.82,
+        "run_number": 1,
+        "score": 0.9168000000000001,
         "subtest_num": 2
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "03",
-        "run_number": 2,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 3
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "04",
         "run_number": 2,
-        "score": 0.833,
+        "score": 1.0,
         "subtest_num": 4
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "05",
-        "run_number": 2,
-        "score": 1.0,
+        "run_number": 3,
+        "score": 0.9583333333333334,
         "subtest_num": 5
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "06",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 6
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "07",
         "run_number": 1,
-        "score": 0.833,
+        "score": 1.0,
         "subtest_num": 7
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "08",
-        "run_number": 5,
-        "score": 1.0,
+        "run_number": 3,
+        "score": 0.9188000000000001,
         "subtest_num": 8
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "09",
-        "run_number": 5,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "10",
-        "run_number": 2,
-        "score": 0.83,
+        "run_number": 3,
+        "score": 0.9583333333333334,
         "subtest_num": 10
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "11",
-        "run_number": 5,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 11
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "12",
-        "run_number": 3,
+        "run_number": 1,
         "score": 1.0,
         "subtest_num": 12
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "13",
-        "run_number": 5,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.9233333333333333,
         "subtest_num": 13
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "14",
-        "run_number": 4,
-        "score": 1.0,
+        "run_number": 2,
+        "score": 0.9266666666666667,
         "subtest_num": 14
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "subtest": "15",
-        "run_number": 2,
-        "score": 0.67,
+        "run_number": 3,
+        "score": 0.9583333333333334,
         "subtest_num": 15
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "subtest": "18",
-        "run_number": 5,
-        "score": 1.0,
-        "subtest_num": 18
+        "subtest": "16",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 16
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "subtest": "19",
-        "run_number": 1,
-        "score": 1.0,
-        "subtest_num": 19
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "01",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 1
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "02",
-        "run_number": 4,
-        "score": 1.0,
-        "subtest_num": 2
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "03",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 3
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "04",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 4
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "06",
-        "run_number": 1,
-        "score": 0.833,
-        "subtest_num": 6
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "07",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 7
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "subtest": "08",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 8
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "01",
-        "run_number": 4,
-        "score": 1.0,
-        "subtest_num": 1
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "02",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 2
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "03",
-        "run_number": 1,
-        "score": 0.83,
-        "subtest_num": 3
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "04",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 4
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "05",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "06",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 6
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "07",
-        "run_number": 1,
-        "score": 0.833,
-        "subtest_num": 7
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "08",
-        "run_number": 1,
-        "score": 1.0,
-        "subtest_num": 8
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "10",
-        "run_number": 5,
-        "score": 0.83,
-        "subtest_num": 10
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "11",
-        "run_number": 3,
-        "score": 0.833,
-        "subtest_num": 11
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "12",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 12
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "13",
-        "run_number": 2,
-        "score": 0.83,
-        "subtest_num": 13
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "14",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 14
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "subtest": "15",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 15
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "01",
-        "run_number": 1,
-        "score": 1.0,
-        "subtest_num": 1
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "02",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 2
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "03",
-        "run_number": 3,
-        "score": 0.82,
-        "subtest_num": 3
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "04",
-        "run_number": 5,
-        "score": 1.0,
-        "subtest_num": 4
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "05",
-        "run_number": 5,
-        "score": 1.0,
-        "subtest_num": 5
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "06",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 6
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "07",
-        "run_number": 5,
-        "score": 1.0,
-        "subtest_num": 7
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "08",
-        "run_number": 4,
-        "score": 1.0,
-        "subtest_num": 8
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "09",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 9
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "10",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 10
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "11",
-        "run_number": 4,
-        "score": 1.0,
-        "subtest_num": 11
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "12",
-        "run_number": 3,
-        "score": 1.0,
-        "subtest_num": 12
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "13",
-        "run_number": 2,
-        "score": 1.0,
-        "subtest_num": 13
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "14",
-        "run_number": 2,
-        "score": 0.833,
-        "subtest_num": 14
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "subtest": "15",
-        "run_number": 2,
-        "score": 0.83,
-        "subtest_num": 15
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
         "subtest": "17",
-        "run_number": 1,
-        "score": 0.89,
+        "run_number": 2,
+        "score": 0.9791666666666666,
         "subtest_num": 17
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "18",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 18
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "19",
+        "run_number": 3,
+        "score": 0.94,
+        "subtest_num": 19
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "20",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 20
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "21",
+        "run_number": 2,
+        "score": 1.0,
+        "subtest_num": 21
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "22",
+        "run_number": 2,
+        "score": 1.0,
+        "subtest_num": 22
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "subtest": "23",
+        "run_number": 2,
+        "score": 0.9166666666666666,
+        "subtest_num": 23
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "01",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 1
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "02",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 2
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "03",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 3
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "04",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 4
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "05",
+        "run_number": 1,
+        "score": 0.9791666666666666,
+        "subtest_num": 5
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "06",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 6
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "07",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 7
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "08",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "09",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "subtest": "10",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 10
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "01",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 1
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "02",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 2
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "03",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 3
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "04",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 4
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "05",
+        "run_number": 3,
+        "score": 0.9166666666666666,
+        "subtest_num": 5
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "06",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 6
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "07",
+        "run_number": 1,
+        "score": 0.9428666666666666,
+        "subtest_num": 7
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "08",
+        "run_number": 2,
+        "score": 0.9166666666666666,
+        "subtest_num": 8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "09",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "10",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 10
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "11",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 11
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "12",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 12
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "13",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 13
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "14",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 14
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "subtest": "15",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 15
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "01",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 1
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "02",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 2
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "03",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 3
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "04",
+        "run_number": 2,
+        "score": 0.9211999999999999,
+        "subtest_num": 4
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "05",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 5
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "06",
+        "run_number": 1,
+        "score": 0.96,
+        "subtest_num": 6
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "07",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 7
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "08",
+        "run_number": 1,
+        "score": 0.9166666666666666,
+        "subtest_num": 8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "09",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "10",
+        "run_number": 3,
+        "score": 0.9411999999999999,
+        "subtest_num": 10
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "11",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 11
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "12",
+        "run_number": 1,
+        "score": 0.9166666666666666,
+        "subtest_num": 12
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "13",
+        "run_number": 3,
+        "score": 0.9346666666666666,
+        "subtest_num": 13
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "14",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 14
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "15",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 15
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "16",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 16
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "17",
+        "run_number": 3,
+        "score": 0.9166666666666666,
+        "subtest_num": 17
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "18",
         "run_number": 3,
@@ -579,95 +697,263 @@
         "subtest_num": 18
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "19",
-        "run_number": 2,
+        "run_number": 1,
         "score": 1.0,
         "subtest_num": 19
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "20",
-        "run_number": 1,
-        "score": 0.67,
+        "run_number": 2,
+        "score": 0.9375,
         "subtest_num": 20
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "21",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 21
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "22",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 22
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "23",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 23
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "24",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 24
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "25",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 25
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "26",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 26
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "27",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 27
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "28",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 28
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "29",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 29
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "30",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 30
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "31",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 31
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "32",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 32
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "33",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 33
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "34",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 34
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "35",
+        "run_number": 3,
+        "score": 1.0,
+        "subtest_num": 35
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "36",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 36
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "37",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 37
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "38",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 38
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "39",
+        "run_number": 3,
+        "score": 0.9166666666666666,
+        "subtest_num": 39
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "40",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 40
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "subtest": "41",
+        "run_number": 1,
+        "score": 0.7200000000000001,
+        "subtest_num": 41
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "01",
-        "run_number": 5,
+        "run_number": 3,
         "score": 1.0,
         "subtest_num": 1
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "02",
-        "run_number": 3,
-        "score": 0.88,
+        "run_number": 1,
+        "score": 1.0,
         "subtest_num": 2
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "03",
-        "run_number": 1,
+        "run_number": 3,
         "score": 1.0,
         "subtest_num": 3
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "04",
-        "run_number": 2,
-        "score": 0.87,
+        "run_number": 1,
+        "score": 1.0,
         "subtest_num": 4
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "05",
-        "run_number": 3,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.739,
         "subtest_num": 5
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "06",
-        "run_number": 1,
-        "score": 0.89,
+        "run_number": 3,
+        "score": 1.0,
         "subtest_num": 6
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "07",
-        "run_number": 2,
-        "score": 0.83,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 7
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "08",
-        "run_number": 2,
-        "score": 1.0,
+        "run_number": 3,
+        "score": 0.9583333333333334,
         "subtest_num": 8
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "09",
-        "run_number": 3,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 9
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "10",
         "run_number": 3,
@@ -675,59 +961,163 @@
         "subtest_num": 10
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "11",
-        "run_number": 3,
-        "score": 1.0,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 11
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "12",
-        "run_number": 4,
-        "score": 1.0,
+        "run_number": 2,
+        "score": 0.9583333333333334,
         "subtest_num": 12
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "13",
-        "run_number": 4,
+        "run_number": 3,
         "score": 1.0,
         "subtest_num": 13
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "14",
         "run_number": 1,
-        "score": 1.0,
+        "score": 0.9583333333333334,
         "subtest_num": 14
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "01",
-        "run_number": 4,
-        "score": 1.0,
+        "run_number": 2,
+        "score": 0.9583333333333334,
         "subtest_num": 1
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "02",
-        "run_number": 5,
-        "score": 0.94,
+        "run_number": 1,
+        "score": 0.9583333333333334,
         "subtest_num": 2
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "03",
+        "run_number": 2,
+        "score": 0.9166666666666666,
+        "subtest_num": 3
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "04",
+        "run_number": 3,
+        "score": 0.9583333333333334,
+        "subtest_num": 4
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "05",
+        "run_number": 2,
+        "score": 1.0,
+        "subtest_num": 5
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "06",
+        "run_number": 2,
+        "score": 1.0,
+        "subtest_num": 6
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "07",
+        "run_number": 2,
+        "score": 0.8333333333333334,
+        "subtest_num": 7
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "08",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 8
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "09",
+        "run_number": 3,
+        "score": 0.9166666666666666,
+        "subtest_num": 9
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "10",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 10
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "11",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 11
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "12",
+        "run_number": 2,
+        "score": 0.9583333333333334,
+        "subtest_num": 12
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "13",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 13
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "14",
+        "run_number": 1,
+        "score": 0.9583333333333334,
+        "subtest_num": 14
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "subtest": "15",
+        "run_number": 1,
+        "score": 1.0,
+        "subtest_num": 15
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "subtest": "01",
         "run_number": 1,
-        "score": 1.0,
+        "score": 0.9583333333333334,
         "subtest_num": 1
       }
     ]

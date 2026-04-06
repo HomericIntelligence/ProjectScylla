@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-61721cdaa0cafef4cf954b0187351c5b"
+    "name": "data-72f71bd2158c0ac15dd25add0f914d89"
   },
   "facet": {
     "column": {
@@ -42,7 +42,6 @@
       },
       "sort": [
         "Build Integration",
-        "Cleanup",
         "Code Formatting",
         "Core Functionality",
         "Deprecated Patterns",
@@ -50,93 +49,58 @@
         "Execution",
         "Memory Safety & Ownership",
         "Memory Safety And Ownership",
-        "R001 Duplicate Recipes Merged",
-        "R001 Tracking Control",
-        "R002 Memory Efficient",
-        "R002 Unused Recipes Removed",
-        "R003 Build Works",
-        "R003 Tests Pass",
-        "R004 Test Works",
-        "R005 Ci Compatible",
-        "R006 Docs Updated",
-        "Agent Behavior",
-        "Agent Contribution",
-        "Agent Execution",
-        "Analysis",
-        "Analysis And Documentation",
-        "Analysis And Verification",
-        "Backward Compatibility",
+        "R001",
+        "R002",
+        "R003",
+        "R004",
         "Build",
+        "Build And Compilation",
+        "Build And Execution",
+        "Build Compile",
         "Build Integration",
         "Build Pipeline",
-        "Build Works",
-        "Ci Compatible",
-        "Cleanup",
-        "Cleanup And Quality",
+        "Clean Exit",
         "Code Formatting",
         "Code Quality",
-        "Commit Quality",
-        "Completeness",
+        "Compilation Warnings",
         "Core Functionality",
-        "Correctness",
-        "Coverage",
-        "Deliverable Quality",
-        "Deliverables",
+        "Correct Output",
+        "Dependencies",
+        "Dependency Config",
         "Deprecated Patterns",
-        "Docs Updated",
         "Documentation",
-        "Duplicate Merge",
-        "Duplicate Recipes",
-        "Duplicate Recipes Merged",
         "Execution",
+        "Execution And Safety",
+        "Execution Safety",
+        "Execution Safety Patterns",
+        "File Creation",
+        "Formatting",
         "Functional",
-        "Functional Correctness",
-        "Functional Implementation",
-        "Functional Requirements",
-        "Git Hygiene",
-        "Implementation",
-        "Implementation Completeness",
-        "Implementation Correctness",
-        "Implementation Quality",
-        "Markdown Quality",
-        "Memory",
-        "Memory Efficiency",
+        "Functionality",
+        "Installation",
+        "Location Discovery",
+        "Memory And Patterns",
         "Memory Safety",
         "Memory Safety And Ownership",
+        "Memory Safety And Patterns",
         "Memory Safety Ownership",
         "Memory Safety Patterns",
-        "Pattern Consistency",
-        "Performance",
+        "Mojo Syntax",
+        "Overall Quality",
+        "Ownership Patterns",
+        "Patterns",
         "Pipeline",
-        "Pipeline Health",
-        "Pipeline Regression",
-        "Pipeline Results",
-        "Pipeline Status",
-        "Precision",
-        "Precision Correctness",
-        "Process",
-        "Process Adherence",
+        "Proportionality",
         "Quality",
         "Requirements",
-        "Scope Adherence",
-        "Scope Discipline",
-        "Simplification",
-        "Task Completeness",
-        "Task Completion",
-        "Task Execution",
-        "Task Scope",
-        "Test Coverage",
-        "Test Works",
-        "Testing",
-        "Tests",
-        "Tracking Control",
-        "Unused Recipes",
-        "Unused Recipes Removed",
-        "Unused Removal",
-        "Verification",
-        "Verification And Analysis",
-        "Workspace Cleanliness",
-        "Workspace Hygiene"
+        "Safety",
+        "Safety And Execution",
+        "Safety And Patterns",
+        "Safety Execution",
+        "Safety Ownership",
+        "Safety Patterns",
+        "Scope And Changes",
+        "Verification"
       ],
       "title": "Criterion",
       "type": "nominal"
@@ -237,2155 +201,1980 @@
   "title": "Per-Criteria Performance by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-61721cdaa0cafef4cf954b0187351c5b": [
+    "data-72f71bd2158c0ac15dd25add0f914d89": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "criterion": "Build Integration",
         "criterion_score": 0.6,
         "criterion_label": "Build Integration"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "Code Formatting",
+        "criterion_score": 0.8,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "criterion": "Core Functionality",
-        "criterion_score": 0.8935,
+        "criterion_score": 0.9335,
         "criterion_label": "Core Functionality"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "criterion": "Deprecated Patterns",
         "criterion_score": 1.0,
         "criterion_label": "Deprecated Patterns"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "criterion": "Documentation",
         "criterion_score": 0.89,
         "criterion_label": "Documentation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "criterion": "Execution",
-        "criterion_score": 1.0,
+        "criterion_score": 0.9333333333333332,
         "criterion_label": "Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
+        "criterion": "Memory Safety & Ownership",
+        "criterion_score": 0.95,
+        "criterion_label": "Memory Safety & Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "Memory Safety and Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "R001",
+        "criterion_score": 1.0,
+        "criterion_label": "R001"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "R002",
+        "criterion_score": 1.0,
+        "criterion_label": "R002"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "R003",
+        "criterion_score": 0.875,
+        "criterion_label": "R003"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "R004",
+        "criterion_score": 0.4166666666666667,
+        "criterion_label": "R004"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "build",
+        "criterion_score": 0.1743461538461539,
+        "criterion_label": "Build"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "build_and_compilation",
+        "criterion_score": 0.143,
+        "criterion_label": "Build And Compilation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "build_and_execution",
+        "criterion_score": 0.14,
+        "criterion_label": "Build And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "build_compile",
+        "criterion_score": 0.14,
+        "criterion_label": "Build Compile"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "build_integration",
+        "criterion_score": 0.4502655555555556,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "build_pipeline",
+        "criterion_score": 0.9362009708737866,
+        "criterion_label": "Build Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "clean_exit",
+        "criterion_score": 1.0,
+        "criterion_label": "Clean Exit"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "code_formatting",
+        "criterion_score": 0.5636986301369864,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "code_quality",
+        "criterion_score": 0.9398390243902439,
+        "criterion_label": "Code Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "compilation_warnings",
+        "criterion_score": 1.0,
+        "criterion_label": "Compilation Warnings"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "core_functionality",
+        "criterion_score": 0.818515454545455,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "correct_output",
+        "criterion_score": 1.0,
+        "criterion_label": "Correct Output"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "dependencies",
+        "criterion_score": 0.9375,
+        "criterion_label": "Dependencies"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "deprecated_patterns",
+        "criterion_score": 0.9230769230769231,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "documentation",
+        "criterion_score": 0.8167464114832532,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "execution",
+        "criterion_score": 0.4547619047619048,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "execution_and_safety",
+        "criterion_score": 0.34406521739130436,
+        "criterion_label": "Execution And Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "execution_safety",
+        "criterion_score": 0.6363,
+        "criterion_label": "Execution Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "execution_safety_patterns",
+        "criterion_score": 0.75,
+        "criterion_label": "Execution Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "file_creation",
+        "criterion_score": 1.0,
+        "criterion_label": "File Creation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "formatting",
+        "criterion_score": 0.538888888888889,
+        "criterion_label": "Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "functional",
+        "criterion_score": 0.8614322580645158,
+        "criterion_label": "Functional"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "functionality",
+        "criterion_score": 0.533325,
+        "criterion_label": "Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "location_discovery",
+        "criterion_score": 0.9,
+        "criterion_label": "Location Discovery"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "memory_safety",
+        "criterion_score": 0.9144500000000001,
+        "criterion_label": "Memory Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "memory_safety_and_ownership",
+        "criterion_score": 0.8055555555555556,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "memory_safety_and_patterns",
+        "criterion_score": 0.75,
+        "criterion_label": "Memory Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "memory_safety_ownership",
+        "criterion_score": 0.8835810810810809,
+        "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "memory_safety_patterns",
+        "criterion_score": 0.78125,
+        "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "mojo_syntax",
+        "criterion_score": 1.0,
+        "criterion_label": "Mojo Syntax"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "overall_quality",
+        "criterion_score": 0.8783414634146347,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "ownership_patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Ownership Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "patterns",
+        "criterion_score": 0.5,
+        "criterion_label": "Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "proportionality",
+        "criterion_score": 0.9184439024390244,
+        "criterion_label": "Proportionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "requirements",
+        "criterion_score": 0.8172285353535353,
+        "criterion_label": "Requirements"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "safety",
+        "criterion_score": 0.46875,
+        "criterion_label": "Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "safety_and_execution",
+        "criterion_score": 0.0,
+        "criterion_label": "Safety And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "safety_and_patterns",
+        "criterion_score": 0.5036764705882353,
+        "criterion_label": "Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "safety_execution",
+        "criterion_score": 0.375,
+        "criterion_label": "Safety Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "safety_ownership",
+        "criterion_score": 0.88,
+        "criterion_label": "Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "criterion": "safety_patterns",
+        "criterion_score": 0.571625,
+        "criterion_label": "Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "Build Integration",
+        "criterion_score": 0.6,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "Code Formatting",
+        "criterion_score": 0.5,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "Core Functionality",
+        "criterion_score": 0.9,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "Documentation",
+        "criterion_score": 0.9,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "Execution",
+        "criterion_score": 0.0,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
         "criterion": "Memory Safety & Ownership",
         "criterion_score": 1.0,
         "criterion_label": "Memory Safety & Ownership"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "agent_behavior",
-        "criterion_score": 0.6,
-        "criterion_label": "Agent Behavior"
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "R001",
+        "criterion_score": 1.0,
+        "criterion_label": "R001"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "R002",
+        "criterion_score": 1.0,
+        "criterion_label": "R002"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "R003",
+        "criterion_score": 0.7,
+        "criterion_label": "R003"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "R004",
+        "criterion_score": 0.4,
+        "criterion_label": "R004"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
         "criterion": "build",
-        "criterion_score": 0.9099999999999999,
+        "criterion_score": 0.14830000000000002,
         "criterion_label": "Build"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "build_compile",
+        "criterion_score": 0.14,
+        "criterion_label": "Build Compile"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
         "criterion": "build_integration",
-        "criterion_score": 0.5111666666666667,
+        "criterion_score": 0.46761038961039,
         "criterion_label": "Build Integration"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
         "criterion": "build_pipeline",
-        "criterion_score": 0.8571428571428571,
+        "criterion_score": 0.9491882352941178,
         "criterion_label": "Build Pipeline"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "build_works",
-        "criterion_score": 0.25,
-        "criterion_label": "Build Works"
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "code_formatting",
+        "criterion_score": 0.5203703703703704,
+        "criterion_label": "Code Formatting"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "ci_compatible",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "code_quality",
+        "criterion_score": 0.9945833333333334,
+        "criterion_label": "Code Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "core_functionality",
+        "criterion_score": 0.8812499999999995,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "dependencies",
+        "criterion_score": 0.8125,
+        "criterion_label": "Dependencies"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "deprecated_patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "documentation",
+        "criterion_score": 0.8701123595505622,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "execution",
+        "criterion_score": 0.44,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "execution_and_safety",
+        "criterion_score": 0.6117777777777778,
+        "criterion_label": "Execution And Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "execution_safety",
+        "criterion_score": 0.4589285714285714,
+        "criterion_label": "Execution Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "formatting",
+        "criterion_score": 0.55,
+        "criterion_label": "Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "functional",
+        "criterion_score": 0.8866640625000006,
+        "criterion_label": "Functional"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "functionality",
+        "criterion_score": 0.7333333333333334,
+        "criterion_label": "Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "memory_safety",
+        "criterion_score": 0.9671,
+        "criterion_label": "Memory Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "memory_safety_and_ownership",
+        "criterion_score": 0.9375,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "memory_safety_ownership",
+        "criterion_score": 0.9386,
+        "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "memory_safety_patterns",
+        "criterion_score": 0.78125,
+        "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "overall_quality",
+        "criterion_score": 0.9222619047619047,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "proportionality",
+        "criterion_score": 0.9316428571428569,
+        "criterion_label": "Proportionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "requirements",
+        "criterion_score": 0.8966346153846154,
+        "criterion_label": "Requirements"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "safety",
+        "criterion_score": 0.3221428571428571,
+        "criterion_label": "Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "safety_and_execution",
+        "criterion_score": 0.111,
+        "criterion_label": "Safety And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "safety_and_patterns",
         "criterion_score": 0.375,
-        "criterion_label": "Ci Compatible"
+        "criterion_label": "Safety And Patterns"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "cleanup",
-        "criterion_score": 0.4571428571428572,
-        "criterion_label": "Cleanup"
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "safety_execution",
+        "criterion_score": 0.0,
+        "criterion_label": "Safety Execution"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "criterion": "safety_patterns",
+        "criterion_score": 0.6046388888888888,
+        "criterion_label": "Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "Build Integration",
+        "criterion_score": 0.6,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "Core Functionality",
+        "criterion_score": 0.9165000000000001,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "Documentation",
+        "criterion_score": 0.88,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "Execution",
+        "criterion_score": 0.5,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "Memory Safety & Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety & Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "Memory Safety and Ownership",
+        "criterion_score": 0.875,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "R001",
+        "criterion_score": 1.0,
+        "criterion_label": "R001"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "R002",
+        "criterion_score": 1.0,
+        "criterion_label": "R002"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "R003",
+        "criterion_score": 0.6428571428571429,
+        "criterion_label": "R003"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "R004",
+        "criterion_score": 0.5714285714285714,
+        "criterion_label": "R004"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "build",
+        "criterion_score": 0.2731904761904761,
+        "criterion_label": "Build"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "build_and_compilation",
+        "criterion_score": 0.0,
+        "criterion_label": "Build And Compilation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "build_compile",
+        "criterion_score": 0.0,
+        "criterion_label": "Build Compile"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "build_integration",
+        "criterion_score": 0.5158348623853217,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "build_pipeline",
+        "criterion_score": 0.9396676923076925,
+        "criterion_label": "Build Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "code_formatting",
+        "criterion_score": 0.5959459459459457,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "code_quality",
+        "criterion_score": 0.9902269230769231,
+        "criterion_label": "Code Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "core_functionality",
+        "criterion_score": 0.873885245901639,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "dependencies",
+        "criterion_score": 0.875,
+        "criterion_label": "Dependencies"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "deprecated_patterns",
+        "criterion_score": 0.9583333333333334,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "documentation",
+        "criterion_score": 0.8653030303030307,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "execution",
+        "criterion_score": 0.4822222222222222,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "execution_and_safety",
+        "criterion_score": 0.6147647058823531,
+        "criterion_label": "Execution And Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "execution_safety",
+        "criterion_score": 0.6397,
+        "criterion_label": "Execution Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "formatting",
+        "criterion_score": 0.65,
+        "criterion_label": "Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "functional",
+        "criterion_score": 0.8911336633663356,
+        "criterion_label": "Functional"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "functionality",
+        "criterion_score": 0.7335,
+        "criterion_label": "Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "memory_safety",
+        "criterion_score": 0.9186451612903226,
+        "criterion_label": "Memory Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "memory_safety_and_ownership",
+        "criterion_score": 0.8958333333333334,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "memory_safety_and_patterns",
+        "criterion_score": 0.875,
+        "criterion_label": "Memory Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "memory_safety_ownership",
+        "criterion_score": 0.8846470588235295,
+        "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "memory_safety_patterns",
+        "criterion_score": 0.7916666666666666,
+        "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "overall_quality",
+        "criterion_score": 0.9183738461538465,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "pipeline",
+        "criterion_score": 0.0,
+        "criterion_label": "Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "proportionality",
+        "criterion_score": 0.943530769230769,
+        "criterion_label": "Proportionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "requirements",
+        "criterion_score": 0.8197016129032259,
+        "criterion_label": "Requirements"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "safety",
+        "criterion_score": 0.46378571428571425,
+        "criterion_label": "Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "safety_and_execution",
+        "criterion_score": 0.0,
+        "criterion_label": "Safety And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "safety_and_patterns",
+        "criterion_score": 0.6453749999999999,
+        "criterion_label": "Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "safety_execution",
+        "criterion_score": 0.3125,
+        "criterion_label": "Safety Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "safety_ownership",
+        "criterion_score": 0.625,
+        "criterion_label": "Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T2",
+        "criterion": "safety_patterns",
+        "criterion_score": 0.5969615384615385,
+        "criterion_label": "Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Build Integration",
+        "criterion_score": 0.5666666666666665,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Code Formatting",
+        "criterion_score": 0.49375,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Core Functionality",
+        "criterion_score": 0.8764166666666667,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Deprecated Patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Documentation",
+        "criterion_score": 0.8900000000000001,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Execution",
+        "criterion_score": 0.7909090909090909,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Memory Safety & Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety & Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "Memory Safety and Ownership",
+        "criterion_score": 0.9707142857142858,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "R001",
+        "criterion_score": 1.0,
+        "criterion_label": "R001"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "R002",
+        "criterion_score": 1.0,
+        "criterion_label": "R002"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "R003",
+        "criterion_score": 0.6111111111111112,
+        "criterion_label": "R003"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "R004",
+        "criterion_score": 0.5,
+        "criterion_label": "R004"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "build",
+        "criterion_score": 0.21861538461538454,
+        "criterion_label": "Build"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "build_and_compilation",
+        "criterion_score": 0.0,
+        "criterion_label": "Build And Compilation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "build_compile",
+        "criterion_score": 0.14250000000000002,
+        "criterion_label": "Build Compile"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "build_integration",
+        "criterion_score": 0.5165986622073568,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "build_pipeline",
+        "criterion_score": 0.9415416000000001,
+        "criterion_label": "Build Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "code_formatting",
+        "criterion_score": 0.5615384615384621,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "code_quality",
+        "criterion_score": 0.989336,
+        "criterion_label": "Code Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "compilation_warnings",
+        "criterion_score": 1.0,
+        "criterion_label": "Compilation Warnings"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "core_functionality",
+        "criterion_score": 0.8675291005291017,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "correct_output",
+        "criterion_score": 0.9,
+        "criterion_label": "Correct Output"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "dependencies",
+        "criterion_score": 1.0,
+        "criterion_label": "Dependencies"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "deprecated_patterns",
+        "criterion_score": 0.9777777777777777,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "documentation",
+        "criterion_score": 0.8832450704225351,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "execution",
+        "criterion_score": 0.5844262295081966,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "execution_and_safety",
+        "criterion_score": 0.6336818181818182,
+        "criterion_label": "Execution And Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "execution_safety",
+        "criterion_score": 0.4926153846153847,
+        "criterion_label": "Execution Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "execution_safety_patterns",
+        "criterion_score": 0.88,
+        "criterion_label": "Execution Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "file_creation",
+        "criterion_score": 1.0,
+        "criterion_label": "File Creation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "formatting",
+        "criterion_score": 0.5611111111111111,
+        "criterion_label": "Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "functional",
+        "criterion_score": 0.8174762711864394,
+        "criterion_label": "Functional"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "functionality",
+        "criterion_score": 0.7333333333333334,
+        "criterion_label": "Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "location_discovery",
+        "criterion_score": 0.9666666666666667,
+        "criterion_label": "Location Discovery"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "memory_and_patterns",
+        "criterion_score": 0.88,
+        "criterion_label": "Memory And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "memory_safety",
+        "criterion_score": 0.9281716417910448,
+        "criterion_label": "Memory Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "memory_safety_and_ownership",
+        "criterion_score": 0.9083333333333333,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "memory_safety_and_patterns",
+        "criterion_score": 0.850875,
+        "criterion_label": "Memory Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "memory_safety_ownership",
+        "criterion_score": 0.9469850746268657,
+        "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "memory_safety_patterns",
+        "criterion_score": 0.90625,
+        "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "mojo_syntax",
+        "criterion_score": 1.0,
+        "criterion_label": "Mojo Syntax"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "overall_quality",
+        "criterion_score": 0.9148688,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "ownership_patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Ownership Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "proportionality",
+        "criterion_score": 0.9205279999999996,
+        "criterion_label": "Proportionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "quality",
+        "criterion_score": 0.5,
+        "criterion_label": "Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "requirements",
+        "criterion_score": 0.8500375375375375,
+        "criterion_label": "Requirements"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "safety",
+        "criterion_score": 0.4250128205128206,
+        "criterion_label": "Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "safety_and_execution",
+        "criterion_score": 0.875,
+        "criterion_label": "Safety And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "safety_and_patterns",
+        "criterion_score": 0.6631486486486486,
+        "criterion_label": "Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "safety_execution",
+        "criterion_score": 0.16666666666666666,
+        "criterion_label": "Safety Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "safety_patterns",
+        "criterion_score": 0.6323308823529411,
+        "criterion_label": "Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "scope_and_changes",
+        "criterion_score": 0.0,
+        "criterion_label": "Scope And Changes"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T3",
+        "criterion": "verification",
+        "criterion_score": 0.5,
+        "criterion_label": "Verification"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Build Integration",
+        "criterion_score": 0.6,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Code Formatting",
+        "criterion_score": 0.5,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Core Functionality",
+        "criterion_score": 0.8882,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Deprecated Patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Documentation",
+        "criterion_score": 0.884,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Execution",
+        "criterion_score": 0.525,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Memory Safety & Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety & Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "Memory Safety and Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "R001",
+        "criterion_score": 1.0,
+        "criterion_label": "R001"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "R002",
+        "criterion_score": 1.0,
+        "criterion_label": "R002"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "R003",
+        "criterion_score": 0.7857142857142857,
+        "criterion_label": "R003"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "R004",
+        "criterion_score": 0.42857142857142855,
+        "criterion_label": "R004"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "build",
+        "criterion_score": 0.1762857142857143,
+        "criterion_label": "Build"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "build_compile",
+        "criterion_score": 0.0,
+        "criterion_label": "Build Compile"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "build_integration",
+        "criterion_score": 0.5016315789473688,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "code_formatting",
+        "criterion_score": 0.5985294117647059,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "core_functionality",
+        "criterion_score": 0.870677419354838,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "dependencies",
+        "criterion_score": 1.0,
+        "criterion_label": "Dependencies"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "deprecated_patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "documentation",
+        "criterion_score": 0.8835000000000003,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "execution",
+        "criterion_score": 0.5181818181818182,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "execution_and_safety",
+        "criterion_score": 0.5501666666666666,
+        "criterion_label": "Execution And Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "execution_safety",
+        "criterion_score": 0.7125,
+        "criterion_label": "Execution Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "formatting",
+        "criterion_score": 0.48333333333333334,
+        "criterion_label": "Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "functional",
+        "criterion_score": 0.6859491525423729,
+        "criterion_label": "Functional"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "functionality",
+        "criterion_score": 0.5185714285714286,
+        "criterion_label": "Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "memory_safety",
+        "criterion_score": 0.9513541666666666,
+        "criterion_label": "Memory Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "memory_safety_and_ownership",
+        "criterion_score": 0.859375,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "memory_safety_and_patterns",
+        "criterion_score": 0.9375,
+        "criterion_label": "Memory Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "memory_safety_ownership",
+        "criterion_score": 0.9484047619047619,
+        "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "memory_safety_patterns",
+        "criterion_score": 0.875,
+        "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "requirements",
+        "criterion_score": 0.8922297297297297,
+        "criterion_label": "Requirements"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "safety",
+        "criterion_score": 0.3658333333333333,
+        "criterion_label": "Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "safety_and_execution",
+        "criterion_score": 0.47333333333333333,
+        "criterion_label": "Safety And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "safety_and_patterns",
+        "criterion_score": 0.50625,
+        "criterion_label": "Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "safety_execution",
+        "criterion_score": 0.0,
+        "criterion_label": "Safety Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "safety_patterns",
+        "criterion_score": 0.5925606060606061,
+        "criterion_label": "Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Build Integration",
+        "criterion_score": 0.6,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Code Formatting",
+        "criterion_score": 0.75,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Core Functionality",
+        "criterion_score": 0.8889999999999999,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Deprecated Patterns",
+        "criterion_score": 1.0,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Documentation",
+        "criterion_score": 0.9066666666666667,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Execution",
+        "criterion_score": 1.0,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Memory Safety & Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety & Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "Memory Safety and Ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "R001",
+        "criterion_score": 1.0,
+        "criterion_label": "R001"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "R002",
+        "criterion_score": 1.0,
+        "criterion_label": "R002"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "R003",
+        "criterion_score": 0.8333333333333334,
+        "criterion_label": "R003"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "R004",
+        "criterion_score": 0.5,
+        "criterion_label": "R004"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "build",
+        "criterion_score": 0.1633125,
+        "criterion_label": "Build"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "build_and_compilation",
+        "criterion_score": 0.0,
+        "criterion_label": "Build And Compilation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "build_compile",
+        "criterion_score": 0.389,
+        "criterion_label": "Build Compile"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "build_integration",
+        "criterion_score": 0.5130181818181824,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "build_pipeline",
+        "criterion_score": 1.0,
+        "criterion_label": "Build Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "code_formatting",
+        "criterion_score": 0.5937499999999999,
+        "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "core_functionality",
+        "criterion_score": 0.8651562499999995,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "dependencies",
+        "criterion_score": 0.875,
+        "criterion_label": "Dependencies"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "dependency_config",
+        "criterion_score": 1.0,
+        "criterion_label": "Dependency Config"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "deprecated_patterns",
+        "criterion_score": 0.9767441860465116,
+        "criterion_label": "Deprecated Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "documentation",
+        "criterion_score": 0.874961832061069,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "execution",
+        "criterion_score": 0.4547169811320755,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "execution_and_safety",
+        "criterion_score": 0.5285555555555557,
+        "criterion_label": "Execution And Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "execution_safety",
+        "criterion_score": 0.6958333333333333,
+        "criterion_label": "Execution Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "formatting",
+        "criterion_score": 0.6,
+        "criterion_label": "Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "functional",
+        "criterion_score": 0.7271304347826086,
+        "criterion_label": "Functional"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "functionality",
+        "criterion_score": 0.7778333333333333,
+        "criterion_label": "Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "installation",
+        "criterion_score": 0.667,
+        "criterion_label": "Installation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "memory_safety",
+        "criterion_score": 0.9264516129032259,
+        "criterion_label": "Memory Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "memory_safety_and_ownership",
+        "criterion_score": 1.0,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "memory_safety_and_patterns",
+        "criterion_score": 0.75,
+        "criterion_label": "Memory Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "memory_safety_ownership",
+        "criterion_score": 0.9461538461538459,
+        "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "memory_safety_patterns",
+        "criterion_score": 0.75,
+        "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "requirements",
+        "criterion_score": 0.8459957627118644,
+        "criterion_label": "Requirements"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "safety",
+        "criterion_score": 0.39499999999999996,
+        "criterion_label": "Safety"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "safety_and_execution",
+        "criterion_score": 0.722,
+        "criterion_label": "Safety And Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "safety_and_patterns",
+        "criterion_score": 0.5981818181818181,
+        "criterion_label": "Safety And Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "safety_execution",
+        "criterion_score": 0.3775,
+        "criterion_label": "Safety Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "safety_patterns",
+        "criterion_score": 0.6850217391304348,
+        "criterion_label": "Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "verification",
+        "criterion_score": 0.0,
+        "criterion_label": "Verification"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "Build Integration",
+        "criterion_score": 0.6,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "Core Functionality",
+        "criterion_score": 0.933,
+        "criterion_label": "Core Functionality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "Documentation",
+        "criterion_score": 0.92,
+        "criterion_label": "Documentation"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "Execution",
+        "criterion_score": 0.0,
+        "criterion_label": "Execution"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "Memory Safety and Ownership",
+        "criterion_score": 0.925,
+        "criterion_label": "Memory Safety And Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "build_integration",
+        "criterion_score": 0.46125,
+        "criterion_label": "Build Integration"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "code_formatting",
         "criterion_score": 0.5666666666666667,
         "criterion_label": "Code Formatting"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "code_quality",
-        "criterion_score": 0.5850000000000001,
-        "criterion_label": "Code Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "completeness",
-        "criterion_score": 0.9,
-        "criterion_label": "Completeness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "core_functionality",
-        "criterion_score": 0.5574,
+        "criterion_score": 0.8756666666666667,
         "criterion_label": "Core Functionality"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "correctness",
-        "criterion_score": 0.7,
-        "criterion_label": "Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "deprecated_patterns",
-        "criterion_score": 0.6,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "docs_updated",
-        "criterion_score": 0.15,
-        "criterion_label": "Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "documentation",
-        "criterion_score": 0.5800000000000001,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "duplicate_recipes",
-        "criterion_score": 0.05,
-        "criterion_label": "Duplicate Recipes"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "execution",
-        "criterion_score": 0.6,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "functional",
-        "criterion_score": 0.6378809523809522,
-        "criterion_label": "Functional"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "functional_correctness",
-        "criterion_score": 0.8665,
-        "criterion_label": "Functional Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "functional_requirements",
-        "criterion_score": 0.9,
-        "criterion_label": "Functional Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "implementation_quality",
-        "criterion_score": 0.6281249999999999,
-        "criterion_label": "Implementation Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "memory_efficiency",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Efficiency"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "memory_safety_and_ownership",
-        "criterion_score": 0.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "memory_safety_ownership",
-        "criterion_score": 0.772,
-        "criterion_label": "Memory Safety Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "pipeline",
-        "criterion_score": 1.0,
-        "criterion_label": "Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "precision",
-        "criterion_score": 1.0,
-        "criterion_label": "Precision"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "precision_correctness",
-        "criterion_score": 0.85,
-        "criterion_label": "Precision Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "process",
-        "criterion_score": 0.375,
-        "criterion_label": "Process"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "quality",
-        "criterion_score": 0.595,
-        "criterion_label": "Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "requirements",
-        "criterion_score": 0.565706896551724,
-        "criterion_label": "Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "task_completion",
-        "criterion_score": 0.675,
-        "criterion_label": "Task Completion"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "task_execution",
-        "criterion_score": 0.55,
-        "criterion_label": "Task Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "test_works",
-        "criterion_score": 0.25,
-        "criterion_label": "Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "tests",
-        "criterion_score": 0.5,
-        "criterion_label": "Tests"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "tracking_control",
-        "criterion_score": 1.0,
-        "criterion_label": "Tracking Control"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "unused_recipes",
-        "criterion_score": 0.125,
-        "criterion_label": "Unused Recipes"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "verification",
-        "criterion_score": 0.3,
-        "criterion_label": "Verification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T0",
-        "criterion": "workspace_hygiene",
-        "criterion_score": 0.0,
-        "criterion_label": "Workspace Hygiene"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Build Integration",
-        "criterion_score": 0.6,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Code Formatting",
-        "criterion_score": 0.0,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Core Functionality",
-        "criterion_score": 0.8835,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Deprecated Patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Documentation",
-        "criterion_score": 0.73,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Execution",
-        "criterion_score": 0.0,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Memory Safety & Ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety & Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "Memory Safety and Ownership",
-        "criterion_score": 0.9,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "analysis_and_verification",
-        "criterion_score": 0.75,
-        "criterion_label": "Analysis And Verification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "build",
-        "criterion_score": 1.0,
-        "criterion_label": "Build"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "build_integration",
-        "criterion_score": 0.516125,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "build_pipeline",
-        "criterion_score": 0.9285714285714286,
-        "criterion_label": "Build Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "cleanup",
-        "criterion_score": 0.8333333333333334,
-        "criterion_label": "Cleanup"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "cleanup_and_quality",
-        "criterion_score": 0.075,
-        "criterion_label": "Cleanup And Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "code_formatting",
-        "criterion_score": 0.6,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "code_quality",
-        "criterion_score": 0.5650000000000001,
-        "criterion_label": "Code Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "core_functionality",
-        "criterion_score": 0.8731428571428571,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "correctness",
-        "criterion_score": 0.0,
-        "criterion_label": "Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "deliverables",
-        "criterion_score": 0.65,
-        "criterion_label": "Deliverables"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "deprecated_patterns",
         "criterion_score": 1.0,
         "criterion_label": "Deprecated Patterns"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "documentation",
-        "criterion_score": 0.8591666666666667,
+        "criterion_score": 0.9550000000000001,
         "criterion_label": "Documentation"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "execution",
-        "criterion_score": 0.5625,
+        "criterion_score": 0.625,
         "criterion_label": "Execution"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "functional",
-        "criterion_score": 0.6086538461538462,
-        "criterion_label": "Functional"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "functional_correctness",
-        "criterion_score": 0.7665,
-        "criterion_label": "Functional Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "functional_implementation",
-        "criterion_score": 0.415,
-        "criterion_label": "Functional Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "implementation",
-        "criterion_score": 0.4466666666666666,
-        "criterion_label": "Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "implementation_quality",
-        "criterion_score": 0.7000000000000001,
-        "criterion_label": "Implementation Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "markdown_quality",
-        "criterion_score": 0.9,
-        "criterion_label": "Markdown Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "memory_efficiency",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Efficiency"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "memory_safety",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "memory_safety_and_ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "memory_safety_ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "performance",
-        "criterion_score": 0.75,
-        "criterion_label": "Performance"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "pipeline",
-        "criterion_score": 0.67,
-        "criterion_label": "Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "pipeline_regression",
-        "criterion_score": 1.0,
-        "criterion_label": "Pipeline Regression"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "pipeline_status",
-        "criterion_score": 0.5,
-        "criterion_label": "Pipeline Status"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "precision_correctness",
-        "criterion_score": 0.75,
-        "criterion_label": "Precision Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "quality",
-        "criterion_score": 0.2625,
-        "criterion_label": "Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "requirements",
-        "criterion_score": 0.7316486486486486,
-        "criterion_label": "Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "task_execution",
-        "criterion_score": 0.4,
-        "criterion_label": "Task Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "test_coverage",
-        "criterion_score": 0.7,
-        "criterion_label": "Test Coverage"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "testing",
-        "criterion_score": 0.6,
-        "criterion_label": "Testing"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "tests",
-        "criterion_score": 0.5,
-        "criterion_label": "Tests"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "tracking_control",
-        "criterion_score": 1.0,
-        "criterion_label": "Tracking Control"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T1",
-        "criterion": "verification",
-        "criterion_score": 0.5,
-        "criterion_label": "Verification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "Build Integration",
-        "criterion_score": 0.429,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "Core Functionality",
-        "criterion_score": 0.867,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "Deprecated Patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "Documentation",
-        "criterion_score": 0.7,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "Execution",
-        "criterion_score": 1.0,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "Memory Safety and Ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "R001_duplicate_recipes_merged",
-        "criterion_score": 0.975,
-        "criterion_label": "R001 Duplicate Recipes Merged"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "R002_unused_recipes_removed",
-        "criterion_score": 0.925,
-        "criterion_label": "R002 Unused Recipes Removed"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "R003_build_works",
-        "criterion_score": 0.5835,
-        "criterion_label": "R003 Build Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "R004_test_works",
-        "criterion_score": 0.5,
-        "criterion_label": "R004 Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "R005_ci_compatible",
-        "criterion_score": 0.9,
-        "criterion_label": "R005 Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "R006_docs_updated",
-        "criterion_score": 0.7749999999999999,
-        "criterion_label": "R006 Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "agent_contribution",
-        "criterion_score": 0.5,
-        "criterion_label": "Agent Contribution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "agent_execution",
-        "criterion_score": 0.35,
-        "criterion_label": "Agent Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "analysis",
-        "criterion_score": 0.9,
-        "criterion_label": "Analysis"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "analysis_and_verification",
-        "criterion_score": 0.8,
-        "criterion_label": "Analysis And Verification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "build",
-        "criterion_score": 0.75,
-        "criterion_label": "Build"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "build_integration",
-        "criterion_score": 0.551888888888889,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "build_pipeline",
-        "criterion_score": 0.9375,
-        "criterion_label": "Build Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "ci_compatible",
-        "criterion_score": 0.85,
-        "criterion_label": "Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "cleanup",
-        "criterion_score": 0.7375,
-        "criterion_label": "Cleanup"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "code_formatting",
-        "criterion_score": 0.3333333333333333,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "code_quality",
-        "criterion_score": 0.79375,
-        "criterion_label": "Code Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "commit_quality",
-        "criterion_score": 0.9,
-        "criterion_label": "Commit Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "completeness",
-        "criterion_score": 0.7,
-        "criterion_label": "Completeness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "core_functionality",
-        "criterion_score": 0.877,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "correctness",
-        "criterion_score": 0.85,
-        "criterion_label": "Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "deprecated_patterns",
-        "criterion_score": 0.8571428571428571,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "docs_updated",
-        "criterion_score": 0.7,
-        "criterion_label": "Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "documentation",
-        "criterion_score": 0.8066666666666666,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "duplicate_merge",
-        "criterion_score": 0.9,
-        "criterion_label": "Duplicate Merge"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "execution",
-        "criterion_score": 0.7857142857142857,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "functional",
-        "criterion_score": 0.767382978723404,
-        "criterion_label": "Functional"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "functional_correctness",
-        "criterion_score": 0.8467777777777779,
-        "criterion_label": "Functional Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "functional_implementation",
-        "criterion_score": 0.375,
-        "criterion_label": "Functional Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "functional_requirements",
-        "criterion_score": 0.775,
-        "criterion_label": "Functional Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "git_hygiene",
-        "criterion_score": 0.9,
-        "criterion_label": "Git Hygiene"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "implementation",
-        "criterion_score": 0.3833333333333333,
-        "criterion_label": "Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "implementation_completeness",
-        "criterion_score": 0.5,
-        "criterion_label": "Implementation Completeness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "implementation_quality",
-        "criterion_score": 0.7769230769230767,
-        "criterion_label": "Implementation Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "memory",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "memory_safety",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "memory_safety_and_ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "memory_safety_ownership",
-        "criterion_score": 0.75,
-        "criterion_label": "Memory Safety Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "performance",
-        "criterion_score": 0.925,
-        "criterion_label": "Performance"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "pipeline",
-        "criterion_score": 1.0,
-        "criterion_label": "Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "pipeline_status",
-        "criterion_score": 1.0,
-        "criterion_label": "Pipeline Status"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "precision",
-        "criterion_score": 0.95,
-        "criterion_label": "Precision"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "precision_correctness",
-        "criterion_score": 0.5,
-        "criterion_label": "Precision Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "quality",
-        "criterion_score": 0.6208333333333333,
-        "criterion_label": "Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "requirements",
-        "criterion_score": 0.7156825396825396,
-        "criterion_label": "Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "task_completeness",
-        "criterion_score": 0.9,
-        "criterion_label": "Task Completeness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "task_completion",
-        "criterion_score": 1.0,
-        "criterion_label": "Task Completion"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "task_execution",
-        "criterion_score": 0.6,
-        "criterion_label": "Task Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "test_coverage",
-        "criterion_score": 0.9,
-        "criterion_label": "Test Coverage"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "testing",
-        "criterion_score": 0.75,
-        "criterion_label": "Testing"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "tests",
-        "criterion_score": 0.67,
-        "criterion_label": "Tests"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "unused_removal",
-        "criterion_score": 1.0,
-        "criterion_label": "Unused Removal"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T2",
-        "criterion": "verification",
-        "criterion_score": 0.5,
-        "criterion_label": "Verification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "Build Integration",
-        "criterion_score": 0.6,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "Code Formatting",
-        "criterion_score": 0.0,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "Core Functionality",
-        "criterion_score": 0.867,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "Documentation",
-        "criterion_score": 0.96,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "Execution",
-        "criterion_score": 0.0,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "Memory Safety and Ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R001_duplicate_recipes_merged",
-        "criterion_score": 0.9,
-        "criterion_label": "R001 Duplicate Recipes Merged"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R001_tracking_control",
-        "criterion_score": 1.0,
-        "criterion_label": "R001 Tracking Control"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R002_memory_efficient",
-        "criterion_score": 0.7,
-        "criterion_label": "R002 Memory Efficient"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R002_unused_recipes_removed",
-        "criterion_score": 0.95,
-        "criterion_label": "R002 Unused Recipes Removed"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R003_build_works",
-        "criterion_score": 0.8,
-        "criterion_label": "R003 Build Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R003_tests_pass",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "execution_safety",
         "criterion_score": 0.33,
-        "criterion_label": "R003 Tests Pass"
+        "criterion_label": "Execution Safety"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R004_test_works",
-        "criterion_score": 0.8,
-        "criterion_label": "R004 Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R005_ci_compatible",
-        "criterion_score": 1.0,
-        "criterion_label": "R005 Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "R006_docs_updated",
-        "criterion_score": 0.7,
-        "criterion_label": "R006 Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "analysis_and_documentation",
-        "criterion_score": 0.85,
-        "criterion_label": "Analysis And Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "build",
-        "criterion_score": 1.0,
-        "criterion_label": "Build"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "build_integration",
-        "criterion_score": 0.5,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "build_pipeline",
-        "criterion_score": 1.0,
-        "criterion_label": "Build Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "build_works",
-        "criterion_score": 0.75,
-        "criterion_label": "Build Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "ci_compatible",
-        "criterion_score": 1.0,
-        "criterion_label": "Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "cleanup",
-        "criterion_score": 1.0,
-        "criterion_label": "Cleanup"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "code_formatting",
-        "criterion_score": 0.375,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "code_quality",
-        "criterion_score": 0.5708333333333333,
-        "criterion_label": "Code Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "core_functionality",
-        "criterion_score": 0.7053999999999999,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "correctness",
-        "criterion_score": 0.875,
-        "criterion_label": "Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "deliverable_quality",
-        "criterion_score": 0.8,
-        "criterion_label": "Deliverable Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "deprecated_patterns",
-        "criterion_score": 0.875,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "docs_updated",
-        "criterion_score": 0.775,
-        "criterion_label": "Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "documentation",
-        "criterion_score": 0.7635714285714286,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "duplicate_recipes_merged",
-        "criterion_score": 0.85,
-        "criterion_label": "Duplicate Recipes Merged"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "execution",
-        "criterion_score": 0.6333333333333333,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "functional",
-        "criterion_score": 0.7193214285714286,
+        "criterion_score": 0.4343333333333333,
         "criterion_label": "Functional"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "functional_correctness",
-        "criterion_score": 0.9,
-        "criterion_label": "Functional Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "functional_implementation",
-        "criterion_score": 0.2,
-        "criterion_label": "Functional Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "functional_requirements",
-        "criterion_score": 0.7415,
-        "criterion_label": "Functional Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "implementation",
-        "criterion_score": 0.0,
-        "criterion_label": "Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "implementation_quality",
-        "criterion_score": 0.5,
-        "criterion_label": "Implementation Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "memory",
-        "criterion_score": 0.6,
-        "criterion_label": "Memory"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "memory_efficiency",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Efficiency"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "memory_safety",
-        "criterion_score": 0.744,
-        "criterion_label": "Memory Safety"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "memory_safety_ownership",
-        "criterion_score": 0.9333333333333332,
-        "criterion_label": "Memory Safety Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "pipeline_health",
-        "criterion_score": 0.8,
-        "criterion_label": "Pipeline Health"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "pipeline_regression",
-        "criterion_score": 0.75,
-        "criterion_label": "Pipeline Regression"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "precision",
-        "criterion_score": 1.0,
-        "criterion_label": "Precision"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "precision_correctness",
-        "criterion_score": 0.9,
-        "criterion_label": "Precision Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "process_adherence",
-        "criterion_score": 0.6,
-        "criterion_label": "Process Adherence"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "quality",
-        "criterion_score": 0.7124999999999999,
-        "criterion_label": "Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "requirements",
-        "criterion_score": 0.6857272727272726,
-        "criterion_label": "Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "scope_discipline",
-        "criterion_score": 0.6,
-        "criterion_label": "Scope Discipline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "task_completion",
-        "criterion_score": 0.64,
-        "criterion_label": "Task Completion"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "test_works",
-        "criterion_score": 0.75,
-        "criterion_label": "Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "testing",
-        "criterion_score": 0.15,
-        "criterion_label": "Testing"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "tests",
-        "criterion_score": 1.0,
-        "criterion_label": "Tests"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "unused_recipes_removed",
-        "criterion_score": 0.925,
-        "criterion_label": "Unused Recipes Removed"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "verification",
-        "criterion_score": 0.0,
-        "criterion_label": "Verification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T3",
-        "criterion": "workspace_cleanliness",
-        "criterion_score": 0.7,
-        "criterion_label": "Workspace Cleanliness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Build Integration",
-        "criterion_score": 0.4000000000000001,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Code Formatting",
-        "criterion_score": 0.5,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Core Functionality",
-        "criterion_score": 0.8109999999999999,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Deprecated Patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Documentation",
-        "criterion_score": 0.8066666666666666,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Execution",
-        "criterion_score": 0.5,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "Memory Safety and Ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "R001_duplicate_recipes_merged",
-        "criterion_score": 0.85,
-        "criterion_label": "R001 Duplicate Recipes Merged"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "R002_unused_recipes_removed",
-        "criterion_score": 0.9,
-        "criterion_label": "R002 Unused Recipes Removed"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "R003_build_works",
-        "criterion_score": 0.67,
-        "criterion_label": "R003 Build Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "R004_test_works",
-        "criterion_score": 0.65,
-        "criterion_label": "R004 Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "R005_ci_compatible",
-        "criterion_score": 0.85,
-        "criterion_label": "R005 Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "R006_docs_updated",
-        "criterion_score": 0.4,
-        "criterion_label": "R006 Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "agent_contribution",
-        "criterion_score": 0.0,
-        "criterion_label": "Agent Contribution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "analysis",
-        "criterion_score": 0.9,
-        "criterion_label": "Analysis"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "backward_compatibility",
-        "criterion_score": 1.0,
-        "criterion_label": "Backward Compatibility"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "build",
-        "criterion_score": 1.0,
-        "criterion_label": "Build"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "build_integration",
-        "criterion_score": 0.5714285714285714,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "build_pipeline",
-        "criterion_score": 0.9711538461538461,
-        "criterion_label": "Build Pipeline"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "build_works",
-        "criterion_score": 0.67,
-        "criterion_label": "Build Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "ci_compatible",
-        "criterion_score": 1.0,
-        "criterion_label": "Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "cleanup",
-        "criterion_score": 0.55,
-        "criterion_label": "Cleanup"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "code_formatting",
-        "criterion_score": 0.5125,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "code_quality",
-        "criterion_score": 0.6818181818181819,
-        "criterion_label": "Code Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "commit_quality",
-        "criterion_score": 0.9,
-        "criterion_label": "Commit Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "core_functionality",
-        "criterion_score": 0.8736,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "correctness",
-        "criterion_score": 0.9,
-        "criterion_label": "Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "coverage",
-        "criterion_score": 1.0,
-        "criterion_label": "Coverage"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "deliverables",
-        "criterion_score": 0.725,
-        "criterion_label": "Deliverables"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "deprecated_patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "docs_updated",
-        "criterion_score": 0.8,
-        "criterion_label": "Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "documentation",
-        "criterion_score": 0.8459999999999999,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "duplicate_recipes",
-        "criterion_score": 0.95,
-        "criterion_label": "Duplicate Recipes"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "execution",
-        "criterion_score": 0.7857142857142857,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "functional",
-        "criterion_score": 0.7596097560975609,
-        "criterion_label": "Functional"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "functional_correctness",
-        "criterion_score": 0.795,
-        "criterion_label": "Functional Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "functional_implementation",
-        "criterion_score": 0.60825,
-        "criterion_label": "Functional Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "implementation",
-        "criterion_score": 0.25,
-        "criterion_label": "Implementation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "implementation_completeness",
-        "criterion_score": 0.65,
-        "criterion_label": "Implementation Completeness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "implementation_correctness",
-        "criterion_score": 1.0,
-        "criterion_label": "Implementation Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "implementation_quality",
-        "criterion_score": 0.71875,
-        "criterion_label": "Implementation Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "memory_safety_and_ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "memory_safety_ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "pattern_consistency",
-        "criterion_score": 0.85,
-        "criterion_label": "Pattern Consistency"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "pipeline_results",
-        "criterion_score": 1.0,
-        "criterion_label": "Pipeline Results"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "precision_correctness",
-        "criterion_score": 0.9,
-        "criterion_label": "Precision Correctness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "quality",
-        "criterion_score": 0.6375,
-        "criterion_label": "Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "requirements",
-        "criterion_score": 0.8054464285714283,
-        "criterion_label": "Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "scope_adherence",
-        "criterion_score": 0.5,
-        "criterion_label": "Scope Adherence"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "simplification",
-        "criterion_score": 0.8,
-        "criterion_label": "Simplification"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "task_completion",
-        "criterion_score": 0.5,
-        "criterion_label": "Task Completion"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "task_scope",
-        "criterion_score": 0.65,
-        "criterion_label": "Task Scope"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "test_coverage",
-        "criterion_score": 0.9,
-        "criterion_label": "Test Coverage"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "test_works",
-        "criterion_score": 0.5,
-        "criterion_label": "Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "testing",
         "criterion_score": 0.875,
-        "criterion_label": "Testing"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "tests",
-        "criterion_score": 0.9,
-        "criterion_label": "Tests"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "unused_recipes",
-        "criterion_score": 1.0,
-        "criterion_label": "Unused Recipes"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "verification_and_analysis",
-        "criterion_score": 0.73,
-        "criterion_label": "Verification And Analysis"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "criterion": "workspace_cleanliness",
-        "criterion_score": 0.9,
-        "criterion_label": "Workspace Cleanliness"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Build Integration",
-        "criterion_score": 0.6,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Cleanup",
-        "criterion_score": 0.0,
-        "criterion_label": "Cleanup"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Code Formatting",
-        "criterion_score": 0.5,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Core Functionality",
-        "criterion_score": 0.867,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Deprecated Patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Documentation",
-        "criterion_score": 0.92,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Execution",
-        "criterion_score": 1.0,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "Memory Safety and Ownership",
-        "criterion_score": 1.0,
         "criterion_label": "Memory Safety And Ownership"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "build_integration",
-        "criterion_score": 0.443,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "code_formatting",
-        "criterion_score": 0.5,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "core_functionality",
-        "criterion_score": 0.0,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "deprecated_patterns",
-        "criterion_score": 0.6666666666666666,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "documentation",
-        "criterion_score": 0.6333333333333333,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "execution",
-        "criterion_score": 0.6666666666666666,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "functional",
-        "criterion_score": 0.599,
-        "criterion_label": "Functional"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "memory_safety",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "memory_safety_ownership",
-        "criterion_score": 0.5,
+        "criterion_score": 0.94375,
         "criterion_label": "Memory Safety Ownership"
       },
       {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "criterion": "quality",
-        "criterion_score": 0.65,
-        "criterion_label": "Quality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T5",
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "requirements",
-        "criterion_score": 0.6411666666666667,
+        "criterion_score": 0.9375,
         "criterion_label": "Requirements"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
-        "criterion": "Build Integration",
-        "criterion_score": 0.5,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Code Formatting",
-        "criterion_score": 0.5,
-        "criterion_label": "Code Formatting"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Core Functionality",
-        "criterion_score": 0.867,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Deprecated Patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Documentation",
-        "criterion_score": 0.92,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Execution",
-        "criterion_score": 0.0,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Memory Safety & Ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety & Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "Memory Safety and Ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety And Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "build_integration",
-        "criterion_score": 0.6,
-        "criterion_label": "Build Integration"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "build_works",
-        "criterion_score": 0.8,
-        "criterion_label": "Build Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "ci_compatible",
-        "criterion_score": 0.9,
-        "criterion_label": "Ci Compatible"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "cleanup",
-        "criterion_score": 0.0,
-        "criterion_label": "Cleanup"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "core_functionality",
-        "criterion_score": 0.911,
-        "criterion_label": "Core Functionality"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "deprecated_patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Deprecated Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "docs_updated",
-        "criterion_score": 0.3,
-        "criterion_label": "Docs Updated"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "documentation",
-        "criterion_score": 0.9,
-        "criterion_label": "Documentation"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "duplicate_recipes",
-        "criterion_score": 0.8,
-        "criterion_label": "Duplicate Recipes"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "execution",
-        "criterion_score": 1.0,
-        "criterion_label": "Execution"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "functional",
-        "criterion_score": 0.782,
-        "criterion_label": "Functional"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "memory_safety_ownership",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety Ownership"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "memory_safety_patterns",
-        "criterion_score": 1.0,
-        "criterion_label": "Memory Safety Patterns"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "requirements",
-        "criterion_score": 0.7896,
-        "criterion_label": "Requirements"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "test_works",
-        "criterion_score": 0.8,
-        "criterion_label": "Test Works"
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "criterion": "unused_recipes",
-        "criterion_score": 0.85,
-        "criterion_label": "Unused Recipes"
+        "criterion": "safety_patterns",
+        "criterion_score": 0.5625,
+        "criterion_label": "Safety Patterns"
       }
     ]
   }

@@ -29,7 +29,7 @@
   "layer": [
     {
       "data": {
-        "name": "data-7b632ac069dd63a67f1e973f9715de4e"
+        "name": "data-aa48f1244ce501bef85fc909e9f1ecf9"
       },
       "mark": {
         "type": "circle",
@@ -40,10 +40,10 @@
           "field": "agent_model",
           "scale": {
             "domain": [
-              "haiku"
+              "claude-haiku-4-5"
             ],
             "range": [
-              "#F58518"
+              "#E45756"
             ]
           },
           "title": "Agent Model",
@@ -53,7 +53,7 @@
           "field": "agent_model",
           "scale": {
             "domain": [
-              "haiku"
+              "claude-haiku-4-5"
             ],
             "range": [
               "circle"
@@ -113,7 +113,7 @@
     },
     {
       "data": {
-        "name": "data-7b632ac069dd63a67f1e973f9715de4e"
+        "name": "data-aa48f1244ce501bef85fc909e9f1ecf9"
       },
       "mark": {
         "type": "text",
@@ -140,7 +140,7 @@
     },
     {
       "data": {
-        "name": "data-3ba1006fa8a9534c884534f025863679"
+        "name": "data-6442e307f46dfa438b4852973c42cec3"
       },
       "mark": {
         "type": "line",
@@ -154,10 +154,10 @@
           "field": "agent_model",
           "scale": {
             "domain": [
-              "haiku"
+              "claude-haiku-4-5"
             ],
             "range": [
-              "#F58518"
+              "#E45756"
             ]
           },
           "type": "nominal"
@@ -176,77 +176,77 @@
   "title": "Cost vs Quality Pareto Frontier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-7b632ac069dd63a67f1e973f9715de4e": [
+    "data-aa48f1244ce501bef85fc909e9f1ecf9": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "mean_cost": 0.43370682692307694,
-        "mean_score": 0.5612478632478632,
-        "is_pareto": false
+        "mean_cost": 0.10948190231481482,
+        "mean_score": 0.7758659611992945,
+        "is_pareto": true
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "mean_cost": 0.38318131144578316,
-        "mean_score": 0.6492530120481927,
-        "is_pareto": false
+        "mean_cost": 0.1132246338888889,
+        "mean_score": 0.8162396296296297,
+        "is_pareto": true
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "mean_cost": 0.3679591380769231,
-        "mean_score": 0.7211384615384616,
+        "mean_cost": 0.1102785825925926,
+        "mean_score": 0.8020991358024692,
         "is_pareto": true
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
-        "mean_cost": 1.55175421147541,
-        "mean_score": 0.6857213114754098,
+        "mean_cost": 0.11278743699186991,
+        "mean_score": 0.6100598915989159,
         "is_pareto": false
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "mean_cost": 1.3575706231707318,
-        "mean_score": 0.7395203252032521,
+        "mean_cost": 0.11670693888888889,
+        "mean_score": 0.5113425925925925,
         "is_pareto": false
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
-        "mean_cost": 0.367293265,
-        "mean_score": 0.48666666666666664,
-        "is_pareto": true
+        "mean_cost": 0.11785477296296297,
+        "mean_score": 0.5077333333333333,
+        "is_pareto": false
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
-        "mean_cost": 0.55216963,
-        "mean_score": 0.8118,
-        "is_pareto": true
+        "mean_cost": 0.14987914444444445,
+        "mean_score": 0.5183333333333333,
+        "is_pareto": false
       }
     ],
-    "data-3ba1006fa8a9534c884534f025863679": [
+    "data-6442e307f46dfa438b4852973c42cec3": [
       {
-        "agent_model": "haiku",
-        "tier": "T5",
-        "mean_cost": 0.367293265,
-        "mean_score": 0.48666666666666664,
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T0",
+        "mean_cost": 0.10948190231481482,
+        "mean_score": 0.7758659611992945,
         "is_pareto": true
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "mean_cost": 0.3679591380769231,
-        "mean_score": 0.7211384615384616,
+        "mean_cost": 0.1102785825925926,
+        "mean_score": 0.8020991358024692,
         "is_pareto": true
       },
       {
-        "agent_model": "haiku",
-        "tier": "T6",
-        "mean_cost": 0.55216963,
-        "mean_score": 0.8118,
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T1",
+        "mean_cost": 0.1132246338888889,
+        "mean_score": 0.8162396296296297,
         "is_pareto": true
       }
     ]

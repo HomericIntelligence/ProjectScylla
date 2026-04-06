@@ -29,7 +29,7 @@
   "layer": [
     {
       "data": {
-        "name": "data-9a3cf3fbdaf59eba2e67bc4c6113a410"
+        "name": "data-8d5cec4a547837c7231cc67074c9ed0f"
       },
       "mark": {
         "type": "line",
@@ -53,7 +53,7 @@
     },
     {
       "data": {
-        "name": "data-4c958f2055851a863d8454b3ffb3a521"
+        "name": "data-22b52f66ea4f3554779ff570d7052fe0"
       },
       "mark": {
         "type": "circle",
@@ -65,10 +65,10 @@
           "field": "agent_model",
           "scale": {
             "domain": [
-              "haiku"
+              "claude-haiku-4-5"
             ],
             "range": [
-              "#F58518"
+              "#E45756"
             ]
           },
           "title": "Model",
@@ -128,876 +128,897 @@
   "width": 400,
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-9a3cf3fbdaf59eba2e67bc4c6113a410": [
+    "data-8d5cec4a547837c7231cc67074c9ed0f": [
       {
-        "theoretical_quantile": -2.8262049046028825,
-        "observed_quantile": -2.8262049046028825
+        "theoretical_quantile": -2.3263478740408408,
+        "observed_quantile": -2.3263478740408408
       },
       {
         "theoretical_quantile": 2.3263478740408408,
         "observed_quantile": 2.3263478740408408
       }
     ],
-    "data-4c958f2055851a863d8454b3ffb3a521": [
+    "data-22b52f66ea4f3554779ff570d7052fe0": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "theoretical_quantile": -2.3263478740408408,
-        "observed_quantile": -2.8262049046028825,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -2.096187360104776,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -2.1005555437504326,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.9420491744948063,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -1.9484595528500137,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.8237047437526013,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -1.8314057748672912,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.7264733203111688,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -1.7351174730812113,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.643266197389126,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -1.6526603903079107,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.5700931472133637,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -1.5801173268098405,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.5044753471762249,
-        "observed_quantile": -2.8262049046028825,
+        "theoretical_quantile": -1.5150489828060103,
+        "observed_quantile": -1.333073805067323,
         "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.4447625623356053,
-        "observed_quantile": -2.520471059754075,
-        "original_score": 0.08
+        "theoretical_quantile": -1.45582862690447,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.389798203051167,
-        "observed_quantile": -1.8707866394503594,
-        "original_score": 0.25
+        "theoretical_quantile": -1.401314657419665,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.3387387467473393,
-        "observed_quantile": -1.7561364476320567,
-        "original_score": 0.28
+        "theoretical_quantile": -1.3506736395811012,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.2909491476822743,
-        "observed_quantile": -1.565052794601552,
-        "original_score": 0.33
+        "theoretical_quantile": -1.30327761648888,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.2459387425950714,
-        "observed_quantile": -1.3739691415710475,
-        "original_score": 0.38
+        "theoretical_quantile": -1.2586410854802628,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.2033201381802416,
-        "observed_quantile": -1.144668757934442,
-        "original_score": 0.44
+        "theoretical_quantile": -1.216380522939513,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.1627818256346698,
-        "observed_quantile": -1.144668757934442,
-        "original_score": 0.44
+        "theoretical_quantile": -1.1761873959447326,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.1240693504220274,
-        "observed_quantile": -0.9153683742978365,
+        "theoretical_quantile": -1.1378095891304394,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -1.1010382733229545,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -1.065698402580978,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -1.0316416956392198,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.9987413584565453,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.966888052265662,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.9359867690202528,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.9059543788230814,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.876717682385744,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.8482118481496955,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.8203791459684607,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.7931679119810391,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.7665316955603962,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.740428551005835,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.7148204453021969,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.6896727596991077,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.6649538676936552,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.6406347756649764,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.6166888152165736,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.5930913784514988,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.5698196890956567,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.5468526037114285,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.5241704382931982,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.5017548163718877,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.4795885354251337,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.45765544892948595,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.43594036182860674,
+        "observed_quantile": -1.333073805067323,
+        "original_score": 0.0
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.4144289375481476,
+        "observed_quantile": -0.15123055479849293,
+        "original_score": 0.4533333333333333
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "theoretical_quantile": -0.3931076149801904,
+        "observed_quantile": -0.029570220211995648,
         "original_score": 0.5
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.0869720089152453,
-        "observed_quantile": -0.9153683742978365,
-        "original_score": 0.5
+        "theoretical_quantile": -0.3719635341006718,
+        "observed_quantile": 0.005189875384146347,
+        "original_score": 0.5133333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.051313227079861,
-        "observed_quantile": -0.9153683742978365,
-        "original_score": 0.5
+        "theoretical_quantile": -0.35098446908207903,
+        "observed_quantile": 0.04690199009951686,
+        "original_score": 0.5293333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.0169434584354569,
-        "observed_quantile": -0.8389349130856345,
-        "original_score": 0.52
+        "theoretical_quantile": -0.33015876792881726,
+        "observed_quantile": 0.057330018778359484,
+        "original_score": 0.5333333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.983734846425546,
-        "observed_quantile": -0.8389349130856345,
-        "original_score": 0.52
+        "theoretical_quantile": -0.3094752978002646,
+        "observed_quantile": 0.07123405701681651,
+        "original_score": 0.5386666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.9515771482401382,
-        "observed_quantile": -0.8389349130856345,
-        "original_score": 0.52
+        "theoretical_quantile": -0.28892339530164474,
+        "observed_quantile": 0.07905507852594819,
+        "original_score": 0.5416666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.9203745771896813,
-        "observed_quantile": -0.7242847212673317,
-        "original_score": 0.55
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": -0.8900433250096367,
-        "observed_quantile": -0.6478512600551302,
+        "theoretical_quantile": -0.26849282111943296,
+        "observed_quantile": 0.15292028166775004,
         "original_score": 0.57
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.8605095949604645,
-        "observed_quantile": -0.45676760702462543,
-        "original_score": 0.62
+        "theoretical_quantile": -0.24817371845931255,
+        "observed_quantile": 0.18768037726389233,
+        "original_score": 0.5833333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.8317080238328145,
-        "observed_quantile": -0.27714897317595094,
-        "original_score": 0.667
+        "theoretical_quantile": -0.22795657481327644,
+        "observed_quantile": 0.18768037726389233,
+        "original_score": 0.5833333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.8035804036827072,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.20783218664044736,
+        "observed_quantile": 0.18768037726389233,
+        "original_score": 0.5833333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.7760746371540774,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.1877916265952762,
+        "observed_quantile": 0.25720056845617634,
+        "original_score": 0.61
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.749143876709247,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.16782621297835748,
+        "observed_quantile": 0.2902226592725114,
+        "original_score": 0.6226666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.7227458100198817,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.1479274811203357,
+        "observed_quantile": 0.2919606640523186,
+        "original_score": 0.6233333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.696842062530018,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.12808715643918644,
+        "observed_quantile": 0.29630567600183616,
+        "original_score": 0.625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.671397694708755,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.10829712893631153,
+        "observed_quantile": 0.29630567600183616,
+        "original_score": 0.625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.646380776395762,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.08854942891802971,
+        "observed_quantile": 0.29630567600183616,
+        "original_score": 0.625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.6217620243488062,
-        "observed_quantile": -0.26568395399412065,
-        "original_score": 0.67
+        "theoretical_quantile": -0.06883620374667193,
+        "observed_quantile": 0.29630567600183616,
+        "original_score": 0.625
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.5975144919404325,
-        "observed_quantile": -0.2274672233880197,
-        "original_score": 0.68
+        "theoretical_quantile": -0.04914969544003161,
+        "observed_quantile": 0.31542372857971424,
+        "original_score": 0.6323333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.5736133021433345,
-        "observed_quantile": -0.1510337621758182,
-        "original_score": 0.7
+        "theoretical_quantile": -0.029482218949714478,
+        "observed_quantile": 0.33280377637778535,
+        "original_score": 0.639
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.550035416651618,
-        "observed_quantile": -0.07460030096361629,
-        "original_score": 0.72
+        "theoretical_quantile": -0.009826140958237072,
+        "observed_quantile": 0.33280377637778535,
+        "original_score": 0.639
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.5267594353255852,
-        "observed_quantile": -0.07460030096361629,
-        "original_score": 0.72
+        "theoretical_quantile": 0.009826140958236793,
+        "observed_quantile": 0.3527908313455669,
+        "original_score": 0.6466666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.5037654212074439,
-        "observed_quantile": -0.07460030096361629,
-        "original_score": 0.72
+        "theoretical_quantile": 0.029482218949714478,
+        "observed_quantile": 0.370170879143638,
+        "original_score": 0.6533333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.4810347471989664,
-        "observed_quantile": -0.07460030096361629,
-        "original_score": 0.72
+        "theoretical_quantile": 0.04914969544003147,
+        "observed_quantile": 0.37799190065277,
+        "original_score": 0.6563333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.45854996116796737,
-        "observed_quantile": -0.07460030096361629,
-        "original_score": 0.72
+        "theoretical_quantile": 0.06883620374667193,
+        "observed_quantile": 0.3927649412811305,
+        "original_score": 0.662
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.43629466679517814,
-        "observed_quantile": -0.07460030096361629,
-        "original_score": 0.72
+        "theoretical_quantile": 0.08854942891802971,
+        "observed_quantile": 0.40232396757006966,
+        "original_score": 0.6656666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.4142534179146095,
-        "observed_quantile": 0.0018331602485856132,
-        "original_score": 0.74
+        "theoretical_quantile": 0.10829712893631167,
+        "observed_quantile": 0.40493097473978,
+        "original_score": 0.6666666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.39241162446026345,
-        "observed_quantile": 0.0018331602485856132,
-        "original_score": 0.74
+        "theoretical_quantile": 0.12808715643918644,
+        "observed_quantile": 0.40493097473978,
+        "original_score": 0.6666666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.3707554684267047,
-        "observed_quantile": 0.0018331602485856132,
-        "original_score": 0.74
+        "theoretical_quantile": 0.14792748112033555,
+        "observed_quantile": 0.40493097473978,
+        "original_score": 0.6666666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.3492718284934295,
-        "observed_quantile": 0.04004989085468657,
-        "original_score": 0.75
+        "theoretical_quantile": 0.16782621297835748,
+        "observed_quantile": 0.40493097473978,
+        "original_score": 0.6666666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.32794821216332715,
-        "observed_quantile": 0.1011966598244481,
-        "original_score": 0.766
+        "theoretical_quantile": 0.1877916265952762,
+        "observed_quantile": 0.45707111813399315,
+        "original_score": 0.6866666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.30677269443178196,
-        "observed_quantile": 0.11648335206688848,
-        "original_score": 0.77
+        "theoretical_quantile": 0.20783218664044723,
+        "observed_quantile": 0.45707111813399315,
+        "original_score": 0.6866666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.2857338621414299,
-        "observed_quantile": 0.23113354388519133,
-        "original_score": 0.8
+        "theoretical_quantile": 0.22795657481327644,
+        "observed_quantile": 0.4657611420330289,
+        "original_score": 0.6900000000000001
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.2648207632933035,
-        "observed_quantile": 0.2693502744912923,
-        "original_score": 0.81
+        "theoretical_quantile": 0.24817371845931255,
+        "observed_quantile": 0.4892242065604245,
+        "original_score": 0.699
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.24402286068210233,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.26849282111943285,
+        "observed_quantile": 0.5005212376291706,
+        "original_score": 0.7033333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.22332998930482958,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.28892339530164474,
+        "observed_quantile": 0.5005212376291706,
+        "original_score": 0.7033333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.20273231706068495,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.30947529780026445,
+        "observed_quantile": 0.5066042543584957,
+        "original_score": 0.7056666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.18222030831797756,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.33015876792881726,
+        "observed_quantile": 0.5092112615282063,
+        "original_score": 0.7066666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.1617846899726676,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.35098446908207903,
+        "observed_quantile": 0.5144252758676277,
+        "original_score": 0.7086666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.14141641966434892,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.3719635341006717,
+        "observed_quantile": 0.5205082925969524,
+        "original_score": 0.711
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.12110665585018512,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.3931076149801904,
+        "observed_quantile": 0.5352813332253129,
+        "original_score": 0.7166666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.10084672946644978,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.4144289375481476,
+        "observed_quantile": 0.5700414288214548,
+        "original_score": 0.73
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.08062811693165073,
-        "observed_quantile": 0.3075670050973928,
-        "original_score": 0.82
+        "theoretical_quantile": 0.43594036182860696,
+        "observed_quantile": 0.5787314527204905,
+        "original_score": 0.7333333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.060442414265358076,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.45765544892948595,
+        "observed_quantile": 0.5917664885690436,
+        "original_score": 0.7383333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.04028131211329982,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.4795885354251336,
+        "observed_quantile": 0.5935044933488508,
+        "original_score": 0.739
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -0.020136571482449652,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.5017548163718877,
+        "observed_quantile": 0.5961115005185611,
+        "original_score": 0.7399999999999999
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": -1.3914582123358836e-16,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.5241704382931982,
+        "observed_quantile": 0.6134915483166326,
+        "original_score": 0.7466666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.020136571482449513,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.5468526037114284,
+        "observed_quantile": 0.628264588944993,
+        "original_score": 0.7523333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.04028131211329968,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.5698196890956567,
+        "observed_quantile": 0.6308715961147034,
+        "original_score": 0.7533333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.06044241426535794,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.5930913784514988,
+        "observed_quantile": 0.6543346606420993,
+        "original_score": 0.7623333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.08062811693165059,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.6166888152165735,
+        "observed_quantile": 0.6630246845411351,
+        "original_score": 0.7656666666666667
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.10084672946644947,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.6406347756649764,
+        "observed_quantile": 0.7299378685637083,
+        "original_score": 0.7913333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.12110665585018485,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.6649538676936549,
+        "observed_quantile": 0.7351518829031297,
+        "original_score": 0.7933333333333333
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.14141641966434865,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.6896727596991077,
+        "observed_quantile": 0.7699119784992717,
+        "original_score": 0.8066666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.16178468997266732,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.7148204453021969,
+        "observed_quantile": 0.839432169691556,
+        "original_score": 0.8333333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.18222030831797756,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.7404285510058349,
+        "observed_quantile": 1.0566827671674437,
+        "original_score": 0.9166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.20273231706068495,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.7665316955603962,
+        "observed_quantile": 1.0566827671674437,
+        "original_score": 0.9166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.22332998930482945,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.7931679119810391,
+        "observed_quantile": 1.0566827671674437,
+        "original_score": 0.9166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.2440228606821022,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.8203791459684608,
+        "observed_quantile": 1.0566827671674437,
+        "original_score": 0.9166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.2648207632933034,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.8482118481496955,
+        "observed_quantile": 1.0566827671674437,
+        "original_score": 0.9166666666666666
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.2857338621414297,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.8767176823857439,
+        "observed_quantile": 1.1109954165364158,
+        "original_score": 0.9375
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.3067726944317818,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.9059543788230814,
+        "observed_quantile": 1.1218579464102103,
+        "original_score": 0.9416666666666668
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.32794821216332687,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.9359867690202528,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.34927182849342925,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.9668880522656615,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.3707554684267044,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 0.9987413584565453,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.39241162446026345,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 1.0316416956392198,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.4142534179146095,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 1.0656984025809777,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.43629466679517814,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 1.1010382733229545,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.4585499611679672,
-        "observed_quantile": 0.3457837357034938,
-        "original_score": 0.83
+        "theoretical_quantile": 1.1378095891304387,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.4810347471989662,
-        "observed_quantile": 0.3496054087641039,
-        "original_score": 0.831
+        "theoretical_quantile": 1.1761873959447326,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.5037654212074438,
-        "observed_quantile": 0.3572487548853241,
-        "original_score": 0.833
+        "theoretical_quantile": 1.216380522939513,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.5267594353255851,
-        "observed_quantile": 0.3572487548853241,
-        "original_score": 0.833
+        "theoretical_quantile": 1.2586410854802623,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.5500354166516179,
-        "observed_quantile": 0.3572487548853241,
-        "original_score": 0.833
+        "theoretical_quantile": 1.30327761648888,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.5736133021433342,
-        "observed_quantile": 0.3572487548853241,
-        "original_score": 0.833
+        "theoretical_quantile": 1.3506736395811005,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.5975144919404322,
-        "observed_quantile": 0.4107521777338654,
-        "original_score": 0.847
+        "theoretical_quantile": 1.401314657419665,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.6217620243488059,
-        "observed_quantile": 0.4145738507944755,
-        "original_score": 0.848
+        "theoretical_quantile": 1.45582862690447,
+        "observed_quantile": 1.1653080659053878,
+        "original_score": 0.9583333333333334
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.646380776395762,
-        "observed_quantile": 0.4986506581278976,
-        "original_score": 0.87
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 0.6713976947087548,
-        "observed_quantile": 0.4986506581278976,
-        "original_score": 0.87
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 0.696842062530018,
-        "observed_quantile": 0.5368673887339985,
-        "original_score": 0.88
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 0.7227458100198815,
-        "observed_quantile": 0.5368673887339985,
-        "original_score": 0.88
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 0.7491438767092469,
-        "observed_quantile": 0.5750841193400995,
-        "original_score": 0.89
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 0.7760746371540773,
-        "observed_quantile": 0.6515175805523015,
-        "original_score": 0.91
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 0.8035804036827068,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 1.5150489828060096,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.8317080238328141,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 1.580117326809841,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.8605095949604642,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 1.6526603903079107,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.8900433250096362,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 1.735117473081211,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.9203745771896809,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 1.8314057748672912,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.9515771482401382,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 1.948459552850013,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "theoretical_quantile": 0.983734846425546,
-        "observed_quantile": 0.9954681560072096,
+        "theoretical_quantile": 2.100555543750431,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       },
       {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.0169434584354569,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.051313227079861,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.0869720089152444,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.1240693504220274,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.1627818256346696,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.203320138180241,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.245938742595071,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.290949147682273,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.3387387467473382,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.389798203051167,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.4447625623356048,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.5044753471762244,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.5700931472133632,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.6432661973891252,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.7264733203111677,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.8237047437526002,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 1.9420491744948047,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
-        "tier": "T4",
-        "theoretical_quantile": 2.096187360104773,
-        "observed_quantile": 0.9954681560072096,
-        "original_score": 1.0
-      },
-      {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "theoretical_quantile": 2.3263478740408408,
-        "observed_quantile": 0.9954681560072096,
+        "observed_quantile": 1.2739333646433317,
         "original_score": 1.0
       }
     ]

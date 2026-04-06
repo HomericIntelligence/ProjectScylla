@@ -1,0 +1,215 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-995a5b26f81c3faaa3d6274f2f892c88"
+  },
+  "mark": {
+    "type": "line"
+  },
+  "encoding": {
+    "color": {
+      "field": "tier",
+      "scale": {
+        "domain": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "range": [
+          "#66c2a5",
+          "#fc8d62",
+          "#8da0cb",
+          "#e78ac3",
+          "#a6d854",
+          "#ffd92f",
+          "#e5c494"
+        ]
+      },
+      "sort": [
+        "T0",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "title": "Tier",
+      "type": "ordinal"
+    },
+    "tooltip": [
+      {
+        "field": "tier",
+        "title": "Tier",
+        "type": "ordinal"
+      },
+      {
+        "field": "n_experiments",
+        "title": "Experiments",
+        "type": "quantitative"
+      },
+      {
+        "field": "running_mean",
+        "format": ".3f",
+        "title": "Running Mean",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "n_experiments",
+      "title": "Number of Experiments",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "running_mean",
+      "scale": {
+        "domain": [
+          0,
+          1
+        ]
+      },
+      "title": "Running Mean Pass Rate",
+      "type": "quantitative"
+    }
+  },
+  "title": "Convergence: Running Mean Pass Rate by Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-995a5b26f81c3faaa3d6274f2f892c88": [
+      {
+        "tier": "T0",
+        "n_experiments": 1,
+        "running_mean": 0.9583333333333334
+      },
+      {
+        "tier": "T0",
+        "n_experiments": 2,
+        "running_mean": 0.9305555555555556
+      },
+      {
+        "tier": "T0",
+        "n_experiments": 3,
+        "running_mean": 0.9351851851851851
+      },
+      {
+        "tier": "T1",
+        "n_experiments": 1,
+        "running_mean": 1.0
+      },
+      {
+        "tier": "T1",
+        "n_experiments": 2,
+        "running_mean": 0.9666666666666667
+      },
+      {
+        "tier": "T1",
+        "n_experiments": 3,
+        "running_mean": 0.9666666666666667
+      },
+      {
+        "tier": "T2",
+        "n_experiments": 1,
+        "running_mean": 1.0
+      },
+      {
+        "tier": "T2",
+        "n_experiments": 2,
+        "running_mean": 0.9777777777777779
+      },
+      {
+        "tier": "T2",
+        "n_experiments": 3,
+        "running_mean": 0.9777777777777779
+      },
+      {
+        "tier": "T3",
+        "n_experiments": 1,
+        "running_mean": 0.34959349593495936
+      },
+      {
+        "tier": "T3",
+        "n_experiments": 2,
+        "running_mean": 0.6585365853658537
+      },
+      {
+        "tier": "T3",
+        "n_experiments": 3,
+        "running_mean": 0.7588075880758808
+      },
+      {
+        "tier": "T4",
+        "n_experiments": 1,
+        "running_mean": 0.0
+      },
+      {
+        "tier": "T4",
+        "n_experiments": 2,
+        "running_mean": 0.4880952380952381
+      },
+      {
+        "tier": "T4",
+        "n_experiments": 3,
+        "running_mean": 0.6428571428571428
+      },
+      {
+        "tier": "T5",
+        "n_experiments": 1,
+        "running_mean": 0.0
+      },
+      {
+        "tier": "T5",
+        "n_experiments": 2,
+        "running_mean": 0.4777777777777778
+      },
+      {
+        "tier": "T5",
+        "n_experiments": 3,
+        "running_mean": 0.6296296296296297
+      },
+      {
+        "tier": "T6",
+        "n_experiments": 1,
+        "running_mean": 0.0
+      },
+      {
+        "tier": "T6",
+        "n_experiments": 2,
+        "running_mean": 0.5
+      },
+      {
+        "tier": "T6",
+        "n_experiments": 3,
+        "running_mean": 0.6666666666666666
+      }
+    ]
+  }
+}

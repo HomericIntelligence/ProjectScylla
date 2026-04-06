@@ -1,0 +1,203 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-760d03c48f6827bf392c3db0e892f674"
+  },
+  "facet": {
+    "column": {
+      "field": "pair_label",
+      "sort": [
+        "Judge 1 vs 2",
+        "Judge 2 vs 3",
+        "Judge 1 vs 3"
+      ],
+      "title": null,
+      "type": "nominal"
+    },
+    "row": {
+      "field": "agent_model",
+      "title": "Agent Model",
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "circle",
+      "opacity": 0.6,
+      "size": 60
+    },
+    "encoding": {
+      "tooltip": [
+        {
+          "field": "pair_label",
+          "title": "Comparison",
+          "type": "nominal"
+        },
+        {
+          "field": "judge_x",
+          "title": "Judge",
+          "type": "nominal"
+        },
+        {
+          "field": "score_x",
+          "format": ".3f",
+          "title": "Score X",
+          "type": "quantitative"
+        },
+        {
+          "field": "judge_y",
+          "title": "Judge",
+          "type": "nominal"
+        },
+        {
+          "field": "score_y",
+          "format": ".3f",
+          "title": "Score Y",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "field": "score_x",
+        "scale": {
+          "domain": [
+            0.8,
+            0.9500000000000001
+          ]
+        },
+        "title": "First Judge Score",
+        "type": "quantitative"
+      },
+      "y": {
+        "field": "score_y",
+        "scale": {
+          "domain": [
+            0.25,
+            1.0
+          ]
+        },
+        "title": "Second Judge Score",
+        "type": "quantitative"
+      }
+    },
+    "height": 250,
+    "width": 250
+  },
+  "resolve": {
+    "scale": {
+      "x": "shared",
+      "y": "shared"
+    }
+  },
+  "title": "Inter-Judge Score Agreement - T6",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-760d03c48f6827bf392c3db0e892f674": [
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 2",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 2",
+        "score_x": 0.7975,
+        "score_y": 0.935
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 2",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 2",
+        "score_x": 0.8474999999999999,
+        "score_y": 0.86
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 2",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 2",
+        "score_x": 0.7975,
+        "score_y": 0.885
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 2 vs 3",
+        "judge_x": "Judge 2",
+        "judge_y": "Judge 3",
+        "score_x": 0.935,
+        "score_y": 0.725
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 2 vs 3",
+        "judge_x": "Judge 2",
+        "judge_y": "Judge 3",
+        "score_x": 0.86,
+        "score_y": 0.86
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 2 vs 3",
+        "judge_x": "Judge 2",
+        "judge_y": "Judge 3",
+        "score_x": 0.885,
+        "score_y": 0.29
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 3",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 3",
+        "score_x": 0.7975,
+        "score_y": 0.725
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 3",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 3",
+        "score_x": 0.8474999999999999,
+        "score_y": 0.86
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 3",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 3",
+        "score_x": 0.7975,
+        "score_y": 0.29
+      }
+    ]
+  }
+}

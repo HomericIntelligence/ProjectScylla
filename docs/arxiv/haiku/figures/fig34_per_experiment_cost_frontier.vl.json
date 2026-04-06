@@ -1,0 +1,226 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-7aadd5eec412fdfa64ca29ea8c4af94b"
+  },
+  "facet": {
+    "column": {
+      "field": "tier",
+      "sort": [
+        "T0",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "title": "Tier",
+      "type": "nominal"
+    }
+  },
+  "spec": {
+    "mark": {
+      "type": "circle",
+      "opacity": 0.7,
+      "size": 40
+    },
+    "encoding": {
+      "tooltip": [
+        {
+          "field": "experiment",
+          "title": "Experiment",
+          "type": "ordinal"
+        },
+        {
+          "field": "mean_cost",
+          "format": "$.4f",
+          "title": "Mean Cost",
+          "type": "quantitative"
+        },
+        {
+          "field": "pass_rate",
+          "format": ".2%",
+          "title": "Pass Rate",
+          "type": "quantitative"
+        }
+      ],
+      "x": {
+        "field": "mean_cost",
+        "scale": {
+          "type": "log"
+        },
+        "title": "Mean Cost (USD)",
+        "type": "quantitative"
+      },
+      "y": {
+        "field": "pass_rate",
+        "scale": {
+          "domain": [
+            0,
+            1
+          ]
+        },
+        "title": "Pass Rate",
+        "type": "quantitative"
+      }
+    }
+  },
+  "title": "Per-Experiment Cost vs Pass Rate by Tier",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-7aadd5eec412fdfa64ca29ea8c4af94b": [
+      {
+        "experiment": "test-001",
+        "tier": "T0",
+        "mean_cost": 0.03836619652777778,
+        "pass_rate": 0.9583333333333334
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T1",
+        "mean_cost": 0.037259195,
+        "pass_rate": 1.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T2",
+        "mean_cost": 0.036605052222222226,
+        "pass_rate": 1.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T3",
+        "mean_cost": 0.03799735081300813,
+        "pass_rate": 0.34959349593495936
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T4",
+        "mean_cost": 0.0384721880952381,
+        "pass_rate": 0.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T5",
+        "mean_cost": 0.037710759999999996,
+        "pass_rate": 0.0
+      },
+      {
+        "experiment": "test-001",
+        "tier": "T6",
+        "mean_cost": 0.07036548333333334,
+        "pass_rate": 0.0
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T0",
+        "mean_cost": 0.21866679305555559,
+        "pass_rate": 0.9027777777777778
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T1",
+        "mean_cost": 0.22865273666666666,
+        "pass_rate": 0.9333333333333333
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T2",
+        "mean_cost": 0.22172164555555554,
+        "pass_rate": 0.9555555555555556
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T3",
+        "mean_cost": 0.22908288983739836,
+        "pass_rate": 0.967479674796748
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T4",
+        "mean_cost": 0.23585412976190476,
+        "pass_rate": 0.9761904761904762
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T5",
+        "mean_cost": 0.21740030666666668,
+        "pass_rate": 0.9555555555555556
+      },
+      {
+        "experiment": "test-002",
+        "tier": "T6",
+        "mean_cost": 0.27918261666666666,
+        "pass_rate": 1.0
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T0",
+        "mean_cost": 0.07141271736111111,
+        "pass_rate": 0.9444444444444444
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T1",
+        "mean_cost": 0.07376197000000001,
+        "pass_rate": 0.9666666666666667
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T2",
+        "mean_cost": 0.07250905,
+        "pass_rate": 0.9777777777777777
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T3",
+        "mean_cost": 0.07128207032520324,
+        "pass_rate": 0.959349593495935
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T4",
+        "mean_cost": 0.0757944988095238,
+        "pass_rate": 0.9523809523809523
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T5",
+        "mean_cost": 0.09845325222222222,
+        "pass_rate": 0.9333333333333333
+      },
+      {
+        "experiment": "test-003",
+        "tier": "T6",
+        "mean_cost": 0.10008933333333335,
+        "pass_rate": 1.0
+      }
+    ]
+  }
+}

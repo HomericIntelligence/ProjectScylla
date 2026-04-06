@@ -35,10 +35,10 @@
           "field": "agent_model",
           "scale": {
             "domain": [
-              "haiku"
+              "claude-haiku-4-5"
             ],
             "range": [
-              "#F58518"
+              "#E45756"
             ]
           },
           "title": "Agent Model",
@@ -106,10 +106,10 @@
           "field": "agent_model",
           "scale": {
             "domain": [
-              "haiku"
+              "claude-haiku-4-5"
             ],
             "range": [
-              "#F58518"
+              "#E45756"
             ]
           },
           "title": "Agent Model",
@@ -157,7 +157,7 @@
           "scale": {
             "domain": [
               0,
-              0.4
+              0.45
             ]
           },
           "title": "Score Std Dev",
@@ -170,60 +170,60 @@
     }
   ],
   "data": {
-    "name": "data-3e88c3e3837088be551f56e8159fa002"
+    "name": "data-b1480f6affdaa7cdaa75f08240107631"
   },
   "title": "Success Variance Aggregate (All Subtests Combined Per Tier)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-3e88c3e3837088be551f56e8159fa002": [
+    "data-b1480f6affdaa7cdaa75f08240107631": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
-        "pass_variance": 0.230111768573307,
-        "score_std": 0.3834351967453608,
-        "n_runs": 117
+        "pass_variance": 0.06061385459533604,
+        "score_std": 0.2061683406032941,
+        "n_runs": 216
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
-        "pass_variance": 0.1948033096240383,
-        "score_std": 0.32971931312577674,
-        "n_runs": 83
+        "pass_variance": 0.032222222222222215,
+        "score_std": 0.13964693771559916,
+        "n_runs": 90
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
-        "pass_variance": 0.14059171597633133,
-        "score_std": 0.2234372691336986,
-        "n_runs": 130
+        "pass_variance": 0.021728395061728425,
+        "score_std": 0.1451223517122524,
+        "n_runs": 135
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
-        "pass_variance": 0.18120128997581297,
-        "score_std": 0.306074972242058,
-        "n_runs": 122
+        "pass_variance": 0.1830186323543452,
+        "score_std": 0.3469488619744278,
+        "n_runs": 369
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "pass_variance": 0.15202591050300748,
-        "score_std": 0.26273571304900445,
-        "n_runs": 123
+        "pass_variance": 0.22959183673469385,
+        "score_std": 0.38511287713578524,
+        "n_runs": 126
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
-        "pass_variance": 0.25,
-        "score_std": 0.3708269726950305,
-        "n_runs": 30
+        "pass_variance": 0.23319615912208505,
+        "score_std": 0.38172720532717974,
+        "n_runs": 135
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
-        "pass_variance": 0.06222222222222221,
-        "score_std": 0.12201592401930869,
-        "n_runs": 15
+        "pass_variance": 0.22222222222222224,
+        "score_std": 0.403392729786302,
+        "n_runs": 9
       }
     ]
   }

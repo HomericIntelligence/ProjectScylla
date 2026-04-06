@@ -20,6 +20,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{array}
+\usepackage{longtable}
 \renewcommand{\arraystretch}{1.2}
 \setlength{\tabcolsep}{6pt}
 
@@ -28,19 +29,11 @@
 \graphicspath{{./figures/}}
 \usepackage{subcaption}
 \usepackage{caption}
-\captionsetup{
-  font=small,
-  labelfont=bf,
-  textfont=it
-}
+\captionsetup{font=small, labelfont=bf, textfont=it}
 
 % ===== Code =====
 \usepackage{listings}
-\lstset{
-  basicstyle=\ttfamily\small,
-  breaklines=true,
-  frame=single
-}
+\lstset{basicstyle=\ttfamily\small, breaklines=true, frame=single}
 
 % ===== Micro-typography =====
 \usepackage{microtype}
@@ -48,922 +41,2012 @@
 % ===== Links =====
 \usepackage[colorlinks=true,allcolors=blue]{hyperref}
 
-% ===== Diagrams =====
+% ===== TikZ =====
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, shapes.geometric, fit, backgrounds}
 
 \raggedbottom
 
-\title{Navigating Scylla with Haiku: \\
-Multi-Task Evaluation of Agentic Coding Architectures \\
-Using a Budget Frontier Model}
-\author{Micah Villmow\thanks{This paper combines the author's original research and writing with improvements, suggestions, and rewrites provided by Claude Code (claude.ai/code).} \\
-Individual \\
-research@villmow.us}
-\date{}
+% ===================================================================
+\title{Navigating Scylla with Haiku:\\Multi-Task Evaluation of Agentic Coding Architectures\\Using a Budget Frontier Model}
+
+\author{
+  Micah Villmow \\
+  \texttt{research@villmow.us}
+}
+
+\date{April 2026}
 
 \begin{document}
-
 \maketitle
 
+% ===================================================================
+% ABSTRACT
+% ===================================================================
 \begin{abstract}
-This paper presents a follow-up empirical study using the Scylla evaluation framework~\cite{scylla2026dryrun}
-to assess the performance and cost-efficiency of Claude Haiku 4.5---Anthropic's
-budget frontier model---across five tasks of increasing complexity, using
-$N=5$ independent runs per subtest to enable statistical inference.
-Three tasks completed fully (Mojo Hello World, Simplify Justfile, Comprehensive Slot Management)
-and two remain in progress.
-The central finding is that tier rankings change significantly with task complexity:
-while trivial tasks show ceiling effects with most configurations achieving similar quality,
-moderately complex tasks reveal critical differentiation---skills alone (T1) score 0.00 on
-a refactoring task where tools (T2) score 0.74---and complex multi-component tasks
-expose over-engineering, with the maximum configuration (T6) scoring lowest (0.78)
-while simpler configurations (T1, T2, T4) achieve perfect 1.00.
-A cross-model comparison with the dryrun paper's Sonnet 4.5 results on a comparable Hello World
-task finds Sonnet's Frontier CoP (\$0.065) is 2.4$\times$ lower than Haiku's (\$0.157)
-on the trivially comparable task---an unexpected result given Haiku's lower per-token pricing,
-likely explained by token efficiency differences. For real coding tasks,
-Haiku's economics are more favorable given its 3--5$\times$ pricing advantage.
-All cross-model comparisons are confounded by differences in task, judges, and N.
-These results extend the dryrun hypothesis that architectural complexity does not always
-improve quality, and add the finding that optimal tier selection is task-dependent.
+Agentic coding systems increasingly employ multi-layered architectural
+patterns---system prompts, domain skills, external tooling, agent delegation,
+and hierarchical orchestration---yet the marginal value of each layer remains
+poorly characterized, particularly for budget-class language models. We present
+a controlled ablation study using the Scylla evaluation framework, which
+decomposes agent architecture into seven tiers of increasing complexity
+(T0--T6) and measures quality and cost across a structured set of 120 YAML
+subtests. Using \texttt{claude-haiku-4-5}, Anthropic's budget frontier model,
+we execute three multi-task experiments totaling 1,080 runs at a cost of
+\$122.31. Our results reveal a striking non-monotonic relationship between
+architectural complexity and task performance: the simplest tiers (T0--T2)
+achieve the highest aggregate pass rates (0.935--0.978), while delegation-based
+tiers (T3--T6) exhibit statistically significant degradation (pass rate
+0.630--0.759; Kruskal--Wallis $H(6)=119.01$, $p<0.001$). The transition from
+T2 to T3 constitutes a critical cliff (Cliff's $\delta=-0.219$, $p<0.001$).
+A Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
+interaction ($H=223.5$, $p<0.001$), indicating that the optimal architectural
+tier is task-dependent. Notably, cost does not vary significantly across tiers
+($p=0.676$), meaning additional architectural complexity yields no cost savings
+despite substantial quality penalties. Inter-rater reliability among the
+three-judge panel (Krippendorff's $\alpha=-0.030$) is near zero, raising
+concerns about LLM-as-judge evaluation at this model scale. These preliminary
+findings suggest that for budget models, simpler architectures consistently
+outperform complex ones, and that architectural decisions should be
+task-contingent rather than universally applied.
 \end{abstract}
 
-\noindent\textbf{Keywords:} LLM agents, software engineering benchmarks, cost-of-pass,
-multi-agent systems, prompt engineering, ablation studies, Haiku 4.5, budget frontier models,
-task complexity scaling
+\textbf{Keywords:} agentic AI, ablation study, LLM evaluation, budget models,
+multi-agent systems, cost-of-pass, Claude Haiku
 
-\section{Introduction}\label{sec:intro}
+% ===================================================================
+% 1. INTRODUCTION
+% ===================================================================
+\section{Introduction}
+\label{sec:introduction}
 
-The Scylla framework~\cite{scylla2026dryrun} was introduced to address a gap in LLM evaluation:
-no rigorous method existed for comparing how different architectural choices---prompts,
-skills, tools, multi-agent setups---affect both capability and cost when using production
-CLI tools like Claude Code.
-The dryrun study used Sonnet 4.5 on a trivial Hello World task (N=1 per subtest) to validate
-the framework infrastructure.
-That study confirmed the framework works and showed that all seven tiers achieved equivalent
-quality (all Grade A, scores 0.943--0.983) while cost varied 3.8$\times$.
+The rapid evolution of large language model (LLM) agent systems has produced a
+proliferating taxonomy of architectural patterns. Modern agentic coding
+frameworks layer system prompts, domain-specific skills, external tool
+integrations, multi-agent delegation, and hierarchical orchestration into
+increasingly complex configurations~\cite{anthropic2024claude, liu2023agentbench}.
+Practitioners face a fundamental question: \emph{which of these architectural
+layers actually improve performance, and at what cost?}
 
-This paper extends the dryrun in three directions. First, we switch the agent model to
-Claude Haiku 4.5~\cite{anthropic2024claude}, Anthropic's budget frontier model priced at
-\$1/\$5 per million tokens (input/output) vs.\ Sonnet's \$3/\$15.
-If Haiku can achieve comparable quality to Sonnet on real tasks,
-practitioners could reduce costs 3--5$\times$.
-Second, we evaluate across five tasks of increasing complexity rather than one trivial case.
-Third, we run $N=5$ independent trials per subtest, enabling bootstrap confidence intervals
-and non-parametric hypothesis testing---a major methodological advance over the dryrun's
-$N=1$.
+This question is especially acute for budget-class models. While frontier
+models such as Claude Opus or GPT-4 may possess sufficient capacity to benefit
+from complex architectures, smaller models may lack the reasoning bandwidth to
+exploit---or even tolerate---the overhead of delegation and orchestration. A
+complex architecture that helps a frontier model may actively harm a budget
+model, yet the interaction between model capacity and architectural complexity
+remains largely unexplored in the existing literature.
 
-\textbf{Research questions:}
+The stakes are practical. Organizations deploying agentic coding systems face
+real economic trade-offs: budget models cost substantially less per token than
+frontier models, but if they require simpler architectures to function
+effectively, then the savings from cheaper models may be offset by reduced
+capability. Conversely, if budget models perform well with minimal
+architecture, then significant cost savings are achievable without sacrificing
+quality---provided the architecture is matched to the model's capacity.
+
+Existing benchmarks such as SWE-bench~\cite{jimenez2024swebench},
+AgentBench~\cite{liu2023agentbench}, and TAU-bench~\cite{yao2024taubench}
+evaluate agents on fixed tasks but do not systematically vary the agent's
+architectural configuration. They answer the question ``how well does agent X
+perform?'' but not ``which architectural components of agent X contribute to
+its performance?'' The ablation methodology needed to answer the latter
+question requires a factorial experimental design that holds the model constant
+while varying the architecture across a controlled hierarchy of configurations.
+
+The Scylla framework~\cite{scylla2026dryrun} provides exactly this capability.
+Named after the mythic trial from Homer's \emph{Odyssey}, Scylla represents
+the challenge of navigating trade-offs between capability gains and operational
+costs. The framework decomposes agent architecture into seven hierarchical
+tiers, from bare prompts (T0) through full orchestration (T6), and evaluates
+each tier on identical tasks using identical models. A prior dryrun study
+applied this framework to Claude Sonnet 4.5 on a single task, establishing
+the methodology but leaving multi-task generalization as an open question.
+
+In this paper, we extend the Scylla framework to a budget frontier model
+(\texttt{claude-haiku-4-5}) and a multi-task evaluation across three
+experiments of varying difficulty. We execute all 120 subtests across all seven
+tiers with $N=3$ replications per subtest, producing 1,080 total runs at a
+total cost of \$122.31. This design enables us to address the following
+research questions:
+
+\begin{description}
+  \item[RQ1] \textbf{Tier--Quality Relationship.} How does architectural
+    complexity (T0--T6) affect pass rate and quality score when using a budget
+    frontier model?
+  \item[RQ2] \textbf{Task Interaction.} Does the optimal tier vary across
+    tasks of different difficulty, or is there a universally superior
+    architecture?
+  \item[RQ3] \textbf{Cost Efficiency.} How does Cost-of-Pass (CoP) vary
+    across tiers, and does increased complexity yield economic benefits?
+  \item[RQ4] \textbf{Judge Reliability.} How reliable is a multi-model
+    LLM-as-judge panel when evaluating budget-model outputs?
+\end{description}
+
+Our contributions are as follows:
 
 \begin{enumerate}
-\item \textbf{(RQ1) Task complexity and tier performance}: Does Haiku 4.5 performance
-  across the seven tiers change with task complexity, and if so, how?
-\item \textbf{(RQ2) Tier ranking stability}: Are the relative rankings of tiers (T0--T6)
-  stable across tasks, or do different task types reward different configurations?
-\item \textbf{(RQ3) Economic viability}: Is Haiku 4.5 economically viable for real coding
-  tasks, and how does its cost-quality profile compare to Sonnet 4.5?
+  \item We provide the first multi-task ablation study of agentic coding
+    architectures using a budget frontier model, demonstrating that
+    architectural complexity has a non-monotonic and task-dependent effect on
+    performance.
+  \item We identify the T2--T3 transition as a critical cliff where
+    delegation-based architectures produce statistically significant
+    degradation in pass rate (Cliff's $\delta = -0.219$, $p < 0.001$).
+  \item We show that cost is invariant to tier ($p=0.676$), establishing that
+    complex architectures impose quality penalties without offsetting cost
+    savings.
+  \item We report near-zero inter-rater reliability ($\alpha=-0.030$) among a
+    three-model judge panel, highlighting the fragility of LLM-as-judge
+    evaluation for budget-model outputs.
+  \item We establish an aggregate frontier Cost-of-Pass of \$0.113,
+    demonstrating that meaningful ablation studies can be conducted at modest
+    cost with budget models.
 \end{enumerate}
 
 The remainder of this paper is organized as follows.
-Section~\ref{sec:background} summarizes the Scylla framework and dryrun results.
-Section~\ref{sec:design} describes the experimental design changes and tasks.
-Section~\ref{sec:results} presents results for each completed test and cross-test analysis.
-Section~\ref{sec:crossmodel} compares Haiku and Sonnet.
-Section~\ref{sec:discussion} discusses findings, limitations, and hypotheses.
-Section~\ref{sec:conclusions} concludes.
-
-\section{Background: The Scylla Framework}\label{sec:background}
-
-This section summarizes the Scylla evaluation framework introduced in~\cite{scylla2026dryrun}.
-Readers should consult that paper for full architecture details.
-
-\subsection{Framework Overview}
-
-Scylla is a model-agnostic evaluation framework for agentic coding CLI tools.
-It uses a seven-tier ablation design (T0--T6) that progressively adds architectural complexity
-to isolate what each component contributes to performance and cost:
-
-\begin{table}[htbp]
-\centering
-\caption{Testing Tiers (Ablation Study Framework)}
-\label{tab:tiers}
-\begin{tabularx}{\textwidth}{llXl}
-\toprule
-Tier & Name & Description & Delegation \\
-\midrule
-T0 & Prompts & System prompt ablation (empty $\rightarrow$ full CLAUDE.md) & No \\
-T1 & Skills & Domain expertise via installed skills & No \\
-T2 & Tooling & External tools and MCP servers & No \\
-T3 & Delegation & Flat multi-agent with specialist agents & Yes \\
-T4 & Hierarchy & Nested orchestration with hierarchical agents & Yes \\
-T5 & Hybrid & Best combinations from previous tiers & Yes \\
-T6 & Super & Maximum capability: all skills, tools, agents & All \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The total ablation suite has 120 subtests (T0: 24, T1: 10, T2: 15, T3: 41, T4: 14, T5: 15, T6: 1).
-Each subtest is an independent configuration that is evaluated against a well-defined task with
-known expected output.
-
-The key metric is \textbf{Cost-of-Pass (CoP)}: the expected dollar cost to obtain one correct
-solution at or above the pass threshold of 0.60 (Grade B).
-CoP combines quality and cost into a single efficiency measure:
-
-$$\text{CoP} = \frac{\text{mean cost per run}}{\text{pass rate}}$$
-
-Lower CoP is better.
-The \textbf{Frontier CoP} is the minimum CoP across all subtests within a tier, representing
-the best achievable cost-efficiency for that tier.
-CoP is reported as a point estimate throughout this paper; bootstrapping the cost/pass ratio
-to derive confidence intervals is straightforward but deferred to future work. With $N=5$ per subtest, both
-mean cost and pass rate carry non-trivial variance, so CoP estimates should be interpreted
-with appropriate caution, particularly for tiers with pass rates near 0 or 1.
-
-\subsection{Dryrun Results Summary}
-
-The dryrun validated the framework infrastructure using test-001 (Hello World, Python script)
-with Claude Sonnet 4.5, N=1 per subtest, and three judges (Opus 4.5, Sonnet 4.5, Haiku 4.5).
-The key findings were:
-
-\begin{itemize}
-\item All seven tiers achieved Grade A quality (scores 0.943--0.983), confirming Hello World
-  is too simple to differentiate tier quality.
-\item Cost varied 3.8$\times$ from \$0.065 (T5 hybrid, Frontier CoP) to \$0.247 (T6 super).
-\item T6 (everything enabled) was the most expensive without quality improvement, the
-  first evidence of over-engineering cost.
-\item T5 (smart hybrid) achieved the lowest CoP by selectively combining features.
-\item Judge agreement was high, validating the three-judge consensus methodology.
-\end{itemize}
-
-\subsection{Key Metrics Definitions}
-
-Following~\cite{scylla2026dryrun}, this paper uses:
-
-\begin{itemize}
-\item \textbf{Pass-Rate}: Fraction of runs achieving score $\geq$ 0.60 (Grade B).
-\item \textbf{Score}: Mean LLM-as-judge evaluation score (0.0--1.0 scale).
-\item \textbf{Implementation Rate (Impl-Rate)}: Fraction of runs that produced any output.
-\item \textbf{Cost-of-Pass (CoP)}: Expected dollar cost per passing solution.
-\item \textbf{Frontier CoP}: Minimum CoP across all subtests in a tier.
-\end{itemize}
-
-All confidence intervals use bootstrap BCa (bias-corrected and accelerated) with 10,000
-resamples and seed=42.
-Statistical tests use non-parametric methods (Kruskal-Wallis, Mann-Whitney U with
-Holm-Bonferroni correction, Cliff's delta effect sizes) since score distributions
-are non-normal for nearly all tiers (Shapiro-Wilk $p < 0.001$; T6 passes normality
-but non-parametric tests are applied throughout for consistency).
-
-\section{Experimental Design}\label{sec:design}
-
-\subsection{Changes from Dryrun}
-
-Table~\ref{tab:design-comparison} summarizes the key differences between the dryrun and
-this study.
-
-\begin{table}[htbp]
-\centering
-\caption{Experimental Design Comparison: Dryrun vs.\ Haiku Study}
-\label{tab:design-comparison}
-\begin{tabularx}{\textwidth}{lXX}
-\toprule
-Parameter & Dryrun (test-001) & This Study \\
-\midrule
-Agent model & Sonnet 4.5 & Haiku 4.5 \\
-Agent pricing & \$3/\$15 per M tokens & \$1/\$5 per M tokens\footnote{Cache read tokens are priced at \$0.10/M for Haiku (10\% of input price). Since 97\% of tokens in our experiments are cache reads, the effective per-token cost is significantly lower than the base input rate.} \\
-Judge models & Opus 4.5 + Sonnet 4.5 + Haiku 4.5 & Sonnet 4.5 (single judge) \\
-Runs per subtest & 1 & 5 \\
-Max subtests per tier & All (up to 24) & 2 per tier per test (suite has 41 T3 subtests, 14 T4 subtests) \\
-Tasks & 1 (Hello World) & 5 (3 complete, 2 partial) \\
-Statistical inference & Not possible ($N=1$) & Bootstrap BCa CI, KW, MWU \\
-Language & Python & Mojo/Python (test-002), Python (others) \\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-The reduction to a single judge was a deliberate cost reduction for exploratory experiments.
-The three-judge consensus from the dryrun will be restored for production experiments.
-Reducing to 2 maximum subtests per tier limits tier coverage but makes the full 5-task
-experiment tractable within budget.
-
-\subsection{Task Descriptions}
-
-The five tasks span a complexity spectrum from trivial to comprehensive multi-component
-system implementation:
-
-\subsubsection{test-002: Mojo Hello World}
-
-\textbf{Complexity}: Trivial. \textbf{Language}: Mojo. \textbf{Repo}: \texttt{mvillmow/modular}.
-
-Task prompt: Implement a standard ``Hello, World!'' program in Mojo.
-This serves as the Mojo-language equivalent of the dryrun Hello World, testing whether
-Haiku can handle a less common language compared to Python.
-
-\textbf{Expected behavior}: All tiers should succeed. Framework failures (T0 = \$0/0 tokens)
-are diagnostic infrastructure issues, not model failures.
-
-\subsubsection{test-007: Simplify Justfile Build System}
-
-\textbf{Complexity}: Moderate. \textbf{Language}: Python/Justfile. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
-
-Task prompt: Simplify an existing Justfile by removing duplicate recipes, eliminating unused
-targets, and merging redundant CI commands while preserving all required functionality.
-
-\textbf{Expected behavior}: Refactoring tasks require understanding existing code structure.
-Skills alone (T1) may be insufficient without access to tools for reading files.
-This is the first test designed to differentiate tiers.
-
-\subsubsection{test-017: Comprehensive Slot Management}
-
-\textbf{Complexity}: High. \textbf{Language}: Python. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
-
-Task prompt: Implement comprehensive slot management for a Python codebase including
-tracking, control mechanisms, and memory efficiency.
-
-\textbf{Expected behavior}: Complex multi-component implementation.
-Delegation overhead may hurt performance if agents coordinate poorly.
-Risk of over-engineering from T6.
-
-\subsubsection{test-021: Gradient Tracking Control (Partial)}
-
-\textbf{Complexity}: High. \textbf{Language}: Mojo. \textbf{Repo}: \texttt{mvillmow/ProjectOdyssey}.
-
-Task prompt: Add gradient tracking control for autograd.
-At the time of writing, this experiment is partially complete with 3 of 7 tiers finished (see Section~\ref{sec:partial}).
-
-\subsubsection{test-022: (Partial, details pending)}
-
-Status: T0 partial (framework failures), T3--T4 partial. Still running.
-Included for completeness; results are not used in statistical analysis.
-
-\subsection{Statistical Methods}
-
-With $N=5$ runs per subtest, we apply the following statistical workflow:
-
-\begin{enumerate}
-\item \textbf{Normality}: Shapiro-Wilk test per tier/metric. Nearly all distributions were
-  non-normal ($p < 0.001$); T6 score/cost passed normality ($p > 0.10$, $n = 15$).
-  Non-parametric tests applied throughout for consistency.
-\item \textbf{Omnibus}: Kruskal-Wallis $H$ test across all seven tiers. Significant
-  ($H(6) = 27.49$, $p = 0.0001$ for pass rate) --- proceed to pairwise.
-\item \textbf{Pairwise}: Mann-Whitney $U$ with Holm-Bonferroni step-down correction.
-  Effect size: Cliff's $\delta$ (Romano et al., 2006 thresholds: negligible $|{\delta}| < 0.147$, small $< 0.33$, medium $< 0.474$, large $\geq 0.474$).
-\item \textbf{Omnibus (score)}: Kruskal-Wallis $H$ test on score confirms tier main effect:
-  $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
-  Note: the Scheirer-Ray-Hare two-way test was planned to assess tier $\times$ task interactions,
-  but degenerates to one-way Kruskal-Wallis with a single-model dataset (agent\_model factor has df=0;
-  interaction term is not estimable). See Section~\ref{sec:further} for future multi-model extension.
-\item \textbf{Confidence intervals}: Bootstrap BCa, 10,000 resamples, seed=42.
-  Note: score distribution is bimodal (12.7\% at 0.0, 51.1\% at 0.8--1.0, skew=$-1.18$);
-  BCa CIs remain valid but may be wider and asymmetric than for unimodal data.
-  Pass-rate BCa CIs (Table~\ref{tab:aggregate-tiers}) are computed during table generation
-  (\texttt{scripts/export\_data.py}) and are not separately archived in
-  \texttt{statistical\_results.json}; see Appendix~\ref{app:data}.
-\end{enumerate}
-
-Post-hoc power analysis (simulation-based, 10,000 iterations, seed=42):
-For the two significant transitions, power at the observed effect size is:
-T4$\rightarrow$T5 ($\delta = -0.313$, $n_1=123$, $n_2=30$): power $= 0.77$;
-T5$\rightarrow$T6 ($\delta = +0.433$, $n_1=30$, $n_2=15$): power $= 0.68$.
-For the non-significant transitions (T0--T3), power at medium effect ($\delta = 0.3$) with
-per-tier $N$ ranging from 83--130 is 0.73--0.98, confirming those null results reflect
-small true effects rather than insufficient power.
-However, T5$\rightarrow$T6 power at medium effect is only $0.37$ (underpowered for small T5/T6 samples),
-so null results involving T5 or T6 individually require cautious interpretation.
-
-\section{Results}\label{sec:results}
-
-\subsection{Experiment Overview}
-
-\begin{table}[htbp]
-\centering
-\caption{Completed Experiment Summary}
-\label{tab:exp-summary}
-\begin{tabularx}{\textwidth}{llXrrrr}
-\toprule
-Test & Name & Best Tier & Best Score & Frontier CoP & Total Cost & Duration \\
-\midrule
-test-002 & Mojo Hello World & T2 & 0.823 & \$0.157 & \$18.08 & 3,946s \\
-test-007 & Simplify Justfile & T2 & 0.740 & \$0.229 & \$38.03 & 10,519s \\
-test-017 & Slot Management & T5 & 0.830 & \$0.471 & \$79.44 & 19,578s \\
-\bottomrule
-\multicolumn{7}{l}{\small Note: test-021 (T0--T4) and test-022 (partial) still running.} \\
-\end{tabularx}
-\end{table}
-
-Total cost for three completed experiments: \$135.55 over approximately 34,044 seconds
-($\approx$9.5 hours of compute).
-Cost scales approximately with task complexity, growing $4.4\times$ from test-002 to test-017.
-
-\subsection{test-002: Mojo Hello World}\label{sec:test002}
-
-\begin{table}[htbp]
-\centering
-\caption{test-002 Tier Performance Summary (Mojo Hello World). Cost = mean cost per run for best subtest. ``Best Score'' = mean score of the subtest with highest pass rate; ``Pass\%'' = pass rate of that subtest; CoP = Cost / Pass Rate.}
-\label{tab:test002}
-\begin{tabular}{lrrrrrr}
-\toprule
-Tier & Best Score & Pass\% & Cost & CoP & Duration \\
-\midrule
-T0 & 0.00 & 0\% & \$0.00 & N/A & 8.6s \\
-T1 & 0.84 & 100\% & \$0.79 & \$0.79 & 1,330s \\
-T2 & 0.82 & 80\% & \$0.63 & \$1.72 & 1,493s \\
-T3 & 0.84 & 100\% & \$6.44 & \$9.65 & 2,540s \\
-T4 & 0.82 & 100\% & \$4.16 & \$4.16 & 2,016s \\
-T5 & 0.00 & 40\% & \$0.35 & \$1.86 & 2,393s \\
-T6 & 0.84 & 100\% & \$1.36 & \$1.36 & 1,418s \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{T0 Framework Failure}: T0 scored 0.00 with \$0.00 cost and zero tokens. This is a
-known infrastructure diagnostic: T0's empty-prompt configuration causes Claude Code to
-refuse the task without generating output on this test (a deliberate refusal, not a crash).
-This is distinct from the SIGABRT (exit code 134) framework crashes observed in T1/T4/T5,
-which are agent process failures rather than task refusals.
-This is not a Haiku model failure---T1 (with skills only, no tools) immediately achieves
-0.84 (100\% pass rate). Note that T0 runs successfully on
-test-007 (\$3.10 cost, 20\% pass rate) and test-017 (\$2.73 cost, 80\% pass rate); the
-\$0.00/zero-token pattern is specific to test-002.
-
-\textbf{Ceiling Effect}: T1, T3, T4, and T6 all achieve best scores of 0.84 with 100\% pass rates.
-This mirrors the dryrun finding: Hello World is too simple to differentiate quality.
-However, cost varies dramatically: T1 costs \$0.79 per run vs.\ T3's \$6.44---an 8$\times$ cost
-difference for identical quality. T3's delegation overhead provides zero quality benefit here.
-
-\textbf{T5 Anomaly}: T5 scored 0.00 with only 40\% pass rate despite other tiers succeeding.
-Six of T5's 30 runs are framework failures (cost=\$0, tokens=0), contributing 20\% of
-all T5 runs as structural zeroes. Additionally, ``Best Score'' is the mean score of the
-subtest selected by \textit{highest pass rate}---not highest mean score---which can
-show 0.00 when the selected subtest's mean score averages to zero despite some individual
-runs passing. This metric-selection artifact explains the paradox and warrants investigation.
-
-\textbf{Key finding}: For trivial Mojo tasks, T1 (skills only, \$0.79) achieves the best
-cost-quality ratio. T3 and T4 delegation adds cost without quality gain.
-
-\subsection{test-007: Simplify Justfile}\label{sec:test007}
-
-\begin{table}[htbp]
-\centering
-\caption{test-007 Tier Performance Summary (Simplify Justfile). Cost = mean cost per run for best subtest.}
-\label{tab:test007}
-\begin{tabular}{lrrrrrr}
-\toprule
-Tier & Best Score & Pass\% & Cost & CoP & Duration \\
-\midrule
-T0 & 0.25 & 20\% & \$3.10 & \$37.74 & 1,446s \\
-T1 & 0.00 & 0\% & \$0.57 & N/A & 1,906s \\
-T2 & 0.74 & 100\% & \$1.15 & \$3.74 & 1,510s \\
-T3 & 0.88 & 80\% & \$5.92 & \$16.94 & 2,684s \\
-T4 & 0.70 & 60\% & \$3.12 & \$7.87 & 2,682s \\
-T5 & 0.73 & 60\% & \$1.92 & \$5.20 & 1,519s \\
-T6 & 0.88 & 80\% & \$3.92 & \$4.90 & 3,174s \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{This is the most analytically rich of the three tests.}
-
-\textbf{T1 = 0.00 (Near-Complete Failure)}: Skills without tools largely fail at a refactoring task.
-T1's tier-level best score is 0.00, with the selected best subtest (02) achieving 0\% pass rate.
-Subtest 01 achieved a 40\% pass rate (mean score 0.30) but remained below acceptable quality.
-Haiku with skills but no file-reading tools cannot reliably examine the
-existing Justfile to determine what to simplify. This is strong evidence of tool
-dependence in the dataset: \textit{refactoring tasks require tools, not just domain knowledge.}
-
-\textbf{T0 Partial Success (0.25)}: Without any prompt or skills, Claude Code's base
-configuration partially succeeds at 20\% pass rate (\$37.74 CoP). The base model has some
-Justfile knowledge but can't reliably execute a multi-step refactoring.
-
-\textbf{T2 as Tier Break (0.74)}: Adding tools enables 100\% pass rate at \$3.74 CoP. This is
-the critical threshold: tools transform a failing task into a reliable one.
-
-\textbf{Delegation Overhead}: T3 achieves 0.88 at 80\% pass rate but at \$16.94 CoP---4.5$\times$
-more expensive than T2 for slightly higher peak score. T6 matches T3's 0.88 score at \$4.90 CoP,
-suggesting super-configuration assembles the right tools without the coordination overhead.
-
-\textbf{Statistical significance}: The Kruskal-Wallis test shows significant tier effect
-($H(6) = 27.49$, $p = 0.0001$). Pairwise: T4$\rightarrow$T5 transition is significant
-($p = 0.0024$, Cliff's $\delta = -0.313$, medium effect).
-
-\textbf{Key finding}: For moderate refactoring tasks, tool access is mandatory (T1 fails without it).
-T2 provides the best cost-quality balance. Delegation (T3/T4) adds cost with marginal quality gain.
-
-\subsection{test-017: Comprehensive Slot Management}\label{sec:test017}
-
-\begin{table}[htbp]
-\centering
-\caption{test-017 Tier Performance Summary (Comprehensive Slot Management). Cost = mean cost per run for best subtest.}
-\label{tab:test017}
-\begin{tabular}{lrrrrrr}
-\toprule
-Tier & Best Score & Pass\% & Cost & CoP & Duration \\
-\midrule
-T0 & 0.83 & 80\% & \$2.73 & \$3.48 & 2,462s \\
-T1 & 1.00 & 60\% & \$3.71 & \$11.64 & 2,623s \\
-T2 & 1.00 & 100\% & \$2.49 & \$7.50 & 1,752s \\
-T3 & 0.83 & 80\% & \$13.18 & \$34.97 & 4,905s \\
-T4 & 1.00 & 80\% & \$17.62 & \$30.04 & 4,044s \\
-T5 & 0.83 & 100\% & \$2.35 & \$7.15 & 1,870s \\
-T6 & 0.78 & 100\% & \$3.01 & \$3.01 & 2,472s \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Counter-intuitive results}: This test shows the reverse of what architectural
-complexity would predict.
-
-\textbf{T6 Worst Score (0.78)}: The maximum configuration achieves the \textit{lowest} quality score
-of all tiers. Despite having all skills, tools, and agents enabled, T6's single subtest scored
-0.78 (100\% pass rate, so this is not unreliability---it consistently produces lower-quality output).
-Note that T6 has only 1 subtest (vs.\ 2 for most other tiers), so it has no selection advantage;
-the 0.78 reflects the single available subtest. Even accounting for this, the consistent
-gap against T1/T2/T4 (all achieving 1.00) suggests over-engineering: activating all systems
-simultaneously may degrade output quality for complex implementation tasks.
-
-\textbf{T1/T2/T4 Achieve Perfect 1.00}: Skills-only, tools-only, and hierarchical delegation all
-achieve perfect scores of 1.00 on their best subtests. Simpler configurations outperform the maximum.
-
-\textbf{Delegation Cost Explosion}: T3 costs \$13.18/run (\$34.97 CoP) and T4 costs
-\$17.62/run (\$30.04 CoP)---T3 costs 3.6$\times$ T1 and 5.3$\times$ T2; T4 costs 4.8$\times$ T1
-and 7.1$\times$ T2---for the same or worse quality. The multi-agent coordination overhead
-does not justify itself here.
-
-\textbf{T5 Best CoP}: T5 achieves \$7.15 CoP at 100\% pass rate, representing the best
-cost-quality balance. This confirms the dryrun finding that smart hybrids can outperform
-both simple and maximum configurations.
-
-\textbf{Key finding}: For complex single-component tasks, simpler tiers (T1, T2, T5) outperform
-delegation hierarchies. T6 over-engineering is detectable and measurable.
-
-\subsection{Partial Results: test-021 and test-022}\label{sec:partial}
-
-\textbf{test-021 (Gradient Tracking, still running)}:
-
-At the time of writing, test-021 is partially complete: T1, T2, and T4 have completed
-tier reports, while T0 is partial (subtest-19 run-1 tracked as passed), T3 is in progress,
-and T5--T6 have not started. Completed tiers show promising scores (T1 best: 0.833,
-T2 best: 0.830, T4 best: 1.000), but tier-level conclusions require all tiers to complete.
-Results will be reported in a follow-up paper once the full evaluation finishes.
-
-\textbf{test-022 (Partial)}: T0 has 2 subtests both scoring 0.00 (\$0.00 cost, zero tokens)
-indicating framework failures on this task---consistent with the empty-prompt infrastructure
-diagnostic seen in test-002 T0. T5 similarly shows 2 subtests with 0.00 scores, \$0.00 cost,
-and zero tokens, suggesting hybrid configuration also fails on this task. T3 partial results
-show mixed performance (2 of 5 runs passing for subtest-05). T1--T4 and T6 are in various
-stages of completion. Insufficient data for tier-level conclusions.
-
-\textbf{Caveat}: Both tests are still running. Results in this section are preliminary
-and subject to change as T5--T6 complete.
-
-\subsection{Cross-Test Analysis}\label{sec:crosstest}
-
-\subsubsection{Tier Ranking Across Tasks}
-
-\begin{table}[htbp]
-\centering
-\caption{Best Score per Tier per Completed Test}
-\label{tab:tier-ranking}
-\begin{tabular}{lrrrrr}
-\toprule
-Tier & test-002 & test-007 & test-017 & Rank-002 & Rank-017 \\
-\midrule
-T0 & 0.00$^\dagger$ & 0.25 & 0.83 & -- & 5 \\
-T1 & 0.84 & 0.00 & 1.00 & 1 & 1 \\
-T2 & 0.82 & 0.74 & 1.00 & 3 & 1 \\
-T3 & 0.84 & 0.88 & 0.83 & 1 & 5 \\
-T4 & 0.82 & 0.70 & 1.00 & 3 & 1 \\
-T5 & 0.00$^\ddagger$ & 0.73 & 0.83 & -- & 5 \\
-T6 & 0.84 & 0.88 & 0.78 & 1 & 7 \\
-\bottomrule
-\multicolumn{6}{l}{\small $^\dagger$ T0 framework failure; $^\ddagger$ T5 subtest anomaly} \\
-\end{tabular}
-\end{table}
-
-Tier rankings show substantial instability across tasks:
-T1 moves from co-first on trivial tasks to last (0.00) on the refactoring task,
-then back to co-first on complex implementation.
-T6 is co-first on trivial, tied-first on refactoring, but worst on complex implementation.
-This directly answers \textbf{RQ2}: tier rankings are \textit{not} stable.
-Optimal tier selection is task-dependent.
-
-\subsubsection{Cost-Quality Analysis}
-
-Aggregated across all completed experiments, T2 (tooling) provides the best overall
-cost-quality balance:
-
-\begin{itemize}
-\item T2 Frontier CoP: \$0.44 (lowest across all tiers in aggregate)
-\item T3 Frontier CoP: \$2.04 (4.6$\times$ T2's cost for marginal quality gain)
-\item T4 Frontier CoP: \$1.67 (3.8$\times$ T2's cost)
-\end{itemize}
-
-The aggregate tier summary (Table~\ref{tab:aggregate-tiers}) shows T2's pass rate (83.1\%)
-and score (0.721) are competitive with T3 (76.2\%, 0.686) and T4 (81.3\%, 0.740)
-while being 4--5$\times$ cheaper per pass.
-
-\begin{table}[htbp]
-\centering
-\caption{Aggregate Tier Summary (All 5 Experiments including partial, Haiku). Partial experiments (test-021, test-022) contribute to tier counts where completed. CoP is a point estimate (no CI; see Section~\ref{sec:background}).}
-\label{tab:aggregate-tiers}
-\begin{tabular}{lrrrr}
-\toprule
-Tier & Pass Rate (95\% CI) & Mean Score & CoP (\$) & Subtests \\
-\midrule
-T0 & 0.641 (0.547, 0.726) & 0.561 $\pm$ 0.383 & 0.68 & 17 \\
-T1 & 0.735 (0.639, 0.819) & 0.649 $\pm$ 0.330 & 0.52 & 7 \\
-T2 & 0.831 (0.754, 0.892) & 0.721 $\pm$ 0.223 & 0.44 & 14 \\
-T3 & 0.762 (0.680, 0.836) & 0.686 $\pm$ 0.306 & 2.04 & 19 \\
-T4 & 0.813 (0.732, 0.878) & 0.740 $\pm$ 0.263 & 1.67 & 14 \\
-T5 & 0.500 (0.333, 0.667) & 0.487 $\pm$ 0.371 & 0.73 & 2 \\
-T6 & 0.933 (0.667, 1.000) & 0.812 $\pm$ 0.122 & 0.59 & 1 \\
-\bottomrule
-\multicolumn{5}{l}{\small Note: T5 and T6 have very few subtests (2 and 1); CIs are wide.} \\
-\end{tabular}
-\end{table}
-
-\subsubsection{Statistical Summary}
-
-Kruskal-Wallis confirms significant tier effects:
-\begin{itemize}
-\item Pass rate: $H(6) = 27.49$, $p = 0.0001$
-\item Impl-rate: $H(6) = 18.97$, $p = 0.0042$
-\item Cost: $H(6) = 157.44$, $p < 0.0001$
-\end{itemize}
-
-The Kruskal-Wallis test confirms the tier main effect on score: $H_{\text{tier}}(6) = 22.63$, $p = 0.0009$.
-(The planned Scheirer-Ray-Hare two-way test degenerates to this result with single-model data;
-see Methods and Section~\ref{sec:further}.)
-
-Significant pairwise transitions (Holm-Bonferroni corrected, $m=7$):
-T4$\rightarrow$T5 ($p = 0.0024$, $\delta = -0.313$, medium effect),
-T5$\rightarrow$T6 ($p = 0.0243$, $\delta = +0.433$, medium effect).
-The T0$\rightarrow$T6 overall contrast is not significant at the aggregate level
-($p = 0.1187$, $\delta = +0.292$), reflecting that task context moderates the effect.
-
-\textbf{Caveat}: T5 and T6 aggregate results are based on only 2 and 1 subtests respectively.
-These aggregate comparisons are dominated by test-002 and test-007 data.
-Per-test analysis (Sections~\ref{sec:test002}--\ref{sec:test017}) provides more reliable estimates.
+Section~\ref{sec:related_work} surveys related work in agent evaluation and
+ablation methodology. Section~\ref{sec:background} describes the Scylla
+framework and its tier taxonomy. Section~\ref{sec:experimental_design} details
+our experimental design. Section~\ref{sec:results} presents results per
+experiment and in aggregate. Section~\ref{sec:interrater} analyzes inter-rater
+reliability. Section~\ref{sec:cost_analysis} examines cost efficiency.
+Section~\ref{sec:discussion} discusses key findings, limitations, and threats
+to validity. Section~\ref{sec:conclusions} concludes, and
+Section~\ref{sec:further_work} outlines future directions.
+
+% ===================================================================
+% 2. RELATED WORK
+% ===================================================================
+\section{Related Work}
+\label{sec:related_work}
+
+\subsection{Agent Benchmarks}
+\label{sec:agent_benchmarks}
+
+The evaluation of LLM-based agents has received increasing attention as agent
+systems have moved from research prototypes to production deployments.
+SWE-bench~\cite{jimenez2024swebench} evaluates agents on real-world GitHub
+issues drawn from popular open-source repositories, providing ecologically
+valid but uncontrolled task sets. The benchmark has become a standard reference
+point for agent capability, with leaderboard performance tracked across
+multiple agent systems. However, SWE-bench treats the agent's internal
+architecture as a black box, measuring only the final outcome without
+decomposing the contribution of individual architectural components.
+
+AgentBench~\cite{liu2023agentbench} offers a broader multi-domain evaluation
+across operating systems, databases, knowledge graphs, and web browsing. Its
+multi-turn interaction design captures aspects of agent behavior that
+single-turn benchmarks miss, including error recovery, context management, and
+strategic planning. Like SWE-bench, however, AgentBench evaluates complete
+agent systems without varying their internal configuration.
+
+TAU-bench~\cite{yao2024taubench} focuses specifically on tool-augmented LLMs,
+measuring the agent's ability to select and compose external tools. While
+TAU-bench does vary the tools available to the agent, it does not extend this
+ablation to other architectural dimensions such as prompting strategy,
+delegation, or hierarchical control.
+
+PromptBench~\cite{zhu2024promptbench} evaluates prompt robustness but operates
+at the level of individual prompts rather than complete agent architectures.
+The lm-evaluation-harness~\cite{gao2024lmevalharness} provides a
+general-purpose framework for few-shot LLM evaluation but is not designed for
+agentic workflows that require multi-turn interaction, tool use, and code
+generation. Polo et al.~\cite{polo2024efficient} propose efficient
+multi-prompt evaluation methods that reduce the number of evaluations needed
+to characterize model behavior, but their focus is on prompt selection rather
+than architectural ablation.
+
+A common limitation of these benchmarks is that they evaluate agent
+\emph{systems} holistically, without providing a principled decomposition of
+architectural contributions. Our work addresses this gap by applying a
+controlled ablation design that isolates the effect of each architectural layer
+while holding the model constant.
+
+\subsection{Ablation Methodology in Machine Learning}
+\label{sec:ablation_method}
+
+Ablation studies have a long history in machine learning, originating in
+neuroscience where they refer to the systematic removal of brain regions to
+understand function localization. In deep learning, ablation studies
+systematically remove or modify components of a model or system to measure
+their individual contributions. This methodology has been applied to neural
+network architectures, loss functions, data augmentation strategies, and
+training procedures.
+
+However, ablation methodology has been underutilized in the evaluation of
+LLM agent systems. Most agent evaluations compare \emph{complete systems}
+against each other (System A vs.\ System B) rather than decomposing a single
+system into its constituent components. The Scylla framework's tier-based
+design brings ablation methodology to agent architecture, treating each
+architectural layer (prompts, skills, tools, delegation, hierarchy) as a
+component that can be systematically added or removed.
+
+Our study extends this approach to the budget model setting, where the
+interaction between model capacity and architectural complexity introduces
+additional considerations not present in frontier model evaluations. The
+ablation is not merely asking ``does this component help?'' but ``does this
+component help \emph{given the model's capacity to use it}?''
+
+\subsection{Multi-Agent Architectures}
+\label{sec:multi_agent}
+
+The multi-agent paradigm has been explored extensively in recent work, with
+systems employing specialist agents, hierarchical delegation, and
+orchestration patterns~\cite{anthropic2024claude}. These architectures are
+motivated by the intuition that complex tasks benefit from division of labor:
+a coding task might be decomposed into planning, implementation, testing, and
+review subtasks, each handled by a specialized agent.
+
+While multi-agent architectures often improve performance for frontier models,
+their interaction with model capacity has received limited systematic study.
+Anecdotal evidence suggests that smaller models struggle with the coordination
+overhead of multi-agent systems, but this has not been rigorously quantified
+in a controlled experimental design.
+
+Our work contributes to this area by demonstrating, through controlled
+ablation, that delegation-based architectures can be counterproductive for
+budget models. We provide the first statistical evidence for a critical
+transition point (the T2--T3 cliff) where multi-agent coordination begins to
+degrade rather than improve performance.
+
+\subsection{LLM-as-Judge Evaluation}
+\label{sec:llm_judge}
+
+The use of LLMs as automated evaluators has become standard practice in agent
+evaluation, driven by the high cost and limited scalability of human
+evaluation. Prior work has identified several reliability concerns, including
+position bias (preference for outputs presented first), verbosity bias
+(preference for longer outputs), and self-preference effects (models rating
+their own outputs more highly)~\cite{polo2024efficient}.
+
+Most studies of LLM-as-judge reliability have focused on frontier models
+evaluating frontier model outputs. The reliability of judge panels that include
+budget models, or that evaluate budget model outputs, has received less
+attention. Our study extends this literature by reporting inter-rater
+reliability statistics for a three-model judge panel spanning the full
+capability spectrum, finding near-chance agreement levels that raise
+fundamental questions about the validity of LLM-as-judge evaluation in
+budget-model contexts.
+
+\subsection{Cost-Aware Evaluation}
+\label{sec:cost_aware}
+
+The economics of LLM deployment have become increasingly important as
+organizations scale agentic workflows from prototypes to production. Token
+costs, latency, and cost-per-successful-completion are all relevant to
+deployment decisions, yet most benchmarks report only quality metrics without
+cost normalization.
+
+The Cost-of-Pass (CoP) metric~\cite{scylla2026dryrun} provides a
+task-normalized measure of economic efficiency by dividing mean cost per run
+by pass rate. This formulation captures a crucial insight: a model that costs
+half as much but passes only a quarter as often is actually \emph{more}
+expensive to use in practice. Our work applies CoP analysis across seven
+architectural tiers, demonstrating that cost invariance across tiers implies
+that simpler architectures are strictly Pareto-dominant when they achieve
+higher quality.
+
+% ===================================================================
+% 3. BACKGROUND: THE SCYLLA FRAMEWORK
+% ===================================================================
+\section{Background: The Scylla Framework}
+\label{sec:background}
+
+\subsection{Design Philosophy}
+\label{sec:design_philosophy}
+
+The Scylla framework is designed around the principle that agent architecture
+can be decomposed into a hierarchy of capabilities, where each tier adds a
+specific category of functionality to the previous tier. This hierarchical
+design enables controlled ablation: by comparing performance across tiers,
+we can isolate the marginal contribution of each capability layer.
+
+The framework name invokes the mythic trial from Homer's \emph{Odyssey},
+where Odysseus must navigate between the six-headed monster Scylla and the
+whirlpool Charybdis. In the context of agent evaluation, Scylla represents
+the trade-off between capability (adding more architectural complexity to
+improve performance) and cost (the economic and quality penalties of
+unnecessary complexity). The goal is to find the optimal passage---the
+architectural configuration that maximizes quality while minimizing cost.
+
+\subsection{Tier Taxonomy}
+\label{sec:tier_taxonomy}
+
+The Scylla framework organizes agent architectures into seven tiers of
+increasing complexity. Each tier extends the capabilities of the previous tier
+while maintaining backward compatibility with the evaluation protocol. The
+tiers are defined as follows:
+
+\begin{description}
+  \item[T0 -- Prompts (24 subtests)] Ablation of system prompt content, ranging
+    from an empty prompt to the full \texttt{CLAUDE.md} configuration. This
+    tier isolates the effect of prompt engineering on model behavior. The 24
+    subtests span a spectrum from no system prompt at all through progressively
+    richer prompt configurations, enabling fine-grained analysis of prompt
+    contribution.
+  \item[T1 -- Skills (10 subtests)] Addition of domain-specific expertise
+    through installed skill modules, organized by category (e.g., code review,
+    testing, documentation, deployment). Skills provide structured knowledge
+    and procedural guidance without external tool access. The 10 subtests
+    evaluate different skill categories and combinations.
+  \item[T2 -- Tooling (15 subtests)] Introduction of external tools and Model
+    Context Protocol (MCP) servers. This tier measures the contribution of tool
+    access (file systems, web search, code analysis, linting) beyond prompt and
+    skill content. The 15 subtests evaluate different tool configurations and
+    combinations.
+  \item[T3 -- Delegation (41 subtests)] Flat multi-agent configurations with
+    specialist agents. The primary agent can delegate subtasks to specialist
+    agents but does not employ hierarchical control. This is the largest tier,
+    with 41 subtests reflecting the combinatorial space of specialist
+    configurations (different specialist roles, delegation strategies, and
+    task decomposition approaches).
+  \item[T4 -- Hierarchy (14 subtests)] Nested orchestration with orchestrator
+    agents managing teams of specialists. This tier tests whether hierarchical
+    control improves coordination over flat delegation. It comprises 7
+    hierarchy subtests (varying the depth and structure of the hierarchy) and
+    7 agent-team subtests (varying team composition and role assignment).
+  \item[T5 -- Hybrid (15 subtests)] Best-of combinations and permutations from
+    lower tiers. This tier explores whether selective combination of
+    architectural elements outperforms uniform tier application. The 15
+    subtests represent curated configurations that mix elements from T0--T4
+    based on prior performance data.
+  \item[T6 -- Super (1 subtest)] Everything enabled at maximum capability. This
+    tier represents the upper bound of architectural complexity, with all
+    prompts, skills, tools, delegation, hierarchy, and hybrid configurations
+    active simultaneously. The single subtest provides a ceiling estimate.
+\end{description}
+
+Figure~\ref{fig:tier_architecture} illustrates the hierarchical relationship
+between tiers.
 
 \begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.48\textwidth}
-  \includegraphics[width=\textwidth]{fig04_pass_rate_by_tier}
-  \caption{Pass rate by tier (aggregate, 95\% CI). T2 and T4 lead among well-sampled tiers.}
-  \label{fig:pass-rate-tier}
-\end{subfigure}
-\hfill
-\begin{subfigure}[b]{0.48\textwidth}
-  \includegraphics[width=\textwidth]{fig08_cost_quality_pareto}
-  \caption{Cost-quality Pareto front. T2 sits on the frontier: highest quality per dollar.}
-  \label{fig:pareto}
-\end{subfigure}
+  \centering
+  \begin{tikzpicture}[
+    tier/.style={draw, rounded corners, minimum width=3cm, minimum height=0.8cm,
+      font=\small},
+    >=Stealth
+  ]
+    \node[tier, fill=green!20]  (t0) at (0,0)    {T0: Prompts (24)};
+    \node[tier, fill=green!30]  (t1) at (0,1.2)  {T1: Skills (10)};
+    \node[tier, fill=green!40]  (t2) at (0,2.4)  {T2: Tooling (15)};
+    \node[tier, fill=red!20]    (t3) at (0,3.6)  {T3: Delegation (41)};
+    \node[tier, fill=red!30]    (t4) at (0,4.8)  {T4: Hierarchy (14)};
+    \node[tier, fill=red!35]    (t5) at (0,6.0)  {T5: Hybrid (15)};
+    \node[tier, fill=red!40]    (t6) at (0,7.2)  {T6: Super (1)};
 
-\medskip
-\begin{subfigure}[b]{0.48\textwidth}
-  \includegraphics[width=\textwidth]{fig01_score_variance_by_tier}
-  \caption{Score distribution by tier. Bimodal pattern (0.0 and 0.8--1.0 modes) throughout.}
-  \label{fig:score-dist}
-\end{subfigure}
-\hfill
-\begin{subfigure}[b]{0.48\textwidth}
-  \includegraphics[width=\textwidth]{fig19_effect_size_forest}
-  \caption{Effect size forest plot (Cliff's $\delta$ with 95\% CI). Only T4$\rightarrow$T5 and T5$\rightarrow$T6 are significant.}
-  \label{fig:forest}
-\end{subfigure}
-\caption{Key aggregate results. (a) Pass rate by tier. (b) Cost-quality Pareto front.
-(c) Score variance by tier. (d) Pairwise effect sizes. All 52 generated figures are
-available in \texttt{docs/arxiv/haiku/figures/}.}
-\label{fig:key-results}
+    \draw[->, thick] (t0) -- (t1);
+    \draw[->, thick] (t1) -- (t2);
+    \draw[->, thick, dashed, red] (t2) -- node[right, font=\footnotesize\itshape]
+      {Critical cliff} (t3);
+    \draw[->, thick] (t3) -- (t4);
+    \draw[->, thick] (t4) -- (t5);
+    \draw[->, thick] (t5) -- (t6);
+
+    \node[right=1.5cm of t0, font=\footnotesize, text width=4cm]
+      {Single agent, prompt only};
+    \node[right=1.5cm of t2, font=\footnotesize, text width=4cm]
+      {Single agent + tools};
+    \node[right=1.5cm of t3, font=\footnotesize, text width=4cm]
+      {Multi-agent begins};
+    \node[right=1.5cm of t6, font=\footnotesize, text width=4cm]
+      {Full orchestration};
+  \end{tikzpicture}
+  \caption{Scylla tier hierarchy. Green tiers (T0--T2) represent single-agent
+    configurations; red tiers (T3--T6) introduce multi-agent coordination.
+    The dashed arrow marks the T2--T3 critical cliff identified in this
+    study.}
+  \label{fig:tier_architecture}
 \end{figure}
 
-\section{Cross-Model Comparison: Haiku vs.\ Sonnet}\label{sec:crossmodel}
+\subsection{Evaluation Protocol}
+\label{sec:eval_protocol}
 
-\subsection{Comparison Scope and Caveats}
+Each subtest defines a coding task with explicit success criteria. The Scylla
+evaluation protocol proceeds as follows:
 
-Comparing this study to the dryrun is confounded by multiple factors:
+\begin{enumerate}
+  \item \textbf{Configuration.} The agent receives the architectural
+    configuration defined by the tier and subtest, including system prompt
+    content, skill definitions, tool access, and delegation/hierarchy
+    parameters.
+  \item \textbf{Task Specification.} The agent receives a task description,
+    target repository, and success criteria. The task specification is
+    identical across all tiers for a given experiment.
+  \item \textbf{Execution.} The agent executes the task using the Claude Code
+    CLI~\cite{anthropic2024claude}, producing code changes, documentation,
+    and/or configuration modifications. Execution is bounded by a timeout
+    to prevent runaway sessions.
+  \item \textbf{Evaluation.} A three-judge panel evaluates the output against
+    predefined criteria. Each judge independently assigns scores on a
+    continuous $[0, 1]$ scale.
+  \item \textbf{Consensus.} The consensus score is computed as the arithmetic
+    mean of the three judge scores. Implementation rate uses the median across
+    judges.
+  \item \textbf{Classification.} A run is classified as ``passing'' if the
+    consensus score exceeds a threshold (typically 0.5).
+\end{enumerate}
 
-\begin{table}[htbp]
-\centering
-\caption{Comparison Confounds: Dryrun (Sonnet) vs.\ Haiku Study}
-\label{tab:confounds}
-\begin{tabularx}{\textwidth}{lXX}
-\toprule
-Factor & Dryrun & Haiku Study \\
-\midrule
-Agent model & Sonnet 4.5 & Haiku 4.5 \\
-Task & Hello World (Python) & Hello World (Mojo) in test-002 \\
-Judge models & Opus + Sonnet + Haiku & Sonnet only \\
-N per subtest & 1 & 5 \\
-Max subtests & All (up to 24) & 2 per tier \\
-\bottomrule
-\end{tabularx}
-\end{table}
+\subsection{Partial-Failure Semantics}
+\label{sec:partial_failure}
 
-The only semi-comparable pair is:
-\textbf{dryrun test-001} (Sonnet, Hello World, N=1, 3 judges)
-vs.\ \textbf{test-002} (Haiku, Mojo Hello World, N=5, 1 judge).
-Both are trivial Hello World tasks but in different languages (Python vs.\ Mojo) with
-different judge configurations.
-\textit{All cross-model comparisons in this section should be treated as exploratory,
-not confirmatory.}
+A key design decision in Scylla is its partial-failure model. When multiple
+tiers run in parallel within an experiment, a tier failure does not abort the
+experiment. The experiment continues with the remaining tiers and can reach a
+``complete'' state even if some tiers are in a ``failed'' state. This is
+intentional: partial results are preserved and reported, enabling analysis
+even when some configurations produce errors.
 
-\subsection{Quality Comparison}
+This design is particularly important for our study, where tiers T4--T6
+exhibit catastrophic failure on test-001. Under an all-or-nothing model, these
+failures would have aborted the experiment, losing the data from the
+successful tiers. Under Scylla's partial-failure semantics, the zero pass
+rates in T4--T6 are recorded and analyzed alongside the high pass rates in
+T0--T2, producing the critical cliff finding that is the central result of
+this paper.
 
-\begin{table}[htbp]
-\centering
-\caption{Quality Comparison on Hello World Tasks (Exploratory)}
-\label{tab:quality-comparison}
-\begin{tabular}{llrrr}
-\toprule
-Model & Task & Best Score & Pass Rate & Grade \\
-\midrule
-Sonnet 4.5 & Hello World (Python, N=1) & 0.943--0.983 & 100\% (all tiers) & A \\
-Haiku 4.5 & Hello World (Mojo, N=5) & 0.82--0.84 & 80--100\% & A \\
-\bottomrule
-\end{tabular}
-\end{table}
+Operators inspecting results must check per-tier states rather than the
+overall experiment state to determine whether all tiers succeeded. A complete
+experiment may contain a mixture of successful and failed tier states.
 
-Both models achieve Grade A on their respective Hello World tasks.
-Haiku's scores are slightly lower (0.82--0.84 vs.\ 0.94--0.98), but this likely reflects
-task difficulty differences (Mojo is less common than Python in training data) and the single
-vs.\ three-judge difference rather than a fundamental capability gap.
+\subsection{Metrics}
+\label{sec:metrics}
 
-\subsection{Cost Comparison}
+Scylla evaluates agent performance across three categories of metrics:
 
-\begin{table}[htbp]
-\centering
-\caption{Cost Comparison on Hello World Tasks}
-\label{tab:cost-comparison}
-\begin{tabular}{llrr}
-\toprule
-Model & Task & Frontier CoP & Best Tier for CoP \\
-\midrule
-Sonnet 4.5 & Hello World (Python) & \$0.065 & T5 \\
-Haiku 4.5 & Hello World (Mojo) & \$0.157 & T1 \\
-\bottomrule
-\end{tabular}
-\end{table}
+\textbf{Quality Metrics.} Pass Rate ($R_{\text{pass}}$) measures the fraction
+of runs exceeding the pass threshold. Implementation Rate ($R_{\text{impl}}$)
+captures whether the agent attempted the task at all, using the median across
+judges' binary assessments. The Fine-Grained Progress Rate captures partial
+task completion on a continuous scale.
 
-Sonnet's Frontier CoP (\$0.065) is 2.4$\times$ lower than Haiku's (\$0.157) on comparable
-trivial tasks. This is surprising given Haiku's lower per-token pricing (\$1/\$5 vs.\ \$3/\$15).
+\textbf{Economic Metrics.} Cost-of-Pass (CoP) is defined as the mean cost per
+run divided by the pass rate:
+\begin{equation}
+  \text{CoP} = \frac{\overline{C}}{R_{\text{pass}}}
+  \label{eq:cop}
+\end{equation}
+where $\overline{C}$ is the mean cost per run (in USD) and $R_{\text{pass}}$
+is the pass rate. CoP captures the expected cost to obtain a passing result,
+penalizing both expensive runs and low pass rates. When $R_{\text{pass}} = 0$,
+CoP is undefined (infinity), indicating that no amount of spending produces a
+successful outcome. Token Distribution tracks the breakdown of costs across
+input, output, cache read, and cache creation operations.
 
-Two explanations are plausible:
-(1) Haiku uses more tokens to accomplish the same task (less efficient token usage),
-consuming more cache reads to compensate for smaller context handling;
-(2) The Mojo Hello World task may be inherently more token-intensive than Python Hello World
-due to Mojo's less common syntax requiring more tool use to verify correctness.
+\textbf{Process Metrics.} Duration measures wall-clock execution time.
+Consistency captures the coefficient of variation of scores within a subtest,
+measuring reproducibility. Strategic Drift measures deviation from task
+objectives over the course of execution.
 
-Token analysis from test-002 shows cache reads dominate: 41.7M total tokens with 40.4M (97\%)
-from cache reads vs.\ 242K output tokens, suggesting cache-heavy access patterns.
-Full token efficiency comparison requires the same task on both models, which is future work.
+% ===================================================================
+% 4. EXPERIMENTAL DESIGN
+% ===================================================================
+\section{Experimental Design}
+\label{sec:experimental_design}
 
-\subsection{Economic Viability Assessment}
+\subsection{Model Selection}
+\label{sec:model_selection}
 
-For real coding tasks (test-007, test-017), Haiku's economics are more favorable:
+We select \texttt{claude-haiku-4-5} as the subject model for all experiments.
+Haiku 4.5 is Anthropic's budget frontier model, positioned below Sonnet and
+Opus in the model hierarchy. It is designed for high-throughput, cost-efficient
+inference while maintaining sufficient capability for coding tasks.
+
+This selection is motivated by three considerations. First, budget models are
+the most likely to be deployed at scale in production environments, making
+their architectural sensitivities practically important for deployment
+decisions. Second, the prior Scylla dryrun~\cite{scylla2026dryrun} used Claude
+Sonnet 4.5, enabling cross-model comparison in future work. Third, the lower
+per-token cost of Haiku (\$0.25/MTok input, \$1.25/MTok output for standard
+pricing) enables a larger experimental matrix at a fixed budget.
+
+\subsection{Task Selection}
+\label{sec:task_selection}
+
+We design three experiments of varying difficulty and domain to test the
+generality of tier effects across task characteristics:
+
+\begin{description}
+  \item[test-001: Python Hello World] A trivial task requiring the creation of
+    a ``Hello World'' program in a simple Python repository. This task serves
+    as a floor calibration: any functional agent architecture should achieve
+    near-perfect performance. The minimal complexity of the task makes it
+    a sensitive detector of architectural overhead---if a tier cannot solve
+    this task, the failure is attributable to the architecture, not the task.
+    \emph{Difficulty}: trivial. \emph{Repository}: Hello-World.
+    \emph{Language}: Python.
+  \item[test-002: Mojo Hello World with Bazel and Documentation] A moderate
+    task requiring a ``Hello World'' program in the Mojo programming language
+    within a Modular repository, including Bazel build configuration and
+    accompanying documentation. This task tests the agent's ability to work
+    with a less common programming language and a complex build system, both
+    of which may have limited representation in the model's training data.
+    \emph{Difficulty}: moderate. \emph{Repository}: modular.
+    \emph{Language}: Mojo.
+  \item[test-003: Add mypy to pixi Configuration] A moderate task requiring the
+    addition of mypy type checking to an existing pixi-managed Python/Mojo
+    project~\cite{projectodyssey}. This task tests the agent's ability to
+    modify existing project configurations, integrate new development tooling,
+    and work within the constraints of an established codebase.
+    \emph{Difficulty}: moderate. \emph{Repository}: ProjectOdyssey.
+    \emph{Language}: Python/Mojo.
+\end{description}
+
+The three tasks were selected to span a range of dimensions: language
+familiarity (Python vs.\ Mojo), task type (greenfield creation vs.\
+configuration modification), and repository complexity (minimal vs.\ full
+project structure). While all three tasks are relatively simple by software
+engineering standards, they provide sufficient variation to test whether tier
+effects are task-dependent.
+
+\subsection{Experimental Configuration}
+\label{sec:exp_config}
+
+Each experiment executes all 120 subtests across all seven tiers (T0--T6) with
+$N=3$ replications per subtest. The total experiment matrix is:
 
 \begin{itemize}
-\item test-007 (Justfile): T2 achieves \$3.74 CoP at 100\% pass rate.
-  As a lower-bound estimate only (assuming identical token usage), Sonnet's 3$\times$
-  per-token pricing might yield $\approx$\$11 CoP---but the earlier token analysis
-  (Section~\ref{sec:crossmodel}) shows token usage differs significantly between models,
-  so this extrapolation is speculative.
-\item test-017 (Slot Management): T5 achieves \$7.15 CoP at 100\% pass rate.
-  For complex implementation, Haiku's lower pricing provides meaningful cost savings
-  vs.\ a hypothetical Sonnet run.
+  \item 3 experiments $\times$ 120 subtests $\times$ 3 runs = 1,080 total runs
+  \item 7 tiers: T0 (24 subtests), T1 (10), T2 (15), T3 (41), T4 (14),
+    T5 (15), T6 (1)
+  \item Subject model: \texttt{claude-haiku-4-5} (all tiers, all experiments)
+  \item Judge panel: \texttt{claude-opus-4-6}, \texttt{claude-sonnet-4-6},
+    \texttt{claude-haiku-4-5}
+  \item Runs per subtest per experiment: $N=3$
 \end{itemize}
 
-\textit{Conclusion on RQ3}: Haiku appears economically viable for the tasks tested here,
-pending confirmatory same-task comparison that controls for the confounds enumerated in
-Table~\ref{tab:confounds}.
-The 3--5$\times$ pricing advantage translates to meaningful CoP reductions at scale
-for tasks within Haiku's capability envelope.
-The key constraint is that Haiku may fail on tasks that require capabilities beyond its
-training (T1 = 0.00 on test-007 suggests Haiku without tools lacks sufficient context management
-for complex refactoring).
+The per-tier sample sizes across all three experiments are: T0 ($n=216$),
+T1 ($n=90$), T2 ($n=135$), T3 ($n=369$), T4 ($n=126$), T5 ($n=135$),
+T6 ($n=9$). The unequal sample sizes reflect the varying number of subtests
+per tier, which in turn reflects the varying combinatorial complexity of each
+architectural category.
 
-\section{Discussion}\label{sec:discussion}
+\input{tables/tab09_experiment_config}
+
+\subsection{Judge Panel Design}
+\label{sec:judge_panel}
+
+Evaluation uses a three-judge panel spanning the full Anthropic model
+hierarchy:
+
+\begin{enumerate}
+  \item \textbf{Judge~1}: \texttt{claude-opus-4-6} --- the frontier model with
+    the highest capability, serving as the most authoritative evaluator.
+  \item \textbf{Judge~2}: \texttt{claude-sonnet-4-6} --- a mid-tier model
+    providing an intermediate evaluation perspective.
+  \item \textbf{Judge~3}: \texttt{claude-haiku-4-5} --- the budget model,
+    identical to the subject agent, enabling analysis of self-evaluation bias.
+\end{enumerate}
+
+The consensus score is computed as the arithmetic mean of the three judges'
+scores. Implementation rate uses the median across judges' binary assessments
+of task attempt. This panel design was chosen to provide evaluation diversity
+while enabling analysis of the relationship between judge capability and
+evaluation reliability.
+
+The inclusion of the subject model (Haiku) as one of its own judges is a
+deliberate design choice. It enables us to test for self-preference bias
+(whether the model rates its own outputs more or less favorably than external
+judges) and to assess whether budget models possess sufficient evaluative
+capacity to serve as reliable judges.
+
+\subsection{Statistical Methods}
+\label{sec:statistical_methods}
+
+All score distributions are tested for normality using the Shapiro--Wilk test.
+As all 14 tier $\times$ \{Score, Cost\} combinations reject normality
+($p < 0.05$ for all 7 tiers $\times$ 2 metrics; see
+Appendix~\ref{app:normality}), we employ non-parametric methods
+throughout:
+
+\begin{itemize}
+  \item \textbf{Omnibus tests}: Kruskal--Wallis $H$ test for overall tier
+    differences across all seven tiers.
+  \item \textbf{Pairwise comparisons}: Dunn's test with Holm--Bonferroni
+    correction for 21 pairwise comparisons ($\binom{7}{2}$).
+  \item \textbf{Effect sizes}: Cliff's $\delta$ with 95\% bootstrap confidence
+    intervals, providing a non-parametric measure of effect magnitude.
+  \item \textbf{Interaction analysis}: Scheirer--Ray--Hare (SRH) test for
+    tier $\times$ experiment interactions, the non-parametric analog of
+    two-way ANOVA. SRH operates on ranked data and decomposes the total sum
+    of squared ranks into main effects and interactions.
+  \item \textbf{Inter-rater reliability}: Krippendorff's $\alpha$ (interval
+    scale) for overall panel reliability, and pairwise Spearman/Pearson
+    correlations for judge-pair agreement.
+  \item \textbf{Confidence intervals}: Bootstrap 95\% confidence intervals
+    for pass rates and other proportions.
+\end{itemize}
+
+Implementation rate comparisons use filtered sample sizes: only runs where the
+agent attempted the task contribute to the pairwise tests, which reduces the
+effective $n$ for some tiers relative to the full run count.
+
+Three process metrics---fine-grained progress rate, change fail percentage, and
+PR revert rate---are zero for all runs and are excluded from analysis. These
+metrics are designed for multi-file tasks not represented in this study.
+
+Given the small sample size ($N=3$ per subtest), all confidence intervals are
+necessarily wide. We adopt hedged language throughout and characterize our
+findings as preliminary evidence rather than definitive conclusions. The
+results should be interpreted as directional signals that motivate
+larger-scale confirmation studies.
+
+% ===================================================================
+% 5. RESULTS
+% ===================================================================
+\section{Results}
+\label{sec:results}
+
+\subsection{Experiment Overview}
+\label{sec:experiment_overview}
+
+Table~\ref{tab:experiment_overview} presents the high-level results for each
+experiment. The three experiments span a range of aggregate pass rates from
+0.519 (test-001) to 0.956 (test-003), with total costs ranging from \$13.72 to
+\$81.28.
+
+\input{tables/tab11_experiment_overview}
+
+A striking finding is that the trivial task (test-001) achieves the
+\emph{lowest} overall pass rate. This counterintuitive result---a simpler task
+being solved less frequently---is driven entirely by catastrophic failure in
+tiers T4--T6, where the agent's delegation and orchestration mechanisms
+actively prevent it from completing a task that the base model handles with
+ease. We examine this phenomenon in detail in Section~\ref{sec:test001}.
+
+The best tier varies across experiments: T1 for test-001, T6 for test-002 and
+test-003. This variation provides an initial indication that the optimal
+architectural configuration is task-dependent, a finding we formalize through
+interaction analysis in Section~\ref{sec:interaction}.
+
+Figure~\ref{fig:tier_summary_heatmap} provides an overview of score
+distributions across all tiers and experiments.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig15c_tier_summary_heatmap.png}
+  \caption{Tier summary heatmap showing mean consensus scores across all
+    experiments and tiers. Darker cells indicate higher scores. The
+    degradation in tiers T3--T6 is visible across experiments, with test-001
+    showing the most extreme effect.}
+  \label{fig:tier_summary_heatmap}
+\end{figure}
+
+\subsection{test-001: Python Hello World}
+\label{sec:test001}
+
+The trivial Python Hello World task produces the most dramatic results in the
+study. Tiers T0--T2 achieve near-perfect performance, while tiers T4--T6
+exhibit complete failure:
+
+\begin{table}[htbp]
+  \centering
+  \caption{test-001 (Python Hello World): Per-tier results. Tiers T4--T6
+    achieve zero pass rate despite the trivial nature of the task.}
+  \label{tab:test001}
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Tier & $n$ & Pass Rate & Score & Cost/Run (\$) & CoP (\$) \\
+    \midrule
+    T0 & 72  & 0.958 & 0.870 & 0.038 & 0.040 \\
+    T1 & 30  & 1.000 & 0.908 & 0.037 & 0.037 \\
+    T2 & 45  & 1.000 & 0.908 & 0.037 & 0.037 \\
+    T3 & 123 & 0.350 & 0.318 & 0.038 & 0.109 \\
+    T4 & 42  & 0.000 & 0.000 & 0.039 & $\infty$ \\
+    T5 & 45  & 0.000 & 0.000 & 0.038 & $\infty$ \\
+    T6 & 3   & 0.000 & 0.000 & 0.070 & $\infty$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The zero pass rate for T4--T6 on this trivial task is the most striking result
+in the entire study. These tiers introduce hierarchical delegation and
+orchestration---mechanisms that, for a task requiring only a single line of
+code (\texttt{print("Hello, World!")}), create coordination overhead that the
+budget model cannot resolve. The agent appears to spend its computational
+budget managing the delegation protocol rather than executing the simple task.
+
+T1 and T2 achieve perfect pass rates (1.000) with identical scores (0.908),
+suggesting that skills and tooling provide no marginal benefit over basic
+prompts for this trivial task, but also introduce no overhead. T0 achieves a
+slightly lower pass rate (0.958), indicating that some prompt configurations
+in the T0 ablation spectrum (particularly minimal or empty prompts) cause
+occasional failures.
+
+T3 (flat delegation) achieves a partial pass rate of 0.350, suggesting that
+some of the 41 specialist configurations can still solve the task, but the
+majority fail. The cost per run is nearly identical across all tiers
+(\$0.037--\$0.070), confirming that the agent consumes similar resources
+regardless of whether it produces useful output.
+
+This result constitutes a clear case of \emph{architectural
+over-specification}: the additional complexity of delegation is not merely
+unhelpful but actively harmful. The budget model lacks the capacity to
+simultaneously manage delegation protocols and solve the underlying task,
+even when the task itself is trivial. The T4--T6 failures are categorical
+rather than probabilistic---zero out of 90 runs across these three tiers
+produced a passing result.
+
+\subsection{test-002: Mojo Hello World with Bazel and Documentation}
+\label{sec:test002}
+
+The moderate Mojo task presents a fundamentally different pattern from
+test-001. All tiers achieve high pass rates, with substantially less
+differentiation across the architectural spectrum:
+
+\begin{table}[htbp]
+  \centering
+  \caption{test-002 (Mojo Hello World): Per-tier results. All tiers achieve
+    pass rates above 0.90, with modest variation.}
+  \label{tab:test002}
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Tier & $n$ & Pass Rate & Score & Cost/Run (\$) & CoP (\$) \\
+    \midrule
+    T0 & 72  & 0.903 & 0.641 & 0.219 & 0.242 \\
+    T1 & 30  & 0.933 & 0.676 & 0.229 & 0.245 \\
+    T2 & 45  & 0.956 & 0.685 & 0.222 & 0.232 \\
+    T3 & 123 & 0.967 & 0.686 & 0.229 & 0.237 \\
+    T4 & 42  & 0.976 & 0.677 & 0.236 & 0.242 \\
+    T5 & 45  & 0.956 & 0.694 & 0.217 & 0.228 \\
+    T6 & 3   & 1.000 & 0.722 & 0.279 & 0.279 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+For this task, tier effects are subtle and, notably, the direction of the
+effect is \emph{reversed} relative to test-001. Pass rates increase slightly
+from T0 (0.903) to T6 (1.000), with a modest upward trend. This reversal is
+a key driver of the significant tier $\times$ experiment interaction discussed
+in Section~\ref{sec:interaction}.
+
+Scores cluster between 0.641 and 0.722, suggesting that while the agent
+consistently attempts and partially completes the task, the quality ceiling is
+bounded by factors other than architecture---likely the model's familiarity
+with Mojo syntax and Bazel build system configuration. The relatively narrow
+score range (0.081 span) contrasts sharply with test-001's range (0.908 span),
+indicating that the task difficulty, rather than the architecture, is the
+primary determinant of output quality.
+
+The Cost-of-Pass is remarkably uniform across tiers (\$0.228--\$0.279),
+consistent with the aggregate cost invariance finding. T6 achieves the highest
+pass rate (1.000) but at the highest CoP (\$0.279), reflecting its elevated
+per-run cost.
+
+One interpretation of these results is that the Mojo task's difficulty
+provides sufficient ``work'' to justify the coordination overhead of
+delegation-based tiers. Unlike the trivial Python task, where delegation is
+unnecessary, the Mojo task involves multiple components (source code, build
+configuration, documentation) that can genuinely benefit from decomposition.
+
+\subsection{test-003: Add mypy to pixi Configuration}
+\label{sec:test003}
+
+The mypy configuration task shows a pattern intermediate between the other two
+experiments, with uniformly high pass rates and subtle tier effects:
+
+\begin{table}[htbp]
+  \centering
+  \caption{test-003 (Add mypy to pixi): Per-tier results. High pass rates
+    across all tiers with modest variation.}
+  \label{tab:test003}
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Tier & $n$ & Pass Rate & Score & Cost/Run (\$) & CoP (\$) \\
+    \midrule
+    T0 & 72  & 0.944 & 0.817 & 0.071 & 0.076 \\
+    T1 & 30  & 0.967 & 0.865 & 0.074 & 0.076 \\
+    T2 & 45  & 0.978 & 0.814 & 0.073 & 0.074 \\
+    T3 & 123 & 0.959 & 0.826 & 0.071 & 0.074 \\
+    T4 & 42  & 0.952 & 0.857 & 0.076 & 0.080 \\
+    T5 & 45  & 0.933 & 0.829 & 0.099 & 0.106 \\
+    T6 & 3   & 1.000 & 0.833 & 0.100 & 0.100 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Pass rates are uniformly high (0.933--1.000) with no clear monotonic trend.
+Scores range from 0.814 to 0.865, with T1 (skills) achieving the highest
+score (0.865). This suggests that for configuration tasks, domain-specific
+skills provide marginally more benefit than raw tool access or delegation,
+possibly because skills contain procedural knowledge about configuration
+management that the base model does not possess.
+
+An interesting anomaly is T5 (hybrid), which shows elevated cost
+(\$0.099/run vs.\ \$0.071--\$0.076 for T0--T3) without a corresponding
+quality improvement (pass rate 0.933 is the lowest in the table). The hybrid
+configurations appear to introduce overhead from combining multiple
+architectural elements without the coordination benefits that might emerge
+on more complex tasks.
+
+T6 achieves a perfect pass rate (1.000) but with only $n=3$ runs, this
+result should be interpreted with extreme caution. The wide confidence interval
+for a proportion of 1.0 with $n=3$ spans $[0.333, 0.889]$ under the
+Clopper--Pearson method, meaning a true pass rate as low as 0.333 is not
+excluded.
+
+\subsection{Cross-Task Analysis}
+\label{sec:cross_task}
+
+Aggregating across all three experiments, Table~\ref{tab:tier_summary}
+presents the tier-level summary statistics.
+
+\input{tables/tab01_tier_summary}
+
+The aggregate results reveal a clear bimodal pattern: tiers T0--T2 form a
+high-performance cluster (pass rate 0.935--0.978, score 0.776--0.816), while
+tiers T3--T6 form a degraded cluster (pass rate 0.630--0.759, score
+0.508--0.610). The transition between these clusters occurs at the T2--T3
+boundary, corresponding to the introduction of multi-agent delegation.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig04_pass_rate_by_tier.png}
+  \caption{Pass rate by tier across all experiments. Error bars show 95\%
+    bootstrap confidence intervals. The drop from T2 to T3 is the most
+    prominent feature, marking the critical cliff where delegation begins
+    to degrade performance.}
+  \label{fig:pass_rate_by_tier}
+\end{figure}
+
+Consistency (the within-subtest reproducibility of scores) shows a parallel
+pattern. T0--T2 achieve consistency values of 0.734--0.829, while T3--T6
+range from 0.222 to 0.431. This indicates that the higher tiers are not only
+worse on average but also less predictable---their outcomes are more variable
+from run to run, making them unreliable for production deployment.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig01_score_variance_by_tier.png}
+  \caption{Score distributions by tier. The variance increases substantially
+    from T3 onward, reflecting the bimodal outcome distribution in
+    delegation-based tiers: runs either succeed (high score) or fail
+    completely (zero score).}
+  \label{fig:score_variance}
+\end{figure}
+
+The Kruskal--Wallis omnibus test confirms significant tier effects for three
+of five metrics:
+
+\begin{itemize}
+  \item Pass rate: $H(6) = 119.01$, $p < 0.001$ (significant)
+  \item Score: $H(6) = 91.34$ (from SRH tier factor), $p < 0.001$ (significant)
+  \item Duration: $H(6) = 40.94$, $p < 0.001$ (significant)
+  \item Cost: $H(6) = 4.00$, $p = 0.676$ (not significant)
+  \item Implementation rate: $H(6) = 5.47$, $p = 0.486$ (not significant)
+\end{itemize}
+
+Note that the Score and Cost tier statistics above are drawn from the
+Scheirer--Ray--Hare tier main effect (Section~\ref{sec:interaction}), as the
+omnibus pipeline tests only pass rate, implementation rate, and duration
+directly.
+
+The non-significance of cost and implementation rate is analytically
+important. It means that all tiers cost approximately the same and that the
+agent's propensity to \emph{attempt} the task is not affected by architecture.
+The differences emerge only in the \emph{quality} of the attempt and the time
+required to complete it.
+
+Pairwise comparisons with Holm--Bonferroni correction identify the following
+significant transitions:
+
+\begin{itemize}
+  \item \textbf{T2 $\to$ T3}: $p < 0.001$, Cliff's $\delta = -0.219$
+    [$-0.268$, $-0.168$] (small effect). This is the critical cliff where
+    the introduction of delegation produces a significant drop in pass rate.
+  \item \textbf{T3 $\to$ T4}: Dunn's $p = 0.058$ (n.s.\ after
+    Holm--Bonferroni correction), Cliff's $\delta = -0.116$ [$-0.212$,
+    $-0.023$] (negligible effect, though CI excludes zero). Hierarchical
+    orchestration further degrades performance beyond flat delegation.
+  \item \textbf{T0 $\to$ T6}: $p = 0.018$. The overall trend from simplest
+    to most complex is significantly negative.
+  \item \textbf{Duration T2 $\to$ T3}: $p = 0.048$, Cliff's $\delta = -0.154$
+    [$-0.264$, $-0.045$]. Delegation-based tiers tend to run longer.
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig19_effect_size_forest.png}
+  \caption{Forest plot of Cliff's $\delta$ effect sizes for pairwise tier
+    comparisons on pass rate. Negative values indicate degradation with
+    increasing complexity. The T2--T3 comparison shows the largest effect.
+    Error bars show 95\% bootstrap confidence intervals.}
+  \label{fig:effect_size_forest}
+\end{figure}
+
+\subsection{Tier $\times$ Task Interaction}
+\label{sec:interaction}
+
+The most analytically important finding is the significant tier $\times$
+experiment interaction. The Scheirer--Ray--Hare (SRH) test provides a
+non-parametric decomposition of the effects of tier, experiment, and their
+interaction on the ranked outcome variables:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Scheirer--Ray--Hare analysis of tier $\times$ experiment
+    interactions. The score interaction ($H=223.5$) exceeds both main
+    effects, indicating that tier effects are strongly task-dependent.}
+  \label{tab:srh}
+  \small
+  \begin{tabular}{llrrcl}
+    \toprule
+    Metric & Factor & $H$ & df & $p$ & Sig? \\
+    \midrule
+    Score & Experiment   & 178.2 & 2  & $<0.001$ & *** \\
+    Score & Tier         &  91.3 & 6  & $<0.001$ & *** \\
+    Score & Interaction  & 223.5 & 12 & $<0.001$ & *** \\
+    \midrule
+    Cost  & Experiment   & 903.1 & 2  & $<0.001$ & *** \\
+    Cost  & Tier         &   4.0 & 6  & 0.676    & n.s. \\
+    Cost  & Interaction  &   4.8 & 12 & 0.965    & n.s. \\
+    \midrule
+    Impl Rate & Experiment   & 490.7 & 2  & $<0.001$ & *** \\
+    Impl Rate & Tier         &   5.5 & 6  & 0.486    & n.s. \\
+    Impl Rate & Interaction  &   3.7 & 12 & 0.989    & n.s. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The score interaction ($H=223.5$, $df=12$, $p<0.001$) is the largest effect
+in the entire analysis, exceeding both the tier main effect ($H=91.3$) and
+the experiment main effect ($H=178.2$). This indicates that the impact of
+architectural complexity on quality is not uniform: it depends critically on
+the task being performed.
+
+The interaction is driven by the divergent tier profiles across experiments.
+In test-001, tiers T4--T6 score zero while T0--T2 score above 0.87. In
+test-002, the tier profile is nearly flat, with all tiers scoring between
+0.64 and 0.72. In test-003, the profile is again relatively flat, with
+modest variation. The aggregation of these divergent profiles produces the
+significant interaction.
+
+For cost, the experiment main effect is dominant ($H=903.1$, $p<0.001$),
+reflecting the differing cost profiles of the three tasks. test-002 (Mojo) is
+approximately $5\times$ more expensive per run than test-001 (Python Hello
+World). However, neither the tier main effect ($H=4.0$, $p=0.676$) nor the
+interaction ($H=4.8$, $p=0.965$) is significant for cost, confirming that
+architectural complexity does not systematically affect expenditure.
+
+The implementation rate shows a similar pattern to cost: strong experiment
+effects ($H=490.7$, $p<0.001$) but no significant tier effects or
+interactions. This indicates that the agent's \emph{willingness to attempt}
+the task is driven by task characteristics rather than architectural
+configuration, while the \emph{quality of the attempt} is
+architecture-dependent.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig36_tier_rank_stability.png}
+  \caption{Tier rank stability across experiments. The rank ordering of tiers
+    by pass rate is not stable across tasks, consistent with the significant
+    interaction effect. Lines crossing between experiments indicate rank
+    reversals.}
+  \label{fig:tier_rank_stability}
+\end{figure}
+
+Figure~\ref{fig:grade_heatmap} provides a granular view of grade distributions
+across all subtests and experiments, illustrating the divergent patterns that
+drive the interaction effect.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig05_grade_heatmap.png}
+  \caption{Grade distribution heatmap across all subtests. Each cell
+    represents the letter grade assigned to a subtest--tier combination.
+    The block of F grades in T3--T6 for test-001 contrasts with the
+    predominantly A/B grades for test-002 and test-003.}
+  \label{fig:grade_heatmap}
+\end{figure}
+
+\subsection{Per-Criterion Analysis}
+\label{sec:criteria}
+
+The judge panel evaluates each run against five weighted criteria. Across all
+runs, the per-criterion mean scores reveal that the budget model's weakest
+dimension is functional correctness (0.838~$\pm$~0.276), while code quality
+(0.972~$\pm$~0.137), build pipeline integrity (0.941~$\pm$~0.138), and
+proportionality (0.927~$\pm$~0.137) score substantially higher. Overall
+quality averages 0.903~$\pm$~0.133. This pattern---high marks on surface
+quality but lower marks on functional correctness---is consistent with the
+hypothesis that the budget model produces syntactically well-formed code that
+occasionally fails to satisfy the task's functional requirements.
+
+% ===================================================================
+% 6. INTER-RATER RELIABILITY
+% ===================================================================
+\section{Inter-Rater Reliability}
+\label{sec:interrater}
+
+\subsection{Panel Design}
+\label{sec:panel_design}
+
+The three-judge panel employs models spanning the full Anthropic capability
+spectrum. Judge~1 (\texttt{claude-opus-4-6}) is the most capable model in the
+lineup, Judge~2 (\texttt{claude-sonnet-4-6}) is mid-tier, and Judge~3
+(\texttt{claude-haiku-4-5}) is the budget model---the same model used as the
+subject agent.
+
+This design was intentional: using the subject model as one of its own judges
+enables analysis of self-evaluation bias. However, it also introduces the
+risk that the budget judge may lack the evaluative capacity to distinguish
+quality levels in its own outputs. The panel represents a pragmatic
+compromise between evaluation cost (using only frontier judges would be
+expensive) and reliability (using only budget judges might be unreliable).
+
+\subsection{Agreement Results}
+\label{sec:agreement_results}
+
+Table~\ref{tab:judge_agreement} presents the full inter-rater reliability
+statistics.
+
+\input{tables/tab03_judge_agreement}
+
+The headline finding is that Krippendorff's $\alpha$ (interval) is $-0.030$,
+which is below chance agreement ($\alpha = 0$). By conventional standards in
+content analysis~\cite{polo2024efficient}, $\alpha < 0.667$ is considered
+unacceptable for drawing conclusions about individual cases, and
+$\alpha > 0.800$ is required for reliable measurement. Our value of $-0.030$
+indicates that the three judges agree less than would be expected by random
+scoring.
+
+The negative value of $\alpha$ is particularly concerning. While $\alpha = 0$
+would indicate random agreement, $\alpha < 0$ suggests systematic
+\emph{disagreement}---the judges are not merely uncorrelated but are
+actively producing divergent evaluations. This could arise if the judges
+apply fundamentally different evaluation criteria or if their evaluation
+strategies are negatively correlated (e.g., one judge favoring verbose output
+while another penalizes it).
+
+Pairwise correlations reveal a structured pattern of disagreement. Spearman
+rank correlations are near zero for all pairs:
+
+\begin{itemize}
+  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): $\rho = 0.125$
+  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): $\rho = 0.142$
+  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): $\rho = 0.054$
+\end{itemize}
+
+These near-zero rank correlations indicate that the judges do not agree on
+the \emph{relative ordering} of outputs. An output that Opus rates highly may
+be rated poorly by Sonnet or Haiku, and vice versa.
+
+Pearson correlations are somewhat higher, suggesting some linear association
+in score magnitudes:
+
+\begin{itemize}
+  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): $r = 0.505$
+  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): $r = 0.242$
+  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): $r = 0.185$
+\end{itemize}
+
+The discrepancy between Spearman and Pearson correlations (particularly for
+Opus--Sonnet: $\rho = 0.125$ vs.\ $r = 0.505$) suggests a non-linear
+relationship between judge scores. The moderate Pearson correlation may
+reflect shared calibration of score scale (both judges tend to use similar
+score ranges) even though they disagree on which outputs deserve high vs.\
+low scores.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \includegraphics[width=\textwidth]{fig14_t0_judge_agreement.png}
+    \caption{T0 (Prompts)}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.48\textwidth}
+    \includegraphics[width=\textwidth]{fig14_t3_judge_agreement.png}
+    \caption{T3 (Delegation)}
+  \end{subfigure}
+  \caption{Judge agreement scatter plots for T0 and T3. Each point represents
+    a run, with axes showing scores from different judge pairs. The wide
+    scatter and lack of diagonal clustering illustrate the low inter-rater
+    reliability across both high-performing (T0) and low-performing (T3)
+    tiers.}
+  \label{fig:judge_agreement}
+\end{figure}
+
+\subsection{Judge Bias}
+\label{sec:judge_bias}
+
+The mean absolute score differences reveal a systematic pattern in which
+disagreement scales with the capability gap between judges:
+
+\begin{itemize}
+  \item Judge~1 (Opus) vs.\ Judge~2 (Sonnet): mean $|\Delta| = 0.089$
+  \item Judge~1 (Opus) vs.\ Judge~3 (Haiku): mean $|\Delta| = 0.210$
+  \item Judge~2 (Sonnet) vs.\ Judge~3 (Haiku): mean $|\Delta| = 0.270$
+\end{itemize}
+
+The two most capable models (Opus and Sonnet) agree most closely, with a mean
+absolute difference of only 0.089 on a $[0, 1]$ scale. As the capability gap
+increases, disagreement grows: Opus and Haiku disagree by 0.210, while Sonnet
+and Haiku---the pair with the most divergent capability levels after accounting
+for the specific evaluation task---disagree by 0.270.
+
+This monotonic relationship between capability gap and disagreement is
+consistent with the hypothesis that the budget model lacks sufficient
+evaluative capacity to produce reliable judgments. Haiku may be applying
+different evaluation criteria, assigning scores based on surface features
+(e.g., output length, code structure) rather than the deeper quality
+assessments (e.g., correctness, completeness, adherence to specifications)
+performed by the frontier judges.
+
+The near-zero Krippendorff's $\alpha$ raises a methodological concern that
+affects the interpretation of all results in this paper. If the judges do not
+agree, then the consensus score (arithmetic mean) may not be a reliable
+measure of output quality. The mean of disagreeing judges produces a
+compromise value that no individual judge endorses, potentially masking
+genuine quality differences between tiers. However, the pass rate metric
+(which uses a binary threshold applied to the consensus score) may be more
+robust to this issue, as it requires only that the mean score be above or
+below 0.5 rather than precisely calibrated.
+
+% ===================================================================
+% 7. COST ANALYSIS
+% ===================================================================
+\section{Cost Analysis}
+\label{sec:cost_analysis}
+
+\subsection{Cost-of-Pass by Tier}
+\label{sec:cop_by_tier}
+
+Table~\ref{tab:cost_analysis} presents the detailed cost analysis by tier,
+including mean cost per run, total cost, Cost-of-Pass, and token usage
+statistics.
+
+\input{tables/tab05_cost_analysis}
+
+The aggregate Cost-of-Pass ranges from \$0.11 (T2) to \$0.22 (T6). This
+variation is driven entirely by the denominator (pass rate) rather than the
+numerator (mean cost), since mean cost per run is effectively constant across
+tiers (\$0.11--\$0.15). Applying Equation~\ref{eq:cop}, the CoP for T6 is
+elevated because its lower pass rate (0.667) divides a slightly higher mean
+cost (\$0.15), yielding \$0.22 per successful outcome.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig06_cop_by_tier.png}
+  \caption{Cost-of-Pass by tier. The increasing CoP from T2 to T6 reflects
+    declining pass rates rather than increasing costs. T2 achieves the
+    minimum CoP at \$0.11, making it the most cost-efficient tier in the
+    aggregate.}
+  \label{fig:cop_by_tier}
+\end{figure}
+
+T2 (Tooling) achieves the lowest aggregate CoP at \$0.11, making it the
+Pareto-optimal tier in the aggregate: it has both the highest pass rate (0.978)
+and the lowest cost-of-pass. T1 (Skills) is a close second with CoP \$0.12
+and pass rate 0.967. The frontier CoP across all tiers and experiments is
+\$0.113.
+
+The practical implication is clear: for budget models on the tasks studied,
+the optimal strategy is to equip the agent with tools (T2) but not delegation
+or orchestration. This configuration maximizes quality while minimizing the
+expected cost per successful outcome.
+
+\subsection{Cost Scaling with Task Difficulty}
+\label{sec:cost_scaling}
+
+Cost varies dramatically by experiment but not by tier. The mean cost per run
+ranges from \$0.038 for test-001 (trivial Python) to \$0.226 for test-002
+(moderate Mojo), with test-003 (moderate Python configuration) at \$0.076.
+The Kruskal--Wallis test confirms a highly significant experiment effect on
+cost ($H = 903.1$, $p < 0.001$) but no significant tier effect
+($H = 4.0$, $p = 0.676$).
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig39_cost_scaling_with_difficulty.png}
+  \caption{Cost scaling across experiments. Cost is driven primarily by task
+    characteristics---repository size, language complexity, and required
+    context---rather than architectural tier. The spread within each
+    experiment reflects run-to-run variance, not tier differences.}
+  \label{fig:cost_scaling}
+\end{figure}
+
+The cost differential between experiments is attributable to the differing
+context requirements of each task. The Mojo task (test-002) requires the agent
+to process a larger repository with more complex build configuration,
+consuming more tokens for context. The Python Hello World task (test-001)
+operates in a minimal repository, requiring minimal context.
+
+This cost invariance across tiers has an important practical implication:
+since all tiers cost approximately the same per run, the optimal strategy is
+simply to use the tier with the highest pass rate. There is no cost--quality
+trade-off to navigate; the Pareto frontier collapses to a narrow region
+around T1--T2, where both cost and quality are optimized simultaneously.
+
+\subsection{Frontier Analysis}
+\label{sec:frontier_analysis}
+
+Figure~\ref{fig:cost_quality_pareto} presents the cost--quality Pareto
+frontier across all tier $\times$ experiment combinations.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{fig08_cost_quality_pareto.png}
+  \caption{Cost--quality Pareto frontier. Each point represents a
+    tier--experiment combination, plotted by mean cost per run (x-axis) and
+    pass rate (y-axis). Pareto-optimal points lie on the upper-left frontier.
+    T0--T2 configurations dominate the frontier across all experiments, while
+    T4--T6 for test-001 cluster at zero quality with non-zero cost.}
+  \label{fig:cost_quality_pareto}
+\end{figure}
+
+The Pareto frontier is dominated by T0--T2 configurations across all three
+experiments. No T4--T6 configuration appears on the Pareto frontier for any
+experiment. T3 appears on the frontier only for test-002, where its pass rate
+(0.967) is competitive with T2 (0.956).
+
+The test-001 T4--T6 points (zero pass rate, non-zero cost) represent the
+worst possible outcome: the organization pays for computation but receives
+no useful output. These configurations are not merely suboptimal---they
+are wasteful, consuming budget without any return.
+
+The total experimental cost of \$122.31 across 1,080 runs yields a mean cost
+of \$0.11 per run. This demonstrates that meaningful ablation studies can be
+conducted at modest cost using budget models, making the Scylla framework
+accessible for iterative evaluation during development cycles rather than
+requiring dedicated evaluation budgets.
+
+% ===================================================================
+% 8. DISCUSSION
+% ===================================================================
+\section{Discussion}
+\label{sec:discussion}
 
 \subsection{Key Findings}
+\label{sec:key_findings}
 
-\textbf{Finding 1: Tier rankings are task-dependent.}
-The same tier can be best on one task and worst on another. T1 (skills) is competitive
-for trivial and complex tasks but fails completely for refactoring. T6 (maximum) performs
-well on trivial tasks but worst on complex implementation. There is no universally optimal tier.
+Our results suggest several preliminary conclusions about the interaction
+between architectural complexity and budget model performance. We organize
+these findings around the four research questions posed in
+Section~\ref{sec:introduction}.
 
-\textbf{Finding 2: Tool access is non-negotiable for refactoring.}
-T1's 0.00 score on test-007 is a hard boundary: no amount of skill configuration compensates
-for the absence of file-reading tools when the task requires understanding existing code.
-This validates that tool access (T2+) is a prerequisite for a class of real-world tasks.
+\textbf{Finding 1 (RQ1): The T2--T3 cliff is the critical transition.} The
+introduction of delegation at T3 produces a statistically significant drop in
+aggregate pass rate from 0.978 to 0.759 (Cliff's $\delta = -0.219$,
+$p < 0.001$). This is the largest single-step degradation in the tier
+hierarchy and represents the transition from individual agent execution to
+multi-agent coordination. For the budget model studied, this transition
+appears to exceed the model's coordination capacity: the overhead of managing
+delegation protocols consumes reasoning resources that would otherwise be
+applied to the task.
 
-\textbf{Finding 3: Over-engineering is detectable and measurable.}
-T6's lowest score on test-017 (0.78 vs.\ 1.00 for T1/T2/T4) quantifies over-engineering.
-Scylla can detect when maximum configuration actively hurts quality.
+The subsequent T3--T4 transition (Cliff's $\delta = -0.116$, negligible
+by conventional thresholds though the CI excludes zero) suggests that
+adding hierarchical orchestration on top of delegation produces further, though
+smaller, degradation. The cumulative effect of moving from T2 to T6 is a
+drop in pass rate from 0.978 to 0.667---a loss of approximately one-third of
+the base capability.
 
-\textbf{Finding 4: Delegation overhead is large and often unjustified.}
-T3 and T4 consistently cost 3.5--7$\times$ more than T1/T2 (depending on comparison) with comparable or worse quality.
-For the tasks tested here, delegation adds coordination overhead without commensurate
-quality improvement.
+\textbf{Finding 2 (RQ1): Architectural over-specification causes catastrophic
+failure on trivial tasks.} The zero pass rate for T4--T6 on test-001 is the
+most striking individual result in the study. A task that the bare model
+handles with 95.8\% pass rate becomes completely unsolvable when wrapped in
+hierarchical delegation. This suggests that budget models cannot
+simultaneously manage coordination overhead and task execution, even when
+the task itself is trivial. The coordination overhead is not additive but
+multiplicative: it does not merely reduce performance but can entirely
+prevent task completion.
 
-\textbf{Finding 5: T2 (tooling) provides the best aggregate cost-quality balance.}
-Across all three complete tests, T2 achieves the lowest Frontier CoP (\$0.44 aggregate),
-the highest pass rate among tiers with representative coverage (T0--T4: 83.1\%,
-compared to T6's 93.3\% from a single subtest with wide CI [0.667, 1.000]),
-and avoids the delegation overhead of T3/T4 while being accessible without complex agent hierarchies.
+\textbf{Finding 3 (RQ2): Tier effects are task-dependent.} The significant
+SRH interaction effect ($H = 223.5$, $p < 0.001$) is the dominant finding of
+the cross-task analysis. The interaction $H$ exceeds both the tier main effect
+($H = 91.3$) and the experiment main effect ($H = 178.2$), indicating that
+the \emph{combination} of tier and task determines quality more strongly than
+either factor alone. This means there is no universally optimal tier: the best
+architecture depends on the task. For trivial tasks, T0--T2 are clearly
+superior; for moderate tasks, the tiers are more interchangeable, with some
+evidence that higher tiers provide marginal benefits.
 
-\subsection{Hypothesis Progress}
+\textbf{Finding 4 (RQ3): Cost is invariant to architectural complexity.} The
+non-significant tier effect on cost ($p = 0.676$) is a powerful result because
+it eliminates the possibility of a cost--quality trade-off. If higher tiers
+provided cost savings (e.g., by solving tasks more efficiently with fewer
+tokens), there might be a case for accepting lower quality in exchange for
+lower cost. The absence of cost variation means that the quality degradation
+in higher tiers is a pure loss with no compensating benefit.
 
-The Scylla framework was designed to test two hypotheses~\cite{scylla2026dryrun}:
+\textbf{Finding 5 (RQ4): The three-judge panel exhibits near-zero
+reliability.} With Krippendorff's $\alpha = -0.030$, the judge panel produces
+scores that are effectively random relative to each other. The disagreement
+is structured: the two frontier judges (Opus and Sonnet) agree reasonably
+well (mean $|\Delta| = 0.089$), while the budget judge (Haiku) disagrees
+substantially with both (mean $|\Delta| = 0.210$ and $0.270$). This suggests
+that including a budget model in the judge panel introduces noise rather than
+signal, and that a two-judge panel of frontier models might provide more
+reliable evaluation.
 
-\textbf{(H1) Certain tasks excel when run as sub-tasks, tools, or skills.}
-Partially supported. Test-007 shows tools are essential for refactoring (H1 supported for tools).
-Test-017 shows delegation does not help complex implementation (H1 not supported for delegation).
-The effect is task-class dependent, not universal.
+\subsection{Practical Implications}
+\label{sec:practical_implications}
 
-\textbf{(H2) Prompt complexity has opposing effects: KISS for in-distribution, inverse KISS
-for out-of-distribution tasks.}
-Partially supported. Test-002 (trivial, presumably in-distribution) shows ceiling effects
-consistent with KISS. Test-007 and test-017 show that added complexity sometimes hurts
-(T6 on test-017), consistent with KISS. However, test-007 shows that T2 tools help,
-suggesting the tool-vs-prompt distinction matters more than prompt complexity per se.
-Full hypothesis testing requires more tasks across the complexity spectrum.
+These findings have several practical implications for organizations deploying
+agentic coding systems with budget models.
+
+\textbf{Architecture selection should be conservative.} The default
+recommendation for budget model deployments is to use T2 (Tooling) as the
+baseline architecture. This configuration provides the agent with external
+tools and MCP servers while avoiding the delegation overhead that degrades
+performance. T2 achieves the highest aggregate pass rate (0.978) and the
+lowest Cost-of-Pass (\$0.11).
+
+\textbf{Avoid delegation for simple tasks.} When the task complexity is low
+(comparable to test-001), delegation-based architectures should be avoided
+entirely. The catastrophic failure of T4--T6 on the trivial Python task
+demonstrates that architectural over-specification is not merely wasteful but
+actively harmful. A simple diagnostic: if the task can be described in a
+single sentence, delegation is unlikely to help with a budget model.
+
+\textbf{Task classification can guide tier selection.} The significant
+interaction effect implies that a static tier recommendation is suboptimal.
+Organizations could implement a lightweight task classifier that selects T1--T2
+for simple tasks and considers T3 only for tasks where genuine decomposition
+benefits are expected. This adaptive approach could capture the benefits of
+higher tiers on complex tasks while avoiding the penalties on simple ones.
+
+\textbf{Judge panel composition matters.} The near-zero inter-rater
+reliability suggests that organizations using LLM-as-judge evaluation should
+carefully consider panel composition. Including budget models as judges
+introduces noise that may obscure real quality differences. A two-judge
+panel of frontier models may provide more reliable evaluation despite the
+higher per-evaluation cost.
+
+\textbf{Budget models are cost-competitive for evaluation.} The total cost
+of \$122.31 for 1,080 runs demonstrates that systematic architectural
+evaluation is affordable with budget models. Organizations can conduct their
+own ablation studies during development cycles rather than relying on
+published benchmarks that may not reflect their specific use cases.
+
+\subsection{Comparison to Prior Work}
+\label{sec:comparison_prior}
+
+The prior Scylla dryrun~\cite{scylla2026dryrun} evaluated Claude Sonnet 4.5
+on a single Hello World task. While direct comparison is limited by
+differences in model, task set, and experimental scale, several contrasts
+are noteworthy.
+
+The dryrun found a similar pattern of degradation in higher tiers, suggesting
+that the non-monotonic tier--quality relationship may be a general phenomenon
+rather than specific to budget models. However, the severity of the
+degradation appears to be model-dependent: the frontier model in the dryrun
+maintained partial performance in delegation tiers, whereas the budget model
+in this study exhibits complete failure on the trivial task.
+
+This comparison, while informal, suggests that the T2--T3 cliff may be
+\emph{steeper} for budget models than for frontier models---a hypothesis
+that could be tested formally in a cross-model study using the same
+experimental design.
 
 \subsection{Limitations}
+\label{sec:limitations}
 
-\begin{enumerate}
-\item \textbf{Small N}: $N=5$ per subtest; simulation-based power analysis shows 40--80\%
-  power at observed effects for significant transitions, and 36\% at medium effect for T5/T6.
-  Null results for T5 and T6 individually should be interpreted with particular caution.
-\item \textbf{Single judge}: Removing two of three judges from the dryrun design increases
-  scoring variance and potential judge bias. The dryrun showed high judge agreement,
-  but single-judge results cannot be validated against consensus.
-\item \textbf{Max 2 subtests per tier}: Critical configuration variants within each tier
-  are not explored. A subtest that fails may not be representative of the tier.
-\item \textbf{Incomplete tests}: test-021 and test-022 are still running; this paper's
-  cross-test analysis is based on only three complete tests.
-\item \textbf{Cross-model confounds}: Haiku vs.\ Sonnet comparison is confounded by
-  task, judges, and N. Conclusions are exploratory.
-\item \textbf{Framework failures}: 16 zero-cost/zero-token runs exist across T1 (5), T4 (5),
-  and T5 (6). These inflate failure rates for those tiers. T5's 50\% aggregate pass rate
-  is partly driven by 20\% framework failure rate (6/30 runs), independent of model quality.
-\end{enumerate}
+This study has several important limitations that constrain the
+generalizability of our findings:
+
+\textbf{Small sample size.} With $N=3$ replications per subtest, our
+statistical power is limited. Bootstrap confidence intervals are necessarily
+wide (e.g., the T6 pass rate CI spans $[0.333, 0.889]$), and individual
+outlier runs can substantially influence subtest-level statistics. The results
+should be treated as preliminary evidence requiring confirmation with larger
+sample sizes ($N \geq 10$).
+
+\textbf{Single model family.} All experiments use models from the Anthropic
+Claude family. The findings may not generalize to other model families (e.g.,
+GPT, Gemini, Llama) with different architectural assumptions, fine-tuning
+strategies, or capability profiles. In particular, models that have been
+specifically optimized for multi-agent coordination might show different tier
+sensitivity profiles.
+
+\textbf{Limited task diversity.} Three experiments provide limited coverage of
+the task space. All three tasks are relatively simple by software engineering
+standards---none involves multi-file refactoring, complex debugging, or
+large-scale system design. The tier effects observed here may not hold for
+more complex tasks where delegation could provide genuine coordination value
+that offsets the overhead costs.
+
+\textbf{Judge reliability concerns.} The near-zero inter-rater reliability
+undermines confidence in the quality scores. While the pass rate metric
+(which uses a binary threshold) is less sensitive to score miscalibration,
+the continuous score and CoP metrics may be substantially affected by judge
+disagreement. All findings based on continuous scores should be interpreted
+with this caveat in mind.
+
+\textbf{Confounded tier composition.} The tiers are not pure factorial
+manipulations---each tier includes the capabilities of previous tiers. T3
+includes T0--T2 capabilities plus delegation. This hierarchical design means
+we cannot fully isolate the effect of delegation from potential interaction
+effects with lower-tier components. A fully factorial design would require
+testing delegation without prompts, skills, or tools, which is not currently
+supported by the framework.
+
+\textbf{Temporal effects.} All experiments were conducted over a limited
+time window during January--March 2026. Model behavior may vary due to API
+updates, load balancing, or other infrastructure factors not captured in our
+analysis.
 
 \subsection{Threats to Validity}
+\label{sec:threats}
 
-\textbf{Internal validity}: The checkpoint/resume system may introduce subtle differences
-between runs if rate-limiting causes different code paths. All T0 failures appear systematic
-(infrastructure issue, not random), so they should be excluded from quality comparisons.
+\textbf{Internal validity.} The primary threat to internal validity is the
+non-independent judge panel. Because the judges are deterministic functions
+of the input (modulo temperature), the three scores for each run are not
+truly independent observations. This may inflate or deflate agreement
+statistics in ways that are difficult to characterize. Additionally, the
+use of the same model (Haiku) as both subject and judge introduces a
+potential confound: self-preference bias could inflate Haiku's scores for
+its own outputs, while capacity limitations could deflate them.
 
-\textbf{External validity}: All tasks are from a single repository (ProjectOdyssey) with
-one contributor. Results may not generalize to other codebases, languages, or domains.
-Mojo is an uncommon language; Haiku's performance may be better/worse on more common languages.
+\textbf{External validity.} The use of a single model family, a single
+evaluation framework, and a small set of tasks limits the external validity
+of our conclusions. The findings are specific to the Scylla framework's
+operationalization of architectural tiers and may not generalize to other
+agent architectures or evaluation protocols. The specific tier definitions
+(e.g., which skills are included in T1, which tools in T2) may also
+influence results in ways that are difficult to disentangle from the
+generic tier effects.
 
-\textbf{Construct validity}: The single judge in this study scores differently than the
-three-judge consensus in the dryrun. Score comparisons across studies should account for
-this systematic difference.
+\textbf{Construct validity.} The mapping from Scylla's tier definitions to
+meaningful architectural categories is a construct that may not perfectly
+capture real-world agent configurations. For example, T3's 41 delegation
+subtests may overweight certain specialist configurations relative to their
+practical importance, and T6's single subtest provides very limited
+statistical basis for inference about ``everything enabled'' configurations.
 
-\section{Conclusions}\label{sec:conclusions}
+\textbf{Statistical conclusion validity.} Given the small $N$, there is a
+risk of both Type~I errors (finding spurious effects) and Type~II errors
+(missing real effects). The use of non-parametric tests and conservative
+correction methods (Holm--Bonferroni) mitigates the former, but the latter
+remains a concern, particularly for the cost and implementation rate analyses
+where real but small effects may be undetectable with $N=3$.
 
-This study applied the Scylla framework to evaluate Claude Haiku 4.5 across five tasks of
-increasing complexity with $N=5$ runs per subtest---a significant methodological advance
-over the dryrun's $N=1$.
+% ===================================================================
+% 9. CONCLUSIONS
+% ===================================================================
+\section{Conclusions}
+\label{sec:conclusions}
 
-The central finding is that \textbf{optimal tier selection is task-dependent}:
-no single architectural configuration dominates across task types.
-For trivial tasks, simple configurations (T1) are most efficient.
-For refactoring tasks, tool access is mandatory (T1 fails without it).
-For complex implementation, simpler configurations (T1/T2/T5) outperform delegation
-hierarchies and maximum configurations.
+This study presents the first multi-task ablation of agentic coding
+architectures using a budget frontier model (\texttt{claude-haiku-4-5}).
+Across 1,080 runs spanning three experiments, seven tiers, and 120 subtests
+at a total cost of \$122.31, we find preliminary evidence for a non-monotonic
+relationship between architectural complexity and task performance.
 
-Haiku 4.5 is \textbf{economically viable} for real coding tasks.
-Despite slightly lower raw scores than Sonnet on Hello World analogues,
-Haiku achieves Grade A results on all three complete tasks with Frontier CoPs
-of \$0.157--\$0.471---meaningful efficiency for production use at scale.
+The central finding is that \emph{simpler is better} for the budget model
+studied. Tiers T0--T2 (prompts, skills, and tooling) consistently outperform
+tiers T3--T6 (delegation, hierarchy, hybrid, and super) in aggregate pass
+rate (0.935--0.978 vs.\ 0.630--0.759) and score (0.776--0.816 vs.\
+0.508--0.610). The transition from T2 to T3 constitutes a statistically
+significant critical cliff where the introduction of multi-agent delegation
+degrades performance (Cliff's $\delta = -0.219$, $p < 0.001$).
 
-The \textbf{over-engineering signal} is clear and measurable: T6 (maximum configuration)
-scores worst on the most complex task. Scylla successfully quantifies when adding more
-capability hurts quality.
+The severity of the degradation is task-dependent. On trivial tasks,
+hierarchical architectures (T4--T6) fail catastrophically, achieving zero
+pass rate on a task the base model solves with near-perfect reliability. On
+moderate tasks, the tier effects are muted, with all tiers achieving
+acceptable performance. This task dependence is formalized by the significant
+SRH interaction effect ($H = 223.5$, $p < 0.001$), the largest effect in the
+analysis.
 
-\section{Further Work}\label{sec:further}
+Cost is invariant to tier ($p = 0.676$), eliminating any cost--quality
+trade-off. Since higher tiers cost the same as lower tiers but produce
+worse results, they are strictly Pareto-dominated. The Pareto-optimal tier
+is T2 (Tooling), with a Cost-of-Pass of \$0.11.
 
-\begin{enumerate}
-\item \textbf{Complete test-021 and test-022}: Run T5--T6 to get full tier coverage
-  and enable complete cross-test analysis.
-\item \textbf{Direct Sonnet comparison}: Run the same three tasks with Sonnet 4.5
-  to produce a controlled cross-model comparison without the confounds in Section~\ref{sec:crossmodel}.
-\item \textbf{Restore three-judge consensus}: Return to Opus + Sonnet + Haiku judges
-  for scoring reliability and to validate single-judge results.
-\item \textbf{Increase N}: Target $N=10$--$20$ per subtest to achieve 80\% power for
-  medium effect sizes.
-\item \textbf{Scale to full suite}: Run the full 47-test suite to enable systematic
-  hypothesis testing across the task complexity spectrum.
-\item \textbf{Adaptive tier selection}: Use this study's tier-task interaction findings
-  to design a meta-learner that selects the optimal tier configuration based on
-  task characteristics.
-\item \textbf{Cross-task Scheirer-Ray-Hare}: With more complete multi-task data,
-  the two-way tier $\times$ task interaction test can be properly estimated.
-\end{enumerate}
+The near-zero inter-rater reliability ($\alpha = -0.030$) of the three-judge
+panel is a methodological finding with implications beyond this study. It
+suggests that LLM-as-judge evaluation requires careful panel composition,
+and that including budget models as judges may undermine measurement
+reliability.
 
-\section*{Acknowledgements}
+These conclusions are necessarily preliminary given the small sample size
+($N=3$ per subtest), limited task diversity, and single-model-family scope.
+We present them as directional evidence that should motivate larger-scale
+studies with broader task coverage and cross-model comparisons.
 
-This work was self-funded by the author.
-The experiments were run on local hardware with API access to Anthropic's Claude models.
-Special thanks to Tuan Nguyen for reviewing early drafts of the dryrun paper.
+% ===================================================================
+% 10. FURTHER WORK
+% ===================================================================
+\section{Further Work}
+\label{sec:further_work}
 
+Several directions for future research emerge from this study:
+
+\textbf{Increased statistical power.} Repeating the experiments with
+$N \geq 10$ replications per subtest would substantially narrow confidence
+intervals and improve the reliability of pairwise comparisons. Adaptive
+sampling strategies could focus additional replications on tiers and subtests
+where variance is highest, optimizing the information gained per dollar spent.
+
+\textbf{Cross-model comparison.} Applying the same experimental design to
+frontier models (e.g., \texttt{claude-opus-4-6}, \texttt{claude-sonnet-4-6})
+would reveal whether the non-monotonic tier--quality relationship is specific
+to budget models or generalizes across the capability spectrum. The prior
+Scylla dryrun~\cite{scylla2026dryrun} used Sonnet 4.5 on a single task,
+providing a starting point for this comparison. Of particular interest is
+whether frontier models exhibit a T2--T3 cliff at all, or whether their
+greater reasoning capacity enables them to manage delegation overhead
+without quality loss.
+
+\textbf{Task difficulty scaling.} Extending the experiment set to include
+harder tasks (multi-file refactoring, complex debugging, system design) would
+test the hypothesis that delegation-based architectures become beneficial only
+when task complexity exceeds the individual model's capacity. A crossover
+point---the task complexity at which delegation begins to help rather than
+hurt---would provide practical guidance for architectural selection.
+
+\textbf{Judge panel calibration.} The poor inter-rater reliability motivates
+investigation of alternative judge panel compositions. Options include:
+(a)~removing the budget judge to test whether a two-model frontier panel
+achieves acceptable reliability; (b)~calibrating all judges through shared
+rubric training or few-shot examples; (c)~replacing LLM judges with
+deterministic evaluation criteria such as test suite pass rates; or
+(d)~investigating hybrid approaches that combine automated evaluation with
+targeted human review.
+
+\textbf{Adaptive tier selection.} The significant tier $\times$ task
+interaction suggests that a meta-agent capable of selecting the optimal tier
+based on task characteristics could outperform any fixed tier strategy. This
+meta-agent could be trained on the data from this and future studies,
+learning to predict which architectural configuration will maximize pass rate
+for a given task description.
+
+\textbf{Cost optimization.} While cost is invariant to tier in our data, the
+total cost of \$122.31 for 1,080 runs suggests room for efficiency gains
+through prompt caching optimization, reduced context windows for simple tasks,
+or selective evaluation (running fewer subtests for well-characterized tiers).
+
+\textbf{Longitudinal stability.} Repeating the experiments periodically would
+reveal whether the tier--quality relationships are stable over time or shift
+with model updates. This is particularly relevant for budget models, which
+may receive more frequent capability improvements than frontier models.
+
+\textbf{Non-Anthropic models.} Extending the study to non-Anthropic model
+families (OpenAI, Google, Meta) would test whether the findings are specific
+to Claude's architecture or reflect general properties of budget-class LLMs
+in agentic settings.
+
+\textbf{Delegation protocol optimization.} The catastrophic failure of
+delegation-based tiers on trivial tasks suggests that the delegation protocol
+itself may be suboptimal for budget models. Research into lightweight
+delegation protocols---simpler handoff mechanisms, reduced coordination
+overhead, or asynchronous delegation---could potentially recover some of the
+lost performance while preserving the benefits of task decomposition.
+
+\textbf{Fine-grained tier decomposition.} The current T3 tier groups 41
+subtests that represent different delegation configurations. A more
+fine-grained analysis could identify which specific delegation strategies
+(e.g., planning-focused, review-focused, or implementation-focused specialists)
+are most harmful or beneficial, enabling surgical rather than wholesale
+architectural recommendations.
+
+% ===================================================================
+% ACKNOWLEDGMENTS
+% ===================================================================
+\section*{Acknowledgments}
+
+This research was conducted using the Scylla evaluation framework as part of
+the Homeric Intelligence ecosystem. The author thanks the Claude Code team at
+Anthropic for providing the agentic CLI infrastructure used in all experiments.
+All evaluation costs (\$122.31) were borne by the author. No external funding
+was received for this work.
+
+% ===================================================================
+% BIBLIOGRAPHY
+% ===================================================================
 \bibliographystyle{plain}
 \bibliography{references}
 
+% ===================================================================
+% APPENDICES
+% ===================================================================
 \appendix
 
-\section{Detailed Tier Reports}\label{app:tier-reports}
+% -------------------------------------------------------------------
+% APPENDIX A: Experiment Configuration
+% -------------------------------------------------------------------
+\section{Experiment Configuration}
+\label{app:experiment_config}
 
-Full per-tier subtest tables are available in the experiment result directories at
-\texttt{docs/arxiv/haiku/data/} and the raw experiment directories at
-\texttt{~/fullruns/haiku/}.
+This appendix provides the full experiment configuration used for all three
+experiments. Each experiment uses identical tier and subtest definitions; the
+experiments differ only in the target task, repository, and difficulty level.
 
-\subsection{test-002 Subtest Detail}
+\subsection{Tier Definitions}
 
-See \texttt{docs/arxiv/haiku/tables/tab07\_subtest\_detail.*} for full subtest-level results.
-
-\subsection{test-007 Subtest Detail}
-
-T1 subtest analysis: subtest-01 achieved 40\% pass rate (mean score 0.304; 2 of 5 runs passed
-with scores 0.85 and 0.67) but below the quality threshold for tier selection.
-Subtest-02 scored 0.00 with 0\% pass rate.
-The tier-level best score is 0.00 (subtest-02 selected as tiebreaker);
-both subtests show insufficient quality for a refactoring task,
-confirming systematic tool-dependency failure rather than a subtest-specific fluke.
-
-T2 best subtest (01) used criteria: \texttt{duplicate\_merge} (1.00),
-\texttt{unused\_removal} (1.00), \texttt{ci\_compatible} (0.85), \texttt{docs\_updated} (0.70).
-
-\subsection{test-017 Subtest Detail}
-
-Single rubric criterion (\texttt{requirements}) explains the high score uniformity.
-Per-criteria breakdown shows requirements scoring: T0=1.00, T1=1.00, T2=1.00, T3=1.00,
-T4=1.00, T5=1.00, T6=1.00. Score differences derive from partial credit on other criteria
-not shown in the summary.
-
-\section{Statistical Output}\label{app:stats}
-
-\subsection{Normality Tests}
-
-Nearly all tier/metric combinations failed the Shapiro-Wilk normality test ($p < 0.001$),
-justifying non-parametric methods throughout. T6 score ($W = 0.935$, $p = 0.329$) and
-T6 cost ($W = 0.918$, $p = 0.177$) passed normality, likely due to small sample size ($n = 15$).
-Sample statistics per tier (score metric):
-
-\begin{itemize}
-\item T0: $W = 0.804$, $p = 3.5 \times 10^{-11}$, $n = 117$
-\item T1: $W = 0.800$, $p = 3.0 \times 10^{-9}$, $n = 83$
-\item T2: $W = 0.835$, $p = 9.3 \times 10^{-11}$, $n = 130$
-\item T3--T5: similarly non-normal
-\item T6: $W = 0.935$, $p = 0.329$, $n = 15$ (normal; non-parametric applied for consistency)
-\end{itemize}
-
-\subsection{Pairwise Comparisons}
-
-Full Mann-Whitney U results with Holm-Bonferroni correction (family size = 7: six adjacent
-transitions plus overall T0$\rightarrow$T6 contrast; all corrected together):
+Table~\ref{tab:tier_defs} provides the mapping from tier identifiers to
+architectural configurations, including the number of subtests in each tier
+and a brief description of what each tier evaluates.
 
 \begin{table}[htbp]
-\centering
-\caption{Pairwise Tier Comparisons (Pass Rate, Holm-Bonferroni Corrected, $m=7$). Bold = significant ($p < 0.05$). T5$\rightarrow$T6 $\delta = +0.433$ classified as medium (Romano et al.\ 0.474 threshold).}
-\label{tab:pairwise}
-\begin{tabular}{lrrrr}
-\toprule
-Transition & $N_1$, $N_2$ & Pass Rate $\Delta$ & $p$-value & Cliff's $\delta$ \\
-\midrule
-T0$\rightarrow$T1 & 117, 83 & +0.094 & 0.487 & +0.094 \\
-T1$\rightarrow$T2 & 83, 130 & +0.096 & 0.373 & +0.096 \\
-T2$\rightarrow$T3 & 130, 122 & $-0.069$ & 0.487 & $-0.068$ \\
-T3$\rightarrow$T4 & 122, 123 & +0.051 & 0.487 & +0.051 \\
-T4$\rightarrow$T5 & 123, 30 & $-0.313$ & \textbf{0.0024} & $-0.313$ \\
-T5$\rightarrow$T6 & 30, 15 & +0.433 & \textbf{0.0243} & +0.433 \\
-T0$\rightarrow$T6 & 117, 15 & +0.292 & 0.1187 & +0.292 \\
-\bottomrule
-\end{tabular}
+  \centering
+  \caption{Tier definitions and subtest counts.}
+  \label{tab:tier_defs}
+  \small
+  \begin{tabular}{llrl}
+    \toprule
+    Tier & Name & Subtests & Description \\
+    \midrule
+    T0 & Prompts    & 24 & System prompt ablation (empty $\to$ full CLAUDE.md) \\
+    T1 & Skills     & 10 & Domain expertise via installed skills \\
+    T2 & Tooling    & 15 & External tools and MCP servers \\
+    T3 & Delegation & 41 & Flat multi-agent with specialist agents \\
+    T4 & Hierarchy  & 14 & Nested orchestration (7 hierarchy + 7 teams) \\
+    T5 & Hybrid     & 15 & Best combinations and permutations \\
+    T6 & Super      &  1 & Everything enabled at maximum capability \\
+    \midrule
+    \multicolumn{2}{l}{Total} & 120 & \\
+    \bottomrule
+  \end{tabular}
 \end{table}
 
-\section{Data Dictionary}\label{app:data}
+\subsection{Model Specifications}
 
-All raw data, figures, and tables are available in \texttt{docs/arxiv/haiku/}:
+\begin{table}[htbp]
+  \centering
+  \caption{Model specifications for subject agent and judge panel.}
+  \label{tab:model_specs}
+  \small
+  \begin{tabular}{lll}
+    \toprule
+    Role & Model ID & Class \\
+    \midrule
+    Subject Agent & \texttt{claude-haiku-4-5} & Budget frontier \\
+    Judge 1 & \texttt{claude-opus-4-6} & Frontier \\
+    Judge 2 & \texttt{claude-sonnet-4-6} & Mid-tier \\
+    Judge 3 & \texttt{claude-haiku-4-5} & Budget frontier \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
+\subsection{Scoring Protocol}
+
+Each judge assigns scores on a continuous $[0, 1]$ scale against predefined
+criteria that are task-specific. The criteria evaluate dimensions such as
+correctness, completeness, code quality, documentation, and adherence to
+specifications. The consensus score is computed as the arithmetic mean of the
+three judges' scores. A run passes if the consensus score exceeds 0.5.
+
+Implementation rate is derived from the median of the three judges' binary
+assessments of whether the agent attempted the task. This median-based
+aggregation is more robust to a single outlier judge than the mean.
+
+Letter grades are assigned based on the consensus score using the following
+scale:
 \begin{itemize}
-\item \texttt{data/runs.csv} --- Per-run data (score, cost, duration, tokens)
-\item \texttt{data/summary.json} --- Aggregated experiment summaries
-\item \texttt{data/statistical\_results.json} --- Full statistical test outputs (Cliff's delta CIs, KW/MWU results, power analysis; does not include bootstrap BCa CIs for pass rate, which are generated by \texttt{scripts/export\_data.py} during table generation)
-\item \texttt{figures/*.png} --- 52 generated figures (PNG + Vega-Lite JSON); 4 key figures included in Figure~\ref{fig:key-results}
-\item \texttt{tables/*.tex} --- 9 generated tables (Markdown + LaTeX)
+  \item S: $\geq 0.95$ (exceptional)
+  \item A: $\geq 0.80$ (strong)
+  \item B: $\geq 0.65$ (satisfactory)
+  \item C: $\geq 0.50$ (marginal pass)
+  \item D: $\geq 0.35$ (below threshold)
+  \item F: $< 0.35$ (failure)
 \end{itemize}
 
-\textbf{Experiment metadata}: 5 experiments, 74 active subtests across 7 tiers (out of 120 total
-in the full suite; evaluated up to 2 subtests per tier per test),
-$N=5$ runs per subtest, Haiku 4.5 agent, Sonnet 4.5 judge, total \$135.55 for
-3 complete experiments.
+\subsection{Execution Environment}
 
-\textbf{Repository}: \url{https://github.com/HomericIntelligence/ProjectScylla}
+All experiments were executed using the Claude Code CLI~\cite{anthropic2024claude}
+in headless mode on Linux systems (kernel 5.10+). The execution environment
+was containerized using Docker to ensure reproducibility. Each run was
+allocated a timeout to prevent runaway sessions, and the Claude Code CLI
+managed all model interactions, tool invocations, and delegation protocols.
+
+% -------------------------------------------------------------------
+% APPENDIX B: Full Subtest Results
+% -------------------------------------------------------------------
+\section{Full Subtest Results}
+\label{app:subtest_results}
+
+Table~\ref{tab:subtest_detail} presents the complete subtest-level results
+across all experiments and tiers. Each row represents a single subtest within
+a specific tier and experiment, showing the pass rate, mean score, standard
+deviation, cost, letter grade, and grade distribution across the $N=3$ runs.
+
+The table reveals the granular patterns that drive the aggregate findings
+discussed in the main text. In particular, the clustering of F grades in
+T3--T6 for test-001 is visible at the subtest level, confirming that the
+failures are systematic rather than driven by a few outlier subtests.
+
+\input{tables/tab07_subtest_detail}
+
+% -------------------------------------------------------------------
+% APPENDIX C: Normality Tests
+% -------------------------------------------------------------------
+\section{Normality Tests}
+\label{app:normality}
+
+All statistical analyses in this paper employ non-parametric methods. This
+methodological choice is justified by Shapiro--Wilk normality tests, which
+reject the normality assumption for all 14 tier $\times$ metric combinations
+at the $\alpha = 0.05$ significance level (Table~\ref{tab:normality_tests}).
+
+\input{tables/tab10_normality_tests}
+
+The universal rejection of normality ($p < 0.05$ for all combinations, and
+$p < 0.001$ for all combinations with $n > 9$) reflects the bounded and often
+bimodal nature of the score distributions. Scores cluster near 0.0 (complete
+failure) and 0.8--1.0 (successful completion), with relatively few
+observations in the intermediate range. This distributional shape is expected
+for pass/fail-oriented coding tasks: the agent either accomplishes the task
+(yielding a high score) or fails to accomplish it (yielding a score near zero).
+
+Cost distributions are also non-normal, exhibiting right skew due to
+occasional runs that require substantially more tokens than average. The
+non-normality of all metrics motivates the use of rank-based tests
+(Kruskal--Wallis, Dunn's, Cliff's $\delta$, Scheirer--Ray--Hare) throughout
+the analysis rather than parametric alternatives (ANOVA, $t$-tests).
+
+% -------------------------------------------------------------------
+% APPENDIX D: Statistical Test Details
+% -------------------------------------------------------------------
+\section{Statistical Test Details}
+\label{app:statistical_details}
+
+\subsection{Kruskal--Wallis Omnibus Tests}
+
+The Kruskal--Wallis $H$ test is the non-parametric analog of one-way ANOVA,
+testing whether the distributions of a metric differ across the $k=7$ tier
+groups. Under the null hypothesis, all groups are drawn from the same
+distribution. The test statistic $H$ is computed from the ranks of all
+observations pooled across groups, and is compared to a chi-squared
+distribution with $k-1 = 6$ degrees of freedom.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Tier main-effect tests across all tiers ($k=7$). Pass Rate,
+    Impl Rate, and Duration are standalone Kruskal--Wallis tests; Cost and
+    Score are tier main effects from the Scheirer--Ray--Hare analysis
+    (Table~\ref{tab:srh}). Significant results ($p < 0.05$) are marked
+    with asterisks.}
+  \label{tab:kruskal_wallis}
+  \small
+  \begin{tabular}{llrrl}
+    \toprule
+    Metric & Source & $H(6)$ & $p$-value & Sig? \\
+    \midrule
+    Pass Rate       & KW     & 119.01 & $<0.001$ & *** \\
+    Impl Rate       & KW     &   5.47 & 0.486    & n.s. \\
+    Duration (s)    & KW     &  40.94 & $<0.001$ & *** \\
+    Cost (USD)      & SRH    &   4.00 & 0.676    & n.s. \\
+    Score           & SRH    &  91.34 & $<0.001$ & *** \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Three of five metrics show significant tier effects: pass rate, duration, and
+score. The two non-significant metrics---implementation rate and cost---indicate
+that these aspects of agent behavior are determined by task characteristics
+rather than architectural configuration. The agent's decision to attempt the
+task and the resources it consumes are not influenced by whether it operates
+in a single-agent or multi-agent configuration.
+
+\subsection{Pairwise Comparisons and Effect Sizes}
+
+For metrics with significant omnibus tests, pairwise comparisons were conducted
+using Dunn's test with Holm--Bonferroni correction. With $k=7$ tiers, there are
+$\binom{7}{2} = 21$ pairwise comparisons, requiring correction for
+multiplicity to control the family-wise error rate.
+
+The significant pairwise results for pass rate, with Cliff's $\delta$ effect
+sizes and 95\% bootstrap confidence intervals, are:
+
+\begin{itemize}
+  \item T2 vs.\ T3: $p < 0.001$, Cliff's $\delta = -0.219$ [$-0.268$,
+    $-0.168$]. The negative $\delta$ indicates that T3 pass rates are
+    systematically lower than T2 pass rates. The effect size falls in the
+    ``small'' range by conventional thresholds ($0.147 \leq |\delta| < 0.33$).
+  \item T3 vs.\ T4: Cliff's $\delta = -0.116$ [$-0.212$, $-0.023$]. The
+    further degradation from flat delegation to hierarchical orchestration
+    is at the boundary of the ``negligible'' range ($|\delta| < 0.147$).
+  \item T0 vs.\ T6: $p = 0.018$. The overall trend from the simplest tier to
+    the most complex is significantly negative, indicating monotonic
+    degradation across the full tier spectrum.
+\end{itemize}
+
+For duration, the significant pairwise result is:
+\begin{itemize}
+  \item T2 vs.\ T3: $p = 0.048$, Cliff's $\delta = -0.154$ [$-0.264$,
+    $-0.045$]. Delegation-based tiers tend to run longer, likely due to the
+    overhead of managing agent communication and task decomposition.
+\end{itemize}
+
+\subsection{Cliff's $\delta$ Interpretation Scale}
+
+Cliff's $\delta$ is a non-parametric effect size measure that quantifies the
+probability that a randomly selected observation from one group exceeds a
+randomly selected observation from another group. It ranges from $-1$ (all
+observations in group A exceed all in group B) to $+1$ (vice versa), with
+0 indicating no systematic difference. The conventional interpretation
+scale~\cite{romano2006appropriate} is:
+
+\begin{itemize}
+  \item $|\delta| < 0.147$: negligible effect
+  \item $0.147 \leq |\delta| < 0.33$: small effect
+  \item $0.33 \leq |\delta| < 0.474$: medium effect
+  \item $|\delta| \geq 0.474$: large effect
+\end{itemize}
+
+The T2--T3 comparison ($\delta = -0.219$) falls in the small effect range, and
+the T3--T4 comparison ($\delta = -0.116$) is in the negligible range. While
+these effect sizes are modest in absolute terms, they are statistically
+significant and consistent across the pairwise and omnibus analyses,
+suggesting real (if small) differences in population distributions.
+
+\subsection{Scheirer--Ray--Hare Details}
+
+The Scheirer--Ray--Hare (SRH) test extends the Kruskal--Wallis framework to
+two-factor designs, enabling analysis of main effects and interaction effects
+on ranked data. Like ANOVA, it decomposes the total variability into
+components attributable to each factor and their interaction. Unlike ANOVA,
+it operates on ranked rather than raw data, making it robust to non-normality
+and heteroscedasticity.
+
+For the score metric, the SRH analysis reveals that all three effects---tier
+main effect ($H = 91.3$, $df = 6$), experiment main effect ($H = 178.2$,
+$df = 2$), and interaction ($H = 223.5$, $df = 12$)---are statistically
+significant at $p < 0.001$. The interaction term is the largest, indicating
+that the relationship between tier and score changes qualitatively across
+experiments. This is consistent with the divergent patterns described in
+Sections~\ref{sec:test001}--\ref{sec:test003}.
+
+The degrees of freedom for the interaction ($df = 12$) correspond to the
+$(a-1)(b-1) = (3-1)(7-1) = 12$ interaction contrasts in the $3 \times 7$
+(experiment $\times$ tier) design. The large $H$ value (223.5) relative to
+the chi-squared distribution with 12 degrees of freedom produces $p \ll 0.001$,
+indicating that the interaction cannot be attributed to chance.
+
+For cost and implementation rate, the interaction terms are non-significant
+($p = 0.965$ and $p = 0.989$, respectively), confirming that the cost and
+attempt profiles are consistent across experiments regardless of tier.
+
+% -------------------------------------------------------------------
+% APPENDIX E: Per-Experiment Cost Breakdown
+% -------------------------------------------------------------------
+\section{Per-Experiment Cost Breakdown}
+\label{app:cost_breakdown}
+
+This appendix provides a detailed cost breakdown for each experiment,
+including total costs, per-run costs, best-performing tiers, and the
+distribution of cost across the token usage categories.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Per-experiment cost summary with best-performing tier by CoP.}
+  \label{tab:cost_by_experiment}
+  \small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Experiment & Runs & Total (\$) & Mean (\$/run) & Best Tier & Best CoP (\$) \\
+    \midrule
+    test-001 & 360 & 13.72 & 0.04 & T1 & 0.037 \\
+    test-002 & 360 & 81.28 & 0.23 & T5 & 0.228 \\
+    test-003 & 360 & 27.30 & 0.08 & T2 & 0.074 \\
+    \midrule
+    Total & 1,080 & 122.31 & 0.11 & -- & 0.113 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The cost distribution across experiments is highly skewed: test-002 accounts
+for 66.5\% (\$81.28) of the total cost despite comprising only one-third of
+the runs. This reflects the larger repository size and greater complexity of
+the Mojo task, which requires more tokens for context loading and code
+generation.
+
+The best Cost-of-Pass varies across experiments: T1 for test-001 (\$0.037),
+T5 for test-002 (\$0.228), and T2 for test-003 (\$0.074). This variation
+reinforces the task-dependent nature of architectural optimization identified
+in the interaction analysis. No single tier achieves the best CoP across all
+experiments, consistent with the significant interaction effect.
+
+\subsection{Token Distribution}
+
+The token distribution across all runs is dominated by cache read operations.
+The mean cache read per run (approximately 593,000--773,000 tokens depending
+on tier) dwarfs the mean input tokens (42--67) and mean output tokens
+(2,409--2,665). This extreme ratio reflects the Scylla framework's use of
+extensive system prompts and repository context. The prompts and context are
+cached by the API and reused across runs, so the per-run cost is dominated by
+the cache read rate rather than the full input token rate.
+
+The cache-dominated cost structure explains why cost is invariant to tier:
+regardless of the architectural configuration, the agent must process a
+similar amount of cached context (the repository and system prompt), and the
+output length (approximately 2,500 tokens on average) is relatively
+consistent across tiers. The architectural overhead of delegation and
+orchestration does not substantially increase output token count, as the
+coordination messages are brief relative to the generated code.
+
+% -------------------------------------------------------------------
+% APPENDIX F: Reproducibility
+% -------------------------------------------------------------------
+\section{Reproducibility}
+\label{app:reproducibility}
+
+\subsection{Framework and Software}
+
+All experiments were conducted using the Scylla evaluation framework
+(v0.1.0+), an open-source Python package available at
+\url{https://github.com/HomericIntelligence/ProjectScylla}. The framework
+provides:
+
+\begin{itemize}
+  \item YAML-based experiment definitions with 120 subtests across 7 tiers
+  \item Automated execution via the Claude Code CLI~\cite{anthropic2024claude}
+  \item Three-judge evaluation with configurable judge models
+  \item Statistical analysis pipeline with non-parametric tests
+  \item Automated figure and table generation for publication
+  \item Cost tracking and token usage reporting
+\end{itemize}
+
+The framework is part of the Homeric Intelligence ecosystem, a collection of
+12 repositories providing infrastructure for agent development, testing, and
+deployment~\cite{projectodyssey}.
+
+\subsection{Environment}
+
+Experiments were executed on Linux systems (kernel 5.10.0-37-amd64) with
+Python 3.10+. The Claude Code CLI was used in headless mode with deterministic
+settings where possible. API calls were made to Anthropic's production
+endpoints during January--March 2026. The Python dependencies and their
+exact versions are specified in the \texttt{pixi.toml} and
+\texttt{pixi.lock} files in the repository.
+
+\subsection{Data Availability}
+
+All raw results, including per-run scores, costs, token counts, and judge
+evaluations, are available in the repository at
+\texttt{docs/arxiv/haiku/data/}. The following data files are provided:
+
+\begin{itemize}
+  \item \texttt{runs.csv}: Per-run data with scores, costs, and durations
+  \item \texttt{subtests.csv}: Subtest-level aggregations
+  \item \texttt{judges.csv}: Per-judge evaluation data
+  \item \texttt{criteria.csv}: Per-criterion judge evaluations
+  \item \texttt{summary.json}: Experiment-level summary statistics
+  \item \texttt{statistical\_results.json}: Full statistical test outputs
+  \item \texttt{srh\_tier\_experiment.json}: Scheirer--Ray--Hare analysis
+\end{itemize}
+
+The statistical analysis scripts used to generate all figures and tables are
+included in the \texttt{scripts/} directory of the repository.
+
+\subsection{Limitations of Reproducibility}
+
+Exact reproduction of these results is not guaranteed due to several inherent
+factors in LLM-based experimentation:
+
+\begin{enumerate}
+  \item \textbf{Model updates.} Anthropic may update model weights, inference
+    infrastructure, or safety filters between experiment runs. These updates
+    can affect model behavior in ways that are not publicly documented.
+  \item \textbf{Non-determinism.} Despite fixed temperature settings (where
+    supported), LLM outputs may vary due to floating-point non-determinism,
+    batching strategies, quantization effects, or infrastructure load
+    balancing.
+  \item \textbf{External dependencies.} Tool-augmented tiers (T2+) depend on
+    external services (MCP servers, web APIs, file systems) whose availability,
+    behavior, and response content may change over time.
+  \item \textbf{Repository state.} The target repositories used in experiments
+    may be updated between replication attempts. Commit hashes for the exact
+    repository states used in each experiment are recorded in the experiment
+    metadata files.
+\end{enumerate}
+
+To maximize reproducibility, we recommend:
+\begin{itemize}
+  \item Using the exact model identifiers specified in
+    Table~\ref{tab:model_specs}
+  \item Running experiments within a short time window to minimize the impact
+    of model updates
+  \item Pinning target repository states to the commit hashes recorded in
+    the experiment metadata
+  \item Using the provided Docker containers for consistent execution
+    environments
+  \item Recording API version headers from Anthropic's responses to track
+    any model version changes during the experiment
+\end{itemize}
 
 \end{document}

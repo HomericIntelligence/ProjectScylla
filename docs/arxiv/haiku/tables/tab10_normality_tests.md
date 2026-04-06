@@ -4,19 +4,19 @@
 
 | Model | Tier | Metric | N | W | p-value | Normal? (α=0.05) |
 |-------|------|--------|---|---|---------|------------------|
-| haiku | T0 | Score | 117 | 0.8043 | 0.0000 | No |
-| haiku | T0 | Cost (USD) | 117 | 0.6916 | 0.0000 | No |
-| haiku | T1 | Score | 83 | 0.8002 | 0.0000 | No |
-| haiku | T1 | Cost (USD) | 83 | 0.7564 | 0.0000 | No |
-| haiku | T2 | Score | 130 | 0.8351 | 0.0000 | No |
-| haiku | T2 | Cost (USD) | 130 | 0.5526 | 0.0000 | No |
-| haiku | T3 | Score | 122 | 0.8100 | 0.0000 | No |
-| haiku | T3 | Cost (USD) | 122 | 0.7942 | 0.0000 | No |
-| haiku | T4 | Score | 123 | 0.7894 | 0.0000 | No |
-| haiku | T4 | Cost (USD) | 123 | 0.8008 | 0.0000 | No |
-| haiku | T5 | Score | 30 | 0.8470 | 0.0005 | No |
-| haiku | T5 | Cost (USD) | 30 | 0.6078 | 0.0000 | No |
-| haiku | T6 | Score | 15 | 0.9355 | 0.3289 | Yes |
-| haiku | T6 | Cost (USD) | 15 | 0.9176 | 0.1768 | Yes |
+| claude-haiku-4-5 | T0 | Score | 216 | 0.7927 | 0.0000 | No |
+| claude-haiku-4-5 | T0 | Cost (USD) | 216 | 0.8250 | 0.0000 | No |
+| claude-haiku-4-5 | T1 | Score | 90 | 0.9009 | 0.0000 | No |
+| claude-haiku-4-5 | T1 | Cost (USD) | 90 | 0.8231 | 0.0000 | No |
+| claude-haiku-4-5 | T2 | Score | 135 | 0.9056 | 0.0000 | No |
+| claude-haiku-4-5 | T2 | Cost (USD) | 135 | 0.8285 | 0.0000 | No |
+| claude-haiku-4-5 | T3 | Score | 369 | 0.7985 | 0.0000 | No |
+| claude-haiku-4-5 | T3 | Cost (USD) | 369 | 0.8184 | 0.0000 | No |
+| claude-haiku-4-5 | T4 | Score | 126 | 0.8132 | 0.0000 | No |
+| claude-haiku-4-5 | T4 | Cost (USD) | 126 | 0.8251 | 0.0000 | No |
+| claude-haiku-4-5 | T5 | Score | 135 | 0.8074 | 0.0000 | No |
+| claude-haiku-4-5 | T5 | Cost (USD) | 135 | 0.8938 | 0.0000 | No |
+| claude-haiku-4-5 | T6 | Score | 9 | 0.8072 | 0.0247 | No |
+| claude-haiku-4-5 | T6 | Cost (USD) | 9 | 0.7816 | 0.0126 | No |
 
-**Summary**: 2/14 (14.3%) distributions pass normality test
+**Summary**: 0/14 (0.0%) distributions pass normality test

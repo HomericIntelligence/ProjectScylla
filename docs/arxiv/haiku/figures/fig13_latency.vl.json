@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-0593a242ea6f955da475a9950705c521"
+    "name": "data-2a49b4dae0cfcbabe71b0ec1103e45e4"
   },
   "facet": {
     "column": {
@@ -104,103 +104,103 @@
   "title": "Latency Breakdown by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-0593a242ea6f955da475a9950705c521": [
+    "data-2a49b4dae0cfcbabe71b0ec1103e45e4": [
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "phase": "agent_duration_seconds",
-        "duration": 217.80293191452992,
+        "duration": 55.79545199074074,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "phase": "agent_duration_seconds",
-        "duration": 246.81496303614458,
+        "duration": 60.08731171111111,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "phase": "agent_duration_seconds",
-        "duration": 232.9076797769231,
+        "duration": 52.09083097037037,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "phase": "agent_duration_seconds",
-        "duration": 470.11794296721314,
+        "duration": 57.301515376693764,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "phase": "agent_duration_seconds",
-        "duration": 413.15361091869914,
+        "duration": 57.238354158730154,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "phase": "agent_duration_seconds",
-        "duration": 238.9462681,
+        "duration": 63.43732397037037,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "phase": "agent_duration_seconds",
-        "duration": 282.9650124666667,
+        "duration": 58.554347777777785,
         "phase_label": "Agent Execution"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T0",
         "phase": "judge_duration_seconds",
-        "duration": 124.94167111965811,
+        "duration": 290.2470158935185,
         "phase_label": "Judge Evaluation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T1",
         "phase": "judge_duration_seconds",
-        "duration": 132.65667481927713,
+        "duration": 324.6436713888889,
         "phase_label": "Judge Evaluation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T2",
         "phase": "judge_duration_seconds",
-        "duration": 123.03441246153847,
+        "duration": 310.6564738074074,
         "phase_label": "Judge Evaluation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "phase": "judge_duration_seconds",
-        "duration": 118.0097535,
+        "duration": 190.448582298103,
         "phase_label": "Judge Evaluation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "phase": "judge_duration_seconds",
-        "duration": 145.02245190243903,
+        "duration": 173.96915007936508,
         "phase_label": "Judge Evaluation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "phase": "judge_duration_seconds",
-        "duration": 137.33439833333335,
+        "duration": 157.25695857037036,
         "phase_label": "Judge Evaluation"
       },
       {
-        "agent_model": "haiku",
+        "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "phase": "judge_duration_seconds",
-        "duration": 187.97204713333335,
+        "duration": 97.47684322222223,
         "phase_label": "Judge Evaluation"
       }
     ]

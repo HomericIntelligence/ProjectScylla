@@ -1,0 +1,53 @@
+{
+  "score": {
+    "experiment": {
+      "h_statistic": 178.227766792449,
+      "df": 2,
+      "p_value": 0.0
+    },
+    "tier": {
+      "h_statistic": 91.34145437867998,
+      "df": 6,
+      "p_value": 0.0
+    },
+    "interaction": {
+      "h_statistic": 223.51633218829758,
+      "df": 12,
+      "p_value": 0.0
+    }
+  },
+  "cost_usd": {
+    "experiment": {
+      "h_statistic": 903.0649505487603,
+      "df": 2,
+      "p_value": 0.0
+    },
+    "tier": {
+      "h_statistic": 4.001630848862611,
+      "df": 6,
+      "p_value": 0.676455704802553
+    },
+    "interaction": {
+      "h_statistic": 4.791251297171157,
+      "df": 12,
+      "p_value": 0.9645901841486582
+    }
+  },
+  "impl_rate": {
+    "experiment": {
+      "h_statistic": 490.66217604426396,
+      "df": 2,
+      "p_value": 0.0
+    },
+    "tier": {
+      "h_statistic": 5.466311427991362,
+      "df": 6,
+      "p_value": 0.4855377428490927
+    },
+    "interaction": {
+      "h_statistic": 3.6610251098258573,
+      "df": 12,
+      "p_value": 0.9888060243603102
+    }
+  }
+}

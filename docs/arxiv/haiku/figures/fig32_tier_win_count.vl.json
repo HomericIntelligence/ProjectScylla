@@ -1,0 +1,126 @@
+{
+  "config": {
+    "font": "serif",
+    "axis": {
+      "labelFontSize": 11,
+      "titleFontSize": 13,
+      "gridColor": "#e0e0e0",
+      "domainColor": "#333333"
+    },
+    "legend": {
+      "labelFontSize": 11,
+      "titleFontSize": 12
+    },
+    "title": {
+      "fontSize": 14,
+      "anchor": "start",
+      "fontWeight": "normal"
+    },
+    "view": {
+      "stroke": null,
+      "continuousWidth": 400,
+      "continuousHeight": 300
+    },
+    "mark": {
+      "tooltip": true
+    }
+  },
+  "data": {
+    "name": "data-7551ba30627567b153d010533b1a844a"
+  },
+  "mark": {
+    "type": "bar"
+  },
+  "encoding": {
+    "color": {
+      "field": "tier",
+      "legend": null,
+      "scale": {
+        "domain": [
+          "T0",
+          "T1",
+          "T2",
+          "T3",
+          "T4",
+          "T5",
+          "T6"
+        ],
+        "range": [
+          "#66c2a5",
+          "#fc8d62",
+          "#8da0cb",
+          "#e78ac3",
+          "#a6d854",
+          "#ffd92f",
+          "#e5c494"
+        ]
+      },
+      "type": "ordinal"
+    },
+    "tooltip": [
+      {
+        "field": "tier",
+        "title": "Tier",
+        "type": "ordinal"
+      },
+      {
+        "field": "wins",
+        "title": "Wins",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "field": "tier",
+      "sort": [
+        "T0",
+        "T1",
+        "T2",
+        "T3",
+        "T4",
+        "T5",
+        "T6"
+      ],
+      "title": "Tier",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "wins",
+      "title": "Number of Experiment Wins",
+      "type": "quantitative"
+    }
+  },
+  "title": "Tier Win Count Across Experiments",
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
+  "datasets": {
+    "data-7551ba30627567b153d010533b1a844a": [
+      {
+        "tier": "T0",
+        "wins": 0
+      },
+      {
+        "tier": "T1",
+        "wins": 1
+      },
+      {
+        "tier": "T2",
+        "wins": 1
+      },
+      {
+        "tier": "T3",
+        "wins": 0
+      },
+      {
+        "tier": "T4",
+        "wins": 0
+      },
+      {
+        "tier": "T5",
+        "wins": 0
+      },
+      {
+        "tier": "T6",
+        "wins": 2
+      }
+    ]
+  }
+}
