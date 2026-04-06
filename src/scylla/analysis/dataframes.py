@@ -114,7 +114,7 @@ def build_runs_df(experiments: dict[str, list[RunData]]) -> pd.DataFrame:
     rows = []
     for runs in experiments.values():
         for run in runs:
-            # Consensus impl_rate: median across judges (matching consensus score logic)
+            # Consensus impl_rate: median across judges (score uses mean, impl_rate uses median)
             consensus_impl_rate = compute_consensus_impl_rate(run.judges)
 
             rows.append(

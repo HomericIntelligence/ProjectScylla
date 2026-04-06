@@ -635,7 +635,7 @@ def benjamini_hochberg_correction(p_values: list[float]) -> list[float]:
     Example:
         >>> p_vals = [0.01, 0.04, 0.03, 0.50]
         >>> benjamini_hochberg_correction(p_vals)
-        [0.04, 0.067, 0.06, 0.50]  # FDR control, not FWER
+        [0.04, 0.053, 0.053, 0.50]  # FDR control, not FWER
 
     """
     n = len(p_values)
@@ -651,6 +651,14 @@ def benjamini_hochberg_correction(p_values: list[float]) -> list[float]:
     for rank, (original_idx, p_val) in enumerate(indexed):
         # Correction factor: (n / rank+1) where rank is 0-indexed
         corrected[original_idx] = min(1.0, p_val * n / (rank + 1))
+
+    # Enforce monotonicity: corrected p-values in sorted order must be
+    # non-decreasing. Work backwards to ensure each value is no larger
+    # than the one after it in the sorted sequence.
+    for i in range(n - 2, -1, -1):
+        curr_idx = indexed[i][0]
+        next_idx = indexed[i + 1][0]
+        corrected[curr_idx] = min(corrected[curr_idx], corrected[next_idx])
 
     return corrected
 
