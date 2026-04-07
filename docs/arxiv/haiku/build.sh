@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build arXiv paper and submission package
 # Run from this directory: cd docs/arxiv/haiku && ./build.sh
+# Or via pixi:            pixi run --environment docs paper-build
 
 set -e  # Exit on error
 
@@ -14,37 +15,53 @@ echo ""
 
 # Step 1: Clean auxiliary files
 echo "[1/4] Cleaning auxiliary files..."
-rm -f paper.aux paper.log paper.out paper.toc paper.lof paper.lot paper.blg
+rm -f paper.aux paper.log paper.out paper.toc paper.lof paper.lot paper.blg paper.bbl
 echo "✓ Cleaned"
 echo ""
 
-# Step 2: Full LaTeX compilation cycle
-echo "[2/4] Compiling LaTeX (4-step cycle)..."
-echo "  Pass 1/4: pdflatex (generating aux)..."
-pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null 2>&1 || {
-    echo "✗ Error during first pdflatex pass"
-    echo "Check paper.log for details"
-    exit 1
-}
+# Step 2: Compile with available engine
+echo "[2/4] Compiling LaTeX..."
 
-echo "  Pass 2/4: bibtex (resolving citations)..."
-bibtex paper > /dev/null 2>&1 || {
-    echo "✗ Error during bibtex pass"
-    echo "Check paper.blg for details"
-    exit 1
-}
+if command -v tectonic &> /dev/null; then
+    # Tectonic: self-contained engine (handles bibtex + multiple passes automatically)
+    echo "  Using tectonic engine"
+    tectonic paper.tex || {
+        echo "✗ Error during tectonic compilation"
+        exit 1
+    }
+elif command -v pdflatex &> /dev/null; then
+    # Traditional: 4-step pdflatex + bibtex cycle
+    echo "  Using pdflatex engine (4-step cycle)"
+    echo "  Pass 1/4: pdflatex (generating aux)..."
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null 2>&1 || {
+        echo "✗ Error during first pdflatex pass"
+        echo "Check paper.log for details"
+        exit 1
+    }
 
-echo "  Pass 3/4: pdflatex (inserting citations)..."
-pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null 2>&1 || {
-    echo "✗ Error during second pdflatex pass"
-    exit 1
-}
+    echo "  Pass 2/4: bibtex (resolving citations)..."
+    bibtex paper > /dev/null 2>&1 || {
+        echo "✗ Error during bibtex pass"
+        echo "Check paper.blg for details"
+        exit 1
+    }
 
-echo "  Pass 4/4: pdflatex (finalizing references)..."
-pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null 2>&1 || {
-    echo "✗ Error during third pdflatex pass"
+    echo "  Pass 3/4: pdflatex (inserting citations)..."
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null 2>&1 || {
+        echo "✗ Error during second pdflatex pass"
+        exit 1
+    }
+
+    echo "  Pass 4/4: pdflatex (finalizing references)..."
+    pdflatex -interaction=nonstopmode -halt-on-error paper.tex > /dev/null 2>&1 || {
+        echo "✗ Error during third pdflatex pass"
+        exit 1
+    }
+else
+    echo "✗ No LaTeX engine found. Install via: pixi install --environment docs"
+    echo "  Alternatively, install tectonic or texlive on your system."
     exit 1
-}
+fi
 
 echo "✓ Compilation successful"
 echo ""
@@ -65,18 +82,20 @@ if [ "${PDF_SIZE}" -lt 10000 ]; then
     exit 1
 fi
 
-# Check for LaTeX errors
-ERROR_COUNT=$(grep -c "^!" paper.log 2>/dev/null || echo "0")
-ERROR_COUNT=${ERROR_COUNT:-0}
-if [ "${ERROR_COUNT}" -gt 0 ]; then
-    echo "✗ Warning: ${ERROR_COUNT} LaTeX errors found in log"
-fi
+# Check for LaTeX errors (only relevant for pdflatex path)
+if [ -f "paper.log" ]; then
+    ERROR_COUNT=$(grep -c "^!" paper.log 2>/dev/null || echo "0")
+    ERROR_COUNT=${ERROR_COUNT:-0}
+    if [ "${ERROR_COUNT}" -gt 0 ]; then
+        echo "✗ Warning: ${ERROR_COUNT} LaTeX errors found in log"
+    fi
 
-# Check for unresolved references
-UNRESOLVED=$(grep "??" paper.log 2>/dev/null | grep -vc pdfTeX || echo "0")
-UNRESOLVED=${UNRESOLVED:-0}
-if [ "${UNRESOLVED}" -gt 0 ]; then
-    echo "✗ Warning: ${UNRESOLVED} unresolved references"
+    # Check for unresolved references
+    UNRESOLVED=$(grep "??" paper.log 2>/dev/null | grep -vc pdfTeX || echo "0")
+    UNRESOLVED=${UNRESOLVED:-0}
+    if [ "${UNRESOLVED}" -gt 0 ]; then
+        echo "✗ Warning: ${UNRESOLVED} unresolved references"
+    fi
 fi
 
 # Get page count if pdfinfo available
