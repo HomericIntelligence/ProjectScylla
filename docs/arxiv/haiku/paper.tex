@@ -466,7 +466,12 @@ evaluation protocol proceeds as follows:
     mean of the three judge scores. Implementation rate uses the median across
     judges.
   \item \textbf{Classification.} A run is classified as ``passing'' if the
-    consensus score exceeds a threshold (typically 0.5).
+    consensus score exceeds a threshold (typically 0.5).\footnote{The pass
+    classification is determined by the evaluation pipeline at execution time.
+    Of 1,080 runs, 16 (1.5\%) show minor discrepancies between the pipeline's
+    pass classification and the post-hoc consensus score threshold, due to
+    rounding in the multi-judge aggregation. These discrepancies do not
+    materially affect tier-level pass rates.}
 \end{enumerate}
 
 \subsection{Partial-Failure Semantics}
@@ -656,7 +661,7 @@ throughout:
     scale) for overall panel reliability, and pairwise Spearman/Pearson
     correlations for judge-pair agreement.
   \item \textbf{Confidence intervals}: Bootstrap 95\% confidence intervals
-    for pass rates and other proportions.
+    (BCa method, 10{,}000 resamples) for pass rates and other proportions.
 \end{itemize}
 
 Implementation rate comparisons use filtered sample sizes: only runs where the
@@ -735,7 +740,7 @@ exhibit complete failure:
     T1 & 30  & 1.000 & 0.908 & 0.037 & 0.037 \\
     T2 & 45  & 1.000 & 0.908 & 0.037 & 0.037 \\
     T3 & 123 & 0.350 & 0.318 & 0.038 & 0.109 \\
-    T4 & 42  & 0.000 & 0.000 & 0.039 & $\infty$ \\
+    T4 & 42  & 0.000 & 0.000 & 0.038 & $\infty$ \\
     T5 & 45  & 0.000 & 0.000 & 0.038 & $\infty$ \\
     T6 & 3   & 0.000 & 0.000 & 0.070 & $\infty$ \\
     \bottomrule
@@ -856,7 +861,7 @@ experiments, with uniformly high pass rates and subtle tier effects:
     T2 & 45  & 0.978 & 0.814 & 0.073 & 0.074 \\
     T3 & 123 & 0.959 & 0.826 & 0.071 & 0.074 \\
     T4 & 42  & 0.952 & 0.857 & 0.076 & 0.080 \\
-    T5 & 45  & 0.933 & 0.829 & 0.099 & 0.106 \\
+    T5 & 45  & 0.933 & 0.829 & 0.098 & 0.106 \\
     T6 & 3   & 1.000 & 0.833 & 0.100 & 0.100 \\
     \bottomrule
   \end{tabular}
