@@ -150,12 +150,14 @@ RUN npm install -g @anthropic-ai/claude-code@2.1.91 \
     # Patch claude-code's transitive deps
     && cd /usr/local/lib/node_modules/@anthropic-ai/claude-code \
     && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save \
-    # Patch npm's bundled tar — npm install inside npm's own tree is unreliable,
-    # so we install tar globally then copy it over the vulnerable copy
-    && npm install -g tar@7.5.13 \
-    && rm -rf /usr/local/lib/node_modules/npm/node_modules/tar \
-    && cp -r /usr/local/lib/node_modules/tar /usr/local/lib/node_modules/npm/node_modules/tar \
-    && npm uninstall -g tar \
+    # Patch npm's own bundled copies — npm install inside npm's tree is unreliable,
+    # so we install fixed versions globally then copy them over the vulnerable copies
+    && npm install -g tar@7.5.13 cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 \
+    && for pkg in tar cross-spawn glob minimatch; do \
+         rm -rf /usr/local/lib/node_modules/npm/node_modules/$pkg \
+         && cp -r /usr/local/lib/node_modules/$pkg /usr/local/lib/node_modules/npm/node_modules/$pkg; \
+       done \
+    && npm uninstall -g tar cross-spawn glob minimatch \
     # Purge npm cache — contains auth tokens from registry handshake
     && npm cache clean --force \
     && rm -rf /root/.npm /home/scylla/.npm /tmp/npm-*
