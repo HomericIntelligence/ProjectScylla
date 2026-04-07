@@ -9,6 +9,10 @@ default:
 test:
     pixi run test
 
+# Run unit tests with coverage
+test-unit:
+    pixi run test-unit
+
 # Run BATS shell tests
 test-shell:
     pixi run test-shell

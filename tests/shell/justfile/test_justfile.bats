@@ -96,5 +96,8 @@ JUSTFILE="${REPO_ROOT}/justfile"
         fi
     done < <(sed -n '/^\[tasks\]/,/^\[/{ /^\[/d; /^#/d; /^$/d; s/ *=.*//p; }' "$pixi_toml")
 
-    [ -z "$missing" ] || fail "pixi tasks missing from justfile:${missing}"
+    if [ -n "$missing" ]; then
+        echo "pixi tasks missing from justfile:${missing}" >&2
+        return 1
+    fi
 }
