@@ -136,24 +136,23 @@ COPY --from=node-source /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
-# Install Claude Code CLI (pinned to specific version for reproducibility)
-# This is the primary tool for agent-based test execution
-RUN npm install -g @anthropic-ai/claude-code@2.1.91
-# Patch HIGH CVEs in Node.js transitive dependencies by overriding vulnerable packages
-# in the global node_modules tree. npm audit fix --force is unreliable for global
-# installs, so we replace the vulnerable packages directly.
+# Install Claude Code CLI and patch transitive CVEs in a single layer.
+# Merging into one RUN ensures npm's cache (which may contain auth tokens from
+# the registry handshake) is purged in the same layer — Trivy's secret scanner
+# inspects every layer, so a separate cleanup RUN would not help.
+#
+# CVE patches (npm audit fix --force is unreliable for global installs):
 #   CVE-2024-21538 (cross-spawn ReDoS)
 #   CVE-2025-64756 (glob command injection)
 #   CVE-2026-26996/27903/27904 (minimatch DoS)
 #   CVE-2026-23745/23950/24842/26960/29786/31802 (tar path traversal/overwrite)
-RUN cd /usr/local/lib/node_modules/@anthropic-ai/claude-code && \
-    npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save 2>/dev/null || true
-# Patch npm's own bundled tar (6.2.1 → 7.5.13) — Trivy flags the same CVEs there
-RUN cd /usr/local/lib/node_modules/npm && \
-    npm install tar@7.5.13 --save 2>/dev/null || true
-# Purge npm cache — it may contain auth tokens that Trivy's secret scanner flags
-RUN npm cache clean --force 2>/dev/null || true && \
-    rm -rf /root/.npm /home/scylla/.npm /tmp/npm-* 2>/dev/null || true
+RUN npm install -g @anthropic-ai/claude-code@2.1.91 \
+    && cd /usr/local/lib/node_modules/@anthropic-ai/claude-code \
+    && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save 2>/dev/null || true \
+    && cd /usr/local/lib/node_modules/npm \
+    && npm install tar@7.5.13 --save 2>/dev/null || true \
+    && npm cache clean --force 2>/dev/null || true \
+    && rm -rf /root/.npm /home/scylla/.npm /tmp/npm-* 2>/dev/null || true
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
