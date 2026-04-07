@@ -147,12 +147,18 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 #   CVE-2026-26996/27903/27904 (minimatch DoS)
 #   CVE-2026-23745/23950/24842/26960/29786/31802 (tar path traversal/overwrite)
 RUN npm install -g @anthropic-ai/claude-code@2.1.91 \
+    # Patch claude-code's transitive deps
     && cd /usr/local/lib/node_modules/@anthropic-ai/claude-code \
-    && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save 2>/dev/null || true \
-    && cd /usr/local/lib/node_modules/npm \
-    && npm install tar@7.5.13 --save 2>/dev/null || true \
-    && npm cache clean --force 2>/dev/null || true \
-    && rm -rf /root/.npm /home/scylla/.npm /tmp/npm-* 2>/dev/null || true
+    && npm install cross-spawn@7.0.6 glob@11.1.0 minimatch@10.2.5 tar@7.5.13 --save \
+    # Patch npm's bundled tar — npm install inside npm's own tree is unreliable,
+    # so we install tar globally then copy it over the vulnerable copy
+    && npm install -g tar@7.5.13 \
+    && rm -rf /usr/local/lib/node_modules/npm/node_modules/tar \
+    && cp -r /usr/local/lib/node_modules/tar /usr/local/lib/node_modules/npm/node_modules/tar \
+    && npm uninstall -g tar \
+    # Purge npm cache — contains auth tokens from registry handshake
+    && npm cache clean --force \
+    && rm -rf /root/.npm /home/scylla/.npm /tmp/npm-*
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
