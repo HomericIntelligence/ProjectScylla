@@ -151,6 +151,9 @@ RUN cd /usr/local/lib/node_modules/@anthropic-ai/claude-code && \
 # Patch npm's own bundled tar (6.2.1 → 7.5.13) — Trivy flags the same CVEs there
 RUN cd /usr/local/lib/node_modules/npm && \
     npm install tar@7.5.13 --save 2>/dev/null || true
+# Purge npm cache — it may contain auth tokens that Trivy's secret scanner flags
+RUN npm cache clean --force 2>/dev/null || true && \
+    rm -rf /root/.npm /home/scylla/.npm /tmp/npm-* 2>/dev/null || true
 
 # Create non-root user for security
 RUN groupadd -r scylla && useradd -r -g scylla -m -s /bin/bash scylla
