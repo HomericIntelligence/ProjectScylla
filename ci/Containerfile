@@ -64,8 +64,11 @@ RUN pixi install --manifest-path pixi.toml && \
 # Baking this in means 'pre-commit run --all-files' starts immediately,
 # without downloading hook repos or creating virtualenvs at CI time.
 # Hooks that use 'language: system' (pixi run ...) just need pixi available.
-RUN pixi run --manifest-path pixi.toml --environment lint \
-    pre-commit install-hooks
+# pre-commit install-hooks requires a git repo, so we init a temporary one.
+RUN git init . && \
+    pixi run --manifest-path pixi.toml --environment lint \
+    pre-commit install-hooks && \
+    rm -rf .git
 
 # ============================================================================
 # Stage 2: Runtime — minimal image without build tools
