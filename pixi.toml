@@ -73,6 +73,19 @@ bandit = { version = ">=1.7.5,<2", extras = ["toml"] }
 [feature.lint.tasks]
 pip-audit = "pip-audit --format json | python scripts/filter_audit.py"
 
+[feature.docs.target.linux-64.dependencies]
+tectonic = ">=0.15,<1"
+
+[feature.docs.target.osx-arm64.dependencies]
+tectonic = ">=0.15,<1"
+
+[feature.docs.target.osx-64.dependencies]
+tectonic = ">=0.15,<1"
+
+[feature.docs.tasks]
+paper-build = { cmd = "bash docs/arxiv/haiku/build.sh", description = "Build the arXiv paper PDF" }
+
 [environments]
 default = { features = ["dev"], solve-group = "default" }
 lint = { features = ["lint"], solve-group = "lint" }
+docs = { features = ["dev", "docs"], solve-group = "default" }
