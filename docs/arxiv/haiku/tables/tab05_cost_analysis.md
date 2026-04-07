@@ -9,4 +9,6 @@
 | claude-haiku-4-5 | T4 | 0.12 | 14.71 | 0.18 | 41 | 2584 | 649313 | 24472 |
 | claude-haiku-4-5 | T5 | 0.12 | 15.91 | 0.19 | 49 | 2565 | 657564 | 28149 |
 | claude-haiku-4-5 | T6 | 0.15 | 1.35 | 0.22 | 47 | 2665 | 772688 | 47389 |
-| claude-haiku-4-5 | **Total** | 0.11 | 122.31 | nan | 58559 | 2782286 | 683228777 | 26920157 |
+| claude-haiku-4-5 | **Total** | 0.11 | 122.31 | --- | 58,559* | 2,782,286* | 683,228,777* | 26,920,157* |
+
+*Token columns show per-run means for individual tiers and absolute totals (*) for the Total row.

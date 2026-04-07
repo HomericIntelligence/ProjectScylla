@@ -1,9 +1,12 @@
 \documentclass[11pt]{article}
-\pdfoutput=1 % Required by arXiv
 
-% ===== Encoding & Fonts =====
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+% ===== Engine Detection & Encoding =====
+\usepackage{iftex}
+\ifpdftex
+  \pdfoutput=1 % Required by arXiv
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\fi
 \usepackage{lmodern}
 
 % ===== Layout =====
@@ -166,9 +169,9 @@ Our contributions are as follows:
 
 \begin{enumerate}
   \item We provide the first multi-task ablation study of agentic coding
-    architectures using a budget frontier model, demonstrating that
-    architectural complexity has a non-monotonic and task-dependent effect on
-    performance.
+    architectures using a budget frontier model, providing preliminary evidence
+    that architectural complexity has a non-monotonic and task-dependent effect
+    on performance.
   \item We identify the T2--T3 transition as a critical cliff where
     delegation-based architectures produce statistically significant
     degradation in pass rate (Cliff's $\delta = -0.219$, $p < 0.001$).
@@ -179,7 +182,7 @@ Our contributions are as follows:
     three-model judge panel, highlighting the fragility of LLM-as-judge
     evaluation for budget-model outputs.
   \item We establish an aggregate frontier Cost-of-Pass of \$0.113,
-    demonstrating that meaningful ablation studies can be conducted at modest
+    showing that meaningful ablation studies can be conducted at modest
     cost with budget models.
 \end{enumerate}
 
@@ -283,9 +286,9 @@ Anecdotal evidence suggests that smaller models struggle with the coordination
 overhead of multi-agent systems, but this has not been rigorously quantified
 in a controlled experimental design.
 
-Our work contributes to this area by demonstrating, through controlled
-ablation, that delegation-based architectures can be counterproductive for
-budget models. We provide the first statistical evidence for a critical
+Our work contributes to this area by providing preliminary evidence, through
+controlled ablation, that delegation-based architectures can be
+counterproductive for budget models. We provide the first statistical evidence for a critical
 transition point (the T2--T3 cliff) where multi-agent coordination begins to
 degrade rather than improve performance.
 
@@ -322,7 +325,7 @@ task-normalized measure of economic efficiency by dividing mean cost per run
 by pass rate. This formulation captures a crucial insight: a model that costs
 half as much but passes only a quarter as often is actually \emph{more}
 expensive to use in practice. Our work applies CoP analysis across seven
-architectural tiers, demonstrating that cost invariance across tiers implies
+architectural tiers, suggesting that cost invariance across tiers implies
 that simpler architectures are strictly Pareto-dominant when they achieve
 higher quality.
 
@@ -641,8 +644,8 @@ throughout:
 \begin{itemize}
   \item \textbf{Omnibus tests}: Kruskal--Wallis $H$ test for overall tier
     differences across all seven tiers.
-  \item \textbf{Pairwise comparisons}: Dunn's test with Holm--Bonferroni
-    correction for 21 pairwise comparisons ($\binom{7}{2}$).
+  \item \textbf{Pairwise comparisons}: Mann--Whitney $U$ test with Holm
+    correction for 7 planned comparisons (6 adjacent transitions plus T0--T6).
   \item \textbf{Effect sizes}: Cliff's $\delta$ with 95\% bootstrap confidence
     intervals, providing a non-parametric measure of effect magnitude.
   \item \textbf{Interaction analysis}: Scheirer--Ray--Hare (SRH) test for
@@ -767,6 +770,18 @@ even when the task itself is trivial. The T4--T6 failures are categorical
 rather than probabilistic---zero out of 90 runs across these three tiers
 produced a passing result.
 
+\textbf{Note on evaluation coverage.} The judge evaluations for test-001 are
+incomplete: only 544 of the expected 1,080 judge assessments are present in
+the data, with T4, T5, and T6 having zero judge evaluations. The zero scores
+and pass rates for these tiers reflect the evaluation pipeline's assignment
+of score~$= 0$ when no judge evaluation was obtained, which in turn occurs
+when the agent fails to produce evaluable output (e.g., produces no code
+artifact or terminates without a result). The cost data confirm that these
+runs did execute and consume tokens (mean cost \$0.029--\$0.068 per run),
+but the agent's output was not suitable for judge evaluation. Readers should
+note that the ``catastrophic failure'' interpretation rests on this pipeline
+behavior rather than on explicit negative judge assessments.
+
 \subsection{test-002: Mojo Hello World with Bazel and Documentation}
 \label{sec:test002}
 
@@ -862,10 +877,10 @@ architectural elements without the coordination benefits that might emerge
 on more complex tasks.
 
 T6 achieves a perfect pass rate (1.000) but with only $n=3$ runs, this
-result should be interpreted with extreme caution. The wide confidence interval
-for a proportion of 1.0 with $n=3$ spans $[0.333, 0.889]$ under the
-Clopper--Pearson method, meaning a true pass rate as low as 0.333 is not
-excluded.
+result should be interpreted with extreme caution. At the aggregate level
+($n=9$ across three experiments), the bootstrap 95\% confidence interval for
+T6's pass rate of 0.667 spans $[0.333, 0.889]$, meaning a true pass rate as
+low as 0.333 is not excluded.
 
 \subsection{Cross-Task Analysis}
 \label{sec:cross_task}
@@ -936,8 +951,8 @@ significant transitions:
   \item \textbf{T2 $\to$ T3}: $p < 0.001$, Cliff's $\delta = -0.219$
     [$-0.268$, $-0.168$] (small effect). This is the critical cliff where
     the introduction of delegation produces a significant drop in pass rate.
-  \item \textbf{T3 $\to$ T4}: Dunn's $p = 0.058$ (n.s.\ after
-    Holm--Bonferroni correction), Cliff's $\delta = -0.116$ [$-0.212$,
+  \item \textbf{T3 $\to$ T4}: $p = 0.058$ (n.s.\ after
+    Holm correction), Cliff's $\delta = -0.116$ [$-0.212$,
     $-0.023$] (negligible effect, though CI excludes zero). Hierarchical
     orchestration further degrades performance beyond flat delegation.
   \item \textbf{T0 $\to$ T6}: $p = 0.018$. The overall trend from simplest
@@ -1007,7 +1022,7 @@ For cost, the experiment main effect is dominant ($H=903.1$, $p<0.001$),
 reflecting the differing cost profiles of the three tasks. test-002 (Mojo) is
 approximately $5\times$ more expensive per run than test-001 (Python Hello
 World). However, neither the tier main effect ($H=4.0$, $p=0.676$) nor the
-interaction ($H=4.8$, $p=0.965$) is significant for cost, confirming that
+interaction ($H=4.8$, $p=0.965$) is significant for cost, indicating that
 architectural complexity does not systematically affect expenditure.
 
 The implementation rate shows a similar pattern to cost: strong experiment
@@ -1085,8 +1100,11 @@ statistics.
 \input{tables/tab03_judge_agreement}
 
 The headline finding is that Krippendorff's $\alpha$ (interval) is $-0.030$,
-which is below chance agreement ($\alpha = 0$). By conventional standards in
-content analysis~\cite{polo2024efficient}, $\alpha < 0.667$ is considered
+computed on the $N=2{,}696$ available judge evaluations (see
+Section~\ref{sec:limitations} for discussion of missing evaluations).
+This value is below chance agreement ($\alpha = 0$). By conventional
+standards in content analysis~\cite{krippendorff2004content, polo2024efficient}, $\alpha < 0.667$ is
+considered
 unacceptable for drawing conclusions about individual cases, and
 $\alpha > 0.800$ is required for reliable measurement. Our value of $-0.030$
 indicates that the three judges agree less than would be expected by random
@@ -1287,7 +1305,7 @@ no useful output. These configurations are not merely suboptimal---they
 are wasteful, consuming budget without any return.
 
 The total experimental cost of \$122.31 across 1,080 runs yields a mean cost
-of \$0.11 per run. This demonstrates that meaningful ablation studies can be
+of \$0.11 per run. This shows that meaningful ablation studies can be
 conducted at modest cost using budget models, making the Scylla framework
 accessible for iterative evaluation during development cycles rather than
 requiring dedicated evaluation budgets.
@@ -1377,7 +1395,7 @@ lowest Cost-of-Pass (\$0.11).
 \textbf{Avoid delegation for simple tasks.} When the task complexity is low
 (comparable to test-001), delegation-based architectures should be avoided
 entirely. The catastrophic failure of T4--T6 on the trivial Python task
-demonstrates that architectural over-specification is not merely wasteful but
+suggests that architectural over-specification is not merely wasteful but
 actively harmful. A simple diagnostic: if the task can be described in a
 single sentence, delegation is unlikely to help with a budget model.
 
@@ -1396,7 +1414,7 @@ panel of frontier models may provide more reliable evaluation despite the
 higher per-evaluation cost.
 
 \textbf{Budget models are cost-competitive for evaluation.} The total cost
-of \$122.31 for 1,080 runs demonstrates that systematic architectural
+of \$122.31 for 1,080 runs shows that systematic architectural
 evaluation is affordable with budget models. Organizations can conduct their
 own ablation studies during development cycles rather than relying on
 published benchmarks that may not reflect their specific use cases.
@@ -1454,6 +1472,15 @@ undermines confidence in the quality scores. While the pass rate metric
 the continuous score and CoP metrics may be substantially affected by judge
 disagreement. All findings based on continuous scores should be interpreted
 with this caveat in mind.
+
+\textbf{Incomplete evaluation coverage.} Of the 3,240 expected judge
+evaluations (1,080 runs $\times$ 3 judges), only 2,696 (83.2\%) are present.
+The shortfall is concentrated in test-001, where T4--T6 have zero judge
+evaluations. Scores for these runs were assigned by the pipeline as~$0$
+when no evaluable output was produced, rather than by explicit judge
+assessment. This means the inter-rater reliability statistics
+($\alpha = -0.030$) are computed on the available subset and may not
+generalize to the full design matrix.
 
 \textbf{Confounded tier composition.} The tiers are not pure factorial
 manipulations---each tier includes the capabilities of previous tiers. T3
@@ -1775,7 +1802,7 @@ for pass/fail-oriented coding tasks: the agent either accomplishes the task
 Cost distributions are also non-normal, exhibiting right skew due to
 occasional runs that require substantially more tokens than average. The
 non-normality of all metrics motivates the use of rank-based tests
-(Kruskal--Wallis, Dunn's, Cliff's $\delta$, Scheirer--Ray--Hare) throughout
+(Kruskal--Wallis, Mann--Whitney $U$, Cliff's $\delta$, Scheirer--Ray--Hare) throughout
 the analysis rather than parametric alternatives (ANOVA, $t$-tests).
 
 % -------------------------------------------------------------------
@@ -1825,8 +1852,8 @@ in a single-agent or multi-agent configuration.
 \subsection{Pairwise Comparisons and Effect Sizes}
 
 For metrics with significant omnibus tests, pairwise comparisons were conducted
-using Dunn's test with Holm--Bonferroni correction. With $k=7$ tiers, there are
-$\binom{7}{2} = 21$ pairwise comparisons, requiring correction for
+using the Mann--Whitney $U$ test with Holm correction. We test 7 planned
+comparisons (6 adjacent transitions plus T0--T6), requiring correction for
 multiplicity to control the family-wise error rate.
 
 The significant pairwise results for pass rate, with Cliff's $\delta$ effect
@@ -1898,7 +1925,7 @@ the chi-squared distribution with 12 degrees of freedom produces $p \ll 0.001$,
 indicating that the interaction cannot be attributed to chance.
 
 For cost and implementation rate, the interaction terms are non-significant
-($p = 0.965$ and $p = 0.989$, respectively), confirming that the cost and
+($p = 0.965$ and $p = 0.989$, respectively), indicating that the cost and
 attempt profiles are consistent across experiments regardless of tier.
 
 % -------------------------------------------------------------------
