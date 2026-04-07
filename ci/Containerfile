@@ -50,8 +50,10 @@ RUN curl -fsSL https://pixi.sh/install.sh \
 # Copy in order of change frequency (least → most frequent)
 WORKDIR /opt/scylla-build
 COPY pixi.lock pixi.toml pyproject.toml .pre-commit-config.yaml README.md ./
-# hatchling editable build requires force-included directories to exist
+# hatchling editable build requires force-included files to exist
+# (see [tool.hatch.build.targets.wheel.force-include] in pyproject.toml)
 COPY src/scylla/analysis/schemas/ src/scylla/analysis/schemas/
+COPY src/scylla/py.typed src/scylla/py.typed
 
 # Layer 2: Install pixi environments (default + lint)
 # This bakes all Python packages into the image — no network needed at runtime
