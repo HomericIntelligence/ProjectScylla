@@ -85,8 +85,9 @@ T2 to T3 constitutes a critical cliff (Cliff's $\delta=-0.219$, $p<0.001$).
 A Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
 interaction on score ($H(12)=223.5$, $p<0.001$), indicating that the optimal architectural
 tier is task-dependent. Notably, cost does not vary significantly across tiers
-($p=0.676$), meaning additional architectural complexity yields no cost savings
-despite substantial quality penalties. Inter-rater reliability among the
+($p=0.676$, non-significant under limited power), providing no evidence of
+cost savings from additional architectural complexity despite substantial
+quality penalties. Inter-rater reliability among the
 three-judge panel (Krippendorff's $\alpha=-0.030$) is below chance agreement,
 raising concerns about the reliability of LLM-as-judge panels that include
 budget-class evaluators. These preliminary
@@ -178,9 +179,9 @@ Our contributions are as follows:
   \item We identify the T2--T3 transition as a critical cliff where
     delegation-based architectures produce statistically significant
     degradation in pass rate (Cliff's $\delta = -0.219$, $p < 0.001$).
-  \item We show that cost is invariant to tier ($p=0.676$), establishing that
-    complex architectures impose quality penalties without offsetting cost
-    savings.
+  \item We find no statistically significant tier effect on cost ($p=0.676$),
+    providing no evidence of offsetting cost savings under current statistical
+    power.
   \item We report near-zero inter-rater reliability ($\alpha=-0.030$) among a
     three-model judge panel, highlighting the fragility of LLM-as-judge
     evaluation for budget-model outputs.
@@ -858,9 +859,9 @@ indicating that the task difficulty, rather than the architecture, is the
 primary determinant of output quality.
 
 The Cost-of-Pass is remarkably uniform across tiers (\$0.228--\$0.279),
-consistent with the aggregate cost invariance finding. T6 achieves the highest
-pass rate (1.000) but at the highest CoP (\$0.279), reflecting its elevated
-per-run cost.
+consistent with the aggregate cost invariance finding. T6 ($n=3$) achieves the
+highest pass rate (1.000) but at the highest CoP (\$0.279), reflecting its
+elevated per-run cost.
 
 One interpretation of these results is that the Mojo task's difficulty
 provides sufficient ``work'' to justify the coordination overhead of
@@ -922,7 +923,7 @@ result should be interpreted with extreme caution. At the aggregate level
 T6's pass rate of 0.667 spans $[0.333, 0.889]$, meaning a true pass rate as
 low as 0.333 is not excluded. Note that BCa bootstrap may exhibit poor
 coverage properties for binary data at $n=9$; the Clopper--Pearson exact
-interval $[0.299, 0.901]$ is wider and may be more appropriate at this
+interval $[0.299, 0.925]$ is wider and may be more appropriate at this
 sample size.
 
 \subsection{Cross-Task Analysis}
@@ -1073,13 +1074,13 @@ interaction on the ranked outcome variables:
   \end{tabular}
 \end{table}
 
-The score interaction ($H=223.5$, $df=12$, $p<0.001$) has the largest $H$-statistic
-in the analysis, exceeding both the tier main effect ($H=91.3$, $df=6$) and
-the experiment main effect ($H=178.2$, $df=2$), though raw $H$-statistics are not
-directly comparable across terms with different degrees of freedom. Nonetheless,
-the highly significant interaction indicates that the impact of
-architectural complexity on quality is not uniform: it depends critically on
-the task being performed.
+All three score effects are significant at $p<0.001$: the tier $\times$
+experiment interaction ($H=223.5$, $df=12$), the experiment main effect
+($H=178.2$, $df=2$), and the tier main effect ($H=91.3$, $df=6$). Raw
+$H$-statistics are not directly comparable across terms with different degrees
+of freedom, but the significance of all three effects---particularly the
+interaction---indicates that the impact of architectural complexity on quality
+is not uniform: it depends critically on the task being performed.
 
 The interaction is driven by the divergent tier profiles across experiments.
 In test-001, tiers T4--T6 score zero while T0--T2 score above 0.87. In
@@ -1433,10 +1434,11 @@ mechanism cannot be determined from observational data alone.
 
 \textbf{Finding 3 (RQ2): In this study, tier effects are task-dependent.} The significant
 SRH interaction effect ($H = 223.5$, $df=12$, $p < 0.001$) is the central finding of
-the cross-task analysis. The interaction is highly significant and its $H$-statistic
-exceeds those of both main effects ($H = 91.3$, $df=6$ for tier; $H = 178.2$, $df=2$
-for experiment), though direct comparison of $H$-values across terms with different
-degrees of freedom requires caution. The highly significant interaction indicates that
+the cross-task analysis. All three effects---interaction, tier main effect
+($H = 91.3$, $df=6$), and experiment main effect ($H = 178.2$, $df=2$)---are
+significant at $p < 0.001$, though their raw $H$-values are not directly
+comparable across different degrees of freedom. The highly significant
+interaction indicates that
 the \emph{combination} of tier and task determines quality beyond
 either factor alone. This means there is no universally optimal tier: the best
 architecture depends on the task. For trivial tasks, T0--T2 are clearly
@@ -1446,10 +1448,11 @@ is derived from continuous score data; given the low inter-rater reliability
 ($\alpha = -0.030$), the pass-rate-based KW analysis ($H(6)=119.01$, $p<0.001$)
 provides independent, more robust confirmation of tier-dependent effects.)
 
-\textbf{Finding 4 (RQ3): In this study, cost is invariant to architectural complexity.} The
-non-significant tier effect on cost ($p = 0.676$) is a notable result because
-it provides no evidence of a cost--quality trade-off under current statistical
-power. If higher tiers provided cost savings (e.g., by solving tasks more
+\textbf{Finding 4 (RQ3): In this study, no significant cost variation across tiers is detected.}
+Cost-of-Pass ranges from \$0.11 at T2 to \$0.22 at T6, driven by declining
+pass rates rather than rising per-run costs. The non-significant tier effect
+on cost ($p = 0.676$) provides no evidence of a cost--quality trade-off under
+current statistical power. If higher tiers provided cost savings (e.g., by solving tasks more
 efficiently with fewer tokens), there might be a case for accepting lower
 quality in exchange for lower cost. The absence of detected cost variation
 means that the quality degradation in higher tiers appears as a net loss
@@ -1711,7 +1714,7 @@ meta-agent could be trained on the data from this and future studies,
 learning to predict which architectural configuration will maximize pass rate
 for a given task description.
 
-\textbf{Cost optimization.} While cost is invariant to tier in our data, the
+\textbf{Cost optimization.} While no significant cost difference across tiers was detected in our data, the
 total cost of \$122.31 for 1,080 runs suggests room for efficiency gains
 through prompt caching optimization, reduced context windows for simple tasks,
 or selective evaluation (running fewer subtests for well-characterized tiers).
@@ -2008,10 +2011,10 @@ omission does not materially affect the conclusions.
 For the score metric, the SRH analysis reveals that all three effects---tier
 main effect ($H = 91.3$, $df = 6$), experiment main effect ($H = 178.2$,
 $df = 2$), and interaction ($H = 223.5$, $df = 12$)---are statistically
-significant at $p < 0.001$. The interaction term has the largest $H$-statistic,
-though raw $H$-values are not directly comparable across terms with different
-degrees of freedom ($df = 12$ vs.\ $df = 6$ vs.\ $df = 2$). Nonetheless,
-the highly significant interaction indicates that the relationship between
+significant at $p < 0.001$. Raw $H$-values are not directly comparable across
+terms with different degrees of freedom ($df = 12$ vs.\ $df = 6$ vs.\
+$df = 2$), but the significance of all three effects---particularly the
+interaction---indicates that the relationship between
 tier and score changes qualitatively across experiments. This is consistent with the divergent patterns described in
 Sections~\ref{sec:test001}--\ref{sec:test003}.
 
@@ -2075,7 +2078,8 @@ extensive system prompts and repository context. The prompts and context are
 cached by the API and reused across runs, so the per-run cost is dominated by
 the cache read rate rather than the full input token rate.
 
-The cache-dominated cost structure explains why cost is invariant to tier:
+The cache-dominated cost structure offers a plausible mechanism for the
+observed absence of detected cost differences across tiers:
 regardless of the architectural configuration, the agent must process a
 similar amount of cached context (the repository and system prompt), and the
 output length (approximately 2,500 tokens on average) is relatively

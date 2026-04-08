@@ -118,7 +118,7 @@ TABLE_FILES=$(ls tables/*.tex 2>/dev/null || echo "")
 tar -czf arxiv-submission.tar.gz \
     paper.tex \
     references.bib \
-    $(ls figures/*.pdf 2>/dev/null | head -30) \
+    $(ls figures/*.png 2>/dev/null | head -30) \
     ${TABLE_FILES} 2>/dev/null || {
     echo "✗ Error creating tarball"
     exit 1
