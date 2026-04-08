@@ -80,19 +80,20 @@ we execute three multi-task experiments totaling 1,080 runs at a cost of
 architectural complexity and task performance: the simplest tiers (T0--T2)
 achieve the highest aggregate pass rates (0.935--0.978), while delegation-based
 tiers (T3--T6) exhibit statistically significant degradation (pass rate
-0.630--0.759; Kruskal--Wallis $H(6)=119.01$, $p<0.001$). The transition from
+0.630--0.759; Kruskal--Wallis on pass rate, $H(6)=119.01$, $p<0.001$). The transition from
 T2 to T3 constitutes a critical cliff (Cliff's $\delta=-0.219$, $p<0.001$).
 A Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
-interaction ($H=223.5$, $p<0.001$), indicating that the optimal architectural
+interaction on score ($H(12)=223.5$, $p<0.001$), indicating that the optimal architectural
 tier is task-dependent. Notably, cost does not vary significantly across tiers
 ($p=0.676$), meaning additional architectural complexity yields no cost savings
 despite substantial quality penalties. Inter-rater reliability among the
 three-judge panel (Krippendorff's $\alpha=-0.030$) is below chance agreement,
 raising concerns about the reliability of LLM-as-judge panels that include
 budget-class evaluators. These preliminary
-findings suggest that for budget models, simpler architectures consistently
-outperform complex ones, and that architectural decisions should be
-task-contingent rather than universally applied.
+findings suggest that for budget models, simpler architectures outperform
+complex ones in aggregate, though task-dependent effects are strong and
+architectural decisions should be task-contingent rather than universally
+applied.
 \end{abstract}
 
 \textbf{Keywords:} agentic AI, ablation study, LLM evaluation, budget models,
@@ -327,9 +328,9 @@ task-normalized measure of economic efficiency by dividing mean cost per run
 by pass rate. This formulation captures a crucial insight: a model that costs
 half as much but passes only a quarter as often is actually \emph{more}
 expensive to use in practice. Our work applies CoP analysis across seven
-architectural tiers, suggesting that cost invariance across tiers implies
-that simpler architectures are strictly Pareto-dominant when they achieve
-higher quality.
+architectural tiers, finding that observed cost invariance across tiers
+($p=0.676$, non-significant under limited power) suggests simpler
+architectures may be Pareto-dominant when they achieve higher quality.
 
 % ===================================================================
 % 3. BACKGROUND: THE SCYLLA FRAMEWORK
@@ -709,7 +710,7 @@ ease. We examine this phenomenon in detail in Section~\ref{sec:test001}.
 
 The best tier varies across experiments: T1 for test-001, T6 for test-002 and
 test-003 (though T6 has only $n=3$ runs per experiment and very wide confidence
-intervals; see Section~\ref{sec:aggregate}). This variation provides an initial
+intervals; see Section~\ref{sec:cross_task}). This variation provides an initial
 indication that the optimal architectural configuration is task-dependent, a
 finding we formalize through
 interaction analysis in Section~\ref{sec:interaction}.
@@ -759,8 +760,10 @@ The zero pass rate for T4--T6 on this trivial task is the most striking result
 in the entire study. These tiers introduce hierarchical delegation and
 orchestration---mechanisms that, for a task requiring only a single line of
 code (\texttt{print("Hello, World!")}), create coordination overhead that the
-budget model cannot resolve. The agent appears to spend its computational
-budget managing the delegation protocol rather than executing the simple task.
+budget model cannot resolve. T4--T6 runs complete in a mean of $\sim$17\,s
+with no evaluable output, suggesting the agent encounters a fatal
+orchestration error immediately rather than exhausting its computational
+budget on coordination overhead.
 
 T1 and T2 achieve perfect pass rates (1.000) with identical scores (0.908),
 suggesting that skills and tooling provide no marginal benefit over basic
@@ -768,6 +771,23 @@ prompts for this trivial task, but also introduce no overhead. T0 achieves a
 slightly lower pass rate (0.958), indicating that some prompt configurations
 in the T0 ablation spectrum (particularly minimal or empty prompts) cause
 occasional failures.
+
+Inspection of the per-subtest data reveals that all three T0 failures on
+test-001 are concentrated in subtest~00, the empty-prompt configuration
+(\texttt{system\_prompt\_mode: none}), which achieves 0/3 passing across all
+three experiments (1/9 overall). With subtest~00 excluded, T0 achieves a
+perfect 1.000 pass rate on test-001, identical to T1 and T2. The empty-prompt
+agent receives the task instructions as a user message but has no system
+prompt providing behavioral framing. Examination of the agent transcripts
+reveals that rather than executing the task, the model meta-reasons about the
+evaluation framework---describing what the task asks for and posing clarifying
+questions (``Would you like me to execute this task?'')---completing in only
+2~API calls and $\sim$6\,s of agent time. In contrast, subtest~01 (which adds
+only the default tool system prompt) executes the task immediately and
+succeeds. This suggests that the system prompt's role is not merely
+informational but \emph{behavioral}: it provides the framing that shifts a
+budget model from meta-reasoning to task execution, even when the task
+instructions are unambiguous.
 
 T3 (flat delegation) achieves a partial pass rate of 0.350, suggesting that
 some of the 41 specialist configurations can still solve the task, but the
@@ -847,6 +867,13 @@ provides sufficient ``work'' to justify the coordination overhead of
 delegation-based tiers. Unlike the trivial Python task, where delegation is
 unnecessary, the Mojo task involves multiple components (source code, build
 configuration, documentation) that can genuinely benefit from decomposition.
+A complementary explanation is that the model's limited familiarity with
+Mojo---noted in Section~\ref{sec:task_selection} as having ``limited
+representation in the model's training data''---means that specialist agents
+in delegation-based tiers may provide language-specific context or tooling
+that partially compensates for the base model's limited training exposure.
+This advantage is absent for well-represented languages like Python, where the
+base model already possesses deep knowledge.
 
 \subsection{test-003: Add mypy to pixi Configuration}
 \label{sec:test003}
@@ -869,7 +896,7 @@ experiments, with uniformly high pass rates and subtle tier effects:
     T2 & 45  & 0.978 & 0.814 & 0.073 & 0.074 \\
     T3 & 123 & 0.959 & 0.826 & 0.071 & 0.074 \\
     T4 & 42  & 0.952 & 0.857 & 0.076 & 0.080 \\
-    T5 & 45  & 0.933 & 0.829 & 0.098 & 0.106 \\
+    T5 & 45  & 0.933 & 0.829 & 0.098 & 0.105 \\
     T6 & 3   & 1.000 & 0.833 & 0.100 & 0.100 \\
     \bottomrule
   \end{tabular}
@@ -883,7 +910,7 @@ possibly because skills contain procedural knowledge about configuration
 management that the base model does not possess.
 
 An interesting anomaly is T5 (hybrid), which shows elevated cost
-(\$0.099/run vs.\ \$0.071--\$0.076 for T0--T3) without a corresponding
+(\$0.098/run vs.\ \$0.071--\$0.076 for T0--T3) without a corresponding
 quality improvement (pass rate 0.933 is the lowest in the table). The hybrid
 configurations appear to introduce overhead from combining multiple
 architectural elements without the coordination benefits that might emerge
@@ -935,12 +962,25 @@ from run to run, making them unreliable for production deployment.
   \label{fig:score_variance}
 \end{figure}
 
-The Kruskal--Wallis omnibus test confirms significant tier effects for three
+Quantitatively, the bimodality is striking: for T3, 22\% of runs score below
+0.1 (complete failure) while 50\% score above 0.7 (successful completion),
+with 28\% in between. For T4--T5, the failure mode is more pronounced
+($\sim$33\% below 0.1, $\sim$40--44\% above 0.7). By contrast, T0--T2 are
+effectively unimodal at high scores (67--76\% above 0.7, 0--4\% below 0.1).
+This pattern suggests a binary delegation outcome: either the coordination
+succeeds and produces high-quality output, or it fails entirely and produces
+near-zero output, with relatively few intermediate outcomes.
+
+The Kruskal--Wallis omnibus test reveals significant tier effects for three
 of five metrics:
 
 \begin{itemize}
-  \item Pass rate: $H(6) = 119.01$, $p < 0.001$ (significant)
-  \item Score: $H(6) = 91.34$ (from SRH tier factor), $p < 0.001$ (significant)
+  \item Pass rate: $H(6) = 119.01$, $p < 0.001$ (significant)%
+    \footnote{For the binary pass/fail outcome, a chi-squared test on the
+    $2 \times 7$ contingency table would be the more natural choice. We use
+    Kruskal--Wallis throughout for a unified analytical framework; the
+    conclusions are qualitatively identical under both tests.}
+  \item Score: $H(6) = 91.3$ (from SRH tier factor), $p < 0.001$ (significant)
   \item Duration: $H(6) = 40.94$, $p < 0.001$ (significant)
   \item Cost: $H(6) = 4.00$, $p = 0.676$ (not significant)
   \item Implementation rate: $H(6) = 5.47$, $p = 0.486$ (not significant)
@@ -955,7 +995,15 @@ The non-significance of cost and implementation rate is analytically
 important. It means that all tiers cost approximately the same and that the
 agent's propensity to \emph{attempt} the task is not affected by architecture.
 The differences emerge only in the \emph{quality} of the attempt and the time
-required to complete it.
+required to complete it. The significant duration effect ($H(6) = 40.94$,
+$p < 0.001$) reveals a counter-intuitive pattern: single-agent tiers (T0--T2)
+run substantially longer than delegation tiers (T3--T6) in aggregate (e.g.,
+T0 mean = 346\,s vs.\ T3 mean = 248\,s). This is driven primarily by the
+rapid failures of T4--T6 on test-001, where runs complete in $\sim$17\,s
+(consistent with immediate orchestration errors) versus 430--505\,s for
+T0--T2. A full duration analysis is deferred to future work; we note that
+wall-clock time represents an operational cost dimension not captured by the
+token-based CoP metric.
 
 Pairwise comparisons with Holm--Bonferroni correction identify the following
 significant and near-significant transitions:
@@ -966,12 +1014,16 @@ significant and near-significant transitions:
     the introduction of delegation produces a significant drop in pass rate.
   \item \textbf{T3 $\to$ T4}: $p = 0.058$ (n.s.\ after
     Holm correction), Cliff's $\delta = -0.116$ [$-0.212$,
-    $-0.023$] (small effect, CI excludes zero). Hierarchical
-    orchestration further degrades performance beyond flat delegation.
+    $-0.023$] (small effect; the bootstrap CI excludes zero but is not
+    adjusted for multiple comparisons). Hierarchical orchestration may
+    further degrade performance beyond flat delegation, though this does
+    not reach corrected significance.
   \item \textbf{T0 $\to$ T6}: $p = 0.018$. The overall trend from simplest
     to most complex is significantly negative.
   \item \textbf{Duration T2 $\to$ T3}: $p = 0.048$, Cliff's $\delta = -0.154$
-    [$-0.264$, $-0.045$]. Delegation-based tiers tend to run longer.
+    [$-0.264$, $-0.045$]. T3 runs are stochastically shorter than T2, driven
+    partly by the rapid failures of delegation-based tiers on test-001
+    (T4--T6 complete in $\sim$17\,s vs.\ 430--505\,s for T0--T2).
 \end{itemize}
 
 \begin{figure}[htbp]
@@ -1018,9 +1070,11 @@ interaction on the ranked outcome variables:
   \end{tabular}
 \end{table}
 
-The score interaction ($H=223.5$, $df=12$, $p<0.001$) is the largest effect
-in the entire analysis, exceeding both the tier main effect ($H=91.3$) and
-the experiment main effect ($H=178.2$). This indicates that the impact of
+The score interaction ($H=223.5$, $df=12$, $p<0.001$) has the largest $H$-statistic
+in the analysis, exceeding both the tier main effect ($H=91.3$, $df=6$) and
+the experiment main effect ($H=178.2$, $df=2$), though raw $H$-statistics are not
+directly comparable across terms with different degrees of freedom. Nonetheless,
+the highly significant interaction indicates that the impact of
 architectural complexity on quality is not uniform: it depends critically on
 the task being performed.
 
@@ -1249,8 +1303,9 @@ cost (\$0.15), yielding \$0.22 per successful outcome.
 \end{figure}
 
 T2 (Tooling) achieves the lowest aggregate CoP at \$0.11, making it the
-apparent Pareto-optimal tier in the observed data: it has both the highest
-pass rate (0.978) and the lowest cost-of-pass. (Cost invariance is a
+apparent Pareto-optimal tier in the aggregate data: it has both the highest
+aggregate pass rate (0.978) and the lowest cost-of-pass, though the optimal
+tier varies by task (Section~\ref{sec:interaction}). (Cost invariance is a
 non-significant finding under limited power; real cost differences between
 tiers may exist below our ability to detect.) T1 (Skills) is a close second with CoP \$0.12
 and pass rate 0.967. The frontier CoP across all tiers and experiments is
@@ -1287,11 +1342,12 @@ to process a larger repository with more complex build configuration,
 consuming more tokens for context. The Python Hello World task (test-001)
 operates in a minimal repository, requiring minimal context.
 
-This cost invariance across tiers has an important practical implication:
-since all tiers cost approximately the same per run, the optimal strategy is
-simply to use the tier with the highest pass rate. There is no cost--quality
-trade-off to navigate; the Pareto frontier collapses to a narrow region
-around T1--T2, where both cost and quality are optimized simultaneously.
+This observed cost invariance across tiers ($p=0.676$, non-significant under
+limited power) has a practical implication: if tiers indeed cost approximately
+the same per run, the optimal strategy is simply to use the tier with the
+highest pass rate. In the aggregate data, the Pareto frontier collapses to
+a narrow region around T1--T2, though per-task analysis shows the frontier
+varies (T5 dominates for test-002).
 
 \subsection{Frontier Analysis}
 \label{sec:frontier_analysis}
@@ -1340,8 +1396,8 @@ between architectural complexity and budget model performance. We organize
 these findings around the four research questions posed in
 Section~\ref{sec:introduction}.
 
-\textbf{Finding 1 (RQ1): The T2--T3 cliff is the critical transition.} The
-introduction of delegation at T3 produces a statistically significant drop in
+\textbf{Finding 1 (RQ1): In this study, the T2--T3 cliff is the critical transition.} The
+introduction of delegation at T3 is associated with a statistically significant drop in
 aggregate pass rate from 0.978 to 0.759 (Cliff's $\delta = -0.219$,
 $p < 0.001$). This is the largest single-step degradation in the tier
 hierarchy and represents the transition from individual agent execution to
@@ -1352,14 +1408,14 @@ applied to the task, though the confounded tier design (Section~\ref{sec:threats
 does not allow definitive causal attribution.
 
 The subsequent T3--T4 transition (Cliff's $\delta = -0.116$, small effect
-by conventional thresholds with CI excluding zero) suggests that
-adding hierarchical orchestration on top of delegation produces further, though
-smaller, degradation. The cumulative effect of moving from T2 to T6 is a
+by conventional thresholds) suggests possible further degradation from
+adding hierarchical orchestration on top of delegation, though this
+comparison does not reach significance after Holm correction ($p = 0.058$). The cumulative effect of moving from T2 to T6 is a
 drop in pass rate from 0.978 to 0.667---a loss of approximately one-third of
 the base capability.
 
-\textbf{Finding 2 (RQ1): Architectural over-specification causes catastrophic
-failure on trivial tasks.} The zero pass rate for T4--T6 on test-001 is the
+\textbf{Finding 2 (RQ1): Architectural over-specification is associated with catastrophic
+failure on the trivial Python task.} The zero pass rate for T4--T6 on test-001 is the
 most striking individual result in the study. A task that the bare model
 handles with 95.8\% pass rate becomes completely unsolvable when wrapped in
 hierarchical delegation. This suggests that budget models cannot
@@ -1369,16 +1425,21 @@ multiplicative: it does not merely reduce performance but can entirely
 prevent task completion.
 
 \textbf{Finding 3 (RQ2): Tier effects are task-dependent.} The significant
-SRH interaction effect ($H = 223.5$, $p < 0.001$) is the dominant finding of
-the cross-task analysis. The interaction $H$ exceeds both the tier main effect
-($H = 91.3$) and the experiment main effect ($H = 178.2$), indicating that
-the \emph{combination} of tier and task determines quality more strongly than
+SRH interaction effect ($H = 223.5$, $df=12$, $p < 0.001$) is the central finding of
+the cross-task analysis. The interaction is highly significant and its $H$-statistic
+exceeds those of both main effects ($H = 91.3$, $df=6$ for tier; $H = 178.2$, $df=2$
+for experiment), though direct comparison of $H$-values across terms with different
+degrees of freedom requires caution. The highly significant interaction indicates that
+the \emph{combination} of tier and task determines quality beyond
 either factor alone. This means there is no universally optimal tier: the best
 architecture depends on the task. For trivial tasks, T0--T2 are clearly
 superior; for moderate tasks, the tiers are more interchangeable, with some
-evidence that higher tiers provide marginal benefits.
+evidence that higher tiers provide marginal benefits. (Note that this finding
+is derived from continuous score data; given the low inter-rater reliability
+($\alpha = -0.030$), the pass-rate-based KW analysis ($H(6)=119.01$, $p<0.001$)
+provides independent, more robust confirmation of tier-dependent effects.)
 
-\textbf{Finding 4 (RQ3): Cost is invariant to architectural complexity.} The
+\textbf{Finding 4 (RQ3): In this study, cost is invariant to architectural complexity.} The
 non-significant tier effect on cost ($p = 0.676$) is a notable result because
 it eliminates the possibility of a cost--quality trade-off. If higher tiers
 provided cost savings (e.g., by solving tasks more efficiently with fewer
@@ -1386,7 +1447,7 @@ tokens), there might be a case for accepting lower quality in exchange for
 lower cost. The absence of cost variation means that the quality degradation
 in higher tiers is a pure loss with no compensating benefit.
 
-\textbf{Finding 5 (RQ4): The three-judge panel exhibits near-zero
+\textbf{Finding 5 (RQ4): In this study, the three-judge panel exhibits near-zero
 reliability.} With Krippendorff's $\alpha = -0.030$, the judge panel produces
 scores that are effectively random relative to each other. The disagreement
 is structured: the two frontier judges (Opus and Sonnet) show the smallest
@@ -1404,12 +1465,13 @@ reliable evaluation.
 These findings have several practical implications for organizations deploying
 agentic coding systems with budget models.
 
-\textbf{Architecture selection should be conservative.} The default
-recommendation for budget model deployments is to use T2 (Tooling) as the
-baseline architecture. This configuration provides the agent with external
-tools and MCP servers while avoiding the delegation overhead that degrades
-performance. T2 achieves the highest aggregate pass rate (0.978) and the
-lowest Cost-of-Pass (\$0.11).
+\textbf{Architecture selection should be conservative.} Based on the tasks
+studied here, the default recommendation for budget model deployments is to
+use T2 (Tooling) as the baseline architecture. This configuration provides
+the agent with external tools and MCP servers while avoiding the delegation
+overhead that degrades aggregate performance. T2 achieves the highest
+aggregate pass rate (0.978) and the lowest Cost-of-Pass (\$0.11), though the
+optimal tier varies by task (Section~\ref{sec:interaction}).
 
 \textbf{Avoid delegation for simple tasks.} When the task complexity is low
 (comparable to test-001), delegation-based architectures should be avoided
@@ -1418,12 +1480,13 @@ suggests that architectural over-specification is not merely wasteful but
 actively harmful. A simple diagnostic: if the task can be described in a
 single sentence, delegation is unlikely to help with a budget model.
 
-\textbf{Task classification can guide tier selection.} The significant
+\textbf{Task classification could guide tier selection.} The significant
 interaction effect implies that a static tier recommendation is suboptimal.
-Organizations could implement a lightweight task classifier that selects T1--T2
-for simple tasks and considers T3 only for tasks where genuine decomposition
-benefits are expected. This adaptive approach could capture the benefits of
-higher tiers on complex tasks while avoiding the penalties on simple ones.
+Organizations could investigate a lightweight task classifier that selects
+T1--T2 for simple tasks and considers T3 only for tasks where genuine
+decomposition benefits are expected. However, this recommendation is
+speculative given the 3-task basis of the current study; a functional
+classifier would require training data from a larger task set.
 
 \textbf{Judge panel composition matters.} The near-zero inter-rater
 reliability suggests that organizations using LLM-as-judge evaluation should
@@ -1563,25 +1626,22 @@ at a total cost of \$122.31, we find preliminary evidence for a non-monotonic
 relationship between architectural complexity and task performance.
 
 The central finding is that \emph{simpler is better} for the budget model
-studied. Tiers T0--T2 (prompts, skills, and tooling) consistently outperform
-tiers T3--T6 (delegation, hierarchy, hybrid, and super) in aggregate pass
-rate (0.935--0.978 vs.\ 0.630--0.759) and score (0.776--0.816 vs.\
-0.508--0.610). The transition from T2 to T3 constitutes a statistically
-significant critical cliff where the introduction of multi-agent delegation
-degrades performance (Cliff's $\delta = -0.219$, $p < 0.001$).
+studied. A two-cluster structure emerges: tiers T0--T2 consistently outperform
+tiers T3--T6 in both pass rate and score, with the T2--T3 transition representing
+the critical cliff where multi-agent delegation is introduced.
 
-The severity of the degradation is task-dependent. On trivial tasks,
-hierarchical architectures (T4--T6) fail catastrophically, achieving zero
-pass rate on a task the base model solves with near-perfect reliability. On
-moderate tasks, the tier effects are muted, with all tiers achieving
-acceptable performance. This task dependence is formalized by the significant
-SRH interaction effect ($H = 223.5$, $p < 0.001$), the largest effect in the
-analysis.
+Crucially, this degradation is task-dependent: the significant SRH interaction
+effect indicates there is no universally optimal tier. On the trivial Python task,
+hierarchical architectures fail catastrophically (zero pass rate for T4--T6); on
+moderate tasks, all tiers achieve acceptable performance with muted differences.
+This interaction should temper aggregate-level recommendations---the ``best'' tier
+depends on the task.
 
-Cost is invariant to tier ($p = 0.676$), eliminating any cost--quality
-trade-off. Since higher tiers cost the same as lower tiers but produce
-worse results, they are strictly Pareto-dominated. The Pareto-optimal tier
-is T2 (Tooling), with a Cost-of-Pass of \$0.11.
+Observed cost invariance across tiers ($p=0.676$, non-significant under
+limited power) suggests no cost--quality trade-off, making higher tiers
+effectively Pareto-dominated in aggregate. T2 (Tooling) appears as the
+aggregate Pareto-optimal tier, though per-task analysis shows the optimal
+tier varies (e.g., T5 dominates T2 for test-002).
 
 The near-zero inter-rater reliability ($\alpha = -0.030$) of the three-judge
 panel is a methodological finding with implications beyond this study. It
@@ -1858,7 +1918,7 @@ distribution with $k-1 = 6$ degrees of freedom.
     Impl Rate       & KW     &   5.47 & 0.486    & n.s. \\
     Duration (s)    & KW     &  40.94 & $<0.001$ & *** \\
     Cost (USD)      & SRH    &   4.00 & 0.676    & n.s. \\
-    Score           & SRH    &  91.34 & $<0.001$ & *** \\
+    Score           & SRH    &  91.3  & $<0.001$ & *** \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -1889,15 +1949,17 @@ sizes and 95\% bootstrap confidence intervals, are:
     further degradation from flat delegation to hierarchical orchestration
     falls in the ``small'' range ($0.11 \leq |\delta| < 0.28$).
   \item T0 vs.\ T6: $p = 0.018$. The overall trend from the simplest tier to
-    the most complex is significantly negative, indicating monotonic
-    degradation across the full tier spectrum.
+    the most complex is significantly negative in aggregate, though the
+    pattern is not monotonic across all tasks (test-002 shows a modest
+    positive trend).
 \end{itemize}
 
 For duration, the significant pairwise result is:
 \begin{itemize}
   \item T2 vs.\ T3: $p = 0.048$, Cliff's $\delta = -0.154$ [$-0.264$,
-    $-0.045$]. Delegation-based tiers tend to run longer, likely due to the
-    overhead of managing agent communication and task decomposition.
+    $-0.045$]. T3 runs are stochastically shorter than T2, driven partly
+    by rapid failures of delegation-based tiers on test-001 ($\sim$17\,s
+    vs.\ 430--505\,s for T0--T2).
 \end{itemize}
 
 \subsection{Cliff's $\delta$ Interpretation Scale}
@@ -1934,9 +1996,11 @@ and heteroscedasticity.
 For the score metric, the SRH analysis reveals that all three effects---tier
 main effect ($H = 91.3$, $df = 6$), experiment main effect ($H = 178.2$,
 $df = 2$), and interaction ($H = 223.5$, $df = 12$)---are statistically
-significant at $p < 0.001$. The interaction term is the largest, indicating
-that the relationship between tier and score changes qualitatively across
-experiments. This is consistent with the divergent patterns described in
+significant at $p < 0.001$. The interaction term has the largest $H$-statistic,
+though raw $H$-values are not directly comparable across terms with different
+degrees of freedom ($df = 12$ vs.\ $df = 6$ vs.\ $df = 2$). Nonetheless,
+the highly significant interaction indicates that the relationship between
+tier and score changes qualitatively across experiments. This is consistent with the divergent patterns described in
 Sections~\ref{sec:test001}--\ref{sec:test003}.
 
 The degrees of freedom for the interaction ($df = 12$) correspond to the
