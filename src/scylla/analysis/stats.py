@@ -594,7 +594,7 @@ def holm_bonferroni_correction(p_values: list[float]) -> list[float]:
     Example:
         >>> p_vals = [0.01, 0.04, 0.03, 0.50]
         >>> holm_bonferroni_correction(p_vals)
-        [0.04, 0.12, 0.09, 0.50]  # More power than Bonferroni
+        [0.04, 0.09, 0.09, 0.50]  # More power than Bonferroni
 
     """
     n = len(p_values)

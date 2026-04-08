@@ -920,7 +920,10 @@ T6 achieves a perfect pass rate (1.000) but with only $n=3$ runs, this
 result should be interpreted with extreme caution. At the aggregate level
 ($n=9$ across three experiments), the bootstrap 95\% confidence interval for
 T6's pass rate of 0.667 spans $[0.333, 0.889]$, meaning a true pass rate as
-low as 0.333 is not excluded.
+low as 0.333 is not excluded. Note that BCa bootstrap may exhibit poor
+coverage properties for binary data at $n=9$; the Clopper--Pearson exact
+interval $[0.299, 0.901]$ is wider and may be more appropriate at this
+sample size.
 
 \subsection{Cross-Task Analysis}
 \label{sec:cross_task}
@@ -1169,7 +1172,10 @@ statistics.
 The headline finding is that Krippendorff's $\alpha$ (interval) is $-0.030$,
 computed on $N=360$ subtest-level scores (averaged across experiments for each
 tier--subtest--run combination) from the 2,696 available judge evaluations (see
-Section~\ref{sec:limitations} for discussion of missing evaluations).
+Section~\ref{sec:limitations} for discussion of missing evaluations). Note
+that this averaging conflates inter-experiment variability with inter-rater
+disagreement; computing $\alpha$ on individual runs (without averaging across
+experiments) may yield different results.
 This value is below chance agreement ($\alpha = 0$). By conventional
 standards in content analysis~\cite{krippendorff2004content, polo2024efficient}, $\alpha < 0.667$ is
 considered
@@ -1322,7 +1328,7 @@ expected cost per successful outcome.
 Cost varies dramatically by experiment but not by tier. The mean cost per run
 ranges from \$0.038 for test-001 (trivial Python) to \$0.226 for test-002
 (moderate Mojo), with test-003 (moderate Python configuration) at \$0.076.
-The Kruskal--Wallis test confirms a highly significant experiment effect on
+The Kruskal--Wallis test shows a highly significant experiment effect on
 cost ($H = 903.1$, $p < 0.001$) but no significant tier effect
 ($H = 4.0$, $p = 0.676$).
 
@@ -1414,17 +1420,18 @@ comparison does not reach significance after Holm correction ($p = 0.058$). The 
 drop in pass rate from 0.978 to 0.667---a loss of approximately one-third of
 the base capability.
 
-\textbf{Finding 2 (RQ1): Architectural over-specification is associated with catastrophic
+\textbf{Finding 2 (RQ1): In this study, architectural over-specification is associated with catastrophic
 failure on the trivial Python task.} The zero pass rate for T4--T6 on test-001 is the
 most striking individual result in the study. A task that the bare model
 handles with 95.8\% pass rate becomes completely unsolvable when wrapped in
-hierarchical delegation. This suggests that budget models cannot
+hierarchical delegation. This suggests that budget models may be unable to
 simultaneously manage coordination overhead and task execution, even when
-the task itself is trivial. The coordination overhead is not additive but
-multiplicative: it does not merely reduce performance but can entirely
-prevent task completion.
+the task itself is trivial. The coordination overhead appears to exceed a
+threshold beyond which task completion is entirely prevented, rather than
+merely degrading performance incrementally. However, the specific failure
+mechanism cannot be determined from observational data alone.
 
-\textbf{Finding 3 (RQ2): Tier effects are task-dependent.} The significant
+\textbf{Finding 3 (RQ2): In this study, tier effects are task-dependent.} The significant
 SRH interaction effect ($H = 223.5$, $df=12$, $p < 0.001$) is the central finding of
 the cross-task analysis. The interaction is highly significant and its $H$-statistic
 exceeds those of both main effects ($H = 91.3$, $df=6$ for tier; $H = 178.2$, $df=2$
@@ -1441,11 +1448,12 @@ provides independent, more robust confirmation of tier-dependent effects.)
 
 \textbf{Finding 4 (RQ3): In this study, cost is invariant to architectural complexity.} The
 non-significant tier effect on cost ($p = 0.676$) is a notable result because
-it eliminates the possibility of a cost--quality trade-off. If higher tiers
-provided cost savings (e.g., by solving tasks more efficiently with fewer
-tokens), there might be a case for accepting lower quality in exchange for
-lower cost. The absence of cost variation means that the quality degradation
-in higher tiers is a pure loss with no compensating benefit.
+it provides no evidence of a cost--quality trade-off under current statistical
+power. If higher tiers provided cost savings (e.g., by solving tasks more
+efficiently with fewer tokens), there might be a case for accepting lower
+quality in exchange for lower cost. The absence of detected cost variation
+means that the quality degradation in higher tiers appears as a net loss
+with no detected compensating benefit in the data.
 
 \textbf{Finding 5 (RQ4): In this study, the three-judge panel exhibits near-zero
 reliability.} With Krippendorff's $\alpha = -0.030$, the judge panel produces
@@ -1626,9 +1634,10 @@ at a total cost of \$122.31, we find preliminary evidence for a non-monotonic
 relationship between architectural complexity and task performance.
 
 The central finding is that \emph{simpler is better} for the budget model
-studied. A two-cluster structure emerges: tiers T0--T2 consistently outperform
+studied. In the aggregate data, tiers T0--T2 outperform
 tiers T3--T6 in both pass rate and score, with the T2--T3 transition representing
-the critical cliff where multi-agent delegation is introduced.
+the critical cliff where multi-agent delegation is introduced. However,
+task-dependent reversals occur (e.g., T6 achieves the highest pass rate on test-002).
 
 Crucially, this degradation is task-dependent: the significant SRH interaction
 effect indicates there is no universally optimal tier. On the trivial Python task,
@@ -1640,8 +1649,9 @@ depends on the task.
 Observed cost invariance across tiers ($p=0.676$, non-significant under
 limited power) suggests no cost--quality trade-off, making higher tiers
 effectively Pareto-dominated in aggregate. T2 (Tooling) appears as the
-aggregate Pareto-optimal tier, though per-task analysis shows the optimal
-tier varies (e.g., T5 dominates T2 for test-002).
+highest-pass-rate Pareto-optimal tier in the aggregate data (T0 and T1 also
+lie on the Pareto frontier at similar costs), though per-task analysis shows
+the optimal tier varies (e.g., T5 dominates T2 for test-002).
 
 The near-zero inter-rater reliability ($\alpha = -0.030$) of the three-judge
 panel is a methodological finding with implications beyond this study. It
@@ -1991,7 +2001,9 @@ two-factor designs, enabling analysis of main effects and interaction effects
 on ranked data. Like ANOVA, it decomposes the total variability into
 components attributable to each factor and their interaction. Unlike ANOVA,
 it operates on ranked rather than raw data, making it robust to non-normality
-and heteroscedasticity.
+and heteroscedasticity. No tie-correction was applied to the $H$-statistics;
+given the large $N=1{,}080$ and the magnitude of the observed effects, this
+omission does not materially affect the conclusions.
 
 For the score metric, the SRH analysis reveals that all three effects---tier
 main effect ($H = 91.3$, $df = 6$), experiment main effect ($H = 178.2$,
