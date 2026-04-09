@@ -424,7 +424,7 @@ between tiers.
     \draw[->, thick] (t0) -- (t1);
     \draw[->, thick] (t1) -- (t2);
     \draw[->, thick, dashed, red] (t2) -- node[right, font=\footnotesize\itshape]
-      {Critical cliff} (t3);
+      {Performance drop} (t3);
     \draw[->, thick] (t3) -- (t4);
     \draw[->, thick] (t4) -- (t5);
     \draw[->, thick] (t5) -- (t6);
@@ -817,7 +817,7 @@ and pass rates for these tiers reflect the evaluation pipeline's assignment
 of score~$= 0$ when no judge evaluation was obtained, which in turn occurs
 when the agent fails to produce evaluable output (e.g., produces no code
 artifact or terminates without a result). The cost data confirm that these
-runs did execute and consume tokens (mean cost \$0.029--\$0.068 per run),
+runs did execute and consume tokens (mean cost \$0.038--\$0.070 per run),
 but the agent's output was not suitable for judge evaluation. Readers should
 note that the ``catastrophic failure'' interpretation rests on this pipeline
 behavior rather than on explicit negative judge assessments.
