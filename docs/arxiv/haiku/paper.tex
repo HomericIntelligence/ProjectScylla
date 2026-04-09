@@ -81,7 +81,7 @@ architectural complexity and task performance: the simplest tiers (T0--T2)
 achieve the highest aggregate pass rates (0.935--0.978), while delegation-based
 tiers (T3--T6) exhibit statistically significant degradation (pass rate
 0.630--0.759; Kruskal--Wallis on pass rate, $H(6)=119.01$, $p<0.001$). The transition from
-T2 to T3 constitutes a critical cliff (Cliff's $\delta=-0.219$, $p<0.001$).
+T2 to T3 constitutes a sharp, statistically significant performance drop (Cliff's $\delta=-0.219$, $p<0.001$).
 A Scheirer--Ray--Hare analysis reveals a significant tier $\times$ task
 interaction on score ($H(12)=223.5$, $p<0.001$), indicating that the optimal architectural
 tier is task-dependent. Notably, cost does not vary significantly across tiers
@@ -176,13 +176,13 @@ Our contributions are as follows:
     preliminary evidence
     that architectural complexity has a non-monotonic and task-dependent effect
     on performance.
-  \item We identify the T2--T3 transition as a critical cliff where
+  \item We identify the T2--T3 transition as a sharp degradation point where
     delegation-based architectures produce statistically significant
     degradation in pass rate (Cliff's $\delta = -0.219$, $p < 0.001$).
   \item We find no statistically significant tier effect on cost ($p=0.676$),
     providing no evidence of offsetting cost savings under current statistical
     power.
-  \item We report near-zero inter-rater reliability ($\alpha=-0.030$) among a
+  \item We report near-zero inter-rater reliability (Krippendorff's $\alpha=-0.030$~\cite{krippendorff2004content}) among a
     three-model judge panel, highlighting the fragility of LLM-as-judge
     evaluation for budget-model outputs.
   \item We establish an aggregate frontier Cost-of-Pass of \$0.113,
@@ -292,8 +292,8 @@ in a controlled experimental design.
 
 Our work contributes to this area by providing preliminary evidence, through
 controlled ablation, that delegation-based architectures can be
-counterproductive for budget models. We provide, to our knowledge, the first statistical evidence for a critical
-transition point (the T2--T3 cliff) where multi-agent coordination begins to
+counterproductive for budget models. We provide, to our knowledge, the first statistical evidence for a significant
+transition point (the T2--T3 boundary) where multi-agent coordination begins to
 degrade rather than improve performance.
 
 \subsection{LLM-as-Judge Evaluation}
@@ -440,7 +440,7 @@ between tiers.
   \end{tikzpicture}
   \caption{Scylla tier hierarchy. Green tiers (T0--T2) represent single-agent
     configurations; red tiers (T3--T6) introduce multi-agent coordination.
-    The dashed arrow marks the T2--T3 critical cliff identified in this
+    The dashed arrow marks the T2--T3 performance drop identified in this
     study.}
   \label{fig:tier_architecture}
 \end{figure}
@@ -477,8 +477,10 @@ evaluation protocol proceeds as follows:
     majority-vote outcome diverging from a na\"ive consensus-score $> 0.5$
     threshold---for example, a run with consensus score 0.487 passes because
     two of three judges passed individually, while a run with consensus score
-    0.635 fails because only one of two available judges passed. These
-    discrepancies do not materially affect tier-level pass rates.}
+    0.635 fails because only one of the two judges whose evaluations were
+    available for that run classified it as passing (the third judge's
+    evaluation was missing). These discrepancies do not materially affect
+    tier-level pass rates.}
 \end{enumerate}
 
 \subsection{Partial-Failure Semantics}
@@ -496,7 +498,7 @@ exhibit catastrophic failure on test-001. Under an all-or-nothing model, these
 failures would have aborted the experiment, losing the data from the
 successful tiers. Under Scylla's partial-failure semantics, the zero pass
 rates in T4--T6 are recorded and analyzed alongside the high pass rates in
-T0--T2, producing the critical cliff finding that is the central result of
+T0--T2, producing the sharp T2--T3 degradation finding that is the central result of
 this paper.
 
 Operators inspecting results must check per-tier states rather than the
@@ -552,7 +554,8 @@ their architectural sensitivities practically important for deployment
 decisions. Second, the prior Scylla dryrun~\cite{scylla2026dryrun} used Claude
 Sonnet 4.5, enabling cross-model comparison in future work. Third, the lower
 per-token cost of Haiku (\$0.25/MTok input, \$1.25/MTok output for standard
-pricing) enables a larger experimental matrix at a fixed budget.
+pricing as of January 2026)\footnote{Anthropic pricing retrieved January 2026;
+prices are subject to change.} enables a larger experimental matrix at a fixed budget.
 
 \subsection{Task Selection}
 \label{sec:task_selection}
@@ -655,21 +658,23 @@ throughout. Additional metrics (implementation rate, duration) were also
 tested and similarly reject normality for most tier combinations:
 
 \begin{itemize}
-  \item \textbf{Omnibus tests}: Kruskal--Wallis $H$ test for overall tier
+  \item \textbf{Omnibus tests}: Kruskal--Wallis $H$ test~\cite{kruskal1952use} for overall tier
     differences across all seven tiers.
-  \item \textbf{Pairwise comparisons}: Mann--Whitney $U$ test with Holm
-    correction for 7 planned comparisons (6 adjacent transitions plus T0--T6).
-  \item \textbf{Effect sizes}: Cliff's $\delta$ with 95\% bootstrap confidence
+  \item \textbf{Pairwise comparisons}: Mann--Whitney $U$ test~\cite{mann1947test} with Holm--Bonferroni
+    correction~\cite{holm1979simple} for 7 planned comparisons (6 adjacent transitions plus T0--T6),
+    applied within each metric family separately.
+  \item \textbf{Effect sizes}: Cliff's $\delta$~\cite{cliff1993dominance} with 95\% bootstrap confidence
     intervals, providing a non-parametric measure of effect magnitude.
-  \item \textbf{Interaction analysis}: Scheirer--Ray--Hare (SRH) test for
+  \item \textbf{Interaction analysis}: Scheirer--Ray--Hare (SRH) test~\cite{scheirer1976analysis} for
     tier $\times$ experiment interactions, the non-parametric analog of
     two-way ANOVA. SRH operates on ranked data and decomposes the total sum
     of squared ranks into main effects and interactions.
-  \item \textbf{Inter-rater reliability}: Krippendorff's $\alpha$ (interval
+  \item \textbf{Inter-rater reliability}: Krippendorff's $\alpha$~\cite{krippendorff2004content} (interval
     scale) for overall panel reliability, and pairwise Spearman/Pearson
     correlations for judge-pair agreement.
   \item \textbf{Confidence intervals}: Bootstrap 95\% confidence intervals
-    (BCa method, 10{,}000 resamples) for pass rates and other proportions.
+    (BCa method~\cite{efron1987better}, 10{,}000 resamples) for pass rates and other proportions;
+    Clopper--Pearson exact intervals~\cite{clopper1934use} for small-sample tiers (e.g., T6 with $n=9$).
 \end{itemize}
 
 Implementation rate comparisons use filtered sample sizes: only runs where the
@@ -722,10 +727,11 @@ distributions across all tiers and experiments.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig15c_tier_summary_heatmap.png}
-  \caption{Tier summary heatmap showing mean consensus scores across all
-    experiments and tiers. Darker cells indicate higher scores. The
-    degradation in tiers T3--T6 is visible across experiments, with test-001
-    showing the most extreme effect.}
+  \caption{Tier summary heatmap showing mean consensus scores by tier (y-axis)
+    and run number (x-axis), faceted by model. Color encodes mean score
+    (red--yellow--green scale). The degradation in tiers T3--T6 is visible
+    as a shift toward red/yellow cells, while T0--T2 show predominantly
+    green cells across runs.}
   \label{fig:tier_summary_heatmap}
 \end{figure}
 
@@ -919,12 +925,13 @@ on more complex tasks.
 
 T6 achieves a perfect pass rate (1.000) but with only $n=3$ runs, this
 result should be interpreted with extreme caution. At the aggregate level
-($n=9$ across three experiments), the bootstrap 95\% confidence interval for
-T6's pass rate of 0.667 spans $[0.333, 0.889]$, meaning a true pass rate as
-low as 0.333 is not excluded. Note that BCa bootstrap may exhibit poor
-coverage properties for binary data at $n=9$; the Clopper--Pearson exact
-interval $[0.299, 0.925]$ is wider and may be more appropriate at this
-sample size.
+($n=9$ across three experiments), T6's pass rate is 0.667. The
+Clopper--Pearson exact 95\% confidence interval~\cite{clopper1934use}
+$[0.299, 0.925]$ is the preferred interval at this sample size, as it
+maintains nominal coverage for binary data without relying on asymptotic
+approximations. For reference, the BCa bootstrap~\cite{efron1987better}
+interval $[0.333, 0.889]$ is narrower and may exhibit poor coverage at
+$n=9$. Under either interval, a true pass rate as low as 0.299 is not excluded.
 
 \subsection{Cross-Task Analysis}
 \label{sec:cross_task}
@@ -943,10 +950,11 @@ boundary, corresponding to the introduction of multi-agent delegation.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig04_pass_rate_by_tier.png}
-  \caption{Pass rate by tier across all experiments. Error bars show 95\%
-    bootstrap confidence intervals. The drop from T2 to T3 is the most
-    prominent feature, marking the critical cliff where delegation begins
-    to degrade performance.}
+  \caption{Score distributions per tier (histogram, bin width 0.05). Each
+    panel shows the distribution of per-run consensus scores for one tier.
+    The red dashed vertical line marks the pass threshold. T0--T2 distributions
+    are concentrated near 1.0; T3--T6 show bimodal distributions with a
+    large mass near 0 (complete failures) alongside a cluster of successful runs.}
   \label{fig:pass_rate_by_tier}
 \end{figure}
 
@@ -1014,10 +1022,10 @@ significant and near-significant transitions:
 
 \begin{itemize}
   \item \textbf{T2 $\to$ T3}: $p < 0.001$, Cliff's $\delta = -0.219$
-    [$-0.268$, $-0.168$] (small effect). This is the critical cliff where
-    the introduction of delegation produces a significant drop in pass rate.
+    [$-0.268$, $-0.168$] (small effect). This marks the sharpest degradation
+    point, where the introduction of delegation produces a significant drop in pass rate.
   \item \textbf{T3 $\to$ T4}: $p = 0.058$ (n.s.\ after
-    Holm correction), Cliff's $\delta = -0.116$ [$-0.212$,
+    Holm--Bonferroni correction), Cliff's $\delta = -0.116$ [$-0.212$,
     $-0.023$] (small effect; the bootstrap CI excludes zero but is not
     adjusted for multiple comparisons). Hierarchical orchestration may
     further degrade performance beyond flat delegation, though this does
@@ -1034,8 +1042,9 @@ significant and near-significant transitions:
   \centering
   \includegraphics[width=\textwidth]{fig19_effect_size_forest.png}
   \caption{Forest plot of Cliff's $\delta$ effect sizes for pairwise tier
-    comparisons on pass rate. Negative values indicate degradation with
-    increasing complexity. The T2--T3 comparison shows the largest effect.
+    comparisons on pass rate (lower-numbered tier is reference group; negative
+    $\delta$ indicates the higher-numbered tier has lower pass rates).
+    The T2--T3 comparison shows the largest magnitude effect.
     Error bars show 95\% bootstrap confidence intervals.}
   \label{fig:effect_size_forest}
 \end{figure}
@@ -1091,7 +1100,7 @@ significant interaction.
 
 For cost, the experiment main effect is dominant ($H=903.1$, $p<0.001$),
 reflecting the differing cost profiles of the three tasks. test-002 (Mojo) is
-approximately $6\times$ more expensive per run than test-001 (Python Hello
+approximately $6\times$ as expensive per run as test-001 (Python Hello
 World). However, neither the tier main effect ($H=4.0$, $p=0.676$) nor the
 interaction ($H=4.8$, $p=0.965$) is significant for cost, indicating that
 architectural complexity does not systematically affect expenditure.
@@ -1106,10 +1115,12 @@ architecture-dependent.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig36_tier_rank_stability.png}
-  \caption{Tier rank stability across experiments. The rank ordering of tiers
-    by pass rate is not stable across tasks, consistent with the significant
-    interaction effect. Lines crossing between experiments indicate rank
-    reversals.}
+  \caption{Tier rank stability heatmap. Each cell shows the rank of a tier
+    (x-axis) within a given experiment (y-axis, sorted by difficulty), where
+    rank 1 is best. Color encodes rank (green = best, red = worst). The
+    changing color pattern across experiments indicates that tier rankings
+    are not stable---the optimal tier varies by task, consistent with the
+    significant tier $\times$ experiment interaction.}
   \label{fig:tier_rank_stability}
 \end{figure}
 
@@ -1120,9 +1131,10 @@ drive the interaction effect.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{fig05_grade_heatmap.png}
-  \caption{Grade distribution heatmap across all subtests. Each cell
-    represents the letter grade assigned to a subtest--tier combination.
-    The block of F grades in T3--T6 for test-001 contrasts with the
+  \caption{Grade distribution heatmap. Each cell represents the proportion
+    of runs assigned each letter grade for a tier--grade combination,
+    faceted by model. Darker (higher proportion) cells in the F row for
+    T3--T6 on test-001 contrast with the
     predominantly A/B grades for test-002 and test-003.}
   \label{fig:grade_heatmap}
 \end{figure}
@@ -1130,12 +1142,15 @@ drive the interaction effect.
 \subsection{Per-Criterion Analysis}
 \label{sec:criteria}
 
-The judge panel evaluates each run against five weighted criteria. Across all
-runs, the per-criterion mean scores reveal that the budget model's weakest
-dimension is functional correctness (0.838~$\pm$~0.276), while code quality
-(0.972~$\pm$~0.137), build pipeline integrity (0.941~$\pm$~0.138), and
-proportionality (0.927~$\pm$~0.137) score substantially higher. Overall
-quality averages 0.903~$\pm$~0.133. This pattern---high marks on surface
+The judge panel evaluates each run against five weighted criteria:
+functional correctness, code quality, build pipeline integrity,
+proportionality (response length and scope appropriateness), and overall
+quality (a holistic assessment). Across all runs, the per-criterion mean
+scores reveal that the budget model's weakest dimension is functional
+correctness (0.838~$\pm$~0.276), while code quality (0.972~$\pm$~0.137),
+build pipeline integrity (0.941~$\pm$~0.138), and proportionality
+(0.927~$\pm$~0.137) score substantially higher. Overall quality averages
+0.903~$\pm$~0.133. This pattern---high marks on surface
 quality but lower marks on functional correctness---is consistent with the
 hypothesis that the budget model produces syntactically well-formed code that
 occasionally fails to satisfy the task's functional requirements.
@@ -1170,14 +1185,18 @@ statistics.
 
 \input{tables/tab03_judge_agreement}
 
-The headline finding is that Krippendorff's $\alpha$ (interval) is $-0.030$,
-computed on $N=360$ subtest-level scores (averaged across experiments for each
-tier--subtest--run combination) from the 2,696 available judge evaluations (see
+The headline finding is that Krippendorff's $\alpha$ (interval) is $-0.030$
+(a confidence interval for $\alpha$ is not separately reported here; all
+values of $\alpha < 0$ are below the chance level of 0), computed on
+$N=360$ items (120 subtests $\times$ 3 runs per subtest, with scores
+averaged across the three experiments for each tier--subtest--run
+combination) from the 2,696 available judge evaluations (see
 Section~\ref{sec:limitations} for discussion of missing evaluations). Note
-that this averaging conflates inter-experiment variability with inter-rater
-disagreement; computing $\alpha$ on individual runs (without averaging across
-experiments) may yield different results.
-This value is below chance agreement ($\alpha = 0$). By conventional
+that averaging scores across experiments before computing $\alpha$ conflates
+inter-experiment variability with inter-rater disagreement; computing $\alpha$
+on individual runs (without averaging across experiments) may yield different
+results.
+The resulting $\alpha = -0.030$ is below chance agreement ($\alpha = 0$). By conventional
 standards in content analysis~\cite{krippendorff2004content, polo2024efficient}, $\alpha < 0.667$ is
 considered
 unacceptable for drawing conclusions about individual cases, and
@@ -1366,17 +1385,18 @@ frontier across all tier $\times$ experiment combinations.
   \centering
   \includegraphics[width=\textwidth]{fig08_cost_quality_pareto.png}
   \caption{Cost--quality Pareto frontier. Each point represents a
-    tier--experiment combination, plotted by mean cost per run (x-axis) and
-    pass rate (y-axis). Pareto-optimal points lie on the upper-left frontier.
-    T0--T2 configurations dominate the frontier across all experiments, while
-    T4--T6 for test-001 cluster at zero quality with non-zero cost.}
+    tier--experiment combination, plotted by mean cost per run (x-axis, log
+    scale) and mean consensus score (y-axis). Pareto-optimal points lie on
+    the upper-left frontier. T0--T2 configurations dominate the frontier
+    across all experiments; T4--T6 for test-001 cluster at low quality with
+    non-zero cost.}
   \label{fig:cost_quality_pareto}
 \end{figure}
 
 The Pareto frontier is dominated by T0--T2 configurations across all three
 experiments. No T4--T6 configuration appears on the Pareto frontier for any
-experiment. T3 appears on the frontier only for test-002, where its pass rate
-(0.967) is competitive with T2 (0.956).
+experiment. T3 appears on the frontier only for test-002, where its mean
+score is competitive with T2.
 
 The test-001 T4--T6 points (zero pass rate, non-zero cost) represent the
 worst possible outcome: the organization pays for computation but receives
@@ -1403,7 +1423,7 @@ between architectural complexity and budget model performance. We organize
 these findings around the four research questions posed in
 Section~\ref{sec:introduction}.
 
-\textbf{Finding 1 (RQ1): In this study, the T2--T3 cliff is the critical transition.} The
+\textbf{Finding 1 (RQ1): In this study, the T2--T3 boundary is the sharpest transition.} The
 introduction of delegation at T3 is associated with a statistically significant drop in
 aggregate pass rate from 0.978 to 0.759 (Cliff's $\delta = -0.219$,
 $p < 0.001$). This is the largest single-step degradation in the tier
@@ -1414,10 +1434,11 @@ coordination overhead consumes reasoning resources that would otherwise be
 applied to the task, though the confounded tier design (Section~\ref{sec:threats})
 does not allow definitive causal attribution.
 
-The subsequent T3--T4 transition (Cliff's $\delta = -0.116$, small effect
-by conventional thresholds) suggests possible further degradation from
-adding hierarchical orchestration on top of delegation, though this
-comparison does not reach significance after Holm correction ($p = 0.058$). The cumulative effect of moving from T2 to T6 is a
+The subsequent T3--T4 transition (Cliff's $\delta = -0.116$, small-to-negligible
+effect by conventional thresholds; see Appendix~\ref{app:statistical_details})
+suggests possible further degradation from adding hierarchical orchestration
+on top of delegation, though this comparison does not reach significance after
+Holm--Bonferroni correction ($p = 0.058$). The cumulative effect of moving from T2 to T6 is a
 drop in pass rate from 0.978 to 0.667---a loss of approximately one-third of
 the base capability.
 
@@ -1527,7 +1548,7 @@ degradation appears to be model-dependent: the frontier model in the dryrun
 maintained partial performance in delegation tiers, whereas the budget model
 in this study exhibits complete failure on the trivial task.
 
-This comparison, while informal, suggests that the T2--T3 cliff may be
+This comparison, while informal, suggests that the T2--T3 degradation may be
 \emph{steeper} for budget models than for frontier models---a hypothesis
 that could be tested formally in a cross-model study using the same
 experimental design.
@@ -1574,7 +1595,14 @@ whatsoever; scores for these runs were assigned by the pipeline as~$0$
 when no evaluable output was produced, rather than by explicit judge
 assessment. This means the inter-rater reliability statistics
 ($\alpha = -0.030$) are computed on the available subset and may not
-generalize to the full design matrix.
+generalize to the full design matrix. Specifically, the complete absence of
+T4--T6 evaluations for test-001 introduces a systematic selection bias: the
+available data overrepresents tiers where the agent produced evaluable output
+(T0--T3) and underrepresents complete-failure runs. If T4--T6 failures would
+have produced uniformly low scores across all three judges, their inclusion
+would likely reduce disagreement (and thus increase $\alpha$). The reported
+$\alpha = -0.030$ should therefore be interpreted as a lower bound on judge
+reliability for the evaluable subset only.
 
 \textbf{Confounded tier composition.} The tiers are not pure factorial
 manipulations---each tier includes the capabilities of previous tiers. T3
@@ -1639,7 +1667,7 @@ relationship between architectural complexity and task performance.
 The central finding is that \emph{simpler is better} for the budget model
 studied. In the aggregate data, tiers T0--T2 outperform
 tiers T3--T6 in both pass rate and score, with the T2--T3 transition representing
-the critical cliff where multi-agent delegation is introduced. However,
+the sharpest degradation point, where multi-agent delegation is introduced. However,
 task-dependent reversals occur (e.g., T6 achieves the highest pass rate on test-002).
 
 Crucially, this degradation is task-dependent: the significant SRH interaction
@@ -1687,7 +1715,7 @@ would reveal whether the non-monotonic tier--quality relationship is specific
 to budget models or generalizes across the capability spectrum. The prior
 Scylla dryrun~\cite{scylla2026dryrun} used Sonnet 4.5 on a single task,
 providing a starting point for this comparison. Of particular interest is
-whether frontier models exhibit a T2--T3 cliff at all, or whether their
+whether frontier models exhibit a T2--T3 performance drop at all, or whether their
 greater reasoning capacity enables them to manage delegation overhead
 without quality loss.
 
@@ -1907,7 +1935,7 @@ the analysis rather than parametric alternatives (ANOVA, $t$-tests).
 
 \subsection{Kruskal--Wallis Omnibus Tests}
 
-The Kruskal--Wallis $H$ test is the non-parametric analog of one-way ANOVA,
+The Kruskal--Wallis $H$ test~\cite{kruskal1952use} is the non-parametric analog of one-way ANOVA,
 testing whether the distributions of a metric differ across the $k=7$ tier
 groups. Under the null hypothesis, all groups are drawn from the same
 distribution. The test statistic $H$ is computed from the ranks of all
@@ -1946,9 +1974,12 @@ in a single-agent or multi-agent configuration.
 \subsection{Pairwise Comparisons and Effect Sizes}
 
 For metrics with significant omnibus tests, pairwise comparisons were conducted
-using the Mann--Whitney $U$ test with Holm correction. We test 7 planned
-comparisons (6 adjacent transitions plus T0--T6), requiring correction for
-multiplicity to control the family-wise error rate.
+using the Mann--Whitney $U$ test~\cite{mann1947test} with Holm--Bonferroni
+correction~\cite{holm1979simple}. We test 7 planned comparisons (6 adjacent
+transitions plus T0--T6) within each metric family separately, requiring
+correction for multiplicity to control the family-wise error rate within each
+metric. The correction is not applied across metrics, as each metric
+represents a pre-specified hypothesis.
 
 The significant pairwise results for pass rate, with Cliff's $\delta$ effect
 sizes and 95\% bootstrap confidence intervals, are:
@@ -1960,7 +1991,9 @@ sizes and 95\% bootstrap confidence intervals, are:
     ``small'' range by conventional thresholds ($0.11 \leq |\delta| < 0.28$).
   \item T3 vs.\ T4: Cliff's $\delta = -0.116$ [$-0.212$, $-0.023$]. The
     further degradation from flat delegation to hierarchical orchestration
-    falls in the ``small'' range ($0.11 \leq |\delta| < 0.28$).
+    falls at the boundary of the ``negligible'' and ``small'' ranges
+    ($|\delta|=0.116$ is just above the Romano et al.\ 0.11 threshold;
+    it would be classified as negligible under alternative cutoffs of 0.147).
   \item T0 vs.\ T6: $p = 0.018$. The overall trend from the simplest tier to
     the most complex is significantly negative in aggregate, though the
     pattern is not monotonic across all tasks (test-002 shows a modest
@@ -1977,11 +2010,16 @@ For duration, the significant pairwise result is:
 
 \subsection{Cliff's $\delta$ Interpretation Scale}
 
-Cliff's $\delta$ is a non-parametric effect size measure that quantifies the
-probability that a randomly selected observation from one group exceeds a
-randomly selected observation from another group. It ranges from $-1$ (all
-observations in group A exceed all in group B) to $+1$ (vice versa), with
-0 indicating no systematic difference. The conventional interpretation
+Cliff's $\delta$~\cite{cliff1993dominance, vargha2000critique} is a non-parametric effect size
+measure that quantifies the probability that a randomly selected observation
+from one group exceeds a randomly selected observation from another group,
+minus the reverse probability. It ranges from $-1$ (all observations in
+group B exceed all in group A, i.e., the second group dominates) to $+1$
+(all observations in group A exceed all in group B, i.e., the first group
+dominates), with 0 indicating no systematic difference. In our pairwise
+comparisons, group A is always the lower-numbered tier (e.g., T2) and group
+B the higher (e.g., T3); thus negative $\delta$ values indicate degradation
+with increasing tier. The conventional interpretation
 scale~\cite{romano2006appropriate} is:
 
 \begin{itemize}
@@ -1991,11 +2029,13 @@ scale~\cite{romano2006appropriate} is:
   \item $|\delta| \geq 0.43$: large effect
 \end{itemize}
 
-The T2--T3 comparison ($\delta = -0.219$) and the T3--T4 comparison
-($\delta = -0.116$) both fall in the small effect range. While these effect
-sizes are modest in absolute terms, they are statistically significant and
-consistent across the pairwise and omnibus analyses, suggesting real (if
-small) differences in population distributions.
+The T2--T3 comparison ($\delta = -0.219$) falls clearly in the small effect
+range under all conventional thresholds. The T3--T4 comparison ($\delta =
+-0.116$) falls at the negligible/small boundary: classified as small under
+the Romano et al.\ (2006) 0.11 threshold but as negligible under alternative
+cutoffs (0.147). Note that this comparison does not reach corrected
+significance ($p = 0.058$ after Holm--Bonferroni correction), so the
+effect should be interpreted cautiously regardless of classification.
 
 \subsection{Scheirer--Ray--Hare Details}
 
@@ -2006,7 +2046,19 @@ components attributable to each factor and their interaction. Unlike ANOVA,
 it operates on ranked rather than raw data, making it robust to non-normality
 and heteroscedasticity. No tie-correction was applied to the $H$-statistics;
 given the large $N=1{,}080$ and the magnitude of the observed effects, this
-omission does not materially affect the conclusions.
+omission does not materially affect the conclusions. For the pass rate
+variable (binary), ties are especially prevalent (each run is either 0 or 1),
+and applying a tie correction to the Kruskal--Wallis $H$ for pass rate would
+increase the test statistic (making results more significant). The reported
+uncorrected $H(6)=119.01$ for pass rate is therefore conservative.
+
+\textbf{Note on T6 sample size.} T6 contributes only $n=9$ runs to the SRH
+analysis (3 runs $\times$ 3 experiments $\times$ 1 subtest). The extreme
+imbalance between T6 ($n=9$) and T3 ($n=369$) may increase leverage of T6
+cells in the rank decomposition. Readers should treat T6-specific SRH
+contributions with caution. The omnibus significance is driven primarily by
+T0--T5 patterns; T6 contributes only 0.8\% of total observations and does
+not materially alter the qualitative conclusions.
 
 For the score metric, the SRH analysis reveals that all three effects---tier
 main effect ($H = 91.3$, $df = 6$), experiment main effect ($H = 178.2$,
