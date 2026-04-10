@@ -77,8 +77,8 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 
 **Success Criteria:**
 
-- `pytest --cov` meets or exceeds the 73% `--cov-fail-under` threshold
-- Unit tests cover all `src/scylla/` sub-packages (adapters, analysis, e2e, executor, judge, metrics, reporting)
+- `pytest --cov` meets or exceeds the 75% `--cov-fail-under` threshold
+- Unit tests cover all `scylla/` sub-packages (adapters, analysis, e2e, executor, judge, metrics, reporting)
 - 47 test fixtures (test-001 to test-047) have complete `test.yaml`, `prompt.md`, `expected/criteria.md`, `expected/rubric.yaml`
 - Sub-test YAML configs in `tests/claude-code/shared/subtests/t0/`–`t6/` are all valid per `schemas/`
 - Tests use proper mocking for external calls (Docker, GitHub API, Claude API)
