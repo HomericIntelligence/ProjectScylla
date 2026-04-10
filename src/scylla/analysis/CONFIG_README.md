@@ -4,8 +4,8 @@
 
 The analysis pipeline uses a centralized configuration system to ensure reproducibility and consistency across all statistical analyses, figures, and tables.
 
-**Configuration File**: `scylla/analysis/config.yaml`
-**Python Module**: `scylla/analysis/config.py`
+**Configuration File**: `src/scylla/analysis/config.yaml`
+**Python Module**: `src/scylla/analysis/config.py`
 
 ## Design Principles
 
@@ -139,7 +139,7 @@ from scylla.analysis.config import ALPHA, BOOTSTRAP_RESAMPLES
 
 ### Updating Configuration
 
-1. Edit `scylla/analysis/config.yaml`
+1. Edit `src/scylla/analysis/config.yaml`
 2. Run tests to verify: `pixi run pytest tests/unit/analysis/`
 3. Commit both `config.yaml` and `config.py` together
 
@@ -154,6 +154,6 @@ from scylla.analysis.config import ALPHA, BOOTSTRAP_RESAMPLES
 ## See Also
 
 - Analysis pipeline documentation: `docs/analysis_pipeline.md`
-- Statistical methods: `scylla/analysis/stats.py`
-- Figure generation: `scylla/analysis/figures/`
-- Table generation: `scylla/analysis/tables.py`
+- Statistical methods: `src/scylla/analysis/stats.py`
+- Figure generation: `src/scylla/analysis/figures/`
+- Table generation: `src/scylla/analysis/tables.py`
