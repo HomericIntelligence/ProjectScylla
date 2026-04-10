@@ -48,6 +48,13 @@ Usage:
     python scripts/manage_experiment.py run \\
         --config tests/fixtures/tests/test-001 \\
         --tiers T0 --runs 1 --until agent_complete
+
+    # Subscribe to experiment events from config/defaults.yaml
+    python scripts/manage_experiment.py subscribe
+
+    # Subscribe to experiment events from custom config directory
+    python scripts/manage_experiment.py subscribe \\
+        --config-dir /path/to/project/root
 """
 
 from __future__ import annotations
