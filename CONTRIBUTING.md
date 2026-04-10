@@ -14,6 +14,7 @@ Thank you for your interest in contributing to ProjectScylla! This guide will he
 - [Issue Reporting Guidelines](#issue-reporting-guidelines)
 - [Documentation Expectations](#documentation-expectations)
 - [Code Review Process](#code-review-process)
+- [Code of Conduct](#code-of-conduct)
 - [Getting Help](#getting-help)
 
 ## Quick Start
@@ -587,6 +588,11 @@ ProjectScylla/
 ├── docs/                # Documentation
 └── .claude/             # AI agent configs
 ```
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating,
+you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
 
 ## License
 
