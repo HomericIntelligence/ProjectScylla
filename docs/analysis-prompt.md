@@ -21,15 +21,15 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 
 **Success Criteria:**
 
-- `scylla/` package mirrors conceptual layers (adapters → e2e → metrics → reporting)
-- `tests/` mirrors `scylla/` with unit and fixture separation
+- `src/scylla/` package mirrors conceptual layers (adapters → e2e → metrics → reporting)
+- `tests/` mirrors `src/scylla/` with unit and fixture separation
 - Config, scripts, docs, and docker are logically separate
 - Naming conventions consistent across all modules
 
 **Tasks to Evaluate:**
 
-1. Map `scylla/` sub-packages against the conceptual pipeline (ingest → execute → judge → metrics → report)
-2. Check `tests/` mirrors `scylla/` structure with matching unit/fixture split
+1. Map `src/scylla/` sub-packages against the conceptual pipeline (ingest → execute → judge → metrics → report)
+2. Check `tests/` mirrors `src/scylla/` structure with matching unit/fixture split
 3. Verify `tests/claude-code/shared/` tier/agent/block/skill layout is internally consistent
 4. Identify any orphaned files or directories referenced in CLAUDE.md that don't exist (e.g., `agents/`)
 5. Check `scripts/` for naming clarity and whether scripts duplicate CLI entry points
@@ -51,7 +51,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 - `README.md` accurate to current implementation state (not just planned state)
 - `CLAUDE.md` matches actual repo structure (no dead links, no phantom directories)
 - `docs/research.md` / `docs/design/` reflect the implemented architecture
-- Inline docstrings on public APIs in `scylla/`
+- Inline docstrings on public APIs in `src/scylla/`
 - `tests/claude-code/shared/blocks/` CLAUDE.md building blocks are well-documented
 - `.claude/shared/` reference files are consistent with each other and with CLAUDE.md
 
@@ -59,9 +59,9 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 
 1. Check CLAUDE.md for stale references (e.g., `agents/hierarchy.md`, `agents/delegation-rules.md`)
 2. Review README.md accuracy against the implemented framework
-3. Sample 5 public functions across `scylla/` for docstring presence and quality
+3. Sample 5 public functions across `src/scylla/` for docstring presence and quality
 4. Verify `docs/design/` files match the implemented architecture (adapter interface, judge protocol, rubric schema)
-5. Check `.claude/shared/metrics-definitions.md` for consistency with `scylla/metrics/`
+5. Check `.claude/shared/metrics-definitions.md` for consistency with `src/scylla/metrics/`
 
 ---
 
@@ -78,7 +78,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 **Success Criteria:**
 
 - `pytest --cov` meets or exceeds the 73% `--cov-fail-under` threshold
-- Unit tests cover all `scylla/` sub-packages (adapters, analysis, e2e, executor, judge, metrics, reporting)
+- Unit tests cover all `src/scylla/` sub-packages (adapters, analysis, e2e, executor, judge, metrics, reporting)
 - 47 test fixtures (test-001 to test-047) have complete `test.yaml`, `prompt.md`, `expected/criteria.md`, `expected/rubric.yaml`
 - Sub-test YAML configs in `tests/claude-code/shared/subtests/t0/`–`t6/` are all valid per `schemas/`
 - Tests use proper mocking for external calls (Docker, GitHub API, Claude API)
@@ -86,7 +86,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 **Tasks to Evaluate:**
 
 1. Run `pixi run python -m pytest tests/unit/ --co -q 2>/dev/null | tail -5` to count collected tests
-2. Check that each `scylla/` module has a corresponding test file in `tests/unit/`
+2. Check that each `src/scylla/` module has a corresponding test file in `tests/unit/`
 3. Sample 3 test files for mocking discipline (no real network/filesystem calls in unit tests)
 4. Count how many of the 47 test fixtures have all 4 required files present
 5. Verify `tests/claude-code/shared/subtests/` sub-test counts match the tier table in CLAUDE.md (T0:24, T1:10, T2:15, T3:41, T4:14, T5:15, T6:1)
@@ -105,7 +105,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 
 **Success Criteria:**
 
-- All `scylla/` code passes `ruff` (style/lint) and `mypy` (type checking) — enforced by pre-commit
+- All `src/scylla/` code passes `ruff` (style/lint) and `mypy` (type checking) — enforced by pre-commit
 - Pydantic models used for all structured data (config, results, metrics)
 - No bare `except:` clauses; specific exception handling throughout
 - Functions under ~50 lines; clear single responsibility
@@ -114,9 +114,9 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 **Tasks to Evaluate:**
 
 1. Check `pyproject.toml` ruff and mypy configuration for enforcement level
-2. Sample `scylla/e2e/runner.py` and `scylla/metrics/grading.py` for type hint completeness
-3. Review `scylla/config/models.py` Pydantic models for completeness and validation rules
-4. Check `scylla/adapters/base.py` for proper abstract method enforcement
+2. Sample `src/scylla/e2e/runner.py` and `src/scylla/metrics/grading.py` for type hint completeness
+3. Review `src/scylla/config/models.py` Pydantic models for completeness and validation rules
+4. Check `src/scylla/adapters/base.py` for proper abstract method enforcement
 5. Identify any known mypy errors (referenced as issue #687 — check if tracking exists)
 
 ---
@@ -181,7 +181,7 @@ Analyze ProjectScylla for completeness, quality, and maturity across six dimensi
 
 ### Step 1: Ground Truth Assessment
 
-1. List `scylla/` and `tests/unit/` top-level directories to establish actual module coverage
+1. List `src/scylla/` and `tests/unit/` top-level directories to establish actual module coverage
 2. Verify CLAUDE.md claims against actual filesystem (especially `agents/` directory)
 3. Check `results/` for existing run data to confirm the framework has been executed end-to-end
 
@@ -254,12 +254,12 @@ For each section: assign a score with 2-3 specific evidence points (file paths w
 - [ ] `mypy` configured with `strict` or documented relaxations
 - [ ] `pytest` configured with `--cov-fail-under` threshold
 - [ ] Pydantic v2 models used for all structured config and result data
-- [ ] Type hints present on all public function signatures in `scylla/`
+- [ ] Type hints present on all public function signatures in `src/scylla/`
 - [ ] Docstrings present on all public classes and functions
 - [ ] No hardcoded API endpoints or model IDs in source (use `config/models/*.yaml`)
 - [ ] Docker image supports all agent adapters (Claude Code, Cline, Codex, Opencode)
 - [ ] LLM judge system prompt versioned and testable (in `config/judge/system_prompt.md`)
-- [ ] Statistical tests documented with assumptions and effect sizes (in `scylla/analysis/stats.py`)
+- [ ] Statistical tests documented with assumptions and effect sizes (in `src/scylla/analysis/stats.py`)
 
 ---
 

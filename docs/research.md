@@ -184,7 +184,7 @@ Table 5.1: Economic Sustainability and Cost Metrics
 
 ### **6.1. Currently Implemented Metrics**
 
-The following metrics are **fully implemented** in both the metrics calculation layer (`scylla/metrics/`) and analysis pipeline (`scylla/analysis/`):
+The following metrics are **fully implemented** in both the metrics calculation layer (`src/scylla/metrics/`) and analysis pipeline (`src/scylla/analysis/`):
 
 **Quality Metrics:**
 
@@ -208,27 +208,27 @@ The following metrics are **fully implemented** in both the metrics calculation 
 **Statistical Analysis:**
 
 * **Power Analysis**: Post-hoc statistical power for Mann-Whitney U and Kruskal-Wallis tests
-  * Implementation: `scylla/analysis/stats.py:mann_whitney_power()`, `kruskal_wallis_power()`
+  * Implementation: `src/scylla/analysis/stats.py:mann_whitney_power()`, `kruskal_wallis_power()`
   * Status: Calculation functions complete; not yet surfaced in comparison tables
 
 ### **6.2. Metrics Defined but Not Yet Integrated**
 
-The following metrics are **implemented** in `scylla/metrics/process.py` but **not yet integrated** into the analysis pipeline (`scylla/analysis/`):
+The following metrics are **implemented** in `src/scylla/metrics/process.py` but **not yet integrated** into the analysis pipeline (`src/scylla/analysis/`):
 
 **Process Metrics (Future Integration):**
 
 * **Fine-Grained Progress Rate (R_Prog)**: Incremental advancement tracking through expected steps
-  * Implementation: `scylla/metrics/process.py:calculate_r_prog()`
+  * Implementation: `src/scylla/metrics/process.py:calculate_r_prog()`
   * Status: Data structures defined (ProgressTracker, ProgressStep), calculation functions complete
   * Integration needed: Add to dataframes.py, loader.py, and create analysis figures/tables
 
 * **Change Fail Percentage (CFP)**: Stability metric for production changes requiring remediation
-  * Implementation: `scylla/metrics/process.py:calculate_cfp()`
+  * Implementation: `src/scylla/metrics/process.py:calculate_cfp()`
   * Status: Data structures defined (ChangeResult), calculation functions complete
   * Integration needed: Add to dataframes.py, loader.py, and create comparison tables
 
 * **PR Revert Rate**: Frequency of agent-generated changes reverted by human reviewers
-  * Implementation: `scylla/metrics/process.py:calculate_pr_revert_rate()`
+  * Implementation: `src/scylla/metrics/process.py:calculate_pr_revert_rate()`
   * Status: Uses ChangeResult dataclass, calculation functions complete
   * Integration needed: Add to dataframes.py, loader.py, and create quality analysis tables
 
@@ -247,8 +247,8 @@ The following metrics are **implemented** in `scylla/metrics/process.py` but **n
 
 1. **Integrate Process Metrics** (R_Prog, CFP, PR Revert Rate):
    * Extend `run_result.json` schema to include process tracking data
-   * Update `loader.py` to extract process metrics from experiment results
-   * Add columns to `runs_df` in `dataframes.py`
+   * Update `src/scylla/analysis/loader.py` to extract process metrics from experiment results
+   * Add columns to `runs_df` in `src/scylla/analysis/dataframes.py`
    * Create dedicated figures (e.g., Fig_RProg: Progress Rate by Tier)
    * Add to comparison tables (e.g., Table_CFP: Change Fail Percentage Analysis)
 
@@ -262,7 +262,7 @@ The following metrics are **implemented** in `scylla/metrics/process.py` but **n
    * Ensure sufficient sample sizes for detecting meaningful effect sizes
 
 4. **Multi-Experiment Support**:
-   * Multi-experiment loading is implemented (`scylla/analysis/loader.py:load_all_experiments()`)
+   * Multi-experiment loading is implemented (`src/scylla/analysis/loader.py:load_all_experiments()`)
    * Remaining work: rubric conflict handling when the same subtest appears across experiments with differing rubrics
 
 ## **7\. Conclusion and Strategic Research Recommendations**
