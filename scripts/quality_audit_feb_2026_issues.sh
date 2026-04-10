@@ -69,7 +69,7 @@ echo "  Created issue #${issue_num}"
 # HIGH-2: Configure test coverage thresholds
 echo "Creating issue: Configure test coverage thresholds in CI..."
 issue_url=$(gh issue create \
-  --title "HIGH: Configure test coverage thresholds in CI (80%)" \
+  --title "HIGH: Configure test coverage thresholds in CI (75%)" \
   --label "testing" \
   --body "$(cat <<'EOF'
 ## Objective
@@ -77,12 +77,12 @@ Enforce minimum test coverage thresholds to prevent coverage regression.
 
 ## Deliverables
 - [ ] Create pytest.ini with coverage configuration
-- [ ] Set line coverage threshold to 80%
+- [ ] Set line coverage threshold to 75%
 - [ ] Configure coverage report formats (term-missing, html)
 - [ ] Add coverage configuration to pyproject.toml
 
 ## Success Criteria
-- CI fails if coverage drops below 80%
+- CI fails if coverage drops below 75%
 - Coverage reports show missing lines
 - HTML coverage report generated for detailed analysis
 
@@ -94,8 +94,8 @@ HIGH - Critical for maintaining code quality
 
 ## Verification
 ```bash
-# Run tests with coverage (should fail if <80%)
-pixi run python -m pytest tests/ --cov=scylla --cov-report=term-missing --cov-fail-under=80
+# Run tests with coverage (should fail if <75%)
+pixi run python -m pytest tests/ --cov=scylla --cov-report=term-missing --cov-fail-under=75
 ```
 
 ## Context
@@ -497,7 +497,7 @@ Created 10 tracking issues for code quality audit findings:
 
 ### HIGH Priority
 - #${issue_numbers[0]} - Resolve 4 skipped tests and clean up .orig artifacts
-- #${issue_numbers[1]} - Configure test coverage thresholds in CI (80%)
+- #${issue_numbers[1]} - Configure test coverage thresholds in CI (75%)
 - #${issue_numbers[2]} - Add mypy type checking to pre-commit hooks
 - #${issue_numbers[3]} - Fix duplicate model config names (same model_id)
 
