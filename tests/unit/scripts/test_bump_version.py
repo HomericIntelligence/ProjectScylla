@@ -1,5 +1,6 @@
 """Tests for scripts/bump_version.py."""
 
+import subprocess
 import textwrap
 from pathlib import Path
 
@@ -8,6 +9,7 @@ import pytest
 from scripts.bump_version import (
     bump_version,
     compute_new_version,
+    create_git_tag,
     get_current_version,
     update_pixi_version,
     update_pyproject_version,
@@ -47,6 +49,29 @@ def setup_repo(root: Path, version: str) -> None:
     """Create both pyproject.toml and pixi.toml with matching version."""
     write_pyproject(root, version)
     write_pixi_toml(root, version)
+
+
+def init_git_repo(root: Path) -> None:
+    """Initialize a minimal git repo so git tag commands succeed."""
+    subprocess.run(["git", "init"], cwd=root, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", "init"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -224,6 +249,68 @@ class TestUpdatePixiVersion:
             update_pixi_version(tmp_path, "0.1.0", "0.2.0")
         assert exc_info.value.code == 1
 
+    def test_only_updates_workspace_version(self, tmp_path: Path) -> None:
+        """Should only replace version in [workspace], not in other sections."""
+        content = textwrap.dedent("""\
+            [workspace]
+            name = "test-project"
+            version = "0.1.0"
+
+            [package.metadata]
+            version = "0.1.0"
+        """)
+        path = tmp_path / "pixi.toml"
+        path.write_text(content)
+        update_pixi_version(tmp_path, "0.1.0", "0.2.0")
+        updated = path.read_text()
+        lines = updated.splitlines()
+        workspace_version_line = next((ln for ln in lines if 'version = "0.2.0"' in ln), None)
+        assert workspace_version_line is not None, "workspace version not updated"
+        # The [package.metadata] version should remain unchanged
+        assert updated.count('version = "0.1.0"') == 1
+        assert updated.count('version = "0.2.0"') == 1
+
+
+# ---------------------------------------------------------------------------
+# TestCreateGitTag
+# ---------------------------------------------------------------------------
+
+
+class TestCreateGitTag:
+    """Tests for create_git_tag()."""
+
+    def test_creates_tag_in_git_repo(self, tmp_path: Path) -> None:
+        """Should create a git tag when called inside a valid git repo."""
+        init_git_repo(tmp_path)
+        result = create_git_tag("1.2.3", tmp_path)
+        assert result == 0
+        tags = (
+            subprocess.run(
+                ["git", "tag"],
+                cwd=tmp_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            .stdout.strip()
+            .splitlines()
+        )
+        assert "v1.2.3" in tags
+
+    def test_returns_one_on_duplicate_tag(self, tmp_path: Path) -> None:
+        """Should return 1 if the tag already exists."""
+        init_git_repo(tmp_path)
+        create_git_tag("1.0.0", tmp_path)
+        result = create_git_tag("1.0.0", tmp_path)
+        assert result == 1
+
+    def test_verbose_prints_tag(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        """Verbose mode should print the created tag name."""
+        init_git_repo(tmp_path)
+        create_git_tag("2.0.0", tmp_path, verbose=True)
+        captured = capsys.readouterr()
+        assert "v2.0.0" in captured.out
+
 
 # ---------------------------------------------------------------------------
 # TestBumpVersion (integration)
@@ -236,6 +323,7 @@ class TestBumpVersion:
     def test_patch_bump(self, tmp_path: Path) -> None:
         """Should bump patch version in both files."""
         setup_repo(tmp_path, "0.1.0")
+        init_git_repo(tmp_path)
         result = bump_version(tmp_path, "patch")
         assert result == 0
         assert 'version = "0.1.1"' in (tmp_path / "pyproject.toml").read_text()
@@ -244,6 +332,7 @@ class TestBumpVersion:
     def test_minor_bump(self, tmp_path: Path) -> None:
         """Should bump minor version in both files."""
         setup_repo(tmp_path, "1.2.3")
+        init_git_repo(tmp_path)
         result = bump_version(tmp_path, "minor")
         assert result == 0
         assert 'version = "1.3.0"' in (tmp_path / "pyproject.toml").read_text()
@@ -252,10 +341,30 @@ class TestBumpVersion:
     def test_major_bump(self, tmp_path: Path) -> None:
         """Should bump major version in both files."""
         setup_repo(tmp_path, "1.2.3")
+        init_git_repo(tmp_path)
         result = bump_version(tmp_path, "major")
         assert result == 0
         assert 'version = "2.0.0"' in (tmp_path / "pyproject.toml").read_text()
         assert 'version = "2.0.0"' in (tmp_path / "pixi.toml").read_text()
+
+    def test_creates_git_tag_after_bump(self, tmp_path: Path) -> None:
+        """Should create a git tag v{new_version} after a successful bump."""
+        setup_repo(tmp_path, "0.1.0")
+        init_git_repo(tmp_path)
+        result = bump_version(tmp_path, "patch")
+        assert result == 0
+        tags = (
+            subprocess.run(
+                ["git", "tag"],
+                cwd=tmp_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            .stdout.strip()
+            .splitlines()
+        )
+        assert "v0.1.1" in tags
 
     def test_dry_run_does_not_write(self, tmp_path: Path) -> None:
         """Dry run should not modify any files."""
@@ -280,6 +389,7 @@ class TestBumpVersion:
     ) -> None:
         """Verbose mode should print bumping details."""
         setup_repo(tmp_path, "0.1.0")
+        init_git_repo(tmp_path)
         bump_version(tmp_path, "patch", verbose=True)
         captured = capsys.readouterr()
         assert "Bumping version" in captured.out
@@ -287,6 +397,7 @@ class TestBumpVersion:
     def test_prints_next_steps(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
         """Should print next steps after successful bump."""
         setup_repo(tmp_path, "0.1.0")
+        init_git_repo(tmp_path)
         bump_version(tmp_path, "patch")
         captured = capsys.readouterr()
         assert "pixi lock" in captured.out
