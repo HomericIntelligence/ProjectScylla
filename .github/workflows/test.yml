@@ -92,8 +92,13 @@ jobs:
       - name: Install nats-server
         if: matrix.test-group.name == 'integration'
         run: |
-          curl -fsSL https://github.com/nats-io/nats-server/releases/download/v2.10.24/nats-server-v2.10.24-linux-amd64.tar.gz | tar xz
-          sudo mv nats-server-v2.10.24-linux-amd64/nats-server /usr/local/bin/
+          NATS_VERSION="v2.10.24"
+          NATS_SHA256="ee6500f364e3a741b496ae0296c04f2a9d53bbaabac457104ac74596b4a59d85"
+          curl -fsSL "https://github.com/nats-io/nats-server/releases/download/${NATS_VERSION}/nats-server-${NATS_VERSION}-linux-amd64.tar.gz" -o nats-server.tar.gz
+          echo "${NATS_SHA256}  nats-server.tar.gz" | sha256sum --check
+          tar xz -f nats-server.tar.gz
+          sudo mv nats-server-${NATS_VERSION}-linux-amd64/nats-server /usr/local/bin/
+          rm nats-server.tar.gz
           nats-server --version
 
       - name: Set up Pixi
