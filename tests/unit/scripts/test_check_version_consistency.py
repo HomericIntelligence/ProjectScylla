@@ -124,6 +124,35 @@ class TestGetPixiVersion:
         path.write_text('[workspace]\nversion  =  "2.0.0"\n')
         assert get_pixi_version(tmp_path) == "2.0.0"
 
+    def test_ignores_dependency_version_outside_workspace(self, tmp_path: Path) -> None:
+        """Should not pick up a version field that appears outside [workspace]."""
+        content = textwrap.dedent("""\
+            [workspace]
+            name = "test-project"
+            version = "1.2.3"
+
+            [dependencies]
+            some-dep = "9.9.9"
+            another = { version = "8.8.8" }
+        """)
+        path = tmp_path / "pixi.toml"
+        path.write_text(content)
+        assert get_pixi_version(tmp_path) == "1.2.3"
+
+    def test_version_field_before_workspace_not_matched(self, tmp_path: Path) -> None:
+        """Should not match a version = line that appears before [workspace]."""
+        content = textwrap.dedent("""\
+            [other]
+            version = "0.0.1"
+
+            [workspace]
+            name = "test-project"
+            version = "1.0.0"
+        """)
+        path = tmp_path / "pixi.toml"
+        path.write_text(content)
+        assert get_pixi_version(tmp_path) == "1.0.0"
+
 
 # ---------------------------------------------------------------------------
 # TestCheckVersionConsistency

@@ -24,9 +24,14 @@ try:
 except ImportError:
     import tomli as tomllib
 
-# Regex to match version = "X.Y.Z" in pixi.toml [workspace] section.
+# Regex to match version = "X.Y.Z" in the [workspace] section of pixi.toml.
+# Anchors to the [workspace] header and captures the first version field that
+# follows it (before any subsequent section header).  Using re.DOTALL so that
+# [^\[]* can span newlines.
 # We use regex instead of a TOML parser to avoid reformatting the file.
-_PIXI_VERSION_RE = re.compile(r'^version\s*=\s*"([^"]+)"', re.MULTILINE)
+_PIXI_VERSION_RE = re.compile(
+    r'(?s)\[workspace\][^\[]*?version\s*=\s*"([^"]+)"',
+)
 
 
 def get_pyproject_version(repo_root: Path) -> str:
