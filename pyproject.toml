@@ -125,6 +125,9 @@ addopts = [
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
 ]
+filterwarnings = [
+    "ignore::DeprecationWarning:nats",
+]
 
 [tool.bandit]
 # Bandit AST-based Python security scanner configuration.
