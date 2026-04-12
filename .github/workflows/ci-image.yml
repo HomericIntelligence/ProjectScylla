@@ -79,6 +79,7 @@ jobs:
         with:
           scan-type: image
           input: /tmp/scylla-ci.tar
+          scanners: vuln
           format: table
           exit-code: 1
           ignore-unfixed: true
