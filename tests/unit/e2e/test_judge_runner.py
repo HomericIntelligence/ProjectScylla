@@ -322,14 +322,22 @@ class TestRunJudge:
         assert consensus["score"] == pytest.approx(0.9)
         assert consensus["passed"] is True
 
-    def test_judge_failure_records_zero_score(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize(
+        "exc",
+        [
+            RuntimeError("cli failed"),
+            ValueError("bad json"),
+            OSError("file error"),
+        ],
+    )
+    def test_judge_failure_records_zero_score(self, tmp_path: Path, exc: Exception) -> None:
         """Individual judge failure creates zero-score failed result instead of crashing."""
         judge_dir = tmp_path / "judge"
         judge_dir.mkdir()
 
         with patch(
             "scylla.e2e.judge_runner.run_llm_judge",
-            side_effect=Exception("judge error"),
+            side_effect=exc,
         ):
             _consensus, judges = _run_judge(
                 workspace=tmp_path,
@@ -351,7 +359,7 @@ class TestRunJudge:
 
         with patch(
             "scylla.e2e.judge_runner.run_llm_judge",
-            side_effect=Exception("judge error"),
+            side_effect=RuntimeError("cli failed"),
         ):
             consensus, judges = _run_judge(
                 workspace=tmp_path,
