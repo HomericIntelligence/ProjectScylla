@@ -1,6 +1,7 @@
 """Tests for scylla.nats.subscriber module."""
 
-from unittest.mock import MagicMock, patch
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from scylla.nats.config import NATSConfig
 from scylla.nats.events import NATSEvent
@@ -107,3 +108,34 @@ class TestNATSSubscriberThread:
         thread = NATSSubscriberThread(config=config, handler=handler)
         assert thread._config.url == "nats://test:4222"
         assert thread._config.stream == "TEST_STREAM"
+
+    def test_deliver_policy_passed_to_subscribe(self) -> None:
+        """deliver_policy from NATSConfig is forwarded to js.subscribe()."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["hi.tasks.>"],
+            deliver_policy="all",
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+        thread._stop_event.set()
+
+        mock_nc = AsyncMock()
+        mock_js = MagicMock()
+        mock_nc.jetstream = MagicMock(return_value=mock_js)
+        mock_sub = AsyncMock()
+        mock_sub.next_msg = AsyncMock(side_effect=asyncio.TimeoutError)
+        mock_js.subscribe = AsyncMock(return_value=mock_sub)
+
+        mock_nats = MagicMock()
+        mock_nats.connect = AsyncMock(return_value=mock_nc)
+
+        async def _run() -> None:
+            with patch.dict("sys.modules", {"nats": mock_nats}):
+                await thread._subscribe_loop()
+
+        asyncio.run(_run())
+
+        mock_js.subscribe.assert_called_once()
+        call_kwargs = mock_js.subscribe.call_args.kwargs
+        assert call_kwargs["deliver_policy"] == "all"
