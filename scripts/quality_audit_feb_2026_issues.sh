@@ -95,7 +95,7 @@ HIGH - Critical for maintaining code quality
 ## Verification
 ```bash
 # Run tests with coverage (should fail if <75%)
-pixi run python -m pytest tests/ --cov=scylla --cov-report=term-missing --cov-fail-under=75
+pixi run python -m pytest tests/ --cov=src/scylla --cov-report=term-missing --cov-fail-under=75
 ```
 
 ## Context

@@ -135,7 +135,7 @@ run_test_unit() {
         pixi run pytest tests/unit \
             --override-ini="addopts=" \
             -v --strict-markers \
-            --cov=scylla --cov-report=term-missing \
+            --cov=src/scylla --cov-report=term-missing \
             --cov-fail-under=75
 }
 
@@ -143,7 +143,7 @@ run_test_integration() {
     log_step "Integration tests (pytest tests/integration)"
     run_in_container \
         pixi run pytest tests/integration \
-            -v --cov=scylla --cov-report=term-missing
+            -v --cov=src/scylla --cov-report=term-missing
 }
 
 run_security() {
