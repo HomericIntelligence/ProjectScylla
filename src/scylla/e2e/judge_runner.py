@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
@@ -205,7 +206,14 @@ def _run_judge(
             # Rate limit errors must propagate immediately to trigger backoff
             raise
 
-        except Exception as e:
+        except (
+            RuntimeError,
+            ValueError,
+            subprocess.TimeoutExpired,
+            subprocess.SubprocessError,
+            OSError,
+            json.JSONDecodeError,
+        ) as e:
             # Log error with full context
             logger.error(
                 f"Judge {judge_num} failed with model {model}: {e}",
