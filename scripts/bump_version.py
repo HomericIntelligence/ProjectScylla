@@ -18,6 +18,7 @@ Exit codes:
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -30,7 +31,13 @@ except ImportError:
 
 # Regex to match version = "X.Y.Z" lines in TOML files
 _PYPROJECT_VERSION_RE = re.compile(r'^(version\s*=\s*")([^"]+)(")', re.MULTILINE)
-_PIXI_VERSION_RE = re.compile(r'^(version\s*=\s*")([^"]+)(")', re.MULTILINE)
+# Matches only the version line within the [workspace] section of pixi.toml.
+# The pattern anchors to [workspace], then looks for the version = "..." line
+# that follows (before any subsequent section header).
+_PIXI_WORKSPACE_VERSION_RE = re.compile(
+    r'(\[workspace\][^\[]*?version\s*=\s*")([^"]+)(")',
+    re.DOTALL,
+)
 
 
 def get_current_version(repo_root: Path) -> tuple[int, int, int]:
@@ -168,7 +175,7 @@ def update_pixi_version(repo_root: Path, old: str, new: str) -> None:
         sys.exit(1)
 
     content = pixi_path.read_text()
-    new_content, count = _PIXI_VERSION_RE.subn(rf"\g<1>{new}\g<3>", content, count=1)
+    new_content, count = _PIXI_WORKSPACE_VERSION_RE.subn(rf"\g<1>{new}\g<3>", content, count=1)
     if count == 0:
         print(
             f"ERROR: Could not find version line in {pixi_path}",
@@ -177,6 +184,36 @@ def update_pixi_version(repo_root: Path, old: str, new: str) -> None:
         sys.exit(1)
 
     pixi_path.write_text(new_content)
+
+
+def create_git_tag(version: str, repo_root: Path, verbose: bool = False) -> int:
+    """Create a git tag for the given version.
+
+    Args:
+        version: The version string (e.g. ``"0.2.0"``).
+        repo_root: Root directory of the repository.
+        verbose: If True, print additional details.
+
+    Returns:
+        0 on success, 1 on failure.
+
+    """
+    tag = f"v{version}"
+    try:
+        subprocess.run(
+            ["git", "tag", tag],
+            cwd=repo_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        print(f"ERROR: Could not create git tag {tag}: {exc.stderr.strip()}", file=sys.stderr)
+        return 1
+
+    if verbose:
+        print(f"Created git tag: {tag}")
+    return 0
 
 
 def bump_version(
@@ -227,12 +264,18 @@ def bump_version(
         )
         return 1
 
+    # Create git tag for the new version
+    tag_result = create_git_tag(new_str, repo_root, verbose=verbose)
+    if tag_result != 0:
+        return 1
+
     print(f"Version bumped: {old_str} -> {new_str}")
     print()
     print("Next steps:")
     print("  1. pixi lock")
     print("  2. git add pyproject.toml pixi.toml pixi.lock")
     print(f'  3. git commit -m "feat(release): bump version to {new_str}"')
+    print("  4. git push --tags")
     return 0
 
 
