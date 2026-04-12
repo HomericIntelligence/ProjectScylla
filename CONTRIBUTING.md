@@ -354,7 +354,7 @@ pixi run pytest tests/unit/analysis/ -v
 pixi run pytest tests/unit/metrics/ -v
 
 # With coverage
-pixi run pytest tests/ --cov=scylla --cov-report=html
+pixi run pytest tests/ --cov=src/scylla --cov-report=html
 ```
 
 ### Writing Tests
