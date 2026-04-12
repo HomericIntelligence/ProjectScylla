@@ -2,14 +2,14 @@
 """Subscribe to NATS JetStream events from ProjectHermes.
 
 .. deprecated::
-    This script is deprecated. Use the ``scylla subscribe`` CLI subcommand instead::
+    This script is deprecated. Use ``manage_experiment.py subscribe`` instead::
 
-        scylla subscribe
-        scylla subscribe --config-dir /path/to/project
-        NATS_URL=nats://remote:4222 scylla subscribe
+        python scripts/manage_experiment.py subscribe
+        python scripts/manage_experiment.py subscribe --config-dir /path/to/project
+        NATS_URL=nats://remote:4222 python scripts/manage_experiment.py subscribe
 
     This standalone script duplicates functionality now provided by the
-    ``scylla subscribe`` subcommand and will be removed in a future release.
+    ``manage_experiment.py subscribe`` subcommand and will be removed in a future release.
 
 Starts a long-running subscriber that listens for task events on the
 ``hi.tasks.*`` subject hierarchy. Press Ctrl+C to stop.
@@ -34,7 +34,8 @@ from pathlib import Path
 def main(argv: list[str] | None = None) -> int:
     """Run the NATS subscriber."""
     warnings.warn(
-        "scripts/nats_subscribe.py is deprecated. Use 'scylla subscribe' instead.",
+        "nats_subscribe.py is deprecated and will be removed in a future release. "
+        "Use 'python scripts/manage_experiment.py subscribe' instead.",
         DeprecationWarning,
         stacklevel=1,
     )
