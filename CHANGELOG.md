@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `manage_experiment.py` unified CLI (run, repair, visualize subcommands).
 - 120 YAML subtests across 7 testing tiers (T0-T6).
 - Strict mypy enforcement (8/8 strict checks enabled).
-- 26+ pre-commit hooks (security, linting, type-checking, complexity).
+- 27+ pre-commit hooks (security, linting, type-checking, complexity).
 - Dual coverage threshold: 75% unit (scylla/), 9% combined floor.
 - JSON schema validation for all config files.
 - Docker multi-stage build with SHA256-pinned base images.
