@@ -13,6 +13,7 @@ from scylla.reporting.markdown import (
     create_report_data,
     create_tier_metrics,
 )
+from scylla.reporting.protocols import ReportWriter
 from scylla.reporting.result import (
     ExecutionInfo,
     GradingInfo,
@@ -53,6 +54,7 @@ __all__ = [
     "OverallStats",
     "Rankings",
     "ReportData",
+    "ReportWriter",
     "ReportingRunResult",
     "ResultWriter",
     "ScorecardGenerator",
