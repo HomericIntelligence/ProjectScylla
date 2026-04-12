@@ -26,7 +26,9 @@ jobs:
           PKG_VERSION=$(python3 -c "
           import re, pathlib
           text = pathlib.Path('pyproject.toml').read_text()
-          m = re.search(r'^version\s*=\s*\"([^\"]+)\"', text, re.MULTILINE)
+          project_section = re.search(r'^\[project\](.*?)^(?=\[)', text, re.MULTILINE | re.DOTALL)
+          section_text = project_section.group(1) if project_section else text
+          m = re.search(r'^version\s*=\s*\"([^\"]+)\"', section_text, re.MULTILINE)
           print(m.group(1) if m else '')
           ")
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
