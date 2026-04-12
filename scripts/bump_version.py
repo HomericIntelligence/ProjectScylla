@@ -221,6 +221,7 @@ def bump_version(
     part: str,
     dry_run: bool = False,
     verbose: bool = False,
+    tag: bool = False,
 ) -> int:
     """Bump the project version atomically across pyproject.toml and pixi.toml.
 
@@ -229,6 +230,7 @@ def bump_version(
         part: Which part to bump — ``"major"``, ``"minor"``, or ``"patch"``.
         dry_run: If True, print what would change without writing.
         verbose: If True, print additional details.
+        tag: If True, create a git tag ``v<new_version>`` after bumping.
 
     Returns:
         0 on success, 1 on failure.
@@ -264,10 +266,11 @@ def bump_version(
         )
         return 1
 
-    # Create git tag for the new version
-    tag_result = create_git_tag(new_str, repo_root, verbose=verbose)
-    if tag_result != 0:
-        return 1
+    # Optionally create a git tag for the new version
+    if tag:
+        tag_result = create_git_tag(new_str, repo_root, verbose=verbose)
+        if tag_result != 0:
+            return 1
 
     print(f"Version bumped: {old_str} -> {new_str}")
     print()
@@ -312,6 +315,11 @@ def main() -> int:
         action="store_true",
         help="Print additional details",
     )
+    parser.add_argument(
+        "--tag",
+        action="store_true",
+        help="Create a git tag v<new_version> after bumping",
+    )
 
     args = parser.parse_args()
     return bump_version(
@@ -319,6 +327,7 @@ def main() -> int:
         part=args.part,
         dry_run=args.dry_run,
         verbose=args.verbose,
+        tag=args.tag,
     )
 
 

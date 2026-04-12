@@ -347,11 +347,30 @@ class TestBumpVersion:
         assert 'version = "2.0.0"' in (tmp_path / "pyproject.toml").read_text()
         assert 'version = "2.0.0"' in (tmp_path / "pixi.toml").read_text()
 
-    def test_creates_git_tag_after_bump(self, tmp_path: Path) -> None:
-        """Should create a git tag v{new_version} after a successful bump."""
+    def test_no_git_tag_by_default(self, tmp_path: Path) -> None:
+        """Should not create a git tag when --tag is not passed."""
         setup_repo(tmp_path, "0.1.0")
         init_git_repo(tmp_path)
         result = bump_version(tmp_path, "patch")
+        assert result == 0
+        tags = (
+            subprocess.run(
+                ["git", "tag"],
+                cwd=tmp_path,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            .stdout.strip()
+            .splitlines()
+        )
+        assert "v0.1.1" not in tags
+
+    def test_creates_git_tag_when_flag_passed(self, tmp_path: Path) -> None:
+        """Should create a git tag v{new_version} when tag=True is passed."""
+        setup_repo(tmp_path, "0.1.0")
+        init_git_repo(tmp_path)
+        result = bump_version(tmp_path, "patch", tag=True)
         assert result == 0
         tags = (
             subprocess.run(
