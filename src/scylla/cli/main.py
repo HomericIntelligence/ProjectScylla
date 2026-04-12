@@ -13,19 +13,20 @@ from scylla import __version__
 from scylla.config import DEFAULT_JUDGE_MODEL, ConfigLoader
 from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
+    JsonReportGenerator,
     MarkdownReportGenerator,
     ReportData,
+    ReportWriter,
     SensitivityAnalysis,
     TierMetrics,
     TransitionAssessment,
     create_tier_metrics,
 )
-from scylla.reporting.json_report import JsonReportGenerator
 
 # Dict-dispatch mapping format names to generator classes.
 # Adding a new format (e.g. HTML) requires only a new entry here
-# and a generator class with the same write_report(ReportData) -> Path interface.
-FORMAT_GENERATORS: dict[str, type[MarkdownReportGenerator] | type[JsonReportGenerator]] = {
+# and a generator class that satisfies the ReportWriter protocol.
+FORMAT_GENERATORS: dict[str, type[ReportWriter]] = {
     "markdown": MarkdownReportGenerator,
     "json": JsonReportGenerator,
 }
