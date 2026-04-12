@@ -24,12 +24,13 @@ jobs:
         run: |
           TAG_VERSION="${TAG_NAME#v}"
           PKG_VERSION=$(python3 -c "
-          import re, pathlib
-          text = pathlib.Path('pyproject.toml').read_text()
-          project_section = re.search(r'^\[project\](.*?)^(?=\[)', text, re.MULTILINE | re.DOTALL)
-          section_text = project_section.group(1) if project_section else text
-          m = re.search(r'^version\s*=\s*\"([^\"]+)\"', section_text, re.MULTILINE)
-          print(m.group(1) if m else '')
+          try:
+              import tomllib
+          except ImportError:
+              import tomli as tomllib
+          with open('pyproject.toml', 'rb') as f:
+              data = tomllib.load(f)
+          print(data['project']['version'])
           ")
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
             echo "::error::Tag version ($TAG_VERSION) does not match pyproject.toml version ($PKG_VERSION)"
