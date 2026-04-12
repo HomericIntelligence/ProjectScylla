@@ -60,6 +60,9 @@ Homepage = "https://github.com/HomericIntelligence/ProjectScylla"
 Repository = "https://github.com/HomericIntelligence/ProjectScylla"
 Issues = "https://github.com/HomericIntelligence/ProjectScylla/issues"
 
+[project.scripts]
+scylla = "scylla.cli.main:cli"
+
 [tool.hatch.build]
 sources = ["src"]
 
