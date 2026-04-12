@@ -256,6 +256,28 @@ def _resolve_output_path(output: str | None, base_path: Path) -> tuple[Path, Pat
     return report_dir, resolved
 
 
+def _warn_format_extension_mismatch(output: str | None, output_format: str) -> None:
+    """Emit a stderr warning when the output file extension implies a different format.
+
+    Args:
+        output: Raw --output value (``None`` or ``"-"`` are silently ignored).
+        output_format: Requested format name (e.g. ``"markdown"`` or ``"json"``).
+
+    """
+    if output is None or output == "-":
+        return
+    ext_format: dict[str, str] = {".md": "markdown", ".json": "json"}
+    output_ext = Path(output).suffix.lower()
+    implied_format = ext_format.get(output_ext)
+    if implied_format is not None and implied_format != output_format:
+        click.echo(
+            f"Warning: --output extension '{output_ext}' implies format '{implied_format}' "
+            f"but --format is '{output_format}'. "
+            "The file will be written in the requested format.",
+            err=True,
+        )
+
+
 @cli.command()
 @click.argument("test_id")
 @click.option(
@@ -270,7 +292,11 @@ def _resolve_output_path(output: str | None, base_path: Path) -> tuple[Path, Pat
     "--output",
     "-o",
     default=None,
-    help="Output file path. Use '-' for stdout.",
+    help=(
+        "Output destination. Use '-' for stdout. "
+        "Paths ending in '.md' or '.json' are written as exact files; "
+        "any other path is treated as a directory and the filename is auto-generated."
+    ),
 )
 def report(
     test_id: str,
@@ -290,6 +316,7 @@ def report(
 
     """
     stdout_mode = output == "-"
+    _warn_format_extension_mismatch(output, output_format)
     click.echo(f"Generating {output_format} report for: {test_id}", err=stdout_mode)
 
     base_path = Path(".")
