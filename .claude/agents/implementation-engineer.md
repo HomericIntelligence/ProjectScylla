@@ -104,7 +104,7 @@ def function_name(
 ### Project Structure
 
 ```text
-scylla/                          # Python source code
+src/scylla/                      # Python source code
   adapters/                      # CLI adapters
   analysis/                      # Statistical analysis
   automation/                    # Automation utilities
@@ -118,7 +118,7 @@ scylla/                          # Python source code
   reporting/                     # Report generation
   utils/                         # Utility functions
 tests/
-  unit/                          # Unit tests (mirrors scylla/ layout)
+  unit/                          # Unit tests (mirrors src/scylla/ layout)
     adapters/
     analysis/
     automation/
@@ -144,7 +144,7 @@ schemas/                         # JSON schemas
 ### Example 1: Implement Pass-Rate Metric
 
 ```python
-# scylla/metrics/pass_rate.py
+# src/scylla/metrics/pass_rate.py
 """Pass-Rate metric implementation."""
 
 from __future__ import annotations
@@ -202,7 +202,7 @@ def calculate_pass_rate(
 ### Example 2: Implement Benchmark Harness
 
 ```python
-# scylla/e2e/harness.py
+# src/scylla/e2e/harness.py
 """Benchmark execution harness."""
 
 from __future__ import annotations
