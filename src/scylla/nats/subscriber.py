@@ -104,7 +104,6 @@ class NATSSubscriberThread(threading.Thread):
         """Connect to NATS JetStream and process messages until stop is requested."""
         try:
             import nats as nats_client
-            from nats.js.api import DeliverPolicy
         except ImportError:
             logger.error("nats-py is not installed. Install with: pip install 'scylla[nats]'")
             # Set stop event so we don't retry endlessly
@@ -117,7 +116,6 @@ class NATSSubscriberThread(threading.Thread):
 
             subjects = self._config.subjects or ["hi.tasks.>"]
             subscriptions = []
-            deliver_policy = DeliverPolicy(self._config.deliver_policy)
             for i, subject in enumerate(subjects):
                 durable = (
                     self._config.durable_name
@@ -128,7 +126,7 @@ class NATSSubscriberThread(threading.Thread):
                     subject=subject,
                     durable=durable,
                     stream=self._config.stream,
-                    deliver_policy=deliver_policy,
+                    deliver_policy=self._config.deliver_policy,  # type: ignore[arg-type]
                 )
                 subscriptions.append(sub)
 
