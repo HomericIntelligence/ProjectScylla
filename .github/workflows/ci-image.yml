@@ -71,11 +71,14 @@ jobs:
             --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             .
           echo "short_sha=${SHORT}" >> "$GITHUB_OUTPUT"
+          # Save image to tar for Trivy — Trivy cannot access the Podman image store directly
+          podman save --output /tmp/scylla-ci.tar "${IMAGE_NAME}:latest"
 
       - name: Scan image for vulnerabilities (Trivy)
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1  # 0.35.0
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:latest
+          scan-type: image
+          input: /tmp/scylla-ci.tar
           format: table
           exit-code: 1
           ignore-unfixed: true
