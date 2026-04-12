@@ -149,7 +149,7 @@ def load_task_prompt(prompt_file: Path) -> str:
     """
     try:
         return prompt_file.read_text()
-    except Exception as e:
+    except OSError as e:
         raise RunnerError(f"Failed to load prompt file: {e}") from e
 
 
@@ -171,7 +171,7 @@ def collect_workspace_state(workspace: Path) -> str:
                 files.append(f"- {item.name}")
             elif item.is_dir():
                 files.append(f"- {item.name}/ (directory)")
-    except Exception as e:
+    except OSError as e:
         logger.warning(f"Failed to list workspace contents: {e}")
         return f"Error listing workspace: {e}"
 
@@ -283,7 +283,7 @@ def write_output(judgment: Judgment, output_dir: Path) -> None:
         output_file.write_text(json.dumps(judgment_dict, indent=2))
         logger.info(f"Judgment written to {output_file}")
 
-    except Exception as e:
+    except (OSError, TypeError, ValueError) as e:
         raise RunnerError(f"Failed to write output: {e}") from e
 
 
