@@ -80,6 +80,7 @@ jobs:
           scan-type: image
           input: /tmp/scylla-ci.tar
           scanners: vuln
+          trivyignores: .trivyignore
           format: table
           exit-code: 1
           ignore-unfixed: true

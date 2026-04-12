@@ -1,0 +1,9 @@
+# Trivy vulnerability ignore file
+# Entries here suppress known false-positives or accepted risks in the CI image.
+# Each entry should document WHY it is ignored.
+
+# CVE-2026-33671: picomatch ReDoS — present in markdownlint-cli2's Node dependency tree
+# baked into the pre-commit cache (/root/.cache/pre-commit/ and /home/ci/.cache/).
+# Not runtime code; not reachable from untrusted input in CI. Unfixable without bumping
+# the markdownlint-cli2 pre-commit hook version (which is pinned for reproducibility).
+CVE-2026-33671

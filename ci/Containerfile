@@ -30,7 +30,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/opt/pixi/bin:$PATH"
 
 # Install build dependencies + git (required by pre-commit hooks)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# apt-get upgrade picks up any security patches released after the base image was pinned
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     git \
     curl \
     ca-certificates \
@@ -87,7 +88,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/opt/pixi/bin:$PATH"
 
 # Runtime-only system packages (no build tools)
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# apt-get upgrade picks up any security patches released after the base image was pinned
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     git \
     curl \
     ca-certificates \
