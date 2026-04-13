@@ -188,6 +188,35 @@ class TestReportCommand:
             assert result.exit_code == 0
             assert target.exists()
 
+    def test_report_output_format_json_to_directory(self) -> None:
+        """--output <dir> --format json writes JSON file to that directory."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            result = runner.invoke(
+                cli, ["report", "test-001", "--output", "out-dir", "--format", "json"]
+            )
+            assert result.exit_code == 0
+            assert Path("out-dir/test-001/report.json").exists()
+            content = json.loads(Path("out-dir/test-001/report.json").read_text())
+            assert content["test_id"] == "test-001"
+
+    def test_report_output_nonexistent_dir_creates_parents(self, tmp_path: Path) -> None:
+        """--output to a non-existent directory creates all parent directories."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            deep_dir = "a/b/c/d"
+            result = runner.invoke(cli, ["report", "test-001", "--output", deep_dir])
+            assert result.exit_code == 0
+            assert Path(f"{deep_dir}/test-001/report.md").exists()
+
 
 class TestWarnFormatExtensionMismatch:
     """Tests for _warn_format_extension_mismatch helper."""
