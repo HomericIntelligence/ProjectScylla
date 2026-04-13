@@ -41,6 +41,35 @@ def _parse_python_base_versions(dockerfile_content: str) -> list[tuple[int, int]
     return versions
 
 
+def _parse_base_image_digest(dockerfile_content: str, image_pattern: str) -> list[str]:
+    """Extract SHA256 digest strings from FROM lines matching a given image pattern.
+
+    For each FROM line that references an image matching ``image_pattern``,
+    extracts ``@sha256:<64 hex chars>`` and returns the full ``sha256:...`` string.
+
+    Args:
+        dockerfile_content: Raw text content of the Dockerfile.
+        image_pattern: Regex pattern used to identify the target base image
+            (e.g. ``r"python:"`` or ``r"node:"``).
+
+    Returns:
+        List of digest strings (e.g. ``["sha256:abc...", "sha256:abc..."]``) found
+        on matching FROM lines, in the order they appear.
+
+    """
+    digests: list[str] = []
+    for line in dockerfile_content.splitlines():
+        stripped = line.strip()
+        if not stripped.upper().startswith("FROM"):
+            continue
+        if not re.search(image_pattern, stripped, re.IGNORECASE):
+            continue
+        match = re.search(r"@(sha256:[a-f0-9]{64})", stripped, re.IGNORECASE)
+        if match:
+            digests.append(match.group(1))
+    return digests
+
+
 def _parse_python_base_digests(dockerfile_content: str) -> list[str]:
     """Extract SHA256 digest strings from Python base image FROM lines in a Dockerfile.
 
@@ -55,17 +84,7 @@ def _parse_python_base_digests(dockerfile_content: str) -> list[str]:
         on Python FROM lines, in the order they appear.
 
     """
-    digests: list[str] = []
-    for line in dockerfile_content.splitlines():
-        stripped = line.strip()
-        if not stripped.upper().startswith("FROM"):
-            continue
-        if not re.search(r"python:", stripped, re.IGNORECASE):
-            continue
-        match = re.search(r"@(sha256:[a-f0-9]{64})", stripped, re.IGNORECASE)
-        if match:
-            digests.append(match.group(1))
-    return digests
+    return _parse_base_image_digest(dockerfile_content, r"python:")
 
 
 class TestDockerfileBaseImageVersion:
@@ -249,16 +268,8 @@ def _parse_node_base_digest(dockerfile_content: str) -> str | None:
         The digest string (e.g. ``sha256:abc...``), or ``None`` if not found.
 
     """
-    for line in dockerfile_content.splitlines():
-        stripped = line.strip()
-        if not stripped.upper().startswith("FROM"):
-            continue
-        if not re.search(r"node:", stripped, re.IGNORECASE):
-            continue
-        match = re.search(r"@(sha256:[a-f0-9]{64})", stripped, re.IGNORECASE)
-        if match:
-            return match.group(1)
-    return None
+    digests = _parse_base_image_digest(dockerfile_content, r"node:")
+    return digests[0] if digests else None
 
 
 class TestDockerfileNodeImageDigestPin:
