@@ -235,6 +235,75 @@ class TestReportCommandIntegration:
             assert "T0:" in result.output
             assert "T1:" in result.output
 
+    def test_report_output_dash_writes_json_to_stdout(self) -> None:
+        """``--output -`` pipes JSON report content to stdout instead of a file."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runs_dir = Path("runs/test-001/T0/run-1")
+            runs_dir.mkdir(parents=True)
+            (runs_dir / "result.json").write_text(json.dumps(_make_result()))
+
+            result = runner.invoke(cli, ["report", "test-001", "--format", "json", "--output", "-"])
+            assert result.exit_code == 0, (
+                f"report --output - exited {result.exit_code}: {result.output}"
+            )
+
+            # stdout must contain parseable JSON with the expected test_id.
+            # The output contains progress lines (stderr is merged by default CliRunner) plus
+            # the JSON body; extract the first top-level JSON object from the output.
+            lines = result.output.splitlines()
+            json_start = next(i for i, line in enumerate(lines) if line.startswith("{"))
+            json_text = "\n".join(lines[json_start:])
+            parsed = json.loads(json_text)
+            assert parsed["test_id"] == "test-001"
+
+            # No report file should be written to disk
+            assert not Path("reports").exists(), (
+                "disk report file must not be created in stdout mode"
+            )
+
+    def test_report_output_dash_markdown_writes_to_stdout(self) -> None:
+        """``--output -`` with markdown format pipes content to stdout."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runs_dir = Path("runs/test-001/T0/run-1")
+            runs_dir.mkdir(parents=True)
+            (runs_dir / "result.json").write_text(json.dumps(_make_result()))
+
+            result = runner.invoke(
+                cli, ["report", "test-001", "--format", "markdown", "--output", "-"]
+            )
+            assert result.exit_code == 0, (
+                f"report --output - exited {result.exit_code}: {result.output}"
+            )
+
+            # Combined output must contain markdown content (the test_id appears in the report)
+            assert "test-001" in result.output.lower()
+
+            # No report file should be written to disk
+            assert not Path("reports").exists(), (
+                "disk report file must not be created in stdout mode"
+            )
+
+    def test_report_output_dash_no_file_created(self) -> None:
+        """``--output -`` must not create any file under the reports directory."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            runs_dir = Path("runs/test-001/T0/run-1")
+            runs_dir.mkdir(parents=True)
+            (runs_dir / "result.json").write_text(json.dumps(_make_result()))
+
+            result = runner.invoke(cli, ["report", "test-001", "--format", "json", "--output", "-"])
+            assert result.exit_code == 0
+
+            # The 'Report generated: ...' message (file-mode only) must not appear
+            assert "Report generated:" not in result.output
+
+            # No reports directory should exist on disk
+            assert not Path("reports").exists(), (
+                "disk report file must not be created in stdout mode"
+            )
+
 
 # ---------------------------------------------------------------------------
 # TestStatusCommandIntegration — status with real disk
