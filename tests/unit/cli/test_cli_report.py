@@ -5,7 +5,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from scylla.cli.main import FORMAT_GENERATORS, cli
+from scylla.cli.main import FORMAT_GENERATORS, _warn_format_extension_mismatch, cli
 from scylla.reporting.json_report import JsonReportGenerator
 from scylla.reporting.markdown import MarkdownReportGenerator
 
@@ -187,3 +187,117 @@ class TestReportCommand:
             result = runner.invoke(cli, ["report", "test-001", "--output", str(target)])
             assert result.exit_code == 0
             assert target.exists()
+
+
+class TestWarnFormatExtensionMismatch:
+    """Tests for _warn_format_extension_mismatch helper."""
+
+    def test_no_warning_when_output_is_none(self) -> None:
+        """No warning emitted when --output is not provided."""
+        import click
+
+        @click.command()
+        def _probe() -> None:
+            _warn_format_extension_mismatch(None, "markdown")
+
+        result = CliRunner().invoke(_probe, [], catch_exceptions=False)
+        assert "Warning:" not in result.output
+
+    def test_no_warning_when_output_is_dash(self) -> None:
+        """No warning emitted when --output is '-' (stdout mode)."""
+        import click
+
+        @click.command()
+        def _probe() -> None:
+            _warn_format_extension_mismatch("-", "json")
+
+        result = CliRunner().invoke(_probe, [], catch_exceptions=False)
+        assert "Warning:" not in result.output
+
+    def test_no_warning_when_extensions_match_markdown(self) -> None:
+        """No warning when .md extension matches markdown format."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            result = runner.invoke(
+                cli,
+                ["report", "test-001", "--format", "markdown", "--output", "report.md"],
+            )
+        assert "Warning:" not in result.output
+
+    def test_no_warning_when_extensions_match_json(self) -> None:
+        """No warning when .json extension matches json format."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            result = runner.invoke(
+                cli,
+                ["report", "test-001", "--format", "json", "--output", "report.json"],
+            )
+        assert "Warning:" not in result.output
+
+    def test_warning_on_mismatch_markdown_format_json_ext(self) -> None:
+        """Warning emitted when --format markdown but output ends with .json."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            result = runner.invoke(
+                cli,
+                ["report", "test-001", "--format", "markdown", "--output", "report.json"],
+                catch_exceptions=False,
+            )
+        # CliRunner mixes stdout and stderr into result.output by default
+        assert "Warning:" in result.output
+        assert ".json" in result.output
+        assert "markdown" in result.output
+
+    def test_warning_on_mismatch_json_format_md_ext(self) -> None:
+        """Warning emitted when --format json but output ends with .md."""
+        runner = CliRunner()
+        with runner.isolated_filesystem():
+            result_dir = Path("runs/test-001/T0/run-1")
+            result_dir.mkdir(parents=True)
+            (result_dir / "result.json").write_text(json.dumps(_create_mock_result()))
+
+            result = runner.invoke(
+                cli,
+                ["report", "test-001", "--format", "json", "--output", "report.md"],
+                catch_exceptions=False,
+            )
+        # CliRunner mixes stdout and stderr into result.output by default
+        assert "Warning:" in result.output
+        assert ".md" in result.output
+        assert "json" in result.output
+
+    def test_warning_unit_mismatch_markdown_format_json_ext(self) -> None:
+        """Unit test: _warn_format_extension_mismatch emits warning for mismatch."""
+        import click
+
+        @click.command()
+        def _probe() -> None:
+            _warn_format_extension_mismatch("report.json", "markdown")
+
+        result = CliRunner().invoke(_probe, [], catch_exceptions=False)
+        # CliRunner mixes stdout and stderr into result.output by default
+        assert "Warning:" in result.output
+        assert ".json" in result.output
+
+    def test_warning_unit_no_mismatch_matching_ext(self) -> None:
+        """Unit test: _warn_format_extension_mismatch silent for matching ext."""
+        import click
+
+        @click.command()
+        def _probe() -> None:
+            _warn_format_extension_mismatch("report.md", "markdown")
+
+        result = CliRunner().invoke(_probe, [], catch_exceptions=False)
+        assert "Warning:" not in result.output
