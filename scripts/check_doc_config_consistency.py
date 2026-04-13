@@ -25,11 +25,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-import tomllib
-
 _REPO_ROOT = Path(__file__).parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
+
+from common import load_pyproject  # noqa: E402
 
 
 def load_pyproject_coverage_threshold(repo_root: Path) -> int:
@@ -45,17 +45,7 @@ def load_pyproject_coverage_threshold(repo_root: Path) -> int:
         SystemExit: If ``pyproject.toml`` is missing, unreadable, or lacks the key.
 
     """
-    pyproject = repo_root / "pyproject.toml"
-    if not pyproject.exists():
-        print(f"ERROR: pyproject.toml not found at {pyproject}", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        with open(pyproject, "rb") as f:
-            data = tomllib.load(f)
-    except Exception as exc:
-        print(f"ERROR: Failed to parse pyproject.toml: {exc}", file=sys.stderr)
-        sys.exit(1)
+    data = load_pyproject(repo_root)
 
     try:
         threshold = data["tool"]["coverage"]["report"]["fail_under"]
@@ -82,13 +72,7 @@ def extract_cov_path_from_pyproject(repo_root: Path) -> str:
         SystemExit: If the key is missing or no ``--cov=`` flag is found.
 
     """
-    pyproject = repo_root / "pyproject.toml"
-    try:
-        with open(pyproject, "rb") as f:
-            data = tomllib.load(f)
-    except Exception as exc:
-        print(f"ERROR: Failed to parse pyproject.toml: {exc}", file=sys.stderr)
-        sys.exit(1)
+    data = load_pyproject(repo_root)
 
     addopts = data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", [])
 
@@ -195,13 +179,7 @@ def extract_cov_fail_under_from_addopts(repo_root: Path) -> int | None:
         SystemExit: If ``pyproject.toml`` is missing or unreadable.
 
     """
-    pyproject = repo_root / "pyproject.toml"
-    try:
-        with open(pyproject, "rb") as f:
-            data = tomllib.load(f)
-    except Exception as exc:
-        print(f"ERROR: Failed to parse pyproject.toml: {exc}", file=sys.stderr)
-        sys.exit(1)
+    data = load_pyproject(repo_root)
 
     addopts = data.get("tool", {}).get("pytest", {}).get("ini_options", {}).get("addopts", [])
 

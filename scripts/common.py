@@ -10,8 +10,11 @@ Centralized Utilities:
 - Colors: ANSI terminal colors with disable() method
 """
 
+import sys
 from pathlib import Path
+from typing import Any
 
+import tomllib
 from hephaestus.utils.helpers import get_repo_root
 
 # Label colors for GitHub issues (evaluation workflow)
@@ -23,6 +26,33 @@ LABEL_COLORS = {
     "analysis": "c2e0c6",  # Light green
     "documentation": "0075ca",  # Blue
 }
+
+
+def load_pyproject(repo_root: Path) -> dict[str, Any]:
+    """Load and parse ``pyproject.toml`` from *repo_root*.
+
+    Args:
+        repo_root: Path to the repository root containing ``pyproject.toml``.
+
+    Returns:
+        Parsed TOML data as a dictionary.
+
+    Raises:
+        SystemExit: If ``pyproject.toml`` is missing or cannot be parsed.
+
+    """
+    pyproject = repo_root / "pyproject.toml"
+    if not pyproject.exists():
+        print(f"ERROR: pyproject.toml not found at {pyproject}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        with open(pyproject, "rb") as f:
+            data: dict[str, Any] = tomllib.load(f)
+            return data
+    except Exception as exc:
+        print(f"ERROR: Failed to parse pyproject.toml: {exc}", file=sys.stderr)
+        sys.exit(1)
 
 
 def get_agents_dir() -> Path:
