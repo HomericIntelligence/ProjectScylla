@@ -54,6 +54,7 @@ gh issue edit <number> --milestone "<milestone-name>"
 ```
 
 Triage options:
+
 - **next minor release** — near-term work targeted for the upcoming minor release
 - **1.0 release** — work required before the 1.0 release
 - **(none)** — deferred or unscoped; leave unassigned
