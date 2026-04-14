@@ -47,15 +47,15 @@ Assign the issue to the appropriate milestone as part of triage:
 
 ```bash
 # Assign to a milestone at creation time
-gh issue create --title "..." --body "..." --milestone "v0.2.0"
+gh issue create --title "..." --body "..." --milestone "<milestone-name>"
 
 # Or assign an existing issue
-gh issue edit <number> --milestone "v0.2.0"
+gh issue edit <number> --milestone "<milestone-name>"
 ```
 
 Triage options:
-- **v0.2.0** — near-term work targeted for the next minor release
-- **v1.0.0** — work required before the 1.0 release
+- **next minor release** — near-term work targeted for the upcoming minor release
+- **1.0 release** — work required before the 1.0 release
 - **(none)** — deferred or unscoped; leave unassigned
 
 See [`docs/dev/milestones.md`](/docs/dev/milestones.md) for the full triage criteria.
