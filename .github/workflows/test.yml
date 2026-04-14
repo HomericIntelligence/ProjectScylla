@@ -83,12 +83,6 @@ jobs:
             exit 1
           fi
 
-      - name: Check Python version consistency (pyproject.toml vs Dockerfile)
-        run: python3 scripts/check_python_version_consistency.py
-
-      - name: Check version consistency (pyproject.toml, pixi.toml, src/scylla/__init__.py)
-        run: python3 scripts/check_version_consistency.py
-
       - name: Install nats-server
         if: matrix.test-group.name == 'integration'
         run: |
@@ -103,6 +97,12 @@ jobs:
 
       - name: Set up Pixi
         uses: ./.github/actions/setup-pixi
+
+      - name: Check Python version consistency (pyproject.toml vs Dockerfile)
+        run: pixi run python scripts/check_python_version_consistency.py
+
+      - name: Check version consistency (pyproject.toml, pixi.toml, src/scylla/__init__.py)
+        run: pixi run python scripts/check_version_consistency.py
 
       # Early gate: fail fast if pixi.lock is out of date before running expensive tests.
       # Catches the common rebase issue (pixi.lock SHA256 invalidated by source change)
