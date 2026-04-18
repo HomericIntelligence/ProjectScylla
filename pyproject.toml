@@ -52,7 +52,7 @@ analysis = [
     "scipy>=1.15.3,<2",
     "altair>=5.0,<7",
     "vl-convert-python>=1.0,<2",
-    "krippendorff>=0.6.0,<1",
+    "krippendorff>=0.8.2,<1",
 ]
 
 [project.urls]
