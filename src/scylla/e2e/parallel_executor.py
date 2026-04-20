@@ -24,7 +24,9 @@ from scylla.e2e.models import (
 from scylla.e2e.rate_limit import (
     RateLimitError,
     RateLimitInfo,
+    WeeklyLimitError,
     detect_rate_limit,
+    is_weekly_limit,
     wait_for_rate_limit,
 )
 
@@ -239,7 +241,19 @@ def run_tier_subtests_parallel(
                 f"{remaining} remaining, elapsed: {elapsed:.0f}s"
             )
         except RateLimitError as e:
-            # Handle rate limit in main thread
+            # Weekly/hard limits reset on a specific date — retrying after 60s
+            # will just fail again 120+ more times.  Stop immediately and let
+            # the operator resume after the reset time.
+            if is_weekly_limit(e.info):
+                logger.error(
+                    "Weekly usage limit detected from %s — stopping tier execution. "
+                    "Resume after: %s",
+                    e.info.source,
+                    e.info.error_message,
+                )
+                raise WeeklyLimitError(e.info) from e
+
+            # Transient rate limit: wait and retry once
             if checkpoint and checkpoint_path:
                 logger.info(f"Rate limit detected from {e.info.source}, waiting...")
                 wait_for_rate_limit(e.info.retry_after_seconds, checkpoint, checkpoint_path)

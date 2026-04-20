@@ -18,6 +18,7 @@ from scylla.e2e.judge_runner import (
 )
 from scylla.e2e.models import JudgeResultSummary
 from scylla.e2e.paths import JUDGE_DIR, RESULT_FILE
+from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
 
 
 def _make_judge_result(
@@ -396,8 +397,6 @@ class TestRunJudge:
 
     def test_rate_limit_error_propagates(self, tmp_path: Path) -> None:
         """RateLimitError from judge propagates immediately (not caught)."""
-        from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
-
         judge_dir = tmp_path / "judge"
         judge_dir.mkdir()
         info = RateLimitInfo(
@@ -419,3 +418,66 @@ class TestRunJudge:
                     judge_dir=judge_dir,
                     judge_models=["claude-haiku-4-5"],
                 )
+
+    def test_all_judges_rate_limited_raises_rate_limit_error(self, tmp_path: Path) -> None:
+        """When all judges fail with rate-limit errors, _run_judge raises RateLimitError.
+
+        This is the test-001 failure mode: all three judges failed with
+        'You've hit your limit · resets Apr 3' but the error was silently
+        recorded as score=0.0 instead of raising RateLimitError.
+        """
+        judge_dir = tmp_path / "judge"
+        judge_dir.mkdir()
+
+        rate_limit_msg = (
+            "Claude CLI failed (exit 1): You've hit your limit"
+            " \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+        )
+
+        with patch(
+            "scylla.e2e.judge_runner.run_llm_judge",
+            side_effect=RuntimeError(rate_limit_msg),
+        ):
+            with pytest.raises(RateLimitError):
+                _run_judge(
+                    workspace=tmp_path,
+                    task_prompt="task",
+                    stdout="output",
+                    judge_dir=judge_dir,
+                    judge_models=["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"],
+                )
+
+    def test_partial_rate_limit_does_not_raise(self, tmp_path: Path) -> None:
+        """When only some (not all) judges fail with rate-limit errors, return zero-score consensus.
+
+        If one judge succeeds, the experiment should continue with that result.
+        """
+        from unittest.mock import MagicMock
+
+        judge_dir = tmp_path / "judge"
+        judge_dir.mkdir()
+
+        rate_limit_msg = "Claude CLI failed (exit 1): You've hit your limit · resets Apr 3"
+        good_result = MagicMock()
+        good_result.score = 0.8
+        good_result.passed = True
+        good_result.grade = "B"
+        good_result.reasoning = "Good work"
+        good_result.is_valid = True
+        good_result.criteria_scores = {}
+
+        with patch(
+            "scylla.e2e.judge_runner.run_llm_judge",
+            side_effect=[RuntimeError(rate_limit_msg), good_result],
+        ):
+            consensus, judges = _run_judge(
+                workspace=tmp_path,
+                task_prompt="task",
+                stdout="output",
+                judge_dir=judge_dir,
+                judge_models=["claude-opus-4-6", "claude-sonnet-4-6"],
+            )
+
+        # Should not raise; valid judge contributes to consensus
+        assert consensus["score"] == pytest.approx(0.8)
+        assert len(judges) == 2
