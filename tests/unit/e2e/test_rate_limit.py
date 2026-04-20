@@ -14,8 +14,10 @@ from scylla.e2e.checkpoint import E2ECheckpoint
 from scylla.e2e.rate_limit import (
     RateLimitError,
     RateLimitInfo,
+    WeeklyLimitError,
     check_api_rate_limit_status,
     detect_rate_limit,
+    is_weekly_limit,
     parse_retry_after,
     validate_run_result,
     wait_for_rate_limit,
@@ -402,6 +404,117 @@ class TestDetectRateLimit:
 
         assert info is not None
         assert "429" in info.error_message
+
+    def test_detect_stream_json_rate_limit_error(self) -> None:
+        """stream-json stdout (multi-line) with is_error rate limit is detected.
+
+        This is the exact failure mode from test-001: the judge uses
+        --output-format stream-json which emits multiple JSON lines.
+        The rate limit appeared in a stream-json event line, but the old
+        detect_rate_limit() tried json.loads(stdout) on the whole string,
+        which fails for multi-line JSON.
+        """
+        # Simulate stream-json: multiple lines, error in the last result event
+        stream_lines = [
+            json.dumps({"type": "system", "subtype": "init", "session_id": "abc"}),
+            json.dumps(
+                {
+                    "type": "result",
+                    "subtype": "error_during_execution",
+                    "is_error": True,
+                    "result": (
+                        "You've hit your limit \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+                    ),
+                }
+            ),
+        ]
+        stdout = "\n".join(stream_lines)
+        stderr = ""
+
+        info = detect_rate_limit(stdout, stderr, source="judge")
+
+        assert info is not None
+        assert info.source == "judge"
+        assert "hit your limit" in info.error_message.lower() or "resets" in info.error_message
+
+    def test_detect_stream_json_rate_limit_in_stdout_text(self) -> None:
+        """Rate limit message as plain text in stdout (not JSON) is detected."""
+        stdout = "You've hit your limit \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+        stderr = ""
+
+        info = detect_rate_limit(stdout, stderr, source="judge")
+
+        assert info is not None
+
+    def test_detect_resets_pattern_in_stderr(self) -> None:
+        """'resets <date>' in stderr is detected as rate limit."""
+        stderr = "You've hit your limit · resets Apr 3, 6am (America/Los_Angeles)"
+        info = detect_rate_limit("", stderr)
+        assert info is not None
+
+    def test_detect_resets_pattern_as_error_message(self) -> None:
+        """The exact error string from test-001 is detected."""
+        error_msg = "You've hit your limit \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+        # This is what _raise_if_rate_limit_in_error receives
+        from scylla.e2e.rate_limit import _detect_rate_limit_from_stderr
+
+        msg, _ = _detect_rate_limit_from_stderr(error_msg)
+        assert msg != ""
+
+
+class TestWeeklyLimitError:
+    """Tests for WeeklyLimitError and is_weekly_limit."""
+
+    def test_weekly_limit_error_is_rate_limit_error(self) -> None:
+        """WeeklyLimitError is a subclass of RateLimitError."""
+        info = RateLimitInfo(
+            source="judge",
+            retry_after_seconds=None,
+            error_message="Weekly usage limit reached",
+            detected_at="2026-01-01T00:00:00Z",
+        )
+        exc = WeeklyLimitError(info)
+        assert isinstance(exc, RateLimitError)
+
+    def test_is_weekly_limit_long_retry_after(self) -> None:
+        """retry_after_seconds > 3600 is classified as weekly."""
+        info = RateLimitInfo(
+            source="judge",
+            retry_after_seconds=86400.0,  # 24 hours
+            error_message="Some error",
+            detected_at="2026-01-01T00:00:00Z",
+        )
+        assert is_weekly_limit(info) is True
+
+    def test_is_weekly_limit_short_retry_after(self) -> None:
+        """retry_after_seconds <= 3600 is NOT classified as weekly."""
+        info = RateLimitInfo(
+            source="agent",
+            retry_after_seconds=30.0,
+            error_message="429 Too Many Requests",
+            detected_at="2026-01-01T00:00:00Z",
+        )
+        assert is_weekly_limit(info) is False
+
+    def test_is_weekly_limit_from_message_keywords(self) -> None:
+        """'hit your limit' in error message is classified as weekly even with None retry."""
+        info = RateLimitInfo(
+            source="judge",
+            retry_after_seconds=None,
+            error_message="You've hit your limit · resets Apr 3",
+            detected_at="2026-01-01T00:00:00Z",
+        )
+        assert is_weekly_limit(info) is True
+
+    def test_is_weekly_limit_none_retry_transient_message(self) -> None:
+        """None retry_after + generic 'overloaded' is NOT classified as weekly."""
+        info = RateLimitInfo(
+            source="agent",
+            retry_after_seconds=None,
+            error_message="API overloaded",
+            detected_at="2026-01-01T00:00:00Z",
+        )
+        assert is_weekly_limit(info) is False
 
 
 class TestWaitForRateLimit:

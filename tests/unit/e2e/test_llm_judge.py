@@ -834,6 +834,46 @@ class TestCallClaudeJudge:
             with pytest.raises(RateLimitError):
                 _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
 
+    def test_judge_call_exit1_rate_limit_stream_json_stdout(self, tmp_path: Path) -> None:
+        """Exit code 1 with rate limit in stream-json stdout raises RateLimitError.
+
+        This is the test-001 failure mode: --output-format stream-json emits
+        multiple JSON lines.  The old detect_rate_limit() tried json.loads()
+        on the whole stdout string, which fails for multi-line JSON.
+        """
+        stream_lines = [
+            json.dumps({"type": "system", "subtype": "init", "session_id": "abc"}),
+            json.dumps(
+                {
+                    "type": "result",
+                    "subtype": "error_during_execution",
+                    "is_error": True,
+                    "result": (
+                        "You've hit your limit \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+                    ),
+                }
+            ),
+        ]
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = "\n".join(stream_lines)
+        mock_result.stderr = ""
+
+        with patch("subprocess.run", return_value=mock_result):
+            with pytest.raises(RateLimitError):
+                _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
+
+    def test_judge_call_exit1_rate_limit_resets_in_stderr(self, tmp_path: Path) -> None:
+        """'resets <date>' in stderr is detected as rate limit (the exact test-001 error)."""
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = ""
+        mock_result.stderr = "You've hit your limit \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+
+        with patch("subprocess.run", return_value=mock_result):
+            with pytest.raises(RateLimitError):
+                _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
+
     def test_judge_call_with_rate_limit(self, tmp_path: Path) -> None:
         """Test rate limit detection."""
         mock_result = MagicMock()

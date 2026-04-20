@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Any, cast
 from scylla.e2e.llm_judge import run_llm_judge
 from scylla.e2e.models import JudgeResultSummary
 from scylla.e2e.paths import RESULT_FILE, get_judge_result_file
-from scylla.e2e.rate_limit import RateLimitError
+from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo, _detect_rate_limit_from_stderr
 
 if TYPE_CHECKING:
     from scylla.e2e.llm_judge import BuildPipelineResult, JudgeResult
@@ -242,6 +242,16 @@ def _run_judge(
             error_file = judge_specific_dir / "error.log"
             error_file.write_text(f"Judge failed: {e}\n")
 
+            # Save raw stdout/stderr from the failed CLI call for post-hoc
+            # debugging (e.g. to detect rate-limit messages that slipped past
+            # the detection logic).
+            raw_stdout = getattr(e, "_judge_stdout", None)
+            raw_stderr = getattr(e, "_judge_stderr", None)
+            if raw_stdout is not None:
+                (judge_specific_dir / "stdout.log").write_text(raw_stdout)
+            if raw_stderr is not None:
+                (judge_specific_dir / "stderr.log").write_text(raw_stderr)
+
             # Record a zero-score failed result and continue to the next judge
             # rather than aborting the entire run. This handles cases like Haiku
             # returning conversational text instead of structured JSON.
@@ -260,9 +270,31 @@ def _run_judge(
     # Compute consensus from all judges (only valid ones contribute)
     consensus_score, consensus_passed, consensus_grade = _compute_judge_consensus(judges)
 
-    # If all judges failed (no valid results), return a zero-score result so the
-    # experiment can continue rather than crashing with an unhandled exception.
+    # If all judges failed (no valid results), check if the failures look like
+    # rate-limit errors.  If so, raise RateLimitError so the run enters
+    # RATE_LIMITED state instead of silently completing with score 0.0.
     if consensus_score is None:
+        all_errors = [j.reasoning for j in judges if not j.is_valid and j.reasoning]
+        rate_limit_errors = [e for e in all_errors if _detect_rate_limit_from_stderr(e)[0]]
+        if rate_limit_errors and len(rate_limit_errors) == len(judges):
+            # Every judge hit a rate limit — propagate so the run is retried
+            from datetime import datetime, timezone
+
+            logger.warning(
+                "All %d judges failed with rate-limit errors; propagating RateLimitError",
+                len(judges),
+            )
+            sample_error = rate_limit_errors[0]
+            _, retry_after = _detect_rate_limit_from_stderr(sample_error)
+            raise RateLimitError(
+                RateLimitInfo(
+                    source="judge",
+                    retry_after_seconds=retry_after,
+                    error_message=sample_error,
+                    detected_at=datetime.now(timezone.utc).isoformat(),
+                )
+            )
+
         logger.warning("All judges failed to produce valid results; returning zero-score consensus")
         return {
             "score": 0.0,
