@@ -5259,14 +5259,14 @@ packages:
 - pypi: ./
   name: scylla
   version: 0.1.0
-  sha256: e72e4f938e5b85f91e1368c5a4a147f2dbca147d4f3ef4b765e101b0c903733b
+  sha256: 81168fad3e67420f5ebd250d5ab1ae72d78701862bfdd73b93974a8e43f6568c
   requires_dist:
   - click>=8.0,<9
   - homericintelligence-hephaestus>=0.7.0,<1
   - httpx>=0.28.1,<1
   - pydantic>=2.12.5,<3
   - pyyaml>=6.0.3,<7
-  - pytest>=7.0,<10 ; extra == 'dev'
+  - pytest>=9.0.3,<10 ; extra == 'dev'
   - pytest-asyncio>=0.25,<2 ; extra == 'dev'
   - pytest-cov>=4.0,<8 ; extra == 'dev'
   - pre-commit>=3.0,<5 ; extra == 'dev'
