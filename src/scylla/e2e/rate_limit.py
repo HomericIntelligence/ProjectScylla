@@ -269,8 +269,9 @@ def _detect_rate_limit_from_json_line(data: dict[str, object], source: str) -> R
 def _detect_rate_limit_from_stdout(stdout: str, source: str) -> RateLimitInfo | None:
     """Detect rate limit from stdout in JSON or stream-json format.
 
-    Tries single-object JSON first, then line-by-line stream-json, then
-    plain-text pattern matching.
+    Only checks structured JSON fields (``is_error: true``) — never scans
+    raw response text, which risks false positives when the judge evaluates
+    tasks that mention rate limits in their content.
 
     Args:
         stdout: Standard output from subprocess
@@ -304,11 +305,6 @@ def _detect_rate_limit_from_stdout(stdout: str, source: str) -> RateLimitInfo | 
                 return info
         except (json.JSONDecodeError, ValueError, TypeError):
             continue
-
-    # 3. Plain-text pattern match (catches non-JSON error output in stdout)
-    rl_msg, retry_after = _detect_rate_limit_from_stderr(stdout)
-    if rl_msg:
-        return _make_rate_limit_info(source, rl_msg, retry_after)
 
     return None
 

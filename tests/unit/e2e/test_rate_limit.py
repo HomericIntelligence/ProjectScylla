@@ -437,14 +437,23 @@ class TestDetectRateLimit:
         assert info.source == "judge"
         assert "hit your limit" in info.error_message.lower() or "resets" in info.error_message
 
-    def test_detect_stream_json_rate_limit_in_stdout_text(self) -> None:
-        """Rate limit message as plain text in stdout (not JSON) is detected."""
-        stdout = "You've hit your limit \u00b7 resets Apr 3, 6am (America/Los_Angeles)"
+    def test_detect_stream_json_rate_limit_judge_response_no_false_positive(self) -> None:
+        """Judge response TEXT mentioning rate limits does NOT trigger detection.
+
+        A judge evaluating a task about rate limiting might produce output
+        containing 'weekly usage limit' as valid response content.  This must
+        NOT be treated as a rate limit error — only structured is_error JSON
+        fields are authoritative.
+        """
+        stdout = (
+            "The implementation correctly handles weekly usage limit errors "
+            "by catching HTTP 429 responses and retrying after the reset time."
+        )
         stderr = ""
 
         info = detect_rate_limit(stdout, stderr, source="judge")
 
-        assert info is not None
+        assert info is None
 
     def test_detect_resets_pattern_in_stderr(self) -> None:
         """'resets <date>' in stderr is detected as rate limit."""
