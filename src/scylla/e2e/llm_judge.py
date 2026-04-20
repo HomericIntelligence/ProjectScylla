@@ -645,7 +645,11 @@ def _extract_response_from_stream(stream_output: str) -> str:
 
 
 def _raise_if_rate_limit(stdout: str, stderr: str) -> None:
-    """Raise RateLimitError if stdout/stderr contain rate limit indicators."""
+    """Raise RateLimitError if stdout/stderr contain rate limit indicators.
+
+    Handles both single-object JSON (``--output-format json``) and
+    stream-json (``--output-format stream-json``) stdout formats.
+    """
     from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
 
     rate_limit_info = detect_rate_limit(stdout, stderr, source="judge")
@@ -763,7 +767,11 @@ def _call_claude_judge(
         error_msg = _extract_cli_error(result.stdout, result.stderr)
         _raise_if_rate_limit_in_error(error_msg)
         cb._record_failure()
-        raise RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
+        exc = RuntimeError(f"Claude CLI failed (exit {result.returncode}): {error_msg}")
+        # Attach raw streams so judge_runner can save them for post-hoc debugging
+        exc._judge_stdout = result.stdout  # type: ignore[attr-defined]
+        exc._judge_stderr = result.stderr  # type: ignore[attr-defined]
+        raise exc
 
     # Check for rate limit in successful responses too
     rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")

@@ -72,6 +72,18 @@ class RateLimitError(Exception):
         super().__init__(f"Rate limit from {info.source}: {info.error_message}")
 
 
+class WeeklyLimitError(RateLimitError):
+    """Raised when a weekly/hard usage limit is hit (not a transient 429).
+
+    Weekly limits reset on a specific date/time, not after seconds.
+    Retrying after 60s will not help — the experiment must be paused
+    until the reset time.
+
+    Use this instead of ``RateLimitError`` when ``retry_after_seconds``
+    represents hours or days (i.e. a date-based reset, not a server backoff).
+    """
+
+
 def parse_retry_after(stderr: str) -> float | None:
     """Extract Retry-After value from stderr/headers with 10% buffer.
 
@@ -153,7 +165,24 @@ _STDERR_RATE_LIMIT_PATTERNS: list[tuple[str, bool, str]] = [
     ("ratelimit", True, "Rate limit detected in stderr"),
     ("hit your limit", True, "API limit hit"),
     ("overloaded", True, "API overloaded"),
+    # "resets <date>" appears in weekly usage limit messages, e.g.
+    # "You've hit your limit · resets Apr 3, 6am (America/Los_Angeles)"
+    ("resets ", True, "Usage limit with scheduled reset"),
 ]
+
+# Rate-limit keywords for JSON is_error result fields (used in JSON + stream-json detection)
+_JSON_RATE_LIMIT_KEYWORDS: tuple[str, ...] = (
+    "rate limit",
+    "rate_limit",
+    "ratelimit",
+    "overloaded",
+    "429",
+    "hit your limit",
+    "resets",
+    "weekly usage limit",
+    "upgrade to continue",
+    "failed to configure provider",
+)
 
 
 def _detect_rate_limit_from_stderr(stderr: str) -> tuple[str, float | None]:
@@ -177,12 +206,121 @@ def _detect_rate_limit_from_stderr(stderr: str) -> tuple[str, float | None]:
     return "", None
 
 
-def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLimitInfo | None:
-    """Detect rate limit from JSON output or stderr patterns.
+def _make_rate_limit_info(
+    source: str,
+    error_msg: str,
+    retry_after: float | None,
+    text_for_retry_parse: str = "",
+) -> RateLimitInfo:
+    """Build the appropriate RateLimitInfo (or WeeklyLimitError info) instance.
 
-    Detection order (requirement: JSON first, then stderr patterns):
-    1. Parse JSON `is_error` field (if stdout is JSON)
-    2. Scan stderr for patterns: 429, "rate limit", "overloaded"
+    If ``retry_after`` is more than 3600 seconds (1 hour) the limit is
+    considered a weekly/hard cap that cannot be resolved by a short wait.
+    We still return a ``RateLimitInfo``; the *caller* is responsible for
+    raising ``WeeklyLimitError`` when that distinction matters.
+
+    Args:
+        source: "agent" or "judge"
+        error_msg: Human-readable error message
+        retry_after: Seconds to wait, or None if unknown
+        text_for_retry_parse: Additional text to try parsing retry-after from
+
+    Returns:
+        RateLimitInfo populated with the supplied values
+
+    """
+    if retry_after is None and text_for_retry_parse:
+        retry_after = parse_retry_after(text_for_retry_parse)
+    return RateLimitInfo(
+        source=source,
+        retry_after_seconds=retry_after,
+        error_message=error_msg or "Rate limit detected",
+        detected_at=datetime.now(timezone.utc).isoformat(),
+    )
+
+
+def _detect_rate_limit_from_json_line(data: dict[str, object], source: str) -> RateLimitInfo | None:
+    """Check a single parsed JSON object for rate-limit indicators.
+
+    Handles both ``--output-format json`` (single object) and individual
+    lines from ``--output-format stream-json``.
+
+    Args:
+        data: Parsed JSON object
+        source: "agent" or "judge"
+
+    Returns:
+        RateLimitInfo if rate limit detected, None otherwise
+
+    """
+    if not data.get("is_error"):
+        return None
+
+    result = data.get("result", data.get("error", ""))
+    error_str = str(result).lower()
+
+    if any(keyword in error_str for keyword in _JSON_RATE_LIMIT_KEYWORDS):
+        retry_after = parse_retry_after(str(result))
+        return _make_rate_limit_info(source, str(result), retry_after)
+
+    return None
+
+
+def _detect_rate_limit_from_stdout(stdout: str, source: str) -> RateLimitInfo | None:
+    """Detect rate limit from stdout in JSON or stream-json format.
+
+    Tries single-object JSON first, then line-by-line stream-json, then
+    plain-text pattern matching.
+
+    Args:
+        stdout: Standard output from subprocess
+        source: "agent" or "judge"
+
+    Returns:
+        RateLimitInfo if rate limit detected, None otherwise
+
+    """
+    if not stdout.strip():
+        return None
+
+    # 1. Try single-object JSON (--output-format json)
+    try:
+        data = json.loads(stdout.strip())
+        info = _detect_rate_limit_from_json_line(data, source)
+        if info:
+            return info
+    except (json.JSONDecodeError, ValueError, TypeError):
+        pass
+
+    # 2. Try stream-json: one JSON object per line (--output-format stream-json)
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            data = json.loads(line)
+            info = _detect_rate_limit_from_json_line(data, source)
+            if info:
+                return info
+        except (json.JSONDecodeError, ValueError, TypeError):
+            continue
+
+    # 3. Plain-text pattern match (catches non-JSON error output in stdout)
+    rl_msg, retry_after = _detect_rate_limit_from_stderr(stdout)
+    if rl_msg:
+        return _make_rate_limit_info(source, rl_msg, retry_after)
+
+    return None
+
+
+def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLimitInfo | None:
+    """Detect rate limit from JSON or stream-json output, or stderr patterns.
+
+    Detection order:
+    1. Parse stdout as single JSON object (``--output-format json``)
+    2. Parse stdout line-by-line as stream-json (``--output-format stream-json``)
+    3. Scan stdout as plain text for rate-limit patterns
+    4. Scan stderr for rate-limit patterns
 
     Args:
         stdout: Standard output from subprocess
@@ -193,59 +331,40 @@ def detect_rate_limit(stdout: str, stderr: str, source: str = "agent") -> RateLi
         RateLimitInfo if rate limit detected, None otherwise
 
     """
-    # 1. Try JSON detection first (primary method)
-    try:
-        data = json.loads(stdout.strip())
+    info = _detect_rate_limit_from_stdout(stdout, source)
+    if info:
+        return info
 
-        # Check is_error field (from Claude Code JSON output)
-        # Rate-limited runs have is_error: true combined with rate-limit indicators
-        if data.get("is_error"):
-            result = data.get("result", data.get("error", ""))
-            error_str = str(result).lower()
-
-            # Check for rate limit keywords in error message
-            if any(
-                keyword in error_str
-                for keyword in [
-                    "rate limit",
-                    "rate_limit",
-                    "ratelimit",
-                    "overloaded",
-                    "429",
-                    "hit your limit",
-                    "resets",
-                    "weekly usage limit",
-                    "upgrade to continue",
-                    "failed to configure provider",
-                ]
-            ):
-                error_msg = str(result)
-                # Try parsing from error message first (JSON result field), then stderr
-                retry_after = parse_retry_after(error_msg) or parse_retry_after(stderr)
-
-                return RateLimitInfo(
-                    source=source,
-                    retry_after_seconds=retry_after,
-                    error_message=error_msg or "Rate limit detected (JSON is_error)",
-                    detected_at=datetime.now(timezone.utc).isoformat(),
-                )
-
-    except (json.JSONDecodeError, ValueError, TypeError):
-        # stdout is not JSON, try stderr patterns
-        pass
-
-    # 2. Scan stderr for rate limit patterns (fallback)
-    error_msg, retry_after = _detect_rate_limit_from_stderr(stderr)
-
-    if error_msg:
-        return RateLimitInfo(
-            source=source,
-            retry_after_seconds=retry_after,
-            error_message=error_msg,
-            detected_at=datetime.now(timezone.utc).isoformat(),
-        )
+    if stderr.strip():
+        error_msg, retry_after = _detect_rate_limit_from_stderr(stderr)
+        if error_msg:
+            return _make_rate_limit_info(source, error_msg, retry_after)
 
     return None
+
+
+def is_weekly_limit(info: RateLimitInfo) -> bool:
+    """Return True if this rate limit is a weekly/hard cap, not a transient 429.
+
+    Weekly limits reset on a specific date, typically hours or days away.
+    A retry-after value greater than 3600 seconds (1 hour) is considered
+    a weekly limit — short retries will not help.
+
+    Args:
+        info: RateLimitInfo to classify
+
+    Returns:
+        True if this is a weekly limit (long wait required)
+
+    """
+    if info.retry_after_seconds is not None and info.retry_after_seconds > 3600:
+        return True
+    # Also detect from error message keywords even if retry_after is unknown
+    msg_lower = info.error_message.lower()
+    return any(
+        kw in msg_lower
+        for kw in ("weekly usage limit", "hit your limit", "upgrade to continue", "resets ")
+    )
 
 
 def wait_for_rate_limit(
