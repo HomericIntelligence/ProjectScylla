@@ -760,7 +760,7 @@ def _call_claude_judge(
     # Use circuit breaker for judge API calls
     cb = get_circuit_breaker("claude_api_judge", failure_threshold=5, recovery_timeout=60.0)
 
-    from scylla.e2e.rate_limit import RateLimitError, detect_rate_limit
+    from scylla.e2e.rate_limit import RateLimitError, _detect_rate_limit_from_stdout
 
     if result.returncode != 0:
         _raise_if_rate_limit(result.stdout, result.stderr)
@@ -773,8 +773,10 @@ def _call_claude_judge(
         exc._judge_stderr = result.stderr  # type: ignore[attr-defined]
         raise exc
 
-    # Check for rate limit in successful responses too
-    rate_limit_info = detect_rate_limit(result.stdout, result.stderr, source="judge")
+    # On success (exit 0), only check stdout for structured JSON rate-limit signals.
+    # Stderr on a successful call is warnings/progress — scanning it risks false
+    # positives when the model mentions "resets" or "rate limit" in valid output.
+    rate_limit_info = _detect_rate_limit_from_stdout(result.stdout, source="judge")
     if rate_limit_info:
         raise RateLimitError(rate_limit_info)
 

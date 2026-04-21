@@ -46,7 +46,7 @@ from scylla.e2e.llm_judge import (
     _save_pipeline_outputs,
     run_llm_judge,
 )
-from scylla.e2e.rate_limit import RateLimitError, RateLimitInfo
+from scylla.e2e.rate_limit import RateLimitError
 
 
 class TestJudgeResult:
@@ -874,24 +874,32 @@ class TestCallClaudeJudge:
             with pytest.raises(RateLimitError):
                 _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
 
-    def test_judge_call_with_rate_limit(self, tmp_path: Path) -> None:
-        """Test rate limit detection."""
+    def test_judge_call_exit0_rate_limit_in_stdout_json(self, tmp_path: Path) -> None:
+        """Exit-0 response with is_error JSON in stdout raises RateLimitError."""
         mock_result = MagicMock()
         mock_result.returncode = 0
-        mock_result.stdout = "Error: rate_limit_error"
+        mock_result.stdout = '{"type":"result","is_error":true,"error":{"type":"rate_limit_error"}}'
         mock_result.stderr = ""
 
         with patch("subprocess.run", return_value=mock_result):
-            with patch("scylla.e2e.rate_limit.detect_rate_limit") as mock_detect:
-                mock_detect.return_value = RateLimitInfo(
-                    source="judge",
-                    retry_after_seconds=60.0,
-                    error_message="rate_limit_error",
-                    detected_at="2024-01-01T00:00:00Z",
-                )
+            with pytest.raises(RateLimitError):
+                _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
 
-                with pytest.raises(RateLimitError):
-                    _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
+    def test_judge_call_exit0_resets_in_stderr_no_false_positive(self, tmp_path: Path) -> None:
+        """Exit-0 with 'resets' in stderr (valid model output) must NOT raise RateLimitError."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        # Valid judge JSON response whose text happens to mention "resets"
+        mock_result.stdout = (
+            '{"type":"result","subtype":"success","is_error":false,'
+            '"result":"The agent resets the counter correctly."}'
+        )
+        mock_result.stderr = "The implementation resets state as required."
+
+        with patch("subprocess.run", return_value=mock_result):
+            # Should complete without raising RateLimitError
+            _stdout, _stderr, response = _call_claude_judge("Evaluate", "claude-opus-4-6", tmp_path)
+            assert response is not None
 
 
 class TestSavePipelineOutputs:
