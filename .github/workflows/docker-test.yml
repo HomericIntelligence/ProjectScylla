@@ -111,6 +111,9 @@ jobs:
         if: always()
         run: git checkout src/scylla/__init__.py
 
+      - name: Install hephaestus
+        run: pip install "homericintelligence-hephaestus>=0.7.0,<1"
+
       - name: Report timing results
         env:
           COLD_DURATION: ${{ steps.cold_build.outputs.duration }}
