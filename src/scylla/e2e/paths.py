@@ -183,6 +183,8 @@ def promote_run_to_completed(
         return dst
 
     dst.parent.mkdir(parents=True, exist_ok=True)
+    if dst.exists():
+        shutil.rmtree(str(dst))
     shutil.move(str(src), str(dst))
 
     # Promote pipeline_baseline.json if present in in_progress subtest dir and not
