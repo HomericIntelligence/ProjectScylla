@@ -202,3 +202,26 @@ class TestStagePromoteToCompleted:
         # Directory still intact
         assert completed_run.exists()
         assert (completed_run / "agent" / "result.json").exists()
+
+    def test_promote_overwrites_existing_completed_on_rerun(self, tmp_path: Path) -> None:
+        """promote_run_to_completed replaces dst when both src and dst exist (rerun)."""
+        from scylla.e2e.paths import promote_run_to_completed
+
+        experiment_dir = tmp_path
+        # Set up the old completed/ dir (stale from prior run)
+        completed_run = experiment_dir / "completed" / "T0" / "00" / "run_01"
+        completed_run.mkdir(parents=True)
+        (completed_run / "stale.txt").write_text("old")
+
+        # Set up fresh in_progress/ dir (new rerun)
+        in_progress_run = experiment_dir / "in_progress" / "T0" / "00" / "run_01"
+        in_progress_run.mkdir(parents=True)
+        (in_progress_run / "agent").mkdir()
+        (in_progress_run / "agent" / "result.json").write_text('{"fresh": true}')
+
+        result = promote_run_to_completed(experiment_dir, "T0", "00", 1)
+
+        assert result == completed_run
+        # New content present, old stale content gone
+        assert (completed_run / "agent" / "result.json").exists()
+        assert not (completed_run / "stale.txt").exists()
