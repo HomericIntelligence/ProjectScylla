@@ -111,15 +111,15 @@ jobs:
         if: always()
         run: git checkout src/scylla/__init__.py
 
-      - name: Install hephaestus
-        run: pip install "homericintelligence-hephaestus>=0.7.0,<1"
+      - name: Set up pixi (installs project deps including hephaestus)
+        uses: ./.github/actions/setup-pixi
 
       - name: Report timing results
         env:
           COLD_DURATION: ${{ steps.cold_build.outputs.duration }}
           WARM_DURATION: ${{ steps.warm_build.outputs.duration }}
         run: |
-          python3 - <<'PYEOF'
+          pixi run python3 - <<'PYEOF'
           import os
           import sys
 
