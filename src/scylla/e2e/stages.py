@@ -55,7 +55,7 @@ from scylla.e2e.models import (
     TierID,
 )
 from scylla.e2e.paths import get_agent_dir, get_judge_dir
-from scylla.e2e.runner import InfrastructureFailureError
+from scylla.e2e.rate_limit import InfrastructureFailureError
 from scylla.e2e.stage_finalization import (
     stage_cleanup_worktree as stage_cleanup_worktree,
 )

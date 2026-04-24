@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from scylla.e2e.models import TierID
+from scylla.e2e.rate_limit import InfrastructureFailureError
 
 
 def _make_ctx(
@@ -58,7 +59,7 @@ class TestStageCommitAgentChanges:
 
         ctx = _make_ctx(tmp_path, exit_code=-1, input_tokens=0, output_tokens=0)
 
-        with pytest.raises(RuntimeError, match="Infrastructure failure"):
+        with pytest.raises(InfrastructureFailureError, match="Infrastructure failure"):
             stage_commit_agent_changes(ctx)
 
         # Run dir should have been moved to .failed/

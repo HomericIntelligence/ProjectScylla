@@ -22,13 +22,13 @@ from scylla.e2e.models import (
     TierID,
 )
 from scylla.e2e.rate_limit import (
+    InfrastructureFailureError,
     RateLimitError,
     RateLimitInfo,
     detect_rate_limit,
     is_weekly_limit,
     wait_for_rate_limit,
 )
-from scylla.e2e.runner import InfrastructureFailureError
 
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
