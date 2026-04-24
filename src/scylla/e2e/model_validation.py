@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import logging
 import subprocess
-import time
+
+from hephaestus.utils.retry import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -76,33 +77,29 @@ def _run_validation_attempt(model_id: str) -> subprocess.CompletedProcess[str]:
 def _handle_validation_result(
     model_id: str,
     result: subprocess.CompletedProcess[str],
-    attempt: int,
-    max_retries: int,
-    base_delay: int,
-) -> bool | None:
-    """Evaluate a single validation result and decide whether to return or retry.
+) -> bool:
+    """Evaluate a single validation result.
 
     Args:
         model_id: Model ID being validated.
         result: Completed subprocess result.
-        attempt: Current attempt number (0-indexed).
-        max_retries: Maximum retries allowed.
-        base_delay: Base sleep seconds for exponential backoff.
 
     Returns:
-        True/False if a final decision was reached, None if caller should retry.
+        True if validation passed, False otherwise.
+
+    Raises:
+        RuntimeError: If validation should be retried.
 
     """
     combined_output = result.stdout + result.stderr
     is_rate_limit, wait_time = is_rate_limit_error(combined_output)
 
-    if is_rate_limit and attempt < max_retries:
+    if is_rate_limit:
         logger.warning(
             f"Rate limit detected for model '{model_id}'. "
-            f"Waiting {wait_time} seconds before retry..."
+            f"Would wait {wait_time} seconds but deferring to caller retry logic..."
         )
-        time.sleep(wait_time or 0)
-        return None
+        raise RuntimeError(f"Rate limit for model '{model_id}'")
 
     if result.returncode == 0 and '"is_error":false' in result.stdout:
         logger.info(f"✓ Model '{model_id}' validated successfully")
@@ -112,58 +109,43 @@ def _handle_validation_result(
         logger.warning(f"Model '{model_id}' not found on server")
         return False
 
-    if attempt < max_retries:
-        logger.warning(
-            f"Validation attempt {attempt + 1} failed for model '{model_id}', retrying..."
-        )
-        time.sleep(base_delay * (2**attempt))
-        return None
-
-    logger.warning(f"All validation attempts failed for model '{model_id}'")
-    return False
+    logger.warning(f"Validation failed for model '{model_id}', will retry...")
+    raise RuntimeError(f"Validation failed for model '{model_id}'")
 
 
+@retry_with_backoff(
+    max_retries=3,
+    initial_delay=60,
+    backoff_factor=2,
+    retry_on=(RuntimeError, subprocess.TimeoutExpired),
+    logger=logger.warning,
+    jitter=False,
+)
 def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) -> bool:
     """Validate that a model is available by running a test prompt.
 
     This function intelligently handles rate limits by waiting for them to reset
-    rather than failing immediately.
+    rather than failing immediately. Retry behavior is managed by the @retry_with_backoff
+    decorator with exponential backoff.
 
     Args:
         model_id: Full model ID to test
-        max_retries: Maximum number of retry attempts for rate limits
-        base_delay: Base delay in seconds between retries
+        max_retries: Maximum number of retry attempts (ignored, decorator controls)
+        base_delay: Base delay in seconds between retries (ignored, decorator controls)
 
     Returns:
         True if model appears available, False otherwise
 
     """
-    for attempt in range(max_retries + 1):
-        try:
-            logger.info(f"Validating model '{model_id}' (attempt {attempt + 1}/{max_retries + 1})")
-            result = _run_validation_attempt(model_id)
-            decision = _handle_validation_result(model_id, result, attempt, max_retries, base_delay)
-            if decision is not None:
-                return decision
-
-        except subprocess.TimeoutExpired:
-            if attempt < max_retries:
-                logger.warning(f"Validation timed out for model '{model_id}', retrying...")
-                time.sleep(base_delay)
-            else:
-                logger.warning(
-                    f"Validation timed out for model '{model_id}' after {max_retries + 1} attempts"
-                )
-                return False
-        except FileNotFoundError:
-            logger.error("Claude CLI not found. Is it installed?")
-            return False
-        except Exception as e:
-            if attempt < max_retries:
-                logger.warning(f"Validation error for model '{model_id}': {e}, retrying...")
-                time.sleep(base_delay)
-            else:
-                logger.error(f"Validation failed for model '{model_id}': {e}")
-                return False
-
-    return False
+    try:
+        logger.info(f"Validating model '{model_id}'")
+        result = _run_validation_attempt(model_id)
+        return _handle_validation_result(model_id, result)
+    except FileNotFoundError:
+        logger.error("Claude CLI not found. Is it installed?")
+        return False
+    except RuntimeError:
+        raise
+    except Exception as e:
+        logger.error(f"Validation error for model '{model_id}': {e}")
+        raise RuntimeError(f"Validation failed for model '{model_id}'") from e
