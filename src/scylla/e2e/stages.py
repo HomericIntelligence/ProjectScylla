@@ -98,7 +98,7 @@ if TYPE_CHECKING:
     from scylla.adapters.base import AdapterConfig, AdapterResult
     from scylla.adapters.claude_code import ClaudeCodeAdapter
     from scylla.e2e.checkpoint import E2ECheckpoint
-    from scylla.e2e.llm_judge import BuildPipelineResult
+    from scylla.e2e.llm_judge_models import BuildPipelineResult
     from scylla.e2e.models import JudgeResultSummary
     from scylla.e2e.parallel_executor import RateLimitCoordinator
     from scylla.e2e.resource_manager import ResourceManager
@@ -355,7 +355,7 @@ def stage_capture_baseline(ctx: RunContext) -> None:
         ctx.pipeline_baseline = _load_pipeline_baseline(subtest_dir)
 
     if ctx.pipeline_baseline is None:
-        from scylla.e2e.llm_judge import _run_build_pipeline
+        from scylla.e2e.build_pipeline import _run_build_pipeline
 
         logger.info("Capturing pipeline baseline inline (experiment-level baseline unavailable)")
         _lock = ctx.resource_manager.pipeline_slot() if ctx.resource_manager else _pipeline_lock
@@ -881,7 +881,8 @@ def stage_run_judge_pipeline(ctx: RunContext) -> None:
         # Resumed — judge result already loaded in stage_capture_diff
         return
 
-    from scylla.e2e.llm_judge import _run_build_pipeline, _save_pipeline_commands
+    from scylla.e2e.build_pipeline import _run_build_pipeline
+    from scylla.e2e.pipeline_scripts import _save_pipeline_commands
 
     logger.info(f"Running {ctx.config.language} build pipeline for judge evaluation")
     _lock = ctx.resource_manager.pipeline_slot() if ctx.resource_manager else _pipeline_lock
@@ -895,7 +896,7 @@ def stage_run_judge_pipeline(ctx: RunContext) -> None:
     _save_pipeline_commands(ctx.run_dir, ctx.workspace, language=ctx.config.language)
 
     # Save pipeline outputs
-    from scylla.e2e.llm_judge import _save_pipeline_outputs
+    from scylla.e2e.pipeline_scripts import _save_pipeline_outputs
 
     _save_pipeline_outputs(ctx.run_dir, ctx.judge_pipeline_result, language=ctx.config.language)
 

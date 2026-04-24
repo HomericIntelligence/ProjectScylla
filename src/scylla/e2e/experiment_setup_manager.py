@@ -164,7 +164,7 @@ class ExperimentSetupManager:
             logger.info("Experiment-level pipeline baseline already captured — skipping")
             return
 
-        from scylla.e2e.llm_judge import _run_build_pipeline
+        from scylla.e2e.build_pipeline import _run_build_pipeline
         from scylla.e2e.subtest_executor import _save_pipeline_baseline
 
         # Create a temporary worktree so the baseline runs on a clean repo state

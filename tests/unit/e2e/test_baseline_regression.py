@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from scylla.e2e.llm_judge import BuildPipelineResult
+from scylla.e2e.llm_judge_models import BuildPipelineResult
 from scylla.e2e.models import E2ERunResult, TokenStats
 from scylla.e2e.subtest_executor import _load_pipeline_baseline, _save_pipeline_baseline
 from scylla.judge.prompts import build_task_prompt

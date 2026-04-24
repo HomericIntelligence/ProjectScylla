@@ -23,14 +23,12 @@ from scylla.e2e.models import (
     SubTestConfig,
     TierConfig,
 )
+from scylla.e2e.parallel_executor import RateLimitCoordinator
 from scylla.e2e.rate_limit import (
     RateLimitError,
     RateLimitInfo,
     detect_rate_limit,
     wait_for_rate_limit,
-)
-from scylla.e2e.subtest_executor import (
-    RateLimitCoordinator,
 )
 
 
@@ -170,7 +168,7 @@ class TestParallelRateLimitHandling:
             results_dir.mkdir()
 
             # Test the coordinator directly instead of trying to mock the entire parallel execution
-            from scylla.e2e.subtest_executor import RateLimitCoordinator
+            from scylla.e2e.parallel_executor import RateLimitCoordinator
 
             coordinator = RateLimitCoordinator()
 

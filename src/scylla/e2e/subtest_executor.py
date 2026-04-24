@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from scylla.e2e.llm_judge import BuildPipelineResult
+    from scylla.e2e.llm_judge_models import BuildPipelineResult
     from scylla.e2e.resource_manager import ResourceManager
 
 from scylla.adapters.claude_code import ClaudeCodeAdapter
@@ -66,50 +66,23 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Re-export functions for backward compatibility
-# These imports ensure existing code like:
-#   from scylla.e2e.subtest_executor import _commit_test_config
-#   from scylla.e2e.subtest_executor import run_tier_subtests_parallel
-# continue to work without modification
 __all__ = [
-    # Parallel executor exports (imported lazily to avoid circular imports)
-    "RateLimitCoordinator",
     "SubTestExecutor",
     "_commit_test_config",
     "_compute_judge_consensus",
     "_create_agent_model_md",
-    "_detect_rate_limit_from_results",  # noqa: F822
     "_has_valid_agent_result",
     "_has_valid_judge_result",
     "_load_agent_result",
     "_load_judge_result",
-    # Workspace setup exports
     "_move_to_failed",
     "_restore_run_context",
     "_run_judge",
-    "_run_subtest",  # noqa: F822
-    # Agent runner exports
     "_save_agent_result",
-    # Judge runner exports
     "_save_judge_result",
     "_setup_workspace",
     "aggregate_run_results",
-    "run_tier_subtests_parallel",  # noqa: F822
 ]
-
-
-def __getattr__(name: str):  # type: ignore[no-untyped-def]
-    """Lazy import for parallel executor functions to avoid circular dependency."""
-    if name in [
-        "RateLimitCoordinator",
-        "run_tier_subtests_parallel",
-        "_detect_rate_limit_from_results",
-        "_run_subtest",
-    ]:
-        from scylla.e2e import parallel_executor
-
-        return getattr(parallel_executor, name)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _restore_run_context(ctx: Any, current_state: str) -> None:
@@ -237,7 +210,7 @@ def _load_pipeline_baseline(results_dir: Path) -> BuildPipelineResult | None:
         BuildPipelineResult if file exists, None otherwise
 
     """
-    from scylla.e2e.llm_judge import BuildPipelineResult
+    from scylla.e2e.llm_judge_models import BuildPipelineResult
 
     baseline_path = results_dir / "pipeline_baseline.json"
     if not baseline_path.exists():

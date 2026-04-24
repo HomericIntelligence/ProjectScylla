@@ -22,7 +22,7 @@ from scylla.e2e.models import (
     TierState,
     TokenStats,
 )
-from scylla.e2e.subtest_executor import run_tier_subtests_parallel
+from scylla.e2e.parallel_executor import run_tier_subtests_parallel
 
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
@@ -142,7 +142,7 @@ class TierActionBuilder:
                 tier_id=tier_id,
                 tier_config=tier_ctx.tier_config,
                 tier_manager=tier_manager,
-                workspace_manager=workspace_manager,
+                workspace_manager=workspace_manager,  # type: ignore[arg-type]  # pre-existing: Optional passed to non-Optional
                 baseline=baseline,
                 results_dir=tier_ctx.tier_dir,
                 checkpoint=checkpoint,
