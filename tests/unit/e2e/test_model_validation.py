@@ -95,7 +95,6 @@ class TestValidateModel:
     def test_timeout_exhausts_retries(self) -> None:
         """Retries on TimeoutExpired until retries exhausted, then re-raises."""
         import subprocess
-        import time
 
         with patch(
             "scylla.e2e.model_validation.subprocess.run",
@@ -106,7 +105,7 @@ class TestValidateModel:
                 try:
                     validate_model("claude-model")
                     # Should not reach here - decorator should re-raise
-                    assert False, "Expected RuntimeError to be raised"
+                    raise AssertionError("Expected RuntimeError to be raised")
                 except RuntimeError:
                     # Expected - decorator re-raises RuntimeError after max retries exhausted
                     pass
