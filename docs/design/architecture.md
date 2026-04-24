@@ -20,8 +20,8 @@ ProjectScylla is part of a 12-repository ecosystem:
 
 | Repository | Role |
 |------------|------|
-| **AchaeanFleet** | Container images for the agent mesh |
-| **Myrmidons** | GitOps agent provisioning |
+| **AchaeanFleet** | Container images for the agent mesh — base images, Dockerfiles, Compose |
+| **Myrmidons** | GitOps agent provisioning — agent definitions as code |
 | **Odysseus** | CLI and core platform for agent lifecycle management |
 | **ProjectArgus** | Observability — monitoring and metrics |
 | **ProjectHephaestus** | Shared Python utilities and foundational tools |
