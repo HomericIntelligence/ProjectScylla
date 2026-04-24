@@ -296,6 +296,47 @@ class LoggingConfig(BaseModel):
     format: str = Field(default="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 
+class RetryConfig(BaseModel):
+    """Retry configuration for resilience patterns."""
+
+    max_retries: int = Field(default=3, ge=0, le=10)
+    initial_delay: float = Field(default=1.0, ge=0.1)
+    backoff_factor: int = Field(default=2, ge=1)
+    max_delay: float = Field(default=30.0, ge=1.0)
+    jitter: bool = Field(default=True)
+
+
+class CircuitBreakerConfig(BaseModel):
+    """Circuit breaker configuration for fail-fast behavior."""
+
+    failure_threshold: int = Field(default=5, ge=1, le=100)
+    recovery_timeout: int = Field(default=60, ge=1, le=3600)
+    half_open_max_calls: int = Field(default=1, ge=1)
+
+
+class TimeoutsConfig(BaseModel):
+    """Timeout configuration for various operations."""
+
+    api_call: int = Field(default=60, ge=5, le=3600)
+    benchmark_run: int = Field(default=300, ge=30, le=86400)
+    analysis: int = Field(default=120, ge=30, le=3600)
+    judge: int = Field(default=1200, ge=60, le=86400)
+
+
+class ResilienceConfig(BaseModel):
+    """Resilience configuration including retry, circuit breaker, and timeouts.
+
+    Configures resilience patterns for handling transient failures,
+    fail-fast behavior on repeated failures, and operation-specific timeouts.
+
+    Maps to config/defaults.yaml resilience: section.
+    """
+
+    retry: RetryConfig = Field(default_factory=RetryConfig)
+    circuit_breaker: CircuitBreakerConfig = Field(default_factory=CircuitBreakerConfig)
+    timeouts: TimeoutsConfig = Field(default_factory=TimeoutsConfig)
+
+
 class DefaultsConfig(BaseModel):
     """Global defaults configuration.
 
@@ -320,6 +361,7 @@ class DefaultsConfig(BaseModel):
     adapters: AdaptersConfig = Field(default_factory=AdaptersConfig)
     cleanup: CleanupConfig = Field(default_factory=CleanupConfig)
     nats: NATSConfig = Field(default_factory=NATSConfig)
+    resilience: ResilienceConfig = Field(default_factory=ResilienceConfig)
 
 
 # -----------------------------------------------------------------------------
