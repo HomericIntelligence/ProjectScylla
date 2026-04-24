@@ -21,6 +21,7 @@ from scylla.adapters.base import (
     AdapterTokenStats,
     BaseAdapter,
 )
+from scylla.core.resilience import resilient_call
 
 if TYPE_CHECKING:
     from scylla.executor.tier_config import TierConfig
@@ -101,10 +102,11 @@ class ClaudeCodeAdapter(BaseAdapter):
         except AdapterError:
             raise
 
-        # Execute
+        # Execute with retry wrapper for transient failures
         start_time = datetime.now(timezone.utc)
         try:
-            result = subprocess.run(
+            result = resilient_call(
+                subprocess.run,
                 cmd,
                 capture_output=True,
                 text=True,
@@ -112,6 +114,7 @@ class ClaudeCodeAdapter(BaseAdapter):
                 cwd=config.workspace,
                 env=env,
                 stdin=subprocess.DEVNULL,
+                max_retries=3,
             )
 
         except subprocess.TimeoutExpired as e:
