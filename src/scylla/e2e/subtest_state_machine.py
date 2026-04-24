@@ -298,7 +298,7 @@ class SubtestStateMachine:
 
         """
         from scylla.e2e.checkpoint import save_checkpoint
-        from scylla.e2e.runner import ShutdownInterruptedError
+        from scylla.e2e.shutdown import ShutdownInterruptedError
 
         try:
             while not self.is_complete(tier_id, subtest_id):

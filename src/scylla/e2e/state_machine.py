@@ -405,7 +405,7 @@ class StateMachine:
         """
         from scylla.e2e.checkpoint import save_checkpoint
         from scylla.e2e.rate_limit import RateLimitError
-        from scylla.e2e.runner import ShutdownInterruptedError
+        from scylla.e2e.shutdown import ShutdownInterruptedError
 
         # Early return if already at or past the --until target state
         if until_state is not None:

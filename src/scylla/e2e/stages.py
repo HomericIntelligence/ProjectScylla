@@ -543,7 +543,7 @@ def _communicate_with_shutdown_check(
             remaining -= poll_interval
             if remaining <= 0:
                 raise
-            from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
+            from scylla.e2e.shutdown import ShutdownInterruptedError, is_shutdown_requested
 
             if is_shutdown_requested():
                 _kill_process_group(proc)
@@ -626,7 +626,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
         # run state — leave it at REPLAY_GENERATED so the next invocation can retry
         # cleanly.  The subprocess returns normally (no Python exception) but with a
         # signal exit code, so we must check the shutdown flag explicitly here.
-        from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
+        from scylla.e2e.shutdown import ShutdownInterruptedError, is_shutdown_requested
 
         if is_shutdown_requested():
             _kill_process_group(proc)
@@ -657,7 +657,7 @@ def stage_execute_agent(ctx: RunContext) -> None:
         )
     except Exception as e:
         from scylla.adapters.base import AdapterResult, AdapterTokenStats
-        from scylla.e2e.runner import ShutdownInterruptedError
+        from scylla.e2e.shutdown import ShutdownInterruptedError
 
         if isinstance(e, ShutdownInterruptedError):
             raise

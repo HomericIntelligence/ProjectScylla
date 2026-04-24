@@ -282,7 +282,7 @@ class ExperimentStateMachine:
                     break
         except Exception as e:
             from scylla.e2e.rate_limit import RateLimitError
-            from scylla.e2e.runner import ShutdownInterruptedError
+            from scylla.e2e.shutdown import ShutdownInterruptedError
 
             if isinstance(e, (RateLimitError, ShutdownInterruptedError)):
                 logger.warning(f"Experiment interrupted in state {self.get_state().value}: {e}")
