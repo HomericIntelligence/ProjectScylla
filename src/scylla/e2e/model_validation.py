@@ -113,39 +113,39 @@ def _handle_validation_result(
     raise RuntimeError(f"Validation failed for model '{model_id}'")
 
 
-@retry_with_backoff(
-    max_retries=3,
-    initial_delay=60,
-    backoff_factor=2,
-    retry_on=(RuntimeError, subprocess.TimeoutExpired),
-    logger=logger.warning,
-    jitter=False,
-)
 def validate_model(model_id: str, max_retries: int = 3, base_delay: int = 60) -> bool:
     """Validate that a model is available by running a test prompt.
 
-    This function intelligently handles rate limits by waiting for them to reset
-    rather than failing immediately. Retry behavior is managed by the @retry_with_backoff
-    decorator with exponential backoff.
-
     Args:
         model_id: Full model ID to test
-        max_retries: Maximum number of retry attempts (ignored, decorator controls)
-        base_delay: Base delay in seconds between retries (ignored, decorator controls)
+        max_retries: Maximum number of retry attempts (0 = no retries, just one attempt)
+        base_delay: Base delay in seconds between retries (doubles each attempt)
 
     Returns:
         True if model appears available, False otherwise
 
     """
-    try:
-        logger.info(f"Validating model '{model_id}'")
-        result = _run_validation_attempt(model_id)
-        return _handle_validation_result(model_id, result)
-    except FileNotFoundError:
-        logger.error("Claude CLI not found. Is it installed?")
-        return False
-    except RuntimeError:
-        raise
-    except Exception as e:
-        logger.error(f"Validation error for model '{model_id}': {e}")
-        raise RuntimeError(f"Validation failed for model '{model_id}'") from e
+
+    def _attempt() -> bool:
+        try:
+            logger.info(f"Validating model '{model_id}'")
+            result = _run_validation_attempt(model_id)
+            return _handle_validation_result(model_id, result)
+        except FileNotFoundError:
+            logger.error("Claude CLI not found. Is it installed?")
+            return False
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.error(f"Validation error for model '{model_id}': {e}")
+            raise RuntimeError(f"Validation failed for model '{model_id}'") from e
+
+    decorated = retry_with_backoff(
+        max_retries=max_retries,
+        initial_delay=base_delay,
+        backoff_factor=2,
+        retry_on=(RuntimeError, subprocess.TimeoutExpired),
+        logger=logger.warning,
+        jitter=False,
+    )(_attempt)
+    return decorated()
