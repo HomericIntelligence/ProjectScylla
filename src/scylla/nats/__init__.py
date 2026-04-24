@@ -12,5 +12,7 @@ from scylla.nats.events import NATSEvent as NATSEvent
 from scylla.nats.events import SubjectParts as SubjectParts
 from scylla.nats.events import parse_subject as parse_subject
 from scylla.nats.handlers import EventRouter as EventRouter
+from scylla.nats.handlers import OrchestratorHandlers as OrchestratorHandlers
 from scylla.nats.handlers import create_default_router as create_default_router
+from scylla.nats.handlers import create_orchestrator_router as create_orchestrator_router
 from scylla.nats.subscriber import NATSSubscriberThread as NATSSubscriberThread
