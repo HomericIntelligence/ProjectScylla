@@ -194,7 +194,7 @@ class TestExecuteTierGroups:
         """execute_tier_groups stops early when shutdown is requested."""
         run_tier_fn = MagicMock(return_value=_make_tier_result())
 
-        with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
+        with patch("scylla.e2e.shutdown.is_shutdown_requested", return_value=True):
             runner = _make_runner(run_tier_fn=run_tier_fn)
             results = runner.execute_tier_groups([[TierID.T0], [TierID.T1]])
 

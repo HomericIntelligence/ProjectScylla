@@ -407,7 +407,7 @@ class TestParallelSubtestLoopShutdown:
         mock_tier_manager = MagicMock()
         mock_workspace = MagicMock()
 
-        with patch("scylla.e2e.runner.is_shutdown_requested", return_value=True):
+        with patch("scylla.e2e.shutdown.is_shutdown_requested", return_value=True):
             from scylla.e2e.parallel_executor import run_tier_subtests_parallel
 
             results = run_tier_subtests_parallel(
