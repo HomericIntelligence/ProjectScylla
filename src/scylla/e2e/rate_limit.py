@@ -428,7 +428,7 @@ def wait_for_rate_limit(
         remaining -= sleep_chunk
 
         # Check for shutdown between sleep iterations
-        from scylla.e2e.runner import ShutdownInterruptedError, is_shutdown_requested
+        from scylla.e2e.shutdown import ShutdownInterruptedError, is_shutdown_requested
 
         if is_shutdown_requested():
             # Restore checkpoint to running state before raising
