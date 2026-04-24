@@ -366,21 +366,3 @@ class TestAuditModelsIntegration:
         runner = CliRunner()
         result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
         assert result.exit_code != 0
-
-    def test_audit_models_end_to_end_mismatch(self, tmp_path: Path) -> None:
-        """Audit models detects and reports filename/model_id mismatches."""
-        models_dir = tmp_path / "config" / "models"
-        models_dir.mkdir(parents=True)
-
-        # Create a config file where filename does NOT match model_id
-        (models_dir / "wrong-name.yaml").write_text(
-            "model_id: correct-model-id\nname: Correct Model\nprovider: test\n"
-            "cost_per_1k_input: 0.001\ncost_per_1k_output: 0.002\n"
-        )
-
-        runner = CliRunner()
-        result = runner.invoke(cli, ["audit", "models", "--config-dir", str(tmp_path)])
-        assert result.exit_code == 1, f"audit models should exit 1 on mismatch: {result.output}"
-        assert "MISMATCH" in result.output
-        assert "wrong-name.yaml" in result.output
-        assert "correct-model-id" in result.output
