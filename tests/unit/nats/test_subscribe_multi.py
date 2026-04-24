@@ -340,3 +340,104 @@ class TestConcurrentPolling:
 
         # Thread should have completed without errors
         handler.assert_not_called()
+
+
+class TestPartialSubscriptionFailure:
+    """Test cleanup when a subscription fails partway through multi-subject setup."""
+
+    def test_unsubscribes_previous_on_failure(self) -> None:
+        """Already-subscribed subjects are unsubscribed when a later subscribe fails."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["events.created", "events.updated", "events.deleted"],
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+        thread._stop_event.set()
+
+        mock_nc, mock_js, _ = _make_mocks()
+
+        # First two subscribes succeed, third raises
+        sub1 = AsyncMock()
+        sub1.unsubscribe = AsyncMock()
+        sub2 = AsyncMock()
+        sub2.unsubscribe = AsyncMock()
+
+        mock_js.subscribe = AsyncMock(side_effect=[sub1, sub2, PermissionError("denied")])
+
+        with pytest.raises(PermissionError, match="denied"):
+            _run_subscribe_loop(thread, mock_nc)
+
+        sub1.unsubscribe.assert_awaited_once()
+        sub2.unsubscribe.assert_awaited_once()
+
+    def test_logs_warning_on_partial_failure(self, caplog: pytest.LogCaptureFixture) -> None:
+        """A warning is logged identifying the failed subject and cleanup count."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["events.created", "events.updated", "events.deleted"],
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+        thread._stop_event.set()
+
+        mock_nc, mock_js, _ = _make_mocks()
+        sub1 = AsyncMock()
+        sub1.unsubscribe = AsyncMock()
+        sub2 = AsyncMock()
+        sub2.unsubscribe = AsyncMock()
+
+        mock_js.subscribe = AsyncMock(side_effect=[sub1, sub2, PermissionError("denied")])
+
+        with (
+            caplog.at_level(logging.WARNING, logger="scylla.nats.subscriber"),
+            pytest.raises(PermissionError),
+        ):
+            _run_subscribe_loop(thread, mock_nc)
+
+        assert "events.deleted" in caplog.text
+        assert "2 already-subscribed" in caplog.text
+
+    def test_first_subject_failure_no_unsubscribe(self) -> None:
+        """When the very first subscribe fails, there is nothing to unsubscribe."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["events.created", "events.updated"],
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+        thread._stop_event.set()
+
+        mock_nc, mock_js, _ = _make_mocks()
+        mock_js.subscribe = AsyncMock(side_effect=PermissionError("denied"))
+
+        with pytest.raises(PermissionError, match="denied"):
+            _run_subscribe_loop(thread, mock_nc)
+
+        # subscribe was called once, failed immediately -- no cleanup needed
+        assert mock_js.subscribe.call_count == 1
+
+    def test_cleanup_continues_on_unsubscribe_error(self) -> None:
+        """If unsubscribe raises, cleanup continues for remaining subscriptions."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["events.created", "events.updated", "events.deleted"],
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+        thread._stop_event.set()
+
+        mock_nc, mock_js, _ = _make_mocks()
+        sub1 = AsyncMock()
+        sub1.unsubscribe = AsyncMock(side_effect=RuntimeError("cleanup fail"))
+        sub2 = AsyncMock()
+        sub2.unsubscribe = AsyncMock()
+
+        mock_js.subscribe = AsyncMock(side_effect=[sub1, sub2, PermissionError("denied")])
+
+        with pytest.raises(PermissionError, match="denied"):
+            _run_subscribe_loop(thread, mock_nc)
+
+        # Both unsubscribe methods were called, even though sub1's raised
+        sub1.unsubscribe.assert_awaited_once()
+        sub2.unsubscribe.assert_awaited_once()
