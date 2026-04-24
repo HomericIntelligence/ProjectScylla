@@ -28,6 +28,7 @@ from scylla.e2e.rate_limit import (
     is_weekly_limit,
     wait_for_rate_limit,
 )
+from scylla.e2e.runner import InfrastructureFailureError
 
 if TYPE_CHECKING:
     from scylla.e2e.checkpoint import E2ECheckpoint
@@ -239,6 +240,13 @@ def run_tier_subtests_parallel(
                 f"{completed_count}/{total_subtests} complete, "
                 f"{remaining} remaining, elapsed: {elapsed:.0f}s"
             )
+        except InfrastructureFailureError as e:
+            # Agent crashed before making API calls — skip this subtest and continue.
+            # The run has already been archived to .failed/ by stage_commit_agent_changes().
+            logger.warning(
+                f"[SKIP] Subtest {subtest.id} skipped due to infrastructure failure: {e}"
+            )
+            completed_count += 1
         except RateLimitError as e:
             # Both weekly and transient rate limits: wait and retry once.
             # Weekly limits have a parsed reset time in retry_after_seconds —

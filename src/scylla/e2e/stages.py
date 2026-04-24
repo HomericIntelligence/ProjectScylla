@@ -55,6 +55,7 @@ from scylla.e2e.models import (
     TierID,
 )
 from scylla.e2e.paths import get_agent_dir, get_judge_dir
+from scylla.e2e.runner import InfrastructureFailureError
 from scylla.e2e.stage_finalization import (
     stage_cleanup_worktree as stage_cleanup_worktree,
 )
@@ -745,7 +746,7 @@ def stage_commit_agent_changes(ctx: RunContext) -> None:
                 f"[AGENT] Infrastructure failure detected (exit_code=-1, zero tokens) — "
                 f"run moved to {dest}"
             )
-            raise RuntimeError(
+            raise InfrastructureFailureError(
                 f"Infrastructure failure in run {ctx.run_number} "
                 f"({ctx.tier_id.value}/{ctx.subtest.id}): agent crashed before making any API calls"
             )
