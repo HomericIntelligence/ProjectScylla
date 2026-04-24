@@ -422,3 +422,285 @@ class TestParallelSubtestLoopShutdown:
 
         # Should return empty results since shutdown was requested before any subtest ran
         assert results == {}
+
+
+# ---------------------------------------------------------------------------
+# AsyncAgamemnonClient wiring in run_tier_subtests_parallel
+# ---------------------------------------------------------------------------
+
+
+class TestAsyncAgamemnonWiring:
+    """Tests that AsyncAgamemnonClient inject/cleanup is called around subtests."""
+
+    def _make_subtest_config(self, subtest_id: str = "00-empty") -> MagicMock:
+        subtest = MagicMock()
+        subtest.id = subtest_id
+        return subtest
+
+    def _make_tier_config(self, subtests: list[Any]) -> MagicMock:
+        tier_config = MagicMock()
+        tier_config.subtests = subtests
+        return tier_config
+
+    def test_inject_and_cleanup_called_when_agamemnon_url_set(self, tmp_path: Path) -> None:
+        """When agamemnon_url is configured, inject and cleanup are called."""
+        from scylla.e2e.models import ExperimentConfig, SubTestResult, TierID
+
+        config = ExperimentConfig(
+            experiment_id="test",
+            task_repo="https://example.com/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="python",
+            tiers_to_run=[TierID.T0],
+            agamemnon_url="http://localhost:8080",
+        )
+
+        mock_result = SubTestResult(
+            subtest_id="00-empty",
+            tier_id=TierID.T0,
+            runs=[],
+            pass_rate=0.0,
+        )
+
+        subtest = self._make_subtest_config("00-empty")
+        tier_config = self._make_tier_config([subtest])
+        mock_tier_manager = MagicMock()
+        mock_workspace = MagicMock()
+        mock_executor = MagicMock()
+        mock_executor.run_subtest.return_value = mock_result
+
+        with (
+            patch(
+                "scylla.e2e.subtest_executor.SubTestExecutor",
+                return_value=mock_executor,
+            ),
+            patch("scylla.e2e.parallel_executor._run_async") as mock_run_async,
+        ):
+            from scylla.e2e.parallel_executor import run_tier_subtests_parallel
+
+            results = run_tier_subtests_parallel(
+                config=config,
+                tier_id=TierID.T0,
+                tier_config=tier_config,
+                tier_manager=mock_tier_manager,
+                workspace_manager=mock_workspace,
+                baseline=None,
+                results_dir=tmp_path,
+            )
+
+        assert "00-empty" in results
+        # inject + cleanup = 2 calls
+        assert mock_run_async.call_count == 2
+
+    def test_no_agamemnon_calls_when_url_is_none(self, tmp_path: Path) -> None:
+        """When agamemnon_url is None, no inject/cleanup calls are made."""
+        from scylla.e2e.models import ExperimentConfig, SubTestResult, TierID
+
+        config = ExperimentConfig(
+            experiment_id="test",
+            task_repo="https://example.com/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="python",
+            tiers_to_run=[TierID.T0],
+        )
+
+        mock_result = SubTestResult(
+            subtest_id="00-empty",
+            tier_id=TierID.T0,
+            runs=[],
+            pass_rate=0.0,
+        )
+
+        subtest = self._make_subtest_config("00-empty")
+        tier_config = self._make_tier_config([subtest])
+        mock_tier_manager = MagicMock()
+        mock_workspace = MagicMock()
+        mock_executor = MagicMock()
+        mock_executor.run_subtest.return_value = mock_result
+
+        with (
+            patch(
+                "scylla.e2e.subtest_executor.SubTestExecutor",
+                return_value=mock_executor,
+            ),
+            patch("scylla.e2e.parallel_executor._run_async") as mock_run_async,
+        ):
+            from scylla.e2e.parallel_executor import run_tier_subtests_parallel
+
+            results = run_tier_subtests_parallel(
+                config=config,
+                tier_id=TierID.T0,
+                tier_config=tier_config,
+                tier_manager=mock_tier_manager,
+                workspace_manager=mock_workspace,
+                baseline=None,
+                results_dir=tmp_path,
+            )
+
+        assert "00-empty" in results
+        mock_run_async.assert_not_called()
+
+    def test_cleanup_called_even_on_infrastructure_failure(self, tmp_path: Path) -> None:
+        """Cleanup runs even when the subtest raises InfrastructureFailureError."""
+        from scylla.e2e.models import ExperimentConfig, TierID
+        from scylla.e2e.rate_limit import InfrastructureFailureError
+
+        config = ExperimentConfig(
+            experiment_id="test",
+            task_repo="https://example.com/repo",
+            task_commit="abc123",
+            task_prompt_file=Path("prompt.md"),
+            language="python",
+            tiers_to_run=[TierID.T0],
+            agamemnon_url="http://localhost:8080",
+        )
+
+        subtest = self._make_subtest_config("00-empty")
+        tier_config = self._make_tier_config([subtest])
+        mock_tier_manager = MagicMock()
+        mock_workspace = MagicMock()
+        mock_executor = MagicMock()
+        mock_executor.run_subtest.side_effect = InfrastructureFailureError("crash")
+
+        with (
+            patch(
+                "scylla.e2e.subtest_executor.SubTestExecutor",
+                return_value=mock_executor,
+            ),
+            patch("scylla.e2e.parallel_executor._run_async") as mock_run_async,
+        ):
+            from scylla.e2e.parallel_executor import run_tier_subtests_parallel
+
+            results = run_tier_subtests_parallel(
+                config=config,
+                tier_id=TierID.T0,
+                tier_config=tier_config,
+                tier_manager=mock_tier_manager,
+                workspace_manager=mock_workspace,
+                baseline=None,
+                results_dir=tmp_path,
+            )
+
+        # Subtest was skipped, no result recorded
+        assert results == {}
+        # inject + cleanup = 2 calls (cleanup happens in finally)
+        assert mock_run_async.call_count == 2
+
+
+# ---------------------------------------------------------------------------
+# _run_async helper
+# ---------------------------------------------------------------------------
+
+
+class TestRunAsync:
+    """Tests for the _run_async helper."""
+
+    def test_runs_coroutine(self) -> None:
+        """_run_async executes a coroutine and returns its result."""
+        from scylla.e2e.parallel_executor import _run_async
+
+        async def coro() -> str:
+            return "ok"
+
+        assert _run_async(coro()) == "ok"
+
+    def test_runs_coroutine_inside_running_loop(self) -> None:
+        """_run_async works when called from within a running event loop."""
+        import asyncio
+
+        from scylla.e2e.parallel_executor import _run_async
+
+        async def inner() -> str:
+            return "inner_ok"
+
+        async def outer() -> str:
+            result: str = _run_async(inner())
+            return result
+
+        result = asyncio.run(outer())
+        assert result == "inner_ok"
+
+
+# ---------------------------------------------------------------------------
+# _async_inject_failure / _async_cleanup_failure
+# ---------------------------------------------------------------------------
+
+
+class TestAsyncInjectFailure:
+    """Tests for _async_inject_failure helper."""
+
+    def test_calls_inject_failure(self) -> None:
+        """Calls inject_failure on the client with correct spec."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        from scylla.adapters.agamemnon_client import AsyncAgamemnonClient
+        from scylla.e2e.models import TierID
+        from scylla.e2e.parallel_executor import _async_inject_failure
+
+        client = AsyncAgamemnonClient(base_url="http://localhost:8080")
+        client.inject_failure = AsyncMock()  # type: ignore[method-assign]
+
+        asyncio.run(_async_inject_failure(client, TierID.T0, "sub-1"))
+        client.inject_failure.assert_called_once_with({"tier": "T0", "subtest": "sub-1"})
+
+    def test_logs_warning_on_connection_error(self) -> None:
+        """Does not raise on AgamemnonConnectionError; logs warning."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        from scylla.adapters.agamemnon_client import (
+            AgamemnonConnectionError,
+            AsyncAgamemnonClient,
+        )
+        from scylla.e2e.models import TierID
+        from scylla.e2e.parallel_executor import _async_inject_failure
+
+        client = AsyncAgamemnonClient(base_url="http://localhost:8080")
+        client.inject_failure = AsyncMock(  # type: ignore[method-assign]
+            side_effect=AgamemnonConnectionError("unreachable")
+        )
+
+        # Should NOT raise
+        asyncio.run(_async_inject_failure(client, TierID.T0, "sub-1"))
+
+
+class TestAsyncCleanupFailure:
+    """Tests for _async_cleanup_failure helper."""
+
+    def test_calls_cleanup_failure(self) -> None:
+        """Calls cleanup_failure on the client."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        from scylla.adapters.agamemnon_client import AsyncAgamemnonClient
+        from scylla.e2e.models import TierID
+        from scylla.e2e.parallel_executor import _async_cleanup_failure
+
+        client = AsyncAgamemnonClient(base_url="http://localhost:8080")
+        client.cleanup_failure = AsyncMock()  # type: ignore[method-assign]
+
+        asyncio.run(_async_cleanup_failure(client, TierID.T0, "sub-1"))
+        client.cleanup_failure.assert_called_once()
+
+    def test_logs_warning_on_connection_error(self) -> None:
+        """Does not raise on AgamemnonConnectionError; logs warning."""
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        from scylla.adapters.agamemnon_client import (
+            AgamemnonConnectionError,
+            AsyncAgamemnonClient,
+        )
+        from scylla.e2e.models import TierID
+        from scylla.e2e.parallel_executor import _async_cleanup_failure
+
+        client = AsyncAgamemnonClient(base_url="http://localhost:8080")
+        client.cleanup_failure = AsyncMock(  # type: ignore[method-assign]
+            side_effect=AgamemnonConnectionError("unreachable")
+        )
+
+        # Should NOT raise
+        asyncio.run(_async_cleanup_failure(client, TierID.T0, "sub-1"))
