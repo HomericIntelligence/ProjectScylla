@@ -1,4 +1,5 @@
 """Circuit breaker for automation layer — re-exports from hephaestus.resilience."""
+
 from hephaestus.resilience.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpenError,

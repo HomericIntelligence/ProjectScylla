@@ -1,4 +1,5 @@
 """Smoke test for circuit_breaker re-export shim in automation layer."""
+
 from scylla.automation.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpenError,
