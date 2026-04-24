@@ -293,7 +293,7 @@ class TierStateMachine:
         except Exception as e:
             from scylla.e2e.checkpoint import save_checkpoint
             from scylla.e2e.rate_limit import RateLimitError
-            from scylla.e2e.runner import ShutdownInterruptedError
+            from scylla.e2e.shutdown import ShutdownInterruptedError
 
             if isinstance(e, ShutdownInterruptedError):
                 # Ctrl+C interrupted this tier — leave it at CONFIG_LOADED (resumable)

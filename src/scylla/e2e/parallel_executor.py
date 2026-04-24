@@ -205,7 +205,7 @@ def run_tier_subtests_parallel(
 
     for subtest in tier_config.subtests:
         # Check for shutdown before starting subtest
-        from scylla.e2e.runner import is_shutdown_requested
+        from scylla.e2e.shutdown import is_shutdown_requested
 
         if is_shutdown_requested():
             logger.warning("Shutdown requested, stopping subtest execution...")

@@ -77,14 +77,14 @@ class ParallelTierRunner:
 
         for group in tier_groups:
             # Check for shutdown before starting group (lazy import avoids circular dependency)
-            from scylla.e2e.runner import is_shutdown_requested
+            from scylla.e2e.shutdown import is_shutdown_requested
 
             if is_shutdown_requested():
                 logger.warning("Shutdown requested before tier group, stopping...")
                 break
 
             for tier_id in group:
-                from scylla.e2e.runner import is_shutdown_requested as _check_shutdown
+                from scylla.e2e.shutdown import is_shutdown_requested as _check_shutdown
 
                 if _check_shutdown():
                     logger.warning("Shutdown requested before tier, stopping...")
