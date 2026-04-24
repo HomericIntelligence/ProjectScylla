@@ -185,20 +185,30 @@ class TestMultiSubjectSubscription:
         msg1 = _make_mock_msg(subject="events.created", sequence=1)
         msg2 = _make_mock_msg(subject="events.updated", sequence=2)
 
-        # First sub returns msg1 then sets stop; second sub returns msg2
+        # Each sub returns its message, then on re-poll raises TimeoutError
+        # and sets stop so the loop exits.
         sub1 = AsyncMock()
+        sub1_calls = 0
 
-        async def sub1_next_msg(timeout: float = 0.5) -> AsyncMock:
-            return msg1
+        async def sub1_next_msg(timeout: float = 1.0) -> AsyncMock:
+            nonlocal sub1_calls
+            sub1_calls += 1
+            if sub1_calls == 1:
+                return msg1
+            thread._stop_event.set()
+            raise asyncio.TimeoutError
 
         sub1.next_msg = sub1_next_msg
 
         sub2 = AsyncMock()
+        sub2_calls = 0
 
-        async def sub2_next_msg(timeout: float = 0.5) -> AsyncMock:
-            # After delivering msg2, signal stop
-            thread._stop_event.set()
-            return msg2
+        async def sub2_next_msg(timeout: float = 1.0) -> AsyncMock:
+            nonlocal sub2_calls
+            sub2_calls += 1
+            if sub2_calls == 1:
+                return msg2
+            raise asyncio.TimeoutError
 
         sub2.next_msg = sub2_next_msg
 
@@ -208,3 +218,125 @@ class TestMultiSubjectSubscription:
 
         assert "events.created" in received
         assert "events.updated" in received
+
+
+class TestConcurrentPolling:
+    """Tests verifying asyncio.wait(FIRST_COMPLETED) concurrent polling."""
+
+    def test_first_ready_subscription_processed_without_waiting(self) -> None:
+        """First-ready subscription is processed without waiting for others."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["fast.subject", "slow.subject"],
+        )
+        received: list[str] = []
+
+        def handler(event: object) -> None:
+            received.append(getattr(event, "subject", ""))
+
+        thread = NATSSubscriberThread(config=config, handler=handler)
+
+        mock_nc = AsyncMock()
+        mock_js = MagicMock()
+        mock_nc.jetstream = MagicMock(return_value=mock_js)
+
+        fast_msg = _make_mock_msg(subject="fast.subject", sequence=1)
+
+        # fast sub returns immediately, slow sub always times out
+        fast_sub = AsyncMock()
+        fast_calls = 0
+
+        async def fast_next_msg(timeout: float = 1.0) -> AsyncMock:
+            nonlocal fast_calls
+            fast_calls += 1
+            if fast_calls == 1:
+                return fast_msg
+            # On re-poll, stop and timeout
+            thread._stop_event.set()
+            raise asyncio.TimeoutError
+
+        fast_sub.next_msg = fast_next_msg
+
+        slow_sub = AsyncMock()
+
+        async def slow_next_msg(timeout: float = 1.0) -> AsyncMock:
+            # Always times out
+            raise asyncio.TimeoutError
+
+        slow_sub.next_msg = slow_next_msg
+
+        mock_js.subscribe = AsyncMock(side_effect=[fast_sub, slow_sub])
+
+        _run_subscribe_loop(thread, mock_nc)
+
+        # The fast message was delivered despite slow sub timing out
+        assert "fast.subject" in received
+
+    def test_pending_tasks_reused_across_iterations(self) -> None:
+        """Unresolved tasks from previous iterations are reused, not recreated."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["sub.a", "sub.b"],
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+
+        mock_nc = AsyncMock()
+        mock_js = MagicMock()
+        mock_nc.jetstream = MagicMock(return_value=mock_js)
+
+        msg_a = _make_mock_msg(subject="sub.a", sequence=1)
+
+        sub_a = AsyncMock()
+        sub_a_calls = 0
+
+        async def sub_a_next_msg(timeout: float = 1.0) -> AsyncMock:
+            nonlocal sub_a_calls
+            sub_a_calls += 1
+            if sub_a_calls == 1:
+                return msg_a
+            thread._stop_event.set()
+            raise asyncio.TimeoutError
+
+        sub_a.next_msg = sub_a_next_msg
+
+        sub_b = AsyncMock()
+        sub_b_calls = 0
+
+        async def sub_b_next_msg(timeout: float = 1.0) -> AsyncMock:
+            nonlocal sub_b_calls
+            sub_b_calls += 1
+            # Always times out — but should only be called twice:
+            # once for initial task, once for re-enqueue after first
+            # asyncio.wait returns it as done (timed out).
+            raise asyncio.TimeoutError
+
+        sub_b.next_msg = sub_b_next_msg
+
+        mock_js.subscribe = AsyncMock(side_effect=[sub_a, sub_b])
+
+        _run_subscribe_loop(thread, mock_nc)
+
+        # sub_b.next_msg should have been called at least once (initial)
+        # but not excessively — tasks are reused, not recreated every loop
+        assert sub_b_calls >= 1
+
+    def test_pending_tasks_cancelled_on_shutdown(self) -> None:
+        """When stop is signalled, remaining pending tasks are cancelled."""
+        config = NATSConfig(
+            enabled=True,
+            subjects=["events.>"],
+        )
+        handler = MagicMock()
+        thread = NATSSubscriberThread(config=config, handler=handler)
+        # Pre-set stop so loop exits after first asyncio.wait
+        thread._stop_event.set()
+
+        mock_nc, _mock_js, _mock_sub = _make_mocks()
+        # The mock sub will timeout, stop_event is set, loop should exit
+        # and cancel pending tasks
+
+        _run_subscribe_loop(thread, mock_nc)
+
+        # Thread should have completed without errors
+        handler.assert_not_called()

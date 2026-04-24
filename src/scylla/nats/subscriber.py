@@ -100,6 +100,34 @@ class NATSSubscriberThread(threading.Thread):
 
         logger.info("NATSSubscriberThread stopped")
 
+    async def _dispatch_msg(self, msg: Any) -> None:
+        """Parse a raw NATS message and dispatch it to the handler.
+
+        Args:
+            msg: A NATS JetStream message object.
+
+        """
+        try:
+            data: dict[str, Any] = json.loads(msg.data.decode())
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logger.warning(
+                "Failed to decode message on %s (seq=%d)",
+                msg.subject,
+                msg.metadata.sequence.stream if msg.metadata else 0,
+            )
+            await msg.ack()
+            return
+
+        event = NATSEvent(
+            subject=msg.subject,
+            data=data,
+            timestamp=(msg.headers.get("Nats-Time-Stamp", "") if msg.headers else ""),
+            sequence=msg.metadata.sequence.stream if msg.metadata else 0,
+        )
+
+        self._handler(event)
+        await msg.ack()
+
     async def _subscribe_loop(self) -> None:
         """Connect to NATS JetStream and process messages until stop is requested."""
         try:
@@ -137,37 +165,47 @@ class NATSSubscriberThread(threading.Thread):
                 subjects,
             )
 
-            while not self._stop_event.is_set():
-                for sub in subscriptions:
+            # Build initial pending tasks — one next_msg per subscription.
+            # We map each task back to its subscription so completed tasks
+            # can be replaced without cancelling/recreating the rest.
+            pending: dict[asyncio.Task[Any], Any] = {}
+            for sub in subscriptions:
+                task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
+                pending[task] = sub
+
+            while not self._stop_event.is_set() and pending:
+                done, _ = await asyncio.wait(
+                    pending.keys(),
+                    timeout=1.0,
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+
+                if not done:
+                    # All timed out — no messages ready; loop back
+                    continue
+
+                for task in done:
+                    sub = pending.pop(task)
+
                     try:
-                        msg = await asyncio.wait_for(
-                            sub.next_msg(timeout=0.5),
-                            timeout=1.0,
-                        )
+                        msg = task.result()
                     except (asyncio.TimeoutError, TimeoutError):
+                        # Subscription poll timed out — re-enqueue
+                        new_task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
+                        pending[new_task] = sub
                         continue
 
-                    # Parse and dispatch
-                    try:
-                        data: dict[str, Any] = json.loads(msg.data.decode())
-                    except (json.JSONDecodeError, UnicodeDecodeError):
-                        logger.warning(
-                            "Failed to decode message on %s (seq=%d)",
-                            msg.subject,
-                            msg.metadata.sequence.stream if msg.metadata else 0,
-                        )
-                        await msg.ack()
-                        continue
+                    await self._dispatch_msg(msg)
 
-                    event = NATSEvent(
-                        subject=msg.subject,
-                        data=data,
-                        timestamp=(msg.headers.get("Nats-Time-Stamp", "") if msg.headers else ""),
-                        sequence=msg.metadata.sequence.stream if msg.metadata else 0,
-                    )
+                    # Re-enqueue a next_msg task for this subscription
+                    new_task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
+                    pending[new_task] = sub
 
-                    self._handler(event)
-                    await msg.ack()
+            # Cancel any remaining pending tasks on shutdown
+            for task in pending:
+                task.cancel()
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
 
         finally:
             await nc.drain()
