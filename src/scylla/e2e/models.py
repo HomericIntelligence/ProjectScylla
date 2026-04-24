@@ -820,6 +820,33 @@ class TestFixture(BaseModel):
             yaml.dump(self.rubric, f, default_flow_style=False, sort_keys=False)
 
 
+class AgamemnonConfig(BaseModel):
+    """Configuration for failure injection via Agamemnon chaos service.
+
+    Agamemnon targets the /v1/chaos/* endpoints for injecting failures during
+    E2E runs. This configuration allows operators to customize failure behavior
+    per-experiment without code changes.
+
+    Attributes:
+        enabled: Whether failure injection is enabled (default: False)
+        failure_type: Type of failure to inject (default: "default")
+        failure_duration_seconds: Duration of the injected failure in seconds
+            (default: None)
+        failure_parameters: Additional parameters for the failure injection
+            (default: {})
+
+    """
+
+    enabled: bool = Field(default=False, description="Whether failure injection is enabled")
+    failure_type: str = Field(default="default", description="Type of failure to inject")
+    failure_duration_seconds: int | None = Field(
+        default=None, description="Duration of the injected failure in seconds"
+    )
+    failure_parameters: dict[str, Any] = Field(
+        default_factory=dict, description="Additional parameters for the failure injection"
+    )
+
+
 class ExperimentConfig(BaseModel):
     """Complete experiment configuration.
 
@@ -887,6 +914,8 @@ class ExperimentConfig(BaseModel):
     max_concurrent_workspaces: int | None = None  # Limit live workspaces (None = auto)
     max_concurrent_agents: int | None = None  # Limit concurrent claude CLI processes (None = auto)
     off_peak: bool = False  # Wait for off-peak hours before each subtest run
+    # Failure injection configuration
+    agamemnon: AgamemnonConfig = Field(default_factory=AgamemnonConfig)
 
     @field_validator("models", mode="before")
     @classmethod
@@ -916,6 +945,12 @@ class ExperimentConfig(BaseModel):
             "skip_agent_teams": self.skip_agent_teams,
             "thinking_mode": self.thinking_mode,
             "use_containers": self.use_containers,
+            "agamemnon": {
+                "enabled": self.agamemnon.enabled,
+                "failure_type": self.agamemnon.failure_type,
+                "failure_duration_seconds": self.agamemnon.failure_duration_seconds,
+                "failure_parameters": self.agamemnon.failure_parameters,
+            },
         }
 
     def save(self, path: Path) -> None:
@@ -936,6 +971,15 @@ class ExperimentConfig(BaseModel):
         else:
             judge_models = data.get("judge_models", [DEFAULT_JUDGE_MODEL])
 
+        # Load agamemnon configuration
+        agamemnon_data = data.get("agamemnon", {})
+        agamemnon_config = AgamemnonConfig(
+            enabled=agamemnon_data.get("enabled", False),
+            failure_type=agamemnon_data.get("failure_type", "default"),
+            failure_duration_seconds=agamemnon_data.get("failure_duration_seconds"),
+            failure_parameters=agamemnon_data.get("failure_parameters", {}),
+        )
+
         return cls(
             experiment_id=data["experiment_id"],
             task_repo=data["task_repo"],
@@ -952,6 +996,7 @@ class ExperimentConfig(BaseModel):
             skip_agent_teams=data.get("skip_agent_teams", False),
             thinking_mode=data.get("thinking_mode", "None"),
             use_containers=data.get("use_containers", False),
+            agamemnon=agamemnon_config,
         )
 
 
