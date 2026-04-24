@@ -54,6 +54,20 @@ bump part:
     pixi run python scripts/bump_version.py {{part}}
     pixi lock
 
+# Bump patch version (e.g. 0.1.0 -> 0.1.1)
+bump-patch:
+    pixi run python scripts/bump_version.py patch
+    pixi lock
+
+# Bump minor version (e.g. 0.1.0 -> 0.2.0)
+bump-minor:
+    pixi run python scripts/bump_version.py minor
+    pixi lock
+
+# Bump major version (e.g. 0.1.0 -> 1.0.0)
+bump-major:
+    pixi run python scripts/bump_version.py major
+    pixi lock
 
 # Run all pre-commit hooks
 pre-commit:
