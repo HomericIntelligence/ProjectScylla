@@ -105,7 +105,7 @@ class ClaudeCodeAdapter(BaseAdapter):
         # Execute with retry wrapper for transient failures
         start_time = datetime.now(timezone.utc)
         try:
-            result = resilient_call(
+            proc = resilient_call(
                 subprocess.run,
                 cmd,
                 capture_output=True,
@@ -116,6 +116,7 @@ class ClaudeCodeAdapter(BaseAdapter):
                 stdin=subprocess.DEVNULL,
                 max_retries=3,
             )
+            result: subprocess.CompletedProcess[str] = proc  # type: ignore[assignment]
 
         except subprocess.TimeoutExpired as e:
             end_time = datetime.now(timezone.utc)
