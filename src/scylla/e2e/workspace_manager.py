@@ -12,7 +12,9 @@ import logging
 import subprocess
 from pathlib import Path
 
-from scylla.core.resilience import TRANSIENT_ERROR_PATTERNS
+from hephaestus.utils.retry import retry_with_backoff
+
+from scylla.core.resilience import is_transient_subprocess_error
 
 logger = logging.getLogger(__name__)
 
@@ -136,31 +138,39 @@ class WorkspaceManager:
             RuntimeError: If clone fails after all retries
 
         """
-        import random
-        import time
 
-        for attempt in range(max_retries):
+        @retry_with_backoff(
+            max_retries=max_retries - 1,
+            initial_delay=initial_delay,
+            backoff_factor=2,
+            retry_on=(subprocess.SubprocessError, OSError),
+            logger=logger.warning,
+            jitter=False,
+        )
+        def _run_clone() -> None:
             result = subprocess.run(
                 clone_cmd,
                 capture_output=True,
                 text=True,
             )
 
-            if result.returncode == 0:
-                return
+            if result.returncode != 0:
+                # Create a CalledProcessError to check if it's transient
+                error_exc = subprocess.CalledProcessError(
+                    result.returncode, clone_cmd, result.stderr
+                )
+                # Check if this is a transient error using resilience utility
+                if not is_transient_subprocess_error(error_exc):
+                    # Non-transient error - raise immediately without retry
+                    raise RuntimeError(f"Failed to clone repository: {result.stderr}")
+                # Transient error - raise to trigger retry by decorator
+                raise error_exc
 
-            stderr = result.stderr.lower()
-            is_transient = any(pattern in stderr for pattern in TRANSIENT_ERROR_PATTERNS)
-
-            if not is_transient or attempt == max_retries - 1:
-                raise RuntimeError(f"Failed to clone repository: {result.stderr}")
-
-            delay = initial_delay * (2**attempt) * random.uniform(0.5, 1.5)
-            logger.warning(
-                f"Git clone failed (attempt {attempt + 1}/{max_retries}), "
-                f"retrying in {delay:.1f}s: {result.stderr.strip()}"
-            )
-            time.sleep(delay)
+        try:
+            _run_clone()
+        except subprocess.CalledProcessError as e:
+            # Convert CalledProcessError from exhausted retries to RuntimeError
+            raise RuntimeError(f"Failed to clone repository: {e.stderr}") from e
 
     def _checkout_commit(self) -> None:
         """Fetch and checkout specific commit in base repo (legacy per-experiment layout)."""
