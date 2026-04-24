@@ -883,7 +883,7 @@ class TestWaitForRateLimitShutdown:
             with (
                 patch("time.sleep"),
                 patch(
-                    "scylla.e2e.runner.is_shutdown_requested",
+                    "scylla.e2e.shutdown.is_shutdown_requested",
                     return_value=True,
                 ),
                 pytest.raises(ShutdownInterruptedError),
@@ -911,7 +911,7 @@ class TestWaitForRateLimitShutdown:
             with (
                 patch("time.sleep"),
                 patch(
-                    "scylla.e2e.runner.is_shutdown_requested",
+                    "scylla.e2e.shutdown.is_shutdown_requested",
                     return_value=True,
                 ),
             ):

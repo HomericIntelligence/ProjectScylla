@@ -1110,7 +1110,7 @@ class TestCommunicateWithShutdownCheck:
         mock_proc.communicate.side_effect = subprocess.TimeoutExpired("cmd", 2.0)
 
         with (
-            patch("scylla.e2e.runner.is_shutdown_requested", return_value=True),
+            patch("scylla.e2e.shutdown.is_shutdown_requested", return_value=True),
             patch("scylla.e2e.stages._kill_process_group"),
             pytest.raises(ShutdownInterruptedError),
         ):
