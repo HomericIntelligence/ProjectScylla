@@ -25,7 +25,7 @@ from pathlib import Path
 repo_root = Path(__file__).parent.parent
 sys.path.insert(0, str(repo_root / "src"))
 
-from scylla.e2e.checkpoint import load_checkpoint, save_checkpoint  # noqa: E402
+from scylla.e2e.checkpoint import E2ECheckpoint, load_checkpoint, save_checkpoint  # noqa: E402
 
 CHECKPOINT = repo_root / "results/2026-03-30T04-09-50-test-001/checkpoint.json"
 
@@ -52,19 +52,18 @@ AGENT_COMPLETE_RUNS: list[tuple[str, str, int]] = [
 
 
 def _patch_runs(
-    checkpoint: object,
+    checkpoint: E2ECheckpoint,
     runs: list[tuple[str, str, int]],
     target_state: str,
     affected_tiers: set[str],
     affected_subtests: set[tuple[str, str]],
 ) -> int:
+    """Set each run's checkpoint state to target_state and clear its completed entry."""
     patched = 0
     for tier_id, subtest_id, run_num in runs:
         run_num_str = str(run_num)
         current_state = (
-            checkpoint.run_states.get(tier_id, {})
-            .get(subtest_id, {})
-            .get(run_num_str, "MISSING")
+            checkpoint.run_states.get(tier_id, {}).get(subtest_id, {}).get(run_num_str, "MISSING")
         )
         print(f"  {tier_id}/{subtest_id}/run{run_num}: {current_state} -> {target_state}")
         checkpoint.set_run_state(tier_id, subtest_id, run_num, target_state)
@@ -76,6 +75,7 @@ def _patch_runs(
 
 
 def main() -> None:
+    """Patch the test-001 checkpoint and print resume commands."""
     if not CHECKPOINT.exists():
         print(f"ERROR: checkpoint not found at {CHECKPOINT}")
         sys.exit(1)
@@ -87,12 +87,14 @@ def main() -> None:
     total = 0
 
     print("=== Category 1: bad judge runs -> judge_pipeline_run ===")
-    total += _patch_runs(checkpoint, BAD_JUDGE_RUNS, "judge_pipeline_run",
-                         affected_tiers, affected_subtests)
+    total += _patch_runs(
+        checkpoint, BAD_JUDGE_RUNS, "judge_pipeline_run", affected_tiers, affected_subtests
+    )
 
     print("\n=== Category 2: agent_complete runs -> agent_complete ===")
-    total += _patch_runs(checkpoint, AGENT_COMPLETE_RUNS, "agent_complete",
-                         affected_tiers, affected_subtests)
+    total += _patch_runs(
+        checkpoint, AGENT_COMPLETE_RUNS, "agent_complete", affected_tiers, affected_subtests
+    )
 
     # Cascade subtest/tier/experiment states
     for tier_id, subtest_id in affected_subtests:
