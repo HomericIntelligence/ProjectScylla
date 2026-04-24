@@ -69,6 +69,15 @@ class ShutdownInterruptedError(Exception):
     """
 
 
+class InfrastructureFailureError(Exception):
+    """Raised when an agent crashes before making any API calls (exit_code=-1, zero tokens).
+
+    Unlike a generic RuntimeError, this is caught at the subtest level in
+    run_tier_subtests_parallel() so the failed run is skipped and the experiment
+    continues with remaining subtests/tiers instead of aborting.
+    """
+
+
 def request_shutdown() -> None:
     """Request graceful shutdown of the experiment.
 
