@@ -143,19 +143,34 @@ class NATSSubscriberThread(threading.Thread):
             js = nc.jetstream()
 
             subjects = self._config.subjects or ["hi.tasks.>"]
-            subscriptions = []
+            subscriptions: list[Any] = []
             for i, subject in enumerate(subjects):
                 durable = (
                     self._config.durable_name
                     if len(subjects) == 1
                     else f"{self._config.durable_name}-{i}"
                 )
-                sub = await js.subscribe(
-                    subject=subject,
-                    durable=durable,
-                    stream=self._config.stream,
-                    deliver_policy=self._config.deliver_policy,  # type: ignore[arg-type]
-                )
+                try:
+                    sub = await js.subscribe(
+                        subject=subject,
+                        durable=durable,
+                        stream=self._config.stream,
+                        deliver_policy=self._config.deliver_policy,  # type: ignore[arg-type]
+                    )
+                except Exception:
+                    logger.warning(
+                        "Failed to subscribe to subject %r (index %d); "
+                        "unsubscribing %d already-subscribed subject(s) before re-raising",
+                        subject,
+                        i,
+                        len(subscriptions),
+                    )
+                    for prev_sub in subscriptions:
+                        try:
+                            await prev_sub.unsubscribe()
+                        except Exception:
+                            logger.debug("Error unsubscribing during cleanup", exc_info=True)
+                    raise
                 subscriptions.append(sub)
 
             logger.info(
