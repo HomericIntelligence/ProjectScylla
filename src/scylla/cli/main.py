@@ -281,6 +281,115 @@ def _warn_format_extension_mismatch(output: str | None, output_format: str) -> N
         )
 
 
+def _load_report_data(
+    test_id: str,
+    results: list[dict[str, Any]],
+) -> ReportData:
+    """Build a fully-populated ReportData from raw run results.
+
+    Groups results by tier, calculates per-tier metrics (pass rate,
+    implementation rate, cost-of-pass, etc.), sensitivity analysis,
+    transition assessments, and recommendations.
+
+    Args:
+        test_id: Test identifier.
+        results: List of result dictionaries (each from a result.json file).
+
+    Returns:
+        ReportData with tiers, sensitivity, transitions, and recommendations.
+
+    Raises:
+        ValueError: If *results* is empty.
+
+    """
+    if not results:
+        raise ValueError(f"No results provided for test: {test_id}")
+
+    # Group results by tier
+    by_tier: dict[str, list[dict[str, Any]]] = {}
+    for r in results:
+        tier_id = r["tier_id"]
+        if tier_id not in by_tier:
+            by_tier[tier_id] = []
+        by_tier[tier_id].append(r)
+
+    # Sort tiers
+    sorted_tiers = sorted(by_tier.keys())
+
+    # Calculate T0 pass rate for uplift calculations
+    t0_pass_rate = None
+    if "T0" in by_tier:
+        t0_results = by_tier["T0"]
+        t0_pass_rates = [r["grading"]["pass_rate"] for r in t0_results]
+        t0_pass_rate = statistics.median(t0_pass_rates)
+
+    # Calculate metrics for each tier
+    tier_metrics = []
+    for tid in sorted_tiers:
+        metrics = _calculate_tier_metrics(tid, by_tier[tid], t0_pass_rate)
+        tier_metrics.append(metrics)
+
+    # Calculate sensitivity analysis if multiple tiers
+    sensitivity = None
+    if len(tier_metrics) > 1:
+        pass_rates = [m.pass_rate_median for m in tier_metrics]
+        impl_rates = [m.impl_rate_median for m in tier_metrics]
+        costs = [
+            m.cost_of_pass_median for m in tier_metrics if m.cost_of_pass_median != float("inf")
+        ]
+
+        sensitivity = SensitivityAnalysis(
+            pass_rate_variance=statistics.variance(pass_rates) if len(pass_rates) > 1 else 0.0,
+            impl_rate_variance=statistics.variance(impl_rates) if len(impl_rates) > 1 else 0.0,
+            cost_variance=statistics.variance(costs) if len(costs) > 1 else 0.0,
+        )
+
+    # Calculate transitions
+    transitions = []
+    for i in range(len(tier_metrics) - 1):
+        from_tier = tier_metrics[i]
+        to_tier = tier_metrics[i + 1]
+
+        pass_delta = to_tier.pass_rate_median - from_tier.pass_rate_median
+        impl_delta = to_tier.impl_rate_median - from_tier.impl_rate_median
+        cost_delta = to_tier.cost_of_pass_median - from_tier.cost_of_pass_median
+
+        # Worth it if pass rate improves more than cost increases (relative)
+        worth_it = pass_delta > 0 and (cost_delta < 0 or pass_delta > cost_delta)
+
+        transitions.append(
+            TransitionAssessment(
+                from_tier=from_tier.tier_id,
+                to_tier=to_tier.tier_id,
+                pass_rate_delta=pass_delta,
+                impl_rate_delta=impl_delta,
+                cost_delta=cost_delta,
+                worth_it=worth_it,
+            )
+        )
+
+    # Determine runs per tier (from first tier's count)
+    runs_per_tier = len(by_tier[sorted_tiers[0]]) if sorted_tiers else 0
+
+    # Create report data
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return ReportData(
+        test_id=test_id,
+        test_name=test_id.replace("-", " ").title(),
+        timestamp=timestamp,
+        runs_per_tier=runs_per_tier,
+        judge_model=DEFAULT_JUDGE_MODEL,
+        tiers=tier_metrics,
+        sensitivity=sensitivity,
+        transitions=transitions,
+        key_finding=f"Evaluated {len(results)} runs across {len(sorted_tiers)} tier(s).",
+        recommendations=[
+            "Review per-tier metrics to identify optimal configuration.",
+            "Consider cost-of-pass when selecting production tier.",
+        ],
+    )
+
+
 @cli.command()
 @click.argument("test_id")
 @click.option(
@@ -332,93 +441,15 @@ def report(
 
     click.echo(f"  Found {len(results)} run results", err=stdout_mode)
 
-    # Group results by tier
-    by_tier: dict[str, list[dict[str, Any]]] = {}
-    for r in results:
-        tier_id = r["tier_id"]
-        if tier_id not in by_tier:
-            by_tier[tier_id] = []
-        by_tier[tier_id].append(r)
+    report_data = _load_report_data(test_id, results)
 
-    # Sort tiers
-    sorted_tiers = sorted(by_tier.keys())
-
-    # Calculate T0 pass rate for uplift calculations
-    t0_pass_rate = None
-    if "T0" in by_tier:
-        t0_results = by_tier["T0"]
-        t0_pass_rates = [r["grading"]["pass_rate"] for r in t0_results]
-        t0_pass_rate = statistics.median(t0_pass_rates)
-
-    # Calculate metrics for each tier
-    tier_metrics = []
-    for tier_id in sorted_tiers:
-        metrics = _calculate_tier_metrics(tier_id, by_tier[tier_id], t0_pass_rate)
-        tier_metrics.append(metrics)
+    # Log per-tier summary
+    for tier in report_data.tiers:
+        by_tier_count = sum(1 for r in results if r["tier_id"] == tier.tier_id)
         click.echo(
-            f"  {tier_id}: {len(by_tier[tier_id])} runs, pass rate: {metrics.pass_rate_median:.1%}",
+            f"  {tier.tier_id}: {by_tier_count} runs, pass rate: {tier.pass_rate_median:.1%}",
             err=stdout_mode,
         )
-
-    # Calculate sensitivity analysis if multiple tiers
-    sensitivity = None
-    if len(tier_metrics) > 1:
-        pass_rates = [m.pass_rate_median for m in tier_metrics]
-        impl_rates = [m.impl_rate_median for m in tier_metrics]
-        costs = [
-            m.cost_of_pass_median for m in tier_metrics if m.cost_of_pass_median != float("inf")
-        ]
-
-        sensitivity = SensitivityAnalysis(
-            pass_rate_variance=statistics.variance(pass_rates) if len(pass_rates) > 1 else 0.0,
-            impl_rate_variance=statistics.variance(impl_rates) if len(impl_rates) > 1 else 0.0,
-            cost_variance=statistics.variance(costs) if len(costs) > 1 else 0.0,
-        )
-
-    # Calculate transitions
-    transitions = []
-    for i in range(len(tier_metrics) - 1):
-        from_tier = tier_metrics[i]
-        to_tier = tier_metrics[i + 1]
-
-        pass_delta = to_tier.pass_rate_median - from_tier.pass_rate_median
-        impl_delta = to_tier.impl_rate_median - from_tier.impl_rate_median
-        cost_delta = to_tier.cost_of_pass_median - from_tier.cost_of_pass_median
-
-        # Worth it if pass rate improves more than cost increases (relative)
-        worth_it = pass_delta > 0 and (cost_delta < 0 or pass_delta > cost_delta)
-
-        transitions.append(
-            TransitionAssessment(
-                from_tier=from_tier.tier_id,
-                to_tier=to_tier.tier_id,
-                pass_rate_delta=pass_delta,
-                impl_rate_delta=impl_delta,
-                cost_delta=cost_delta,
-                worth_it=worth_it,
-            )
-        )
-
-    # Determine runs per tier (from first tier's count)
-    runs_per_tier = len(by_tier[sorted_tiers[0]]) if sorted_tiers else 0
-
-    # Create report data
-    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    report_data = ReportData(
-        test_id=test_id,
-        test_name=test_id.replace("-", " ").title(),
-        timestamp=timestamp,
-        runs_per_tier=runs_per_tier,
-        judge_model=DEFAULT_JUDGE_MODEL,
-        tiers=tier_metrics,
-        sensitivity=sensitivity,
-        transitions=transitions,
-        key_finding=f"Evaluated {len(results)} runs across {len(sorted_tiers)} tier(s).",
-        recommendations=[
-            "Review per-tier metrics to identify optimal configuration.",
-            "Consider cost-of-pass when selecting production tier.",
-        ],
-    )
 
     # Generate report using dict-dispatch — single code path for all formats
     generator_cls = FORMAT_GENERATORS[output_format]
