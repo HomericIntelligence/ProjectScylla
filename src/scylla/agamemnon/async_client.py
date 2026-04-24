@@ -1,9 +1,9 @@
-"""Synchronous HTTP client for the Agamemnon Chaos API."""
+"""Asynchronous HTTP client for the Agamemnon Chaos API."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
-import time
 from typing import Any
 
 import httpx
@@ -26,12 +26,15 @@ from scylla.agamemnon.models import (
 logger = logging.getLogger(__name__)
 
 
-class AgamemnonClient:
-    """Synchronous client for the Agamemnon Chaos API.
+class AsyncAgamemnonClient:
+    """Asynchronous client for the Agamemnon Chaos API.
 
-    Provides methods for health checks, failure injection, failure clearing,
-    and agent listing. Transient failures (connection errors, timeouts,
-    HTTP 502/503/504) are retried with exponential backoff.
+    Mirrors the synchronous :class:`AgamemnonClient` interface using
+    ``httpx.AsyncClient``. Designed for parallel tier execution without
+    blocking the event loop during retries.
+
+    Transient failures (connection errors, timeouts, HTTP 502/503/504) are
+    retried with exponential backoff using ``asyncio.sleep``.
 
     Args:
         config: Agamemnon client configuration.
@@ -39,29 +42,29 @@ class AgamemnonClient:
     """
 
     def __init__(self, config: AgamemnonConfig) -> None:
-        """Initialize the synchronous Agamemnon client."""
+        """Initialize the asynchronous Agamemnon client."""
         self._config = config
-        self._client = httpx.Client(
+        self._client = httpx.AsyncClient(
             base_url=config.base_url,
             timeout=httpx.Timeout(config.timeout_seconds),
         )
         self._health_timeout = httpx.Timeout(config.health_check_timeout_seconds)
 
-    def close(self) -> None:
-        """Close the underlying HTTP client."""
-        self._client.close()
+    async def close(self) -> None:
+        """Close the underlying async HTTP client."""
+        await self._client.aclose()
 
-    def __enter__(self) -> AgamemnonClient:
-        """Enter the synchronous context manager."""
+    async def __aenter__(self) -> AsyncAgamemnonClient:
+        """Enter the async context manager."""
         return self
 
-    def __exit__(self, *args: object) -> None:
-        """Exit the synchronous context manager and close the client."""
-        self.close()
+    async def __aexit__(self, *args: object) -> None:
+        """Exit the async context manager and close the client."""
+        await self.close()
 
     # -- Public API -----------------------------------------------------------
 
-    def health_check(self) -> HealthResponse | None:
+    async def health_check(self) -> HealthResponse | None:
         """Check Agamemnon API health.
 
         Returns:
@@ -69,14 +72,14 @@ class AgamemnonClient:
 
         """
         try:
-            response = self._client.get("/v1/health", timeout=self._health_timeout)
+            response = await self._client.get("/v1/health", timeout=self._health_timeout)
             response.raise_for_status()
             return HealthResponse.model_validate(response.json())
         except (httpx.HTTPError, Exception):
             logger.warning("Agamemnon health check failed", exc_info=True)
             return None
 
-    def inject_failure(self, spec: FailureSpec) -> InjectionResult:
+    async def inject_failure(self, spec: FailureSpec) -> InjectionResult:
         """Inject a failure into an agent.
 
         Args:
@@ -90,14 +93,14 @@ class AgamemnonClient:
             AgamemnonAPIError: On non-2xx responses after retries.
 
         """
-        response = self._request_with_retry(
+        response = await self._request_with_retry(
             "POST",
             "/v1/chaos/inject",
             json=spec.model_dump(),
         )
         return InjectionResult.model_validate(response.json())
 
-    def clear_failure(self, injection_id: str) -> None:
+    async def clear_failure(self, injection_id: str) -> None:
         """Remove an injected failure.
 
         Args:
@@ -108,9 +111,9 @@ class AgamemnonClient:
             AgamemnonAPIError: On non-2xx responses after retries.
 
         """
-        self._request_with_retry("DELETE", f"/v1/chaos/inject/{injection_id}")
+        await self._request_with_retry("DELETE", f"/v1/chaos/inject/{injection_id}")
 
-    def list_agents(self) -> list[dict[str, Any]]:
+    async def list_agents(self) -> list[dict[str, Any]]:
         """List all registered agents.
 
         Returns:
@@ -121,31 +124,28 @@ class AgamemnonClient:
             AgamemnonAPIError: On non-2xx responses after retries.
 
         """
-        response = self._request_with_retry("GET", "/v1/agents")
+        response = await self._request_with_retry("GET", "/v1/agents")
         result: list[dict[str, Any]] = response.json()
         return result
 
-    def get_diagnostics(self) -> dict[str, Any]:
-        """Return diagnostic information about the client."""
-        raise NotImplementedError  # pragma: no cover
-
     # -- Internal retry logic -------------------------------------------------
 
-    def _request_with_retry(
+    async def _request_with_retry(
         self,
         method: str,
         url: str,
         **kwargs: Any,
     ) -> httpx.Response:
-        """Execute an HTTP request with exponential-backoff retry.
+        """Execute an async HTTP request with exponential-backoff retry.
 
         Retries on connection errors, timeouts, and transient HTTP status codes
-        (502, 503, 504).
+        (502, 503, 504). Uses ``asyncio.sleep`` instead of ``time.sleep`` so
+        the event loop is not blocked.
 
         Args:
             method: HTTP method (GET, POST, DELETE, etc.).
             url: URL path relative to base_url.
-            **kwargs: Additional arguments passed to httpx.Client.request.
+            **kwargs: Additional arguments passed to httpx.AsyncClient.request.
 
         Returns:
             The successful httpx.Response.
@@ -159,7 +159,7 @@ class AgamemnonClient:
         last_error: Exception | None = None
         for attempt in range(self._config.max_retries + 1):
             try:
-                response = self._client.request(method, url, **kwargs)
+                response = await self._client.request(method, url, **kwargs)
                 if response.is_success:
                     return response
                 if is_transient_status(response.status_code):
@@ -175,7 +175,7 @@ class AgamemnonClient:
                             attempt + 1,
                             self._config.max_retries,
                         )
-                        time.sleep(delay)
+                        await asyncio.sleep(delay)
                         continue
                     raise last_error
                 raise AgamemnonAPIError(response.status_code, response.text)
@@ -192,7 +192,7 @@ class AgamemnonClient:
                         self._config.max_retries,
                         exc,
                     )
-                    time.sleep(delay)
+                    await asyncio.sleep(delay)
                     continue
                 raise last_error from exc
         # Should not be reached, but satisfy type checker

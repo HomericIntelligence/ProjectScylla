@@ -1,33 +1,27 @@
-"""Exception hierarchy for the Agamemnon chaos client."""
+"""Exception hierarchy for the Agamemnon Chaos Client."""
 
 from __future__ import annotations
 
 
 class AgamemnonError(Exception):
-    """Base exception for Agamemnon client errors."""
+    """Base exception for all Agamemnon client errors."""
 
 
 class AgamemnonConnectionError(AgamemnonError):
-    """Raised on network failures or timeouts."""
+    """Network failures and timeouts when communicating with Agamemnon."""
 
 
 class AgamemnonAPIError(AgamemnonError):
-    """Raised on non-2xx HTTP responses.
+    """Non-2xx HTTP response from the Agamemnon API.
 
     Attributes:
-        status_code: HTTP status code from the server.
+        status_code: HTTP status code returned by the API.
         response_body: Raw response body text.
 
     """
 
-    def __init__(
-        self,
-        message: str,
-        *,
-        status_code: int,
-        response_body: str = "",
-    ) -> None:
-        """Create an API error with status code and optional response body."""
-        super().__init__(message)
+    def __init__(self, status_code: int, response_body: str) -> None:
+        """Initialize with status code and response body."""
         self.status_code = status_code
         self.response_body = response_body
+        super().__init__(f"Agamemnon API error {status_code}: {response_body}")

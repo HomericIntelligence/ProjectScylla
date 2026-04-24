@@ -1,19 +1,41 @@
-"""Agamemnon chaos fault injection client for the Odysseus agent mesh.
+"""Agamemnon Chaos Client for optional fault-injection via the Odysseus agent mesh.
 
-This module provides synchronous and asynchronous clients for the
-Agamemnon REST API, along with Protocol types that allow consumers
-to write code agnostic to sync vs async.
+This package provides both synchronous and asynchronous HTTP clients for the
+Agamemnon Chaos API. The async variant is designed for parallel tier execution
+without blocking the event loop.
+
+Typical usage::
+
+    from scylla.agamemnon import AgamemnonClient, AgamemnonConfig
+
+    config = AgamemnonConfig(base_url="http://localhost:8080", enabled=True)
+    with AgamemnonClient(config) as client:
+        health = client.health_check()
+        result = client.inject_failure(spec)
+
+For async usage::
+
+    from scylla.agamemnon import AsyncAgamemnonClient, AgamemnonConfig
+
+    config = AgamemnonConfig(base_url="http://localhost:8080", enabled=True)
+    async with AsyncAgamemnonClient(config) as client:
+        health = await client.health_check()
+        result = await client.inject_failure(spec)
 """
 
-from scylla.agamemnon.client import AgamemnonClient as AgamemnonClient
-from scylla.agamemnon.client import AsyncAgamemnonClient as AsyncAgamemnonClient
-from scylla.agamemnon.errors import AgamemnonAPIError as AgamemnonAPIError
-from scylla.agamemnon.errors import AgamemnonConnectionError as AgamemnonConnectionError
-from scylla.agamemnon.errors import AgamemnonError as AgamemnonError
-from scylla.agamemnon.models import AgamemnonConfig as AgamemnonConfig
-from scylla.agamemnon.models import FailureSpec as FailureSpec
-from scylla.agamemnon.models import HealthResponse as HealthResponse
-from scylla.agamemnon.models import InjectionResult as InjectionResult
+from scylla.agamemnon.async_client import AsyncAgamemnonClient
+from scylla.agamemnon.client import AgamemnonClient
+from scylla.agamemnon.errors import (
+    AgamemnonAPIError,
+    AgamemnonConnectionError,
+    AgamemnonError,
+)
+from scylla.agamemnon.models import (
+    AgamemnonConfig,
+    FailureSpec,
+    HealthResponse,
+    InjectionResult,
+)
 from scylla.agamemnon.protocols import (
     AgamemnonClientProtocol as AgamemnonClientProtocol,
 )

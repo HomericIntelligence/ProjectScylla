@@ -1,8 +1,4 @@
-"""Data models for the Agamemnon chaos fault injection client.
-
-Defines configuration, request, and response models used by both
-the synchronous and asynchronous client implementations.
-"""
+"""Configuration and data models for the Agamemnon Chaos Client."""
 
 from __future__ import annotations
 
@@ -12,56 +8,62 @@ from pydantic import BaseModel, Field
 
 
 class AgamemnonConfig(BaseModel):
-    """Configuration for the Agamemnon chaos client."""
+    """Configuration for the Agamemnon Chaos Client.
 
-    base_url: str = Field(
-        default="http://localhost:8080",
-        description="Agamemnon REST API base URL",
-    )
-    enabled: bool = Field(
-        default=False,
-        description="Whether Agamemnon integration is active",
-    )
-    timeout_seconds: int = Field(
-        default=10,
-        ge=1,
-        le=300,
-        description="Timeout for mutation requests",
-    )
-    health_check_timeout_seconds: int = Field(
-        default=5,
-        ge=1,
-        le=60,
-        description="Timeout for health checks",
-    )
-    max_retries: int = Field(
-        default=3,
-        ge=0,
-        le=10,
-        description="Retry attempts for transient failures",
-    )
+    Attributes:
+        base_url: Agamemnon REST API base URL.
+        enabled: Whether the integration is active.
+        timeout_seconds: Timeout for mutation requests (1-300).
+        health_check_timeout_seconds: Timeout for health checks (1-60).
+        max_retries: Retry attempts for transient failures (0-10).
+
+    """
+
+    base_url: str = "http://localhost:8080"
+    enabled: bool = False
+    timeout_seconds: int = Field(default=10, ge=1, le=300)
+    health_check_timeout_seconds: int = Field(default=5, ge=1, le=60)
+    max_retries: int = Field(default=3, ge=0, le=10)
 
 
 class FailureSpec(BaseModel):
-    """Specification for a chaos failure to inject."""
+    """Describes a failure to inject into an agent.
 
-    agent_id: str = Field(..., description="Target agent identifier")
-    failure_type: str = Field(..., description="Type of failure to inject")
-    parameters: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional failure parameters",
-    )
+    Attributes:
+        agent_id: Identifier of the target agent.
+        failure_type: Type of failure to inject.
+        duration_seconds: How long the failure should last.
+        parameters: Additional failure-specific parameters.
+
+    """
+
+    agent_id: str
+    failure_type: str
+    duration_seconds: int = Field(ge=1)
+    parameters: dict[str, Any] = Field(default_factory=dict)
 
 
 class HealthResponse(BaseModel):
-    """Response from the Agamemnon health endpoint."""
+    """API health status response.
 
-    status: str = Field(..., description="Health status string")
-    version: str = Field(default="", description="Server version")
+    Attributes:
+        status: Current health status string.
+        version: API version string.
+
+    """
+
+    status: str
+    version: str
 
 
 class InjectionResult(BaseModel):
-    """Result of a successful fault injection."""
+    """Result of a successful failure injection.
 
-    injection_id: str = Field(..., description="Unique identifier for the injection")
-    status: str = Field(..., description="Injection status")
+    Attributes:
+        injection_id: Unique identifier for the injection.
+        status: Status of the injection.
+
+    """
+
+    injection_id: str
+    status: str
