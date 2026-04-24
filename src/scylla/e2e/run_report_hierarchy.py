@@ -84,6 +84,8 @@ def save_subtest_report(
     subtest_dir: Path,
     subtest_id: str,
     result: SubTestResult,
+    output_path_json: Path | None = None,
+    output_path_md: Path | None = None,
 ) -> None:
     """Save JSON and markdown reports for a subtest.
 
@@ -91,6 +93,8 @@ def save_subtest_report(
         subtest_dir: Directory for this subtest
         subtest_id: Subtest identifier
         result: SubTestResult with aggregated data
+        output_path_json: Optional custom path for JSON report (defaults to subtest_dir/report.json)
+        output_path_md: Optional custom path for markdown report (defaults to subtest_dir/report.md)
 
     """
     # Build children list with relative paths
@@ -131,7 +135,9 @@ def save_subtest_report(
 
     # Ensure directory exists before writing
     subtest_dir.mkdir(parents=True, exist_ok=True)
-    (subtest_dir / "report.json").write_text(json.dumps(json_report, indent=2))
+    json_path = output_path_json if output_path_json is not None else subtest_dir / "report.json"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(json_report, indent=2))
 
     # Markdown report
     md_lines = [
@@ -319,6 +325,8 @@ def save_tier_report(
     tier_dir: Path,
     tier_id: str,
     result: TierResult,
+    output_path_json: Path | None = None,
+    output_path_md: Path | None = None,
 ) -> None:
     """Save JSON and markdown reports for a tier.
 
@@ -326,6 +334,8 @@ def save_tier_report(
         tier_dir: Directory for this tier
         tier_id: Tier identifier (e.g., "T0")
         result: TierResult with aggregated data
+        output_path_json: Optional custom path for JSON report (defaults to tier_dir/report.json)
+        output_path_md: Optional custom path for markdown report (defaults to tier_dir/report.md)
 
     """
     # Build children list with relative paths
@@ -363,7 +373,9 @@ def save_tier_report(
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    (tier_dir / "report.json").write_text(json.dumps(json_report, indent=2))
+    json_path = output_path_json if output_path_json is not None else tier_dir / "report.json"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(json_report, indent=2))
 
     # Markdown report
     md_lines = [
@@ -456,12 +468,16 @@ def save_tier_report(
 def save_experiment_report(
     experiment_dir: Path,
     result: ExperimentResult,
+    output_path_json: Path | None = None,
+    output_path_md: Path | None = None,
 ) -> None:
     """Save JSON and markdown reports for the entire experiment.
 
     Args:
         experiment_dir: Root experiment directory
         result: ExperimentResult with all data
+        output_path_json: Optional custom path for JSON report (defaults to experiment_dir/report.json)
+        output_path_md: Optional custom path for markdown report (defaults to experiment_dir/report.md)
 
     """
     # Build children list with relative paths
@@ -502,7 +518,9 @@ def save_experiment_report(
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    (experiment_dir / "report.json").write_text(json.dumps(json_report, indent=2))
+    json_path = output_path_json if output_path_json is not None else experiment_dir / "report.json"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(json_report, indent=2))
 
     # Markdown report with enhanced tables
     md_lines = [
