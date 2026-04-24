@@ -1759,14 +1759,6 @@ def cmd_subscribe(args: argparse.Namespace) -> int:
         logger.error("Error loading configuration: %s", exc)
         return 1
 
-    # Guard: DefaultsConfig must expose a .nats field (added by #1505).
-    if not hasattr(defaults, "nats"):
-        logger.error(
-            "DefaultsConfig has no 'nats' field — "
-            "NATS support requires the infrastructure from issue #1505."
-        )
-        return 1
-
     nats_config = defaults.nats
 
     if not nats_config.enabled:

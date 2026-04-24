@@ -111,23 +111,6 @@ class TestCmdSubscribeErrors:
 
         assert result == 1
 
-    def test_missing_nats_attribute_returns_1(self, tmp_path: Path) -> None:
-        """Returns 1 when DefaultsConfig has no .nats attribute."""
-        from manage_experiment import cmd_subscribe
-
-        mock_defaults = MagicMock(spec=[])  # empty spec — no attributes
-
-        mock_loader = MagicMock()
-        mock_loader.load_defaults.return_value = mock_defaults
-
-        parser = build_parser()
-        args = parser.parse_args(["subscribe", "--config-dir", str(tmp_path)])
-
-        with patch("scylla.config.ConfigLoader", return_value=mock_loader):
-            result = cmd_subscribe(args)
-
-        assert result == 1
-
 
 # ---------------------------------------------------------------------------
 # cmd_subscribe — happy path
