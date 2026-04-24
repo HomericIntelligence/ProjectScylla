@@ -3,6 +3,7 @@
 This module provides result writing and report generation capabilities.
 """
 
+from scylla.reporting.html_report import HtmlReportGenerator
 from scylla.reporting.json_report import JsonReportGenerator
 from scylla.reporting.markdown import (
     MarkdownReportGenerator,
@@ -45,6 +46,7 @@ __all__ = [
     "EvaluationReport",
     "ExecutionInfo",
     "GradingInfo",
+    "HtmlReportGenerator",
     "JsonReportGenerator",
     "JudgmentInfo",
     "MarkdownReportGenerator",

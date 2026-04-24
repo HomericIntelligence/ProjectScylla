@@ -13,6 +13,7 @@ from scylla import __version__
 from scylla.config import DEFAULT_JUDGE_MODEL, ConfigLoader
 from scylla.e2e.orchestrator import EvalOrchestrator, OrchestratorConfig
 from scylla.reporting import (
+    HtmlReportGenerator,
     JsonReportGenerator,
     MarkdownReportGenerator,
     ReportData,
@@ -24,11 +25,12 @@ from scylla.reporting import (
 )
 
 # Dict-dispatch mapping format names to generator classes.
-# Adding a new format (e.g. HTML) requires only a new entry here
+# Adding a new format requires only a new entry here
 # and a generator class that satisfies the ReportWriter protocol.
 FORMAT_GENERATORS: dict[str, type[ReportWriter]] = {
-    "markdown": MarkdownReportGenerator,
+    "html": HtmlReportGenerator,
     "json": JsonReportGenerator,
+    "markdown": MarkdownReportGenerator,
 }
 
 
@@ -246,7 +248,7 @@ def _resolve_output_path(output: str | None, base_path: Path) -> tuple[Path, Pat
     output_path = Path(output) if output else None
     resolved: Path | None = None
 
-    if output_path is not None and output_path.suffix in (".md", ".json"):
+    if output_path is not None and output_path.suffix in (".md", ".json", ".html"):
         resolved = output_path
         report_dir = output_path.parent
     elif output_path is not None:
@@ -267,7 +269,7 @@ def _warn_format_extension_mismatch(output: str | None, output_format: str) -> N
     """
     if output is None or output == "-":
         return
-    ext_format: dict[str, str] = {".md": "markdown", ".json": "json"}
+    ext_format: dict[str, str] = {".html": "html", ".md": "markdown", ".json": "json"}
     output_ext = Path(output).suffix.lower()
     implied_format = ext_format.get(output_ext)
     if implied_format is not None and implied_format != output_format:
