@@ -476,8 +476,10 @@ def save_experiment_report(
     Args:
         experiment_dir: Root experiment directory
         result: ExperimentResult with all data
-        output_path_json: Optional custom path for JSON report (defaults to experiment_dir/report.json)
-        output_path_md: Optional custom path for markdown report (defaults to experiment_dir/report.md)
+        output_path_json: Optional custom path for JSON report
+            (defaults to experiment_dir/report.json)
+        output_path_md: Optional custom path for markdown report
+            (defaults to experiment_dir/report.md)
 
     """
     # Build children list with relative paths
