@@ -50,6 +50,14 @@ class RateLimitInfo(BaseModel):
         return self
 
 
+class InfrastructureFailureError(Exception):
+    """Raised when an agent crashes before making any API calls (exit_code=-1, zero tokens).
+
+    Caught at the subtest level in run_tier_subtests_parallel() so the failed
+    run is skipped and the experiment continues with remaining subtests/tiers.
+    """
+
+
 class RateLimitError(Exception):
     """Raised when rate limit is detected from agent or judge.
 
