@@ -130,100 +130,154 @@ class NATSSubscriberThread(threading.Thread):
 
     async def _subscribe_loop(self) -> None:
         """Connect to NATS JetStream and process messages until stop is requested."""
-        try:
-            import nats as nats_client
-        except ImportError:
-            logger.error("nats-py is not installed. Install with: pip install 'scylla[nats]'")
-            # Set stop event so we don't retry endlessly
-            self._stop_event.set()
+        nats_client = self._import_nats()
+        if nats_client is None:
             return
 
         nc = await nats_client.connect(self._config.url)
         try:
             js = nc.jetstream()
-
             subjects = self._config.subjects or ["hi.tasks.>"]
-            subscriptions: list[Any] = []
-            for i, subject in enumerate(subjects):
-                durable = (
-                    self._config.durable_name
-                    if len(subjects) == 1
-                    else f"{self._config.durable_name}-{i}"
-                )
-                try:
-                    sub = await js.subscribe(
-                        subject=subject,
-                        durable=durable,
-                        stream=self._config.stream,
-                        deliver_policy=self._config.deliver_policy,  # type: ignore[arg-type]
-                    )
-                except Exception:
-                    logger.warning(
-                        "Failed to subscribe to subject %r (index %d); "
-                        "unsubscribing %d already-subscribed subject(s) before re-raising",
-                        subject,
-                        i,
-                        len(subscriptions),
-                    )
-                    for prev_sub in subscriptions:
-                        try:
-                            await prev_sub.unsubscribe()
-                        except Exception:
-                            logger.debug("Error unsubscribing during cleanup", exc_info=True)
-                    raise
-                subscriptions.append(sub)
-
+            subscriptions = await self._create_subscriptions(js, subjects)
             logger.info(
                 "Subscribed to %d NATS JetStream subject(s) on stream=%s: %s",
                 len(subscriptions),
                 self._config.stream,
                 subjects,
             )
-
-            # Build initial pending tasks — one next_msg per subscription.
-            # We map each task back to its subscription so completed tasks
-            # can be replaced without cancelling/recreating the rest.
-            pending: dict[asyncio.Task[Any], Any] = {}
-            for sub in subscriptions:
-                task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
-                pending[task] = sub
-
-            while not self._stop_event.is_set() and pending:
-                done, _ = await asyncio.wait(
-                    pending.keys(),
-                    timeout=1.0,
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-
-                if not done:
-                    # All timed out — no messages ready; loop back
-                    continue
-
-                for task in done:
-                    sub = pending.pop(task)
-
-                    try:
-                        msg = task.result()
-                    except (asyncio.TimeoutError, TimeoutError):
-                        # Subscription poll timed out — re-enqueue
-                        new_task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
-                        pending[new_task] = sub
-                        continue
-
-                    await self._dispatch_msg(msg)
-
-                    # Re-enqueue a next_msg task for this subscription
-                    new_task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
-                    pending[new_task] = sub
-
-            # Cancel any remaining pending tasks on shutdown
-            for task in pending:
-                task.cancel()
-            if pending:
-                await asyncio.gather(*pending, return_exceptions=True)
-
+            await self._run_message_loop(subscriptions)
         finally:
             await nc.drain()
+
+    def _import_nats(self) -> Any:
+        """Import nats-py, setting stop event if unavailable.
+
+        Returns:
+            The nats module, or None if not installed.
+
+        """
+        try:
+            import nats as nats_client
+
+            return nats_client
+        except ImportError:
+            logger.error("nats-py is not installed. Install with: pip install 'scylla[nats]'")
+            # Set stop event so we don't retry endlessly
+            self._stop_event.set()
+            return None
+
+    async def _create_subscriptions(self, js: Any, subjects: list[str]) -> list[Any]:
+        """Subscribe to all subjects, rolling back on partial failure.
+
+        Args:
+            js: The JetStream context.
+            subjects: List of subject strings to subscribe to.
+
+        Returns:
+            List of active subscription objects.
+
+        Raises:
+            Exception: Re-raises any subscription error after cleaning up.
+
+        """
+        subscriptions: list[Any] = []
+        for i, subject in enumerate(subjects):
+            durable = (
+                self._config.durable_name
+                if len(subjects) == 1
+                else f"{self._config.durable_name}-{i}"
+            )
+            try:
+                sub = await js.subscribe(
+                    subject=subject,
+                    durable=durable,
+                    stream=self._config.stream,
+                    deliver_policy=self._config.deliver_policy,
+                )
+            except Exception:
+                logger.warning(
+                    "Failed to subscribe to subject %r (index %d); "
+                    "unsubscribing %d already-subscribed subject(s) before re-raising",
+                    subject,
+                    i,
+                    len(subscriptions),
+                )
+                await self._cleanup_subscriptions(subscriptions)
+                raise
+            subscriptions.append(sub)
+        return subscriptions
+
+    async def _cleanup_subscriptions(self, subscriptions: list[Any]) -> None:
+        """Unsubscribe from all subscriptions, logging errors as debug.
+
+        Args:
+            subscriptions: List of subscription objects to unsubscribe.
+
+        """
+        for prev_sub in subscriptions:
+            try:
+                await prev_sub.unsubscribe()
+            except Exception:
+                logger.debug("Error unsubscribing during cleanup", exc_info=True)
+
+    async def _run_message_loop(self, subscriptions: list[Any]) -> None:
+        """Poll subscriptions and dispatch messages until stop is requested.
+
+        Args:
+            subscriptions: Active JetStream subscription objects.
+
+        """
+        # Build initial pending tasks — one next_msg per subscription.
+        # We map each task back to its subscription so completed tasks
+        # can be replaced without cancelling/recreating the rest.
+        pending: dict[asyncio.Task[Any], Any] = {}
+        for sub in subscriptions:
+            task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
+            pending[task] = sub
+
+        while not self._stop_event.is_set() and pending:
+            done, _ = await asyncio.wait(
+                pending.keys(),
+                timeout=1.0,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for task in done:
+                sub = pending.pop(task)
+                await self._handle_task_result(task, sub, pending)
+
+        # Cancel any remaining pending tasks on shutdown
+        for task in pending:
+            task.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
+
+    async def _handle_task_result(
+        self,
+        task: asyncio.Task[Any],
+        sub: Any,
+        pending: dict[asyncio.Task[Any], Any],
+    ) -> None:
+        """Process a completed next_msg task and re-enqueue for the subscription.
+
+        Args:
+            task: The completed asyncio Task.
+            sub: The subscription the task belongs to.
+            pending: Mapping of active tasks to their subscriptions; updated in-place.
+
+        """
+        try:
+            msg = task.result()
+        except (asyncio.TimeoutError, TimeoutError):
+            # Subscription poll timed out — re-enqueue
+            new_task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
+            pending[new_task] = sub
+            return
+
+        await self._dispatch_msg(msg)
+
+        # Re-enqueue a next_msg task for this subscription
+        new_task = asyncio.ensure_future(sub.next_msg(timeout=1.0))
+        pending[new_task] = sub
 
     def stop(self) -> None:
         """Signal the subscriber to stop and wait for the thread to finish."""
