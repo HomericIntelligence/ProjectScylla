@@ -128,6 +128,10 @@ class AsyncAgamemnonClient:
         result: list[dict[str, Any]] = response.json()
         return result
 
+    async def get_diagnostics(self) -> dict[str, Any]:
+        """Return diagnostic information about the client."""
+        raise NotImplementedError  # pragma: no cover
+
     # -- Internal retry logic -------------------------------------------------
 
     async def _request_with_retry(
