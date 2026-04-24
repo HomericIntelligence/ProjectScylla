@@ -336,8 +336,8 @@ def rejudge_missing_runs(  # noqa: C901  # workspace state detection with many f
                             from scylla.e2e.llm_judge import (
                                 _call_claude_judge,
                                 _parse_judge_response,
-                                _save_judge_logs,
                             )
+                            from scylla.e2e.pipeline_scripts import _save_judge_logs
 
                             judge_start = time.time()
 

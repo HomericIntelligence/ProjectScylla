@@ -132,8 +132,9 @@ def stage_execute_judge(ctx: RunContext) -> None:
         return
 
     from scylla.e2e.judge_runner import _compute_judge_consensus, _save_judge_result
-    from scylla.e2e.llm_judge import JudgeResult, _save_judge_logs
+    from scylla.e2e.llm_judge_models import JudgeResult
     from scylla.e2e.models import JudgeResultSummary
+    from scylla.e2e.pipeline_scripts import _save_judge_logs
     from scylla.e2e.rate_limit import RateLimitError
 
     judge_dir = get_judge_dir(ctx.run_dir)

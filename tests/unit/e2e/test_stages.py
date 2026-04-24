@@ -442,7 +442,7 @@ class TestStageCaptureBaseline:
         existing = MagicMock()
         stage_context.pipeline_baseline = existing
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline:
             stage_capture_baseline(stage_context)
 
         mock_pipeline.assert_not_called()
@@ -454,7 +454,7 @@ class TestStageCaptureBaseline:
         Checks that if pipeline_baseline.json exists at experiment level, it is loaded
         instead of running the pipeline again.
         """
-        from scylla.e2e.llm_judge import BuildPipelineResult
+        from scylla.e2e.llm_judge_models import BuildPipelineResult
 
         # experiment_dir is the preferred location for the baseline
         assert stage_context.experiment_dir is not None
@@ -472,7 +472,7 @@ class TestStageCaptureBaseline:
             json.dumps(baseline_data.model_dump())
         )
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline:
             stage_capture_baseline(stage_context)
 
         mock_pipeline.assert_not_called()
@@ -481,7 +481,7 @@ class TestStageCaptureBaseline:
 
     def test_loads_from_subtest_dir_as_backward_compat(self, stage_context: RunContext) -> None:
         """If no experiment-level baseline but subtest-level exists, loads it (backward compat)."""
-        from scylla.e2e.llm_judge import BuildPipelineResult
+        from scylla.e2e.llm_judge_models import BuildPipelineResult
 
         # Ensure experiment_dir has NO baseline (simulate old checkpoint)
         assert stage_context.experiment_dir is not None
@@ -500,7 +500,7 @@ class TestStageCaptureBaseline:
         )
         (subtest_dir / "pipeline_baseline.json").write_text(json.dumps(baseline_data.model_dump()))
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline:
             stage_capture_baseline(stage_context)
 
         mock_pipeline.assert_not_called()
@@ -509,7 +509,7 @@ class TestStageCaptureBaseline:
 
     def test_runs_pipeline_and_saves_if_not_cached(self, stage_context: RunContext) -> None:
         """If no cached baseline anywhere, runs pipeline and saves to subtest dir."""
-        from scylla.e2e.llm_judge import BuildPipelineResult
+        from scylla.e2e.llm_judge_models import BuildPipelineResult
 
         mock_result = BuildPipelineResult(
             language="python",
@@ -525,7 +525,7 @@ class TestStageCaptureBaseline:
         subtest_dir = stage_context.run_dir.parent
         subtest_dir.mkdir(parents=True, exist_ok=True)
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline", return_value=mock_result):
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline", return_value=mock_result):
             stage_capture_baseline(stage_context)
 
         assert stage_context.pipeline_baseline is mock_result
@@ -714,14 +714,14 @@ class TestStageRunJudgePipeline:
         """If judgment already loaded (resume), pipeline is skipped."""
         stage_context.judgment = {"score": 0.9, "passed": True, "grade": "A", "reasoning": "ok"}
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline:
             stage_run_judge_pipeline(stage_context)
 
         mock_pipeline.assert_not_called()
 
     def test_runs_pipeline_and_sets_result(self, stage_context: RunContext) -> None:
         """stage_run_judge_pipeline runs pipeline and stores result."""
-        from scylla.e2e.llm_judge import BuildPipelineResult
+        from scylla.e2e.llm_judge_models import BuildPipelineResult
 
         mock_result = BuildPipelineResult(
             language="python",
@@ -733,9 +733,9 @@ class TestStageRunJudgePipeline:
         )
         stage_context.diff_result = {"workspace_state": "", "patchfile": "", "deleted_files": []}
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline", return_value=mock_result):
-            with patch("scylla.e2e.llm_judge._save_pipeline_commands"):
-                with patch("scylla.e2e.llm_judge._save_pipeline_outputs"):
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline", return_value=mock_result):
+            with patch("scylla.e2e.pipeline_scripts._save_pipeline_commands"):
+                with patch("scylla.e2e.pipeline_scripts._save_pipeline_outputs"):
                     stage_run_judge_pipeline(stage_context)
 
         assert stage_context.judge_pipeline_result is mock_result
@@ -793,7 +793,7 @@ class TestStageExecuteJudge:
     def test_runs_judge_and_saves_result(self, stage_context: RunContext) -> None:
         """stage_execute_judge calls Claude judge and persists results to disk."""
         from scylla.adapters.base import AdapterResult, AdapterTokenStats
-        from scylla.e2e.llm_judge import JudgeResult
+        from scylla.e2e.llm_judge_models import JudgeResult
 
         stage_context.agent_result = AdapterResult(
             exit_code=0,
@@ -819,7 +819,7 @@ class TestStageExecuteJudge:
             with patch(
                 "scylla.e2e.llm_judge._parse_judge_response", return_value=mock_judge_result
             ):
-                with patch("scylla.e2e.llm_judge._save_judge_logs"):
+                with patch("scylla.e2e.pipeline_scripts._save_judge_logs"):
                     with patch("scylla.e2e.judge_runner._save_judge_result"):
                         stage_execute_judge(stage_context)
 

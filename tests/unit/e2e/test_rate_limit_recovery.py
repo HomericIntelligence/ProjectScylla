@@ -6,10 +6,8 @@ import json
 from pathlib import Path
 
 from scylla.e2e.models import SubTestResult, TierID
+from scylla.e2e.parallel_executor import _detect_rate_limit_from_results
 from scylla.e2e.rate_limit import RateLimitInfo
-from scylla.e2e.subtest_executor import (
-    _detect_rate_limit_from_results,
-)
 
 
 class TestDetectRateLimitFromResults:

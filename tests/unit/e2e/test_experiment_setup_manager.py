@@ -225,7 +225,7 @@ class TestCaptureBaseline:
         workspace_manager = MagicMock()
 
         with (
-            patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline,
+            patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline,
             patch("scylla.e2e.subtest_executor._save_pipeline_baseline"),
         ):
             mock_result = MagicMock()
@@ -246,7 +246,7 @@ class TestCaptureBaseline:
         workspace_manager = MagicMock()
 
         with (
-            patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline,
+            patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline,
             patch("scylla.e2e.subtest_executor._save_pipeline_baseline"),
         ):
             mock_result = MagicMock()
@@ -266,7 +266,7 @@ class TestCaptureBaseline:
 
         workspace_manager = MagicMock()
 
-        with patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline:
+        with patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline:
             mock_pipeline.side_effect = RuntimeError("build failed")
 
             # Should NOT propagate — baseline capture is non-critical
@@ -284,7 +284,7 @@ class TestCaptureBaseline:
         workspace_manager = MagicMock()
 
         with (
-            patch("scylla.e2e.llm_judge._run_build_pipeline") as mock_pipeline,
+            patch("scylla.e2e.build_pipeline._run_build_pipeline") as mock_pipeline,
             patch("scylla.e2e.subtest_executor._save_pipeline_baseline"),
         ):
             mock_result = MagicMock()

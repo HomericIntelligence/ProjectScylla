@@ -12,25 +12,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scylla.e2e.llm_judge import (
-    BuildPipelineResult,
-    JudgeResult,
-    _call_claude_judge,
-    _create_mojo_build_script,
-    _create_mojo_format_script,
-    _create_mojo_scripts,
-    _create_mojo_test_script,
-    _create_precommit_script,
-    _create_python_scripts,
-    _create_run_all_script,
+from scylla.e2e.build_pipeline import (
     _execute_python_scripts,
-    _gather_judge_context,
-    _get_deleted_files,
-    _get_patchfile,
     _get_pipeline_env,
-    _get_workspace_state,
-    _load_reference_patch,
-    _parse_judge_response,
     _run_build_pipeline,
     _run_mojo_build_step,
     _run_mojo_format_step,
@@ -41,10 +25,29 @@ from scylla.e2e.llm_judge import (
     _run_python_format_step,
     _run_python_pipeline,
     _run_python_test_step,
+)
+from scylla.e2e.llm_judge import (
+    _call_claude_judge,
+    _gather_judge_context,
+    _get_deleted_files,
+    _get_patchfile,
+    _get_workspace_state,
+    _load_reference_patch,
+    _parse_judge_response,
+    run_llm_judge,
+)
+from scylla.e2e.llm_judge_models import BuildPipelineResult, JudgeResult
+from scylla.e2e.pipeline_scripts import (
+    _create_mojo_build_script,
+    _create_mojo_format_script,
+    _create_mojo_scripts,
+    _create_mojo_test_script,
+    _create_precommit_script,
+    _create_python_scripts,
+    _create_run_all_script,
     _save_judge_logs,
     _save_pipeline_commands,
     _save_pipeline_outputs,
-    run_llm_judge,
 )
 from scylla.e2e.rate_limit import RateLimitError
 
@@ -1059,7 +1062,7 @@ class TestRunLlmJudge:
         ):
             with patch("scylla.e2e.llm_judge._get_deleted_files", return_value=[]):
                 with patch(
-                    "scylla.e2e.llm_judge._run_build_pipeline",
+                    "scylla.e2e.build_pipeline._run_build_pipeline",
                     return_value=mock_pipeline_result,
                 ):
                     with patch("scylla.e2e.llm_judge._call_claude_judge") as mock_judge:
@@ -1121,7 +1124,7 @@ class TestRunLlmJudge:
             with patch("scylla.e2e.llm_judge._get_patchfile", return_value="(no changes)"):
                 with patch("scylla.e2e.llm_judge._get_deleted_files", return_value=[]):
                     with patch(
-                        "scylla.e2e.llm_judge._run_build_pipeline",
+                        "scylla.e2e.build_pipeline._run_build_pipeline",
                         return_value=mock_pipeline_result,
                     ):
                         with patch("scylla.e2e.llm_judge._call_claude_judge") as mock_judge:

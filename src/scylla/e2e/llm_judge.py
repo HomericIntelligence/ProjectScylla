@@ -21,97 +21,10 @@ from typing import Any
 from hephaestus.resilience.circuit_breaker import get_circuit_breaker
 
 from scylla.config.constants import DEFAULT_JUDGE_MODEL
-
-# Re-export build pipeline functions for backward compatibility
-from scylla.e2e.build_pipeline import (
-    _execute_python_scripts as _execute_python_scripts,
-)
-from scylla.e2e.build_pipeline import (
-    _format_pipeline_result as _format_pipeline_result,
-)
-from scylla.e2e.build_pipeline import (
-    _get_pipeline_env as _get_pipeline_env,
-)
-from scylla.e2e.build_pipeline import (
-    _is_modular_repo as _is_modular_repo,
-)
-from scylla.e2e.build_pipeline import (
-    _run_and_log_pipeline as _run_and_log_pipeline,
-)
-from scylla.e2e.build_pipeline import (
-    _run_build_pipeline as _run_build_pipeline,
-)
-from scylla.e2e.build_pipeline import (
-    _run_mojo_build_step as _run_mojo_build_step,
-)
-from scylla.e2e.build_pipeline import (
-    _run_mojo_format_step as _run_mojo_format_step,
-)
-from scylla.e2e.build_pipeline import (
-    _run_mojo_pipeline as _run_mojo_pipeline,
-)
-from scylla.e2e.build_pipeline import (
-    _run_mojo_test_step as _run_mojo_test_step,
-)
-from scylla.e2e.build_pipeline import (
-    _run_precommit_step as _run_precommit_step,
-)
-from scylla.e2e.build_pipeline import (
-    _run_python_build_step as _run_python_build_step,
-)
-from scylla.e2e.build_pipeline import (
-    _run_python_format_step as _run_python_format_step,
-)
-from scylla.e2e.build_pipeline import (
-    _run_python_pipeline as _run_python_pipeline,
-)
-from scylla.e2e.build_pipeline import (
-    _run_python_test_step as _run_python_test_step,
-)
+from scylla.e2e.build_pipeline import _format_pipeline_result, _run_and_log_pipeline
 from scylla.e2e.filters import is_test_config_file
-
-# Re-export models for backward compatibility
-from scylla.e2e.llm_judge_models import (
-    BuildPipelineResult as BuildPipelineResult,
-)
-from scylla.e2e.llm_judge_models import (
-    JudgeResult as JudgeResult,
-)
-from scylla.e2e.llm_judge_models import (
-    _score_to_grade as _score_to_grade,
-)
-
-# Re-export pipeline script functions for backward compatibility
-from scylla.e2e.pipeline_scripts import (
-    _create_mojo_build_script as _create_mojo_build_script,
-)
-from scylla.e2e.pipeline_scripts import (
-    _create_mojo_format_script as _create_mojo_format_script,
-)
-from scylla.e2e.pipeline_scripts import (
-    _create_mojo_scripts as _create_mojo_scripts,
-)
-from scylla.e2e.pipeline_scripts import (
-    _create_mojo_test_script as _create_mojo_test_script,
-)
-from scylla.e2e.pipeline_scripts import (
-    _create_precommit_script as _create_precommit_script,
-)
-from scylla.e2e.pipeline_scripts import (
-    _create_python_scripts as _create_python_scripts,
-)
-from scylla.e2e.pipeline_scripts import (
-    _create_run_all_script as _create_run_all_script,
-)
-from scylla.e2e.pipeline_scripts import (
-    _save_judge_logs as _save_judge_logs,
-)
-from scylla.e2e.pipeline_scripts import (
-    _save_pipeline_commands as _save_pipeline_commands,
-)
-from scylla.e2e.pipeline_scripts import (
-    _save_pipeline_outputs as _save_pipeline_outputs,
-)
+from scylla.e2e.llm_judge_models import BuildPipelineResult, JudgeResult, _score_to_grade
+from scylla.e2e.pipeline_scripts import _save_judge_logs
 from scylla.judge import extract_json_from_llm_response
 from scylla.judge.prompts import JUDGE_SYSTEM_PROMPT_FILE, build_task_prompt
 

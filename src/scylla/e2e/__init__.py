@@ -21,7 +21,8 @@ from scylla.e2e.checkpoint import (
     save_checkpoint,
     validate_checkpoint_config,
 )
-from scylla.e2e.llm_judge import JudgeResult, run_llm_judge
+from scylla.e2e.llm_judge import run_llm_judge
+from scylla.e2e.llm_judge_models import JudgeResult
 from scylla.e2e.models import (
     E2ERunResult,
     ExperimentConfig,
