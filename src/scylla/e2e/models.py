@@ -916,6 +916,8 @@ class ExperimentConfig(BaseModel):
     off_peak: bool = False  # Wait for off-peak hours before each subtest run
     # Failure injection configuration
     agamemnon: AgamemnonConfig = Field(default_factory=AgamemnonConfig)
+    # Agamemnon failure injection (ephemeral, not saved to experiment.json)
+    agamemnon_url: str | None = None  # Base URL for Agamemnon chaos service
 
     @field_validator("models", mode="before")
     @classmethod
