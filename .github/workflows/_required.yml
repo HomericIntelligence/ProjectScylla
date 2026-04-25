@@ -209,7 +209,7 @@ jobs:
           retention-days: 7
 
   # ── 4. security/dependency-scan ────────────────────────────────────────────
-  security/dependency-scan:
+  security-dependency-scan:
     name: security/dependency-scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -242,7 +242,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ── 5. security/secrets-scan ───────────────────────────────────────────────
-  security/secrets-scan:
+  security-secrets-scan:
     name: security/secrets-scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -343,7 +343,7 @@ jobs:
           done
 
   # ── 9. deps/version-sync ───────────────────────────────────────────────────
-  deps/version-sync:
+  deps-version-sync:
     name: deps/version-sync
     runs-on: ubuntu-latest
     timeout-minutes: 10
