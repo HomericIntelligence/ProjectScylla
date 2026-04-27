@@ -265,7 +265,11 @@ def table05_cost_analysis(runs_df: pd.DataFrame) -> tuple[str, str]:
             else "--"
         )
 
-        tier_str = r"\textbf{Total}" if row["Tier"] == "**Total**" else row["Tier"]
+        tier_str = (
+            r"\textbf{Total}"
+            if row["Tier"] == "**Total**"
+            else row["Tier"]
+        )
 
         latex_lines.append(
             f"{row['Model']} & {tier_str} & {row['Mean Cost']:{_FMT_COST}} & "
