@@ -10,13 +10,13 @@
 | claude-haiku-4-5 | T1 | Cost (USD) | 90 | 0.8231 | 0.0000 | No |
 | claude-haiku-4-5 | T2 | Score | 135 | 0.9056 | 0.0000 | No |
 | claude-haiku-4-5 | T2 | Cost (USD) | 135 | 0.8285 | 0.0000 | No |
-| claude-haiku-4-5 | T3 | Score | 369 | 0.7985 | 0.0000 | No |
-| claude-haiku-4-5 | T3 | Cost (USD) | 369 | 0.8184 | 0.0000 | No |
-| claude-haiku-4-5 | T4 | Score | 126 | 0.8132 | 0.0000 | No |
-| claude-haiku-4-5 | T4 | Cost (USD) | 126 | 0.8251 | 0.0000 | No |
-| claude-haiku-4-5 | T5 | Score | 135 | 0.8074 | 0.0000 | No |
-| claude-haiku-4-5 | T5 | Cost (USD) | 135 | 0.8938 | 0.0000 | No |
-| claude-haiku-4-5 | T6 | Score | 9 | 0.8072 | 0.0247 | No |
-| claude-haiku-4-5 | T6 | Cost (USD) | 9 | 0.7816 | 0.0126 | No |
+| claude-haiku-4-5 | T3 | Score | 369 | 0.8704 | 0.0000 | No |
+| claude-haiku-4-5 | T3 | Cost (USD) | 369 | 0.8153 | 0.0000 | No |
+| claude-haiku-4-5 | T4 | Score | 126 | 0.8600 | 0.0000 | No |
+| claude-haiku-4-5 | T4 | Cost (USD) | 126 | 0.8248 | 0.0000 | No |
+| claude-haiku-4-5 | T5 | Score | 135 | 0.8722 | 0.0000 | No |
+| claude-haiku-4-5 | T5 | Cost (USD) | 135 | 0.8934 | 0.0000 | No |
+| claude-haiku-4-5 | T6 | Score | 9 | 0.8260 | 0.0403 | No |
+| claude-haiku-4-5 | T6 | Cost (USD) | 9 | 0.8469 | 0.0689 | Yes |
 
-**Summary**: 0/14 (0.0%) distributions pass normality test
+**Summary**: 1/14 (7.1%) distributions pass normality test

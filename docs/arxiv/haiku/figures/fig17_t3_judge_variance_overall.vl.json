@@ -28,7 +28,7 @@
   "hconcat": [
     {
       "data": {
-        "name": "data-c2559516511f04e5a50d9f4e21378336"
+        "name": "data-d4d94d11ae0d2e25e6a2356850d79e9d"
       },
       "mark": {
         "type": "boxplot",
@@ -80,7 +80,7 @@
     },
     {
       "data": {
-        "name": "data-3753170a4a165cd8343b6abfe371e490"
+        "name": "data-76b5f23e78a978fd1b8a7616a8f64237"
       },
       "mark": {
         "type": "bar"
@@ -145,71 +145,35 @@
   "title": "Judge Variance - T3",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-c2559516511f04e5a50d9f4e21378336": [
+    "data-d4d94d11ae0d2e25e6a2356850d79e9d": [
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.91,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
         "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.92,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.91,
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
         "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.91,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.8964,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.92,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.92,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9036,
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -221,103 +185,13 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.81,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.88,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
         "judge_score": 0.93,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.95,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
         "judge_score": 0.91,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.94,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.89,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.93,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.8964,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -329,13 +203,13 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
+        "judge_score": 0.95,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9236,
+        "judge_score": 0.936,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -347,7 +221,7 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
+        "judge_score": 0.95,
         "judge_display": "claude-opus-4-6"
       },
       {
@@ -359,37 +233,19 @@
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
+        "judge_score": 0.96,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
+        "judge_score": 0.89,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.8929,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.95,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9036,
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -400,32 +256,20 @@
       },
       {
         "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.91,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.82,
+        "judge_score": 0.93,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9036,
+        "judge_score": 0.936,
         "judge_display": "claude-sonnet-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
+        "judge_score": 0.92,
         "judge_display": "claude-haiku-4-5"
       },
       {
@@ -437,152 +281,20 @@
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9036,
+        "judge_score": 0.929,
         "judge_display": "claude-sonnet-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
+        "judge_score": 0.92,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.82,
+        "judge_score": 0.92,
         "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.8971,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.897,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.891,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.88,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.91,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.91,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.88,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.82,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9206,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9286,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 1.0,
-        "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
@@ -611,19 +323,37 @@
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
+        "judge_score": 0.91,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
+        "judge_score": 0.9,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9236,
+        "judge_score": 0.91,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -635,13 +365,283 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.88,
+        "judge_score": 0.93,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9143,
+        "judge_score": 0.934,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.946,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9545,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.985,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -659,7 +659,7 @@
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9136,
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -671,7 +671,259 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
         "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.9,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9286,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9514,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9382,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.85,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9357,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.94,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
         "judge_display": "claude-opus-4-6"
       },
       {
@@ -689,61 +941,7 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.87,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9214,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.78,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.884,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
         "judge_score": 0.92,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.95,
-        "judge_display": "claude-opus-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.8786,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.85,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.78,
         "judge_display": "claude-opus-4-6"
       },
       {
@@ -755,49 +953,37 @@
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
+        "judge_score": 0.93,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
-        "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.88,
-        "judge_display": "claude-sonnet-4-6"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-haiku-4-5",
+        "judge_model": "claude-opus-4-6",
         "judge_score": 0.92,
-        "judge_display": "claude-haiku-4-5"
-      },
-      {
-        "tier": "T3",
-        "judge_model": "claude-opus-4-6",
-        "judge_score": 0.83,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.91,
+        "judge_score": 0.9314,
         "judge_display": "claude-sonnet-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.85,
+        "judge_score": 0.91,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
+        "judge_score": 0.92,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.89,
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -821,19 +1007,73 @@
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.88,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
         "judge_score": 0.94,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.81,
+        "judge_score": 0.93,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9286,
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -845,13 +1085,49 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
+        "judge_score": 0.92,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9036,
+        "judge_score": 0.9236,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.91,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
@@ -863,25 +1139,25 @@
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.89,
+        "judge_score": 0.95,
         "judge_display": "claude-opus-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-sonnet-4-6",
-        "judge_score": 0.9071,
+        "judge_score": 0.93,
         "judge_display": "claude-sonnet-4-6"
       },
       {
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
-        "judge_score": 0.95,
+        "judge_score": 0.96,
         "judge_display": "claude-haiku-4-5"
       },
       {
         "tier": "T3",
         "judge_model": "claude-opus-4-6",
-        "judge_score": 0.72,
+        "judge_score": 0.95,
         "judge_display": "claude-opus-4-6"
       },
       {
@@ -894,6 +1170,1194 @@
         "tier": "T3",
         "judge_model": "claude-haiku-4-5",
         "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.96,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.936,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.91,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.89,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.943,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.97,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9286,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.89,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.936,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.951,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.91,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.953,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.91,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9545,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.87,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9206,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.85,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.941,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9286,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.936,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.85,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.946,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.96,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.936,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.94,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.87,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9386,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.95,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.9286,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.88,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.936,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.96,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.91,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.95,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.88,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.89,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.92,
+        "judge_display": "claude-haiku-4-5"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-opus-4-6",
+        "judge_score": 0.92,
+        "judge_display": "claude-opus-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-sonnet-4-6",
+        "judge_score": 0.93,
+        "judge_display": "claude-sonnet-4-6"
+      },
+      {
+        "tier": "T3",
+        "judge_model": "claude-haiku-4-5",
+        "judge_score": 0.93,
         "judge_display": "claude-haiku-4-5"
       },
       {
@@ -5313,18 +6777,18 @@
         "judge_display": "claude-haiku-4-5"
       }
     ],
-    "data-3753170a4a165cd8343b6abfe371e490": [
+    "data-76b5f23e78a978fd1b8a7616a8f64237": [
       {
         "judge_display": "claude-haiku-4-5",
-        "score_std": 0.3641602801719875
+        "score_std": 0.34683843294169836
       },
       {
         "judge_display": "claude-opus-4-6",
-        "score_std": 0.10147112999746888
+        "score_std": 0.09942151418938683
       },
       {
         "judge_display": "claude-sonnet-4-6",
-        "score_std": 0.13823112559167447
+        "score_std": 0.12378265788789733
       }
     ]
   }

@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-6028b300f07704c26619e82152866ba2"
+    "name": "data-083fc15a6d4ca7f10d0b5cdb8f3c1153"
   },
   "mark": {
     "type": "circle",
@@ -73,11 +73,11 @@
   "title": "Task Complexity vs Tier Differentiation",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-6028b300f07704c26619e82152866ba2": [
+    "data-083fc15a6d4ca7f10d0b5cdb8f3c1153": [
       {
         "experiment": "test-001",
-        "mean_pass_rate": 0.47256097560975613,
-        "tier_std": 0.4962226080589727
+        "mean_pass_rate": 0.9940476190476192,
+        "tier_std": 0.015748519708717757
       },
       {
         "experiment": "test-002",
