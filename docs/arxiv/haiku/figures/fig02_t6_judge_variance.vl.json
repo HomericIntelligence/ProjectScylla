@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-6d31c2b50cbfbffb9f38bda97e8dd7dc"
+    "name": "data-b6e8019c4fcde65d07d2a8cb055f24e1"
   },
   "mark": {
     "type": "bar"
@@ -51,7 +51,43 @@
   "width": 400,
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-6d31c2b50cbfbffb9f38bda97e8dd7dc": [
+    "data-b6e8019c4fcde65d07d2a8cb055f24e1": [
+      {
+        "tier": "T6",
+        "judge_score": 0.91
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.934
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.92
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.94
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.95
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.886
+      },
+      {
+        "tier": "T6",
+        "judge_score": 0.93
+      },
       {
         "tier": "T6",
         "judge_score": 0.72

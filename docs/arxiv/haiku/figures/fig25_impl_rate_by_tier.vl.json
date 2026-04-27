@@ -104,7 +104,7 @@
           "field": "impl_rate",
           "scale": {
             "domain": [
-              0.8,
+              0.8500000000000001,
               0.9500000000000001
             ]
           },
@@ -147,14 +147,14 @@
     }
   ],
   "data": {
-    "name": "data-a57a563987859c43bc29896cff833ffe"
+    "name": "data-bf0c5c6b64b00085c99dc45d9ec99b4a"
   },
   "height": 300,
   "title": "Implementation Rate by Tier (95% Bootstrap CI)",
   "width": 400,
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-a57a563987859c43bc29896cff833ffe": [
+    "data-bf0c5c6b64b00085c99dc45d9ec99b4a": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -186,37 +186,37 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "tier_label": "T3 (n=41)",
-        "impl_rate": 0.8822176612942892,
-        "ci_low": 0.8662741966722952,
-        "ci_high": 0.8943018767754238,
-        "n": 289
+        "impl_rate": 0.9079996018466816,
+        "ci_low": 0.8947515246179141,
+        "ci_high": 0.9181587548149743,
+        "n": 369
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "tier_label": "T4 (n=14)",
-        "impl_rate": 0.8769929397226154,
-        "ci_low": 0.8547983274669518,
-        "ci_high": 0.8991776723316514,
-        "n": 83
+        "impl_rate": 0.9147645024520071,
+        "ci_low": 0.896218866476546,
+        "ci_high": 0.9314637423545757,
+        "n": 125
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "tier_label": "T5 (n=15)",
-        "impl_rate": 0.8486139104061304,
-        "ci_low": 0.8063548861487823,
-        "ci_high": 0.875267441405297,
-        "n": 90
+        "impl_rate": 0.8944281458854879,
+        "ci_low": 0.862195508630964,
+        "ci_high": 0.9139312163279172,
+        "n": 135
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "tier_label": "T6 (n=1)",
-        "impl_rate": 0.8761480349715643,
-        "ci_low": 0.8444677871148458,
-        "ci_high": 0.9481352153084619,
-        "n": 6
+        "impl_rate": 0.913146309028662,
+        "ci_low": 0.8669467787114846,
+        "ci_high": 0.9604623328676145,
+        "n": 9
       }
     ]
   }

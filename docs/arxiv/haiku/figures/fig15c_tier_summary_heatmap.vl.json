@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-7ffe71aad2a635574b6ca88afc4ed217"
+    "name": "data-fb12a5dd7e3292c9d686a0881e474b9b"
   },
   "facet": {
     "column": {
@@ -109,7 +109,7 @@
   "title": "Tier Summary (Mean Across Subtests)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-7ffe71aad2a635574b6ca88afc4ed217": [
+    "data-fb12a5dd7e3292c9d686a0881e474b9b": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -168,73 +168,73 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "run_number": 1,
-        "score": 0.6133157181571816
+        "score": 0.8128436314363143
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "run_number": 2,
-        "score": 0.6008943089430894
+        "score": 0.8065552845528455
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "run_number": 3,
-        "score": 0.615969647696477
+        "score": 0.8217029810298103
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "run_number": 1,
-        "score": 0.5258928571428572
+        "score": 0.8344642857142857
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "run_number": 2,
-        "score": 0.48898412698412697
+        "score": 0.7978801587301587
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "run_number": 3,
-        "score": 0.5191507936507936
+        "score": 0.8288730158730159
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "run_number": 1,
-        "score": 0.5251629629629629
+        "score": 0.8364266666666668
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "run_number": 2,
-        "score": 0.5201777777777778
+        "score": 0.8295762962962964
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "run_number": 3,
-        "score": 0.47785925925925926
+        "score": 0.7874133333333333
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "run_number": 1,
-        "score": 0.5461111111111111
+        "score": 0.8565555555555555
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "run_number": 2,
-        "score": 0.5705555555555555
+        "score": 0.8827777777777778
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "run_number": 3,
-        "score": 0.4383333333333333
+        "score": 0.7456666666666667
       }
     ]
   }

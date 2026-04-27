@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-4ef8b708ecd771874f8fd8625a5d231a"
+    "name": "data-1c96562ca590ce6cf1811d31fb88cc0e"
   },
   "facet": {
     "column": {
@@ -117,7 +117,7 @@
   "title": "Implementation Rate vs Pass-Rate per Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-4ef8b708ecd771874f8fd8625a5d231a": [
+    "data-1c96562ca590ce6cf1811d31fb88cc0e": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -158,49 +158,49 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "metric": "Impl-Rate",
-        "value": 0.8822176612942892
+        "value": 0.9079996018466816
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "metric": "Pass-Rate",
-        "value": 0.7588075880758808
+        "value": 0.975609756097561
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "metric": "Impl-Rate",
-        "value": 0.8769929397226156
+        "value": 0.9147645024520071
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "metric": "Pass-Rate",
-        "value": 0.6428571428571429
+        "value": 0.9761904761904762
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "metric": "Impl-Rate",
-        "value": 0.8486139104061305
+        "value": 0.8944281458854879
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "metric": "Pass-Rate",
-        "value": 0.6296296296296297
+        "value": 0.9629629629629629
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "metric": "Impl-Rate",
-        "value": 0.8761480349715643
+        "value": 0.913146309028662
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "metric": "Pass-Rate",
-        "value": 0.6666666666666666
+        "value": 1.0
       }
     ]
   }

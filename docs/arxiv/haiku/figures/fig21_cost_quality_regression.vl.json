@@ -29,7 +29,7 @@
   "layer": [
     {
       "data": {
-        "name": "data-b3e3b8c9e57c7eb7cfe66ab9c3c80ab5"
+        "name": "data-51e9da34506bba69da3fcd8b7b7cd547"
       },
       "mark": {
         "type": "circle",
@@ -89,7 +89,7 @@
           "scale": {
             "domain": [
               0.05,
-              0.9500000000000001
+              1.0
             ]
           },
           "title": "Mean Score per Subtest",
@@ -99,7 +99,7 @@
     },
     {
       "data": {
-        "name": "data-f62a8feae72c2675fd4041e86aaa79b2"
+        "name": "data-dbad3bc185cfe7558335c034f0938a1f"
       },
       "mark": {
         "type": "line",
@@ -130,7 +130,7 @@
     },
     {
       "data": {
-        "name": "data-aa8292fd3dd619ac1ce79a13187a800e"
+        "name": "data-9d12b3e75cd58743545c9471ed17c1e9"
       },
       "mark": {
         "type": "text",
@@ -168,7 +168,7 @@
   "title": "Cost vs Quality Regression (Subtest Level)",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-b3e3b8c9e57c7eb7cfe66ab9c3c80ab5": [
+    "data-51e9da34506bba69da3fcd8b7b7cd547": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -516,520 +516,520 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "01",
-        "mean_cost": 0.12729006666666665,
-        "mean_score": 0.8437555555555556
+        "mean_cost": 0.12657480555555556,
+        "mean_score": 0.8483333333333333
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "02",
-        "mean_cost": 0.10238748333333333,
-        "mean_score": 0.816874074074074
+        "mean_cost": 0.10332917222222221,
+        "mean_score": 0.8262222222222222
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "03",
-        "mean_cost": 0.11341109444444444,
-        "mean_score": 0.8455370370370371
+        "mean_cost": 0.11293436666666667,
+        "mean_score": 0.8497444444444445
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "04",
-        "mean_cost": 0.12715118333333333,
-        "mean_score": 0.7555925925925925
+        "mean_cost": 0.12675208333333335,
+        "mean_score": 0.7574444444444445
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "05",
-        "mean_cost": 0.1118271888888889,
-        "mean_score": 0.8157962962962962
+        "mean_cost": 0.11325537777777778,
+        "mean_score": 0.8207407407407408
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "06",
-        "mean_cost": 0.11119607777777778,
-        "mean_score": 0.8447888888888888
+        "mean_cost": 0.11452242777777778,
+        "mean_score": 0.8540555555555556
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "07",
-        "mean_cost": 0.10128107777777778,
-        "mean_score": 0.8609814814814816
+        "mean_cost": 0.10173069444444444,
+        "mean_score": 0.8667777777777778
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "08",
-        "mean_cost": 0.12109757222222223,
-        "mean_score": 0.7436518518518518
+        "mean_cost": 0.12188122777777778,
+        "mean_score": 0.7551111111111111
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "09",
-        "mean_cost": 0.1079131888888889,
-        "mean_score": 0.845574074074074
+        "mean_cost": 0.11129133333333334,
+        "mean_score": 0.8457037037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "10",
-        "mean_cost": 0.1009816,
-        "mean_score": 0.8203333333333334
+        "mean_cost": 0.10285997222222222,
+        "mean_score": 0.8243518518518518
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "11",
-        "mean_cost": 0.11089386111111112,
-        "mean_score": 0.8034814814814815
+        "mean_cost": 0.11149787222222224,
+        "mean_score": 0.8092592592592592
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "12",
-        "mean_cost": 0.11153600000000001,
-        "mean_score": 0.8028740740740741
+        "mean_cost": 0.11109706666666669,
+        "mean_score": 0.818111111111111
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "13",
-        "mean_cost": 0.1234029,
-        "mean_score": 0.7382592592592592
+        "mean_cost": 0.12343196111111111,
+        "mean_score": 0.7473037037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "14",
-        "mean_cost": 0.10657028888888889,
-        "mean_score": 0.7988629629629629
+        "mean_cost": 0.10638896666666667,
+        "mean_score": 0.8102111111111111
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "15",
-        "mean_cost": 0.09781313888888889,
-        "mean_score": 0.620925925925926
+        "mean_cost": 0.09870537777777777,
+        "mean_score": 0.8353185185185186
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "16",
-        "mean_cost": 0.09723022777777778,
-        "mean_score": 0.5211851851851852
+        "mean_cost": 0.09738773333333334,
+        "mean_score": 0.8306444444444444
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "17",
-        "mean_cost": 0.13232671111111113,
-        "mean_score": 0.5307407407407407
+        "mean_cost": 0.1318634277777778,
+        "mean_score": 0.8396296296296296
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "18",
-        "mean_cost": 0.11038279444444445,
-        "mean_score": 0.5523703703703704
+        "mean_cost": 0.11256157222222221,
+        "mean_score": 0.8606518518518518
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "19",
-        "mean_cost": 0.10444475,
-        "mean_score": 0.575
+        "mean_cost": 0.10393182777777778,
+        "mean_score": 0.8879629629629631
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "20",
-        "mean_cost": 0.11880627222222222,
-        "mean_score": 0.49942592592592594
+        "mean_cost": 0.1173265111111111,
+        "mean_score": 0.8066851851851852
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "21",
-        "mean_cost": 0.11321855555555554,
-        "mean_score": 0.5508148148148149
+        "mean_cost": 0.11239703888888888,
+        "mean_score": 0.8568518518518519
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "22",
-        "mean_cost": 0.103309,
-        "mean_score": 0.47281481481481485
+        "mean_cost": 0.10401228333333333,
+        "mean_score": 0.7820222222222222
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "23",
-        "mean_cost": 0.12132971111111113,
-        "mean_score": 0.48840740740740746
+        "mean_cost": 0.12248099444444446,
+        "mean_score": 0.7989999999999999
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "24",
-        "mean_cost": 0.11453132777777777,
-        "mean_score": 0.5566666666666666
+        "mean_cost": 0.11427636111111111,
+        "mean_score": 0.8651851851851852
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "25",
-        "mean_cost": 0.10980055,
-        "mean_score": 0.5077962962962963
+        "mean_cost": 0.11175001666666666,
+        "mean_score": 0.8174259259259259
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "26",
-        "mean_cost": 0.11556168333333335,
-        "mean_score": 0.518
+        "mean_cost": 0.11803423888888889,
+        "mean_score": 0.8287777777777777
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "27",
-        "mean_cost": 0.09511978888888889,
-        "mean_score": 0.47622222222222216
+        "mean_cost": 0.0955267777777778,
+        "mean_score": 0.7852222222222223
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "28",
-        "mean_cost": 0.11356605,
-        "mean_score": 0.5214074074074074
+        "mean_cost": 0.11539573333333333,
+        "mean_score": 0.8332592592592593
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "29",
-        "mean_cost": 0.1107883888888889,
-        "mean_score": 0.5660740740740741
+        "mean_cost": 0.11162825,
+        "mean_score": 0.8738518518518519
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "30",
-        "mean_cost": 0.11853145555555554,
-        "mean_score": 0.5161481481481481
+        "mean_cost": 0.1248574111111111,
+        "mean_score": 0.8240925925925926
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "31",
-        "mean_cost": 0.10643483333333334,
-        "mean_score": 0.5371111111111111
+        "mean_cost": 0.10817037777777777,
+        "mean_score": 0.8478518518518519
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "32",
-        "mean_cost": 0.12044403888888892,
-        "mean_score": 0.532962962962963
+        "mean_cost": 0.12086676666666668,
+        "mean_score": 0.8404296296296296
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "33",
-        "mean_cost": 0.12173221666666666,
-        "mean_score": 0.4118148148148148
+        "mean_cost": 0.12218357222222223,
+        "mean_score": 0.7232444444444445
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "34",
-        "mean_cost": 0.11145827777777778,
-        "mean_score": 0.43481481481481477
+        "mean_cost": 0.11345961666666667,
+        "mean_score": 0.7435555555555555
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "35",
-        "mean_cost": 0.11537684444444446,
-        "mean_score": 0.4748518518518519
+        "mean_cost": 0.11693479444444445,
+        "mean_score": 0.785962962962963
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "36",
-        "mean_cost": 0.12164043888888888,
-        "mean_score": 0.5065925925925926
+        "mean_cost": 0.12231813333333334,
+        "mean_score": 0.8151851851851852
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "37",
-        "mean_cost": 0.11009835555555557,
-        "mean_score": 0.422962962962963
+        "mean_cost": 0.11090219444444445,
+        "mean_score": 0.7314296296296297
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "38",
-        "mean_cost": 0.10888391111111112,
-        "mean_score": 0.5087222222222222
+        "mean_cost": 0.11353882777777777,
+        "mean_score": 0.8164481481481481
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "39",
-        "mean_cost": 0.12435868888888892,
-        "mean_score": 0.48340740740740734
+        "mean_cost": 0.12588262777777778,
+        "mean_score": 0.7936296296296297
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "40",
-        "mean_cost": 0.10519812777777778,
-        "mean_score": 0.4883333333333333
+        "mean_cost": 0.10835971666666666,
+        "mean_score": 0.797962962962963
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "subtest": "41",
-        "mean_cost": 0.12495919444444444,
-        "mean_score": 0.4005185185185185
+        "mean_cost": 0.12918906666666669,
+        "mean_score": 0.7060740740740741
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "01",
-        "mean_cost": 0.11812315555555555,
-        "mean_score": 0.5629259259259259
+        "mean_cost": 0.12067001111111113,
+        "mean_score": 0.8731111111111112
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "02",
-        "mean_cost": 0.11445921666666667,
-        "mean_score": 0.5574814814814815
+        "mean_cost": 0.11538743333333334,
+        "mean_score": 0.8681148148148148
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "03",
-        "mean_cost": 0.10575464444444445,
-        "mean_score": 0.5183333333333333
+        "mean_cost": 0.10570996666666667,
+        "mean_score": 0.829037037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "04",
-        "mean_cost": 0.09712416666666666,
-        "mean_score": 0.5561851851851851
+        "mean_cost": 0.10006878888888888,
+        "mean_score": 0.8649925925925925
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "05",
-        "mean_cost": 0.11086310555555556,
-        "mean_score": 0.43077777777777776
+        "mean_cost": 0.11215262777777779,
+        "mean_score": 0.7405185185185186
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "06",
-        "mean_cost": 0.10748793333333334,
-        "mean_score": 0.4861111111111111
+        "mean_cost": 0.10741006111111112,
+        "mean_score": 0.7974444444444444
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "07",
-        "mean_cost": 0.10533560555555556,
-        "mean_score": 0.527962962962963
+        "mean_cost": 0.1075204,
+        "mean_score": 0.8383333333333334
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "08",
-        "mean_cost": 0.13109998888888888,
-        "mean_score": 0.488962962962963
+        "mean_cost": 0.1359405388888889,
+        "mean_score": 0.798962962962963
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "09",
-        "mean_cost": 0.11849403888888888,
-        "mean_score": 0.5053703703703705
+        "mean_cost": 0.11969226111111109,
+        "mean_score": 0.8112962962962963
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "10",
-        "mean_cost": 0.1312992888888889,
-        "mean_score": 0.5641666666666666
+        "mean_cost": 0.1352295388888889,
+        "mean_score": 0.8719814814814816
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "11",
-        "mean_cost": 0.11941427222222223,
-        "mean_score": 0.529
+        "mean_cost": 0.12448326666666668,
+        "mean_score": 0.8345555555555556
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "12",
-        "mean_cost": 0.12321309444444445,
-        "mean_score": 0.46481481481481485
+        "mean_cost": 0.12428130000000001,
+        "mean_score": 0.7703703703703704
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "13",
-        "mean_cost": 0.13052025555555555,
-        "mean_score": 0.47044444444444444
+        "mean_cost": 0.13167402777777779,
+        "mean_score": 0.7818148148148149
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "subtest": "14",
-        "mean_cost": 0.12070837777777779,
-        "mean_score": 0.49625925925925923
+        "mean_cost": 0.12054748333333334,
+        "mean_score": 0.8051481481481482
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "01",
-        "mean_cost": 0.1390192166666667,
-        "mean_score": 0.5214814814814814
+        "mean_cost": 0.1407278666666667,
+        "mean_score": 0.8325925925925926
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "02",
-        "mean_cost": 0.12244726666666667,
-        "mean_score": 0.5177037037037038
+        "mean_cost": 0.12328027222222222,
+        "mean_score": 0.8273333333333333
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "03",
-        "mean_cost": 0.11337886666666669,
-        "mean_score": 0.46518518518518515
+        "mean_cost": 0.11608533333333335,
+        "mean_score": 0.7755037037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "04",
-        "mean_cost": 0.11432442222222222,
-        "mean_score": 0.4801111111111111
+        "mean_cost": 0.1148326,
+        "mean_score": 0.7911703703703703
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "05",
-        "mean_cost": 0.10834196666666668,
-        "mean_score": 0.5733333333333334
+        "mean_cost": 0.11055877222222223,
+        "mean_score": 0.8823037037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "06",
-        "mean_cost": 0.14583998333333334,
-        "mean_score": 0.5638888888888889
+        "mean_cost": 0.14432498333333335,
+        "mean_score": 0.8705185185185185
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "07",
-        "mean_cost": 0.0960471,
-        "mean_score": 0.4203148148148148
+        "mean_cost": 0.0984965111111111,
+        "mean_score": 0.7292037037037038
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "08",
-        "mean_cost": 0.13518560000000002,
-        "mean_score": 0.5614814814814815
+        "mean_cost": 0.14209760555555556,
+        "mean_score": 0.8718518518518519
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "09",
-        "mean_cost": 0.10101407777777777,
-        "mean_score": 0.5024814814814814
+        "mean_cost": 0.10410853333333332,
+        "mean_score": 0.8120740740740741
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "10",
-        "mean_cost": 0.12430422777777778,
-        "mean_score": 0.5571851851851852
+        "mean_cost": 0.1234223,
+        "mean_score": 0.867925925925926
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "11",
-        "mean_cost": 0.12032070555555555,
-        "mean_score": 0.48474074074074075
+        "mean_cost": 0.12391323888888889,
+        "mean_score": 0.795837037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "12",
-        "mean_cost": 0.13110565555555556,
-        "mean_score": 0.461
+        "mean_cost": 0.12934353333333334,
+        "mean_score": 0.7717407407407407
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "13",
-        "mean_cost": 0.11817004444444446,
-        "mean_score": 0.4986666666666666
+        "mean_cost": 0.11971382777777778,
+        "mean_score": 0.8104666666666667
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "14",
-        "mean_cost": 0.10256234444444444,
-        "mean_score": 0.5119814814814815
+        "mean_cost": 0.10328071666666666,
+        "mean_score": 0.8243740740740741
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "subtest": "15",
-        "mean_cost": 0.09576011666666667,
-        "mean_score": 0.49644444444444447
+        "mean_cost": 0.09743960000000002,
+        "mean_score": 0.8041851851851852
       },
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "subtest": "01",
-        "mean_cost": 0.14987914444444445,
-        "mean_score": 0.5183333333333333
+        "mean_cost": 0.16180843333333333,
+        "mean_score": 0.8283333333333334
       }
     ],
-    "data-f62a8feae72c2675fd4041e86aaa79b2": [
+    "data-dbad3bc185cfe7558335c034f0938a1f": [
       {
         "agent_model": "claude-haiku-4-5",
         "x": 0.022632038888888886,
-        "y": 0.6071090489405232
+        "y": 0.5869474872371265
       },
       {
         "agent_model": "claude-haiku-4-5",
-        "x": 0.15131818333333336,
-        "y": 0.6812763518118443
+        "x": 0.16180843333333333,
+        "y": 0.920496717455568
       }
     ],
-    "data-aa8292fd3dd619ac1ce79a13187a800e": [
+    "data-9d12b3e75cd58743545c9471ed17c1e9": [
       {
         "agent_model": "claude-haiku-4-5",
-        "slope": 0.5763425673487337,
-        "intercept": 0.5940652415429646,
-        "r_squared": 0.002532155622029797,
-        "p_value": 0.5851965325765184,
-        "annotation": "R\u00b2 = 0.003, p = 0.5852"
+        "slope": 2.3965934133434215,
+        "intercept": 0.5327076919054833,
+        "r_squared": 0.22421163377219233,
+        "p_value": 4.7082841222134904e-08,
+        "annotation": "R\u00b2 = 0.224, p = 0.0000"
       }
     ]
   }

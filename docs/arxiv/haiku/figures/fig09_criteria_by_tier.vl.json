@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-72f71bd2158c0ac15dd25add0f914d89"
+    "name": "data-6d51ee1c4d33be6acaa0591619125fa8"
   },
   "facet": {
     "column": {
@@ -201,7 +201,7 @@
   "title": "Per-Criteria Performance by Tier",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-72f71bd2158c0ac15dd25add0f914d89": [
+    "data-6d51ee1c4d33be6acaa0591619125fa8": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -1249,7 +1249,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "criterion": "build_pipeline",
-        "criterion_score": 0.9415416000000001,
+        "criterion_score": 0.9781401084010843,
         "criterion_label": "Build Pipeline"
       },
       {
@@ -1263,7 +1263,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "criterion": "code_quality",
-        "criterion_score": 0.989336,
+        "criterion_score": 0.9894173441734415,
         "criterion_label": "Code Quality"
       },
       {
@@ -1354,7 +1354,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "criterion": "functional",
-        "criterion_score": 0.8174762711864394,
+        "criterion_score": 0.9008988868274597,
         "criterion_label": "Functional"
       },
       {
@@ -1424,7 +1424,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "criterion": "overall_quality",
-        "criterion_score": 0.9148688,
+        "criterion_score": 0.942723577235771,
         "criterion_label": "Overall Quality"
       },
       {
@@ -1438,7 +1438,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "criterion": "proportionality",
-        "criterion_score": 0.9205279999999996,
+        "criterion_score": 0.9858994579945802,
         "criterion_label": "Proportionality"
       },
       {
@@ -1612,9 +1612,23 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
+        "criterion": "build_pipeline",
+        "criterion_score": 0.9890896825396827,
+        "criterion_label": "Build Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
         "criterion": "code_formatting",
         "criterion_score": 0.5985294117647059,
         "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "code_quality",
+        "criterion_score": 0.9904761904761906,
+        "criterion_label": "Code Quality"
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -1676,7 +1690,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "criterion": "functional",
-        "criterion_score": 0.6859491525423729,
+        "criterion_score": 0.8998432432432422,
         "criterion_label": "Functional"
       },
       {
@@ -1720,6 +1734,20 @@
         "criterion": "memory_safety_patterns",
         "criterion_score": 0.875,
         "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "overall_quality",
+        "criterion_score": 0.9395238095238101,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T4",
+        "criterion": "proportionality",
+        "criterion_score": 0.9930555555555556,
+        "criterion_label": "Proportionality"
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -1879,7 +1907,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "criterion": "build_pipeline",
-        "criterion_score": 1.0,
+        "criterion_score": 0.9789398550724638,
         "criterion_label": "Build Pipeline"
       },
       {
@@ -1888,6 +1916,13 @@
         "criterion": "code_formatting",
         "criterion_score": 0.5937499999999999,
         "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "code_quality",
+        "criterion_score": 0.9879444444444443,
+        "criterion_label": "Code Quality"
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -1956,7 +1991,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "criterion": "functional",
-        "criterion_score": 0.7271304347826086,
+        "criterion_score": 0.9077058823529406,
         "criterion_label": "Functional"
       },
       {
@@ -2007,6 +2042,20 @@
         "criterion": "memory_safety_patterns",
         "criterion_score": 0.75,
         "criterion_label": "Memory Safety Patterns"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "overall_quality",
+        "criterion_score": 0.9465851851851854,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T5",
+        "criterion": "proportionality",
+        "criterion_score": 0.9852962962962962,
+        "criterion_label": "Proportionality"
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -2102,9 +2151,23 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
+        "criterion": "build_pipeline",
+        "criterion_score": 1.0,
+        "criterion_label": "Build Pipeline"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
         "criterion": "code_formatting",
         "criterion_score": 0.5666666666666667,
         "criterion_label": "Code Formatting"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "code_quality",
+        "criterion_score": 0.9944444444444444,
+        "criterion_label": "Code Quality"
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -2145,7 +2208,7 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "criterion": "functional",
-        "criterion_score": 0.4343333333333333,
+        "criterion_score": 0.8585833333333333,
         "criterion_label": "Functional"
       },
       {
@@ -2161,6 +2224,20 @@
         "criterion": "memory_safety_ownership",
         "criterion_score": 0.94375,
         "criterion_label": "Memory Safety Ownership"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "overall_quality",
+        "criterion_score": 0.9277777777777779,
+        "criterion_label": "Overall Quality"
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "criterion": "proportionality",
+        "criterion_score": 0.9861111111111112,
+        "criterion_label": "Proportionality"
       },
       {
         "agent_model": "claude-haiku-4-5",

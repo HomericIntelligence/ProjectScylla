@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-b9c2868263876679e811e83d35fe81cb"
+    "name": "data-cbb54627fcda49d41ed4cded5f51bb67"
   },
   "facet": {
     "column": {
@@ -159,7 +159,7 @@
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-b9c2868263876679e811e83d35fe81cb": [
+    "data-cbb54627fcda49d41ed4cded5f51bb67": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T0",
@@ -284,9 +284,9 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
         "grade": "A",
-        "count": 117,
+        "count": 197,
         "total": 369,
-        "proportion": 0.3170731707317073
+        "proportion": 0.5338753387533876
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -315,14 +315,6 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T3",
-        "grade": "F",
-        "count": 80,
-        "total": 369,
-        "proportion": 0.21680216802168023
-      },
-      {
-        "agent_model": "claude-haiku-4-5",
-        "tier": "T3",
         "grade": "S",
         "count": 10,
         "total": 369,
@@ -332,9 +324,9 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
         "grade": "A",
-        "count": 23,
+        "count": 65,
         "total": 126,
-        "proportion": 0.18253968253968253
+        "proportion": 0.5158730158730159
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -355,14 +347,6 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T4",
-        "grade": "F",
-        "count": 42,
-        "total": 126,
-        "proportion": 0.3333333333333333
-      },
-      {
-        "agent_model": "claude-haiku-4-5",
-        "tier": "T4",
         "grade": "S",
         "count": 8,
         "total": 126,
@@ -372,9 +356,9 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
         "grade": "A",
-        "count": 23,
+        "count": 68,
         "total": 135,
-        "proportion": 0.17037037037037037
+        "proportion": 0.5037037037037037
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -403,14 +387,6 @@
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T5",
-        "grade": "F",
-        "count": 45,
-        "total": 135,
-        "proportion": 0.3333333333333333
-      },
-      {
-        "agent_model": "claude-haiku-4-5",
-        "tier": "T5",
         "grade": "S",
         "count": 7,
         "total": 135,
@@ -420,9 +396,9 @@
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "grade": "A",
-        "count": 2,
+        "count": 5,
         "total": 9,
-        "proportion": 0.2222222222222222
+        "proportion": 0.5555555555555556
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -431,14 +407,6 @@
         "count": 4,
         "total": 9,
         "proportion": 0.4444444444444444
-      },
-      {
-        "agent_model": "claude-haiku-4-5",
-        "tier": "T6",
-        "grade": "F",
-        "count": 3,
-        "total": 9,
-        "proportion": 0.3333333333333333
       }
     ]
   }

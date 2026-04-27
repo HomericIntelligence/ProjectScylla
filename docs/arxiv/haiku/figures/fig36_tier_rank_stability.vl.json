@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-91dc4e6df1e26b6820f21f3952e2e04d"
+    "name": "data-0e7bb62ccf614f66a77a568147179312"
   },
   "mark": {
     "type": "rect"
@@ -84,9 +84,9 @@
     "y": {
       "field": "experiment",
       "sort": [
+        "test-001",
         "test-003",
-        "test-002",
-        "test-001"
+        "test-002"
       ],
       "title": "Experiment (sorted by difficulty)",
       "type": "ordinal"
@@ -96,48 +96,48 @@
   "title": "Tier Rank Stability Across Experiments",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-91dc4e6df1e26b6820f21f3952e2e04d": [
+    "data-0e7bb62ccf614f66a77a568147179312": [
       {
         "experiment": "test-001",
         "tier": "T0",
         "pass_rate": 0.9583333333333334,
-        "rank": 3.0
+        "rank": 7.0
       },
       {
         "experiment": "test-001",
         "tier": "T1",
         "pass_rate": 1.0,
-        "rank": 1.5
+        "rank": 3.5
       },
       {
         "experiment": "test-001",
         "tier": "T2",
         "pass_rate": 1.0,
-        "rank": 1.5
+        "rank": 3.5
       },
       {
         "experiment": "test-001",
         "tier": "T3",
-        "pass_rate": 0.34959349593495936,
-        "rank": 4.0
+        "pass_rate": 1.0,
+        "rank": 3.5
       },
       {
         "experiment": "test-001",
         "tier": "T4",
-        "pass_rate": 0.0,
-        "rank": 6.0
+        "pass_rate": 1.0,
+        "rank": 3.5
       },
       {
         "experiment": "test-001",
         "tier": "T5",
-        "pass_rate": 0.0,
-        "rank": 6.0
+        "pass_rate": 1.0,
+        "rank": 3.5
       },
       {
         "experiment": "test-001",
         "tier": "T6",
-        "pass_rate": 0.0,
-        "rank": 6.0
+        "pass_rate": 1.0,
+        "rank": 3.5
       },
       {
         "experiment": "test-002",

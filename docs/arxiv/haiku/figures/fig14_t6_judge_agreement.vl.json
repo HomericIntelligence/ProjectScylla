@@ -26,7 +26,7 @@
     }
   },
   "data": {
-    "name": "data-760d03c48f6827bf392c3db0e892f674"
+    "name": "data-b6f4da7b133655f2a63f1f44131572d8"
   },
   "facet": {
     "column": {
@@ -96,7 +96,7 @@
         "field": "score_y",
         "scale": {
           "domain": [
-            0.25,
+            0.45,
             1.0
           ]
         },
@@ -116,24 +116,15 @@
   "title": "Inter-Judge Score Agreement - T6",
   "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json",
   "datasets": {
-    "data-760d03c48f6827bf392c3db0e892f674": [
+    "data-b6f4da7b133655f2a63f1f44131572d8": [
       {
         "agent_model": "claude-haiku-4-5",
         "tier": "T6",
         "pair_label": "Judge 1 vs 2",
         "judge_x": "Judge 1",
         "judge_y": "Judge 2",
-        "score_x": 0.7975,
-        "score_y": 0.935
-      },
-      {
-        "agent_model": "claude-haiku-4-5",
-        "tier": "T6",
-        "pair_label": "Judge 1 vs 2",
-        "judge_x": "Judge 1",
-        "judge_y": "Judge 2",
-        "score_x": 0.8474999999999999,
-        "score_y": 0.86
+        "score_x": 0.835,
+        "score_y": 0.9346666666666668
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -141,8 +132,17 @@
         "pair_label": "Judge 1 vs 2",
         "judge_x": "Judge 1",
         "judge_y": "Judge 2",
-        "score_x": 0.7975,
-        "score_y": 0.885
+        "score_x": 0.8716666666666667,
+        "score_y": 0.8866666666666667
+      },
+      {
+        "agent_model": "claude-haiku-4-5",
+        "tier": "T6",
+        "pair_label": "Judge 1 vs 2",
+        "judge_x": "Judge 1",
+        "judge_y": "Judge 2",
+        "score_x": 0.8483333333333333,
+        "score_y": 0.8853333333333334
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -150,8 +150,8 @@
         "pair_label": "Judge 2 vs 3",
         "judge_x": "Judge 2",
         "judge_y": "Judge 3",
-        "score_x": 0.935,
-        "score_y": 0.725
+        "score_x": 0.9346666666666668,
+        "score_y": 0.7999999999999999
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -159,8 +159,8 @@
         "pair_label": "Judge 2 vs 3",
         "judge_x": "Judge 2",
         "judge_y": "Judge 3",
-        "score_x": 0.86,
-        "score_y": 0.86
+        "score_x": 0.8866666666666667,
+        "score_y": 0.89
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -168,8 +168,8 @@
         "pair_label": "Judge 2 vs 3",
         "judge_x": "Judge 2",
         "judge_y": "Judge 3",
-        "score_x": 0.885,
-        "score_y": 0.29
+        "score_x": 0.8853333333333334,
+        "score_y": 0.5033333333333333
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -177,8 +177,8 @@
         "pair_label": "Judge 1 vs 3",
         "judge_x": "Judge 1",
         "judge_y": "Judge 3",
-        "score_x": 0.7975,
-        "score_y": 0.725
+        "score_x": 0.835,
+        "score_y": 0.7999999999999999
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -186,8 +186,8 @@
         "pair_label": "Judge 1 vs 3",
         "judge_x": "Judge 1",
         "judge_y": "Judge 3",
-        "score_x": 0.8474999999999999,
-        "score_y": 0.86
+        "score_x": 0.8716666666666667,
+        "score_y": 0.89
       },
       {
         "agent_model": "claude-haiku-4-5",
@@ -195,8 +195,8 @@
         "pair_label": "Judge 1 vs 3",
         "judge_x": "Judge 1",
         "judge_y": "Judge 3",
-        "score_x": 0.7975,
-        "score_y": 0.29
+        "score_x": 0.8483333333333333,
+        "score_y": 0.5033333333333333
       }
     ]
   }
