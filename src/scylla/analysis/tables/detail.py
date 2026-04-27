@@ -97,7 +97,7 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
     md_lines.append("|------------|------------|-----------|---------------|")
 
     for _, row in df.iterrows():
-        if row["Spearman ρ"] is not None:
+        if pd.notna(row["Spearman ρ"]):
             md_lines.append(
                 f"| {row['Judge Pair']} | {row['Spearman ρ']:.3f} | "
                 f"{row['Pearson r']:.3f} | {row['Mean |Δ Score|']:{_FMT_PVAL}} |"
@@ -122,13 +122,13 @@ def table03_judge_agreement(judges_df: pd.DataFrame) -> tuple[str, str]:
     ]
 
     for _, row in df.iterrows():
-        if row["Spearman ρ"] is not None:
+        if pd.notna(row["Spearman ρ"]):
             latex_lines.append(
                 f"{row['Judge Pair']} & {row['Spearman ρ']:.3f} & "
                 f"{row['Pearson r']:.3f} & {row['Mean |Δ Score|']:{_FMT_PVAL}} \\\\"
             )
         else:
-            latex_lines.append(f"{row['Judge Pair']} & — & — & — \\\\")
+            latex_lines.append(f"{row['Judge Pair']} & -- & -- & -- \\\\")
 
     latex_lines.extend(
         [
